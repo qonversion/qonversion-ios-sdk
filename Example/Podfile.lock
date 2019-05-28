@@ -1,0 +1,16 @@
+PODS:
+  - Qonversion (0.2.0)
+
+DEPENDENCIES:
+  - Qonversion (from `../`)
+
+EXTERNAL SOURCES:
+  Qonversion:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  Qonversion: 5391429f1b9e23a18b72c9f320d91d95d03859e3
+
+PODFILE CHECKSUM: fff2c384eef567557633815a6bdbad303909e9a3
+
+COCOAPODS: 1.7.0

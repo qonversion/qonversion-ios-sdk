@@ -1,0 +1,10 @@
+use_frameworks!
+platform :ios, '9.0'
+
+target 'SwiftEx' do
+  pod 'Qonversion', :path => '../'
+end
+
+target 'ObjcEx' do
+  pod 'Qonversion', :path => '../'
+end

@@ -1,0 +1,22 @@
+{
+  "name": "Qonversion",
+  "version": "0.2.0",
+  "summary": "qonversion.io",
+  "description": "Qonversion Analytic Tool for Subscribrions",
+  "homepage": "https://github.com/axcic/Qonversion2",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "axcic": "bogdan.nov@ya.ru"
+  },
+  "source": {
+    "git": "https://github.com/axcic/Qonversion2.git",
+    "tag": "0.2.0"
+  },
+  "platforms": {
+    "ios": "9.0"
+  },
+  "source_files": "Qonversion/Classes/**/*"
+}
