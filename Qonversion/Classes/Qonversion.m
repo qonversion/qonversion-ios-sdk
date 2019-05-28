@@ -47,6 +47,10 @@ static BOOL autoTrackPurchases;
 }
 
 + (void)trackPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+    if (autoTrackPurchases) {
+        NSLog(@"'autoTrackPurchases' enabled, manual 'trackPurchase:transaction:' disabled");
+        return;
+    }
     [self serviceLogPurchase:product transaction:transaction];
 }
 
@@ -71,10 +75,6 @@ static BOOL autoTrackPurchases;
 }
 
 + (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
-    if (autoTrackPurchases) {
-        NSLog(@"'autoTrackPurchases' enabled, manual 'trackPurchase:transaction:' disabled");
-        return;
-    }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSURL *receiptURL = UserInfo.bundle.appStoreReceiptURL;
         if (!receiptURL) {
