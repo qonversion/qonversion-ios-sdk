@@ -5,12 +5,9 @@
 [![License](https://img.shields.io/cocoapods/l/Qonversion.svg?style=flat)](https://cocoapods.org/pods/Qonversion)
 [![Platform](https://img.shields.io/cocoapods/p/Qonversion.svg?style=flat)](https://cocoapods.org/pods/Qonversion)
 
-## Example
-
-To run the example project, clone the repo, and run `pod install` from the Example directory first.
 
 ## Requirements
-iOS 9+
+iOS 9.0+
 
 ## Installation
 
@@ -23,6 +20,7 @@ pod 'Qonversion'
 ## Author
 
 Bogdan Novikov, bogdan@qonversion.io
+
 Sam Mejlumyan, sam@qonversion.io
 
 ## License
