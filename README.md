@@ -1,3 +1,5 @@
+![Qonversion](https://qonversion.io/assets/img/brand.png)
+
 # Qonversion
 
 [![CI Status](https://img.shields.io/travis/axcic/Qonversion.svg?style=flat)](https://travis-ci.org/axcic/Qonversion)
@@ -10,7 +12,7 @@
 To run the example project, clone the repo, and run `pod install` from the Example directory first.
 
 ## Requirements
-iOS 9+
+iOS 9.0+
 
 ## Installation
 
