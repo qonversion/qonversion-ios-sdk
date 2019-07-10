@@ -10,11 +10,11 @@
 To run the example project, clone the repo, and run `pod install` from the Example directory first.
 
 ## Requirements
+iOS 9+
 
 ## Installation
 
-Qonversion is available through [CocoaPods](https://cocoapods.org). To install
-it, simply add the following line to your Podfile:
+Qonversion is available through [CocoaPods](https://cocoapods.org). To install it, simply add the following line to your Podfile:
 
 ```ruby
 pod 'Qonversion'
@@ -22,8 +22,9 @@ pod 'Qonversion'
 
 ## Author
 
-axcic, bogdan.nov@ya.ru
+Bogdan Novikov, bogdan@qonversion.io
+Sam Mejlumyan, sam@qonversion.io
 
 ## License
 
-Qonversion is available under the MIT license. See the LICENSE file for more info.
+Qonversion SDK is available under the MIT license. See the LICENSE file for more info.

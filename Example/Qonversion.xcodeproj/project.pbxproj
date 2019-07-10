@@ -11,12 +11,10 @@
 		1A01034A229490240060433F /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A010349229490240060433F /* ViewController.swift */; };
 		1A01034D229490240060433F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1A01034B229490240060433F /* Main.storyboard */; };
 		1A01034F229490250060433F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A01034E229490250060433F /* Assets.xcassets */; };
-		1A010352229490250060433F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1A010350229490250060433F /* LaunchScreen.storyboard */; };
 		1AF9AA942294928C00D36B3A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AF9AA932294928C00D36B3A /* AppDelegate.m */; };
 		1AF9AA972294928C00D36B3A /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AF9AA962294928C00D36B3A /* ViewController.m */; };
 		1AF9AA9A2294928C00D36B3A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1AF9AA982294928C00D36B3A /* Main.storyboard */; };
 		1AF9AA9C2294928D00D36B3A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1AF9AA9B2294928D00D36B3A /* Assets.xcassets */; };
-		1AF9AA9F2294928D00D36B3A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1AF9AA9D2294928D00D36B3A /* LaunchScreen.storyboard */; };
 		1AF9AAA22294928D00D36B3A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AF9AAA12294928D00D36B3A /* main.m */; };
 		4D2CA54BFEC362F6151C56E6 /* Pods_ObjcEx.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10914B6C32E95733923485D0 /* Pods_ObjcEx.framework */; };
 		AF39E56AAA3C1BB81C2E98BA /* Pods_SwiftEx.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E2920219265656A467FA335 /* Pods_SwiftEx.framework */; };
@@ -52,7 +50,6 @@
 		1A010349229490240060433F /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		1A01034C229490240060433F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		1A01034E229490250060433F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		1A010351229490250060433F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1A010353229490250060433F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1AF9AA902294928C00D36B3A /* ObjcEx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ObjcEx.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1AF9AA922294928C00D36B3A /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -61,7 +58,6 @@
 		1AF9AA962294928C00D36B3A /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		1AF9AA992294928C00D36B3A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		1AF9AA9B2294928D00D36B3A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		1AF9AA9E2294928D00D36B3A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1AF9AAA02294928D00D36B3A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1AF9AAA12294928D00D36B3A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		1AF9AAAE2294966B00D36B3A /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -107,7 +103,6 @@
 				1A010349229490240060433F /* ViewController.swift */,
 				1A01034B229490240060433F /* Main.storyboard */,
 				1A01034E229490250060433F /* Assets.xcassets */,
-				1A010350229490250060433F /* LaunchScreen.storyboard */,
 				1A010353229490250060433F /* Info.plist */,
 			);
 			path = SwiftEx;
@@ -122,7 +117,6 @@
 				1AF9AA962294928C00D36B3A /* ViewController.m */,
 				1AF9AA982294928C00D36B3A /* Main.storyboard */,
 				1AF9AA9B2294928D00D36B3A /* Assets.xcassets */,
-				1AF9AA9D2294928D00D36B3A /* LaunchScreen.storyboard */,
 				1AF9AAA02294928D00D36B3A /* Info.plist */,
 				1AF9AAA12294928D00D36B3A /* main.m */,
 			);
@@ -275,7 +269,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1A010352229490250060433F /* LaunchScreen.storyboard in Resources */,
 				1A01034F229490250060433F /* Assets.xcassets in Resources */,
 				1A01034D229490240060433F /* Main.storyboard in Resources */,
 			);
@@ -285,7 +278,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1AF9AA9F2294928D00D36B3A /* LaunchScreen.storyboard in Resources */,
 				1AF9AA9C2294928D00D36B3A /* Assets.xcassets in Resources */,
 				1AF9AA9A2294928C00D36B3A /* Main.storyboard in Resources */,
 			);
@@ -407,28 +399,12 @@
 			name = Main.storyboard;
 			sourceTree = "<group>";
 		};
-		1A010350229490250060433F /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				1A010351229490250060433F /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
 		1AF9AA982294928C00D36B3A /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
 				1AF9AA992294928C00D36B3A /* Base */,
 			);
 			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		1AF9AA9D2294928D00D36B3A /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				1AF9AA9E2294928D00D36B3A /* Base */,
-			);
-			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -464,7 +440,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				INFOPLIST_FILE = SwiftEx/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -508,7 +484,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				INFOPLIST_FILE = SwiftEx/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -550,7 +526,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				INFOPLIST_FILE = ObjcEx/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -591,7 +567,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				INFOPLIST_FILE = ObjcEx/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -634,7 +610,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -667,7 +643,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;

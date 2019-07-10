@@ -90,14 +90,20 @@ static BOOL autoTrackPurchases;
             currency = [formatter stringFromNumber:product.price];
         }
         NSString *receipt = [[NSData dataWithContentsOfURL:receiptURL] base64EncodedStringWithOptions:0];
-        NSMutableDictionary *dict = @{@"inapp": @{@"product": product.productIdentifier,
-                                                  @"receipt": receipt,
-                                                  @"transactionIdentifier": transaction.transactionIdentifier,
-                                                  @"currency": currency,
-                                                  @"value": product.price
-                                                  }}.mutableCopy;
-        dict[@"d"] = UserInfo.overallData;
-        NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:dict];
+        
+        NSMutableDictionary *inappDict = @{@"product": product.productIdentifier,
+                                           @"receipt": receipt,
+                                           @"transactionIdentifier": transaction.transactionIdentifier,
+                                           @"currency": currency,
+                                           @"value": product.price
+                                           }.mutableCopy;
+        
+        if (transaction.originalTransaction.transactionIdentifier) {
+            inappDict[@"originalTransactionIdentifier"] = transaction.originalTransaction.transactionIdentifier;
+        }
+        NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
+        
+        NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
         [self dataTaskWithRequest:request completion:^(NSDictionary *dict) { }];
     });
 }
