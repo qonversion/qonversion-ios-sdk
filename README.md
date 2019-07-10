@@ -1,3 +1,5 @@
+![Qonversion](https://qonversion.io/assets/img/brand.png)
+
 # Qonversion
 
 [![CI Status](https://img.shields.io/travis/axcic/Qonversion.svg?style=flat)](https://travis-ci.org/axcic/Qonversion)
