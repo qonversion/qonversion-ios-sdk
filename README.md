@@ -19,9 +19,10 @@ Then, in your `AppDelegate` in the `application:didFinishLaunchingWithOptions:` 
             //
         })`
 
-Need to pass your project key from [qonversion.io](https://qonversion.io) on a launch.
+1. Need to pass your project key from [qonversion.io](https://qonversion.io) on a launch.
 
-In `Qonversion.launch(withKey:autoTrackPurchases:completion:` completion block you will receive unique user id (uid). This uid is for the Facebook SDK. Use it like so: `FBSDKAppEvents.setUserID(uid)` or `FBSDKAppEvents.setUserID = uid` (depends on FBSDK version).
+2. In `Qonversion.launch(withKey:autoTrackPurchases:completion:` completion block you will receive unique user id (uid). This uid is for the Facebook SDK. Use it like so: `FBSDKAppEvents.setUserID(uid)` or `FBSDKAppEvents.setUserID = uid` (depends on FBSDK version).
+
 
 Library automatically tracks any purchase types (subscriptions, trials, basic purchases) if you set `autoTrackPurchases` to `true`. If you want to control the process of purchase tracking manually, just pass `false` in `autoTrackPurchases` and call `trackPurchase:transaction:` on every purchase event in your application.
 
