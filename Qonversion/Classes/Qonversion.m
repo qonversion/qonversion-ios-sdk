@@ -134,7 +134,7 @@ static BOOL autoTrackPurchases;
     [mutableBody setObject:apiKey forKey:@"access_token"];
     [mutableBody setObject:@"0.0.1" forKey:@"v"];
     if (Keeper.userID) {
-        [mutableBody setObject:@"client_uid" forKey:Keeper.userID];
+        [mutableBody setObject:Keeper.userID forKey:@"client_uid"];
     }
     request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
     
