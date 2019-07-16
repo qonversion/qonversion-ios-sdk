@@ -16,8 +16,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        Qonversion.launch(withKey: "projectKey", autoTrackPurchases: true) { (uid) in
-            // need to pass uid to FBSDKCoreKit.AppEvents.userID
+        Qonversion.launch(withKey: "FS0uWnuNG4jbU2tBW54JFsSznt8KIfbf", autoTrackPurchases: true) { (uid) in
+            print(uid)
         }
         
         return true

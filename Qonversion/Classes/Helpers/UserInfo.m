@@ -29,12 +29,18 @@
                          @"build": self.bundle.build,
                          @"bundle": self.bundle.bundleIdentifier};
     }
+    
+    NSMutableDictionary *adsDict = @{@"trackingEnabled": [NSNumber numberWithBool:ASIdentifierManager.sharedManager.isAdvertisingTrackingEnabled].stringValue}.mutableCopy;
+    
+    if (ASIdentifierManager.sharedManager.isAdvertisingTrackingEnabled) {
+        adsDict[@"IDFA"] = ASIdentifierManager.sharedManager.advertisingIdentifier.UUIDString;
+    }
+    
     dict[@"device"] = @{@"os": @{@"name": UIDevice.currentDevice.systemName,
                                  @"version": UIDevice.currentDevice.systemVersion},
                         @"screen": @{@"height": [NSNumber numberWithFloat:UIScreen.mainScreen.size.height].stringValue,
                                      @"width": [NSNumber numberWithFloat:UIScreen.mainScreen.size.width].stringValue},
-                        @"ads": @{@"trackingEnabled": [NSNumber numberWithBool:ASIdentifierManager.sharedManager.isAdvertisingTrackingEnabled].stringValue,
-                                  @"IDFA": ASIdentifierManager.sharedManager.advertisingIdentifier.UUIDString},
+                        @"ads": adsDict,
                         @"deviceId": UIDevice.currentDevice.identifierForVendor.UUIDString,
                         @"model": UIDevice.currentDevice.model,
                         @"carrier": CTTelephonyNetworkInfo.new.subscriberCellularProvider.carrierName ?: @"none",
