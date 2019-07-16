@@ -95,7 +95,7 @@ static BOOL autoTrackPurchases;
                                            @"receipt": receipt,
                                            @"transactionIdentifier": transaction.transactionIdentifier,
                                            @"currency": currency,
-                                           @"value": product.price
+                                           @"value": product.price.stringValue
                                            }.mutableCopy;
         
         if (transaction.originalTransaction.transactionIdentifier) {
@@ -132,7 +132,7 @@ static BOOL autoTrackPurchases;
     NSMutableDictionary *mutableBody = body.mutableCopy;
     
     [mutableBody setObject:apiKey forKey:@"access_token"];
-    [mutableBody setObject:@"0.0.1" forKey:@"v"];
+    [mutableBody setObject:@"0.2.5" forKey:@"v"];
     if (Keeper.userID) {
         [mutableBody setObject:Keeper.userID forKey:@"client_uid"];
     }
