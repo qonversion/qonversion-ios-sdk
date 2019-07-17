@@ -21,7 +21,7 @@ You will see the Token:
 
 4. Also you need to provide `AppStore App Shared Secret` in your [qonversion.io](https://qonversion.io) account  from [appstoreconnect.apple.com](https://appstoreconnect.apple.com). Go your App/Features and open `App-Specific Shared Secret` on the right and generate App's secret:
 
-[App Shared Secret](https://api.monosnap.com/file/download?id=lIwjBASuafZvDMFKiQJfhneUwyPngG)
+![App Shared Secret](https://api.monosnap.com/file/download?id=lIwjBASuafZvDMFKiQJfhneUwyPngG)
 
 This shared secret is needed to validate receipts and make offline events triggered by real purchases.  
 
