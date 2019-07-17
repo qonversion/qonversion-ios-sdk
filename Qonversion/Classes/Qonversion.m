@@ -12,7 +12,7 @@
 static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
-static NSString * const kSDKVersion = @"0.2.9";
+static NSString * const kSDKVersion = @"0.2.10";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 

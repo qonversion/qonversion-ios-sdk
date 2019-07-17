@@ -1,4 +1,4 @@
-![Qonversion](https://qonversion.io/assets/img/brand.png)
+![Qonversion](https://qonversion.io/img/brand.png)
 
 Feed your Facebook Ad account with the data on high-value users and see how your Ad account will be enriched with offline purchase events data.
 
