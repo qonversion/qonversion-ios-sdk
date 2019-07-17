@@ -43,10 +43,10 @@
                         @"ads": adsDict,
                         @"deviceId": UIDevice.currentDevice.identifierForVendor.UUIDString,
                         @"model": UIDevice.currentDevice.model,
-                        @"carrier": CTTelephonyNetworkInfo.new.subscriberCellularProvider.carrierName ?: @"none",
+                        @"carrier": CTTelephonyNetworkInfo.new.subscriberCellularProvider.carrierName ?: @"",
                         @"locale": NSLocale.currentLocale.localeIdentifier,
                         @"timezone": NSTimeZone.localTimeZone.name,
-                        @"ip": Keeper.initialIP ?: @"none"};
+                        @"ip": Keeper.initialIP ?: @""};
     return dict;
 }
 
@@ -55,7 +55,7 @@
 @implementation NSBundle(Dict)
 
 - (NSString *)name    { return self.infoDictionary[@"CFBundleDisplayName"] ?: self.infoDictionary[@"CFBundleName"] ?: @""; }
-- (NSString *)version { return self.infoDictionary[@"CFBundleShortVersionString"] ?: @"1.0"; }
+- (NSString *)version { return self.infoDictionary[@"CFBundleShortVersionString"] ?: @""; }
 - (NSString *)build   { return self.infoDictionary[@"CFBundleVersion"] ?: @""; }
 
 @end

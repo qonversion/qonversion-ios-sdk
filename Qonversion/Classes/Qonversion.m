@@ -12,7 +12,7 @@
 static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
-static NSString * const kSDKVersion = @"0.2.8";
+static NSString * const kSDKVersion = @"0.2.9";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -28,7 +28,7 @@ static BOOL autoTrackPurchases;
 
 // MARK: - Public
 
-+ (void)launchWithKey:(NSString *)key autoTrackPurchases:(BOOL)autoTrack completion:(void (^)(NSString *uid))completion {
++ (void)launchWithKey:(NSString *)key autoTrackPurchases:(BOOL)autoTrack {
     apiKey = key;
     autoTrackPurchases = autoTrack;
     if (autoTrack) {
@@ -41,15 +41,12 @@ static BOOL autoTrackPurchases;
             return;
         }
         Keeper.userID = uid;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion(uid);
-        });
     }];
 }
 
 + (void)trackPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
     if (autoTrackPurchases) {
-        NSLog(@"'autoTrackPurchases' enabled, manual 'trackPurchase:transaction:' disabled");
+        NSLog(@"'autoTrackPurchases' enabled in `launchWithKey:autoTrackPurchases`, so manual 'trackPurchase:transaction:' just won't send duplicate data");
         return;
     }
     [self serviceLogPurchase:product transaction:transaction];
@@ -94,19 +91,17 @@ static BOOL autoTrackPurchases;
         
         NSMutableDictionary *inappDict = @{@"product": product.productIdentifier,
                                            @"receipt": receipt,
-                                           @"transactionIdentifier": transaction.transactionIdentifier,
+                                           @"transactionIdentifier": transaction.transactionIdentifier ?: @"",
+                                           @"originalTransactionIdentifier": transaction.originalTransaction.transactionIdentifier ?: @"",
                                            @"currency": currency,
                                            @"value": product.price.stringValue
                                            }.mutableCopy;
         
-        if (transaction.originalTransaction.transactionIdentifier) {
-            inappDict[@"originalTransactionIdentifier"] = transaction.originalTransaction.transactionIdentifier;
-        }
         NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
         
         NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
         [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-            NSLog(@"%@", dict);
+            NSLog(@"Qonversion Purchase Log Response:\n%@", dict);
         }];
     });
 }
@@ -163,12 +158,14 @@ static BOOL autoTrackPurchases;
 // MARK: - SKProductsRequestDelegate
 
 - (void)productsRequest:(nonnull SKProductsRequest *)request didReceiveResponse:(nonnull SKProductsResponse *)response {
-    if (!response.products.firstObject) {
+    SKProduct *product = response.products.firstObject;
+    if (!product) {
         return;
     }
-    SKProduct *product = response.products.firstObject;
     SKPaymentTransaction *transaction = [self.transactions objectForKey:product.productIdentifier];
-    
+    if (!transaction) {
+        return;
+    }
     [Qonversion serviceLogPurchase:product transaction:transaction];
     [self.transactions removeObjectForKey:product.productIdentifier];
     [self.productRequests removeObjectForKey:product.productIdentifier];

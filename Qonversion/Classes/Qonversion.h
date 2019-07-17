@@ -16,18 +16,17 @@ NS_ASSUME_NONNULL_BEGIN
  Initializes an instance of the Qonversion SDK with the given project key.
  
  @param key The key used to setup the SDK.
- @param autoTrack Tracks all purchases automatically (purchase, subscription or trial). With this parameter turned on usage of the method `trackPurchase:transaction:` is unnecessary.
- @param completion Returns UID. You have to pass this UID to the `FBSDKCoreKit.AppEvents.userID`.
+ @param autoTrack Tracks all purchase events automatically (purchases, subscriptions or trials). With this parameter turned on you don't need to use `trackPurchase:transaction:` method.
  
- @warning With `autoTrackPurchases` disabled you have to call `trackPurchase:`. Otherwise, purchase tracking won't track.
+ @warning With `autoTrackPurchases` disabled you have to call `trackPurchase:transaction:` method. Otherwise, purchase tracking won't work.
  */
-+ (void)launchWithKey:(NSString *)key autoTrackPurchases:(BOOL)autoTrack completion:(void (^)(NSString *uid))completion;
++ (void)launchWithKey:(NSString *)key autoTrackPurchases:(BOOL)autoTrack;
 
 /**
- Initializes an instance of the Qonversion SDK with the given project key.
+ Tracks porchases manually. Do nothing if you pass `true` for `autoTrackPurchases` in `launchWithKey:autoTrackPurchases:` method.
  
  @param product SKProduct. Any type: purchase, subscription or trial.
- @param transaction SKPaymentTransaction of the same purchase.
+ @param transaction SKPaymentTransaction of the product.
  */
 + (void)trackPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction;
 
