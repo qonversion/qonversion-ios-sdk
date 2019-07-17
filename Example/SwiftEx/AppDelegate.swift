@@ -16,7 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        Qonversion.launch(withKey: "FS0uWnuNG4jbU2tBW54JFsSznt8KIfbf", autoTrackPurchases: true)
+        Qonversion.launch(withKey: "projectKey", autoTrackPurchases: true)
         
         return true
     }

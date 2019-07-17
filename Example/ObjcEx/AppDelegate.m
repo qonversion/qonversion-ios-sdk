@@ -17,9 +17,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
-    [Qonversion launchWithKey:@"projectKey" autoTrackPurchases:YES completion:^(NSString * _Nonnull uid) {
-        // need to pass uid to FBSDKCoreKit.AppEvents.userID
-    }];
+    [Qonversion launchWithKey:@"projectKey" autoTrackPurchases:YES];
     
     return YES;
 }
