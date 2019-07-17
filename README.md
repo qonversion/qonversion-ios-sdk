@@ -5,26 +5,28 @@ Feed your Facebook Ad account with the data on high-value users and see how your
 [![Version](https://img.shields.io/cocoapods/v/Qonversion.svg?style=flat)](https://cocoapods.org/pods/Qonversion)
 [![Platform](https://img.shields.io/cocoapods/p/Qonversion.svg?style=flat)](https://cocoapods.org/pods/Qonversion)
 
-## Simple Installation:
+## Simple Installation in only 5 steps:
 
 1. Install Facebook's SDK `FBSDKCoreKit` with their [guide](https://developers.facebook.com/docs/ios/getting-started). 
 
 2. Get Facebook's Access Token [here](https://developers.facebook.com/tools/explorer/) (choose correct `Application` in top right corner and then `Get App Token` one line below):
+
 ![App Token](https://api.monosnap.com/file/download?id=txzyuGApvCQ6SqzhFWg7vEGhQ4c1bv)
 
 You will see the Token:
+
 ![Access Token](https://api.monosnap.com/file/download?id=aLTdcBoD31co8oAj9zuwPgZBn2Ot4V)
 
-3. Provide it in your [qonversion.io](https://qonversion.io) account.
+3. Provide it in your [qonversion.io](https://qonversion.io) account & request the Qonversion API Key to use it in your App. It's in a beta right now, so no charges on a launch 🐬
 
-4. Request the api key for [qonversion.io](https://qonversion.io) to provide it in the App. It's in a beta right now, so no charges on a launch 🐬
+4. Run `pod install` with `pod 'Qonversion'` in your pod file (Carthage will be supported later).
 
-5. Run `pod install` with `pod 'Qonversion'` in your pod file (Carthage will be supported later).
-
-6. In your `AppDelegate` in the `application:didFinishLaunchingWithOptions:` method, setup the SDK like so:
+5. In your `AppDelegate` in the `application:didFinishLaunchingWithOptions:` method, setup the SDK like so:
 ```
 Qonversion.launch(withKey: "projectKey", autoTrackPurchases: true)
 ```
+
+#### Now you will see all purchases in your Facobook Ad account, even if they happen after trial period or app removal (but only in 28-days window - it's a Facebook rule).
 
 SDK will automatically track any purchase events (subscriptions, trials, basic purchases). But If you want to track purchases manually, you can pass `false` in `autoTrackPurchases` and call `trackPurchase:transaction:` on every purchase event in your application.
 
