@@ -11,15 +11,12 @@
 @implementation Keychain
 
 + (void)setString:(NSString *)string forKey:(NSString *)key {
-    if (!string || !key) {
+    if (!string || !key || ![string isKindOfClass:NSString.class] || ![key isKindOfClass:NSString.class]) {
         return;
     }
     NSData *keyData = [key dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:NO];
     NSData *valueData = [string dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:NO];
-    
-    if (!keyData || !valueData) {
-        return;
-    }
+
     NSDictionary *query = @{(id)kSecClass:(id)kSecClassGenericPassword,
                             (id)kSecAttrAccount:keyData,
                             (id)kSecValueData:valueData};

@@ -12,7 +12,7 @@
 static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
-static NSString * const kSDKVersion = @"0.2.13";
+static NSString * const kSDKVersion = @"0.2.14";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -28,7 +28,7 @@ static BOOL autoTrackPurchases;
 
 // MARK: - Public
 
-+ (void)launchWithKey:(NSString *)key autoTrackPurchases:(BOOL)autoTrack {
++ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack {
     apiKey = key;
     autoTrackPurchases = autoTrack;
     if (autoTrack) {
@@ -36,15 +36,21 @@ static BOOL autoTrackPurchases;
     }
     NSURLRequest *request = [self makePostRequestWithEndpoint:kInitEndpoint andBody:@{@"d": UserInfo.overallData}];
     [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-        NSString *uid = [[dict valueForKey:@"data"] valueForKey:@"client_uid"];
-        if (!uid) {
+        if (!dict || ![dict isKindOfClass:NSDictionary.class]) {
             return;
         }
-        Keeper.userID = uid;
+        NSDictionary *dataDict = [dict valueForKey:@"data"];
+        if (!dataDict || ![dataDict isKindOfClass:NSDictionary.class]) {
+            return;
+        }
+        NSString *uid = [dataDict valueForKey:@"client_uid"];
+        if (uid && [uid isKindOfClass:NSString.class]) {
+            Keeper.userID = uid;
+        }
     }];
 }
 
-+ (void)trackPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
++ (void)trackPurchase:(nonnull SKProduct *)product transaction:(nonnull SKPaymentTransaction *)transaction {
     if (autoTrackPurchases) {
         NSLog(@"'autoTrackPurchases' enabled in `launchWithKey:autoTrackPurchases`, so manual 'trackPurchase:transaction:' just won't send duplicate data");
         return;
@@ -101,7 +107,9 @@ static BOOL autoTrackPurchases;
         
         NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
         [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-            NSLog(@"Qonversion Purchase Log Response:\n%@", dict);
+            if (dict) {
+                NSLog(@"Qonversion Purchase Log Response:\n%@", dict);
+            }
         }];
     });
 }
@@ -109,11 +117,11 @@ static BOOL autoTrackPurchases;
 + (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
     NSURLSession *session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
     [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        if (!data) {
+        if (!data || ![data isKindOfClass:NSData.class]) {
             return;
         }
         NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-        if (!dict) {
+        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
             return;
         }
         completion(dict);

@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  @warning With `autoTrackPurchases` disabled you have to call `trackPurchase:transaction:` method. Otherwise, purchase tracking won't work.
  */
-+ (void)launchWithKey:(NSString *)key autoTrackPurchases:(BOOL)autoTrack;
++ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack;
 
 /**
  Tracks porchases manually. Do nothing if you pass `true` for `autoTrackPurchases` in `launchWithKey:autoTrackPurchases:` method.
@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param product SKProduct. Any type: purchase, subscription or trial.
  @param transaction SKPaymentTransaction of the product.
  */
-+ (void)trackPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction;
++ (void)trackPurchase:(nonnull SKProduct *)product transaction:(nonnull SKPaymentTransaction *)transaction;
 
 @end
 

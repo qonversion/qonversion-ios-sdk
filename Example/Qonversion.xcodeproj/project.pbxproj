@@ -188,9 +188,9 @@
 			buildConfigurationList = 1A010354229490250060433F /* Build configuration list for PBXNativeTarget "SwiftEx" */;
 			buildPhases = (
 				ABC836488601B9BE8D146E02 /* [CP] Check Pods Manifest.lock */,
+				1A010343229490240060433F /* Resources */,
 				1A010341229490240060433F /* Sources */,
 				1A010342229490240060433F /* Frameworks */,
-				1A010343229490240060433F /* Resources */,
 				1AF9AAA92294965900D36B3A /* Embed Frameworks */,
 				1A88A3DC80A5CBDC5FB52332 /* [CP] Embed Pods Frameworks */,
 			);
@@ -236,6 +236,7 @@
 				TargetAttributes = {
 					1A010344229490240060433F = {
 						CreatedOnToolsVersion = 10.2.1;
+						DevelopmentTeam = PP7WNNPQCJ;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.InAppPurchase = {
@@ -440,7 +441,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = PP7WNNPQCJ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -484,7 +485,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = PP7WNNPQCJ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;

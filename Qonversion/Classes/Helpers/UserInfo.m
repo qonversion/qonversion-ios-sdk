@@ -6,8 +6,6 @@
 //
 
 #import "UserInfo.h"
-#import <UIKit/UIKit.h>
-#import <Foundation/Foundation.h>
 #import <sys/utsname.h>
 #import <AdSupport/AdSupport.h>
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
