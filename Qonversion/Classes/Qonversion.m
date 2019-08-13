@@ -12,7 +12,7 @@
 static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
-static NSString * const kSDKVersion = @"0.3.1";
+static NSString * const kSDKVersion = @"0.3.2";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -144,7 +144,7 @@ static BOOL autoTrackPurchases;
     
     [mutableBody setObject:apiKey forKey:@"access_token"];
     [mutableBody setObject:kSDKVersion forKey:@"v"];
-    if (Keeper.userID) {
+    if (Keeper.userID && Keeper.userID.length > 2) {
         [mutableBody setObject:Keeper.userID forKey:@"client_uid"];
     }
     request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
