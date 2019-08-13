@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack;
 
++ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack completion:(nullable void (^)(NSString *uid))completion;
+
 /**
  Tracks porchases manually. Do nothing if you pass `true` for `autoTrackPurchases` in `launchWithKey:autoTrackPurchases:` method.
  

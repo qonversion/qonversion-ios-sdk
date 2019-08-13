@@ -1,7 +1,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Qonversion'
-  s.version          = '0.2.14'
+  s.version          = '0.3.1'
   s.summary          = 'qonversion.io'
   s.description      = <<-DESC
   Real-time app monitoring.

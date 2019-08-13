@@ -12,7 +12,7 @@
 static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
-static NSString * const kSDKVersion = @"0.2.14";
+static NSString * const kSDKVersion = @"0.3.1";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -29,6 +29,10 @@ static BOOL autoTrackPurchases;
 // MARK: - Public
 
 + (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack {
+    [self launchWithKey:key autoTrackPurchases:autoTrack completion:nil];
+}
+
++ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack completion:(nullable void (^)(NSString *uid))completion {
     apiKey = key;
     autoTrackPurchases = autoTrack;
     if (autoTrack) {
@@ -46,6 +50,7 @@ static BOOL autoTrackPurchases;
         NSString *uid = [dataDict valueForKey:@"client_uid"];
         if (uid && [uid isKindOfClass:NSString.class]) {
             Keeper.userID = uid;
+            completion(uid);
         }
     }];
 }
