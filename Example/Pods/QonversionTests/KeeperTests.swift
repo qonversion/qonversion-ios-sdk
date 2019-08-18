@@ -39,4 +39,9 @@ class KeeperTests: XCTestCase {
         XCTAssert(keepedInitialIP == stubInitialIP,
                   "keepedInitialIP(\(keepedInitialIP)) != stubInitialIP(\(stubInitialIP))")
     }
+    
+    override func tearDown() {
+        keeper.setUserID("")
+        keeper.setInitialIP("")
+    }
 }

@@ -8,14 +8,22 @@
 import XCTest
 @testable import Qonversion
 
-class LaunchTests: XCTestCase {
+fileprivate enum Constants {
+    static let timeoutSeconds = 6
+}
 
+class LaunchTests: XCTestCase {
     func testIfLaunchWithNilCompletionDoNotFail() {
-        let expect = XCTestExpectation(description: "launch")
+        let timeoutSeconds = Constants.timeoutSeconds
+        let timeoutInterval = DispatchTimeInterval.seconds(timeoutSeconds)
+        let launchExpect = XCTestExpectation(description: "launch")
         
         Qonversion.launch(withKey: "TEST", autoTrackPurchases: true)
         
-        // TODO: fullfil expect after timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeoutInterval) {
+            launchExpect.fulfill()
+        }
+        
+        wait(for: [launchExpect], timeout: TimeInterval(timeoutSeconds + 1))
     }
-
 }
