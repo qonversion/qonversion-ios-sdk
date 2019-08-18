@@ -28,6 +28,7 @@ class KeychainTests: XCTestCase {
         keychain.setString(originalThing.val, forKey: originalThing.key)
         let storedThingVal = keychain.string(forKey: originalThing.key)
         
-        XCTAssert(originalThing.val == storedThingVal, "testKeychainWritesAndReadsSameThing: originalThingVal(\(originalThing.val)) not equal storedThingVal(\(String(describing: storedThingVal)))")
+        XCTAssert(originalThing.val == storedThingVal,
+                  "testKeychainWritesAndReadsSameThing: originalThingVal(\(originalThing.val)) not equal storedThingVal(\(String(describing: storedThingVal)))")
     }
 }
