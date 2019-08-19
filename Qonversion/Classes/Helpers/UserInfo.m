@@ -43,8 +43,7 @@
                         @"model": UIDevice.currentDevice.model,
                         @"carrier": CTTelephonyNetworkInfo.new.subscriberCellularProvider.carrierName ?: @"",
                         @"locale": NSLocale.currentLocale.localeIdentifier,
-                        @"timezone": NSTimeZone.localTimeZone.name,
-                        @"ip": Keeper.initialIP ?: @""};
+                        @"timezone": NSTimeZone.localTimeZone.name};
     return dict;
 }
 

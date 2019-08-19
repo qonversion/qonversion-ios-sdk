@@ -14,9 +14,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable NSString *)userID;
 + (void)setUserID:(NSString *)userID;
 
-+ (nullable NSString *)initialIP;
-+ (void)setInitialIP:(NSString *)initialIP;
-
 @end
 
 NS_ASSUME_NONNULL_END

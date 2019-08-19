@@ -13,7 +13,6 @@
 #import "Keychain.h"
 #import "UserInfo.h"
 #import "Qonversion.h"
-#import "IPInfo.h"
 #import "Keeper.h"
 
 FOUNDATION_EXPORT double QonversionVersionNumber;

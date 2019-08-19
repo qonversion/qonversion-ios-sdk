@@ -18,13 +18,4 @@
     [Keychain setString:userID forKey:@"Qonversion.Keeper.userID"];
 }
 
-+ (nullable NSString *)initialIP {
-    return [NSUserDefaults.standardUserDefaults stringForKey:@"Qonversion.Keeper.initialIP"];
-}
-
-+ (void)setInitialIP:(NSString *)initialIP {
-    [NSUserDefaults.standardUserDefaults setObject:initialIP forKey:@"Qonversion.Keeper.initialIP"];
-    [NSUserDefaults.standardUserDefaults synchronize];
-}
-
 @end

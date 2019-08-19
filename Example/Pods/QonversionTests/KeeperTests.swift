@@ -10,13 +10,11 @@ import XCTest
 
 fileprivate enum Constants {
     static let userID = "Borat1950"
-    static let initialIP = "127.0.0.1"
 }
 
 class KeeperTests: XCTestCase {
     private let keeper = Keeper.self
     private let stubUserID = Constants.userID
-    private let stubInitialIP = Constants.initialIP
     
     func testIfKeeperSetNReadSameUserID() {
         keeper.setUserID(stubUserID)
@@ -29,19 +27,7 @@ class KeeperTests: XCTestCase {
                   "keepedUserID(\(keepedUserID)) != stubUserID(\(stubUserID))")
     }
     
-    func testIfKeeperSetNReadSameInitialIP() {
-        keeper.setInitialIP(stubInitialIP)
-        guard let keepedInitialIP = keeper.initialIP() else {
-            XCTAssert(false, "")
-            return
-        }
-        
-        XCTAssert(keepedInitialIP == stubInitialIP,
-                  "keepedInitialIP(\(keepedInitialIP)) != stubInitialIP(\(stubInitialIP))")
-    }
-    
     override func tearDown() {
         keeper.setUserID("")
-        keeper.setInitialIP("")
     }
 }
