@@ -50,7 +50,9 @@ static BOOL autoTrackPurchases;
         NSString *uid = [dataDict valueForKey:@"client_uid"];
         if (uid && [uid isKindOfClass:NSString.class]) {
             Keeper.userID = uid;
-            completion(uid);
+            if (completion) {
+                completion(uid);
+            }
         }
     }];
 }
