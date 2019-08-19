@@ -29,7 +29,9 @@ This shared secret is needed to validate receipts and make offline events trigge
 
 6. In your `AppDelegate` in the `application:didFinishLaunchingWithOptions:` method, setup the SDK like so:
 ```
-Qonversion.launch(withKey: "projectKey", autoTrackPurchases: true)
+Qonversion.launch(withKey: "projectKey", autoTrackPurchases: true) { (uid) in
+    FBSDKAppEvents.setUserID(uid)
+}
 ```
 
 #### Now you will see all purchases in your Facobook Ad account, even if they happen after trial period or app removal (but only in 28-days window - it's a Facebook rule).
