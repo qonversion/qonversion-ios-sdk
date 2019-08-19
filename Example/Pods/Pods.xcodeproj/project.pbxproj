@@ -491,13 +491,11 @@
 				TargetAttributes = {
 					8B6734D62306EA3100A595F6 = {
 						CreatedOnToolsVersion = 10.1;
-						DevelopmentTeam = PP7WNNPQCJ;
 						ProvisioningStyle = Automatic;
 						TestTargetID = 8B6735212309A08800A595F6;
 					};
 					8B6735212309A08800A595F6 = {
 						CreatedOnToolsVersion = 10.1;
-						DevelopmentTeam = PP7WNNPQCJ;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -796,7 +794,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PP7WNNPQCJ;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = "${BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Qonversion";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -819,7 +817,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PP7WNNPQCJ;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = "${BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/Qonversion";
 				INFOPLIST_FILE = QonversionTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
@@ -840,7 +838,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PP7WNNPQCJ;
+				DEVELOPMENT_TEAM = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -862,7 +860,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PP7WNNPQCJ;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = DummyApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
