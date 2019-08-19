@@ -242,6 +242,9 @@
 							com.apple.InAppPurchase = {
 								enabled = 0;
 							};
+							com.apple.Keychain = {
+								enabled = 0;
+							};
 						};
 					};
 					1AF9AA8F2294928C00D36B3A = {
