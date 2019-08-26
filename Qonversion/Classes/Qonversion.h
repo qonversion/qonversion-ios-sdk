@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack;
 
++ (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion;
+
 + (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack completion:(nullable void (^)(NSString *uid))completion;
 
 /**
