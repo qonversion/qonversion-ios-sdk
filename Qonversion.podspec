@@ -1,7 +1,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Qonversion'
-  s.version          = '0.4.5'
+  s.version          = '0.4.6'
   s.summary          = 'qonversion.io'
   s.description      = <<-DESC
   Real-time app monitoring.
@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
                        DESC
   s.homepage         = 'https://github.com/qonversion/qonversion-ios-sdk'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'Bogdan Novikov' => 'bogdan@qonversion.io' }
+  s.author           = { 'Bogdan Novikov' => 'hi@qonversion.io' }
   s.source           = { :git => 'https://github.com/qonversion/qonversion-ios-sdk.git', :tag => s.version.to_s }
   s.ios.deployment_target = '9.0'
   s.source_files = 'Qonversion/Classes/**/*'
