@@ -12,25 +12,31 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface Qonversion : NSObject
 
++ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack
+DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:autoTrackPurchases:completion:` method instead.");
+
 /**
- Initializes an instance of the Qonversion SDK with the given project key.
- 
- @param key The key used to setup the SDK.
- @param autoTrack Tracks all purchase events automatically (purchases, subscriptions or trials). With this parameter turned on you don't need to use `trackPurchase:transaction:` method.
- 
- @warning With `autoTrackPurchases` disabled you have to call `trackPurchase:transaction:` method. Otherwise, purchase tracking won't work.
+ Launches Qonversion SDK with the given project key, you can get one in your account on qonversion.io.
+ @param key - project key to setup the SDK.
+ @param completion - will return `uid` for Ads integrations.
+ @warning Will track any purchase events (trials, subscriptions, basic purchases) automatically.
  */
-+ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack;
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion;
 
+/**
+ Launches Qonversion SDK with the given project key, you can get one in your account on qonversion.io.
+ @param key - project key to setup the SDK.
+ @param autoTrack - with this parameter turned off you need to call `trackPurchase:transaction:` method.
+ @param completion - will return `uid` for Ads integrations.
+ @warning Will track any purchase events (trials, subscriptions, basic purchases) automatically. But if `autoTrackPurchases` disabled you need to call `trackPurchase:transaction:` method. Otherwise, purchases tracking won't work.
+ */
 + (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack completion:(nullable void (^)(NSString *uid))completion;
 
 /**
- Tracks porchases manually. Do nothing if you pass `true` for `autoTrackPurchases` in `launchWithKey:autoTrackPurchases:` method.
- 
- @param product SKProduct. Any type: purchase, subscription or trial.
- @param transaction SKPaymentTransaction of the product.
+ Tracks purchases manually. Do nothing if you pass `true`/`YES` to `autoTrackPurchases` in `launchWithKey:autoTrackPurchases:` method or call `launchWithKey:completion:` method.
+ @param product - SKProduct. Any of: trials, subscriptions, basic purchases.
+ @param transaction - SKPaymentTransaction of the SKProduct.
  */
 + (void)trackPurchase:(nonnull SKProduct *)product transaction:(nonnull SKPaymentTransaction *)transaction;
 
