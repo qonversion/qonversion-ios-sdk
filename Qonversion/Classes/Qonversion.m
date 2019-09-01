@@ -12,7 +12,7 @@
 static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
-static NSString * const kSDKVersion = @"0.4.6";
+static NSString * const kSDKVersion = @"0.5.0";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -46,11 +46,11 @@ static BOOL autoTrackPurchases;
     }
     NSURLRequest *request = [self makePostRequestWithEndpoint:kInitEndpoint andBody:@{@"d": UserInfo.overallData}];
     [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-        if (!dict || ![dict isKindOfClass:NSDictionary.class]) {
+        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
             return;
         }
         NSDictionary *dataDict = [dict valueForKey:@"data"];
-        if (!dataDict || ![dataDict isKindOfClass:NSDictionary.class]) {
+        if (!dataDict || ![dataDict respondsToSelector:@selector(valueForKey:)]) {
             return;
         }
         NSString *uid = [dataDict valueForKey:@"client_uid"];
@@ -120,7 +120,7 @@ static BOOL autoTrackPurchases;
         
         NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
         [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-            if (dict) {
+            if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 NSLog(@"Qonversion Purchase Log Response:\n%@", dict);
             }
         }];
@@ -155,6 +155,20 @@ static BOOL autoTrackPurchases;
     if (Keeper.userID && Keeper.userID.length > 2) {
         [mutableBody setObject:Keeper.userID forKey:@"client_uid"];
     }
+    
+    NSURL *docsURL = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
+    if (docsURL) {
+        NSDictionary *docsAttributes = [NSFileManager.defaultManager attributesOfItemAtPath:docsURL.path error:nil];
+        NSDate *date = docsAttributes.fileCreationDate;
+        if (date) {
+            NSString *unixTime = [NSString stringWithFormat:@"%ld", (long)round(date.timeIntervalSince1970)];
+            [mutableBody setObject:unixTime forKey:@"install_date"];
+        }
+    }
+    
+    NSString *unixTime = [NSString stringWithFormat:@"%ld", (long)round(NSDate.new.timeIntervalSince1970)];
+    [mutableBody setObject:unixTime forKey:@"launch_date"];
+    
     request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
     
     return request;
