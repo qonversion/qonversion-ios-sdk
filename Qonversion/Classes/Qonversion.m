@@ -12,7 +12,7 @@
 static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
-static NSString * const kSDKVersion = @"0.5.1";
+static NSString * const kSDKVersion = @"0.5.4";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -112,7 +112,7 @@ static BOOL autoTrackPurchases;
         }
         
         NSMutableDictionary *inappDict = @{@"product": product.productIdentifier,
-                                           @"receipt": receipt,
+                                           @"receipt": receipt ?: @"",
                                            @"transactionIdentifier": transaction.transactionIdentifier ?: @"",
                                            @"originalTransactionIdentifier": transaction.originalTransaction.transactionIdentifier ?: @"",
                                            @"currency": currency,

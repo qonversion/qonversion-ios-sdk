@@ -34,7 +34,7 @@ Qonversion.launch(withKey: "projectKey", autoTrackPurchases: true) { (uid) in
 }
 ```
 
-#### Now you will see all purchases in your Facobook Ad account, even if they happen after trial period or app removal (but only in 28-days window - it's a Facebook rule).
+#### Now you will see all purchases in your Facebook Ad account, even if they happen after trial period or app removal (but only in 28-days window - it's a Facebook rule).
 
 SDK will automatically track any purchase events (subscriptions, trials, basic purchases). But If you want to track purchases manually, you can pass `false` in `autoTrackPurchases` and call `trackPurchase:transaction:` on every purchase event in your application.
 
