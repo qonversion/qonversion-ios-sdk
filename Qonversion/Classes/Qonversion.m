@@ -120,21 +120,19 @@ static BOOL autoTrackPurchases;
 
         if (@available(iOS 11.2, *)) {
             if (product.subscriptionPeriod != nil) {
-                inappDict[@"subscriptionPeriodUnit"] = product.subscriptionPeriod.subscriptionPeriodAsString;
-                inappDict[@"subscriptionNumberOfUnits"] = product.subscriptionPeriod.numberOfUnits;
+                inappDict[@"subscriptionPeriodUnit"] = @(product.subscriptionPeriod.unit).stringValue;
+                inappDict[@"numberOfUnits"] = @(product.subscriptionPeriod.numberOfUnits).stringValue;
             }
 
             if (product.introductoryPrice != nil) {
                 SKProductDiscount *introductoryPrice = product.introductoryPrice;
                 NSMutableDictionary *introductoryPriceDict = @{
                                                     @"value": introductoryPrice.price.stringValue,
-                                                    @"numberOfPeriods": introductoryPrice.numberOfPeriods,
-                                                    @"subscriptionNumberOfUnits": introductoryPrice.subscriptionPeriod.numberOfUnits
+                                                    @"numberOfPeriods": @(introductoryPrice.numberOfPeriods).stringValue,
+                                                    @"numberOfUnits": @(introductoryPrice.subscriptionPeriod.numberOfUnits).stringValue,
+                                                    @"subscriptionPeriodUnit": @(introductoryPrice.subscriptionPeriod.unit).stringValue,
+                                                    @"paymentMode": @(introductoryPrice.paymentMode).stringValue
                                                 }.mutableCopy;
-
-                introductoryPriceDict[@"subscriptionNumberOfUnits"] = introductoryPrice.price;
-                introductoryPriceDict[@"subscriptionPeriodUnit"] = introductoryPrice.subscriptionPeriod.subscriptionPeriodAsString;
-                introductoryPriceDict[@"paymentMode"] = introductoryPrice.paymentModeAsString;
 
                 inappDict[@"introductoryPrice"] = introductoryPriceDict;
             }
@@ -229,41 +227,6 @@ static BOOL autoTrackPurchases;
     [Qonversion serviceLogPurchase:product transaction:transaction];
     [self.transactions removeObjectForKey:product.productIdentifier];
     [self.productRequests removeObjectForKey:product.productIdentifier];
-}
-
-@end
-
-
-@implementation SKProductSubscriptionPeriod (SubscriptionPeriodAsString)
-
-- (NSString *)subscriptionPeriodAsString {
-
-    switch (self.unit) {
-        case SKProductPeriodUnitDay:
-            return @"day";
-        case SKProductPeriodUnitWeek:
-            return @"week";
-        case SKProductPeriodUnitMonth:
-            return @"month";
-        case SKProductPeriodUnitYear:
-            return @"year";
-    }
-}
-
-@end
-
-@implementation SKProductDiscount (PaymentModeAsString)
-
-- (NSString *)paymentModeAsString {
-
-    switch (self.paymentMode) {
-        case SKProductDiscountPaymentModePayAsYouGo:
-            return @"payAsYouGo";
-        case SKProductDiscountPaymentModePayUpFront:
-            return @"payUpFront";
-        case SKProductDiscountPaymentModeFreeTrial:
-            return @"freeTrial";
-    }
 }
 
 @end
