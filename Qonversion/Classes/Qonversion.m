@@ -119,20 +119,26 @@ static BOOL autoTrackPurchases;
                                            }.mutableCopy;
 
         if (@available(iOS 11.2, *)) {
-            inappDict[@"subscriptionNumberOfUnits"] = product.subscriptionPeriod.numberOfUnits;
-
-            NSString *periodUnitKey = @"subscriptionPeriodUnit";
-
-            switch (product.subscriptionPeriod.unit) {
-                case SKProductPeriodUnitDay:
-                    inappDict[periodUnitKey] = @"day";
-                case SKProductPeriodUnitWeek:
-                    inappDict[periodUnitKey] = @"week";
-                case SKProductPeriodUnitMonth:
-                    inappDict[periodUnitKey] = @"month";
-                case SKProductPeriodUnitYear:
-                    inappDict[periodUnitKey] = @"year";
+            if (product.subscriptionPeriod != nil) {
+                inappDict[@"subscriptionPeriodUnit"] = product.subscriptionPeriod.subscriptionPeriodAsString;
+                inappDict[@"subscriptionNumberOfUnits"] = product.subscriptionPeriod.numberOfUnits;
             }
+
+            if (product.introductoryPrice != nil) {
+                SKProductDiscount *introductoryPrice = product.introductoryPrice;
+                NSMutableDictionary *introductoryPriceDict = @{
+                                                    @"value": introductoryPrice.price.stringValue,
+                                                    @"numberOfPeriods": introductoryPrice.numberOfPeriods,
+                                                    @"subscriptionNumberOfUnits": introductoryPrice.subscriptionPeriod.numberOfUnits
+                                                }.mutableCopy;
+
+                introductoryPriceDict[@"subscriptionNumberOfUnits"] = introductoryPrice.price;
+                introductoryPriceDict[@"subscriptionPeriodUnit"] = introductoryPrice.subscriptionPeriod.subscriptionPeriodAsString;
+                introductoryPriceDict[@"paymentMode"] = introductoryPrice.paymentModeAsString;
+
+                inappDict[@"introductoryPrice"] = introductoryPriceDict;
+            }
+
         }
 
         NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
@@ -223,6 +229,41 @@ static BOOL autoTrackPurchases;
     [Qonversion serviceLogPurchase:product transaction:transaction];
     [self.transactions removeObjectForKey:product.productIdentifier];
     [self.productRequests removeObjectForKey:product.productIdentifier];
+}
+
+@end
+
+
+@implementation SKProductSubscriptionPeriod (SubscriptionPeriodAsString)
+
+- (NSString *)subscriptionPeriodAsString {
+
+    switch (self.unit) {
+        case SKProductPeriodUnitDay:
+            return @"day";
+        case SKProductPeriodUnitWeek:
+            return @"week";
+        case SKProductPeriodUnitMonth:
+            return @"month";
+        case SKProductPeriodUnitYear:
+            return @"year";
+    }
+}
+
+@end
+
+@implementation SKProductDiscount (PaymentModeAsString)
+
+- (NSString *)paymentModeAsString {
+
+    switch (self.paymentMode) {
+        case SKProductDiscountPaymentModePayAsYouGo:
+            return @"payAsYouGo";
+        case SKProductDiscountPaymentModePayUpFront:
+            return @"payUpFront";
+        case SKProductDiscountPaymentModeFreeTrial:
+            return @"freeTrial";
+    }
 }
 
 @end
