@@ -117,7 +117,24 @@ static BOOL autoTrackPurchases;
                                            @"currency": currency,
                                            @"value": product.price.stringValue
                                            }.mutableCopy;
-        
+
+        if (@available(iOS 11.2, *)) {
+            inappDict[@"subscriptionNumberOfUnits"] = product.subscriptionPeriod.numberOfUnits;
+
+            NSString *periodUnitKey = @"subscriptionPeriodUnit";
+
+            switch (product.subscriptionPeriod.unit) {
+                case SKProductPeriodUnitDay:
+                    inappDict[periodUnitKey] = @"day";
+                case SKProductPeriodUnitWeek:
+                    inappDict[periodUnitKey] = @"week";
+                case SKProductPeriodUnitMonth:
+                    inappDict[periodUnitKey] = @"month";
+                case SKProductPeriodUnitYear:
+                    inappDict[periodUnitKey] = @"year";
+            }
+        }
+
         NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
         
         NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
