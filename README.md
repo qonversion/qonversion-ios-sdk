@@ -22,7 +22,7 @@ Get access to the powerful yet simple subscription analytics:
 
 3. In your `AppDelegate` in the `application:didFinishLaunchingWithOptions:` method, setup the SDK like so:
 
-```
+```swift
 import Qonversion
 
 Qonversion.launch(withKey: "projectKey") { userID in
