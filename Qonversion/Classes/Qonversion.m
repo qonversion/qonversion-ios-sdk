@@ -12,7 +12,7 @@
 static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
-static NSString * const kSDKVersion = @"0.5.5";
+static NSString * const kSDKVersion = @"0.6.0";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -117,7 +117,28 @@ static BOOL autoTrackPurchases;
                                            @"currency": currency,
                                            @"value": product.price.stringValue
                                            }.mutableCopy;
-        
+
+        if (@available(iOS 11.2, *)) {
+            if (product.subscriptionPeriod != nil) {
+                inappDict[@"subscriptionPeriodUnit"] = @(product.subscriptionPeriod.unit).stringValue;
+                inappDict[@"subscriptionPeriodNumberOfUnits"] = @(product.subscriptionPeriod.numberOfUnits).stringValue;
+            }
+
+            if (product.introductoryPrice != nil) {
+                SKProductDiscount *introductoryPrice = product.introductoryPrice;
+                NSMutableDictionary *introductoryPriceDict = @{
+                                                    @"value": introductoryPrice.price.stringValue,
+                                                    @"numberOfPeriods": @(introductoryPrice.numberOfPeriods).stringValue,
+                                                    @"subscriptionPeriodNumberOfUnits": @(introductoryPrice.subscriptionPeriod.numberOfUnits).stringValue,
+                                                    @"subscriptionPeriodUnit": @(introductoryPrice.subscriptionPeriod.unit).stringValue,
+                                                    @"paymentMode": @(introductoryPrice.paymentMode).stringValue
+                                                }.mutableCopy;
+
+                inappDict[@"introductoryPrice"] = introductoryPriceDict;
+            }
+
+        }
+
         NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
         
         NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
@@ -183,6 +204,7 @@ static BOOL autoTrackPurchases;
         if (transaction.transactionState != SKPaymentTransactionStatePurchased) {
             continue;
         }
+        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
         [self.transactions setObject:transaction forKey:transaction.payment.productIdentifier];
         
         SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:[NSSet setWithObject:transaction.payment.productIdentifier]];
