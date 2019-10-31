@@ -1,4 +1,4 @@
-[![Qonversion](https://qonversion.io/img/illustrations/pic-integration.png)](https://qonversion.io)
+[![Qonversion](https://qonversion.io/img/illustrations/charts.svg)](https://qonversion.io)
 
 Get access to the powerful yet simple subscription analytics:
 * Conversion from install to paying user, MRR, LTV, churn and other metrics.
