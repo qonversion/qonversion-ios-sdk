@@ -22,14 +22,33 @@ Get access to the powerful yet simple subscription analytics:
 
 3. In your `AppDelegate` in the `application:didFinishLaunchingWithOptions:` method, setup the SDK like so:
 
+### Swift
+
 ```swift
 import Qonversion
 
-Qonversion.launch(withKey: "projectKey") { userID in
-    FBSDKAppEvents.setUserID(uid)
+Qonversion.launch(withKey: "projectKey") { uid in 
+   // This is needed for Facebook Ads integration:
+   // AppEvents.userID = uid
+   
+   // This is needed for Amplitude integration:
+   // Amplitude.instance()?.setUserId(uid)
 }
 ```
 
+### Objective-C
+
+```objective-c
+#import "Qonversion.h"
+
+[Qonversion launchWithKey:@"projectKey" completion:^(NSString * _Nonnull uid) {
+   // This is needed for Facebook Ads integration:
+   // [FBSDKAppEvents setUserID:uid];
+   
+   // This is needed for Amplitude integration:
+   // [[Amplitude] instance] setUserId:uid];
+}]; 
+```
 
 #### Now you will see all purchases in your Facebook Ad account, even if they happen after trial period or app removal (but only in 28-days window - it's a Facebook rule).
 
