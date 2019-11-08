@@ -12,6 +12,7 @@
 static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
+static NSString * const kAttributionEndpoint = @"attribution";
 static NSString * const kSDKVersion = @"0.6.0";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
@@ -69,6 +70,22 @@ static BOOL autoTrackPurchases;
         return;
     }
     [self serviceLogPurchase:product transaction:transaction];
+}
+
++ (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
+    NSMutableDictionary *body = @{@"d": UserInfo.overallData}.mutableCopy;
+
+    if (provider == QAttributionProviderAppsFlyer) {
+      body[@"provider_data"] = @{@"provider": @"appsflyer", @"d": data, @"uid": uid ?: @""};
+    }
+
+    NSURLRequest *request = [self makePostRequestWithEndpoint:kAttributionEndpoint andBody:body];
+
+    [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+        if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
+            NSLog(@"Attribution Request Log Response:\n%@", dict);
+        }
+    }];
 }
 
 // MARK: - Private
