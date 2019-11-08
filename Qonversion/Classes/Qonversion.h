@@ -10,6 +10,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSInteger, QAttributionProvider) {
+
+    QAttributionProviderAppsFlyer = 0,
+    QAttributionProviderBranch
+};
+
 @interface Qonversion : NSObject
 
 + (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack
@@ -39,6 +45,16 @@ DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:auto
  @param transaction - SKPaymentTransaction of the SKProduct.
  */
 + (void)trackPurchase:(nonnull SKProduct *)product transaction:(nonnull SKPaymentTransaction *)transaction;
+
+/**
+ Send your attribution data
+ @param data Dictionary received by the provider
+ @param provider
+ @param userID – User Id that should be sent to the provider
+ */
++ (void)addAttributionData:(NSDictionary *)data
+               fromProvider:(QAttributionProvider)provider
+               userID:(nullable NSString *)uid;
 
 @end
 
