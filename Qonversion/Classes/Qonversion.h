@@ -31,6 +31,13 @@ DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:auto
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion;
 
 /**
+ @param key - project key to setup the SDK.
+ @param userID - Client side user-id (instead of Qonversion user-id) will be used for matching data in the third party data.
+ */
+
++ (void)launchWithKey:(nonnull NSString *)key userID:(nonnull NSString *)uid;
+
+/**
  Launches Qonversion SDK with the given project key, you can get one in your account on qonversion.io.
  @param key - project key to setup the SDK.
  @param autoTrack - with this parameter turned off you need to call `trackPurchase:transaction:` method.
