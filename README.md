@@ -50,6 +50,14 @@ Qonversion.launch(withKey: "projectKey") { uid in
 }]; 
 ```
 
+If you want to use your user-id instead of Qonversion user-id:
+
+```swift
+import Qonversion
+
+Qonversion.launch(withKey: "projectKey", userID: "yourSideUserID")
+```
+
 
 #### Now you will see all purchases in your Facebook Ad account, even if they happen after trial period or app removal (but only in 28-days window - it's a Facebook rule).
 
