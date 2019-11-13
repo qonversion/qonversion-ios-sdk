@@ -83,7 +83,7 @@
 		6AE912038C0C8F7B28AE0B93AF4B0621 /* Pods-SwiftEx.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-SwiftEx.release.xcconfig"; sourceTree = "<group>"; };
 		6B5AC076DF5B92C86BDC4B9E22735801 /* Pods-SwiftEx-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-SwiftEx-Info.plist"; sourceTree = "<group>"; };
 		7281F5700DFE0D79DA79799689C53074 /* Qonversion.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = Qonversion.modulemap; sourceTree = "<group>"; };
-		7DBFB55308D1E20731C5FD9AC55E06CE /* UserInfo.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = UserInfo.m; sourceTree = "<group>"; };
+		7DBFB55308D1E20731C5FD9AC55E06CE /* UserInfo.m */ = {isa = PBXFileReference; includeInIndex = 1; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = UserInfo.m; sourceTree = "<group>"; tabWidth = 4; };
 		801C4754EC8C654951E36B1AB4DAEC3C /* Pods_SwiftEx.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SwiftEx.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8140018BA51BAF9E379A50D4566EC61A /* Pods-SwiftEx-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-SwiftEx-umbrella.h"; sourceTree = "<group>"; };
 		8B6734D72306EA3100A595F6 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -116,7 +116,7 @@
 		C7AC98E7F2260B4A887640B8DFCBA76F /* Pods-SwiftEx-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-SwiftEx-acknowledgements.plist"; sourceTree = "<group>"; };
 		CB4607EFCA7C5F75397649E792E2AFCB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		D72C31BEF06F23008361C9A46A553176 /* Keeper.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = Keeper.h; sourceTree = "<group>"; };
-		DD9D92ED5D438D46354FA5A89649EA35 /* Qonversion.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = Qonversion.m; path = Qonversion/Classes/Qonversion.m; sourceTree = "<group>"; };
+		DD9D92ED5D438D46354FA5A89649EA35 /* Qonversion.m */ = {isa = PBXFileReference; includeInIndex = 1; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = Qonversion.m; path = Qonversion/Classes/Qonversion.m; sourceTree = "<group>"; tabWidth = 4; };
 		E416E324A8670DD9F4903897BD72125B /* Pods-SwiftEx-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-SwiftEx-dummy.m"; sourceTree = "<group>"; };
 		E929B19A10B1F82176789A82D2BF072B /* Pods-ObjcEx-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-ObjcEx-acknowledgements.markdown"; sourceTree = "<group>"; };
 		EE48FB9D38A6E9ECF65D77B2392CE55A /* Qonversion.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Qonversion.xcconfig; sourceTree = "<group>"; };
