@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable NSBundle *)bundle;
 + (NSDictionary *)overallData;
 
++ (void)saveInternalUserID:(nonnull NSString *)uid;
+
 @end
 
 @interface NSBundle(Dict)
