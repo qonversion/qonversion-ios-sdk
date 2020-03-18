@@ -1,0 +1,15 @@
+name: Tests
+on:
+  push:
+    branches:
+      - feature/ci
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build and Tests
+        run: |
+          fastlane ios tests
