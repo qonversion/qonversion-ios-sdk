@@ -4,7 +4,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  build:
+  tests:
     runs-on: macos-latest
 
     steps:
