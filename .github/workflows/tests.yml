@@ -1,8 +1,7 @@
 name: Tests
 on:
-  push:
-    branches:
-      - feature/ci
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   build:
