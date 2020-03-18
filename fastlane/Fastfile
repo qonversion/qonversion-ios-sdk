@@ -1,0 +1,8 @@
+
+PROJECT_NAME = "_Pods"
+XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
+
+lane :tests do
+  run_tests(scheme: XCODE_PROJECT,
+            devices: ["iPhone 7", "iPhone 11"])
+end
