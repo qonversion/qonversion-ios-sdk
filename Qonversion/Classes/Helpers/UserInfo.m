@@ -1,10 +1,3 @@
-//
-//  UserInfo.m
-//  Qonversion
-//
-//  Created by Bogdan Novikov on 23/05/2019.
-//
-
 #import "UserInfo.h"
 #import <sys/utsname.h>
 #import <AdSupport/AdSupport.h>

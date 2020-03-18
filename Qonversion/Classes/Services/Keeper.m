@@ -1,10 +1,3 @@
-//
-//  Keeper.m
-//  Qonversion
-//
-//  Created by Bogdan Novikov on 24/05/2019.
-//
-
 #import "Keeper.h"
 #import "Keychain.h"
 

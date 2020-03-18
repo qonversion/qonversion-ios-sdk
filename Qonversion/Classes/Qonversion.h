@@ -1,10 +1,3 @@
-//
-//  Qonversion.h
-//  Qonversion
-//
-//  Created by Bogdan Novikov on 05/05/2019.
-//
-
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
 

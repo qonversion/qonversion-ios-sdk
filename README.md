@@ -63,10 +63,6 @@ Qonversion.launch(withKey: "projectKey", userID: "yourSideUserID")
 
 SDK will automatically track any purchase events (subscriptions, trials, basic purchases). But If you want to track purchases manually, you can pass `false` in `autoTrackPurchases` and call `trackPurchase:transaction:` on every purchase event in your application.
 
-## Authors
-
-Developed by Team of [Qonversion](https://qonversion.io), and written by [Bogdan Novikov](https://github.com/Axcic) & [Sam Mejlumyan](https://github.com/smejl)
-
 ## License
 
 Qonversion SDK is available under the MIT license.

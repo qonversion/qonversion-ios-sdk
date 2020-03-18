@@ -1,10 +1,3 @@
-//
-//  Qonversion.m
-//  Qonversion
-//
-//  Created by Bogdan Novikov on 05/05/2019.
-//
-
 #import "Qonversion.h"
 #import "Keeper.h"
 #import "UserInfo.h"
@@ -13,7 +6,7 @@ static NSString * const kBaseURL = @"https://qonversion.io/api/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
 static NSString * const kAttributionEndpoint = @"attribution";
-static NSString * const kSDKVersion = @"0.7.1";
+static NSString * const kSDKVersion = @"0.8.0";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
