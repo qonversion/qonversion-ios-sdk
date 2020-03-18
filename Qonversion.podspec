@@ -13,9 +13,9 @@ Pod::Spec.new do |s|
                        DESC
   s.homepage         = 'https://github.com/qonversion/qonversion-ios-sdk'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'Bogdan Novikov' => 'hi@qonversion.io' }
+  s.author           = { 'Qonversion Inc.' => 'hi@qonversion.io' }
   s.source           = { :git => 'https://github.com/qonversion/qonversion-ios-sdk.git', :tag => s.version.to_s }
   s.ios.deployment_target = '9.0'
   s.source_files = 'Qonversion/Classes/**/*'
-  
+
 end
