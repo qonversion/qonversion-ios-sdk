@@ -1,10 +1,3 @@
-//
-//  Qonversion.m
-//  Qonversion
-//
-//  Created by Bogdan Novikov on 05/05/2019.
-//
-
 #import "Qonversion.h"
 #import "Keeper.h"
 #import "UserInfo.h"

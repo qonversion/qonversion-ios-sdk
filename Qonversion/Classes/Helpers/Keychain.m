@@ -1,10 +1,3 @@
-//
-//  Keychain.m
-//  Qonversion
-//
-//  Created by Bogdan Novikov on 22/05/2019.
-//
-
 #import "Keychain.h"
 #import <Security/Security.h>
 
