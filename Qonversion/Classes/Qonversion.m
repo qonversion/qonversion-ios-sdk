@@ -2,9 +2,10 @@
 #import "Keeper.h"
 #import "UserInfo.h"
 
-static NSString * const kBaseURL = @"https://qonversion.io/api/";
+static NSString * const kBaseURL = @"https://api.qonversion.io/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
+static NSString * const kCheckEndpoint = @"check";
 static NSString * const kAttributionEndpoint = @"attribution";
 static NSString * const kSDKVersion = @"0.8.0";
 
