@@ -56,6 +56,7 @@ DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:auto
                fromProvider:(QAttributionProvider)provider
                userID:(nullable NSString *)uid;
 
++ (void)check:(nullable void (^)(QCheckResult *result))completion;
 @end
 
 NS_ASSUME_NONNULL_END
