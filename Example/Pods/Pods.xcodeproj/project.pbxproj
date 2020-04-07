@@ -14,7 +14,7 @@
 		3A98A0C848D3B91FF4ED499F9F706137 /* Keeper.m in Sources */ = {isa = PBXBuildFile; fileRef = BB60045F5B4A8D884A912FEFBEBDFE4E /* Keeper.m */; };
 		45956074243CC40C0050CAC4 /* QonversionCheckResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 45956073243CC40C0050CAC4 /* QonversionCheckResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		45956076243CC4EC0050CAC4 /* QonversionCheckResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 45956075243CC4EC0050CAC4 /* QonversionCheckResult.m */; };
-		45956078243CDB6D0050CAC4 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 45956077243CDB6D0050CAC4 /* RenewalProductDetails.h */; };
+		45956078243CDB6D0050CAC4 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 45956077243CDB6D0050CAC4 /* RenewalProductDetails.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4625B0A8D326AFAB3AFAE34F0F0DBC01 /* UserInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DBFB55308D1E20731C5FD9AC55E06CE /* UserInfo.m */; };
 		527CB65F22146ECB124935193099C356 /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = AC7930D266283C2CD62D92E692894E44 /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		60AE567731FED957F33B4CE726C9D5E4 /* Qonversion-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5BFAEB8583DD2AFFE91B2313D9E9B9CC /* Qonversion-dummy.m */; };
@@ -271,7 +271,6 @@
 			isa = PBXGroup;
 			children = (
 				8B6734DB2306EA3200A595F6 /* Info.plist */,
-				8B6734E22306F4B000A595F6 /* Mocks */,
 				8B6734E32306F4DC00A595F6 /* KeeperTests.swift */,
 				8B6734D92306EA3200A595F6 /* QonversionTests.swift */,
 				8B6734E52306F76600A595F6 /* LaunchTests.swift */,
@@ -279,13 +278,6 @@
 				8B6734E923070A8600A595F6 /* UserInfoTests.swift */,
 			);
 			path = QonversionTests;
-			sourceTree = "<group>";
-		};
-		8B6734E22306F4B000A595F6 /* Mocks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Mocks;
 			sourceTree = "<group>";
 		};
 		8B6735232309A08800A595F6 /* DummyApp */ = {

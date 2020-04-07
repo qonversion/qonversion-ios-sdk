@@ -6,7 +6,6 @@ typedef NS_ENUM(NSInteger, ClientEnvironment){
     ClientEnvironmentProduction
 };
 
-
 @interface QonversionCheckResult : NSObject
 
 /**
