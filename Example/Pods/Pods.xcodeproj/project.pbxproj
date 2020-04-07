@@ -12,9 +12,9 @@
 		24D1A72B28C5129312D05A2EA74BC634 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB4607EFCA7C5F75397649E792E2AFCB /* Foundation.framework */; };
 		24F6D94F890125C931B80E0E3D9636E7 /* Pods-SwiftEx-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 8140018BA51BAF9E379A50D4566EC61A /* Pods-SwiftEx-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		3A98A0C848D3B91FF4ED499F9F706137 /* Keeper.m in Sources */ = {isa = PBXBuildFile; fileRef = BB60045F5B4A8D884A912FEFBEBDFE4E /* Keeper.m */; };
-		45956074243CC40C0050CAC4 /* QonversionCheckResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 45956073243CC40C0050CAC4 /* QonversionCheckResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		45956076243CC4EC0050CAC4 /* QonversionCheckResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 45956075243CC4EC0050CAC4 /* QonversionCheckResult.m */; };
-		45956078243CDB6D0050CAC4 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 45956077243CDB6D0050CAC4 /* RenewalProductDetails.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4595607E243CE6F70050CAC4 /* QonversionCheckResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 4595607B243CE6F70050CAC4 /* QonversionCheckResult.m */; };
+		4595607F243CE6F70050CAC4 /* QonversionCheckResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 4595607C243CE6F70050CAC4 /* QonversionCheckResult.h */; };
+		45956080243CE6F70050CAC4 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */; };
 		4625B0A8D326AFAB3AFAE34F0F0DBC01 /* UserInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DBFB55308D1E20731C5FD9AC55E06CE /* UserInfo.m */; };
 		527CB65F22146ECB124935193099C356 /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = AC7930D266283C2CD62D92E692894E44 /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		60AE567731FED957F33B4CE726C9D5E4 /* Qonversion-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5BFAEB8583DD2AFFE91B2313D9E9B9CC /* Qonversion-dummy.m */; };
@@ -31,7 +31,7 @@
 		8B67352F2309A08900A595F6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8B67352D2309A08900A595F6 /* LaunchScreen.storyboard */; };
 		A15E890439D604B21A7B4D6459F53D2B /* Pods-ObjcEx-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C1641BC645BF67BDB42F1D27FCC6CC4 /* Pods-ObjcEx-dummy.m */; };
 		A6B11B2B3DB80DEF0FF21868EE8BAC08 /* Keeper.h in Headers */ = {isa = PBXBuildFile; fileRef = D72C31BEF06F23008361C9A46A553176 /* Keeper.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		AA9323E1854AAC5BEC1BC118F3262251 /* Qonversion-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 8E9D976A0C514006ACEA46BC5935AB30 /* Qonversion-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		AA9323E1854AAC5BEC1BC118F3262251 /* QonversionSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 8E9D976A0C514006ACEA46BC5935AB30 /* QonversionSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AD2BC45132D9E538733F55E0AD656505 /* Keychain.m in Sources */ = {isa = PBXBuildFile; fileRef = B50907436697F9EB85B1FFAE2CCCE1E7 /* Keychain.m */; };
 		BF5A415CA7A64B3FCC6F24067D5CDDF3 /* Keychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 377447B6044CBD67FDD399E2400BE204 /* Keychain.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		D6A11FA593629B69B6025274303D0B56 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB4607EFCA7C5F75397649E792E2AFCB /* Foundation.framework */; };
@@ -81,9 +81,9 @@
 		33D110A2A9C4D263140295E19719F76B /* Pods-SwiftEx.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-SwiftEx.debug.xcconfig"; sourceTree = "<group>"; };
 		352FAB267FFDC501F9B0C0BB535665F9 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		377447B6044CBD67FDD399E2400BE204 /* Keychain.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = Keychain.h; sourceTree = "<group>"; };
-		45956073243CC40C0050CAC4 /* QonversionCheckResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionCheckResult.h; sourceTree = "<group>"; };
-		45956075243CC4EC0050CAC4 /* QonversionCheckResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionCheckResult.m; sourceTree = "<group>"; };
-		45956077243CDB6D0050CAC4 /* RenewalProductDetails.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenewalProductDetails.h; sourceTree = "<group>"; };
+		4595607B243CE6F70050CAC4 /* QonversionCheckResult.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QonversionCheckResult.m; sourceTree = "<group>"; };
+		4595607C243CE6F70050CAC4 /* QonversionCheckResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionCheckResult.h; sourceTree = "<group>"; };
+		4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenewalProductDetails.h; sourceTree = "<group>"; };
 		5BFAEB8583DD2AFFE91B2313D9E9B9CC /* Qonversion-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Qonversion-dummy.m"; sourceTree = "<group>"; };
 		5E3D376474973E8A659FB932637105E8 /* Pods-SwiftEx-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-SwiftEx-frameworks.sh"; sourceTree = "<group>"; };
 		6AE912038C0C8F7B28AE0B93AF4B0621 /* Pods-SwiftEx.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-SwiftEx.release.xcconfig"; sourceTree = "<group>"; };
@@ -106,7 +106,7 @@
 		8B67352B2309A08900A595F6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8B67352E2309A08900A595F6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8B6735302309A08900A595F6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		8E9D976A0C514006ACEA46BC5935AB30 /* Qonversion-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Qonversion-umbrella.h"; sourceTree = "<group>"; };
+		8E9D976A0C514006ACEA46BC5935AB30 /* QonversionSDK.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QonversionSDK.h; sourceTree = "<group>"; };
 		8EC68B36729BFDF59F1118C96FF3AFF1 /* Pods-SwiftEx-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-SwiftEx-acknowledgements.markdown"; sourceTree = "<group>"; };
 		995CBC601EF3626E63A7C89FE654229C /* Pods-ObjcEx-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-ObjcEx-Info.plist"; sourceTree = "<group>"; };
 		9B58C12C0879489AF2D3CF8288F85055 /* Pods-SwiftEx.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-SwiftEx.modulemap"; sourceTree = "<group>"; };
@@ -203,20 +203,21 @@
 			path = Qonversion/Classes/Helpers;
 			sourceTree = "<group>";
 		};
-		45956071243CC3F60050CAC4 /* Network */ = {
+		45956079243CE6F70050CAC4 /* Network */ = {
 			isa = PBXGroup;
 			children = (
-				45956072243CC3FC0050CAC4 /* Models */,
+				4595607A243CE6F70050CAC4 /* Models */,
 			);
-			path = Network;
+			name = Network;
+			path = Qonversion/Classes/Network;
 			sourceTree = "<group>";
 		};
-		45956072243CC3FC0050CAC4 /* Models */ = {
+		4595607A243CE6F70050CAC4 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				45956073243CC40C0050CAC4 /* QonversionCheckResult.h */,
-				45956077243CDB6D0050CAC4 /* RenewalProductDetails.h */,
-				45956075243CC4EC0050CAC4 /* QonversionCheckResult.m */,
+				4595607B243CE6F70050CAC4 /* QonversionCheckResult.m */,
+				4595607C243CE6F70050CAC4 /* QonversionCheckResult.h */,
+				4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -253,7 +254,7 @@
 			name = Pod;
 			sourceTree = "<group>";
 		};
-		7E92E52A3FB178AD3BC5C77D59D066DE /* Support Files */ = {
+		7E92E52A3FB178AD3BC5C77D59D066DE /* Framework */ = {
 			isa = PBXGroup;
 			children = (
 				7281F5700DFE0D79DA79799689C53074 /* Qonversion.modulemap */,
@@ -261,9 +262,9 @@
 				5BFAEB8583DD2AFFE91B2313D9E9B9CC /* Qonversion-dummy.m */,
 				AC5CEA7FB06D1F9F01959B242E79ACDC /* Qonversion-Info.plist */,
 				EFB27F5B07E393773F347DCB6EE8D03D /* Qonversion-prefix.pch */,
-				8E9D976A0C514006ACEA46BC5935AB30 /* Qonversion-umbrella.h */,
+				8E9D976A0C514006ACEA46BC5935AB30 /* QonversionSDK.h */,
 			);
-			name = "Support Files";
+			name = Framework;
 			path = "Example/Pods/Target Support Files/Qonversion";
 			sourceTree = "<group>";
 		};
@@ -359,13 +360,13 @@
 		FC3B3C5BF96F94B0E108C164001EC6B1 /* Qonversion */ = {
 			isa = PBXGroup;
 			children = (
-				45956071243CC3F60050CAC4 /* Network */,
+				45956079243CE6F70050CAC4 /* Network */,
 				AC7930D266283C2CD62D92E692894E44 /* Qonversion.h */,
 				DD9D92ED5D438D46354FA5A89649EA35 /* Qonversion.m */,
 				18B0A1DDF66CB010696E321E6490B561 /* Helpers */,
 				6A7146B9DA5307332C5D746934E4B076 /* Pod */,
 				60A043E207395BDE2CB2ADA66FAF51BE /* Services */,
-				7E92E52A3FB178AD3BC5C77D59D066DE /* Support Files */,
+				7E92E52A3FB178AD3BC5C77D59D066DE /* Framework */,
 			);
 			name = Qonversion;
 			path = ../..;
@@ -388,10 +389,10 @@
 			files = (
 				A6B11B2B3DB80DEF0FF21868EE8BAC08 /* Keeper.h in Headers */,
 				BF5A415CA7A64B3FCC6F24067D5CDDF3 /* Keychain.h in Headers */,
-				45956074243CC40C0050CAC4 /* QonversionCheckResult.h in Headers */,
-				AA9323E1854AAC5BEC1BC118F3262251 /* Qonversion-umbrella.h in Headers */,
-				45956078243CDB6D0050CAC4 /* RenewalProductDetails.h in Headers */,
+				AA9323E1854AAC5BEC1BC118F3262251 /* QonversionSDK.h in Headers */,
 				527CB65F22146ECB124935193099C356 /* Qonversion.h in Headers */,
+				45956080243CE6F70050CAC4 /* RenewalProductDetails.h in Headers */,
+				4595607F243CE6F70050CAC4 /* QonversionCheckResult.h in Headers */,
 				E0381EDA5AA65DD45B5FD840351AFD3F /* UserInfo.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -618,9 +619,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				3A98A0C848D3B91FF4ED499F9F706137 /* Keeper.m in Sources */,
+				4595607E243CE6F70050CAC4 /* QonversionCheckResult.m in Sources */,
 				AD2BC45132D9E538733F55E0AD656505 /* Keychain.m in Sources */,
 				60AE567731FED957F33B4CE726C9D5E4 /* Qonversion-dummy.m in Sources */,
-				45956076243CC4EC0050CAC4 /* QonversionCheckResult.m in Sources */,
 				FB24213B1245D02399DD4A82C14D0D76 /* Qonversion.m in Sources */,
 				4625B0A8D326AFAB3AFAE34F0F0DBC01 /* UserInfo.m in Sources */,
 			);

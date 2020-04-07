@@ -1,5 +1,5 @@
 framework module Qonversion {
-  umbrella header "Qonversion-umbrella.h"
+  umbrella header "QonversionSDK.h"
 
   export *
   module * { export * }
