@@ -35,6 +35,8 @@
 		459DAC02243E35BC0011ECF3 /* QonversionCheckResult+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */; };
 		459DAC03243E35BC0011ECF3 /* QonversionMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF3243E35BC0011ECF3 /* QonversionMapper.h */; };
 		459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABF4243E35BC0011ECF3 /* Qonversion.m */; };
+		459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */; };
+		459DAC09243E4B0B0011ECF3 /* check_result_with_active_users.json in Resources */ = {isa = PBXBuildFile; fileRef = 459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,6 +82,8 @@
 		459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QonversionCheckResult+Protected.h"; sourceTree = "<group>"; };
 		459DABF3243E35BC0011ECF3 /* QonversionMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionMapper.h; sourceTree = "<group>"; };
 		459DABF4243E35BC0011ECF3 /* Qonversion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Qonversion.m; sourceTree = "<group>"; };
+		459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionMapperTests.m; sourceTree = "<group>"; };
+		459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_result_with_active_users.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -136,7 +140,9 @@
 		459DAB76243E329F0011ECF3 /* QonversionTests */ = {
 			isa = PBXGroup;
 			children = (
+				459DAC07243E4AF20011ECF3 /* Resources */,
 				459DAB77243E329F0011ECF3 /* QonversionTests.m */,
+				459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */,
 				459DAB79243E329F0011ECF3 /* Info.plist */,
 			);
 			path = QonversionTests;
@@ -225,6 +231,14 @@
 				459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		459DAC07243E4AF20011ECF3 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -341,6 +355,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				459DAC09243E4B0B0011ECF3 /* check_result_with_active_users.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -366,6 +381,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
 				459DAB78243E329F0011ECF3 /* QonversionTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
