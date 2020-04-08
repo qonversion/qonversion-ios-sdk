@@ -133,11 +133,11 @@
 		459DAB6B243E329F0011ECF3 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				459DABE2243E35BC0011ECF3 /* Helpers */,
 				459DABEA243E35BC0011ECF3 /* Network */,
+				459DABE2243E35BC0011ECF3 /* Helpers */,
+				459DABE7243E35BC0011ECF3 /* Services */,
 				459DABE1243E35BC0011ECF3 /* Qonversion.h */,
 				459DABF4243E35BC0011ECF3 /* Qonversion.m */,
-				459DABE7243E35BC0011ECF3 /* Services */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
