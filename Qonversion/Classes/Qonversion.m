@@ -2,6 +2,8 @@
 #import "Keeper.h"
 #import "UserInfo.h"
 
+NSString * const QonversionErrorDomain = @"com.qonversion.io";
+
 static NSString * const kBaseURL = @"https://api.qonversion.io/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
@@ -246,5 +248,44 @@ static BOOL autoTrackPurchases;
     [self.productRequests removeObjectForKey:product.productIdentifier];
 }
 
++ (void)checkUser:(void(^)(QonversionCheckResult *result))result
+          failure:(QonversionCheckFailer)failure {
+    
+    NSURLRequest *request = [self makePostRequestWithEndpoint:kCheckEndpoint andBody:@{}];
+    [[[self session] dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        
+        if (error) {
+            failure(error);
+            return;
+        }
+        
+        if (!data || ![data isKindOfClass:NSData.class]) {
+            failure([self error:"Could not receive data"]);
+            return;
+        }
+        
+        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
+        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
+            failure([self error:"Could not parse response"]);
+            return;
+        }
+        
+        completion(dict);
+    }] resume];
+    
+
+    QonversionCheckResult *resultObject = [[QonversionCheckResult alloc] init];
+    result(resultObject)
+}
+
++ (NSURLSession *)session {
+    return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];;
+}
+
++ (NSError *)error:(NSString *)message code:(nullable NSInteger)errorCode  {
+    NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil)};
+    NSInteger code = errorCode ?: -1;
+    return [[NSError alloc] initWithDomain:QonversionErrorDomain code:code userInfo:info];
+}
 
 @end
