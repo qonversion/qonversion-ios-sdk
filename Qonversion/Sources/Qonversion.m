@@ -257,6 +257,27 @@ static BOOL autoTrackPurchases;
 
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
           failure:(QonversionCheckFailer)failure {
+    [self tryTocheckUser:result failure:failure attempt:0];
+}
+
++ (void)tryTocheckUser:(void(^)(QonversionCheckResult *result))result
+               failure:(QonversionCheckFailer)failure
+               attempt:(NSInteger)attempt {
+    if (attempt >= 5) {
+        failure([self error:@"Could not init user" code:QErrorCodeFailedReceiveData]);
+        return;
+    }
+    
+    if (Keeper.userID.length == 0) {
+        double delayInSeconds = 1.0;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+        
+        dispatch_after(popTime,  dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+            NSInteger nextAttempt = attempt + 1;
+            [self tryTocheckUser:result failure:failure attempt:nextAttempt];
+        });
+        return;
+    }
     
     NSURLRequest *request = [self makePostRequestWithEndpoint:kCheckEndpoint andBody:@{}];
     [[[self session] dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
@@ -267,7 +288,7 @@ static BOOL autoTrackPurchases;
         }
         
         if (!data || ![data isKindOfClass:NSData.class]) {
-            failure([self error:@"Could not receive data" code:QErrorCodeFailedReceivData]);
+            failure([self error:@"Could not receive data" code:QErrorCodeFailedReceiveData]);
             return;
         }
         

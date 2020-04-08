@@ -5,7 +5,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSInteger, QErrorCode) {
-  QErrorCodeFailedReceivData = 0,
+  QErrorCodeFailedReceiveData = 0,
   QErrorCodeFailedParseResponse,
 };
 
