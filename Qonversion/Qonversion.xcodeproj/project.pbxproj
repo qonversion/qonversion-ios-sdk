@@ -229,12 +229,8 @@
 		459DABEC243E35BC0011ECF3 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */,
-				459DABEE243E35BC0011ECF3 /* RenewalProductDetails.m */,
-				459DAC0F243E5D050011ECF3 /* RenewalProductDetails+Protected.h */,
-				459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */,
-				459DABF1243E35BC0011ECF3 /* RenewalProductDetails.h */,
-				459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */,
+				459DAC12243E61BF0011ECF3 /* QonversionCheckResult */,
+				459DAC11243E61A80011ECF3 /* RenewalProductDetails */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -262,6 +258,26 @@
 				459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */,
 			);
 			path = Stubs;
+			sourceTree = "<group>";
+		};
+		459DAC11243E61A80011ECF3 /* RenewalProductDetails */ = {
+			isa = PBXGroup;
+			children = (
+				459DABF1243E35BC0011ECF3 /* RenewalProductDetails.h */,
+				459DAC0F243E5D050011ECF3 /* RenewalProductDetails+Protected.h */,
+				459DABEE243E35BC0011ECF3 /* RenewalProductDetails.m */,
+			);
+			name = RenewalProductDetails;
+			sourceTree = "<group>";
+		};
+		459DAC12243E61BF0011ECF3 /* QonversionCheckResult */ = {
+			isa = PBXGroup;
+			children = (
+				459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */,
+				459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */,
+				459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */,
+			);
+			path = QonversionCheckResult;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

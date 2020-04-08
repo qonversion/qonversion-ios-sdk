@@ -1,8 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "RenewalProductDetails.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @interface RenewalProductDetails (Protected)
 
 @property (nonatomic) RenewalProductStatus status;
@@ -15,7 +13,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSUInteger purchasedAt;
 @property (nonatomic) NSUInteger expiresAt;
 @property (nonatomic) BOOL expired;
+@property (nonatomic) BOOL billingRetry;
 
 @end
-
-NS_ASSUME_NONNULL_END

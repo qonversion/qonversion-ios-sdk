@@ -27,7 +27,7 @@ static NSString *JSONWithActiveProduct = @"check_result_with_active_users.json";
 }
 
 - (void)testThatMapper {
-    QonversionCheckResult *activeUserResult = [QonversionMapper fillCheckResultWith:self.activeUserDict];
+    QonversionCheckResult *activeUserResult = [[QonversionMapper new] fillCheckResultWith:self.activeUserDict];
     XCTAssertNotNil(activeUserResult);
     
     NSUInteger timestamp = 1586369519;
@@ -35,6 +35,8 @@ static NSString *JSONWithActiveProduct = @"check_result_with_active_users.json";
     
     XCTAssertEqual(activeUserResult.timestamp, timestamp);
     XCTAssertEqual(activeUserResult.environment, environment);
+    XCTAssertEqual(activeUserResult.activeProducts.count, 1);
+    XCTAssertEqual(activeUserResult.allProducts.count, 1);
 }
 
 @end

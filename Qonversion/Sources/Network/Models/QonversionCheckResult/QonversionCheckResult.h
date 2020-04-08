@@ -1,8 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "RenewalProductDetails.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 typedef void (^QonversionCheckFailer)(NSError *error);
 
 typedef NS_ENUM(unsigned int, ClientEnvironment){
@@ -35,4 +33,3 @@ typedef NS_ENUM(unsigned int, ClientEnvironment){
 
 @end
 
-NS_ASSUME_NONNULL_END

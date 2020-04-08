@@ -271,7 +271,7 @@ static BOOL autoTrackPurchases;
             return;
         }
 
-        QonversionCheckResult *resultObject = [QonversionMapper fillCheckResultWith:dict];
+        QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:dict];
         result(resultObject);
     }] resume];
     

@@ -1,9 +1,9 @@
 #import <Foundation/Foundation.h>
-#import "Models/QonversionCheckResult.h"
+#import "QonversionCheckResult.h"
 
 
 @interface QonversionMapper : NSObject
 
-+ (QonversionCheckResult *)fillCheckResultWith:(NSDictionary *)dict;
+- (QonversionCheckResult *)fillCheckResultWith:(NSDictionary *)dict;
 
 @end

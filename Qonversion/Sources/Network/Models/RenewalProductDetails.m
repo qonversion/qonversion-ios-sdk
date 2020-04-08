@@ -27,6 +27,10 @@
     _expired = expired;
 }
 
+- (void)setBillingRetry:(BOOL)billingRetry {
+    _billingRetry = billingRetry;
+}
+
 - (void)setCreatedAt:(NSUInteger)createdAt {
     _createdAt = createdAt;
 }
@@ -34,5 +38,6 @@
 - (void)setExpiresAt:(NSUInteger)expiresAt {
     _expiresAt = expiresAt;
 }
+
 
 @end

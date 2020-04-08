@@ -1,7 +1,5 @@
 #import "QonversionCheckResult.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @interface QonversionCheckResult (Protected)
 
 @property (nonatomic) NSUInteger timestamp;
@@ -10,5 +8,3 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSArray<RenewalProductDetails *> *allProducts;
 
 @end
-
-NS_ASSUME_NONNULL_END
