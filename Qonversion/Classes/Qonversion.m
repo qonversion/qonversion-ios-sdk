@@ -1,6 +1,7 @@
 #import "Qonversion.h"
 #import "Keeper.h"
 #import "UserInfo.h"
+#import "Network/QonversionMapper.h"
 
 NSString * const QonversionErrorDomain = @"com.qonversion.io";
 
@@ -269,13 +270,11 @@ static BOOL autoTrackPurchases;
             failure([self error:"Could not parse response"]);
             return;
         }
-        
-        completion(dict);
+
+        QonversionCheckResult *resultObject = [QonversionMapper fillCheckResult:NSDictionary]
+        result(resultObject);
     }] resume];
     
-
-    QonversionCheckResult *resultObject = [[QonversionCheckResult alloc] init];
-    result(resultObject)
 }
 
 + (NSURLSession *)session {
