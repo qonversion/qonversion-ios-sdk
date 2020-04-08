@@ -35,9 +35,10 @@
 		459DAC03243E35BC0011ECF3 /* QonversionMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF3243E35BC0011ECF3 /* QonversionMapper.h */; };
 		459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABF4243E35BC0011ECF3 /* Qonversion.m */; };
 		459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */; };
-		459DAC09243E4B0B0011ECF3 /* check_result_with_active_users.json in Resources */ = {isa = PBXBuildFile; fileRef = 459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */; };
+		459DAC09243E4B0B0011ECF3 /* check_result_with_active_product.json in Resources */ = {isa = PBXBuildFile; fileRef = 459DAC08243E4B0B0011ECF3 /* check_result_with_active_product.json */; };
 		459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */; };
 		459DAC10243E5D050011ECF3 /* RenewalProductDetails+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DAC0F243E5D050011ECF3 /* RenewalProductDetails+Protected.h */; };
+		459DAC14243E64AA0011ECF3 /* check_restul_without_products.json in Resources */ = {isa = PBXBuildFile; fileRef = 459DAC13243E64AA0011ECF3 /* check_restul_without_products.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,10 +84,11 @@
 		459DABF3243E35BC0011ECF3 /* QonversionMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionMapper.h; sourceTree = "<group>"; };
 		459DABF4243E35BC0011ECF3 /* Qonversion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Qonversion.m; sourceTree = "<group>"; };
 		459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionMapperTests.m; sourceTree = "<group>"; };
-		459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_result_with_active_users.json; sourceTree = "<group>"; };
+		459DAC08243E4B0B0011ECF3 /* check_result_with_active_product.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_result_with_active_product.json; sourceTree = "<group>"; };
 		459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+TestJSON.h"; sourceTree = "<group>"; };
 		459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+TestJSON.m"; sourceTree = "<group>"; };
 		459DAC0F243E5D050011ECF3 /* RenewalProductDetails+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RenewalProductDetails+Protected.h"; sourceTree = "<group>"; };
+		459DAC13243E64AA0011ECF3 /* check_restul_without_products.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_restul_without_products.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -255,7 +257,8 @@
 		459DAC0E243E4E530011ECF3 /* Stubs */ = {
 			isa = PBXGroup;
 			children = (
-				459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */,
+				459DAC08243E4B0B0011ECF3 /* check_result_with_active_product.json */,
+				459DAC13243E64AA0011ECF3 /* check_restul_without_products.json */,
 			);
 			path = Stubs;
 			sourceTree = "<group>";
@@ -395,7 +398,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				459DAC09243E4B0B0011ECF3 /* check_result_with_active_users.json in Resources */,
+				459DAC14243E64AA0011ECF3 /* check_restul_without_products.json in Resources */,
+				459DAC09243E4B0B0011ECF3 /* check_result_with_active_product.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

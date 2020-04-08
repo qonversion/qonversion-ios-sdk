@@ -274,7 +274,6 @@ static BOOL autoTrackPurchases;
         QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:dict];
         result(resultObject);
     }] resume];
-    
 }
 
 + (NSURLSession *)session {
