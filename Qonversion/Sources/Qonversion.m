@@ -75,19 +75,25 @@ static BOOL autoTrackPurchases;
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
-    NSMutableDictionary *body = @{@"d": UserInfo.overallData}.mutableCopy;
+    
+    double delayInSeconds = 3.0;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+    
+    dispatch_after(popTime,  dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+      NSMutableDictionary *body = @{@"d": UserInfo.overallData}.mutableCopy;
 
-    if (provider == QAttributionProviderAppsFlyer) {
-        body[@"provider_data"] = @{@"provider": @"appsflyer", @"d": data, @"uid": uid ?: @""};
-    }
+      if (provider == QAttributionProviderAppsFlyer) {
+          body[@"provider_data"] = @{@"provider": @"appsflyer", @"d": data, @"uid": uid ?: @""};
+      }
 
-    NSURLRequest *request = [self makePostRequestWithEndpoint:kAttributionEndpoint andBody:body];
+      NSURLRequest *request = [self makePostRequestWithEndpoint:kAttributionEndpoint andBody:body];
 
-    [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-        if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-            NSLog(@"Attribution Request Log Response:\n%@", dict);
-        }
-    }];
+      [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+          if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
+              NSLog(@"Attribution Request Log Response:\n%@", dict);
+          }
+      }];
+    });
 }
 
 // MARK: - Private
