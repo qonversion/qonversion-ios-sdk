@@ -29,7 +29,6 @@
 		459DABFC243E35BC0011ECF3 /* QonversionMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABEB243E35BC0011ECF3 /* QonversionMapper.m */; };
 		459DABFD243E35BC0011ECF3 /* QonversionCheckResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */; };
 		459DABFE243E35BC0011ECF3 /* RenewalProductDetails.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABEE243E35BC0011ECF3 /* RenewalProductDetails.m */; };
-		459DABFF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABEF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m */; };
 		459DAC00243E35BC0011ECF3 /* QonversionCheckResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */; };
 		459DAC01243E35BC0011ECF3 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF1243E35BC0011ECF3 /* RenewalProductDetails.h */; };
 		459DAC02243E35BC0011ECF3 /* QonversionCheckResult+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */; };
@@ -77,7 +76,6 @@
 		459DABEB243E35BC0011ECF3 /* QonversionMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QonversionMapper.m; sourceTree = "<group>"; };
 		459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QonversionCheckResult.m; sourceTree = "<group>"; };
 		459DABEE243E35BC0011ECF3 /* RenewalProductDetails.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RenewalProductDetails.m; sourceTree = "<group>"; };
-		459DABEF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QonversionCheckResult+Protected.m"; sourceTree = "<group>"; };
 		459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionCheckResult.h; sourceTree = "<group>"; };
 		459DABF1243E35BC0011ECF3 /* RenewalProductDetails.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenewalProductDetails.h; sourceTree = "<group>"; };
 		459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QonversionCheckResult+Protected.h"; sourceTree = "<group>"; };
@@ -219,8 +217,8 @@
 		459DABEA243E35BC0011ECF3 /* Network */ = {
 			isa = PBXGroup;
 			children = (
-				459DABEB243E35BC0011ECF3 /* QonversionMapper.m */,
 				459DABEC243E35BC0011ECF3 /* Models */,
+				459DABEB243E35BC0011ECF3 /* QonversionMapper.m */,
 				459DABF3243E35BC0011ECF3 /* QonversionMapper.h */,
 			);
 			path = Network;
@@ -231,7 +229,6 @@
 			children = (
 				459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */,
 				459DABEE243E35BC0011ECF3 /* RenewalProductDetails.m */,
-				459DABEF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m */,
 				459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */,
 				459DABF1243E35BC0011ECF3 /* RenewalProductDetails.h */,
 				459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */,
@@ -390,7 +387,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				459DABFD243E35BC0011ECF3 /* QonversionCheckResult.m in Sources */,
-				459DABFF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m in Sources */,
 				459DABF6243E35BC0011ECF3 /* UserInfo.m in Sources */,
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
 				459DABFB243E35BC0011ECF3 /* Keeper.m in Sources */,
