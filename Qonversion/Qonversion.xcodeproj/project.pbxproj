@@ -17,30 +17,24 @@
 		459DABA6243E33470011ECF3 /* Appfile in Resources */ = {isa = PBXBuildFile; fileRef = 459DABA1243E33470011ECF3 /* Appfile */; };
 		459DABA7243E33470011ECF3 /* Fastfile in Resources */ = {isa = PBXBuildFile; fileRef = 459DABA2243E33470011ECF3 /* Fastfile */; };
 		459DABA8243E33470011ECF3 /* report.xml in Resources */ = {isa = PBXBuildFile; fileRef = 459DABA3243E33470011ECF3 /* report.xml */; };
-		459DABC1243E33690011ECF3 /* Qonversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABAA243E33690011ECF3 /* Qonversion.m */; };
-		459DABC2243E33690011ECF3 /* .gitkeep in Resources */ = {isa = PBXBuildFile; fileRef = 459DABAB243E33690011ECF3 /* .gitkeep */; };
-		459DABC3243E33690011ECF3 /* QonversionMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABAD243E33690011ECF3 /* QonversionMapper.m */; };
-		459DABC4243E33690011ECF3 /* QonversionCheckResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABAF243E33690011ECF3 /* QonversionCheckResult.m */; };
-		459DABC5243E33690011ECF3 /* RenewalProductDetails.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABB0243E33690011ECF3 /* RenewalProductDetails.m */; };
-		459DABC6243E33690011ECF3 /* QonversionCheckResult+Protected.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABB1243E33690011ECF3 /* QonversionCheckResult+Protected.m */; };
-		459DABC7243E33690011ECF3 /* QonversionCheckResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABB2243E33690011ECF3 /* QonversionCheckResult.h */; };
-		459DABC8243E33690011ECF3 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABB3243E33690011ECF3 /* RenewalProductDetails.h */; };
-		459DABC9243E33690011ECF3 /* QonversionCheckResult+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABB4243E33690011ECF3 /* QonversionCheckResult+Protected.h */; };
-		459DABCA243E33690011ECF3 /* QonversionMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABB5243E33690011ECF3 /* QonversionMapper.h */; };
-		459DABCB243E33690011ECF3 /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABB6243E33690011ECF3 /* Qonversion.h */; };
-		459DABCC243E33690011ECF3 /* UserInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABB8243E33690011ECF3 /* UserInfo.m */; };
-		459DABCD243E33690011ECF3 /* Keychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABB9243E33690011ECF3 /* Keychain.h */; };
-		459DABCE243E33690011ECF3 /* UserInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABBA243E33690011ECF3 /* UserInfo.h */; };
-		459DABCF243E33690011ECF3 /* Keychain.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABBB243E33690011ECF3 /* Keychain.m */; };
-		459DABD0243E33690011ECF3 /* Keeper.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABBD243E33690011ECF3 /* Keeper.h */; };
-		459DABD1243E33690011ECF3 /* Keeper.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABBE243E33690011ECF3 /* Keeper.m */; };
-		459DABD2243E33690011ECF3 /* .gitkeep in Resources */ = {isa = PBXBuildFile; fileRef = 459DABC0243E33690011ECF3 /* .gitkeep */; };
 		459DABDB243E33C20011ECF3 /* Qonversion.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 459DABD4243E33C20011ECF3 /* Qonversion.xcconfig */; };
-		459DABDC243E33C20011ECF3 /* Qonversion-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABD5243E33C20011ECF3 /* Qonversion-dummy.m */; };
-		459DABDD243E33C20011ECF3 /* Qonversion-prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 459DABD6243E33C20011ECF3 /* Qonversion-prefix.pch */; };
-		459DABDE243E33C20011ECF3 /* QonversionSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABD7243E33C20011ECF3 /* QonversionSDK.h */; };
-		459DABDF243E33C20011ECF3 /* Qonversion-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 459DABD9243E33C20011ECF3 /* Qonversion-Info.plist */; };
-		459DABE0243E33C20011ECF3 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 459DABDA243E33C20011ECF3 /* Info.plist */; };
+		459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABD7243E33C20011ECF3 /* QonversionFramework.h */; };
+		459DABF5243E35BC0011ECF3 /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABE1243E35BC0011ECF3 /* Qonversion.h */; };
+		459DABF6243E35BC0011ECF3 /* UserInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABE3243E35BC0011ECF3 /* UserInfo.m */; };
+		459DABF7243E35BC0011ECF3 /* Keychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABE4243E35BC0011ECF3 /* Keychain.h */; };
+		459DABF8243E35BC0011ECF3 /* UserInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABE5243E35BC0011ECF3 /* UserInfo.h */; };
+		459DABF9243E35BC0011ECF3 /* Keychain.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABE6243E35BC0011ECF3 /* Keychain.m */; };
+		459DABFA243E35BC0011ECF3 /* Keeper.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABE8243E35BC0011ECF3 /* Keeper.h */; };
+		459DABFB243E35BC0011ECF3 /* Keeper.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABE9243E35BC0011ECF3 /* Keeper.m */; };
+		459DABFC243E35BC0011ECF3 /* QonversionMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABEB243E35BC0011ECF3 /* QonversionMapper.m */; };
+		459DABFD243E35BC0011ECF3 /* QonversionCheckResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */; };
+		459DABFE243E35BC0011ECF3 /* RenewalProductDetails.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABEE243E35BC0011ECF3 /* RenewalProductDetails.m */; };
+		459DABFF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABEF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m */; };
+		459DAC00243E35BC0011ECF3 /* QonversionCheckResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */; };
+		459DAC01243E35BC0011ECF3 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF1243E35BC0011ECF3 /* RenewalProductDetails.h */; };
+		459DAC02243E35BC0011ECF3 /* QonversionCheckResult+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */; };
+		459DAC03243E35BC0011ECF3 /* QonversionMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABF3243E35BC0011ECF3 /* QonversionMapper.h */; };
+		459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABF4243E35BC0011ECF3 /* Qonversion.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,31 +60,26 @@
 		459DABA1243E33470011ECF3 /* Appfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Appfile; sourceTree = "<group>"; };
 		459DABA2243E33470011ECF3 /* Fastfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Fastfile; sourceTree = "<group>"; };
 		459DABA3243E33470011ECF3 /* report.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = report.xml; sourceTree = "<group>"; };
-		459DABAA243E33690011ECF3 /* Qonversion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Qonversion.m; sourceTree = "<group>"; };
-		459DABAB243E33690011ECF3 /* .gitkeep */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
-		459DABAD243E33690011ECF3 /* QonversionMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QonversionMapper.m; sourceTree = "<group>"; };
-		459DABAF243E33690011ECF3 /* QonversionCheckResult.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QonversionCheckResult.m; sourceTree = "<group>"; };
-		459DABB0243E33690011ECF3 /* RenewalProductDetails.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RenewalProductDetails.m; sourceTree = "<group>"; };
-		459DABB1243E33690011ECF3 /* QonversionCheckResult+Protected.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QonversionCheckResult+Protected.m"; sourceTree = "<group>"; };
-		459DABB2243E33690011ECF3 /* QonversionCheckResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionCheckResult.h; sourceTree = "<group>"; };
-		459DABB3243E33690011ECF3 /* RenewalProductDetails.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenewalProductDetails.h; sourceTree = "<group>"; };
-		459DABB4243E33690011ECF3 /* QonversionCheckResult+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QonversionCheckResult+Protected.h"; sourceTree = "<group>"; };
-		459DABB5243E33690011ECF3 /* QonversionMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionMapper.h; sourceTree = "<group>"; };
-		459DABB6243E33690011ECF3 /* Qonversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
-		459DABB8243E33690011ECF3 /* UserInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UserInfo.m; sourceTree = "<group>"; };
-		459DABB9243E33690011ECF3 /* Keychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Keychain.h; sourceTree = "<group>"; };
-		459DABBA243E33690011ECF3 /* UserInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UserInfo.h; sourceTree = "<group>"; };
-		459DABBB243E33690011ECF3 /* Keychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Keychain.m; sourceTree = "<group>"; };
-		459DABBD243E33690011ECF3 /* Keeper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Keeper.h; sourceTree = "<group>"; };
-		459DABBE243E33690011ECF3 /* Keeper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Keeper.m; sourceTree = "<group>"; };
-		459DABC0243E33690011ECF3 /* .gitkeep */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		459DABD4243E33C20011ECF3 /* Qonversion.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Qonversion.xcconfig; sourceTree = "<group>"; };
-		459DABD5243E33C20011ECF3 /* Qonversion-dummy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Qonversion-dummy.m"; sourceTree = "<group>"; };
-		459DABD6243E33C20011ECF3 /* Qonversion-prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Qonversion-prefix.pch"; sourceTree = "<group>"; };
-		459DABD7243E33C20011ECF3 /* QonversionSDK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionSDK.h; sourceTree = "<group>"; };
+		459DABD7243E33C20011ECF3 /* QonversionFramework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionFramework.h; sourceTree = "<group>"; };
 		459DABD8243E33C20011ECF3 /* Qonversion.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = Qonversion.modulemap; sourceTree = "<group>"; };
-		459DABD9243E33C20011ECF3 /* Qonversion-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Qonversion-Info.plist"; sourceTree = "<group>"; };
 		459DABDA243E33C20011ECF3 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		459DABE1243E35BC0011ECF3 /* Qonversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
+		459DABE3243E35BC0011ECF3 /* UserInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UserInfo.m; sourceTree = "<group>"; };
+		459DABE4243E35BC0011ECF3 /* Keychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Keychain.h; sourceTree = "<group>"; };
+		459DABE5243E35BC0011ECF3 /* UserInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UserInfo.h; sourceTree = "<group>"; };
+		459DABE6243E35BC0011ECF3 /* Keychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Keychain.m; sourceTree = "<group>"; };
+		459DABE8243E35BC0011ECF3 /* Keeper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Keeper.h; sourceTree = "<group>"; };
+		459DABE9243E35BC0011ECF3 /* Keeper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Keeper.m; sourceTree = "<group>"; };
+		459DABEB243E35BC0011ECF3 /* QonversionMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QonversionMapper.m; sourceTree = "<group>"; };
+		459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QonversionCheckResult.m; sourceTree = "<group>"; };
+		459DABEE243E35BC0011ECF3 /* RenewalProductDetails.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RenewalProductDetails.m; sourceTree = "<group>"; };
+		459DABEF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QonversionCheckResult+Protected.m"; sourceTree = "<group>"; };
+		459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionCheckResult.h; sourceTree = "<group>"; };
+		459DABF1243E35BC0011ECF3 /* RenewalProductDetails.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenewalProductDetails.h; sourceTree = "<group>"; };
+		459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QonversionCheckResult+Protected.h"; sourceTree = "<group>"; };
+		459DABF3243E35BC0011ECF3 /* QonversionMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionMapper.h; sourceTree = "<group>"; };
+		459DABF4243E35BC0011ECF3 /* Qonversion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Qonversion.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,8 +124,11 @@
 		459DAB6B243E329F0011ECF3 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				459DABBF243E33690011ECF3 /* Assets */,
-				459DABA9243E33690011ECF3 /* Classes */,
+				459DABE2243E35BC0011ECF3 /* Helpers */,
+				459DABEA243E35BC0011ECF3 /* Network */,
+				459DABE1243E35BC0011ECF3 /* Qonversion.h */,
+				459DABF4243E35BC0011ECF3 /* Qonversion.m */,
+				459DABE7243E35BC0011ECF3 /* Services */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -181,82 +173,58 @@
 			path = test_output;
 			sourceTree = "<group>";
 		};
-		459DABA9243E33690011ECF3 /* Classes */ = {
-			isa = PBXGroup;
-			children = (
-				459DABB6243E33690011ECF3 /* Qonversion.h */,
-				459DABAA243E33690011ECF3 /* Qonversion.m */,
-				459DABAB243E33690011ECF3 /* .gitkeep */,
-				459DABAC243E33690011ECF3 /* Network */,
-				459DABB7243E33690011ECF3 /* Helpers */,
-				459DABBC243E33690011ECF3 /* Services */,
-			);
-			path = Classes;
-			sourceTree = "<group>";
-		};
-		459DABAC243E33690011ECF3 /* Network */ = {
-			isa = PBXGroup;
-			children = (
-				459DABAD243E33690011ECF3 /* QonversionMapper.m */,
-				459DABAE243E33690011ECF3 /* Models */,
-				459DABB5243E33690011ECF3 /* QonversionMapper.h */,
-			);
-			path = Network;
-			sourceTree = "<group>";
-		};
-		459DABAE243E33690011ECF3 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				459DABAF243E33690011ECF3 /* QonversionCheckResult.m */,
-				459DABB0243E33690011ECF3 /* RenewalProductDetails.m */,
-				459DABB1243E33690011ECF3 /* QonversionCheckResult+Protected.m */,
-				459DABB2243E33690011ECF3 /* QonversionCheckResult.h */,
-				459DABB3243E33690011ECF3 /* RenewalProductDetails.h */,
-				459DABB4243E33690011ECF3 /* QonversionCheckResult+Protected.h */,
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
-		459DABB7243E33690011ECF3 /* Helpers */ = {
-			isa = PBXGroup;
-			children = (
-				459DABB8243E33690011ECF3 /* UserInfo.m */,
-				459DABB9243E33690011ECF3 /* Keychain.h */,
-				459DABBA243E33690011ECF3 /* UserInfo.h */,
-				459DABBB243E33690011ECF3 /* Keychain.m */,
-			);
-			path = Helpers;
-			sourceTree = "<group>";
-		};
-		459DABBC243E33690011ECF3 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				459DABBD243E33690011ECF3 /* Keeper.h */,
-				459DABBE243E33690011ECF3 /* Keeper.m */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		459DABBF243E33690011ECF3 /* Assets */ = {
-			isa = PBXGroup;
-			children = (
-				459DABC0243E33690011ECF3 /* .gitkeep */,
-			);
-			path = Assets;
-			sourceTree = "<group>";
-		};
 		459DABD3243E33C20011ECF3 /* Framework */ = {
 			isa = PBXGroup;
 			children = (
 				459DABD4243E33C20011ECF3 /* Qonversion.xcconfig */,
-				459DABD5243E33C20011ECF3 /* Qonversion-dummy.m */,
-				459DABD6243E33C20011ECF3 /* Qonversion-prefix.pch */,
-				459DABD7243E33C20011ECF3 /* QonversionSDK.h */,
+				459DABD7243E33C20011ECF3 /* QonversionFramework.h */,
 				459DABD8243E33C20011ECF3 /* Qonversion.modulemap */,
-				459DABD9243E33C20011ECF3 /* Qonversion-Info.plist */,
 				459DABDA243E33C20011ECF3 /* Info.plist */,
 			);
 			path = Framework;
+			sourceTree = "<group>";
+		};
+		459DABE2243E35BC0011ECF3 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				459DABE3243E35BC0011ECF3 /* UserInfo.m */,
+				459DABE4243E35BC0011ECF3 /* Keychain.h */,
+				459DABE5243E35BC0011ECF3 /* UserInfo.h */,
+				459DABE6243E35BC0011ECF3 /* Keychain.m */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		459DABE7243E35BC0011ECF3 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				459DABE8243E35BC0011ECF3 /* Keeper.h */,
+				459DABE9243E35BC0011ECF3 /* Keeper.m */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		459DABEA243E35BC0011ECF3 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				459DABEB243E35BC0011ECF3 /* QonversionMapper.m */,
+				459DABEC243E35BC0011ECF3 /* Models */,
+				459DABF3243E35BC0011ECF3 /* QonversionMapper.h */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		459DABEC243E35BC0011ECF3 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */,
+				459DABEE243E35BC0011ECF3 /* RenewalProductDetails.m */,
+				459DABEF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m */,
+				459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */,
+				459DABF1243E35BC0011ECF3 /* RenewalProductDetails.h */,
+				459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -266,16 +234,15 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				459DABD0243E33690011ECF3 /* Keeper.h in Headers */,
-				459DABCD243E33690011ECF3 /* Keychain.h in Headers */,
-				459DABCB243E33690011ECF3 /* Qonversion.h in Headers */,
-				459DABC8243E33690011ECF3 /* RenewalProductDetails.h in Headers */,
-				459DABCE243E33690011ECF3 /* UserInfo.h in Headers */,
-				459DABCA243E33690011ECF3 /* QonversionMapper.h in Headers */,
-				459DABC7243E33690011ECF3 /* QonversionCheckResult.h in Headers */,
-				459DABDD243E33C20011ECF3 /* Qonversion-prefix.pch in Headers */,
-				459DABDE243E33C20011ECF3 /* QonversionSDK.h in Headers */,
-				459DABC9243E33690011ECF3 /* QonversionCheckResult+Protected.h in Headers */,
+				459DABFA243E35BC0011ECF3 /* Keeper.h in Headers */,
+				459DAC03243E35BC0011ECF3 /* QonversionMapper.h in Headers */,
+				459DABF7243E35BC0011ECF3 /* Keychain.h in Headers */,
+				459DAC01243E35BC0011ECF3 /* RenewalProductDetails.h in Headers */,
+				459DABF5243E35BC0011ECF3 /* Qonversion.h in Headers */,
+				459DABF8243E35BC0011ECF3 /* UserInfo.h in Headers */,
+				459DAC02243E35BC0011ECF3 /* QonversionCheckResult+Protected.h in Headers */,
+				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
+				459DAC00243E35BC0011ECF3 /* QonversionCheckResult.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -341,7 +308,6 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
-				Base,
 			);
 			mainGroup = 459DAB5F243E329F0011ECF3;
 			productRefGroup = 459DAB6A243E329F0011ECF3 /* Products */;
@@ -362,16 +328,12 @@
 				459DAB9A243E333C0011ECF3 /* README.md in Resources */,
 				459DABA6243E33470011ECF3 /* Appfile in Resources */,
 				459DABA8243E33470011ECF3 /* report.xml in Resources */,
-				459DABC2243E33690011ECF3 /* .gitkeep in Resources */,
-				459DABDF243E33C20011ECF3 /* Qonversion-Info.plist in Resources */,
 				459DABA5243E33470011ECF3 /* report.junit in Resources */,
 				459DAB9C243E333C0011ECF3 /* Qonversion.podspec in Resources */,
 				459DABA7243E33470011ECF3 /* Fastfile in Resources */,
 				459DABDB243E33C20011ECF3 /* Qonversion.xcconfig in Resources */,
-				459DABD2243E33690011ECF3 /* .gitkeep in Resources */,
 				459DAB9B243E333C0011ECF3 /* LICENSE in Resources */,
 				459DABA4243E33470011ECF3 /* report.html in Resources */,
-				459DABE0243E33C20011ECF3 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,15 +351,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				459DABDC243E33C20011ECF3 /* Qonversion-dummy.m in Sources */,
-				459DABC3243E33690011ECF3 /* QonversionMapper.m in Sources */,
-				459DABCF243E33690011ECF3 /* Keychain.m in Sources */,
-				459DABC4243E33690011ECF3 /* QonversionCheckResult.m in Sources */,
-				459DABC1243E33690011ECF3 /* Qonversion.m in Sources */,
-				459DABC6243E33690011ECF3 /* QonversionCheckResult+Protected.m in Sources */,
-				459DABCC243E33690011ECF3 /* UserInfo.m in Sources */,
-				459DABC5243E33690011ECF3 /* RenewalProductDetails.m in Sources */,
-				459DABD1243E33690011ECF3 /* Keeper.m in Sources */,
+				459DABFD243E35BC0011ECF3 /* QonversionCheckResult.m in Sources */,
+				459DABFF243E35BC0011ECF3 /* QonversionCheckResult+Protected.m in Sources */,
+				459DABF6243E35BC0011ECF3 /* UserInfo.m in Sources */,
+				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
+				459DABFB243E35BC0011ECF3 /* Keeper.m in Sources */,
+				459DABFE243E35BC0011ECF3 /* RenewalProductDetails.m in Sources */,
+				459DABFC243E35BC0011ECF3 /* QonversionMapper.m in Sources */,
+				459DABF9243E35BC0011ECF3 /* Keychain.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -471,7 +432,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -526,7 +487,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -544,16 +505,22 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = Qonversion/Info.plist;
+				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
+				GCC_WARN_PEDANTIC = NO;
+				INFOPLIST_FILE = Framework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.Qonversion;
+				MARKETING_VERSION = 0.8.0;
+				MODULEMAP_FILE = Framework/Qonversion.modulemap;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -566,16 +533,22 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = Qonversion/Info.plist;
+				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
+				GCC_WARN_PEDANTIC = NO;
+				INFOPLIST_FILE = Framework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.Qonversion;
+				MARKETING_VERSION = 0.8.0;
+				MODULEMAP_FILE = Framework/Qonversion.modulemap;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -583,7 +556,10 @@
 		459DAB81243E329F0011ECF3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = QonversionTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -592,6 +568,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.QonversionTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -599,7 +577,10 @@
 		459DAB82243E329F0011ECF3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = QonversionTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -608,6 +589,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.QonversionTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
