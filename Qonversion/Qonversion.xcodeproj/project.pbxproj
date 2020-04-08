@@ -37,6 +37,7 @@
 		459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABF4243E35BC0011ECF3 /* Qonversion.m */; };
 		459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */; };
 		459DAC09243E4B0B0011ECF3 /* check_result_with_active_users.json in Resources */ = {isa = PBXBuildFile; fileRef = 459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */; };
+		459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -84,6 +85,8 @@
 		459DABF4243E35BC0011ECF3 /* Qonversion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Qonversion.m; sourceTree = "<group>"; };
 		459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionMapperTests.m; sourceTree = "<group>"; };
 		459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_result_with_active_users.json; sourceTree = "<group>"; };
+		459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+TestJSON.h"; sourceTree = "<group>"; };
+		459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+TestJSON.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,7 +117,9 @@
 				459DAB6A243E329F0011ECF3 /* Products */,
 				459DABD3243E33C20011ECF3 /* Framework */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
+			tabWidth = 4;
 		};
 		459DAB6A243E329F0011ECF3 /* Products */ = {
 			isa = PBXGroup;
@@ -140,6 +145,7 @@
 		459DAB76243E329F0011ECF3 /* QonversionTests */ = {
 			isa = PBXGroup;
 			children = (
+				459DAC0A243E4D420011ECF3 /* Helpers */,
 				459DAC07243E4AF20011ECF3 /* Resources */,
 				459DAB77243E329F0011ECF3 /* QonversionTests.m */,
 				459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */,
@@ -236,9 +242,26 @@
 		459DAC07243E4AF20011ECF3 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */,
+				459DAC0E243E4E530011ECF3 /* Stubs */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		459DAC0A243E4D420011ECF3 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */,
+				459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		459DAC0E243E4E530011ECF3 /* Stubs */ = {
+			isa = PBXGroup;
+			children = (
+				459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */,
+			);
+			path = Stubs;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -381,6 +404,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
 				459DAB78243E329F0011ECF3 /* QonversionTests.m in Sources */,
 			);
