@@ -13,8 +13,8 @@
 		24F6D94F890125C931B80E0E3D9636E7 /* Pods-SwiftEx-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 8140018BA51BAF9E379A50D4566EC61A /* Pods-SwiftEx-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		3A98A0C848D3B91FF4ED499F9F706137 /* Keeper.m in Sources */ = {isa = PBXBuildFile; fileRef = BB60045F5B4A8D884A912FEFBEBDFE4E /* Keeper.m */; };
 		4595607E243CE6F70050CAC4 /* QonversionCheckResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 4595607B243CE6F70050CAC4 /* QonversionCheckResult.m */; };
-		4595607F243CE6F70050CAC4 /* QonversionCheckResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 4595607C243CE6F70050CAC4 /* QonversionCheckResult.h */; };
-		45956080243CE6F70050CAC4 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */; };
+		4595607F243CE6F70050CAC4 /* QonversionCheckResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 4595607C243CE6F70050CAC4 /* QonversionCheckResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		45956080243CE6F70050CAC4 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4625B0A8D326AFAB3AFAE34F0F0DBC01 /* UserInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DBFB55308D1E20731C5FD9AC55E06CE /* UserInfo.m */; };
 		527CB65F22146ECB124935193099C356 /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = AC7930D266283C2CD62D92E692894E44 /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		60AE567731FED957F33B4CE726C9D5E4 /* Qonversion-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5BFAEB8583DD2AFFE91B2313D9E9B9CC /* Qonversion-dummy.m */; };

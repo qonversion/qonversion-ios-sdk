@@ -1,14 +1,14 @@
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(NSInteger, RenewalProductState){
-    RenewalProductStateTrial,
-    RenewalProductStateSubscription
+typedef NS_ENUM(unsigned int, RenewalProductState){
+    RenewalProductStateTrial = 0,
+    RenewalProductStateSubscription = 1
 };
 
-typedef NS_ENUM(NSInteger, RenewalProductStatus){
-    RenewalProductStatusActive,
-    RenewalProductStatusCancelled,
-    RenewalProductStatusRefunded
+typedef NS_ENUM(unsigned int, RenewalProductStatus){
+    RenewalProductStatusCancelled = 0,
+    RenewalProductStatusActive = 1,
+    RenewalProductStatusRefunded = 2
 };
 
 @interface RenewalProductDetails : NSObject
@@ -17,7 +17,6 @@ typedef NS_ENUM(NSInteger, RenewalProductStatus){
 @property (nonatomic, readonly) RenewalProductState state;
   
 @property (nonatomic, copy, readonly) NSString *productID;
-@property (nonatomic, copy, readonly) NSString *originalTransactionID;
 @property (nonatomic, copy, readonly) NSString *originalTransactionID;
 
 @property (nonatomic, readonly) NSUInteger createdAt;

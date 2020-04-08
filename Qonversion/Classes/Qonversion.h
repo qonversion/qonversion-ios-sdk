@@ -25,7 +25,7 @@ DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:auto
 
 /**
  @param key - project key to setup the SDK.
- @param userID - Client side user-id (instead of Qonversion user-id) will be used for matching data in the third party data.
+ @param uid - Client side user-id (instead of Qonversion user-id) will be used for matching data in the third party data.
  */
 
 + (void)launchWithKey:(nonnull NSString *)key userID:(nonnull NSString *)uid;
@@ -49,14 +49,13 @@ DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:auto
 /**
  Send your attribution data
  @param data Dictionary received by the provider
- @param provider
- @param userID – User Id that should be sent to the provider
+ @param provider Attribution provider
+ @param uid – User Id that should be sent to the provider
  */
 + (void)addAttributionData:(NSDictionary *)data
                fromProvider:(QAttributionProvider)provider
                userID:(nullable NSString *)uid;
 
-+ (void)check:(nullable void (^)(QCheckResult *result))completion;
 @end
 
 NS_ASSUME_NONNULL_END

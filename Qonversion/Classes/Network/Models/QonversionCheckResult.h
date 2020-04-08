@@ -1,9 +1,11 @@
 #import <Foundation/Foundation.h>
 #import "RenewalProductDetails.h"
 
-typedef NS_ENUM(NSInteger, ClientEnvironment){
-    ClientEnvironmentSandbox,
-    ClientEnvironmentProduction
+NS_ASSUME_NONNULL_BEGIN
+
+typedef NS_ENUM(unsigned int, ClientEnvironment){
+    ClientEnvironmentSandbox = 0,
+    ClientEnvironmentProduction = 1
 };
 
 @interface QonversionCheckResult : NSObject
@@ -30,3 +32,5 @@ typedef NS_ENUM(NSInteger, ClientEnvironment){
 @property (nonatomic, copy, readonly) NSArray<RenewalProductDetails *> *allProducts;
 
 @end
+
+NS_ASSUME_NONNULL_END
