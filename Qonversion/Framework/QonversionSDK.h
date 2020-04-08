@@ -10,12 +10,9 @@
 #endif
 #endif
 
-#import "Keychain.h"
-#import "UserInfo.h"
 #import "Qonversion.h"
-#import "Keeper.h"
-#import "QonversionCheckResult.h"
 #import "RenewalProductDetails.h"
+#import "QonversionCheckResult.h"
 
 FOUNDATION_EXPORT double QonversionVersionNumber;
 FOUNDATION_EXPORT const unsigned char QonversionVersionString[];

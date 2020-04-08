@@ -1,6 +1,0 @@
-framework module Pods_SwiftEx {
-  umbrella header "Pods-SwiftEx-umbrella.h"
-
-  export *
-  module * { export * }
-}

@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "RenewalProductDetails.h"
 
-@implementation RenewalProductDetails
+@implementation RenewalProductDetails : NSObject
 
 
 @end
