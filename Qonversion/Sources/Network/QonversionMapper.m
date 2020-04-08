@@ -2,6 +2,7 @@
 #import "QonversionMapper.h"
 #import "RenewalProductDetails.h"
 #import "QonversionCheckResult+Protected.h"
+#import "RenewalProductDetails+Protected.h"
 
 @implementation QonversionMapper
 
@@ -11,20 +12,37 @@
     NSNumber *timestamp = dict[@"timestamp"];
     NSNumber *environment = dict[@"environment"];
     
-    NSDictionary *activeProductsDict = dict[@"active_renew_product"];
-    NSDictionary *allProductsDict = dict[@"all_renewal_products"];
-    
-    NSMutableArray <RenewalProductDetails *> *activeProducts = [NSMutableArray array];
-    NSMutableArray <RenewalProductDetails *> *allProducts = [NSMutableArray array];
+    NSArray *activeProductsDict = dict[@"active_renew_product"];
+    NSArray *allProductsDict = dict[@"all_renewal_products"];
     
     [result setEnvironment:environment.intValue];
     [result setTimestamp:timestamp.intValue];
-    
-    [result setAllProducts:[allProducts copy]];
-    [result setActiveProducts:[activeProducts copy]];
-    
+
+    id allProducts = [self fillRenewalProducts:allProductsDict];
+    id activeProducts = [self fillRenewalProducts:activeProductsDict];
+
+    [result setAllProducts:allProducts];
+    [result setActiveProducts:activeProducts];
+
     return result;
 }
 
+
++ (NSArray<RenewalProductDetails *> *)fillRenewalProducts:(NSArray *)dict {
+    NSMutableArray *products = [[NSMutableArray alloc] init];
+
+    for (NSDictionary* itemDict in dict) {
+        RenewalProductDetails *item = [self fillRenewalProduct:itemDict];
+        if (item) {
+            [products addObject:item];
+        }
+    }
+
+    return [products copy];
+}
+
++ (RenewalProductDetails *)fillRenewalProduct:(NSDictionary *)dict {
+    return nil;
+}
 @end
 

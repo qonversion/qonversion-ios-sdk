@@ -37,6 +37,7 @@
 		459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */; };
 		459DAC09243E4B0B0011ECF3 /* check_result_with_active_users.json in Resources */ = {isa = PBXBuildFile; fileRef = 459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */; };
 		459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */; };
+		459DAC10243E5D050011ECF3 /* RenewalProductDetails+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DAC0F243E5D050011ECF3 /* RenewalProductDetails+Protected.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -85,6 +86,7 @@
 		459DAC08243E4B0B0011ECF3 /* check_result_with_active_users.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_result_with_active_users.json; sourceTree = "<group>"; };
 		459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+TestJSON.h"; sourceTree = "<group>"; };
 		459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+TestJSON.m"; sourceTree = "<group>"; };
+		459DAC0F243E5D050011ECF3 /* RenewalProductDetails+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RenewalProductDetails+Protected.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -229,6 +231,7 @@
 			children = (
 				459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */,
 				459DABEE243E35BC0011ECF3 /* RenewalProductDetails.m */,
+				459DAC0F243E5D050011ECF3 /* RenewalProductDetails+Protected.h */,
 				459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */,
 				459DABF1243E35BC0011ECF3 /* RenewalProductDetails.h */,
 				459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */,
@@ -275,6 +278,7 @@
 				459DABF5243E35BC0011ECF3 /* Qonversion.h in Headers */,
 				459DABF8243E35BC0011ECF3 /* UserInfo.h in Headers */,
 				459DAC02243E35BC0011ECF3 /* QonversionCheckResult+Protected.h in Headers */,
+				459DAC10243E5D050011ECF3 /* RenewalProductDetails+Protected.h in Headers */,
 				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
 				459DAC00243E35BC0011ECF3 /* QonversionCheckResult.h in Headers */,
 			);
