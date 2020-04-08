@@ -4,6 +4,6 @@
 
 @interface QonversionMapper : NSObject
 
-+ (QonversionCheckResult *)fillCheckResult:(NSDictionary *)dict;
++ (QonversionCheckResult *)fillCheckResultWith:(NSDictionary *)dict;
 
 @end

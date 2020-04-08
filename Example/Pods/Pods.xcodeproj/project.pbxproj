@@ -17,7 +17,9 @@
 		45956080243CE6F70050CAC4 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		45956084243E133E0050CAC4 /* RenewalProductDetails.m in Sources */ = {isa = PBXBuildFile; fileRef = 45956083243E133E0050CAC4 /* RenewalProductDetails.m */; };
 		45956086243E21A70050CAC4 /* QonversionMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 45956085243E21A70050CAC4 /* QonversionMapper.h */; };
-		45956088243E22200050CAC4 /* QonversionMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 45956087243E22200050CAC4 /* QonversionMapper.m */; };
+		45956089243E262C0050CAC4 /* QonversionMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 45956087243E22200050CAC4 /* QonversionMapper.m */; };
+		45956098243E26BD0050CAC4 /* QonversionCheckResult+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 45956096243E26BD0050CAC4 /* QonversionCheckResult+Protected.h */; };
+		45956099243E26BD0050CAC4 /* QonversionCheckResult+Protected.m in Sources */ = {isa = PBXBuildFile; fileRef = 45956097243E26BD0050CAC4 /* QonversionCheckResult+Protected.m */; };
 		4625B0A8D326AFAB3AFAE34F0F0DBC01 /* UserInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DBFB55308D1E20731C5FD9AC55E06CE /* UserInfo.m */; };
 		527CB65F22146ECB124935193099C356 /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = AC7930D266283C2CD62D92E692894E44 /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		60AE567731FED957F33B4CE726C9D5E4 /* Qonversion-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5BFAEB8583DD2AFFE91B2313D9E9B9CC /* Qonversion-dummy.m */; };
@@ -90,6 +92,8 @@
 		45956083243E133E0050CAC4 /* RenewalProductDetails.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RenewalProductDetails.m; sourceTree = "<group>"; };
 		45956085243E21A70050CAC4 /* QonversionMapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionMapper.h; sourceTree = "<group>"; };
 		45956087243E22200050CAC4 /* QonversionMapper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionMapper.m; sourceTree = "<group>"; };
+		45956096243E26BD0050CAC4 /* QonversionCheckResult+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QonversionCheckResult+Protected.h"; sourceTree = "<group>"; };
+		45956097243E26BD0050CAC4 /* QonversionCheckResult+Protected.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "QonversionCheckResult+Protected.m"; sourceTree = "<group>"; };
 		5BFAEB8583DD2AFFE91B2313D9E9B9CC /* Qonversion-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Qonversion-dummy.m"; sourceTree = "<group>"; };
 		5E3D376474973E8A659FB932637105E8 /* Pods-SwiftEx-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-SwiftEx-frameworks.sh"; sourceTree = "<group>"; };
 		6AE912038C0C8F7B28AE0B93AF4B0621 /* Pods-SwiftEx.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-SwiftEx.release.xcconfig"; sourceTree = "<group>"; };
@@ -227,6 +231,8 @@
 				4595607B243CE6F70050CAC4 /* QonversionCheckResult.m */,
 				4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */,
 				45956083243E133E0050CAC4 /* RenewalProductDetails.m */,
+				45956096243E26BD0050CAC4 /* QonversionCheckResult+Protected.h */,
+				45956097243E26BD0050CAC4 /* QonversionCheckResult+Protected.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -402,6 +408,7 @@
 				AA9323E1854AAC5BEC1BC118F3262251 /* QonversionSDK.h in Headers */,
 				527CB65F22146ECB124935193099C356 /* Qonversion.h in Headers */,
 				45956080243CE6F70050CAC4 /* RenewalProductDetails.h in Headers */,
+				45956098243E26BD0050CAC4 /* QonversionCheckResult+Protected.h in Headers */,
 				4595607F243CE6F70050CAC4 /* QonversionCheckResult.h in Headers */,
 				E0381EDA5AA65DD45B5FD840351AFD3F /* UserInfo.h in Headers */,
 			);
@@ -600,7 +607,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A15E890439D604B21A7B4D6459F53D2B /* Pods-ObjcEx-dummy.m in Sources */,
-				45956088243E22200050CAC4 /* QonversionMapper.m in Sources */,
 				45956084243E133E0050CAC4 /* RenewalProductDetails.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -635,6 +641,8 @@
 				AD2BC45132D9E538733F55E0AD656505 /* Keychain.m in Sources */,
 				60AE567731FED957F33B4CE726C9D5E4 /* Qonversion-dummy.m in Sources */,
 				FB24213B1245D02399DD4A82C14D0D76 /* Qonversion.m in Sources */,
+				45956089243E262C0050CAC4 /* QonversionMapper.m in Sources */,
+				45956099243E26BD0050CAC4 /* QonversionCheckResult+Protected.m in Sources */,
 				4625B0A8D326AFAB3AFAE34F0F0DBC01 /* UserInfo.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

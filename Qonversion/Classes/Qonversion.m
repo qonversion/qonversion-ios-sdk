@@ -12,8 +12,6 @@ static NSString * const kCheckEndpoint = @"check";
 static NSString * const kAttributionEndpoint = @"attribution";
 static NSString * const kSDKVersion = @"0.8.0";
 
-typedef NSInteger <#new#>;
-
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
 @property (nonatomic, readonly) NSMutableDictionary *transactions;
@@ -273,7 +271,7 @@ static BOOL autoTrackPurchases;
             return;
         }
 
-        QonversionCheckResult *resultObject = [QonversionMapper fillCheckResult:dict];
+        QonversionCheckResult *resultObject = [QonversionMapper fillCheckResultWith:dict];
         result(resultObject);
     }] resume];
     
