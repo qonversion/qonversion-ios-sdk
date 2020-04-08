@@ -29,7 +29,7 @@ typedef NS_ENUM(unsigned int, ClientEnvironment){
 @property (nonatomic, copy, readonly) NSArray<RenewalProductDetails *> *activeProducts;
 
 /**
- All product
+ All products
  */
 @property (nonatomic, copy, readonly) NSArray<RenewalProductDetails *> *allProducts;
 
