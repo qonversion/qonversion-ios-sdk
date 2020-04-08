@@ -4,6 +4,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSInteger, QErrorCode) {
+  QErrorCodeFailedReceivData = 0,
+  QErrorCodeFailedParseResponse,
+};
+
 typedef NS_ENUM(NSInteger, QAttributionProvider) {
 
     QAttributionProviderAppsFlyer = 0,

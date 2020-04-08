@@ -12,6 +12,8 @@ static NSString * const kCheckEndpoint = @"check";
 static NSString * const kAttributionEndpoint = @"attribution";
 static NSString * const kSDKVersion = @"0.8.0";
 
+typedef NSInteger <#new#>;
+
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
 @property (nonatomic, readonly) NSMutableDictionary *transactions;
@@ -261,17 +263,17 @@ static BOOL autoTrackPurchases;
         }
         
         if (!data || ![data isKindOfClass:NSData.class]) {
-            failure([self error:"Could not receive data"]);
+            failure([self error:@"Could not receive data" code:QErrorCodeFailedReceivData]);
             return;
         }
         
         NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
         if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
-            failure([self error:"Could not parse response"]);
+            failure([self error:@"Could not parse response"code:QErrorCodeFailedParseResponse]);
             return;
         }
 
-        QonversionCheckResult *resultObject = [QonversionMapper fillCheckResult:NSDictionary]
+        QonversionCheckResult *resultObject = [QonversionMapper fillCheckResult:dict];
         result(resultObject);
     }] resume];
     
@@ -281,10 +283,9 @@ static BOOL autoTrackPurchases;
     return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];;
 }
 
-+ (NSError *)error:(NSString *)message code:(nullable NSInteger)errorCode  {
++ (NSError *)error:(NSString *)message code:(QErrorCode)errorCode  {
     NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil)};
-    NSInteger code = errorCode ?: -1;
-    return [[NSError alloc] initWithDomain:QonversionErrorDomain code:code userInfo:info];
+    return [[NSError alloc] initWithDomain:QonversionErrorDomain code:errorCode userInfo:info];
 }
 
 @end
