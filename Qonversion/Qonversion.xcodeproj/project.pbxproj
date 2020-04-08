@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
-		459DAB78243E329F0011ECF3 /* QonversionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAB77243E329F0011ECF3 /* QonversionTests.m */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
 		459DAB9C243E333C0011ECF3 /* Qonversion.podspec in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB99243E333C0011ECF3 /* Qonversion.podspec */; };
@@ -54,7 +53,6 @@
 /* Begin PBXFileReference section */
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		459DAB77243E329F0011ECF3 /* QonversionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionTests.m; sourceTree = "<group>"; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		459DAB97243E333C0011ECF3 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		459DAB98243E333C0011ECF3 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
@@ -149,7 +147,6 @@
 			children = (
 				459DAC0A243E4D420011ECF3 /* Helpers */,
 				459DAC07243E4AF20011ECF3 /* Resources */,
-				459DAB77243E329F0011ECF3 /* QonversionTests.m */,
 				459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */,
 				459DAB79243E329F0011ECF3 /* Info.plist */,
 			);
@@ -426,7 +423,6 @@
 			files = (
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
-				459DAB78243E329F0011ECF3 /* QonversionTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
