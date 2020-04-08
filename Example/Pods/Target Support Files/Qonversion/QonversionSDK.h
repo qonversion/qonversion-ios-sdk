@@ -15,6 +15,7 @@
 #import "Qonversion.h"
 #import "Keeper.h"
 #import "QonversionCheckResult.h"
+#import "RenewalProductDetails.h"
 
 FOUNDATION_EXPORT double QonversionVersionNumber;
 FOUNDATION_EXPORT const unsigned char QonversionVersionString[];

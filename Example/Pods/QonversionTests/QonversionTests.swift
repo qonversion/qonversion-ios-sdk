@@ -4,7 +4,15 @@ import XCTest
 class QonversionTests: XCTestCase {
   
   func testThatResult() {
-//    let result = QonversionCheckResult.init()
-    // result.activeProducts?.first?.status
+    Qonversion.checkUser({ result in
+      guard let activeProduct = result.activeProducts.first else { return }
+      switch activeProduct.status {
+      case .active:
+        print("Test")
+      default: break
+      }
+    }) { error in
+      
+    }
   }
 }

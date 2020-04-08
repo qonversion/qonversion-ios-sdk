@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
-#import "Network/Models/QonversionCheckResult.h"
+#import "QonversionCheckResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

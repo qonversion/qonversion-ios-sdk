@@ -1,7 +1,7 @@
 #import "Qonversion.h"
 #import "Keeper.h"
 #import "UserInfo.h"
-#import "Network/QonversionMapper.h"
+#import "QonversionMapper.h"
 
 NSString * const QonversionErrorDomain = @"com.qonversion.io";
 
