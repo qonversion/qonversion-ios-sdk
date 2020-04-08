@@ -15,6 +15,7 @@
 		4595607E243CE6F70050CAC4 /* QonversionCheckResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 4595607B243CE6F70050CAC4 /* QonversionCheckResult.m */; };
 		4595607F243CE6F70050CAC4 /* QonversionCheckResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 4595607C243CE6F70050CAC4 /* QonversionCheckResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		45956080243CE6F70050CAC4 /* RenewalProductDetails.h in Headers */ = {isa = PBXBuildFile; fileRef = 4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		45956084243E133E0050CAC4 /* RenewalProductDetails.m in Sources */ = {isa = PBXBuildFile; fileRef = 45956083243E133E0050CAC4 /* RenewalProductDetails.m */; };
 		4625B0A8D326AFAB3AFAE34F0F0DBC01 /* UserInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DBFB55308D1E20731C5FD9AC55E06CE /* UserInfo.m */; };
 		527CB65F22146ECB124935193099C356 /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = AC7930D266283C2CD62D92E692894E44 /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		60AE567731FED957F33B4CE726C9D5E4 /* Qonversion-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5BFAEB8583DD2AFFE91B2313D9E9B9CC /* Qonversion-dummy.m */; };
@@ -84,6 +85,7 @@
 		4595607B243CE6F70050CAC4 /* QonversionCheckResult.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QonversionCheckResult.m; sourceTree = "<group>"; };
 		4595607C243CE6F70050CAC4 /* QonversionCheckResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionCheckResult.h; sourceTree = "<group>"; };
 		4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenewalProductDetails.h; sourceTree = "<group>"; };
+		45956083243E133E0050CAC4 /* RenewalProductDetails.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RenewalProductDetails.m; sourceTree = "<group>"; };
 		5BFAEB8583DD2AFFE91B2313D9E9B9CC /* Qonversion-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Qonversion-dummy.m"; sourceTree = "<group>"; };
 		5E3D376474973E8A659FB932637105E8 /* Pods-SwiftEx-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-SwiftEx-frameworks.sh"; sourceTree = "<group>"; };
 		6AE912038C0C8F7B28AE0B93AF4B0621 /* Pods-SwiftEx.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-SwiftEx.release.xcconfig"; sourceTree = "<group>"; };
@@ -218,6 +220,7 @@
 				4595607B243CE6F70050CAC4 /* QonversionCheckResult.m */,
 				4595607C243CE6F70050CAC4 /* QonversionCheckResult.h */,
 				4595607D243CE6F70050CAC4 /* RenewalProductDetails.h */,
+				45956083243E133E0050CAC4 /* RenewalProductDetails.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -590,6 +593,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A15E890439D604B21A7B4D6459F53D2B /* Pods-ObjcEx-dummy.m in Sources */,
+				45956084243E133E0050CAC4 /* RenewalProductDetails.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

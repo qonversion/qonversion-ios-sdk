@@ -1,6 +1,6 @@
 #use_frameworks!
 #platform :ios, '9.0'
 #
-#target 'SwiftEx' do
+#target 'DummyApp' do
 #  pod 'Qonversion', :path => '../'
 #end

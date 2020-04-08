@@ -3,6 +3,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef void (^QonversionCheckFailer)(NSError *error);
+
 typedef NS_ENUM(unsigned int, ClientEnvironment){
     ClientEnvironmentSandbox = 0,
     ClientEnvironmentProduction = 1

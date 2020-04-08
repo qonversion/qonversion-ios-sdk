@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
+#import "Network/Models/QonversionCheckResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -55,6 +56,11 @@ DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:auto
 + (void)addAttributionData:(NSDictionary *)data
                fromProvider:(QAttributionProvider)provider
                userID:(nullable NSString *)uid;
+
+
++ (void)checkUser:(void(^)(QonversionCheckResult *result))result
+          failure:(QonversionCheckFailer)failure;
+
 
 @end
 
