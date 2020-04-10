@@ -1,0 +1,9 @@
+{
+   "success" : false,
+   "data" : {
+      "message" : "Invalid access token",
+      "name" : "Bad Request",
+      "code" : 0,
+      "status" : 400
+   }
+}
