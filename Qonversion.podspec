@@ -1,4 +1,3 @@
-
 Pod::Spec.new do |s|
   s.name             = 'Qonversion'
   s.version          = '0.8.0'
