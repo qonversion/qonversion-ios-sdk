@@ -5,12 +5,12 @@
 NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSInteger, QErrorCode) {
-  QErrorCodeFailedReceiveData = 0,
-  QErrorCodeFailedParseResponse,
+    QErrorCodeFailedReceiveData = 0,
+    QErrorCodeFailedParseResponse,
+    QErrorCodeIncorrectResponse
 };
 
 typedef NS_ENUM(NSInteger, QAttributionProvider) {
-
     QAttributionProviderAppsFlyer = 0,
     QAttributionProviderBranch
 };
@@ -59,8 +59,8 @@ DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:auto
  @param uid – User Id that should be sent to the provider
  */
 + (void)addAttributionData:(NSDictionary *)data
-               fromProvider:(QAttributionProvider)provider
-               userID:(nullable NSString *)uid;
+              fromProvider:(QAttributionProvider)provider
+                    userID:(nullable NSString *)uid;
 
 
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result

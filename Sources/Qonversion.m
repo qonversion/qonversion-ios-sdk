@@ -5,7 +5,7 @@
 
 NSString * const QonversionErrorDomain = @"com.qonversion.io";
 
-static NSString * const kBaseURL = @"https://api.qonversion.io/";
+static NSString * const kBaseURL = @"https://apib.qonversion.io/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
 static NSString * const kCheckEndpoint = @"check";
@@ -80,19 +80,19 @@ static BOOL autoTrackPurchases;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     
     dispatch_after(popTime,  dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-      NSMutableDictionary *body = @{@"d": UserInfo.overallData}.mutableCopy;
-
-      if (provider == QAttributionProviderAppsFlyer) {
-          body[@"provider_data"] = @{@"provider": @"appsflyer", @"d": data, @"uid": uid ?: @""};
-      }
-
-      NSURLRequest *request = [self makePostRequestWithEndpoint:kAttributionEndpoint andBody:body];
-
-      [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-          if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-              NSLog(@"Attribution Request Log Response:\n%@", dict);
-          }
-      }];
+        NSMutableDictionary *body = @{@"d": UserInfo.overallData}.mutableCopy;
+        
+        if (provider == QAttributionProviderAppsFlyer) {
+            body[@"provider_data"] = @{@"provider": @"appsflyer", @"d": data, @"uid": uid ?: @""};
+        }
+        
+        NSURLRequest *request = [self makePostRequestWithEndpoint:kAttributionEndpoint andBody:body];
+        
+        [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+            if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
+                NSLog(@"Attribution Request Log Response:\n%@", dict);
+            }
+        }];
     });
 }
 
@@ -122,7 +122,7 @@ static BOOL autoTrackPurchases;
         if (!receiptURL) {
             return;
         }
-
+        
         NSString *currency;
         if (@available(iOS 10.0, *)) {
             currency = product.priceLocale.currencyCode;
@@ -132,9 +132,9 @@ static BOOL autoTrackPurchases;
             [formatter setLocale:product.priceLocale];
             currency = [formatter stringFromNumber:product.price];
         }
-
+        
         NSString *receipt = [[NSData dataWithContentsOfURL:receiptURL] base64EncodedStringWithOptions:0];
-
+        
         NSMutableDictionary *inappDict = @{@"product": product.productIdentifier,
                                            @"receipt": receipt ?: @"",
                                            @"transactionIdentifier": transaction.transactionIdentifier ?: @"",
@@ -142,13 +142,13 @@ static BOOL autoTrackPurchases;
                                            @"currency": currency,
                                            @"value": product.price.stringValue
         }.mutableCopy;
-
+        
         if (@available(iOS 11.2, *)) {
             if (product.subscriptionPeriod != nil) {
                 inappDict[@"subscriptionPeriodUnit"] = @(product.subscriptionPeriod.unit).stringValue;
                 inappDict[@"subscriptionPeriodNumberOfUnits"] = @(product.subscriptionPeriod.numberOfUnits).stringValue;
             }
-
+            
             if (product.introductoryPrice != nil) {
                 SKProductDiscount *introductoryPrice = product.introductoryPrice;
                 NSMutableDictionary *introductoryPriceDict = @{
@@ -158,14 +158,14 @@ static BOOL autoTrackPurchases;
                     @"subscriptionPeriodUnit": @(introductoryPrice.subscriptionPeriod.unit).stringValue,
                     @"paymentMode": @(introductoryPrice.paymentMode).stringValue
                 }.mutableCopy;
-
+                
                 inappDict[@"introductoryPrice"] = introductoryPriceDict;
             }
-
+            
         }
-
+        
         NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
-
+        
         NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
         [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
@@ -191,19 +191,19 @@ static BOOL autoTrackPurchases;
 
 + (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint andBody:(NSDictionary *)body {
     NSURL *url = [NSURL.alloc initWithString:[kBaseURL stringByAppendingString:endpoint]];
-
+    
     NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:url];
     request.HTTPMethod = @"POST";
     [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
-
+    
     NSMutableDictionary *mutableBody = body.mutableCopy;
-
+    
     [mutableBody setObject:apiKey forKey:@"access_token"];
     [mutableBody setObject:kSDKVersion forKey:@"v"];
     if (Keeper.userID && Keeper.userID.length > 2) {
         [mutableBody setObject:Keeper.userID forKey:@"client_uid"];
     }
-
+    
     NSURL *docsURL = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
     if (docsURL) {
         NSDictionary *docsAttributes = [NSFileManager.defaultManager attributesOfItemAtPath:docsURL.path error:nil];
@@ -213,12 +213,12 @@ static BOOL autoTrackPurchases;
             [mutableBody setObject:unixTime forKey:@"install_date"];
         }
     }
-
+    
     NSString *unixTime = [NSString stringWithFormat:@"%ld", (long)round(NSDate.new.timeIntervalSince1970)];
     [mutableBody setObject:unixTime forKey:@"launch_date"];
-
+    
     request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
-
+    
     return request;
 }
 
@@ -231,7 +231,7 @@ static BOOL autoTrackPurchases;
         }
         [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
         [self.transactions setObject:transaction forKey:transaction.payment.productIdentifier];
-
+        
         SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:[NSSet setWithObject:transaction.payment.productIdentifier]];
         [self.productRequests setObject:request forKey:transaction.payment.productIdentifier];
         request.delegate = self;
@@ -297,9 +297,17 @@ static BOOL autoTrackPurchases;
             failure([self error:@"Could not parse response"code:QErrorCodeFailedParseResponse]);
             return;
         }
-
-        QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:dict];
-        result(resultObject);
+        
+        BOOL success = dict[@"success"];
+        NSDictionary *resultData = dict[@"data"];
+        
+        if (success && resultData) {
+            QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:resultData];
+            result(resultObject);
+        } else {
+            NSString *message = dict[@"data.message"] ?: @"";
+            failure([self error:message code:QErrorCodeFailedParseResponse]);
+        }
     }] resume];
 }
 
