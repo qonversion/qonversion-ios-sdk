@@ -9,8 +9,8 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
 
 @interface QonversionCheckResultComposeModel : NSObject
 
-@property (copy, nullable) QonversionCheckResult *result;
-@property (copy, nullable) NSError *error;
+@property (nonatomic, nullable) QonversionCheckResult *result;
+@property (nonatomic, copy, nullable) NSError *error;
 
 @end
 

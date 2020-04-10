@@ -48,7 +48,7 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
     
     if (success.boolValue && resultData) {
         QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:resultData];
-        result.result = resultObject;
+        [result setResult:resultObject];
         return result;
     } else {
         NSString *message = dict[@"data"][@"message"] ?: @"";
