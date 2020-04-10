@@ -279,7 +279,6 @@ static BOOL autoTrackPurchases;
     
     NSURLRequest *request = [self makePostRequestWithEndpoint:kCheckEndpoint andBody:@{}];
     [[[self session] dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        
         if (error) {
             failure(error);
             return;

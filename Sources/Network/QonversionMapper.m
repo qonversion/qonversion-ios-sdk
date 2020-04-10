@@ -43,15 +43,15 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
         return result;
     }
     
-    BOOL success = dict[@"success"];
+    NSNumber *success = dict[@"success"];
     NSDictionary *resultData = dict[@"data"];
     
-    if (success && resultData) {
+    if (success.boolValue && resultData) {
         QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:resultData];
         result.result = resultObject;
         return result;
     } else {
-        NSString *message = dict[@"data.message"] ?: @"";
+        NSString *message = dict[@"data"][@"message"] ?: @"";
         [result setError:[QonversionMapper error:message code:QErrorCodeFailedParseResponse]];
         return result;
     }

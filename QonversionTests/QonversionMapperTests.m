@@ -59,8 +59,10 @@ static NSString *checkFailedState = @"check_failed_state.json";
 }
 
 - (void)testThatMapperCouldParseErrorResponse {
-    NSDictionary *failedDict = [self JSONObjectFromContentsOfFile:checkFailedState];
-    
+    NSData *failedData = [self fileDataFromContentsOfFile:checkFailedState];
+    QonversionCheckResultComposeModel * composeModel = [[QonversionMapper new] composeModelFrom:failedData];
+    XCTAssertNil(composeModel.result);
+    XCTAssertNotNil(composeModel.error);
 }
 
 @end
