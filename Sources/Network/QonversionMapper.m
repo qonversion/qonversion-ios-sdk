@@ -63,7 +63,7 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
     NSNumber *timestamp = dict[@"timestamp"];
     NSNumber *environment = dict[@"environment"];
     
-    NSArray *activeProductsDict = dict[@"active_renew_product"];
+    NSArray *activeProductsDict = dict[@"active_renew_products"];
     NSArray *allProductsDict = dict[@"all_renewal_products"];
     
     [result setEnvironment:environment.intValue];

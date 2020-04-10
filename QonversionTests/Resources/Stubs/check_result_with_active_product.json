@@ -2,7 +2,7 @@
   "environment": 1,
   "timestamp": 1586369519,
   
-  "active_renew_product": [
+  "active_renew_products": [
     {
       "product_id": "product",
       "original_transaction_id": "original_transaction_id",
