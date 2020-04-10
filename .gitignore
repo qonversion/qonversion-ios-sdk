@@ -6,8 +6,6 @@ XCBuildData
 Index
 Logs
 ModuleCache.noindex
-fastlane/test_output
-fastlane/report.xml
 
 # Xcode
 build/

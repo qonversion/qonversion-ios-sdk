@@ -89,6 +89,7 @@
 		459DAC0F243E5D050011ECF3 /* RenewalProductDetails+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RenewalProductDetails+Protected.h"; sourceTree = "<group>"; };
 		459DAC13243E64AA0011ECF3 /* check_restul_without_products.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_restul_without_products.json; sourceTree = "<group>"; };
 		45CC2EEF24407737005CD107 /* check_failed_state.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_failed_state.json; sourceTree = "<group>"; };
+		45CC2EF4244085E4005CD107 /* tests.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = tests.yml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -158,6 +159,7 @@
 		459DAB84243E32C40011ECF3 /* Deployment */ = {
 			isa = PBXGroup;
 			children = (
+				45CC2EF1244085E4005CD107 /* .github */,
 				459DAB9D243E33470011ECF3 /* fastlane */,
 				459DAB98243E333C0011ECF3 /* LICENSE */,
 				459DAB99243E333C0011ECF3 /* Qonversion.podspec */,
@@ -281,6 +283,22 @@
 				459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */,
 			);
 			path = QonversionCheckResult;
+			sourceTree = "<group>";
+		};
+		45CC2EF1244085E4005CD107 /* .github */ = {
+			isa = PBXGroup;
+			children = (
+				45CC2EF2244085E4005CD107 /* workflows */,
+			);
+			path = .github;
+			sourceTree = "<group>";
+		};
+		45CC2EF2244085E4005CD107 /* workflows */ = {
+			isa = PBXGroup;
+			children = (
+				45CC2EF4244085E4005CD107 /* tests.yml */,
+			);
+			path = workflows;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
