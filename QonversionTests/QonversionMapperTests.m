@@ -5,6 +5,7 @@
 
 static NSString *JSONWithActiveProduct = @"check_result_with_active_product.json";
 static NSString *JSONWithoutProducts = @"check_restul_without_products.json";
+static NSString *checkFailedState = @"check_failed_state.json";
 
 @interface QonversionMapperTests : XCTestCase
 @property (nonatomic, strong) NSDictionary *activeUserDict;
@@ -55,6 +56,11 @@ static NSString *JSONWithoutProducts = @"check_restul_without_products.json";
     
     XCTAssertEqual(resultWithoutProducts.activeProducts.count, 0);
     XCTAssertEqual(resultWithoutProducts.allProducts.count, 0);
+}
+
+- (void)testThatMapperCouldParseErrorResponse {
+    NSDictionary *failedDict = [self JSONObjectFromContentsOfFile:checkFailedState];
+    
 }
 
 @end

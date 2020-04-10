@@ -264,7 +264,7 @@ static BOOL autoTrackPurchases;
                failure:(QonversionCheckFailer)failure
                attempt:(NSInteger)attempt {
     if (attempt >= 5) {
-        failure([self error:@"Could not init user" code:QErrorCodeFailedReceiveData]);
+        failure([QonversionMapper error:@"Could not init user" code:QErrorCodeFailedReceiveData]);
         return;
     }
     
@@ -287,37 +287,18 @@ static BOOL autoTrackPurchases;
             return;
         }
         
-        if (!data || ![data isKindOfClass:NSData.class]) {
-            failure([self error:@"Could not receive data" code:QErrorCodeFailedReceiveData]);
-            return;
-        }
+        QonversionCheckResultComposeModel *model = [[QonversionMapper new] composeModelFrom:data];
         
-        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
-        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
-            failure([self error:@"Could not parse response"code:QErrorCodeFailedParseResponse]);
-            return;
-        }
-        
-        BOOL success = dict[@"success"];
-        NSDictionary *resultData = dict[@"data"];
-        
-        if (success && resultData) {
-            QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:resultData];
-            result(resultObject);
+        if (model.result) {
+            result(model.result);
         } else {
-            NSString *message = dict[@"data.message"] ?: @"";
-            failure([self error:message code:QErrorCodeFailedParseResponse]);
+            failure(model.error);
         }
     }] resume];
 }
 
 + (NSURLSession *)session {
     return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];;
-}
-
-+ (NSError *)error:(NSString *)message code:(QErrorCode)errorCode  {
-    NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil)};
-    return [[NSError alloc] initWithDomain:QonversionErrorDomain code:errorCode userInfo:info];
 }
 
 @end
