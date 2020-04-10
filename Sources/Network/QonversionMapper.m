@@ -4,8 +4,14 @@
 #import "QonversionCheckResult+Protected.h"
 #import "RenewalProductDetails+Protected.h"
 
+NSString * const QonversionErrorDomain = @"com.qonversion.io";
+
 static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStatuses = nil;
 static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
+
+@implementation QonversionCheckResultComposeModel : NSObject
+
+@end
 
 @implementation QonversionMapper
 

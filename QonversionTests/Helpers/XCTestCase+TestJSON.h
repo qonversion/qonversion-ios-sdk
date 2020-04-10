@@ -3,5 +3,6 @@
 @interface XCTestCase (TestJSON)
 
 - (id)JSONObjectFromContentsOfFile:(NSString *)filePath;
+- (id)fileDataFromContentsOfFile:(NSString *)filePath;
 
 @end

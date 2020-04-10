@@ -3,8 +3,6 @@
 #import "UserInfo.h"
 #import "QonversionMapper.h"
 
-NSString * const QonversionErrorDomain = @"com.qonversion.io";
-
 static NSString * const kBaseURL = @"https://apib.qonversion.io/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";

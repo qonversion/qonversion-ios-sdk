@@ -17,9 +17,9 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
 
 @interface QonversionMapper : NSObject
 
-- (QonversionCheckResultComposeModel *)composeModelFrom:(NSData *)data;
-- (QonversionCheckResult *)fillCheckResultWith:(NSDictionary *)dict;
+- (QonversionCheckResultComposeModel * _Nonnull)composeModelFrom:(NSData * _Nullable)data;
+- (QonversionCheckResult * _Nullable)fillCheckResultWith:(NSDictionary * _Nullable)dict;
 
-+ (NSError *)error:(NSString *)message code:(QErrorCode)errorCode;
++ (NSError * _Nonnull)error:(NSString * _Nullable)message code:(QErrorCode)errorCode;
 
 @end
