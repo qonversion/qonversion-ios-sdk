@@ -63,6 +63,16 @@ static NSString *checkFailedState = @"check_failed_state.json";
     QonversionCheckResultComposeModel * composeModel = [[QonversionMapper new] composeModelFrom:failedData];
     XCTAssertNil(composeModel.result);
     XCTAssertNotNil(composeModel.error);
+    XCTAssertEqual(composeModel.error.code, QErrorCodeIncorrectRequest);
+}
+
+- (void)testThatMapperParseBrokenData {
+    NSData *brokenData = [NSData new];
+    QonversionCheckResultComposeModel * composeModel = [[QonversionMapper new] composeModelFrom:brokenData];
+    XCTAssertNil(composeModel.result);
+    XCTAssertNotNil(composeModel.error);
+    
+    XCTAssertEqual(composeModel.error.code, QErrorCodeFailedParseResponse);
 }
 
 @end

@@ -52,7 +52,7 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
         return result;
     } else {
         NSString *message = dict[@"data"][@"message"] ?: @"";
-        [result setError:[QonversionMapper error:message code:QErrorCodeFailedParseResponse]];
+        [result setError:[QonversionMapper error:message code:QErrorCodeIncorrectRequest]];
         return result;
     }
 }

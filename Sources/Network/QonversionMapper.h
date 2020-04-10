@@ -4,7 +4,7 @@
 typedef NS_ENUM(NSInteger, QErrorCode) {
     QErrorCodeFailedReceiveData = 0,
     QErrorCodeFailedParseResponse,
-    QErrorCodeIncorrectResponse
+    QErrorCodeIncorrectRequest
 };
 
 @interface QonversionCheckResultComposeModel : NSObject
