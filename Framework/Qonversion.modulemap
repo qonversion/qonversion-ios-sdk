@@ -1,0 +1,6 @@
+framework module Qonversion {
+  umbrella header "QonversionFramework.h"
+
+  export *
+  module * { export * }
+}
