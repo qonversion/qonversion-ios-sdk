@@ -232,7 +232,7 @@
 		459DABEC243E35BC0011ECF3 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				459DAC12243E61BF0011ECF3 /* QonversionCheckResult */,
+				45BA20412444BA490046E6C9 /* QonversionCheckResult */,
 				459DAC11243E61A80011ECF3 /* RenewalProductDetails */,
 			);
 			path = Models;
@@ -275,14 +275,14 @@
 			name = RenewalProductDetails;
 			sourceTree = "<group>";
 		};
-		459DAC12243E61BF0011ECF3 /* QonversionCheckResult */ = {
+		45BA20412444BA490046E6C9 /* QonversionCheckResult */ = {
 			isa = PBXGroup;
 			children = (
 				459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */,
 				459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */,
 				459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */,
 			);
-			path = QonversionCheckResult;
+			name = QonversionCheckResult;
 			sourceTree = "<group>";
 		};
 		45CC2EF1244085E4005CD107 /* .github */ = {

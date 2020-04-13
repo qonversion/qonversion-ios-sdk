@@ -162,6 +162,14 @@ static BOOL autoTrackPurchases;
             
         }
         
+        if (@available(iOS 13.0, *)) {
+            NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
+            
+            if (countryCode.length > 0) {
+                inappDict[@"country"] = countryCode;
+            }
+        }
+        
         NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
         
         NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
