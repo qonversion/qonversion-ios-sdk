@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		45202189244DD02F00C1A928 /* QonversionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45202188244DD02F00C1A928 /* QonversionTests.m */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -52,6 +53,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		45202188244DD02F00C1A928 /* QonversionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionTests.m; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 				459DAC0A243E4D420011ECF3 /* Helpers */,
 				459DAC07243E4AF20011ECF3 /* Resources */,
 				459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */,
+				45202188244DD02F00C1A928 /* QonversionTests.m */,
 				459DAB79243E329F0011ECF3 /* Info.plist */,
 			);
 			path = QonversionTests;
@@ -232,7 +235,7 @@
 		459DABEC243E35BC0011ECF3 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				459DAC12243E61BF0011ECF3 /* QonversionCheckResult */,
+				45BA20412444BA490046E6C9 /* QonversionCheckResult */,
 				459DAC11243E61A80011ECF3 /* RenewalProductDetails */,
 			);
 			path = Models;
@@ -275,14 +278,14 @@
 			name = RenewalProductDetails;
 			sourceTree = "<group>";
 		};
-		459DAC12243E61BF0011ECF3 /* QonversionCheckResult */ = {
+		45BA20412444BA490046E6C9 /* QonversionCheckResult */ = {
 			isa = PBXGroup;
 			children = (
 				459DABF0243E35BC0011ECF3 /* QonversionCheckResult.h */,
 				459DABF2243E35BC0011ECF3 /* QonversionCheckResult+Protected.h */,
 				459DABED243E35BC0011ECF3 /* QonversionCheckResult.m */,
 			);
-			path = QonversionCheckResult;
+			name = QonversionCheckResult;
 			sourceTree = "<group>";
 		};
 		45CC2EF1244085E4005CD107 /* .github */ = {
@@ -444,6 +447,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
+				45202189244DD02F00C1A928 /* QonversionTests.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -593,7 +597,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 1.0.0;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -621,7 +625,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 1.0.0;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";

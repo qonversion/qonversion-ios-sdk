@@ -11,8 +11,13 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
 
 @interface Qonversion : NSObject
 
-+ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack
-DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:autoTrackPurchases:completion:` method instead.");
+/**
+ Sets the environment for receipt.
+ @param debugMode        true If your app run under debug mode, default: false
+ @see [Setting Debug Mode](https://docs.qonversion.io/getting-started/debug-mode)
+ */
+
++ (void)setDebugMode:(BOOL) debugMode;
 
 /**
  Launches Qonversion SDK with the given project key, you can get one in your account on qonversion.io.
