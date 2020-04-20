@@ -21,7 +21,7 @@ static NSString * const kSDKVersion = @"1.0.0";
 
 static NSString* apiKey;
 static BOOL autoTrackPurchases;
-static BOOL debugMode = NO;
+static BOOL _debugMode = NO;
 
 // MARK: - Public
 
@@ -199,7 +199,7 @@ static BOOL debugMode = NO;
     
     NSMutableDictionary *mutableBody = body.mutableCopy;
     
-    [mutableBody setObject:[[NSNumber alloc] initWithBool:debugMode] forKey:@"debug_mode"];
+    [mutableBody setObject:[[NSNumber alloc] initWithBool:_debugMode] forKey:@"debug_mode"];
     
     [mutableBody setObject:apiKey forKey:@"access_token"];
     [mutableBody setObject:kSDKVersion forKey:@"v"];
@@ -304,7 +304,7 @@ static BOOL debugMode = NO;
 }
 
 + (void)setDebugMode:(BOOL) debugMode {
-    debugMode = debugMode;
+    _debugMode = debugMode;
 }
 
 @end

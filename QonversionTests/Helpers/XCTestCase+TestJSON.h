@@ -4,5 +4,6 @@
 
 - (id)JSONObjectFromContentsOfFile:(NSString *)filePath;
 - (id)fileDataFromContentsOfFile:(NSString *)filePath;
+- (id)JSONObjectFromData:(NSData *)data;
 
 @end
