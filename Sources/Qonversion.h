@@ -19,9 +19,6 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
 
 + (void)setDebugMode:(BOOL) debugMode;
 
-+ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack
-DEPRECATED_MSG_ATTRIBUTE("Use `launchWithKey:completion:` or `launchWithKey:autoTrackPurchases:completion:` method instead.");
-
 /**
  Launches Qonversion SDK with the given project key, you can get one in your account on qonversion.io.
  @param key - project key to setup the SDK.

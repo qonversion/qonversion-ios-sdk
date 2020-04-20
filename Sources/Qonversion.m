@@ -24,12 +24,6 @@ static BOOL autoTrackPurchases;
 
 // MARK: - Public
 
-+ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack {
-    [self launchWithKey:key autoTrackPurchases:autoTrack completion:^(NSString * _Nonnull uid) {
-        // dummy
-    }];
-}
-
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
     [self launchWithKey:key autoTrackPurchases:YES completion:completion];
 }
