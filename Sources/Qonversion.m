@@ -306,4 +306,8 @@ static BOOL autoTrackPurchases;
     return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];;
 }
 
++ (void)setDebugMode:(BOOL) debugMode {
+    
+}
+
 @end
