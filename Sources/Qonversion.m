@@ -3,7 +3,7 @@
 #import "UserInfo.h"
 #import "QonversionMapper.h"
 
-static NSString * const kBaseURL = @"https://apib.qonversion.io/";
+static NSString * const kBaseURL = @"https://api.qonversion.io/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
 static NSString * const kCheckEndpoint = @"check";
@@ -21,14 +21,9 @@ static NSString * const kSDKVersion = @"1.0.0";
 
 static NSString* apiKey;
 static BOOL autoTrackPurchases;
+static BOOL _debugMode = NO;
 
 // MARK: - Public
-
-+ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack {
-    [self launchWithKey:key autoTrackPurchases:autoTrack completion:^(NSString * _Nonnull uid) {
-        // dummy
-    }];
-}
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
     [self launchWithKey:key autoTrackPurchases:YES completion:completion];
@@ -162,6 +157,14 @@ static BOOL autoTrackPurchases;
             
         }
         
+        if (@available(iOS 13.0, *)) {
+            NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
+            
+            if (countryCode.length > 0) {
+                inappDict[@"country"] = countryCode;
+            }
+        }
+        
         NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
         
         NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
@@ -195,6 +198,8 @@ static BOOL autoTrackPurchases;
     [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
     
     NSMutableDictionary *mutableBody = body.mutableCopy;
+    
+    [mutableBody setObject:[[NSNumber alloc] initWithBool:_debugMode] forKey:@"debug_mode"];
     
     [mutableBody setObject:apiKey forKey:@"access_token"];
     [mutableBody setObject:kSDKVersion forKey:@"v"];
@@ -296,6 +301,10 @@ static BOOL autoTrackPurchases;
 
 + (NSURLSession *)session {
     return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];;
+}
+
++ (void)setDebugMode:(BOOL) debugMode {
+    _debugMode = debugMode;
 }
 
 @end

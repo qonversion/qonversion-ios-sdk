@@ -4,8 +4,8 @@
 
 - (id)JSONObjectFromContentsOfFile:(NSString *)filePath {
     NSData *fileData = [self fileDataFromContentsOfFile:filePath];
-    NSDictionary *object = [NSJSONSerialization JSONObjectWithData:fileData options:kNilOptions error:nil];
-    return object;
+    
+    return [NSJSONSerialization JSONObjectWithData:fileData options:kNilOptions error:nil];
 }
 
 - (id)fileDataFromContentsOfFile:(NSString *)filePath {
@@ -16,6 +16,10 @@
     NSString *pathToFile = [bundle pathForResource:fileName ofType:fileExtension];
     
     return [NSData dataWithContentsOfFile:pathToFile];
+}
+
+- (id)JSONObjectFromData:(NSData *)data {
+    return [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
 }
 
 @end
