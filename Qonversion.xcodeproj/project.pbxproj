@@ -8,6 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		45202189244DD02F00C1A928 /* QonversionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45202188244DD02F00C1A928 /* QonversionTests.m */; };
+		4531CBBF245778110022C422 /* QDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 4531CBBD245778110022C422 /* QDevice.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		4531CBC0245778110022C422 /* QDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBBE245778110022C422 /* QDevice.m */; };
+		4531CBC324577D770022C422 /* QConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 4531CBC124577D770022C422 /* QConstants.h */; };
+		4531CBC424577D770022C422 /* QConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC224577D770022C422 /* QConstants.m */; };
+		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
+		4531CBC824578D300022C422 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 4531CBC724578D300022C422 /* Podfile */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -54,6 +60,12 @@
 
 /* Begin PBXFileReference section */
 		45202188244DD02F00C1A928 /* QonversionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionTests.m; sourceTree = "<group>"; };
+		4531CBBD245778110022C422 /* QDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QDevice.h; sourceTree = "<group>"; };
+		4531CBBE245778110022C422 /* QDevice.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QDevice.m; sourceTree = "<group>"; };
+		4531CBC124577D770022C422 /* QConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QConstants.h; sourceTree = "<group>"; };
+		4531CBC224577D770022C422 /* QConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QConstants.m; sourceTree = "<group>"; };
+		4531CBC5245789D40022C422 /* QDeviceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QDeviceTests.m; sourceTree = "<group>"; };
+		4531CBC724578D300022C422 /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -70,7 +82,7 @@
 		459DABD8243E33C20011ECF3 /* Qonversion.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = Qonversion.modulemap; sourceTree = "<group>"; };
 		459DABDA243E33C20011ECF3 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		459DABE1243E35BC0011ECF3 /* Qonversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
-		459DABE3243E35BC0011ECF3 /* UserInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UserInfo.m; sourceTree = "<group>"; };
+		459DABE3243E35BC0011ECF3 /* UserInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = UserInfo.m; sourceTree = "<group>"; tabWidth = 4; };
 		459DABE4243E35BC0011ECF3 /* Keychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Keychain.h; sourceTree = "<group>"; };
 		459DABE5243E35BC0011ECF3 /* UserInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UserInfo.h; sourceTree = "<group>"; };
 		459DABE6243E35BC0011ECF3 /* Keychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Keychain.m; sourceTree = "<group>"; };
@@ -116,6 +128,7 @@
 		459DAB5F243E329F0011ECF3 = {
 			isa = PBXGroup;
 			children = (
+				4531CBC724578D300022C422 /* Podfile */,
 				459DAB84243E32C40011ECF3 /* Deployment */,
 				459DABD3243E33C20011ECF3 /* Framework */,
 				459DAB6B243E329F0011ECF3 /* Sources */,
@@ -143,6 +156,10 @@
 				459DABE7243E35BC0011ECF3 /* Services */,
 				459DABE1243E35BC0011ECF3 /* Qonversion.h */,
 				459DABF4243E35BC0011ECF3 /* Qonversion.m */,
+				4531CBBD245778110022C422 /* QDevice.h */,
+				4531CBBE245778110022C422 /* QDevice.m */,
+				4531CBC124577D770022C422 /* QConstants.h */,
+				4531CBC224577D770022C422 /* QConstants.m */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -155,6 +172,7 @@
 				459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */,
 				45202188244DD02F00C1A928 /* QonversionTests.m */,
 				459DAB79243E329F0011ECF3 /* Info.plist */,
+				4531CBC5245789D40022C422 /* QDeviceTests.m */,
 			);
 			path = QonversionTests;
 			sourceTree = "<group>";
@@ -311,6 +329,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4531CBC324577D770022C422 /* QConstants.h in Headers */,
 				459DABFA243E35BC0011ECF3 /* Keeper.h in Headers */,
 				459DAC03243E35BC0011ECF3 /* QonversionMapper.h in Headers */,
 				459DABF7243E35BC0011ECF3 /* Keychain.h in Headers */,
@@ -319,6 +338,7 @@
 				459DABF8243E35BC0011ECF3 /* UserInfo.h in Headers */,
 				459DAC02243E35BC0011ECF3 /* QonversionCheckResult+Protected.h in Headers */,
 				459DAC10243E5D050011ECF3 /* RenewalProductDetails+Protected.h in Headers */,
+				4531CBBF245778110022C422 /* QDevice.h in Headers */,
 				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
 				459DAC00243E35BC0011ECF3 /* QonversionCheckResult.h in Headers */,
 			);
@@ -374,6 +394,7 @@
 				TargetAttributes = {
 					459DAB68243E329F0011ECF3 = {
 						CreatedOnToolsVersion = 11.3.1;
+						LastSwiftMigration = 1140;
 					};
 					459DAB71243E329F0011ECF3 = {
 						CreatedOnToolsVersion = 11.3.1;
@@ -403,6 +424,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4531CBC824578D300022C422 /* Podfile in Resources */,
 				459DAB9A243E333C0011ECF3 /* README.md in Resources */,
 				459DABA6243E33470011ECF3 /* Appfile in Resources */,
 				459DABA8243E33470011ECF3 /* report.xml in Resources */,
@@ -437,7 +459,9 @@
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
 				459DABFB243E35BC0011ECF3 /* Keeper.m in Sources */,
 				459DABFE243E35BC0011ECF3 /* RenewalProductDetails.m in Sources */,
+				4531CBC0245778110022C422 /* QDevice.m in Sources */,
 				459DABFC243E35BC0011ECF3 /* QonversionMapper.m in Sources */,
+				4531CBC424577D770022C422 /* QConstants.m in Sources */,
 				459DABF9243E35BC0011ECF3 /* Keychain.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -447,6 +471,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
+				4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */,
 				45202189244DD02F00C1A928 /* QonversionTests.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
 			);
@@ -582,6 +607,7 @@
 		459DAB7E243E329F0011ECF3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -603,6 +629,8 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -610,6 +638,7 @@
 		459DAB7F243E329F0011ECF3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -631,6 +660,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
