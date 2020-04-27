@@ -12,24 +12,4 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface NSBundle(Dict)
-
-- (NSString *)name;
-- (NSString *)version;
-- (NSString *)build;
-
-@end
-
-@interface UIScreen(Size)
-
-- (CGSize)size;
-
-@end
-
-@interface UIDevice(Model)
-
-- (NSString *)model;
-
-@end
-
 NS_ASSUME_NONNULL_END
