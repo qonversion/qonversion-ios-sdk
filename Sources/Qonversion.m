@@ -1,6 +1,7 @@
 #import "Qonversion.h"
 #import "Keeper.h"
 #import "UserInfo.h"
+#import "QConstants.h"
 #import "QonversionMapper.h"
 
 static NSString * const kBaseURL = @"https://api.qonversion.io/";
@@ -8,7 +9,6 @@ static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
 static NSString * const kCheckEndpoint = @"check";
 static NSString * const kAttributionEndpoint = @"attribution";
-static NSString * const kSDKVersion = @"1.0.0";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -37,9 +37,11 @@ static BOOL _debugMode = NO;
 + (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack completion:(nullable void (^)(NSString *uid))completion {
     apiKey = key;
     autoTrackPurchases = autoTrack;
+    
     if (autoTrack) {
         [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
     }
+    
     NSURLRequest *request = [self makePostRequestWithEndpoint:kInitEndpoint andBody:@{@"d": UserInfo.overallData}];
     [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
         if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
@@ -72,12 +74,28 @@ static BOOL _debugMode = NO;
     double delayInSeconds = 3.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     
-    dispatch_after(popTime,  dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+    dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         NSMutableDictionary *body = @{@"d": UserInfo.overallData}.mutableCopy;
         
-        if (provider == QAttributionProviderAppsFlyer) {
-            body[@"provider_data"] = @{@"provider": @"appsflyer", @"d": data, @"uid": uid ?: @""};
+        NSMutableDictionary *providerData = [NSMutableDictionary new];
+        
+        switch (provider) {
+            case QAttributionProviderAppsFlyer:
+                [providerData setValue:@"appsflyer" forKey:@"provider"];
+                break;
+            case QAttributionProviderAdjust:
+                [providerData setValue:@"adjust" forKey:@"provider"];
+                break;
+            case QAttributionProviderBranch:
+                [providerData setValue:@"branch" forKey:@"provider"];
+                break;
         }
+        
+        NSString *_uid = uid ?: @"";
+        [providerData setValue:data forKey:@"d"];
+        [providerData setValue:_uid forKey:@"uid"];
+        
+        [body setValue:providerData forKey:@"provider_data"];
         
         NSURLRequest *request = [self makePostRequestWithEndpoint:kAttributionEndpoint andBody:body];
         
@@ -202,7 +220,7 @@ static BOOL _debugMode = NO;
     [mutableBody setObject:[[NSNumber alloc] initWithBool:_debugMode] forKey:@"debug_mode"];
     
     [mutableBody setObject:apiKey forKey:@"access_token"];
-    [mutableBody setObject:kSDKVersion forKey:@"v"];
+    [mutableBody setObject:keyQVersion forKey:@"v"];
     if (Keeper.userID && Keeper.userID.length > 2) {
         [mutableBody setObject:Keeper.userID forKey:@"client_uid"];
     }

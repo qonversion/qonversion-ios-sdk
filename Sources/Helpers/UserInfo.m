@@ -12,11 +12,6 @@
 
 @implementation UserInfo
 
-+ (nullable NSBundle *)bundle {
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"appStoreReceiptURL != nil"];
-    return [NSBundle.allBundles filteredArrayUsingPredicate:predicate].firstObject;
-}
-
 + (NSDictionary *)overallData {
     QDevice *device = [[QDevice alloc] init];
     
