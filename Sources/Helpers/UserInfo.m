@@ -24,8 +24,9 @@
         [overallDict setValue:device.appVersion forKey:@"appVersion"];
     }
     
-    [overallDict setValue:[UserInfo appStoreReceipt] ?: @"" forKey:@"receipt"];
-    
+    if ([UserInfo appStoreReceipt]) {
+        [overallDict setValue:[UserInfo appStoreReceipt] forKey:@"receipt"];
+    }
     
     NSMutableDictionary *deviceDict = [NSMutableDictionary new];
     NSMutableDictionary *osDict = [NSMutableDictionary new];
