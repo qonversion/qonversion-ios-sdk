@@ -12,6 +12,7 @@
 @property (readonly, strong, nonatomic) NSString *country;
 
 @property (readonly, strong, nonatomic) NSString *language;
+@property (readonly, strong, nonatomic) NSString *timezone;
 @property (readonly, strong, nonatomic) NSString *advertiserID;
 @property (readonly, strong, nonatomic) NSString *vendorID;
 

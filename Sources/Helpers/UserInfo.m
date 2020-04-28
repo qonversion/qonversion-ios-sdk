@@ -14,32 +14,74 @@
 
 + (NSDictionary *)overallData {
     QDevice *device = [[QDevice alloc] init];
+    NSMutableDictionary *overallDict = [NSMutableDictionary new];
     
-    NSDictionary *overallDict = @{
-        @"internalUserID": [self internalUserID],
-        @"appVersion": device.appVersion,
-        @"receipt": [UserInfo appStoreReceipt] ?: @"",
-        @"device": @{
-                    @"os": @{
-                            @"name": device.osName,
-                            @"version": device.osVersion,
-                            @"manufacturer": device.manufacturer
-                    },
-                    @"ads": @{
-                            // Need to replace with public method
-                            @"trackingEnabled": @"1",
-                            @"IDFA": device.advertiserID,
-                    },
-                    @"deviceId": device.vendorID,
-                    @"model": device.model,
-                    @"carrier": device.carrier,
-                    @"locale": device.language,
-                    @"country": device.country,
-                    @"timezone": NSTimeZone.localTimeZone.name
-            }
-    };
+    if ([self internalUserID]) {
+        [overallDict setValue:[self internalUserID] forKey:@"internalUserID"];
+    }
     
-    return overallDict.copy;
+    if (device.appVersion) {
+        [overallDict setValue:device.appVersion forKey:@"appVersion"];
+    }
+    
+    [overallDict setValue:[UserInfo appStoreReceipt] ?: @"" forKey:@"receipt"];
+    
+    
+    NSMutableDictionary *deviceDict = [NSMutableDictionary new];
+    NSMutableDictionary *osDict = [NSMutableDictionary new];
+    
+    
+    if (device.osName) {
+        [osDict setValue:device.osName forKey:@"name"];
+    }
+    
+    if (device.osVersion) {
+        [osDict setValue:device.osVersion forKey:@"version"];
+    }
+    
+    if (device.manufacturer) {
+        [osDict setValue:device.manufacturer forKey:@"manufacturer"];
+    }
+    
+    [deviceDict setValue:osDict.copy forKey:@"os"];
+    
+    NSMutableDictionary *adsDict = [NSMutableDictionary new];
+
+    // Need to replace with public method
+    [adsDict setValue:@"1" forKey:@"trackingEnabled"];
+    if (device.advertiserID) {
+        [adsDict setValue:device.advertiserID forKey:@"IDFA"];
+    }
+    
+    [deviceDict setValue:adsDict.copy forKey:@"ads"];
+    
+    if (device.vendorID) {
+        [deviceDict setValue:device.vendorID forKey:@"deviceId"];
+    }
+    
+    if (device.model) {
+        [deviceDict setValue:device.model forKey:@"model"];
+    }
+    
+    if (device.carrier) {
+        [deviceDict setValue:device.carrier forKey:@"carrier"];
+    }
+    
+    if (device.language) {
+        [deviceDict setValue:device.language forKey:@"locale"];
+    }
+    
+    if (device.country) {
+        [deviceDict setValue:device.country forKey:@"country"];
+    }
+    
+    if (device.timezone) {
+        [deviceDict setValue:device.timezone forKey:@"timezone"];
+    }
+    
+    [overallDict setValue:deviceDict forKey:@"device"];
+    
+    return overallDict;
 }
 
 + (nullable NSString *)appStoreReceipt {
