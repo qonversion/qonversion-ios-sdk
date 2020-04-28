@@ -15,7 +15,6 @@
 		4531CBC424577D770022C422 /* QConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC224577D770022C422 /* QConstants.m */; };
 		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
 		4531CBC824578D300022C422 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 4531CBC724578D300022C422 /* Podfile */; };
-		4531CBCA2457F6E00022C422 /* QUserInfoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC92457F6E00022C422 /* QUserInfoTests.m */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -242,9 +241,9 @@
 		459DABE2243E35BC0011ECF3 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				459DABE5243E35BC0011ECF3 /* UserInfo.h */,
 				459DABE3243E35BC0011ECF3 /* UserInfo.m */,
 				459DABE4243E35BC0011ECF3 /* Keychain.h */,
-				459DABE5243E35BC0011ECF3 /* UserInfo.h */,
 				459DABE6243E35BC0011ECF3 /* Keychain.m */,
 			);
 			path = Helpers;
@@ -525,7 +524,6 @@
 			files = (
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
 				4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */,
-				4531CBCA2457F6E00022C422 /* QUserInfoTests.m in Sources */,
 				45202189244DD02F00C1A928 /* QonversionTests.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
 			);
