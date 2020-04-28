@@ -6,7 +6,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSInteger, QAttributionProvider) {
     QAttributionProviderAppsFlyer = 0,
-    QAttributionProviderBranch
+    QAttributionProviderBranch,
+    QAttributionProviderAdjust
 };
 
 @interface Qonversion : NSObject
