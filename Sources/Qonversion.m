@@ -129,7 +129,7 @@ static BOOL _debugMode = NO;
 
 + (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSURL *receipt = UserInfo.appStoreReceipt;
+        NSString *receipt = UserInfo.appStoreReceipt;
         if (!receipt) {
             return;
         }
