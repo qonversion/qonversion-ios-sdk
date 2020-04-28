@@ -15,7 +15,7 @@
 + (NSDictionary *)overallData {
     QDevice *device = [[QDevice alloc] init];
     
-    NSMutableDictionary *overallDict = @{
+    NSDictionary *overallDict = @{
         @"internalUserID": [self internalUserID],
         @"appVersion": device.appVersion,
         @"receipt": [UserInfo appStoreReceipt] ?: @"",
