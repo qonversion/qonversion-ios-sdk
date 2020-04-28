@@ -18,6 +18,7 @@
     NSMutableDictionary *overallDict = @{
         @"internalUserID": [self internalUserID],
         @"appVersion": device.appVersion,
+        @"receipt": [UserInfo appStoreReceipt] ?: @"",
         @"device": @{
                     @"os": @{
                             @"name": device.osName,
@@ -41,12 +42,29 @@
     return overallDict.copy;
 }
 
++ (nullable NSString *)appStoreReceipt {
+    NSURL *receiptURL = UserInfo.bundle.appStoreReceiptURL;
+    
+    if (!receiptURL) {
+        return NULL;
+    }
+
+    NSString *receipt = [[NSData dataWithContentsOfURL:receiptURL] base64EncodedStringWithOptions:0];
+    
+    return receipt ?: @"";
+}
+
 + (void)saveInternalUserID:(nonnull NSString *)uid {
     [[NSUserDefaults standardUserDefaults] setObject:uid forKey:keyQInternalUserID];
 }
 
 + (NSString *)internalUserID {
     return [[NSUserDefaults standardUserDefaults] stringForKey:keyQInternalUserID] ?: @"";
+}
+
++ (nullable NSBundle *)bundle {
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"appStoreReceiptURL != nil"];
+    return [NSBundle.allBundles filteredArrayUsingPredicate:predicate].firstObject;
 }
 
 @end

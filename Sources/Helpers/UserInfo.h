@@ -3,8 +3,10 @@
 @interface UserInfo : NSObject
 
 + (nullable NSBundle *)bundle;
-+ (NSDictionary *)overallData;
++ (nonnull NSDictionary *)overallData;
 
 + (void)saveInternalUserID:(nonnull NSString *)uid;
+
++ (nullable NSString *)appStoreReceipt;
 
 @end

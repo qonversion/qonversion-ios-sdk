@@ -129,8 +129,8 @@ static BOOL _debugMode = NO;
 
 + (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSURL *receiptURL = UserInfo.bundle.appStoreReceiptURL;
-        if (!receiptURL) {
+        NSURL *receipt = UserInfo.appStoreReceipt;
+        if (!receipt) {
             return;
         }
         
@@ -144,10 +144,8 @@ static BOOL _debugMode = NO;
             currency = [formatter stringFromNumber:product.price];
         }
         
-        NSString *receipt = [[NSData dataWithContentsOfURL:receiptURL] base64EncodedStringWithOptions:0];
-        
         NSMutableDictionary *inappDict = @{@"product": product.productIdentifier,
-                                           @"receipt": receipt ?: @"",
+                                           @"receipt": receipt,
                                            @"transactionIdentifier": transaction.transactionIdentifier ?: @"",
                                            @"originalTransactionIdentifier": transaction.originalTransaction.transactionIdentifier ?: @"",
                                            @"currency": currency,
