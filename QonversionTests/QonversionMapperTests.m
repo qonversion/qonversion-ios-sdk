@@ -1,7 +1,7 @@
 #import <XCTest/XCTest.h>
+
 #import "QonversionMapper.h"
 #import "Helpers/XCTestCase+TestJSON.h"
-
 
 static NSString *JSONWithActiveProduct = @"check_result_with_active_product.json";
 static NSString *JSONWithoutProducts = @"check_restul_without_products.json";
