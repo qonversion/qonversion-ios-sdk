@@ -18,36 +18,36 @@
 @synthesize advertiserID = _advertiserID;
 @synthesize vendorID = _vendorID;
 
-- (NSString*)osName {
+- (NSString *)osName {
     return keyQOSName;
 }
 
-- (NSString*)appVersion {
+- (NSString *)appVersion {
     if (!_appVersion) {
         _appVersion = [[[NSBundle mainBundle] infoDictionary] valueForKey:@"CFBundleShortVersionString"];
     }
     return _appVersion;
 }
 
-- (NSString*)osVersion {
+- (NSString *)osVersion {
     if (!_osVersion) {
         _osVersion = [[UIDevice currentDevice] systemVersion];
     }
     return _osVersion;
 }
 
-- (NSString*)manufacturer {
+- (NSString *)manufacturer {
     return @"Apple";
 }
 
-- (NSString*)model {
+- (NSString *)model {
     if (!_model) {
         _model = [QDevice getDeviceModel];
     }
     return _model;
 }
 
-- (NSString*)carrier {
+- (NSString *)carrier {
     if (!_carrier) {
         Class CTTelephonyNetworkInfo = NSClassFromString(@"CTTelephonyNetworkInfo");
         SEL subscriberCellularProvider = NSSelectorFromString(@"subscriberCellularProvider");
@@ -72,7 +72,7 @@
     return _carrier;
 }
 
-- (NSString*)country {
+- (NSString *)country {
     if (!_country) {
         _country = [[NSLocale localeWithLocaleIdentifier:@"en_US"] displayNameForKey: NSLocaleCountryCode
                                                                                value: [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode]];
@@ -80,7 +80,11 @@
     return _country;
 }
 
-- (NSString*)language {
+- (NSString *)timezone {
+    return NSTimeZone.localTimeZone.name;
+}
+
+- (NSString *)language {
     if (!_language) {
         _language = [[NSLocale localeWithLocaleIdentifier:@"en_US"] displayNameForKey: NSLocaleLanguageCode
                                                                                 value: [[NSLocale preferredLanguages] objectAtIndex:0]];
@@ -88,7 +92,7 @@
     return _language;
 }
 
-- (NSString*)advertiserID {
+- (NSString *)advertiserID {
     if (!_advertiserID) {
         NSString *advertiserId = [QDevice getAdvertiserID:5];
         if (advertiserId != nil &&
@@ -100,7 +104,7 @@
 }
 
 
-- (NSString*)vendorID {
+- (NSString *)vendorID {
     if (!_vendorID) {
         NSString *identifierForVendor = [QDevice getVendorID:5];
         if (identifierForVendor != nil &&
