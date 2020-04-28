@@ -8,6 +8,7 @@
 @interface Qonversion (Tests)
 
 + (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint andBody:(NSDictionary *)body;
+
 @end
 
 @interface QonversionTests : XCTestCase
