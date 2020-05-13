@@ -219,8 +219,11 @@ static BOOL _debugMode = NO;
     
     [mutableBody setObject:apiKey forKey:@"access_token"];
     [mutableBody setObject:keyQVersion forKey:@"v"];
-    if (Keeper.userID && Keeper.userID.length > 2) {
-        [mutableBody setObject:Keeper.userID forKey:@"client_uid"];
+    
+    NSString *clientUID = Keeper.userID;
+    
+    if (clientUID && clientUID.length > 2) {
+        [mutableBody setObject:clientUID forKey:@"client_uid"];
     }
     
     NSURL *docsURL = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
