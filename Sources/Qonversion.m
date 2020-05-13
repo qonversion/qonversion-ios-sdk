@@ -222,7 +222,7 @@ static BOOL _debugMode = NO;
     
     NSString *clientUID = Keeper.userID;
     
-    if (clientUID && clientUID.length > 2) {
+    if (clientUID) {
         [mutableBody setObject:clientUID forKey:@"client_uid"];
     }
     
