@@ -67,4 +67,9 @@
     XCTAssertEqualObjects(@"English", _device.language);
 }
 
+- (void)testAfUserID {
+    XCTAssertNil(_device.af_UserID);
+    XCTAssertNil(_device.adjust_UserID);
+}
+
 @end

@@ -1,4 +1,4 @@
-#import "QBlocksHelpers.h"
+#import "QUtils.h"
 #import <Foundation/Foundation.h>
 
 @protocol QLocalStorage <NSObject>
@@ -21,5 +21,7 @@
 @optional
 - (void)setVersion:(NSString *)version;
 - (NSString *)version;
+
+- (void)clear;
 
 @end

@@ -103,6 +103,44 @@
     return _advertiserID;
 }
 
+- (nullable NSString *)af_UserID {
+    Class AppsFlyerTracker = NSClassFromString(@"AppsFlyerTracker");
+    SEL sharedTracker = NSSelectorFromString(@"sharedTracker");
+    SEL getAppsFlyerUID = NSSelectorFromString(@"getAppsFlyerUID");
+    if (AppsFlyerTracker && sharedTracker && getAppsFlyerUID) {
+        id (*imp1)(id, SEL) = (id (*)(id, SEL))[AppsFlyerTracker methodForSelector:sharedTracker];
+        id tracker = nil;
+        NSString *appsFlyerUID = nil;
+        if (imp1) {
+            tracker = imp1(AppsFlyerTracker, sharedTracker);
+        }
+        
+        NSString* (*imp2)(id, SEL) = (NSString* (*)(id, SEL))[tracker methodForSelector:getAppsFlyerUID];
+        if (imp2) {
+            appsFlyerUID = imp2(tracker, getAppsFlyerUID);
+        }
+        
+        return appsFlyerUID;
+    }
+    
+    return NULL;
+}
+
+- (nullable NSString *)adjust_UserID {
+    Class Adjust = NSClassFromString(@"Adjust");
+    SEL adid = NSSelectorFromString(@"adid");
+    if (Adjust && adid) {
+        id (*imp1)(id, SEL) = (id (*)(id, SEL))[Adjust methodForSelector:adid];
+        NSString *adidString = nil;
+        if (imp1) {
+            adidString = imp1(Adjust, adid);
+        }
+        
+        return adidString;
+    }
+    
+    return NULL;
+}
 
 - (NSString *)vendorID {
     if (!_vendorID) {

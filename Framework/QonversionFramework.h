@@ -10,6 +10,7 @@
 #endif
 #endif
 
+#import "QUtils.h"
 #import "Qonversion.h"
 #import "RenewalProductDetails.h"
 #import "QonversionCheckResult.h"

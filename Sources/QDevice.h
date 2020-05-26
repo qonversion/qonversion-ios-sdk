@@ -16,4 +16,7 @@
 @property (readonly, strong, nonatomic) NSString *advertiserID;
 @property (readonly, strong, nonatomic) NSString *vendorID;
 
+@property (readonly, strong, nonatomic) NSString *af_UserID;
+@property (readonly, strong, nonatomic) NSString *adjust_UserID;
+
 @end

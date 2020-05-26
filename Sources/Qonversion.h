@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
 #import "QonversionCheckResult.h"
+#import "QonversionProperties.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -18,7 +19,22 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
  @see [Setting Debug Mode](https://docs.qonversion.io/getting-started/debug-mode)
  */
 
-+ (void)setDebugMode:(BOOL) debugMode;
++ (void)setDebugMode:(BOOL)debugMode;
+
+/**
+ Sets Qonversion reservered user properties, like email or one-signal id
+ @param property        Defined enum key that will ber transformed to string
+ @param value               Property value
+ */
++ (void)setProperty:(QProperty)property value:(NSString *)value;
+
+/**
+ Sets custom user properties
+ @param property        Defined enum key that will ber transformed to string
+ @param value               Property value
+ */
++ (void)setUserProperty:(NSString *)property value:(NSString *)value;
+
 
 /**
  Launches Qonversion SDK with the given project key, you can get one in your account on qonversion.io.
@@ -52,6 +68,12 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
  */
 + (void)trackPurchase:(nonnull SKProduct *)product transaction:(nonnull SKPaymentTransaction *)transaction;
 
+
++ (void)checkUser:(void(^)(QonversionCheckResult *result))result
+          failure:(QonversionCheckFailer)failure;
+
+#pragma mark - Deprecated methods
+
 /**
  Send your attribution data
  @param data Dictionary received by the provider
@@ -60,11 +82,16 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
  */
 + (void)addAttributionData:(NSDictionary *)data
               fromProvider:(QAttributionProvider)provider
-                    userID:(nullable NSString *)uid;
+                    userID:(nullable NSString *)uid
+                    __deprecated_msg("Use addAttributionData:fromProvider: instead");
 
-
-+ (void)checkUser:(void(^)(QonversionCheckResult *result))result
-          failure:(QonversionCheckFailer)failure;
+/**
+ Send your attribution data
+ @param data Dictionary received by the provider
+ @param provider Attribution provider
+ */
++ (void)addAttributionData:(NSDictionary *)data
+              fromProvider:(QAttributionProvider)provider;
 
 
 @end

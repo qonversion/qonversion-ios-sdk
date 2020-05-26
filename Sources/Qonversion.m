@@ -3,17 +3,34 @@
 #import "UserInfo.h"
 #import "QConstants.h"
 #import "QonversionMapper.h"
+#import "QInMemoryStorage.h"
+
+#import <net/if.h>
+#import <net/if_dl.h>
+#import <sys/socket.h>
+#import <sys/sysctl.h>
+#import <sys/types.h>
+
+#import <UIKit/UIKit.h>
 
 static NSString * const kBaseURL = @"https://api.qonversion.io/";
 static NSString * const kInitEndpoint = @"init";
 static NSString * const kPurchaseEndpoint = @"purchase";
 static NSString * const kCheckEndpoint = @"check";
+static NSString * const kPropertiesEndpoint = @"v1/properties";
 static NSString * const kAttributionEndpoint = @"attribution";
+static NSString  *const kBackgrounQueueName = @"qonversion.background.queue.name";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
 @property (nonatomic, readonly) NSMutableDictionary *transactions;
 @property (nonatomic, readonly) NSMutableDictionary *productRequests;
+
+@property (nonatomic, strong) NSOperationQueue *backgroundQueue;
+@property (nonatomic) QInMemoryStorage *storage;
+
+@property (nonatomic, assign, readwrite) BOOL sendingScheduled;
+@property (nonatomic, assign, readwrite) BOOL updatingCurrently;
 
 @end
 
@@ -63,10 +80,20 @@ static BOOL _debugMode = NO;
 
 + (void)trackPurchase:(nonnull SKProduct *)product transaction:(nonnull SKPaymentTransaction *)transaction {
     if (autoTrackPurchases) {
-        NSLog(@"'autoTrackPurchases' enabled in `launchWithKey:autoTrackPurchases`, so manual 'trackPurchase:transaction:' just won't send duplicate data");
+        QONVERSION_LOG(@"'autoTrackPurchases' enabled in `launchWithKey:autoTrackPurchases`, so manual 'trackPurchase:transaction:' just won't send duplicate data");
         return;
     }
     [self serviceLogPurchase:product transaction:transaction];
+}
+
++ (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider {
+    // @TODO
+    
+}
+
++ (void)checkUser:(void(^)(QonversionCheckResult *result))result
+          failure:(QonversionCheckFailer)failure {
+    [self tryTocheckUser:result failure:failure attempt:0];
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
@@ -101,30 +128,10 @@ static BOOL _debugMode = NO;
         
         [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-                NSLog(@"Attribution Request Log Response:\n%@", dict);
+                QONVERSION_LOG(@"Attribution Request Log Response:\n%@", dict);
             }
         }];
     });
-}
-
-// MARK: - Private
-
-- (instancetype)init {
-    self = super.init;
-    if (self) {
-        _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
-        _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
-    }
-    return self;
-}
-
-+ (instancetype)sharedInstance {
-    static id shared = nil;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        shared = self.new;
-    });
-    return shared;
 }
 
 + (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
@@ -186,7 +193,7 @@ static BOOL _debugMode = NO;
         NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
         [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-                NSLog(@"Qonversion Purchase Log Response:\n%@", dict);
+                QONVERSION_LOG(@"Qonversion Purchase Log Response:\n%@", dict);
             }
         }];
     });
@@ -277,11 +284,6 @@ static BOOL _debugMode = NO;
     [self.productRequests removeObjectForKey:product.productIdentifier];
 }
 
-+ (void)checkUser:(void(^)(QonversionCheckResult *result))result
-          failure:(QonversionCheckFailer)failure {
-    [self tryTocheckUser:result failure:failure attempt:0];
-}
-
 + (void)tryTocheckUser:(void(^)(QonversionCheckResult *result))result
                failure:(QonversionCheckFailer)failure
                attempt:(NSInteger)attempt {
@@ -324,6 +326,136 @@ static BOOL _debugMode = NO;
 
 + (void)setDebugMode:(BOOL) debugMode {
     _debugMode = debugMode;
+}
+
++ (void)setProperty:(QProperty)property value:(NSString *)value {
+    NSString *key = [QonversionProperties keyForProperty:property];
+    
+    if (key) {
+        [self setUserProperty:key value:value];
+    }
+}
+
++ (void)setUserProperty:(NSString *)property value:(NSString *)value {
+    
+    if ([QonversionProperties checkProperty:property] && [QonversionProperties checkValue:value]) {
+        [[Qonversion sharedInstance].storage storeObject:value forKey:property];
+        [[Qonversion sharedInstance] sendPropertiesWithDelay:kQPropertiesSendingPeriodInSeconds];
+    }
+}
+
+// MARK: - Private
+
++ (instancetype)sharedInstance {
+    static id shared = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        shared = self.new;
+    });
+    
+    [shared addObservers];
+    
+    return shared;
+}
+
+- (void)addObservers {
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self
+               selector:@selector(enterBackground)
+                   name:UIApplicationDidEnterBackgroundNotification
+                 object:nil];
+}
+
+- (void)removeObservers {
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
+}
+
+- (void)dealloc {
+    [self removeObservers];
+}
+
+- (void)enterBackground {
+    [self sendPropertiesInBackground];
+}
+
+- (instancetype)init {
+    self = super.init;
+    if (self) {
+        _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
+        _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
+        _storage = [[QInMemoryStorage alloc] init];
+        _updatingCurrently = NO;
+        
+        _backgroundQueue = [[NSOperationQueue alloc] init];
+        [_backgroundQueue setMaxConcurrentOperationCount:1];
+        [_backgroundQueue setSuspended:NO];
+        
+        _backgroundQueue.name = kBackgrounQueueName;
+    }
+    return self;
+}
+
+- (void)sendPropertiesWithDelay:(int)delay {
+    if (!_sendingScheduled) {
+        _sendingScheduled = YES;
+        __block __weak Qonversion *weakSelf = self;
+        [_backgroundQueue addOperationWithBlock:^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf performSelector:@selector(sendPropertiesInBackground) withObject:nil afterDelay:delay];
+            });
+        }];
+    }
+}
+
+- (void)sendPropertiesInBackground {
+    _sendingScheduled = NO;
+    [self sendProperties];
+}
+
+- (void)sendProperties {
+    if ([QUtils isEmptyString:apiKey]) {
+        QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
+        return;
+    }
+
+    @synchronized (self) {
+        if (_updatingCurrently) {
+            return;
+        }
+        _updatingCurrently = YES;
+    }
+    
+    [self runOnBackgroundQueue:^{
+        NSDictionary *properties = [_storage.storageDictionary copy];
+        
+        if (properties.count == 0) {
+            self->_updatingCurrently = NO;
+            return;
+        }
+        
+        NSURLRequest *request = [Qonversion makePostRequestWithEndpoint:kPropertiesEndpoint andBody:@{@"properties": properties}];
+        __block __weak Qonversion *weakSelf = self;
+        
+        [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+            if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
+                QONVERSION_LOG(@"Properties Request Log Response:\n%@", dict);
+            }
+            [weakSelf.storage clear];
+            weakSelf.updatingCurrently = NO;
+        }];
+    }];
+}
+
+- (BOOL)runOnBackgroundQueue:(void (^)(void))block {
+    if ([[NSOperationQueue currentQueue].name isEqualToString:kBackgrounQueueName]) {
+        QONVERSION_LOG(@"Already running in the background.");
+        block();
+        return NO;
+    } else {
+        [_backgroundQueue addOperationWithBlock:block];
+        return YES;
+    }
 }
 
 @end
