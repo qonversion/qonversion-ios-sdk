@@ -20,3 +20,5 @@ typedef NS_ENUM(NSInteger, QProperty) {
 extern NSString *const keyQPropertyFacebookAnonUserID;
 extern NSString *const keyQPropertyAppsFlyerUserID;
 extern NSString *const keyQPropertyAdjustADID;
+
+extern NSString *const keyQDummyAdvertiserID;
