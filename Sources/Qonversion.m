@@ -472,6 +472,11 @@ static BOOL _debugMode = NO;
     [self runOnBackgroundQueue:^{
         NSDictionary *properties = [_storage.storageDictionary copy];
         
+        if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
+            self->_updatingCurrently = NO;
+            return;
+        }
+        
         if (properties.count == 0) {
             self->_updatingCurrently = NO;
             return;
