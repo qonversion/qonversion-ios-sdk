@@ -411,7 +411,14 @@ static BOOL _debugMode = NO;
 }
 
 - (void)collectIntegrationsData {
-    // @TODO
+    __block __weak Qonversion *weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf performSelector:@selector(collectIntegrationsDataInBackground) withObject:nil afterDelay:5];
+    });
+}
+
+- (void)collectIntegrationsDataInBackground {
+    
 }
 
 - (void)enterBackground {
