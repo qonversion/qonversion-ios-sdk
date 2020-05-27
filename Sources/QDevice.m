@@ -103,6 +103,83 @@
     return _advertiserID;
 }
 
+- (nullable NSString *)af_userID {
+    Class AppsFlyerTracker = NSClassFromString(@"AppsFlyerTracker");
+    SEL sharedTracker = NSSelectorFromString(@"sharedTracker");
+    SEL getAppsFlyerUID = NSSelectorFromString(@"getAppsFlyerUID");
+    if (AppsFlyerTracker && sharedTracker && getAppsFlyerUID) {
+        id (*imp1)(id, SEL) = (id (*)(id, SEL))[AppsFlyerTracker methodForSelector:sharedTracker];
+        id tracker = nil;
+        NSString *appsFlyerUID = nil;
+        if (imp1) {
+            tracker = imp1(AppsFlyerTracker, sharedTracker);
+        }
+        
+        NSString* (*imp2)(id, SEL) = (NSString* (*)(id, SEL))[tracker methodForSelector:getAppsFlyerUID];
+        if (imp2) {
+            appsFlyerUID = imp2(tracker, getAppsFlyerUID);
+        }
+        
+        return appsFlyerUID;
+    }
+    
+    return nil;
+}
+
+- (nullable NSString *)fb_anonID {
+    NSString *advertiserId = [QDevice getAdvertiserID:2];
+    
+    if (advertiserId && ![advertiserId isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
+        return nil;
+    } else {
+        Class FBSDKAppEvents = NSClassFromString(@"FBSDKAppEvents");
+        SEL anonymousID = NSSelectorFromString(@"anonymousID");
+        if (FBSDKAppEvents && anonymousID) {
+            id (*imp1)(id, SEL) = (id (*)(id, SEL))[FBSDKAppEvents methodForSelector:anonymousID];
+            NSString *anonID = nil;
+            if (imp1) {
+                anonID = imp1(FBSDKAppEvents, anonymousID);
+            }
+            
+            if (anonID) {
+                return anonID;
+            }
+        }
+        
+        Class FBSDKBasicUtility = NSClassFromString(@"FBSDKBasicUtility");
+        SEL FBSDKBasicUtilityanonymousID = NSSelectorFromString(@"anonymousID");
+        
+        if (FBSDKBasicUtility && FBSDKBasicUtilityanonymousID) {
+            id (*imp1)(id, SEL) = (id (*)(id, SEL))[FBSDKBasicUtility methodForSelector:FBSDKBasicUtilityanonymousID];
+            NSString *anonID = nil;
+            if (imp1) {
+                anonID = imp1(FBSDKBasicUtility, FBSDKBasicUtilityanonymousID);
+            }
+            
+            if (anonID) {
+                return anonID;
+            }
+        }
+    }
+    
+    return nil;
+}
+
+- (nullable NSString *)adjust_userID {
+    Class Adjust = NSClassFromString(@"Adjust");
+    SEL adid = NSSelectorFromString(@"adid");
+    if (Adjust && adid) {
+        id (*imp1)(id, SEL) = (id (*)(id, SEL))[Adjust methodForSelector:adid];
+        NSString *adidString = nil;
+        if (imp1) {
+            adidString = imp1(Adjust, adid);
+        }
+        
+        return adidString;
+    }
+    
+    return nil;
+}
 
 - (NSString *)vendorID {
     if (!_vendorID) {

@@ -16,6 +16,14 @@
 		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
 		4531CBC824578D300022C422 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 4531CBC724578D300022C422 /* Podfile */; };
 		4531CBCB24581BD80022C422 /* QUserInfoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC92457F6E00022C422 /* QUserInfoTests.m */; };
+		454BE211247C2BB4001FE771 /* QInMemoryStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE20F247C2BB4001FE771 /* QInMemoryStorage.h */; };
+		454BE212247C2BB4001FE771 /* QInMemoryStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE210247C2BB4001FE771 /* QInMemoryStorage.m */; };
+		454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */; };
+		454BE22A247C3E72001FE771 /* QonversionProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE228247C3E72001FE771 /* QonversionProperties.h */; };
+		454BE22B247C3E72001FE771 /* QonversionProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE229247C3E72001FE771 /* QonversionProperties.m */; };
+		454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */; };
+		454BE230247C4AD8001FE771 /* QUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE22E247C4AD8001FE771 /* QUtils.h */; };
+		454BE231247C4AD8001FE771 /* QUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22F247C4AD8001FE771 /* QUtils.m */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -69,6 +77,15 @@
 		4531CBC5245789D40022C422 /* QDeviceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QDeviceTests.m; sourceTree = "<group>"; };
 		4531CBC724578D300022C422 /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		4531CBC92457F6E00022C422 /* QUserInfoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QUserInfoTests.m; sourceTree = "<group>"; };
+		454BE20F247C2BB4001FE771 /* QInMemoryStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QInMemoryStorage.h; sourceTree = "<group>"; };
+		454BE210247C2BB4001FE771 /* QInMemoryStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QInMemoryStorage.m; sourceTree = "<group>"; };
+		454BE213247C2BCE001FE771 /* QLocalStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QLocalStorage.h; sourceTree = "<group>"; };
+		454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QInMemoryStorageTests.m; sourceTree = "<group>"; };
+		454BE228247C3E72001FE771 /* QonversionProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = QonversionProperties.h; path = Sources/QonversionProperties.h; sourceTree = SOURCE_ROOT; };
+		454BE229247C3E72001FE771 /* QonversionProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = QonversionProperties.m; path = Sources/QonversionProperties.m; sourceTree = SOURCE_ROOT; };
+		454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPropertiesTests.m; sourceTree = "<group>"; };
+		454BE22E247C4AD8001FE771 /* QUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QUtils.h; sourceTree = "<group>"; };
+		454BE22F247C4AD8001FE771 /* QUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QUtils.m; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -141,6 +158,32 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		454BE20D247C2B78001FE771 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				454BE213247C2BCE001FE771 /* QLocalStorage.h */,
+				454BE20E247C2B81001FE771 /* QInMemoryStorage */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		454BE20E247C2B81001FE771 /* QInMemoryStorage */ = {
+			isa = PBXGroup;
+			children = (
+				454BE20F247C2BB4001FE771 /* QInMemoryStorage.h */,
+				454BE210247C2BB4001FE771 /* QInMemoryStorage.m */,
+			);
+			path = QInMemoryStorage;
+			sourceTree = "<group>";
+		};
+		454BE219247C2EF7001FE771 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
 		459DAB5F243E329F0011ECF3 = {
 			isa = PBXGroup;
 			children = (
@@ -169,6 +212,7 @@
 		459DAB6B243E329F0011ECF3 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				454BE20D247C2B78001FE771 /* Storage */,
 				459DABEA243E35BC0011ECF3 /* Network */,
 				459DABE2243E35BC0011ECF3 /* Helpers */,
 				459DABE7243E35BC0011ECF3 /* Services */,
@@ -185,6 +229,7 @@
 		459DAB76243E329F0011ECF3 /* QonversionTests */ = {
 			isa = PBXGroup;
 			children = (
+				454BE219247C2EF7001FE771 /* Storage */,
 				459DAC0A243E4D420011ECF3 /* Helpers */,
 				459DAC07243E4AF20011ECF3 /* Resources */,
 				459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */,
@@ -192,6 +237,7 @@
 				459DAB79243E329F0011ECF3 /* Info.plist */,
 				4531CBC5245789D40022C422 /* QDeviceTests.m */,
 				4531CBC92457F6E00022C422 /* QUserInfoTests.m */,
+				454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */,
 			);
 			path = QonversionTests;
 			sourceTree = "<group>";
@@ -242,10 +288,14 @@
 		459DABE2243E35BC0011ECF3 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				454BE228247C3E72001FE771 /* QonversionProperties.h */,
+				454BE229247C3E72001FE771 /* QonversionProperties.m */,
 				459DABE5243E35BC0011ECF3 /* UserInfo.h */,
 				459DABE3243E35BC0011ECF3 /* UserInfo.m */,
 				459DABE4243E35BC0011ECF3 /* Keychain.h */,
 				459DABE6243E35BC0011ECF3 /* Keychain.m */,
+				454BE22E247C4AD8001FE771 /* QUtils.h */,
+				454BE22F247C4AD8001FE771 /* QUtils.m */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -356,16 +406,19 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				454BE230247C4AD8001FE771 /* QUtils.h in Headers */,
 				4531CBC324577D770022C422 /* QConstants.h in Headers */,
 				459DABFA243E35BC0011ECF3 /* Keeper.h in Headers */,
 				459DAC03243E35BC0011ECF3 /* QonversionMapper.h in Headers */,
 				459DABF7243E35BC0011ECF3 /* Keychain.h in Headers */,
+				454BE211247C2BB4001FE771 /* QInMemoryStorage.h in Headers */,
 				459DAC01243E35BC0011ECF3 /* RenewalProductDetails.h in Headers */,
 				459DABF5243E35BC0011ECF3 /* Qonversion.h in Headers */,
 				459DABF8243E35BC0011ECF3 /* UserInfo.h in Headers */,
 				459DAC02243E35BC0011ECF3 /* QonversionCheckResult+Protected.h in Headers */,
 				459DAC10243E5D050011ECF3 /* RenewalProductDetails+Protected.h in Headers */,
 				4531CBBF245778110022C422 /* QDevice.h in Headers */,
+				454BE22A247C3E72001FE771 /* QonversionProperties.h in Headers */,
 				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
 				459DAC00243E35BC0011ECF3 /* QonversionCheckResult.h in Headers */,
 			);
@@ -508,10 +561,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				459DABFD243E35BC0011ECF3 /* QonversionCheckResult.m in Sources */,
+				454BE231247C4AD8001FE771 /* QUtils.m in Sources */,
+				454BE22B247C3E72001FE771 /* QonversionProperties.m in Sources */,
 				459DABF6243E35BC0011ECF3 /* UserInfo.m in Sources */,
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
 				459DABFB243E35BC0011ECF3 /* Keeper.m in Sources */,
 				459DABFE243E35BC0011ECF3 /* RenewalProductDetails.m in Sources */,
+				454BE212247C2BB4001FE771 /* QInMemoryStorage.m in Sources */,
 				4531CBC0245778110022C422 /* QDevice.m in Sources */,
 				459DABFC243E35BC0011ECF3 /* QonversionMapper.m in Sources */,
 				4531CBC424577D770022C422 /* QConstants.m in Sources */,
@@ -524,6 +580,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
+				454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */,
+				454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */,
 				4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */,
 				4531CBCB24581BD80022C422 /* QUserInfoTests.m in Sources */,
 				45202189244DD02F00C1A928 /* QonversionTests.m in Sources */,
@@ -677,7 +735,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.1.0;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -708,7 +766,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.1.0;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
