@@ -10,8 +10,11 @@
         case QPropertyEmail:
             key = @"_q_email";
             break;
-        case QPropertyOnesignalUserID:
-            key = @"_q_onesignal_id";
+        case QPropertyName:
+            key = @"_q_name";
+            break;
+        case QPropertyPremium:
+            key = @"_q_premium";
             break;
     }
     
