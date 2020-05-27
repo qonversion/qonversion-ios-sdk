@@ -461,7 +461,7 @@ static BOOL _debugMode = NO;
         QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
         return;
     }
-
+    
     @synchronized (self) {
         if (_updatingCurrently) {
             return;
@@ -484,7 +484,11 @@ static BOOL _debugMode = NO;
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Properties Request Log Response:\n%@", dict);
             }
-            [weakSelf.storage clear];
+            
+            for (NSString *key in properties.allKeys) {
+                [weakSelf.storage removeObjectForKey:key];
+            }
+            
             weakSelf.updatingCurrently = NO;
         }];
     }];
