@@ -19,7 +19,7 @@ static NSString * const kPurchaseEndpoint = @"purchase";
 static NSString * const kCheckEndpoint = @"check";
 static NSString * const kPropertiesEndpoint = @"v1/properties";
 static NSString * const kAttributionEndpoint = @"attribution";
-static NSString  *const kBackgrounQueueName = @"qonversion.background.queue.name";
+static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -41,6 +41,10 @@ static BOOL autoTrackPurchases;
 static BOOL _debugMode = NO;
 
 // MARK: - Public
+
++ (void)setDebugMode:(BOOL) debugMode {
+    _debugMode = debugMode;
+}
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
     [self launchWithKey:key autoTrackPurchases:YES completion:completion];
@@ -324,10 +328,6 @@ static BOOL _debugMode = NO;
     return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];;
 }
 
-+ (void)setDebugMode:(BOOL) debugMode {
-    _debugMode = debugMode;
-}
-
 + (void)setProperty:(QProperty)property value:(NSString *)value {
     NSString *key = [QonversionProperties keyForProperty:property];
     
@@ -358,6 +358,23 @@ static BOOL _debugMode = NO;
     return shared;
 }
 
+- (instancetype)init {
+    self = super.init;
+    if (self) {
+        _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
+        _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
+        _storage = [[QInMemoryStorage alloc] init];
+        _updatingCurrently = NO;
+        
+        _backgroundQueue = [[NSOperationQueue alloc] init];
+        [_backgroundQueue setMaxConcurrentOperationCount:1];
+        [_backgroundQueue setSuspended:NO];
+        
+        _backgroundQueue.name = kBackgrounQueueName;
+    }
+    return self;
+}
+
 - (void)addObservers {
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self
@@ -375,25 +392,12 @@ static BOOL _debugMode = NO;
     [self removeObservers];
 }
 
-- (void)enterBackground {
-    [self sendPropertiesInBackground];
+- (void)collectIntegrationsData {
+    // @TODO
 }
 
-- (instancetype)init {
-    self = super.init;
-    if (self) {
-        _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
-        _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
-        _storage = [[QInMemoryStorage alloc] init];
-        _updatingCurrently = NO;
-        
-        _backgroundQueue = [[NSOperationQueue alloc] init];
-        [_backgroundQueue setMaxConcurrentOperationCount:1];
-        [_backgroundQueue setSuspended:NO];
-        
-        _backgroundQueue.name = kBackgrounQueueName;
-    }
-    return self;
+- (void)enterBackground {
+    [self sendPropertiesInBackground];
 }
 
 - (void)sendPropertiesWithDelay:(int)delay {
@@ -435,8 +439,8 @@ static BOOL _debugMode = NO;
         }
         
         NSURLRequest *request = [Qonversion makePostRequestWithEndpoint:kPropertiesEndpoint andBody:@{@"properties": properties}];
-        __block __weak Qonversion *weakSelf = self;
         
+        __block __weak Qonversion *weakSelf = self;
         [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Properties Request Log Response:\n%@", dict);

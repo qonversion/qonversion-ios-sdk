@@ -123,7 +123,46 @@
         return appsFlyerUID;
     }
     
-    return NULL;
+    return nil;
+}
+
+- (nullable NSString *)fb_anonID {
+    NSString *advertiserId = [QDevice getAdvertiserID:2];
+    
+    if (advertiserId) {
+        return nil;
+    } else {
+        Class FBSDKAppEvents = NSClassFromString(@"FBSDKAppEvents");
+        SEL anonymousID = NSSelectorFromString(@"anonymousID");
+        if (FBSDKAppEvents && anonymousID) {
+            id (*imp1)(id, SEL) = (id (*)(id, SEL))[FBSDKAppEvents methodForSelector:anonymousID];
+            NSString *anonID = nil;
+            if (imp1) {
+                anonID = imp1(FBSDKAppEvents, anonymousID);
+            }
+            
+            if (anonID) {
+                return anonID;
+            }
+        }
+        
+        Class FBSDKBasicUtility = NSClassFromString(@"FBSDKBasicUtility");
+        SEL FBSDKBasicUtilityanonymousID = NSSelectorFromString(@"anonymousID");
+        
+        if (FBSDKBasicUtility && FBSDKBasicUtilityanonymousID) {
+            id (*imp1)(id, SEL) = (id (*)(id, SEL))[FBSDKBasicUtility methodForSelector:FBSDKBasicUtilityanonymousID];
+            NSString *anonID = nil;
+            if (imp1) {
+                anonID = imp1(FBSDKBasicUtility, FBSDKBasicUtilityanonymousID);
+            }
+            
+            if (anonID) {
+                return anonID;
+            }
+        }
+    }
+    
+    return nil;
 }
 
 - (nullable NSString *)adjust_UserID {
@@ -139,7 +178,7 @@
         return adidString;
     }
     
-    return NULL;
+    return nil;
 }
 
 - (NSString *)vendorID {
