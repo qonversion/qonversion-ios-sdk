@@ -419,7 +419,6 @@ static BOOL _debugMode = NO;
 
 - (void)collectIntegrationsDataInBackground {
     NSString *adjust_UserID = _device.adjust_UserID;
-    
     if (![QUtils isEmptyString:adjust_UserID]) {
         [Qonversion setProperty:keyQPropertyAdjustADID value:adjust_UserID];
     }
