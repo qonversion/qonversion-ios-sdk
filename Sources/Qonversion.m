@@ -370,8 +370,6 @@ static BOOL _debugMode = NO;
         shared = self.new;
     });
     
-    [shared addObservers];
-    [shared collectIntegrationsData];
     return shared;
 }
 
@@ -389,6 +387,9 @@ static BOOL _debugMode = NO;
         [_backgroundQueue setSuspended:NO];
         
         _backgroundQueue.name = kBackgrounQueueName;
+        
+        [self addObservers];
+        [self collectIntegrationsData];
     }
     return self;
 }
