@@ -103,7 +103,7 @@
     return _advertiserID;
 }
 
-- (nullable NSString *)af_UserID {
+- (nullable NSString *)af_userID {
     Class AppsFlyerTracker = NSClassFromString(@"AppsFlyerTracker");
     SEL sharedTracker = NSSelectorFromString(@"sharedTracker");
     SEL getAppsFlyerUID = NSSelectorFromString(@"getAppsFlyerUID");
@@ -165,7 +165,7 @@
     return nil;
 }
 
-- (nullable NSString *)adjust_UserID {
+- (nullable NSString *)adjust_userID {
     Class Adjust = NSClassFromString(@"Adjust");
     SEL adid = NSSelectorFromString(@"adid");
     if (Adjust && adid) {

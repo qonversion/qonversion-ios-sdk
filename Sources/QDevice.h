@@ -16,8 +16,8 @@
 @property (readonly, strong, nonatomic) NSString *advertiserID;
 @property (readonly, strong, nonatomic) NSString *vendorID;
 
-@property (readonly, strong, nonatomic) NSString *af_UserID;
-@property (readonly, strong, nonatomic) NSString *adjust_UserID;
+@property (readonly, strong, nonatomic) NSString *af_userID;
+@property (readonly, strong, nonatomic) NSString *adjust_userID;
 @property (readonly, strong, nonatomic) NSString *fb_anonID;
 
 @end

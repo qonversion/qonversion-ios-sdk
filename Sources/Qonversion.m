@@ -131,7 +131,7 @@ static BOOL _debugMode = NO;
         } else {
             /** Temporary workaround for keep backward compatibility  */
             /** Recommend to remove after moving all clients to version > 1.0.4 */
-            NSString *af_uid = [[Qonversion sharedInstance] device].af_UserID;
+            NSString *af_uid = [[Qonversion sharedInstance] device].af_userID;
             if (af_uid && provider == QAttributionProviderAppsFlyer) {
                 _uid = af_uid;
             }
@@ -419,9 +419,9 @@ static BOOL _debugMode = NO;
 }
 
 - (void)collectIntegrationsDataInBackground {
-    NSString *adjust_UserID = _device.adjust_UserID;
-    if (![QUtils isEmptyString:adjust_UserID]) {
-        [Qonversion setUserProperty:keyQPropertyAdjustADID value:adjust_UserID];
+    NSString *adjust_userID = _device.adjust_userID;
+    if (![QUtils isEmptyString:adjust_userID]) {
+        [Qonversion setUserProperty:keyQPropertyAdjustADID value:adjust_userID];
     }
     
     NSString *fb_anonID = _device.fb_anonID;
@@ -429,9 +429,9 @@ static BOOL _debugMode = NO;
         [Qonversion setUserProperty:keyQPropertyFacebookAnonUserID value:fb_anonID];
     }
     
-    NSString *af_UserID = _device.af_UserID;
-    if (![QUtils isEmptyString:af_UserID]) {
-        [Qonversion setUserProperty:keyQPropertyAppsFlyerUserID value:af_UserID];
+    NSString *af_userID = _device.af_userID;
+    if (![QUtils isEmptyString:af_userID]) {
+        [Qonversion setUserProperty:keyQPropertyAppsFlyerUserID value:af_userID];
     }
 }
 
