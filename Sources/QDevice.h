@@ -18,5 +18,6 @@
 
 @property (readonly, strong, nonatomic) NSString *af_UserID;
 @property (readonly, strong, nonatomic) NSString *adjust_UserID;
+@property (readonly, strong, nonatomic) NSString *fb_anonID;
 
 @end

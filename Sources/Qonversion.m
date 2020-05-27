@@ -4,6 +4,7 @@
 #import "QConstants.h"
 #import "QonversionMapper.h"
 #import "QInMemoryStorage.h"
+#import "QDevice.h"
 
 #import <net/if.h>
 #import <net/if_dl.h>
@@ -28,6 +29,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
 @property (nonatomic) QInMemoryStorage *storage;
+
+@property (nonatomic, strong) QDevice *device;
 
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
@@ -91,8 +94,7 @@ static BOOL _debugMode = NO;
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider {
-    // @TODO
-    
+    [self addAttributionData:data fromProvider:provider];
 }
 
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
@@ -122,9 +124,24 @@ static BOOL _debugMode = NO;
                 break;
         }
         
-        NSString *_uid = uid ?: @"";
+        NSString *_uid = nil;
+        
+        if (uid) {
+            _uid = uid;
+        } else {
+            /** Temporary workaround for keep backward compatibility  */
+            /** Recommend to remove after moving all clients to version > 1.0.4 */
+            NSString *af_uid = [[Qonversion sharedInstance] device].af_UserID;
+            if (af_uid && provider == QAttributionProviderAppsFlyer) {
+                _uid = af_uid;
+            }
+        }
+        
         [providerData setValue:data forKey:@"d"];
-        [providerData setValue:_uid forKey:@"uid"];
+        
+        if (_uid) {
+            [providerData setValue:_uid forKey:@"uid"];
+        }
         
         [body setValue:providerData forKey:@"provider_data"];
         
@@ -365,6 +382,7 @@ static BOOL _debugMode = NO;
         _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
         _storage = [[QInMemoryStorage alloc] init];
         _updatingCurrently = NO;
+        _device = [[QDevice alloc] init];
         
         _backgroundQueue = [[NSOperationQueue alloc] init];
         [_backgroundQueue setMaxConcurrentOperationCount:1];
