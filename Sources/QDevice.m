@@ -96,7 +96,7 @@
     if (!_advertiserID) {
         NSString *advertiserId = [QDevice getAdvertiserID:5];
         if (advertiserId != nil &&
-            ![advertiserId isEqualToString:keyQDummyAdvertiserID]) {
+            ![advertiserId isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
             _advertiserID = advertiserId;
         }
     }
@@ -129,7 +129,7 @@
 - (nullable NSString *)fb_anonID {
     NSString *advertiserId = [QDevice getAdvertiserID:2];
     
-    if (advertiserId && ![advertiserId isEqualToString:keyQDummyAdvertiserID]) {
+    if (advertiserId && ![advertiserId isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
         return nil;
     } else {
         Class FBSDKAppEvents = NSClassFromString(@"FBSDKAppEvents");
@@ -185,7 +185,7 @@
     if (!_vendorID) {
         NSString *identifierForVendor = [QDevice getVendorID:5];
         if (identifierForVendor != nil &&
-            ![identifierForVendor isEqualToString:keyQDummyAdvertiserID]) {
+            ![identifierForVendor isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
             _vendorID = identifierForVendor;
         }
     }

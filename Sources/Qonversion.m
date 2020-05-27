@@ -420,17 +420,17 @@ static BOOL _debugMode = NO;
 - (void)collectIntegrationsDataInBackground {
     NSString *adjust_UserID = _device.adjust_UserID;
     if (![QUtils isEmptyString:adjust_UserID]) {
-        [Qonversion setProperty:keyQPropertyAdjustADID value:adjust_UserID];
+        [Qonversion setUserProperty:keyQPropertyAdjustADID value:adjust_UserID];
     }
     
     NSString *fb_anonID = _device.fb_anonID;
     if (![QUtils isEmptyString:fb_anonID]) {
-        [Qonversion setProperty:keyQPropertyFacebookAnonUserID value:fb_anonID];
+        [Qonversion setUserProperty:keyQPropertyFacebookAnonUserID value:fb_anonID];
     }
     
     NSString *af_UserID = _device.af_UserID;
     if (![QUtils isEmptyString:af_UserID]) {
-        [Qonversion setProperty:keyQPropertyAppsFlyerUserID value:af_UserID];
+        [Qonversion setUserProperty:keyQPropertyAppsFlyerUserID value:af_UserID];
     }
 }
 

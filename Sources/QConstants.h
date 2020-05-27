@@ -21,4 +21,3 @@ extern NSString *const keyQPropertyFacebookAnonUserID;
 extern NSString *const keyQPropertyAppsFlyerUserID;
 extern NSString *const keyQPropertyAdjustADID;
 
-extern NSString *const keyQDummyAdvertiserID;
