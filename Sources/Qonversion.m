@@ -356,8 +356,7 @@ static BOOL _debugMode = NO;
 + (void)setUserProperty:(NSString *)property value:(NSString *)value {
     
     if ([QonversionProperties checkProperty:property] && [QonversionProperties checkValue:value]) {
-        [[Qonversion sharedInstance].storage storeObject:value forKey:property];
-        [[Qonversion sharedInstance] sendPropertiesWithDelay:kQPropertiesSendingPeriodInSeconds];
+        [[Qonversion sharedInstance] setUserProperty:property value:value];
     }
 }
 
@@ -392,6 +391,13 @@ static BOOL _debugMode = NO;
         [self collectIntegrationsData];
     }
     return self;
+}
+
+- (void)setUserProperty:(NSString *)property value:(NSString *)value {
+    [self runOnBackgroundQueue:^{
+        [self->_storage storeObject:value forKey:property];
+        [self sendPropertiesWithDelay:kQPropertiesSendingPeriodInSeconds];
+    }];
 }
 
 - (void)addObservers {
@@ -470,7 +476,7 @@ static BOOL _debugMode = NO;
     }
     
     [self runOnBackgroundQueue:^{
-        NSDictionary *properties = [_storage.storageDictionary copy];
+        NSDictionary *properties = [self->_storage.storageDictionary copy];
         
         if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
             self->_updatingCurrently = NO;
@@ -489,13 +495,21 @@ static BOOL _debugMode = NO;
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Properties Request Log Response:\n%@", dict);
             }
-            
-            for (NSString *key in properties.allKeys) {
-                [weakSelf.storage removeObjectForKey:key];
-            }
-            
             weakSelf.updatingCurrently = NO;
+            [weakSelf clearProperties:properties];
         }];
+    }];
+}
+
+- (void)clearProperties:(NSDictionary *)properties {
+    [self runOnBackgroundQueue:^{
+        if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
+            return;
+        }
+        
+        for (NSString *key in properties.allKeys) {
+            [self->_storage removeObjectForKey:key];
+        }
     }];
 }
 
