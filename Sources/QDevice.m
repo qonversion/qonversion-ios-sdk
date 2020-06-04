@@ -137,7 +137,7 @@
         if (FBSDKAppEvents && anonymousID) {
             id (*imp1)(id, SEL) = (id (*)(id, SEL))[FBSDKAppEvents methodForSelector:anonymousID];
             NSString *anonID = nil;
-            if (imp1) {
+            if (imp1 && [FBSDKAppEvents respondsToSelector:anonymousID]) {
                 anonID = imp1(FBSDKAppEvents, anonymousID);
             }
             
