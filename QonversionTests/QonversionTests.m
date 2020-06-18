@@ -21,7 +21,12 @@
     [super setUp];
     
     // Set default value before
+    [Qonversion launchWithKey:@"test_key"];
     [Qonversion setDebugMode:NO];
+}
+
+- (void)testThatQonversionLauch {
+    XCTAssertNotNil(@"");
 }
 
 @end

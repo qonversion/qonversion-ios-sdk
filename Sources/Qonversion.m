@@ -66,29 +66,34 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 - (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-    NSURLRequest *request = [_requestBuilder makeInitRequestWith:@{@"d": UserInfo.overallData}];
-    
-    [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
-            return;
-        }
-        NSDictionary *dataDict = [dict valueForKey:@"data"];
-        if (!dataDict || ![dataDict respondsToSelector:@selector(valueForKey:)]) {
-            return;
-        }
-        NSString *uid = [dataDict valueForKey:@"client_uid"];
-        if (uid && [uid isKindOfClass:NSString.class]) {
-            Keeper.userID = uid;
-            if (completion) {
-                completion(uid);
+    [self runOnBackgroundQueue:^{
+        NSURLRequest *request = [_requestBuilder makeInitRequestWith:@{@"d": UserInfo.overallData}];
+        [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+            if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
+                return;
             }
-        }
+            NSDictionary *dataDict = [dict valueForKey:@"data"];
+            if (!dataDict || ![dataDict respondsToSelector:@selector(valueForKey:)]) {
+                return;
+            }
+            NSString *uid = [dataDict valueForKey:@"client_uid"];
+            if (uid && [uid isKindOfClass:NSString.class]) {
+                Keeper.userID = uid;
+                if (completion) {
+                    completion(uid);
+                }
+            }
+        }];
     }];
 }
 
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
           failure:(QonversionCheckFailer)failure {
-    [[Qonversion sharedInstance] tryTocheckUser:result failure:failure attempt:0];
+
+    __block __weak Qonversion *weakSelf = [Qonversion sharedInstance];
+    [[Qonversion sharedInstance] runOnBackgroundQueue:^{
+        [weakSelf checkUser:result failure:failure];
+    }];
 }
 
 + (void)setProperty:(QProperty)property value:(NSString *)value {
@@ -276,22 +281,12 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     [self.productRequests removeObjectForKey:product.productIdentifier];
 }
 
-- (void)tryTocheckUser:(void(^)(QonversionCheckResult *result))result
-               failure:(QonversionCheckFailer)failure
-               attempt:(NSInteger)attempt {
-    if (attempt >= 5) {
-        failure([QonversionMapper error:@"Could not init user" code:QErrorCodeFailedReceiveData]);
-        return;
-    }
+- (void)checkUser:(void(^)(QonversionCheckResult *result))result
+               failure:(QonversionCheckFailer)failure {
     
-    if (Keeper.userID.length == 0) {
-        double delayInSeconds = 1.0;
-        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-        
-        dispatch_after(popTime,  dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-            NSInteger nextAttempt = attempt + 1;
-            [self tryTocheckUser:result failure:failure attempt:nextAttempt];
-        });
+    NSString *userID = Keeper.userID;
+    if ([QUtils isEmptyString:userID]) {
+        failure([QonversionMapper error:@"Could not init user" code:QErrorCodeFailedReceiveData]);
         return;
     }
     
