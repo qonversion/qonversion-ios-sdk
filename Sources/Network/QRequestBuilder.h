@@ -2,6 +2,8 @@
 
 @interface QRequestBuilder : NSObject
 
+- (instancetype)initWithKey:(NSString *)key;
+
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters;

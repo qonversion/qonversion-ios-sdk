@@ -49,12 +49,13 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 + (void)launchWithKey:(nonnull NSString *)key userID:(nonnull NSString *)uid {
-    [UserInfo saveInternalUserID: uid];
+    [UserInfo saveInternalUserID:uid];
     [self launchWithKey:key completion:NULL];
 }
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
     [Qonversion sharedInstance]->_apiKey = key;
+    [Qonversion sharedInstance]->_requestBuilder = [[QRequestBuilder alloc] initWithKey:key];
     
     [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
     [[Qonversion sharedInstance] launchWithKey:key completion:completion];
