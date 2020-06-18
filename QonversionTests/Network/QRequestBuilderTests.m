@@ -16,24 +16,27 @@
 }
 
 - (void)testThatInitRequestBuilderSetCorrectURL {
-    NSURLRequest *initRequest = [_requestBuilder makeInitRequestWith:@{}];
+    NSURLRequest *request = [_requestBuilder makeInitRequestWith:@{}];
+    XCTAssertNotNil(request);
     
-    XCTAssertNotNil(initRequest.URL);
-    XCTAssertEqualObjects(initRequest.URL.absoluteString, @"https://api.qonversion.io/v1/user/init");
+    XCTAssertNotNil(request.URL);
+    XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/v1/user/init");
 }
 
 - (void)testThatPurchaseRequestBuilderSetCorrectURL {
-    NSURLRequest *initRequest = [_requestBuilder makePurchaseRequestWith:@{}];
+    NSURLRequest *request = [_requestBuilder makePurchaseRequestWith:@{}];
+    XCTAssertNotNil(request);
     
-    XCTAssertNotNil(initRequest.URL);
-    XCTAssertEqualObjects(initRequest.URL.absoluteString, @"https://api.qonversion.io/purchase");
+    XCTAssertNotNil(request.URL);
+    XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/purchase");
 }
 
 - (void)testThatCheckRequestBuilderSetCorrectURL {
-    NSURLRequest *initRequest = [_requestBuilder makeCheckRequest];
+    NSURLRequest *request = [_requestBuilder makeCheckRequest];
+    XCTAssertNotNil(request);
     
-    XCTAssertNotNil(initRequest.URL);
-    XCTAssertEqualObjects(initRequest.URL.absoluteString, @"https://api.qonversion.io/check");
+    XCTAssertNotNil(request.URL);
+    XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/check");
 }
 
 @end
