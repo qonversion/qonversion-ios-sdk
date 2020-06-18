@@ -17,11 +17,7 @@
     NSMutableDictionary *overallDict = [NSMutableDictionary new];
     
     if ([self internalUserID]) {
-        [overallDict setValue:[self internalUserID] forKey:@"internalUserID"];
-    }
-    
-    if (device.appVersion) {
-        [overallDict setValue:device.appVersion forKey:@"appVersion"];
+        [overallDict setValue:[self internalUserID] forKey:@"custom_uid"];
     }
     
     if ([UserInfo appStoreReceipt]) {
@@ -29,35 +25,32 @@
     }
     
     NSMutableDictionary *deviceDict = [NSMutableDictionary new];
-    NSMutableDictionary *osDict = [NSMutableDictionary new];
-    
     
     if (device.osName) {
-        [osDict setValue:device.osName forKey:@"name"];
+        [deviceDict setValue:device.osName forKey:@"os"];
     }
     
     if (device.osVersion) {
-        [osDict setValue:device.osVersion forKey:@"version"];
+        [deviceDict setValue:device.osVersion forKey:@"os_version"];
     }
     
     if (device.manufacturer) {
-        [osDict setValue:device.manufacturer forKey:@"manufacturer"];
+        [deviceDict setValue:device.manufacturer forKey:@"manufacturer"];
     }
-    
-    [deviceDict setValue:osDict.copy forKey:@"os"];
-    
-    NSMutableDictionary *adsDict = [NSMutableDictionary new];
 
     // Need to replace with public method
-    [adsDict setValue:@"1" forKey:@"trackingEnabled"];
+    [deviceDict setValue:@"1" forKey:@"tracking_enabled"];
+    
     if (device.advertiserID) {
-        [adsDict setValue:device.advertiserID forKey:@"IDFA"];
+        [deviceDict setValue:device.advertiserID forKey:@"advertiser_id"];
     }
     
-    [deviceDict setValue:adsDict.copy forKey:@"ads"];
+    if (device.appVersion) {
+        [deviceDict setValue:device.appVersion forKey:@"app_version"];
+    }
     
     if (device.vendorID) {
-        [deviceDict setValue:device.vendorID forKey:@"deviceId"];
+        [deviceDict setValue:device.vendorID forKey:@"device_id"];
     }
     
     if (device.model) {

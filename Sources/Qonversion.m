@@ -15,7 +15,7 @@
 #import <UIKit/UIKit.h>
 
 static NSString * const kBaseURL = @"https://api.qonversion.io/";
-static NSString * const kInitEndpoint = @"init";
+static NSString * const kInitEndpoint = @"v1/user/init";
 static NSString * const kPurchaseEndpoint = @"purchase";
 static NSString * const kCheckEndpoint = @"check";
 static NSString * const kPropertiesEndpoint = @"v1/properties";
@@ -63,6 +63,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
     
     NSURLRequest *request = [self makePostRequestWithEndpoint:kInitEndpoint andBody:@{@"d": UserInfo.overallData}];
+    
     [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
         if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
             return;
@@ -237,8 +238,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     NSString *apiKey = [Qonversion sharedInstance].apiKey;
     if ([QUtils isEmptyString:apiKey]) {
         QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
-    } else {
-        [mutableBody setObject:apiKey forKey:@"access_token"];
+    } else {[mutableBody setObject:apiKey forKey:@"access_token"];
     }
     
     [mutableBody setObject:keyQVersion forKey:@"v"];
