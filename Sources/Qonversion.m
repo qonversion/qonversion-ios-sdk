@@ -35,17 +35,17 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
 
+@property (nonatomic, assign) BOOL debugMode;
+@property (nonatomic, strong) NSString *apiKey;
+
 @end
 
 @implementation Qonversion
 
-static NSString* apiKey;
-static BOOL _debugMode = NO;
-
 // MARK: - Public
 
 + (void)setDebugMode:(BOOL) debugMode {
-    _debugMode = debugMode;
+    [Qonversion sharedInstance]->_debugMode = debugMode;
 }
 
 + (void)launchWithKey:(nonnull NSString *)key {
@@ -58,7 +58,7 @@ static BOOL _debugMode = NO;
 }
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-    apiKey = key;
+    [Qonversion sharedInstance]->_apiKey = key;
     
     [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
     
@@ -223,6 +223,7 @@ static BOOL _debugMode = NO;
 }
 
 + (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint andBody:(NSDictionary *)body {
+    
     NSURL *url = [NSURL.alloc initWithString:[kBaseURL stringByAppendingString:endpoint]];
     
     NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:url];
@@ -231,9 +232,15 @@ static BOOL _debugMode = NO;
     
     NSMutableDictionary *mutableBody = body.mutableCopy;
     
-    [mutableBody setObject:[[NSNumber alloc] initWithBool:_debugMode] forKey:@"debug_mode"];
+    [mutableBody setObject:[[NSNumber alloc] initWithBool:[Qonversion sharedInstance].debugMode] forKey:@"debug_mode"];
     
-    [mutableBody setObject:apiKey forKey:@"access_token"];
+    NSString *apiKey = [Qonversion sharedInstance].apiKey;
+    if ([QUtils isEmptyString:apiKey]) {
+        QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
+    } else {
+        [mutableBody setObject:apiKey forKey:@"access_token"];
+    }
+    
     [mutableBody setObject:keyQVersion forKey:@"v"];
     
     NSString *clientUID = Keeper.userID;
@@ -367,6 +374,7 @@ static BOOL _debugMode = NO;
         _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
         _storage = [[QInMemoryStorage alloc] init];
         _updatingCurrently = NO;
+        _debugMode = NO;
         _device = [[QDevice alloc] init];
         
         _backgroundQueue = [[NSOperationQueue alloc] init];
@@ -451,7 +459,7 @@ static BOOL _debugMode = NO;
 }
 
 - (void)sendProperties {
-    if ([QUtils isEmptyString:apiKey]) {
+    if ([QUtils isEmptyString:[Qonversion sharedInstance].apiKey]) {
         QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
         return;
     }
