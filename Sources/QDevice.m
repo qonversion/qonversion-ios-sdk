@@ -10,6 +10,7 @@
 }
 
 @synthesize model = _model;
+@synthesize installDate = _installDate;
 @synthesize osVersion = _osVersion;
 @synthesize appVersion = _appVersion;
 @synthesize carrier = _carrier;
@@ -48,17 +49,18 @@
 }
 
 - (nullable NSString *)installDate {
-
-    NSURL *docsURL = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
-    if (docsURL) {
-        NSDictionary *docsAttributes = [NSFileManager.defaultManager attributesOfItemAtPath:docsURL.path error:nil];
-        NSDate *date = docsAttributes.fileCreationDate;
-        if (date) {
-            return [NSString stringWithFormat:@"%ld", (long)round(date.timeIntervalSince1970)];
+    if (!_installDate) {
+        NSURL *docsURL = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
+        if (docsURL) {
+            NSDictionary *docsAttributes = [NSFileManager.defaultManager attributesOfItemAtPath:docsURL.path error:nil];
+            NSDate *date = docsAttributes.fileCreationDate;
+            if (date) {
+                _installDate = [NSString stringWithFormat:@"%ld", (long)round(date.timeIntervalSince1970)];
+            }
         }
     }
-
-    return NULL;
+    
+    return _installDate;
 }
 
 - (NSString *)carrier {
