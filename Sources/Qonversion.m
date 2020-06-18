@@ -248,9 +248,6 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         [mutableBody setObject:clientUID forKey:@"client_uid"];
     }
     
-    NSString *unixTime = [NSString stringWithFormat:@"%ld", (long)round(NSDate.new.timeIntervalSince1970)];
-    [mutableBody setObject:unixTime forKey:@"launch_date"];
-    
     request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
     
     return request;
