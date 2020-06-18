@@ -6,6 +6,7 @@
 #import "QInMemoryStorage.h"
 #import "QDevice.h"
 #import "QRequestBuilder.h"
+#import "QRequestSerializer.h"
 
 #import <net/if.h>
 #import <net/if_dl.h>
@@ -24,6 +25,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
 @property (nonatomic, strong) QRequestBuilder *requestBuilder;
+@property (nonatomic, strong) QRequestSerializer *requestSerializer;
 @property (nonatomic) QInMemoryStorage *storage;
 
 @property (nonatomic, strong) QDevice *device;
@@ -67,7 +69,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 - (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
     [self runOnBackgroundQueue:^{
-        NSURLRequest *request = [_requestBuilder makeInitRequestWith:@{@"d": UserInfo.overallData}];
+        NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:@{@"d": UserInfo.overallData}];
         [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
                 return;
@@ -169,69 +171,16 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 - (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSString *receipt = UserInfo.appStoreReceipt;
-        if (!receipt) {
-            return;
-        }
-        
-        NSString *currency;
-        if (@available(iOS 10.0, *)) {
-            currency = product.priceLocale.currencyCode;
-        } else {
-            NSNumberFormatter *formatter = NSNumberFormatter.new;
-            [formatter setNumberStyle:NSNumberFormatterCurrencyISOCodeStyle];
-            [formatter setLocale:product.priceLocale];
-            currency = [formatter stringFromNumber:product.price];
-        }
-        
-        NSMutableDictionary *inappDict = @{@"product": product.productIdentifier,
-                                           @"receipt": receipt,
-                                           @"transactionIdentifier": transaction.transactionIdentifier ?: @"",
-                                           @"originalTransactionIdentifier": transaction.originalTransaction.transactionIdentifier ?: @"",
-                                           @"currency": currency,
-                                           @"value": product.price.stringValue
-        }.mutableCopy;
-        
-        if (@available(iOS 11.2, *)) {
-            if (product.subscriptionPeriod != nil) {
-                inappDict[@"subscriptionPeriodUnit"] = @(product.subscriptionPeriod.unit).stringValue;
-                inappDict[@"subscriptionPeriodNumberOfUnits"] = @(product.subscriptionPeriod.numberOfUnits).stringValue;
-            }
-            
-            if (product.introductoryPrice != nil) {
-                SKProductDiscount *introductoryPrice = product.introductoryPrice;
-                NSMutableDictionary *introductoryPriceDict = @{
-                    @"value": introductoryPrice.price.stringValue,
-                    @"numberOfPeriods": @(introductoryPrice.numberOfPeriods).stringValue,
-                    @"subscriptionPeriodNumberOfUnits": @(introductoryPrice.subscriptionPeriod.numberOfUnits).stringValue,
-                    @"subscriptionPeriodUnit": @(introductoryPrice.subscriptionPeriod.unit).stringValue,
-                    @"paymentMode": @(introductoryPrice.paymentMode).stringValue
-                }.mutableCopy;
-                
-                inappDict[@"introductoryPrice"] = introductoryPriceDict;
-            }
-            
-        }
-        
-        if (@available(iOS 13.0, *)) {
-            NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
-            
-            if (countryCode.length > 0) {
-                inappDict[@"country"] = countryCode;
-            }
-        }
-        
-        NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
-        
-        NSURLRequest *request = [[[Qonversion sharedInstance] requestBuilder] makePurchaseRequestWith:body];
+    [self runOnBackgroundQueue:^{
+        NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
+        NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
         
         [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Qonversion Purchase Log Response:\n%@", dict);
             }
         }];
-    });
+    }];
 }
 
 + (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
