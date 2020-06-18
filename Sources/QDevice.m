@@ -117,7 +117,7 @@
     return _advertiserID;
 }
 
-- (nullable NSString *)af_userID {
+- (nullable NSString *)afUserID {
     Class AppsFlyerTracker = NSClassFromString(@"AppsFlyerTracker");
     SEL sharedTracker = NSSelectorFromString(@"sharedTracker");
     SEL getAppsFlyerUID = NSSelectorFromString(@"getAppsFlyerUID");
@@ -140,7 +140,7 @@
     return nil;
 }
 
-- (nullable NSString *)fb_anonID {
+- (nullable NSString *)fbAnonID {
     NSString *advertiserId = [QDevice getAdvertiserID:2];
     
     if (advertiserId && ![advertiserId isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
@@ -179,7 +179,7 @@
     return nil;
 }
 
-- (nullable NSString *)adjust_userID {
+- (nullable NSString *)adjustUserID {
     Class Adjust = NSClassFromString(@"Adjust");
     SEL adid = NSSelectorFromString(@"adid");
     if (Adjust && adid) {

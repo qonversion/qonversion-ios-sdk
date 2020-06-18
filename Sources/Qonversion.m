@@ -120,7 +120,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         } else {
             /** Temporary workaround for keep backward compatibility  */
             /** Recommend to remove after moving all clients to version > 1.0.4 */
-            NSString *af_uid = [[Qonversion sharedInstance] device].af_userID;
+            NSString *af_uid = [[Qonversion sharedInstance] device].afUserID;
             if (af_uid && provider == QAttributionProviderAppsFlyer) {
                 _uid = af_uid;
             }
@@ -238,7 +238,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     NSString *apiKey = [Qonversion sharedInstance].apiKey;
     if ([QUtils isEmptyString:apiKey]) {
         QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
-    } else {[mutableBody setObject:apiKey forKey:@"access_token"];
+    } else {
+        [mutableBody setObject:apiKey forKey:@"access_token"];
     }
     
     NSString *clientUID = Keeper.userID;
@@ -409,19 +410,19 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 - (void)collectIntegrationsDataInBackground {
-    NSString *adjust_userID = _device.adjust_userID;
-    if (![QUtils isEmptyString:adjust_userID]) {
-        [Qonversion setUserProperty:keyQPropertyAdjustADID value:adjust_userID];
+    NSString *adjustUserID = _device.adjustUserID;
+    if (![QUtils isEmptyString:adjustUserID]) {
+        [Qonversion setUserProperty:keyQPropertyAdjustADID value:adjustUserID];
     }
     
-    NSString *fb_anonID = _device.fb_anonID;
-    if (![QUtils isEmptyString:fb_anonID]) {
-        [Qonversion setUserProperty:keyQPropertyFacebookAnonUserID value:fb_anonID];
+    NSString *fbAnonID = _device.fbAnonID;
+    if (![QUtils isEmptyString:fbAnonID]) {
+        [Qonversion setUserProperty:keyQPropertyFacebookAnonUserID value:fbAnonID];
     }
     
-    NSString *af_userID = _device.af_userID;
-    if (![QUtils isEmptyString:af_userID]) {
-        [Qonversion setUserProperty:keyQPropertyAppsFlyerUserID value:af_userID];
+    NSString *afUserID = _device.afUserID;
+    if (![QUtils isEmptyString:afUserID]) {
+        [Qonversion setUserProperty:keyQPropertyAppsFlyerUserID value:afUserID];
     }
 }
 

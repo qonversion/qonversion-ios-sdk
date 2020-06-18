@@ -68,8 +68,8 @@
 }
 
 - (void)testAfUserID {
-    XCTAssertNil(_device.af_userID);
-    XCTAssertNil(_device.adjust_userID);
+    XCTAssertNil(_device.afUserID);
+    XCTAssertNil(_device.adjustUserID);
 }
 
 @end
