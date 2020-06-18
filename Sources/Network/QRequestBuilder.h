@@ -2,8 +2,10 @@
 
 @interface QRequestBuilder : NSObject
 
-- (NSURLRequest *)makeInitRequestWithParameters:(NSDictionary *)parameters;
-
-+ (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint andBody:(NSDictionary *)body;
+- (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makeCheckRequest;
+- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters;
 
 @end

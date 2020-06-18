@@ -5,6 +5,7 @@
 #import "QonversionMapper.h"
 #import "QInMemoryStorage.h"
 #import "QDevice.h"
+#import "QRequestBuilder.h"
 
 #import <net/if.h>
 #import <net/if_dl.h>
@@ -14,12 +15,6 @@
 
 #import <UIKit/UIKit.h>
 
-static NSString * const kBaseURL = @"https://api.qonversion.io/";
-static NSString * const kInitEndpoint = @"v1/user/init";
-static NSString * const kPurchaseEndpoint = @"purchase";
-static NSString * const kCheckEndpoint = @"check";
-static NSString * const kPropertiesEndpoint = @"v1/properties";
-static NSString * const kAttributionEndpoint = @"attribution";
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
@@ -28,6 +23,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 @property (nonatomic, readonly) NSMutableDictionary *productRequests;
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
+@property (nonatomic, strong) QRequestBuilder *requestBuilder;
 @property (nonatomic) QInMemoryStorage *storage;
 
 @property (nonatomic, strong) QDevice *device;
@@ -61,10 +57,17 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     [Qonversion sharedInstance]->_apiKey = key;
     
     [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
+    [[Qonversion sharedInstance] launchWithKey:key completion:completion];
+}
+
++ (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider {
+    [Qonversion addAttributionData:data fromProvider:provider userID:nil];
+}
+
+- (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
+    NSURLRequest *request = [_requestBuilder makeInitRequestWith:@{@"d": UserInfo.overallData}];
     
-    NSURLRequest *request = [self makePostRequestWithEndpoint:kInitEndpoint andBody:@{@"d": UserInfo.overallData}];
-    
-    [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+    [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
         if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
             return;
         }
@@ -82,16 +85,31 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     }];
 }
 
-+ (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider {
-    [self addAttributionData:data fromProvider:provider userID:nil];
-}
-
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
           failure:(QonversionCheckFailer)failure {
-    [self tryTocheckUser:result failure:failure attempt:0];
+    [[Qonversion sharedInstance] tryTocheckUser:result failure:failure attempt:0];
+}
+
++ (void)setProperty:(QProperty)property value:(NSString *)value {
+    NSString *key = [QonversionProperties keyForProperty:property];
+    
+    if (key) {
+        [self setUserProperty:key value:value];
+    }
+}
+
++ (void)setUserProperty:(NSString *)property value:(NSString *)value {
+    
+    if ([QonversionProperties checkProperty:property] && [QonversionProperties checkValue:value]) {
+        [[Qonversion sharedInstance] setUserProperty:property value:value];
+    }
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
+    [[Qonversion sharedInstance]  addAttributionData:data fromProvider:provider userID:uid];
+}
+
+- (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
     
     double delayInSeconds = 3.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
@@ -120,7 +138,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         } else {
             /** Temporary workaround for keep backward compatibility  */
             /** Recommend to remove after moving all clients to version > 1.0.4 */
-            NSString *af_uid = [[Qonversion sharedInstance] device].afUserID;
+            NSString *af_uid = _device.afUserID;
             if (af_uid && provider == QAttributionProviderAppsFlyer) {
                 _uid = af_uid;
             }
@@ -134,9 +152,9 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         
         [body setValue:providerData forKey:@"provider_data"];
         
-        NSURLRequest *request = [self makePostRequestWithEndpoint:kAttributionEndpoint andBody:body];
+        NSURLRequest *request = [_requestBuilder makeAttributionRequestWith:body];
         
-        [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+        [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Attribution Request Log Response:\n%@", dict);
             }
@@ -200,7 +218,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         
         NSDictionary *body = @{@"inapp": inappDict, @"d": UserInfo.overallData};
         
-        NSURLRequest *request = [self makePostRequestWithEndpoint:kPurchaseEndpoint andBody:body];
+        NSURLRequest *request = [[[Qonversion sharedInstance] requestBuilder] makePurchaseRequestWith:body];
+        
         [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Qonversion Purchase Log Response:\n%@", dict);
@@ -221,36 +240,6 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         }
         completion(dict);
     }] resume];
-}
-
-+ (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint andBody:(NSDictionary *)body {
-    
-    NSURL *url = [NSURL.alloc initWithString:[kBaseURL stringByAppendingString:endpoint]];
-    
-    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:url];
-    request.HTTPMethod = @"POST";
-    [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
-    
-    NSMutableDictionary *mutableBody = body.mutableCopy;
-    
-    [mutableBody setObject:[[NSNumber alloc] initWithBool:[Qonversion sharedInstance].debugMode] forKey:@"debug_mode"];
-    
-    NSString *apiKey = [Qonversion sharedInstance].apiKey;
-    if ([QUtils isEmptyString:apiKey]) {
-        QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
-    } else {
-        [mutableBody setObject:apiKey forKey:@"access_token"];
-    }
-    
-    NSString *clientUID = Keeper.userID;
-    
-    if (clientUID) {
-        [mutableBody setObject:clientUID forKey:@"client_uid"];
-    }
-    
-    request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
-    
-    return request;
 }
 
 // MARK: - SKPaymentTransactionObserver
@@ -286,7 +275,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     [self.productRequests removeObjectForKey:product.productIdentifier];
 }
 
-+ (void)tryTocheckUser:(void(^)(QonversionCheckResult *result))result
+- (void)tryTocheckUser:(void(^)(QonversionCheckResult *result))result
                failure:(QonversionCheckFailer)failure
                attempt:(NSInteger)attempt {
     if (attempt >= 5) {
@@ -305,8 +294,10 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         return;
     }
     
-    NSURLRequest *request = [self makePostRequestWithEndpoint:kCheckEndpoint andBody:@{}];
-    [[[self session] dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+    NSURLRequest *request = [_requestBuilder makeCheckRequest];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
+    
+    [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if (error) {
             failure(error);
             return;
@@ -320,25 +311,6 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
             failure(model.error);
         }
     }] resume];
-}
-
-+ (NSURLSession *)session {
-    return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];;
-}
-
-+ (void)setProperty:(QProperty)property value:(NSString *)value {
-    NSString *key = [QonversionProperties keyForProperty:property];
-    
-    if (key) {
-        [self setUserProperty:key value:value];
-    }
-}
-
-+ (void)setUserProperty:(NSString *)property value:(NSString *)value {
-    
-    if ([QonversionProperties checkProperty:property] && [QonversionProperties checkValue:value]) {
-        [[Qonversion sharedInstance] setUserProperty:property value:value];
-    }
 }
 
 // MARK: - Private
@@ -362,6 +334,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         _updatingCurrently = NO;
         _debugMode = NO;
         _device = [[QDevice alloc] init];
+        _requestBuilder = [[QRequestBuilder alloc] init];
         
         _backgroundQueue = [[NSOperationQueue alloc] init];
         [_backgroundQueue setMaxConcurrentOperationCount:1];
@@ -470,7 +443,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
             return;
         }
         
-        NSURLRequest *request = [Qonversion makePostRequestWithEndpoint:kPropertiesEndpoint andBody:@{@"properties": properties}];
+        NSURLRequest *request = [_requestBuilder makePropertiesRequestWith:@{@"properties": properties}];
         
         __block __weak Qonversion *weakSelf = self;
         [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {

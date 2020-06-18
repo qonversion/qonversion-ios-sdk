@@ -4,6 +4,10 @@
 
 static NSString * const kAPIBase = @"https://api.qonversion.io";
 static NSString * const kInitEndpoint = @"v1/user/init";
+static NSString * const kPropertiesEndpoint = @"v1/properties";
+static NSString * const kCheckEndpoint = @"check";
+static NSString * const kAttributionEndpoint = @"attribution";
+static NSString * const kPurchaseEndpoint = @"purchase";
 
 @interface QRequestBuilder ()
 
@@ -20,18 +24,41 @@ static NSString * const kInitEndpoint = @"v1/user/init";
     return self;
 }
 
-- (NSURLRequest *)makeInitRequestWithParameters:(NSDictionary *)parameters {
+- (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters {
+    return [self makePostRequestWith:kInitEndpoint andBody:parameters];
+}
+
+- (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters {
+    return [self makePostRequestWith:kInitEndpoint andBody:parameters];
+}
+
+- (NSURLRequest *)makeCheckRequest {
+    return [self makePostRequestWith:kCheckEndpoint andBody:@{}];
+}
+
+- (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters {
+    return [self makePostRequestWith:kAttributionEndpoint andBody:parameters];
+}
+
+- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters {
+    return [self makePostRequestWith:kPurchaseEndpoint andBody:parameters];
+}
+
+// MARK: Private
+
+- (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body {
     
-    NSString *endpoint = [kAPIBase stringByAppendingString:kInitEndpoint];
-    NSURL *url = [[NSURL alloc] initWithString:endpoint];
+    NSString *urlString = [kAPIBase stringByAppendingString:endpoint];
+    NSURL *url = [NSURL.alloc initWithString:urlString];
+    
     
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL: url];
     
     request.HTTPMethod = @"POST";
     [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
-
-    NSMutableDictionary *mutableBody = parameters.mutableCopy;
- 
+    
+    NSMutableDictionary *mutableBody = body.mutableCopy;
+    
     [mutableBody setObject:_key forKey:@"access_token"];
     NSString *clientUID = Keeper.userID;
 
@@ -40,7 +67,8 @@ static NSString * const kInitEndpoint = @"v1/user/init";
     }
 
     request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
-    return [request copy];
+    
+    return request.copy;
 }
 
 @end
