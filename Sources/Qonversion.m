@@ -168,7 +168,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     });
 }
 
-+ (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+- (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSString *receipt = UserInfo.appStoreReceipt;
         if (!receipt) {
@@ -226,7 +226,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         
         NSURLRequest *request = [[[Qonversion sharedInstance] requestBuilder] makePurchaseRequestWith:body];
         
-        [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+        [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Qonversion Purchase Log Response:\n%@", dict);
             }
@@ -276,7 +276,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     if (!transaction) {
         return;
     }
-    [Qonversion serviceLogPurchase:product transaction:transaction];
+    [self serviceLogPurchase:product transaction:transaction];
     [self.transactions removeObjectForKey:product.productIdentifier];
     [self.productRequests removeObjectForKey:product.productIdentifier];
 }
