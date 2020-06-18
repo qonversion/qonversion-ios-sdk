@@ -16,8 +16,8 @@
     return self;
 }
 
-- (NSDictionary *)lauchData {
-    return [NSDictionary new];
+- (NSDictionary *)launchData {
+    return self.mainData;
 }
 
 - (NSDictionary *)mainData {

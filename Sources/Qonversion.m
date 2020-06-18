@@ -69,7 +69,9 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 - (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
     [self runOnBackgroundQueue:^{
-        NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:@{@"d": UserInfo.overallData}];
+        NSDictionary *launchData = [self->_requestSerializer launchData];
+        NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:launchData];
+        
         [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
                 return;

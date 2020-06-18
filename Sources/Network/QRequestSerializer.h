@@ -5,7 +5,7 @@
 
 - (instancetype)initWithUserID:(NSString *)uid;
 
-- (NSDictionary *)lauchData;
+- (NSDictionary *)launchData;
 
 - (NSDictionary *)purchaseData:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction;
 
