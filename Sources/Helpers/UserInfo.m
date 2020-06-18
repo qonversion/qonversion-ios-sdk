@@ -19,6 +19,11 @@
     
     [overallDict setObject:keyQVersion forKey:@"version"];
     
+    NSString *installDate = device.installDate;
+    if (installDate) {
+        [overallDict setValue:installDate forKey:@"install_date"];
+    }
+    
     if ([self internalUserID]) {
         [overallDict setValue:[self internalUserID] forKey:@"custom_uid"];
     }
