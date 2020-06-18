@@ -40,7 +40,6 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 @implementation Qonversion
 
 static NSString* apiKey;
-static BOOL autoTrackPurchases;
 static BOOL _debugMode = NO;
 
 // MARK: - Public
@@ -49,22 +48,15 @@ static BOOL _debugMode = NO;
     _debugMode = debugMode;
 }
 
-+ (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-    [self launchWithKey:key autoTrackPurchases:YES completion:completion];
-}
-
 + (void)launchWithKey:(nonnull NSString *)key userID:(nonnull NSString *)uid {
     [UserInfo saveInternalUserID: uid];
     [self launchWithKey:key completion:NULL];
 }
 
-+ (void)launchWithKey:(nonnull NSString *)key autoTrackPurchases:(BOOL)autoTrack completion:(nullable void (^)(NSString *uid))completion {
++ (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
     apiKey = key;
-    autoTrackPurchases = autoTrack;
     
-    if (autoTrack) {
-        [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
-    }
+    [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
     
     NSURLRequest *request = [self makePostRequestWithEndpoint:kInitEndpoint andBody:@{@"d": UserInfo.overallData}];
     [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
@@ -83,14 +75,6 @@ static BOOL _debugMode = NO;
             }
         }
     }];
-}
-
-+ (void)trackPurchase:(nonnull SKProduct *)product transaction:(nonnull SKPaymentTransaction *)transaction {
-    if (autoTrackPurchases) {
-        QONVERSION_LOG(@"'autoTrackPurchases' enabled in `launchWithKey:autoTrackPurchases`, so manual 'trackPurchase:transaction:' just won't send duplicate data");
-        return;
-    }
-    [self serviceLogPurchase:product transaction:transaction];
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider {
