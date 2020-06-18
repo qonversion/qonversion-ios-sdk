@@ -241,22 +241,10 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     } else {[mutableBody setObject:apiKey forKey:@"access_token"];
     }
     
-    [mutableBody setObject:keyQVersion forKey:@"v"];
-    
     NSString *clientUID = Keeper.userID;
     
     if (clientUID) {
         [mutableBody setObject:clientUID forKey:@"client_uid"];
-    }
-    
-    NSURL *docsURL = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
-    if (docsURL) {
-        NSDictionary *docsAttributes = [NSFileManager.defaultManager attributesOfItemAtPath:docsURL.path error:nil];
-        NSDate *date = docsAttributes.fileCreationDate;
-        if (date) {
-            NSString *unixTime = [NSString stringWithFormat:@"%ld", (long)round(date.timeIntervalSince1970)];
-            [mutableBody setObject:unixTime forKey:@"install_date"];
-        }
     }
     
     NSString *unixTime = [NSString stringWithFormat:@"%ld", (long)round(NSDate.new.timeIntervalSince1970)];

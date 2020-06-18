@@ -16,6 +16,9 @@
     QDevice *device = [[QDevice alloc] init];
     NSMutableDictionary *overallDict = [NSMutableDictionary new];
     
+    
+    [overallDict setObject:keyQVersion forKey:@"version"];
+    
     if ([self internalUserID]) {
         [overallDict setValue:[self internalUserID] forKey:@"custom_uid"];
     }

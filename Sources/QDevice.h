@@ -20,4 +20,6 @@
 @property (readonly, strong, nonatomic) NSString *adjust_userID;
 @property (readonly, strong, nonatomic) NSString *fb_anonID;
 
+@property (readonly, strong, nonatomic) NSString *installDate;
+
 @end
