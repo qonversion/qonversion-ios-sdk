@@ -49,6 +49,11 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
 + (void)launchWithKey:(nonnull NSString *)key userID:(nonnull NSString *)uid;
 
 /**
+ @param key - project key to setup the SDK.
+ */
++ (void)launchWithKey:(nonnull NSString *)key;
+
+/**
  Send your attribution data
  @param data Dictionary received by the provider
  @param provider Attribution provider

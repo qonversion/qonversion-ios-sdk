@@ -48,6 +48,10 @@ static BOOL _debugMode = NO;
     _debugMode = debugMode;
 }
 
++ (void)launchWithKey:(nonnull NSString *)key {
+    [self launchWithKey:key userID:NULL];
+}
+
 + (void)launchWithKey:(nonnull NSString *)key userID:(nonnull NSString *)uid {
     [UserInfo saveInternalUserID: uid];
     [self launchWithKey:key completion:NULL];
