@@ -94,7 +94,7 @@ static BOOL _debugMode = NO;
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider {
-    [self addAttributionData:data fromProvider:provider];
+    [self addAttributionData:data fromProvider:provider userID:nil];
 }
 
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result

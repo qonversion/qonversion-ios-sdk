@@ -5,7 +5,7 @@ DEPENDENCIES:
   - OCMock (~> 3.2.1)
 
 SPEC REPOS:
-  https://github.com/CocoaPods/Specs.git:
+  https://github.com/CocoaPods/Specs:
     - OCMock
 
 SPEC CHECKSUMS:
@@ -13,4 +13,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: da2af8c1fb1338335d6c619c322fd8f70dd232e7
 
-COCOAPODS: 1.8.4
+COCOAPODS: 1.9.3
