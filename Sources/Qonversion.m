@@ -24,6 +24,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 @property (nonatomic, readonly) NSMutableDictionary *productRequests;
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
+
 @property (nonatomic, strong) QRequestBuilder *requestBuilder;
 @property (nonatomic, strong) QRequestSerializer *requestSerializer;
 @property (nonatomic) QInMemoryStorage *storage;
@@ -76,6 +77,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
             if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
                 return;
             }
+            
             NSDictionary *dataDict = [dict valueForKey:@"data"];
             if (!dataDict || ![dataDict respondsToSelector:@selector(valueForKey:)]) {
                 return;
@@ -93,8 +95,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
           failure:(QonversionCheckFailer)failure {
-
     __block __weak Qonversion *weakSelf = [Qonversion sharedInstance];
+    
     [[Qonversion sharedInstance] runOnBackgroundQueue:^{
         [weakSelf checkUser:result failure:failure];
     }];
@@ -116,52 +118,15 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
-    [[Qonversion sharedInstance]  addAttributionData:data fromProvider:provider userID:uid];
+    [[Qonversion sharedInstance] addAttributionData:data fromProvider:provider userID:uid];
 }
 
 - (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
-    
     double delayInSeconds = 3.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     
     dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        NSMutableDictionary *body = @{@"d": UserInfo.overallData}.mutableCopy;
-        
-        NSMutableDictionary *providerData = [NSMutableDictionary new];
-        
-        switch (provider) {
-            case QAttributionProviderAppsFlyer:
-                [providerData setValue:@"appsflyer" forKey:@"provider"];
-                break;
-            case QAttributionProviderAdjust:
-                [providerData setValue:@"adjust" forKey:@"provider"];
-                break;
-            case QAttributionProviderBranch:
-                [providerData setValue:@"branch" forKey:@"provider"];
-                break;
-        }
-        
-        NSString *_uid = nil;
-        
-        if (uid) {
-            _uid = uid;
-        } else {
-            /** Temporary workaround for keep backward compatibility  */
-            /** Recommend to remove after moving all clients to version > 1.0.4 */
-            NSString *af_uid = _device.afUserID;
-            if (af_uid && provider == QAttributionProviderAppsFlyer) {
-                _uid = af_uid;
-            }
-        }
-        
-        [providerData setValue:data forKey:@"d"];
-        
-        if (_uid) {
-            [providerData setValue:_uid forKey:@"uid"];
-        }
-        
-        [body setValue:providerData forKey:@"provider_data"];
-        
+        NSDictionary *body = [_requestSerializer attributionDataWithDict:data fromProvider:provider userID:uid];
         NSURLRequest *request = [_requestBuilder makeAttributionRequestWith:body];
         
         [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
@@ -224,9 +189,11 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         return;
     }
     SKPaymentTransaction *transaction = [self.transactions objectForKey:product.productIdentifier];
+    
     if (!transaction) {
         return;
     }
+    
     [self serviceLogPurchase:product transaction:transaction];
     [self.transactions removeObjectForKey:product.productIdentifier];
     [self.productRequests removeObjectForKey:product.productIdentifier];

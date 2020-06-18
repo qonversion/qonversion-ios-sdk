@@ -1,9 +1,11 @@
 #import "QRequestSerializer.h"
 #import "UserInfo.h"
+#import "QDevice.h"
 
 @interface QRequestSerializer ()
 
 @property (nonatomic, strong) NSString *userID;
+@property (nonatomic, strong) QDevice *device;
 
 @end
 
@@ -12,6 +14,7 @@
 - (instancetype)initWithUserID:(NSString *)uid {
     if (self = [super init]) {
         _userID = uid;
+        _device = [[QDevice alloc] init];
     }
     return self;
 }
@@ -76,6 +79,45 @@
     
 
     return @{@"inapp": inappDict, @"d": self.mainData};
+}
+
+- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
+    NSMutableDictionary *body = @{@"d": self.mainData}.mutableCopy;
+    NSMutableDictionary *providerData = [NSMutableDictionary new];
+    
+    switch (provider) {
+        case QAttributionProviderAppsFlyer:
+            [providerData setValue:@"appsflyer" forKey:@"provider"];
+            break;
+        case QAttributionProviderAdjust:
+            [providerData setValue:@"adjust" forKey:@"provider"];
+            break;
+        case QAttributionProviderBranch:
+            [providerData setValue:@"branch" forKey:@"provider"];
+            break;
+    }
+    
+    NSString *_uid = nil;
+    
+    if (uid) {
+        _uid = uid;
+    } else {
+        /** Temporary workaround for keep backward compatibility  */
+        /** Recommend to remove after moving all clients to version > 1.0.4 */
+        NSString *af_uid = _device.afUserID;
+        if (af_uid && provider == QAttributionProviderAppsFlyer) {
+            _uid = af_uid;
+        }
+    }
+    
+    [providerData setValue:data forKey:@"d"];
+    
+    if (_uid) {
+        [providerData setValue:_uid forKey:@"uid"];
+    }
+    
+    [body setValue:providerData forKey:@"provider_data"];
+    
 }
 
 @end

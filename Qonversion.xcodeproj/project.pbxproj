@@ -214,6 +214,13 @@
 			path = Network;
 			sourceTree = "<group>";
 		};
+		456ECD3C249BC97100D2BC40 /* QonversionLaunchResult */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = QonversionLaunchResult;
+			sourceTree = "<group>";
+		};
 		459DAB5F243E329F0011ECF3 = {
 			isa = PBXGroup;
 			children = (
@@ -357,6 +364,7 @@
 		459DABEC243E35BC0011ECF3 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				456ECD3C249BC97100D2BC40 /* QonversionLaunchResult */,
 				456ECD30249B823500D2BC40 /* QonversionPermissionResult */,
 				45BA20412444BA490046E6C9 /* QonversionCheckResult */,
 				459DAC11243E61A80011ECF3 /* RenewalProductDetails */,

@@ -51,13 +51,12 @@ static NSString * const kPurchaseEndpoint = @"purchase";
     NSString *urlString = [kAPIBase stringByAppendingString:endpoint];
     NSURL *url = [NSURL.alloc initWithString:urlString];
     
-    
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL: url];
     
     request.HTTPMethod = @"POST";
     [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
     
-    NSMutableDictionary *mutableBody = body.mutableCopy;
+    NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
     
     [mutableBody setObject:_key forKey:@"access_token"];
     NSString *clientUID = Keeper.userID;
