@@ -99,6 +99,7 @@ static NSString *initFailedJSON = @"init_failed_state.json";
     
     XCTAssertTrue([premium.startedDate.description isEqualToString:@"2020-04-08 18:11:26 +0000"]);
     XCTAssertNotNil(premium.expirationDate);
+    XCTAssertTrue(premium.isActive);
     
     XCTAssertTrue([premium.expirationDate.description isEqualToString:@"2020-05-08 14:51:26 +0000"]);
 }
@@ -112,13 +113,21 @@ static NSString *initFailedJSON = @"init_failed_state.json";
     QonversionPermission *standart = result.permissions[@"standart"];
     XCTAssertNotNil(standart);
     XCTAssertTrue([standart.permissionID isEqualToString:@"standart"]);
+    XCTAssertFalse(standart.isActive);
 }
 
 - (void)testThatMapparParsePermissionWithBrokenJson {
-      QonversionLaunchResult *result = [[QonversionMapper new] fillLaunchResult:self.userInitFailed];
+    QonversionLaunchComposeModel *result = [[QonversionMapper new] composeLaunchModelFrom:[self fileDataFromContentsOfFile:initFailedJSON]];
     
     XCTAssertNotNil(result);
-    XCTAssertEqual(result.permissions.count, 0);
+    XCTAssertNotNil(result.error);
+    XCTAssertNil(result.result);
+    XCTAssertEqual(result.result.permissions.count, 0);
+    
+    QonversionLaunchComposeModel *brokenResult = [[QonversionMapper new] composeLaunchModelFrom:NULL];
+    XCTAssertNotNil(brokenResult);
+    XCTAssertNil(brokenResult.result);
+    XCTAssertNotNil(brokenResult.error);
 }
 
 @end

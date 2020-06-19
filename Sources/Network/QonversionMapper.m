@@ -9,6 +9,7 @@ NSString * const QonversionErrorDomain = @"com.qonversion.io";
 
 static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStatuses = nil;
 static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
+static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 
 
 @interface QonversionMapperObject : NSObject
@@ -19,19 +20,15 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
 @end
 
 @implementation QonversionMapperObject : NSObject
-
 @end
 
 @implementation QonversionComposeModel : NSObject
-
 @end
 
 @implementation QonversionLaunchComposeModel : QonversionComposeModel
-
 @end
 
 @implementation QonversionCheckResultComposeModel : QonversionComposeModel
-
 @end
 
 @implementation QonversionMapper
@@ -47,6 +44,7 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
         @"trial": @0,
         @"subscription": @1,
     };
+    
 }
 
 - (QonversionCheckResultComposeModel *)composeModelFrom:(NSData *)data {
@@ -169,8 +167,8 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
 - (QonversionPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
     QonversionPermission *result = [[QonversionPermission alloc] init];
     result.permissionID = dict[@"id"];
-    result.isActive = dict[@"active"];
-    result.renewState = ((NSNumber *)dict[@"renewState"] ?: @0).intValue;
+    result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
+    result.renewState = ((NSNumber *)dict[@"renew_state"] ?: @0).intValue;
     
     NSTimeInterval started = ((NSNumber *)dict[@"started_timestamp"] ?: @0).doubleValue;
     result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
