@@ -28,6 +28,7 @@
 		456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD36249BB68B00D2BC40 /* QRequestBuilderTests.m */; };
 		456ECD39249BBF3E00D2BC40 /* QRequestSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD38249BBF3E00D2BC40 /* QRequestSerializer.m */; };
 		456ECD3B249BBF9A00D2BC40 /* QRequestSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD3A249BBF9A00D2BC40 /* QRequestSerializer.h */; };
+		456ECD3F249C737500D2BC40 /* QonversionPermissionResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD3E249C737500D2BC40 /* QonversionPermissionResult.m */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -97,6 +98,10 @@
 		456ECD36249BB68B00D2BC40 /* QRequestBuilderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestBuilderTests.m; sourceTree = "<group>"; };
 		456ECD38249BBF3E00D2BC40 /* QRequestSerializer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestSerializer.m; sourceTree = "<group>"; };
 		456ECD3A249BBF9A00D2BC40 /* QRequestSerializer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QRequestSerializer.h; sourceTree = "<group>"; };
+		456ECD3D249BD10F00D2BC40 /* QonversionLaunchResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionLaunchResult.h; sourceTree = "<group>"; };
+		456ECD3E249C737500D2BC40 /* QonversionPermissionResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPermissionResult.m; sourceTree = "<group>"; };
+		456ECD40249C75D400D2BC40 /* QonversionLaunchResult+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QonversionLaunchResult+Protected.h"; sourceTree = "<group>"; };
+		456ECD41249C76D400D2BC40 /* QonversionProductResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionProductResult.h; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -202,6 +207,7 @@
 			isa = PBXGroup;
 			children = (
 				456ECD31249B825D00D2BC40 /* QonversionPermissionResult.h */,
+				456ECD41249C76D400D2BC40 /* QonversionProductResult.h */,
 			);
 			name = QonversionPermissionResult;
 			sourceTree = "<group>";
@@ -217,6 +223,9 @@
 		456ECD3C249BC97100D2BC40 /* QonversionLaunchResult */ = {
 			isa = PBXGroup;
 			children = (
+				456ECD3D249BD10F00D2BC40 /* QonversionLaunchResult.h */,
+				456ECD40249C75D400D2BC40 /* QonversionLaunchResult+Protected.h */,
+				456ECD3E249C737500D2BC40 /* QonversionPermissionResult.m */,
 			);
 			name = QonversionLaunchResult;
 			sourceTree = "<group>";
@@ -617,6 +626,7 @@
 				459DABFD243E35BC0011ECF3 /* QonversionCheckResult.m in Sources */,
 				456ECD39249BBF3E00D2BC40 /* QRequestSerializer.m in Sources */,
 				454BE231247C4AD8001FE771 /* QUtils.m in Sources */,
+				456ECD3F249C737500D2BC40 /* QonversionPermissionResult.m in Sources */,
 				454BE22B247C3E72001FE771 /* QonversionProperties.m in Sources */,
 				459DABF6243E35BC0011ECF3 /* UserInfo.m in Sources */,
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
