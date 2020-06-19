@@ -15,12 +15,21 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
 
 @end
 
+@interface QonversionLaunchComposeModel : NSObject
+
+@property (nonatomic, nullable) QonversionLaunchResult *result;
+@property (nonatomic, copy, nullable) NSError *error;
+
+@end
+
+
 
 @interface QonversionMapper : NSObject
 
 - (QonversionCheckResultComposeModel * _Nonnull)composeModelFrom:(NSData * _Nullable)data;
+- (QonversionLaunchComposeModel * _Nonnull)composeLaunchModelFrom:(NSData * _Nullable)data;
+
 - (QonversionCheckResult * _Nullable)fillCheckResultWith:(NSDictionary * _Nullable)dict;
-- (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict;
 
 + (NSError * _Nonnull)error:(NSString * _Nullable)message code:(QErrorCode)errorCode;
 

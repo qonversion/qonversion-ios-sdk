@@ -19,4 +19,5 @@
  */
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, QonversionProduct *> *products;
 
+
 @end

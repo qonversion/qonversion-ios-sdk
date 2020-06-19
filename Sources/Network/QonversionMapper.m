@@ -10,6 +10,15 @@ NSString * const QonversionErrorDomain = @"com.qonversion.io";
 static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStatuses = nil;
 static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
 
+
+@interface QonversionMapperObject : NSObject
+
+@property (nonatomic, nullable) NSDictionary *data;
+@property (nonatomic, copy, nullable) NSError *error;
+
+@end
+
+
 @implementation QonversionCheckResultComposeModel : NSObject
 
 @end
@@ -30,30 +39,15 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
 }
 
 - (QonversionCheckResultComposeModel *)composeModelFrom:(NSData *)data {
+    QonversionMapperObject *object = [self mapperObjectFrom:data];
     QonversionCheckResultComposeModel *result = [QonversionCheckResultComposeModel new];
-    
-    if (!data || ![data isKindOfClass:NSData.class]) {
-        [result setError:[QonversionMapper error:@"Could not receive data" code:QErrorCodeFailedReceiveData]];
-        return result;
-    }
-    
-    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
-    
-    if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
-        [result setError:[QonversionMapper error:@"Could not parse response" code:QErrorCodeFailedParseResponse]];
-        return result;
-    }
-    
-    NSNumber *success = dict[@"success"];
-    NSDictionary *resultData = dict[@"data"];
-    
-    if (success.boolValue && resultData) {
-        QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:resultData];
+
+    if (object.error == NULL && [object.data isKindOfClass:NSDictionary.class]) {
+        QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:object.data];
         [result setResult:resultObject];
         return result;
     } else {
-        NSString *message = dict[@"data"][@"message"] ?: @"";
-        [result setError:[QonversionMapper error:message code:QErrorCodeIncorrectRequest]];
+        [result setError:object.error];
         return result;
     }
 }
@@ -125,6 +119,11 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
     return item;
 }
 
+- (QonversionLaunchComposeModel * _Nonnull)composeLaunchModelFrom:(NSData * _Nullable)data {
+    
+}
+
+
 - (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
     QonversionLaunchResult *result = [[QonversionLaunchResult alloc] init];
     NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
@@ -170,5 +169,32 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
     return [[NSError alloc] initWithDomain:QonversionErrorDomain code:errorCode userInfo:info];
 }
 
+- (QonversionMapperObject *)mapperObjectFrom:(NSData *)data {
+    QonversionMapperObject *object = [QonversionMapperObject new];
+    
+    if (!data || ![data isKindOfClass:NSData.class]) {
+        [object setError:[QonversionMapper error:@"Could not receive data" code:QErrorCodeFailedReceiveData]];
+        return object;
+    }
+    
+    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
+    
+    if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
+        [object setError:[QonversionMapper error:@"Could not parse response" code:QErrorCodeFailedParseResponse]];
+        return object;
+    }
+    
+    NSNumber *success = dict[@"success"];
+    NSDictionary *resultData = dict[@"data"];
+    
+      if (success.boolValue && resultData) {
+          [object setData:resultData];
+          return object;
+      } else {
+          NSString *message = dict[@"data"][@"message"] ?: @"";
+          [object setError:[QonversionMapper error:message code:QErrorCodeIncorrectRequest]];
+          return object;
+      }
+}
 @end
 
