@@ -88,6 +88,7 @@ static NSString *initFailedJSON = @"init_failed_state.json";
     QonversionLaunchResult *result = [[QonversionMapper new] fillLaunchResult:self.userInitSuccess];
     
     XCTAssertNotNil(result);
+    XCTAssertTrue([result.uid isEqualToString:@"qonversion_user_id"]);
     XCTAssertTrue([result.permissions isKindOfClass:NSDictionary.class]);
     
     QonversionPermission *premium = result.permissions[@"premium"];

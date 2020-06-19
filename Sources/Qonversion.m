@@ -4,6 +4,7 @@
 #import "QConstants.h"
 #import "QonversionMapper.h"
 #import "QInMemoryStorage.h"
+#import "QUserDefaultsStorage.h"
 #import "QDevice.h"
 #import "QRequestBuilder.h"
 #import "QRequestSerializer.h"
@@ -17,6 +18,7 @@
 #import <UIKit/UIKit.h>
 
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
+static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -27,7 +29,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 @property (nonatomic, strong) QRequestBuilder *requestBuilder;
 @property (nonatomic, strong) QRequestSerializer *requestSerializer;
-@property (nonatomic) QInMemoryStorage *storage;
+@property (nonatomic) QInMemoryStorage *inMemoryStorage;
+@property (nonatomic) QUserDefaultsStorage *persistentStorage;
 
 @property (nonatomic, strong) QDevice *device;
 
@@ -43,7 +46,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 // MARK: - Public
 
-+ (void)setDebugMode:(BOOL) debugMode {
++ (void)setDebugMode:(BOOL)debugMode {
     [Qonversion sharedInstance]->_debugMode = debugMode;
 }
 
@@ -53,6 +56,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 + (void)launchWithKey:(nonnull NSString *)key userID:(nonnull NSString *)uid {
     [UserInfo saveInternalUserID:uid];
+    
     [self launchWithKey:key completion:NULL];
 }
 
@@ -73,23 +77,27 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     NSDictionary *launchData = [self->_requestSerializer launchData];
     NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:launchData];
     
-    [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
+    NSURLSession *session = [[self session] copy];
+    [[session dataTaskWithRequest:request
+                completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        QonversionCheckPermissionCompletionBlock block = [_inMemoryStorage loadObjectForKey:kPermissionsResultBlock];
+        
+        if (data == NULL && error) {
+            block(NULL, error);
             return;
         }
         
-        NSDictionary *dataDict = [dict valueForKey:@"data"];
-        if (!dataDict || ![dataDict respondsToSelector:@selector(valueForKey:)]) {
-            return;
+        QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
+        
+        if (model.result && model.result.uid && completion) {
+            completion(model.result.uid);
         }
-        NSString *uid = [dataDict valueForKey:@"client_uid"];
-        if (uid && [uid isKindOfClass:NSString.class]) {
-            Keeper.userID = uid;
-            if (completion) {
-                completion(uid);
-            }
+        
+        if (block) {
+            block(model.result.permissions,  model.error);
         }
-    }];
+        
+    }] resume];
 }
 
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
@@ -128,7 +136,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         NSDictionary *body = [_requestSerializer attributionDataWithDict:data fromProvider:provider userID:uid];
         NSURLRequest *request = [_requestBuilder makeAttributionRequestWith:body];
         
-        [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+        [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Attribution Request Log Response:\n%@", dict);
             }
@@ -141,7 +149,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
         NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
         
-        [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+        [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Qonversion Purchase Log Response:\n%@", dict);
             }
@@ -149,8 +157,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     }];
 }
 
-+ (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
+- (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
+    NSURLSession *session = [[self session] copy];
     [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if (!data || ![data isKindOfClass:NSData.class]) {
             return;
@@ -208,8 +216,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     }
     
     NSURLRequest *request = [_requestBuilder makeCheckRequest];
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
-    
+    NSURLSession *session = [[self session] copy];
     [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if (error) {
             failure(error);
@@ -226,6 +233,10 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     }] resume];
 }
 
++ (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result {
+    [[[Qonversion sharedInstance] inMemoryStorage] setValue:result forKey:kPermissionsResultBlock];
+}
+
 // MARK: - Private
 
 + (instancetype)sharedInstance {
@@ -238,12 +249,17 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     return shared;
 }
 
+- (NSURLSession *)session {
+    return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
+}
+
 - (instancetype)init {
     self = super.init;
     if (self) {
         _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
         _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
-        _storage = [[QInMemoryStorage alloc] init];
+        _inMemoryStorage = [[QInMemoryStorage alloc] init];
+        _persistentStorage = [[QUserDefaultsStorage alloc] init];
         _updatingCurrently = NO;
         _debugMode = NO;
         _device = [[QDevice alloc] init];
@@ -263,7 +279,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 - (void)setUserProperty:(NSString *)property value:(NSString *)value {
     [self runOnBackgroundQueue:^{
-        [self->_storage storeObject:value forKey:property];
+        [self->_inMemoryStorage storeObject:value forKey:property];
         [self sendPropertiesWithDelay:kQPropertiesSendingPeriodInSeconds];
     }];
 }
@@ -344,7 +360,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     }
     
     [self runOnBackgroundQueue:^{
-        NSDictionary *properties = [self->_storage.storageDictionary copy];
+        NSDictionary *properties = [self->_inMemoryStorage.storageDictionary copy];
         
         if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
             self->_updatingCurrently = NO;
@@ -359,7 +375,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         NSURLRequest *request = [_requestBuilder makePropertiesRequestWith:@{@"properties": properties}];
         
         __block __weak Qonversion *weakSelf = self;
-        [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+        [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
             if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
                 QONVERSION_LOG(@"Properties Request Log Response:\n%@", dict);
             }
@@ -376,7 +392,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         }
         
         for (NSString *key in properties.allKeys) {
-            [self->_storage removeObjectForKey:key];
+            [self->_inMemoryStorage removeObjectForKey:key];
         }
     }];
 }

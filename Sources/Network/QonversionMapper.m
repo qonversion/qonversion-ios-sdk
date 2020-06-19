@@ -145,7 +145,8 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 - (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
     QonversionLaunchResult *result = [[QonversionLaunchResult alloc] init];
     NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
-
+    
+    [result setUid:((NSString *)dict[@"uid"] ?: @"")];
     [result setPermissions:[self fillPermissions:permissionsDict]];
     
     return result;

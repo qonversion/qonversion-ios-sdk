@@ -7,6 +7,11 @@
 /**
  Original Server response time
  */
+@property (nonatomic, copy, readonly) NSString *uid;
+
+/**
+ Original Server response time
+ */
 @property (nonatomic, readonly) NSUInteger timestamp;
 
 /**

@@ -3,6 +3,10 @@
 
 @implementation QonversionLaunchResult : NSObject
 
+- (void)setUid:(NSString *)uid {
+    _uid = uid;
+}
+
 - (void)setTimestamp:(NSUInteger)timestamp {
     _timestamp = timestamp;
 }

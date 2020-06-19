@@ -1,9 +1,12 @@
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
 #import "QonversionCheckResult.h"
+#import "QonversionPermission.h"
 #import "QonversionProperties.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+typedef void (^QonversionCheckPermissionCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError *error);
 
 typedef NS_ENUM(NSInteger, QAttributionProvider) {
     QAttributionProviderAppsFlyer = 0,
@@ -64,6 +67,7 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
           failure:(QonversionCheckFailer)failure;
 
++ (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result;
 
 // MARK: - Deprecated methods
 
