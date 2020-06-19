@@ -29,8 +29,8 @@
 		456ECD39249BBF3E00D2BC40 /* QRequestSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD38249BBF3E00D2BC40 /* QRequestSerializer.m */; };
 		456ECD3B249BBF9A00D2BC40 /* QRequestSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD3A249BBF9A00D2BC40 /* QRequestSerializer.h */; };
 		456ECD3F249C737500D2BC40 /* QonversionLaunchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD3E249C737500D2BC40 /* QonversionLaunchResult.m */; };
-		456ECD43249C8B0100D2BC40 /* QonversionPermissionResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD42249C8B0100D2BC40 /* QonversionPermissionResult.m */; };
-		456ECD45249C8B2000D2BC40 /* QonversionProductResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD44249C8B2000D2BC40 /* QonversionProductResult.m */; };
+		456ECD43249C8B0100D2BC40 /* QonversionPermission.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD42249C8B0100D2BC40 /* QonversionPermission.m */; };
+		456ECD45249C8B2000D2BC40 /* QonversionProduct.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD44249C8B2000D2BC40 /* QonversionProduct.m */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -94,7 +94,7 @@
 		454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPropertiesTests.m; sourceTree = "<group>"; };
 		454BE22E247C4AD8001FE771 /* QUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QUtils.h; sourceTree = "<group>"; };
 		454BE22F247C4AD8001FE771 /* QUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QUtils.m; sourceTree = "<group>"; };
-		456ECD31249B825D00D2BC40 /* QonversionPermissionResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionPermissionResult.h; sourceTree = "<group>"; };
+		456ECD31249B825D00D2BC40 /* QonversionPermission.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionPermission.h; sourceTree = "<group>"; };
 		456ECD32249B8FE000D2BC40 /* QRequestBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QRequestBuilder.h; sourceTree = "<group>"; };
 		456ECD33249B901900D2BC40 /* QRequestBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestBuilder.m; sourceTree = "<group>"; };
 		456ECD36249BB68B00D2BC40 /* QRequestBuilderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestBuilderTests.m; sourceTree = "<group>"; };
@@ -103,9 +103,9 @@
 		456ECD3D249BD10F00D2BC40 /* QonversionLaunchResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionLaunchResult.h; sourceTree = "<group>"; };
 		456ECD3E249C737500D2BC40 /* QonversionLaunchResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionLaunchResult.m; sourceTree = "<group>"; };
 		456ECD40249C75D400D2BC40 /* QonversionLaunchResult+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QonversionLaunchResult+Protected.h"; sourceTree = "<group>"; };
-		456ECD41249C76D400D2BC40 /* QonversionProductResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionProductResult.h; sourceTree = "<group>"; };
-		456ECD42249C8B0100D2BC40 /* QonversionPermissionResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPermissionResult.m; sourceTree = "<group>"; };
-		456ECD44249C8B2000D2BC40 /* QonversionProductResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionProductResult.m; sourceTree = "<group>"; };
+		456ECD41249C76D400D2BC40 /* QonversionProduct.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionProduct.h; sourceTree = "<group>"; };
+		456ECD42249C8B0100D2BC40 /* QonversionPermission.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPermission.m; sourceTree = "<group>"; };
+		456ECD44249C8B2000D2BC40 /* QonversionProduct.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionProduct.m; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -210,10 +210,10 @@
 		456ECD30249B823500D2BC40 /* QonversionPermissionResult */ = {
 			isa = PBXGroup;
 			children = (
-				456ECD31249B825D00D2BC40 /* QonversionPermissionResult.h */,
-				456ECD42249C8B0100D2BC40 /* QonversionPermissionResult.m */,
-				456ECD41249C76D400D2BC40 /* QonversionProductResult.h */,
-				456ECD44249C8B2000D2BC40 /* QonversionProductResult.m */,
+				456ECD31249B825D00D2BC40 /* QonversionPermission.h */,
+				456ECD42249C8B0100D2BC40 /* QonversionPermission.m */,
+				456ECD41249C76D400D2BC40 /* QonversionProduct.h */,
+				456ECD44249C8B2000D2BC40 /* QonversionProduct.m */,
 			);
 			name = QonversionPermissionResult;
 			sourceTree = "<group>";
@@ -629,7 +629,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				456ECD45249C8B2000D2BC40 /* QonversionProductResult.m in Sources */,
+				456ECD45249C8B2000D2BC40 /* QonversionProduct.m in Sources */,
 				459DABFD243E35BC0011ECF3 /* QonversionCheckResult.m in Sources */,
 				456ECD39249BBF3E00D2BC40 /* QRequestSerializer.m in Sources */,
 				454BE231247C4AD8001FE771 /* QUtils.m in Sources */,
@@ -638,7 +638,7 @@
 				459DABF6243E35BC0011ECF3 /* UserInfo.m in Sources */,
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
 				459DABFB243E35BC0011ECF3 /* Keeper.m in Sources */,
-				456ECD43249C8B0100D2BC40 /* QonversionPermissionResult.m in Sources */,
+				456ECD43249C8B0100D2BC40 /* QonversionPermission.m in Sources */,
 				45B19FF12497D5FE00AEF08E /* QUserDefaultsStorage.m in Sources */,
 				459DABFE243E35BC0011ECF3 /* RenewalProductDetails.m in Sources */,
 				454BE212247C2BB4001FE771 /* QInMemoryStorage.m in Sources */,

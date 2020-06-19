@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
-#import "QonversionPermissionResult.h"
-#import "QonversionProductResult.h"
+#import "QonversionPermission.h"
+#import "QonversionProduct.h"
 
 @interface QonversionLaunchResult : NSObject
 
@@ -12,11 +12,11 @@
 /**
  User permissions
  */
-@property (nonatomic, copy, readonly) NSDictionary<NSString *, QonversionPermissionResult *> *permissions;
+@property (nonatomic, copy, readonly) NSDictionary<NSString *, QonversionPermission *> *permissions;
 
 /**
  All products
  */
-@property (nonatomic, copy, readonly) NSDictionary<NSString *, QonversionProductResult *> *products;
+@property (nonatomic, copy, readonly) NSDictionary<NSString *, QonversionProduct *> *products;
 
 @end

@@ -7,11 +7,11 @@
     _timestamp = timestamp;
 }
 
-- (void)setPermissions:(NSDictionary<NSString *, QonversionPermissionResult *> *)permissions {
+- (void)setPermissions:(NSDictionary<NSString *, QonversionPermission *> *)permissions {
     _permissions = permissions;
 }
 
-- (void)setProducts:(NSDictionary<NSString *, QonversionProductResult *> *)products {
+- (void)setProducts:(NSDictionary<NSString *, QonversionProduct *> *)products {
     _products = products;
 }
 
