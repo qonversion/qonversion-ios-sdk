@@ -84,7 +84,30 @@ static NSString *initSuccessJSON = @"init.json";
     QonversionLaunchResult *result = [[QonversionMapper new] fillLaunchResult:self.userInitSuccess];
     
     XCTAssertNotNil(result);
-    XCTAssertEqual(result.permissions.count, 1);
+    XCTAssertTrue([result.permissions isKindOfClass:NSDictionary.class]);
+    
+    QonversionPermission *premium = result.permissions[@"premium"];
+    XCTAssertNotNil(premium);
+    XCTAssertTrue(premium.isActive);
+    XCTAssertEqual(premium.renewState, QonversionPermissionRenewStateBillingIssue);
+    
+    XCTAssertNotNil(premium.startedDate);
+    
+    XCTAssertTrue([premium.startedDate.description isEqualToString:@"2020-04-08 18:11:26 +0000"]);
+    XCTAssertNotNil(premium.expirationDate);
+    
+    XCTAssertTrue([premium.expirationDate.description isEqualToString:@"2020-05-08 14:51:26 +0000"]);
+}
+
+- (void)testThatMapperParseFewPermissionsCorrectly {
+    QonversionLaunchResult *result = [[QonversionMapper new] fillLaunchResult:self.userInitSuccess];
+      
+    XCTAssertNotNil(result);
+    XCTAssertEqual(result.permissions.count, 2);
+    
+    QonversionPermission *standart = result.permissions[@"standart"];
+    XCTAssertNotNil(standart);
+    XCTAssertTrue([standart.permissionID isEqualToString:@"standart"]);
 }
 
 @end

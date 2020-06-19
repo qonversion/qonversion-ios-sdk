@@ -2,12 +2,20 @@
   "timestamp": 1586369519,
   "permissions": [
     {
-      "id": "qonversion_product",
+      "id": "standart",
       "associated_product": "qonversion_product",
       "active": true,
-      "renewState": 0,
+      "renewState": 3,
       "started_timestamp": 1586369486,
-      "expiration_timestamp": 1585369486,
+      "expiration_timestamp": 1588949486,
+    },
+    {
+      "id": "premium",
+      "associated_product": "qonversion_product",
+      "active": true,
+      "renewState": 3,
+      "started_timestamp": 1586369486,
+      "expiration_timestamp": 1588949486,
     }
   ],
   "products": [

@@ -128,23 +128,39 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
 - (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
     QonversionLaunchResult *result = [[QonversionLaunchResult alloc] init];
     NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
-    
-    NSMutableArray *permissions = [NSMutableArray new];
-    
-    for (NSDictionary* itemDict in permissionsDict) {
-        QonversionPermission *item = [self fillPermission:itemDict];
-        if (item) {
-            [permissions addObject:item];
-        }
-    }
-    
-    [result setPermissions:permissions];
+
+    [result setPermissions:[self fillPermissions:permissionsDict]];
     
     return result;
 }
 
+- (NSDictionary <NSString *, QonversionPermission *> *)fillPermissions:(NSDictionary *)dict {
+    NSMutableDictionary <NSString *, QonversionPermission *> *permissions = [NSMutableDictionary new];
+    
+    for (NSDictionary* itemDict in dict) {
+        QonversionPermission *item = [self fillPermission:itemDict];
+        if (item && item.permissionID) {
+            permissions[item.permissionID] = item;
+        }
+    }
+    
+    return [[NSDictionary alloc] initWithDictionary:permissions];
+}
+
 - (QonversionPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
     QonversionPermission *result = [[QonversionPermission alloc] init];
+    result.permissionID = dict[@"id"];
+    result.isActive = dict[@"active"];
+    result.renewState = ((NSNumber *)dict[@"renewState"] ?: @0).intValue;
+    
+    NSTimeInterval started = ((NSNumber *)dict[@"started_timestamp"] ?: @0).doubleValue;
+    result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
+    result.expirationDate = nil;
+    
+    if (dict[@"expiration_timestamp"]) {
+        NSTimeInterval expiration = ((NSNumber *)dict[@"expiration_timestamp"] ?: @0).doubleValue;
+        result.expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
+    }
     
     return result;
 }
