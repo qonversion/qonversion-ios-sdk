@@ -19,11 +19,10 @@ typedef NS_ENUM(unsigned int, QonversionProductDuration){
 
 @interface QonversionProductResult : NSObject
 
-@property (nonatomic, copy) NSString *qID;
+@property (nonatomic, copy) NSString *qonversionID;
 @property (nonatomic, copy) NSString *storeID;
 
 @property (nonatomic) QonversionProductType type;
 @property (nonatomic) QonversionProductDuration duration;
 
 @end
-
