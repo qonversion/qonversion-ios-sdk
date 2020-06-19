@@ -18,8 +18,19 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
 
 @end
 
+@implementation QonversionMapperObject : NSObject
 
-@implementation QonversionCheckResultComposeModel : NSObject
+@end
+
+@implementation QonversionComposeModel : NSObject
+
+@end
+
+@implementation QonversionLaunchComposeModel : QonversionComposeModel
+
+@end
+
+@implementation QonversionCheckResultComposeModel : QonversionComposeModel
 
 @end
 
@@ -120,9 +131,18 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
 }
 
 - (QonversionLaunchComposeModel * _Nonnull)composeLaunchModelFrom:(NSData * _Nullable)data {
-    
-}
+    QonversionMapperObject *object = [self mapperObjectFrom:data];
+    QonversionLaunchComposeModel *result = [QonversionLaunchComposeModel new];
 
+    if (object.error == NULL && [object.data isKindOfClass:NSDictionary.class]) {
+        QonversionLaunchResult *resultObject = [[QonversionMapper new] fillLaunchResult:object];
+        [result setResult:resultObject];
+        return result;
+    } else {
+        [result setError:object.error];
+        return result;
+    }
+}
 
 - (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
     QonversionLaunchResult *result = [[QonversionLaunchResult alloc] init];
@@ -196,5 +216,6 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
           return object;
       }
 }
+
 @end
 
