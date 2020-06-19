@@ -1,0 +1,22 @@
+{
+  "timestamp": 1586369519,
+  "permissions": [
+    {
+      "id": "qonversion_product",
+      "associated_product": "qonversion_product",
+      "active": true,
+      "renewState": 0,
+      "started_timestamp": 1586369486,
+      "expiration_timestamp": 1585369486,
+    }
+  ],
+  "products": [
+    {
+      "id": "product",
+      "store_id": "apple_store_id",
+      "type": 0,
+      "duration": 1,
+    }
+  ],
+  
+}

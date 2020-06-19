@@ -31,6 +31,7 @@
 		456ECD3F249C737500D2BC40 /* QonversionLaunchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD3E249C737500D2BC40 /* QonversionLaunchResult.m */; };
 		456ECD43249C8B0100D2BC40 /* QonversionPermission.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD42249C8B0100D2BC40 /* QonversionPermission.m */; };
 		456ECD45249C8B2000D2BC40 /* QonversionProduct.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD44249C8B2000D2BC40 /* QonversionProduct.m */; };
+		456ECD47249C8EEE00D2BC40 /* init.json in Resources */ = {isa = PBXBuildFile; fileRef = 456ECD46249C8EEE00D2BC40 /* init.json */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -106,6 +107,7 @@
 		456ECD41249C76D400D2BC40 /* QonversionProduct.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionProduct.h; sourceTree = "<group>"; };
 		456ECD42249C8B0100D2BC40 /* QonversionPermission.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPermission.m; sourceTree = "<group>"; };
 		456ECD44249C8B2000D2BC40 /* QonversionProduct.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionProduct.m; sourceTree = "<group>"; };
+		456ECD46249C8EEE00D2BC40 /* init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init.json; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -407,6 +409,7 @@
 		459DAC0E243E4E530011ECF3 /* Stubs */ = {
 			isa = PBXGroup;
 			children = (
+				456ECD46249C8EEE00D2BC40 /* init.json */,
 				459DAC08243E4B0B0011ECF3 /* check_result_with_active_product.json */,
 				459DAC13243E64AA0011ECF3 /* check_restul_without_products.json */,
 				45CC2EEF24407737005CD107 /* check_failed_state.json */,
@@ -593,6 +596,7 @@
 			files = (
 				45CC2EF024407737005CD107 /* check_failed_state.json in Resources */,
 				459DAC14243E64AA0011ECF3 /* check_restul_without_products.json in Resources */,
+				456ECD47249C8EEE00D2BC40 /* init.json in Resources */,
 				459DAC09243E4B0B0011ECF3 /* check_result_with_active_product.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
