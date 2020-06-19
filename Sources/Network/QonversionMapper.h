@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "QonversionCheckResult.h"
+#import "QonversionLaunchResult.h"
 
 typedef NS_ENUM(NSInteger, QErrorCode) {
     QErrorCodeFailedReceiveData = 0,
@@ -19,6 +20,7 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
 
 - (QonversionCheckResultComposeModel * _Nonnull)composeModelFrom:(NSData * _Nullable)data;
 - (QonversionCheckResult * _Nullable)fillCheckResultWith:(NSDictionary * _Nullable)dict;
+- (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict;
 
 + (NSError * _Nonnull)error:(NSString * _Nullable)message code:(QErrorCode)errorCode;
 

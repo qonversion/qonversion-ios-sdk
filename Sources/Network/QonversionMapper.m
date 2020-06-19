@@ -3,6 +3,7 @@
 #import "RenewalProductDetails.h"
 #import "QonversionCheckResult+Protected.h"
 #import "RenewalProductDetails+Protected.h"
+#import "QonversionLaunchResult+Protected.h"
 
 NSString * const QonversionErrorDomain = @"com.qonversion.io";
 
@@ -122,6 +123,30 @@ static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
     [item setState:(RenewalProductDetailsStates[state] ?: @-1).intValue];
     
     return item;
+}
+
+- (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
+    QonversionLaunchResult *result = [[QonversionLaunchResult alloc] init];
+    NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
+    
+    NSMutableArray *permissions = [NSMutableArray new];
+    
+    for (NSDictionary* itemDict in permissionsDict) {
+        QonversionPermission *item = [self fillPermission:itemDict];
+        if (item) {
+            [permissions addObject:item];
+        }
+    }
+    
+    [result setPermissions:permissions];
+    
+    return result;
+}
+
+- (QonversionPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
+    QonversionPermission *result = [[QonversionPermission alloc] init];
+    
+    return result;
 }
 
 + (NSError *)error:(NSString *)message code:(QErrorCode)errorCode  {

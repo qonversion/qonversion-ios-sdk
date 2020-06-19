@@ -6,10 +6,12 @@
 static NSString *JSONWithActiveProduct = @"check_result_with_active_product.json";
 static NSString *JSONWithoutProducts = @"check_restul_without_products.json";
 static NSString *checkFailedState = @"check_failed_state.json";
+static NSString *initSuccessJSON = @"init.json";
 
 @interface QonversionMapperTests : XCTestCase
 @property (nonatomic, strong) NSDictionary *activeUserDict;
 @property (nonatomic, strong) NSDictionary *withoutProducts;
+@property (nonatomic, strong) NSDictionary *userInitSuccess;
 @end
 
 @implementation QonversionMapperTests
@@ -19,11 +21,14 @@ static NSString *checkFailedState = @"check_failed_state.json";
     
     self.activeUserDict = [self JSONObjectFromContentsOfFile:JSONWithActiveProduct];
     self.withoutProducts = [self JSONObjectFromContentsOfFile:JSONWithoutProducts];
+    self.userInitSuccess = [self JSONObjectFromContentsOfFile:initSuccessJSON];
 }
 
 - (void)tearDown {
     self.activeUserDict = nil;
     self.withoutProducts = nil;
+    self.userInitSuccess = nil;
+    
     [super tearDown];
 }
 
@@ -73,6 +78,13 @@ static NSString *checkFailedState = @"check_failed_state.json";
     XCTAssertNotNil(composeModel.error);
     
     XCTAssertEqual(composeModel.error.code, QErrorCodeFailedParseResponse);
+}
+
+- (void)testThatMapperParsePermissions {
+    QonversionLaunchResult *result = [[QonversionMapper new] fillLaunchResult:self.userInitSuccess];
+    
+    XCTAssertNotNil(result);
+    XCTAssertEqual(result.permissions.count, 1);
 }
 
 @end
