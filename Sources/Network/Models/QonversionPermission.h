@@ -11,16 +11,16 @@ typedef NS_ENUM(int, QonversionPermissionRenewState){
 @interface QonversionPermission : NSObject
 
 /**
- Qonversion Permission, like premium
- https://qonversion.io/create-permission
+ Qonversion Permission ID, like premium
+ @see [Create Permission](https://qonversion.io/docs/create-permission)
  */
-@property (nonatomic, copy) NSString *permissionID;
+@property (nonatomic, copy, nonnull) NSString *permissionID;
 
 /**
  Product ID created in Qonversion Dashboard
- https://qonversion.io/create-products
+ @see [Create Products](https://qonversion.io/docs/create-products)
  */
-@property (nonatomic, copy) NSString *qonversionProductID;
+@property (nonatomic, copy, nonnull) NSString *qonversionProductID;
 
 /**
  Use for checking permission for current user
@@ -37,7 +37,7 @@ typedef NS_ENUM(int, QonversionPermissionRenewState){
 /**
  Purchase date
  */
-@property (nonatomic, copy) NSDate *startedDate;
+@property (nonatomic, copy, nonnull) NSDate *startedDate;
 
 /**
  Expiration date for subscriptions

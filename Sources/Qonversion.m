@@ -69,27 +69,26 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 - (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-    [self runOnBackgroundQueue:^{
-        NSDictionary *launchData = [self->_requestSerializer launchData];
-        NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:launchData];
+
+    NSDictionary *launchData = [self->_requestSerializer launchData];
+    NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:launchData];
+    
+    [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
+            return;
+        }
         
-        [Qonversion dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-            if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
-                return;
+        NSDictionary *dataDict = [dict valueForKey:@"data"];
+        if (!dataDict || ![dataDict respondsToSelector:@selector(valueForKey:)]) {
+            return;
+        }
+        NSString *uid = [dataDict valueForKey:@"client_uid"];
+        if (uid && [uid isKindOfClass:NSString.class]) {
+            Keeper.userID = uid;
+            if (completion) {
+                completion(uid);
             }
-            
-            NSDictionary *dataDict = [dict valueForKey:@"data"];
-            if (!dataDict || ![dataDict respondsToSelector:@selector(valueForKey:)]) {
-                return;
-            }
-            NSString *uid = [dataDict valueForKey:@"client_uid"];
-            if (uid && [uid isKindOfClass:NSString.class]) {
-                Keeper.userID = uid;
-                if (completion) {
-                    completion(uid);
-                }
-            }
-        }];
+        }
     }];
 }
 

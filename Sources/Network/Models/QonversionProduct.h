@@ -21,25 +21,25 @@ typedef NS_ENUM(unsigned int, QonversionProductDuration){
 
 /**
  Product ID created in Qonversion Dashboard
- https://qonversion.io/create-products
+ @see [Create Products](https://qonversion.io/docs/create-products)
  */
 @property (nonatomic, copy) NSString *qonversionID;
 
 /**
  Apple Store Product ID
- https://qonversion.io/create-products
+ @see [Create Products](https://qonversion.io/docs/create-products)
  */
 @property (nonatomic, copy) NSString *storeID;
 
 /**
  Product types
- https://qonversion.io/product-types
+ @see [Products types](https://qonversion.io/docs/product-types)
  */
 @property (nonatomic) QonversionProductType type;
 
 /**
 Product durations
-https://qonversion.io/product-durations
+@see [Products durations](https://qonversion.io/docs/product-durations)
 */
 @property (nonatomic) QonversionProductDuration duration;
 

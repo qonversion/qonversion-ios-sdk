@@ -16,7 +16,7 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
 /**
  Sets the environment for receipt.
  @param debugMode        true If your app run under debug mode, default: false
- @see [Setting Debug Mode](https://docs.qonversion.io/getting-started/debug-mode)
+ @see [Setting Debug Mode](https://qonversion.io/docs/debug-mode)
  */
 + (void)setDebugMode:(BOOL)debugMode;
 
