@@ -86,18 +86,27 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
         self->_launchingFinished = YES;
         
         if (data == NULL && error) {
-            block(NULL, error);
+            if (block) {
+                block(NULL, error);
+            }
+            
+            QonversionLaunchComposeModel *model = [[QonversionLaunchComposeModel alloc] init];
+            model.error = error;
+            [self.persistentStorage setValue:model forKey:kPermissionsResult];
+            
             return;
         }
         
         QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
         
-        if (model.result && model.result.uid && completion) {
-            [self.persistentStorage setValue:model.result.permissions forKey:kPermissionsResult];
-            [self.persistentStorage setValue:model.result.products forKey:kProductsResult];
+        if (model) {
+            [self.persistentStorage setValue:model forKey:kPermissionsResult];
             [self loadProducts];
             
-            Keeper.userID = model.result.uid;
+            if (model.result.uid) {
+                Keeper.userID = model.result.uid;
+            }
+            
             completion(model.result.uid);
         }
         
@@ -252,19 +261,14 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 - (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result {
     
     @synchronized (self) {
-          if (!_launchingFinished) {
-              [self.inMemoryStorage setValue:result forKey:kPermissionsResultBlock];
-              return;
-          }
-          _updatingCurrently = YES;
-      }
-    
-    id permissions = [self.persistentStorage loadObjectForKey:kPermissionsResult];
-    if (permissions) {
-        result(permissions, NULL);
-    } else {
-        
+        if (!_launchingFinished) {
+          [self.inMemoryStorage setValue:result forKey:kPermissionsResultBlock];
+          return;
+        }
     }
+    
+    QonversionLaunchComposeModel *model = [self.persistentStorage loadObjectForKey:kPermissionsResult];
+    result(model.result, model.error);
 }
 
 // MARK: - Private
