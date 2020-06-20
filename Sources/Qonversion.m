@@ -18,6 +18,7 @@
 #import <UIKit/UIKit.h>
 
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
+static NSString * const kPermissionsResult = @"kPermissionsResult";
 static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
@@ -36,9 +37,9 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
+@property (nonatomic, assign, readwrite) BOOL initingCurrently;
 
 @property (nonatomic, assign) BOOL debugMode;
-@property (nonatomic, strong) NSString *apiKey;
 
 @end
 
@@ -61,7 +62,6 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 }
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-    [Qonversion sharedInstance]->_apiKey = key;
     [Qonversion sharedInstance]->_requestBuilder = [[QRequestBuilder alloc] initWithKey:key];
     
     [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
@@ -73,11 +73,19 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 }
 
 - (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-
+    
+    @synchronized (self) {
+        if (_initingCurrently) {
+            return;
+        }
+        _initingCurrently = YES;
+    }
+    
     NSDictionary *launchData = [self->_requestSerializer launchData];
     NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:launchData];
-    
     NSURLSession *session = [[self session] copy];
+    
+    __block __weak Qonversion *weakSelf = self;
     [[session dataTaskWithRequest:request
                 completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         QonversionCheckPermissionCompletionBlock block = [_inMemoryStorage loadObjectForKey:kPermissionsResultBlock];
@@ -90,6 +98,7 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
         QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
         
         if (model.result && model.result.uid && completion) {
+            [weakSelf.persistentStorage setValue:model.result.permissions forKey:kPermissionsResult];
             completion(model.result.uid);
         }
         
@@ -234,7 +243,16 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 }
 
 + (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result {
-    [[[Qonversion sharedInstance] inMemoryStorage] setValue:result forKey:kPermissionsResultBlock];
+    [[Qonversion sharedInstance] checkPermissions:result];
+}
+
+- (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result {
+    id permissions = [self.persistentStorage loadObjectForKey:kPermissionsResult];
+    if (permissions) {
+        result(permissions, NULL);
+    } else {
+        [self.inMemoryStorage setValue:result forKey:kPermissionsResultBlock];
+    }
 }
 
 // MARK: - Private
@@ -261,6 +279,7 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
         _inMemoryStorage = [[QInMemoryStorage alloc] init];
         _persistentStorage = [[QUserDefaultsStorage alloc] init];
         _updatingCurrently = NO;
+        _initingCurrently = NO;
         _debugMode = NO;
         _device = [[QDevice alloc] init];
         _requestBuilder = [[QRequestBuilder alloc] init];
@@ -347,7 +366,7 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 }
 
 - (void)sendProperties {
-    if ([QUtils isEmptyString:[Qonversion sharedInstance].apiKey]) {
+    if ([QUtils isEmptyString:_requestBuilder.apiKey]) {
         QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
         return;
     }
