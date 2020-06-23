@@ -8,7 +8,7 @@ typedef NS_ENUM(int, QonversionPermissionRenewState){
     QonversionPermissionRenewStateBillingIssue = 3
 };
 
-@interface QonversionPermission : NSObject
+@interface QonversionPermission : NSObject <NSCoding>
 
 /**
  Qonversion Permission ID, like premium

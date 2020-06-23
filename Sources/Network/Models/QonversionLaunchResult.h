@@ -2,10 +2,10 @@
 #import "QonversionPermission.h"
 #import "QonversionProduct.h"
 
-@interface QonversionLaunchResult : NSObject
+@interface QonversionLaunchResult : NSObject <NSCoding>
 
 /**
- Original Server response time
+ Qonversion User Identifier
  */
 @property (nonatomic, copy, readonly) NSString *uid;
 

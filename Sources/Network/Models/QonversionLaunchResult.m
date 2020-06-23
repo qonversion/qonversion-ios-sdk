@@ -3,6 +3,26 @@
 
 @implementation QonversionLaunchResult : NSObject
 
+- (instancetype)initWithCoder:(NSCoder *)coder
+{
+    self = [super init];
+    if (self) {
+        _uid = [coder decodeObjectForKey:NSStringFromSelector(@selector(uid))];
+        _timestamp = [coder decodeIntegerForKey:NSStringFromSelector(@selector(timestamp))];
+        _permissions = [coder decodeObjectForKey:NSStringFromSelector(@selector(permissions))];
+        _products = [coder decodeObjectForKey:NSStringFromSelector(@selector(products))];
+    }
+    return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder
+{
+    [coder encodeObject:_uid forKey:NSStringFromSelector(@selector(uid))];
+    [coder encodeInteger:_timestamp forKey:NSStringFromSelector(@selector(timestamp))];
+    [coder encodeObject:_permissions forKey:NSStringFromSelector(@selector(permissions))];
+    [coder encodeObject:_products forKey:NSStringFromSelector(@selector(products))];
+}
+
 - (void)setUid:(NSString *)uid {
     _uid = uid;
 }

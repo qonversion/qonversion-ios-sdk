@@ -211,7 +211,7 @@
 			path = Storage;
 			sourceTree = "<group>";
 		};
-		456ECD30249B823500D2BC40 /* QonversionPermissionResult */ = {
+		456ECD30249B823500D2BC40 /* QonversionPermission */ = {
 			isa = PBXGroup;
 			children = (
 				456ECD31249B825D00D2BC40 /* QonversionPermission.h */,
@@ -219,7 +219,7 @@
 				456ECD41249C76D400D2BC40 /* QonversionProduct.h */,
 				456ECD44249C8B2000D2BC40 /* QonversionProduct.m */,
 			);
-			name = QonversionPermissionResult;
+			name = QonversionPermission;
 			sourceTree = "<group>";
 		};
 		456ECD35249BB67600D2BC40 /* Network */ = {
@@ -384,7 +384,7 @@
 			isa = PBXGroup;
 			children = (
 				456ECD3C249BC97100D2BC40 /* QonversionLaunchResult */,
-				456ECD30249B823500D2BC40 /* QonversionPermissionResult */,
+				456ECD30249B823500D2BC40 /* QonversionPermission */,
 				45BA20412444BA490046E6C9 /* QonversionCheckResult */,
 				459DAC11243E61A80011ECF3 /* RenewalProductDetails */,
 			);
