@@ -92,7 +92,7 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
             
             QonversionLaunchComposeModel *model = [[QonversionLaunchComposeModel alloc] init];
             model.error = error;
-            [self.persistentStorage setValue:model forKey:kPermissionsResult];
+            [self.persistentStorage storeObject:model forKey:kPermissionsResult];
             
             return;
         }
@@ -100,14 +100,16 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
         QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
         
         if (model) {
-            [self.persistentStorage setValue:model forKey:kPermissionsResult];
+            [self.persistentStorage storeObject:model forKey:kPermissionsResult];
             [self loadProducts];
             
             if (model.result.uid) {
                 Keeper.userID = model.result.uid;
             }
             
+          if (completion) {
             completion(model.result.uid);
+          }
         }
         
         if (block) {
@@ -262,7 +264,7 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
     
     @synchronized (self) {
         if (!_launchingFinished) {
-          [self.inMemoryStorage setValue:result forKey:kPermissionsResultBlock];
+          [self.inMemoryStorage storeObject:result forKey:kPermissionsResultBlock];
           return;
         }
     }

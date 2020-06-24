@@ -6,7 +6,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^QonversionCheckPermissionCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError *error);
+typedef void (^QonversionCheckPermissionCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error);
 
 typedef NS_ENUM(NSInteger, QAttributionProvider) {
     QAttributionProviderAppsFlyer = 0,

@@ -8,7 +8,7 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
     QErrorCodeIncorrectRequest
 };
 
-@interface QonversionComposeModel : NSObject
+@interface QonversionComposeModel : NSObject <NSCoding>
 
 @property (nonatomic, copy, nullable) NSError *error;
 
@@ -20,9 +20,10 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
 
 @end
 
-@interface QonversionLaunchComposeModel : QonversionComposeModel
+@interface QonversionLaunchComposeModel : NSObject <NSCoding>
 
-@property (nonatomic, nullable) QonversionLaunchResult *result;
+@property (nonatomic, copy, nullable) NSError *error;
+@property (nonatomic, copy, nullable) QonversionLaunchResult *result;
 
 @end
 

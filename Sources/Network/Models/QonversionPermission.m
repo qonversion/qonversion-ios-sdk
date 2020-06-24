@@ -27,4 +27,18 @@
     [coder encodeObject:_expirationDate forKey:NSStringFromSelector(@selector(expirationDate))];
 }
 
+- (NSString *)description
+{
+    NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    
+    [description appendFormat:@"id=%@,\n", self.permissionID];
+    [description appendFormat:@"isActive=%d,\n", self.isActive];
+    [description appendFormat:@"qonversionProductID=%d,\n", self.qonversionProductID];
+    [description appendFormat:@"renewState=%li,\n", (long) self.renewState];
+    [description appendFormat:@"startedDate=%@,\n", self.startedDate];
+    [description appendFormat:@"expirationDate=%@,\n", self.expirationDate];
+    [description appendString:@">"];
+    return description;
+}
+
 @end
