@@ -3,7 +3,7 @@
 NSString *const keyQPlatform = @"iOS";
 NSString *const keyQOSName = @"ios";
 
-NSString *const keyQVersion = @"1.1.2";
+NSString *const keyQVersion = @"1.2.0";
 NSString *const keyQUnknownLibrary = @"unknown";
 NSString *const keyQUnknownVersion = @"unknown";
 NSString *const keyQInternalUserID = @"keyQInternalUserID";
