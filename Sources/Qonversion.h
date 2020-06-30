@@ -67,7 +67,21 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
           failure:(QonversionCheckFailer)failure;
 
+/**
+ Check user permissions based on product center details
+ @param result Complition block that include permissions dictionary and error
+ @see [Product Center](https://qonversion.io/docs/product-center)
+ */
 + (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result;
+
+/**
+ Make a purchase and validate that through server-to-server using Qonversion's Backend
+ 
+ @param productID Product identifier create in Qonversion Dash, pay attention that you should use qonversion id instead Apple Product ID
+ @see [Product Center](https://qonversion.io/docs/product-center)
+*/
++ (void)purchase:(NSString *)productID
+          result:(QonversionCheckPermissionCompletionBlock)result;
 
 // MARK: - Deprecated methods
 
