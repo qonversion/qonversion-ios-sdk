@@ -44,6 +44,11 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
     [coder encodeObject:_result forKey:NSStringFromSelector(@selector(result))];
 }
 
+
+- (void)setResult:(QonversionLaunchResult *)result {
+    _result = result;
+}
+
 @end
 
 @implementation QonversionCheckResultComposeModel : QonversionComposeModel
@@ -151,7 +156,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
     QonversionLaunchComposeModel *result = [QonversionLaunchComposeModel new];
 
     if (object.error == NULL && [object.data isKindOfClass:NSDictionary.class]) {
-        QonversionLaunchResult *resultObject = [[QonversionMapper new] fillLaunchResult:object];
+        QonversionLaunchResult *resultObject = [[QonversionMapper new] fillLaunchResult:object.data];
         [result setResult:resultObject];
         return result;
     } else {

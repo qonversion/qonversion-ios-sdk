@@ -23,7 +23,7 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
 @interface QonversionLaunchComposeModel : NSObject <NSCoding>
 
 @property (nonatomic, copy, nullable) NSError *error;
-@property (nonatomic, copy, nullable) QonversionLaunchResult *result;
+@property (nonatomic, strong, nullable) QonversionLaunchResult *result;
 
 @end
 

@@ -62,6 +62,7 @@ static NSString * const kPurchaseEndpoint = @"purchase";
     NSString *clientUID = Keeper.userID;
 
     if (clientUID) {
+        [mutableBody setObject:clientUID forKey:@"q_uid"];
         [mutableBody setObject:clientUID forKey:@"client_uid"];
     }
 
