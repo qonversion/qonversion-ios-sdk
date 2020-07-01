@@ -33,7 +33,7 @@ static NSString * const kProductsResult = @"qonversion.products.result";
 @property (nonatomic) QInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QUserDefaultsStorage *persistentStorage;
 
-@property (nonatomic, copy) NSMutableArray <QonversionCheckPermissionCompletionBlock *> *permissionsBlocks;
+@property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 
 @property (nonatomic, strong) QDevice *device;
 
@@ -278,15 +278,15 @@ static NSString * const kProductsResult = @"qonversion.products.result";
     [[session dataTaskWithRequest:request
                 completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         
-        self->_launchingFinished = YES;
+        @synchronized (self) {
+            _launchingFinished = YES;
+        }
         
         if (data == NULL && error) {
-            
             QonversionLaunchComposeModel *model = [[QonversionLaunchComposeModel alloc] init];
             model.error = error;
             
             [self executePermissionBlocks:model];
-            [self.persistentStorage storeObject:model forKey:kPermissionsResult];
             
             return;
         }
@@ -294,7 +294,7 @@ static NSString * const kProductsResult = @"qonversion.products.result";
         QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
         
         if (model) {
-            [self.persistentStorage storeObject:model forKey:kPermissionsResult];
+            [self executePermissionBlocks:model];
             [self loadProducts];
             
             if (model.result.uid) {
@@ -304,17 +304,21 @@ static NSString * const kProductsResult = @"qonversion.products.result";
             if (completion) {
                 completion(model.result.uid);
             }
-            [self executePermissionBlocks:model];
         }
         
     }] resume];
 }
 
+
 - (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
     
      @synchronized (self) {
-         for (id permissionBlock in self->_permissionsBlocks) {
-             
+         [self.persistentStorage storeObject:model forKey:kPermissionsResult];
+         NSMutableArray <QonversionCheckPermissionCompletionBlock> *_blocks = [self->_permissionsBlocks copy];
+         [self->_permissionsBlocks removeAllObjects];
+         
+         for (QonversionCheckPermissionCompletionBlock block in _blocks) {
+             block(model.result.permissions ?: @{}, model.error);
          }
      }
 }
