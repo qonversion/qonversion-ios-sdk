@@ -20,7 +20,6 @@
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
 static NSString * const kPermissionsResult = @"qonversion.permissions.result";
 static NSString * const kProductsResult = @"qonversion.products.result";
-static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -33,6 +32,8 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
 @property (nonatomic, strong) QRequestSerializer *requestSerializer;
 @property (nonatomic) QInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QUserDefaultsStorage *persistentStorage;
+
+@property (nonatomic, copy) NSMutableArray <QonversionCheckPermissionCompletionBlock *> *permissionsBlocks;
 
 @property (nonatomic, strong) QDevice *device;
 
@@ -73,56 +74,6 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
     [Qonversion addAttributionData:data fromProvider:provider userID:nil];
 }
 
-- (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-    
-    NSDictionary *launchData = [self->_requestSerializer launchData];
-    NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:launchData];
-    NSURLSession *session = [[self session] copy];
-    
-    [[session dataTaskWithRequest:request
-                completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        
-        QonversionCheckPermissionCompletionBlock block = [_inMemoryStorage loadObjectForKey:kPermissionsResultBlock];
-        self->_launchingFinished = YES;
-        
-        if (data == NULL && error) {
-            if (block) {
-                block(NULL, error);
-            }
-            
-            QonversionLaunchComposeModel *model = [[QonversionLaunchComposeModel alloc] init];
-            model.error = error;
-            [self.persistentStorage storeObject:model forKey:kPermissionsResult];
-            
-            return;
-        }
-        
-        QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
-        
-        if (model) {
-            [self.persistentStorage storeObject:model forKey:kPermissionsResult];
-            [self loadProducts];
-            
-            if (model.result.uid) {
-                Keeper.userID = model.result.uid;
-            }
-            
-          if (completion) {
-            completion(model.result.uid);
-          }
-        }
-        
-        if (block) {
-            block(model.result.permissions,  model.error);
-        }
-        
-    }] resume];
-}
-
-- (void)loadProducts {
-    
-}
-
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
           failure:(QonversionCheckFailer)failure {
     __block __weak Qonversion *weakSelf = [Qonversion sharedInstance];
@@ -147,6 +98,10 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
     }
 }
 
++ (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result {
+    [[Qonversion sharedInstance] checkPermissions:result];
+}
+
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
     [[Qonversion sharedInstance] addAttributionData:data fromProvider:provider userID:uid];
 }
@@ -165,33 +120,6 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
             }
         }];
     });
-}
-
-- (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
-    [self runOnBackgroundQueue:^{
-        NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
-        NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
-        
-        [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-            if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-                QONVERSION_LOG(@"Qonversion Purchase Log Response:\n%@", dict);
-            }
-        }];
-    }];
-}
-
-- (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
-    NSURLSession *session = [[self session] copy];
-    [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        if (!data || ![data isKindOfClass:NSData.class]) {
-            return;
-        }
-        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
-            return;
-        }
-        completion(dict);
-    }] resume];
 }
 
 // MARK: - SKPaymentTransactionObserver
@@ -256,16 +184,15 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
     }] resume];
 }
 
-+ (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result {
-    [[Qonversion sharedInstance] checkPermissions:result];
-}
-
 - (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result {
     
     @synchronized (self) {
         if (!_launchingFinished) {
-          [self.inMemoryStorage storeObject:result forKey:kPermissionsResultBlock];
-          return;
+            if (result) {
+                [self.permissionsBlocks addObject:result];
+            }
+            
+            return;
         }
     }
     
@@ -308,10 +235,92 @@ static NSString * const kPermissionsResultBlock = @"kPermissionsResultBlock";
         
         _backgroundQueue.name = kBackgrounQueueName;
         
+        _permissionsBlocks = [[NSMutableArray alloc] init];
         [self addObservers];
         [self collectIntegrationsData];
     }
     return self;
+}
+
+- (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+    [self runOnBackgroundQueue:^{
+        NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
+        NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
+        
+        [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+            if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
+                QONVERSION_LOG(@"Qonversion Purchase Log Response:\n%@", dict);
+            }
+        }];
+    }];
+}
+
+- (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
+    NSURLSession *session = [[self session] copy];
+    [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (!data || ![data isKindOfClass:NSData.class]) {
+            return;
+        }
+        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
+            return;
+        }
+        completion(dict);
+    }] resume];
+}
+
+- (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
+    
+    NSDictionary *launchData = [self->_requestSerializer launchData];
+    NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:launchData];
+    NSURLSession *session = [[self session] copy];
+    
+    [[session dataTaskWithRequest:request
+                completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        
+        self->_launchingFinished = YES;
+        
+        if (data == NULL && error) {
+            
+            QonversionLaunchComposeModel *model = [[QonversionLaunchComposeModel alloc] init];
+            model.error = error;
+            
+            [self executePermissionBlocks:model];
+            [self.persistentStorage storeObject:model forKey:kPermissionsResult];
+            
+            return;
+        }
+        
+        QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
+        
+        if (model) {
+            [self.persistentStorage storeObject:model forKey:kPermissionsResult];
+            [self loadProducts];
+            
+            if (model.result.uid) {
+                Keeper.userID = model.result.uid;
+            }
+            
+            if (completion) {
+                completion(model.result.uid);
+            }
+            [self executePermissionBlocks:model];
+        }
+        
+    }] resume];
+}
+
+- (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
+    
+     @synchronized (self) {
+         for (id permissionBlock in self->_permissionsBlocks) {
+             
+         }
+     }
+}
+
+- (void)loadProducts {
+    
 }
 
 - (void)setUserProperty:(NSString *)property value:(NSString *)value {

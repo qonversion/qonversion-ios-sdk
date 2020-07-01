@@ -21,8 +21,9 @@
     [super setUp];
     
     // Set default value before
-    [Qonversion launchWithKey:@"test_key"];
     [Qonversion setDebugMode:NO];
+    [Qonversion launchWithKey:@"test_key"];
+    
 }
 
 - (void)testThatQonversionLauch {
