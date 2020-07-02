@@ -25,6 +25,7 @@ static NSString * const kProductsResult = @"qonversion.products.result";
 
 @property (nonatomic, readonly) NSMutableDictionary *transactions;
 @property (nonatomic, readonly) NSMutableDictionary *productRequests;
+@property (nonatomic, readonly) NSMutableDictionary *products;
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
 
@@ -132,6 +133,7 @@ static NSString * const kProductsResult = @"qonversion.products.result";
     if (self) {
         _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
         _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
+        _products = [[NSMutableDictionary alloc] init];
         _inMemoryStorage = [[QInMemoryStorage alloc] init];
         _persistentStorage = [[QUserDefaultsStorage alloc] init];
         _requestSerializer = [[QRequestSerializer alloc] init];
@@ -299,7 +301,18 @@ static NSString * const kProductsResult = @"qonversion.products.result";
 }
 
 - (void)loadProducts:(QonversionLaunchComposeModel *)model {
-    //model.result.products
+    NSArray<QonversionProduct *> *products = [model.result.products allValues];
+    
+    NSMutableSet *productsSet = [[NSMutableSet alloc] init];
+    if (products) {
+        for (QonversionProduct *product in products) {
+            [productsSet addObject:product.storeID];
+        }
+    }
+    
+    SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:productsSet];
+    [request setDelegate:self];
+    [request start];
 }
 
 - (void)setUserProperty:(NSString *)property value:(NSString *)value {
@@ -457,6 +470,14 @@ static NSString * const kProductsResult = @"qonversion.products.result";
     if (!product) {
         return;
     }
+    
+    // Set products
+    for (product in response.products) {
+        if (product.productIdentifier) {
+            [_products setValue:product forKey:product.productIdentifier];
+        }
+    }
+    
     SKPaymentTransaction *transaction = [self.transactions objectForKey:product.productIdentifier];
     
     if (!transaction) {
