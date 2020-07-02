@@ -17,7 +17,7 @@ typedef NS_ENUM(unsigned int, QonversionProductDuration){
     QonversionProductDurationLifetime = 5
 };
 
-@interface QonversionProduct : NSObject
+@interface QonversionProduct : NSObject <NSCoding>
 
 /**
  Product ID created in Qonversion Dashboard
