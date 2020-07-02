@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import "QUtils.h"
 #import "QonversionMapper.h"
 #import "RenewalProductDetails.h"
 #import "QonversionCheckResult+Protected.h"
@@ -194,13 +195,14 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
     result.permissionID = dict[@"id"];
     result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
     result.renewState = ((NSNumber *)dict[@"renew_state"] ?: @0).intValue;
+    result.productID = ((NSString *)dict[@"associated_product"] ?: @"");
     
-    NSTimeInterval started = ((NSNumber *)dict[@"started_timestamp"] ?: @0).doubleValue;
+    NSTimeInterval started = ((NSNumber *)dict[@"started_timestamp"] ?: @0).intValue;
     result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
     result.expirationDate = nil;
     
     if (dict[@"expiration_timestamp"]) {
-        NSTimeInterval expiration = ((NSNumber *)dict[@"expiration_timestamp"] ?: @0).doubleValue;
+        NSTimeInterval expiration = ((NSNumber *)dict[@"expiration_timestamp"] ?: @0).intValue;
         result.expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
     }
     

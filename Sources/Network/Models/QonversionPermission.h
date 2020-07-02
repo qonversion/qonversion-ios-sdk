@@ -20,7 +20,7 @@ typedef NS_ENUM(int, QonversionPermissionRenewState){
  Product ID created in Qonversion Dashboard
  @see [Create Products](https://qonversion.io/docs/create-products)
  */
-@property (nonatomic, copy, nonnull) NSString *qonversionProductID;
+@property (nonatomic, copy, nonnull) NSString *productID;
 
 /**
  Use for checking permission for current user
