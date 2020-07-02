@@ -41,7 +41,7 @@
     _products = products;
 }
 
-- (void)setUserPoducts:(NSDictionary<NSString *, QonversionProduct *> *)userPoducts {
+- (void)setUserProducts:(NSDictionary<NSString *, QonversionProduct *> *)userPoducts {
     _userPoducts = userPoducts;
 }
 
