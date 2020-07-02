@@ -156,6 +156,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
     QonversionLaunchComposeModel *result = [QonversionLaunchComposeModel new];
 
     if (object.error == NULL && [object.data isKindOfClass:NSDictionary.class]) {
+        QONVERSION_LOG(@"Qonversion Launch Log Response:\n%@", object.data);
         QonversionLaunchResult *resultObject = [[QonversionMapper new] fillLaunchResult:object.data];
         [result setResult:resultObject];
         return result;

@@ -122,41 +122,6 @@ static NSString * const kProductsResult = @"qonversion.products.result";
     });
 }
 
-// MARK: - SKPaymentTransactionObserver
-
-- (void)paymentQueue:(nonnull SKPaymentQueue *)queue updatedTransactions:(nonnull NSArray<SKPaymentTransaction *> *)transactions {
-    for (SKPaymentTransaction *transaction in transactions) {
-        if (transaction.transactionState != SKPaymentTransactionStatePurchased) {
-            continue;
-        }
-        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-        [self.transactions setObject:transaction forKey:transaction.payment.productIdentifier];
-        
-        SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:[NSSet setWithObject:transaction.payment.productIdentifier]];
-        [self.productRequests setObject:request forKey:transaction.payment.productIdentifier];
-        request.delegate = self;
-        [request start];
-    }
-}
-
-// MARK: - SKProductsRequestDelegate
-
-- (void)productsRequest:(nonnull SKProductsRequest *)request didReceiveResponse:(nonnull SKProductsResponse *)response {
-    SKProduct *product = response.products.firstObject;
-    if (!product) {
-        return;
-    }
-    SKPaymentTransaction *transaction = [self.transactions objectForKey:product.productIdentifier];
-    
-    if (!transaction) {
-        return;
-    }
-    
-    [self serviceLogPurchase:product transaction:transaction];
-    [self.transactions removeObjectForKey:product.productIdentifier];
-    [self.productRequests removeObjectForKey:product.productIdentifier];
-}
-
 - (void)checkUser:(void(^)(QonversionCheckResult *result))result
                failure:(QonversionCheckFailer)failure {
     
@@ -195,7 +160,7 @@ static NSString * const kProductsResult = @"qonversion.products.result";
             return;
         }
     }
-    
+
     QonversionLaunchComposeModel *model = [self.persistentStorage loadObjectForKey:kPermissionsResult];
     result(model.result, model.error);
 }
@@ -223,6 +188,7 @@ static NSString * const kProductsResult = @"qonversion.products.result";
         _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
         _inMemoryStorage = [[QInMemoryStorage alloc] init];
         _persistentStorage = [[QUserDefaultsStorage alloc] init];
+        _requestSerializer = [[QRequestSerializer alloc] init];
         _updatingCurrently = NO;
         _launchingFinished = NO;
         _debugMode = NO;
@@ -278,17 +244,16 @@ static NSString * const kProductsResult = @"qonversion.products.result";
     [[session dataTaskWithRequest:request
                 completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         
-        @synchronized (self) {
-            _launchingFinished = YES;
-        }
-        
         if (data == NULL && error) {
             QonversionLaunchComposeModel *model = [[QonversionLaunchComposeModel alloc] init];
             model.error = error;
             
             [self executePermissionBlocks:model];
-            
-            return;
+
+            @synchronized (self) {
+                _launchingFinished = YES;
+                return;
+            }
         }
         
         QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
@@ -305,6 +270,12 @@ static NSString * const kProductsResult = @"qonversion.products.result";
                 completion(model.result.uid);
             }
         }
+
+        @synchronized (self) {
+            _launchingFinished = YES;
+            return;
+        }
+      
         
     }] resume];
 }
@@ -456,6 +427,41 @@ static NSString * const kProductsResult = @"qonversion.products.result";
         [_backgroundQueue addOperationWithBlock:block];
         return YES;
     }
+}
+
+// MARK: - SKPaymentTransactionObserver
+
+- (void)paymentQueue:(nonnull SKPaymentQueue *)queue updatedTransactions:(nonnull NSArray<SKPaymentTransaction *> *)transactions {
+    for (SKPaymentTransaction *transaction in transactions) {
+        if (transaction.transactionState != SKPaymentTransactionStatePurchased) {
+            continue;
+        }
+        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+        [self.transactions setObject:transaction forKey:transaction.payment.productIdentifier];
+        
+        SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:[NSSet setWithObject:transaction.payment.productIdentifier]];
+        [self.productRequests setObject:request forKey:transaction.payment.productIdentifier];
+        request.delegate = self;
+        [request start];
+    }
+}
+
+// MARK: - SKProductsRequestDelegate
+
+- (void)productsRequest:(nonnull SKProductsRequest *)request didReceiveResponse:(nonnull SKProductsResponse *)response {
+    SKProduct *product = response.products.firstObject;
+    if (!product) {
+        return;
+    }
+    SKPaymentTransaction *transaction = [self.transactions objectForKey:product.productIdentifier];
+    
+    if (!transaction) {
+        return;
+    }
+    
+    [self serviceLogPurchase:product transaction:transaction];
+    [self.transactions removeObjectForKey:product.productIdentifier];
+    [self.productRequests removeObjectForKey:product.productIdentifier];
 }
 
 @end
