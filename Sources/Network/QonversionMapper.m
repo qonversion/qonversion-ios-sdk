@@ -170,9 +170,13 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 - (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
     QonversionLaunchResult *result = [[QonversionLaunchResult alloc] init];
     NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
+    NSDictionary *productsDict = dict[@"products"] ?: @{};
+    NSDictionary *userProductsDict = dict[@"user_products"] ?: @{};
     
     [result setUid:((NSString *)dict[@"uid"] ?: @"")];
     [result setPermissions:[self fillPermissions:permissionsDict]];
+    [result setProducts:[self fillProducts:productsDict]];
+    [result setUserProducts:[self fillProducts:userProductsDict]];
     
     return result;
 }
@@ -190,6 +194,19 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
     return [[NSDictionary alloc] initWithDictionary:permissions];
 }
 
+- (NSDictionary <NSString *, QonversionProduct *> *)fillProducts:(NSDictionary *)dict {
+    NSMutableDictionary <NSString *, QonversionProduct *> *products = [NSMutableDictionary new];
+    
+    for (NSDictionary* itemDict in dict) {
+        QonversionProduct *item = [self fillProduct:itemDict];
+        if (item && item.qonversionID) {
+            products[item.qonversionID] = item;
+        }
+    }
+    
+    return [[NSDictionary alloc] initWithDictionary:products];
+}
+
 - (QonversionPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
     QonversionPermission *result = [[QonversionPermission alloc] init];
     result.permissionID = dict[@"id"];
@@ -205,6 +222,17 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
         NSTimeInterval expiration = ((NSNumber *)dict[@"expiration_timestamp"] ?: @0).intValue;
         result.expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
     }
+    
+    return result;
+}
+
+- (QonversionProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
+    QonversionProduct *result = [[QonversionProduct alloc] init];
+    
+    result.duration = ((NSNumber *)dict[@"duration"] ?: @0).integerValue;
+    result.type = ((NSNumber *)dict[@"type"] ?: @0).integerValue;
+    result.qonversionID = ((NSString *)dict[@"id"] ?: @"");
+    result.storeID = ((NSString *)dict[@"store_id"] ?: @"");
     
     return result;
 }

@@ -11,6 +11,7 @@
         _timestamp = [coder decodeIntegerForKey:NSStringFromSelector(@selector(timestamp))];
         _permissions = [coder decodeObjectForKey:NSStringFromSelector(@selector(permissions))];
         _products = [coder decodeObjectForKey:NSStringFromSelector(@selector(products))];
+        _userPoducts = [coder decodeObjectForKey:NSStringFromSelector(@selector(userPoducts))];
     }
     return self;
 }
@@ -21,6 +22,7 @@
     [coder encodeInteger:_timestamp forKey:NSStringFromSelector(@selector(timestamp))];
     [coder encodeObject:_permissions forKey:NSStringFromSelector(@selector(permissions))];
     [coder encodeObject:_products forKey:NSStringFromSelector(@selector(products))];
+    [coder encodeObject:_userPoducts forKey:NSStringFromSelector(@selector(userPoducts))];
 }
 
 - (void)setUid:(NSString *)uid {
@@ -37,6 +39,10 @@
 
 - (void)setProducts:(NSDictionary<NSString *, QonversionProduct *> *)products {
     _products = products;
+}
+
+- (void)setUserPoducts:(NSDictionary<NSString *, QonversionProduct *> *)userPoducts {
+    _userPoducts = userPoducts;
 }
 
 @end

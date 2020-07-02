@@ -6,5 +6,6 @@
 @property (nonatomic) NSUInteger timestamp;
 @property (nonatomic, strong) NSDictionary<NSString *, QonversionPermission *> *permissions;
 @property (nonatomic, strong) NSDictionary<NSString *, QonversionProduct *> *products;
+@property (nonatomic, strong) NSDictionary<NSString *, QonversionProduct *> *userProducts;
 
 @end

@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "QRequestBuilder.h"
 #import "Keeper.h"
+#import "QUtils.h"
 
 static NSString * const kAPIBase = @"https://api.qonversion.io/";
 static NSString * const kInitEndpoint = @"v1/user/init";
@@ -12,6 +13,7 @@ static NSString * const kPurchaseEndpoint = @"purchase";
 @interface QRequestBuilder ()
 
 @property (nonatomic, strong) NSString *apiKey;
+@property (nonatomic, strong) NSString *userID;
 
 @end
 
@@ -59,11 +61,14 @@ static NSString * const kPurchaseEndpoint = @"purchase";
     NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
     
     [mutableBody setObject:_apiKey forKey:@"access_token"];
-    NSString *clientUID = Keeper.userID;
-
-    if (clientUID) {
-        [mutableBody setObject:clientUID forKey:@"q_uid"];
-        [mutableBody setObject:clientUID forKey:@"client_uid"];
+    if ([QUtils isEmptyString:_userID]) {
+        NSString *clientUID = Keeper.userID;
+        _userID = clientUID;
+    }
+    
+    if (_userID) {
+        [mutableBody setObject:_userID forKey:@"q_uid"];
+        [mutableBody setObject:_userID forKey:@"client_uid"];
     }
 
     request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];

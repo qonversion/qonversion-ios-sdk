@@ -24,5 +24,10 @@
  */
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, QonversionProduct *> *products;
 
+/**
+ User products
+ */
+@property (nonatomic, copy, readonly) NSDictionary<NSString *, QonversionProduct *> *userPoducts;
+
 
 @end

@@ -264,7 +264,7 @@ static NSString * const kProductsResult = @"qonversion.products.result";
         
         if (model) {
             [self executePermissionBlocks:model];
-            [self loadProducts];
+            [self loadProducts:model];
             
             if (model.result.uid) {
                 Keeper.userID = model.result.uid;
@@ -298,8 +298,8 @@ static NSString * const kProductsResult = @"qonversion.products.result";
      }
 }
 
-- (void)loadProducts {
-    
+- (void)loadProducts:(QonversionLaunchComposeModel *)model {
+    //model.result.products
 }
 
 - (void)setUserProperty:(NSString *)property value:(NSString *)value {
