@@ -31,7 +31,7 @@ static NSString * const kPurchaseEndpoint = @"purchase";
 }
 
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters {
-    return [self makePostRequestWith:kInitEndpoint andBody:parameters];
+    return [self makePostRequestWith:kPropertiesEndpoint andBody:parameters];
 }
 
 - (NSURLRequest *)makeCheckRequest {
