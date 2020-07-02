@@ -286,7 +286,6 @@ static NSString * const kProductsResult = @"qonversion.products.result";
     }] resume];
 }
 
-
 - (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
     
      @synchronized (self) {
@@ -475,6 +474,7 @@ static NSString * const kProductsResult = @"qonversion.products.result";
     for (product in response.products) {
         if (product.productIdentifier) {
             [_products setValue:product forKey:product.productIdentifier];
+            QONVERSION_LOG(@"Loaded Product %@ with price %@", product.productIdentifier, product.price);
         }
     }
     
