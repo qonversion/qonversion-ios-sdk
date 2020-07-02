@@ -4,7 +4,7 @@
 
 - (instancetype)initWithKey:(NSString *)key;
 
-@property (nonatomic, copy, readonly) NSString *apiKey;
+@property (nonatomic, copy, readonly) NSString *key;
 
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;

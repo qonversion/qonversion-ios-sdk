@@ -106,6 +106,53 @@ static NSString * const kProductsResult = @"qonversion.products.result";
     [[Qonversion sharedInstance] addAttributionData:data fromProvider:provider userID:uid];
 }
 
++ (void)purchase:(NSString *)productID
+          result:(QonversionCheckPermissionCompletionBlock)result {
+    QONVERSION_LOG(@"purchase product %@", productID);
+}
+
+// MARK: - Private
+
++ (instancetype)sharedInstance {
+    static id shared = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        shared = self.new;
+    });
+    
+    return shared;
+}
+
+- (NSURLSession *)session {
+    return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
+}
+
+- (instancetype)init {
+    self = super.init;
+    if (self) {
+        _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
+        _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
+        _inMemoryStorage = [[QInMemoryStorage alloc] init];
+        _persistentStorage = [[QUserDefaultsStorage alloc] init];
+        _requestSerializer = [[QRequestSerializer alloc] init];
+        _updatingCurrently = NO;
+        _launchingFinished = NO;
+        _debugMode = NO;
+        _device = [[QDevice alloc] init];
+        
+        _backgroundQueue = [[NSOperationQueue alloc] init];
+        [_backgroundQueue setMaxConcurrentOperationCount:1];
+        [_backgroundQueue setSuspended:NO];
+        
+        _backgroundQueue.name = kBackgrounQueueName;
+        
+        _permissionsBlocks = [[NSMutableArray alloc] init];
+        [self addObservers];
+        [self collectIntegrationsData];
+    }
+    return self;
+}
+
 - (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
     double delayInSeconds = 3.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
@@ -163,49 +210,6 @@ static NSString * const kProductsResult = @"qonversion.products.result";
 
     QonversionLaunchComposeModel *model = [self.persistentStorage loadObjectForKey:kPermissionsResult];
     result(model.result, model.error);
-}
-
-// MARK: - Private
-
-+ (instancetype)sharedInstance {
-    static id shared = nil;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        shared = self.new;
-    });
-    
-    return shared;
-}
-
-- (NSURLSession *)session {
-    return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
-}
-
-- (instancetype)init {
-    self = super.init;
-    if (self) {
-        _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
-        _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
-        _inMemoryStorage = [[QInMemoryStorage alloc] init];
-        _persistentStorage = [[QUserDefaultsStorage alloc] init];
-        _requestSerializer = [[QRequestSerializer alloc] init];
-        _updatingCurrently = NO;
-        _launchingFinished = NO;
-        _debugMode = NO;
-        _device = [[QDevice alloc] init];
-        _requestBuilder = [[QRequestBuilder alloc] init];
-        
-        _backgroundQueue = [[NSOperationQueue alloc] init];
-        [_backgroundQueue setMaxConcurrentOperationCount:1];
-        [_backgroundQueue setSuspended:NO];
-        
-        _backgroundQueue.name = kBackgrounQueueName;
-        
-        _permissionsBlocks = [[NSMutableArray alloc] init];
-        [self addObservers];
-        [self collectIntegrationsData];
-    }
-    return self;
 }
 
 - (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {

@@ -11,7 +11,7 @@ static NSString * const kPurchaseEndpoint = @"purchase";
 
 @interface QRequestBuilder ()
 
-@property (nonatomic, strong) NSString *key;
+@property (nonatomic, strong) NSString *apiKey;
 
 @end
 
@@ -19,7 +19,7 @@ static NSString * const kPurchaseEndpoint = @"purchase";
 
 - (instancetype)initWithKey:(NSString *)key {
     if (self = [super init]) {
-        _key = key;
+        _apiKey = key;
     }
     return self;
 }
@@ -58,7 +58,7 @@ static NSString * const kPurchaseEndpoint = @"purchase";
     
     NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
     
-    [mutableBody setObject:_key forKey:@"access_token"];
+    [mutableBody setObject:_apiKey forKey:@"access_token"];
     NSString *clientUID = Keeper.userID;
 
     if (clientUID) {
