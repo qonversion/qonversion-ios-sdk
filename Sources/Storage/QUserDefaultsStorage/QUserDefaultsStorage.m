@@ -9,7 +9,7 @@ static NSString *QUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefaul
 }
 
 - (void)storeObject:(id)object forKey:(NSString *)key {
-    [self.userDefaults setObject:object forKey:key];
+    [self.userDefaults setObject:[self archivedDataWith:object] forKey:key];
     [self.userDefaults synchronize];
 }
 
@@ -22,7 +22,12 @@ static NSString *QUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefaul
 }
 
 - (id)loadObjectForKey:(NSString *)key {
-    return [self.userDefaults objectForKey:key];
+    NSData *data = [self.userDefaults objectForKey:key];
+    if (data) {
+        return [self unarchiveObjectWithData:data];
+    }
+    
+    return nil;
 }
 
 - (void)loadObjectForKey:(NSString *)key withCompletion:(void (^)(id))completion {
@@ -35,6 +40,14 @@ static NSString *QUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefaul
 
 - (void)removeObjectForKey:(NSString *)key {
     [self.userDefaults removeObjectForKey:key];
+}
+
+- (NSData *)archivedDataWith:(id)object {
+    return [NSKeyedArchiver archivedDataWithRootObject:object];
+}
+
+- (id)unarchiveObjectWithData:(NSData *)data {
+    return [NSKeyedUnarchiver unarchiveObjectWithData:data];
 }
 
 @end
