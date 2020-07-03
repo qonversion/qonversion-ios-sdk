@@ -111,6 +111,33 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 + (void)purchase:(NSString *)productID
           result:(QonversionCheckPermissionCompletionBlock)result {
     QONVERSION_LOG(@"purchase product %@", productID);
+    Qonversion *instance = [Qonversion sharedInstance];
+    QonversionLaunchComposeModel *launchResult = [instance launchModel];
+    NSDictionary *products = launchResult.result.products ?: @{};
+    QonversionProduct *product = products[productID];
+    
+    if (product) {
+        SKProduct *skProduct = [instance->_products[product.storeID]];
+        
+        if (skProduct) {
+            SKPayment *payment = [SKPayment paymentWithProduct:skProduct];
+            [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
+            [[SKPaymentQueue defaultQueue] addPayment:payment];
+            NSLog(">>> Payment queue %@", payment);
+        } else {
+            // TODO
+            // Parse error
+        }
+        
+    } else {
+        // TODO
+        // Update product not found error
+        NSError *productNotFoundError = [[NSError alloc] init];
+        result(nil, productNotFoundError);
+    }
+    
+    NSLog(@">>> Data %@", launchResult);
+    
 }
 
 // MARK: - Private
@@ -213,7 +240,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
         }
     }
 
-    QonversionLaunchComposeModel *model = [self.persistentStorage loadObjectForKey:kPermissionsResult];
+    QonversionLaunchComposeModel *model = [self launchModel];
     if (model) {
         result(model.result.permissions, model.error);
     } else {
@@ -232,6 +259,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
             }
         }];
     }];
+}
+
+- (QonversionLaunchComposeModel *)launchModel {
+    return [self.persistentStorage loadObjectForKey:kPermissionsResult];
 }
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
@@ -296,7 +327,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 - (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
-    
+
      @synchronized (self) {
          NSMutableArray <QonversionCheckPermissionCompletionBlock> *_blocks = [self->_permissionsBlocks copy];
          [self->_permissionsBlocks removeAllObjects];
