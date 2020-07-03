@@ -12,7 +12,8 @@ extern int const kQPropertiesSendingPeriodInSeconds;
 typedef NS_ENUM(NSInteger, QProperty) {
     QPropertyEmail = 0,
     QPropertyName,
-    QPropertyPremium
+    QPropertyPremium,
+    QPropertyKochavaDeviceID
 };
 
 // MARK: - Qonversion Underhood User Properties
