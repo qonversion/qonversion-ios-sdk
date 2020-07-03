@@ -20,6 +20,7 @@
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
 static NSString * const kPermissionsResult = @"qonversion.permissions.result";
 static NSString * const kProductsResult = @"qonversion.products.result";
+static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -136,6 +137,8 @@ static NSString * const kProductsResult = @"qonversion.products.result";
         _products = [[NSMutableDictionary alloc] init];
         _inMemoryStorage = [[QInMemoryStorage alloc] init];
         _persistentStorage = [[QUserDefaultsStorage alloc] init];
+        [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
+      
         _requestSerializer = [[QRequestSerializer alloc] init];
         _updatingCurrently = NO;
         _launchingFinished = NO;
