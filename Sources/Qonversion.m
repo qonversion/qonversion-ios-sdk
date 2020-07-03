@@ -210,8 +210,8 @@ static NSString * const kProductsResult = @"qonversion.products.result";
         }
     }
 
-    QonversionLaunchComposeModel *model = [self.persistentStorage loadObjectForKey:kPermissionsResult];
-    result(model.result, model.error);
+    id model = [self.persistentStorage loadObjectForKey:kPermissionsResult];
+    //result(model.result, model.error);
 }
 
 - (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
@@ -253,16 +253,22 @@ static NSString * const kProductsResult = @"qonversion.products.result";
         if (data == NULL && error) {
             QonversionLaunchComposeModel *model = [[QonversionLaunchComposeModel alloc] init];
             model.error = error;
-            
-            [self executePermissionBlocks:model];
 
             @synchronized (self) {
+                [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
                 _launchingFinished = YES;
+                [self executePermissionBlocks:model];
+                
                 return;
             }
         }
         
         QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
+        
+        @synchronized (self) {
+            [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
+            _launchingFinished = YES;
+        }
         
         if (model) {
             [self executePermissionBlocks:model];
@@ -276,11 +282,6 @@ static NSString * const kProductsResult = @"qonversion.products.result";
                 completion(model.result.uid);
             }
         }
-
-        @synchronized (self) {
-            _launchingFinished = YES;
-            return;
-        }
       
         
     }] resume];
@@ -289,7 +290,6 @@ static NSString * const kProductsResult = @"qonversion.products.result";
 - (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
     
      @synchronized (self) {
-         [self.persistentStorage storeObject:model forKey:kPermissionsResult];
          NSMutableArray <QonversionCheckPermissionCompletionBlock> *_blocks = [self->_permissionsBlocks copy];
          [self->_permissionsBlocks removeAllObjects];
          
