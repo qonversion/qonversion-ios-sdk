@@ -213,8 +213,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
         }
     }
 
-    id model = [self.persistentStorage loadObjectForKey:kPermissionsResult];
-    //result(model.result, model.error);
+    QonversionLaunchComposeModel *model = [self.persistentStorage loadObjectForKey:kPermissionsResult];
+    if (model) {
+        result(model.result.permissions, model.error);
+    } else {
+        QONVERSION_LOG(@">>>> MODEL NOT FOUND");
+    }
 }
 
 - (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
@@ -279,6 +283,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
             
             if (model.result.uid) {
                 Keeper.userID = model.result.uid;
+                [self->_requestBuilder setUserID:model.result.uid];
             }
             
             if (completion) {

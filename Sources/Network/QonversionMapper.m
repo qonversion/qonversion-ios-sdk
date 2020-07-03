@@ -68,7 +68,6 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
         @"trial": @0,
         @"subscription": @1,
     };
-    
 }
 
 - (QonversionCheckResultComposeModel *)composeModelFrom:(NSData *)data {
@@ -252,6 +251,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
     
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
     
+    QONVERSION_LOG(@"QONVERSION RESPONSE DATA %@", dict);
     if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
         [object setError:[QonversionMapper error:@"Could not parse response" code:QErrorCodeFailedParseResponse]];
         return object;
