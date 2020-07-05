@@ -10,9 +10,9 @@ extern NSString *const keyQPropertyReg;
 extern int const kQPropertiesSendingPeriodInSeconds;
 
 typedef NS_ENUM(NSInteger, QProperty) {
-    QPropertyEmail = 0,
-    QPropertyName,
-    QPropertyPremium
+  QPropertyEmail = 0,
+  QPropertyName,
+  QPropertyPremium
 };
 
 // MARK: - Qonversion Underhood User Properties

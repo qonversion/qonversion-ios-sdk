@@ -5,7 +5,7 @@
 
 @property (nonatomic) RenewalProductStatus status;
 @property (nonatomic) RenewalProductState state;
-  
+
 @property (nonatomic, copy) NSString *productID;
 @property (nonatomic, copy) NSString *originalTransactionID;
 

@@ -3,7 +3,7 @@
 @implementation QUtils
 
 + (BOOL)isEmptyString:(NSString*)string {
-    return string == nil || [string isKindOfClass:[NSNull class]] || [string length] == 0;
+  return string == nil || [string isKindOfClass:[NSNull class]] || [string length] == 0;
 }
 
 @end

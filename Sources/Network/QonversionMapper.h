@@ -3,9 +3,9 @@
 #import "QonversionLaunchResult.h"
 
 typedef NS_ENUM(NSInteger, QErrorCode) {
-    QErrorCodeFailedReceiveData = 0,
-    QErrorCodeFailedParseResponse,
-    QErrorCodeIncorrectRequest
+  QErrorCodeFailedReceiveData = 0,
+  QErrorCodeFailedParseResponse,
+  QErrorCodeIncorrectRequest
 };
 
 @interface QonversionComposeModel : NSObject <NSCoding>

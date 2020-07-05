@@ -4,39 +4,39 @@
 @implementation RenewalProductDetails : NSObject
 
 - (void)setState:(RenewalProductState)state {
-    _state = state;
+  _state = state;
 }
 
 - (void)setProductID:(NSString *)productID {
-    _productID = [productID copy];
+  _productID = [productID copy];
 }
 
 - (void)setOriginalTransactionID:(NSString *)originalTransactionID {
-    _originalTransactionID = [originalTransactionID copy];
+  _originalTransactionID = [originalTransactionID copy];
 }
 
 - (void)setStatus:(RenewalProductStatus)status {
-    _status = status;
+  _status = status;
 }
 
 - (void)setPurchasedAt:(NSUInteger)purchasedAt {
-    _purchasedAt = purchasedAt;
+  _purchasedAt = purchasedAt;
 }
 
 - (void)setExpired:(BOOL)expired {
-    _expired = expired;
+  _expired = expired;
 }
 
 - (void)setBillingRetry:(BOOL)billingRetry {
-    _billingRetry = billingRetry;
+  _billingRetry = billingRetry;
 }
 
 - (void)setCreatedAt:(NSUInteger)createdAt {
-    _createdAt = createdAt;
+  _createdAt = createdAt;
 }
 
 - (void)setExpiresAt:(NSUInteger)expiresAt {
-    _expiresAt = expiresAt;
+  _expiresAt = expiresAt;
 }
 
 

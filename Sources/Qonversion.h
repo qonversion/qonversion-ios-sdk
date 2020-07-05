@@ -9,9 +9,9 @@ NS_ASSUME_NONNULL_BEGIN
 typedef void (^QonversionCheckPermissionCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error);
 
 typedef NS_ENUM(NSInteger, QAttributionProvider) {
-    QAttributionProviderAppsFlyer = 0,
-    QAttributionProviderBranch,
-    QAttributionProviderAdjust
+  QAttributionProviderAppsFlyer = 0,
+  QAttributionProviderBranch,
+  QAttributionProviderAdjust
 };
 
 @interface Qonversion : NSObject
@@ -79,7 +79,7 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
  
  @param productID Product identifier create in Qonversion Dash, pay attention that you should use qonversion id instead Apple Product ID
  @see [Product Center](https://qonversion.io/docs/product-center)
-*/
+ */
 + (void)purchase:(NSString *)productID
           result:(QonversionCheckPermissionCompletionBlock)result;
 
@@ -94,7 +94,7 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
 + (void)addAttributionData:(NSDictionary *)data
               fromProvider:(QAttributionProvider)provider
                     userID:(nullable NSString *)uid
-                    __deprecated_msg("Use addAttributionData:fromProvider: instead");
+__deprecated_msg("Use addAttributionData:fromProvider: instead");
 
 @end
 

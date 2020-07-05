@@ -4,8 +4,8 @@
 typedef void (^QonversionCheckFailer)(NSError *error);
 
 typedef NS_ENUM(unsigned int, ClientEnvironment){
-    ClientEnvironmentSandbox = 0,
-    ClientEnvironmentProduction = 1
+  ClientEnvironmentSandbox = 0,
+  ClientEnvironmentProduction = 1
 };
 
 @interface QonversionCheckResult : NSObject
@@ -16,7 +16,7 @@ typedef NS_ENUM(unsigned int, ClientEnvironment){
 @property (nonatomic, readonly) NSUInteger timestamp;
 
 /**
-  The environment for which the receipt was generated.
+ The environment for which the receipt was generated.
  */
 @property (nonatomic, readonly) ClientEnvironment environment;
 

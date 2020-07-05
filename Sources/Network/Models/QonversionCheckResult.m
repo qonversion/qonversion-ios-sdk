@@ -4,19 +4,19 @@
 @implementation QonversionCheckResult : NSObject
 
 - (void)setEnvironment:(ClientEnvironment)environment {
-    _environment = environment;
+  _environment = environment;
 }
 
 - (void)setTimestamp:(NSUInteger)timestamp {
-    _timestamp = timestamp;
+  _timestamp = timestamp;
 }
 
 - (void)setActiveProducts:(NSArray<RenewalProductDetails *> *)activeProducts {
-    _activeProducts = activeProducts;
+  _activeProducts = activeProducts;
 }
 
 - (void)setAllProducts:(NSArray<RenewalProductDetails *> *)allProducts {
-    _allProducts = allProducts;
+  _allProducts = allProducts;
 }
 
 @end

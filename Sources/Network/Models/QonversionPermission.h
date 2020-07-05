@@ -1,11 +1,11 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(int, QonversionPermissionRenewState){
-    QonversionPermissionRenewStateNonRenewable = -1,
-    QonversionPermissionRenewStateUnknown = 0,
-    QonversionPermissionRenewStateWillRenew = 1,
-    QonversionPermissionRenewStateCancelled = 2,
-    QonversionPermissionRenewStateBillingIssue = 3
+  QonversionPermissionRenewStateNonRenewable = -1,
+  QonversionPermissionRenewStateUnknown = 0,
+  QonversionPermissionRenewStateWillRenew = 1,
+  QonversionPermissionRenewStateCancelled = 2,
+  QonversionPermissionRenewStateBillingIssue = 3
 };
 
 @interface QonversionPermission : NSObject <NSCoding>
