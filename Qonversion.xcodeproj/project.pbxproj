@@ -112,6 +112,7 @@
 		456ECD46249C8EEE00D2BC40 /* init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init.json; sourceTree = "<group>"; };
 		456ECD48249CA28300D2BC40 /* init_failed_state.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init_failed_state.json; sourceTree = "<group>"; };
 		4587136B24AB963100F4B418 /* QRequestSerializerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestSerializerTests.m; sourceTree = "<group>"; };
+		458A8CB624B1EFE500637130 /* QErrors.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QErrors.h; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -356,6 +357,7 @@
 				459DABE6243E35BC0011ECF3 /* Keychain.m */,
 				454BE22E247C4AD8001FE771 /* QUtils.h */,
 				454BE22F247C4AD8001FE771 /* QUtils.m */,
+				458A8CB624B1EFE500637130 /* QErrors.h */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
