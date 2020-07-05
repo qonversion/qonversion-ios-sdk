@@ -34,6 +34,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 @property (nonatomic, strong) QRequestSerializer *requestSerializer;
 @property (nonatomic) QInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QUserDefaultsStorage *persistentStorage;
+@property (nonatomic) QonversionCheckPermissionCompletionBlock purchasingBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 
@@ -41,6 +42,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
+@property (nonatomic, strong) NSString *purchasingCurrently;
 @property (nonatomic, assign, readwrite) BOOL launchingFinished;
 
 @property (nonatomic, assign) BOOL debugMode;
@@ -110,34 +112,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 + (void)purchase:(NSString *)productID
           result:(QonversionCheckPermissionCompletionBlock)result {
-    QONVERSION_LOG(@"purchase product %@", productID);
-    Qonversion *instance = [Qonversion sharedInstance];
-    QonversionLaunchComposeModel *launchResult = [instance launchModel];
-    NSDictionary *products = launchResult.result.products ?: @{};
-    QonversionProduct *product = products[productID];
-    
-    if (product) {
-        SKProduct *skProduct = [instance->_products[product.storeID]];
-        
-        if (skProduct) {
-            SKPayment *payment = [SKPayment paymentWithProduct:skProduct];
-            [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
-            [[SKPaymentQueue defaultQueue] addPayment:payment];
-            NSLog(">>> Payment queue %@", payment);
-        } else {
-            // TODO
-            // Parse error
-        }
-        
-    } else {
-        // TODO
-        // Update product not found error
-        NSError *productNotFoundError = [[NSError alloc] init];
-        result(nil, productNotFoundError);
-    }
-    
-    NSLog(@">>> Data %@", launchResult);
-    
+    [[Qonversion sharedInstance] purchase:productID result:result];
 }
 
 // MARK: - Private
@@ -164,12 +139,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
         _products = [[NSMutableDictionary alloc] init];
         _inMemoryStorage = [[QInMemoryStorage alloc] init];
         _persistentStorage = [[QUserDefaultsStorage alloc] init];
+        
         [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
       
         _requestSerializer = [[QRequestSerializer alloc] init];
         _updatingCurrently = NO;
         _launchingFinished = NO;
         _debugMode = NO;
+        _purchasingCurrently = NO;
         _device = [[QDevice alloc] init];
         
         _backgroundQueue = [[NSOperationQueue alloc] init];
@@ -186,7 +163,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 - (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
-    double delayInSeconds = 3.0;
+    double delayInSeconds = 5.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     
     dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
@@ -248,16 +225,59 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     }
 }
 
+- (void)purchase:(NSString *)productID
+          result:(QonversionCheckPermissionCompletionBlock)result {
+    QONVERSION_LOG(@"purchase product %@", productID);
+    self->_purchasingCurrently = productID;
+    
+    QonversionLaunchComposeModel *launchResult = [self launchModel];
+    NSDictionary *products = launchResult.result.products ?: @{};
+    QonversionProduct *product = products[productID];
+    
+    if (product) {
+        SKProduct *skProduct = self->_products[product.storeID];
+        
+        if (skProduct) {
+            self->_purchasingBlock = result;
+            SKPayment *payment = [SKPayment paymentWithProduct:skProduct];
+            [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
+            [[SKPaymentQueue defaultQueue] addPayment:payment];
+            QONVERSION_LOG(@">>> Payment queue %@", payment);
+            
+        } else {
+            // TODO
+            // Parse error
+            // SKProduct has not been loaded
+            self->_purchasingBlock = nil;
+        }
+    } else {
+        // TODO
+        // Update product not found error
+        NSError *productNotFoundError = [[NSError alloc] init];
+        result(nil, productNotFoundError);
+    }
+    
+    QONVERSION_LOG(@">>> Data %@", launchResult);
+}
+
 - (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
     [self runOnBackgroundQueue:^{
         NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
         NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
         
-        [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-            if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-                QONVERSION_LOG(@"Qonversion Purchase Log Response:\n%@", dict);
+        NSURLSession *session = [[self session] copy];
+        
+        [[session dataTaskWithRequest:request
+                    completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error)
+          {
+            if (!data || ![data isKindOfClass:NSData.class]) {
+                return;
             }
-        }];
+            NSError *jsonError = [[NSError alloc] init];
+            NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+            QONVERSION_LOG(@">>> serviceLogPurchase result %@", dict);
+        }] resume];
+        
     }];
 }
 
@@ -486,19 +506,100 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 // MARK: - SKPaymentTransactionObserver
 
-- (void)paymentQueue:(nonnull SKPaymentQueue *)queue updatedTransactions:(nonnull NSArray<SKPaymentTransaction *> *)transactions {
+- (void)paymentQueue:(SKPaymentQueue *)queue restoreCompletedTransactionsFailedWithError:(NSError *)error {
+    // TODO
+    // Something gona wrong
+    // Check here
+    QONVERSION_LOG(@">>> restoreCompletedTransactionsFailedWithError %@", error);
+}
+
+- (void)paymentQueue:(nonnull SKPaymentQueue *)queue
+ updatedTransactions:(nonnull NSArray<SKPaymentTransaction *> *)transactions {
+    
+    SKPaymentTransaction *purchasingCurrentlyTransaction = nil;
+    
     for (SKPaymentTransaction *transaction in transactions) {
-        if (transaction.transactionState != SKPaymentTransactionStatePurchased) {
+        NSString *transactionID = nil;
+        NSString *transactionDate = nil;
+        
+        switch (transaction.transactionState) {
+          case SKPaymentTransactionStatePurchasing:
+            break;
+          case SKPaymentTransactionStatePurchased:
+            // Handle purchased transaction
+            break;
+          case SKPaymentTransactionStateFailed:
+            // Handle failed transaction
+            break;
+          case SKPaymentTransactionStateRestored:
+            // Restore
+            break;
+          default: break;
+        }
+        
+        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+        
+        // If Q requested products
+        NSString *productIdentifier = transaction.payment.productIdentifier ?: @"";
+        SKProduct *product = self.products[productIdentifier];
+        
+        // Initialize using Qonversion SDK
+        if (self->_purchasingCurrently && [self->_purchasingCurrently isEqualToString:productIdentifier]) {
+            purchasingCurrentlyTransaction = transaction;
             continue;
         }
-        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-        [self.transactions setObject:transaction forKey:transaction.payment.productIdentifier];
         
-        SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:[NSSet setWithObject:transaction.payment.productIdentifier]];
-        [self.productRequests setObject:request forKey:transaction.payment.productIdentifier];
-        request.delegate = self;
-        [request start];
+        if (product) {
+            [self serviceLogPurchase:product transaction:transaction];
+        } else {
+            [self.transactions setObject:transaction forKey:productIdentifier];
+            SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:[NSSet setWithObject:productIdentifier]];
+            [self.productRequests setObject:request forKey:productIdentifier];
+            
+            request.delegate = self;
+            [request start];
+        }
     }
+    
+    if (purchasingCurrentlyTransaction) {
+        NSString *productIdentifier = purchasingCurrentlyTransaction.payment.productIdentifier ?: @"";
+        SKProduct *product = self.products[productIdentifier];
+        [self checkPurchase:product transaction:purchasingCurrentlyTransaction];
+    }
+    
+}
+
+- (void)checkPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+    NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
+    NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
+    
+    NSURLSession *session = [[self session] copy];
+    
+    [[session dataTaskWithRequest:request
+                completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error)
+      {
+        if (error) {
+            // TODO
+            // Faield state
+            return;
+        }
+        
+        NSError *jsonError = [[NSError alloc] init];
+        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+        
+        if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
+            // Response failed
+            return;
+        }
+        
+        // Result
+        // Success
+        // Go to backend and check result
+        id checkBlock = [self purchasingBlock];
+        if (checkBlock) {
+            [self checkPermissions:checkBlock];
+        }
+    }] resume];
 }
 
 // MARK: - SKProductsRequestDelegate
