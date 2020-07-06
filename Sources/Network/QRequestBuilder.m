@@ -10,7 +10,7 @@ static NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 static NSString * const kPropertiesEndpoint = @"v1/properties";
 
 /**
- @warning This method is deprecated. Use product center instead.
+ @warning This endpoint is deprecated. Use product center instead.
 */
 static NSString * const kCheckEndpoint = @"check";
 static NSString * const kAttributionEndpoint = @"attribution";
