@@ -14,6 +14,7 @@
   
   if ([[error domain] isEqualToString:SKErrorDomain]) {
     SKErrorCode skErrorCode = error.code;
+    SKErrorCloudServiceNetworkConnectionFailed
       switch (skErrorCode) {
         case SKErrorUnknown:
           errorCode = QonversionErrorUnknown; break;
@@ -46,6 +47,24 @@
 
 + (NSError *)errorWithQonverionErrorCode:(QonversionError)code {
   [[NSError alloc] initWithDomain:QonversionErrorDomain code:code userInfo:nil];
+}
+
+
++ (NSError *)errorFromURLDomainError:(NSError *)error {
+  QonversionError errorCode = QonversionErrorUnknown;
+  
+  if ([[error domain] isEqualToString:NSURLErrorDomain]) {
+    switch (error.code) {
+      case NSURLErrorNotConnectedToInternet:
+        errorCode = QonversionErrorConnectionFailed; break;
+      default:
+        errorCode = QonversionErrorInternetConnectionFailed; break;
+    }
+  } else {
+    return error;
+  }
+  
+  return [self errorWithQonverionErrorCode:errorCode];
 }
 
 @end

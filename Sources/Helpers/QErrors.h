@@ -52,6 +52,12 @@ typedef NS_ERROR_ENUM(QonversionErrorDomain, QonversionError) {
   // failed to connect to Qonversion Backend
   QonversionErrorConnectionFailed,
   
+  // Other URL Session errors
+  QonversionErrorInternetConnectionFailed,
+  
+  // Network data error
+  QonversionErrorDataFailed,
+  
 } NS_SWIFT_NAME(Qonversion.Error);
 
 @end
