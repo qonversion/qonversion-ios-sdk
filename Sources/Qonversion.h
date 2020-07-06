@@ -83,19 +83,6 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
 + (void)purchase:(NSString *)productID
           result:(QonversionCheckPermissionCompletionBlock)result;
 
-// MARK: - Deprecated methods
-
-/**
- Send your attribution data
- @param data Dictionary received by the provider
- @param provider Attribution provider
- @param uid – User Id that should be sent to the provider
- */
-+ (void)addAttributionData:(NSDictionary *)data
-              fromProvider:(QAttributionProvider)provider
-                    userID:(nullable NSString *)uid
-__deprecated_msg("Use addAttributionData:fromProvider: instead");
-
 @end
 
 NS_ASSUME_NONNULL_END

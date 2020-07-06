@@ -107,10 +107,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [[Qonversion sharedInstance] checkPermissions:result];
 }
 
-+ (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
-  [[Qonversion sharedInstance] addAttributionData:data fromProvider:provider userID:uid];
-}
-
 + (void)purchase:(NSString *)productID
           result:(QonversionCheckPermissionCompletionBlock)result {
   [[Qonversion sharedInstance] purchase:productID result:result];
