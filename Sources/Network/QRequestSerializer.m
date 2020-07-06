@@ -78,7 +78,6 @@
       
       purchaseDict[@"introductory_price"] = introductoryPriceDict;
     }
-    
   }
   
   if (@available(iOS 13.0, *)) {
