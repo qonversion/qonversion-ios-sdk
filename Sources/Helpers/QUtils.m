@@ -41,6 +41,11 @@
     return error;
   }
   
-  return [[NSError alloc] initWithDomain:QonversionErrorDomain code:errorCode userInfo:nil];
+  return [self errorWithQonverionErrorCode:errorCode];
 }
+
++ (NSError *)errorWithQonverionErrorCode:(QonversionError)code {
+  [[NSError alloc] initWithDomain:QonversionErrorDomain code:code userInfo:nil];
+}
+
 @end
