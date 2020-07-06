@@ -14,7 +14,7 @@
   
   if ([[error domain] isEqualToString:SKErrorDomain]) {
     SKErrorCode skErrorCode = error.code;
-    SKErrorCloudServiceNetworkConnectionFailed
+    
       switch (skErrorCode) {
         case SKErrorUnknown:
           errorCode = QonversionErrorUnknown; break;
