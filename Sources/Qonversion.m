@@ -8,6 +8,7 @@
 #import "QDevice.h"
 #import "QRequestBuilder.h"
 #import "QRequestSerializer.h"
+#import "QErrors.h"
 
 #import <net/if.h>
 #import <net/if_dl.h>
@@ -146,7 +147,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     _updatingCurrently = NO;
     _launchingFinished = NO;
     _debugMode = NO;
-    _purchasingCurrently = NO;
+    _purchasingCurrently = NULL;
     _device = [[QDevice alloc] init];
     
     _backgroundQueue = [[NSOperationQueue alloc] init];
@@ -228,16 +229,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (void)purchase:(NSString *)productID
           result:(QonversionCheckPermissionCompletionBlock)result {
   QONVERSION_LOG(@"purchase product %@", productID);
-  self->_purchasingCurrently = productID;
+  
   
   QonversionLaunchComposeModel *launchResult = [self launchModel];
   NSDictionary *products = launchResult.result.products ?: @{};
   QonversionProduct *product = products[productID];
+  self->_purchasingCurrently = NULL;
   
   if (product) {
     SKProduct *skProduct = self->_products[product.storeID];
     
     if (skProduct) {
+      self->_purchasingCurrently = skProduct.productIdentifier;
       self->_purchasingBlock = result;
       SKPayment *payment = [SKPayment paymentWithProduct:skProduct];
       [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
@@ -253,7 +256,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   } else {
     // TODO
     // Update product not found error
-    NSError *productNotFoundError = [[NSError alloc] init];
+    NSError *productNotFoundError = [[NSError alloc] initWithDomain:QonversionErrorDomain
+                                                               code:QonversionErrorCancelled
+                                                           userInfo:nil];
     result(nil, productNotFoundError);
   }
   
@@ -527,6 +532,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
         break;
       case SKPaymentTransactionStateFailed:
         [self handleFailedTransaction:transaction];
+        
         break;
       case SKPaymentTransactionStateRestored:
         // Restore
@@ -544,11 +550,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
   SKProduct *product = [self productAt:transaction];
+  [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
   
   // Initialize using purchase:
-  if (self->_purchasingCurrently && product && [self->_purchasingCurrently isEqualToString:product.productIdentifier]) {
-    self->_purchasingBlock(nil, transaction.error);
-    SKErrorPaymentCancelled
+  if (self->_purchasingCurrently && product
+      && [transaction.payment.productIdentifier isEqualToString:product.productIdentifier]) {
+    NSError *error = [QUtils errorFromTransactionError:transaction.error];
+    self->_purchasingBlock(nil, error);
     return;
   }
 }
@@ -556,8 +564,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
   SKProduct *product = [self productAt:transaction];
   
+  [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+  
+  
   // Initialize using purchase:
-  if (self->_purchasingCurrently && product && [self->_purchasingCurrently isEqualToString:product.productIdentifier]) {
+  if (self->_purchasingCurrently && product && [transaction.payment.productIdentifier isEqualToString:product.productIdentifier]) {
     [self checkPurchase:product transaction:transaction];
     return;
   }
@@ -578,6 +589,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 - (void)checkPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+  // Legacy request for storing purchase
   NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
   NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
   
