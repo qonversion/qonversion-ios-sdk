@@ -224,7 +224,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 - (void)purchase:(NSString *)productID result:(QonversionCheckPermissionCompletionBlock)result {
   self->_purchasingCurrently = NULL;
-  QonversionProduct *product = [self productAt:productID];
+  QonversionProduct *product = [self qonversionProduct:productID];
   
   if (product) {
     SKProduct *skProduct = self->_products[product.storeID];
@@ -547,10 +547,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   return self.products[productIdentifier];
 }
 
-- (QonversionProduct * _Nullable)productAt:(NSString *)productID {
+- (QonversionProduct * _Nullable)qonversionProduct:(NSString *)productID {
   QonversionLaunchComposeModel *launchResult = [self launchModel];
   NSDictionary *products = launchResult.result.products ?: @{};
-  return products[productID]
+  return products[productID];
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
@@ -573,12 +573,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   
   // Initialize using purchase:
   if (skProduct && _purchasingCurrently && [_purchasingCurrently isEqualToString:productIdentifier]) {
-    [self purchase:product transaction:transaction];
+    [self purchase:skProduct transaction:transaction];
     return;
   }
   
   if (skProduct) {
-    [self serviceLogPurchase:product transaction:transaction];
+    [self serviceLogPurchase:skProduct transaction:transaction];
   } else {
     // Auto-handling for analytics and integrations
     [self.transactions setObject:transaction forKey:productIdentifier];
