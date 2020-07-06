@@ -9,6 +9,29 @@
 
 @end
 
+@interface SKProduct (PrettyCurrency)
+@property (nonatomic, strong) NSString *prettyCurrency;
+@end
+
+@implementation SKProduct (PrettyCurrency)
+
+- (NSString *)prettyCurrency {
+    
+  NSString *currency = @"";
+  if (@available(iOS 10.0, *)) {
+    currency = product.priceLocale.currencyCode;
+  } else {
+    NSNumberFormatter *formatter = NSNumberFormatter.new;
+    [formatter setNumberStyle:NSNumberFormatterCurrencyISOCodeStyle];
+    [formatter setLocale:product.priceLocale];
+    currency = [formatter stringFromNumber:product.price];
+  }
+  
+  return currency;
+}
+
+@end
+
 @implementation QRequestSerializer
 
 - (instancetype)initWithUserID:(NSString *)uid {
@@ -28,57 +51,45 @@
 }
 
 - (NSDictionary *)purchaseData:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
-  NSString *receipt = UserInfo.appStoreReceipt ?: @"";
-  
-  NSString *currency = @"";
-  if (@available(iOS 10.0, *)) {
-    currency = product.priceLocale.currencyCode;
-  } else {
-    NSNumberFormatter *formatter = NSNumberFormatter.new;
-    [formatter setNumberStyle:NSNumberFormatterCurrencyISOCodeStyle];
-    [formatter setLocale:product.priceLocale];
-    currency = [formatter stringFromNumber:product.price];
-  }
-  
-  NSMutableDictionary *inappDict = @{@"product": product.productIdentifier,
-                                     @"receipt": receipt,
-                                     @"transactionIdentifier": transaction.transactionIdentifier ?: @"",
-                                     @"originalTransactionIdentifier": transaction.originalTransaction.transactionIdentifier ?: @"",
-                                     @"currency": currency,
-                                     @"value": product.price.stringValue
-  }.mutableCopy;
+  NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
+
+  purchaseDict[@"product"] = product.productIdentifier;
+  purchaseDict[@"currency"] = product.prettyCurrency;
+  purchaseDict[@"value"] = product.price.stringValue;
+  purchaseDict[@"transaction_id"] = transaction.transactionIdentifier ?: @"";
+  purchaseDict[@"original_transaction_id"] = transaction.originalTransaction.transactionIdentifier ?: @"";
   
   if (@available(iOS 11.2, *)) {
     if (product.subscriptionPeriod != nil) {
-      inappDict[@"subscriptionPeriodUnit"] = @(product.subscriptionPeriod.unit).stringValue;
-      inappDict[@"subscriptionPeriodNumberOfUnits"] = @(product.subscriptionPeriod.numberOfUnits).stringValue;
+      purchaseDict[@"period_unit"] = @(product.subscriptionPeriod.unit).stringValue;
+      purchaseDict[@"period_number_of_units"] = @(product.subscriptionPeriod.numberOfUnits).stringValue;
     }
     
     if (product.introductoryPrice != nil) {
-      SKProductDiscount *introductoryPrice = product.introductoryPrice;
-      NSMutableDictionary *introductoryPriceDict = @{
-        @"value": introductoryPrice.price.stringValue,
-        @"numberOfPeriods": @(introductoryPrice.numberOfPeriods).stringValue,
-        @"subscriptionPeriodNumberOfUnits": @(introductoryPrice.subscriptionPeriod.numberOfUnits).stringValue,
-        @"subscriptionPeriodUnit": @(introductoryPrice.subscriptionPeriod.unit).stringValue,
-        @"paymentMode": @(introductoryPrice.paymentMode).stringValue
-      }.mutableCopy;
+      NSMutableDictionary *introductoryPriceDict = [[NSMutableDictionary alloc] init];
       
-      inappDict[@"introductoryPrice"] = introductoryPriceDict;
+      SKProductDiscount *introductoryPrice = product.introductoryPrice;
+      
+      introductoryPriceDict[@"value"] = introductoryPrice.price.stringValue;
+      introductoryPriceDict[@"number_of_periods"] = @(introductoryPrice.numberOfPeriods).stringValue;
+      introductoryPriceDict[@"period_number_of_units"] = @(introductoryPrice.subscriptionPeriod.numberOfUnits).stringValue;
+      introductoryPriceDict[@"period_unit"] = @(introductoryPrice.subscriptionPeriod.unit).stringValue;
+      introductoryPriceDict[@"payment_mode"] = @(introductoryPrice.paymentMode).stringValue;
+      
+      purchaseDict[@"introductory_price"] = introductoryPriceDict;
     }
     
   }
   
   if (@available(iOS 13.0, *)) {
     NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
-    
-    if (countryCode.length > 0) {
-      inappDict[@"country"] = countryCode;
-    }
+    purchaseDict[@"country"] = countryCode;
   }
   
+  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
+  result[@"purchase"] = purchaseDict;
   
-  return @{@"inapp": inappDict, @"d": self.mainData};
+  return result;
 }
 
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
