@@ -6,10 +6,13 @@
 
 static NSString * const kAPIBase = @"https://api.qonversion.io/";
 static NSString * const kInitEndpoint = @"v1/user/init";
+static NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 static NSString * const kPropertiesEndpoint = @"v1/properties";
+
+@available(*, deprecated, message: "User product center")
 static NSString * const kCheckEndpoint = @"check";
+
 static NSString * const kAttributionEndpoint = @"attribution";
-static NSString * const kPurchaseEndpoint = @"purchase";
 
 @interface QRequestBuilder ()
 
