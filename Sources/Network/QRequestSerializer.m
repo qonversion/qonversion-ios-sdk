@@ -16,15 +16,15 @@
 @implementation SKProduct (PrettyCurrency)
 
 - (NSString *)prettyCurrency {
-    
   NSString *currency = @"";
+  
   if (@available(iOS 10.0, *)) {
-    currency = product.priceLocale.currencyCode;
+    currency = self.priceLocale.currencyCode;
   } else {
     NSNumberFormatter *formatter = NSNumberFormatter.new;
     [formatter setNumberStyle:NSNumberFormatterCurrencyISOCodeStyle];
-    [formatter setLocale:product.priceLocale];
-    currency = [formatter stringFromNumber:product.price];
+    [formatter setLocale:self.priceLocale];
+    currency = [formatter stringFromNumber:self.price];
   }
   
   return currency;
