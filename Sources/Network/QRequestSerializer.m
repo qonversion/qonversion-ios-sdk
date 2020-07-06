@@ -51,6 +51,7 @@
 }
 
 - (NSDictionary *)purchaseData:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
 
   purchaseDict[@"product"] = product.productIdentifier;
@@ -66,17 +67,17 @@
     }
     
     if (product.introductoryPrice != nil) {
-      NSMutableDictionary *introductoryPriceDict = [[NSMutableDictionary alloc] init];
+      NSMutableDictionary *introOffer = [[NSMutableDictionary alloc] init];
       
       SKProductDiscount *introductoryPrice = product.introductoryPrice;
       
-      introductoryPriceDict[@"value"] = introductoryPrice.price.stringValue;
-      introductoryPriceDict[@"number_of_periods"] = @(introductoryPrice.numberOfPeriods).stringValue;
-      introductoryPriceDict[@"period_number_of_units"] = @(introductoryPrice.subscriptionPeriod.numberOfUnits).stringValue;
-      introductoryPriceDict[@"period_unit"] = @(introductoryPrice.subscriptionPeriod.unit).stringValue;
-      introductoryPriceDict[@"payment_mode"] = @(introductoryPrice.paymentMode).stringValue;
+      introOffer[@"value"] = introductoryPrice.price.stringValue;
+      introOffer[@"number_of_periods"] = @(introductoryPrice.numberOfPeriods).stringValue;
+      introOffer[@"period_number_of_units"] = @(introductoryPrice.subscriptionPeriod.numberOfUnits).stringValue;
+      introOffer[@"period_unit"] = @(introductoryPrice.subscriptionPeriod.unit).stringValue;
+      introOffer[@"payment_mode"] = @(introductoryPrice.paymentMode).stringValue;
       
-      purchaseDict[@"introductory_price"] = introductoryPriceDict;
+      result[@"introductory_offer"] = introOffer;
     }
   }
   
@@ -85,9 +86,7 @@
     purchaseDict[@"country"] = countryCode;
   }
   
-  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   result[@"purchase"] = purchaseDict;
-  
   return result;
 }
 
