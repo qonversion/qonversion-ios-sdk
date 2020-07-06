@@ -76,7 +76,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider {
-  [Qonversion addAttributionData:data fromProvider:provider userID:nil];
+  [[Qonversion sharedInstance] addAttributionData:data fromProvider:provider userID:nil];
 }
 
 + (void)checkUser:(void(^)(QonversionCheckResult *result))result
