@@ -615,12 +615,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       return;
     }
     
+    QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
+    
     // Result
     // Success
     // Go to backend and check result
     id checkBlock = [self purchasingBlock];
     if (checkBlock) {
-      [self checkPermissions:checkBlock];
+      checkBlock(model.result, model.error);
     }
   }] resume];
 }
