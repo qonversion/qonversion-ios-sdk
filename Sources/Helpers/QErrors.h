@@ -11,6 +11,10 @@ typedef NS_ERROR_ENUM(QonversionErrorDomain, QonversionError) {
   // user cancelled the request, etc.
   QonversionErrorCancelled,
   
+  // the product has not been added to the product center
+  // see more https://qonversion.io/docs/create-products
+  QonversionErrorProductNotFound,
+  
   // client is not allowed to issue the request, etc
   QonversionErrorClientInvalid,
   

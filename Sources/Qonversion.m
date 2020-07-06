@@ -222,10 +222,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }
 }
 
-- (void)purchase:(NSString *)productID
-          result:(QonversionCheckPermissionCompletionBlock)result {
+- (void)purchase:(NSString *)productID result:(QonversionCheckPermissionCompletionBlock)result {
   QONVERSION_LOG(@"purchase product %@", productID);
-  
   
   QonversionLaunchComposeModel *launchResult = [self launchModel];
   NSDictionary *products = launchResult.result.products ?: @{};
@@ -250,10 +248,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       self->_purchasingBlock = nil;
     }
   } else {
-    // TODO
-    // Update product not found error
     NSError *productNotFoundError = [[NSError alloc] initWithDomain:QonversionErrorDomain
-                                                               code:QonversionErrorCancelled
+                                                               code:QonversionErrorProductNotFound
                                                            userInfo:nil];
     result(nil, productNotFoundError);
   }
@@ -545,12 +541,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
-  SKProduct *product = [self productAt:transaction];
+  SKProduct *skProduct = [self productAt:transaction];
+
   [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
   
   // Initialize using purchase:
-  if (self->_purchasingCurrently && product
-      && [transaction.payment.productIdentifier isEqualToString:product.productIdentifier]) {
+  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
     NSError *error = [QUtils errorFromTransactionError:transaction.error];
     self->_purchasingBlock(nil, error);
     return;
@@ -558,14 +554,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
-  SKProduct *product = [self productAt:transaction];
+  SKProduct *skProduct = [self productAt:transaction];
   
   [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
   
-  
   // Initialize using purchase:
-  if (self->_purchasingCurrently && product && [transaction.payment.productIdentifier isEqualToString:product.productIdentifier]) {
-    [self checkPurchase:product transaction:transaction];
+  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
+    [self purchase:product transaction:transaction];
     return;
   }
   
@@ -584,7 +579,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }
 }
 
-- (void)checkPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+- (void)purchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
   // Legacy request for storing purchase
   NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
   NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
