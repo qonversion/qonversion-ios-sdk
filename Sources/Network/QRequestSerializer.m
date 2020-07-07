@@ -1,34 +1,12 @@
 #import "QRequestSerializer.h"
 #import "UserInfo.h"
 #import "QDevice.h"
+#import "StoreKit+Sugare.h"
 
 @interface QRequestSerializer ()
 
 @property (nonatomic, strong) NSString *userID;
 @property (nonatomic, strong) QDevice *device;
-
-@end
-
-@interface SKProduct (PrettyCurrency)
-@property (nonatomic, strong) NSString *prettyCurrency;
-@end
-
-@implementation SKProduct (PrettyCurrency)
-
-- (NSString *)prettyCurrency {
-  NSString *currency = @"";
-  
-  if (@available(iOS 10.0, *)) {
-    currency = self.priceLocale.currencyCode;
-  } else {
-    NSNumberFormatter *formatter = NSNumberFormatter.new;
-    [formatter setNumberStyle:NSNumberFormatterCurrencyISOCodeStyle];
-    [formatter setLocale:self.priceLocale];
-    currency = [formatter stringFromNumber:self.price];
-  }
-  
-  return currency;
-}
 
 @end
 

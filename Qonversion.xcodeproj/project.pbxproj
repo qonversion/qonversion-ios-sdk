@@ -35,6 +35,8 @@
 		456ECD49249CA28300D2BC40 /* init_failed_state.json in Resources */ = {isa = PBXBuildFile; fileRef = 456ECD48249CA28300D2BC40 /* init_failed_state.json */; };
 		4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4587136B24AB963100F4B418 /* QRequestSerializerTests.m */; };
 		458A8CB724B1F5F600637130 /* QErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CB624B1EFE500637130 /* QErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		458A8CBE24B4B88F00637130 /* StoreKit+Sugare.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CBC24B4B88F00637130 /* StoreKit+Sugare.h */; };
+		458A8CBF24B4B88F00637130 /* StoreKit+Sugare.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CBD24B4B88F00637130 /* StoreKit+Sugare.m */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -114,6 +116,8 @@
 		456ECD48249CA28300D2BC40 /* init_failed_state.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init_failed_state.json; sourceTree = "<group>"; };
 		4587136B24AB963100F4B418 /* QRequestSerializerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestSerializerTests.m; sourceTree = "<group>"; };
 		458A8CB624B1EFE500637130 /* QErrors.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QErrors.h; sourceTree = "<group>"; };
+		458A8CBC24B4B88F00637130 /* StoreKit+Sugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "StoreKit+Sugare.h"; sourceTree = "<group>"; };
+		458A8CBD24B4B88F00637130 /* StoreKit+Sugare.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "StoreKit+Sugare.m"; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -359,6 +363,8 @@
 				454BE22E247C4AD8001FE771 /* QUtils.h */,
 				454BE22F247C4AD8001FE771 /* QUtils.m */,
 				458A8CB624B1EFE500637130 /* QErrors.h */,
+				458A8CBC24B4B88F00637130 /* StoreKit+Sugare.h */,
+				458A8CBD24B4B88F00637130 /* StoreKit+Sugare.m */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -502,6 +508,7 @@
 				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
 				458A8CB724B1F5F600637130 /* QErrors.h in Headers */,
 				456ECD3B249BBF9A00D2BC40 /* QRequestSerializer.h in Headers */,
+				458A8CBE24B4B88F00637130 /* StoreKit+Sugare.h in Headers */,
 				459DAC00243E35BC0011ECF3 /* QonversionCheckResult.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -660,6 +667,7 @@
 				4531CBC0245778110022C422 /* QDevice.m in Sources */,
 				459DABFC243E35BC0011ECF3 /* QonversionMapper.m in Sources */,
 				456ECD34249B901900D2BC40 /* QRequestBuilder.m in Sources */,
+				458A8CBF24B4B88F00637130 /* StoreKit+Sugare.m in Sources */,
 				4531CBC424577D770022C422 /* QConstants.m in Sources */,
 				459DABF9243E35BC0011ECF3 /* Keychain.m in Sources */,
 			);

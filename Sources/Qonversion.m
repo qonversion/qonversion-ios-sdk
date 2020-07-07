@@ -35,7 +35,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 @property (nonatomic, strong) QRequestSerializer *requestSerializer;
 @property (nonatomic) QInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QUserDefaultsStorage *persistentStorage;
-@property (nonatomic) QonversionPermissionCompletionBlock purchasingBlock;
+@property (nonatomic) QonversionPurchaseCompletionBlock purchasingBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 
@@ -103,12 +103,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }
 }
 
-+ (void)checkPermissions:(QonversionPermissionCompletionBlock)result {
++ (void)checkPermissions:(QonversionPurchaseCompletionBlock)result {
   [[Qonversion sharedInstance] checkPermissions:result];
 }
 
 + (void)purchase:(NSString *)productID
-          result:(QonversionPermissionCompletionBlock)result {
+          result:(QonversionPurchaseCompletionBlock)result {
   [[Qonversion sharedInstance] purchase:productID result:result];
 }
 
@@ -202,7 +202,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }] resume];
 }
 
-- (void)checkPermissions:(QonversionPermissionCompletionBlock)result {
+- (void)checkPermissions:(QonversionPurchaseCompletionBlock)result {
   
   @synchronized (self) {
     if (!_launchingFinished) {
@@ -222,7 +222,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }
 }
 
-- (void)purchase:(NSString *)productID result:(QonversionPermissionCompletionBlock)result {
+- (void)purchase:(NSString *)productID result:(QonversionPurchaseCompletionBlock)result {
   self->_purchasingCurrently = NULL;
   QonversionProduct *product = [self qonversionProduct:productID];
   
@@ -257,29 +257,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     [[session dataTaskWithRequest:request
                 completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error)
       {
-      QonversionPermissionCompletionBlock purchasingBlock = [self purchasingBlock];
-      if ([self purchasingCurrently] == nil && purchasingBlock == nil) {
-        return;
-      }
-      
-      // Something gonna wrong on transport side
-      if (data == NULL && error) {
-        purchasingBlock(nil, [QUtils errorFromURLDomainError:error]);
-        return;
-      }
-      
       if (!data || ![data isKindOfClass:NSData.class]) {
-        purchasingBlock(nil, [QUtils errorWithQonverionErrorCode:QonversionErrorDataFailed]);
         return;
       }
       
       NSError *jsonError = [[NSError alloc] init];
-      NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-      
-      if (dict) {
-        
-      }
-      
+      NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];      
       QONVERSION_LOG(@">>> serviceLogPurchase result %@", dict);
     }] resume];
   }];
@@ -353,10 +336,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
   
   @synchronized (self) {
-    NSMutableArray <QonversionPermissionCompletionBlock> *_blocks = [self->_permissionsBlocks copy];
+    NSMutableArray <QonversionPurchaseCompletionBlock> *_blocks = [self->_permissionsBlocks copy];
     [self->_permissionsBlocks removeAllObjects];
     
-    for (QonversionPermissionCompletionBlock block in _blocks) {
+    for (QonversionPurchaseCompletionBlock block in _blocks) {
       block(model.result.permissions ?: @{}, model.error);
     }
   }
@@ -560,7 +543,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   
   // Initialize using purchase:
   if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
-    QonversionPermissionCompletionBlock checkBlock = [self purchasingBlock];
+    QonversionPurchaseCompletionBlock checkBlock = [self purchasingBlock];
     if (checkBlock) {
       checkBlock(nil, [QUtils errorFromTransactionError:transaction.error]);
     }
@@ -615,7 +598,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
     }
     
-    QonversionPermissionCompletionBlock checkBlock = [self purchasingBlock];
+    QonversionPurchaseCompletionBlock checkBlock = [self purchasingBlock];
     if (checkBlock) {
       checkBlock(model.result.permissions, model.error);
       self->_purchasingCurrently = nil;
