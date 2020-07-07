@@ -252,7 +252,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   NSError *jsonError = [[NSError alloc] init];
   NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
   
-  if (jsonError) {
+  if (jsonError.domain) {
     [object setError:[QonversionMapper error:@"Could not parse response" code:QErrorCodeFailedParseResponse]];
     return object;
   }
