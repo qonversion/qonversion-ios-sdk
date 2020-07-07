@@ -617,12 +617,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     
     QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
     
-    // Result
-    // Success
-    // Go to backend and check result
-    id checkBlock = [self purchasingBlock];
+    @synchronized (self) {
+      [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
+    }
+    
+    QonversionCheckPermissionCompletionBlock checkBlock = [self purchasingBlock];
     if (checkBlock) {
-      checkBlock(model.result, model.error);
+      checkBlock(model.result.permissions, model.error);
+      self->_purchasingCurrently = nil;
+      self->_purchasingBlock = nil;
     }
   }] resume];
 }
