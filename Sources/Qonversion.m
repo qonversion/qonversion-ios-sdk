@@ -607,14 +607,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       return;
     }
     
-    NSError *jsonError = [[NSError alloc] init];
-    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-    
-    if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
-      // Response failed
-      return;
-    }
-    
     QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
     
     @synchronized (self) {

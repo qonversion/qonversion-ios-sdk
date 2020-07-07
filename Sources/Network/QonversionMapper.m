@@ -249,7 +249,13 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
     return object;
   }
   
-  NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
+  NSError *jsonError = [[NSError alloc] init];
+  NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
+  
+  if (jsonError) {
+    [object setError:[QonversionMapper error:@"Could not parse response" code:QErrorCodeFailedParseResponse]];
+    return object;
+  }
   
   QONVERSION_LOG(@"QONVERSION RESPONSE DATA %@", dict);
   if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
