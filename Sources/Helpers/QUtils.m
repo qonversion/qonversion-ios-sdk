@@ -12,7 +12,7 @@
 + (NSError *)errorFromTransactionError:(NSError *)error {
   QonversionError errorCode = QonversionErrorUnknown;
   
-  if ([[error domain] isEqualToString:SKErrorDomain]) {
+  if (error && [[error domain] isEqualToString:SKErrorDomain]) {
     SKErrorCode skErrorCode = error.code;
     
       switch (skErrorCode) {
@@ -38,15 +38,13 @@
         case 10: // SKErrorUnauthorizedRequestData
           errorCode = QonversionErrorUnauthorizedRequestData; break;
       }
-  } else {
-    return error;
   }
   
   return [self errorWithQonverionErrorCode:errorCode];
 }
 
 + (NSError *)errorWithQonverionErrorCode:(QonversionError)code {
-  [[NSError alloc] initWithDomain:QonversionErrorDomain code:code userInfo:nil];
+  return [NSError errorWithDomain:QonversionErrorDomain code:code userInfo:nil];
 }
 
 

@@ -6,7 +6,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^QonversionCheckPermissionCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error);
+typedef void (^QonversionPermissionCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error);
+NS_SWIFT_NAME(Qonversion.PermissionCompletionBlock);
 
 typedef NS_ENUM(NSInteger, QAttributionProvider) {
   QAttributionProviderAppsFlyer = 0,
@@ -72,7 +73,7 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
  @param result Complition block that include permissions dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)checkPermissions:(QonversionCheckPermissionCompletionBlock)result;
++ (void)checkPermissions:(QonversionPermissionCompletionBlock)result;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -81,7 +82,7 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
 + (void)purchase:(NSString *)productID
-          result:(QonversionCheckPermissionCompletionBlock)result;
+          result:(QonversionPermissionCompletionBlock)result;
 
 @end
 
