@@ -9,6 +9,9 @@ NS_ASSUME_NONNULL_BEGIN
 typedef void (^QonversionPermissionCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error);
 NS_SWIFT_NAME(Qonversion.PermissionCompletionBlock);
 
+typedef void (^QonversionPurchaseCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error, BOOL cancelled);
+NS_SWIFT_NAME(Qonversion.PurchaseCompletionBlock);
+
 typedef NS_ENUM(NSInteger, QAttributionProvider) {
   QAttributionProviderAppsFlyer = 0,
   QAttributionProviderBranch,
@@ -82,7 +85,7 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
 + (void)purchase:(NSString *)productID
-          result:(QonversionPermissionCompletionBlock)result;
+          result:(QonversionPurchaseCompletionBlock)result;
 
 @end
 
