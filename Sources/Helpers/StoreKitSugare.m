@@ -1,4 +1,4 @@
-#import "StoreKit+Sugare.h"
+#import "StoreKitSugare.h"
 
 @implementation SKProduct (PrettyCurrency)
 

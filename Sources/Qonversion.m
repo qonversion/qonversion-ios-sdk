@@ -9,6 +9,7 @@
 #import "QRequestBuilder.h"
 #import "QRequestSerializer.h"
 #import "QErrors.h"
+#import "StoreKitSugare.h"
 
 #import <net/if.h>
 #import <net/if_dl.h>
@@ -103,7 +104,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }
 }
 
-+ (void)checkPermissions:(QonversionPurchaseCompletionBlock)result {
++ (void)checkPermissions:(QonversionPermissionCompletionBlock)result {
   [[Qonversion sharedInstance] checkPermissions:result];
 }
 
@@ -202,7 +203,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }] resume];
 }
 
-- (void)checkPermissions:(QonversionPurchaseCompletionBlock)result {
+- (void)checkPermissions:(QonversionPermissionCompletionBlock)result {
   
   @synchronized (self) {
     if (!_launchingFinished) {
@@ -243,7 +244,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       self->_purchasingBlock = nil;
     }
   } else {
-    result(nil, [QUtils errorWithQonverionErrorCode:QonversionErrorProductNotFound]);
+    result(nil, [QUtils errorWithQonverionErrorCode:QonversionErrorProductNotFound], NO);
   }
 }
 
@@ -262,7 +263,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       }
       
       NSError *jsonError = [[NSError alloc] init];
-      NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];      
+      NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
       QONVERSION_LOG(@">>> serviceLogPurchase result %@", dict);
     }] resume];
   }];
@@ -336,10 +337,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
   
   @synchronized (self) {
-    NSMutableArray <QonversionPurchaseCompletionBlock> *_blocks = [self->_permissionsBlocks copy];
+    NSMutableArray <QonversionPermissionCompletionBlock> *_blocks = [self->_permissionsBlocks copy];
     [self->_permissionsBlocks removeAllObjects];
     
-    for (QonversionPurchaseCompletionBlock block in _blocks) {
+    for (QonversionPermissionCompletionBlock block in _blocks) {
       block(model.result.permissions ?: @{}, model.error);
     }
   }
@@ -545,7 +546,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
     QonversionPurchaseCompletionBlock checkBlock = [self purchasingBlock];
     if (checkBlock) {
-      checkBlock(nil, [QUtils errorFromTransactionError:transaction.error]);
+      checkBlock(nil, [QUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
     }
     return;
   }
@@ -600,7 +601,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     
     QonversionPurchaseCompletionBlock checkBlock = [self purchasingBlock];
     if (checkBlock) {
-      checkBlock(model.result.permissions, model.error);
+      checkBlock(model.result.permissions, model.error, transaction.isCancelled);
       self->_purchasingCurrently = nil;
       self->_purchasingBlock = nil;
     }
