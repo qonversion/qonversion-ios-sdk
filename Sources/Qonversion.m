@@ -117,15 +117,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   QonversionLaunchComposeModel *model = [[Qonversion sharedInstance] launchModel];
   NSDictionary *products = model.result.products ?: @{};
   
-  for (NSString *key in products) {
-    QonversionProduct *product = products[key];
-    
-    if (product && [product.qonversionID isEqualToString:productID]) {
-      return product;
-    }
-  }
-  
-  return nil;
+  return products[productID];
 }
 
 // MARK: - Private
