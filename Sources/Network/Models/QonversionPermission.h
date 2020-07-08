@@ -8,6 +8,7 @@ typedef NS_ENUM(int, QonversionPermissionRenewState){
   QonversionPermissionRenewStateBillingIssue = 3
 };
 
+NS_SWIFT_NAME(Qonversion.Permission)
 @interface QonversionPermission : NSObject <NSCoding>
 
 /**

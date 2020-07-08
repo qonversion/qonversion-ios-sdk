@@ -17,6 +17,7 @@ typedef NS_ENUM(unsigned int, QonversionProductDuration){
   QonversionProductDurationLifetime = 5
 };
 
+NS_SWIFT_NAME(Qonversion.Product)
 @interface QonversionProduct : NSObject <NSCoding>
 
 /**
@@ -32,13 +33,14 @@ typedef NS_ENUM(unsigned int, QonversionProductDuration){
 @property (nonatomic, copy) NSString *storeID;
 
 /**
- Product types
+ Product type
+ Trial, Subscription or one-time purchase
  @see [Products types](https://qonversion.io/docs/product-types)
  */
 @property (nonatomic) QonversionProductType type;
 
 /**
- Product durations
+ Product duration
  @see [Products durations](https://qonversion.io/docs/product-durations)
  */
 @property (nonatomic) QonversionProductDuration duration;

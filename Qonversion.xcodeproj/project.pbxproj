@@ -37,6 +37,9 @@
 		458A8CB724B1F5F600637130 /* QErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CB624B1EFE500637130 /* QErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		458A8CBE24B4B88F00637130 /* StoreKitSugare.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CBC24B4B88F00637130 /* StoreKitSugare.h */; };
 		458A8CBF24B4B88F00637130 /* StoreKitSugare.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CBD24B4B88F00637130 /* StoreKitSugare.m */; };
+		458A8CC124B5E50A00637130 /* QonversionProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD41249C76D400D2BC40 /* QonversionProduct.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		458A8CC224B5E50F00637130 /* QonversionPermission.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD31249B825D00D2BC40 /* QonversionPermission.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		458A8CC424B5E52D00637130 /* QonversionProduct+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CC324B5E52D00637130 /* QonversionProduct+Protected.h */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -118,6 +121,7 @@
 		458A8CB624B1EFE500637130 /* QErrors.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QErrors.h; sourceTree = "<group>"; };
 		458A8CBC24B4B88F00637130 /* StoreKitSugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StoreKitSugare.h; sourceTree = "<group>"; };
 		458A8CBD24B4B88F00637130 /* StoreKitSugare.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StoreKitSugare.m; sourceTree = "<group>"; };
+		458A8CC324B5E52D00637130 /* QonversionProduct+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QonversionProduct+Protected.h"; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -225,6 +229,7 @@
 				456ECD31249B825D00D2BC40 /* QonversionPermission.h */,
 				456ECD42249C8B0100D2BC40 /* QonversionPermission.m */,
 				456ECD41249C76D400D2BC40 /* QonversionProduct.h */,
+				458A8CC324B5E52D00637130 /* QonversionProduct+Protected.h */,
 				456ECD44249C8B2000D2BC40 /* QonversionProduct.m */,
 			);
 			name = QonversionPermission;
@@ -500,7 +505,9 @@
 				454BE211247C2BB4001FE771 /* QInMemoryStorage.h in Headers */,
 				459DAC01243E35BC0011ECF3 /* RenewalProductDetails.h in Headers */,
 				459DABF5243E35BC0011ECF3 /* Qonversion.h in Headers */,
+				458A8CC424B5E52D00637130 /* QonversionProduct+Protected.h in Headers */,
 				459DABF8243E35BC0011ECF3 /* UserInfo.h in Headers */,
+				458A8CC224B5E50F00637130 /* QonversionPermission.h in Headers */,
 				459DAC02243E35BC0011ECF3 /* QonversionCheckResult+Protected.h in Headers */,
 				459DAC10243E5D050011ECF3 /* RenewalProductDetails+Protected.h in Headers */,
 				4531CBBF245778110022C422 /* QDevice.h in Headers */,
@@ -508,6 +515,7 @@
 				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
 				458A8CB724B1F5F600637130 /* QErrors.h in Headers */,
 				456ECD3B249BBF9A00D2BC40 /* QRequestSerializer.h in Headers */,
+				458A8CC124B5E50A00637130 /* QonversionProduct.h in Headers */,
 				458A8CBE24B4B88F00637130 /* StoreKitSugare.h in Headers */,
 				459DAC00243E35BC0011ECF3 /* QonversionCheckResult.h in Headers */,
 			);
