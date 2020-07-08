@@ -17,6 +17,17 @@
   return currency;
 }
 
+- (NSString *)prettyPrice {
+  NSString *currency = @"";
+  
+  NSNumberFormatter *formatter = NSNumberFormatter.new;
+  [formatter setFormatterBehavior:NSNumberFormatterBehavior10_4];
+  [formatter setNumberStyle:NSNumberFormatterCurrencyStyle];
+  [formatter setLocale:[self priceLocale]];
+  
+  return [formatter stringFromNumber:[self price]];
+}
+
 @end
 
 @implementation SKPaymentTransaction (Cancelled)

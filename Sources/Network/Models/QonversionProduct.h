@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <StoreKit/StoreKit.h>
 
 typedef NS_ENUM(unsigned int, QonversionProductType){
   QonversionProductTypeUnknown = -1,
@@ -24,13 +25,13 @@ NS_SWIFT_NAME(Qonversion.Product)
  Product ID created in Qonversion Dashboard
  @see [Create Products](https://qonversion.io/docs/create-products)
  */
-@property (nonatomic, copy) NSString *qonversionID;
+@property (nonatomic, copy, nonnull) NSString *qonversionID;
 
 /**
  Apple Store Product ID
  @see [Create Products](https://qonversion.io/docs/create-products)
  */
-@property (nonatomic, copy) NSString *storeID;
+@property (nonatomic, copy, nonnull) NSString *storeID;
 
 /**
  Product type
@@ -44,5 +45,15 @@ NS_SWIFT_NAME(Qonversion.Product)
  @see [Products durations](https://qonversion.io/docs/product-durations)
  */
 @property (nonatomic) QonversionProductDuration duration;
+
+/**
+  Associated StoreKit Product
+ */
+@property (nonatomic, copy, readonly, nullable) SKProduct *skProduct;
+
+/**
+  Price
+ */
+@property (nonatomic, copy) NSString *prettyPrice;
 
 @end

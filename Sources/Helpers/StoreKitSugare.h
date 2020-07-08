@@ -2,7 +2,8 @@
 
 @interface SKProduct (PrettyCurrency)
 
-@property (nonatomic, strong) NSString *prettyCurrency;
+@property (nonatomic, copy, readonly) NSString *prettyCurrency;
+@property (nonatomic, copy, readonly) NSString *prettyPrice;
 
 @end
 
