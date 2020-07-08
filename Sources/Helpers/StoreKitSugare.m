@@ -26,7 +26,7 @@
     return NO;
   }
   
-  if ([[self.error domain] isEqualToString:NSURLErrorDomain] == NO) {
+  if ([[self.error domain] isEqualToString:SKErrorDomain] == NO) {
     return NO;
   }
   

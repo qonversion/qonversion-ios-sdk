@@ -11,6 +11,8 @@
 
 + (NSError *)errorFromTransactionError:(NSError *)error {
   QonversionError errorCode = QonversionErrorUnknown;
+  NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
+  userInfo[NSLocalizedDescriptionKey] = error.localizedDescription ?: @"";
   
   if (error && [[error domain] isEqualToString:SKErrorDomain]) {
     SKErrorCode skErrorCode = error.code;
@@ -40,16 +42,19 @@
       }
   }
   
-  return [self errorWithQonverionErrorCode:errorCode];
+  return [self errorWithQonverionErrorCode:errorCode userInfo:userInfo];
 }
 
-+ (NSError *)errorWithQonverionErrorCode:(QonversionError)code {
-  return [NSError errorWithDomain:QonversionErrorDomain code:code userInfo:nil];
++ (NSError *)errorWithQonverionErrorCode:(QonversionError)code
+                                userInfo:(nullable NSDictionary<NSErrorUserInfoKey, id> *)dict {
+  return [NSError errorWithDomain:QonversionErrorDomain code:code userInfo:dict];
 }
 
 
 + (NSError *)errorFromURLDomainError:(NSError *)error {
   QonversionError errorCode = QonversionErrorUnknown;
+  NSMutableDictionary *userInfo = @{};
+  userInfo[NSLocalizedDescriptionKey] = error.localizedDescription ?: @"";
   
   if ([[error domain] isEqualToString:NSURLErrorDomain]) {
     switch (error.code) {
@@ -62,7 +67,7 @@
     return error;
   }
   
-  return [self errorWithQonverionErrorCode:errorCode];
+  return [self errorWithQonverionErrorCode:errorCode userInfo:userInfo];
 }
 
 @end

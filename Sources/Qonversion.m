@@ -219,7 +219,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   if (model) {
     result(model.result.permissions, model.error);
   } else {
-    QONVERSION_LOG(@">>>> MODEL NOT FOUND");
+    QONVERSION_LOG(@">>> Model not found");
   }
 }
 
@@ -237,15 +237,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       SKPayment *payment = [SKPayment paymentWithProduct:skProduct];
       [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
       [[SKPaymentQueue defaultQueue] addPayment:payment];
-    } else {
-      // TODO
-      // SKProduct has not been loaded
-      // Try again
-      self->_purchasingBlock = nil;
+      return;
     }
-  } else {
-    result(nil, [QUtils errorWithQonverionErrorCode:QonversionErrorProductNotFound], NO);
   }
+  
+  result(nil, [QUtils errorWithQonverionErrorCode:QonversionErrorProductNotFound], NO);
 }
 
 - (void)serviceLogPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
