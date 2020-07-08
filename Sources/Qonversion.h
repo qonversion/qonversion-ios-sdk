@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
+#import "QonversionProduct.h"
 #import "QonversionCheckResult.h"
 #import "QonversionPermission.h"
 #import "QonversionProperties.h"
@@ -86,6 +87,11 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
  */
 + (void)purchase:(NSString *)productID
           result:(QonversionPurchaseCompletionBlock)result;
+
+/**
+ 
+ */
++ (QonversionProduct *)productWith:(NSString *)productID;
 
 @end
 
