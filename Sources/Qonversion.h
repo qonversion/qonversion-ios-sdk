@@ -89,7 +89,9 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
           result:(QonversionPurchaseCompletionBlock)result;
 
 /**
- 
+  Return Qonverion Product Assotiated with Store Kit Product
+  @param productID Product identifier create in Qonversion Dash
+  @see [Product Center](https://qonversion.io/docs/product-center)
  */
 + (QonversionProduct *)productWith:(NSString *)productID;
 

@@ -52,7 +52,7 @@ NS_SWIFT_NAME(Qonversion.Product)
 @property (nonatomic, copy, readonly, nullable) SKProduct *skProduct;
 
 /**
-  Price
+  Localized price
  */
 @property (nonatomic, copy) NSString *prettyPrice;
 
