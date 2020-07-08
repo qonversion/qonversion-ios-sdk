@@ -1,11 +1,11 @@
 #import "QonversionProduct.h"
 #import "QonversionProduct+Protected.h"
-
-@interface QonversionProduct (Protected)
-
-@property (nonatomic, strong) SKProduct *skProduct;
-
-@end
+//
+//@interface QonversionProduct (Protected)
+//
+//@property (nonatomic, strong) SKProduct *skProduct;
+//
+//@end
 
 @implementation QonversionProduct : NSObject
 
@@ -17,7 +17,7 @@
     _storeID = [coder decodeObjectForKey:NSStringFromSelector(@selector(storeID))];
     _type = [coder decodeIntegerForKey:NSStringFromSelector(@selector(type))];
     _duration = [coder decodeIntegerForKey:NSStringFromSelector(@selector(duration))];
-    _skProduct = [coder decodeObjectForKey:NSStringFromSelector(@selector(skProduct))];
+    //_skProduct = [coder decodeObjectForKey:NSStringFromSelector(@selector(skProduct))];
   }
   return self;
 }
