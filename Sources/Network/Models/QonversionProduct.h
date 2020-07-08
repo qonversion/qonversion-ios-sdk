@@ -53,7 +53,8 @@ NS_SWIFT_NAME(Qonversion.Product)
 
 /**
   Localized price
+  For example, 1 490,00 USD
  */
-@property (nonatomic, copy) NSString *prettyPrice;
+@property (nonatomic, copy, nonnull) NSString *prettyPrice;
 
 @end

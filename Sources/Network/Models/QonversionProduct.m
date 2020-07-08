@@ -1,6 +1,6 @@
 #import "QonversionProduct.h"
-#import "StoreKitSugare.h"
 #import "QonversionProduct+Protected.h"
+#import "StoreKitSugare.h"
 
 @implementation QonversionProduct : NSObject
 
@@ -24,6 +24,10 @@
   [coder encodeInteger:_type forKey:NSStringFromSelector(@selector(type))];
   [coder encodeInteger:_duration forKey:NSStringFromSelector(@selector(duration))];
   [coder encodeInteger:_skProduct forKey:NSStringFromSelector(@selector(skProduct))];
+}
+
+- (void)setSkProduct:(SKProduct *)skProduct {
+  _skProduct = skProduct;
 }
 
 - (NSString *)prettyPrice {

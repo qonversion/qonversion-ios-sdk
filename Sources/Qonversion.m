@@ -10,6 +10,7 @@
 #import "QRequestSerializer.h"
 #import "QErrors.h"
 #import "StoreKitSugare.h"
+#import "QonversionProduct+Protected.h"
 
 #import <net/if.h>
 #import <net/if_dl.h>
@@ -114,10 +115,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (QonversionProduct *)productFor:(NSString *)productID {
-  QonversionLaunchComposeModel *model = [[Qonversion sharedInstance] launchModel];
+  return [[Qonversion sharedInstance] productFor:productID];
+}
+
+- (QonversionProduct *)productFor:(NSString *)productID {
+  QonversionLaunchComposeModel *model = [self launchModel];
   NSDictionary *products = model.result.products ?: @{};
-  
-  return products[productID];
+  QonversionProduct *product = products[productID];
+  if (product) {
+    id skProduct = _products[product.storeID];
+    if (skProduct) {
+      [product setSkProduct:skProduct];
+    }
+    return product;
+  }
+  return nil;
 }
 
 // MARK: - Private
