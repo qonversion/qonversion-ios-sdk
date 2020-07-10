@@ -1,9 +1,6 @@
-#import <Foundation/Foundation.h>
-
-NS_ASSUME_NONNULL_BEGIN
+#import <StoreKit/StoreKit.h>
 
 @interface StoreKitService : NSObject
 
 @end
 
-NS_ASSUME_NONNULL_END
