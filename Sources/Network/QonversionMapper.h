@@ -1,5 +1,4 @@
 #import <Foundation/Foundation.h>
-#import "QonversionCheckResult.h"
 #import "QonversionLaunchResult.h"
 
 typedef NS_ENUM(NSInteger, QErrorCode) {
@@ -14,12 +13,6 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
 
 @end
 
-@interface QonversionCheckResultComposeModel : QonversionComposeModel
-
-@property (nonatomic, nullable) QonversionCheckResult *result;
-
-@end
-
 @interface QonversionLaunchComposeModel : NSObject <NSCoding>
 
 @property (nonatomic, copy, nullable) NSError *error;
@@ -29,10 +22,8 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
 
 @interface QonversionMapper : NSObject
 
-- (QonversionCheckResultComposeModel * _Nonnull)composeModelFrom:(NSData * _Nullable)data;
 - (QonversionLaunchComposeModel * _Nonnull)composeLaunchModelFrom:(NSData * _Nullable)data;
 
-- (QonversionCheckResult * _Nullable)fillCheckResultWith:(NSDictionary * _Nullable)dict;
 - (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary * _Nullable)dict;
 - (NSDictionary <NSString *, QonversionPermission *> * _Nonnull)fillPermissions:(NSDictionary * _Nullable)dict;
 

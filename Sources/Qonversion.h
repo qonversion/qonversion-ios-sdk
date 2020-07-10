@@ -69,9 +69,6 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
 + (void)addAttributionData:(NSDictionary *)data
               fromProvider:(QAttributionProvider)provider;
 
-+ (void)checkUser:(void(^)(QonversionCheckResult *result))result
-          failure:(QonversionCheckFailer)failure;
-
 /**
  Check user permissions based on product center details
  @param result Complition block that include permissions dictionary and error

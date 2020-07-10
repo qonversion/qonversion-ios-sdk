@@ -77,15 +77,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [[Qonversion sharedInstance] addAttributionData:data fromProvider:provider userID:nil];
 }
 
-+ (void)checkUser:(void(^)(QonversionCheckResult *result))result
-          failure:(QonversionCheckFailer)failure {
-  __block __weak Qonversion *weakSelf = [Qonversion sharedInstance];
-  
-  [[Qonversion sharedInstance] runOnBackgroundQueue:^{
-    [weakSelf checkUser:result failure:failure];
-  }];
-}
-
 + (void)setProperty:(QProperty)property value:(NSString *)value {
   NSString *key = [QonversionProperties keyForProperty:property];
   

@@ -1,15 +1,10 @@
 #import <Foundation/Foundation.h>
 #import "QUtils.h"
 #import "QonversionMapper.h"
-#import "RenewalProductDetails.h"
-#import "QonversionCheckResult+Protected.h"
-#import "RenewalProductDetails+Protected.h"
 #import "QonversionLaunchResult+Protected.h"
 
 NSString * const QonversionErrorDomain = @"com.qonversion.io";
 
-static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStatuses = nil;
-static NSDictionary <NSString *, NSNumber *> *RenewalProductDetailsStates = nil;
 static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 
 
@@ -52,104 +47,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 
 @end
 
-@implementation QonversionCheckResultComposeModel : QonversionComposeModel
-@end
-
 @implementation QonversionMapper
-
-+ (void)load {
-  RenewalProductDetailsStatuses = @{
-    @"cancelled": @0,
-    @"active": @1,
-    @"refunded": @2,
-  };
-  
-  RenewalProductDetailsStates = @{
-    @"trial": @0,
-    @"subscription": @1,
-  };
-}
-
-- (QonversionCheckResultComposeModel *)composeModelFrom:(NSData *)data {
-  QonversionMapperObject *object = [self mapperObjectFrom:data];
-  QonversionCheckResultComposeModel *result = [QonversionCheckResultComposeModel new];
-  
-  if (object.error == NULL && [object.data isKindOfClass:NSDictionary.class]) {
-    QonversionCheckResult *resultObject = [[QonversionMapper new] fillCheckResultWith:object.data];
-    [result setResult:resultObject];
-    return result;
-  } else {
-    [result setError:object.error];
-    return result;
-  }
-}
-
-- (QonversionCheckResult *)fillCheckResultWith:(NSDictionary *)dict {
-  QonversionCheckResult *result = [[QonversionCheckResult alloc] init];
-  
-  NSNumber *timestamp = dict[@"timestamp"];
-  NSNumber *environment = dict[@"environment"];
-  
-  NSArray *activeProductsDict = dict[@"active_renew_products"];
-  NSArray *allProductsDict = dict[@"all_renewal_products"];
-  
-  [result setEnvironment:environment.intValue];
-  [result setTimestamp:timestamp.intValue];
-  
-  id allProducts = [self fillRenewalProducts:allProductsDict];
-  id activeProducts = [self fillRenewalProducts:activeProductsDict];
-  
-  [result setAllProducts:allProducts];
-  [result setActiveProducts:activeProducts];
-  
-  return result;
-}
-
-- (NSArray<RenewalProductDetails *> *)fillRenewalProducts:(NSArray *)dict {
-  NSMutableArray *products = [[NSMutableArray alloc] init];
-  
-  for (NSDictionary* itemDict in dict) {
-    RenewalProductDetails *item = [self fillRenewalProduct:itemDict];
-    if (item) {
-      [products addObject:item];
-    }
-  }
-  
-  return [products copy];
-}
-
-- (RenewalProductDetails *)fillRenewalProduct:(NSDictionary *)dict {
-  RenewalProductDetails *item = [[RenewalProductDetails alloc] init];
-  
-  NSString *productID = dict[@"product_id"] ?: @"";
-  NSString *originalID = dict[@"original_transaction_id"] ?: @"";
-  
-  if (!productID || !originalID) {
-    return nil;
-  }
-  
-  NSNumber *created = dict[@"created_at"] ?: @0;
-  NSNumber *purchased = dict[@"purchased_at"] ?: @0;
-  NSNumber *expires = dict[@"expires_at"] ?: @0;
-  NSNumber *expired = dict[@"expired"] ?: @0;
-  NSNumber *billingRetry = dict[@"billing_retry"] ?: @0;
-  
-  [item setProductID:productID];
-  [item setOriginalTransactionID:originalID];
-  [item setCreatedAt:created.intValue];
-  [item setPurchasedAt:purchased.intValue];
-  [item setExpiresAt:expires.intValue];
-  [item setExpired:expired.boolValue];
-  [item setBillingRetry:billingRetry.boolValue];
-  
-  NSString *status = dict[@"status"] ?: @"";
-  [item setStatus:(RenewalProductDetailsStatuses[status] ?: @-1).intValue];
-  
-  NSString *state = dict[@"state"] ?: @"";
-  [item setState:(RenewalProductDetailsStates[state] ?: @-1).intValue];
-  
-  return item;
-}
 
 - (QonversionLaunchComposeModel * _Nonnull)composeLaunchModelFrom:(NSData * _Nullable)data {
   QonversionMapperObject *object = [self mapperObjectFrom:data];
