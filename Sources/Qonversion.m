@@ -560,9 +560,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   // Initialize using purchase:
   if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
     QonversionPurchaseCompletionBlock checkBlock = [self purchasingBlock];
-    if (checkBlock) {
-      checkBlock(nil, [QUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
-    }
+    run_block_on_main(checkBlock, nil, [QUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
     return;
   }
 }
@@ -615,11 +613,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     }
     
     QonversionPurchaseCompletionBlock checkBlock = [self purchasingBlock];
-    if (checkBlock) {
-      checkBlock(model.result.permissions, model.error, transaction.isCancelled);
-      self->_purchasingCurrently = nil;
-      self->_purchasingBlock = nil;
-    }
+    run_block_on_main(checkBlock, model.result.permissions, model.error, transaction.isCancelled);
+    self->_purchasingCurrently = nil;
+    self->_purchasingBlock = nil;
   }] resume];
 }
 
