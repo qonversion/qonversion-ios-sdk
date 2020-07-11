@@ -477,5 +477,4 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }] resume];
 }
 
-
 @end
