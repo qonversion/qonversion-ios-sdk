@@ -1,4 +1,5 @@
 #import "StoreKitService.h"
+#import "QUtils.h"
 
 @interface StoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -6,6 +7,7 @@
 @property (nonatomic, readonly) NSMutableDictionary *productRequests;
 @property (nonatomic, readonly) NSMutableDictionary *products;
 
+@property (nonatomic, strong) NSString *purchasingCurrently;
 @end
 
 @implementation StoreKitService
@@ -16,6 +18,8 @@
     _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
     _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
     _products = [[NSMutableDictionary alloc] init];
+    
+    _purchasingCurrently = NULL;
   }
   return self;
 }
@@ -44,38 +48,42 @@
 // MARK: - Private
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
-  SKProduct *skProduct = [self productAt:transaction];
-  
-  // Initialize using purchase:
-  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
-    QonversionPurchaseCompletionHandler checkBlock = [self purchasingBlock];
-    run_block_on_main(checkBlock, nil, [QUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
-    return;
-  }
+  // TODO
+//  SKProduct *skProduct = [self productAt:transaction];
+//
+//  // Initialize using purchase:
+//  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
+//    QonversionPurchaseCompletionHandler checkBlock = [self purchasingBlock];
+//    run_block_on_main(checkBlock, nil, [QUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
+//    return;
+//  }
 }
 
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
   [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-  SKProduct *skProduct = [self productAt:transaction];
-  NSString *productIdentifier = transaction.payment.productIdentifier;
+  // TODO
+  SKProduct *skProduct = nil;
+  //SKProduct *skProduct = [self productAt:transaction];
+  //NSString *productIdentifier = transaction.payment.productIdentifier;
   
   // Initialize using purchase:
-  if (skProduct && _purchasingCurrently && [_purchasingCurrently isEqualToString:productIdentifier]) {
-    [self purchase:skProduct transaction:transaction];
+  //if (skProduct && _purchasingCurrently && [_purchasingCurrently isEqualToString:productIdentifier]) {
+    // TODO
+    //[self purchase:skProduct transaction:transaction];
     return;
-  }
+  //}
   
   if (skProduct) {
     // [self serviceLogPurchase:skProduct transaction:transaction];
   } else {
     // Auto-handling for analytics and integrations
-    [self.transactions setObject:transaction forKey:productIdentifier];
-    SKProductsRequest *request = [SKProductsRequest.alloc
-                                  initWithProductIdentifiers:[NSSet setWithObject:productIdentifier]];
-    
-    [self.productRequests setObject:request forKey:productIdentifier];
-    request.delegate = self;
-    [request start];
+    //[self.transactions setObject:transaction forKey:productIdentifier];
+//    SKProductsRequest *request = [SKProductsRequest.alloc
+//                                  initWithProductIdentifiers:[NSSet setWithObject:productIdentifier]];
+//    
+//    [self.productRequests setObject:request forKey:productIdentifier];
+//    request.delegate = self;
+//    [request start];
   }
 }
 

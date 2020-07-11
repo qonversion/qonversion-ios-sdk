@@ -41,7 +41,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
-@property (nonatomic, strong) NSString *purchasingCurrently;
 @property (nonatomic, assign, readwrite) BOOL launchingFinished;
 
 @property (nonatomic, assign) BOOL debugMode;
@@ -57,7 +56,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (void)launchWithKey:(nonnull NSString *)key {
-  [self launchWithKey:key];
+  [self launchWithKey:key completion:nil];
 }
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
@@ -140,7 +139,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     _updatingCurrently = NO;
     _launchingFinished = NO;
     _debugMode = NO;
-    _purchasingCurrently = NULL;
     _device = [[QDevice alloc] init];
     
     _backgroundQueue = [[NSOperationQueue alloc] init];
@@ -193,8 +191,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 - (void)purchase:(NSString *)productID result:(QonversionPurchaseCompletionHandler)result {
-  self->_purchasingCurrently = NULL;
-  QonversionProduct *product = [self qonversionProduct:productID];
+  
+  /*
+    TODO
+   self->_purchasingCurrently = NULL;
+   QonversionProduct *product = [self qonversionProduct:productID];
   
   if (product) {
     SKProduct *skProduct = self->_products[product.storeID];
@@ -208,7 +209,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       [[SKPaymentQueue defaultQueue] addPayment:payment];
       return;
     }
-  }
+  }*/
   
   result(nil, [QUtils errorWithQonverionErrorCode:QonversionErrorProductNotFound], NO);
 }
@@ -472,7 +473,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     
     QonversionPurchaseCompletionHandler checkBlock = [self purchasingBlock];
     run_block_on_main(checkBlock, model.result.permissions, model.error, transaction.isCancelled);
-    self->_purchasingCurrently = nil;
     self->_purchasingBlock = nil;
   }] resume];
 }

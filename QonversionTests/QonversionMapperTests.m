@@ -41,31 +41,6 @@ static NSString *initFailedJSON = @"init_failed_state.json";
     XCTAssertNotNil([self withoutProducts]);
 }
 
-- (void)testThatMapperParseEmptyProductCorrectly {
-    QonversionCheckResult *resultWithoutProducts = [[QonversionMapper new] fillCheckResultWith:self.withoutProducts];
-    XCTAssertNotNil(resultWithoutProducts);
-    
-    XCTAssertEqual(resultWithoutProducts.activeProducts.count, 0);
-    XCTAssertEqual(resultWithoutProducts.allProducts.count, 0);
-}
-
-- (void)testThatMapperCouldParseErrorResponse {
-    NSData *failedData = [self fileDataFromContentsOfFile:checkFailedState];
-    QonversionCheckResultComposeModel * composeModel = [[QonversionMapper new] composeModelFrom:failedData];
-    XCTAssertNil(composeModel.result);
-    XCTAssertNotNil(composeModel.error);
-    XCTAssertEqual(composeModel.error.code, QErrorCodeIncorrectRequest);
-}
-
-- (void)testThatMapperParseBrokenData {
-    NSData *brokenData = [NSData new];
-    QonversionCheckResultComposeModel * composeModel = [[QonversionMapper new] composeModelFrom:brokenData];
-    XCTAssertNil(composeModel.result);
-    XCTAssertNotNil(composeModel.error);
-    
-    XCTAssertEqual(composeModel.error.code, QErrorCodeFailedParseResponse);
-}
-
 - (void)testThatMapperParsePermissions {
     QonversionLaunchResult *result = [[QonversionMapper new] fillLaunchResult:self.userInitSuccess];
     
