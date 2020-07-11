@@ -41,8 +41,6 @@
 - (void)paymentQueue:(nonnull SKPaymentQueue *)queue
  updatedTransactions:(nonnull NSArray<SKPaymentTransaction *> *)transactions {
   for (SKPaymentTransaction *transaction in transactions) {
-    NSString *transactionID = nil;
-    NSString *transactionDate = nil;
     
     switch (transaction.transactionState) {
       case SKPaymentTransactionStatePurchasing:

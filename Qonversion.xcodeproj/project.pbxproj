@@ -42,6 +42,7 @@
 		458A8CC424B5E52D00637130 /* QonversionProduct+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CC324B5E52D00637130 /* QonversionProduct+Protected.h */; };
 		458A8CC824B8407C00637130 /* StoreKitService.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CC624B8407B00637130 /* StoreKitService.h */; };
 		458A8CC924B8407C00637130 /* StoreKitService.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CC724B8407B00637130 /* StoreKitService.m */; };
+		458A8CCB24B9A3DF00637130 /* StoreKitServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CCA24B9A3DF00637130 /* StoreKitServiceTests.m */; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -120,6 +121,7 @@
 		458A8CC324B5E52D00637130 /* QonversionProduct+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QonversionProduct+Protected.h"; sourceTree = "<group>"; };
 		458A8CC624B8407B00637130 /* StoreKitService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StoreKitService.h; sourceTree = "<group>"; };
 		458A8CC724B8407B00637130 /* StoreKitService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StoreKitService.m; sourceTree = "<group>"; };
+		458A8CCA24B9A3DF00637130 /* StoreKitServiceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StoreKitServiceTests.m; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -301,6 +303,7 @@
 				4531CBC92457F6E00022C422 /* QUserInfoTests.m */,
 				454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */,
 				4587136B24AB963100F4B418 /* QRequestSerializerTests.m */,
+				458A8CCA24B9A3DF00637130 /* StoreKitServiceTests.m */,
 			);
 			path = QonversionTests;
 			sourceTree = "<group>";
@@ -657,6 +660,7 @@
 				454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */,
 				4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */,
 				454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */,
+				458A8CCB24B9A3DF00637130 /* StoreKitServiceTests.m in Sources */,
 				4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */,
 				4531CBCB24581BD80022C422 /* QUserInfoTests.m in Sources */,
 				456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */,

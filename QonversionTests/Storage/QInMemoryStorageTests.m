@@ -71,7 +71,7 @@ NSTimeInterval QDefaultTestTimeout = 0.1;
     XCTAssertNil(resultObject);
 }
 
-- (void)testThatStorageReturnObjectWithoutKeyInCompletionBlock {
+- (void)testThatStorageReturnObjectWithoutKeyInCompletionHandler {
     NSObject *expectedObject = [NSObject new];
     XCTestExpectation *expectation = [self expectationWithDescription:@"Completion block was called"];
     
@@ -89,7 +89,7 @@ NSTimeInterval QDefaultTestTimeout = 0.1;
                                  }];
 }
 
-- (void)testThatStorageReturnObjectByKeyInCompletionBlock {
+- (void)testThatStorageReturnObjectByKeyInCompletionHandler {
     NSObject *expectedObject = [NSObject new];
     XCTestExpectation *expectation = [self expectationWithDescription:@"Completion block was called"];
     
