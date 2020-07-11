@@ -92,7 +92,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }
 }
 
-+ (void)checkPermissions:(QonversionPermissionCompletionBlock)result {
++ (void)checkPermissions:(QonversionPermissionCompletionHandler)result {
   [[Qonversion sharedInstance] checkPermissions:result];
 }
 
@@ -110,7 +110,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   NSDictionary *products = model.result.products ?: @{};
   QonversionProduct *product = products[productID];
   if (product) {
-    id skProduct = _products[product.storeID];
+    id skProduct = products[product.storeID];
     if (skProduct) {
       [product setSkProduct:skProduct];
     }
@@ -182,34 +182,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   });
 }
 
-- (void)checkUser:(void(^)(QonversionCheckResult *result))result
-          failure:(QonversionCheckFailer)failure {
-  
-  NSString *userID = Keeper.userID;
-  if ([QUtils isEmptyString:userID]) {
-    failure([QonversionMapper error:@"Could not init user" code:QErrorCodeFailedReceiveData]);
-    return;
-  }
-  
-  NSURLRequest *request = [_requestBuilder makeCheckRequest];
-  NSURLSession *session = [[self session] copy];
-  [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-    if (error) {
-      failure(error);
-      return;
-    }
-    
-    QonversionCheckResultComposeModel *model = [[QonversionMapper new] composeModelFrom:data];
-    
-    if (model.result) {
-      result(model.result);
-    } else {
-      failure(model.error);
-    }
-  }] resume];
-}
-
-- (void)checkPermissions:(QonversionPermissionCompletionBlock)result {
+- (void)checkPermissions:(QonversionPermissionCompletionHandler)result {
   
   @synchronized (self) {
     if (!_launchingFinished) {
@@ -318,10 +291,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
   
   @synchronized (self) {
-    NSMutableArray <QonversionPermissionCompletionBlock> *_blocks = [self->_permissionsBlocks copy];
+    NSMutableArray <QonversionPermissionCompletionHandler> *_blocks = [self->_permissionsBlocks copy];
     [self->_permissionsBlocks removeAllObjects];
     
-    for (QonversionPermissionCompletionBlock block in _blocks) {
+    for (QonversionPermissionCompletionHandler block in _blocks) {
       block(model.result.permissions ?: @{}, model.error);
     }
   }

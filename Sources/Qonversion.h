@@ -1,13 +1,12 @@
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
 #import "QonversionProduct.h"
-#import "QonversionCheckResult.h"
 #import "QonversionPermission.h"
 #import "QonversionProperties.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^QonversionPermissionCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error);
+typedef void (^QonversionPermissionCompletionHandler)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error);
 NS_SWIFT_NAME(Qonversion.PermissionCompletionBlock);
 
 typedef void (^QonversionPurchaseCompletionBlock)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error, BOOL cancelled);
@@ -74,7 +73,7 @@ typedef NS_ENUM(NSInteger, QAttributionProvider) {
  @param result Complition block that include permissions dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)checkPermissions:(QonversionPermissionCompletionBlock)result;
++ (void)checkPermissions:(QonversionPermissionCompletionHandler)result;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
