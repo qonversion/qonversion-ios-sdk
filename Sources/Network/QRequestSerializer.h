@@ -11,9 +11,7 @@
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction;
 
-- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data
-                             fromProvider:(QAttributionProvider)provider
-                                   userID:(nullable NSString *)uid;
+- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider;
 
 @end
 

@@ -14,6 +14,7 @@ typedef NS_ENUM(NSInteger, QProperty) {
   QPropertyName,
   QPropertyPremium
 };
+NS_SWIFT_NAME(Qonversion.Property);
 
 // MARK: - Qonversion Underhood User Properties
 

@@ -4,16 +4,19 @@
 #import "QonversionPermission.h"
 #import "QonversionProperties.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef void (^QonversionPermissionCompletionHandler)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error);
 NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
 
 typedef void (^QonversionPurchaseCompletionHandler)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error, BOOL cancelled);
 NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
 
-typedef NS_ENUM(NSInteger, QAttributionProvider) {
-  QAttributionProviderAppsFlyer = 0,
-  QAttributionProviderBranch,
-  QAttributionProviderAdjust
+typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
+  QonversionAttributionProviderAppsFlyer = 0,
+  QonversionAttributionProviderBranch,
+  QonversionAttributionProviderAdjust,
+  QonversionAttributionProviderApple
 };
 NS_SWIFT_NAME(Qonversion.AttributionProvider);
 
@@ -57,7 +60,7 @@ NS_SWIFT_NAME(Qonversion.AttributionProvider);
  @param data Dictionary received by the provider
  @param provider Attribution provider
  */
-+ (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider;
++ (void)addAttributionData:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider;
 
 /**
  Check user permissions based on product center details
@@ -82,3 +85,5 @@ NS_SWIFT_NAME(Qonversion.AttributionProvider);
 + (QonversionProduct *)productFor:(NSString *)productID;
 
 @end
+
+NS_ASSUME_NONNULL_END

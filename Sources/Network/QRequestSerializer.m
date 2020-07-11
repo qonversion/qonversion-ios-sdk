@@ -68,33 +68,29 @@
   return result;
 }
 
-- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QAttributionProvider)provider userID:(nullable NSString *)uid {
+- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider {
   NSMutableDictionary *body = @{@"d": self.mainData}.mutableCopy;
   NSMutableDictionary *providerData = [NSMutableDictionary new];
   
   switch (provider) {
-    case QAttributionProviderAppsFlyer:
+    case QonversionAttributionProviderAppsFlyer:
       [providerData setValue:@"appsflyer" forKey:@"provider"];
       break;
-    case QAttributionProviderAdjust:
+    case QonversionAttributionProviderAdjust:
       [providerData setValue:@"adjust" forKey:@"provider"];
       break;
-    case QAttributionProviderBranch:
+    case QonversionAttributionProviderBranch:
       [providerData setValue:@"branch" forKey:@"provider"];
+      break;
+    case QonversionAttributionProviderApple:
+      [providerData setValue:@"apple" forKey:@"provider"];
       break;
   }
   
   NSString *_uid = nil;
-  
-  if (uid) {
-    _uid = uid;
-  } else {
-    /** Temporary workaround for keep backward compatibility  */
-    /** Recommend to remove after moving all clients to version > 1.0.4 */
-    NSString *af_uid = _device.afUserID;
-    if (af_uid && provider == QAttributionProviderAppsFlyer) {
-      _uid = af_uid;
-    }
+  NSString *af_uid = _device.afUserID;
+  if (af_uid && provider == QonversionAttributionProviderAppsFlyer) {
+    _uid = af_uid;
   }
   
   [providerData setValue:data forKey:@"d"];

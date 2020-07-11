@@ -67,7 +67,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [[Qonversion sharedInstance] launchWithKey:key completion:completion];
 }
 
-+ (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider {
++ (void)addAttributionData:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider {
   [[Qonversion sharedInstance] addAttributionData:data fromProvider:provider];
 }
 
@@ -90,8 +90,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [[Qonversion sharedInstance] checkPermissions:result];
 }
 
-+ (void)purchase:(NSString *)productID
-          result:(QonversionPurchaseCompletionHandler)result {
++ (void)purchase:(NSString *)productID result:(QonversionPurchaseCompletionHandler)result {
   [[Qonversion sharedInstance] purchase:productID result:result];
 }
 
@@ -132,9 +131,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (instancetype)init {
   self = super.init;
   if (self) {
-    _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
-    _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
-    _products = [[NSMutableDictionary alloc] init];
     _inMemoryStorage = [[QInMemoryStorage alloc] init];
     _persistentStorage = [[QUserDefaultsStorage alloc] init];
     
@@ -160,12 +156,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   return self;
 }
 
-- (void)addAttributionData:(NSDictionary *)data fromProvider:(QAttributionProvider)provider {
+- (void)addAttributionData:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider {
   double delayInSeconds = 5.0;
   dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
   
   dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-    NSDictionary *body = [_requestSerializer attributionDataWithDict:data fromProvider:provider userID:uid];
+    NSDictionary *body = [_requestSerializer attributionDataWithDict:data fromProvider:provider];
     NSURLRequest *request = [_requestBuilder makeAttributionRequestWith:body];
     
     [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
@@ -442,50 +438,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 - (SKProduct * _Nullable)productAt:(SKPaymentTransaction *)transaction {
   NSString *productIdentifier = transaction.payment.productIdentifier ?: @"";
-  
-  return self.products[productIdentifier];
+  // TODO
+  //return self.products[productIdentifier];
 }
 
 - (QonversionProduct * _Nullable)qonversionProduct:(NSString *)productID {
   QonversionLaunchComposeModel *launchResult = [self launchModel];
   NSDictionary *products = launchResult.result.products ?: @{};
   return products[productID];
-}
-
-- (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
-  SKProduct *skProduct = [self productAt:transaction];
-  
-  // Initialize using purchase:
-  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
-    QonversionPurchaseCompletionHandler checkBlock = [self purchasingBlock];
-    run_block_on_main(checkBlock, nil, [QUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
-    return;
-  }
-}
-
-- (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
-  [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-  SKProduct *skProduct = [self productAt:transaction];
-  NSString *productIdentifier = transaction.payment.productIdentifier;
-  
-  // Initialize using purchase:
-  if (skProduct && _purchasingCurrently && [_purchasingCurrently isEqualToString:productIdentifier]) {
-    [self purchase:skProduct transaction:transaction];
-    return;
-  }
-  
-  if (skProduct) {
-    [self serviceLogPurchase:skProduct transaction:transaction];
-  } else {
-    // Auto-handling for analytics and integrations
-    [self.transactions setObject:transaction forKey:productIdentifier];
-    SKProductsRequest *request = [SKProductsRequest.alloc
-                                  initWithProductIdentifiers:[NSSet setWithObject:productIdentifier]];
-    
-    [self.productRequests setObject:request forKey:productIdentifier];
-    request.delegate = self;
-    [request start];
-  }
 }
 
 - (void)purchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
