@@ -6,19 +6,16 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^QonversionPermissionCompletionHandler)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error);
-NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
+typedef void (^QonversionPermissionCompletionHandler)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
 
-typedef void (^QonversionPurchaseCompletionHandler)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error, BOOL cancelled);
-NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
+typedef void (^QonversionPurchaseCompletionHandler)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
 
 typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
   QonversionAttributionProviderAppsFlyer = 0,
   QonversionAttributionProviderBranch,
   QonversionAttributionProviderAdjust,
   QonversionAttributionProviderApple
-};
-NS_SWIFT_NAME(Qonversion.AttributionProvider);
+} NS_SWIFT_NAME(Qonversion.AttributionProvider);
 
 @interface Qonversion : NSObject
 
