@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@interface QRequestBuilder : NSObject
+@interface QNRequestBuilder : NSObject
 
 - (instancetype)initWithKey:(NSString *)key;
 

@@ -1,19 +1,19 @@
 #import <XCTest/XCTest.h>
-#import "QRequestSerializer.h"
+#import "QNRequestSerializer.h"
 
-@interface QRequestSerializerTests : XCTestCase
+@interface QNRequestSerializerTests : XCTestCase
 
-@property (nonatomic, strong) QRequestSerializer *serializer;
+@property (nonatomic, strong) QNRequestSerializer *serializer;
 
 @end
 
 
-@implementation QRequestSerializerTests
+@implementation QNRequestSerializerTests
 
 - (void)setUp {
     [super setUp];
     
-    self.serializer = [[QRequestSerializer alloc] initWithUserID:@"test"];
+    self.serializer = [[QNRequestSerializer alloc] initWithUserID:@"test"];
 }
 
 - (void)testThatLaunchDataCorrect {

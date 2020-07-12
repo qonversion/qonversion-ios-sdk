@@ -29,7 +29,7 @@ typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
  @param key - project key to setup the SDK.
  @param completion - will return `uid` for Ads integrations.
  */
-+ (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion;
++ (void)launchWithKey:(nonnull NSString *)key completion:(QonversionPurchaseCompletionHandler)completion;
 
 /**
  Sets the environment for receipt.

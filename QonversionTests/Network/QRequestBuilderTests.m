@@ -1,14 +1,14 @@
 #import <XCTest/XCTest.h>
-#import "QRequestBuilder.h"
+#import "QNRequestBuilder.h"
 
-@interface QRequestBuilderTests : XCTestCase
-@property (nonatomic, strong) QRequestBuilder *requestBuilder;
+@interface QNRequestBuilderTests : XCTestCase
+@property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @end
 
-@implementation QRequestBuilderTests
+@implementation QNRequestBuilderTests
 
 - (void)setUp {
-    _requestBuilder = [[QRequestBuilder alloc] initWithKey:@"API_KEY"];
+    _requestBuilder = [[QNRequestBuilder alloc] initWithKey:@"API_KEY"];
 }
 
 - (void)tearDown {

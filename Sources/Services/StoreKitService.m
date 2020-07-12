@@ -1,7 +1,12 @@
 #import "StoreKitService.h"
 #import "QUtils.h"
+#import "<AVFoundation/AVFoundation.h"
 
 @interface StoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
+
+// Storages
+@property (nonatomic) QInMemoryStorage *inMemoryStorage;
+@property (nonatomic) QUserDefaultsStorage *persistentStorage;
 
 @property (nonatomic, readonly) NSMutableDictionary *transactions;
 @property (nonatomic, readonly) NSMutableDictionary *productRequests;

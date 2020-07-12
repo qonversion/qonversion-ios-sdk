@@ -2,7 +2,7 @@
 
 #import "Qonversion.h"
 
-@interface QRequestSerializer : NSObject
+@interface QNRequestSerializer : NSObject
 
 - (instancetype)initWithUserID:(NSString *)uid;
 

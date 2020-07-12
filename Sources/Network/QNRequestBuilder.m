@@ -1,5 +1,5 @@
 #import <Foundation/Foundation.h>
-#import "QRequestBuilder.h"
+#import "QNRequestBuilder.h"
 #import "Keeper.h"
 #import "QUtils.h"
 #import "QConstants.h"
@@ -15,13 +15,13 @@ static NSString * const kPropertiesEndpoint = @"v1/properties";
 static NSString * const kCheckEndpoint = @"check";
 static NSString * const kAttributionEndpoint = @"attribution";
 
-@interface QRequestBuilder ()
+@interface QNRequestBuilder ()
 
 @property (nonatomic, strong) NSString *apiKey;
 
 @end
 
-@implementation QRequestBuilder
+@implementation QNRequestBuilder
 
 - (instancetype)initWithKey:(NSString *)key {
   if (self = [super init]) {

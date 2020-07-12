@@ -6,8 +6,8 @@
 #import "QInMemoryStorage.h"
 #import "QUserDefaultsStorage.h"
 #import "QDevice.h"
-#import "QRequestBuilder.h"
-#import "QRequestSerializer.h"
+#import "QNRequestBuilder.h"
+#import "QNRequestSerializer.h"
 #import "QErrors.h"
 #import "StoreKitSugare.h"
 #import "QonversionProduct+Protected.h"
@@ -29,8 +29,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
 
-@property (nonatomic, strong) QRequestBuilder *requestBuilder;
-@property (nonatomic, strong) QRequestSerializer *requestSerializer;
+
+@property (nonatomic, strong) QNRequestBuilder *requestBuilder;
+@property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic) QInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QUserDefaultsStorage *persistentStorage;
 @property (nonatomic) QonversionPurchaseCompletionHandler purchasingBlock;
@@ -51,19 +52,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 // MARK: - Public
 
-+ (void)setDebugMode:(BOOL)debugMode {
-  [Qonversion sharedInstance]->_debugMode = debugMode;
-}
-
 + (void)launchWithKey:(nonnull NSString *)key {
   [self launchWithKey:key completion:nil];
 }
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-  [Qonversion sharedInstance]->_requestBuilder = [[QRequestBuilder alloc] initWithKey:key];
+  [Qonversion sharedInstance]->_requestBuilder = [[QNRequestBuilder alloc] initWithKey:key];
   
   [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
   [[Qonversion sharedInstance] launchWithKey:key completion:completion];
+}
+
++ (void)setDebugMode:(BOOL)debugMode {
+  [Qonversion sharedInstance]->_debugMode = debugMode;
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider {
@@ -79,7 +80,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (void)setUserProperty:(NSString *)property value:(NSString *)value {
-  
   if ([QonversionProperties checkProperty:property] && [QonversionProperties checkValue:value]) {
     [[Qonversion sharedInstance] setUserProperty:property value:value];
   }
@@ -135,7 +135,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
-    _requestSerializer = [[QRequestSerializer alloc] init];
+    _requestSerializer = [[QNRequestSerializer alloc] init];
     _updatingCurrently = NO;
     _launchingFinished = NO;
     _debugMode = NO;
