@@ -13,7 +13,7 @@
 - (void)setUp {
     [super setUp];
     
-    self.serializer = [[QNRequestSerializer alloc] initWithUserID:@"test"];
+    self.serializer = [[QNRequestSerializer alloc] init];
 }
 
 - (void)testThatLaunchDataCorrect {

@@ -46,7 +46,7 @@
 }
 
 + (NSError *)errorWithQonverionErrorCode:(QonversionError)code
-                                userInfo:(nullable NSDictionary<NSErrorQNUserInfoKey, id> *)dict {
+                                userInfo:(nullable NSDictionary<NSErrorUserInfoKey, id> *)dict {
   return [NSError errorWithDomain:QNErrorDomain code:code userInfo:dict];
 }
 

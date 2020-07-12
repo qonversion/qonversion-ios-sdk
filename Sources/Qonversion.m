@@ -55,7 +55,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [self launchWithKey:key completion:nil];
 }
 
-+ (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
++ (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
+//+ (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
   [Qonversion sharedInstance]->_requestBuilder = [[QNRequestBuilder alloc] initWithKey:key];
   
   [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
@@ -88,7 +89,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [[Qonversion sharedInstance] checkPermissions:result];
 }
 
-+ (void)purchase:(NSString *)productID result:(QonversionPurchaseCompletionHandler)result {
++ (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
   [[Qonversion sharedInstance] purchase:productID result:result];
 }
 
@@ -189,7 +190,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }
 }
 
-- (void)purchase:(NSString *)productID result:(QonversionPurchaseCompletionHandler)result {
+- (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
   
   /*
     TODO
@@ -231,7 +232,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }] resume];
 }
 
-- (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
+- (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
   
   NSDictionary *launchData = [self->_requestSerializer launchData];
   NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:launchData];
@@ -270,7 +271,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       }
       
       if (completion) {
-        completion(model.result.uid);
+        // TODO
+        //completion(model.result.uid);
       }
     }
     
@@ -470,7 +472,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
     }
     
-    QonversionPurchaseCompletionHandler checkBlock = [self purchasingBlock];
+    QNPurchaseCompletionHandler checkBlock = [self purchasingBlock];
     run_block_on_main(checkBlock, model.result.permissions, model.error, transaction.isCancelled);
     self->_purchasingBlock = nil;
   }] resume];

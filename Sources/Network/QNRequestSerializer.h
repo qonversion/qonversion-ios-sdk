@@ -4,8 +4,6 @@
 
 @interface QNRequestSerializer : NSObject
 
-- (instancetype)initWithUserID:(NSString *)uid;
-
 - (NSDictionary *)launchData;
 
 - (NSDictionary *)purchaseData:(SKProduct *)product

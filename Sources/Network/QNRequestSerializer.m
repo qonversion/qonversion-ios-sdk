@@ -12,14 +12,6 @@
 
 @implementation QNRequestSerializer
 
-- (instancetype)initWithUserID:(NSString *)uid {
-  if (self = [super init]) {
-    _userID = uid;
-    _device = [[QNDevice alloc] init];
-  }
-  return self;
-}
-
 - (NSDictionary *)launchData {
   return self.mainData;
 }
