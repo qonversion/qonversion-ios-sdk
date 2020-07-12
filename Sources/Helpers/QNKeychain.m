@@ -1,7 +1,7 @@
-#import "Keychain.h"
+#import "QNKeychain.h"
 #import <Security/Security.h>
 
-@implementation Keychain
+@implementation QNKeychain
 
 + (void)setString:(NSString *)string forKey:(NSString *)key {
   if (!string || !key || ![string isKindOfClass:NSString.class] || ![key isKindOfClass:NSString.class]) {

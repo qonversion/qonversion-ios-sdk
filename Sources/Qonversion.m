@@ -1,6 +1,5 @@
 #import "Qonversion.h"
 #import "Keeper.h"
-#import "UserInfo.h"
 #import "QNConstants.h"
 #import "QNMapper.h"
 #import "QInMemoryStorage.h"

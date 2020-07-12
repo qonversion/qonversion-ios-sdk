@@ -3,7 +3,6 @@
 
 #import "Qonversion.h"
 #import "XCTestCase+TestJSON.h"
-#import "UserInfo.h"
 
 @interface Qonversion (Tests)
 

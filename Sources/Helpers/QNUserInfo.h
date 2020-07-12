@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@interface UserInfo : NSObject
+@interface QNUserInfo : NSObject
 
 + (nullable NSBundle *)bundle;
 + (nonnull NSDictionary *)overallData;

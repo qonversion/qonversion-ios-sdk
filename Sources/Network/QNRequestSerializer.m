@@ -1,5 +1,5 @@
 #import "QNRequestSerializer.h"
-#import "UserInfo.h"
+#import "QNUserInfo.h"
 #import "QNDevice.h"
 #import "StoreKitSugare.h"
 
@@ -25,7 +25,7 @@
 }
 
 - (NSDictionary *)mainData {
-  return UserInfo.overallData;
+  return QNUserInfo.overallData;
 }
 
 - (NSDictionary *)purchaseData:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {

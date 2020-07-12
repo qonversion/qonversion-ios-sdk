@@ -1,16 +1,16 @@
 #import <XCTest/XCTest.h>
 
-#import "UserInfo.h"
+#import "QNUserInfo.h"
 #import "QNConstants.h"
 
-@interface QUserInfoTests : XCTestCase
+@interface QQNUserInfoTests : XCTestCase
 
 @end
 
-@implementation QUserInfoTests
+@implementation QQNUserInfoTests
 
 - (void)testReceiptInfo {
-    // XCTAssertNil(UserInfo.appStoreReceipt);
+    // XCTAssertNil(QNUserInfo.appStoreReceipt);
 }
 
 @end

@@ -1,16 +1,16 @@
 #import "QNConstants.h"
 #import "QNDevice.h"
 
-#import "UserInfo.h"
+#import "QNUserInfo.h"
 #import "Keeper.h"
 
-@interface UserInfo (InternalUserID)
+@interface QNUserInfo (InternalUserID)
 
 + (NSString *)internalUserID;
 
 @end
 
-@implementation UserInfo
+@implementation QNUserInfo
 
 + (NSDictionary *)overallData {
   QNDevice *device = [[QNDevice alloc] init];
@@ -27,8 +27,8 @@
     [overallDict setValue:[self internalUserID] forKey:@"custom_uid"];
   }
   
-  if ([UserInfo appStoreReceipt]) {
-    [overallDict setValue:[UserInfo appStoreReceipt] forKey:@"receipt"];
+  if ([QNUserInfo appStoreReceipt]) {
+    [overallDict setValue:[QNUserInfo appStoreReceipt] forKey:@"receipt"];
   }
   
   NSMutableDictionary *deviceDict = [NSMutableDictionary new];
@@ -86,7 +86,7 @@
 }
 
 + (nullable NSString *)appStoreReceipt {
-  NSURL *receiptURL = UserInfo.bundle.appStoreReceiptURL;
+  NSURL *receiptURL = QNUserInfo.bundle.appStoreReceiptURL;
   
   if (!receiptURL) {
     return NULL;

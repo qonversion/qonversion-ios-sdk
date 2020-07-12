@@ -2,7 +2,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface Keychain : NSObject
+@interface QNKeychain : NSObject
 
 + (void)setString:(NSString *)string forKey:(NSString *)key;
 + (nullable NSString *)stringForKey:(NSString *)key;

@@ -1,14 +1,14 @@
 #import "Keeper.h"
-#import "Keychain.h"
+#import "QNKeychain.h"
 
 @implementation Keeper
 
 + (nullable NSString *)userID {
-  return [Keychain stringForKey:@"Qonversion.Keeper.userID"];
+  return [QNKeychain stringForKey:@"Qonversion.Keeper.userID"];
 }
 
 + (void)setUserID:(NSString *)userID {
-  [Keychain setString:userID forKey:@"Qonversion.Keeper.userID"];
+  [QNKeychain setString:userID forKey:@"Qonversion.Keeper.userID"];
 }
 
 @end
