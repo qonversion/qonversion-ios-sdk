@@ -1,25 +1,25 @@
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
 
-typedef NS_ENUM(unsigned int, QonversionProductType){
-  QonversionProductTypeUnknown = -1,
-  QonversionProductTypeTrial = 0,
-  QonversionProductTypeSubscription = 1,
-  QonversionProductTypeOneTime = 2
+typedef NS_ENUM(unsigned int, QNProductType){
+  QNProductTypeUnknown = -1,
+  QNProductTypeTrial = 0,
+  QNProductTypeSubscription = 1,
+  QNProductTypeOneTime = 2
 };
 
-typedef NS_ENUM(unsigned int, QonversionProductDuration){
-  QonversionProductDurationUnknown = -1,
-  QonversionProductDurationWeekly = 0,
-  QonversionProductDurationMonthly = 1,
-  QonversionProductDuration3Month = 2,
-  QonversionProductDuration6Month = 3,
-  QonversionProductDurationAnnual = 4,
-  QonversionProductDurationLifetime = 5
+typedef NS_ENUM(unsigned int, QNProductDuration){
+  QNProductDurationUnknown = -1,
+  QNProductDurationWeekly = 0,
+  QNProductDurationMonthly = 1,
+  QNProductDuration3Month = 2,
+  QNProductDuration6Month = 3,
+  QNProductDurationAnnual = 4,
+  QNProductDurationLifetime = 5
 };
 
 NS_SWIFT_NAME(Qonversion.Product)
-@interface QonversionProduct : NSObject <NSCoding>
+@interface QNProduct : NSObject <NSCoding>
 
 /**
  Product ID created in Qonversion Dashboard
@@ -38,13 +38,13 @@ NS_SWIFT_NAME(Qonversion.Product)
  Trial, Subscription or one-time purchase
  @see [Products types](https://qonversion.io/docs/product-types)
  */
-@property (nonatomic) QonversionProductType type;
+@property (nonatomic) QNProductType type;
 
 /**
  Product duration
  @see [Products durations](https://qonversion.io/docs/product-durations)
  */
-@property (nonatomic) QonversionProductDuration duration;
+@property (nonatomic) QNProductDuration duration;
 
 /**
   Associated StoreKit Product

@@ -9,7 +9,7 @@
 #import "QNRequestSerializer.h"
 #import "QNErrors.h"
 #import "QNStoreKitSugare.h"
-#import "QonversionProduct+Protected.h"
+#import "QNProduct+Protected.h"
 
 #import <net/if.h>
 #import <net/if_dl.h>
@@ -84,7 +84,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   }
 }
 
-+ (void)checkPermissions:(QonversionPermissionCompletionHandler)result {
++ (void)checkPermissions:(QNPermissionCompletionHandler)result {
   [[Qonversion sharedInstance] checkPermissions:result];
 }
 
@@ -92,14 +92,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [[Qonversion sharedInstance] purchase:productID result:result];
 }
 
-+ (QonversionProduct *)productFor:(NSString *)productID {
++ (QNProduct *)productFor:(NSString *)productID {
   return [[Qonversion sharedInstance] productFor:productID];
 }
 
-- (QonversionProduct *)productFor:(NSString *)productID {
+- (QNProduct *)productFor:(NSString *)productID {
   QonversionLaunchComposeModel *model = [self launchModel];
   NSDictionary *products = model.result.products ?: @{};
-  QonversionProduct *product = products[productID];
+  QNProduct *product = products[productID];
   if (product) {
     id skProduct = products[product.storeID];
     if (skProduct) {
@@ -169,7 +169,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   });
 }
 
-- (void)checkPermissions:(QonversionPermissionCompletionHandler)result {
+- (void)checkPermissions:(QNPermissionCompletionHandler)result {
   
   @synchronized (self) {
     if (!_launchingFinished) {
@@ -194,7 +194,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   /*
     TODO
    self->_purchasingCurrently = NULL;
-   QonversionProduct *product = [self qonversionProduct:productID];
+   QNProduct *product = [self qonversionProduct:productID];
   
   if (product) {
     SKProduct *skProduct = self->_products[product.storeID];
@@ -281,21 +281,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
   
   @synchronized (self) {
-    NSMutableArray <QonversionPermissionCompletionHandler> *_blocks = [self->_permissionsBlocks copy];
+    NSMutableArray <QNPermissionCompletionHandler> *_blocks = [self->_permissionsBlocks copy];
     [self->_permissionsBlocks removeAllObjects];
     
-    for (QonversionPermissionCompletionHandler block in _blocks) {
+    for (QNPermissionCompletionHandler block in _blocks) {
       block(model.result.permissions ?: @{}, model.error);
     }
   }
 }
 
 - (void)loadProducts:(QonversionLaunchComposeModel *)model {
-  NSArray<QonversionProduct *> *products = [model.result.products allValues];
+  NSArray<QNProduct *> *products = [model.result.products allValues];
   
   NSMutableSet *productsSet = [[NSMutableSet alloc] init];
   if (products) {
-    for (QonversionProduct *product in products) {
+    for (QNProduct *product in products) {
       [productsSet addObject:product.storeID];
     }
   }
@@ -442,7 +442,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   //return self.products[productIdentifier];
 }
 
-- (QonversionProduct * _Nullable)qonversionProduct:(NSString *)productID {
+- (QNProduct * _Nullable)qonversionProduct:(NSString *)productID {
   QonversionLaunchComposeModel *launchResult = [self launchModel];
   NSDictionary *products = launchResult.result.products ?: @{};
   return products[productID];

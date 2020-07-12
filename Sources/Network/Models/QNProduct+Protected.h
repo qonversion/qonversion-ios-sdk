@@ -1,6 +1,6 @@
-#import "QonversionProduct.h"
+#import "QNProduct.h"
 
-@interface QonversionProduct (Protected)
+@interface QNProduct (Protected)
 
 @property (nonatomic, strong, readwrite, nullable) SKProduct *skProduct;
 

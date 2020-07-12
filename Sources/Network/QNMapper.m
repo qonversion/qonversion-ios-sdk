@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "QNUtils.h"
 #import "QNMapper.h"
-#import "QonversionLaunchResult+Protected.h"
+#import "QNLaunchResult+Protected.h"
 
 NSString * const QNErrorDomain = @"com.qonversion.io";
 
@@ -41,7 +41,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 }
 
 
-- (void)setResult:(QonversionLaunchResult *)result {
+- (void)setResult:(QNLaunchResult *)result {
   _result = result;
 }
 
@@ -55,7 +55,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   
   if (object.error == NULL && [object.data isKindOfClass:NSDictionary.class]) {
     QONVERSION_LOG(@"Qonversion Launch Log Response:\n%@", object.data);
-    QonversionLaunchResult *resultObject = [[QNMapper new] fillLaunchResult:object.data];
+    QNLaunchResult *resultObject = [[QNMapper new] fillLaunchResult:object.data];
     [result setResult:resultObject];
     return result;
   } else {
@@ -64,8 +64,8 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   }
 }
 
-- (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
-  QonversionLaunchResult *result = [[QonversionLaunchResult alloc] init];
+- (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
+  QNLaunchResult *result = [[QNLaunchResult alloc] init];
   NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
   NSDictionary *productsDict = dict[@"products"] ?: @{};
   NSDictionary *userProductsDict = dict[@"user_products"] ?: @{};
@@ -78,11 +78,11 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   return result;
 }
 
-- (NSDictionary <NSString *, QonversionPermission *> *)fillPermissions:(NSDictionary *)dict {
-  NSMutableDictionary <NSString *, QonversionPermission *> *permissions = [NSMutableDictionary new];
+- (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSDictionary *)dict {
+  NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
   
   for (NSDictionary* itemDict in dict) {
-    QonversionPermission *item = [self fillPermission:itemDict];
+    QNPermission *item = [self fillPermission:itemDict];
     if (item && item.permissionID) {
       permissions[item.permissionID] = item;
     }
@@ -91,11 +91,11 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   return [[NSDictionary alloc] initWithDictionary:permissions];
 }
 
-- (NSDictionary <NSString *, QonversionProduct *> *)fillProducts:(NSDictionary *)dict {
-  NSMutableDictionary <NSString *, QonversionProduct *> *products = [NSMutableDictionary new];
+- (NSDictionary <NSString *, QNProduct *> *)fillProducts:(NSDictionary *)dict {
+  NSMutableDictionary <NSString *, QNProduct *> *products = [NSMutableDictionary new];
   
   for (NSDictionary* itemDict in dict) {
-    QonversionProduct *item = [self fillProduct:itemDict];
+    QNProduct *item = [self fillProduct:itemDict];
     if (item && item.qonversionID) {
       products[item.qonversionID] = item;
     }
@@ -104,8 +104,8 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   return [[NSDictionary alloc] initWithDictionary:products];
 }
 
-- (QonversionPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
-  QonversionPermission *result = [[QonversionPermission alloc] init];
+- (QNPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
+  QNPermission *result = [[QNPermission alloc] init];
   result.permissionID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
   result.renewState = ((NSNumber *)dict[@"renew_state"] ?: @0).intValue;
@@ -123,8 +123,8 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   return result;
 }
 
-- (QonversionProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
-  QonversionProduct *result = [[QonversionProduct alloc] init];
+- (QNProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
+  QNProduct *result = [[QNProduct alloc] init];
   
   result.duration = ((NSNumber *)dict[@"duration"] ?: @0).integerValue;
   result.type = ((NSNumber *)dict[@"type"] ?: @0).integerValue;

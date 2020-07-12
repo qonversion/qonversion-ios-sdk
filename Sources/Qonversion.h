@@ -1,14 +1,14 @@
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
-#import "QonversionProduct.h"
-#import "QonversionPermission.h"
+#import "QNProduct.h"
+#import "QNPermission.h"
 #import "QNProperties.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^QonversionPermissionCompletionHandler)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
+typedef void (^QNPermissionCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
 
-typedef void (^QonversionPurchaseCompletionHandler)(NSDictionary<NSString *, QonversionPermission*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
+typedef void (^QonversionPurchaseCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
 
 typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
   QonversionAttributionProviderAppsFlyer = 0,
@@ -64,7 +64,7 @@ typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
  @param result Complition block that include permissions dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)checkPermissions:(QonversionPermissionCompletionHandler)result;
++ (void)checkPermissions:(QNPermissionCompletionHandler)result;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -79,7 +79,7 @@ typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
   @param productID Product identifier create in Qonversion Dash
   @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (QonversionProduct *)productFor:(NSString *)productID;
++ (QNProduct *)productFor:(NSString *)productID;
 
 @end
 

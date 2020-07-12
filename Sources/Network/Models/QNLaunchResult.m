@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
-#import "QonversionLaunchResult+Protected.h"
+#import "QNLaunchResult+Protected.h"
 
-@implementation QonversionLaunchResult : NSObject
+@implementation QNLaunchResult : NSObject
 
 - (instancetype)initWithCoder:(NSCoder *)coder
 {
@@ -33,15 +33,15 @@
   _timestamp = timestamp;
 }
 
-- (void)setPermissions:(NSDictionary<NSString *, QonversionPermission *> *)permissions {
+- (void)setPermissions:(NSDictionary<NSString *, QNPermission *> *)permissions {
   _permissions = permissions;
 }
 
-- (void)setProducts:(NSDictionary<NSString *, QonversionProduct *> *)products {
+- (void)setProducts:(NSDictionary<NSString *, QNProduct *> *)products {
   _products = products;
 }
 
-- (void)setUserProducts:(NSDictionary<NSString *, QonversionProduct *> *)userPoducts {
+- (void)setUserProducts:(NSDictionary<NSString *, QNProduct *> *)userPoducts {
   _userPoducts = userPoducts;
 }
 

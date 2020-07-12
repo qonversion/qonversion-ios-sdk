@@ -1,8 +1,8 @@
-#import "QonversionProduct.h"
-#import "QonversionProduct+Protected.h"
+#import "QNProduct.h"
+#import "QNProduct+Protected.h"
 #import "QNStoreKitSugare.h"
 
-@implementation QonversionProduct : NSObject
+@implementation QNProduct : NSObject
 
 - (instancetype)initWithCoder:(NSCoder *)coder
 {

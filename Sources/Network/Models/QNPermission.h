@@ -1,15 +1,15 @@
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(int, QonversionPermissionRenewState){
-  QonversionPermissionRenewStateNonRenewable = -1,
-  QonversionPermissionRenewStateUnknown = 0,
-  QonversionPermissionRenewStateWillRenew = 1,
-  QonversionPermissionRenewStateCancelled = 2,
-  QonversionPermissionRenewStateBillingIssue = 3
+typedef NS_ENUM(int, QNPermissionRenewState){
+  QNPermissionRenewStateNonRenewable = -1,
+  QNPermissionRenewStateUnknown = 0,
+  QNPermissionRenewStateWillRenew = 1,
+  QNPermissionRenewStateCancelled = 2,
+  QNPermissionRenewStateBillingIssue = 3
 };
 
 NS_SWIFT_NAME(Qonversion.Permission)
-@interface QonversionPermission : NSObject <NSCoding>
+@interface QNPermission : NSObject <NSCoding>
 
 /**
  Qonversion Permission ID, like premium
@@ -33,7 +33,7 @@ NS_SWIFT_NAME(Qonversion.Permission)
 /**
  A renew state for an associate product that unlocked permission
  */
-@property (nonatomic) QonversionPermissionRenewState renewState;
+@property (nonatomic) QNPermissionRenewState renewState;
 
 /**
  Purchase date

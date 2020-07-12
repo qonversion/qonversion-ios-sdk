@@ -29,16 +29,16 @@ static NSString *initFailedJSON = @"init_failed_state.json";
 }
 
 - (void)testThatMapperParsePermissions {
-    QonversionLaunchResult *result = [[QNMapper new] fillLaunchResult:self.userInitSuccess];
+    QNLaunchResult *result = [[QNMapper new] fillLaunchResult:self.userInitSuccess];
     
     XCTAssertNotNil(result);
     XCTAssertTrue([result.uid isEqualToString:@"qonversion_user_id"]);
     XCTAssertTrue([result.permissions isKindOfClass:NSDictionary.class]);
     
-    QonversionPermission *premium = result.permissions[@"premium"];
+    QNPermission *premium = result.permissions[@"premium"];
     XCTAssertNotNil(premium);
     XCTAssertTrue(premium.isActive);
-    XCTAssertEqual(premium.renewState, QonversionPermissionRenewStateBillingIssue);
+    XCTAssertEqual(premium.renewState, QNPermissionRenewStateBillingIssue);
     
     XCTAssertNotNil(premium.startedDate);
     
@@ -50,12 +50,12 @@ static NSString *initFailedJSON = @"init_failed_state.json";
 }
 
 - (void)testThatMapperParseFewPermissionsCorrectly {
-    QonversionLaunchResult *result = [[QNMapper new] fillLaunchResult:self.userInitSuccess];
+    QNLaunchResult *result = [[QNMapper new] fillLaunchResult:self.userInitSuccess];
       
     XCTAssertNotNil(result);
     XCTAssertEqual(result.permissions.count, 2);
     
-    QonversionPermission *standart = result.permissions[@"standart"];
+    QNPermission *standart = result.permissions[@"standart"];
     XCTAssertNotNil(standart);
     XCTAssertTrue([standart.permissionID isEqualToString:@"standart"]);
     XCTAssertFalse(standart.isActive);

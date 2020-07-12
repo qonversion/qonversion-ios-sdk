@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
-#import "QonversionPermission.h"
+#import "QNPermission.h"
 
-@implementation QonversionPermission : NSObject
+@implementation QNPermission : NSObject
 
 - (instancetype)initWithCoder:(NSCoder *)coder
 {
