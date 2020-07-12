@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "QNRequestBuilder.h"
 #import "Keeper.h"
-#import "QUtils.h"
+#import "QNUtils.h"
 #import "QConstants.h"
 
 static NSString * const kAPIBase = @"https://api.qonversion.io/";

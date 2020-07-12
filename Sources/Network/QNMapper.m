@@ -1,9 +1,9 @@
 #import <Foundation/Foundation.h>
-#import "QUtils.h"
+#import "QNUtils.h"
 #import "QNMapper.h"
 #import "QonversionLaunchResult+Protected.h"
 
-NSString * const QonversionErrorDomain = @"com.qonversion.io";
+NSString * const QNErrorDomain = @"com.qonversion.io";
 
 static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 
@@ -136,7 +136,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 
 + (NSError *)error:(NSString *)message code:(QNErrorCode)errorCode  {
   NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil)};
-  return [[NSError alloc] initWithDomain:QonversionErrorDomain code:errorCode userInfo:info];
+  return [[NSError alloc] initWithDomain:QNErrorDomain code:errorCode userInfo:info];
 }
 
 - (QNMapperObject *)mapperObjectFrom:(NSData *)data {

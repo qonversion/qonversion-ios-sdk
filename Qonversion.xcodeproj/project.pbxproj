@@ -22,8 +22,8 @@
 		454BE22A247C3E72001FE771 /* QNProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE228247C3E72001FE771 /* QNProperties.h */; };
 		454BE22B247C3E72001FE771 /* QNProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE229247C3E72001FE771 /* QNProperties.m */; };
 		454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */; };
-		454BE230247C4AD8001FE771 /* QUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE22E247C4AD8001FE771 /* QUtils.h */; };
-		454BE231247C4AD8001FE771 /* QUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22F247C4AD8001FE771 /* QUtils.m */; };
+		454BE230247C4AD8001FE771 /* QNUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE22E247C4AD8001FE771 /* QNUtils.h */; };
+		454BE231247C4AD8001FE771 /* QNUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22F247C4AD8001FE771 /* QNUtils.m */; };
 		456ECD34249B901900D2BC40 /* QNRequestBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD33249B901900D2BC40 /* QNRequestBuilder.m */; };
 		456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD36249BB68B00D2BC40 /* QRequestBuilderTests.m */; };
 		456ECD39249BBF3E00D2BC40 /* QNRequestSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD38249BBF3E00D2BC40 /* QNRequestSerializer.m */; };
@@ -96,8 +96,8 @@
 		454BE228247C3E72001FE771 /* QNProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = QNProperties.h; path = Sources/QNProperties.h; sourceTree = SOURCE_ROOT; };
 		454BE229247C3E72001FE771 /* QNProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = QNProperties.m; path = Sources/QNProperties.m; sourceTree = SOURCE_ROOT; };
 		454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPropertiesTests.m; sourceTree = "<group>"; };
-		454BE22E247C4AD8001FE771 /* QUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QUtils.h; sourceTree = "<group>"; };
-		454BE22F247C4AD8001FE771 /* QUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QUtils.m; sourceTree = "<group>"; };
+		454BE22E247C4AD8001FE771 /* QNUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUtils.h; sourceTree = "<group>"; };
+		454BE22F247C4AD8001FE771 /* QNUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUtils.m; sourceTree = "<group>"; };
 		456ECD31249B825D00D2BC40 /* QonversionPermission.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionPermission.h; sourceTree = "<group>"; };
 		456ECD32249B8FE000D2BC40 /* QNRequestBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNRequestBuilder.h; sourceTree = "<group>"; };
 		456ECD33249B901900D2BC40 /* QNRequestBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNRequestBuilder.m; sourceTree = "<group>"; };
@@ -356,8 +356,8 @@
 				459DABE3243E35BC0011ECF3 /* UserInfo.m */,
 				459DABE4243E35BC0011ECF3 /* Keychain.h */,
 				459DABE6243E35BC0011ECF3 /* Keychain.m */,
-				454BE22E247C4AD8001FE771 /* QUtils.h */,
-				454BE22F247C4AD8001FE771 /* QUtils.m */,
+				454BE22E247C4AD8001FE771 /* QNUtils.h */,
+				454BE22F247C4AD8001FE771 /* QNUtils.m */,
 				458A8CB624B1EFE500637130 /* QErrors.h */,
 				458A8CBC24B4B88F00637130 /* StoreKitSugare.h */,
 				458A8CBD24B4B88F00637130 /* StoreKitSugare.m */,
@@ -466,7 +466,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				454BE230247C4AD8001FE771 /* QUtils.h in Headers */,
+				454BE230247C4AD8001FE771 /* QNUtils.h in Headers */,
 				4531CBC324577D770022C422 /* QConstants.h in Headers */,
 				459DABFA243E35BC0011ECF3 /* Keeper.h in Headers */,
 				459DAC03243E35BC0011ECF3 /* QNMapper.h in Headers */,
@@ -625,7 +625,7 @@
 			files = (
 				456ECD45249C8B2000D2BC40 /* QonversionProduct.m in Sources */,
 				456ECD39249BBF3E00D2BC40 /* QNRequestSerializer.m in Sources */,
-				454BE231247C4AD8001FE771 /* QUtils.m in Sources */,
+				454BE231247C4AD8001FE771 /* QNUtils.m in Sources */,
 				456ECD3F249C737500D2BC40 /* QonversionLaunchResult.m in Sources */,
 				454BE22B247C3E72001FE771 /* QNProperties.m in Sources */,
 				459DABF6243E35BC0011ECF3 /* UserInfo.m in Sources */,

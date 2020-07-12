@@ -1,5 +1,5 @@
 #import "StoreKitService.h"
-#import "QUtils.h"
+#import "QNUtils.h"
 #import "<AVFoundation/AVFoundation.h"
 
 @interface StoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
@@ -59,7 +59,7 @@
 //  // Initialize using purchase:
 //  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
 //    QonversionPurchaseCompletionHandler checkBlock = [self purchasingBlock];
-//    run_block_on_main(checkBlock, nil, [QUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
+//    run_block_on_main(checkBlock, nil, [QNUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
 //    return;
 //  }
 }

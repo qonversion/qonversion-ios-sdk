@@ -1,9 +1,9 @@
 #import <StoreKit/StoreKit.h>
 
-#import "QUtils.h"
-#import "QErrors.h"
+#import "QNUtils.h"
+#import "QNErrors.h"
 
-@implementation QUtils
+@implementation QNUtils
 
 + (BOOL)isEmptyString:(NSString *)string {
   return string == nil || [string isKindOfClass:[NSNull class]] || [string length] == 0;
@@ -47,7 +47,7 @@
 
 + (NSError *)errorWithQonverionErrorCode:(QonversionError)code
                                 userInfo:(nullable NSDictionary<NSErrorUserInfoKey, id> *)dict {
-  return [NSError errorWithDomain:QonversionErrorDomain code:code userInfo:dict];
+  return [NSError errorWithDomain:QNErrorDomain code:code userInfo:dict];
 }
 
 

@@ -1,11 +1,11 @@
 #import <Foundation/Foundation.h>
 
 NS_SWIFT_NAME(Qonversion.Errors)
-@interface QErrors
+@interface QNErrors
 
-extern NSErrorDomain const QonversionErrorDomain NS_SWIFT_NAME(Qonversion.ErrorDomain);
+extern NSErrorDomain const QNErrorDomain NS_SWIFT_NAME(Qonversion.ErrorDomain);
 
-typedef NS_ERROR_ENUM(QonversionErrorDomain, QonversionError) {
+typedef NS_ERROR_ENUM(QNErrorDomain, QonversionError) {
   QonversionErrorUnknown = 0,
   
   // user cancelled the request, etc.

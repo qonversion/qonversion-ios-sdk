@@ -8,7 +8,7 @@
 #import "QDevice.h"
 #import "QNRequestBuilder.h"
 #import "QNRequestSerializer.h"
-#import "QErrors.h"
+#import "QNErrors.h"
 #import "StoreKitSugare.h"
 #import "QonversionProduct+Protected.h"
 
@@ -211,7 +211,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     }
   }*/
   
-  result(nil, [QUtils errorWithQonverionErrorCode:QonversionErrorProductNotFound], NO);
+  result(nil, [QNUtils errorWithQonverionErrorCode:QonversionErrorProductNotFound], NO);
 }
 
 - (QonversionLaunchComposeModel *)launchModel {
@@ -339,17 +339,17 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 - (void)collectIntegrationsDataInBackground {
   NSString *adjustUserID = _device.adjustUserID;
-  if (![QUtils isEmptyString:adjustUserID]) {
+  if (![QNUtils isEmptyString:adjustUserID]) {
     [Qonversion setUserProperty:keyQPropertyAdjustADID value:adjustUserID];
   }
   
   NSString *fbAnonID = _device.fbAnonID;
-  if (![QUtils isEmptyString:fbAnonID]) {
+  if (![QNUtils isEmptyString:fbAnonID]) {
     [Qonversion setUserProperty:keyQPropertyFacebookAnonUserID value:fbAnonID];
   }
   
   NSString *afUserID = _device.afUserID;
-  if (![QUtils isEmptyString:afUserID]) {
+  if (![QNUtils isEmptyString:afUserID]) {
     [Qonversion setUserProperty:keyQPropertyAppsFlyerUserID value:afUserID];
   }
 }
@@ -376,7 +376,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 - (void)sendProperties {
-  if ([QUtils isEmptyString:_requestBuilder.apiKey]) {
+  if ([QNUtils isEmptyString:_requestBuilder.apiKey]) {
     QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
     return;
   }

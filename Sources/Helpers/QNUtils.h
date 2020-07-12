@@ -48,9 +48,9 @@ dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 #endif
 
 #import <Foundation/Foundation.h>
-#import "QErrors.h"
+#import "QNErrors.h"
 
-@interface QUtils : NSObject
+@interface QNUtils : NSObject
 
 + (BOOL)isEmptyString:(NSString *)string;
 + (NSError *)errorFromTransactionError:(NSError *)error;

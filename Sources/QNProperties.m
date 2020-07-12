@@ -1,6 +1,6 @@
 #import "QConstants.h"
 #import "QNProperties.h"
-#import "QUtils.h"
+#import "QNUtils.h"
 
 @implementation QNProperties
 
@@ -22,11 +22,11 @@
 }
 
 + (BOOL)checkValue:(NSString *)value {
-  return ![QUtils isEmptyString:value];
+  return ![QNUtils isEmptyString:value];
 }
 
 + (BOOL)checkProperty:(NSString *)property {
-  if ([QUtils isEmptyString:property]) {
+  if ([QNUtils isEmptyString:property]) {
     return NO;
   }
   
