@@ -1,10 +1,10 @@
 #import <XCTest/XCTest.h>
 
-@interface StoreKitServiceTests : XCTestCase
+@interface QNStoreKitServiceTests : XCTestCase
 
 @end
 
-@implementation StoreKitServiceTests
+@implementation QNStoreKitServiceTests
 
 - (void)testPerformanceExample {
     // This is an example of a performance test case.

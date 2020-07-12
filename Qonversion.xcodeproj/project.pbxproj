@@ -36,8 +36,8 @@
 		458A8CC124B5E50A00637130 /* QNProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD41249C76D400D2BC40 /* QNProduct.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		458A8CC224B5E50F00637130 /* QNPermission.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD31249B825D00D2BC40 /* QNPermission.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		458A8CC424B5E52D00637130 /* QNProduct+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CC324B5E52D00637130 /* QNProduct+Protected.h */; };
-		458A8CC824B8407C00637130 /* StoreKitService.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CC624B8407B00637130 /* StoreKitService.h */; };
-		458A8CC924B8407C00637130 /* StoreKitService.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CC724B8407B00637130 /* StoreKitService.m */; };
+		458A8CC824B8407C00637130 /* QNStoreKitService.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CC624B8407B00637130 /* QNStoreKitService.h */; };
+		458A8CC924B8407C00637130 /* QNStoreKitService.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CC724B8407B00637130 /* QNStoreKitService.m */; };
 		458A8CCB24B9A3DF00637130 /* StoreKitServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CCA24B9A3DF00637130 /* StoreKitServiceTests.m */; };
 		458A8CD124BAC5F500637130 /* QNUserDefaultsStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CCC24BAC5F500637130 /* QNUserDefaultsStorage.h */; };
 		458A8CD224BAC5F500637130 /* QNUserDefaultsStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CCD24BAC5F500637130 /* QNUserDefaultsStorage.m */; };
@@ -114,8 +114,8 @@
 		458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNStoreKitSugare.h; sourceTree = "<group>"; };
 		458A8CBD24B4B88F00637130 /* QNStoreKitSugare.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNStoreKitSugare.m; sourceTree = "<group>"; };
 		458A8CC324B5E52D00637130 /* QNProduct+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNProduct+Protected.h"; sourceTree = "<group>"; };
-		458A8CC624B8407B00637130 /* StoreKitService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StoreKitService.h; sourceTree = "<group>"; };
-		458A8CC724B8407B00637130 /* StoreKitService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StoreKitService.m; sourceTree = "<group>"; };
+		458A8CC624B8407B00637130 /* QNStoreKitService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNStoreKitService.h; sourceTree = "<group>"; };
+		458A8CC724B8407B00637130 /* QNStoreKitService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNStoreKitService.m; sourceTree = "<group>"; };
 		458A8CCA24B9A3DF00637130 /* StoreKitServiceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StoreKitServiceTests.m; sourceTree = "<group>"; };
 		458A8CCC24BAC5F500637130 /* QNUserDefaultsStorage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNUserDefaultsStorage.h; sourceTree = "<group>"; };
 		458A8CCD24BAC5F500637130 /* QNUserDefaultsStorage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNUserDefaultsStorage.m; sourceTree = "<group>"; };
@@ -343,8 +343,8 @@
 			children = (
 				459DABE8243E35BC0011ECF3 /* QNKeeper.h */,
 				459DABE9243E35BC0011ECF3 /* QNKeeper.m */,
-				458A8CC624B8407B00637130 /* StoreKitService.h */,
-				458A8CC724B8407B00637130 /* StoreKitService.m */,
+				458A8CC624B8407B00637130 /* QNStoreKitService.h */,
+				458A8CC724B8407B00637130 /* QNStoreKitService.m */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -454,7 +454,7 @@
 				458A8CD124BAC5F500637130 /* QNUserDefaultsStorage.h in Headers */,
 				458A8CC124B5E50A00637130 /* QNProduct.h in Headers */,
 				458A8CD824BAC61E00637130 /* QNRequestSerializer.h in Headers */,
-				458A8CC824B8407C00637130 /* StoreKitService.h in Headers */,
+				458A8CC824B8407C00637130 /* QNStoreKitService.h in Headers */,
 				458A8CBE24B4B88F00637130 /* QNStoreKitSugare.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -610,7 +610,7 @@
 				456ECD34249B901900D2BC40 /* QNRequestBuilder.m in Sources */,
 				458A8CBF24B4B88F00637130 /* QNStoreKitSugare.m in Sources */,
 				4531CBC424577D770022C422 /* QNConstants.m in Sources */,
-				458A8CC924B8407C00637130 /* StoreKitService.m in Sources */,
+				458A8CC924B8407C00637130 /* QNStoreKitService.m in Sources */,
 				459DABF9243E35BC0011ECF3 /* QNKeychain.m in Sources */,
 				458A8CD224BAC5F500637130 /* QNUserDefaultsStorage.m in Sources */,
 			);

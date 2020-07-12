@@ -1,9 +1,9 @@
-#import "StoreKitService.h"
+#import "QNStoreKitService.h"
 #import "QNUtils.h"
 #import "QNInMemoryStorage.h"
 #import "QNUserDefaultsStorage.h"
 
-@interface StoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
+@interface QNStoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
 // Storages
 @property (nonatomic) QNInMemoryStorage *inMemoryStorage;
@@ -16,7 +16,7 @@
 @property (nonatomic, strong) NSString *purchasingCurrently;
 @end
 
-@implementation StoreKitService
+@implementation QNStoreKitService
 
 - (instancetype)init {
   self = super.init;
