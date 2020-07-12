@@ -1,5 +1,5 @@
 #import "QConstants.h"
-#import "QDevice.h"
+#import "QNDevice.h"
 
 #import "UserInfo.h"
 #import "Keeper.h"
@@ -13,7 +13,7 @@
 @implementation UserInfo
 
 + (NSDictionary *)overallData {
-  QDevice *device = [[QDevice alloc] init];
+  QNDevice *device = [[QNDevice alloc] init];
   NSMutableDictionary *overallDict = [NSMutableDictionary new];
   
   [overallDict setObject:keyQVersion forKey:@"version"];

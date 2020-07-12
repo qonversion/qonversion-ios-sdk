@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@interface QDevice : NSObject
+@interface QNDevice : NSObject
 
 @property (readonly, strong, nonatomic) NSString *manufacturer;
 @property (readonly, strong, nonatomic) NSString *osName;

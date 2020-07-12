@@ -1,11 +1,11 @@
-#import "QDevice.h"
+#import "QNDevice.h"
 #import "QConstants.h"
 #import <UIKit/UIKit.h>
 
 #import <sys/sysctl.h>
 #import <sys/types.h>
 
-@implementation QDevice {
+@implementation QNDevice {
   NSObject* networkInfo;
 }
 
@@ -43,7 +43,7 @@
 
 - (NSString *)model {
   if (!_model) {
-    _model = [QDevice getDeviceModel];
+    _model = [QNDevice getDeviceModel];
   }
   return _model;
 }
@@ -110,7 +110,7 @@
 
 - (NSString *)advertiserID {
   if (!_advertiserID) {
-    NSString *advertiserId = [QDevice getAdvertiserID:5];
+    NSString *advertiserId = [QNDevice getAdvertiserID:5];
     if (advertiserId != nil &&
         ![advertiserId isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
       _advertiserID = advertiserId;
@@ -143,7 +143,7 @@
 }
 
 - (nullable NSString *)fbAnonID {
-  NSString *advertiserId = [QDevice getAdvertiserID:2];
+  NSString *advertiserId = [QNDevice getAdvertiserID:2];
   
   if (advertiserId && ![advertiserId isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
     return nil;
@@ -199,7 +199,7 @@
 
 - (NSString *)vendorID {
   if (!_vendorID) {
-    NSString *identifierForVendor = [QDevice getVendorID:5];
+    NSString *identifierForVendor = [QNDevice getVendorID:5];
     if (identifierForVendor != nil &&
         ![identifierForVendor isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
       _vendorID = identifierForVendor;
@@ -230,7 +230,7 @@
     if (identifier == nil && maxAttempts > 0) {
       // Try again every 5 seconds
       [NSThread sleepForTimeInterval:5.0];
-      return [QDevice getAdvertiserID:maxAttempts - 1];
+      return [QNDevice getAdvertiserID:maxAttempts - 1];
     } else {
       return identifier;
     }
@@ -244,7 +244,7 @@
   if (identifier == nil && maxAttempts > 0) {
     // Try again every 5 seconds
     [NSThread sleepForTimeInterval:5.0];
-    return [QDevice getVendorID:maxAttempts - 1];
+    return [QNDevice getVendorID:maxAttempts - 1];
   } else {
     return identifier;
   }

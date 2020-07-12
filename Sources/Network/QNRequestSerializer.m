@@ -1,12 +1,12 @@
 #import "QNRequestSerializer.h"
 #import "UserInfo.h"
-#import "QDevice.h"
+#import "QNDevice.h"
 #import "StoreKitSugare.h"
 
 @interface QNRequestSerializer ()
 
 @property (nonatomic, strong) NSString *userID;
-@property (nonatomic, strong) QDevice *device;
+@property (nonatomic, strong) QNDevice *device;
 
 @end
 
@@ -15,7 +15,7 @@
 - (instancetype)initWithUserID:(NSString *)uid {
   if (self = [super init]) {
     _userID = uid;
-    _device = [[QDevice alloc] init];
+    _device = [[QNDevice alloc] init];
   }
   return self;
 }

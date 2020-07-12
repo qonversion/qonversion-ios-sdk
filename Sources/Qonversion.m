@@ -5,7 +5,7 @@
 #import "QNMapper.h"
 #import "QInMemoryStorage.h"
 #import "QUserDefaultsStorage.h"
-#import "QDevice.h"
+#import "QNDevice.h"
 #import "QNRequestBuilder.h"
 #import "QNRequestSerializer.h"
 #import "QNErrors.h"
@@ -38,7 +38,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 
-@property (nonatomic, strong) QDevice *device;
+@property (nonatomic, strong) QNDevice *device;
 
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
@@ -139,7 +139,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     _updatingCurrently = NO;
     _launchingFinished = NO;
     _debugMode = NO;
-    _device = [[QDevice alloc] init];
+    _device = [[QNDevice alloc] init];
     
     _backgroundQueue = [[NSOperationQueue alloc] init];
     [_backgroundQueue setMaxConcurrentOperationCount:1];
