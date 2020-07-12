@@ -1,4 +1,6 @@
 #import "Qonversion.h"
+
+
 #import "QNKeeper.h"
 #import "QNConstants.h"
 #import "QNMapper.h"
@@ -10,14 +12,6 @@
 #import "QNErrors.h"
 #import "QNStoreKitSugare.h"
 #import "QNProduct+Protected.h"
-
-#import <net/if.h>
-#import <net/if_dl.h>
-#import <sys/socket.h>
-#import <sys/sysctl.h>
-#import <sys/types.h>
-
-#import <UIKit/UIKit.h>
 
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
 static NSString * const kPermissionsResult = @"qonversion.permissions.result";
