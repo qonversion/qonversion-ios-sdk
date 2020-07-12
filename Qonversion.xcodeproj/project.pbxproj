@@ -34,7 +34,7 @@
 		456ECD47249C8EEE00D2BC40 /* init.json in Resources */ = {isa = PBXBuildFile; fileRef = 456ECD46249C8EEE00D2BC40 /* init.json */; };
 		456ECD49249CA28300D2BC40 /* init_failed_state.json in Resources */ = {isa = PBXBuildFile; fileRef = 456ECD48249CA28300D2BC40 /* init_failed_state.json */; };
 		4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4587136B24AB963100F4B418 /* QRequestSerializerTests.m */; };
-		458A8CB724B1F5F600637130 /* QErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CB624B1EFE500637130 /* QErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		458A8CB724B1F5F600637130 /* QNErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CB624B1EFE500637130 /* QNErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		458A8CBE24B4B88F00637130 /* QNStoreKitSugare.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */; };
 		458A8CBF24B4B88F00637130 /* QNStoreKitSugare.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CBD24B4B88F00637130 /* QNStoreKitSugare.m */; };
 		458A8CC124B5E50A00637130 /* QNProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD41249C76D400D2BC40 /* QNProduct.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -113,7 +113,7 @@
 		456ECD46249C8EEE00D2BC40 /* init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init.json; sourceTree = "<group>"; };
 		456ECD48249CA28300D2BC40 /* init_failed_state.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init_failed_state.json; sourceTree = "<group>"; };
 		4587136B24AB963100F4B418 /* QRequestSerializerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestSerializerTests.m; sourceTree = "<group>"; };
-		458A8CB624B1EFE500637130 /* QErrors.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QErrors.h; sourceTree = "<group>"; };
+		458A8CB624B1EFE500637130 /* QNErrors.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNErrors.h; sourceTree = "<group>"; };
 		458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNStoreKitSugare.h; sourceTree = "<group>"; };
 		458A8CBD24B4B88F00637130 /* QNStoreKitSugare.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNStoreKitSugare.m; sourceTree = "<group>"; };
 		458A8CC324B5E52D00637130 /* QNProduct+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNProduct+Protected.h"; sourceTree = "<group>"; };
@@ -329,7 +329,7 @@
 				459DABE6243E35BC0011ECF3 /* QNKeychain.m */,
 				454BE22E247C4AD8001FE771 /* QNUtils.h */,
 				454BE22F247C4AD8001FE771 /* QNUtils.m */,
-				458A8CB624B1EFE500637130 /* QErrors.h */,
+				458A8CB624B1EFE500637130 /* QNErrors.h */,
 				458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */,
 				458A8CBD24B4B88F00637130 /* QNStoreKitSugare.m */,
 			);
@@ -447,7 +447,7 @@
 				4531CBBF245778110022C422 /* QNDevice.h in Headers */,
 				454BE22A247C3E72001FE771 /* QNProperties.h in Headers */,
 				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
-				458A8CB724B1F5F600637130 /* QErrors.h in Headers */,
+				458A8CB724B1F5F600637130 /* QNErrors.h in Headers */,
 				456ECD3B249BBF9A00D2BC40 /* QNRequestSerializer.h in Headers */,
 				458A8CC124B5E50A00637130 /* QNProduct.h in Headers */,
 				458A8CC824B8407C00637130 /* StoreKitService.h in Headers */,
