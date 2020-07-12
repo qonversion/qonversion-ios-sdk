@@ -5,8 +5,8 @@
 @interface StoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
 // Storages
-@property (nonatomic) QInMemoryStorage *inMemoryStorage;
-@property (nonatomic) QUserDefaultsStorage *persistentStorage;
+@property (nonatomic) QNInMemoryStorage *inMemoryStorage;
+@property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
 @property (nonatomic, readonly) NSMutableDictionary *transactions;
 @property (nonatomic, readonly) NSMutableDictionary *productRequests;

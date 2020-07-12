@@ -1,7 +1,7 @@
 #import "QNUtils.h"
 #import <Foundation/Foundation.h>
 
-@protocol QLocalStorage <NSObject>
+@protocol QNLocalStorage <NSObject>
 @required
 - (void)storeObject:(id)object;
 

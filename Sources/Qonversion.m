@@ -2,8 +2,8 @@
 #import "QNKeeper.h"
 #import "QNConstants.h"
 #import "QNMapper.h"
-#import "QInMemoryStorage.h"
-#import "QUserDefaultsStorage.h"
+#import "QNInMemoryStorage.h"
+#import "QNUserDefaultsStorage.h"
 #import "QNDevice.h"
 #import "QNRequestBuilder.h"
 #import "QNRequestSerializer.h"
@@ -31,8 +31,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
-@property (nonatomic) QInMemoryStorage *inMemoryStorage;
-@property (nonatomic) QUserDefaultsStorage *persistentStorage;
+@property (nonatomic) QNInMemoryStorage *inMemoryStorage;
+@property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 @property (nonatomic) QonversionPurchaseCompletionHandler purchasingBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
@@ -129,8 +129,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (instancetype)init {
   self = super.init;
   if (self) {
-    _inMemoryStorage = [[QInMemoryStorage alloc] init];
-    _persistentStorage = [[QUserDefaultsStorage alloc] init];
+    _inMemoryStorage = [[QNInMemoryStorage alloc] init];
+    _persistentStorage = [[QNUserDefaultsStorage alloc] init];
     
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     

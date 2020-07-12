@@ -1,11 +1,11 @@
-#import "QUserDefaultsStorage.h"
+#import "QNUserDefaultsStorage.h"
 
-static NSString *QUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefaultsDefaultKey";
+static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefaultsDefaultKey";
 
-@implementation QUserDefaultsStorage
+@implementation QNUserDefaultsStorage
 
 - (void)storeObject:(id)object {
-  [self storeObject:object forKey:QUserDefaultsStorageDefaultKey];
+  [self storeObject:object forKey:QNUserDefaultsStorageDefaultKey];
 }
 
 - (void)storeObject:(id)object forKey:(NSString *)key {
@@ -14,11 +14,11 @@ static NSString *QUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefaul
 }
 
 - (id)loadObject {
-  return [self loadObjectForKey:QUserDefaultsStorageDefaultKey];
+  return [self loadObjectForKey:QNUserDefaultsStorageDefaultKey];
 }
 
 - (void)loadObjectWithCompletion:(void (^)(id))completion {
-  [self loadObjectForKey:QUserDefaultsStorageDefaultKey withCompletion:completion];
+  [self loadObjectForKey:QNUserDefaultsStorageDefaultKey withCompletion:completion];
 }
 
 - (id)loadObjectForKey:(NSString *)key {
@@ -35,7 +35,7 @@ static NSString *QUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefaul
 }
 
 - (void)removeObject {
-  [self removeObjectForKey:QUserDefaultsStorageDefaultKey];
+  [self removeObjectForKey:QNUserDefaultsStorageDefaultKey];
 }
 
 - (void)removeObjectForKey:(NSString *)key {

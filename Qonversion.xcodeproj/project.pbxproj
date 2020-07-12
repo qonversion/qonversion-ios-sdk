@@ -16,8 +16,8 @@
 		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
 		4531CBC824578D300022C422 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 4531CBC724578D300022C422 /* Podfile */; };
 		4531CBCB24581BD80022C422 /* QUserInfoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC92457F6E00022C422 /* QUserInfoTests.m */; };
-		454BE211247C2BB4001FE771 /* QInMemoryStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE20F247C2BB4001FE771 /* QInMemoryStorage.h */; };
-		454BE212247C2BB4001FE771 /* QInMemoryStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE210247C2BB4001FE771 /* QInMemoryStorage.m */; };
+		454BE211247C2BB4001FE771 /* QNInMemoryStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE20F247C2BB4001FE771 /* QNInMemoryStorage.h */; };
+		454BE212247C2BB4001FE771 /* QNInMemoryStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE210247C2BB4001FE771 /* QNInMemoryStorage.m */; };
 		454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */; };
 		454BE22A247C3E72001FE771 /* QNProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE228247C3E72001FE771 /* QNProperties.h */; };
 		454BE22B247C3E72001FE771 /* QNProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE229247C3E72001FE771 /* QNProperties.m */; };
@@ -66,7 +66,7 @@
 		459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABF4243E35BC0011ECF3 /* Qonversion.m */; };
 		459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */; };
 		459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */; };
-		45B19FF12497D5FE00AEF08E /* QUserDefaultsStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 45B19FF02497D5FE00AEF08E /* QUserDefaultsStorage.m */; };
+		45B19FF12497D5FE00AEF08E /* QNUserDefaultsStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 45B19FF02497D5FE00AEF08E /* QNUserDefaultsStorage.m */; };
 		45CC2EF024407737005CD107 /* check_failed_state.json in Resources */ = {isa = PBXBuildFile; fileRef = 45CC2EEF24407737005CD107 /* check_failed_state.json */; };
 /* End PBXBuildFile section */
 
@@ -89,9 +89,9 @@
 		4531CBC5245789D40022C422 /* QDeviceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QDeviceTests.m; sourceTree = "<group>"; };
 		4531CBC724578D300022C422 /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		4531CBC92457F6E00022C422 /* QUserInfoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QUserInfoTests.m; sourceTree = "<group>"; };
-		454BE20F247C2BB4001FE771 /* QInMemoryStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QInMemoryStorage.h; sourceTree = "<group>"; };
-		454BE210247C2BB4001FE771 /* QInMemoryStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QInMemoryStorage.m; sourceTree = "<group>"; };
-		454BE213247C2BCE001FE771 /* QLocalStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QLocalStorage.h; sourceTree = "<group>"; };
+		454BE20F247C2BB4001FE771 /* QNInMemoryStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNInMemoryStorage.h; sourceTree = "<group>"; };
+		454BE210247C2BB4001FE771 /* QNInMemoryStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNInMemoryStorage.m; sourceTree = "<group>"; };
+		454BE213247C2BCE001FE771 /* QNLocalStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNLocalStorage.h; sourceTree = "<group>"; };
 		454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QInMemoryStorageTests.m; sourceTree = "<group>"; };
 		454BE228247C3E72001FE771 /* QNProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = QNProperties.h; path = Sources/QNProperties.h; sourceTree = SOURCE_ROOT; };
 		454BE229247C3E72001FE771 /* QNProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = QNProperties.m; path = Sources/QNProperties.m; sourceTree = SOURCE_ROOT; };
@@ -148,8 +148,8 @@
 		459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionMapperTests.m; sourceTree = "<group>"; };
 		459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+TestJSON.h"; sourceTree = "<group>"; };
 		459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+TestJSON.m"; sourceTree = "<group>"; };
-		45B19FF02497D5FE00AEF08E /* QUserDefaultsStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QUserDefaultsStorage.m; sourceTree = "<group>"; };
-		45B19FF22497D64500AEF08E /* QUserDefaultsStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QUserDefaultsStorage.h; sourceTree = "<group>"; };
+		45B19FF02497D5FE00AEF08E /* QNUserDefaultsStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserDefaultsStorage.m; sourceTree = "<group>"; };
+		45B19FF22497D64500AEF08E /* QNUserDefaultsStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUserDefaultsStorage.h; sourceTree = "<group>"; };
 		45CC2EEF24407737005CD107 /* check_failed_state.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_failed_state.json; sourceTree = "<group>"; };
 		45CC2EF4244085E4005CD107 /* tests.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = tests.yml; sourceTree = "<group>"; };
 		6D20F2CD8AEC1ED86B5F788D /* libPods-QonversionTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-QonversionTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -189,20 +189,13 @@
 		454BE20D247C2B78001FE771 /* Storage */ = {
 			isa = PBXGroup;
 			children = (
-				45B19FEF2497D5E700AEF08E /* QUserDefaultsStorage */,
-				454BE20E247C2B81001FE771 /* QInMemoryStorage */,
-				454BE213247C2BCE001FE771 /* QLocalStorage.h */,
+				454BE213247C2BCE001FE771 /* QNLocalStorage.h */,
+				45B19FF02497D5FE00AEF08E /* QNUserDefaultsStorage.m */,
+				45B19FF22497D64500AEF08E /* QNUserDefaultsStorage.h */,
+				454BE20F247C2BB4001FE771 /* QNInMemoryStorage.h */,
+				454BE210247C2BB4001FE771 /* QNInMemoryStorage.m */,
 			);
 			path = Storage;
-			sourceTree = "<group>";
-		};
-		454BE20E247C2B81001FE771 /* QInMemoryStorage */ = {
-			isa = PBXGroup;
-			children = (
-				454BE20F247C2BB4001FE771 /* QInMemoryStorage.h */,
-				454BE210247C2BB4001FE771 /* QInMemoryStorage.m */,
-			);
-			path = QInMemoryStorage;
 			sourceTree = "<group>";
 		};
 		454BE219247C2EF7001FE771 /* Storage */ = {
@@ -410,15 +403,6 @@
 			path = Stubs;
 			sourceTree = "<group>";
 		};
-		45B19FEF2497D5E700AEF08E /* QUserDefaultsStorage */ = {
-			isa = PBXGroup;
-			children = (
-				45B19FF02497D5FE00AEF08E /* QUserDefaultsStorage.m */,
-				45B19FF22497D64500AEF08E /* QUserDefaultsStorage.h */,
-			);
-			path = QUserDefaultsStorage;
-			sourceTree = "<group>";
-		};
 		45CC2EF1244085E4005CD107 /* .github */ = {
 			isa = PBXGroup;
 			children = (
@@ -455,7 +439,7 @@
 				459DABFA243E35BC0011ECF3 /* QNKeeper.h in Headers */,
 				459DAC03243E35BC0011ECF3 /* QNMapper.h in Headers */,
 				459DABF7243E35BC0011ECF3 /* QNKeychain.h in Headers */,
-				454BE211247C2BB4001FE771 /* QInMemoryStorage.h in Headers */,
+				454BE211247C2BB4001FE771 /* QNInMemoryStorage.h in Headers */,
 				459DABF5243E35BC0011ECF3 /* Qonversion.h in Headers */,
 				458A8CC424B5E52D00637130 /* QNProduct+Protected.h in Headers */,
 				459DABF8243E35BC0011ECF3 /* QNUserInfo.h in Headers */,
@@ -616,8 +600,8 @@
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
 				459DABFB243E35BC0011ECF3 /* QNKeeper.m in Sources */,
 				456ECD43249C8B0100D2BC40 /* QNPermission.m in Sources */,
-				45B19FF12497D5FE00AEF08E /* QUserDefaultsStorage.m in Sources */,
-				454BE212247C2BB4001FE771 /* QInMemoryStorage.m in Sources */,
+				45B19FF12497D5FE00AEF08E /* QNUserDefaultsStorage.m in Sources */,
+				454BE212247C2BB4001FE771 /* QNInMemoryStorage.m in Sources */,
 				4531CBC0245778110022C422 /* QNDevice.m in Sources */,
 				459DABFC243E35BC0011ECF3 /* QNMapper.m in Sources */,
 				456ECD34249B901900D2BC40 /* QNRequestBuilder.m in Sources */,

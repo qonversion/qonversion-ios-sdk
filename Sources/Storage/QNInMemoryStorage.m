@@ -1,20 +1,20 @@
-#import "QInMemoryStorage.h"
+#import "QNInMemoryStorage.h"
 
-static NSString *QInMemoryStorageDefaultKey = @"inMemoryStorageDefaultKey";
+static NSString *QNInMemoryStorageDefaultKey = @"inMemoryStorageDefaultKey";
 
-@interface QInMemoryStorage ()
+@interface QNInMemoryStorage ()
 
 @property (nonatomic, copy) NSString *version;
 
 @end
 
-@implementation QInMemoryStorage
+@implementation QNInMemoryStorage
 
 + (instancetype)sharedInstance {
-  static QInMemoryStorage *sharedInstance = nil;
+  static QNInMemoryStorage *sharedInstance = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    sharedInstance = [QInMemoryStorage new];
+    sharedInstance = [QNInMemoryStorage new];
   });
   return sharedInstance;
 }
@@ -27,7 +27,7 @@ static NSString *QInMemoryStorageDefaultKey = @"inMemoryStorageDefaultKey";
 }
 
 - (void)storeObject:(id)object {
-  [self storeObject:object forKey:QInMemoryStorageDefaultKey];
+  [self storeObject:object forKey:QNInMemoryStorageDefaultKey];
 }
 
 - (void)storeObject:(id)object forKey:(NSString *)key {
@@ -37,7 +37,7 @@ static NSString *QInMemoryStorageDefaultKey = @"inMemoryStorageDefaultKey";
 }
 
 - (id)loadObject {
-  return [self loadObjectForKey:QInMemoryStorageDefaultKey];
+  return [self loadObjectForKey:QNInMemoryStorageDefaultKey];
 }
 
 - (id)loadObjectForKey:(NSString *)key {
@@ -45,7 +45,7 @@ static NSString *QInMemoryStorageDefaultKey = @"inMemoryStorageDefaultKey";
 }
 
 - (void)loadObjectWithCompletion:(void (^)(id))completion {
-  [self loadObjectForKey:QInMemoryStorageDefaultKey
+  [self loadObjectForKey:QNInMemoryStorageDefaultKey
           withCompletion:completion];
 }
 
@@ -55,7 +55,7 @@ static NSString *QInMemoryStorageDefaultKey = @"inMemoryStorageDefaultKey";
 }
 
 - (void)removeObject {
-  [self removeObjectForKey:QInMemoryStorageDefaultKey];
+  [self removeObjectForKey:QNInMemoryStorageDefaultKey];
 }
 
 - (void)clear {

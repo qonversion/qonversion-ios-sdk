@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
-#import "QLocalStorage.h"
+#import "QNLocalStorage.h"
 
-@interface QUserDefaultsStorage : NSObject <QLocalStorage>
+@interface QNUserDefaultsStorage : NSObject <QNLocalStorage>
 
 @property (nonatomic, strong) NSUserDefaults *userDefaults;
 
