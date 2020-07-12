@@ -2,7 +2,7 @@
 #import "QNRequestBuilder.h"
 #import "Keeper.h"
 #import "QNUtils.h"
-#import "QConstants.h"
+#import "QNConstants.h"
 
 static NSString * const kAPIBase = @"https://api.qonversion.io/";
 static NSString * const kInitEndpoint = @"v1/user/init";

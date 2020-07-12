@@ -6,19 +6,19 @@ extern NSString *const keyQUnknownLibrary;
 extern NSString *const keyQUnknownVersion;
 extern NSString *const keyQPlatform;
 extern NSString *const keyQOSName;
-extern NSString *const keyQPropertyReg;
+extern NSString *const keyQNPropertyReg;
 extern int const kQPropertiesSendingPeriodInSeconds;
 
-typedef NS_ENUM(NSInteger, QProperty) {
-  QPropertyEmail = 0,
-  QPropertyName,
-  QPropertyPremium
+typedef NS_ENUM(NSInteger, QNProperty) {
+  QNPropertyEmail = 0,
+  QNPropertyName,
+  QNPropertyPremium
 };
 NS_SWIFT_NAME(Qonversion.Property);
 
 // MARK: - Qonversion Underhood User Properties
 
-extern NSString *const keyQPropertyFacebookAnonUserID;
-extern NSString *const keyQPropertyAppsFlyerUserID;
-extern NSString *const keyQPropertyAdjustADID;
+extern NSString *const keyQNPropertyFacebookAnonUserID;
+extern NSString *const keyQNPropertyAppsFlyerUserID;
+extern NSString *const keyQNPropertyAdjustADID;
 

@@ -1,19 +1,19 @@
-#import "QConstants.h"
+#import "QNConstants.h"
 #import "QNProperties.h"
 #import "QNUtils.h"
 
 @implementation QNProperties
 
-+ (nullable NSString *)keyForProperty:(QProperty) property {
++ (nullable NSString *)keyForProperty:(QNProperty) property {
   NSString *key = NULL;
   switch (property) {
-    case QPropertyEmail:
+    case QNPropertyEmail:
       key = @"_q_email";
       break;
-    case QPropertyName:
+    case QNPropertyName:
       key = @"_q_name";
       break;
-    case QPropertyPremium:
+    case QNPropertyPremium:
       key = @"_q_premium";
       break;
   }
@@ -30,7 +30,7 @@
     return NO;
   }
   
-  NSRange range = [property rangeOfString:keyQPropertyReg options:NSRegularExpressionSearch];
+  NSRange range = [property rangeOfString:keyQNPropertyReg options:NSRegularExpressionSearch];
   return range.location != NSNotFound;
 }
 

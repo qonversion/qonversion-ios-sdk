@@ -2,7 +2,7 @@
 #import <OCMock/OCMock.h>
 
 #import "QNDevice.h"
-#import "QConstants.h"
+#import "QNConstants.h"
 
 // expose private methods for unit testing
 @interface QNDevice (Tests)

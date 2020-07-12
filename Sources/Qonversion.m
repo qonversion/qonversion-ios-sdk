@@ -1,7 +1,7 @@
 #import "Qonversion.h"
 #import "Keeper.h"
 #import "UserInfo.h"
-#import "QConstants.h"
+#import "QNConstants.h"
 #import "QNMapper.h"
 #import "QInMemoryStorage.h"
 #import "QUserDefaultsStorage.h"
@@ -71,7 +71,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [[Qonversion sharedInstance] addAttributionData:data fromProvider:provider];
 }
 
-+ (void)setProperty:(QProperty)property value:(NSString *)value {
++ (void)setProperty:(QNProperty)property value:(NSString *)value {
   NSString *key = [QNProperties keyForProperty:property];
   
   if (key) {
@@ -340,17 +340,17 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (void)collectIntegrationsDataInBackground {
   NSString *adjustUserID = _device.adjustUserID;
   if (![QNUtils isEmptyString:adjustUserID]) {
-    [Qonversion setUserProperty:keyQPropertyAdjustADID value:adjustUserID];
+    [Qonversion setUserProperty:keyQNPropertyAdjustADID value:adjustUserID];
   }
   
   NSString *fbAnonID = _device.fbAnonID;
   if (![QNUtils isEmptyString:fbAnonID]) {
-    [Qonversion setUserProperty:keyQPropertyFacebookAnonUserID value:fbAnonID];
+    [Qonversion setUserProperty:keyQNPropertyFacebookAnonUserID value:fbAnonID];
   }
   
   NSString *afUserID = _device.afUserID;
   if (![QNUtils isEmptyString:afUserID]) {
-    [Qonversion setUserProperty:keyQPropertyAppsFlyerUserID value:afUserID];
+    [Qonversion setUserProperty:keyQNPropertyAppsFlyerUserID value:afUserID];
   }
 }
 

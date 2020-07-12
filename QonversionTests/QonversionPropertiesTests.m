@@ -8,7 +8,7 @@
 @implementation QNPropertiesTests
 
 - (void)testExample {
-    XCTAssertEqualObjects([QNProperties keyForProperty:QPropertyEmail], @"_q_email");
+    XCTAssertEqualObjects([QNProperties keyForProperty:QNPropertyEmail], @"_q_email");
 }
 
 - (void)testCorrectionForPropertyKey {

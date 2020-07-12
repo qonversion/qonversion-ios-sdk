@@ -43,7 +43,7 @@ typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
  @param property        Defined enum key that will be transformed to string
  @param value               Property value
  */
-+ (void)setProperty:(QProperty)property value:(NSString *)value;
++ (void)setProperty:(QNProperty)property value:(NSString *)value;
 
 /**
  Sets custom user properties

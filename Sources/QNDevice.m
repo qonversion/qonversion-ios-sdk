@@ -1,5 +1,5 @@
 #import "QNDevice.h"
-#import "QConstants.h"
+#import "QNConstants.h"
 #import <UIKit/UIKit.h>
 
 #import <sys/sysctl.h>

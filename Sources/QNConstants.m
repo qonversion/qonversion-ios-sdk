@@ -1,4 +1,4 @@
-#import "QConstants.h"
+#import "QNConstants.h"
 
 NSString *const keyQPlatform = @"iOS";
 NSString *const keyQOSName = @"ios";
@@ -7,11 +7,11 @@ NSString *const keyQVersion = @"2.0.0";
 NSString *const keyQUnknownLibrary = @"unknown";
 NSString *const keyQUnknownVersion = @"unknown";
 NSString *const keyQInternalUserID = @"keyQInternalUserID";
-NSString *const keyQPropertyReg = @"^(?=.*[a-z])^[-a-z0-9_.:]+$";
+NSString *const keyQNPropertyReg = @"^(?=.*[a-z])^[-a-z0-9_.:]+$";
 
 int const kQPropertiesSendingPeriodInSeconds = 15; // 15 seconds
 
-NSString *const keyQPropertyFacebookAnonUserID = @"_q_fb_anon_id";
-NSString *const keyQPropertyAppsFlyerUserID = @"_q_appsflyer_user_id";
-NSString *const keyQPropertyAdjustADID = @"_q_adjust_adid";
+NSString *const keyQNPropertyFacebookAnonUserID = @"_q_fb_anon_id";
+NSString *const keyQNPropertyAppsFlyerUserID = @"_q_appsflyer_user_id";
+NSString *const keyQNPropertyAdjustADID = @"_q_adjust_adid";
 
