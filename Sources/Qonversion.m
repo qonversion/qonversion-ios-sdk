@@ -1,5 +1,5 @@
 #import "Qonversion.h"
-#import "Keeper.h"
+#import "QNKeeper.h"
 #import "QNConstants.h"
 #import "QNMapper.h"
 #import "QInMemoryStorage.h"
@@ -265,7 +265,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       [self loadProducts:model];
       
       if (model.result.uid) {
-        Keeper.userID = model.result.uid;
+        QNKeeper.userID = model.result.uid;
         [self->_requestBuilder setUserID:model.result.uid];
       }
       

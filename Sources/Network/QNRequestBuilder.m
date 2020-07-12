@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "QNRequestBuilder.h"
-#import "Keeper.h"
+#import "QNKeeper.h"
 #import "QNUtils.h"
 #import "QNConstants.h"
 
@@ -26,7 +26,7 @@ static NSString * const kAttributionEndpoint = @"attribution";
 - (instancetype)initWithKey:(NSString *)key {
   if (self = [super init]) {
     _apiKey = key;
-    _userID = Keeper.userID ?: @"";
+    _userID = QNKeeper.userID ?: @"";
   }
   return self;
 }

@@ -2,7 +2,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface Keeper : NSObject
+@interface QNKeeper : NSObject
 
 + (nullable NSString *)userID;
 + (void)setUserID:(NSString *)userID;

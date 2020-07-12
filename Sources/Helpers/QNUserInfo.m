@@ -2,7 +2,7 @@
 #import "QNDevice.h"
 
 #import "QNUserInfo.h"
-#import "Keeper.h"
+#import "QNKeeper.h"
 
 @interface QNUserInfo (InternalUserID)
 
