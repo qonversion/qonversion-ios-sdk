@@ -1,8 +1,8 @@
 #import "QConstants.h"
-#import "QonversionProperties.h"
+#import "QNProperties.h"
 #import "QUtils.h"
 
-@implementation QonversionProperties
+@implementation QNProperties
 
 + (nullable NSString *)keyForProperty:(QProperty) property {
   NSString *key = NULL;

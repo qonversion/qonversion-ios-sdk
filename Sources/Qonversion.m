@@ -72,7 +72,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (void)setProperty:(QProperty)property value:(NSString *)value {
-  NSString *key = [QonversionProperties keyForProperty:property];
+  NSString *key = [QNProperties keyForProperty:property];
   
   if (key) {
     [self setUserProperty:key value:value];
@@ -80,7 +80,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (void)setUserProperty:(NSString *)property value:(NSString *)value {
-  if ([QonversionProperties checkProperty:property] && [QonversionProperties checkValue:value]) {
+  if ([QNProperties checkProperty:property] && [QNProperties checkValue:value]) {
     [[Qonversion sharedInstance] setUserProperty:property value:value];
   }
 }

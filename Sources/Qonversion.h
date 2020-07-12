@@ -2,7 +2,7 @@
 #import <StoreKit/StoreKit.h>
 #import "QonversionProduct.h"
 #import "QonversionPermission.h"
-#import "QonversionProperties.h"
+#import "QNProperties.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

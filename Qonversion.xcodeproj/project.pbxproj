@@ -19,8 +19,8 @@
 		454BE211247C2BB4001FE771 /* QInMemoryStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE20F247C2BB4001FE771 /* QInMemoryStorage.h */; };
 		454BE212247C2BB4001FE771 /* QInMemoryStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE210247C2BB4001FE771 /* QInMemoryStorage.m */; };
 		454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */; };
-		454BE22A247C3E72001FE771 /* QonversionProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE228247C3E72001FE771 /* QonversionProperties.h */; };
-		454BE22B247C3E72001FE771 /* QonversionProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE229247C3E72001FE771 /* QonversionProperties.m */; };
+		454BE22A247C3E72001FE771 /* QNProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE228247C3E72001FE771 /* QNProperties.h */; };
+		454BE22B247C3E72001FE771 /* QNProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE229247C3E72001FE771 /* QNProperties.m */; };
 		454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */; };
 		454BE230247C4AD8001FE771 /* QUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE22E247C4AD8001FE771 /* QUtils.h */; };
 		454BE231247C4AD8001FE771 /* QUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22F247C4AD8001FE771 /* QUtils.m */; };
@@ -93,8 +93,8 @@
 		454BE210247C2BB4001FE771 /* QInMemoryStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QInMemoryStorage.m; sourceTree = "<group>"; };
 		454BE213247C2BCE001FE771 /* QLocalStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QLocalStorage.h; sourceTree = "<group>"; };
 		454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QInMemoryStorageTests.m; sourceTree = "<group>"; };
-		454BE228247C3E72001FE771 /* QonversionProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = QonversionProperties.h; path = Sources/QonversionProperties.h; sourceTree = SOURCE_ROOT; };
-		454BE229247C3E72001FE771 /* QonversionProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = QonversionProperties.m; path = Sources/QonversionProperties.m; sourceTree = SOURCE_ROOT; };
+		454BE228247C3E72001FE771 /* QNProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = QNProperties.h; path = Sources/QNProperties.h; sourceTree = SOURCE_ROOT; };
+		454BE229247C3E72001FE771 /* QNProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = QNProperties.m; path = Sources/QNProperties.m; sourceTree = SOURCE_ROOT; };
 		454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPropertiesTests.m; sourceTree = "<group>"; };
 		454BE22E247C4AD8001FE771 /* QUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QUtils.h; sourceTree = "<group>"; };
 		454BE22F247C4AD8001FE771 /* QUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QUtils.m; sourceTree = "<group>"; };
@@ -350,8 +350,8 @@
 		459DABE2243E35BC0011ECF3 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
-				454BE228247C3E72001FE771 /* QonversionProperties.h */,
-				454BE229247C3E72001FE771 /* QonversionProperties.m */,
+				454BE228247C3E72001FE771 /* QNProperties.h */,
+				454BE229247C3E72001FE771 /* QNProperties.m */,
 				459DABE5243E35BC0011ECF3 /* UserInfo.h */,
 				459DABE3243E35BC0011ECF3 /* UserInfo.m */,
 				459DABE4243E35BC0011ECF3 /* Keychain.h */,
@@ -477,7 +477,7 @@
 				459DABF8243E35BC0011ECF3 /* UserInfo.h in Headers */,
 				458A8CC224B5E50F00637130 /* QonversionPermission.h in Headers */,
 				4531CBBF245778110022C422 /* QDevice.h in Headers */,
-				454BE22A247C3E72001FE771 /* QonversionProperties.h in Headers */,
+				454BE22A247C3E72001FE771 /* QNProperties.h in Headers */,
 				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
 				458A8CB724B1F5F600637130 /* QErrors.h in Headers */,
 				456ECD3B249BBF9A00D2BC40 /* QNRequestSerializer.h in Headers */,
@@ -627,7 +627,7 @@
 				456ECD39249BBF3E00D2BC40 /* QNRequestSerializer.m in Sources */,
 				454BE231247C4AD8001FE771 /* QUtils.m in Sources */,
 				456ECD3F249C737500D2BC40 /* QonversionLaunchResult.m in Sources */,
-				454BE22B247C3E72001FE771 /* QonversionProperties.m in Sources */,
+				454BE22B247C3E72001FE771 /* QNProperties.m in Sources */,
 				459DABF6243E35BC0011ECF3 /* UserInfo.m in Sources */,
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
 				459DABFB243E35BC0011ECF3 /* Keeper.m in Sources */,
