@@ -2,7 +2,7 @@
 #import "Keeper.h"
 #import "UserInfo.h"
 #import "QConstants.h"
-#import "QonversionMapper.h"
+#import "QNMapper.h"
 #import "QInMemoryStorage.h"
 #import "QUserDefaultsStorage.h"
 #import "QDevice.h"
@@ -254,7 +254,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       }
     }
     
-    QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
+    QonversionLaunchComposeModel *model = [[QNMapper new] composeLaunchModelFrom:data];
     
     @synchronized (self) {
       [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
@@ -465,7 +465,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       return;
     }
     
-    QonversionLaunchComposeModel *model = [[QonversionMapper new] composeLaunchModelFrom:data];
+    QonversionLaunchComposeModel *model = [[QNMapper new] composeLaunchModelFrom:data];
     
     @synchronized (self) {
       [self->_persistentStorage storeObject:model forKey:kPermissionsResult];

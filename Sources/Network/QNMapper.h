@@ -1,10 +1,10 @@
 #import <Foundation/Foundation.h>
 #import "QonversionLaunchResult.h"
 
-typedef NS_ENUM(NSInteger, QErrorCode) {
-  QErrorCodeFailedReceiveData = 0,
-  QErrorCodeFailedParseResponse,
-  QErrorCodeIncorrectRequest
+typedef NS_ENUM(NSInteger, QNErrorCode) {
+  QNErrorCodeFailedReceiveData = 0,
+  QNErrorCodeFailedParseResponse,
+  QNErrorCodeIncorrectRequest
 };
 
 @interface QonversionComposeModel : NSObject <NSCoding>
@@ -20,13 +20,13 @@ typedef NS_ENUM(NSInteger, QErrorCode) {
 
 @end
 
-@interface QonversionMapper : NSObject
+@interface QNMapper : NSObject
 
 - (QonversionLaunchComposeModel * _Nonnull)composeLaunchModelFrom:(NSData * _Nullable)data;
 
 - (QonversionLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary * _Nullable)dict;
 - (NSDictionary <NSString *, QonversionPermission *> * _Nonnull)fillPermissions:(NSDictionary * _Nullable)dict;
 
-+ (NSError * _Nonnull)error:(NSString * _Nullable)message code:(QErrorCode)errorCode;
++ (NSError * _Nonnull)error:(NSString * _Nullable)message code:(QNErrorCode)errorCode;
 
 @end

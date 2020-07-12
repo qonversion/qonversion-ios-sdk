@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "QUtils.h"
-#import "QonversionMapper.h"
+#import "QNMapper.h"
 #import "QonversionLaunchResult+Protected.h"
 
 NSString * const QonversionErrorDomain = @"com.qonversion.io";
@@ -8,14 +8,14 @@ NSString * const QonversionErrorDomain = @"com.qonversion.io";
 static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 
 
-@interface QonversionMapperObject : NSObject
+@interface QNMapperObject : NSObject
 
 @property (nonatomic, nullable) NSDictionary *data;
 @property (nonatomic, copy, nullable) NSError *error;
 
 @end
 
-@implementation QonversionMapperObject : NSObject
+@implementation QNMapperObject : NSObject
 
 @end
 
@@ -47,15 +47,15 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 
 @end
 
-@implementation QonversionMapper
+@implementation QNMapper
 
 - (QonversionLaunchComposeModel * _Nonnull)composeLaunchModelFrom:(NSData * _Nullable)data {
-  QonversionMapperObject *object = [self mapperObjectFrom:data];
+  QNMapperObject *object = [self mapperObjectFrom:data];
   QonversionLaunchComposeModel *result = [QonversionLaunchComposeModel new];
   
   if (object.error == NULL && [object.data isKindOfClass:NSDictionary.class]) {
     QONVERSION_LOG(@"Qonversion Launch Log Response:\n%@", object.data);
-    QonversionLaunchResult *resultObject = [[QonversionMapper new] fillLaunchResult:object.data];
+    QonversionLaunchResult *resultObject = [[QNMapper new] fillLaunchResult:object.data];
     [result setResult:resultObject];
     return result;
   } else {
@@ -134,16 +134,16 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   return result;
 }
 
-+ (NSError *)error:(NSString *)message code:(QErrorCode)errorCode  {
++ (NSError *)error:(NSString *)message code:(QNErrorCode)errorCode  {
   NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil)};
   return [[NSError alloc] initWithDomain:QonversionErrorDomain code:errorCode userInfo:info];
 }
 
-- (QonversionMapperObject *)mapperObjectFrom:(NSData *)data {
-  QonversionMapperObject *object = [QonversionMapperObject new];
+- (QNMapperObject *)mapperObjectFrom:(NSData *)data {
+  QNMapperObject *object = [QNMapperObject new];
   
   if (!data || ![data isKindOfClass:NSData.class]) {
-    [object setError:[QonversionMapper error:@"Could not receive data" code:QErrorCodeFailedReceiveData]];
+    [object setError:[QNMapper error:@"Could not receive data" code:QNErrorCodeFailedReceiveData]];
     return object;
   }
   
@@ -151,13 +151,13 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
   
   if (jsonError.domain) {
-    [object setError:[QonversionMapper error:@"Could not parse response" code:QErrorCodeFailedParseResponse]];
+    [object setError:[QNMapper error:@"Could not parse response" code:QNErrorCodeFailedParseResponse]];
     return object;
   }
   
   QONVERSION_LOG(@"QONVERSION RESPONSE DATA %@", dict);
   if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
-    [object setError:[QonversionMapper error:@"Could not parse response" code:QErrorCodeFailedParseResponse]];
+    [object setError:[QNMapper error:@"Could not parse response" code:QNErrorCodeFailedParseResponse]];
     return object;
   }
   
@@ -169,7 +169,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
     return object;
   } else {
     NSString *message = dict[@"data"][@"message"] ?: @"";
-    [object setError:[QonversionMapper error:message code:QErrorCodeIncorrectRequest]];
+    [object setError:[QNMapper error:message code:QNErrorCodeIncorrectRequest]];
     return object;
   }
 }

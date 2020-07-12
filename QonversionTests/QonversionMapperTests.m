@@ -1,18 +1,18 @@
 #import <XCTest/XCTest.h>
 
-#import "QonversionMapper.h"
+#import "QNMapper.h"
 #import "Helpers/XCTestCase+TestJSON.h"
 
 static NSString *checkFailedState = @"check_failed_state.json";
 static NSString *initSuccessJSON = @"init.json";
 static NSString *initFailedJSON = @"init_failed_state.json";
 
-@interface QonversionMapperTests : XCTestCase
+@interface QNMapperTests : XCTestCase
 @property (nonatomic, strong) NSDictionary *userInitSuccess;
 @property (nonatomic, strong) NSDictionary *userInitFailed;
 @end
 
-@implementation QonversionMapperTests
+@implementation QNMapperTests
 
 - (void)setUp {
     [super setUp];
@@ -29,7 +29,7 @@ static NSString *initFailedJSON = @"init_failed_state.json";
 }
 
 - (void)testThatMapperParsePermissions {
-    QonversionLaunchResult *result = [[QonversionMapper new] fillLaunchResult:self.userInitSuccess];
+    QonversionLaunchResult *result = [[QNMapper new] fillLaunchResult:self.userInitSuccess];
     
     XCTAssertNotNil(result);
     XCTAssertTrue([result.uid isEqualToString:@"qonversion_user_id"]);
@@ -50,7 +50,7 @@ static NSString *initFailedJSON = @"init_failed_state.json";
 }
 
 - (void)testThatMapperParseFewPermissionsCorrectly {
-    QonversionLaunchResult *result = [[QonversionMapper new] fillLaunchResult:self.userInitSuccess];
+    QonversionLaunchResult *result = [[QNMapper new] fillLaunchResult:self.userInitSuccess];
       
     XCTAssertNotNil(result);
     XCTAssertEqual(result.permissions.count, 2);
@@ -62,14 +62,14 @@ static NSString *initFailedJSON = @"init_failed_state.json";
 }
 
 - (void)testThatMapparParsePermissionWithBrokenJson {
-    QonversionLaunchComposeModel *result = [[QonversionMapper new] composeLaunchModelFrom:[self fileDataFromContentsOfFile:initFailedJSON]];
+    QonversionLaunchComposeModel *result = [[QNMapper new] composeLaunchModelFrom:[self fileDataFromContentsOfFile:initFailedJSON]];
     
     XCTAssertNotNil(result);
     XCTAssertNotNil(result.error);
     XCTAssertNil(result.result);
     XCTAssertEqual(result.result.permissions.count, 0);
     
-    QonversionLaunchComposeModel *brokenResult = [[QonversionMapper new] composeLaunchModelFrom:NULL];
+    QonversionLaunchComposeModel *brokenResult = [[QNMapper new] composeLaunchModelFrom:NULL];
     XCTAssertNotNil(brokenResult);
     XCTAssertNil(brokenResult.result);
     XCTAssertNotNil(brokenResult.error);
