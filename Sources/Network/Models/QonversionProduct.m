@@ -1,6 +1,6 @@
 #import "QonversionProduct.h"
 #import "QonversionProduct+Protected.h"
-#import "StoreKitSugare.h"
+#import "QNStoreKitSugare.h"
 
 @implementation QonversionProduct : NSObject
 

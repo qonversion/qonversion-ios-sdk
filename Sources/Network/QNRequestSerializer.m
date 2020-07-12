@@ -1,7 +1,7 @@
 #import "QNRequestSerializer.h"
 #import "QNUserInfo.h"
 #import "QNDevice.h"
-#import "StoreKitSugare.h"
+#import "QNStoreKitSugare.h"
 
 @interface QNRequestSerializer ()
 

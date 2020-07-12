@@ -8,7 +8,7 @@
 #import "QNRequestBuilder.h"
 #import "QNRequestSerializer.h"
 #import "QNErrors.h"
-#import "StoreKitSugare.h"
+#import "QNStoreKitSugare.h"
 #import "QonversionProduct+Protected.h"
 
 #import <net/if.h>
