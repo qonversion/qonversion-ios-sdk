@@ -68,28 +68,28 @@
   return result;
 }
 
-- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider {
+- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
   NSMutableDictionary *body = @{@"d": self.mainData}.mutableCopy;
   NSMutableDictionary *providerData = [NSMutableDictionary new];
   
   switch (provider) {
-    case QonversionAttributionProviderAppsFlyer:
+    case QNAttributionProviderAppsFlyer:
       [providerData setValue:@"appsflyer" forKey:@"provider"];
       break;
-    case QonversionAttributionProviderAdjust:
+    case QNAttributionProviderAdjust:
       [providerData setValue:@"adjust" forKey:@"provider"];
       break;
-    case QonversionAttributionProviderBranch:
+    case QNAttributionProviderBranch:
       [providerData setValue:@"branch" forKey:@"provider"];
       break;
-    case QonversionAttributionProviderApple:
+    case QNAttributionProviderApple:
       [providerData setValue:@"apple" forKey:@"provider"];
       break;
   }
   
   NSString *_uid = nil;
   NSString *af_uid = _device.afUserID;
-  if (af_uid && provider == QonversionAttributionProviderAppsFlyer) {
+  if (af_uid && provider == QNAttributionProviderAppsFlyer) {
     _uid = af_uid;
   }
   

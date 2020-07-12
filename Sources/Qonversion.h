@@ -8,13 +8,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef void (^QNPermissionCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
 
-typedef void (^QonversionPurchaseCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
+typedef void (^QNPurchaseCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
 
-typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
-  QonversionAttributionProviderAppsFlyer = 0,
-  QonversionAttributionProviderBranch,
-  QonversionAttributionProviderAdjust,
-  QonversionAttributionProviderApple
+typedef NS_ENUM(NSInteger, QNAttributionProvider) {
+  QNAttributionProviderAppsFlyer = 0,
+  QNAttributionProviderBranch,
+  QNAttributionProviderAdjust,
+  QNAttributionProviderApple
 } NS_SWIFT_NAME(Qonversion.AttributionProvider);
 
 @interface Qonversion : NSObject
@@ -29,7 +29,7 @@ typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
  @param key - project key to setup the SDK.
  @param completion - will return `uid` for Ads integrations.
  */
-+ (void)launchWithKey:(nonnull NSString *)key completion:(QonversionPurchaseCompletionHandler)completion;
++ (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion;
 
 /**
  Sets the environment for receipt.
@@ -57,7 +57,7 @@ typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
  @param data Dictionary received by the provider
  @param provider Attribution provider
  */
-+ (void)addAttributionData:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider;
++ (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;
 
 /**
  Check user permissions based on product center details
@@ -72,7 +72,7 @@ typedef NS_ENUM(NSInteger, QonversionAttributionProvider) {
  @param productID Product identifier create in Qonversion Dash, pay attention that you should use qonversion id instead Apple Product ID
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)purchase:(NSString *)productID result:(QonversionPurchaseCompletionHandler)result;
++ (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result;
 
 /**
   Return Qonverion Product Assotiated with Store Kit Product

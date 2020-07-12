@@ -33,7 +33,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic) QNInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
-@property (nonatomic) QonversionPurchaseCompletionHandler purchasingBlock;
+@property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 
@@ -66,7 +66,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [Qonversion sharedInstance]->_debugMode = debugMode;
 }
 
-+ (void)addAttributionData:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider {
++ (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
   [[Qonversion sharedInstance] addAttributionData:data fromProvider:provider];
 }
 
@@ -153,7 +153,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   return self;
 }
 
-- (void)addAttributionData:(NSDictionary *)data fromProvider:(QonversionAttributionProvider)provider {
+- (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
   double delayInSeconds = 5.0;
   dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
   

@@ -58,7 +58,7 @@
 //
 //  // Initialize using purchase:
 //  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
-//    QonversionPurchaseCompletionHandler checkBlock = [self purchasingBlock];
+//    QNPurchaseCompletionHandler checkBlock = [self purchasingBlock];
 //    run_block_on_main(checkBlock, nil, [QNUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
 //    return;
 //  }
