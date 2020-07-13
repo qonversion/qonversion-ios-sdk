@@ -120,15 +120,13 @@
 // MARK: - Private
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
-  // TODO
-//  SKProduct *skProduct = [self productAt:transaction];
-//
-//  // Initialize using purchase:
-//  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
-//    QNPurchaseCompletionHandler checkBlock = [self purchasingBlock];
-//    run_block_on_main(checkBlock, nil, [QNUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
-//    return;
-//  }
+  NSString *productIdentifier = transaction.payment.productIdentifier;
+  SKProduct *skProduct = _products[productIdentifier];
+  if (skProduct) {
+    [self.delegate handleFailedTransaction:transaction forProduct:skProduct];
+    [self finishTransaction:transaction];
+    return;
+  }
 }
 
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
