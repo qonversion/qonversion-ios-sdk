@@ -21,6 +21,14 @@
 
 @implementation QNStoreKitService
 
+- (instancetype)initWithDelegate:(id <QNStoreKitServiceDelegate>)delegate {
+    self = [self init];
+    if (self) {
+        _delegate = delegate;
+    }
+    return self;
+}
+
 - (instancetype)init {
   self = super.init;
   if (self) {
