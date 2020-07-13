@@ -1,16 +1,33 @@
 #import "QNProductCenterManager.h"
 #import "QNInMemoryStorage.h"
 #import "QNUserDefaultsStorage.h"
+#import "QNStoreKitService.h"
 
 @interface QNProductCenterManager()
 
-// Storages
+@property (nonatomic) QNStoreKitService *storeKitService;
 @property (nonatomic) QNInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
+
+@property (nonatomic, strong) NSString *purchasingCurrently;
 
 @end
 
 @implementation QNProductCenterManager
+
+- (instancetype)init {
+  self = super.init;
+  if (self) {
+    _storeKitService = [[QNStoreKitService alloc] initWithDelegate:self];
+    
+    _inMemoryStorage = [[QNInMemoryStorage alloc] init];
+    _persistentStorage = [[QNUserDefaultsStorage alloc] init];
+    
+    _purchasingCurrently = NULL;
+  }
+  
+  return self;
+}
 
 - (void)logPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
   /*

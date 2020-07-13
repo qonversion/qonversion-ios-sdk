@@ -3,13 +3,10 @@
 
 @interface QNStoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
-// Through whole service we use product id as
-// hash for fast access to entities
+// Use SKProduct.productIdentifier as hash for fast access to entities
 @property (nonatomic, readonly) NSMutableDictionary<NSString *, SKPaymentTransaction *> *processingTransactions;
 @property (nonatomic, readonly) NSMutableDictionary<NSString *, SKProductsRequest *> *productRequests;
 @property (nonatomic, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
-
-@property (nonatomic, strong) NSString *purchasingCurrently;
 
 @end
 
@@ -29,8 +26,6 @@
     _processingTransactions = [[NSMutableDictionary alloc] init];
     _productRequests = [[NSMutableDictionary alloc] init];
     _products = [[NSMutableDictionary alloc] init];
-    
-    _purchasingCurrently = NULL;
   }
 
   [SKPaymentQueue.defaultQueue addTransactionObserver:self];
