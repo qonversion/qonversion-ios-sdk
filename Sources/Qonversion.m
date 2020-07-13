@@ -149,7 +149,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   
   dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
     NSDictionary *body = [_requestSerializer attributionDataWithDict:data fromProvider:provider];
-    NSURLRequest *request = [_requestBuilder makeAttributionRequestWith:body];
+    NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:body];
     
     [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
       if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
@@ -228,7 +228,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
   
   NSDictionary *launchData = [self->_requestSerializer launchData];
-  NSURLRequest *request = [self->_requestBuilder makeInitRequestWith:launchData];
+  NSURLRequest *request = [[self requestBuilder] makeInitRequestWith:launchData];
   NSURLSession *session = [[self session] copy];
   
   [[session dataTaskWithRequest:request
@@ -260,7 +260,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       
       if (model.result.uid) {
         QNKeeper.userID = model.result.uid;
-        [self->_requestBuilder setUserID:model.result.uid];
+        [[self requestBuilder] setUserID:model.result.uid];
       }
       
       if (completion) {
@@ -370,7 +370,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 - (void)sendProperties {
-  if ([QNUtils isEmptyString:_requestBuilder.apiKey]) {
+  if ([QNUtils isEmptyString:[self requestBuilder].apiKey]) {
     QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
     return;
   }
@@ -395,7 +395,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
       return;
     }
     
-    NSURLRequest *request = [_requestBuilder makePropertiesRequestWith:@{@"properties": properties}];
+    NSURLRequest *request = [[self requestBuilder] makePropertiesRequestWith:@{@"properties": properties}];
     
     __block __weak Qonversion *weakSelf = self;
     [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
@@ -446,7 +446,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (void)purchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
   // Legacy request for storing purchase
   NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
-  NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
+  NSURLRequest *request = [[self requestBuilder] makePurchaseRequestWith:body];
   
   NSURLSession *session = [[self session] copy];
   
