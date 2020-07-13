@@ -31,6 +31,8 @@
 		456ECD49249CA28300D2BC40 /* init_failed_state.json in Resources */ = {isa = PBXBuildFile; fileRef = 456ECD48249CA28300D2BC40 /* init_failed_state.json */; };
 		4572FE1C24BC40F900A17AC4 /* QNProductCenterManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */; };
 		4572FE1D24BC40F900A17AC4 /* QNProductCenterManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */; };
+		4572FE2024BC4B5B00A17AC4 /* QNUserPropertiesManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */; };
+		4572FE2124BC4B5B00A17AC4 /* QNUserPropertiesManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */; };
 		4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4587136B24AB963100F4B418 /* QRequestSerializerTests.m */; };
 		458A8CB724B1F5F600637130 /* QNErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CB624B1EFE500637130 /* QNErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		458A8CBE24B4B88F00637130 /* QNStoreKitSugare.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */; };
@@ -113,6 +115,8 @@
 		456ECD48249CA28300D2BC40 /* init_failed_state.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init_failed_state.json; sourceTree = "<group>"; };
 		4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNProductCenterManager.h; sourceTree = "<group>"; };
 		4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNProductCenterManager.m; sourceTree = "<group>"; };
+		4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUserPropertiesManager.h; sourceTree = "<group>"; };
+		4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserPropertiesManager.m; sourceTree = "<group>"; };
 		4587136B24AB963100F4B418 /* QRequestSerializerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestSerializerTests.m; sourceTree = "<group>"; };
 		458A8CB624B1EFE500637130 /* QNErrors.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNErrors.h; sourceTree = "<group>"; };
 		458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNStoreKitSugare.h; sourceTree = "<group>"; };
@@ -256,6 +260,8 @@
 				459DABF4243E35BC0011ECF3 /* Qonversion.m */,
 				4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */,
 				4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */,
+				4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */,
+				4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */,
 				4531CBBD245778110022C422 /* QNDevice.h */,
 				4531CBBE245778110022C422 /* QNDevice.m */,
 				4531CBC124577D770022C422 /* QNConstants.h */,
@@ -445,6 +451,7 @@
 				454BE230247C4AD8001FE771 /* QNUtils.h in Headers */,
 				4531CBC324577D770022C422 /* QNConstants.h in Headers */,
 				459DABFA243E35BC0011ECF3 /* QNKeeper.h in Headers */,
+				4572FE2024BC4B5B00A17AC4 /* QNUserPropertiesManager.h in Headers */,
 				459DAC03243E35BC0011ECF3 /* QNMapper.h in Headers */,
 				459DABF7243E35BC0011ECF3 /* QNKeychain.h in Headers */,
 				458A8CD524BAC5F500637130 /* QNLocalStorage.h in Headers */,
@@ -616,6 +623,7 @@
 				458A8CD924BAC61E00637130 /* QNRequestSerializer.m in Sources */,
 				459DABFC243E35BC0011ECF3 /* QNMapper.m in Sources */,
 				456ECD34249B901900D2BC40 /* QNRequestBuilder.m in Sources */,
+				4572FE2124BC4B5B00A17AC4 /* QNUserPropertiesManager.m in Sources */,
 				458A8CBF24B4B88F00637130 /* QNStoreKitSugare.m in Sources */,
 				4531CBC424577D770022C422 /* QNConstants.m in Sources */,
 				458A8CC924B8407C00637130 /* QNStoreKitService.m in Sources */,
