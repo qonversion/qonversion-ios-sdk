@@ -16,6 +16,7 @@
 @property (nonatomic, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
 
 @property (nonatomic, strong) NSString *purchasingCurrently;
+
 @end
 
 @implementation QNStoreKitService
@@ -54,49 +55,6 @@
   }] resume];
    */
 }
-
-// MARK: - Private
-
-- (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
-  // TODO
-//  SKProduct *skProduct = [self productAt:transaction];
-//
-//  // Initialize using purchase:
-//  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
-//    QNPurchaseCompletionHandler checkBlock = [self purchasingBlock];
-//    run_block_on_main(checkBlock, nil, [QNUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
-//    return;
-//  }
-}
-
-- (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
-  [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-  // TODO
-  SKProduct *skProduct = nil;
-  //SKProduct *skProduct = [self productAt:transaction];
-  //NSString *productIdentifier = transaction.payment.productIdentifier;
-  
-  // Initialize using purchase:
-  //if (skProduct && _purchasingCurrently && [_purchasingCurrently isEqualToString:productIdentifier]) {
-    // TODO
-    //[self purchase:skProduct transaction:transaction];
-    return;
-  //}
-  
-  if (skProduct) {
-    // [self serviceLogPurchase:skProduct transaction:transaction];
-  } else {
-    // Auto-handling for analytics and integrations
-    //[self.transactions setObject:transaction forKey:productIdentifier];
-//    SKProductsRequest *request = [SKProductsRequest.alloc
-//                                  initWithProductIdentifiers:[NSSet setWithObject:productIdentifier]];
-//    
-//    [self.productRequests setObject:request forKey:productIdentifier];
-//    request.delegate = self;
-//    [request start];
-  }
-}
-
 
 // MARK: - SKPaymentTransactionObserver
 
@@ -157,6 +115,48 @@
   [self logPurchase:product transaction:transaction];
   [self.transactions removeObjectForKey:product.productIdentifier];
   [self.productRequests removeObjectForKey:product.productIdentifier];
+}
+
+// MARK: - Private
+
+- (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
+  // TODO
+//  SKProduct *skProduct = [self productAt:transaction];
+//
+//  // Initialize using purchase:
+//  if (skProduct && [skProduct.productIdentifier isEqualToString:transaction.payment.productIdentifier]) {
+//    QNPurchaseCompletionHandler checkBlock = [self purchasingBlock];
+//    run_block_on_main(checkBlock, nil, [QNUtils errorFromTransactionError:transaction.error], transaction.isCancelled);
+//    return;
+//  }
+}
+
+- (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
+  [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+  // TODO
+  SKProduct *skProduct = nil;
+  //SKProduct *skProduct = [self productAt:transaction];
+  //NSString *productIdentifier = transaction.payment.productIdentifier;
+  
+  // Initialize using purchase:
+  //if (skProduct && _purchasingCurrently && [_purchasingCurrently isEqualToString:productIdentifier]) {
+    // TODO
+    //[self purchase:skProduct transaction:transaction];
+    return;
+  //}
+  
+  if (skProduct) {
+    // [self serviceLogPurchase:skProduct transaction:transaction];
+  } else {
+    // Auto-handling for analytics and integrations
+    //[self.transactions setObject:transaction forKey:productIdentifier];
+//    SKProductsRequest *request = [SKProductsRequest.alloc
+//                                  initWithProductIdentifiers:[NSSet setWithObject:productIdentifier]];
+//
+//    [self.productRequests setObject:request forKey:productIdentifier];
+//    request.delegate = self;
+//    [request start];
+  }
 }
 
 @end
