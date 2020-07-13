@@ -17,7 +17,7 @@ static NSString * const kPermissionsResult = @"qonversion.permissions.result";
 static NSString * const kProductsResult = @"qonversion.products.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
-@interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
+@interface Qonversion()
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
 
@@ -52,7 +52,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 //+ (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
   [Qonversion sharedInstance]->_requestBuilder = [[QNRequestBuilder alloc] initWithKey:key];
   
-  [SKPaymentQueue.defaultQueue addTransactionObserver:Qonversion.sharedInstance];
   [[Qonversion sharedInstance] launchWithKey:key completion:completion];
 }
 

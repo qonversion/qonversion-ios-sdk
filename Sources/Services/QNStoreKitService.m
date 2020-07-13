@@ -29,6 +29,8 @@
     
     _purchasingCurrently = NULL;
   }
+
+  [SKPaymentQueue.defaultQueue addTransactionObserver:self];
   return self;
 }
 
