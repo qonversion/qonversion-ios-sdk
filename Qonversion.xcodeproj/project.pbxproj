@@ -29,6 +29,8 @@
 		456ECD45249C8B2000D2BC40 /* QNProduct.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD44249C8B2000D2BC40 /* QNProduct.m */; };
 		456ECD47249C8EEE00D2BC40 /* init.json in Resources */ = {isa = PBXBuildFile; fileRef = 456ECD46249C8EEE00D2BC40 /* init.json */; };
 		456ECD49249CA28300D2BC40 /* init_failed_state.json in Resources */ = {isa = PBXBuildFile; fileRef = 456ECD48249CA28300D2BC40 /* init_failed_state.json */; };
+		4572FE1C24BC40F900A17AC4 /* QNProductCenterManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */; };
+		4572FE1D24BC40F900A17AC4 /* QNProductCenterManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */; };
 		4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4587136B24AB963100F4B418 /* QRequestSerializerTests.m */; };
 		458A8CB724B1F5F600637130 /* QNErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CB624B1EFE500637130 /* QNErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		458A8CBE24B4B88F00637130 /* QNStoreKitSugare.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */; };
@@ -109,6 +111,8 @@
 		456ECD44249C8B2000D2BC40 /* QNProduct.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNProduct.m; sourceTree = "<group>"; };
 		456ECD46249C8EEE00D2BC40 /* init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init.json; sourceTree = "<group>"; };
 		456ECD48249CA28300D2BC40 /* init_failed_state.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init_failed_state.json; sourceTree = "<group>"; };
+		4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNProductCenterManager.h; sourceTree = "<group>"; };
+		4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNProductCenterManager.m; sourceTree = "<group>"; };
 		4587136B24AB963100F4B418 /* QRequestSerializerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestSerializerTests.m; sourceTree = "<group>"; };
 		458A8CB624B1EFE500637130 /* QNErrors.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNErrors.h; sourceTree = "<group>"; };
 		458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNStoreKitSugare.h; sourceTree = "<group>"; };
@@ -250,6 +254,8 @@
 				459DABE7243E35BC0011ECF3 /* Services */,
 				459DABE1243E35BC0011ECF3 /* Qonversion.h */,
 				459DABF4243E35BC0011ECF3 /* Qonversion.m */,
+				4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */,
+				4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */,
 				4531CBBD245778110022C422 /* QNDevice.h */,
 				4531CBBE245778110022C422 /* QNDevice.m */,
 				4531CBC124577D770022C422 /* QNConstants.h */,
@@ -452,6 +458,7 @@
 				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
 				458A8CB724B1F5F600637130 /* QNErrors.h in Headers */,
 				458A8CD124BAC5F500637130 /* QNUserDefaultsStorage.h in Headers */,
+				4572FE1C24BC40F900A17AC4 /* QNProductCenterManager.h in Headers */,
 				458A8CC124B5E50A00637130 /* QNProduct.h in Headers */,
 				458A8CD824BAC61E00637130 /* QNRequestSerializer.h in Headers */,
 				458A8CC824B8407C00637130 /* QNStoreKitService.h in Headers */,
@@ -599,6 +606,7 @@
 				454BE231247C4AD8001FE771 /* QNUtils.m in Sources */,
 				456ECD3F249C737500D2BC40 /* QNLaunchResult.m in Sources */,
 				458A8CD324BAC5F500637130 /* QNInMemoryStorage.m in Sources */,
+				4572FE1D24BC40F900A17AC4 /* QNProductCenterManager.m in Sources */,
 				454BE22B247C3E72001FE771 /* QNProperties.m in Sources */,
 				459DABF6243E35BC0011ECF3 /* QNUserInfo.m in Sources */,
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
