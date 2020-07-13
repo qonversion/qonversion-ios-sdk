@@ -6,8 +6,7 @@
 @property (nonatomic, strong) QNRequestSerializer *serializer;
 
 @end
-
-
+  
 @implementation QNRequestSerializerTests
 
 - (void)setUp {

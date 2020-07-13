@@ -9,9 +9,11 @@
 @property (nonatomic) QNInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
-@property (nonatomic, readonly) NSMutableDictionary *transactions;
-@property (nonatomic, readonly) NSMutableDictionary *productRequests;
-@property (nonatomic, readonly) NSMutableDictionary *products;
+// Through whole service we use product id as
+// hash for fast access to entities
+@property (nonatomic, readonly) NSMutableDictionary<NSString *, SKPaymentTransaction *> *transactions;
+@property (nonatomic, readonly) NSMutableDictionary<NSString *, SKProductsRequest *> *productRequests;
+@property (nonatomic, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
 
 @property (nonatomic, strong) NSString *purchasingCurrently;
 @end
@@ -21,8 +23,8 @@
 - (instancetype)init {
   self = super.init;
   if (self) {
-    _transactions = [NSMutableDictionary dictionaryWithCapacity:1];
-    _productRequests = [NSMutableDictionary dictionaryWithCapacity:1];
+    _transactions = [[NSMutableDictionary alloc] init];
+    _productRequests = [[NSMutableDictionary alloc] init];
     _products = [[NSMutableDictionary alloc] init];
     
     _purchasingCurrently = NULL;
