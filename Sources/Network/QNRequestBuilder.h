@@ -2,10 +2,10 @@
 
 @interface QNRequestBuilder : NSObject
 
-- (instancetype)initWithKey:(NSString *)key;
++ (instancetype)shared;
 
 @property (nonatomic, strong) NSString *userID;
-@property (nonatomic, copy, readonly) NSString *apiKey;
+@property (nonatomic, strong) NSString *apiKey;
 
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;

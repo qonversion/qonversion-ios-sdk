@@ -1,4 +1,3 @@
-#import <Foundation/Foundation.h>
 #import "QNRequestBuilder.h"
 #import "QNKeeper.h"
 #import "QNUtils.h"
@@ -15,20 +14,16 @@ static NSString * const kPropertiesEndpoint = @"v1/properties";
 static NSString * const kCheckEndpoint = @"check";
 static NSString * const kAttributionEndpoint = @"attribution";
 
-@interface QNRequestBuilder ()
-
-@property (nonatomic, strong) NSString *apiKey;
-
-@end
-
 @implementation QNRequestBuilder
 
-- (instancetype)initWithKey:(NSString *)key {
-  if (self = [super init]) {
-    _apiKey = key;
-    _userID = QNKeeper.userID ?: @"";
-  }
-  return self;
++ (instancetype)shared {
+  static id shared = nil;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    shared = self.new;
+  });
+  
+  return shared;
 }
 
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters {

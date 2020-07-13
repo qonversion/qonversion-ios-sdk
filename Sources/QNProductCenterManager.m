@@ -3,10 +3,11 @@
 #import "QNUserDefaultsStorage.h"
 #import "QNStoreKitService.h"
 
+static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
+
 @interface QNProductCenterManager()
 
 @property (nonatomic) QNStoreKitService *storeKitService;
-@property (nonatomic) QNInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
 @property (nonatomic, strong) NSString *purchasingCurrently;
@@ -20,8 +21,8 @@
   if (self) {
     _storeKitService = [[QNStoreKitService alloc] initWithDelegate:self];
     
-    _inMemoryStorage = [[QNInMemoryStorage alloc] init];
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
+    [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
     _purchasingCurrently = NULL;
   }

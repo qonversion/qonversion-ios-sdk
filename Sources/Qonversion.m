@@ -21,8 +21,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
 
-
-@property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic) QNInMemoryStorage *inMemoryStorage;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
@@ -50,8 +48,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
 //+ (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-  [Qonversion sharedInstance]->_requestBuilder = [[QNRequestBuilder alloc] initWithKey:key];
-  
+  [[QNRequestBuilder shared] setApiKey:key];
   [[Qonversion sharedInstance] launchWithKey:key completion:completion];
 }
 
@@ -208,6 +205,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 - (QonversionLaunchComposeModel *)launchModel {
   return [self.persistentStorage loadObjectForKey:kPermissionsResult];
+}
+
+- (QNRequestBuilder *)requestBuilder {
+  return [QNRequestBuilder shared];
 }
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
