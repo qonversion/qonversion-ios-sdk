@@ -10,7 +10,6 @@
 
 @end
 
-
 @protocol QNStoreKitServiceDelegate <NSObject>
 
 @optional
