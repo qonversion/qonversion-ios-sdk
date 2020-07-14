@@ -16,8 +16,6 @@
   QNDevice *device = QNDevice.current;
   NSMutableDictionary *overallDict = [NSMutableDictionary new];
   
-  [overallDict setObject:keyQVersion forKey:@"version"];
-  
   NSString *installDate = device.installDate;
   if (installDate) {
     [overallDict setValue:installDate forKey:@"install_date"];

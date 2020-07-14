@@ -1,7 +1,4 @@
 #import "QNRequestBuilder.h"
-#import "QNKeeper.h"
-#import "QNUtils.h"
-#import "QNConstants.h"
 
 static NSString * const kAPIBase = @"https://api.qonversion.io/";
 static NSString * const kInitEndpoint = @"v1/user/init";
@@ -32,22 +29,24 @@ static NSString * const kAttributionEndpoint = @"attribution";
 // MARK: Private
 
 - (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body {
-  
   NSString *urlString = [kAPIBase stringByAppendingString:endpoint];
   NSURL *url = [NSURL.alloc initWithString:urlString];
+
+  NSMutableURLRequest *request = [self baseRequestWithURL:url];
+  NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
+
+  request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
   
+  return request.copy;
+}
+
+- (NSMutableURLRequest *)baseRequestWithURL:(NSURL *)url {
   NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL: url];
   
   request.HTTPMethod = @"POST";
   [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
   
-  NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
-
-  [mutableBody setObject:keyQVersion forKey:@"version"];
-  
-  request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
-  
-  return request.copy;
+  return request;
 }
 
 @end

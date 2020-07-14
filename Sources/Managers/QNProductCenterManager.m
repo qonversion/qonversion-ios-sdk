@@ -42,8 +42,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //
 //- (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
 //  
-//  NSDictionary *launchData = [self->_requestSerializer launchData];
-//  NSURLRequest *request = [[self requestBuilder] makeInitRequestWith:launchData];
+
+//  
 //  NSURLSession *session = [[self session] copy];
 //  
 //  [[session dataTaskWithRequest:request

@@ -5,6 +5,12 @@
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @end
 
+@interface QNRequestBuilder (Private)
+
+- (NSMutableURLRequest *)baseRequestWithURL:(NSURL *)url;
+
+@end
+
 @implementation QNRequestBuilderTests
 
 - (void)setUp {
@@ -13,6 +19,17 @@
 
 - (void)tearDown {
     _requestBuilder = nil;
+}
+
+- (void)testThatBuilderSetCorrectRequestSettings {
+  NSURL *url = [[NSURL alloc] initWithString:@"https://api.qonversion.io/"];
+  NSURLRequest *request = [_requestBuilder baseRequestWithURL:url];
+  
+  XCTAssertEqualObjects(request.HTTPMethod, @"POST");
+  NSString *contentType = [request.allHTTPHeaderFields valueForKey:@"Content-Type"];
+  
+  XCTAssertNotNil(contentType);
+  XCTAssertEqualObjects(contentType, @"application/json; charset=utf-8");
 }
 
 - (void)testThatInitRequestBuilderSetCorrectURL {

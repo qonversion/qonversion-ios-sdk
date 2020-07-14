@@ -3,6 +3,7 @@
 #import "QNRequestSerializer.h"
 #import "QNDevice.h"
 #import "QNMapper.h"
+#import "QNConstants.h"
 
 // Models
 #import "QNLaunchResult+Protected.h"
@@ -41,19 +42,26 @@
 // MARK: - Public
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+  NSDictionary *launchData = [self enrichParameters:[_requestSerializer launchData]];
+  NSURLRequest *request = [[self requestBuilder] makeInitRequestWith:launchData];
   
 }
 
 // MARK: - Private
 
-- (NSDictionary *)accessDict {
-  NSMutableDictionary *accessDict = [[NSMutableDictionary alloc] init];
-  [accessDict setObject:_apiKey forKey:@"access_token"];
+- (NSDictionary *)enrichParameters:(NSDictionary *)parameters {
+  NSDictionary *_parameters = parameters ?: @{};
   
-  [accessDict setObject:@"qonversion_user_id" forKey:@"q_uid"];
-  [accessDict setObject:_userID forKey:@"client_uid"];
+  NSMutableDictionary *baseDict = [[NSMutableDictionary alloc] initWithDictionary:_parameters];
+  [baseDict setObject:_apiKey forKey:@"access_token"];
   
-  return [accessDict copy];
+  // TODO
+  // Replace after tests
+  [baseDict setObject:@"qonversion_user_id" forKey:@"q_uid"];
+  [baseDict setObject:_userID forKey:@"client_uid"];
+  [baseDict setObject:keyQVersion forKey:@"version"];
+  
+  return [baseDict copy];
 }
 
 - (NSURLSession *)session {
