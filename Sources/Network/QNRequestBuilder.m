@@ -8,10 +8,7 @@ static NSString * const kInitEndpoint = @"v1/user/init";
 static NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 static NSString * const kPropertiesEndpoint = @"v1/properties";
 
-/**
- @warning This endpoint is deprecated. Use product center instead.
-*/
-static NSString * const kCheckEndpoint = @"check";
+
 static NSString * const kAttributionEndpoint = @"attribution";
 
 @implementation QNRequestBuilder
@@ -22,10 +19,6 @@ static NSString * const kAttributionEndpoint = @"attribution";
 
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters {
   return [self makePostRequestWith:kPropertiesEndpoint andBody:parameters];
-}
-
-- (NSURLRequest *)makeCheckRequest {
-  return [self makePostRequestWith:kCheckEndpoint andBody:@{}];
 }
 
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters {

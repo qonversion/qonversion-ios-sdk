@@ -1,6 +1,8 @@
 #import <Foundation/Foundation.h>
 #import "QNLaunchResult.h"
 
+@class QonversionLaunchComposeModel;
+
 typedef NS_ENUM(NSInteger, QNErrorCode) {
   QNErrorCodeFailedReceiveData = 0,
   QNErrorCodeFailedParseResponse,

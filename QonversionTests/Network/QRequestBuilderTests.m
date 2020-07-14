@@ -31,12 +31,4 @@
     XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/v1/user/purchase");
 }
 
-- (void)testThatCheckRequestBuilderSetCorrectURL {
-    NSURLRequest *request = [_requestBuilder makeCheckRequest];
-    XCTAssertNotNil(request);
-    
-    XCTAssertNotNil(request.URL);
-    XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/check");
-}
-
 @end
