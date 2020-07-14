@@ -69,7 +69,7 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
 }
 
-- (void)testThatClientDefineBrokenData {
+- (void)testThatClientParseNullData {
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   
   NSError *networkError = [NSError errorWithDomain:NSURLErrorDomain code:404 userInfo:nil];
@@ -96,6 +96,24 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   [_client dataTaskWithRequest:_request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     XCTAssertNotNil(dict);
     XCTAssertNil(error);
+    [expectation fulfill];
+  }];
+  
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+}
+
+- (void)testThatClientDetectBrokenData {
+  XCTestExpectation *expectation = [self expectationWithDescription:@""];
+  NSData *brokenJson = [self fileDataFromContentsOfFile:keyQNBrokenJSON];
+  
+  OCMStub([_mockSession dataTaskWithRequest:self.request
+                          completionHandler:([OCMArg invokeBlockWithArgs:brokenJson, [NSNull null], [NSNull null], nil])]);
+  
+  [_client dataTaskWithRequest:_request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    XCTAssertNil(dict);
+    XCTAssertNotNil(error);
+    XCTAssertEqual(error.code, 1);
+    XCTAssertEqualObjects(error.domain, keyQNErrorDomain);
     [expectation fulfill];
   }];
   
