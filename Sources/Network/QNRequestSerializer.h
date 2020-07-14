@@ -2,6 +2,8 @@
 
 #import "Qonversion.h"
 
+@class SKProduct, SKPaymentTransaction;
+
 @interface QNRequestSerializer : NSObject
 
 - (NSDictionary *)launchData;

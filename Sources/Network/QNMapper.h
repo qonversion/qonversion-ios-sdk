@@ -7,19 +7,6 @@ typedef NS_ENUM(NSInteger, QNErrorCode) {
   QNErrorCodeIncorrectRequest
 };
 
-@interface QonversionComposeModel : NSObject <NSCoding>
-
-@property (nonatomic, copy, nullable) NSError *error;
-
-@end
-
-@interface QonversionLaunchComposeModel : NSObject <NSCoding>
-
-@property (nonatomic, copy, nullable) NSError *error;
-@property (nonatomic, strong, nullable) QNLaunchResult *result;
-
-@end
-
 @interface QNMapper : NSObject
 
 - (QonversionLaunchComposeModel * _Nonnull)composeLaunchModelFrom:(NSData * _Nullable)data;

@@ -2,6 +2,7 @@
 #import "QNUtils.h"
 #import "QNMapper.h"
 #import "QNLaunchResult+Protected.h"
+#import "QonversionLaunchComposeModel.h"
 
 NSString * const QNErrorDomain = @"com.qonversion.io";
 
@@ -17,9 +18,6 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 
 @implementation QNMapperObject : NSObject
 
-@end
-
-@implementation QonversionComposeModel : NSObject
 @end
 
 @implementation QonversionLaunchComposeModel

@@ -2,6 +2,8 @@
 
 @interface QNDevice : NSObject
 
++ (instancetype)current;
+
 @property (readonly, strong, nonatomic) NSString *manufacturer;
 @property (readonly, strong, nonatomic) NSString *osName;
 @property (readonly, strong, nonatomic) NSString *osVersion;

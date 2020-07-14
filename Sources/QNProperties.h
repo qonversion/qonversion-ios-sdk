@@ -1,5 +1,5 @@
-#import <Foundation/Foundation.h>
 #import "QNConstants.h"
+#import "Qonversion.h"
 
 @interface QNProperties : NSObject
 

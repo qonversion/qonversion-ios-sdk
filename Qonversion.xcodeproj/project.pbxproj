@@ -78,6 +78,8 @@
 		45FFA2CF24BDE5FE007EFB8F /* QNAPIClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */; };
 		45FFA2D324BDFCE8007EFB8F /* QNAttributionManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 45FFA2D124BDFCE8007EFB8F /* QNAttributionManager.h */; };
 		45FFA2D424BDFCE8007EFB8F /* QNAttributionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2D224BDFCE8007EFB8F /* QNAttributionManager.m */; };
+		45FFA2D724BE010A007EFB8F /* QonversionLaunchComposeModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 45FFA2D524BE010A007EFB8F /* QonversionLaunchComposeModel.h */; };
+		45FFA2D824BE010A007EFB8F /* QonversionLaunchComposeModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2D624BE010A007EFB8F /* QonversionLaunchComposeModel.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -152,7 +154,7 @@
 		459DABD8243E33C20011ECF3 /* Qonversion.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = Qonversion.modulemap; sourceTree = "<group>"; };
 		459DABDA243E33C20011ECF3 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		459DABE1243E35BC0011ECF3 /* Qonversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
-		459DABE3243E35BC0011ECF3 /* QNUserInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = QNUserInfo.m; sourceTree = "<group>"; tabWidth = 4; };
+		459DABE3243E35BC0011ECF3 /* QNUserInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.objc; path = QNUserInfo.m; sourceTree = "<group>"; tabWidth = 2; };
 		459DABE4243E35BC0011ECF3 /* QNKeychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNKeychain.h; sourceTree = "<group>"; };
 		459DABE5243E35BC0011ECF3 /* QNUserInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNUserInfo.h; sourceTree = "<group>"; };
 		459DABE6243E35BC0011ECF3 /* QNKeychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNKeychain.m; sourceTree = "<group>"; };
@@ -170,6 +172,8 @@
 		45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIClient.m; sourceTree = "<group>"; };
 		45FFA2D124BDFCE8007EFB8F /* QNAttributionManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNAttributionManager.h; sourceTree = "<group>"; };
 		45FFA2D224BDFCE8007EFB8F /* QNAttributionManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAttributionManager.m; sourceTree = "<group>"; };
+		45FFA2D524BE010A007EFB8F /* QonversionLaunchComposeModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionLaunchComposeModel.h; sourceTree = "<group>"; };
+		45FFA2D624BE010A007EFB8F /* QonversionLaunchComposeModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionLaunchComposeModel.m; sourceTree = "<group>"; };
 		6D20F2CD8AEC1ED86B5F788D /* libPods-QonversionTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-QonversionTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		839DD50DB29B0AB311CD4074 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
 		B82EFA1145B6FD87B8EEEF6B /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -393,6 +397,8 @@
 				456ECD41249C76D400D2BC40 /* QNProduct.h */,
 				458A8CC324B5E52D00637130 /* QNProduct+Protected.h */,
 				456ECD44249C8B2000D2BC40 /* QNProduct.m */,
+				45FFA2D524BE010A007EFB8F /* QonversionLaunchComposeModel.h */,
+				45FFA2D624BE010A007EFB8F /* QonversionLaunchComposeModel.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -469,6 +475,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				45FFA2CE24BDE5FE007EFB8F /* QNAPIClient.h in Headers */,
+				45FFA2D724BE010A007EFB8F /* QonversionLaunchComposeModel.h in Headers */,
 				454BE230247C4AD8001FE771 /* QNUtils.h in Headers */,
 				4531CBC324577D770022C422 /* QNConstants.h in Headers */,
 				459DABFA243E35BC0011ECF3 /* QNKeeper.h in Headers */,
@@ -651,6 +658,7 @@
 				4531CBC424577D770022C422 /* QNConstants.m in Sources */,
 				45FFA2D424BDFCE8007EFB8F /* QNAttributionManager.m in Sources */,
 				458A8CC924B8407C00637130 /* QNStoreKitService.m in Sources */,
+				45FFA2D824BE010A007EFB8F /* QonversionLaunchComposeModel.m in Sources */,
 				459DABF9243E35BC0011ECF3 /* QNKeychain.m in Sources */,
 				458A8CD224BAC5F500637130 /* QNUserDefaultsStorage.m in Sources */,
 			);

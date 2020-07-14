@@ -2,7 +2,10 @@
 #import "QNInMemoryStorage.h"
 #import "QNProperties.h"
 #import "QNRequestSerializer.h"
-#import "QNConstants.h"
+#import "QNAPIClient.h"
+#import "QNDevice.h"
+
+#import <UIKit/UIKit.h>
 
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
 
@@ -15,6 +18,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
 @property (nonatomic, assign, readwrite) BOOL launchingFinished;
+
+@property (nonatomic, strong) QNDevice *device;
 
 @end
 
@@ -29,6 +34,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     [_backgroundQueue setSuspended:NO];
 
     _backgroundQueue.name = kBackgrounQueueName;
+    _device = QNDevice.current;
     
     [self addObservers];
     [self collectIntegrationsData];
@@ -70,7 +76,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 - (void)sendPropertiesWithDelay:(int)delay {
   if (!_sendingScheduled) {
     _sendingScheduled = YES;
-    __block __weak Qonversion *weakSelf = self;
+    __block __weak QNUserPropertiesManager *weakSelf = self;
     [_backgroundQueue addOperationWithBlock:^{
       dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf performSelector:@selector(sendPropertiesInBackground) withObject:nil afterDelay:delay];
@@ -85,7 +91,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 - (void)sendProperties {
-  if ([QNUtils isEmptyString:[self requestBuilder].apiKey]) {
+  if ([QNUtils isEmptyString:[QNAPIClient shared].apiKey]) {
     QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
     return;
   }
@@ -109,17 +115,19 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
       self->_updatingCurrently = NO;
       return;
     }
+    // TODO
+    // Move to api client
     
-    NSURLRequest *request = [[self requestBuilder] makePropertiesRequestWith:@{@"properties": properties}];
-    
-    __block __weak Qonversion *weakSelf = self;
-    [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-      if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-        QONVERSION_LOG(@"Properties Request Log Response:\n%@", dict);
-      }
-      weakSelf.updatingCurrently = NO;
-      [weakSelf clearProperties:properties];
-    }];
+//    NSURLRequest *request = [[self requestBuilder] makePropertiesRequestWith:@{@"properties": properties}];
+//
+//    __block __weak QNUserPropertiesManager *weakSelf = self;
+//    [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
+//      if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
+//        QONVERSION_LOG(@"Properties Request Log Response:\n%@", dict);
+//      }
+//      weakSelf.updatingCurrently = NO;
+//      [weakSelf clearProperties:properties];
+//    }];
   }];
 }
 
@@ -147,6 +155,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 - (void)collectIntegrationsData {
+  __block __weak QNUserPropertiesManager *weakSelf = self;
   dispatch_async(dispatch_get_main_queue(), ^{
     [weakSelf performSelector:@selector(collectIntegrationsDataInBackground) withObject:nil afterDelay:5];
   });

@@ -1,3 +1,4 @@
+#import <Foundation/Foundation.h>
 #import "Qonversion.h"
 
 NS_ASSUME_NONNULL_BEGIN

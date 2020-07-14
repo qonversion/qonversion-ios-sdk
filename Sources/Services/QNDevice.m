@@ -9,6 +9,17 @@
   NSObject* networkInfo;
 }
 
+
++ (instancetype)current {
+  static id shared = nil;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    shared = self.new;
+  });
+  
+  return shared;
+}
+
 @synthesize model = _model;
 @synthesize installDate = _installDate;
 @synthesize osVersion = _osVersion;

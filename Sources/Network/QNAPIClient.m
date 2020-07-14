@@ -23,7 +23,7 @@
     _requestSerializer = [[QNRequestSerializer alloc] init];
     _requestBuilder = [[QNRequestBuilder alloc] init];
     
-    _device = [[QNDevice alloc] init];
+    _device = QNDevice.current;
   }
   return self;
 }

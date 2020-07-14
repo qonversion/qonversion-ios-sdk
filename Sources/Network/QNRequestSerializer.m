@@ -6,7 +6,6 @@
 @interface QNRequestSerializer ()
 
 @property (nonatomic, strong) NSString *userID;
-@property (nonatomic, strong) QNDevice *device;
 
 @end
 
@@ -80,7 +79,7 @@
   }
   
   NSString *_uid = nil;
-  NSString *af_uid = _device.afUserID;
+  NSString *af_uid = QNDevice.current.afUserID;
   if (af_uid && provider == QNAttributionProviderAppsFlyer) {
     _uid = af_uid;
   }

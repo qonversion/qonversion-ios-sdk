@@ -3,6 +3,7 @@
 #import "QNUserDefaultsStorage.h"
 #import "QNStoreKitService.h"
 
+static NSString * const kPermissionsResult = @"qonversion.permissions.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
 
 @interface QNProductCenterManager()

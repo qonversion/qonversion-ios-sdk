@@ -13,7 +13,7 @@
 @implementation QNUserInfo
 
 + (NSDictionary *)overallData {
-  QNDevice *device = [[QNDevice alloc] init];
+  QNDevice *device = QNDevice.current;
   NSMutableDictionary *overallDict = [NSMutableDictionary new];
   
   [overallDict setObject:keyQVersion forKey:@"version"];
