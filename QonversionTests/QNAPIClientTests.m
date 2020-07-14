@@ -27,6 +27,8 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   _request = OCMClassMock([NSURLRequest class]);
   
   _client = [[QNAPIClient alloc] init];
+  
+  [_client setSession:_mockSession];
   [_client setApiKey:kTestAPIKey];
 }
 
@@ -45,6 +47,13 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   XCTAssertNotNil(result[@"q_uid"]);
   XCTAssertNotNil(result[@"client_uid"]);
   XCTAssertNotNil(result[@"version"]);
+}
+
+- (void)testThatClientSendsRequest {
+  [_client dataTaskWithRequest:_request completion:nil];
+  
+  OCMVerify([self.mockSession dataTaskWithRequest:self.request
+                                completionHandler:OCMOCK_ANY]);
 }
 
 - (void)testThatRequestHandler {

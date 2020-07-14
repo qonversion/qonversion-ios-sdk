@@ -27,6 +27,7 @@
     _apiKey = @"";
     _userID = @"";
     _device = QNDevice.current;
+    _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
   }
   
   return self;
@@ -65,15 +66,9 @@
   return [baseDict copy];
 }
 
-- (NSURLSession *)session {
-  return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
-}
-
 - (void)dataTaskWithRequest:(NSURLRequest *)request
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
-  NSURLSession *session = [[self session] copy];
-  
-  [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+  [[self.session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
     
     if (error) {
       completion(nil, error);

@@ -8,6 +8,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)shared;
 
+@property (nonatomic, strong) NSURLSession *session;
+
 @property (nonatomic, strong) NSString *userID;
 @property (nonatomic, strong) NSString *apiKey;
 
