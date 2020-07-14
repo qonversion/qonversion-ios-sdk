@@ -24,6 +24,8 @@
     _requestSerializer = [[QNRequestSerializer alloc] init];
     _requestBuilder = [[QNRequestBuilder alloc] init];
     
+    _apiKey = @"";
+    _userID = @"";
     _device = QNDevice.current;
   }
   return self;
