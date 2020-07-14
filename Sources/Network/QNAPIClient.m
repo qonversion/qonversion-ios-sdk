@@ -75,7 +75,7 @@
   
   [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
     
-    if (data == NULL && error) {
+    if (error) {
       completion(nil, error);
       return;
     }
@@ -88,7 +88,7 @@
     NSError *jsonError = [[NSError alloc] init];
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
     
-    if (jsonError.domain || !dict) {
+    if (jsonError.code || !dict) {
       completion(nil, [QNMapper error:@"Could not parse response" code:QNErrorCodeFailedParseResponse]);
       return;
     }
