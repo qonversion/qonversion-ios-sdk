@@ -3,6 +3,7 @@
 #import "QNAPIClient.h"
 #import "QNTestConstants.h"
 
+#import "Helpers/XCTestCase+TestJSON.h"
 
 NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
 
@@ -62,6 +63,39 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   OCMStub([_mockSession dataTaskWithRequest:self.request completionHandler:[OCMArg invokeBlock]]);
   
   [_client dataTaskWithRequest:_request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    [expectation fulfill];
+  }];
+  
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+}
+
+- (void)testThatClientDefineBrokenData {
+  XCTestExpectation *expectation = [self expectationWithDescription:@""];
+  
+  NSError *networkError = [NSError errorWithDomain:NSURLErrorDomain code:404 userInfo:nil];
+  
+  OCMStub([_mockSession dataTaskWithRequest:self.request
+                          completionHandler:([OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], networkError, nil])]);
+  
+  [_client dataTaskWithRequest:_request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    XCTAssertNotNil(error);
+    XCTAssertEqual(error.code, 404);
+    XCTAssertNil(dict);
+    [expectation fulfill];
+  }];
+  
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+}
+
+- (void)testThatClientParseCorrectData {
+  XCTestExpectation *expectation = [self expectationWithDescription:@""];
+  
+  OCMStub([_mockSession dataTaskWithRequest:self.request
+                          completionHandler:([OCMArg invokeBlockWithArgs:[self fileDataFromContentsOfFile:keyQNInitFailedJSON], [NSNull null], [NSNull null], nil])]);
+  
+  [_client dataTaskWithRequest:_request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    XCTAssertNotNil(dict);
+    XCTAssertNil(error);
     [expectation fulfill];
   }];
   

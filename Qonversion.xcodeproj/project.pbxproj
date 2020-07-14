@@ -73,7 +73,6 @@
 		459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABF4243E35BC0011ECF3 /* Qonversion.m */; };
 		459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */; };
 		459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */; };
-		45CC2EF024407737005CD107 /* check_failed_state.json in Resources */ = {isa = PBXBuildFile; fileRef = 45CC2EEF24407737005CD107 /* check_failed_state.json */; };
 		45FFA2CE24BDE5FE007EFB8F /* QNAPIClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 45FFA2CC24BDE5FE007EFB8F /* QNAPIClient.h */; };
 		45FFA2CF24BDE5FE007EFB8F /* QNAPIClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */; };
 		45FFA2D324BDFCE8007EFB8F /* QNAttributionManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 45FFA2D124BDFCE8007EFB8F /* QNAttributionManager.h */; };
@@ -169,7 +168,6 @@
 		459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionMapperTests.m; sourceTree = "<group>"; };
 		459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+TestJSON.h"; sourceTree = "<group>"; };
 		459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+TestJSON.m"; sourceTree = "<group>"; };
-		45CC2EEF24407737005CD107 /* check_failed_state.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_failed_state.json; sourceTree = "<group>"; };
 		45CC2EF4244085E4005CD107 /* tests.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = tests.yml; sourceTree = "<group>"; };
 		45FFA2CC24BDE5FE007EFB8F /* QNAPIClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNAPIClient.h; sourceTree = "<group>"; };
 		45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIClient.m; sourceTree = "<group>"; };
@@ -434,7 +432,6 @@
 			children = (
 				456ECD48249CA28300D2BC40 /* init_failed_state.json */,
 				456ECD46249C8EEE00D2BC40 /* init.json */,
-				45CC2EEF24407737005CD107 /* check_failed_state.json */,
 			);
 			path = Stubs;
 			sourceTree = "<group>";
@@ -611,7 +608,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				456ECD49249CA28300D2BC40 /* init_failed_state.json in Resources */,
-				45CC2EF024407737005CD107 /* check_failed_state.json in Resources */,
 				456ECD47249C8EEE00D2BC40 /* init.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

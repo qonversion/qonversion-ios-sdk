@@ -3,10 +3,7 @@
 #import "QNMapper.h"
 #import "Helpers/XCTestCase+TestJSON.h"
 #import "QonversionLaunchComposeModel.h"
-
-static NSString *checkFailedState = @"check_failed_state.json";
-static NSString *initSuccessJSON = @"init.json";
-static NSString *initFailedJSON = @"init_failed_state.json";
+#import "QNTestConstants.h"
 
 @interface QNMapperTests : XCTestCase
 @property (nonatomic, strong) NSDictionary *userInitSuccess;
@@ -18,8 +15,8 @@ static NSString *initFailedJSON = @"init_failed_state.json";
 - (void)setUp {
     [super setUp];
     
-    self.userInitSuccess = [self JSONObjectFromContentsOfFile:initSuccessJSON];
-    self.userInitFailed = [self JSONObjectFromContentsOfFile:initFailedJSON];
+    self.userInitSuccess = [self JSONObjectFromContentsOfFile:keyQNInitSuccessJSON];
+    self.userInitFailed = [self JSONObjectFromContentsOfFile:keyQNInitFailedJSON];
 }
 
 - (void)tearDown {
@@ -63,7 +60,7 @@ static NSString *initFailedJSON = @"init_failed_state.json";
 }
 
 - (void)testThatMapparParsePermissionWithBrokenJson {
-    QonversionLaunchComposeModel *result = [[QNMapper new] composeLaunchModelFrom:[self fileDataFromContentsOfFile:initFailedJSON]];
+    QonversionLaunchComposeModel *result = [[QNMapper new] composeLaunchModelFrom:[self fileDataFromContentsOfFile:keyQNInitFailedJSON]];
     
     XCTAssertNotNil(result);
     XCTAssertNotNil(result.error);
