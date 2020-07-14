@@ -49,11 +49,7 @@ static NSString * const kAttributionEndpoint = @"attribution";
   [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
   
   NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
-  
-  [mutableBody setObject:_apiKey forKey:@"access_token"];
-  
-  [mutableBody setObject:@"qonversion_user_id" forKey:@"q_uid"];
-  [mutableBody setObject:_userID forKey:@"client_uid"];
+
   [mutableBody setObject:keyQVersion forKey:@"version"];
   
   request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];

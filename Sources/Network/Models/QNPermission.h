@@ -6,9 +6,8 @@ typedef NS_ENUM(int, QNPermissionRenewState){
   QNPermissionRenewStateWillRenew = 1,
   QNPermissionRenewStateCancelled = 2,
   QNPermissionRenewStateBillingIssue = 3
-};
+} NS_SWIFT_NAME(Qonversion.PermissionRenewState);
 
-NS_SWIFT_NAME(Qonversion.Permission)
 @interface QNPermission : NSObject <NSCoding>
 
 /**

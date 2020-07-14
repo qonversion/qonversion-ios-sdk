@@ -1,5 +1,7 @@
 #import <Foundation/Foundation.h>
 
+@class QNLaunchResult;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QNAPIClient : NSObject
@@ -9,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *userID;
 @property (nonatomic, strong) NSString *apiKey;
 
-- (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion;
+- (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 
 @end
 

@@ -4,6 +4,9 @@
 #import "QNDevice.h"
 #import "QNMapper.h"
 
+// Models
+#import "QNLaunchResult+Protected.h"
+
 @interface QNAPIClient()
 
 @property (nonatomic, strong) QNDevice *device;
@@ -33,6 +36,20 @@
   });
   
   return shared;
+}
+
+- (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+  
+}
+
+- (NSDictionary *)accessDict {
+  NSMutableDictionary *accessDict = [[NSMutableDictionary alloc] init];
+  [accessDict setObject:_apiKey forKey:@"access_token"];
+  
+  [accessDict setObject:@"qonversion_user_id" forKey:@"q_uid"];
+  [accessDict setObject:_userID forKey:@"client_uid"];
+  
+  return [accessDict copy];
 }
 
 - (NSURLSession *)session {

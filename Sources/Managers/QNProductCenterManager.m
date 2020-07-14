@@ -33,6 +33,59 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return self;
 }
 
+- (QonversionLaunchComposeModel *)launchModel {
+  return [self.persistentStorage loadObjectForKey:kPermissionsResult];
+}
+
+- (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
+  
+  NSDictionary *launchData = [self->_requestSerializer launchData];
+  NSURLRequest *request = [[self requestBuilder] makeInitRequestWith:launchData];
+  NSURLSession *session = [[self session] copy];
+  
+  [[session dataTaskWithRequest:request
+              completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+    
+    if (data == NULL && error) {
+      QonversionLaunchComposeModel *model = [[QonversionLaunchComposeModel alloc] init];
+      model.error = error;
+      
+      @synchronized (self) {
+        [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
+        _launchingFinished = YES;
+        [self executePermissionBlocks:model];
+        
+        return;
+      }
+    }
+    
+    QonversionLaunchComposeModel *model = [[QNMapper new] composeLaunchModelFrom:data];
+    
+    @synchronized (self) {
+      [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
+      _launchingFinished = YES;
+    }
+    
+    if (model) {
+      [self executePermissionBlocks:model];
+      [self loadProducts:model];
+      
+      if (model.result.uid) {
+        QNKeeper.userID = model.result.uid;
+        [[self requestBuilder] setUserID:model.result.uid];
+      }
+      
+      if (completion) {
+        // TODO
+        //completion(model.result.uid);
+      }
+    }
+    
+    
+  }] resume];
+}
+
+
 - (void)logPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
   /*
    NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
