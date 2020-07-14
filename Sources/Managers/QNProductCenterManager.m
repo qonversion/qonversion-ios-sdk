@@ -28,6 +28,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
     _purchasingCurrently = NULL;
+    _permissionsBlocks = [[NSMutableArray alloc] init];
   }
   
   return self;

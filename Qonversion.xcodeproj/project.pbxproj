@@ -76,6 +76,8 @@
 		45CC2EF024407737005CD107 /* check_failed_state.json in Resources */ = {isa = PBXBuildFile; fileRef = 45CC2EEF24407737005CD107 /* check_failed_state.json */; };
 		45FFA2CE24BDE5FE007EFB8F /* QNAPIClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 45FFA2CC24BDE5FE007EFB8F /* QNAPIClient.h */; };
 		45FFA2CF24BDE5FE007EFB8F /* QNAPIClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */; };
+		45FFA2D324BDFCE8007EFB8F /* QNAttributionManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 45FFA2D124BDFCE8007EFB8F /* QNAttributionManager.h */; };
+		45FFA2D424BDFCE8007EFB8F /* QNAttributionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2D224BDFCE8007EFB8F /* QNAttributionManager.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -166,6 +168,8 @@
 		45CC2EF4244085E4005CD107 /* tests.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = tests.yml; sourceTree = "<group>"; };
 		45FFA2CC24BDE5FE007EFB8F /* QNAPIClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNAPIClient.h; sourceTree = "<group>"; };
 		45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIClient.m; sourceTree = "<group>"; };
+		45FFA2D124BDFCE8007EFB8F /* QNAttributionManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNAttributionManager.h; sourceTree = "<group>"; };
+		45FFA2D224BDFCE8007EFB8F /* QNAttributionManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAttributionManager.m; sourceTree = "<group>"; };
 		6D20F2CD8AEC1ED86B5F788D /* libPods-QonversionTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-QonversionTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		839DD50DB29B0AB311CD4074 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
 		B82EFA1145B6FD87B8EEEF6B /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -443,6 +447,8 @@
 				4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */,
 				4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */,
 				4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */,
+				45FFA2D124BDFCE8007EFB8F /* QNAttributionManager.h */,
+				45FFA2D224BDFCE8007EFB8F /* QNAttributionManager.m */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -473,6 +479,7 @@
 				459DABF5243E35BC0011ECF3 /* Qonversion.h in Headers */,
 				458A8CC424B5E52D00637130 /* QNProduct+Protected.h in Headers */,
 				459DABF8243E35BC0011ECF3 /* QNUserInfo.h in Headers */,
+				45FFA2D324BDFCE8007EFB8F /* QNAttributionManager.h in Headers */,
 				458A8CD424BAC5F500637130 /* QNInMemoryStorage.h in Headers */,
 				458A8CC224B5E50F00637130 /* QNPermission.h in Headers */,
 				4531CBBF245778110022C422 /* QNDevice.h in Headers */,
@@ -642,6 +649,7 @@
 				4572FE2124BC4B5B00A17AC4 /* QNUserPropertiesManager.m in Sources */,
 				458A8CBF24B4B88F00637130 /* QNStoreKitSugare.m in Sources */,
 				4531CBC424577D770022C422 /* QNConstants.m in Sources */,
+				45FFA2D424BDFCE8007EFB8F /* QNAttributionManager.m in Sources */,
 				458A8CC924B8407C00637130 /* QNStoreKitService.m in Sources */,
 				459DABF9243E35BC0011ECF3 /* QNKeychain.m in Sources */,
 				458A8CD224BAC5F500637130 /* QNUserDefaultsStorage.m in Sources */,

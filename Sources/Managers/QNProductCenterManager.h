@@ -7,9 +7,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QNProductCenterManager : NSObject
 
-- (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion;
+- (void)launchWithCompletion:(QNPurchaseCompletionHandler)completion;
 - (void)checkPermissions:(QNPermissionCompletionHandler)result;
 - (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result;
++ (QNProduct *)productFor:(NSString *)productID;
 
 @end
 

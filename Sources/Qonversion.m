@@ -1,3 +1,5 @@
+#import <StoreKit/StoreKit.h>
+
 #import "Qonversion.h"
 
 #import "QNKeeper.h"
@@ -6,7 +8,7 @@
 #import "QNProduct+Protected.h"
 #import "QNUserPropertiesManager.h"
 #import "QNProductCenterManager.h"
-#import <StoreKit/StoreKit.h>
+#import "QNAttributionManager.h"
 #import "QNProductCenterManager.h"
 #import "QNProperties.h"
 
@@ -18,6 +20,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
+@property (nonatomic, strong) QNAttributionManager *attributionManager;
 
 @property (nonatomic, assign, readwrite) BOOL launchingFinished;
 
@@ -35,10 +38,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
   [[QNAPIClient shared] setApiKey:key];
-  
-  // TODO
-  // Product Center
-  [[Qonversion sharedInstance] launchWithKey:key completion:completion];
+  [[[Qonversion sharedInstance] productCenterManager] launchWithCompletion:completion];
 }
 
 + (void)setDebugMode:(BOOL)debugMode {
@@ -70,7 +70,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (QNProduct *)productFor:(NSString *)productID {
-  return [[Qonversion sharedInstance] productFor:productID];
+  return [[[Qonversion sharedInstance] productCenterManager] productFor:productID];
 }
 
 // MARK: - Private
@@ -90,29 +90,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   if (self) {
     _propertiesManager = [[QNUserPropertiesManager alloc] init];
     _productCenterManager = [[QNProductCenterManager alloc] init];
+    _attributionManager = [[QNAttributionManager alloc] init];
     
     _launchingFinished = NO;
     _debugMode = NO;
-    
-    _permissionsBlocks = [[NSMutableArray alloc] init];
   }
-  return self;
-}
-
-- (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
-  double delayInSeconds = 5.0;
-  dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
   
-  dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-    NSDictionary *body = [_requestSerializer attributionDataWithDict:data fromProvider:provider];
-    NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:body];
-    
-    [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-      if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-        QONVERSION_LOG(@"Attribution Request Log Response:\n%@", dict);
-      }
-    }];
-  });
+  return self;
 }
 
 @end
