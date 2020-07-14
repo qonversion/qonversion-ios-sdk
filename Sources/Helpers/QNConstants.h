@@ -9,13 +9,6 @@ extern NSString *const keyQOSName;
 extern NSString *const keyQNPropertyReg;
 extern int const kQPropertiesSendingPeriodInSeconds;
 
-typedef NS_ENUM(NSInteger, QNProperty) {
-  QNPropertyEmail = 0,
-  QNPropertyName,
-  QNPropertyPremium
-};
-NS_SWIFT_NAME(Qonversion.Property);
-
 // MARK: - Qonversion Underhood User Properties
 
 extern NSString *const keyQNPropertyFacebookAnonUserID;

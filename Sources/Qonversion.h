@@ -1,9 +1,8 @@
 #import <Foundation/Foundation.h>
-#import <StoreKit/StoreKit.h>
-#import "QNProductCenterManager.h"
-#import "QNProperties.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@class QNProduct, QNPermission;
 
 typedef NS_ENUM(NSInteger, QNAttributionProvider) {
   QNAttributionProviderAppsFlyer = 0,
@@ -11,6 +10,19 @@ typedef NS_ENUM(NSInteger, QNAttributionProvider) {
   QNAttributionProviderAdjust,
   QNAttributionProviderApple
 } NS_SWIFT_NAME(Qonversion.AttributionProvider);
+
+
+typedef void (^QNPermissionCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
+
+typedef void (^QNPurchaseCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
+
+typedef NS_ENUM(NSInteger, QNProperty) {
+  QNPropertyEmail = 0,
+  QNPropertyName,
+  QNPropertyPremium
+};
+NS_SWIFT_NAME(Qonversion.Property);
+
 
 @interface Qonversion : NSObject
 

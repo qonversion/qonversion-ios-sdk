@@ -12,6 +12,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
 
+@property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 @property (nonatomic, strong) NSString *purchasingCurrently;
 
 @end

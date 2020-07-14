@@ -5,6 +5,10 @@
 #import "QNErrors.h"
 #import "QNProduct+Protected.h"
 #import "QNUserPropertiesManager.h"
+#import "QNProductCenterManager.h"
+#import <StoreKit/StoreKit.h>
+#import "QNProductCenterManager.h"
+#import "QNProperties.h"
 
 static NSString * const kPermissionsResult = @"qonversion.permissions.result";
 static NSString * const kProductsResult = @"qonversion.products.result";
@@ -15,9 +19,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 
-@property (nonatomic) QNUserDefaultsStorage *persistentStorage;
-
-@property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 @property (nonatomic, assign, readwrite) BOOL launchingFinished;
 
 @property (nonatomic, assign) BOOL debugMode;
