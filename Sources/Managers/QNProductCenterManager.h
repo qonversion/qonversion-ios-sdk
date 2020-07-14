@@ -9,6 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion;
 - (void)checkPermissions:(QNPermissionCompletionHandler)result;
+- (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result;
 
 @end
 

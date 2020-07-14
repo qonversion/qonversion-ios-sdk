@@ -62,11 +62,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (void)checkPermissions:(QNPermissionCompletionHandler)result {
-  [[Qonversion sharedInstance] checkPermissions:result];
+  [[[Qonversion sharedInstance] productCenterManager] checkPermissions:result];
 }
 
 + (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
-  [[Qonversion sharedInstance] purchase:productID result:result];
+  [[[Qonversion sharedInstance] productCenterManager] purchase:productID result:result];
 }
 
 + (QNProduct *)productFor:(NSString *)productID {

@@ -38,9 +38,13 @@
   return shared;
 }
 
+// MARK: - Public
+
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
   
 }
+
+// MARK: - Private
 
 - (NSDictionary *)accessDict {
   NSMutableDictionary *accessDict = [[NSMutableDictionary alloc] init];
