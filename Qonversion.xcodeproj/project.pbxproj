@@ -256,20 +256,13 @@
 		459DAB6B243E329F0011ECF3 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				45FFA2D024BDF379007EFB8F /* Managers */,
 				454BE20D247C2B78001FE771 /* Storage */,
 				459DABEA243E35BC0011ECF3 /* Network */,
 				459DABE2243E35BC0011ECF3 /* Helpers */,
 				459DABE7243E35BC0011ECF3 /* Services */,
 				459DABE1243E35BC0011ECF3 /* Qonversion.h */,
 				459DABF4243E35BC0011ECF3 /* Qonversion.m */,
-				4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */,
-				4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */,
-				4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */,
-				4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */,
-				4531CBBD245778110022C422 /* QNDevice.h */,
-				4531CBBE245778110022C422 /* QNDevice.m */,
-				4531CBC124577D770022C422 /* QNConstants.h */,
-				4531CBC224577D770022C422 /* QNConstants.m */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -339,6 +332,8 @@
 		459DABE2243E35BC0011ECF3 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				4531CBC124577D770022C422 /* QNConstants.h */,
+				4531CBC224577D770022C422 /* QNConstants.m */,
 				454BE228247C3E72001FE771 /* QNProperties.h */,
 				454BE229247C3E72001FE771 /* QNProperties.m */,
 				459DABE5243E35BC0011ECF3 /* QNUserInfo.h */,
@@ -357,6 +352,8 @@
 		459DABE7243E35BC0011ECF3 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				4531CBBD245778110022C422 /* QNDevice.h */,
+				4531CBBE245778110022C422 /* QNDevice.m */,
 				459DABE8243E35BC0011ECF3 /* QNKeeper.h */,
 				459DABE9243E35BC0011ECF3 /* QNKeeper.m */,
 				458A8CC624B8407B00637130 /* QNStoreKitService.h */,
@@ -437,6 +434,17 @@
 				45CC2EF4244085E4005CD107 /* tests.yml */,
 			);
 			path = workflows;
+			sourceTree = "<group>";
+		};
+		45FFA2D024BDF379007EFB8F /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */,
+				4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */,
+				4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */,
+				4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */,
+			);
+			path = Managers;
 			sourceTree = "<group>";
 		};
 		BB6B3C9FD9EFBC9E1604507D /* Frameworks */ = {

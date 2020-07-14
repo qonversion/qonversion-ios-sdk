@@ -2,7 +2,7 @@
 #import "QNInMemoryStorage.h"
 #import "QNProperties.h"
 #import "QNRequestSerializer.h"
-#import "QNRequestBuilder.h"
+#import "QNConstants.h"
 
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
 
@@ -10,7 +10,6 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
 
-@property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic) QNInMemoryStorage *inMemoryStorage;
 
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
@@ -32,13 +31,10 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     _backgroundQueue.name = kBackgrounQueueName;
     
     [self addObservers];
+    [self collectIntegrationsData];
   }
   
   return self;
-}
-
-- (QNRequestBuilder *)requestBuilder {
-  return [QNRequestBuilder shared];
 }
 
 - (void)setUserProperty:(NSString *)property value:(NSString *)value {
@@ -147,6 +143,29 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
   } else {
     [_backgroundQueue addOperationWithBlock:block];
     return YES;
+  }
+}
+
+- (void)collectIntegrationsData {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [weakSelf performSelector:@selector(collectIntegrationsDataInBackground) withObject:nil afterDelay:5];
+  });
+}
+
+- (void)collectIntegrationsDataInBackground {
+  NSString *adjustUserID = _device.adjustUserID;
+  if (![QNUtils isEmptyString:adjustUserID]) {
+    [Qonversion setUserProperty:keyQNPropertyAdjustADID value:adjustUserID];
+  }
+  
+  NSString *fbAnonID = _device.fbAnonID;
+  if (![QNUtils isEmptyString:fbAnonID]) {
+    [Qonversion setUserProperty:keyQNPropertyFacebookAnonUserID value:fbAnonID];
+  }
+  
+  NSString *afUserID = _device.afUserID;
+  if (![QNUtils isEmptyString:afUserID]) {
+    [Qonversion setUserProperty:keyQNPropertyAppsFlyerUserID value:afUserID];
   }
 }
 

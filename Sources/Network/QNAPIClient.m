@@ -1,14 +1,29 @@
 #import "QNAPIClient.h"
 #import "QNRequestBuilder.h"
 #import "QNRequestSerializer.h"
+#import "QNDevice.h"
+#import "QNMapper.h"
 
 @interface QNAPIClient()
 
+@property (nonatomic, strong) QNDevice *device;
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
+@property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 
 @end
 
 @implementation QNAPIClient
+
+- (instancetype)init {
+  self = super.init;
+  if (self) {
+    _requestSerializer = [[QNRequestSerializer alloc] init];
+    _requestBuilder = [[QNRequestBuilder alloc] init];
+    
+    _device = [[QNDevice alloc] init];
+  }
+  return self;
+}
 
 + (instancetype)shared {
   static id shared = nil;
