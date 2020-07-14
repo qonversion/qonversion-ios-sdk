@@ -91,9 +91,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
     _propertiesManager = [[QNUserPropertiesManager alloc] init];
     _productCenterManager = [[QNProductCenterManager alloc] init];
     
-    [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
-    
-    _updatingCurrently = NO;
     _launchingFinished = NO;
     _debugMode = NO;
     
