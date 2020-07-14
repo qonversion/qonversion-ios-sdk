@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
 #import "QNAPIClient.h"
+#import "QNTestConstants.h"
 
 
 NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
@@ -56,8 +57,15 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
                                 completionHandler:OCMOCK_ANY]);
 }
 
-- (void)testThatRequestHandler {
+- (void)testThatClientCallsCompletionHandler {
+  XCTestExpectation *expectation = [self expectationWithDescription:@""];
+  OCMStub([_mockSession dataTaskWithRequest:self.request completionHandler:[OCMArg invokeBlock]]);
   
+  [_client dataTaskWithRequest:_request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    [expectation fulfill];
+  }];
+  
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
 }
 
 @end
