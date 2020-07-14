@@ -28,6 +28,7 @@
     _userID = @"";
     _device = QNDevice.current;
   }
+  
   return self;
 }
 
@@ -57,8 +58,6 @@
   NSMutableDictionary *baseDict = [[NSMutableDictionary alloc] initWithDictionary:_parameters];
   [baseDict setObject:_apiKey forKey:@"access_token"];
   
-  // TODO
-  // Replace after tests
   [baseDict setObject:@"qonversion_user_id" forKey:@"q_uid"];
   [baseDict setObject:_userID forKey:@"client_uid"];
   [baseDict setObject:keyQVersion forKey:@"version"];
@@ -70,17 +69,31 @@
   return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
 }
 
-- (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
+- (void)dataTaskWithRequest:(NSURLRequest *)request
+                 completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   NSURLSession *session = [[self session] copy];
+  
   [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+    
+    if (data == NULL && error) {
+      completion(nil, error);
+      return;
+    }
+  
     if (!data || ![data isKindOfClass:NSData.class]) {
+      completion(nil, [QNMapper error:@"Could not receive data" code:QNErrorCodeFailedReceiveData]);
       return;
     }
-    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-    if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
+    
+    NSError *jsonError = [[NSError alloc] init];
+    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
+    
+    if (jsonError.domain || !dict) {
+      completion(nil, [QNMapper error:@"Could not parse response" code:QNErrorCodeFailedParseResponse]);
       return;
     }
-    completion(dict);
+    
+    completion(dict, nil);
   }] resume];
 }
 
