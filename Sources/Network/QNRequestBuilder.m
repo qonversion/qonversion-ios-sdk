@@ -16,16 +16,6 @@ static NSString * const kAttributionEndpoint = @"attribution";
 
 @implementation QNRequestBuilder
 
-+ (instancetype)shared {
-  static id shared = nil;
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{
-    shared = self.new;
-  });
-  
-  return shared;
-}
-
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters {
   return [self makePostRequestWith:kInitEndpoint andBody:parameters];
 }

@@ -3,26 +3,23 @@
 #import "QNKeeper.h"
 #import "QNConstants.h"
 #import "QNMapper.h"
-#import "QNInMemoryStorage.h"
 #import "QNUserDefaultsStorage.h"
 #import "QNDevice.h"
-#import "QNRequestBuilder.h"
-#import "QNRequestSerializer.h"
 #import "QNErrors.h"
 #import "QNStoreKitSugare.h"
 #import "QNProduct+Protected.h"
+#import "QNAPIClient.h"
+#import "QNUserPropertiesManager.h"
 
-static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
 static NSString * const kPermissionsResult = @"qonversion.permissions.result";
 static NSString * const kProductsResult = @"qonversion.products.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 
 @interface Qonversion()
 
-@property (nonatomic, strong) NSOperationQueue *backgroundQueue;
-
+@property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
-@property (nonatomic) QNInMemoryStorage *inMemoryStorage;
+
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 @property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
 
@@ -47,8 +44,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
-//+ (void)launchWithKey:(nonnull NSString *)key completion:(nullable void (^)(NSString *uid))completion {
-  [[QNRequestBuilder shared] setApiKey:key];
+  [[QNAPIClient shared] setApiKey:key];
+  
+  // TODO
+  // Product Center
   [[Qonversion sharedInstance] launchWithKey:key completion:completion];
 }
 
@@ -69,9 +68,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (void)setUserProperty:(NSString *)property value:(NSString *)value {
-  if ([QNProperties checkProperty:property] && [QNProperties checkValue:value]) {
-    [[Qonversion sharedInstance] setUserProperty:property value:value];
-  }
+  [[[Qonversion sharedInstance] propertiesManager] setUserProperty:property value:value];
 }
 
 + (void)checkPermissions:(QNPermissionCompletionHandler)result {
@@ -112,32 +109,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   return shared;
 }
 
-- (NSURLSession *)session {
-  return [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
-}
-
 - (instancetype)init {
   self = super.init;
   if (self) {
-    _inMemoryStorage = [[QNInMemoryStorage alloc] init];
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
+    
+    _propertiesManager = [[QNUserPropertiesManager alloc] init];
     
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
-    _requestSerializer = [[QNRequestSerializer alloc] init];
     _updatingCurrently = NO;
     _launchingFinished = NO;
     _debugMode = NO;
     _device = [[QNDevice alloc] init];
     
-    _backgroundQueue = [[NSOperationQueue alloc] init];
-    [_backgroundQueue setMaxConcurrentOperationCount:1];
-    [_backgroundQueue setSuspended:NO];
-    
-    _backgroundQueue.name = kBackgrounQueueName;
-    
     _permissionsBlocks = [[NSMutableArray alloc] init];
-    [self addObservers];
     [self collectIntegrationsData];
   }
   return self;
@@ -300,30 +286,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [request start];
 }
 
-- (void)setUserProperty:(NSString *)property value:(NSString *)value {
-  [self runOnBackgroundQueue:^{
-    [self->_inMemoryStorage storeObject:value forKey:property];
-    [self sendPropertiesWithDelay:kQPropertiesSendingPeriodInSeconds];
-  }];
-}
-
-- (void)addObservers {
-  NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-  [center addObserver:self
-             selector:@selector(enterBackground)
-                 name:UIApplicationDidEnterBackgroundNotification
-               object:nil];
-}
-
-- (void)removeObservers {
-  NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-  [center removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
-}
-
-- (void)dealloc {
-  [self removeObservers];
-}
-
 - (void)collectIntegrationsData {
   __block __weak Qonversion *weakSelf = self;
   dispatch_async(dispatch_get_main_queue(), ^{
@@ -345,89 +307,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   NSString *afUserID = _device.afUserID;
   if (![QNUtils isEmptyString:afUserID]) {
     [Qonversion setUserProperty:keyQNPropertyAppsFlyerUserID value:afUserID];
-  }
-}
-
-- (void)enterBackground {
-  [self sendPropertiesInBackground];
-}
-
-- (void)sendPropertiesWithDelay:(int)delay {
-  if (!_sendingScheduled) {
-    _sendingScheduled = YES;
-    __block __weak Qonversion *weakSelf = self;
-    [_backgroundQueue addOperationWithBlock:^{
-      dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf performSelector:@selector(sendPropertiesInBackground) withObject:nil afterDelay:delay];
-      });
-    }];
-  }
-}
-
-- (void)sendPropertiesInBackground {
-  _sendingScheduled = NO;
-  [self sendProperties];
-}
-
-- (void)sendProperties {
-  if ([QNUtils isEmptyString:[self requestBuilder].apiKey]) {
-    QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
-    return;
-  }
-  
-  @synchronized (self) {
-    if (_updatingCurrently) {
-      return;
-    }
-    _updatingCurrently = YES;
-  }
-  
-  [self runOnBackgroundQueue:^{
-    NSDictionary *properties = [self->_inMemoryStorage.storageDictionary copy];
-    
-    if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
-      self->_updatingCurrently = NO;
-      return;
-    }
-    
-    if (properties.count == 0) {
-      self->_updatingCurrently = NO;
-      return;
-    }
-    
-    NSURLRequest *request = [[self requestBuilder] makePropertiesRequestWith:@{@"properties": properties}];
-    
-    __block __weak Qonversion *weakSelf = self;
-    [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-      if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-        QONVERSION_LOG(@"Properties Request Log Response:\n%@", dict);
-      }
-      weakSelf.updatingCurrently = NO;
-      [weakSelf clearProperties:properties];
-    }];
-  }];
-}
-
-- (void)clearProperties:(NSDictionary *)properties {
-  [self runOnBackgroundQueue:^{
-    if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
-      return;
-    }
-    
-    for (NSString *key in properties.allKeys) {
-      [self->_inMemoryStorage removeObjectForKey:key];
-    }
-  }];
-}
-
-- (BOOL)runOnBackgroundQueue:(void (^)(void))block {
-  if ([[NSOperationQueue currentQueue].name isEqualToString:kBackgrounQueueName]) {
-    QONVERSION_LOG(@"Already running in the background.");
-    block();
-    return NO;
-  } else {
-    [_backgroundQueue addOperationWithBlock:block];
-    return YES;
   }
 }
 

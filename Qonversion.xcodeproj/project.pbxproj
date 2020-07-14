@@ -74,6 +74,8 @@
 		459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */; };
 		459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */; };
 		45CC2EF024407737005CD107 /* check_failed_state.json in Resources */ = {isa = PBXBuildFile; fileRef = 45CC2EEF24407737005CD107 /* check_failed_state.json */; };
+		45FFA2CE24BDE5FE007EFB8F /* QNAPIClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 45FFA2CC24BDE5FE007EFB8F /* QNAPIClient.h */; };
+		45FFA2CF24BDE5FE007EFB8F /* QNAPIClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -162,6 +164,8 @@
 		459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+TestJSON.m"; sourceTree = "<group>"; };
 		45CC2EEF24407737005CD107 /* check_failed_state.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = check_failed_state.json; sourceTree = "<group>"; };
 		45CC2EF4244085E4005CD107 /* tests.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = tests.yml; sourceTree = "<group>"; };
+		45FFA2CC24BDE5FE007EFB8F /* QNAPIClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNAPIClient.h; sourceTree = "<group>"; };
+		45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIClient.m; sourceTree = "<group>"; };
 		6D20F2CD8AEC1ED86B5F788D /* libPods-QonversionTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-QonversionTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		839DD50DB29B0AB311CD4074 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
 		B82EFA1145B6FD87B8EEEF6B /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -371,6 +375,8 @@
 				456ECD33249B901900D2BC40 /* QNRequestBuilder.m */,
 				458A8CD624BAC61E00637130 /* QNRequestSerializer.h */,
 				458A8CD724BAC61E00637130 /* QNRequestSerializer.m */,
+				45FFA2CC24BDE5FE007EFB8F /* QNAPIClient.h */,
+				45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -448,6 +454,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45FFA2CE24BDE5FE007EFB8F /* QNAPIClient.h in Headers */,
 				454BE230247C4AD8001FE771 /* QNUtils.h in Headers */,
 				4531CBC324577D770022C422 /* QNConstants.h in Headers */,
 				459DABFA243E35BC0011ECF3 /* QNKeeper.h in Headers */,
@@ -621,6 +628,7 @@
 				456ECD43249C8B0100D2BC40 /* QNPermission.m in Sources */,
 				4531CBC0245778110022C422 /* QNDevice.m in Sources */,
 				458A8CD924BAC61E00637130 /* QNRequestSerializer.m in Sources */,
+				45FFA2CF24BDE5FE007EFB8F /* QNAPIClient.m in Sources */,
 				459DABFC243E35BC0011ECF3 /* QNMapper.m in Sources */,
 				456ECD34249B901900D2BC40 /* QNRequestBuilder.m in Sources */,
 				4572FE2124BC4B5B00A17AC4 /* QNUserPropertiesManager.m in Sources */,
