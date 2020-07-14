@@ -2,6 +2,7 @@
 
 #import "QNMapper.h"
 #import "Helpers/XCTestCase+TestJSON.h"
+#import "QonversionLaunchComposeModel.h"
 
 static NSString *checkFailedState = @"check_failed_state.json";
 static NSString *initSuccessJSON = @"init.json";

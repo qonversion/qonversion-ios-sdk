@@ -8,7 +8,7 @@
 @implementation QNRequestBuilderTests
 
 - (void)setUp {
-    _requestBuilder = [[QNRequestBuilder alloc] initWithKey:@"API_KEY"];
+    _requestBuilder = [[QNRequestBuilder alloc] init];
 }
 
 - (void)tearDown {

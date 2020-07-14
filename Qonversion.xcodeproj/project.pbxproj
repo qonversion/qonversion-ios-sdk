@@ -80,6 +80,7 @@
 		45FFA2D424BDFCE8007EFB8F /* QNAttributionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2D224BDFCE8007EFB8F /* QNAttributionManager.m */; };
 		45FFA2D724BE010A007EFB8F /* QonversionLaunchComposeModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 45FFA2D524BE010A007EFB8F /* QonversionLaunchComposeModel.h */; };
 		45FFA2D824BE010A007EFB8F /* QonversionLaunchComposeModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2D624BE010A007EFB8F /* QonversionLaunchComposeModel.m */; };
+		45FFA2D924BE029E007EFB8F /* QNRequestBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD32249B8FE000D2BC40 /* QNRequestBuilder.h */; settings = {ATTRIBUTES = (Private, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -477,6 +478,7 @@
 				45FFA2CE24BDE5FE007EFB8F /* QNAPIClient.h in Headers */,
 				45FFA2D724BE010A007EFB8F /* QonversionLaunchComposeModel.h in Headers */,
 				454BE230247C4AD8001FE771 /* QNUtils.h in Headers */,
+				45FFA2D924BE029E007EFB8F /* QNRequestBuilder.h in Headers */,
 				4531CBC324577D770022C422 /* QNConstants.h in Headers */,
 				459DABFA243E35BC0011ECF3 /* QNKeeper.h in Headers */,
 				4572FE2024BC4B5B00A17AC4 /* QNUserPropertiesManager.h in Headers */,
