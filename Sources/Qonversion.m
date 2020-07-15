@@ -56,7 +56,7 @@
 }
 
 + (void)checkPermissions:(QNPermissionCompletionHandler)result {
-//  [[Qonversion sharedInstance].productCenterManager checkPermissions:result];
+  [[Qonversion sharedInstance].productCenterManager checkPermissions:result];
 }
 
 + (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {

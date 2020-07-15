@@ -81,6 +81,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }];
 }
 
+- (void)checkPermissions:(QNPermissionCompletionHandler)result {
+  
+  @synchronized (self) {
+    if (!_launchingFinished) {
+      if (result) {
+        [self.permissionsBlocks addObject:result];
+      }
+      
+      return;
+    }
+  }
+  
+  result(self.launchResult, self.launchError);
+}
+
 - (void)executePermissionBlocks {
   @synchronized (self) {
     NSMutableArray <QNPermissionCompletionHandler> *_blocks = [self->_permissionsBlocks copy];
@@ -143,25 +158,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //  return nil;
 //}
 //
-//- (void)checkPermissions:(QNPermissionCompletionHandler)result {
-//  
-//  @synchronized (self) {
-//    if (!_launchingFinished) {
-//      if (result) {
-//        [self.permissionsBlocks addObject:result];
-//      }
-//      
-//      return;
-//    }
-//  }
-//  
-//  QonversionLaunchComposeModel *model = [self launchModel];
-//  if (model) {
-//    result(model.result.permissions, model.error);
-//  } else {
-//    QONVERSION_LOG(@">>> Model not found");
-//  }
-//}
+
 //
 //- (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
 //  
