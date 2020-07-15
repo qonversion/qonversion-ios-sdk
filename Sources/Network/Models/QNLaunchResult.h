@@ -2,6 +2,7 @@
 #import "QNPermission.h"
 #import "QNProduct.h"
 
+NS_SWIFT_NAME(Qonversion.LaunchResult)
 @interface QNLaunchResult : NSObject <NSCoding>
 
 /**
