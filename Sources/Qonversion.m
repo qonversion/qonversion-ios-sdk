@@ -21,8 +21,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 //@property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 //@property (nonatomic, strong) QNAttributionManager *attributionManager;
 
-@property (nonatomic, assign, readwrite) BOOL launchingFinished;
-
 @property (nonatomic, assign) BOOL debugMode;
 
 @end
@@ -35,7 +33,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
   [self launchWithKey:key completion:nil];
 }
 
-+ (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
++ (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
   
   //[[QNAPIClient shared] setApiKey:key];
   //[[Qonversion sharedInstance].productCenterManager]
@@ -93,7 +91,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 //    _productCenterManager = [[QNProductCenterManager alloc] init];
 //    _attributionManager = [[QNAttributionManager alloc] init];
     
-    _launchingFinished = NO;
     _debugMode = NO;
   }
   

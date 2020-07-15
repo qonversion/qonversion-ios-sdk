@@ -6,6 +6,7 @@
 #import "QNMapper.h"
 #import "QNLaunchResult.h"
 #import "QNMapperObject.h"
+#import "QNKeeper.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
@@ -20,6 +21,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 @property (nonatomic) NSString *purchasingCurrently;
 @property (nonatomic) QNAPIClient *apiClient;
+@property (nonatomic) QNLaunchResult *launchResult;
+@property (nonatomic) NSError *launchError;
+
+@property (nonatomic, assign) BOOL launchingFinished;
+
 
 @end
 
@@ -28,6 +34,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (instancetype)init {
   self = super.init;
   if (self) {
+    _launchingFinished = NO;
+    _launchError = nil;
+    _launchResult = nil;
+    
     _apiClient = [QNAPIClient shared];
     _storeKitService = [[QNStoreKitService alloc] initWithDelegate:self];
     
@@ -45,55 +55,70 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return [self.persistentStorage loadObjectForKey:kLaunchResult];
 }
 
-//
-//- (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
-//  
+- (void)launchWithCompletion:(QNLaunchCompletionHandler)completion {
+  _launchingFinished = NO;
+  
+  [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+    @synchronized (self) {
+      self->_launchingFinished = YES;
+      if (result) {
+        [self->_persistentStorage storeObject:result forKey:kLaunchResult];
+      }
+      
+      self->_launchResult = result;
+      self->_launchError = error;
+      
+      [self executePermissionBlocks];
+      [self loadProducts];
+      if (result.uid) {
+        QNKeeper.userID = result.uid;
+        [[QNAPIClient shared] setUserID:result.uid];
+      }
+    }
+  }];
+  
+}
 
-//  
-//  NSURLSession *session = [[self session] copy];
-//  
-//  [[session dataTaskWithRequest:request
-//              completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-//    
-//    if (data == NULL && error) {
-//      QonversionLaunchComposeModel *model = [[QonversionLaunchComposeModel alloc] init];
-//      model.error = error;
-//      
-//      @synchronized (self) {
-//        [self->_persistentStorage storeObject:model forKey:kLaunchResult];
-//        _launchingFinished = YES;
-//        [self executePermissionBlocks:model];
-//        
-//        return;
-//      }
-//    }
-//    
-//    QonversionLaunchComposeModel *model = [[QNMapper new] composeLaunchModelFrom:data];
-//    
-//    @synchronized (self) {
-//      [self->_persistentStorage storeObject:model forKey:kLaunchResult];
-//      _launchingFinished = YES;
-//    }
-//    
-//    if (model) {
-//      [self executePermissionBlocks:model];
-//      [self loadProducts:model];
-//      
-//      if (model.result.uid) {
-//        QNKeeper.userID = model.result.uid;
-//        [[self requestBuilder] setUserID:model.result.uid];
-//      }
-//      
-//      if (completion) {
-//        // TODO
-//        //completion(model.result.uid);
-//      }
-//    }
-//    
-//    
-//  }] resume];
+  //    @synchronized (self) {
+  //      [self->_persistentStorage storeObject:model forKey:kLaunchResult];
+  //      _launchingFinished = YES;
+  //    }
 //}
+  //
+  //    if (model) {
+  //      [self executePermissionBlocks:model];
+  //      [self loadProducts:model];
+  //
+
+
+  //    }
+
+- (void)executePermissionBlocks {
+  @synchronized (self) {
+    NSMutableArray <QNPermissionCompletionHandler> *_blocks = [self->_permissionsBlocks copy];
+    [self->_permissionsBlocks removeAllObjects];
+
+    for (QNPermissionCompletionHandler block in _blocks) {
+      block(self.launchResult.permissions ?: @{}, self.launchError);
+    }
+  }
+}
+
+- (void)loadProducts {
+//  NSArray<QNProduct *> *products = [model.result.products allValues];
 //
+//  NSMutableSet *productsSet = [[NSMutableSet alloc] init];
+//  if (products) {
+//    for (QNProduct *product in products) {
+//      [productsSet addObject:product.storeID];
+//    }
+//  }
+//
+//  SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:productsSet];
+//  [request setDelegate:self];
+//  [request start];
+}
+
 //
 //- (void)logPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
 //  /*
@@ -173,33 +198,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //  
 //  result(nil, [QNErrors errorWithQonverionErrorCode:QNErrorProductNotFound], NO);
 //}
-//
-//- (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {
-//  
-//  @synchronized (self) {
-//    NSMutableArray <QNPermissionCompletionHandler> *_blocks = [self->_permissionsBlocks copy];
-//    [self->_permissionsBlocks removeAllObjects];
-//    
-//    for (QNPermissionCompletionHandler block in _blocks) {
-//      block(model.result.permissions ?: @{}, model.error);
-//    }
-//  }
-//}
-//
-//- (void)loadProducts:(QonversionLaunchComposeModel *)model {
-//  NSArray<QNProduct *> *products = [model.result.products allValues];
-//  
-//  NSMutableSet *productsSet = [[NSMutableSet alloc] init];
-//  if (products) {
-//    for (QNProduct *product in products) {
-//      [productsSet addObject:product.storeID];
-//    }
-//  }
-//  
-//  SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:productsSet];
-//  [request setDelegate:self];
-//  [request start];
-//}
+
 //
 //- (SKProduct * _Nullable)productAt:(SKPaymentTransaction *)transaction {
 //  NSString *productIdentifier = transaction.payment.productIdentifier ?: @"";

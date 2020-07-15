@@ -2,7 +2,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class QNProduct, QNPermission;
+@class QNProduct, QNPermission, QNLaunchResult;
 
 typedef NS_ENUM(NSInteger, QNAttributionProvider) {
   QNAttributionProviderAppsFlyer = 0,
@@ -11,6 +11,7 @@ typedef NS_ENUM(NSInteger, QNAttributionProvider) {
   QNAttributionProviderApple
 } NS_SWIFT_NAME(Qonversion.AttributionProvider);
 
+typedef void (^QNLaunchCompletionHandler)(QNLaunchResult *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.LaunchCompletionHandler);
 
 typedef void (^QNPermissionCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
 
@@ -20,9 +21,7 @@ typedef NS_ENUM(NSInteger, QNProperty) {
   QNPropertyEmail = 0,
   QNPropertyName,
   QNPropertyPremium
-};
-NS_SWIFT_NAME(Qonversion.Property);
-
+} NS_SWIFT_NAME(Qonversion.Property);
 
 @interface Qonversion : NSObject
 
@@ -36,7 +35,7 @@ NS_SWIFT_NAME(Qonversion.Property);
  @param key - project key to setup the SDK.
  @param completion - will return `uid` for Ads integrations.
  */
-+ (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion;
++ (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
 
 /**
  Sets the environment for receipt.
