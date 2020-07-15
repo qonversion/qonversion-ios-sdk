@@ -71,6 +71,7 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNAPIError) {
 @interface QNErrors
 
 + (NSError *)errorWithCode:(QNAPIError)errorCode;
++ (NSError *)errorWithQNErrorCode:(QNError)errorCode;
 + (NSError *)errorFromURLDomainError:(NSError *)error;
 + (NSError *)errorFromTransactionError:(NSError *)error;
 

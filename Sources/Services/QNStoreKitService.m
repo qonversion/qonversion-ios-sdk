@@ -38,6 +38,20 @@
   return self;
 }
 
+- (SKProduct *)purchase:(NSString *)productID {
+  SKProduct *skProduct = self->_products[productID];
+  
+  if (skProduct) {
+    SKPayment *payment = [SKPayment paymentWithProduct:skProduct];
+    [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
+    [[SKPaymentQueue defaultQueue] addPayment:payment];
+    
+    return skProduct;
+  } else {
+    return nil;
+  }
+}
+
 // MARK: - SKPaymentTransactionObserver
 
 - (void)paymentQueue:(SKPaymentQueue *)queue restoreCompletedTransactionsFailedWithError:(NSError *)error {

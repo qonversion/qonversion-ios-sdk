@@ -1,3 +1,4 @@
+#import "Qonversion.h"
 #import <Foundation/Foundation.h>
 
 @class SKProduct, SKPaymentTransaction;
@@ -22,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
                  completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
+- (void)attributionRequest:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
 
 @end
 

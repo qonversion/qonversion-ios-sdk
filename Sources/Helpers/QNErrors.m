@@ -16,10 +16,14 @@
   return @"";
 }
 
++ (NSError *)errorWithQNErrorCode:(QNError)errorCode {
+  return [self errorWithQonversionErrorCode:errorCode userInfo:nil];
+}
+
 + (NSError *)errorWithCode:(QNAPIError)errorCode  {
   NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString([self messageForError:errorCode], nil)};
   
-  return [self errorWithQonverionErrorCode:QNErrorInternalError userInfo:info];
+  return [self errorWithQonversionErrorCode:QNErrorInternalError userInfo:info];
 }
 
 + (NSError *)errorFromTransactionError:(NSError *)error {
@@ -55,7 +59,7 @@
       }
   }
   
-  return [self errorWithQonverionErrorCode:errorCode userInfo:userInfo];
+  return [self errorWithQonversionErrorCode:errorCode userInfo:userInfo];
 }
 
 + (NSError *)errorFromURLDomainError:(NSError *)error {
@@ -74,10 +78,10 @@
     return error;
   }
   
-  return [self errorWithQonverionErrorCode:errorCode userInfo:userInfo];
+  return [self errorWithQonversionErrorCode:errorCode userInfo:userInfo];
 }
 
-+ (NSError *)errorWithQonverionErrorCode:(QNError)code
++ (NSError *)errorWithQonversionErrorCode:(QNError)code
                                 userInfo:(nullable NSDictionary<NSErrorUserInfoKey, id> *)dict {
   return [NSError errorWithDomain:keyQNErrorDomain code:code userInfo:dict];
 }

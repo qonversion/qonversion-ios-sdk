@@ -96,6 +96,25 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   result(self.launchResult.permissions, self.launchError);
 }
 
+- (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
+  @synchronized (self) {
+    if (self.purchasingCurrently) {
+      QONVERSION_LOG(@"Purchasing in process");
+      return;
+    }
+    self.purchasingCurrently = NULL;
+    
+    QNProduct *product = [self qonversionProduct:productID];
+    if (product && [_storeKitService purchase:product.storeID]) {
+      self.purchasingBlock = result;
+      self.purchasingCurrently = product.storeID;
+      return;
+    }
+  }
+
+   result(nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
+}
+
 - (void)executePermissionBlocks {
   @synchronized (self) {
     NSMutableArray <QNPermissionCompletionHandler> *_blocks = [self->_permissionsBlocks copy];
@@ -130,7 +149,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [_storeKitService loadProducts:productsSet];
 }
 
-
 //- (QNProduct *)productFor:(NSString *)productID {
 //  QonversionLaunchComposeModel *model = [self launchModel];
 //  NSDictionary *products = model.result.products ?: @{};
@@ -146,71 +164,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //}
 //
 
-//
-//- (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
-//  
-//  /*
-//    TODO
-//   self->_purchasingCurrently = NULL;
-//   QNProduct *product = [self qonversionProduct:productID];
-//  
-//  if (product) {
-//    SKProduct *skProduct = self->_products[product.storeID];
-//    
-//    if (skProduct) {
-//      self->_purchasingCurrently = skProduct.productIdentifier;
-//      self->_purchasingBlock = result;
-//      
-//      SKPayment *payment = [SKPayment paymentWithProduct:skProduct];
-//      [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
-//      [[SKPaymentQueue defaultQueue] addPayment:payment];
-//      return;
-//    }
-//  }*/
-//  
-//  result(nil, [QNErrors errorWithQonverionErrorCode:QNErrorProductNotFound], NO);
-//}
-
-//
-//- (SKProduct * _Nullable)productAt:(SKPaymentTransaction *)transaction {
-//  NSString *productIdentifier = transaction.payment.productIdentifier ?: @"";
-//  // TODO
-//  //return self.products[productIdentifier];
-//}
-//
-//- (QNProduct * _Nullable)qonversionProduct:(NSString *)productID {
-//  QonversionLaunchComposeModel *launchResult = [self launchModel];
-//  NSDictionary *products = launchResult.result.products ?: @{};
-//  return products[productID];
-//}
-//
-//- (void)purchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
-//  // Legacy request for storing purchase
-//  NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
-//  NSURLRequest *request = [[self requestBuilder] makePurchaseRequestWith:body];
-//  
-//  NSURLSession *session = [[self session] copy];
-//  
-//  [[session dataTaskWithRequest:request
-//              completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error)
-//    {
-//    if (error) {
-//      // TODO
-//      // Faield state
-//      return;
-//    }
-//    
-//    QonversionLaunchComposeModel *model = [[QNMapper new] composeLaunchModelFrom:data];
-//    
-//    @synchronized (self) {
-//      [self->_persistentStorage storeObject:model forKey:kLaunchResult];
-//    }
-//    
-//    QNPurchaseCompletionHandler checkBlock = [self purchasingBlock];
-//    run_block_on_main(checkBlock, model.result.permissions, model.error, transaction.isCancelled);
-//    self->_purchasingBlock = nil;
-//  }] resume];
-//}
+- (QNProduct * _Nullable)qonversionProduct:(NSString *)productID {
+  NSDictionary *products = _launchResult.products ?: @{};
+  
+  return products[productID];
+}
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
   [_apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {

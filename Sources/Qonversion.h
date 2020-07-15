@@ -81,7 +81,7 @@ typedef NS_ENUM(NSInteger, QNProperty) {
 + (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result;
 
 /**
-  Return Qonverion Product Assotiated with Store Kit Product
+  Return Qonversion Product Assotiated with Store Kit Product
   @param productID Product identifier create in Qonversion Dash
   @see [Product Center](https://qonversion.io/docs/product-center)
  */
