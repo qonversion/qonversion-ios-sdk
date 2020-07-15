@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 
 #import "QNMapper.h"
+#import "QNErrors.h"
 #import "Helpers/XCTestCase+TestJSON.h"
 #import "QNTestConstants.h"
 
@@ -63,7 +64,6 @@
 
 - (void)testThatMapparParsePermissionWithBrokenJson {
   
-  
   QNMapperObject *result = [QNMapper mapperObjectFrom:[self JSONObjectFromContentsOfFile:keyQNInitFailedJSON]];
   
   XCTAssertNotNil(result);
@@ -74,6 +74,8 @@
   XCTAssertNotNil(brokenResult);
   XCTAssertNil(brokenResult.data);
   XCTAssertNotNil(brokenResult.error);
+  
+  XCTAssertEqual(brokenResult.error.code, QNErrorInternalError);
 }
 
 @end
