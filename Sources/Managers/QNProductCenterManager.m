@@ -82,13 +82,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)checkPermissions:(QNPermissionCompletionHandler)result {
+  if (!result) {
+    return;
+  }
   
   @synchronized (self) {
     if (!_launchingFinished) {
-      if (result) {
-        [self.permissionsBlocks addObject:result];
-      }
-      
+      [self.permissionsBlocks addObject:result];
       return;
     }
   }
