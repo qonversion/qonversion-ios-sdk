@@ -11,6 +11,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 @interface QNUserPropertiesManager()
 
+@property (nonatomic) QNAPIClient *apiClient;
+
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
 
 @property (nonatomic) QNInMemoryStorage *inMemoryStorage;
@@ -32,6 +34,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     _backgroundQueue = [[NSOperationQueue alloc] init];
     [_backgroundQueue setMaxConcurrentOperationCount:1];
     [_backgroundQueue setSuspended:NO];
+    _apiClient = [QNAPIClient shared];
 
     _backgroundQueue.name = kBackgrounQueueName;
     _device = QNDevice.current;
@@ -115,19 +118,14 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
       self->_updatingCurrently = NO;
       return;
     }
-    // TODO
-    // Move to api client
     
-//    NSURLRequest *request = [[self requestBuilder] makePropertiesRequestWith:@{@"properties": properties}];
-//
-//    __block __weak QNUserPropertiesManager *weakSelf = self;
-//    [self dataTaskWithRequest:request completion:^(NSDictionary *dict) {
-//      if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-//        QONVERSION_LOG(@"Properties Request Log Response:\n%@", dict);
-//      }
-//      weakSelf.updatingCurrently = NO;
-//      [weakSelf clearProperties:properties];
-//    }];
+    __block __weak QNUserPropertiesManager *weakSelf = self;
+    [self->_apiClient properties:properties completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      if (error) {
+        weakSelf.updatingCurrently = NO;
+        [weakSelf clearProperties:properties];
+      }
+    }];
   }];
 }
 
