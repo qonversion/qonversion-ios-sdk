@@ -8,6 +8,7 @@
 #import "QNMapperObject.h"
 #import "QNKeeper.h"
 #import "QNProduct+Protected.h"
+#import "QNErrors.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
@@ -197,7 +198,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
+  NSError *error = [QNErrors errorFromTransactionError:transaction];
   
+  if (self.purchasingBlock) {
+    self.purchasingBlock(nil, error, error.code == QNErrorCancelled);
+    @synchronized (self) {
+      self.purchasingBlock = nil;
+      self.purchasingCurrently = nil;
+    }
+  }
 }
 
 @end
