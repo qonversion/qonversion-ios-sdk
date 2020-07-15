@@ -1,5 +1,6 @@
 #import "QNUtils.h"
 #import "QNMapper.h"
+#import "QNErrors.h"
 #import "QNLaunchResult+Protected.h"
 #import "QNMapperObject.h"
 
@@ -82,6 +83,11 @@
 + (QNMapperObject *)mapperObjectFrom:(NSDictionary *)dict {
   QNMapperObject *object = [QNMapperObject new];
   
+  if (!dict || ![dict isKindOfClass:NSDictionary.class]) {
+    [object setError:[QNErrors errorWithCode:QNAPIErrorFailedReceiveData]];
+    return object;
+  }
+  
   NSNumber *success = dict[@"success"];
   NSDictionary *resultData = dict[@"data"];
   
@@ -89,8 +95,7 @@
     [object setData:resultData];
     return object;
   } else {
-    NSString *message = dict[@"data"][@"message"] ?: @"";
-    [object setError:[QNErrors errorWIthCode:QNAPIErrorIncorrectRequest]];
+    [object setError:[QNErrors errorWithCode:QNAPIErrorIncorrectRequest]];
     return object;
   }
 }

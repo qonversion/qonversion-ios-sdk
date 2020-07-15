@@ -1,9 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "QNConstants.h"
 
-NS_SWIFT_NAME(Qonversion.Errors)
-@interface QNErrors
-
 extern NSErrorDomain const QNErrorDomain NS_SWIFT_NAME(Qonversion.ErrorDomain);
 
 typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
@@ -71,7 +68,9 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNAPIError) {
   QNAPIErrorIncorrectRequest
 };
 
-+ (NSError *)errorWIthCode:(QNAPIError)errorCode;
+@interface QNErrors
+
++ (NSError *)errorWithCode:(QNAPIError)errorCode;
 + (NSError *)errorFromURLDomainError:(NSError *)error;
 + (NSError *)errorFromTransactionError:(NSError *)error;
 

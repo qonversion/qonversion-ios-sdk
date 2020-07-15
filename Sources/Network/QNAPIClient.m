@@ -6,9 +6,6 @@
 #import "QNConstants.h"
 #import "QNErrors.h"
 
-// Models
-#import "QNLaunchResult+Protected.h"
-
 @interface QNAPIClient()
 
 @property (nonatomic, strong) QNDevice *device;
@@ -82,7 +79,7 @@
     }
   
     if (!data || ![data isKindOfClass:NSData.class]) {
-      completion(nil, [QNErrors errorWIthCode:QNAPIErrorFailedReceiveData]);
+      completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedReceiveData]);
       return;
     }
     
@@ -90,7 +87,7 @@
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
     
     if (jsonError.code || !dict) {
-      completion(nil, [QNErrors errorWIthCode:QNAPIErrorFailedParseResponse]);
+      completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedParseResponse]);
       return;
     }
     
