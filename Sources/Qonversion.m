@@ -15,7 +15,7 @@
 @interface Qonversion()
 
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
-//@property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
+@property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 //@property (nonatomic, strong) QNAttributionManager *attributionManager;
 
 @property (nonatomic, assign) BOOL debugMode;
@@ -52,7 +52,7 @@
 }
 
 + (void)setUserProperty:(NSString *)property value:(NSString *)value {
- // [[Qonversion sharedInstance].propertiesManager setUserProperty:property value:value];
+  [[Qonversion sharedInstance].propertiesManager setUserProperty:property value:value];
 }
 
 + (void)checkPermissions:(QNPermissionCompletionHandler)result {
@@ -83,7 +83,7 @@
   self = super.init;
   if (self) {
     _productCenterManager = [[QNProductCenterManager alloc] init];
-//    _propertiesManager = [[QNUserPropertiesManager alloc] init];
+    _propertiesManager = [[QNUserPropertiesManager alloc] init];
 //    _attributionManager = [[QNAttributionManager alloc] init];
     
     _debugMode = NO;
