@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *userID;
 @property (nonatomic, strong) NSString *apiKey;
 
-- (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion;
+- (void)launchWithCompletion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion;
 
 @end
 

@@ -44,25 +44,27 @@
 
 // MARK: - Public
 
-- (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+- (void)launchWithCompletion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   NSDictionary *launchData = [self enrichParameters:[_requestSerializer launchData]];
   NSURLRequest *request = [[self requestBuilder] makeInitRequestWith:launchData];
-  
-  [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    if (error) {
-      completion(nil, error);
-      return;
-    }
-    
-    QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
-    if (result.error) {
-      completion(nil, result.error);
-      return;
-    }
-    
-    QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-    completion(launchResult, nil);
-  }];
+  /*
+   ^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+     if (error) {
+       completion(nil, error);
+       return;
+     }
+     
+     QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+     if (result.error) {
+       completion(nil, result.error);
+       return;
+     }
+     
+     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+     completion(launchResult, nil);
+   }
+   */
+  return [self dataTaskWithRequest:request completion:completion];
 }
 
 // MARK: - Private
