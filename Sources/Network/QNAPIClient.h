@@ -1,5 +1,7 @@
 #import <Foundation/Foundation.h>
 
+@class SKProduct, SKPaymentTransaction;
+
 typedef void (^QNAPIClientCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
 
 NS_ASSUME_NONNULL_BEGIN
@@ -14,6 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *apiKey;
 
 - (void)launchRequest:(QNAPIClientCompletionHandler)completion;
+
+- (void)purchaseRequestWith:(SKProduct *)product
+                transaction:(SKPaymentTransaction *)transaction
+                 completion:(QNAPIClientCompletionHandler)completion;
 
 @end
 

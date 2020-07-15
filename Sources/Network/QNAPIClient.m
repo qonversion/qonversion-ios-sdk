@@ -50,6 +50,15 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
+- (void)purchaseRequestWith:(SKProduct *)product
+                transaction:(SKPaymentTransaction *)transaction
+                completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *purchaseData = [_requestSerializer purchaseData:product transaction:transaction];
+  NSDictionary *resultData = [self enrichParameters:purchaseData];
+  NSURLRequest *request = [[self requestBuilder] makePurchaseRequestWith:resultData];
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
 // MARK: - Private
 
 - (NSDictionary *)enrichParameters:(NSDictionary *)parameters {
