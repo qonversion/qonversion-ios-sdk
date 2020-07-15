@@ -56,6 +56,7 @@
   NSDictionary *purchaseData = [_requestSerializer purchaseData:product transaction:transaction];
   NSDictionary *resultData = [self enrichParameters:purchaseData];
   NSURLRequest *request = [[self requestBuilder] makePurchaseRequestWith:resultData];
+  
   return [self dataTaskWithRequest:request completion:completion];
 }
 
