@@ -2,6 +2,10 @@
 #import "QNInMemoryStorage.h"
 #import "QNUserDefaultsStorage.h"
 #import "QNStoreKitService.h"
+#import "QNAPIClient.h"
+#import "QNMapper.h"
+#import "QNLaunchResult.h"
+#import "QNMapperObject.h"
 
 static NSString * const kPermissionsResult = @"qonversion.permissions.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
@@ -14,7 +18,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
-@property (nonatomic, strong) NSString *purchasingCurrently;
+@property (nonatomic) NSString *purchasingCurrently;
+@property (nonatomic) QNAPIClient *apiClient;
 
 @end
 
@@ -23,6 +28,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (instancetype)init {
   self = super.init;
   if (self) {
+    _apiClient = [QNAPIClient shared];
     _storeKitService = [[QNStoreKitService alloc] initWithDelegate:self];
     
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
@@ -234,25 +240,22 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //  }] resume];
 //}
 
-- (void)requestLaunchData {
-  /*
-   ^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-     if (error) {
-       completion(nil, error);
-       return;
-     }
-     
-     QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
-     if (result.error) {
-       completion(nil, result.error);
-       return;
-     }
-     
-     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-     completion(launchResult, nil);
-   }
-   */
-  
+- (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+  [_apiClient launchWithCompletion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    if (error) {
+      completion(nil, error);
+      return;
+    }
+    
+    QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+    if (result.error) {
+      completion(nil, result.error);
+      return;
+    }
+    
+    QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+    completion(launchResult, nil);
+  }];
 }
 
 @end

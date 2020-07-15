@@ -112,7 +112,7 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   [_client dataTaskWithRequest:_request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     XCTAssertNil(dict);
     XCTAssertNotNil(error);
-    XCTAssertEqual(error.code, 1);
+    XCTAssertEqual(error.code, 17);
     XCTAssertEqualObjects(error.domain, keyQNErrorDomain);
     [expectation fulfill];
   }];
