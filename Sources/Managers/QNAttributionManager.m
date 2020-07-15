@@ -1,5 +1,6 @@
 #import "QNAttributionManager.h"
 #import "QNAPIClient.h"
+#import "QNUtils.h"
 
 @interface QNAttributionManager()
 
