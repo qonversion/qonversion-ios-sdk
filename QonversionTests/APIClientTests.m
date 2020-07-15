@@ -1,7 +1,7 @@
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
-#import "QNAPIClient.h"
 #import "QNTestConstants.h"
+#import "QNAPIClient.h"
 
 #import "Helpers/XCTestCase+TestJSON.h"
 
@@ -14,15 +14,15 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion;
 @end
 
-@interface QNAPIClientTests : XCTestCase
+@interface APIClientTests : XCTestCase
 
-@property (strong, nonatomic) id mockSession;
-@property (nonatomic, strong) id request;
+@property (nonatomic) id mockSession;
+@property (nonatomic) id request;
 
-@property (nonatomic, strong) QNAPIClient *client;
+@property (nonatomic) QNAPIClient *client;
 @end
 
-@implementation QNAPIClientTests
+@implementation APIClientTests
 
 - (void)setUp {
   _mockSession = OCMClassMock([NSURLSession class]);

@@ -1,7 +1,5 @@
 #import <Foundation/Foundation.h>
 
-@class QNLaunchResult;
-
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QNAPIClient : NSObject
