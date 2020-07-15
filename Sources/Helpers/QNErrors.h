@@ -5,59 +5,70 @@ NS_SWIFT_NAME(Qonversion.Errors)
 
 extern NSErrorDomain const QNErrorDomain NS_SWIFT_NAME(Qonversion.ErrorDomain);
 
-typedef NS_ERROR_ENUM(QNErrorDomain, QonversionError) {
-  QonversionErrorUnknown = 0,
+typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
+  QNErrorUnknown = 0,
   
   // user cancelled the request, etc.
-  QonversionErrorCancelled,
+  QNErrorCancelled,
   
   // the product has not been added to the product center
   // see more https://qonversion.io/docs/create-products
-  QonversionErrorProductNotFound,
+  QNErrorProductNotFound,
   
   // client is not allowed to issue the request, etc
-  QonversionErrorClientInvalid,
+  QNErrorClientInvalid,
   
   // purchase identifier was invalid, etc.
-  QonversionErrorPaymentInvalid,
+  QNErrorPaymentInvalid,
   
   // this device is not allowed to make the payment
-  QonversionErrorPaymentNotAllowed,
+  QNErrorPaymentNotAllowed,
   
   // Apple Store didn't processe request
   
-  QonversionErrorStoreFailed,
+  QNErrorStoreFailed,
   
   // product is not available in the current storefront
-  QonversionErrorStoreProductNotAvailable,
+  QNErrorStoreProductNotAvailable,
   
   // user has not allowed access to cloud service information
-  QonversionErrorCloudServicePermissionDenied,
+  QNErrorCloudServicePermissionDenied,
   
   // the device could not connect to the nework
-  QonversionErrorCloudServiceNetworkConnectionFailed,
+  QNErrorCloudServiceNetworkConnectionFailed,
   
   // user has revoked permission to use this cloud service
-  QonversionErrorCloudServiceRevoked,
+  QNErrorCloudServiceRevoked,
   
   // user needs to acknowledge Apple's privacy policy
-  QonversionErrorPrivacyAcknowledgementRequired,
+  QNErrorPrivacyAcknowledgementRequired,
   
   // app is attempting to use SKPayment's requestData property, but does not have the appropriate entitlement
-  QonversionErrorUnauthorizedRequestData,
+  QNErrorUnauthorizedRequestData,
   
   // provided shared secret is incorrect, validation unavailable
-  QonversionErrorIncorrectSharedSecret,
+  QNErrorIncorrectSharedSecret,
   
   // failed to connect to Qonversion Backend
-  QonversionErrorConnectionFailed,
+  QNErrorConnectionFailed,
   
   // Other URL Session errors
-  QonversionErrorInternetConnectionFailed,
+  QNErrorInternetConnectionFailed,
   
   // Network data error
-  QonversionErrorDataFailed,
+  QNErrorDataFailed,
   
 } NS_SWIFT_NAME(Qonversion.Error);
 
+
+typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
+  QNErrorCodeFailedReceiveData = 0,
+  QNErrorCodeFailedParseResponse,
+  QNErrorCodeIncorrectRequest
+};
+
+
++ (NSError *)error:(NSString *)message code:(QNErrorCode)errorCode;
+
 @end
+

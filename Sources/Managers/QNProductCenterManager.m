@@ -165,7 +165,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //    }
 //  }*/
 //  
-//  result(nil, [QNUtils errorWithQonverionErrorCode:QonversionErrorProductNotFound], NO);
+//  result(nil, [QNUtils errorWithQonverionErrorCode:QNErrorProductNotFound], NO);
 //}
 //
 //- (void)executePermissionBlocks:(QonversionLaunchComposeModel *)model {

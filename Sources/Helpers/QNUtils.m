@@ -10,7 +10,7 @@
 }
 
 + (NSError *)errorFromTransactionError:(NSError *)error {
-  QonversionError errorCode = QonversionErrorUnknown;
+  QNError errorCode = QNErrorUnknown;
   NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
   userInfo[NSLocalizedDescriptionKey] = error.localizedDescription ?: @"";
   
@@ -19,49 +19,49 @@
     
       switch (skErrorCode) {
         case SKErrorUnknown:
-          errorCode = QonversionErrorUnknown; break;
+          errorCode = QNErrorUnknown; break;
         case SKErrorPaymentCancelled:
-          errorCode = QonversionErrorCancelled; break;
+          errorCode = QNErrorCancelled; break;
         case SKErrorStoreProductNotAvailable:
-          errorCode = QonversionErrorStoreProductNotAvailable; break;
+          errorCode = QNErrorStoreProductNotAvailable; break;
         case SKErrorPaymentNotAllowed:
-          errorCode = QonversionErrorPaymentNotAllowed; break;
+          errorCode = QNErrorPaymentNotAllowed; break;
         case SKErrorPaymentInvalid:
-          errorCode = QonversionErrorPaymentInvalid; break;
+          errorCode = QNErrorPaymentInvalid; break;
         // Belowe codes available on different iOS
         case 6: // SKErrorCloudServicePermissionDenied
-          errorCode = QonversionErrorCloudServicePermissionDenied;
+          errorCode = QNErrorCloudServicePermissionDenied;
         case 7: // SKErrorCloudServiceNetworkConnectionFailed
-          errorCode = QonversionErrorConnectionFailed; break;
+          errorCode = QNErrorConnectionFailed; break;
         case 8: // SKErrorCloudServiceRevoked
-          errorCode = QonversionErrorCloudServiceRevoked; break;
+          errorCode = QNErrorCloudServiceRevoked; break;
         case 9: // SKErrorPrivacyAcknowledgementRequired
-          errorCode = QonversionErrorPrivacyAcknowledgementRequired; break;
+          errorCode = QNErrorPrivacyAcknowledgementRequired; break;
         case 10: // SKErrorUnauthorizedRequestData
-          errorCode = QonversionErrorUnauthorizedRequestData; break;
+          errorCode = QNErrorUnauthorizedRequestData; break;
       }
   }
   
   return [self errorWithQonverionErrorCode:errorCode userInfo:userInfo];
 }
 
-+ (NSError *)errorWithQonverionErrorCode:(QonversionError)code
++ (NSError *)errorWithQonverionErrorCode:(QNError)code
                                 userInfo:(nullable NSDictionary<NSErrorUserInfoKey, id> *)dict {
   return [NSError errorWithDomain:QNErrorDomain code:code userInfo:dict];
 }
 
 
 + (NSError *)errorFromURLDomainError:(NSError *)error {
-  QonversionError errorCode = QonversionErrorUnknown;
+  QNError errorCode = QNErrorUnknown;
   NSMutableDictionary *userInfo = @{};
   userInfo[NSLocalizedDescriptionKey] = error.localizedDescription ?: @"";
   
   if ([[error domain] isEqualToString:NSURLErrorDomain]) {
     switch (error.code) {
       case NSURLErrorNotConnectedToInternet:
-        errorCode = QonversionErrorConnectionFailed; break;
+        errorCode = QNErrorConnectionFailed; break;
       default:
-        errorCode = QonversionErrorInternetConnectionFailed; break;
+        errorCode = QNErrorInternetConnectionFailed; break;
     }
   } else {
     return error;

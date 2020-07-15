@@ -83,6 +83,7 @@
 		45FFA2DB24BE06C3007EFB8F /* QNAPIClientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2DA24BE06C3007EFB8F /* QNAPIClientTests.m */; };
 		45FFA2DE24BE1015007EFB8F /* QNTestConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */; };
 		45FFA2E024BE1549007EFB8F /* broken_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2DF24BE1548007EFB8F /* broken_data.json */; };
+		45FFA2E324BECA9D007EFB8F /* QNErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2E124BECA9A007EFB8F /* QNErrors.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -180,6 +181,7 @@
 		45FFA2DC24BE1015007EFB8F /* QNTestConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNTestConstants.h; sourceTree = "<group>"; };
 		45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNTestConstants.m; sourceTree = "<group>"; };
 		45FFA2DF24BE1548007EFB8F /* broken_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = broken_data.json; sourceTree = "<group>"; };
+		45FFA2E124BECA9A007EFB8F /* QNErrors.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNErrors.m; sourceTree = "<group>"; };
 		6D20F2CD8AEC1ED86B5F788D /* libPods-QonversionTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-QonversionTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		839DD50DB29B0AB311CD4074 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
 		B82EFA1145B6FD87B8EEEF6B /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -360,6 +362,7 @@
 				454BE22E247C4AD8001FE771 /* QNUtils.h */,
 				454BE22F247C4AD8001FE771 /* QNUtils.m */,
 				458A8CB624B1EFE500637130 /* QNErrors.h */,
+				45FFA2E124BECA9A007EFB8F /* QNErrors.m */,
 				458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */,
 				458A8CBD24B4B88F00637130 /* QNStoreKitSugare.m */,
 			);
@@ -657,6 +660,7 @@
 				459DABF6243E35BC0011ECF3 /* QNUserInfo.m in Sources */,
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
 				459DABFB243E35BC0011ECF3 /* QNKeeper.m in Sources */,
+				45FFA2E324BECA9D007EFB8F /* QNErrors.m in Sources */,
 				456ECD43249C8B0100D2BC40 /* QNPermission.m in Sources */,
 				4531CBC0245778110022C422 /* QNDevice.m in Sources */,
 				458A8CD924BAC61E00637130 /* QNRequestSerializer.m in Sources */,

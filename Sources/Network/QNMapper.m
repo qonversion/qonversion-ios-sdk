@@ -107,12 +107,6 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   return result;
 }
 
-// Move out error building from mapper
-+ (NSError *)error:(NSString *)message code:(QNErrorCode)errorCode  {
-  NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil)};
-  return [[NSError alloc] initWithDomain:QNErrorDomain code:errorCode userInfo:info];
-}
-
 - (QNMapperObject *)mapperObjectFrom:(NSData *)data {
   QNMapperObject *object = [QNMapperObject new];
   
