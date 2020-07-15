@@ -7,7 +7,7 @@
 #import "QNLaunchResult.h"
 #import "QNMapperObject.h"
 
-static NSString * const kPermissionsResult = @"qonversion.permissions.result";
+static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
 
 @interface QNProductCenterManager()
@@ -40,10 +40,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   return self;
 }
-//
-//- (QNLaunchResult *)launchModel {
-//  return [self.persistentStorage loadObjectForKey:kPermissionsResult];
-//}
+
+- (QNLaunchResult *)launchModel {
+  return [self.persistentStorage loadObjectForKey:kLaunchResult];
+}
+
 //
 //- (void)launchWithKey:(nonnull NSString *)key completion:(QNPurchaseCompletionHandler)completion {
 //  
@@ -59,7 +60,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //      model.error = error;
 //      
 //      @synchronized (self) {
-//        [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
+//        [self->_persistentStorage storeObject:model forKey:kLaunchResult];
 //        _launchingFinished = YES;
 //        [self executePermissionBlocks:model];
 //        
@@ -70,7 +71,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //    QonversionLaunchComposeModel *model = [[QNMapper new] composeLaunchModelFrom:data];
 //    
 //    @synchronized (self) {
-//      [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
+//      [self->_persistentStorage storeObject:model forKey:kLaunchResult];
 //      _launchingFinished = YES;
 //    }
 //    
@@ -231,7 +232,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //    QonversionLaunchComposeModel *model = [[QNMapper new] composeLaunchModelFrom:data];
 //    
 //    @synchronized (self) {
-//      [self->_persistentStorage storeObject:model forKey:kPermissionsResult];
+//      [self->_persistentStorage storeObject:model forKey:kLaunchResult];
 //    }
 //    
 //    QNPurchaseCompletionHandler checkBlock = [self purchasingBlock];
