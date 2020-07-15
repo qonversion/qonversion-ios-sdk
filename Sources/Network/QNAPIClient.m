@@ -6,6 +6,7 @@
 #import "QNConstants.h"
 #import "QNErrors.h"
 #import "QNMapperObject.h"
+#import "QNUtils.h"
 
 @interface QNAPIClient()
 
