@@ -94,7 +94,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 - (void)sendProperties {
-  if ([QNUtils isEmptyString:[QNAPIClient shared].apiKey]) {
+  if ([QNUtils isEmptyString:_apiClient.apiKey]) {
     QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
     return;
   }
@@ -120,8 +120,9 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     }
     
     __block __weak QNUserPropertiesManager *weakSelf = self;
-    [self->_apiClient properties:properties completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-      if (error) {
+    [self->_apiClient properties:properties
+                      completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      if (!error) {
         weakSelf.updatingCurrently = NO;
         [weakSelf clearProperties:properties];
       }
