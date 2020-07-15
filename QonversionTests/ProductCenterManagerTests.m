@@ -36,7 +36,7 @@
 - (void)testThatProductCenterGetLaunchModel {
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   
-  OCMStub([_mockClient launchWithCompletion:([OCMArg invokeBlockWithArgs:[self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON], [NSNull null], nil])]);
+  OCMStub([_mockClient launchRequest:([OCMArg invokeBlockWithArgs:[self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON], [NSNull null], nil])]);
   
   [_manager launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
     XCTAssertNotNil(result);

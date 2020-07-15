@@ -11,8 +11,8 @@
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
 
-@interface QNProductCenterManager()
-
+@interface QNProductCenterManager() <QNStoreKitServiceDelegate>
+ 
 @property (nonatomic) QNStoreKitService *storeKitService;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
@@ -107,6 +107,27 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
+- (void)logPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+  /*
+   NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
+  NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
+  
+  NSURLSession *session = [[self session] copy];
+  
+  [[session dataTaskWithRequest:request
+              completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error)
+    {
+    if (!data || ![data isKindOfClass:NSData.class]) {
+      return;
+    }
+    
+    NSError *jsonError = [[NSError alloc] init];
+    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+    QONVERSION_LOG(@">>> serviceLogPurchase result %@", dict);
+  }] resume];
+   */
+}
+
 - (void)loadProducts {
 //  NSArray<QNProduct *> *products = [model.result.products allValues];
 //
@@ -122,28 +143,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //  [request start];
 }
 
-//
-//- (void)logPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
-//  /*
-//   NSDictionary *body = [self->_requestSerializer purchaseData:product transaction:transaction];
-//  NSURLRequest *request = [self->_requestBuilder makePurchaseRequestWith:body];
-//  
-//  NSURLSession *session = [[self session] copy];
-//  
-//  [[session dataTaskWithRequest:request
-//              completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error)
-//    {
-//    if (!data || ![data isKindOfClass:NSData.class]) {
-//      return;
-//    }
-//    
-//    NSError *jsonError = [[NSError alloc] init];
-//    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-//    QONVERSION_LOG(@">>> serviceLogPurchase result %@", dict);
-//  }] resume];
-//   */
-//}
-//
+
 //- (QNProduct *)productFor:(NSString *)productID {
 //  QonversionLaunchComposeModel *model = [self launchModel];
 //  NSDictionary *products = model.result.products ?: @{};
@@ -226,7 +226,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //}
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
-  [_apiClient launchWithCompletion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+  [_apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     if (error) {
       completion(nil, error);
       return;

@@ -44,7 +44,7 @@
 
 // MARK: - Public
 
-- (void)launchWithCompletion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+- (void)launchRequest:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   NSDictionary *launchData = [self enrichParameters:[_requestSerializer launchData]];
   NSURLRequest *request = [[self requestBuilder] makeInitRequestWith:launchData];
   return [self dataTaskWithRequest:request completion:completion];
