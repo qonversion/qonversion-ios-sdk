@@ -21,6 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
                 transaction:(SKPaymentTransaction *)transaction
                  completion:(QNAPIClientCompletionHandler)completion;
 
+- (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
+
 @end
 
 NS_ASSUME_NONNULL_END

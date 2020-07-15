@@ -45,17 +45,24 @@
 // MARK: - Public
 
 - (void)launchRequest:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
-  NSDictionary *launchData = [self enrichParameters:[_requestSerializer launchData]];
-  NSURLRequest *request = [[self requestBuilder] makeInitRequestWith:launchData];
+  NSDictionary *launchData = [self enrichParameters:[self.requestSerializer launchData]];
+  NSURLRequest *request = [self.requestBuilder makeInitRequestWith:launchData];
   return [self dataTaskWithRequest:request completion:completion];
 }
 
 - (void)purchaseRequestWith:(SKProduct *)product
                 transaction:(SKPaymentTransaction *)transaction
                 completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *purchaseData = [_requestSerializer purchaseData:product transaction:transaction];
+  NSDictionary *purchaseData = [self.requestSerializer purchaseData:product transaction:transaction];
   NSDictionary *resultData = [self enrichParameters:purchaseData];
-  NSURLRequest *request = [[self requestBuilder] makePurchaseRequestWith:resultData];
+  NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
+- (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *propertiesData = [self enrichParameters:@{@"properties": properties}];
+  NSURLRequest *request = [self.requestBuilder makePropertiesRequestWith:propertiesData];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
