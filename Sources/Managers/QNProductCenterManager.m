@@ -60,7 +60,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   __block __weak QNProductCenterManager *weakSelf = self;
   
-  [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+  [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
     run_block_on_bg(^void(){
       weakSelf.launchingFinished = YES;
       if (result) {
