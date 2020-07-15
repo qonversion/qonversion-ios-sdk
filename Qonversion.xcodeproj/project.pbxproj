@@ -82,6 +82,8 @@
 		45FFA2DE24BE1015007EFB8F /* QNTestConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */; };
 		45FFA2E024BE1549007EFB8F /* broken_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2DF24BE1548007EFB8F /* broken_data.json */; };
 		45FFA2E324BECA9D007EFB8F /* QNErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2E124BECA9A007EFB8F /* QNErrors.m */; };
+		45FFA2E624BED563007EFB8F /* QNMapperObject.h in Headers */ = {isa = PBXBuildFile; fileRef = 45FFA2E424BED563007EFB8F /* QNMapperObject.h */; };
+		45FFA2E724BED563007EFB8F /* QNMapperObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2E524BED563007EFB8F /* QNMapperObject.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -178,6 +180,8 @@
 		45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNTestConstants.m; sourceTree = "<group>"; };
 		45FFA2DF24BE1548007EFB8F /* broken_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = broken_data.json; sourceTree = "<group>"; };
 		45FFA2E124BECA9A007EFB8F /* QNErrors.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNErrors.m; sourceTree = "<group>"; };
+		45FFA2E424BED563007EFB8F /* QNMapperObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNMapperObject.h; sourceTree = "<group>"; };
+		45FFA2E524BED563007EFB8F /* QNMapperObject.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNMapperObject.m; sourceTree = "<group>"; };
 		6D20F2CD8AEC1ED86B5F788D /* libPods-QonversionTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-QonversionTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		839DD50DB29B0AB311CD4074 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
 		B82EFA1145B6FD87B8EEEF6B /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -382,8 +386,8 @@
 			isa = PBXGroup;
 			children = (
 				459DABEC243E35BC0011ECF3 /* Models */,
-				459DABEB243E35BC0011ECF3 /* QNMapper.m */,
 				459DABF3243E35BC0011ECF3 /* QNMapper.h */,
+				459DABEB243E35BC0011ECF3 /* QNMapper.m */,
 				456ECD32249B8FE000D2BC40 /* QNRequestBuilder.h */,
 				456ECD33249B901900D2BC40 /* QNRequestBuilder.m */,
 				458A8CD624BAC61E00637130 /* QNRequestSerializer.h */,
@@ -405,6 +409,8 @@
 				456ECD41249C76D400D2BC40 /* QNProduct.h */,
 				458A8CC324B5E52D00637130 /* QNProduct+Protected.h */,
 				456ECD44249C8B2000D2BC40 /* QNProduct.m */,
+				45FFA2E424BED563007EFB8F /* QNMapperObject.h */,
+				45FFA2E524BED563007EFB8F /* QNMapperObject.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -487,6 +493,7 @@
 				459DABFA243E35BC0011ECF3 /* QNKeeper.h in Headers */,
 				4572FE2024BC4B5B00A17AC4 /* QNUserPropertiesManager.h in Headers */,
 				459DAC03243E35BC0011ECF3 /* QNMapper.h in Headers */,
+				45FFA2E624BED563007EFB8F /* QNMapperObject.h in Headers */,
 				459DABF7243E35BC0011ECF3 /* QNKeychain.h in Headers */,
 				458A8CD524BAC5F500637130 /* QNLocalStorage.h in Headers */,
 				459DABF5243E35BC0011ECF3 /* Qonversion.h in Headers */,
@@ -658,6 +665,7 @@
 				4531CBC0245778110022C422 /* QNDevice.m in Sources */,
 				458A8CD924BAC61E00637130 /* QNRequestSerializer.m in Sources */,
 				45FFA2CF24BDE5FE007EFB8F /* QNAPIClient.m in Sources */,
+				45FFA2E724BED563007EFB8F /* QNMapperObject.m in Sources */,
 				459DABFC243E35BC0011ECF3 /* QNMapper.m in Sources */,
 				456ECD34249B901900D2BC40 /* QNRequestBuilder.m in Sources */,
 				4572FE2124BC4B5B00A17AC4 /* QNUserPropertiesManager.m in Sources */,

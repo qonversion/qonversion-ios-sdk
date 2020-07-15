@@ -50,6 +50,11 @@
   NSDictionary *launchData = [self enrichParameters:[_requestSerializer launchData]];
   NSURLRequest *request = [[self requestBuilder] makeInitRequestWith:launchData];
   
+  [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    if (dict) {
+      //[QNMapper ]
+    }
+  }];
 }
 
 // MARK: - Private

@@ -1,18 +1,9 @@
-#import <Foundation/Foundation.h>
 #import "QNUtils.h"
 #import "QNMapper.h"
 #import "QNLaunchResult+Protected.h"
+#import "QNMapperObject.h"
 
-static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
-
-@interface QNMapperObject : NSObject
-
-@property (nonatomic, nullable) NSDictionary *data;
-@property (nonatomic, copy, nullable) NSError *error;
-
-@end
-
-@implementation QNMapperObject : NSObject
+@implementation QNMapperObjec
 
 @end
 
@@ -88,7 +79,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   return result;
 }
 
-- (QNMapperObject *)mapperObjectFrom:(NSDictionary *)dict {
++ (QNMapperObject *)mapperObjectFrom:(NSDictionary *)dict {
   QNMapperObject *object = [QNMapperObject new];
   
   NSNumber *success = dict[@"success"];
