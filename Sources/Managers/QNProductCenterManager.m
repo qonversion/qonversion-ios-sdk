@@ -19,21 +19,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @end
 
 @implementation QNProductCenterManager
-//
-//- (instancetype)init {
-//  self = super.init;
-//  if (self) {
-//    _storeKitService = [[QNStoreKitService alloc] initWithDelegate:self];
-//    
-//    _persistentStorage = [[QNUserDefaultsStorage alloc] init];
-//    [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
-//    
-//    _purchasingCurrently = NULL;
-//    _permissionsBlocks = [[NSMutableArray alloc] init];
-//  }
-//  
-//  return self;
-//}
+
+- (instancetype)init {
+  self = super.init;
+  if (self) {
+    _storeKitService = [[QNStoreKitService alloc] initWithDelegate:self];
+    
+    _persistentStorage = [[QNUserDefaultsStorage alloc] init];
+    [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
+    
+    _purchasingCurrently = NULL;
+    _permissionsBlocks = [[NSMutableArray alloc] init];
+  }
+  
+  return self;
+}
 //
 //- (QNLaunchResult *)launchModel {
 //  return [self.persistentStorage loadObjectForKey:kPermissionsResult];
@@ -233,5 +233,26 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //    self->_purchasingBlock = nil;
 //  }] resume];
 //}
+
+- (void)requestLaunchData {
+  /*
+   ^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+     if (error) {
+       completion(nil, error);
+       return;
+     }
+     
+     QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+     if (result.error) {
+       completion(nil, result.error);
+       return;
+     }
+     
+     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+     completion(launchResult, nil);
+   }
+   */
+  
+}
 
 @end
