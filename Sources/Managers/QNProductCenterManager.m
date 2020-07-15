@@ -76,22 +76,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       }
     }
   }];
-  
 }
-
-  //    @synchronized (self) {
-  //      [self->_persistentStorage storeObject:model forKey:kLaunchResult];
-  //      _launchingFinished = YES;
-  //    }
-//}
-  //
-  //    if (model) {
-  //      [self executePermissionBlocks:model];
-  //      [self loadProducts:model];
-  //
-
-
-  //    }
 
 - (void)executePermissionBlocks {
   @synchronized (self) {
