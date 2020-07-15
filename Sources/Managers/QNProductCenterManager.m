@@ -21,11 +21,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 @property (nonatomic) NSString *purchasingCurrently;
 @property (nonatomic) QNAPIClient *apiClient;
+
 @property (nonatomic) QNLaunchResult *launchResult;
 @property (nonatomic) NSError *launchError;
 
 @property (nonatomic, assign) BOOL launchingFinished;
-
 
 @end
 

@@ -12,13 +12,10 @@
 #import "QNProductCenterManager.h"
 #import "QNProperties.h"
 
-static NSString * const kProductsResult = @"qonversion.products.result";
-static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
-
 @interface Qonversion()
 
+@property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 //@property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
-//@property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 //@property (nonatomic, strong) QNAttributionManager *attributionManager;
 
 @property (nonatomic, assign) BOOL debugMode;
@@ -34,10 +31,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 }
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
-  
-  //[[QNAPIClient shared] setApiKey:key];
-  //[[Qonversion sharedInstance].productCenterManager]
-  // [[Qonversion sharedInstance].productCenterManager] launchWithCompletion:completion];
+  [[QNAPIClient shared] setApiKey:key];
+  [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
 }
 
 + (void)setDebugMode:(BOOL)debugMode {
@@ -87,8 +82,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.user.defaults";
 - (instancetype)init {
   self = super.init;
   if (self) {
+    _productCenterManager = [[QNProductCenterManager alloc] init];
 //    _propertiesManager = [[QNUserPropertiesManager alloc] init];
-//    _productCenterManager = [[QNProductCenterManager alloc] init];
 //    _attributionManager = [[QNAttributionManager alloc] init];
     
     _debugMode = NO;
