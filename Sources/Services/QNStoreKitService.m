@@ -20,6 +20,12 @@
     return self;
 }
 
+- (void)loadProducts:(NSSet <NSString *> *)products {
+  SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:products];
+  [request setDelegate:self];
+  [request start];
+}
+
 - (instancetype)init {
   self = super.init;
   if (self) {

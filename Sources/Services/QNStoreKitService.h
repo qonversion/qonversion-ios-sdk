@@ -5,7 +5,7 @@
 @interface QNStoreKitService : NSObject
 
 - (instancetype)initWithDelegate:(id <QNStoreKitServiceDelegate>)delegate;
-
+- (void)loadProducts:(NSSet <NSString *> *)products;
 @property (nonatomic, weak) id <QNStoreKitServiceDelegate> delegate;
 
 @end

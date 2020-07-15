@@ -114,18 +114,20 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)loadProducts {
-//  NSArray<QNProduct *> *products = [model.result.products allValues];
-//
-//  NSMutableSet *productsSet = [[NSMutableSet alloc] init];
-//  if (products) {
-//    for (QNProduct *product in products) {
-//      [productsSet addObject:product.storeID];
-//    }
-//  }
-//
-//  SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:productsSet];
-//  [request setDelegate:self];
-//  [request start];
+  if (!_launchResult) {
+    return;
+  }
+  
+  NSArray<QNProduct *> *products = [_launchResult.products allValues];
+
+  NSMutableSet *productsSet = [[NSMutableSet alloc] init];
+  if (products) {
+    for (QNProduct *product in products) {
+      [productsSet addObject:product.storeID];
+    }
+  }
+
+  [_storeKitService loadProducts:productsSet];
 }
 
 
