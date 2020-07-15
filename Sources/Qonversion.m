@@ -16,7 +16,7 @@
 
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
-//@property (nonatomic, strong) QNAttributionManager *attributionManager;
+@property (nonatomic, strong) QNAttributionManager *attributionManager;
 
 @property (nonatomic, assign) BOOL debugMode;
 
@@ -40,7 +40,7 @@
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
- // [[Qonversion sharedInstance].attributionManager addAttributionData:data fromProvider:provider];
+  [[Qonversion sharedInstance].attributionManager addAttributionData:data fromProvider:provider];
 }
 
 + (void)setProperty:(QNProperty)property value:(NSString *)value {
@@ -60,7 +60,7 @@
 }
 
 + (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
-//  [[Qonversion sharedInstance].productCenterManager purchase:productID result:result];
+  [[Qonversion sharedInstance].productCenterManager purchase:productID result:result];
 }
 
 + (QNProduct *)productFor:(NSString *)productID {
@@ -84,7 +84,7 @@
   if (self) {
     _productCenterManager = [[QNProductCenterManager alloc] init];
     _propertiesManager = [[QNUserPropertiesManager alloc] init];
-//    _attributionManager = [[QNAttributionManager alloc] init];
+    _attributionManager = [[QNAttributionManager alloc] init];
     
     _debugMode = NO;
   }
