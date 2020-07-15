@@ -4,6 +4,7 @@
 #import "QNDevice.h"
 #import "QNMapper.h"
 #import "QNConstants.h"
+#import "QNErrors.h"
 
 // Models
 #import "QNLaunchResult+Protected.h"
@@ -76,7 +77,7 @@
     }
   
     if (!data || ![data isKindOfClass:NSData.class]) {
-      completion(nil, [QNMapper error:@"Could not receive data" code:QNErrorCodeFailedReceiveData]);
+      completion(nil, [QNErrors errorWIthCode:QNAPIErrorFailedReceiveData]);
       return;
     }
     
@@ -84,7 +85,7 @@
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
     
     if (jsonError.code || !dict) {
-      completion(nil, [QNMapper error:@"Could not parse response" code:QNErrorCodeFailedParseResponse]);
+      completion(nil, [QNErrors errorWIthCode:QNAPIErrorFailedParseResponse]);
       return;
     }
     

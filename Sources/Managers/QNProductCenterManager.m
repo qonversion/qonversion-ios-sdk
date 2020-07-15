@@ -2,7 +2,6 @@
 #import "QNInMemoryStorage.h"
 #import "QNUserDefaultsStorage.h"
 #import "QNStoreKitService.h"
-#import "QonversionLaunchComposeModel.h"
 
 static NSString * const kPermissionsResult = @"qonversion.permissions.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
@@ -36,7 +35,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 //  return self;
 //}
 //
-//- (QonversionLaunchComposeModel *)launchModel {
+//- (QNLaunchResult *)launchModel {
 //  return [self.persistentStorage loadObjectForKey:kPermissionsResult];
 //}
 //

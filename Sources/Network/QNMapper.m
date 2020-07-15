@@ -2,7 +2,6 @@
 #import "QNUtils.h"
 #import "QNMapper.h"
 #import "QNLaunchResult+Protected.h"
-#import "QonversionLaunchComposeModel.h"
 
 static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 
@@ -18,21 +17,6 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
 @end
 
 @implementation QNMapper
-
-- (QonversionLaunchComposeModel * _Nonnull)composeLaunchModelFrom:(NSData * _Nullable)data {
-  QNMapperObject *object = [self mapperObjectFrom:data];
-  QonversionLaunchComposeModel *result = [QonversionLaunchComposeModel new];
-  
-  if (object.error == NULL && [object.data isKindOfClass:NSDictionary.class]) {
-    QONVERSION_LOG(@"Qonversion Launch Log Response:\n%@", object.data);
-    QNLaunchResult *resultObject = [[QNMapper new] fillLaunchResult:object.data];
-    [result setResult:resultObject];
-    return result;
-  } else {
-    [result setError:object.error];
-    return result;
-  }
-}
 
 - (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
   QNLaunchResult *result = [[QNLaunchResult alloc] init];
@@ -104,27 +88,8 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
   return result;
 }
 
-- (QNMapperObject *)mapperObjectFrom:(NSData *)data {
+- (QNMapperObject *)mapperObjectFrom:(NSDictionary *)dict {
   QNMapperObject *object = [QNMapperObject new];
-  
-  if (!data || ![data isKindOfClass:NSData.class]) {
-    [object setError:[QNMapper error:@"Could not receive data" code:QNErrorCodeFailedReceiveData]];
-    return object;
-  }
-  
-  NSError *jsonError = [[NSError alloc] init];
-  NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
-  
-  if (jsonError.domain) {
-    [object setError:[QNMapper error:@"Could not parse response" code:QNErrorCodeFailedParseResponse]];
-    return object;
-  }
-  
-  QONVERSION_LOG(@"QONVERSION RESPONSE DATA %@", dict);
-  if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
-    [object setError:[QNMapper error:@"Could not parse response" code:QNErrorCodeFailedParseResponse]];
-    return object;
-  }
   
   NSNumber *success = dict[@"success"];
   NSDictionary *resultData = dict[@"data"];
@@ -134,7 +99,7 @@ static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
     return object;
   } else {
     NSString *message = dict[@"data"][@"message"] ?: @"";
-    [object setError:[QNMapper error:message code:QNErrorCodeIncorrectRequest]];
+    [object setError:[QNErrors errorWIthCode:QNAPIErrorIncorrectRequest]];
     return object;
   }
 }

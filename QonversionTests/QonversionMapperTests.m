@@ -2,7 +2,6 @@
 
 #import "QNMapper.h"
 #import "Helpers/XCTestCase+TestJSON.h"
-#import "QonversionLaunchComposeModel.h"
 #import "QNTestConstants.h"
 
 @interface QNMapperTests : XCTestCase
