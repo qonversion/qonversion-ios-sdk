@@ -53,17 +53,26 @@
 - (void)purchaseRequestWith:(SKProduct *)product
                 transaction:(SKPaymentTransaction *)transaction
                 completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *purchaseData = [self.requestSerializer purchaseData:product transaction:transaction];
-  NSDictionary *resultData = [self enrichParameters:purchaseData];
+  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction];
+  NSDictionary *resultData = [self enrichParameters:body];
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
 
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *propertiesData = [self enrichParameters:@{@"properties": properties}];
-  NSURLRequest *request = [self.requestBuilder makePropertiesRequestWith:propertiesData];
+  NSDictionary *body = [self enrichParameters:@{@"properties": properties}];
+  NSURLRequest *request = [self.requestBuilder makePropertiesRequestWith:body];
   
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
+- (void)attributionRequest:(QNAttributionProvider)provider
+      data:(NSDictionary *)data
+                completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
+  NSDictionary *resultData = [self enrichParameters:body];
+  NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:body];
   return [self dataTaskWithRequest:request completion:completion];
 }
 
