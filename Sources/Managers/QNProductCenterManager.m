@@ -198,7 +198,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
-  NSError *error = [QNErrors errorFromTransactionError:transaction];
+  NSError *error = [QNErrors errorFromTransactionError:transaction.error];
   
   if (self.purchasingBlock) {
     self.purchasingBlock(nil, error, error.code == QNErrorCancelled);
