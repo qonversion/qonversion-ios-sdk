@@ -93,7 +93,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
   }
   
-  result(self.launchResult, self.launchError);
+  result(self.launchResult.permissions, self.launchError);
 }
 
 - (void)executePermissionBlocks {
