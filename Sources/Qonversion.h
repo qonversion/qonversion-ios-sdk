@@ -85,7 +85,7 @@ typedef NS_ENUM(NSInteger, QNProperty) {
   @param productID Product identifier create in Qonversion Dash
   @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (QNProduct *)productFor:(NSString *)productID;
++ (QNProduct *)productAt:(NSString *)productID;
 
 @end
 

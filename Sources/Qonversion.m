@@ -64,7 +64,7 @@
 }
 
 + (QNProduct *)productFor:(NSString *)productID {
-//  return [[Qonversion sharedInstance].productCenterManager productFor:productID];
+  return [[Qonversion sharedInstance].productCenterManager productFor:productID];
 }
 
 // MARK: - Private

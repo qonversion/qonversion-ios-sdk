@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)checkPermissions:(QNPermissionCompletionHandler)result;
 - (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result;
 
-+ (QNProduct *)productFor:(NSString *)productID;
+- (QNProduct *)productAt:(NSString *)productID;
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 

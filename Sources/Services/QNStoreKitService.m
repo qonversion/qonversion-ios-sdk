@@ -52,6 +52,10 @@
   }
 }
 
+- (nullable SKProduct *)productAt:(NSString *)productID {
+  return _products[productID];
+}
+
 // MARK: - SKPaymentTransactionObserver
 
 - (void)paymentQueue:(SKPaymentQueue *)queue restoreCompletedTransactionsFailedWithError:(NSError *)error {

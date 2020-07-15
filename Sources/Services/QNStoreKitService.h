@@ -10,6 +10,7 @@
 
 - (void)loadProducts:(NSSet <NSString *> *)products;
 - (nullable SKProduct *)purchase:(NSString *)productID;
+- (nullable SKProduct *)productAt:(NSString *)productID;
 
 @end
 

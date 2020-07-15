@@ -7,6 +7,7 @@
 #import "QNLaunchResult.h"
 #import "QNMapperObject.h"
 #import "QNKeeper.h"
+#import "QNProduct+Protected.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
@@ -149,20 +150,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [_storeKitService loadProducts:productsSet];
 }
 
-//- (QNProduct *)productFor:(NSString *)productID {
-//  QonversionLaunchComposeModel *model = [self launchModel];
-//  NSDictionary *products = model.result.products ?: @{};
-//  QNProduct *product = products[productID];
-//  if (product) {
-//    id skProduct = products[product.storeID];
-//    if (skProduct) {
-//      [product setSkProduct:skProduct];
-//    }
-//    return product;
-//  }
-//  return nil;
-//}
-//
+- (QNProduct *)productAt:(NSString *)productID {
+  QNProduct *product = [self qonversionProduct:productID];
+  if (product) {
+    id skProduct = [_storeKitService productAt:product.storeID];
+    if (skProduct) {
+      [product setSkProduct:skProduct];
+    }
+    return product;
+  }
+  return nil;
+}
+
 
 - (QNProduct * _Nullable)qonversionProduct:(NSString *)productID {
   NSDictionary *products = _launchResult.products ?: @{};
