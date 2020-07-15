@@ -15,3 +15,4 @@ extern NSString *const keyQNPropertyFacebookAnonUserID;
 extern NSString *const keyQNPropertyAppsFlyerUserID;
 extern NSString *const keyQNPropertyAdjustADID;
 
+extern NSString *const keyQNErrorDomain;

@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import "QNConstants.h"
 
 NS_SWIFT_NAME(Qonversion.Errors)
 @interface QNErrors
@@ -58,17 +59,21 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
   // Network data error
   QNErrorDataFailed,
   
+  // Internal error occurred
+  QNErrorInternalError,
+  
 } NS_SWIFT_NAME(Qonversion.Error);
 
 
-typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
-  QNErrorCodeFailedReceiveData = 0,
-  QNErrorCodeFailedParseResponse,
-  QNErrorCodeIncorrectRequest
+typedef NS_ERROR_ENUM(QNErrorDomain, QNAPIError) {
+  QNAPIErrorFailedReceiveData = 0,
+  QNAPIErrorFailedParseResponse,
+  QNAPIErrorIncorrectRequest
 };
 
-
-+ (NSError *)error:(NSString *)message code:(QNErrorCode)errorCode;
++ (NSError *)errorWIthCode:(QNAPIError)errorCode;
++ (NSError *)errorFromURLDomainError:(NSError *)error;
++ (NSError *)errorFromTransactionError:(NSError *)error;
 
 @end
 

@@ -15,3 +15,4 @@ NSString *const keyQNPropertyFacebookAnonUserID = @"_q_fb_anon_id";
 NSString *const keyQNPropertyAppsFlyerUserID = @"_q_appsflyer_user_id";
 NSString *const keyQNPropertyAdjustADID = @"_q_adjust_adid";
 
+NSString * const keyQNErrorDomain = @"com.qonversion.io";

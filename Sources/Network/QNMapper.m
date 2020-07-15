@@ -4,10 +4,7 @@
 #import "QNLaunchResult+Protected.h"
 #import "QonversionLaunchComposeModel.h"
 
-NSString * const QNErrorDomain = @"com.qonversion.io";
-
 static NSDictionary <NSString *, NSNumber *> *PermissionStates = nil;
-
 
 @interface QNMapperObject : NSObject
 
