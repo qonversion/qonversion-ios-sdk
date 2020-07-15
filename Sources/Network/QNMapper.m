@@ -10,8 +10,9 @@
 
 @implementation QNMapper
 
-- (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
++ (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
   QNLaunchResult *result = [[QNLaunchResult alloc] init];
+  
   NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
   NSDictionary *productsDict = dict[@"products"] ?: @{};
   NSDictionary *userProductsDict = dict[@"user_products"] ?: @{};
@@ -24,7 +25,7 @@
   return result;
 }
 
-- (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSDictionary *)dict {
++ (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSDictionary *)dict {
   NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
   
   for (NSDictionary* itemDict in dict) {
@@ -37,7 +38,7 @@
   return [[NSDictionary alloc] initWithDictionary:permissions];
 }
 
-- (NSDictionary <NSString *, QNProduct *> *)fillProducts:(NSDictionary *)dict {
++ (NSDictionary <NSString *, QNProduct *> *)fillProducts:(NSDictionary *)dict {
   NSMutableDictionary <NSString *, QNProduct *> *products = [NSMutableDictionary new];
   
   for (NSDictionary* itemDict in dict) {
@@ -50,7 +51,7 @@
   return [[NSDictionary alloc] initWithDictionary:products];
 }
 
-- (QNPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
++ (QNPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
   QNPermission *result = [[QNPermission alloc] init];
   result.permissionID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
@@ -69,7 +70,7 @@
   return result;
 }
 
-- (QNProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
++ (QNProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
   QNProduct *result = [[QNProduct alloc] init];
   
   result.duration = ((NSNumber *)dict[@"duration"] ?: @0).integerValue;

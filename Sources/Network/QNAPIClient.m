@@ -5,6 +5,7 @@
 #import "QNMapper.h"
 #import "QNConstants.h"
 #import "QNErrors.h"
+#import "QNMapperObject.h"
 
 @interface QNAPIClient()
 
@@ -48,9 +49,19 @@
   NSURLRequest *request = [[self requestBuilder] makeInitRequestWith:launchData];
   
   [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    if (dict) {
-      //[QNMapper ]
+    if (error) {
+      completion(nil, error);
+      return;
     }
+    
+    QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+    if (result.error) {
+      completion(nil, result.error);
+      return;
+    }
+    
+    QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+    completion(launchResult, nil);
   }];
 }
 

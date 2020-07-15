@@ -30,7 +30,7 @@
 }
 
 - (void)testThatMapperParsePermissions {
-  QNLaunchResult *result = [[QNMapper new] fillLaunchResult:self.userInitSuccess];
+  QNLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
   
   XCTAssertNotNil(result);
   XCTAssertTrue([result.uid isEqualToString:@"qonversion_user_id"]);
@@ -51,7 +51,7 @@
 }
 
 - (void)testThatMapperParseFewPermissionsCorrectly {
-  QNLaunchResult *result = [[QNMapper new] fillLaunchResult:self.userInitSuccess];
+  QNLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
   
   XCTAssertNotNil(result);
   XCTAssertEqual(result.permissions.count, 2);
