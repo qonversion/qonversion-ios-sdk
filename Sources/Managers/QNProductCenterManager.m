@@ -127,12 +127,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)logPurchase:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
-  [[self apiClient] purchaseRequestWith:product transaction:transaction completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-     QONVERSION_LOG(@">>> logPurchase result %@", dict);
-  }];
-}
-
 - (void)loadProducts {
   if (!_launchResult) {
     return;
@@ -185,6 +179,25 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
     completion(launchResult, nil);
   }];
+}
+
+// MARK: - QNStoreKitServiceDelegate
+
+- (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
+  __block __weak QNProductCenterManager *weakSelf = self;
+  [self launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
+    if (!weakSelf.purchasingBlock) {
+      return;
+    }
+    
+    weakSelf.purchasingBlock(result.permissions, error, NO);
+    weakSelf.purchasingBlock = nil;
+    weakSelf.purchasingCurrently = nil;
+  }];
+}
+
+- (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
+  
 }
 
 @end

@@ -94,7 +94,6 @@
 - (void)dataTaskWithRequest:(NSURLRequest *)request
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   [[self.session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-    
     if (error) {
       completion(nil, error);
       return;
@@ -113,6 +112,7 @@
       return;
     }
     
+    QONVERSION_LOG(@">>> Qonversion request result %@", dict);
     completion(dict, nil);
   }] resume];
 }

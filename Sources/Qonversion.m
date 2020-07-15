@@ -63,8 +63,8 @@
   [[Qonversion sharedInstance].productCenterManager purchase:productID result:result];
 }
 
-+ (QNProduct *)productFor:(NSString *)productID {
-  return [[Qonversion sharedInstance].productCenterManager productFor:productID];
++ (QNProduct *)productAt:(NSString *)productID {
+  return [[Qonversion sharedInstance].productCenterManager productAt:productID];
 }
 
 // MARK: - Private
