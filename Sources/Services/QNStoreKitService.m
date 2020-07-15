@@ -7,6 +7,7 @@
 @property (nonatomic, readonly) NSMutableDictionary<NSString *, SKPaymentTransaction *> *processingTransactions;
 @property (nonatomic, readonly) NSMutableDictionary<NSString *, SKProductsRequest *> *productRequests;
 @property (nonatomic, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
+@property (nonatomic) NSString *purchasingCurrently;
 
 @end
 
@@ -32,6 +33,8 @@
     _processingTransactions = [[NSMutableDictionary alloc] init];
     _productRequests = [[NSMutableDictionary alloc] init];
     _products = [[NSMutableDictionary alloc] init];
+    
+    _purchasingCurrently = nil;
   }
 
   [SKPaymentQueue.defaultQueue addTransactionObserver:self];
@@ -42,6 +45,10 @@
   SKProduct *skProduct = self->_products[productID];
   
   if (skProduct) {
+    @synchronized (self) {
+      self->_purchasingCurrently = skProduct.productIdentifier;
+    }
+    
     SKPayment *payment = [SKPayment paymentWithProduct:skProduct];
     [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
     [[SKPaymentQueue defaultQueue] addPayment:payment];
@@ -66,24 +73,27 @@
 - (void)paymentQueue:(nonnull SKPaymentQueue *)queue
  updatedTransactions:(nonnull NSArray<SKPaymentTransaction *> *)transactions {
   for (SKPaymentTransaction *transaction in transactions) {
-    
-    switch (transaction.transactionState) {
-      case SKPaymentTransactionStatePurchasing:
-        break;
-      case SKPaymentTransactionStatePurchased:
-        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-        [self handlePurchasedTransaction:transaction];
-        break;
-      case SKPaymentTransactionStateFailed:
-        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-        [self handleFailedTransaction:transaction];
-        break;
-      case SKPaymentTransactionStateRestored:
-        // Restore
-        break;
-      default:
-        break;
-    }
+    [self handleTransaction:transaction];
+  }
+}
+
+- (void)handleTransaction:(nonnull SKPaymentTransaction *)transaction {
+  switch (transaction.transactionState) {
+    case SKPaymentTransactionStatePurchasing:
+      break;
+    case SKPaymentTransactionStatePurchased:
+      [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+      [self handlePurchasedTransaction:transaction];
+      break;
+    case SKPaymentTransactionStateFailed:
+      [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+      [self handleFailedTransaction:transaction];
+      break;
+    case SKPaymentTransactionStateRestored:
+      // Restore
+      break;
+    default:
+      break;
   }
 }
 
@@ -94,6 +104,7 @@
     return;
   }
   
+  BOOL autoTracked = NO;
   for (SKProduct *product in response.products) {
     [_products setValue:product forKey:product.productIdentifier];
     QONVERSION_LOG(@"Loaded Product %@ with price %@", product.productIdentifier, product.price);
@@ -102,10 +113,20 @@
     SKPaymentTransaction *transaction = [self.processingTransactions objectForKey:product.productIdentifier];
     
     if (transaction) {
+      SKProductsRequest *storedRequest = self.productRequests[product.productIdentifier];
       [self.productRequests removeObjectForKey:product.productIdentifier];
       [self.processingTransactions removeObjectForKey:product.productIdentifier];
-      [self paymentQueue:[SKPaymentQueue defaultQueue] updatedTransactions:@[transaction]];
+      [self handleTransaction:transaction];
+      
+      // Auto-inited requests
+      if (response.products.count == 1 && storedRequest) {
+        autoTracked = YES;
+      }
     }
+  }
+  
+  if (autoTracked && [self.delegate respondsToSelector:@selector(handleProducts:)]) {
+    [self.delegate handleProducts:response.products];
   }
 }
 
@@ -115,7 +136,10 @@
   NSString *productIdentifier = transaction.payment.productIdentifier;
   SKProduct *skProduct = _products[productIdentifier];
   if (skProduct) {
-    [self.delegate handleFailedTransaction:transaction forProduct:skProduct];
+    if ([self.delegate respondsToSelector:@selector(handleFailedTransaction:forProduct:)]) {
+        [self.delegate handleFailedTransaction:transaction forProduct:skProduct];
+    }
+    
     [self finishTransaction:transaction];
     return;
   }
@@ -125,7 +149,10 @@
   NSString *productIdentifier = transaction.payment.productIdentifier;
   SKProduct *skProduct = _products[productIdentifier];
   if (skProduct) {
-    [self.delegate handlePurchasedTransaction:transaction forProduct:skProduct];
+    if ([self.delegate respondsToSelector:@selector(handlePurchasedTransaction:forProduct:)]) {
+        [self.delegate handlePurchasedTransaction:transaction forProduct:skProduct];
+    }
+    
     [self finishTransaction:transaction];
     return;
   }

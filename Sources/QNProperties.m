@@ -5,7 +5,7 @@
 @implementation QNProperties
 
 + (nullable NSString *)keyForProperty:(QNProperty) property {
-  NSString *key = NULL;
+  NSString *key = nil;
   switch (property) {
     case QNPropertyEmail:
       key = @"_q_email";

@@ -19,5 +19,5 @@
 @optional
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
-
+- (void)handleProducts:(NSArray<SKProduct *> *)products;
 @end

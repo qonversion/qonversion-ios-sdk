@@ -63,8 +63,12 @@
   [[Qonversion sharedInstance].productCenterManager purchase:productID result:result];
 }
 
++ (void)productsWithIDs:(NSArray<NSString *> *)productIDs completion:(QNProductsCompletionHandler)completion {
+  return [[Qonversion sharedInstance].productCenterManager productsWithIDs:productIDs completion:completion];
+}
+
 + (QNProduct *)productAt:(NSString *)productID {
-  return [[Qonversion sharedInstance].productCenterManager productAt:productID];
+ // return [[Qonversion sharedInstance].productCenterManager productAt:productID];
 }
 
 // MARK: - Private

@@ -21,13 +21,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
-@property (nonatomic) NSString *purchasingCurrently;
+@property (nonatomic, copy) NSMutableArray *productsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
 @property (nonatomic) QNLaunchResult *launchResult;
 @property (nonatomic) NSError *launchError;
 
 @property (nonatomic, assign) BOOL launchingFinished;
+@property (nonatomic, assign) BOOL productsLoaded;
 
 @end
 
@@ -37,6 +38,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   self = super.init;
   if (self) {
     _launchingFinished = NO;
+    _productsLoaded = NO;
     _launchError = nil;
     _launchResult = nil;
     
@@ -46,7 +48,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
-    _purchasingCurrently = NULL;
     _permissionsBlocks = [[NSMutableArray alloc] init];
   }
   
@@ -100,16 +101,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
   @synchronized (self) {
-    if (self.purchasingCurrently) {
+    if (self.purchasingBlock) {
       QONVERSION_LOG(@"Purchasing in process");
       return;
     }
-    self.purchasingCurrently = NULL;
     
     QNProduct *product = [self qonversionProduct:productID];
     if (product && [_storeKitService purchase:product.storeID]) {
       self.purchasingBlock = result;
-      self.purchasingCurrently = product.storeID;
       return;
     }
   }
@@ -134,8 +133,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   
   NSArray<QNProduct *> *products = [_launchResult.products allValues];
-
   NSMutableSet *productsSet = [[NSMutableSet alloc] init];
+  
   if (products) {
     for (QNProduct *product in products) {
       [productsSet addObject:product.storeID];
@@ -143,6 +142,20 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 
   [_storeKitService loadProducts:productsSet];
+}
+
+- (void)productsWithIDs:(NSArray<NSString *> *)productIDs completion:(QNProductsCompletionHandler)completion {
+  @synchronized (self) {
+    if (!_launchingFinished) {
+      [self.productsBlocks addObject:completion];
+      return;
+    }
+  }
+  
+}
+
+- (void)handleProducts:(NSArray<SKProduct *> *)products {
+  
 }
 
 - (QNProduct *)productAt:(NSString *)productID {
@@ -156,7 +169,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   return nil;
 }
-
 
 - (QNProduct * _Nullable)qonversionProduct:(NSString *)productID {
   NSDictionary *products = _launchResult.products ?: @{};
@@ -193,7 +205,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     weakSelf.purchasingBlock(result.permissions, error, NO);
     weakSelf.purchasingBlock = nil;
-    weakSelf.purchasingCurrently = nil;
   }];
 }
 
@@ -204,7 +215,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     self.purchasingBlock(nil, error, error.code == QNErrorCancelled);
     @synchronized (self) {
       self.purchasingBlock = nil;
-      self.purchasingCurrently = nil;
     }
   }
 }
