@@ -125,7 +125,7 @@
     }
   }
   
-  if (autoTracked && [self.delegate respondsToSelector:@selector(handleProducts:)]) {
+  if (!autoTracked && [self.delegate respondsToSelector:@selector(handleProducts:)]) {
     [self.delegate handleProducts:response.products];
   }
 }
