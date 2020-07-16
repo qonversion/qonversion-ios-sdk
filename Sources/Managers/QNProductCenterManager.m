@@ -147,7 +147,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         continue;
       }
       
-      QNProduct *qnProduct = [self QNProduct:_product.qonversionID];
+      QNProduct *qnProduct = [self productAt:_product.qonversionID];
       if (qnProduct) {
         [resultProducts setValue:qnProduct forKey:_product.qonversionID];
       }
