@@ -154,7 +154,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     for (QNProductsCompletionHandler _block in _blocks) {
-      _block([resultProducts copy]);
+      _block(resultProducts);
     }
     
   }
@@ -176,8 +176,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
   [_storeKitService loadProducts:productsSet];
 }
-
-- (void)productsWithIDs:(NSArray<NSString *> *)productIDs completion:(QNProductsCompletionHandler)completion {
+- (void)products:(QNProductsCompletionHandler)completion {
   @synchronized (self) {
     [self.productsBlocks addObject:completion];
     

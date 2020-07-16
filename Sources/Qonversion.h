@@ -17,7 +17,7 @@ typedef void (^QNPermissionCompletionHandler)(NSDictionary<NSString *, QNPermiss
 
 typedef void (^QNPurchaseCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
 
-typedef void (^QNProductsCompletionHandler)(NSArray<QNProduct *> *) NS_SWIFT_NAME(Qonversion.ProductsCompletionHandler);
+typedef void (^QNProductsCompletionHandler)(NSDictionary<NSString *, QNProduct *> *) NS_SWIFT_NAME(Qonversion.ProductsCompletionHandler);
 
 typedef NS_ENUM(NSInteger, QNProperty) {
   QNPropertyEmail = 0,
