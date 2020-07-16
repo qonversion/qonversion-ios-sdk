@@ -61,6 +61,12 @@ typedef NS_ENUM(NSInteger, QNProperty) {
 + (void)setUserProperty:(NSString *)property value:(NSString *)value;
 
 /**
+ Associate a user with their unique ID in your system
+ @param userID            Your database user ID
+ */
++ (void)setUserID:(NSString *)userID;
+
+/**
  Send your attribution data
  @param data Dictionary received by the provider
  @param provider Attribution provider

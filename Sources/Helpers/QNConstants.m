@@ -14,5 +14,6 @@ int const kQPropertiesSendingPeriodInSeconds = 15; // 15 seconds
 NSString *const keyQNPropertyFacebookAnonUserID = @"_q_fb_anon_id";
 NSString *const keyQNPropertyAppsFlyerUserID = @"_q_appsflyer_user_id";
 NSString *const keyQNPropertyAdjustADID = @"_q_adjust_adid";
+NSString *const keyQNPropertyUserID = @"_q_custom_user_id";
 
 NSString * const keyQNErrorDomain = @"com.qonversion.io";

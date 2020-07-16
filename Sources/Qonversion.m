@@ -55,6 +55,10 @@
   [[Qonversion sharedInstance].propertiesManager setUserProperty:property value:value];
 }
 
++ (void)setUserID:(NSString *)userID {
+  [[Qonversion sharedInstance].propertiesManager setUserID:userID];
+}
+
 + (void)checkPermissions:(QNPermissionCompletionHandler)result {
   [[Qonversion sharedInstance].productCenterManager checkPermissions:result];
 }
