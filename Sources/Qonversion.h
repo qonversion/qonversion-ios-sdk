@@ -88,8 +88,7 @@ typedef NS_ENUM(NSInteger, QNProperty) {
  @param productIDs Product identifiers that were created in Qonversion Dashboard
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
-- (void)productsWithIDs:(NSArray<NSString *> *)productIDs
-             completion:(QNProductsCompletionHandler)completion;
++ (void)products:(QNProductsCompletionHandler)completion;
 
 @end
 
