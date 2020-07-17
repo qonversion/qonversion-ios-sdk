@@ -232,34 +232,44 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+  __block __weak QNProductCenterManager *weakSelf = self;
+  
   [_apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    if (error) {
-      completion(nil, error);
-      return;
-    }
-    
-    QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
-    if (result.error) {
-      completion(nil, result.error);
-      return;
-    }
-    
-    QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-    completion(launchResult, nil);
+    [weakSelf process:dict error:error completion:completion];
   }];
+}
+
+- (void)process:(NSDictionary * _Nullable)dict error:(NSError *)error
+     completion:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+  if (error) {
+    completion(nil, error);
+    return;
+  }
+  
+  QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+  if (result.error) {
+    completion(nil, result.error);
+    return;
+  }
+  
+  QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+  completion(launchResult, nil);
 }
 
 // MARK: - QNStoreKitServiceDelegate
 
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   __block __weak QNProductCenterManager *weakSelf = self;
-  [self launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
-    if (!weakSelf.purchasingBlock) {
-      return;
-    }
-    
-    weakSelf.purchasingBlock(result.permissions, error, NO);
-    weakSelf.purchasingBlock = nil;
+  
+  [_apiClient purchaseRequestWith:product transaction:transaction completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    [weakSelf process:dict error:error completion:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
+      if (!weakSelf.purchasingBlock) {
+        return;
+      }
+      
+      weakSelf.purchasingBlock(result.permissions, error, NO);
+      weakSelf.purchasingBlock = nil;
+    }];
   }];
 }
 
