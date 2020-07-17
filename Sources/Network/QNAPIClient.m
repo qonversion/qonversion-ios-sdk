@@ -85,7 +85,7 @@
   NSMutableDictionary *baseDict = [[NSMutableDictionary alloc] initWithDictionary:_parameters];
   [baseDict setObject:_apiKey forKey:@"access_token"];
   
-  [baseDict setObject:@"qonversion_user_id" forKey:@"q_uid"];
+  [baseDict setObject:_userID forKey:@"q_uid"];
   [baseDict setObject:_userID forKey:@"client_uid"];
   [baseDict setObject:keyQVersion forKey:@"version"];
   
