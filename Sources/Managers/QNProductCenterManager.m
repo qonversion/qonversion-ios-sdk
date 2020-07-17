@@ -97,7 +97,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
   }
   
-  result(self.launchResult.permissions, self.launchError);
+  run_block_on_main(result, self.launchResult.permissions, self.launchError);
 }
 
 - (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
@@ -113,8 +113,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       return;
     }
   }
-
-   result(nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
+  run_block_on_main(result, nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
 }
 
 - (void)executePermissionBlocks {
@@ -127,7 +126,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [self->_permissionsBlocks removeAllObjects];
 
     for (QNPermissionCompletionHandler block in _blocks) {
-      block(self.launchResult.permissions ?: @{}, self.launchError);
+      run_block_on_main(block, self.launchResult.permissions ?: @{}, self.launchError);
     }
   }
 }
@@ -154,7 +153,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     for (QNProductsCompletionHandler _block in _blocks) {
-      _block(resultProducts);
+      run_block_on_main(_block, resultProducts);
     }
     
   }
