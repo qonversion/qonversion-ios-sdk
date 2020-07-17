@@ -62,7 +62,7 @@
   XCTAssertFalse(standart.isActive);
 }
 
-- (void)testThatMapparParsePermissionWithBrokenJson {
+- (void)testThatMapperParsePermissionWithBrokenJson {
   
   QNMapperObject *result = [QNMapper mapperObjectFrom:[self JSONObjectFromContentsOfFile:keyQNInitFailedJSON]];
   
@@ -76,6 +76,21 @@
   XCTAssertNotNil(brokenResult.error);
   
   XCTAssertEqual(brokenResult.error.code, QNErrorInternalError);
+}
+
+- (void)testThatMapperParseIntegerFromAnyObject {
+  NSInteger value = [QNMapper mapInteger:[NSNull null]];
+  XCTAssertTrue(value == 0);
+  
+  NSDictionary *dict = @{@"key": [NSNull null], @"key_1": @1};
+  NSInteger valueFromNull = [QNMapper mapInteger:dict[@"key"]];
+  XCTAssertTrue(valueFromNull == 0);
+  
+  NSInteger valueFromNotExistKey = [QNMapper mapInteger:dict[@"non_exist_key"]];
+  XCTAssertTrue(valueFromNotExistKey == 0);
+  
+  NSInteger valueFromExistValue = [QNMapper mapInteger:dict[@"key_1"]];
+  XCTAssertTrue(valueFromExistValue == 1);
 }
 
 @end

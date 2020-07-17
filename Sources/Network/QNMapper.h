@@ -10,4 +10,5 @@
 
 + (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSDictionary * _Nullable)dict;
 
++ (NSInteger)mapInteger:(NSObject *)object; 
 @end

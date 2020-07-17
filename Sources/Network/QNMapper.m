@@ -103,11 +103,17 @@
   }
 }
 
-+ (NSInteger)mapInteger:(NSNumber *)object {
-  if ([object isEqual:[NSNull null]]) {
++ (NSInteger)mapInteger:(NSObject *)object {
+  if (object == nil) {
+    return 0;
+  }
+  
+  NSNumber *numberObject = object;
+  
+  if ([numberObject isEqual:[NSNull null]]) {
     return 0;
   } else {
-    return object.integerValue;
+    return numberObject.integerValue;
   }
 }
 
