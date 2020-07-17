@@ -32,6 +32,8 @@
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
   [[QNAPIClient shared] setApiKey:key];
+  [[QNAPIClient shared] setUserID:[self getUserID:3]];
+  
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
 }
 
@@ -94,6 +96,15 @@
   }
   
   return self;
+}
+
++ (NSString*)getUserID:(int) maxAttempts {
+  NSString *userID = QNKeeper.userID;
+  if (userID == nil && maxAttempts > 0) {
+    return [self getUserID:maxAttempts - 1];
+  } else {
+    return userID;
+  }
 }
 
 @end
