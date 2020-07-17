@@ -265,8 +265,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       if (!weakSelf.purchasingBlock) {
         return;
       }
-      
-      weakSelf.purchasingBlock(result.permissions, error, NO);
+      run_block_on_main( weakSelf.purchasingBlock, result.permissions, error, NO);
       weakSelf.purchasingBlock = nil;
     }];
   }];
@@ -275,8 +274,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   NSError *error = [QNErrors errorFromTransactionError:transaction.error];
   
-  if (self.purchasingBlock) {
-    self.purchasingBlock(nil, error, error.code == QNErrorCancelled);
+  if (_purchasingBlock) {
+    run_block_on_main(_purchasingBlock, nil, error, error.code == QNErrorCancelled);
     @synchronized (self) {
       self.purchasingBlock = nil;
     }
