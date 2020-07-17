@@ -55,14 +55,15 @@
   QNPermission *result = [[QNPermission alloc] init];
   result.permissionID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
-  result.renewState = ((NSNumber *)dict[@"renew_state"] ?: @0).intValue;
+  result.renewState = [self mapInteger:dict[@"renew_state"]];
+  
   result.productID = ((NSString *)dict[@"associated_product"] ?: @"");
   
-  NSTimeInterval started = ((NSNumber *)dict[@"started_timestamp"] ?: @0).intValue;
+  NSTimeInterval started = [self mapInteger:dict[@"started_timestamp"]];
   result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
   result.expirationDate = nil;
   
-  if (dict[@"expiration_timestamp"]) {
+  if ([dict[@"expiration_timestamp"] isEqual:[NSNull null]] == NO) {
     NSTimeInterval expiration = ((NSNumber *)dict[@"expiration_timestamp"] ?: @0).intValue;
     result.expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
   }
@@ -73,8 +74,9 @@
 + (QNProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
   QNProduct *result = [[QNProduct alloc] init];
   
-  result.duration = ((NSNumber *)dict[@"duration"] ?: @0).integerValue;
-  result.type = ((NSNumber *)dict[@"type"] ?: @0).integerValue;
+  result.duration = [self mapInteger:dict[@"duration"]];
+  result.type = [self mapInteger:dict[@"type"]];
+  
   result.qonversionID = ((NSString *)dict[@"id"] ?: @"");
   result.storeID = ((NSString *)dict[@"store_id"] ?: @"");
   
@@ -98,6 +100,14 @@
   } else {
     [object setError:[QNErrors errorWithCode:QNAPIErrorIncorrectRequest]];
     return object;
+  }
+}
+
++ (NSInteger)mapInteger:(NSNumber *)object {
+  if ([object isEqual:[NSNull null]]) {
+    return 0;
+  } else {
+    return object.integerValue;
   }
 }
 
