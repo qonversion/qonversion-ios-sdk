@@ -102,9 +102,12 @@
   NSString *userID = QNKeeper.userID;
   if (userID == nil && maxAttempts > 0) {
     return [self getUserID:maxAttempts - 1];
-  } else {
+  }
+  if (userID) {
     return userID;
   }
+  
+  return @"";
 }
 
 @end

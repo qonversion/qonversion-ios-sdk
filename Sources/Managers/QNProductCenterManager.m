@@ -65,24 +65,23 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-    run_block_on_bg(^void(){
-      weakSelf.launchingFinished = YES;
-      if (result) {
-        [weakSelf.persistentStorage storeObject:result forKey:kLaunchResult];
-      }
-      
-      weakSelf.launchResult = result;
-      weakSelf.launchError = error;
-      
-      [weakSelf executePermissionBlocks];
-      [weakSelf loadProducts];
-      
-      if (result.uid) {
-        QNKeeper.userID = result.uid;
-        [[QNAPIClient shared] setUserID:result.uid];
-      }
-      run_block_on_main(completion, result, error)
-    });
+    weakSelf.launchingFinished = YES;
+    if (result) {
+      [weakSelf.persistentStorage storeObject:result forKey:kLaunchResult];
+    }
+    
+    weakSelf.launchResult = result;
+    weakSelf.launchError = error;
+    
+    [weakSelf executePermissionBlocks];
+    [weakSelf loadProducts];
+    
+    if (result.uid) {
+      QNKeeper.userID = result.uid;
+      [[QNAPIClient shared] setUserID:result.uid];
+    }
+    run_block_on_main(completion, result, error)
+    
   }];
 }
 
