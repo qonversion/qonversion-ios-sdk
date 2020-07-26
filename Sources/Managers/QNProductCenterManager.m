@@ -179,11 +179,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   @synchronized (self) {
     [self.productsBlocks addObject:completion];
     
-    if (!_productsLoaded) {
-      return;
+    if (_productsLoaded) {
+      [self executeProductsBlocks];
     }
     
-    [self executeProductsBlocks];
+    if (_launchingFinished && !_productsLoaded) {
+      [self launch:nil];
+    }
+    
   }
 }
 
