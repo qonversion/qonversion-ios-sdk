@@ -3,6 +3,19 @@
 
 @implementation QNLaunchResult : NSObject
 
+- (instancetype)init
+{
+  self = [super init];
+  if (self) {
+    _uid = @"";
+    _timestamp = [[NSDate dateWithTimeIntervalSince1970:0] timeIntervalSinceReferenceDate];
+    _permissions = @{};
+    _products = @{};
+    _userPoducts = @{};
+  }
+  return self;
+}
+
 - (instancetype)initWithCoder:(NSCoder *)coder
 {
   self = [super init];

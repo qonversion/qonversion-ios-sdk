@@ -240,14 +240,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)process:(NSDictionary * _Nullable)dict error:(NSError *)error
      completion:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+
   if (error) {
-    completion(nil, error);
+    completion([[QNLaunchResult alloc] init], error);
     return;
   }
   
   QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
   if (result.error) {
-    completion(nil, result.error);
+    completion([[QNLaunchResult alloc] init], result.error);
     return;
   }
   
