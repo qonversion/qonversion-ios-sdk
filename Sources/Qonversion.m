@@ -38,6 +38,7 @@
 }
 
 + (void)setDebugMode:(BOOL)debugMode {
+  [[QNAPIClient shared] setDebug:debugMode];
   [Qonversion sharedInstance]->_debugMode = debugMode;
 }
 

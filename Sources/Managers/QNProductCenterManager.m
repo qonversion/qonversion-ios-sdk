@@ -65,7 +65,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-    weakSelf.launchingFinished = YES;
     if (result) {
       [weakSelf.persistentStorage storeObject:result forKey:kLaunchResult];
     }
@@ -184,7 +183,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     if (_launchingFinished && !_productsLoaded) {
-      [self launch:nil];
+      [self launchWithCompletion:nil];
     }
     
   }
@@ -243,6 +242,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)process:(NSDictionary * _Nullable)dict error:(NSError *)error
      completion:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+  
+  @synchronized (self) {
+    self->_launchingFinished = YES;
+  }
+
+  if (!completion) {
+    return;
+  }
 
   if (error) {
     completion([[QNLaunchResult alloc] init], error);
@@ -266,10 +273,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   [_apiClient purchaseRequestWith:product transaction:transaction completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     [weakSelf process:dict error:error completion:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
-      if (!weakSelf.purchasingBlock) {
-        return;
-      }
-      run_block_on_main( weakSelf.purchasingBlock, result.permissions, error, NO);
+      run_block_on_main(weakSelf.purchasingBlock, result.permissions, error, NO);
       weakSelf.purchasingBlock = nil;
     }];
   }];

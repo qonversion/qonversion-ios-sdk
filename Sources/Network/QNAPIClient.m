@@ -26,6 +26,7 @@
     
     _apiKey = @"";
     _userID = @"";
+    _debug = NO;
     _device = QNDevice.current;
     _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
   }
@@ -88,6 +89,7 @@
   [baseDict setObject:_userID forKey:@"q_uid"];
   [baseDict setObject:_userID forKey:@"client_uid"];
   [baseDict setObject:keyQVersion forKey:@"version"];
+  [baseDict setObject:[NSNumber numberWithBool:_debug] forKey:@"debug_mode"];
   
   return [baseDict copy];
 }
