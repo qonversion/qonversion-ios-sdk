@@ -82,11 +82,9 @@
     case SKPaymentTransactionStatePurchasing:
       break;
     case SKPaymentTransactionStatePurchased:
-      [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
       [self handlePurchasedTransaction:transaction];
       break;
     case SKPaymentTransactionStateFailed:
-      [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
       [self handleFailedTransaction:transaction];
       break;
     case SKPaymentTransactionStateRestored:
