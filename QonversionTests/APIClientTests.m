@@ -44,7 +44,7 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
 - (void)testThatEnrichingAddWaitingFields {
   NSDictionary *result = [_client enrichParameters:@{}];
   XCTAssertNotNil(result);
-  XCTAssertEqual(result.count, 4);
+  XCTAssertEqual(result.count, 5);
   XCTAssertNotNil(result[@"access_token"]);
   XCTAssertNotNil(result[@"q_uid"]);
   XCTAssertNotNil(result[@"client_uid"]);

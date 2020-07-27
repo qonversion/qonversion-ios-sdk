@@ -19,10 +19,14 @@ typedef void (^QNPurchaseCompletionHandler)(NSDictionary<NSString *, QNPermissio
 
 typedef void (^QNProductsCompletionHandler)(NSDictionary<NSString *, QNProduct *> *) NS_SWIFT_NAME(Qonversion.ProductsCompletionHandler);
 
+/**
+ Qonversion Defined User Properties
+ We defined some common case properties and provided API for adding them
+ @see [Product Center](https://qonversion.io/docs/defined-user-properties)
+ */
 typedef NS_ENUM(NSInteger, QNProperty) {
   QNPropertyEmail = 0,
   QNPropertyName,
-  QNPropertyPremium,
   QNPropertyKochavaDeviceID
 } NS_SWIFT_NAME(Qonversion.Property);
 
