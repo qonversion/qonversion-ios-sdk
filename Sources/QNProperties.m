@@ -16,6 +16,9 @@
     case QNPropertyPremium:
       key = @"_q_premium";
       break;
+    case QNPropertyKochavaDeviceID:
+      key = @"_q_kochava_device_id";
+      break;
   }
   
   return key;
