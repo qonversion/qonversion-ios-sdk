@@ -33,13 +33,15 @@
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
   [[QNAPIClient shared] setApiKey:key];
   [[QNAPIClient shared] setUserID:[self getUserID:3]];
+  [[QNAPIClient shared] setDebug:[Qonversion sharedInstance]->_debugMode];
   
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
 }
 
 + (void)setDebugMode:(BOOL)debugMode {
-  [[QNAPIClient shared] setDebug:debugMode];
-  [Qonversion sharedInstance]->_debugMode = debugMode;
+  @synchronized ([Qonversion sharedInstance]) {
+    [Qonversion sharedInstance]->_debugMode = debugMode;
+  }
 }
 
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
@@ -109,6 +111,11 @@
   }
   
   return @"";
+}
+
++ (void)resetUser {
+  QNKeeper.userID = @"";
+  [[QNAPIClient shared] setUserID:@""];
 }
 
 @end
