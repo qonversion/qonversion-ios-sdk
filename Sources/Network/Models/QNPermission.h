@@ -1,10 +1,27 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(int, QNPermissionRenewState){
+  /**
+   For in-app purchases.
+   */
   QNPermissionRenewStateNonRenewable = -1,
   QNPermissionRenewStateUnknown = 0,
+  
+  /**
+    Subscription is active and will renew
+   */
   QNPermissionRenewStateWillRenew = 1,
+  
+  /**
+   The user canceled the subscription, but the subscription may be active.
+   Check isActive to be sure that the subscription has not expired yet.
+   */
   QNPermissionRenewStateCancelled = 2,
+  
+  /**
+   There was some billing issue.
+   Prompt the user to update the payment method.
+   */
   QNPermissionRenewStateBillingIssue = 3
 } NS_SWIFT_NAME(Qonversion.PermissionRenewState);
 
