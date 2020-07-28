@@ -7,6 +7,7 @@
 #import "QNErrors.h"
 #import "QNMapperObject.h"
 #import "QNUtils.h"
+#import "QNUserInfo.h"
 
 @interface QNAPIClient()
 
@@ -89,7 +90,7 @@
   [baseDict setObject:_userID forKey:@"q_uid"];
   [baseDict setObject:_userID forKey:@"client_uid"];
   [baseDict setObject:keyQVersion forKey:@"version"];
-  [baseDict setObject:[NSNumber numberWithBool:_debug] forKey:@"debug_mode"];
+  [baseDict setObject:[NSNumber numberWithBool:[QNUserInfo isDebug]] forKey:@"debug_mode"];
   
   return [baseDict copy];
 }
