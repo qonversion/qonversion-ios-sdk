@@ -95,6 +95,16 @@
   return receipt ?: @"";
 }
 
++ (BOOL)isDebug {
+  NSURL *receiptURL = QNUserInfo.bundle.appStoreReceiptURL;
+  
+  if (!receiptURL) {
+    return NO;
+  }
+  
+  return ([receiptURL.path rangeOfString:@"sandboxReceipt"].location != NSNotFound);
+}
+
 + (void)saveInternalUserID:(nonnull NSString *)uid {
   [[NSUserDefaults standardUserDefaults] setObject:uid forKey:keyQInternalUserID];
 }
@@ -107,5 +117,6 @@
   NSPredicate *predicate = [NSPredicate predicateWithFormat:@"appStoreReceiptURL != nil"];
   return [NSBundle.allBundles filteredArrayUsingPredicate:predicate].firstObject;
 }
+
 
 @end
