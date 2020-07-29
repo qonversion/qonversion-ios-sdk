@@ -38,9 +38,11 @@
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
 }
 
-+ (void)setDebugMode:(BOOL)debugMode {
++ (void)setDebugMode {
+  [[Qonversion sharedInstance].propertiesManager setUserProperty:@"_q_debug_mode" value:@"YES"];
+  
   @synchronized ([Qonversion sharedInstance]) {
-    [Qonversion sharedInstance]->_debugMode = debugMode;
+    [Qonversion sharedInstance]->_debugMode = YES;
   }
 }
 

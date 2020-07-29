@@ -20,7 +20,7 @@
     [super setUp];
     
     // Set default value before
-    [Qonversion setDebugMode:NO];
+    [Qonversion setDebugMode];
     [Qonversion launchWithKey:@"test_key"];
     
 }

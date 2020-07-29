@@ -45,11 +45,11 @@ typedef NS_ENUM(NSInteger, QNProperty) {
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
 
 /**
- Sets the environment for receipt.
- @param debugMode        true If your app run under debug mode, default: false
+ Sets debug environment for user.
+ If debug mode set, user purchases will not be sent to third-party integrations.
  @see [Setting Debug Mode](https://qonversion.io/docs/debug-mode)
  */
-+ (void)setDebugMode:(BOOL)debugMode;
++ (void)setDebugMode;
 
 /**
  Sets Qonversion reservered user properties, like email or one-signal id
