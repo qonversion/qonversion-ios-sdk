@@ -80,7 +80,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [[QNAPIClient shared] setUserID:result.uid];
     }
     run_block_on_main(completion, result, error)
-    
   }];
 }
 
@@ -174,6 +173,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
   [_storeKitService loadProducts:productsSet];
 }
+
 - (void)products:(QNProductsCompletionHandler)completion {
   @synchronized (self) {
     [self.productsBlocks addObject:completion];
@@ -185,7 +185,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     if (_launchingFinished && !_productsLoaded) {
       [self launchWithCompletion:nil];
     }
-    
   }
 }
 
@@ -236,7 +235,27 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [_apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    [weakSelf process:dict error:error completion:completion];
+    @synchronized (weakSelf) {
+      weakSelf.launchingFinished = YES;
+    }
+
+    if (!completion) {
+      return;
+    }
+
+    if (error) {
+      completion([[QNLaunchResult alloc] init], error);
+      return;
+    }
+    
+    QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+    if (result.error) {
+      completion([[QNLaunchResult alloc] init], result.error);
+      return;
+    }
+    
+    QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+    completion(launchResult, nil);
   }];
 }
 
@@ -272,10 +291,22 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [_apiClient purchaseRequestWith:product transaction:transaction completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    [weakSelf process:dict error:error completion:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
-      run_block_on_main(weakSelf.purchasingBlock, result.permissions, error, NO);
-      weakSelf.purchasingBlock = nil;
-    }];
+    QNPurchaseCompletionHandler purchasingBlock = weakSelf.purchasingBlock;
+    
+    if (error) {
+      run_block_on_main(purchasingBlock, @{}, error, NO);
+      return;
+    }
+    
+    QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+    if (result.error) {
+      run_block_on_main(purchasingBlock, @{}, result.error, NO);
+      return;
+    }
+    
+    QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+    run_block_on_main(purchasingBlock, launchResult.permissions, error, NO);
+    weakSelf.purchasingBlock = nil;
   }];
 }
 

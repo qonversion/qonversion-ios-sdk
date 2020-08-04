@@ -2,6 +2,8 @@
 #import <OCMock/OCMock.h>
 #import "QNProductCenterManager.h"
 #import "QNAPIClient.h"
+#import "QNUserDefaultsStorage.h"
+#import "QNStoreKitService.h"
 #import "QNTestConstants.h"
 #import "QNLaunchResult.h"
 
@@ -9,7 +11,22 @@
 
 @interface QNProductCenterManager (Private)
 
+@property (nonatomic) QNStoreKitService *storeKitService;
+@property (nonatomic) QNUserDefaultsStorage *persistentStorage;
+
+@property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
+
+@property (nonatomic, copy) NSMutableArray *permissionsBlocks;
+@property (nonatomic, copy) NSMutableArray *productsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
+
+@property (nonatomic) QNLaunchResult *launchResult;
+@property (nonatomic) NSError *launchError;
+
+@property (nonatomic, assign) BOOL launchingFinished;
+@property (nonatomic, assign) BOOL productsLoaded;
+
+- (void)checkPermissions:(QNPermissionCompletionHandler)result;
 
 @end
 
@@ -48,6 +65,36 @@
     [expectation fulfill];
   }];
 
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+}
+
+- (void)testThatCheckPermissionStoreBlocksWhenLaunchingIsActive {
+  // Given
+  
+  // When
+  [_manager checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
+    
+  }];
+  
+  // Then
+  XCTAssertEqual(_manager.permissionsBlocks.count, 1);
+}
+
+- (void)testThatCheckPermissionCallBlockWhenLaunchingFinished {
+  // Given
+  _manager.launchingFinished = YES;
+  XCTestExpectation *expectation = [self expectationWithDescription:@""];
+  
+  // When
+  [_manager checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
+    XCTAssertNil(result);
+    XCTAssertNil(error);
+    XCTAssertEqual([NSThread mainThread], [NSThread currentThread]);
+    
+    [expectation fulfill];
+  }];
+  
+  // Then
   [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
 }
 
