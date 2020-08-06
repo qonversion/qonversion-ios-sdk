@@ -133,12 +133,13 @@
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
   NSString *productIdentifier = transaction.payment.productIdentifier;
   SKProduct *skProduct = _products[productIdentifier];
+  [self finishTransaction:transaction];
+  
   if (skProduct) {
     if ([self.delegate respondsToSelector:@selector(handleFailedTransaction:forProduct:)]) {
         [self.delegate handleFailedTransaction:transaction forProduct:skProduct];
     }
     
-    [self finishTransaction:transaction];
     return;
   }
 }
