@@ -146,12 +146,13 @@
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
   NSString *productIdentifier = transaction.payment.productIdentifier;
   SKProduct *skProduct = _products[productIdentifier];
+  [self finishTransaction:transaction];
+  
   if (skProduct) {
     if ([self.delegate respondsToSelector:@selector(handlePurchasedTransaction:forProduct:)]) {
         [self.delegate handlePurchasedTransaction:transaction forProduct:skProduct];
     }
     
-    [self finishTransaction:transaction];
     return;
   }
 
