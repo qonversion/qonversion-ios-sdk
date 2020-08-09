@@ -95,7 +95,7 @@ typedef NS_ENUM(NSInteger, QNProperty) {
 
 /**
  Return Qonversion Products in assotiation with Store Kit Products
- @param productIDs Product identifiers that were created in Qonversion Dashboard
+ 
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
 + (void)products:(QNProductsCompletionHandler)completion;

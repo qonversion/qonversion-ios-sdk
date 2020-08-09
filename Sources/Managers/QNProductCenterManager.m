@@ -18,7 +18,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic) QNStoreKitService *storeKitService;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
-@property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
+@property (nonatomic) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 @property (nonatomic, copy) NSMutableArray *productsBlocks;
@@ -50,6 +50,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     _permissionsBlocks = [[NSMutableArray alloc] init];
     _productsBlocks = [[NSMutableArray alloc] init];
+    _purchasingBlocks = [[NSMutableDictionary alloc] init];
   }
   
   return self;
@@ -100,18 +101,24 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
   @synchronized (self) {
-    if (self.purchasingBlock) {
+    QNProduct *product = [self QNProduct:productID];
+    if (!product) {
+      run_block_on_main(result, nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
+      return;
+    }
+    
+    if (self.purchasingBlocks[product.storeID]) {
       QONVERSION_LOG(@"Purchasing in process");
       return;
     }
     
-    QNProduct *product = [self QNProduct:productID];
+    self.purchasingBlocks[product.storeID] = result;
+    
     if (product && [_storeKitService purchase:product.storeID]) {
-      self.purchasingBlock = result;
+      self.purchasingBlocks[product.storeID] = result;
       return;
     }
   }
-  run_block_on_main(result, nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
 }
 
 - (void)executePermissionBlocks {
@@ -291,32 +298,36 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [_apiClient purchaseRequestWith:product transaction:transaction completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    QNPurchaseCompletionHandler purchasingBlock = weakSelf.purchasingBlock;
+    QNPurchaseCompletionHandler _purchasingBlock = weakSelf.purchasingBlocks[product.productIdentifier];
+    
+    @synchronized (self) {
+      [weakSelf.purchasingBlocks removeObjectForKey:product.productIdentifier];
+    }
     
     if (error) {
-      run_block_on_main(purchasingBlock, @{}, error, NO);
+      run_block_on_main(_purchasingBlock, @{}, error, NO);
       return;
     }
     
     QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
     if (result.error) {
-      run_block_on_main(purchasingBlock, @{}, result.error, NO);
+      run_block_on_main(_purchasingBlock, @{}, result.error, NO);
       return;
     }
     
     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-    run_block_on_main(purchasingBlock, launchResult.permissions, error, NO);
-    weakSelf.purchasingBlock = nil;
+    run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
   }];
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   NSError *error = [QNErrors errorFromTransactionError:transaction.error];
   
+  QNPurchaseCompletionHandler _purchasingBlock = _purchasingBlocks[product.productIdentifier];
   if (_purchasingBlock) {
     run_block_on_main(_purchasingBlock, nil, error, error.code == QNErrorCancelled);
     @synchronized (self) {
-      self.purchasingBlock = nil;
+      [_purchasingBlocks removeObjectForKey:product.productIdentifier];
     }
   }
 }
