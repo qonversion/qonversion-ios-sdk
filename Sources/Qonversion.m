@@ -66,12 +66,12 @@
   [[Qonversion sharedInstance].propertiesManager setUserID:userID];
 }
 
-+ (void)checkPermissions:(QNPermissionCompletionHandler)result {
-  [[Qonversion sharedInstance].productCenterManager checkPermissions:result];
++ (void)checkPermissions:(QNPermissionCompletionHandler)completion {
+  [[Qonversion sharedInstance].productCenterManager checkPermissions:completion];
 }
 
-+ (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result {
-  [[Qonversion sharedInstance].productCenterManager purchase:productID result:result];
++ (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
+  [[Qonversion sharedInstance].productCenterManager purchase:productID completion:completion];
 }
 
 + (void)products:(QNProductsCompletionHandler)completion {

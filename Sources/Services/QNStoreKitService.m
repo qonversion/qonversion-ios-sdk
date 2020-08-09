@@ -88,7 +88,7 @@
       [self handleFailedTransaction:transaction];
       break;
     case SKPaymentTransactionStateRestored:
-      // Restore
+      [self handlePurchasedTransaction:transaction];
       break;
     default:
       break;

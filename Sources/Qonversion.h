@@ -80,10 +80,10 @@ typedef NS_ENUM(NSInteger, QNProperty) {
 
 /**
  Check user permissions based on product center details
- @param result Complition block that include permissions dictionary and error
+ @param completion Complition block that include permissions dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)checkPermissions:(QNPermissionCompletionHandler)result;
++ (void)checkPermissions:(QNPermissionCompletionHandler)completion;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -91,7 +91,9 @@ typedef NS_ENUM(NSInteger, QNProperty) {
  @param productID Product identifier create in Qonversion Dash, pay attention that you should use qonversion id instead Apple Product ID
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)purchase:(NSString *)productID result:(QNPurchaseCompletionHandler)result;
++ (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
+
++ (void)restoreWith:(QNPurchaseCompletionHandler)completion;
 
 /**
  Return Qonversion Products in assotiation with Store Kit Products
