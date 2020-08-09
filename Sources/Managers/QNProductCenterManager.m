@@ -112,12 +112,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       return;
     }
     
-    self.purchasingBlocks[product.storeID] = result;
-    
     if (product && [_storeKitService purchase:product.storeID]) {
       self.purchasingBlocks[product.storeID] = result;
       return;
     }
+    
+    run_block_on_main(result, nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
   }
 }
 
