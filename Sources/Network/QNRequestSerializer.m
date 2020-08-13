@@ -92,6 +92,7 @@
   
   [body setValue:providerData forKey:@"provider_data"];
   
+  return body;
 }
 
 @end
