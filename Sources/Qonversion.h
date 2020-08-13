@@ -93,8 +93,6 @@ typedef NS_ENUM(NSInteger, QNProperty) {
  */
 + (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
 
-+ (void)restoreWith:(QNPurchaseCompletionHandler)completion;
-
 /**
  Return Qonversion Products in assotiation with Store Kit Products
  

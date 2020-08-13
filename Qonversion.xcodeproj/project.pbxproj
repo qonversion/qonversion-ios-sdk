@@ -568,7 +568,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 1130;
-				ORGANIZATIONNAME = qonverison;
+				ORGANIZATIONNAME = "Qonversion Inc.";
 				TargetAttributes = {
 					459DAB68243E329F0011ECF3 = {
 						CreatedOnToolsVersion = 11.3.1;
