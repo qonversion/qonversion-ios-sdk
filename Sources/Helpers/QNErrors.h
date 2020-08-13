@@ -68,7 +68,7 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNAPIError) {
   QNAPIErrorIncorrectRequest
 };
 
-@interface QNErrors
+@interface QNErrors: NSObject
 
 + (NSError *)errorWithCode:(QNAPIError)errorCode;
 + (NSError *)errorWithQNErrorCode:(QNError)errorCode;

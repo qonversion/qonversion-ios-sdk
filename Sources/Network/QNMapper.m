@@ -104,7 +104,7 @@
     return 0;
   }
   
-  NSNumber *numberObject = object;
+  NSNumber *numberObject = (NSNumber *)object;
   
   if ([numberObject isEqual:[NSNull null]]) {
     return 0;
