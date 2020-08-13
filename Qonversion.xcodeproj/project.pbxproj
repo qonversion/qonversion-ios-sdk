@@ -22,6 +22,13 @@
 		454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */; };
 		454BE230247C4AD8001FE771 /* QNUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE22E247C4AD8001FE771 /* QNUtils.h */; };
 		454BE231247C4AD8001FE771 /* QNUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22F247C4AD8001FE771 /* QNUtils.m */; };
+		454EF63F24E5CC580070581E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454EF63E24E5CC580070581E /* AppDelegate.swift */; };
+		454EF64124E5CC590070581E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454EF64024E5CC590070581E /* SceneDelegate.swift */; };
+		454EF64324E5CC590070581E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454EF64224E5CC590070581E /* ViewController.swift */; };
+		454EF64624E5CC590070581E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 454EF64424E5CC590070581E /* Main.storyboard */; };
+		454EF64824E5CC5A0070581E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 454EF64724E5CC5A0070581E /* Assets.xcassets */; };
+		454EF64B24E5CC5A0070581E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 454EF64924E5CC5A0070581E /* LaunchScreen.storyboard */; };
+		454EF65024E5CD8E0070581E /* QNLaunchResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD3D249BD10F00D2BC40 /* QNLaunchResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		456ECD34249B901900D2BC40 /* QNRequestBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD33249B901900D2BC40 /* QNRequestBuilder.m */; };
 		456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD36249BB68B00D2BC40 /* QRequestBuilderTests.m */; };
 		456ECD3F249C737500D2BC40 /* QNLaunchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD3E249C737500D2BC40 /* QNLaunchResult.m */; };
@@ -60,7 +67,6 @@
 		459DABA7243E33470011ECF3 /* Fastfile in Resources */ = {isa = PBXBuildFile; fileRef = 459DABA2243E33470011ECF3 /* Fastfile */; };
 		459DABA8243E33470011ECF3 /* report.xml in Resources */ = {isa = PBXBuildFile; fileRef = 459DABA3243E33470011ECF3 /* report.xml */; };
 		459DABDB243E33C20011ECF3 /* Qonversion.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 459DABD4243E33C20011ECF3 /* Qonversion.xcconfig */; };
-		459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABD7243E33C20011ECF3 /* QonversionFramework.h */; };
 		459DABF5243E35BC0011ECF3 /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABE1243E35BC0011ECF3 /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		459DABF6243E35BC0011ECF3 /* QNUserInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 459DABE3243E35BC0011ECF3 /* QNUserInfo.m */; };
 		459DABF7243E35BC0011ECF3 /* QNKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 459DABE4243E35BC0011ECF3 /* QNKeychain.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -113,6 +119,14 @@
 		454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPropertiesTests.m; sourceTree = "<group>"; };
 		454BE22E247C4AD8001FE771 /* QNUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUtils.h; sourceTree = "<group>"; };
 		454BE22F247C4AD8001FE771 /* QNUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUtils.m; sourceTree = "<group>"; };
+		454EF63C24E5CC580070581E /* Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		454EF63E24E5CC580070581E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		454EF64024E5CC590070581E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		454EF64224E5CC590070581E /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		454EF64524E5CC590070581E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		454EF64724E5CC5A0070581E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		454EF64A24E5CC5A0070581E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		454EF64C24E5CC5A0070581E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		456ECD31249B825D00D2BC40 /* QNPermission.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNPermission.h; sourceTree = "<group>"; };
 		456ECD32249B8FE000D2BC40 /* QNRequestBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNRequestBuilder.h; sourceTree = "<group>"; };
 		456ECD33249B901900D2BC40 /* QNRequestBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNRequestBuilder.m; sourceTree = "<group>"; };
@@ -156,7 +170,6 @@
 		459DABA2243E33470011ECF3 /* Fastfile */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; path = Fastfile; sourceTree = "<group>"; tabWidth = 2; };
 		459DABA3243E33470011ECF3 /* report.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = report.xml; sourceTree = "<group>"; };
 		459DABD4243E33C20011ECF3 /* Qonversion.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Qonversion.xcconfig; sourceTree = "<group>"; };
-		459DABD7243E33C20011ECF3 /* QonversionFramework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QonversionFramework.h; sourceTree = "<group>"; };
 		459DABD8243E33C20011ECF3 /* Qonversion.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = Qonversion.modulemap; sourceTree = "<group>"; };
 		459DABDA243E33C20011ECF3 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		459DABE1243E35BC0011ECF3 /* Qonversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
@@ -192,6 +205,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		454EF63924E5CC580070581E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		459DAB66243E329F0011ECF3 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -240,6 +260,20 @@
 			path = Storage;
 			sourceTree = "<group>";
 		};
+		454EF63D24E5CC580070581E /* Sample */ = {
+			isa = PBXGroup;
+			children = (
+				454EF63E24E5CC580070581E /* AppDelegate.swift */,
+				454EF64024E5CC590070581E /* SceneDelegate.swift */,
+				454EF64224E5CC590070581E /* ViewController.swift */,
+				454EF64424E5CC590070581E /* Main.storyboard */,
+				454EF64724E5CC5A0070581E /* Assets.xcassets */,
+				454EF64924E5CC5A0070581E /* LaunchScreen.storyboard */,
+				454EF64C24E5CC5A0070581E /* Info.plist */,
+			);
+			path = Sample;
+			sourceTree = "<group>";
+		};
 		456ECD35249BB67600D2BC40 /* Network */ = {
 			isa = PBXGroup;
 			children = (
@@ -256,6 +290,7 @@
 				459DABD3243E33C20011ECF3 /* Framework */,
 				459DAB6B243E329F0011ECF3 /* Sources */,
 				459DAB76243E329F0011ECF3 /* QonversionTests */,
+				454EF63D24E5CC580070581E /* Sample */,
 				459DAB6A243E329F0011ECF3 /* Products */,
 				447A040961B196621A548033 /* Pods */,
 				BB6B3C9FD9EFBC9E1604507D /* Frameworks */,
@@ -269,6 +304,7 @@
 			children = (
 				459DAB69243E329F0011ECF3 /* Qonversion.framework */,
 				459DAB72243E329F0011ECF3 /* QonversionTests.xctest */,
+				454EF63C24E5CC580070581E /* Sample.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -346,7 +382,6 @@
 			isa = PBXGroup;
 			children = (
 				459DABD4243E33C20011ECF3 /* Qonversion.xcconfig */,
-				459DABD7243E33C20011ECF3 /* QonversionFramework.h */,
 				459DABD8243E33C20011ECF3 /* Qonversion.modulemap */,
 				459DABDA243E33C20011ECF3 /* Info.plist */,
 			);
@@ -510,10 +545,10 @@
 				458A8CC224B5E50F00637130 /* QNPermission.h in Headers */,
 				4531CBBF245778110022C422 /* QNDevice.h in Headers */,
 				454BE22A247C3E72001FE771 /* QNProperties.h in Headers */,
-				459DABDE243E33C20011ECF3 /* QonversionFramework.h in Headers */,
 				458A8CB724B1F5F600637130 /* QNErrors.h in Headers */,
 				458A8CD124BAC5F500637130 /* QNUserDefaultsStorage.h in Headers */,
 				4572FE1C24BC40F900A17AC4 /* QNProductCenterManager.h in Headers */,
+				454EF65024E5CD8E0070581E /* QNLaunchResult.h in Headers */,
 				458A8CC124B5E50A00637130 /* QNProduct.h in Headers */,
 				458A8CD824BAC61E00637130 /* QNRequestSerializer.h in Headers */,
 				458A8CC824B8407C00637130 /* QNStoreKitService.h in Headers */,
@@ -524,6 +559,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		454EF63B24E5CC580070581E /* Sample */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 454EF64F24E5CC5A0070581E /* Build configuration list for PBXNativeTarget "Sample" */;
+			buildPhases = (
+				454EF63824E5CC580070581E /* Sources */,
+				454EF63924E5CC580070581E /* Frameworks */,
+				454EF63A24E5CC580070581E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Sample;
+			productName = Sample;
+			productReference = 454EF63C24E5CC580070581E /* Sample.app */;
+			productType = "com.apple.product-type.application";
+		};
 		459DAB68243E329F0011ECF3 /* Qonversion */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 459DAB7D243E329F0011ECF3 /* Build configuration list for PBXNativeTarget "Qonversion" */;
@@ -567,9 +619,13 @@
 		459DAB60243E329F0011ECF3 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 1150;
 				LastUpgradeCheck = 1130;
 				ORGANIZATIONNAME = "Qonversion Inc.";
 				TargetAttributes = {
+					454EF63B24E5CC580070581E = {
+						CreatedOnToolsVersion = 11.5;
+					};
 					459DAB68243E329F0011ECF3 = {
 						CreatedOnToolsVersion = 11.3.1;
 						LastSwiftMigration = 1140;
@@ -585,6 +641,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 459DAB5F243E329F0011ECF3;
 			productRefGroup = 459DAB6A243E329F0011ECF3 /* Products */;
@@ -593,11 +650,22 @@
 			targets = (
 				459DAB68243E329F0011ECF3 /* Qonversion */,
 				459DAB71243E329F0011ECF3 /* QonversionTests */,
+				454EF63B24E5CC580070581E /* Sample */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		454EF63A24E5CC580070581E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				454EF64B24E5CC5A0070581E /* LaunchScreen.storyboard in Resources */,
+				454EF64824E5CC5A0070581E /* Assets.xcassets in Resources */,
+				454EF64624E5CC590070581E /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		459DAB67243E329F0011ECF3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -654,6 +722,16 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		454EF63824E5CC580070581E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				454EF64324E5CC590070581E /* ViewController.swift in Sources */,
+				454EF63F24E5CC580070581E /* AppDelegate.swift in Sources */,
+				454EF64124E5CC590070581E /* SceneDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		459DAB65243E329F0011ECF3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -715,7 +793,68 @@
 		};
 /* End PBXTargetDependency section */
 
+/* Begin PBXVariantGroup section */
+		454EF64424E5CC590070581E /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				454EF64524E5CC590070581E /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		454EF64924E5CC5A0070581E /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				454EF64A24E5CC5A0070581E /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
+		454EF64D24E5CC5A0070581E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = Sample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.sample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		454EF64E24E5CC5A0070581E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = Sample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.sample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		459DAB7B243E329F0011ECF3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -851,7 +990,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.0.1;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -882,7 +1021,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.0.1;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -940,6 +1079,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		454EF64F24E5CC5A0070581E /* Build configuration list for PBXNativeTarget "Sample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				454EF64D24E5CC5A0070581E /* Debug */,
+				454EF64E24E5CC5A0070581E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		459DAB63243E329F0011ECF3 /* Build configuration list for PBXProject "Qonversion" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
