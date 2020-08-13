@@ -11,7 +11,7 @@
 		45202189244DD02F00C1A928 /* QonversionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45202188244DD02F00C1A928 /* QonversionTests.m */; };
 		4531CBBF245778110022C422 /* QDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 4531CBBD245778110022C422 /* QDevice.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		4531CBC0245778110022C422 /* QDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBBE245778110022C422 /* QDevice.m */; };
-		4531CBC324577D770022C422 /* QConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 4531CBC124577D770022C422 /* QConstants.h */; };
+		4531CBC324577D770022C422 /* QConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 4531CBC124577D770022C422 /* QConstants.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4531CBC424577D770022C422 /* QConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC224577D770022C422 /* QConstants.m */; };
 		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
 		4531CBC824578D300022C422 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 4531CBC724578D300022C422 /* Podfile */; };
@@ -19,7 +19,7 @@
 		454BE211247C2BB4001FE771 /* QInMemoryStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE20F247C2BB4001FE771 /* QInMemoryStorage.h */; };
 		454BE212247C2BB4001FE771 /* QInMemoryStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE210247C2BB4001FE771 /* QInMemoryStorage.m */; };
 		454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */; };
-		454BE22A247C3E72001FE771 /* QonversionProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE228247C3E72001FE771 /* QonversionProperties.h */; };
+		454BE22A247C3E72001FE771 /* QonversionProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE228247C3E72001FE771 /* QonversionProperties.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		454BE22B247C3E72001FE771 /* QonversionProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE229247C3E72001FE771 /* QonversionProperties.m */; };
 		454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */; };
 		454BE230247C4AD8001FE771 /* QUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE22E247C4AD8001FE771 /* QUtils.h */; };
@@ -470,6 +470,7 @@
 		459DAB60243E329F0011ECF3 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 1150;
 				LastUpgradeCheck = 1130;
 				ORGANIZATIONNAME = qonverison;
 				TargetAttributes = {
@@ -488,6 +489,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 459DAB5F243E329F0011ECF3;
 			productRefGroup = 459DAB6A243E329F0011ECF3 /* Products */;

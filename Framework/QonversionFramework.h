@@ -10,11 +10,6 @@
 #endif
 #endif
 
-#import "QUtils.h"
-#import "Qonversion.h"
-#import "RenewalProductDetails.h"
-#import "QonversionCheckResult.h"
-
 FOUNDATION_EXPORT double QonversionVersionNumber;
 FOUNDATION_EXPORT const unsigned char QonversionVersionString[];
 

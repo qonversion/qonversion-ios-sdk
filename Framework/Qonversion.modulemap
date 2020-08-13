@@ -1,6 +1,9 @@
 framework module Qonversion {
-  umbrella header "QonversionFramework.h"
 
+  header "Qonversion.h"
+  header "QonversionCheckResult.h"
+  header "RenewalProductDetails.h"
+  header "QonversionProperties.h"
+  header "QConstants.h"
   export *
-  module * { export * }
 }
