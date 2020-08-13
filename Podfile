@@ -4,7 +4,7 @@ project 'Qonversion'
 
 target 'QonversionTests' do
   platform :ios, '9.0'
-  pod 'OCMock', '~> 3.2.1'
+  pod 'OCMock'
 end
 
 post_install do |installer|

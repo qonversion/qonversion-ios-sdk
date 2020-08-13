@@ -1,22 +1,22 @@
 #import <XCTest/XCTest.h>
-#import "QonversionProperties.h"
+#import "QNProperties.h"
 
-@interface QonversionPropertiesTests : XCTestCase
+@interface QNPropertiesTests : XCTestCase
 
 @end
 
-@implementation QonversionPropertiesTests
+@implementation QNPropertiesTests
 
 - (void)testExample {
-    XCTAssertEqualObjects([QonversionProperties keyForProperty:QPropertyEmail], @"_q_email");
+    XCTAssertEqualObjects([QNProperties keyForProperty:QNPropertyEmail], @"_q_email");
 }
 
 - (void)testCorrectionForPropertyKey {
-    XCTAssertTrue([QonversionProperties checkProperty:@"test"]);
-    XCTAssertTrue([QonversionProperties checkProperty:@"test-test"]);
-    XCTAssertTrue([QonversionProperties checkProperty:@"test-test:"]);
-    XCTAssertFalse([QonversionProperties checkProperty:@"test-test: "]);
-    XCTAssertTrue([QonversionProperties checkProperty:@"test_test"]);
+    XCTAssertTrue([QNProperties checkProperty:@"test"]);
+    XCTAssertTrue([QNProperties checkProperty:@"test-test"]);
+    XCTAssertTrue([QNProperties checkProperty:@"test-test:"]);
+    XCTAssertFalse([QNProperties checkProperty:@"test-test: "]);
+    XCTAssertTrue([QNProperties checkProperty:@"test_test"]);
 }
 
 @end
