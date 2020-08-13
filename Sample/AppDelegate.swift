@@ -8,13 +8,18 @@
 
 import UIKit
 import Qonversion
+import AppsFlyerLib
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
+  
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     
     Qonversion.launch(withKey: "project_key")
+    
+    AppsFlyerTracker.shared().appsFlyerDevKey = "appsFlyerDevKey"
+    AppsFlyerTracker.shared().appleAppID = "appleAppID"
+    AppsFlyerTracker.shared().delegate = self
     
     Qonversion.checkPermissions { (permissions, error) in
       if let _ = error {
@@ -43,6 +48,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     return true
   }
-
+  
 }
 
+
+extension AppDelegate: AppsFlyerTrackerDelegate {
+  
+  func onConversionDataSuccess(_ conversionInfo: [AnyHashable : Any]) {
+    Qonversion.addAttributionData(conversionInfo, from: .appsFlyer)
+  }
+  
+  func onConversionDataFail(_ error: Error) {
+    
+  }
+  
+}

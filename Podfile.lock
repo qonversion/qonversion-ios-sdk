@@ -1,16 +1,20 @@
 PODS:
+  - AppsFlyerFramework (5.4.0)
   - OCMock (3.2.2)
 
 DEPENDENCIES:
+  - AppsFlyerFramework
   - OCMock
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs:
+    - AppsFlyerFramework
     - OCMock
 
 SPEC CHECKSUMS:
+  AppsFlyerFramework: 0253602f146ec07652543fe6f143d27086a695c3
   OCMock: 18c9b7e67d4c2770e95bb77a9cc1ae0c91fe3835
 
-PODFILE CHECKSUM: 30d6e86e2f472b1863ada85abb42581367e03f2c
+PODFILE CHECKSUM: d8402922d3263cabf9a52c075fe68ef5e9c5491e
 
 COCOAPODS: 1.9.3
