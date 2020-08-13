@@ -1,5 +1,9 @@
 framework module Qonversion {
 
   header "Qonversion.h"
+  header "QonversionCheckResult.h"
+  header "RenewalProductDetails.h"
+  header "QonversionProperties.h"
+  header "QConstants.h"
   export *
 }
