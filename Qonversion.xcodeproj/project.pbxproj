@@ -86,7 +86,6 @@
 		454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPropertiesTests.m; sourceTree = "<group>"; };
 		454BE22E247C4AD8001FE771 /* QUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QUtils.h; sourceTree = "<group>"; };
 		454BE22F247C4AD8001FE771 /* QUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QUtils.m; sourceTree = "<group>"; };
-		454EF5FD24E5C4420070581E /* Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -131,13 +130,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		454EF5FA24E5C4420070581E /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		459DAB66243E329F0011ECF3 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -213,7 +205,6 @@
 			children = (
 				459DAB69243E329F0011ECF3 /* Qonversion.framework */,
 				459DAB72243E329F0011ECF3 /* QonversionTests.xctest */,
-				454EF5FD24E5C4420070581E /* Sample.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -436,23 +427,6 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		454EF5FC24E5C4420070581E /* Sample */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 454EF61024E5C4440070581E /* Build configuration list for PBXNativeTarget "Sample" */;
-			buildPhases = (
-				454EF5F924E5C4420070581E /* Sources */,
-				454EF5FA24E5C4420070581E /* Frameworks */,
-				454EF5FB24E5C4420070581E /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = Sample;
-			productName = Sample;
-			productReference = 454EF5FD24E5C4420070581E /* Sample.app */;
-			productType = "com.apple.product-type.application";
-		};
 		459DAB68243E329F0011ECF3 /* Qonversion */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 459DAB7D243E329F0011ECF3 /* Build configuration list for PBXNativeTarget "Qonversion" */;
@@ -500,9 +474,6 @@
 				LastUpgradeCheck = 1130;
 				ORGANIZATIONNAME = qonverison;
 				TargetAttributes = {
-					454EF5FC24E5C4420070581E = {
-						CreatedOnToolsVersion = 11.5;
-					};
 					459DAB68243E329F0011ECF3 = {
 						CreatedOnToolsVersion = 11.3.1;
 						LastSwiftMigration = 1140;
@@ -527,19 +498,11 @@
 			targets = (
 				459DAB68243E329F0011ECF3 /* Qonversion */,
 				459DAB71243E329F0011ECF3 /* QonversionTests */,
-				454EF5FC24E5C4420070581E /* Sample */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		454EF5FB24E5C4420070581E /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		459DAB67243E329F0011ECF3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -595,13 +558,6 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		454EF5F924E5C4420070581E /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		459DAB65243E329F0011ECF3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -646,46 +602,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		454EF60E24E5C4440070581E /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = Sample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.sample.Sample;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		454EF60F24E5C4440070581E /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = Sample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.sample.Sample;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 		459DAB7B243E329F0011ECF3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -910,15 +826,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		454EF61024E5C4440070581E /* Build configuration list for PBXNativeTarget "Sample" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				454EF60E24E5C4440070581E /* Debug */,
-				454EF60F24E5C4440070581E /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		459DAB63243E329F0011ECF3 /* Build configuration list for PBXProject "Qonversion" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
