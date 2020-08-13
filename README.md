@@ -58,47 +58,6 @@ import Qonversion
 Qonversion.launch(withKey: "projectKey", userID: "yourSideUserID")
 ```
 
-
-## User Validation
-
-
-Most app users have only one subscription. For that reason, you can get the first item from `activeProducts` and check its status. 
-
-### Swift
-
-```swift
-Qonversion.checkUser({ result in
-
-  guard let activeProduct = result.activeProducts.first else {
-    // Flow for users without any active subscription
-    return
-  }
-  
-  if activeProduct.state == .trial, activeProduct.status == .active {
-    // Flow for users with active subscription
-  }
-}) { _ in }
-```
-
-### Objective-C
-
-```Objective-C
-[Qonversion checkUser:^(QonversionCheckResult * _Nonnull result) {
-    RenewalProductDetails *activeObject = result.activeProducts.firstObject;
-    
-    if (activeObject) {
-        
-    } else {
-        // Flow for users without any active subscriptions
-    }
-    
-} failure:^(NSError *error) {
-    
-}];
-```
- For more details, see [docs](https://docs.qonversion.io/getting-started/quick-start-with-ios/user-validation#check-user-subscription).
-
-
 ## License
 
 Qonversion SDK is available under the MIT license.

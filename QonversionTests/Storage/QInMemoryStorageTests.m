@@ -1,20 +1,20 @@
 #import <XCTest/XCTest.h>
-#import "QInMemoryStorage.h"
+#import "QNInMemoryStorage.h"
 
-static NSString *const QInMemoryStorageKey = @"testStorageKey";
+static NSString *const QNInMemoryStorageKey = @"testStorageKey";
 NSTimeInterval QDefaultTestTimeout = 0.1;
 
-@interface QInMemoryStorageTests : XCTestCase
+@interface QNInMemoryStorageTests : XCTestCase
 
-@property (nonatomic, strong) QInMemoryStorage *storage;
+@property (nonatomic, strong) QNInMemoryStorage *storage;
 
 @end
 
-@implementation QInMemoryStorageTests
+@implementation QNInMemoryStorageTests
 
 - (void)setUp {
     [super setUp];
-    self.storage = [QInMemoryStorage new];
+    self.storage = [QNInMemoryStorage new];
 }
 
 - (void)tearDown {
@@ -34,8 +34,8 @@ NSTimeInterval QDefaultTestTimeout = 0.1;
 - (void)testThatStorageKeepObjectByKey {
     NSObject *expectedObject = [NSObject new];
     
-    [self.storage storeObject:expectedObject forKey:QInMemoryStorageKey];
-    id resultObject = [self.storage loadObjectForKey:QInMemoryStorageKey];
+    [self.storage storeObject:expectedObject forKey:QNInMemoryStorageKey];
+    id resultObject = [self.storage loadObjectForKey:QNInMemoryStorageKey];
     
     XCTAssertEqualObjects(expectedObject, resultObject);
 }
@@ -64,14 +64,14 @@ NSTimeInterval QDefaultTestTimeout = 0.1;
 - (void)testThatStorageReturnNilAfterRemoveObjectByKey {
     NSObject *object = [NSObject new];
     
-    [self.storage storeObject:object forKey:QInMemoryStorageKey];
-    [self.storage removeObjectForKey:QInMemoryStorageKey];
-    id resultObject = [self.storage loadObjectForKey:QInMemoryStorageKey];
+    [self.storage storeObject:object forKey:QNInMemoryStorageKey];
+    [self.storage removeObjectForKey:QNInMemoryStorageKey];
+    id resultObject = [self.storage loadObjectForKey:QNInMemoryStorageKey];
     
     XCTAssertNil(resultObject);
 }
 
-- (void)testThatStorageReturnObjectWithoutKeyInCompletionBlock {
+- (void)testThatStorageReturnObjectWithoutKeyInCompletionHandler {
     NSObject *expectedObject = [NSObject new];
     XCTestExpectation *expectation = [self expectationWithDescription:@"Completion block was called"];
     
@@ -89,14 +89,14 @@ NSTimeInterval QDefaultTestTimeout = 0.1;
                                  }];
 }
 
-- (void)testThatStorageReturnObjectByKeyInCompletionBlock {
+- (void)testThatStorageReturnObjectByKeyInCompletionHandler {
     NSObject *expectedObject = [NSObject new];
     XCTestExpectation *expectation = [self expectationWithDescription:@"Completion block was called"];
     
-    [self.storage storeObject:expectedObject forKey:QInMemoryStorageKey];
+    [self.storage storeObject:expectedObject forKey:QNInMemoryStorageKey];
     
     __block id resultObject;
-    [self.storage loadObjectForKey:QInMemoryStorageKey withCompletion:^(id object) {
+    [self.storage loadObjectForKey:QNInMemoryStorageKey withCompletion:^(id object) {
         resultObject = object;
         [expectation fulfill];
     }];

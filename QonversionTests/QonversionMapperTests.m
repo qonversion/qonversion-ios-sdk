@@ -1,78 +1,96 @@
 #import <XCTest/XCTest.h>
 
-#import "QonversionMapper.h"
+#import "QNMapper.h"
+#import "QNErrors.h"
 #import "Helpers/XCTestCase+TestJSON.h"
+#import "QNTestConstants.h"
 
-static NSString *JSONWithActiveProduct = @"check_result_with_active_product.json";
-static NSString *JSONWithoutProducts = @"check_restul_without_products.json";
-static NSString *checkFailedState = @"check_failed_state.json";
+#import "QNMapperObject.h"
+#import "QNLaunchResult.h"
 
-@interface QonversionMapperTests : XCTestCase
-@property (nonatomic, strong) NSDictionary *activeUserDict;
-@property (nonatomic, strong) NSDictionary *withoutProducts;
+@interface QNMapperTests : XCTestCase
+@property (nonatomic, strong) NSDictionary *userInitSuccess;
+@property (nonatomic, strong) NSDictionary *userInitFailed;
 @end
 
-@implementation QonversionMapperTests
+@implementation QNMapperTests
 
 - (void)setUp {
-    [super setUp];
-    
-    self.activeUserDict = [self JSONObjectFromContentsOfFile:JSONWithActiveProduct];
-    self.withoutProducts = [self JSONObjectFromContentsOfFile:JSONWithoutProducts];
+  [super setUp];
+  
+  self.userInitSuccess = [self JSONObjectFromContentsOfFile:keyQNInitSuccessJSON];
+  self.userInitFailed = [self JSONObjectFromContentsOfFile:keyQNInitFailedJSON];
 }
 
 - (void)tearDown {
-    self.activeUserDict = nil;
-    self.withoutProducts = nil;
-    [super tearDown];
+  self.userInitSuccess = nil;
+  self.userInitFailed = nil;
+  
+  [super tearDown];
 }
 
-- (void)testThatAllRequiredDataPrepared {
-    XCTAssertNotNil([self activeUserDict]);
-    XCTAssertNotNil([self withoutProducts]);
+- (void)testThatMapperParsePermissions {
+  QNLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
+  
+  XCTAssertNotNil(result);
+  XCTAssertTrue([result.uid isEqualToString:@"qonversion_user_id"]);
+  XCTAssertTrue([result.permissions isKindOfClass:NSDictionary.class]);
+  
+  QNPermission *premium = result.permissions[@"premium"];
+  XCTAssertNotNil(premium);
+  XCTAssertTrue(premium.isActive);
+  XCTAssertEqual(premium.renewState, QNPermissionRenewStateBillingIssue);
+  
+  XCTAssertNotNil(premium.startedDate);
+  
+  XCTAssertTrue([premium.startedDate.description isEqualToString:@"2020-04-08 18:11:26 +0000"]);
+  XCTAssertNotNil(premium.expirationDate);
+  XCTAssertTrue(premium.isActive);
+  
+  XCTAssertTrue([premium.expirationDate.description isEqualToString:@"2020-05-08 14:51:26 +0000"]);
 }
 
-- (void)testThatMapperWorkCorrectWithIdealJSON {
-    QonversionCheckResult *activeUserResult = [[QonversionMapper new] fillCheckResultWith:self.activeUserDict];
-    XCTAssertNotNil(activeUserResult);
-    
-    NSUInteger timestamp = 1586369519;
-    ClientEnvironment environment = ClientEnvironmentProduction;
-    
-    XCTAssertEqual(activeUserResult.timestamp, timestamp);
-    XCTAssertEqual(activeUserResult.environment, environment);
-    XCTAssertEqual(activeUserResult.activeProducts.count, 1);
-    XCTAssertEqual(activeUserResult.allProducts.count, 1);
-    
-    XCTAssertNotNil(activeUserResult.activeProducts.firstObject);
-    
-    XCTAssertEqual(activeUserResult.activeProducts.firstObject.billingRetry, NO);
-    XCTAssertEqual(activeUserResult.activeProducts.firstObject.expired, NO);
+- (void)testThatMapperParseFewPermissionsCorrectly {
+  QNLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
+  
+  XCTAssertNotNil(result);
+  XCTAssertEqual(result.permissions.count, 2);
+  
+  QNPermission *standart = result.permissions[@"standart"];
+  XCTAssertNotNil(standart);
+  XCTAssertTrue([standart.permissionID isEqualToString:@"standart"]);
+  XCTAssertFalse(standart.isActive);
 }
 
-- (void)testThatMapperParseEmptyProductCorrectly {
-    QonversionCheckResult *resultWithoutProducts = [[QonversionMapper new] fillCheckResultWith:self.withoutProducts];
-    XCTAssertNotNil(resultWithoutProducts);
-    
-    XCTAssertEqual(resultWithoutProducts.activeProducts.count, 0);
-    XCTAssertEqual(resultWithoutProducts.allProducts.count, 0);
+- (void)testThatMapperParsePermissionWithBrokenJson {
+  
+  QNMapperObject *result = [QNMapper mapperObjectFrom:[self JSONObjectFromContentsOfFile:keyQNInitFailedJSON]];
+  
+  XCTAssertNotNil(result);
+  XCTAssertNotNil(result.error);
+  XCTAssertNil(result.data);
+  
+  QNMapperObject *brokenResult = [QNMapper mapperObjectFrom:nil];
+  XCTAssertNotNil(brokenResult);
+  XCTAssertNil(brokenResult.data);
+  XCTAssertNotNil(brokenResult.error);
+  
+  XCTAssertEqual(brokenResult.error.code, QNErrorInternalError);
 }
 
-- (void)testThatMapperCouldParseErrorResponse {
-    NSData *failedData = [self fileDataFromContentsOfFile:checkFailedState];
-    QonversionCheckResultComposeModel * composeModel = [[QonversionMapper new] composeModelFrom:failedData];
-    XCTAssertNil(composeModel.result);
-    XCTAssertNotNil(composeModel.error);
-    XCTAssertEqual(composeModel.error.code, QErrorCodeIncorrectRequest);
-}
-
-- (void)testThatMapperParseBrokenData {
-    NSData *brokenData = [NSData new];
-    QonversionCheckResultComposeModel * composeModel = [[QonversionMapper new] composeModelFrom:brokenData];
-    XCTAssertNil(composeModel.result);
-    XCTAssertNotNil(composeModel.error);
-    
-    XCTAssertEqual(composeModel.error.code, QErrorCodeFailedParseResponse);
+- (void)testThatMapperParseIntegerFromAnyObject {
+  NSInteger value = [QNMapper mapInteger:[NSNull null]];
+  XCTAssertTrue(value == 0);
+  
+  NSDictionary *dict = @{@"key": [NSNull null], @"key_1": @1};
+  NSInteger valueFromNull = [QNMapper mapInteger:dict[@"key"]];
+  XCTAssertTrue(valueFromNull == 0);
+  
+  NSInteger valueFromNotExistKey = [QNMapper mapInteger:dict[@"non_exist_key"]];
+  XCTAssertTrue(valueFromNotExistKey == 0);
+  
+  NSInteger valueFromExistValue = [QNMapper mapInteger:dict[@"key_1"]];
+  XCTAssertTrue(valueFromExistValue == 1);
 }
 
 @end

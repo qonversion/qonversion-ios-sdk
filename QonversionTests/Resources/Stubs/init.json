@@ -1,0 +1,31 @@
+{
+  "timestamp": 1586369519,
+  "uid": "qonversion_user_id",
+  "permissions": [
+    {
+      "id": "standart",
+      "associated_product": "qonversion_product",
+      "active": 0,
+      "renew_state": 0,
+      "started_timestamp": 1586369486,
+      "expiration_timestamp": 1588949486,
+    },
+    {
+      "id": "premium",
+      "associated_product": "qonversion_product",
+      "active": 1,
+      "renew_state": 3,
+      "started_timestamp": 1586369486,
+      "expiration_timestamp": 1588949486,
+    }
+  ],
+  "products": [
+    {
+      "id": "product",
+      "store_id": "apple_store_id",
+      "type": 0,
+      "duration": 1,
+    }
+  ],
+  
+}

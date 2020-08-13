@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'Qonversion'
-  s.version          = '1.2.0'
+  s.version          = '2.0.0'
   s.summary          = 'qonversion.io'
   s.description      = <<-DESC
   Deep Analytics for iOS Subscriptions

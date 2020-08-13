@@ -3,7 +3,6 @@
 
 #import "Qonversion.h"
 #import "XCTestCase+TestJSON.h"
-#import "UserInfo.h"
 
 @interface Qonversion (Tests)
 
@@ -21,41 +20,13 @@
     [super setUp];
     
     // Set default value before
-    [Qonversion setDebugMode:NO];
+    [Qonversion setDebugMode];
+    [Qonversion launchWithKey:@"test_key"];
+    
 }
 
-- (void)testThatDebugModeSetDefaultValueAsNoCorrectly {
-    id mockUserInfo = [OCMockObject niceMockForClass:[UserInfo class]];
-    
-    NSDictionary *mockDictionary = @{@"d": @""};
-    OCMStub([mockUserInfo overallData]).andReturn(mockDictionary);
-    
-    [Qonversion launchWithKey:@"key" completion:nil];
-    
-    NSURLRequest *request = [Qonversion makePostRequestWithEndpoint:@"dummy" andBody:@{}];
-    XCTAssertNotNil(request);
-    NSDictionary *body = [self JSONObjectFromData:request.HTTPBody];
-    XCTAssertNotNil(body);
-
-    NSNumber *debugMode = body[@"debug_mode"];
-    XCTAssertEqual(debugMode.copy, @NO);
+- (void)testThatQonversionLauch {
+    XCTAssertNotNil(@"");
 }
-
-- (void)testThatDebugModeSetCorrectly {
-    id mockUserInfo = [OCMockObject niceMockForClass:[UserInfo class]];
-    
-    NSDictionary *mockDictionary = @{@"d": @""};
-    OCMStub([mockUserInfo overallData]).andReturn(mockDictionary);
-    [Qonversion setDebugMode:YES];
-    [Qonversion launchWithKey:@"key" userID:@"user"];
-    NSURLRequest *request = [Qonversion makePostRequestWithEndpoint:@"dummy" andBody:@{}];
-    XCTAssertNotNil(request);
-    NSDictionary *body = [self JSONObjectFromData:request.HTTPBody];
-    XCTAssertNotNil(body);
-
-    NSNumber *debugMode = body[@"debug_mode"];
-    XCTAssertEqual(debugMode, @YES);
-}
-
 
 @end

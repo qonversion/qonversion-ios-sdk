@@ -1,24 +1,24 @@
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
 
-#import "QDevice.h"
-#import "QConstants.h"
+#import "QNDevice.h"
+#import "QNConstants.h"
 
 // expose private methods for unit testing
-@interface QDevice (Tests)
+@interface QNDevice (Tests)
 
 + (NSString*)getAdvertiserID:(int) maxAttempts;
 
 @end
 
-@interface QDeviceTests : XCTestCase
-@property (nonatomic, strong) QDevice *device;
+@interface QNDeviceTests : XCTestCase
+@property (nonatomic, strong) QNDevice *device;
 @end
 
-@implementation QDeviceTests
+@implementation QNDeviceTests
 
 - (void)setUp {
-    _device = [[QDevice alloc] init];
+    _device = [[QNDevice alloc] init];
 }
 
 - (void)tearDown {
@@ -39,7 +39,7 @@
 }
 
 - (void)testAdvertiserID {
-    id mockDeviceInfo = OCMClassMock([QDevice class]);
+    id mockDeviceInfo = OCMClassMock([QNDevice class]);
     [[mockDeviceInfo expect] getAdvertiserID:5];
     XCTAssertEqualObjects(nil, _device.advertiserID);
     [mockDeviceInfo verify];
@@ -68,8 +68,8 @@
 }
 
 - (void)testAfUserID {
-    XCTAssertNil(_device.af_userID);
-    XCTAssertNil(_device.adjust_userID);
+    XCTAssertNil(_device.afUserID);
+    XCTAssertNil(_device.adjustUserID);
 }
 
 @end
