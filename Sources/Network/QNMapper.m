@@ -4,10 +4,6 @@
 #import "QNLaunchResult+Protected.h"
 #import "QNMapperObject.h"
 
-@implementation QNMapperObjec
-
-@end
-
 @implementation QNMapper
 
 + (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
