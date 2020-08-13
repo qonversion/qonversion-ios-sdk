@@ -66,8 +66,7 @@
 // MARK: - SKPaymentTransactionObserver
 
 - (void)paymentQueue:(SKPaymentQueue *)queue restoreCompletedTransactionsFailedWithError:(NSError *)error {
-  // TODO
-  QONVERSION_LOG(@">>> restoreCompletedTransactionsFailedWithError %@", error);
+  
 }
 
 - (void)paymentQueue:(nonnull SKPaymentQueue *)queue

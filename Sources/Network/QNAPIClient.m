@@ -116,7 +116,6 @@
       return;
     }
     
-    QONVERSION_LOG(@">>> Qonversion request result %@", dict);
     completion(dict, nil);
   }] resume];
 }
