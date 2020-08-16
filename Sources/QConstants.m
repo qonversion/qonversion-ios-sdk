@@ -7,7 +7,7 @@ NSString *const keyQVersion = @"1.2.0";
 NSString *const keyQUnknownLibrary = @"unknown";
 NSString *const keyQUnknownVersion = @"unknown";
 NSString *const keyQInternalUserID = @"keyQInternalUserID";
-NSString *const keyQPropertyReg = @"^(?=.*[a-z])^[-a-z0-9_.:]+$";
+NSString *const keyQPropertyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
 
 int const kQPropertiesSendingPeriodInSeconds = 15; // 15 seconds
 

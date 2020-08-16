@@ -17,6 +17,8 @@
     XCTAssertTrue([QonversionProperties checkProperty:@"test-test:"]);
     XCTAssertFalse([QonversionProperties checkProperty:@"test-test: "]);
     XCTAssertTrue([QonversionProperties checkProperty:@"test_test"]);
+    XCTAssertTrue([QonversionProperties checkProperty:@"authUID"]);
+    XCTAssertTrue([QonversionProperties checkProperty:@"appsFlyerID"]);
 }
 
 @end
