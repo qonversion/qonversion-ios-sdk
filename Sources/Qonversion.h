@@ -1,8 +1,7 @@
 #import <Foundation/Foundation.h>
+#import "QNLaunchResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
-@class QNProduct, QNPermission, QNLaunchResult;
 
 typedef NS_ENUM(NSInteger, QNAttributionProvider) {
   QNAttributionProviderAppsFlyer = 0,
