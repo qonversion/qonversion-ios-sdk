@@ -29,7 +29,6 @@
 		454EF64624E5CC590070581E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 454EF64424E5CC590070581E /* Main.storyboard */; };
 		454EF64824E5CC5A0070581E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 454EF64724E5CC5A0070581E /* Assets.xcassets */; };
 		454EF64B24E5CC5A0070581E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 454EF64924E5CC5A0070581E /* LaunchScreen.storyboard */; };
-		454EF65024E5CD8E0070581E /* QNLaunchResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD3D249BD10F00D2BC40 /* QNLaunchResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		456ECD34249B901900D2BC40 /* QNRequestBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD33249B901900D2BC40 /* QNRequestBuilder.m */; };
 		456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD36249BB68B00D2BC40 /* QRequestBuilderTests.m */; };
 		456ECD3F249C737500D2BC40 /* QNLaunchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 456ECD3E249C737500D2BC40 /* QNLaunchResult.m */; };
@@ -58,6 +57,7 @@
 		458A8CD524BAC5F500637130 /* QNLocalStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CD024BAC5F500637130 /* QNLocalStorage.h */; };
 		458A8CD824BAC61E00637130 /* QNRequestSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CD624BAC61E00637130 /* QNRequestSerializer.h */; };
 		458A8CD924BAC61E00637130 /* QNRequestSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CD724BAC61E00637130 /* QNRequestSerializer.m */; };
+		458D64BC24F55BA7008F057D /* QNLaunchResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 458D64BB24F55BA7008F057D /* QNLaunchResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		459DAB73243E329F0011ECF3 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -135,7 +135,6 @@
 		456ECD32249B8FE000D2BC40 /* QNRequestBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNRequestBuilder.h; sourceTree = "<group>"; };
 		456ECD33249B901900D2BC40 /* QNRequestBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNRequestBuilder.m; sourceTree = "<group>"; };
 		456ECD36249BB68B00D2BC40 /* QRequestBuilderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestBuilderTests.m; sourceTree = "<group>"; };
-		456ECD3D249BD10F00D2BC40 /* QNLaunchResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNLaunchResult.h; sourceTree = "<group>"; };
 		456ECD3E249C737500D2BC40 /* QNLaunchResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNLaunchResult.m; sourceTree = "<group>"; };
 		456ECD40249C75D400D2BC40 /* QNLaunchResult+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNLaunchResult+Protected.h"; sourceTree = "<group>"; };
 		456ECD41249C76D400D2BC40 /* QNProduct.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNProduct.h; sourceTree = "<group>"; };
@@ -162,6 +161,7 @@
 		458A8CD024BAC5F500637130 /* QNLocalStorage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNLocalStorage.h; sourceTree = "<group>"; };
 		458A8CD624BAC61E00637130 /* QNRequestSerializer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNRequestSerializer.h; sourceTree = "<group>"; };
 		458A8CD724BAC61E00637130 /* QNRequestSerializer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNRequestSerializer.m; sourceTree = "<group>"; };
+		458D64BB24F55BA7008F057D /* QNLaunchResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNLaunchResult.h; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -448,7 +448,7 @@
 		459DABEC243E35BC0011ECF3 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				456ECD3D249BD10F00D2BC40 /* QNLaunchResult.h */,
+				458D64BB24F55BA7008F057D /* QNLaunchResult.h */,
 				456ECD40249C75D400D2BC40 /* QNLaunchResult+Protected.h */,
 				456ECD3E249C737500D2BC40 /* QNLaunchResult.m */,
 				456ECD31249B825D00D2BC40 /* QNPermission.h */,
@@ -556,7 +556,7 @@
 				458A8CB724B1F5F600637130 /* QNErrors.h in Headers */,
 				458A8CD124BAC5F500637130 /* QNUserDefaultsStorage.h in Headers */,
 				4572FE1C24BC40F900A17AC4 /* QNProductCenterManager.h in Headers */,
-				454EF65024E5CD8E0070581E /* QNLaunchResult.h in Headers */,
+				458D64BC24F55BA7008F057D /* QNLaunchResult.h in Headers */,
 				458A8CC124B5E50A00637130 /* QNProduct.h in Headers */,
 				458A8CD824BAC61E00637130 /* QNRequestSerializer.h in Headers */,
 				458A8CC824B8407C00637130 /* QNStoreKitService.h in Headers */,
@@ -1059,7 +1059,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.1;
+				MARKETING_VERSION = 2.0.3;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -1090,7 +1090,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.1;
+				MARKETING_VERSION = 2.0.3;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
