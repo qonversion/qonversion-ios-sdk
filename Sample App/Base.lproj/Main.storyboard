@@ -18,7 +18,7 @@
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="J3M-L1-dl4">
                                 <rect key="frame" x="82" y="423" width="250" height="50"/>
-                                <color key="backgroundColor" red="0.25490196078431371" green="0.39215686274509803" blue="0.88627450980392153" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="backgroundColor" red="0.24201017620000001" green="0.35261094570000001" blue="0.88240224119999999" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                 <constraints>
                                     <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="250" id="Dsx-Oz-AFj"/>
                                     <constraint firstAttribute="height" constant="50" id="YQX-SG-cuQ"/>
@@ -32,20 +32,20 @@
                                     <action selector="didTapBuySubscriptionButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Z4v-hQ-XXD"/>
                                 </connections>
                             </button>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Qonversion" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Drb-Qg-LWy">
-                                <rect key="frame" x="125.5" y="94" width="163" height="40"/>
-                                <color key="tintColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="33"/>
-                                <color key="textColor" red="0.25490196078431371" green="0.39215686274509803" blue="0.88627450980392153" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="qonversion_icon" translatesAutoresizingMaskIntoConstraints="NO" id="aOA-A9-Teq">
+                                <rect key="frame" x="162" y="94" width="90" height="90"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="90" id="bpV-tD-JAV"/>
+                                    <constraint firstAttribute="width" constant="90" id="o4f-pg-w3h"/>
+                                </constraints>
+                            </imageView>
                         </subviews>
                         <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
                         <constraints>
-                            <constraint firstItem="Drb-Qg-LWy" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="50" id="2z7-gK-fAU"/>
+                            <constraint firstItem="aOA-A9-Teq" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="7TH-Sk-LZi"/>
                             <constraint firstItem="J3M-L1-dl4" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="ABC-3o-Bwr"/>
                             <constraint firstItem="J3M-L1-dl4" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="inb-uE-X4D"/>
-                            <constraint firstItem="Drb-Qg-LWy" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="sz6-kw-NWS"/>
+                            <constraint firstItem="aOA-A9-Teq" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="50" id="ywZ-Kc-wbf"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
@@ -58,4 +58,7 @@
             <point key="canvasLocation" x="137.68115942028987" y="94.419642857142847"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="qonversion_icon" width="150" height="150"/>
+    </resources>
 </document>
