@@ -1,16 +1,20 @@
 PODS:
   - OCMock (3.2.2)
+  - SwiftyStoreKit (0.16.1)
 
 DEPENDENCIES:
   - OCMock (~> 3.2.1)
+  - SwiftyStoreKit
 
 SPEC REPOS:
-  https://github.com/CocoaPods/Specs:
+  https://github.com/CocoaPods/Specs.git:
     - OCMock
+    - SwiftyStoreKit
 
 SPEC CHECKSUMS:
   OCMock: 18c9b7e67d4c2770e95bb77a9cc1ae0c91fe3835
+  SwiftyStoreKit: 6b9c08810269f030586dac1fae8e75871a82e84a
 
-PODFILE CHECKSUM: da2af8c1fb1338335d6c619c322fd8f70dd232e7
+PODFILE CHECKSUM: b2b40a82fa35b2f888238054ff0603a66ab01b18
 
 COCOAPODS: 1.9.3
