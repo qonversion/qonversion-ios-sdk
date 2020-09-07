@@ -8,7 +8,6 @@
 
 import UIKit
 import Qonversion
-import SwiftyStoreKit
 
 class ViewController: UIViewController {
 
@@ -24,4 +23,3 @@ class ViewController: UIViewController {
   }
 
 }
-
