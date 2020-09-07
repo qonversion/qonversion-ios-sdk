@@ -4,10 +4,10 @@
 @interface QNStoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
 // Use SKProduct.productIdentifier as hash for fast access to entities
-@property (nonatomic, readonly) NSMutableDictionary<NSString *, SKPaymentTransaction *> *processingTransactions;
-@property (nonatomic, readonly) NSMutableDictionary<NSString *, SKProductsRequest *> *productRequests;
-@property (nonatomic, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
-@property (nonatomic) NSString *purchasingCurrently;
+@property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKPaymentTransaction *> *processingTransactions;
+@property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProductsRequest *> *productRequests;
+@property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
+@property (nonatomic, copy) NSString *purchasingCurrently;
 
 @end
 
@@ -30,9 +30,9 @@
 - (instancetype)init {
   self = super.init;
   if (self) {
-    _processingTransactions = [[NSMutableDictionary alloc] init];
-    _productRequests = [[NSMutableDictionary alloc] init];
-    _products = [[NSMutableDictionary alloc] init];
+    _processingTransactions = [NSMutableDictionary new];
+    _productRequests = [NSMutableDictionary new];
+    _products = [NSMutableDictionary new];
     
     _purchasingCurrently = nil;
   }
@@ -59,14 +59,26 @@
   }
 }
 
+- (void)restore {
+  [[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
+}
+
 - (nullable SKProduct *)productAt:(NSString *)productID {
   return _products[productID];
 }
 
 // MARK: - SKPaymentTransactionObserver
 
+- (void)paymentQueueRestoreCompletedTransactionsFinished:(SKPaymentQueue *)queue {
+  if ([self.delegate respondsToSelector:@selector(handleRestoreCompletedTransactionsFinished)]) {
+    [self.delegate handleRestoreCompletedTransactionsFinished];
+  }
+}
+
 - (void)paymentQueue:(SKPaymentQueue *)queue restoreCompletedTransactionsFailedWithError:(NSError *)error {
-  
+  if ([self.delegate respondsToSelector:@selector(handleRestoreCompletedTransactionsFailed:)]) {
+    [self.delegate handleRestoreCompletedTransactionsFailed:error];
+  }
 }
 
 - (void)paymentQueue:(nonnull SKPaymentQueue *)queue
@@ -156,6 +168,10 @@
     return;
   }
 
+  [self processTransaction:transaction productIdentifier:productIdentifier];
+}
+
+- (void)processTransaction:(SKPaymentTransaction *)transaction productIdentifier:(NSString *)productIdentifier {
   [self.processingTransactions setObject:transaction forKey:productIdentifier];
   NSSet <NSString *> *productSet = [NSSet setWithObject:productIdentifier];
   SKProductsRequest *request = [[SKProductsRequest alloc] initWithProductIdentifiers:productSet];

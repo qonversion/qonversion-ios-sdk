@@ -11,6 +11,7 @@ end
 target 'Sample' do
   platform :ios, '9.0'
   pod 'AppsFlyerFramework'
+  pod 'SwiftyStoreKit'
 end
 
 

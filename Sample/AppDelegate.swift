@@ -12,10 +12,11 @@ import AppsFlyerLib
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
+//  
+  var window: UIWindow?
   
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-    
-    Qonversion.launch(withKey: "project_key")
+    Qonversion.launch(withKey: "your_launch_key")
     
     AppsFlyerTracker.shared().appsFlyerDevKey = "appsFlyerDevKey"
     AppsFlyerTracker.shared().appleAppID = "appleAppID"
@@ -27,8 +28,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return
       }
       
-      if let premium = permissions["premium"], premium.isActive {
-        switch premium.renewState {
+      if let permission = permissions["your_permission_name"], permission.isActive {
+        switch permission.renewState {
         case .willRenew, .nonRenewable:
           // .willRenew is state for auto-renewable purchases
           // .nonRenewable is state for in-app purchases that unlock the permission lifetime

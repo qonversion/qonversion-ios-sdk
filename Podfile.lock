@@ -1,20 +1,24 @@
 PODS:
   - AppsFlyerFramework (5.4.0)
   - OCMock (3.2.2)
+  - SwiftyStoreKit (0.16.1)
 
 DEPENDENCIES:
   - AppsFlyerFramework
   - OCMock
+  - SwiftyStoreKit
 
 SPEC REPOS:
-  https://github.com/CocoaPods/Specs:
+  https://github.com/CocoaPods/Specs.git:
     - AppsFlyerFramework
     - OCMock
+    - SwiftyStoreKit
 
 SPEC CHECKSUMS:
   AppsFlyerFramework: 0253602f146ec07652543fe6f143d27086a695c3
   OCMock: 18c9b7e67d4c2770e95bb77a9cc1ae0c91fe3835
+  SwiftyStoreKit: 6b9c08810269f030586dac1fae8e75871a82e84a
 
-PODFILE CHECKSUM: d8402922d3263cabf9a52c075fe68ef5e9c5491e
+PODFILE CHECKSUM: cf24842fd2a7af19f0c8f054c6085d49bb8321bd
 
 COCOAPODS: 1.9.3

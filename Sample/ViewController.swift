@@ -7,14 +7,21 @@
 //
 
 import UIKit
+import Qonversion
+import SwiftyStoreKit
 
 class ViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    
+  
+    let deadlineTime = DispatchTime.now() + .seconds(3)
+    DispatchQueue.main.asyncAfter(deadline: deadlineTime) {
+      Qonversion.restore { (result, error, flag) in
+        print(result)
+      }
+    }
   }
-
 
 }
 

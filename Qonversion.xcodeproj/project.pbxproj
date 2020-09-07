@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -24,7 +24,6 @@
 		454BE230247C4AD8001FE771 /* QNUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 454BE22E247C4AD8001FE771 /* QNUtils.h */; };
 		454BE231247C4AD8001FE771 /* QNUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE22F247C4AD8001FE771 /* QNUtils.m */; };
 		454EF63F24E5CC580070581E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454EF63E24E5CC580070581E /* AppDelegate.swift */; };
-		454EF64124E5CC590070581E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454EF64024E5CC590070581E /* SceneDelegate.swift */; };
 		454EF64324E5CC590070581E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454EF64224E5CC590070581E /* ViewController.swift */; };
 		454EF64624E5CC590070581E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 454EF64424E5CC590070581E /* Main.storyboard */; };
 		454EF64824E5CC5A0070581E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 454EF64724E5CC5A0070581E /* Assets.xcassets */; };
@@ -93,6 +92,8 @@
 		45FFA2E724BED563007EFB8F /* QNMapperObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2E524BED563007EFB8F /* QNMapperObject.m */; };
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
+		89861D2C2501563B00E5D36B /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
+		89861D2D2501563B00E5D36B /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -103,7 +104,28 @@
 			remoteGlobalIDString = 459DAB68243E329F0011ECF3;
 			remoteInfo = Qonversion;
 		};
+		89861D2E2501563B00E5D36B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 459DAB60243E329F0011ECF3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 459DAB68243E329F0011ECF3;
+			remoteInfo = Qonversion;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		89861D302501563B00E5D36B /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				89861D2D2501563B00E5D36B /* Qonversion.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		045555B21ABEFDE2E6E5AA58 /* Pods-Sample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.release.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.release.xcconfig"; sourceTree = "<group>"; };
@@ -125,7 +147,6 @@
 		454BE22F247C4AD8001FE771 /* QNUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUtils.m; sourceTree = "<group>"; };
 		454EF63C24E5CC580070581E /* Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		454EF63E24E5CC580070581E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		454EF64024E5CC590070581E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		454EF64224E5CC590070581E /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		454EF64524E5CC590070581E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		454EF64724E5CC5A0070581E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -213,6 +234,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				89861D2C2501563B00E5D36B /* Qonversion.framework in Frameworks */,
 				051A90145F9029F72EFF9216 /* libPods-Sample.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -271,7 +293,6 @@
 			isa = PBXGroup;
 			children = (
 				454EF63E24E5CC580070581E /* AppDelegate.swift */,
-				454EF64024E5CC590070581E /* SceneDelegate.swift */,
 				454EF64224E5CC590070581E /* ViewController.swift */,
 				454EF64424E5CC590070581E /* Main.storyboard */,
 				454EF64724E5CC5A0070581E /* Assets.xcassets */,
@@ -577,10 +598,12 @@
 				454EF63924E5CC580070581E /* Frameworks */,
 				454EF63A24E5CC580070581E /* Resources */,
 				5975F14E6BBEE36884D409FD /* [CP] Embed Pods Frameworks */,
+				89861D302501563B00E5D36B /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				89861D2F2501563B00E5D36B /* PBXTargetDependency */,
 			);
 			name = Sample;
 			productName = Sample;
@@ -795,7 +818,6 @@
 			files = (
 				454EF64324E5CC590070581E /* ViewController.swift in Sources */,
 				454EF63F24E5CC580070581E /* AppDelegate.swift in Sources */,
-				454EF64124E5CC590070581E /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -858,6 +880,11 @@
 			target = 459DAB68243E329F0011ECF3 /* Qonversion */;
 			targetProxy = 459DAB74243E329F0011ECF3 /* PBXContainerItemProxy */;
 		};
+		89861D2F2501563B00E5D36B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 459DAB68243E329F0011ECF3 /* Qonversion */;
+			targetProxy = 89861D2E2501563B00E5D36B /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -886,8 +913,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = MTVL2X9L7N;
 				INFOPLIST_FILE = Sample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -908,8 +936,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = MTVL2X9L7N;
 				INFOPLIST_FILE = Sample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
