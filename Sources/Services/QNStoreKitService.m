@@ -183,7 +183,8 @@
 
 - (void)finishTransaction:(SKPaymentTransaction *)transaction {
   if (transaction.transactionState == SKPaymentTransactionStateFailed
-      || transaction.transactionState == SKPaymentTransactionStatePurchased) {
+      || transaction.transactionState == SKPaymentTransactionStatePurchased
+      || transaction.transactionState == SKPaymentTransactionStateRestored) {
     [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
   }
   
