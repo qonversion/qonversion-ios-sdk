@@ -21,11 +21,13 @@ static NSString * const kCheckEndpoint = @"check";
 static NSString * const kPropertiesEndpoint = @"v1/properties";
 static NSString * const kAttributionEndpoint = @"attribution";
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
+static NSString * const kStoredRequestsKey = @"storedRequests";
 
 @interface Qonversion() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
 @property (nonatomic, readonly) NSMutableDictionary *transactions;
 @property (nonatomic, readonly) NSMutableDictionary *productRequests;
+@property (nonatomic, copy) NSArray<NSNumber *> *connectionErrorCodes;
 
 @property (nonatomic, strong) NSOperationQueue *backgroundQueue;
 @property (nonatomic) QInMemoryStorage *storage;
@@ -83,6 +85,27 @@ static BOOL _debugMode = NO;
             }
         }
     }];
+    
+    [self processStoredRequests];
+}
+
++ (void)processStoredRequests {
+    NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
+    NSArray *storedRequests = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData];
+    
+    if (![storedRequests isKindOfClass:[NSArray class]]) {
+        return;
+    }
+    
+    for (NSInteger i = 0; i < [storedRequests count]; i++) {
+        if ([storedRequests[i] isKindOfClass:[NSURLRequest class]]) {
+            NSURLRequest *request = storedRequests[i];
+            
+            [self dataTaskWithRequest:request completion:nil];
+        }
+    }
+    
+    [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
 }
 
 + (void)trackPurchase:(nonnull SKProduct *)product transaction:(nonnull SKPaymentTransaction *)transaction {
@@ -220,9 +243,30 @@ static BOOL _debugMode = NO;
     });
 }
 
-+ (void)dataTaskWithRequest:(NSURLRequest *)request completion:(void (^)(NSDictionary *dict))completion {
++ (void)dataTaskWithRequest:(NSURLRequest *)request tryCount:(NSInteger)tryCount completion:(void (^)(NSDictionary *dict))completion {
+    __block NSInteger doneTryCount = tryCount;
     NSURLSession *session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
     [[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (error) {
+            BOOL isConnectionError = [[Qonversion sharedInstance].connectionErrorCodes containsObject:@(error.code)];
+            if (isConnectionError) {
+                if (doneTryCount < 3) {
+                    doneTryCount++;
+                    [self dataTaskWithRequest:request tryCount:doneTryCount completion:completion];
+                  
+                    return;
+                } else {
+                    NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
+                    NSArray *unarchivedData = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData] ?: @[];
+                    NSMutableArray *storedRequests = [unarchivedData mutableCopy];
+                    [storedRequests addObject:request];
+                    NSData *updatedStoredRequestsData = [NSKeyedArchiver archivedDataWithRootObject:[storedRequests copy]];
+                    [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
+                    
+                    return;
+                }
+            }
+        }
         if (!data || ![data isKindOfClass:NSData.class]) {
             return;
         }
@@ -230,8 +274,15 @@ static BOOL _debugMode = NO;
         if (!dict || ![dict respondsToSelector:@selector(valueForKey:)]) {
             return;
         }
-        completion(dict);
+        if (completion) {
+            completion(dict);
+        }
     }] resume];
+}
+
++ (void)dataTaskWithRequest:(NSURLRequest *)request
+                 completion:(void (^)(NSDictionary *dict))completion {
+  [self dataTaskWithRequest:request tryCount:1 completion:completion];
 }
 
 + (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint andBody:(NSDictionary *)body {
@@ -384,6 +435,7 @@ static BOOL _debugMode = NO;
         _backgroundQueue = [[NSOperationQueue alloc] init];
         [_backgroundQueue setMaxConcurrentOperationCount:1];
         [_backgroundQueue setSuspended:NO];
+        _connectionErrorCodes = @[@(NSURLErrorNotConnectedToInternet), @(NSURLErrorCallIsActive), @(NSURLErrorNetworkConnectionLost), @(NSURLErrorDataNotAllowed)];
         
         _backgroundQueue.name = kBackgrounQueueName;
         
