@@ -91,14 +91,17 @@ static BOOL _debugMode = NO;
 
 + (void)processStoredRequests {
     NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
-    NSMutableArray *storedRequests = [[NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData] mutableCopy];
+    NSArray *storedRequests = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData];
+    
+    if (![storedRequests isKindOfClass:[NSArray class]]) {
+        return;
+    }
     
     for (NSInteger i = 0; i < [storedRequests count]; i++) {
         if ([storedRequests[i] isKindOfClass:[NSURLRequest class]]) {
             NSURLRequest *request = storedRequests[i];
             
             [self dataTaskWithRequest:request completion:nil];
-            [storedRequests removeObject:request];
         }
     }
     
