@@ -94,7 +94,7 @@ typedef NS_ENUM(NSInteger, QNProperty) {
 
 /**
  Restore user permissions based on product center details
- @param completion Complition block that include permissions dictionary and error
+ @param completion Completion block that include permissions dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
 + (void)restoreWithCompletion:(QNPurchaseCompletionHandler)completion;
