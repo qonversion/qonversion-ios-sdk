@@ -145,7 +145,7 @@ class ViewController: UIViewController {
       }
       
       guard permissions.values.contains(where: {$0.isActive == true}) else {
-        return self.showAlert(with: "Error", message: "No purchases to recover")
+        return self.showAlert(with: "Error", message: "No purchases to restore")
       }
       
       self.checkActivePermissionsButton.isHidden = false
@@ -153,11 +153,11 @@ class ViewController: UIViewController {
       self.permissions = permissions
       
       if let permission: Qonversion.Permission = self.permissions["standart"], permission.isActive {
-        self.inAppPurchseButton.setTitle("Purchased", for: .normal)
+        self.inAppPurchseButton.setTitle("Restored", for: .normal)
       }
       
       if let permission: Qonversion.Permission = self.permissions["plus"], permission.isActive {
-        self.mainProductSubscriptionButton.setTitle("Purchased", for: .normal)
+        self.mainProductSubscriptionButton.setTitle("Restored", for: .normal)
       }
     }
   }
