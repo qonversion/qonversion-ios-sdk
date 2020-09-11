@@ -19,6 +19,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
 @property (nonatomic) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
+@property (nonatomic, copy) QNPurchaseCompletionHandler restorePurchasesBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 @property (nonatomic, copy) NSMutableArray *productsBlocks;
@@ -119,6 +120,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     run_block_on_main(completion, nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
   }
+}
+
+- (void)restoreWithCompletion:(QNPurchaseCompletionHandler)completion {
+  self.restorePurchasesBlock = completion;
+  [self.storeKitService restore];
 }
 
 - (void)executePermissionBlocks {
@@ -318,6 +324,24 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
     run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
   }];
+}
+
+- (void)handleRestoreCompletedTransactionsFinished {
+  if (self.restorePurchasesBlock) {
+    [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      if (result) {
+        run_block_on_main(self.restorePurchasesBlock, [result permissions], error, NO);
+      } else if (error) {
+        run_block_on_main(self.restorePurchasesBlock, @{}, error, NO);
+      }
+    }];
+  }
+}
+
+- (void)handleRestoreCompletedTransactionsFailed:(NSError *)error {
+  if (self.restorePurchasesBlock) {
+    run_block_on_main(self.restorePurchasesBlock, @{}, error, NO);
+  }
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {

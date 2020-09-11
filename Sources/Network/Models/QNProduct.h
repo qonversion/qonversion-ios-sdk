@@ -23,8 +23,8 @@ typedef NS_ENUM(unsigned int, QNProductDuration){
   QNProductDurationUnknown = -1,
   QNProductDurationWeekly = 0,
   QNProductDurationMonthly = 1,
-  QNProductDuration3Month = 2,
-  QNProductDuration6Month = 3,
+  QNProductDuration3Months = 2,
+  QNProductDuration6Months = 3,
   QNProductDurationAnnual = 4,
   QNProductDurationLifetime = 5
 } NS_SWIFT_NAME(Qonversion.ProductDuration);

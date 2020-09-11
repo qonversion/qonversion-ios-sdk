@@ -10,6 +10,7 @@
 
 - (void)loadProducts:(NSSet <NSString *> *)products;
 - (nullable SKProduct *)purchase:(NSString *)productID;
+- (void)restore;
 - (nullable SKProduct *)productAt:(NSString *)productID;
 
 @end
@@ -19,5 +20,7 @@
 @optional
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
+- (void)handleRestoreCompletedTransactionsFinished;
+- (void)handleRestoreCompletedTransactionsFailed:(NSError *)error;
 - (void)handleProducts:(NSArray<SKProduct *> *)products;
 @end

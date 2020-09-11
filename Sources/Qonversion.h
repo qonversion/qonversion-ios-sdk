@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
-#import "QNLaunchResult.h"
+
+@class QNLaunchResult, QNPermission, QNProduct;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -91,6 +92,13 @@ typedef NS_ENUM(NSInteger, QNProperty) {
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
 + (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
+
+/**
+ Restore user permissions based on product center details
+ @param completion Completion block that include permissions dictionary and error
+ @see [Product Center](https://qonversion.io/docs/product-center)
+*/
++ (void)restoreWithCompletion:(QNPurchaseCompletionHandler)completion;
 
 /**
  Return Qonversion Products in assotiation with Store Kit Products

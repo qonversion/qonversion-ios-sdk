@@ -11,6 +11,7 @@
 #import "QNAttributionManager.h"
 #import "QNProductCenterManager.h"
 #import "QNProperties.h"
+#import "QNUserInfo.h"
 
 @interface Qonversion()
 
@@ -72,6 +73,10 @@
 
 + (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager purchase:productID completion:completion];
+}
+
++ (void)restoreWithCompletion:(QNPurchaseCompletionHandler)completion {
+  [[Qonversion sharedInstance].productCenterManager restoreWithCompletion:completion];
 }
 
 + (void)products:(QNProductsCompletionHandler)completion {
