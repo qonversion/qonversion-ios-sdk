@@ -87,7 +87,7 @@
   NSURL *receiptURL = QNUserInfo.bundle.appStoreReceiptURL;
   
   if (!receiptURL) {
-    return nil;
+    return @"";
   }
   
   NSString *receipt = [[NSData dataWithContentsOfURL:receiptURL] base64EncodedStringWithOptions:0];
