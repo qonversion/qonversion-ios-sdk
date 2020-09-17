@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchWithCompletion:(QNLaunchCompletionHandler)completion;
 - (void)checkPermissions:(QNPermissionCompletionHandler)completion;
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
-- (void)restoreWithCompletion:(QNPurchaseCompletionHandler)completion;
+- (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;
 
 - (void)products:(QNProductsCompletionHandler)completion;
 

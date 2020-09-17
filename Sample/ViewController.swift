@@ -135,7 +135,7 @@ class ViewController: UIViewController {
   
   @IBAction func didTapRestorePurchasesButton(_ sender: Any) {
     activityIndicator.startAnimating()
-    Qonversion.restore { [weak self] (permissions, error, flag) in
+    Qonversion.restore { [weak self] (permissions, error) in
       guard let self = self else { return }
       
       self.activityIndicator.stopAnimating()
