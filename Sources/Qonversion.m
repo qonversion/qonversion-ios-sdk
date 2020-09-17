@@ -75,7 +75,7 @@
   [[Qonversion sharedInstance].productCenterManager purchase:productID completion:completion];
 }
 
-+ (void)restoreWithCompletion:(QNPurchaseCompletionHandler)completion {
++ (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager restoreWithCompletion:completion];
 }
 

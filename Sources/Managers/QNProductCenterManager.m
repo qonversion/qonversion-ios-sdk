@@ -19,7 +19,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
 @property (nonatomic) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
-@property (nonatomic, copy) QNPurchaseCompletionHandler restorePurchasesBlock;
+@property (nonatomic, copy) QNRestoreCompletionHandler restorePurchasesBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 @property (nonatomic, copy) NSMutableArray *productsBlocks;
@@ -122,7 +122,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)restoreWithCompletion:(QNPurchaseCompletionHandler)completion {
+- (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion {
   self.restorePurchasesBlock = completion;
   [self.storeKitService restore];
 }
@@ -329,10 +329,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)handleRestoreCompletedTransactionsFinished {
   if (self.restorePurchasesBlock) {
     [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      QNRestoreCompletionHandler restorePurchasesBlock = [self.restorePurchasesBlock copy];
+      self.restorePurchasesBlock = nil;
       if (result) {
-        run_block_on_main(self.restorePurchasesBlock, [result permissions], error, NO);
+        run_block_on_main(restorePurchasesBlock, result.permissions, error);
       } else if (error) {
-        run_block_on_main(self.restorePurchasesBlock, @{}, error, NO);
+        run_block_on_main(restorePurchasesBlock, @{}, error);
       }
     }];
   }
@@ -340,7 +342,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)handleRestoreCompletedTransactionsFailed:(NSError *)error {
   if (self.restorePurchasesBlock) {
-    run_block_on_main(self.restorePurchasesBlock, @{}, error, NO);
+    QNRestoreCompletionHandler restorePurchasesBlock = [self.restorePurchasesBlock copy];
+    self.restorePurchasesBlock = nil;
+    run_block_on_main(restorePurchasesBlock, @{}, error);
   }
 }
 

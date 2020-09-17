@@ -16,6 +16,7 @@ typedef void (^QNLaunchCompletionHandler)(QNLaunchResult *result, NSError  *_Nul
 typedef void (^QNPermissionCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
 
 typedef void (^QNPurchaseCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
+typedef void (^QNRestoreCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.RestoreCompletionHandler);
 
 typedef void (^QNProductsCompletionHandler)(NSDictionary<NSString *, QNProduct *> *) NS_SWIFT_NAME(Qonversion.ProductsCompletionHandler);
 
@@ -98,7 +99,7 @@ typedef NS_ENUM(NSInteger, QNProperty) {
  @param completion Completion block that include permissions dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
-+ (void)restoreWithCompletion:(QNPurchaseCompletionHandler)completion;
++ (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;
 
 /**
  Return Qonversion Products in assotiation with Store Kit Products
