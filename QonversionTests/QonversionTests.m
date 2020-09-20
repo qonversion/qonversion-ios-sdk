@@ -1,7 +1,7 @@
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
-
 #import "Qonversion.h"
+
 #import "XCTestCase+TestJSON.h"
 
 @interface Qonversion (Tests)

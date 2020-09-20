@@ -6,6 +6,7 @@
 #import "QNTestConstants.h"
 
 #import "QNMapperObject.h"
+#import "QNPermission.h"
 #import "QNLaunchResult.h"
 
 @interface QNMapperTests : XCTestCase

@@ -1,9 +1,5 @@
-framework module Qonversion {
-  header "Qonversion.h"
-  header "QNLaunchResult.h"
-  header "QNPermission.h"
-  header "QNProduct.h"
-  
-  export *
+framework module Qonverison {
+    umbrella header "QonverisonFramework.h"
+    
+    export *
 }
-
