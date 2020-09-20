@@ -4,8 +4,15 @@
 #import "QNRequestSerializer.h"
 #import "QNAPIClient.h"
 #import "QNDevice.h"
-
+#import "QNConstants.h"
+#if !TARGET_OS_OSX
 #import <UIKit/UIKit.h>
+#else
+#import <Cocoa/Cocoa.h>
+#import <net/if.h>
+#import <net/if_dl.h>
+#endif
+
 
 static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
 
@@ -61,15 +68,19 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 - (void)addObservers {
   NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+  #if !TARGET_OS_OSX
   [center addObserver:self
-             selector:@selector(enterBackground)
-                 name:UIApplicationDidEnterBackgroundNotification
-               object:nil];
+  selector:@selector(enterBackground)
+      name:UIApplicationDidEnterBackgroundNotification
+    object:nil];
+  #endif
 }
 
 - (void)removeObservers {
   NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+  #if !TARGET_OS_OSX
   [center removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
+  #endif
 }
 
 - (void)dealloc {
@@ -167,17 +178,17 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 - (void)collectIntegrationsDataInBackground {
   NSString *adjustUserID = _device.adjustUserID;
   if (![QNUtils isEmptyString:adjustUserID]) {
-    [Qonversion setProperty:QNPropertyAdjustUserID value:adjustUserID];
+    [self setUserProperty:@"_q_adjust_adid" value:adjustUserID];
   }
   
   NSString *fbAnonID = _device.fbAnonID;
   if (![QNUtils isEmptyString:fbAnonID]) {
-    [Qonversion setUserProperty:keyQNPropertyFacebookAnonUserID value:fbAnonID];
+    [self setUserProperty:@"_q_fb_anon_id" value:fbAnonID];
   }
   
   NSString *afUserID = _device.afUserID;
   if (![QNUtils isEmptyString:afUserID]) {
-    [Qonversion setProperty:QNPropertyAppsFlyerUserID value:afUserID];
+    [self setUserProperty:@"_q_appsflyer_user_id" value:afUserID];
   }
 }
 

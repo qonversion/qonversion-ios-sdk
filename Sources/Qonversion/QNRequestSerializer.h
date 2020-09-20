@@ -1,6 +1,5 @@
 #import <Foundation/Foundation.h>
-
-#import "Qonversion.h"
+#import "QNLaunchResult.h"
 
 @class SKProduct, SKPaymentTransaction;
 

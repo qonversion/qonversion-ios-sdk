@@ -4,14 +4,13 @@
 
 #import "QNKeeper.h"
 #import "QNAPIClient.h"
-#import "QNErrors.h"
-#import "QNProduct+Protected.h"
+#import "QNProduct.h"
 #import "QNUserPropertiesManager.h"
 #import "QNProductCenterManager.h"
 #import "QNAttributionManager.h"
 #import "QNProductCenterManager.h"
-#import "QNProperties.h"
 #import "QNUserInfo.h"
+#import "QNProperties.h"
 
 @interface Qonversion()
 

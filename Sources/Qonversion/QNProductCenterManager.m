@@ -7,7 +7,7 @@
 #import "QNLaunchResult.h"
 #import "QNMapperObject.h"
 #import "QNKeeper.h"
-#import "QNProduct+Protected.h"
+#import "QNProduct.h"
 #import "QNErrors.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
@@ -77,10 +77,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [weakSelf executePermissionBlocks];
     [weakSelf loadProducts];
     
-    if (result.uid) {
-      QNKeeper.userID = result.uid;
-      [[QNAPIClient shared] setUserID:result.uid];
-    }
+//    if (result.uid) {
+//      QNKeeper.userID = result.uid;
+//      [[QNAPIClient shared] setUserID:result.uid];
+//    }
     run_block_on_main(completion, result, error)
   }];
 }

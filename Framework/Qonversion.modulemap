@@ -1,6 +1,4 @@
 framework module Qonverison {
     umbrella header "QonverisonFramework.h"
 
-    export *
-    module * { export * }
 }

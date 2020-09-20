@@ -1,8 +1,11 @@
-#import <Qonverison/Qonversion.h>
 
-#import <Qonverison/QNProduct.h>
-#import <Qonverison/QNPermission.h>
-#import <Qonverison/QNLaunchResult.h>
-#import <Qonverison/QNConstants.h>
-#import <Qonverison/QNErrors.h>
+
+#import <Qonversion/Qonversion.h>
+
+#import <Qonversion/QNLaunchResult.h>
+#import <Qonversion/QNPermission.h>
+#import <Qonversion/QNProduct.h>
+#import <Qonversion/QNStoreKitSugare.h>
+#import <Qonversion/QNConstants.h>
+#import <Qonversion/QNErrors.h>
 

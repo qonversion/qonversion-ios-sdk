@@ -19,7 +19,7 @@
   return self;
 }
 
-- (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
+- (void)addAttributionData:(NSDictionary *)data fromProvider:(NSInteger)provider {
   double delayInSeconds = 5.0;
   dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
 

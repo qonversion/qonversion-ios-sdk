@@ -2,6 +2,8 @@
 #import "QNMapper.h"
 #import "QNErrors.h"
 #import "QNLaunchResult+Protected.h"
+#import "QNProduct.h"
+#import "QNPermission.h"
 #import "QNMapperObject.h"
 
 @implementation QNMapper

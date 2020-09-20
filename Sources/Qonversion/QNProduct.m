@@ -1,6 +1,6 @@
-#import "QNProduct.h"
-#import "QNProduct+Protected.h"
+
 #import "QNStoreKitSugare.h"
+#import "QNProduct.h"
 
 @implementation QNProduct : NSObject
 

@@ -1,7 +1,5 @@
 #import <Foundation/Foundation.h>
-#import "QNProduct.h"
-#import "QNPermission.h"
-#import "Qonversion.h"
+#import "QNLaunchResult.h"
 
 @class QNLaunchResult;
 

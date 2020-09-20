@@ -1,4 +1,3 @@
-#import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
 
 typedef NS_ENUM(unsigned int, QNProductType){
@@ -60,7 +59,7 @@ NS_SWIFT_NAME(Qonversion.Product)
 /**
   Associated StoreKit Product
  */
-@property (nonatomic, copy, readonly, nullable) SKProduct *skProduct;
+@property (nonatomic, copy, nullable) SKProduct *skProduct;
 
 /**
   Localized price
