@@ -75,7 +75,7 @@
                 completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
   NSDictionary *resultData = [self enrichParameters:body];
-  NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:body];
+  NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:resultData];
   return [self dataTaskWithRequest:request completion:completion];
 }
 

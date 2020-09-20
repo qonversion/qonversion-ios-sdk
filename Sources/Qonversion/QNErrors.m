@@ -66,7 +66,7 @@
 
 + (NSError *)errorFromURLDomainError:(NSError *)error {
   QNError errorCode = QNErrorUnknown;
-  NSMutableDictionary *userInfo = @{};
+  NSMutableDictionary *userInfo = [NSMutableDictionary new];
   userInfo[NSLocalizedDescriptionKey] = error.localizedDescription ?: @"";
   
   if ([[error domain] isEqualToString:NSURLErrorDomain]) {

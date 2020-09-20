@@ -9,6 +9,6 @@
 
 @interface SKPaymentTransaction (Cancelled)
 
-@property (nonatomic, assign) BOOL isCancelled;
+@property (nonatomic, assign, readonly) BOOL isCancelled;
 
 @end

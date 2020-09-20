@@ -25,7 +25,7 @@
 
   dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
     
-    [_client attributionRequest:provider data:data completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    [self->_client attributionRequest:provider data:data completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
         QONVERSION_LOG(@"Attribution Request Log Response:\n%@", dict);
       }
