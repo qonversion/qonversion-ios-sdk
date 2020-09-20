@@ -1,5 +1,4 @@
 framework module Qonversion {
-  header "Qonversion.h"
   header "QNLaunchResult.h"
   header "QNPermission.h"
   header "QNProduct.h"
