@@ -20,7 +20,6 @@
   [coder encodeObject:_storeID forKey:NSStringFromSelector(@selector(storeID))];
   [coder encodeInteger:_type forKey:NSStringFromSelector(@selector(type))];
   [coder encodeInteger:_duration forKey:NSStringFromSelector(@selector(duration))];
-  [coder encodeInteger:_skProduct forKey:NSStringFromSelector(@selector(skProduct))];
 }
 
 - (NSString *)description {
