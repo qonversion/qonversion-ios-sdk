@@ -13,12 +13,12 @@ typedef NS_ENUM(NSInteger, QProperty) {
     QPropertyEmail = 0,
     QPropertyName,
     QPropertyPremium,
-    QPropertyKochavaDeviceID
+    QPropertyKochavaDeviceID,
+    QNPropertyAppsFlyerUserID,
+    QNPropertyAdjustUserID
 };
 
 // MARK: - Qonversion Underhood User Properties
 
 extern NSString *const keyQPropertyFacebookAnonUserID;
-extern NSString *const keyQPropertyAppsFlyerUserID;
-extern NSString *const keyQPropertyAdjustADID;
 
