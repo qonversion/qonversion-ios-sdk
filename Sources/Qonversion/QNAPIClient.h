@@ -1,4 +1,5 @@
 #import "Foundation/Foundation.h"
+
 @class SKProduct, SKPaymentTransaction;
 
 typedef void (^QNAPIClientCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);

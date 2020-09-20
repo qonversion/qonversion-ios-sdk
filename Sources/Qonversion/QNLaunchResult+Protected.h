@@ -1,4 +1,3 @@
-#import "Foundation/Foundation.h"
 #import "QNLaunchResult.h"
 
 @interface QNLaunchResult (Protected)

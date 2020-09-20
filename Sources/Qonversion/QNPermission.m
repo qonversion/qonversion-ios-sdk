@@ -1,4 +1,3 @@
-#import <Foundation/Foundation.h>
 #import "QNPermission.h"
 
 @implementation QNPermission : NSObject
