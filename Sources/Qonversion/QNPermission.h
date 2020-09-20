@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(int, QNPermissionRenewState){
+typedef NS_ENUM(NSInteger, QNPermissionRenewState){
   /**
    For in-app purchases.
    */

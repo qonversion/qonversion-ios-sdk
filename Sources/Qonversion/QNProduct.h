@@ -1,6 +1,6 @@
 #import <StoreKit/StoreKit.h>
 
-typedef NS_ENUM(unsigned int, QNProductType){
+typedef NS_ENUM(NSInteger, QNProductType){
   QNProductTypeUnknown = -1,
   /**
    Provides access to content on a recurring basis with a free introductory offer
@@ -18,7 +18,7 @@ typedef NS_ENUM(unsigned int, QNProductType){
   QNProductTypeOneTime = 2
 } NS_SWIFT_NAME(Qonversion.ProductType);
 
-typedef NS_ENUM(unsigned int, QNProductDuration){
+typedef NS_ENUM(NSInteger, QNProductDuration){
   QNProductDurationUnknown = -1,
   QNProductDurationWeekly = 0,
   QNProductDurationMonthly = 1,
