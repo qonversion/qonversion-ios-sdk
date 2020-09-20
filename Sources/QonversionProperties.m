@@ -19,6 +19,12 @@
         case QPropertyKochavaDeviceID:
             key = @"_q_kochava_device_id";
             break;
+        case QNPropertyAppsFlyerUserID:
+            key = @"_q_appsflyer_user_id";
+            break;
+        case QNPropertyAdjustUserID:
+            key = @"_q_adjust_adid";
+            break;
     }
     
     return key;

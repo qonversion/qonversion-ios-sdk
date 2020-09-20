@@ -479,7 +479,7 @@ static BOOL _debugMode = NO;
 - (void)collectIntegrationsDataInBackground {
     NSString *adjust_userID = _device.adjust_userID;
     if (![QUtils isEmptyString:adjust_userID]) {
-        [Qonversion setUserProperty:keyQPropertyAdjustADID value:adjust_userID];
+        [Qonversion setProperty:QNPropertyAdjustUserID value:adjust_userID];
     }
     
     NSString *fb_anonID = _device.fb_anonID;
@@ -489,7 +489,7 @@ static BOOL _debugMode = NO;
     
     NSString *af_userID = _device.af_userID;
     if (![QUtils isEmptyString:af_userID]) {
-        [Qonversion setUserProperty:keyQPropertyAppsFlyerUserID value:af_userID];
+        [Qonversion setProperty:QNPropertyAppsFlyerUserID value:af_userID];
     }
 }
 
