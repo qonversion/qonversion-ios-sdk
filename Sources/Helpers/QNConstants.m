@@ -9,7 +9,7 @@ NSString *const keyQUnknownVersion = @"unknown";
 NSString *const keyQInternalUserID = @"keyQInternalUserID";
 NSString *const keyQNPropertyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
 
-int const kQPropertiesSendingPeriodInSeconds = 15; // 15 seconds
+int const kQPropertiesSendingPeriodInSeconds = 15;
 
 NSString *const keyQNPropertyFacebookAnonUserID = @"_q_fb_anon_id";
 NSString *const keyQNPropertyUserID = @"_q_custom_user_id";
