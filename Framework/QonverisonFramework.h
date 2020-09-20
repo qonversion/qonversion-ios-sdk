@@ -1,5 +1,3 @@
-
-
 #import <Qonversion/Qonversion.h>
 
 #import <Qonversion/QNLaunchResult.h>
