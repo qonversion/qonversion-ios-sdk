@@ -56,6 +56,8 @@
           errorCode = QNErrorPrivacyAcknowledgementRequired; break;
         case 10: // SKErrorUnauthorizedRequestData
           errorCode = QNErrorUnauthorizedRequestData; break;
+        default:
+          errorCode = QNErrorUnknown; break;
       }
   }
   

@@ -104,7 +104,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   @synchronized (self) {
     QNProduct *product = [self QNProduct:productID];
     if (!product) {
-      run_block_on_main(completion, nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
+      run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
       return;
     }
     
@@ -118,7 +118,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       return;
     }
     
-    run_block_on_main(completion, nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
+    run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
   }
 }
 
@@ -150,8 +150,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     [_productsBlocks removeAllObjects];
-    NSDictionary *products = [(_launchResult.products ?: @{}) allValues];;
-    NSMutableArray *resultProducts = [[NSMutableDictionary alloc] init];
+    NSArray *products = [(_launchResult.products ?: @{}) allValues];;
+    NSMutableDictionary *resultProducts = [[NSMutableDictionary alloc] init];
     for (QNProduct *_product in products) {
       if (!_product.qonversionID) {
         continue;
@@ -196,7 +196,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     if (_launchingFinished && !_productsLoaded) {
-      [self launchWithCompletion:nil];
+      [self launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
+        // Loading
+      }];
     }
   }
 }
@@ -353,7 +355,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   QNPurchaseCompletionHandler _purchasingBlock = _purchasingBlocks[product.productIdentifier];
   if (_purchasingBlock) {
-    run_block_on_main(_purchasingBlock, nil, error, error.code == QNErrorCancelled);
+    run_block_on_main(_purchasingBlock, @{}, error, error.code == QNErrorCancelled);
     @synchronized (self) {
       [_purchasingBlocks removeObjectForKey:product.productIdentifier];
     }

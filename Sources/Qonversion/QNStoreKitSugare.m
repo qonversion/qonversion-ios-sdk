@@ -18,8 +18,6 @@
 }
 
 - (NSString *)prettyPrice {
-  NSString *currency = @"";
-  
   NSNumberFormatter *formatter = NSNumberFormatter.new;
   [formatter setFormatterBehavior:NSNumberFormatterBehavior10_4];
   [formatter setNumberStyle:NSNumberFormatterCurrencyStyle];
