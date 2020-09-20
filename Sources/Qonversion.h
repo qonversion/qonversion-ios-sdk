@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
-#import "QNLaunchResult.h"
-
-@class QNLaunchResult, QNPermission, QNProduct;
+#import <Qonverison/QNProduct.h>
+#import <Qonverison/QNPermission.h>
+#import <Qonverison/QNLaunchResult.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
