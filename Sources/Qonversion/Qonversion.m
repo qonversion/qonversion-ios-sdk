@@ -24,7 +24,9 @@
 // MARK: - Public
 
 + (void)launchWithKey:(nonnull NSString *)key {
-  [self launchWithKey:key completion:nil];
+  [self launchWithKey:key completion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+    
+  }];
 }
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
