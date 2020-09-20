@@ -167,7 +167,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 - (void)collectIntegrationsDataInBackground {
   NSString *adjustUserID = _device.adjustUserID;
   if (![QNUtils isEmptyString:adjustUserID]) {
-    [Qonversion setUserProperty:keyQNPropertyAdjustADID value:adjustUserID];
+    [Qonversion setProperty:QNPropertyAdjustUserID value:adjustUserID];
   }
   
   NSString *fbAnonID = _device.fbAnonID;
@@ -177,7 +177,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
   
   NSString *afUserID = _device.afUserID;
   if (![QNUtils isEmptyString:afUserID]) {
-    [Qonversion setUserProperty:keyQNPropertyAppsFlyerUserID value:afUserID];
+    [Qonversion setProperty:QNPropertyAppsFlyerUserID value:afUserID];
   }
 }
 

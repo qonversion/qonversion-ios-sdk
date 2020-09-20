@@ -18,16 +18,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
     
-    AppsFlyerTracker.shared().appsFlyerDevKey = "appsFlyerDevKey"
-    AppsFlyerTracker.shared().appleAppID = "appleAppID"
-    AppsFlyerTracker.shared().delegate = self
+    Qonversion.setProperty(.appsFlyerUserID, value: AppsFlyerLib.shared().getAppsFlyerUID())
+    AppsFlyerLib.shared().appsFlyerDevKey = "appsFlyerDevKey"
+    AppsFlyerLib.shared().appleAppID = "appleAppID"
+    AppsFlyerLib.shared().delegate = self
+    AppsFlyerLib.shared().getAppsFlyerUID()
     
     return true
   }
   
 }
 
-extension AppDelegate: AppsFlyerTrackerDelegate {
+extension AppDelegate: AppsFlyerLibDelegate {
   
   func onConversionDataSuccess(_ conversionInfo: [AnyHashable : Any]) {
     Qonversion.addAttributionData(conversionInfo, from: .appsFlyer)

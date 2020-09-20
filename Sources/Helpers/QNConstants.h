@@ -12,8 +12,6 @@ extern int const kQPropertiesSendingPeriodInSeconds;
 // MARK: - Qonversion Underhood User Properties
 
 extern NSString *const keyQNPropertyFacebookAnonUserID;
-extern NSString *const keyQNPropertyAppsFlyerUserID;
-extern NSString *const keyQNPropertyAdjustADID;
 extern NSString *const keyQNPropertyUserID;
 
 extern NSString *const keyQNErrorDomain;

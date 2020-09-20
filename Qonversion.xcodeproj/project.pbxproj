@@ -599,11 +599,9 @@
 			buildConfigurationList = 454EF64F24E5CC5A0070581E /* Build configuration list for PBXNativeTarget "Sample" */;
 			buildPhases = (
 				3D22C999990798773291815F /* [CP] Check Pods Manifest.lock */,
-				F0B65327C62745163EAA4C83 /* [CP] Prepare Artifacts */,
 				454EF63824E5CC580070581E /* Sources */,
 				454EF63924E5CC580070581E /* Frameworks */,
 				454EF63A24E5CC580070581E /* Resources */,
-				5975F14E6BBEE36884D409FD /* [CP] Embed Pods Frameworks */,
 				89861D302501563B00E5D36B /* Embed Frameworks */,
 			);
 			buildRules = (
@@ -779,40 +777,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		5975F14E6BBEE36884D409FD /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F0B65327C62745163EAA4C83 /* [CP] Prepare Artifacts */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-artifacts-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Prepare Artifacts";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-artifacts-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-artifacts.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

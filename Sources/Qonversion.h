@@ -28,6 +28,8 @@ typedef void (^QNProductsCompletionHandler)(NSDictionary<NSString *, QNProduct *
 typedef NS_ENUM(NSInteger, QNProperty) {
   QNPropertyEmail = 0,
   QNPropertyName,
+  QNPropertyAppsFlyerUserID,
+  QNPropertyAdjustUserID,
   QNPropertyKochavaDeviceID
 } NS_SWIFT_NAME(Qonversion.Property);
 
