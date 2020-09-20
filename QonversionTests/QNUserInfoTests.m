@@ -10,7 +10,8 @@
 @implementation QNUserInfoTests
 
 - (void)testReceiptInfo {
-    XCTAssertNil(QNUserInfo.appStoreReceipt);
+  XCTAssertNotNil(QNUserInfo.appStoreReceipt);
+  XCTAssertTrue([QNUserInfo.appStoreReceipt isEqualToString:@""]);
 }
 
 @end

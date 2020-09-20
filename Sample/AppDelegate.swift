@@ -8,41 +8,35 @@
 
 import UIKit
 import Qonversion
+import AppsFlyerLib
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
+  var window: UIWindow?
+  
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
     
-    Qonversion.launch(withKey: "project_key")
-    
-    Qonversion.checkPermissions { (permissions, error) in
-      if let _ = error {
-        // handle error
-        return
-      }
-      
-      if let premium = permissions["premium"], premium.isActive {
-        switch premium.renewState {
-        case .willRenew, .nonRenewable:
-          // .willRenew is state for auto-renewable purchases
-          // .nonRenewable is state for in-app purchases that unlock the permission lifetime
-          break
-        case .billingIssue:
-          // Grace period: permission is active, but there was some billing issue.
-          // Prompt the user to update the payment method.
-          break
-        case .cancelled:
-          // The user canceled the subscription, but the subscription has not expired yet.
-          // Prompt the user to resubscribe with some special offer.
-          break
-        default: break
-        }
-      }
-    }
+    Qonversion.setProperty(.appsFlyerUserID, value: AppsFlyerLib.shared().getAppsFlyerUID())
+    AppsFlyerLib.shared().appsFlyerDevKey = "appsFlyerDevKey"
+    AppsFlyerLib.shared().appleAppID = "appleAppID"
+    AppsFlyerLib.shared().delegate = self
+    AppsFlyerLib.shared().getAppsFlyerUID()
     
     return true
   }
-
+  
 }
 
+extension AppDelegate: AppsFlyerLibDelegate {
+  
+  func onConversionDataSuccess(_ conversionInfo: [AnyHashable : Any]) {
+    Qonversion.addAttributionData(conversionInfo, from: .appsFlyer)
+  }
+  
+  func onConversionDataFail(_ error: Error) {
+    
+  }
+  
+}

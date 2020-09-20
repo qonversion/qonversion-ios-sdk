@@ -33,7 +33,7 @@
   
   [description appendFormat:@"id=%@,\n", self.permissionID];
   [description appendFormat:@"isActive=%d,\n", self.isActive];
-  [description appendFormat:@"productID=%d,\n", self.productID];
+  [description appendFormat:@"productID=%@,\n", self.productID];
   [description appendFormat:@"renewState=%li,\n", (long) self.renewState];
   [description appendFormat:@"startedDate=%@,\n", self.startedDate];
   [description appendFormat:@"expirationDate=%@,\n", self.expirationDate];

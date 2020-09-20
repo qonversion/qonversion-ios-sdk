@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
-#import "QNLaunchResult.h"
+
+@class QNLaunchResult, QNPermission, QNProduct;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -15,6 +16,7 @@ typedef void (^QNLaunchCompletionHandler)(QNLaunchResult *result, NSError  *_Nul
 typedef void (^QNPermissionCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PermissionCompletionHandler);
 
 typedef void (^QNPurchaseCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
+typedef void (^QNRestoreCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.RestoreCompletionHandler);
 
 typedef void (^QNProductsCompletionHandler)(NSDictionary<NSString *, QNProduct *> *) NS_SWIFT_NAME(Qonversion.ProductsCompletionHandler);
 
@@ -26,6 +28,8 @@ typedef void (^QNProductsCompletionHandler)(NSDictionary<NSString *, QNProduct *
 typedef NS_ENUM(NSInteger, QNProperty) {
   QNPropertyEmail = 0,
   QNPropertyName,
+  QNPropertyAppsFlyerUserID,
+  QNPropertyAdjustUserID,
   QNPropertyKochavaDeviceID
 } NS_SWIFT_NAME(Qonversion.Property);
 
@@ -91,6 +95,13 @@ typedef NS_ENUM(NSInteger, QNProperty) {
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
 + (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
+
+/**
+ Restore user permissions based on product center details
+ @param completion Completion block that include permissions dictionary and error
+ @see [Product Center](https://qonversion.io/docs/product-center)
+*/
++ (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;
 
 /**
  Return Qonversion Products in assotiation with Store Kit Products

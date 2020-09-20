@@ -28,7 +28,7 @@
   NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
   
   [description appendFormat:@"id=%@,\n", self.qonversionID];
-  [description appendFormat:@"storeID=%d,\n", self.storeID];
+  [description appendFormat:@"storeID=%@,\n", self.storeID];
   [description appendFormat:@"type=%l,\n", (long) self.type];
   [description appendFormat:@"duration=%li,\n", (long) self.duration];
   [description appendFormat:@"skProduct=%@,\n", self.skProduct];

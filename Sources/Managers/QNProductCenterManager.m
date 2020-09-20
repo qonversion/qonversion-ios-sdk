@@ -19,6 +19,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
 @property (nonatomic) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
+@property (nonatomic, copy) QNRestoreCompletionHandler restorePurchasesBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
 @property (nonatomic, copy) NSMutableArray *productsBlocks;
@@ -119,6 +120,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     run_block_on_main(completion, nil, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
   }
+}
+
+- (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion {
+  self.restorePurchasesBlock = completion;
+  [self.storeKitService restore];
 }
 
 - (void)executePermissionBlocks {
@@ -318,6 +324,28 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
     run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
   }];
+}
+
+- (void)handleRestoreCompletedTransactionsFinished {
+  if (self.restorePurchasesBlock) {
+    [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      QNRestoreCompletionHandler restorePurchasesBlock = [self.restorePurchasesBlock copy];
+      self.restorePurchasesBlock = nil;
+      if (result) {
+        run_block_on_main(restorePurchasesBlock, result.permissions, error);
+      } else if (error) {
+        run_block_on_main(restorePurchasesBlock, @{}, error);
+      }
+    }];
+  }
+}
+
+- (void)handleRestoreCompletedTransactionsFailed:(NSError *)error {
+  if (self.restorePurchasesBlock) {
+    QNRestoreCompletionHandler restorePurchasesBlock = [self.restorePurchasesBlock copy];
+    self.restorePurchasesBlock = nil;
+    run_block_on_main(restorePurchasesBlock, @{}, error);
+  }
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
