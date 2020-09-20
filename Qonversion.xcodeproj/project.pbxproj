@@ -304,6 +304,97 @@
 			path = Network;
 			sourceTree = "<group>";
 		};
+		45747F522517F88500354B9A /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				45FFA2D124BDFCE8007EFB8F /* QNAttributionManager.h */,
+				45FFA2D224BDFCE8007EFB8F /* QNAttributionManager.m */,
+				4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */,
+				4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */,
+				4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */,
+				4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */,
+			);
+			name = Managers;
+			sourceTree = "<group>";
+		};
+		45747F532517F8B400354B9A /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				458A8CCF24BAC5F500637130 /* QNInMemoryStorage.h */,
+				458A8CCE24BAC5F500637130 /* QNInMemoryStorage.m */,
+				458A8CD024BAC5F500637130 /* QNLocalStorage.h */,
+				458A8CCC24BAC5F500637130 /* QNUserDefaultsStorage.h */,
+				458A8CCD24BAC5F500637130 /* QNUserDefaultsStorage.m */,
+			);
+			name = Storage;
+			sourceTree = "<group>";
+		};
+		45747F542517F8D900354B9A /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				4531CBBD245778110022C422 /* QNDevice.h */,
+				4531CBBE245778110022C422 /* QNDevice.m */,
+				458A8CC624B8407B00637130 /* QNStoreKitService.h */,
+				458A8CC724B8407B00637130 /* QNStoreKitService.m */,
+			);
+			name = Services;
+			sourceTree = "<group>";
+		};
+		45747F552517F8E700354B9A /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				45747F562517F91000354B9A /* Models */,
+				456ECD32249B8FE000D2BC40 /* QNRequestBuilder.h */,
+				456ECD33249B901900D2BC40 /* QNRequestBuilder.m */,
+				458A8CD624BAC61E00637130 /* QNRequestSerializer.h */,
+				458A8CD724BAC61E00637130 /* QNRequestSerializer.m */,
+				459DABF3243E35BC0011ECF3 /* QNMapper.h */,
+				459DABEB243E35BC0011ECF3 /* QNMapper.m */,
+				45FFA2CC24BDE5FE007EFB8F /* QNAPIClient.h */,
+				45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */,
+			);
+			name = Network;
+			sourceTree = "<group>";
+		};
+		45747F562517F91000354B9A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				45239D702517D5CD0085D0A8 /* QNLaunchResult.h */,
+				456ECD3E249C737500D2BC40 /* QNLaunchResult.m */,
+				456ECD40249C75D400D2BC40 /* QNLaunchResult+Protected.h */,
+				45FFA2E424BED563007EFB8F /* QNMapperObject.h */,
+				45FFA2E524BED563007EFB8F /* QNMapperObject.m */,
+				45F4C2E92517E85D00AD8FF0 /* QNPermission.h */,
+				45F4C2EA2517E85E00AD8FF0 /* QNPermission.m */,
+				456ECD41249C76D400D2BC40 /* QNProduct.h */,
+				456ECD44249C8B2000D2BC40 /* QNProduct.m */,
+			);
+			name = Models;
+			sourceTree = "<group>";
+		};
+		45747F572517FA1C00354B9A /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				459DABE4243E35BC0011ECF3 /* QNKeychain.h */,
+				459DABE6243E35BC0011ECF3 /* QNKeychain.m */,
+				458A8CB624B1EFE500637130 /* QNErrors.h */,
+				45FFA2E124BECA9A007EFB8F /* QNErrors.m */,
+				4531CBC124577D770022C422 /* QNConstants.h */,
+				4531CBC224577D770022C422 /* QNConstants.m */,
+				454BE228247C3E72001FE771 /* QNProperties.h */,
+				454BE229247C3E72001FE771 /* QNProperties.m */,
+				459DABE5243E35BC0011ECF3 /* QNUserInfo.h */,
+				459DABE3243E35BC0011ECF3 /* QNUserInfo.m */,
+				459DABE8243E35BC0011ECF3 /* QNKeeper.h */,
+				459DABE9243E35BC0011ECF3 /* QNKeeper.m */,
+				454BE22E247C4AD8001FE771 /* QNUtils.h */,
+				454BE22F247C4AD8001FE771 /* QNUtils.m */,
+				458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */,
+				458A8CBD24B4B88F00637130 /* QNStoreKitSugare.m */,
+			);
+			name = Helpers;
+			sourceTree = "<group>";
+		};
 		459DAB5F243E329F0011ECF3 = {
 			isa = PBXGroup;
 			children = (
@@ -452,54 +543,11 @@
 		45D329F12517DD25004DAE2B /* Qonversion */ = {
 			isa = PBXGroup;
 			children = (
-				45FFA2CC24BDE5FE007EFB8F /* QNAPIClient.h */,
-				45FFA2CD24BDE5FE007EFB8F /* QNAPIClient.m */,
-				45FFA2D124BDFCE8007EFB8F /* QNAttributionManager.h */,
-				45FFA2D224BDFCE8007EFB8F /* QNAttributionManager.m */,
-				4531CBC124577D770022C422 /* QNConstants.h */,
-				4531CBC224577D770022C422 /* QNConstants.m */,
-				4531CBBD245778110022C422 /* QNDevice.h */,
-				4531CBBE245778110022C422 /* QNDevice.m */,
-				458A8CB624B1EFE500637130 /* QNErrors.h */,
-				45FFA2E124BECA9A007EFB8F /* QNErrors.m */,
-				458A8CCF24BAC5F500637130 /* QNInMemoryStorage.h */,
-				458A8CCE24BAC5F500637130 /* QNInMemoryStorage.m */,
-				459DABE8243E35BC0011ECF3 /* QNKeeper.h */,
-				459DABE9243E35BC0011ECF3 /* QNKeeper.m */,
-				459DABE4243E35BC0011ECF3 /* QNKeychain.h */,
-				459DABE6243E35BC0011ECF3 /* QNKeychain.m */,
-				45239D702517D5CD0085D0A8 /* QNLaunchResult.h */,
-				456ECD3E249C737500D2BC40 /* QNLaunchResult.m */,
-				456ECD40249C75D400D2BC40 /* QNLaunchResult+Protected.h */,
-				458A8CD024BAC5F500637130 /* QNLocalStorage.h */,
-				459DABF3243E35BC0011ECF3 /* QNMapper.h */,
-				459DABEB243E35BC0011ECF3 /* QNMapper.m */,
-				45FFA2E424BED563007EFB8F /* QNMapperObject.h */,
-				45FFA2E524BED563007EFB8F /* QNMapperObject.m */,
-				45F4C2E92517E85D00AD8FF0 /* QNPermission.h */,
-				45F4C2EA2517E85E00AD8FF0 /* QNPermission.m */,
-				456ECD41249C76D400D2BC40 /* QNProduct.h */,
-				456ECD44249C8B2000D2BC40 /* QNProduct.m */,
-				4572FE1A24BC40F900A17AC4 /* QNProductCenterManager.h */,
-				4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */,
-				454BE228247C3E72001FE771 /* QNProperties.h */,
-				454BE229247C3E72001FE771 /* QNProperties.m */,
-				456ECD32249B8FE000D2BC40 /* QNRequestBuilder.h */,
-				456ECD33249B901900D2BC40 /* QNRequestBuilder.m */,
-				458A8CD624BAC61E00637130 /* QNRequestSerializer.h */,
-				458A8CD724BAC61E00637130 /* QNRequestSerializer.m */,
-				458A8CC624B8407B00637130 /* QNStoreKitService.h */,
-				458A8CC724B8407B00637130 /* QNStoreKitService.m */,
-				458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */,
-				458A8CBD24B4B88F00637130 /* QNStoreKitSugare.m */,
-				458A8CCC24BAC5F500637130 /* QNUserDefaultsStorage.h */,
-				458A8CCD24BAC5F500637130 /* QNUserDefaultsStorage.m */,
-				459DABE5243E35BC0011ECF3 /* QNUserInfo.h */,
-				459DABE3243E35BC0011ECF3 /* QNUserInfo.m */,
-				4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */,
-				4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */,
-				454BE22E247C4AD8001FE771 /* QNUtils.h */,
-				454BE22F247C4AD8001FE771 /* QNUtils.m */,
+				45747F572517FA1C00354B9A /* Helpers */,
+				45747F552517F8E700354B9A /* Network */,
+				45747F542517F8D900354B9A /* Services */,
+				45747F532517F8B400354B9A /* Storage */,
+				45747F522517F88500354B9A /* Managers */,
 				459DABE1243E35BC0011ECF3 /* Qonversion.h */,
 				459DABF4243E35BC0011ECF3 /* Qonversion.m */,
 			);
