@@ -18,6 +18,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
     
+    Qonversion.setProperty(.appsFlyerUserID, value: AppsFlyerLib.shared().getAppsFlyerUID())
     AppsFlyerLib.shared().appsFlyerDevKey = "appsFlyerDevKey"
     AppsFlyerLib.shared().appleAppID = "appleAppID"
     AppsFlyerLib.shared().delegate = self
