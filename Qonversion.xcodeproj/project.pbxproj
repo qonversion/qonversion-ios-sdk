@@ -10,7 +10,7 @@
 		051A90145F9029F72EFF9216 /* libPods-Sample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 09492756259E8BDEC06D7069 /* libPods-Sample.a */; };
 		3ACB2676C0929D7E1B7EBD35 /* libPods-QonversionTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D20F2CD8AEC1ED86B5F788D /* libPods-QonversionTests.a */; };
 		45202189244DD02F00C1A928 /* QonversionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45202188244DD02F00C1A928 /* QonversionTests.m */; };
-		45239D6F2517CEB00085D0A8 /* QonverisonFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonverisonFramework.h */; };
+		45239D6F2517CEB00085D0A8 /* QonverisonFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonverisonFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4531CBBF245778110022C422 /* QNDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 4531CBBD245778110022C422 /* QNDevice.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		4531CBC0245778110022C422 /* QNDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBBE245778110022C422 /* QNDevice.m */; };
 		4531CBC324577D770022C422 /* QNConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 4531CBC124577D770022C422 /* QNConstants.h */; };
