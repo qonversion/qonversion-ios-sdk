@@ -131,6 +131,10 @@
 }
 
 - (nullable NSString *)afUserID {
+  return [self af5UserID] ?: [self af6UserID];
+}
+
+- (nullable NSString *)af5UserID {
   Class AppsFlyerTracker = NSClassFromString(@"AppsFlyerTracker");
   SEL sharedTracker = NSSelectorFromString(@"sharedTracker");
   SEL getAppsFlyerUID = NSSelectorFromString(@"getAppsFlyerUID");
@@ -149,8 +153,27 @@
     
     return appsFlyerUID;
   }
-  
-  return nil;
+}
+
+- (nullable NSString *)af6UserID {
+  Class AppsFlyerTracker = NSClassFromString(@"AppsFlyerLib");
+  SEL sharedTracker = NSSelectorFromString(@"shared");
+  SEL getAppsFlyerUID = NSSelectorFromString(@"getAppsFlyerUID");
+  if (AppsFlyerTracker && sharedTracker && getAppsFlyerUID) {
+    id (*imp1)(id, SEL) = (id (*)(id, SEL))[AppsFlyerTracker methodForSelector:sharedTracker];
+    id tracker = nil;
+    NSString *appsFlyerUID = nil;
+    if (imp1) {
+      tracker = imp1(AppsFlyerTracker, sharedTracker);
+    }
+    
+    NSString* (*imp2)(id, SEL) = (NSString* (*)(id, SEL))[tracker methodForSelector:getAppsFlyerUID];
+    if (imp2) {
+      appsFlyerUID = imp2(tracker, getAppsFlyerUID);
+    }
+    
+    return appsFlyerUID;
+  }
 }
 
 - (nullable NSString *)fbAnonID {
