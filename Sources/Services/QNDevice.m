@@ -153,6 +153,8 @@
     
     return appsFlyerUID;
   }
+  
+  return nil;
 }
 
 - (nullable NSString *)af6UserID {
@@ -174,6 +176,8 @@
     
     return appsFlyerUID;
   }
+  
+  return nil;
 }
 
 - (nullable NSString *)fbAnonID {
