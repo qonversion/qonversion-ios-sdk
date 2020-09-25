@@ -1,6 +1,7 @@
 source 'https://github.com/CocoaPods/Specs.git'
 
 project 'Qonversion'
+use_frameworks!
 
 target 'QonversionTests' do
   platform :ios, '9.0'

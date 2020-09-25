@@ -196,8 +196,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     if (_launchingFinished && !_productsLoaded) {
+      __block __weak QNProductCenterManager *weakSelf = self;
       [self launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
-        // Loading
+        [weakSelf executeProductsBlocks];
       }];
     }
   }
