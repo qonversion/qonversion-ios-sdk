@@ -45,25 +45,36 @@
 }
 
 - (void)showActionWithID:(NSString *)actionID {
-  self.actionsDelegate = nil;
-  if ([self.actionsDelegate canShowActionWithID:actionID]) {
-    ActionsViewController *viewController = [self.assembly configureActionsViewControllerWithActionID:actionID delegate:self];
-    
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
-    navigationController.navigationBarHidden = YES;
-    
-    UIViewController *presentationViewController = [self.actionsDelegate controllerForNavigation];
-    
-    if (!presentationViewController) {
-      presentationViewController = [self topLevelViewController];
-    }
-    
-    [presentationViewController presentViewController:navigationController animated:YES completion:nil];
+  BOOL canShowAction = YES;
+  
+  if ([self.actionsDelegate respondsToSelector:@selector(canShowActionWithID:)]) {
+    canShowAction = [self.actionsDelegate canShowActionWithID:actionID];
   }
+  
+  if (!canShowAction) {
+    return;
+  }
+  
+  ActionsViewController *viewController = [self.assembly configureActionsViewControllerWithActionID:actionID delegate:self];
+  
+  UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
+  navigationController.navigationBarHidden = YES;
+  
+  UIViewController *presentationViewController;
+  
+  if ([self.actionsDelegate respondsToSelector:@selector(controllerForNavigation)]) {
+    presentationViewController = [self.actionsDelegate controllerForNavigation];
+  } else {
+    presentationViewController = [self topLevelViewController];
+  }
+  
+  [presentationViewController presentViewController:navigationController animated:YES completion:nil];
 }
 
 - (void)actionViewController:(ActionsViewController *)viewController didFinishAction:(QNAction *)action {
-  [self.actionsDelegate actionFlowFinished];
+  if ([self.actionsDelegate respondsToSelector:@selector(actionFlowFinished)]) {
+    [self.actionsDelegate actionFlowFinished];
+  }
 }
 
 #pragma mark - Priate
