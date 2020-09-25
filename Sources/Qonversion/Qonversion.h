@@ -3,6 +3,7 @@
 #import "QNLaunchResult.h"
 #import "QNProduct.h"
 #import "QNPermission.h"
+#import "ActionsDelegate.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -82,6 +83,10 @@ NS_ASSUME_NONNULL_BEGIN
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
 + (void)products:(QNProductsCompletionHandler)completion;
+
++ (void)setActionsDelegate:(id<ActionsDelegate>)delegate;
+
++ (void)showActionWithID:(NSString *)actionID;
 
 + (void)resetUser;
 

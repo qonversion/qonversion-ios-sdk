@@ -8,9 +8,12 @@
 #import "QNProductCenterManager.h"
 #import "QNUserInfo.h"
 #import "QNProperties.h"
+#import "ActionsFlowCoordinator.h"
+
 
 @interface Qonversion()
 
+@property (nonatomic, weak, readwrite) id<ActionsDelegate> actionsDelegate;
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
@@ -79,6 +82,14 @@
 
 + (void)products:(QNProductsCompletionHandler)completion {
   return [[Qonversion sharedInstance].productCenterManager products:completion];
+}
+
++ (void)setActionsDelegate:(id<ActionsDelegate>)delegate {
+  [[ActionsFlowCoordinator sharedInstance] setActionsDelegate:delegate];
+}
+
++ (void)showActionWithID:(NSString *)actionID {
+  [[ActionsFlowCoordinator sharedInstance] showActionWithID:actionID];
 }
 
 // MARK: - Private

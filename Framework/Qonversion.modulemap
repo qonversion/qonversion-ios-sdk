@@ -1,5 +1,5 @@
-framework module Qonverison {
-    umbrella header "QonverisonFramework.h"
+framework module Qonversion {
+    umbrella header "QonversionFramework.h"
     
     export *
 }

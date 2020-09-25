@@ -4,6 +4,7 @@ static NSString * const kAPIBase = @"https://api.qonversion.io/";
 static NSString * const kInitEndpoint = @"v1/user/init";
 static NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 static NSString * const kPropertiesEndpoint = @"v1/properties";
+static NSString * const kActionsEndpoint = @"v1/htmlForID";
 
 
 static NSString * const kAttributionEndpoint = @"attribution";
@@ -16,6 +17,10 @@ static NSString * const kAttributionEndpoint = @"attribution";
 
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters {
   return [self makePostRequestWith:kPropertiesEndpoint andBody:parameters];
+}
+
+- (NSURLRequest *)makeActionsRequestWith:(NSDictionary *)parameters {
+  return [self makePostRequestWith:kActionsEndpoint andBody:parameters];
 }
 
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters {

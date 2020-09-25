@@ -3,9 +3,7 @@
 #import "QNRequestBuilder.h"
 #import "QNRequestSerializer.h"
 #import "QNDevice.h"
-#import "QNMapper.h"
 #import "QNErrors.h"
-#import "QNMapperObject.h"
 #import "QNUtils.h"
 #import "QNUserInfo.h"
 
@@ -66,6 +64,13 @@
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self enrichParameters:@{@"properties": properties}];
   NSURLRequest *request = [self.requestBuilder makePropertiesRequestWith:body];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
+- (void)actionWithID:(NSString *)actionID completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *body = [self enrichParameters:@{@"actionID": actionID}];
+  NSURLRequest *request = [self.requestBuilder makeActionsRequestWith:body];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
