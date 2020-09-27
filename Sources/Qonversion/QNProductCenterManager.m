@@ -351,6 +351,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
+- (void)handleProductsRequestFailed:(NSError *)error {
+  NSError *er = [QNErrors errorFromTransactionError:error];
+  QONVERSION_LOG(@"Products requests failed with message: @%", er.description);
+  [self executeProductsBlocks];
+}
+
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   NSError *error = [QNErrors errorFromTransactionError:transaction.error];
   
