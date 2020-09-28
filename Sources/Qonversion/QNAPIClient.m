@@ -8,6 +8,7 @@
 #import "QNMapperObject.h"
 #import "QNUtils.h"
 #import "QNUserInfo.h"
+#import "QNAPIConstants.h"
 
 static NSString * const kStoredRequestsKey = @"storedRequests";
 
@@ -17,6 +18,7 @@ static NSString * const kStoredRequestsKey = @"storedRequests";
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, copy) NSArray<NSNumber *> *connectionErrorCodes;
+@property (nonatomic, copy) NSArray<NSString *> *retriableRequests;
 
 @end
 
@@ -40,6 +42,7 @@ static NSString * const kStoredRequestsKey = @"storedRequests";
       @(NSURLErrorDataNotAllowed),
       @(NSURLErrorTimedOut)
     ];
+    _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kPropertiesEndpoint, kAttributionEndpoint];
   }
   
   return self;
@@ -145,14 +148,7 @@ static NSString * const kStoredRequestsKey = @"storedRequests";
           
           return;
         } else {
-          NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
-          NSArray *unarchivedData = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData] ?: @[];
-          NSMutableArray *storedRequests = [unarchivedData mutableCopy];
-          [storedRequests addObject:request];
-          NSData *updatedStoredRequestsData = [NSKeyedArchiver archivedDataWithRootObject:[storedRequests copy]];
-          [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
-
-          return;
+          [weakSelf storeRequestIfNeeded:request];
         }
       }
     }
@@ -174,6 +170,19 @@ static NSString * const kStoredRequestsKey = @"storedRequests";
       completion(dict, nil);
     }
   }] resume];
+}
+
+- (void)storeRequestIfNeeded:(NSURLRequest *)request {
+  NSURLComponents *components = [NSURLComponents componentsWithString:request.URL.absoluteString];
+  if ([self.retriableRequests containsObject:components.path]) {
+    NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
+    NSArray *unarchivedData = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData] ?: @[];
+    NSMutableArray *storedRequests = [unarchivedData mutableCopy];
+    [storedRequests addObject:request];
+    NSData *updatedStoredRequestsData = [NSKeyedArchiver archivedDataWithRootObject:[storedRequests copy]];
+    [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
+    return;
+  }
 }
 
 @end
