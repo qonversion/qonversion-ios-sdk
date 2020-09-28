@@ -171,6 +171,12 @@
   [self processTransaction:transaction productIdentifier:productIdentifier];
 }
 
+- (void)request:(SKRequest *)request didFailWithError:(NSError *)error {
+  if ([request isKindOfClass:SKProductsRequest.class] && [self.delegate respondsToSelector:@selector(handleProductsRequestFailed:)]) {
+      [self.delegate handleProductsRequestFailed:error];
+  }
+}
+
 - (void)processTransaction:(SKPaymentTransaction *)transaction productIdentifier:(NSString *)productIdentifier {
   [self.processingTransactions setObject:transaction forKey:productIdentifier];
   NSSet <NSString *> *productSet = [NSSet setWithObject:productIdentifier];
