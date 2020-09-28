@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
 - (void)handleRestoreCompletedTransactionsFinished;
 - (void)handleRestoreCompletedTransactionsFailed:(NSError *)error;
+- (void)handleProductsRequestFailed:(NSError *)error;
 - (void)handleProducts:(NSArray<SKProduct *> *)products;
 @end
 

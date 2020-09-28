@@ -61,7 +61,7 @@
       }
   }
   
-  return [self errorWithQonversionErrorCode:errorCode userInfo:userInfo];
+  return [self errorFromURLDomainError:error];
 }
 
 + (NSError *)errorFromURLDomainError:(NSError *)error {
