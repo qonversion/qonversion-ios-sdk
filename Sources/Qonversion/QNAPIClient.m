@@ -68,7 +68,7 @@ static NSString * const kStoredRequestsKey = @"storedRequests";
 
 - (void)purchaseRequestWith:(SKProduct *)product
                 transaction:(SKPaymentTransaction *)transaction
-                completion:(QNAPIClientCompletionHandler)completion {
+                 completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction];
   NSDictionary *resultData = [self enrichParameters:body];
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
@@ -84,7 +84,7 @@ static NSString * const kStoredRequestsKey = @"storedRequests";
 }
 
 - (void)attributionRequest:(QNAttributionProvider)provider
-      data:(NSDictionary *)data
+                      data:(NSDictionary *)data
                 completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
   NSDictionary *resultData = [self enrichParameters:body];
@@ -93,22 +93,23 @@ static NSString * const kStoredRequestsKey = @"storedRequests";
 }
 
 - (void)processStoredRequests {
-    NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
-    NSArray *storedRequests = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData];
-    
-    if (![storedRequests isKindOfClass:[NSArray class]]) {
-        return;
-    }
-    
-    for (NSInteger i = 0; i < [storedRequests count]; i++) {
-        if ([storedRequests[i] isKindOfClass:[NSURLRequest class]]) {
-            NSURLRequest *request = storedRequests[i];
-            
-          [self dataTaskWithRequest:request completion:nil];
-        }
-    }
-    
+  NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
+  NSArray *storedRequests = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData];
+  
+  if (![storedRequests isKindOfClass:[NSArray class]]) {
     [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
+    return;
+  }
+  
+  for (NSInteger i = 0; i < [storedRequests count]; i++) {
+    if ([storedRequests[i] isKindOfClass:[NSURLRequest class]]) {
+      NSURLRequest *request = storedRequests[i];
+      
+      [self dataTaskWithRequest:request completion:nil];
+    }
+  }
+  
+  [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
 }
 
 // MARK: - Private
@@ -152,7 +153,7 @@ static NSString * const kStoredRequestsKey = @"storedRequests";
         }
       }
     }
-  
+    
     if ((!data || ![data isKindOfClass:NSData.class]) && completion) {
       completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedReceiveData]);
       return;
@@ -174,7 +175,8 @@ static NSString * const kStoredRequestsKey = @"storedRequests";
 
 - (void)storeRequestIfNeeded:(NSURLRequest *)request {
   NSURLComponents *components = [NSURLComponents componentsWithString:request.URL.absoluteString];
-  if ([self.retriableRequests containsObject:components.path]) {
+  NSString *requestString = [components.path stringByReplacingOccurrencesOfString:@"/" withString:@"" options:NSCaseInsensitiveSearch range:(NSRange){0, 1}];
+  if ([self.retriableRequests containsObject:requestString]) {
     NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
     NSArray *unarchivedData = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData] ?: @[];
     NSMutableArray *storedRequests = [unarchivedData mutableCopy];
