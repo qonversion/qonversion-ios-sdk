@@ -10,8 +10,6 @@
 #import "QNUserInfo.h"
 #import "QNAPIConstants.h"
 
-static NSString * const kStoredRequestsKey = @"storedRequests";
-
 @interface QNAPIClient()
 
 @property (nonatomic, strong) QNDevice *device;

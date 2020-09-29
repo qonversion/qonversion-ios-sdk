@@ -15,3 +15,5 @@ NSString * const kPropertiesEndpoint = @"v1/properties";
 
 
 NSString * const kAttributionEndpoint = @"attribution";
+
+NSString * const kStoredRequestsKey = @"storedRequests";
