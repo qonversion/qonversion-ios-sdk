@@ -36,7 +36,8 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
 
 - (void)tearDown {
   [super tearDown];
-  _mockSession = nil;
+  
+  _request = nil;
   _mockSession = nil;
   _client = nil;
 }
