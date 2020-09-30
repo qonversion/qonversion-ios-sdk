@@ -190,6 +190,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
   if (![QNUtils isEmptyString:afUserID]) {
     [self setUserProperty:@"_q_appsflyer_user_id" value:afUserID];
   }
+  
+  [self sendPropertiesInBackground];
 }
 
 @end
