@@ -152,6 +152,7 @@
       }
       
       completion(nil, error);
+      return;
     }
     
     if ((!data || ![data isKindOfClass:NSData.class]) && completion) {
