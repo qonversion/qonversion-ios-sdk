@@ -150,6 +150,8 @@
           [weakSelf storeRequestIfNeeded:request];
         }
       }
+      
+      completion(nil, error);
     }
     
     if ((!data || ![data isKindOfClass:NSData.class]) && completion) {
@@ -181,7 +183,6 @@
     [storedRequests addObject:request];
     NSData *updatedStoredRequestsData = [NSKeyedArchiver archivedDataWithRootObject:[storedRequests copy]];
     [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
-    return;
   }
 }
 
