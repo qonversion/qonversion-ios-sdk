@@ -272,6 +272,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
     completion(launchResult, nil);
+    
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+      [weakSelf.apiClient processStoredRequests];
+    });
   }];
 }
 

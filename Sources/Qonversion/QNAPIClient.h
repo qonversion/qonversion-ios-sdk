@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)attributionRequest:(QNAttributionProvider)provider
                       data:(NSDictionary *)data
                 completion:(QNAPIClientCompletionHandler)completion;
+- (void)processStoredRequests;
 
 @end
 

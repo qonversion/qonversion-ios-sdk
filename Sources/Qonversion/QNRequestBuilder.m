@@ -1,12 +1,5 @@
 #import "QNRequestBuilder.h"
-
-static NSString * const kAPIBase = @"https://api.qonversion.io/";
-static NSString * const kInitEndpoint = @"v1/user/init";
-static NSString * const kPurchaseEndpoint = @"v1/user/purchase";
-static NSString * const kPropertiesEndpoint = @"v1/properties";
-
-
-static NSString * const kAttributionEndpoint = @"attribution";
+#import "QNAPIConstants.h"
 
 @implementation QNRequestBuilder
 
