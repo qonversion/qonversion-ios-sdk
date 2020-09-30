@@ -75,13 +75,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     weakSelf.launchError = error;
     
     [weakSelf executePermissionBlocks];
-    [weakSelf loadProducts];
+    
+    if (!_productsLoaded) {
+      [weakSelf loadProducts];
+    }
     
     if (result.uid) {
       QNKeeper.userID = result.uid;
       [[QNAPIClient shared] setUserID:result.uid];
     }
-    run_block_on_main(completion, result, error)
+    
+    if (completion) {
+      run_block_on_main(completion, result, error)
+    }
   }];
 }
 
@@ -143,6 +149,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)executeProductsBlocks {
+  [self executeProductsBlocksWithError:nil];
+}
+
+- (void)executeProductsBlocksWithError:(NSError * _Nullable)error {
   @synchronized (self) {
     NSMutableArray <QNProductsCompletionHandler> *_blocks = [self->_productsBlocks copy];
     if (_blocks.count == 0) {
@@ -163,8 +173,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       }
     }
     
+    NSError *resultError = error ?: _launchError;
     for (QNProductsCompletionHandler _block in _blocks) {
-      run_block_on_main(_block, resultProducts);
+      run_block_on_main(_block, resultProducts, resultError);
     }
     
   }
@@ -191,14 +202,17 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   @synchronized (self) {
     [self.productsBlocks addObject:completion];
     
-    if (_productsLoaded) {
+    if (_productsLoaded && !_launchError) {
       [self executeProductsBlocks];
+      return;
     }
-    
-    if (_launchingFinished && !_productsLoaded) {
+   
+    if (_launchError) {
       __block __weak QNProductCenterManager *weakSelf = self;
-      [self launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
-        [weakSelf executeProductsBlocks];
+      [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+        if (error || weakSelf.productsLoaded) {
+          [weakSelf executeProductsBlocks];
+        }
       }];
     }
   }
@@ -359,7 +373,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)handleProductsRequestFailed:(NSError *)error {
   NSError *er = [QNErrors errorFromTransactionError:error];
   QONVERSION_LOG(@"Products request failed with message: %@", er.description);
-  [self executeProductsBlocks];
+  [self executeProductsBlocksWithError:error];
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
