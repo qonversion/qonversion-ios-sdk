@@ -78,7 +78,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Return Qonversion Products in assotiation with Store Kit Products
- 
+ If you get an empty SKProducts be sure your in-app purchases are correctly setted up in AppStore Connect and .storeKit file is available.
+
+ @see [Installing the iOS SDK](https://qonversion.io/docs/apple)
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
 + (void)products:(QNProductsCompletionHandler)completion;
