@@ -109,10 +109,6 @@
 // MARK: - SKProductsRequestDelegate
 
 - (void)productsRequest:(nonnull SKProductsRequest *)request didReceiveResponse:(nonnull SKProductsResponse *)response {
-  if (response.products.count == 0) {
-    return;
-  }
-  
   BOOL autoTracked = NO;
   for (SKProduct *product in response.products) {
     [_products setValue:product forKey:product.productIdentifier];
