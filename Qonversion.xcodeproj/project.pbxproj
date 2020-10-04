@@ -93,6 +93,7 @@
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		8911823925222C2300EBCDFA /* QNAPIConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 8911823725222C2300EBCDFA /* QNAPIConstants.h */; };
 		8911823A25222C2300EBCDFA /* QNAPIConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 8911823825222C2300EBCDFA /* QNAPIConstants.m */; };
+		897B30102527627600161D89 /* Configuration.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 897B300F2527627600161D89 /* Configuration.storekit */; };
 		89861D2C2501563B00E5D36B /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		89861D2D2501563B00E5D36B /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */; };
@@ -231,6 +232,7 @@
 		839DD50DB29B0AB311CD4074 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
 		8911823725222C2300EBCDFA /* QNAPIConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNAPIConstants.h; sourceTree = "<group>"; };
 		8911823825222C2300EBCDFA /* QNAPIConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIConstants.m; sourceTree = "<group>"; };
+		897B300F2527627600161D89 /* Configuration.storekit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
 		89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsViewController.swift; sourceTree = "<group>"; };
 		89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsTableViewCell.swift; sourceTree = "<group>"; };
 		B82EFA1145B6FD87B8EEEF6B /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -295,6 +297,7 @@
 				454EF64424E5CC590070581E /* Main.storyboard */,
 				454EF64724E5CC5A0070581E /* Assets.xcassets */,
 				454EF64924E5CC5A0070581E /* LaunchScreen.storyboard */,
+				897B300F2527627600161D89 /* Configuration.storekit */,
 				454EF64C24E5CC5A0070581E /* Info.plist */,
 			);
 			path = Sample;
@@ -716,6 +719,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				454EF64B24E5CC5A0070581E /* LaunchScreen.storyboard in Resources */,
+				897B30102527627600161D89 /* Configuration.storekit in Resources */,
 				454EF64824E5CC5A0070581E /* Assets.xcassets in Resources */,
 				454EF64624E5CC590070581E /* Main.storyboard in Resources */,
 			);
@@ -1095,7 +1099,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.3.2;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -1124,7 +1128,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.3.2;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
