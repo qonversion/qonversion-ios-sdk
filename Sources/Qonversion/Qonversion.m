@@ -45,6 +45,10 @@
   }
 }
 
++ (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
+  [[Qonversion sharedInstance].productCenterManager setPromoPurchasesDelegate:delegate];
+}
+
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
   [[Qonversion sharedInstance].attributionManager addAttributionData:data fromProvider:provider];
 }
