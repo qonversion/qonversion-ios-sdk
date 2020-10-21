@@ -45,18 +45,22 @@
   SKProduct *skProduct = self->_products[productID];
   
   if (skProduct) {
-    @synchronized (self) {
-      self->_purchasingCurrently = skProduct.productIdentifier;
-    }
-    
-    SKPayment *payment = [SKPayment paymentWithProduct:skProduct];
-    [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
-    [[SKPaymentQueue defaultQueue] addPayment:payment];
+    [self purchaseProduct:skProduct];
     
     return skProduct;
   } else {
     return nil;
   }
+}
+
+- (void)purchaseProduct:(SKProduct *)product {
+  @synchronized (self) {
+    self->_purchasingCurrently = product.productIdentifier;
+  }
+  
+  SKPayment *payment = [SKPayment paymentWithProduct:product];
+  [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
+  [[SKPaymentQueue defaultQueue] addPayment:payment];
 }
 
 - (void)restore {
@@ -73,6 +77,10 @@
   if ([self.delegate respondsToSelector:@selector(handleRestoreCompletedTransactionsFinished)]) {
     [self.delegate handleRestoreCompletedTransactionsFinished];
   }
+}
+
+- (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product {
+  return [self.delegate paymentQueue:queue shouldAddStorePayment:payment forProduct:product];
 }
 
 - (void)paymentQueue:(SKPaymentQueue *)queue restoreCompletedTransactionsFailedWithError:(NSError *)error {

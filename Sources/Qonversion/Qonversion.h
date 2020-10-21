@@ -4,6 +4,8 @@
 #import "QNProduct.h"
 #import "QNPermission.h"
 
+@protocol QNPromoPurchasesDelegate;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Qonversion : NSObject
@@ -19,6 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
  @param completion - will return `uid` for Ads integrations.
  */
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
+
++ (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
 /**
  Sets debug environment for user.
