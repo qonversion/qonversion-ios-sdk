@@ -17,6 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
+    Qonversion.setPromoPurchasesDelegate(self)
     
     Qonversion.setProperty(.appsFlyerUserID, value: AppsFlyerLib.shared().getAppsFlyerUID())
     AppsFlyerLib.shared().appsFlyerDevKey = "appsFlyerDevKey"
@@ -25,6 +26,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     AppsFlyerLib.shared().getAppsFlyerUID()
     
     return true
+  }
+  
+}
+
+extension AppDelegate: QNPromoPurchasesDelegate {
+  
+  func shouldPurchasePromoProduct(withIdentifier productID: String, executionBlock: @escaping Qonversion.PromoPurchaseCompletionHandler) {
+    // check productID value in case if you want to enable promoted purchase only for specific products
+    
+    let compeltion: Qonversion.PurchaseCompletionHandler = {result, error, flag in
+      // handle purchased product or error
+    }
+    
+    executionBlock(compeltion)
   }
   
 }

@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)loadProducts:(NSSet <NSString *> *)products;
 - (nullable SKProduct *)purchase:(NSString *)productID;
+- (void)purchaseProduct:(SKProduct *)product;
 - (void)restore;
 - (nullable SKProduct *)productAt:(NSString *)productID;
 
@@ -27,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)handleRestoreCompletedTransactionsFailed:(NSError *)error;
 - (void)handleProductsRequestFailed:(NSError *)error;
 - (void)handleProducts:(NSArray<SKProduct *> *)products;
+- (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product;
 @end
 
 NS_ASSUME_NONNULL_END

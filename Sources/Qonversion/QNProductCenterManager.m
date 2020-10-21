@@ -9,16 +9,19 @@
 #import "QNKeeper.h"
 #import "QNProduct.h"
 #import "QNErrors.h"
+#import "QNPromoPurchasesDelegate.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
 
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
- 
+
+@property (nonatomic, weak) id<QNPromoPurchasesDelegate> promoPurchasesDelegate;
+
 @property (nonatomic) QNStoreKitService *storeKitService;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
-@property (nonatomic) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
+@property (nonatomic, strong) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
 @property (nonatomic, copy) QNRestoreCompletionHandler restorePurchasesBlock;
 
 @property (nonatomic, copy) NSMutableArray *permissionsBlocks;
@@ -89,6 +92,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       run_block_on_main(completion, result, error)
     }
   }];
+}
+
+- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
+  _promoPurchasesDelegate = delegate;
 }
 
 - (void)checkPermissions:(QNPermissionCompletionHandler)completion {
@@ -344,7 +351,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-    run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
+    if (_purchasingBlock) {
+      run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
+    }
   }];
 }
 
@@ -386,6 +395,22 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [_purchasingBlocks removeObjectForKey:product.productIdentifier];
     }
   }
+}
+
+- (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product {
+  __block __weak QNProductCenterManager *weakSelf = self;
+  
+  if ([self.promoPurchasesDelegate respondsToSelector:@selector(shouldPurchasePromoProductWithIdentifier:executionBlock:)]) {
+    [self.promoPurchasesDelegate shouldPurchasePromoProductWithIdentifier:product.productIdentifier executionBlock:^(QNPurchaseCompletionHandler _Nonnull completion) {
+      weakSelf.purchasingBlocks[product.productIdentifier] = completion;
+      
+      [weakSelf.storeKitService purchaseProduct:product];
+    }];
+    
+    return NO;
+  }
+  
+  return YES;
 }
 
 @end
