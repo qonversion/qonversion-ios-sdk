@@ -14,7 +14,9 @@
   NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
   NSDictionary *productsDict = dict[@"products"] ?: @{};
   NSDictionary *userProductsDict = dict[@"user_products"] ?: @{};
+  NSUInteger timestamp = dict[@"timestamp"] ?: 0;
   
+  [result setTimestamp:timestamp];
   [result setUid:((NSString *)dict[@"uid"] ?: @"")];
   [result setPermissions:[self fillPermissions:permissionsDict]];
   [result setProducts:[self fillProducts:productsDict]];
