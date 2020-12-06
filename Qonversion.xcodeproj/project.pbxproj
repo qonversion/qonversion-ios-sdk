@@ -160,6 +160,7 @@
 		454EF64724E5CC5A0070581E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		454EF64A24E5CC5A0070581E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		454EF64C24E5CC5A0070581E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		456215C8257D6AF800548A3D /* Sample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Sample.entitlements; sourceTree = "<group>"; };
 		456ECD32249B8FE000D2BC40 /* QNRequestBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNRequestBuilder.h; sourceTree = "<group>"; };
 		456ECD33249B901900D2BC40 /* QNRequestBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNRequestBuilder.m; sourceTree = "<group>"; };
 		456ECD36249BB68B00D2BC40 /* QRequestBuilderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestBuilderTests.m; sourceTree = "<group>"; };
@@ -292,6 +293,7 @@
 		454EF63D24E5CC580070581E /* Sample */ = {
 			isa = PBXGroup;
 			children = (
+				456215C8257D6AF800548A3D /* Sample.entitlements */,
 				454EF63E24E5CC580070581E /* AppDelegate.swift */,
 				454EF64224E5CC590070581E /* ViewController.swift */,
 				89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */,
@@ -926,6 +928,7 @@
 			baseConfigurationReference = 1337D4574E133D635F96F46F /* Pods-Sample.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sample/Sample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MTVL2X9L7N;
 				INFOPLIST_FILE = Sample/Info.plist;
@@ -937,6 +940,7 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.sample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -949,6 +953,7 @@
 			baseConfigurationReference = 045555B21ABEFDE2E6E5AA58 /* Pods-Sample.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sample/Sample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MTVL2X9L7N;
 				INFOPLIST_FILE = Sample/Info.plist;
@@ -960,6 +965,7 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.sample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
