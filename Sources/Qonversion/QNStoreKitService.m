@@ -7,20 +7,22 @@
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKPaymentTransaction *> *processingTransactions;
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProductsRequest *> *productRequests;
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
+@property (nonatomic, strong, readonly) NSMutableArray<QNReceiptFetcherCompletionHandler> *receiptRefreshCompletionHandlers;
 @property (nonatomic, copy) NSString *purchasingCurrently;
 
-@property (nonatomic, strong) SKProductsRequest *request;
+@property (nonatomic) SKProductsRequest *productsRequest;
+@property (nonatomic) SKRequest *receiptRefreshRequest;
 
 @end
 
 @implementation QNStoreKitService
 
 - (instancetype)initWithDelegate:(id <QNStoreKitServiceDelegate>)delegate {
-    self = [self init];
-    if (self) {
-        _delegate = delegate;
-    }
-    return self;
+  self = [self init];
+  if (self) {
+    _delegate = delegate;
+  }
+  return self;
 }
 
 - (void)loadProducts:(NSSet <NSString *> *)products {
@@ -28,7 +30,7 @@
   [request setDelegate:self];
   [request start];
   
-  [self setRequest:request];
+  [self setProductsRequest:request];
 }
 
 - (instancetype)init {
@@ -37,10 +39,11 @@
     _processingTransactions = [NSMutableDictionary new];
     _productRequests = [NSMutableDictionary new];
     _products = [NSMutableDictionary new];
+    _receiptRefreshCompletionHandlers = [NSMutableArray new];
     
     _purchasingCurrently = nil;
   }
-
+  
   [SKPaymentQueue.defaultQueue addTransactionObserver:self];
   return self;
 }
@@ -73,6 +76,23 @@
 
 - (nullable SKProduct *)productAt:(NSString *)productID {
   return _products[productID];
+}
+
+- (void)fetchReceipt:(QNReceiptFetcherCompletionHandler)completion {
+  @synchronized(self) {
+    [self.receiptRefreshCompletionHandlers addObject:[completion copy]];
+    if (self.receiptRefreshRequest == nil) {
+      [self fetchReceipt];
+    }
+  }
+}
+
+- (void)fetchReceipt {
+  @synchronized(self) {
+    self.receiptRefreshRequest = [self buildReceiptRefreshRequest];
+    self.receiptRefreshRequest.delegate = self;
+    [self.receiptRefreshRequest start];
+  }
 }
 
 // MARK: - SKPaymentTransactionObserver
@@ -156,7 +176,7 @@
   
   if (skProduct) {
     if ([self.delegate respondsToSelector:@selector(handleFailedTransaction:forProduct:)]) {
-        [self.delegate handleFailedTransaction:transaction forProduct:skProduct];
+      [self.delegate handleFailedTransaction:transaction forProduct:skProduct];
     }
     
     return;
@@ -170,18 +190,30 @@
   
   if (skProduct) {
     if ([self.delegate respondsToSelector:@selector(handlePurchasedTransaction:forProduct:)]) {
-        [self.delegate handlePurchasedTransaction:transaction forProduct:skProduct];
+      [self.delegate handlePurchasedTransaction:transaction forProduct:skProduct];
     }
     
     return;
   }
-
+  
   [self processTransaction:transaction productIdentifier:productIdentifier];
 }
 
 - (void)request:(SKRequest *)request didFailWithError:(NSError *)error {
-  if ([request isKindOfClass:SKProductsRequest.class] && [self.delegate respondsToSelector:@selector(handleProductsRequestFailed:)]) {
-      [self.delegate handleProductsRequestFailed:error];
+  if ([request isKindOfClass:SKProductsRequest.class]
+      && [self.delegate respondsToSelector:@selector(handleProductsRequestFailed:)]) {
+    [self.delegate handleProductsRequestFailed:error];
+    return;
+  }
+  
+  if ([request isKindOfClass:SKReceiptRefreshRequest.class]) {
+    [self finishReceiptFetchRequest:request];
+  }
+}
+
+- (void)requestDidFinish:(SKRequest *)request {
+  if ([request isKindOfClass:SKReceiptRefreshRequest.class]) {
+    [self finishReceiptFetchRequest:request];
   }
 }
 
@@ -190,7 +222,7 @@
   NSSet <NSString *> *productSet = [NSSet setWithObject:productIdentifier];
   SKProductsRequest *request = [[SKProductsRequest alloc] initWithProductIdentifiers:productSet];
   [self.productRequests setObject:request forKey:productIdentifier];
-                                
+  
   request.delegate = self;
   [request start];
 }
@@ -203,6 +235,22 @@
   }
   
   return;
+}
+
+- (SKReceiptRefreshRequest *)buildReceiptRefreshRequest {
+  return [[SKReceiptRefreshRequest alloc] init];
+}
+
+- (void)finishReceiptFetchRequest:(SKRequest *)request {
+  @synchronized(self) {
+    self.receiptRefreshRequest = nil;
+    NSArray<QNReceiptFetcherCompletionHandler> *handlers = [NSArray arrayWithArray:self.receiptRefreshCompletionHandlers];
+    self.receiptRefreshRequest = [NSMutableArray new];
+    
+    for (QNReceiptFetcherCompletionHandler handler in handlers) {
+      handler();
+    }
+  }
 }
 
 @end
