@@ -9,6 +9,8 @@
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
 @property (nonatomic, copy) NSString *purchasingCurrently;
 
+@property (nonatomic, strong) SKProductsRequest *request;
+
 @end
 
 @implementation QNStoreKitService
@@ -25,6 +27,8 @@
   SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:products];
   [request setDelegate:self];
   [request start];
+  
+  [self setRequest:request];
 }
 
 - (instancetype)init {
