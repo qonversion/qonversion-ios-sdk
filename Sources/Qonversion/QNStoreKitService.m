@@ -103,6 +103,8 @@
     NSString *newReceipt = [self receipt];
     if (newReceipt == nil || newReceipt.length == 0) {
       QONVERSION_LOG(@"⚠️ Receipt not found.");
+    } else {
+      QONVERSION_LOG(@"✅ Receipt was fetched");
     }
     completion(newReceipt ?: @"");
   }];
@@ -223,8 +225,6 @@
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
   NSString *productIdentifier = transaction.payment.productIdentifier;
   SKProduct *skProduct = _products[productIdentifier];
-
-  [self finishTransaction:transaction];
   
   if (skProduct) {
     if ([self.delegate respondsToSelector:@selector(handlePurchasedTransaction:forProduct:)]) {
