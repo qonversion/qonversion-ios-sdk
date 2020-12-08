@@ -2,6 +2,7 @@
 
 @class SKProduct, SKPaymentTransaction;
 
+NS_ASSUME_NONNULL_BEGIN
 @interface QNRequestSerializer : NSObject
 
 - (NSDictionary *)launchData;
@@ -14,4 +15,4 @@
 
 @end
 
-
+NS_ASSUME_NONNULL_END

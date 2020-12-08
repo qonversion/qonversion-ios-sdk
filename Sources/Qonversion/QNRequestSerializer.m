@@ -9,6 +9,8 @@
 
 @end
 
+NS_ASSUME_NONNULL_BEGIN
+
 @implementation QNRequestSerializer
 
 - (NSDictionary *)launchData {
@@ -103,3 +105,5 @@
 }
 
 @end
+
+NS_ASSUME_NONNULL_END
