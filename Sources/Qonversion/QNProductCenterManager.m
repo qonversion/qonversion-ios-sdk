@@ -336,8 +336,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   __block __weak QNProductCenterManager *weakSelf = self;
   
-  [_storeKitService receipt:^(NSString * receipt) {
-    [_apiClient purchaseRequestWith:product transaction:transaction receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+  [self.storeKitService receipt:^(NSString * receipt) {
+    [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       QNPurchaseCompletionHandler _purchasingBlock = weakSelf.purchasingBlocks[product.productIdentifier];
       [[weakSelf storeKitService] finishTransaction:transaction];
       @synchronized (self) {
