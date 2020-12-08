@@ -134,9 +134,11 @@
   }
 }
 
+#if (TARGET_OS_IOS && !TARGET_OS_MACCATALYST) || TARGET_OS_TV
 - (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product {
   return [self.delegate paymentQueue:queue shouldAddStorePayment:payment forProduct:product];
 }
+#endif
 
 - (void)paymentQueue:(SKPaymentQueue *)queue restoreCompletedTransactionsFailedWithError:(NSError *)error {
   if ([self.delegate respondsToSelector:@selector(handleRestoreCompletedTransactionsFailed:)]) {
@@ -283,7 +285,7 @@
   @synchronized(self) {
     self.receiptRefreshRequest = nil;
     NSArray<QNStoreKitServiceReceiptFetchCompletionHandler> *handlers = [self.receiptRefreshCompletionHandlers copy];
-    self.receiptRefreshRequest = [NSMutableArray new];
+    [self.receiptRefreshCompletionHandlers removeAllObjects];
     
     for (QNStoreKitServiceReceiptFetchCompletionHandler handler in handlers) {
       handler();

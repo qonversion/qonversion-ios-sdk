@@ -12,3 +12,17 @@ NSString *const keyQNPropertyFacebookAnonUserID = @"_q_fb_anon_id";
 NSString *const keyQNPropertyUserID = @"_q_custom_user_id";
 
 NSString * const keyQNErrorDomain = @"com.qonversion.io";
+
+#if TARGET_OS_OSX
+    NSString *const kQNPlatform = @"macOS";
+    NSString *const kQNOSName = @"macos";
+#elif TARGET_OS_TV
+    NSString *const kQNPlatform = @"tvOS";
+    NSString *const kQNOSName = @"tvos";
+#elif TARGET_OS_MACCATALYST
+    NSString *const kQNPlatform = @"macOS";
+    NSString *const kQNOSName = @"macos";
+#else // iOS, simulator, etc.
+    NSString *const kQNPlatform = @"iOS";
+    NSString *const kQNOSName = @"ios";
+#endif

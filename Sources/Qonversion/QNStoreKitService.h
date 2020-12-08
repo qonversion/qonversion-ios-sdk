@@ -1,11 +1,11 @@
 #import <StoreKit/StoreKit.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef void(^QNStoreKitServiceReceiptFetchCompletionHandler)(void);
 typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSString *);
 
 @protocol QNStoreKitServiceDelegate;
-
-NS_ASSUME_NONNULL_BEGIN
 
 @interface QNStoreKitService : NSObject
 

@@ -24,8 +24,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
 @property (nonatomic, copy) QNRestoreCompletionHandler restorePurchasesBlock;
 
-@property (nonatomic, copy) NSMutableArray *permissionsBlocks;
-@property (nonatomic, copy) NSMutableArray *productsBlocks;
+@property (nonatomic, strong) NSMutableArray *permissionsBlocks;
+@property (nonatomic, strong) NSMutableArray *productsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
 @property (nonatomic) QNLaunchResult *launchResult;
@@ -79,7 +79,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     [weakSelf executePermissionBlocks];
     
-    if (!_productsLoaded) {
+    if (!weakSelf.productsLoaded) {
       [weakSelf loadProducts];
     }
     

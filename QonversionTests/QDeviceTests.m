@@ -31,7 +31,7 @@
 }
 
 - (void)testModel {
-    XCTAssertEqualObjects(@"Simulator", _device.model);
+    XCTAssertEqualObjects(@"x86_64", _device.model);
 }
 
 - (void)testManufacturer {
