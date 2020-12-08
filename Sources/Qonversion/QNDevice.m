@@ -46,6 +46,10 @@
   _osName = @"iOS";
   #elif TARGET_OS_OSX
   _osName = @"macOS";
+  #elif TARGET_OS_WATCH
+  _osName = @"watchOS"
+  #elif TARGET_OS_TV
+  _osName = @"tvOS"
   #endif
   
   return _osName;
