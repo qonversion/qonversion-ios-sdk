@@ -82,7 +82,7 @@
 - (void)fetchReceipt:(QNStoreKitServiceReceiptFetchCompletionHandler)completion {
   @synchronized(self) {
     [self.receiptRefreshCompletionHandlers addObject:[completion copy]];
-    if (self.receiptRefreshRequest == nil) {
+    if (!self.receiptRefreshRequest) {
       [self startReceiptRefreshRequest];
     }
   }
@@ -90,7 +90,7 @@
 
 - (void)receipt:(QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)completion {
   NSString *receipt = [self receipt];
-  if (receipt == nil || receipt.length == 0) {
+  if (receipt.length > 0) {
     QONVERSION_LOG(@"❎ Try to fetch user receipt...");
     [self refreshReceipt:completion];
   } else {
@@ -102,7 +102,7 @@
   [self fetchReceipt:^{
     NSString *newReceipt = [self receipt];
     if (newReceipt == nil || newReceipt.length == 0) {
-      QONVERSION_LOG(@"⚠️ Receipt not found.");
+      QONVERSION_LOG(@"⚠️ Receipt not found");
     } else {
       QONVERSION_LOG(@"✅ Receipt was fetched");
     }
@@ -244,13 +244,13 @@
     return;
   }
   
-  if ([request isKindOfClass:SKReceiptRefreshRequest.class]) {
+  if ([request isKindOfClass:[SKReceiptRefreshRequest class]]) {
     [self finishReceiptFetchRequest:request];
   }
 }
 
 - (void)requestDidFinish:(SKRequest *)request {
-  if ([request isKindOfClass:SKReceiptRefreshRequest.class]) {
+  if ([request isKindOfClass:[SKReceiptRefreshRequest class]]) {
     [self finishReceiptFetchRequest:request];
   }
 }
