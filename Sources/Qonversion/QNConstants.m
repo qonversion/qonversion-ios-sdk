@@ -1,8 +1,5 @@
 #import "QNConstants.h"
 
-NSString *const keyQPlatform = @"iOS";
-NSString *const keyQOSName = @"ios";
-
 NSString *const keyQVersion = @"2.4.1";
 NSString *const keyQUnknownLibrary = @"unknown";
 NSString *const keyQUnknownVersion = @"unknown";
