@@ -4,7 +4,7 @@ project 'Qonversion'
 use_frameworks!
 
 target 'QonversionTests' do
-  platform :osx, 10.9
+  platform :ios, 12.0
   pod 'OCMock'
 end
 
