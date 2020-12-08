@@ -1,6 +1,7 @@
 #import <StoreKit/StoreKit.h>
 
-typedef void(^QNReceiptFetcherCompletionHandler)(void);
+typedef void(^QNStoreKitServiceReceiptFetchCompletionHandler)(void);
+typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSString *);
 
 @protocol QNStoreKitServiceDelegate;
 
@@ -18,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)restore;
 - (nullable SKProduct *)productAt:(NSString *)productID;
 
-- (void)fetchReceipt:(QNReceiptFetcherCompletionHandler)completion;
+- (void)receipt:(QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)completion;
 
 @end
 

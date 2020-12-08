@@ -1,5 +1,6 @@
 #import "QNStoreKitService.h"
 #import "QNUtils.h"
+#import "QNUserInfo.h"
 
 @interface QNStoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -7,7 +8,7 @@
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKPaymentTransaction *> *processingTransactions;
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProductsRequest *> *productRequests;
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
-@property (nonatomic, strong, readonly) NSMutableArray<QNReceiptFetcherCompletionHandler> *receiptRefreshCompletionHandlers;
+@property (nonatomic, strong, readonly) NSMutableArray<QNStoreKitServiceReceiptFetchCompletionHandler> *receiptRefreshCompletionHandlers;
 @property (nonatomic, copy) NSString *purchasingCurrently;
 
 @property (nonatomic) SKProductsRequest *productsRequest;
@@ -78,21 +79,49 @@
   return _products[productID];
 }
 
-- (void)fetchReceipt:(QNReceiptFetcherCompletionHandler)completion {
+- (void)fetchReceipt:(QNStoreKitServiceReceiptFetchCompletionHandler)completion {
   @synchronized(self) {
     [self.receiptRefreshCompletionHandlers addObject:[completion copy]];
     if (self.receiptRefreshRequest == nil) {
-      [self fetchReceipt];
+      [self startReceiptRefreshRequest];
     }
   }
 }
 
-- (void)fetchReceipt {
-  @synchronized(self) {
-    self.receiptRefreshRequest = [self buildReceiptRefreshRequest];
-    self.receiptRefreshRequest.delegate = self;
-    [self.receiptRefreshRequest start];
+- (void)receipt:(QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)completion {
+  NSString *receipt = [self receipt];
+  if (receipt == nil || receipt.length == 0) {
+    QONVERSION_LOG(@"❎ Try to fetch user receipt...");
+    [self refreshReceipt:completion];
+  } else {
+    completion(receipt);
   }
+}
+
+- (void)refreshReceipt:(QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)completion {
+  [self fetchReceipt:^{
+    NSString *newReceipt = [self receipt];
+    if (newReceipt == nil || newReceipt.length == 0) {
+      QONVERSION_LOG(@"⚠️ Receipt not found.");
+    }
+    completion(newReceipt ?: @"");
+  }];
+}
+
+- (nullable NSString *)receipt {
+  NSURL *receiptURL = QNUserInfo.bundle.appStoreReceiptURL;
+  
+  if (!receiptURL) {
+    return NULL;
+  }
+  
+  NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
+  
+  if (!receiptData) {
+    return NULL;
+  }
+  
+  return [receiptData base64EncodedStringWithOptions:0];
 }
 
 // MARK: - SKPaymentTransactionObserver
@@ -169,6 +198,14 @@
 
 // MARK: - Private
 
+- (void)startReceiptRefreshRequest {
+  @synchronized(self) {
+    self.receiptRefreshRequest = [self buildReceiptRefreshRequest];
+    self.receiptRefreshRequest.delegate = self;
+    [self.receiptRefreshRequest start];
+  }
+}
+
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction {
   NSString *productIdentifier = transaction.payment.productIdentifier;
   SKProduct *skProduct = _products[productIdentifier];
@@ -186,6 +223,7 @@
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction {
   NSString *productIdentifier = transaction.payment.productIdentifier;
   SKProduct *skProduct = _products[productIdentifier];
+
   [self finishTransaction:transaction];
   
   if (skProduct) {
@@ -244,10 +282,10 @@
 - (void)finishReceiptFetchRequest:(SKRequest *)request {
   @synchronized(self) {
     self.receiptRefreshRequest = nil;
-    NSArray<QNReceiptFetcherCompletionHandler> *handlers = [NSArray arrayWithArray:self.receiptRefreshCompletionHandlers];
+    NSArray<QNStoreKitServiceReceiptFetchCompletionHandler> *handlers = [NSArray arrayWithArray:self.receiptRefreshCompletionHandlers];
     self.receiptRefreshRequest = [NSMutableArray new];
     
-    for (QNReceiptFetcherCompletionHandler handler in handlers) {
+    for (QNStoreKitServiceReceiptFetchCompletionHandler handler in handlers) {
       handler();
     }
   }
