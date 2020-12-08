@@ -185,7 +185,7 @@
     NSMutableArray *storedRequests = [unarchivedData mutableCopy];
     [storedRequests addObject:request];
     
-    NSData *updatedStoredRequestsData = [NSKeyedArchiver archivedDataWithRootObject:[storedRequests copy] requiringSecureCoding:false error:nil];
+    NSData *updatedStoredRequestsData = [NSKeyedArchiver archivedDataWithRootObject:[storedRequests copy]];
     [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
   }
 }
