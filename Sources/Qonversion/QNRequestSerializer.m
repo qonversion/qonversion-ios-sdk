@@ -38,7 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
   purchaseDict[@"transaction_id"] = transaction.transactionIdentifier ?: @"";
   purchaseDict[@"original_transaction_id"] = transaction.originalTransaction.transactionIdentifier ?: @"";
   
-  if (@available(iOS 11.2, *)) {
+  if (@available(iOS 11.2, macOS 10.13.2, tvOS 11.2, *)) {
     if (product.subscriptionPeriod != nil) {
       purchaseDict[@"period_unit"] = @(product.subscriptionPeriod.unit).stringValue;
       purchaseDict[@"period_number_of_units"] = @(product.subscriptionPeriod.numberOfUnits).stringValue;
@@ -59,7 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
   }
   
-  if (@available(iOS 13.0, *)) {
+  if (@available(iOS 13.0, macos 10.15, tvOS 13.0, *)) {
     NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
     purchaseDict[@"country"] = countryCode;
   }

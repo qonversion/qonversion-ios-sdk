@@ -5,7 +5,7 @@
 - (NSString *)prettyCurrency {
   NSString *currency = @"";
   
-  if (@available(iOS 10.0, *)) {
+  if (@available(iOS 10.0, tvOS 10.0, *)) {
     currency = self.priceLocale.currencyCode;
   } else {
     NSNumberFormatter *formatter = NSNumberFormatter.new;
