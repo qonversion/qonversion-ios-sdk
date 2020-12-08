@@ -43,7 +43,7 @@ static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefau
 }
 
 - (NSData *)archivedDataWith:(id)object {
-  return [NSKeyedArchiver archivedDataWithRootObject:object];
+  return [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:false error:nil];
 }
 
 - (id)unarchiveObjectWithData:(NSData *)data {

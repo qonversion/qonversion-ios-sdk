@@ -283,7 +283,7 @@
   @synchronized(self) {
     self.receiptRefreshRequest = nil;
     NSArray<QNStoreKitServiceReceiptFetchCompletionHandler> *handlers = [self.receiptRefreshCompletionHandlers copy];
-    self.receiptRefreshRequest = [NSMutableArray new];
+    [self.receiptRefreshCompletionHandlers removeAllObjects];
     
     for (QNStoreKitServiceReceiptFetchCompletionHandler handler in handlers) {
       handler();
