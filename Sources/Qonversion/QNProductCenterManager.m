@@ -24,8 +24,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
 @property (nonatomic, copy) QNRestoreCompletionHandler restorePurchasesBlock;
 
-@property (nonatomic) NSMutableArray *permissionsBlocks;
-@property (nonatomic) NSMutableArray *productsBlocks;
+@property (nonatomic, strong) NSMutableArray *permissionsBlocks;
+@property (nonatomic, strong) NSMutableArray *productsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
 @property (nonatomic) QNLaunchResult *launchResult;
