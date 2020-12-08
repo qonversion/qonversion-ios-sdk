@@ -14,9 +14,9 @@
   NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
   NSDictionary *productsDict = dict[@"products"] ?: @{};
   NSDictionary *userProductsDict = dict[@"user_products"] ?: @{};
-  NSUInteger timestamp = dict[@"timestamp"] ?: 0;
+  NSNumber *timestamp = dict[@"timestamp"] ?: @0;
   
-  [result setTimestamp:timestamp];
+  [result setTimestamp:timestamp.unsignedIntegerValue];
   [result setUid:((NSString *)dict[@"uid"] ?: @"")];
   [result setPermissions:[self fillPermissions:permissionsDict]];
   [result setProducts:[self fillProducts:productsDict]];
@@ -74,7 +74,10 @@
 + (QNProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
   QNProduct *result = [[QNProduct alloc] init];
   
-  result.duration = [self mapInteger:dict[@"duration"]];
+  NSInteger durationValue =  [self mapInteger:dict[@"duration"]];
+  QNProductDuration duration = durationValue ? durationValue : -1;
+  result.duration = duration;
+  
   result.type = [self mapInteger:dict[@"type"]];
   
   result.qonversionID = ((NSString *)dict[@"id"] ?: @"");

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'Qonversion'
-  s.version          = '2.4.1'
+  s.version          = '2.5.0'
   s.summary          = 'qonversion.io'
   s.description      = <<-DESC
   Deep Analytics for iOS Subscriptions
@@ -12,6 +12,9 @@ Pod::Spec.new do |s|
   s.source_files     = 'Sources/Qonversion/*.{h,m}'
   s.source           = { :git => 'https://github.com/qonversion/qonversion-ios-sdk.git', :tag => s.version.to_s }
   s.ios.deployment_target = '9.0'
+  s.osx.deployment_target = '10.12'
+  s.watchos.deployment_target = '6.2'
+  s.tvos.deployment_target = '9.0'
   s.requires_arc           = true
   
 end

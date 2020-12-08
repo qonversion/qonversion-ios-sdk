@@ -4,14 +4,13 @@ project 'Qonversion'
 use_frameworks!
 
 target 'QonversionTests' do
-  platform :ios, '9.0'
+  platform :ios, 12.0
   pod 'OCMock'
 end
 
 
 target 'Sample' do
-  platform :ios, '9.0'
-  pod 'AppsFlyerFramework'
+
 end
 
 
