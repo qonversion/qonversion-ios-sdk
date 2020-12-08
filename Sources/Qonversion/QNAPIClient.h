@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)purchaseRequestWith:(SKProduct *)product
                 transaction:(SKPaymentTransaction *)transaction
+                    receipt:(nullable NSString *)receipt
                  completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;

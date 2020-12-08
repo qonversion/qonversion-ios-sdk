@@ -91,6 +91,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     if (completion) {
       run_block_on_main(completion, result, error)
     }
+    
+    if (error) {
+      QONVERSION_LOG(@"❗️ Request failed %@", error.description);
+    }
   }];
 }
 
@@ -332,29 +336,32 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   __block __weak QNProductCenterManager *weakSelf = self;
   
-  [_apiClient purchaseRequestWith:product transaction:transaction completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    QNPurchaseCompletionHandler _purchasingBlock = weakSelf.purchasingBlocks[product.productIdentifier];
-    
-    @synchronized (self) {
-      [weakSelf.purchasingBlocks removeObjectForKey:product.productIdentifier];
-    }
-    
-    if (error) {
-      run_block_on_main(_purchasingBlock, @{}, error, NO);
-      return;
-    }
-    
-    QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
-    if (result.error) {
-      run_block_on_main(_purchasingBlock, @{}, result.error, NO);
-      return;
-    }
-    
-    QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-    if (_purchasingBlock) {
-      run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
-    }
+  [self.storeKitService receipt:^(NSString * receipt) {
+    [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      QNPurchaseCompletionHandler _purchasingBlock = weakSelf.purchasingBlocks[product.productIdentifier];
+      [[weakSelf storeKitService] finishTransaction:transaction];
+      @synchronized (weakSelf) {
+        [weakSelf.purchasingBlocks removeObjectForKey:product.productIdentifier];
+      }
+      
+      if (error) {
+        run_block_on_main(_purchasingBlock, @{}, error, NO);
+        return;
+      }
+      
+      QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+      if (result.error) {
+        run_block_on_main(_purchasingBlock, @{}, result.error, NO);
+        return;
+      }
+      
+      QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+      if (_purchasingBlock) {
+        run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
+      }
+    }];
   }];
+  
 }
 
 - (void)handleRestoreCompletedTransactionsFinished {

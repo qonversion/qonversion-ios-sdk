@@ -38,7 +38,21 @@
 @synthesize vendorID = _vendorID;
 
 - (NSString *)osName {
-  return keyQOSName;
+  NSString *_osName = @"iOS";
+  
+  #if TARGET_OS_MACCATALYST
+  _osName = @"macOS Catalyst";
+  #elif TARGET_OS_IOS
+  _osName = @"iOS";
+  #elif TARGET_OS_OSX
+  _osName = @"macOS";
+  #elif TARGET_OS_WATCH
+  _osName = @"watchOS";
+  #elif TARGET_OS_TV
+  _osName = @"tvOS";
+  #endif
+  
+  return _osName;
 }
 
 - (NSString *)appVersion {

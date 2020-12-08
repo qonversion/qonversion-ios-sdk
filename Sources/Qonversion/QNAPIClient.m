@@ -66,9 +66,11 @@
 
 - (void)purchaseRequestWith:(SKProduct *)product
                 transaction:(SKPaymentTransaction *)transaction
+                    receipt:(nullable NSString *)receipt
                  completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction];
+  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt];
   NSDictionary *resultData = [self enrichParameters:body];
+  
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
   
   return [self dataTaskWithRequest:request completion:completion];

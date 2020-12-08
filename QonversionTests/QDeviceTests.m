@@ -26,7 +26,7 @@
 }
 
 - (void)testOSName {
-    XCTAssertEqualObjects(@"ios", _device.osName);
+    XCTAssertEqualObjects(@"iOS", _device.osName);
     XCTAssertNotNil(_device.osVersion);
 }
 

@@ -7,7 +7,8 @@
 - (NSDictionary *)launchData;
 
 - (NSDictionary *)purchaseData:(SKProduct *)product
-                   transaction:(SKPaymentTransaction *)transaction;
+                   transaction:(SKPaymentTransaction *)transaction
+                       receipt:(nullable NSString *)receipt;
 
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;
 

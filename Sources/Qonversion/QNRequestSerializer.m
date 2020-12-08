@@ -19,10 +19,17 @@
   return QNUserInfo.overallData;
 }
 
-- (NSDictionary *)purchaseData:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+- (NSDictionary *)purchaseData:(SKProduct *)product
+                   transaction:(SKPaymentTransaction *)transaction
+                       receipt:(nullable NSString *)receipt {
+
   NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
 
+  if (receipt) {
+    result[@"receipt"] = receipt;
+  }
+  
   purchaseDict[@"product"] = product.productIdentifier;
   purchaseDict[@"currency"] = product.prettyCurrency;
   purchaseDict[@"value"] = product.price.stringValue;
