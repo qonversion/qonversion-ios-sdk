@@ -11,8 +11,8 @@
 @property (nonatomic, strong, readonly) NSMutableArray<QNStoreKitServiceReceiptFetchCompletionHandler> *receiptRefreshCompletionHandlers;
 @property (nonatomic, copy) NSString *purchasingCurrently;
 
-@property (nonatomic) SKProductsRequest *productsRequest;
-@property (nonatomic) SKRequest *receiptRefreshRequest;
+@property (nonatomic, strong) SKProductsRequest *productsRequest;
+@property (nonatomic, strong) SKRequest *receiptRefreshRequest;
 
 @end
 
@@ -114,13 +114,13 @@
   NSURL *receiptURL = QNUserInfo.bundle.appStoreReceiptURL;
   
   if (!receiptURL) {
-    return NULL;
+    return nil;
   }
   
   NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
   
   if (!receiptData) {
-    return NULL;
+    return nil;
   }
   
   return [receiptData base64EncodedStringWithOptions:0];
@@ -282,7 +282,7 @@
 - (void)finishReceiptFetchRequest:(SKRequest *)request {
   @synchronized(self) {
     self.receiptRefreshRequest = nil;
-    NSArray<QNStoreKitServiceReceiptFetchCompletionHandler> *handlers = [NSArray arrayWithArray:self.receiptRefreshCompletionHandlers];
+    NSArray<QNStoreKitServiceReceiptFetchCompletionHandler> *handlers = [self.receiptRefreshCompletionHandlers copy];
     self.receiptRefreshRequest = [NSMutableArray new];
     
     for (QNStoreKitServiceReceiptFetchCompletionHandler handler in handlers) {
