@@ -39,6 +39,7 @@
 		4572FE1D24BC40F900A17AC4 /* QNProductCenterManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */; };
 		4572FE2024BC4B5B00A17AC4 /* QNUserPropertiesManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */; };
 		4572FE2124BC4B5B00A17AC4 /* QNUserPropertiesManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */; };
+		45754AE725814C7500FCA376 /* iAd.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45754AE625814C7500FCA376 /* iAd.framework */; };
 		4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4587136B24AB963100F4B418 /* QRequestSerializerTests.m */; };
 		458A8CB724B1F5F600637130 /* QNErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CB624B1EFE500637130 /* QNErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		458A8CBE24B4B88F00637130 /* QNStoreKitSugare.h in Headers */ = {isa = PBXBuildFile; fileRef = 458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -179,6 +180,7 @@
 		4572FE1B24BC40F900A17AC4 /* QNProductCenterManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNProductCenterManager.m; sourceTree = "<group>"; };
 		4572FE1E24BC4B5B00A17AC4 /* QNUserPropertiesManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUserPropertiesManager.h; sourceTree = "<group>"; };
 		4572FE1F24BC4B5B00A17AC4 /* QNUserPropertiesManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserPropertiesManager.m; sourceTree = "<group>"; };
+		45754AE625814C7500FCA376 /* iAd.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = iAd.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.0.sdk/System/iOSSupport/System/Library/Frameworks/iAd.framework; sourceTree = DEVELOPER_DIR; };
 		4587136B24AB963100F4B418 /* QRequestSerializerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestSerializerTests.m; sourceTree = "<group>"; };
 		458A8CB624B1EFE500637130 /* QNErrors.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNErrors.h; sourceTree = "<group>"; };
 		458A8CBC24B4B88F00637130 /* QNStoreKitSugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNStoreKitSugare.h; sourceTree = "<group>"; };
@@ -254,6 +256,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45754AE725814C7500FCA376 /* iAd.framework in Frameworks */,
 				89861D2C2501563B00E5D36B /* Qonversion.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -576,6 +579,7 @@
 		BB6B3C9FD9EFBC9E1604507D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				45754AE625814C7500FCA376 /* iAd.framework */,
 				4502E451257FDF5E006FC750 /* OCMock.framework */,
 				4502E457257FDF90006FC750 /* OCMock.framework */,
 				B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */,
