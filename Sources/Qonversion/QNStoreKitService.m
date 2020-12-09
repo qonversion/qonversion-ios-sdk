@@ -177,8 +177,7 @@
   BOOL autoTracked = NO;
   for (SKProduct *product in response.products) {
     [_products setValue:product forKey:product.productIdentifier];
-    QONVERSION_LOG(@"Loaded Product %@ with price %@", product.productIdentifier, product.price);
-    
+  
     // Transactions for auto-tracking
     SKPaymentTransaction *transaction = [self.processingTransactions objectForKey:product.productIdentifier];
     
