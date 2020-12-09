@@ -8,7 +8,7 @@ typedef NS_ENUM(NSInteger, QNAttributionProvider) {
   QNAttributionProviderAppsFlyer = 0,
   QNAttributionProviderBranch,
   QNAttributionProviderAdjust,
-  QNAttributionProviderApple
+  QNAttributionProviderAppleSearchAds
 } NS_SWIFT_NAME(Qonversion.AttributionProvider);
 
 /**
