@@ -87,11 +87,8 @@
 
 + (void)enableAppleSearchAdsAttiribution:(BOOL)enable {
   Qonversion *shared = [Qonversion sharedInstance];
-  
-  @synchronized (shared) {
-    if (enable) {
-      [shared.attributionManager addAppleSearchAttributionData];
-    }
+  if (enable) {
+    [shared.attributionManager addAppleSearchAttributionData];
   }
 }
 

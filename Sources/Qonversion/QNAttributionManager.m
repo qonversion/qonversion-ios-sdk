@@ -77,7 +77,7 @@
   [ADClientSharedClientInstance performSelector:iAdDetailsSelector
                                      withObject:^(NSDictionary *attributionDetails, NSError *error) {
     
-    [self->_client attributionRequest:QNAttributionProviderAppleSearchAds data:attributionDetails completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) { }];
+    [self.client attributionRequest:QNAttributionProviderAppleSearchAds data:attributionDetails completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) { }];
   }];
 }
 
