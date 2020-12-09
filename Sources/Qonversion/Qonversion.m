@@ -85,6 +85,16 @@
   return [[Qonversion sharedInstance].productCenterManager products:completion];
 }
 
++ (void)enableAppleSearchAdsAttiribution:(BOOL)enable {
+  Qonversion *shared = [Qonversion sharedInstance];
+  
+  @synchronized (shared) {
+    if (enable) {
+      [shared.attributionManager addAppleSearchAttributionData];
+    }
+  }
+}
+
 // MARK: - Private
 
 + (instancetype)sharedInstance {
