@@ -80,17 +80,17 @@
 }
 
 - (void)testThatMapperParseIntegerFromAnyObject {
-  NSInteger value = [QNMapper mapInteger:[NSNull null]];
+  NSInteger value = [QNMapper mapInteger:[NSNull null] orReturn:0];
   XCTAssertTrue(value == 0);
   
   NSDictionary *dict = @{@"key": [NSNull null], @"key_1": @1};
-  NSInteger valueFromNull = [QNMapper mapInteger:dict[@"key"]];
+  NSInteger valueFromNull = [QNMapper mapInteger:dict[@"key"] orReturn:0];
   XCTAssertTrue(valueFromNull == 0);
   
-  NSInteger valueFromNotExistKey = [QNMapper mapInteger:dict[@"non_exist_key"]];
+  NSInteger valueFromNotExistKey = [QNMapper mapInteger:dict[@"non_exist_key"] orReturn:0];
   XCTAssertTrue(valueFromNotExistKey == 0);
   
-  NSInteger valueFromExistValue = [QNMapper mapInteger:dict[@"key_1"]];
+  NSInteger valueFromExistValue = [QNMapper mapInteger:dict[@"key_1"] orReturn:0];
   XCTAssertTrue(valueFromExistValue == 1);
 }
 
