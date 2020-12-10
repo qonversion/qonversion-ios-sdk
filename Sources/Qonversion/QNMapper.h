@@ -10,6 +10,6 @@
 
 + (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSDictionary * _Nullable)dict;
 
-+ (NSInteger)mapInteger:(NSObject * _Nullable)object;
++ (NSInteger)mapInteger:(NSObject * _Nullable)object orReturn:(NSInteger)defaultValue;
 
 @end

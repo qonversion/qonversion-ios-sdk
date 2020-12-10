@@ -12,7 +12,7 @@
 @property (nonatomic, copy) NSString *purchasingCurrently;
 
 @property (nonatomic, strong) SKProductsRequest *productsRequest;
-@property (nonatomic, strong) SKRequest *receiptRefreshRequest;
+@property (nonatomic, strong) SKReceiptRefreshRequest *receiptRefreshRequest;
 
 @end
 
@@ -91,10 +91,10 @@
 - (void)receipt:(QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)completion {
   NSString *receipt = [self receipt];
   if (receipt.length > 0) {
+    completion(receipt);
+  } else {
     QONVERSION_LOG(@"❎ Try to fetch user receipt...");
     [self refreshReceipt:completion];
-  } else {
-    completion(receipt);
   }
 }
 
@@ -177,8 +177,7 @@
   BOOL autoTracked = NO;
   for (SKProduct *product in response.products) {
     [_products setValue:product forKey:product.productIdentifier];
-    QONVERSION_LOG(@"Loaded Product %@ with price %@", product.productIdentifier, product.price);
-    
+  
     // Transactions for auto-tracking
     SKPaymentTransaction *transaction = [self.processingTransactions objectForKey:product.productIdentifier];
     

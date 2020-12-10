@@ -82,8 +82,8 @@ NS_ASSUME_NONNULL_BEGIN
     case QNAttributionProviderBranch:
       [providerData setValue:@"branch" forKey:@"provider"];
       break;
-    case QNAttributionProviderApple:
-      [providerData setValue:@"apple" forKey:@"provider"];
+    case QNAttributionProviderAppleSearchAds:
+      [providerData setValue:@"apple_search_ads" forKey:@"provider"];
       break;
   }
   
