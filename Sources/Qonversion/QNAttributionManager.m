@@ -56,7 +56,6 @@
     return;
   }
   
-  
   id ADClientSharedClientInstance = [ADClientClass performSelector:sharedClientSelector];
   if (ADClientSharedClientInstance == nil) {
     QONVERSION_LOG(@"⚠️ iAd framework not found (ADClientSharedClientInstance is nil). Make sure that you import iAd");

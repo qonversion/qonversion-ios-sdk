@@ -17,7 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
     Qonversion.setPromoPurchasesDelegate(self)
-    Qonversion.enableAppleSearchAdsAttiribution(true)
+    Qonversion.setAppleSearchAdsAttributionEnabled(true)
     
     return true
   }

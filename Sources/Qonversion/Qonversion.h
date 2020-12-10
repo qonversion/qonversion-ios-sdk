@@ -94,7 +94,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Enable attribution collection from Apple Search Ads. NO by default.
  */
-+ (void)enableAppleSearchAdsAttiribution:(BOOL)enable;
++ (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable;
 
 @end
 
