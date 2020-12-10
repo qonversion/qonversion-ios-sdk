@@ -91,10 +91,10 @@
 - (void)receipt:(QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)completion {
   NSString *receipt = [self receipt];
   if (receipt.length > 0) {
+    completion(receipt);
+  } else {
     QONVERSION_LOG(@"❎ Try to fetch user receipt...");
     [self refreshReceipt:completion];
-  } else {
-    completion(receipt);
   }
 }
 
