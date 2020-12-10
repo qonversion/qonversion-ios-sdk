@@ -12,7 +12,7 @@
 @property (nonatomic, copy) NSString *purchasingCurrently;
 
 @property (nonatomic, strong) SKProductsRequest *productsRequest;
-@property (nonatomic, strong) SKRequest *receiptRefreshRequest;
+@property (nonatomic, strong) SKReceiptRefreshRequest *receiptRefreshRequest;
 
 @end
 

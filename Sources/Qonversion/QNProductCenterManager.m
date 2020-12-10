@@ -356,6 +356,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       }
       
       QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+      @synchronized (weakSelf) {
+        [weakSelf.launchResult setPermissions:launchResult.permissions];
+      }
       if (_purchasingBlock) {
         run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
       }
