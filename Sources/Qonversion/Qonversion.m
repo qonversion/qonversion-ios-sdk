@@ -32,17 +32,13 @@
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
   [[QNAPIClient shared] setApiKey:key];
   [[QNAPIClient shared] setUserID:[self getUserID:3]];
-  [[QNAPIClient shared] setDebug:[Qonversion sharedInstance]->_debugMode];
+  [[QNAPIClient shared] setDebug:[Qonversion sharedInstance].debugMode];
   
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
 }
 
 + (void)setDebugMode {
-  [[Qonversion sharedInstance].propertiesManager setUserProperty:@"_q_debug_mode" value:@"YES"];
-  
-  @synchronized ([Qonversion sharedInstance]) {
-    [Qonversion sharedInstance]->_debugMode = YES;
-  }
+  [Qonversion sharedInstance].debugMode = YES;
 }
 
 + (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
