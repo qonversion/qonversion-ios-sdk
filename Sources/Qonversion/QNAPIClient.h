@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) NSString *userID;
 @property (nonatomic, strong) NSString *apiKey;
-@property (nonatomic) BOOL debug;
+@property (nonatomic, assign) BOOL debug;
 
 - (void)launchRequest:(QNAPIClientCompletionHandler)completion;
 
