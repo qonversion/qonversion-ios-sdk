@@ -2,6 +2,9 @@
 #import "QNAPIClient.h"
 #import "QNUtils.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+
 @interface QNAttributionManager()
 
 @property (nonatomic) QNAPIClient *client;
@@ -81,3 +84,5 @@
 }
 
 @end
+
+#pragma clang diagnostic pop

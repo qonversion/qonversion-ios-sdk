@@ -12,6 +12,9 @@
 #import <sys/sysctl.h>
 #import <sys/types.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+
 @implementation QNDevice {
   NSObject* networkInfo;
 }
@@ -401,3 +404,5 @@
 #endif
 
 @end
+
+#pragma clang diagnostic pop
