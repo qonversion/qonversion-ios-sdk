@@ -153,7 +153,10 @@
         }
       }
       
-      completion(nil, error);
+      if (completion) {
+        completion(nil, error);
+      }
+      
       return;
     }
     

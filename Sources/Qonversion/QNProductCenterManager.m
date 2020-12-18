@@ -185,10 +185,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     NSError *resultError = error ?: _launchError;
+    NSDictionary *result = resultError ? @{} : [resultProducts copy];
     for (QNProductsCompletionHandler _block in _blocks) {
-      run_block_on_main(_block, resultProducts, resultError);
+      run_block_on_main(_block, result, resultError);
     }
-    
   }
 }
 
