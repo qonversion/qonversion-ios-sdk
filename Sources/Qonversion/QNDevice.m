@@ -157,12 +157,12 @@
     id (*imp1)(id, SEL) = (id (*)(id, SEL))[AppsFlyerTracker methodForSelector:sharedTracker];
     id tracker = nil;
     NSString *appsFlyerUID = nil;
-    if (imp1) {
+    if (imp1 && [AppsFlyerTracker respondsToSelector:sharedTracker]) {
       tracker = imp1(AppsFlyerTracker, sharedTracker);
     }
     
     NSString* (*imp2)(id, SEL) = (NSString* (*)(id, SEL))[tracker methodForSelector:getAppsFlyerUID];
-    if (imp2) {
+    if (imp2 && [tracker respondsToSelector:getAppsFlyerUID]) {
       appsFlyerUID = imp2(tracker, getAppsFlyerUID);
     }
     
@@ -180,12 +180,12 @@
     id (*imp1)(id, SEL) = (id (*)(id, SEL))[AppsFlyerTracker methodForSelector:sharedTracker];
     id tracker = nil;
     NSString *appsFlyerUID = nil;
-    if (imp1) {
+    if (imp1 && [AppsFlyerTracker respondsToSelector:sharedTracker]) {
       tracker = imp1(AppsFlyerTracker, sharedTracker);
     }
     
     NSString* (*imp2)(id, SEL) = (NSString* (*)(id, SEL))[tracker methodForSelector:getAppsFlyerUID];
-    if (imp2) {
+    if (imp2 && [tracker respondsToSelector:getAppsFlyerUID]) {
       appsFlyerUID = imp2(tracker, getAppsFlyerUID);
     }
     
@@ -221,7 +221,7 @@
     if (FBSDKBasicUtility && FBSDKBasicUtilityanonymousID) {
       id (*imp1)(id, SEL) = (id (*)(id, SEL))[FBSDKBasicUtility methodForSelector:FBSDKBasicUtilityanonymousID];
       NSString *anonID = nil;
-      if (imp1) {
+      if (imp1 && [FBSDKBasicUtility respondsToSelector:FBSDKBasicUtilityanonymousID]) {
         anonID = imp1(FBSDKBasicUtility, FBSDKBasicUtilityanonymousID);
       }
       
