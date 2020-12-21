@@ -32,7 +32,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic) NSError *launchError;
 
 @property (nonatomic, assign) BOOL launchingFinished;
-@property (nonatomic, assign) BOOL productsLoaded;
+@property (nonatomic, assign) BOOL productsLoading;
 
 @end
 
@@ -42,7 +42,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   self = super.init;
   if (self) {
     _launchingFinished = NO;
-    _productsLoaded = NO;
+    _productsLoading = NO;
     _launchError = nil;
     _launchResult = nil;
     
@@ -79,7 +79,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     [weakSelf executePermissionBlocks];
     
-    if (!weakSelf.productsLoaded) {
+    NSArray *storeProducts = [weakSelf.storeKitService getLoadedProducts];
+    if (!weakSelf.productsLoading && storeProducts.count == 0) {
       [weakSelf loadProducts];
     }
     
@@ -185,17 +186,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     NSError *resultError = error ?: _launchError;
+    NSDictionary *result = resultError ? @{} : [resultProducts copy];
     for (QNProductsCompletionHandler _block in _blocks) {
-      run_block_on_main(_block, resultProducts, resultError);
+      run_block_on_main(_block, result, resultError);
     }
-    
   }
 }
 
 - (void)loadProducts {
-  if (!_launchResult) {
+  if (!self.launchResult || self.productsLoading) {
     return;
   }
+  
+  self.productsLoading = YES;
   
   NSArray<QNProduct *> *products = [_launchResult.products allValues];
   NSMutableSet *productsSet = [[NSMutableSet alloc] init];
@@ -213,28 +216,29 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   @synchronized (self) {
     [self.productsBlocks addObject:completion];
     
-    if (_productsLoaded && !_launchError) {
-      [self executeProductsBlocks];
+    if (self.productsLoading) {
       return;
     }
    
-    if (_launchError) {
+    if (self.launchError) {
       __block __weak QNProductCenterManager *weakSelf = self;
       [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-        if (error || weakSelf.productsLoaded) {
+        if (weakSelf.productsLoading) {
+          return;
+        } else {
           [weakSelf executeProductsBlocks];
         }
       }];
+    } else {
+      NSArray *storeProducts = [self.storeKitService getLoadedProducts];
+      if (storeProducts.count > 0) {
+        [self executeProductsBlocks];
+        return;
+      } else {
+        [self loadProducts];
+      }
     }
   }
-}
-
-- (void)handleProducts:(NSArray<SKProduct *> *)products {
-  @synchronized (self) {
-    self->_productsLoaded = YES;
-  }
-  
-  [self executeProductsBlocks];
 }
 
 - (QNProduct *)productAt:(NSString *)productID {
@@ -389,9 +393,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
+- (void)handleProducts:(NSArray<SKProduct *> *)products {
+  @synchronized (self) {
+    self->_productsLoading = NO;
+  }
+  
+  [self executeProductsBlocks];
+}
+
 - (void)handleProductsRequestFailed:(NSError *)error {
+  self.productsLoading = NO;
   NSError *er = [QNErrors errorFromTransactionError:error];
-  QONVERSION_LOG(@"⚠️ Products request failed with message: %@", er.description);
+  QONVERSION_LOG(@"⚠️ Store products request failed with message: %@", er.description);
   [self executeProductsBlocksWithError:error];
 }
 

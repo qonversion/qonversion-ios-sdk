@@ -79,6 +79,10 @@
   return _products[productID];
 }
 
+- (NSArray<SKProduct *> *)getLoadedProducts {
+  return self.products.allValues;
+}
+
 - (void)fetchReceipt:(QNStoreKitServiceReceiptFetchCompletionHandler)completion {
   @synchronized(self) {
     [self.receiptRefreshCompletionHandlers addObject:[completion copy]];
