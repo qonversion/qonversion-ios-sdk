@@ -19,6 +19,7 @@ typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSStrin
 - (void)restore;
 - (nullable SKProduct *)productAt:(NSString *)productID;
 - (void)finishTransaction:(SKPaymentTransaction *)transaction;
+- (NSArray<SKProduct *> *)getLoadedProducts;
 
 - (void)receipt:(QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)completion;
 
