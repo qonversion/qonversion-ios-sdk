@@ -205,7 +205,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   if (products) {
     for (QNProduct *product in products) {
-      [productsSet addObject:product.storeID];
+      if (product.storeID) {
+        [productsSet addObject:product.storeID];
+      }
     }
   }
 
