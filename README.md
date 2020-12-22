@@ -17,12 +17,12 @@ Qonversion provides full in-app purchases infrastructure, so you do not need to 
 Implement in-app subscriptions, validate user receipts, check subscription status, and provide access to your app features and content using our StoreKit wrapper and Google Play Billing wrapper.
 </p>
 
-Read more in [documentation](https://docs.qonversion.io).
+Check the [documentation](https://docs.qonversion.io) to learn details on implementing and using Qonversion SDKs.
 
 [![Version](https://img.shields.io/cocoapods/v/Qonversion.svg?style=flat)](https://cocoapods.org/pods/Qonversion)
 [![Platform](https://img.shields.io/cocoapods/p/Qonversion.svg?style=flat)](https://cocoapods.org/pods/Qonversion)
 [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
-[![MIT License](http://img.shields.io/cocoapods/l/Qonversion.svg?style=flat)](https://mixpanel.com)
+[![MIT License](http://img.shields.io/cocoapods/l/Qonversion.svg?style=flat)](http://qonversion.io)
 
 
 ## Product Center
@@ -34,8 +34,8 @@ Read more in [documentation](https://docs.qonversion.io).
 
 1. Application calls the purchase method to initialize Qonversion SDK.
 2. Qonversion SDK communicates with StoreKit or Google Billing Client to make a purchase.
-3. If a purchase is successful, the SDK sends a request to Qonversion API for server-to-server validation of purchase. Qonversion server unlocks permissions associated with the product.
-4. SDK returns control to the application with a processing state
+3. If a purchase is successful, the SDK sends a request to Qonversion API for server-to-server purchase validation. Qonversion server receives accurate information on the in-app purchase status and user entitlements.
+4. SDK returns control to the application with a processing state.
 
 ## Analytics
 
@@ -46,7 +46,7 @@ Monitor your in-app revenue metrics. Understand your customers and make better d
      </a>
 </p>
 
-## Integraitons
+## Integrations
 
 Share your iOS and Android in-app subscription data with your favorite platforms.
 

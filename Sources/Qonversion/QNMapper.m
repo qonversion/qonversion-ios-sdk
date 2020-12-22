@@ -80,7 +80,8 @@
   result.type = [self mapInteger:dict[@"type"] orReturn:0];
   
   result.qonversionID = ((NSString *)dict[@"id"] ?: @"");
-  result.storeID = ((NSString *)dict[@"store_id"] ?: @"");
+  NSString *storeId = (NSString *)dict[@"store_id"];
+  result.storeID = [storeId isKindOfClass:[NSString class]] ? storeId : nil;
   
   return result;
 }
