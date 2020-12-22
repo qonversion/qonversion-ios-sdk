@@ -14,7 +14,9 @@
   NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
   NSDictionary *productsDict = dict[@"products"] ?: @{};
   NSDictionary *userProductsDict = dict[@"user_products"] ?: @{};
+  NSNumber *timestamp = dict[@"timestamp"] ?: @0;
   
+  [result setTimestamp:timestamp.unsignedIntegerValue];
   [result setUid:((NSString *)dict[@"uid"] ?: @"")];
   [result setPermissions:[self fillPermissions:permissionsDict]];
   [result setProducts:[self fillProducts:productsDict]];
@@ -53,11 +55,11 @@
   QNPermission *result = [[QNPermission alloc] init];
   result.permissionID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
-  result.renewState = [self mapInteger:dict[@"renew_state"]];
+  result.renewState = [self mapInteger:dict[@"renew_state"] orReturn:0];
   
   result.productID = ((NSString *)dict[@"associated_product"] ?: @"");
   
-  NSTimeInterval started = [self mapInteger:dict[@"started_timestamp"]];
+  NSTimeInterval started = [self mapInteger:dict[@"started_timestamp"] orReturn:0];
   result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
   result.expirationDate = nil;
   
@@ -72,11 +74,14 @@
 + (QNProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
   QNProduct *result = [[QNProduct alloc] init];
   
-  result.duration = [self mapInteger:dict[@"duration"]];
-  result.type = [self mapInteger:dict[@"type"]];
+  QNProductDuration duration = [self mapInteger:dict[@"duration"] orReturn:-1];
+  result.duration = duration;
+  
+  result.type = [self mapInteger:dict[@"type"] orReturn:0];
   
   result.qonversionID = ((NSString *)dict[@"id"] ?: @"");
-  result.storeID = ((NSString *)dict[@"store_id"] ?: @"");
+  NSString *storeId = (NSString *)dict[@"store_id"];
+  result.storeID = [storeId isKindOfClass:[NSString class]] ? storeId : nil;
   
   return result;
 }
@@ -101,15 +106,15 @@
   }
 }
 
-+ (NSInteger)mapInteger:(NSObject *)object {
++ (NSInteger)mapInteger:(NSObject *)object orReturn:(NSInteger)defaultValue {
   if (object == nil) {
-    return 0;
+    return defaultValue;
   }
   
   NSNumber *numberObject = (NSNumber *)object;
   
   if ([numberObject isEqual:[NSNull null]]) {
-    return 0;
+    return defaultValue;
   } else {
     return numberObject.integerValue;
   }

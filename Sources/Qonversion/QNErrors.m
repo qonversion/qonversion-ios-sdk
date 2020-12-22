@@ -31,23 +31,34 @@
   NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
   userInfo[NSLocalizedDescriptionKey] = error.localizedDescription ?: @"";
   
+  if ([[error domain] isEqualToString:NSURLErrorDomain]) {
+    switch (error.code) {
+      case NSURLErrorNotConnectedToInternet:
+        errorCode = QNErrorConnectionFailed; break;
+      default:
+        errorCode = QNErrorInternetConnectionFailed; break;
+    }
+  }
+  
   if (error && [[error domain] isEqualToString:SKErrorDomain]) {
     SKErrorCode skErrorCode = error.code;
     
       switch (skErrorCode) {
         case SKErrorUnknown:
           errorCode = QNErrorUnknown; break;
+        case SKErrorClientInvalid:
+          errorCode = QNErrorClientInvalid; break;
         case SKErrorPaymentCancelled:
           errorCode = QNErrorCancelled; break;
-        case SKErrorStoreProductNotAvailable:
-          errorCode = QNErrorStoreProductNotAvailable; break;
         case SKErrorPaymentNotAllowed:
           errorCode = QNErrorPaymentNotAllowed; break;
         case SKErrorPaymentInvalid:
           errorCode = QNErrorPaymentInvalid; break;
         // Belowe codes available on different iOS
+        case 5:
+          errorCode = QNErrorStoreProductNotAvailable; break;
         case 6: // SKErrorCloudServicePermissionDenied
-          errorCode = QNErrorCloudServicePermissionDenied;
+          errorCode = QNErrorCloudServicePermissionDenied; break;
         case 7: // SKErrorCloudServiceNetworkConnectionFailed
           errorCode = QNErrorConnectionFailed; break;
         case 8: // SKErrorCloudServiceRevoked

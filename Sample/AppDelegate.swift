@@ -8,7 +8,6 @@
 
 import UIKit
 import Qonversion
-import AppsFlyerLib
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,12 +16,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
-    
-    Qonversion.setProperty(.appsFlyerUserID, value: AppsFlyerLib.shared().getAppsFlyerUID())
-    AppsFlyerLib.shared().appsFlyerDevKey = "appsFlyerDevKey"
-    AppsFlyerLib.shared().appleAppID = "appleAppID"
-    AppsFlyerLib.shared().delegate = self
-    AppsFlyerLib.shared().getAppsFlyerUID()
+    Qonversion.setPromoPurchasesDelegate(self)
+    Qonversion.setAppleSearchAdsAttributionEnabled(true)
     
     registerForNotifications()
     
@@ -60,14 +55,16 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
   
 }
 
-extension AppDelegate: AppsFlyerLibDelegate {
+extension AppDelegate: QNPromoPurchasesDelegate {
   
-  func onConversionDataSuccess(_ conversionInfo: [AnyHashable : Any]) {
-    Qonversion.addAttributionData(conversionInfo, from: .appsFlyer)
-  }
-  
-  func onConversionDataFail(_ error: Error) {
+  func shouldPurchasePromoProduct(withIdentifier productID: String, executionBlock: @escaping Qonversion.PromoPurchaseCompletionHandler) {
+    // check productID value in case if you want to enable promoted purchase only for specific products
     
+    let compeltion: Qonversion.PurchaseCompletionHandler = {result, error, flag in
+      // handle purchased product or error
+    }
+    
+    executionBlock(compeltion)
   }
   
 }

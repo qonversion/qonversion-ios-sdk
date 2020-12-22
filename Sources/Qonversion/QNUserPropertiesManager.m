@@ -68,19 +68,12 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 - (void)addObservers {
   NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-  #if !TARGET_OS_OSX
-  [center addObserver:self
-  selector:@selector(enterBackground)
-      name:UIApplicationDidEnterBackgroundNotification
-    object:nil];
-  #endif
+  [center addObserver:self selector:@selector(enterBackground) name:DID_ENTER_BACKGROUND_NOTIFICATION_NAME object:nil];
 }
 
 - (void)removeObservers {
   NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-  #if !TARGET_OS_OSX
-  [center removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
-  #endif
+  [center removeObserver:self name:DID_ENTER_BACKGROUND_NOTIFICATION_NAME object:nil];
 }
 
 - (void)dealloc {
@@ -190,6 +183,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
   if (![QNUtils isEmptyString:afUserID]) {
     [self setUserProperty:@"_q_appsflyer_user_id" value:afUserID];
   }
+  
+  [self sendPropertiesInBackground];
 }
 
 @end

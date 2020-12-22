@@ -26,12 +26,12 @@
 }
 
 - (void)testOSName {
-    XCTAssertEqualObjects(@"ios", _device.osName);
+    XCTAssertEqualObjects(@"iOS", _device.osName);
     XCTAssertNotNil(_device.osVersion);
 }
 
 - (void)testModel {
-    XCTAssertEqualObjects(@"Simulator", _device.model);
+    XCTAssertEqualObjects(@"x86_64", _device.model);
 }
 
 - (void)testManufacturer {

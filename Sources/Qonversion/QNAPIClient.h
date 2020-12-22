@@ -15,12 +15,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) NSString *userID;
 @property (nonatomic, strong) NSString *apiKey;
-@property (nonatomic) BOOL debug;
+@property (nonatomic, assign) BOOL debug;
 
 - (void)launchRequest:(QNAPIClientCompletionHandler)completion;
 
 - (void)purchaseRequestWith:(SKProduct *)product
                 transaction:(SKPaymentTransaction *)transaction
+                    receipt:(nullable NSString *)receipt
                  completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
@@ -29,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)attributionRequest:(QNAttributionProvider)provider
                       data:(NSDictionary *)data
                 completion:(QNAPIClientCompletionHandler)completion;
+- (void)processStoredRequests;
 
 @end
 

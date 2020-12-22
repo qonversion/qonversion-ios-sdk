@@ -5,6 +5,8 @@
 #import "QNPermission.h"
 #import "QNAutomationsDelegate.h"
 
+@protocol QNPromoPurchasesDelegate;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Qonversion : NSObject
@@ -20,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
  @param completion - will return `uid` for Ads integrations.
  */
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
+
++ (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
 /**
  Sets debug environment for user.
@@ -79,7 +83,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Return Qonversion Products in assotiation with Store Kit Products
- 
+ If you get an empty SKProducts be sure your in-app purchases are correctly setted up in AppStore Connect and .storeKit file is available.
+
+ @see [Installing the iOS SDK](https://qonversion.io/docs/apple)
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
 + (void)products:(QNProductsCompletionHandler)completion;
@@ -89,6 +95,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)showAutomationWithID:(NSString *)actionID;
 
 + (void)resetUser;
+
+/**
+ Enable attribution collection from Apple Search Ads. NO by default.
+ */
++ (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable;
 
 @end
 

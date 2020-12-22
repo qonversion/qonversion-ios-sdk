@@ -9,6 +9,8 @@
 
 @end
 
+NS_ASSUME_NONNULL_BEGIN
+
 @implementation QNRequestSerializer
 
 - (NSDictionary *)launchData {
@@ -19,17 +21,24 @@
   return QNUserInfo.overallData;
 }
 
-- (NSDictionary *)purchaseData:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+- (NSDictionary *)purchaseData:(SKProduct *)product
+                   transaction:(SKPaymentTransaction *)transaction
+                       receipt:(nullable NSString *)receipt {
+
   NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
 
+  if (receipt) {
+    result[@"receipt"] = receipt;
+  }
+  
   purchaseDict[@"product"] = product.productIdentifier;
   purchaseDict[@"currency"] = product.prettyCurrency;
   purchaseDict[@"value"] = product.price.stringValue;
   purchaseDict[@"transaction_id"] = transaction.transactionIdentifier ?: @"";
   purchaseDict[@"original_transaction_id"] = transaction.originalTransaction.transactionIdentifier ?: @"";
   
-  if (@available(iOS 11.2, *)) {
+  if (@available(iOS 11.2, macOS 10.13.2, tvOS 11.2, *)) {
     if (product.subscriptionPeriod != nil) {
       purchaseDict[@"period_unit"] = @(product.subscriptionPeriod.unit).stringValue;
       purchaseDict[@"period_number_of_units"] = @(product.subscriptionPeriod.numberOfUnits).stringValue;
@@ -50,7 +59,7 @@
     }
   }
   
-  if (@available(iOS 13.0, *)) {
+  if (@available(iOS 13.0, macos 10.15, tvOS 13.0, *)) {
     NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
     purchaseDict[@"country"] = countryCode;
   }
@@ -73,8 +82,8 @@
     case QNAttributionProviderBranch:
       [providerData setValue:@"branch" forKey:@"provider"];
       break;
-    case QNAttributionProviderApple:
-      [providerData setValue:@"apple" forKey:@"provider"];
+    case QNAttributionProviderAppleSearchAds:
+      [providerData setValue:@"apple_search_ads" forKey:@"provider"];
       break;
   }
   
@@ -96,3 +105,5 @@
 }
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -55,7 +55,7 @@ class ViewController: UIViewController {
   
   func checkProducts() {
     activityIndicator.startAnimating()
-    Qonversion.products { [weak self] (result) in
+    Qonversion.products { [weak self] (result, error) in
       guard let self = self else { return }
       
       self.activityIndicator.stopAnimating()
@@ -171,7 +171,7 @@ class ViewController: UIViewController {
   
 }
 
-extension ViewController: Qonversion.ActionsDelegate {
+extension ViewController: Qonversion.AutomationsDelegate {
   
   func actionFlowFinished() {
     print("YOHOHO")
