@@ -402,7 +402,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handleProductsRequestFailed:(NSError *)error {
-  self.productsLoading = NO;
+  @synchronized (self) {
+    self->_productsLoading = NO;
+  }
+  
   NSError *er = [QNErrors errorFromTransactionError:error];
   QONVERSION_LOG(@"⚠️ Store products request failed with message: %@", er.description);
   [self executeProductsBlocksWithError:error];
