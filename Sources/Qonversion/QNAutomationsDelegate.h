@@ -1,5 +1,5 @@
 //
-//  ActionsDelegate.h
+//  QNAutomationsDelegate.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 24.09.2020.
@@ -8,12 +8,12 @@
 
 @class UIViewController;
 
-NS_SWIFT_NAME(Qonversion.ActionsDelegate)
-@protocol ActionsDelegate <NSObject>
+NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
+@protocol QNAutomationsDelegate <NSObject>
 
 @optional
-- (void)actionFlowFinished;
-- (BOOL)canShowActionWithID:(NSString *)actionID;
+- (void)automationFlowFinished;
+- (BOOL)canShowAutomationWithID:(NSString *)automationID;
 - (UIViewController *)controllerForNavigation;
 
 @end

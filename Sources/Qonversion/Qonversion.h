@@ -3,7 +3,7 @@
 #import "QNLaunchResult.h"
 #import "QNProduct.h"
 #import "QNPermission.h"
-#import "ActionsDelegate.h"
+#import "QNAutomationsDelegate.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -84,9 +84,9 @@ NS_ASSUME_NONNULL_BEGIN
 */
 + (void)products:(QNProductsCompletionHandler)completion;
 
-+ (void)setActionsDelegate:(id<ActionsDelegate>)delegate;
++ (void)setAutomationsDelegate:(id<QNAutomationsDelegate>)delegate;
 
-+ (void)showActionWithID:(NSString *)actionID;
++ (void)showAutomationWithID:(NSString *)actionID;
 
 + (void)resetUser;
 

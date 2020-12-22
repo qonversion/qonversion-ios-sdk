@@ -134,8 +134,8 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapRestorePurchasesButton(_ sender: Any) {
-    Qonversion.setActionsDelegate(self)
-    Qonversion.showAction(withID: "da")
+    Qonversion.setAutomationsDelegate(self)
+    Qonversion.showAutomation(withID: "da")
     return
     activityIndicator.startAnimating()
     Qonversion.restore { [weak self] (permissions, error) in
