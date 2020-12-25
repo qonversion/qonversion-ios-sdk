@@ -40,14 +40,14 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 
   func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
     let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-    Qonversion.setProperty(.pushToken, value: tokenString)
+    Qonversion.setPushNotificationsToken(tokenString)
   }
 
   func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
       
     completionHandler()
   }
-
+  
   func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
       
     completionHandler([])

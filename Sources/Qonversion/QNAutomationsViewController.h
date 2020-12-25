@@ -8,11 +8,11 @@
 
 #import <UIKit/UIKit.h>
 
-@class QNAutomationsService, QNActionsHandler, QNAutomationsFlowAssembly, QNAutomation, QNAutomationsViewController;
+@class QNAutomationsService, QNActionsHandler, QNAutomationsFlowAssembly, QNAction, QNAutomationsViewController;
 
 @protocol QNAutomationsViewControllerDelegate <NSObject>
 
-- (void)automationsViewController:(QNAutomationsViewController *)viewController didFinishAutomation:(QNAutomation *)automation;
+- (void)automationsViewController:(QNAutomationsViewController *)viewController didFinishAction:(QNAction *)action;
 
 @end
 
@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface QNAutomationsViewController : UIViewController
 
 @property (nonatomic, weak) id<QNAutomationsViewControllerDelegate> delegate;
-@property (nonatomic, copy) NSString *automationID;
+@property (nonatomic, copy) NSString *htmlString;
 @property (nonatomic, strong) QNActionsHandler *actionsHandler;
 @property (nonatomic, strong) QNAutomationsService *automationsService;
 @property (nonatomic, strong) QNAutomationsFlowAssembly *flowAssembly;

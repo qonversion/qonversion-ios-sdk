@@ -10,11 +10,15 @@
 #import "QNAutomationsFlowAssembly.h"
 #import "QNAutomationsDelegate.h"
 #import "QNAutomationsViewController.h"
+#import "QNAutomationsService.h"
+#import "QNAutomationScreen.h"
+#import "QNActionsHandler.h"
 
 @interface QNAutomationsFlowCoordinator() <QNAutomationsViewControllerDelegate>
 
 @property (nonatomic, weak) id<QNAutomationsDelegate> automationsDelegate;
 @property (nonatomic, strong) QNAutomationsFlowAssembly *assembly;
+@property (nonatomic, strong) QNAutomationsService *automationsService;
 
 @end
 
@@ -35,6 +39,7 @@
   
   if (self) {
     _assembly = [QNAutomationsFlowAssembly new];
+    _automationsService = [_assembly automationService];
   }
   
   return self;
@@ -44,36 +49,51 @@
   _automationsDelegate = automationsDelegate;
 }
 
-- (void)showAutomationWithID:(NSString *)automationID {
-  BOOL canShowAutomation = YES;
-  
-  if ([self.automationsDelegate respondsToSelector:@selector(canShowAutomationWithID:)]) {
-    canShowAutomation = [self.automationsDelegate canShowAutomationWithID:automationID];
+- (BOOL)handlePushNotification:(NSDictionary *)userInfo {
+  BOOL shouldShowAutomation = [userInfo[@"qonv.pick_screen"] boolValue];
+  if (shouldShowAutomation) {
+    [self showAutomationIfExists];
   }
   
-  if (!canShowAutomation) {
-    return;
-  }
-  
-  QNAutomationsViewController *viewController = [self.assembly configureAutomationsViewControllerWithID:automationID delegate:self];
-  
-  UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
-  navigationController.navigationBarHidden = YES;
-  
-  UIViewController *presentationViewController;
-  
-  if ([self.automationsDelegate respondsToSelector:@selector(controllerForNavigation)]) {
-    presentationViewController = [self.automationsDelegate controllerForNavigation];
-  } else {
-    presentationViewController = [self topLevelViewController];
-  }
-  
-  [presentationViewController presentViewController:navigationController animated:YES completion:nil];
+  return shouldShowAutomation;
 }
 
-- (void)automationsViewController:(QNAutomationsViewController *)viewController didFinishAutomation:(QNAutomation *)automation {
-  if ([self.automationsDelegate respondsToSelector:@selector(automationFlowFinished)]) {
-    [self.automationsDelegate automationFlowFinished];
+- (void)showAutomationIfExists {
+  __block __weak QNAutomationsFlowCoordinator *weakSelf = self;
+  [self.automationsService obtainAutomationScreensWithCompletion:^(NSArray<NSString *> *result, NSError * _Nullable error) {
+    NSString *automationID = result.lastObject;
+    if ([automationID isMemberOfClass:[NSString class]] && automationID.length > 0) {
+      [weakSelf showAutomationWithID:automationID];
+    }
+  }];
+}
+
+- (void)showAutomationWithID:(NSString *)automationID {
+  __block __weak QNAutomationsFlowCoordinator *weakSelf = self;
+  [self.automationsService automationWithID:automationID completion:^(QNAutomationScreen *screen, NSError * _Nullable error) {
+    if (screen) {
+      [weakSelf.automationsService trackScreenShownWithID:automationID];
+      QNAutomationsViewController *viewController = [weakSelf.assembly configureAutomationsViewControllerWithHtmlString:screen.htmlString delegate:self];
+      
+      UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
+      navigationController.navigationBarHidden = YES;
+      
+      UIViewController *presentationViewController;
+      
+      if ([weakSelf.automationsDelegate respondsToSelector:@selector(controllerForNavigation)]) {
+        presentationViewController = [weakSelf.automationsDelegate controllerForNavigation];
+      } else {
+        presentationViewController = [weakSelf topLevelViewController];
+      }
+      navigationController.modalPresentationStyle = UIModalPresentationFullScreen;
+      [presentationViewController presentViewController:navigationController animated:YES completion:nil];
+    }
+  }];
+}
+
+- (void)automationsViewController:(QNAutomationsViewController *)viewController didFinishAction:(QNAction *)action {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationFlowFinishedWithAction:)]) {
+    [self.automationsDelegate automationFlowFinishedWithAction:action];
   }
 }
 

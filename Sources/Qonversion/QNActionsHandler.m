@@ -10,14 +10,15 @@
 #import "QNAction.h"
 #import <WebKit/WebKit.h>
 
-static NSString *const kQonversionScheme = @"qonversion";
+static NSString *const kQonversionSchemeRegEx = @"^(q-)\\w";
+static NSString *const kAutomationsHost = @"automations";
 static NSString *const kActionHost = @"action";
 
-static NSString *const kLinkAction = @"link";
+static NSString *const kLinkAction = @"url";
 static NSString *const kDeeplinkAction = @"deeplink";
 static NSString *const kPurchaseAction = @"purchase";
 static NSString *const kRestoreAction = @"restore";
-static NSString *const kNavigationAction = @"navigateTo";
+static NSString *const kNavigationAction = @"navigate";
 static NSString *const kCloseAction = @"close";
 
 @interface QNActionsHandler()
@@ -47,27 +48,27 @@ static NSString *const kCloseAction = @"close";
 
 - (BOOL)isActionShouldBeHandled:(WKNavigationAction *)action {
   NSURLComponents *components = [NSURLComponents componentsWithString:action.request.URL.absoluteString];
+  NSRange range = [components.scheme rangeOfString:kQonversionSchemeRegEx options:NSRegularExpressionSearch];
   
-  return [components.scheme isEqualToString:kQonversionScheme] && [components.host isEqualToString:kActionHost];
+  return range.location != NSNotFound && [components.host isEqualToString:kAutomationsHost];
 }
 
 - (QNAction *)prepareDataForAction:(WKNavigationAction *)action {
   NSURLComponents *components = [NSURLComponents componentsWithString:action.request.URL.absoluteString];
   QNActionType type = QNActionTypeUnknown;
-  NSDictionary *value = @{};
+  NSMutableDictionary *value = [NSMutableDictionary new];
   
   for (NSURLQueryItem *item in [components queryItems]) {
-      if ([item.name isEqualToString:@"type"]) {
+      if ([item.name isEqualToString:@"action"]) {
         type = self.actionsTypesDictionary[item.value].integerValue ?: type;
       } else if ([item.name isEqualToString:@"data"]) {
-          NSData *data = [item.value dataUsingEncoding:NSUTF8StringEncoding];
-          value = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+        value[@"value"] = item.value;
       }
   }
   
   QNAction *formattedAction = [QNAction new];
   formattedAction.type = type;
-  formattedAction.value = value;
+  formattedAction.value = [value copy];
   
   return formattedAction;
 }

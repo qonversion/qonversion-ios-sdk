@@ -23,7 +23,18 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
 
+/**
+ Sets delegate for AppStore promo purchases flow
+ */
 + (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
+
+/**
+ Sets push notifications token
+ */
++ (void)setPushNotificationsToken:(NSString *)token;
+
+// TODO: update comment
++ (BOOL)handlePushNotification:(NSDictionary *)userInfo;
 
 /**
  Sets debug environment for user.
@@ -92,7 +103,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)setAutomationsDelegate:(id<QNAutomationsDelegate>)delegate;
 
-+ (void)showAutomationWithID:(NSString *)actionID;
++ (void)showAutomationWithID:(NSString *)automationID;
 
 + (void)resetUser;
 

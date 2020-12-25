@@ -2,7 +2,6 @@
 #import "QNConstants.h"
 #import "QNRequestBuilder.h"
 #import "QNRequestSerializer.h"
-#import "QNDevice.h"
 #import "QNErrors.h"
 #import "QNUtils.h"
 #import "QNUserInfo.h"
@@ -10,7 +9,6 @@
 
 @interface QNAPIClient()
 
-@property (nonatomic, strong) QNDevice *device;
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, copy) NSArray<NSNumber *> *connectionErrorCodes;
@@ -29,7 +27,6 @@
     _apiKey = @"";
     _userID = @"";
     _debug = NO;
-    _device = QNDevice.current;
     _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
     _connectionErrorCodes = @[
       @(NSURLErrorNotConnectedToInternet),
@@ -81,11 +78,17 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
-- (void)actionWithID:(NSString *)actionID completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *body = [self enrichParameters:@{@"actionID": actionID}];
-  NSURLRequest *request = [self.requestBuilder makeActionsRequestWith:body];
+- (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID apiKey:self.apiKey];
   
   return [self dataTaskWithRequest:request completion:completion];
+}
+
+- (void)trackScreenShownWithID:(NSString *)automationID {
+  NSDictionary *body = @{@"user": self.userID};
+  NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body apiKey:self.apiKey];
+  
+  return [self dataTaskWithRequest:request completion:nil];
 }
 
 - (void)attributionRequest:(QNAttributionProvider)provider

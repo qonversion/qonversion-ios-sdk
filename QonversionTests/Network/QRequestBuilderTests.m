@@ -7,7 +7,7 @@
 
 @interface QNRequestBuilder (Private)
 
-- (NSMutableURLRequest *)baseRequestWithURL:(NSURL *)url;
+- (NSMutableURLRequest *)basePostRequestWithURL:(NSURL *)url;
 
 @end
 
@@ -23,7 +23,7 @@
 
 - (void)testThatBuilderSetCorrectRequestSettings {
   NSURL *url = [[NSURL alloc] initWithString:@"https://api.qonversion.io/"];
-  NSURLRequest *request = [_requestBuilder baseRequestWithURL:url];
+  NSURLRequest *request = [_requestBuilder basePostRequestWithURL:url];
   
   XCTAssertEqualObjects(request.HTTPMethod, @"POST");
   NSString *contentType = [request.allHTTPHeaderFields valueForKey:@"Content-Type"];

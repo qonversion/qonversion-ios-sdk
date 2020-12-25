@@ -11,22 +11,36 @@
 #import "QNActionsHandler.h"
 #import "QNAutomationsService.h"
 #import "QNAPIClient.h"
+#import "QNScreensMapper.h"
 
 @implementation QNAutomationsFlowAssembly
 
-- (QNAutomationsViewController *)configureAutomationsViewControllerWithID:(NSString *)automationID delegate:(id<QNAutomationsViewControllerDelegate>)delegate {
+- (QNAutomationsViewController *)configureAutomationsViewControllerWithHtmlString:(NSString *)htmlString delegate:(id<QNAutomationsViewControllerDelegate>)delegate {
   QNAutomationsViewController *vc = [QNAutomationsViewController new];
-  vc.automationID = automationID;
+  vc.htmlString = htmlString;
   vc.delegate = delegate;
   
-  QNAutomationsService *automationsService = [QNAutomationsService new];
-  automationsService.apiClient = [QNAPIClient shared];
-  
   vc.actionsHandler = [QNActionsHandler new];
-  vc.automationsService = automationsService;
+  vc.automationsService = [self automationService];
   vc.flowAssembly = [QNAutomationsFlowAssembly new];
   
   return vc;
+}
+
+- (QNAutomationsService *)automationService {
+  QNAutomationsService *automationsService = [QNAutomationsService new];
+  automationsService.apiClient = [QNAPIClient shared];
+  automationsService.mapper = [self screensMapper];
+  
+  return automationsService;
+}
+
+- (QNScreensMapper *)screensMapper {
+  return [QNScreensMapper new];
+}
+
+- (QNActionsHandler *)actionsHandler {
+  return [QNActionsHandler new];
 }
 
 @end

@@ -9,7 +9,7 @@
 #import "QNUserInfo.h"
 #import "QNProperties.h"
 #import "QNAutomationsFlowCoordinator.h"
-
+#import "QNDevice.h"
 
 @interface Qonversion()
 
@@ -31,13 +31,28 @@
     
   }];
 }
-
+ 
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
   [[QNAPIClient shared] setApiKey:key];
   [[QNAPIClient shared] setUserID:[self getUserID:3]];
   [[QNAPIClient shared] setDebug:[Qonversion sharedInstance].debugMode];
   
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
+}
+
++ (void)setPushNotificationsToken:(NSString *)token {
+  NSString *oldToken = [QNDevice current].pushNotificationsToken;
+  if ([token isEqualToString:oldToken] || token.length == 0) {
+    return;
+  }
+  
+  [[QNDevice current] setPushNotificationsToken:token];
+  
+  [[Qonversion sharedInstance].productCenterManager launchWithCompletion:nil];
+}
+
++ (BOOL)handlePushNotification:(NSDictionary *)userInfo {
+  return [[QNAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
 }
 
 + (void)setDebugMode {
@@ -88,7 +103,7 @@
   [[QNAutomationsFlowCoordinator sharedInstance] setAutomationsDelegate:delegate];
 }
 
-+ (void)showActionWithID:(NSString *)automationID {
++ (void)showAutomationWithID:(NSString *)automationID {
   [[QNAutomationsFlowCoordinator sharedInstance] showAutomationWithID:automationID];
 }
 

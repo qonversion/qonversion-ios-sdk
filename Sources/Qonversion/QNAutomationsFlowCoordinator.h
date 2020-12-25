@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setAutomationsDelegate:(id<QNAutomationsDelegate> _Nullable)automationsDelegate;
 - (void)showAutomationWithID:(NSString *)automationID;
+- (BOOL)handlePushNotification:(NSDictionary *)userInfo;
+- (void)showAutomationIfExists;
 
 @end
 

@@ -7,17 +7,22 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "QNAPIClient.h"
 
-typedef void (^QNActionsCompletionHandler)(NSDictionary *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ActionsCompletionHandler);
+@class QNAPIClient, QNScreensMapper, QNAutomationScreen;
+
+typedef void (^QNActiveAutomationsCompletionHandler)(NSArray<NSString *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.AutomationCompletionHandler);
+typedef void (^QNAutomationsCompletionHandler)(QNAutomationScreen *screen, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.AutomationCompletionHandler);
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QNAutomationsService : NSObject
 
 @property (nonatomic, strong) QNAPIClient *apiClient;
+@property (nonatomic, strong) QNScreensMapper *mapper;
 
-- (void)actionWithID:(NSString *)actionID completion:(QNActionsCompletionHandler)completion;
+- (void)automationWithID:(NSString *)automationID completion:(QNAutomationsCompletionHandler)completion;
+- (void)trackScreenShownWithID:(NSString *)automationID;
+- (void)obtainAutomationScreensWithCompletion:(QNActiveAutomationsCompletionHandler)completion;
 
 @end
 

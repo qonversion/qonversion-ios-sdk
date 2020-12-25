@@ -6,14 +6,13 @@
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-@class UIViewController;
+@class UIViewController, QNAction;
 
 NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
 @protocol QNAutomationsDelegate <NSObject>
 
 @optional
-- (void)automationFlowFinished;
-- (BOOL)canShowAutomationWithID:(NSString *)automationID;
+- (void)automationFlowFinishedWithAction:(QNAction *)action;
 - (UIViewController *)controllerForNavigation;
 
 @end

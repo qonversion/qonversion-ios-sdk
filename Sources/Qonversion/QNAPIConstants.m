@@ -10,7 +10,8 @@
 
 NSString * const kAPIBase = @"https://api.qonversion.io/";
 NSString * const kInitEndpoint = @"v1/user/init";
-NSString * const kActionsEndpoint = @"v1/user/init";
+NSString * const kScreensEndpoint = @"v2/screens/";
+NSString * const kScreenShowEndpointFormat = @"v2/screens/%@/views";
 NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 NSString * const kPropertiesEndpoint = @"v1/properties";
 
