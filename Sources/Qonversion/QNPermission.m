@@ -33,11 +33,34 @@
   [description appendFormat:@"id=%@,\n", self.permissionID];
   [description appendFormat:@"isActive=%d,\n", self.isActive];
   [description appendFormat:@"productID=%@,\n", self.productID];
-  [description appendFormat:@"renewState=%li,\n", (long) self.renewState];
+  [description appendFormat:@"renewState=%@ (enum value = %li),\n", [self prettyRenewState], (long) self.renewState];
   [description appendFormat:@"startedDate=%@,\n", self.startedDate];
   [description appendFormat:@"expirationDate=%@,\n", self.expirationDate];
   [description appendString:@">"];
   return description;
+}
+
+- (NSString *)prettyRenewState {
+  NSString *result = @"unknown";
+  
+  switch (self.renewState) {
+    case QNPermissionRenewStateNonRenewable:
+      result = @"non renewable"; break;
+    
+    case QNPermissionRenewStateWillRenew:
+      result = @"will renew"; break;
+    
+    case QNPermissionRenewStateCancelled:
+      result = @"cancelled"; break;
+      
+    case QNPermissionRenewStateBillingIssue:
+      result = @"billing issue"; break;
+      
+    default:
+      break;
+  }
+  
+  return result;
 }
 
 @end
