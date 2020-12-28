@@ -11,7 +11,7 @@
 #import "QNActionsHandler.h"
 #import "QNAutomationsService.h"
 #import "QNAPIClient.h"
-#import "QNScreensMapper.h"
+#import "QNAutomationsMapper.h"
 
 @implementation QNAutomationsFlowAssembly
 
@@ -35,8 +35,8 @@
   return automationsService;
 }
 
-- (QNScreensMapper *)screensMapper {
-  return [QNScreensMapper new];
+- (QNAutomationsMapper *)screensMapper {
+  return [QNAutomationsMapper new];
 }
 
 - (QNActionsHandler *)actionsHandler {

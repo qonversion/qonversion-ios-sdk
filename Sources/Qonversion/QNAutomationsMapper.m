@@ -1,16 +1,17 @@
 //
-//  QNScreensMapper.m
+//  QNAutomationsMapper.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.12.2020.
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-#import "QNScreensMapper.h"
+#import "QNAutomationsMapper.h"
 #import "QNAutomationScreen.h"
 #import "QNErrors.h"
+#import "QNUserActionPoint.h"
 
-@implementation QNScreensMapper
+@implementation QNAutomationsMapper
 
 - (nullable QNAutomationScreen *)mapScreen:(NSDictionary *)dict {
   NSString *htmlString = dict[@"data"][@"body"];
@@ -35,6 +36,24 @@
   }
   
   return error;
+}
+
+- (NSArray<QNUserActionPoint *> *)mapUserActionPoints:(NSArray<NSDictionary *> *)data {
+  NSMutableArray *actionPoints = [NSMutableArray new];
+  
+  for (NSDictionary *action in data) {
+    NSNumber *date = action[@"created"];
+    NSDate *createDate = [NSDate dateWithTimeIntervalSince1970:date.doubleValue];
+    NSString *screenId = action[@"data"][@"screen"];
+    
+    if ([screenId isKindOfClass:[NSString class]] && screenId.length > 0 && createDate) {
+      QNUserActionPoint *actionPoint = [[QNUserActionPoint alloc] initWithScreenId:screenId createDate:createDate];
+      
+      [actionPoints addObject:actionPoint];
+    }
+  }
+  
+  return [actionPoints copy];
 }
 
 @end

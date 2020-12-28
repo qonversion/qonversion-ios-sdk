@@ -9,8 +9,9 @@
 #import "QNAutomationsService.h"
 #import "QNAutomationScreen.h"
 #import "QNAPIClient.h"
-#import "QNScreensMapper.h"
+#import "QNAutomationsMapper.h"
 #import "QNUtils.h"
+#import "QNUserActionPoint.h"
 
 @implementation QNAutomationsService
 
@@ -21,12 +22,17 @@
     NSError *mappedError = [weakSelf.mapper mapError:dict];
     NSError *screenError = mappedError ?: error ;
     
-    run_block_on_main(completion, screen, screenError);
+    
   }];
 }
 
-- (void)obtainAutomationScreensWithCompletion:(QNActiveAutomationsCompletionHandler)completion {
-  
+- (void)obtainAutomationScreensWithCompletion:(QNActiveAutomationCompletionHandler)completion {
+  __block __weak QNAutomationsService *weakSelf = self;
+  [self.apiClient userActionPointsWithCompletion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    NSArray<QNUserActionPoint *> *actions = [weakSelf.mapper mapUserActionPoints:dict];
+
+    run_block_on_main(completion, actions, nil);
+  }];
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID {

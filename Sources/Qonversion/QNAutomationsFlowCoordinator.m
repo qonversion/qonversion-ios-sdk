@@ -13,6 +13,7 @@
 #import "QNAutomationsService.h"
 #import "QNAutomationScreen.h"
 #import "QNActionsHandler.h"
+#import "QNUserActionPoint.h"
 
 @interface QNAutomationsFlowCoordinator() <QNAutomationsViewControllerDelegate>
 
@@ -60,9 +61,12 @@
 
 - (void)showAutomationIfExists {
   __block __weak QNAutomationsFlowCoordinator *weakSelf = self;
-  [self.automationsService obtainAutomationScreensWithCompletion:^(NSArray<NSString *> *result, NSError * _Nullable error) {
-    NSString *automationID = result.lastObject;
-    if ([automationID isMemberOfClass:[NSString class]] && automationID.length > 0) {
+  [self.automationsService obtainAutomationScreensWithCompletion:^(NSArray<QNUserActionPoint *> *actionPoints, NSError * _Nullable error) {
+    NSArray<QNUserActionPoint *> *sortedActions = [actionPoints sortedArrayUsingSelector:@selector(createDate)];
+    QNUserActionPoint *latestAction = sortedActions.lastObject;
+    NSString *automationID = latestAction.screenId;
+    
+    if (automationID.length > 0) {
       [weakSelf showAutomationWithID:automationID];
     }
   }];

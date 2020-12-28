@@ -19,6 +19,11 @@
   return [self makePostRequestWith:kPurchaseEndpoint andBody:parameters];
 }
 
+- (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter apiKey:(NSString *)apiKey {
+  NSString *endpoint = [NSString stringWithFormat:kActionPointsEndpointFormat, parameter];
+  return [self makeGetRequestWith:endpoint apiKey:apiKey];
+}
+
 - (NSURLRequest *)makeScreensRequestWith:(NSString *)parameters apiKey:(NSString *)apiKey {
   NSString *endpoint = [NSString stringWithFormat:@"%@%@", kScreensEndpoint, parameters];
   return [self makeGetRequestWith:endpoint apiKey:apiKey];

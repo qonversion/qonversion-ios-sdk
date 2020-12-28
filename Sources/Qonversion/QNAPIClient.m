@@ -78,6 +78,12 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
+- (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeUserActionPointsRequestWith:self.userID apiKey:self.apiKey];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
 - (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion {
   NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID apiKey:self.apiKey];
   
@@ -173,7 +179,7 @@
       return;
     }
     
-    NSError *jsonError = [[NSError alloc] init];
+    NSError *jsonError;
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
     
     if ((jsonError.code || !dict) && completion) {

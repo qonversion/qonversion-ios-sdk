@@ -10,6 +10,7 @@
 
 extern NSString *const kAPIBase;
 extern NSString *const kInitEndpoint;
+extern NSString *const kActionPointsEndpointFormat;
 extern NSString *const kScreensEndpoint;
 extern NSString *const kScreenShowEndpointFormat;
 extern NSString *const kPurchaseEndpoint;

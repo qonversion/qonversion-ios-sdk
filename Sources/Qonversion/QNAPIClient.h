@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
                  completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
+- (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion;
 - (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;
 - (void)trackScreenShownWithID:(NSString *)automationID;
 

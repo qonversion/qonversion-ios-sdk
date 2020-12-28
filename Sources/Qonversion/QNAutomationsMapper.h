@@ -1,5 +1,5 @@
 //
-//  QNScreensMapper.h
+//  QNAutomationsMapper.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.12.2020.
@@ -8,14 +8,15 @@
 
 #import <Foundation/Foundation.h>
 
-@class QNAutomationScreen;
+@class QNAutomationScreen, QNUserActionPoint;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QNScreensMapper : NSObject
+@interface QNAutomationsMapper : NSObject
 
 - (nullable QNAutomationScreen *)mapScreen:(NSDictionary *)dict;
 - (nullable NSError *)mapError:(NSDictionary *)error;
+- (NSArray<QNUserActionPoint *> *)mapUserActionPoints:(NSArray<NSDictionary *> *)data;
 
 @end
 
