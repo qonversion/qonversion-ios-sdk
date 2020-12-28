@@ -32,7 +32,7 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
   // user has not allowed access to cloud service information
   QNErrorCloudServicePermissionDenied,
   
-  // the device could not connect to the nework
+  // the device could not connect to the network
   QNErrorCloudServiceNetworkConnectionFailed,
   
   // user has revoked permission to use this cloud service
