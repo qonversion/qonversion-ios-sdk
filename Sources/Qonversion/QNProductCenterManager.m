@@ -120,6 +120,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
   @synchronized (self) {
+    NSArray *storeProducts = [self.storeKitService getLoadedProducts];
+    
     if (self.launchError) {
       __block __weak QNProductCenterManager *weakSelf = self;
       [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
@@ -128,20 +130,33 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           return;
         }
         
-        NSArray *storeProducts = [weakSelf.storeKitService getLoadedProducts];
         if (weakSelf.productsLoading) {
-          QNProductsCompletionHandler productsCompletion = ^(NSDictionary<NSString *, QNProduct *> *result, NSError  *_Nullable error) {
-            [weakSelf processPurchase:productID completion:completion];
-          };
-          [weakSelf.productsBlocks addObject:productsCompletion];
+          [weakSelf preparDelayedPurchase:productID completion:completion];
         } else {
           [weakSelf processPurchase:productID completion:completion];
         }
       }];
+    } else if (!self.productsLoading && storeProducts.count == 0) {
+      [self preparDelayedPurchase:productID completion:completion];
+      
+      [self loadProducts];
     } else {
       [self processPurchase:productID completion:completion];
     }
   }
+}
+
+- (void)preparDelayedPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
+  QNProductsCompletionHandler productsCompletion = ^(NSDictionary<NSString *, QNProduct *> *result, NSError  *_Nullable error) {
+    if (error) {
+      run_block_on_main(completion, @{}, error, NO);
+      return;
+    }
+    
+    [self processPurchase:productID completion:completion];
+  };
+  
+  [self.productsBlocks addObject:productsCompletion];
 }
 
 - (void)processPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
