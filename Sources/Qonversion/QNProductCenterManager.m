@@ -120,24 +120,48 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
   @synchronized (self) {
-    QNProduct *product = [self QNProduct:productID];
-    if (!product) {
-      run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
-      return;
+    if (self.launchError) {
+      __block __weak QNProductCenterManager *weakSelf = self;
+      [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+        if (error) {
+          run_block_on_main(completion, @{}, error, NO);
+          return;
+        }
+        
+        NSArray *storeProducts = [weakSelf.storeKitService getLoadedProducts];
+        if (weakSelf.productsLoading) {
+          QNProductsCompletionHandler productsCompletion = ^(NSDictionary<NSString *, QNProduct *> *result, NSError  *_Nullable error) {
+            [weakSelf processPurchase:productID completion:completion];
+          };
+          [weakSelf.productsBlocks addObject:productsCompletion];
+        } else {
+          [weakSelf processPurchase:productID completion:completion];
+        }
+      }];
+    } else {
+      [self processPurchase:productID completion:completion];
     }
-    
-    if (self.purchasingBlocks[product.storeID]) {
-      QONVERSION_LOG(@"Purchasing in process");
-      return;
-    }
-    
-    if (product && [_storeKitService purchase:product.storeID]) {
-      self.purchasingBlocks[product.storeID] = completion;
-      return;
-    }
-    
-    run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
   }
+}
+
+- (void)processPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
+  QNProduct *product = [self QNProduct:productID];
+  if (!product) {
+    run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
+    return;
+  }
+  
+  if (self.purchasingBlocks[product.storeID]) {
+    QONVERSION_LOG(@"Purchasing in process");
+    return;
+  }
+  
+  if (product && [_storeKitService purchase:product.storeID]) {
+    self.purchasingBlocks[product.storeID] = completion;
+    return;
+  }
+  
+  run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
 }
 
 - (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion {
