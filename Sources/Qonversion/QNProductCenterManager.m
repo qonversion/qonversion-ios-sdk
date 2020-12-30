@@ -120,24 +120,63 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
   @synchronized (self) {
-    QNProduct *product = [self QNProduct:productID];
-    if (!product) {
-      run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
-      return;
-    }
+    NSArray *storeProducts = [self.storeKitService getLoadedProducts];
     
-    if (self.purchasingBlocks[product.storeID]) {
-      QONVERSION_LOG(@"Purchasing in process");
-      return;
+    if (self.launchError) {
+      __block __weak QNProductCenterManager *weakSelf = self;
+      [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+        if (error) {
+          run_block_on_main(completion, @{}, error, NO);
+          return;
+        }
+        
+        if (weakSelf.productsLoading) {
+          [weakSelf preparDelayedPurchase:productID completion:completion];
+        } else {
+          [weakSelf processPurchase:productID completion:completion];
+        }
+      }];
+    } else if (!self.productsLoading && storeProducts.count == 0) {
+      [self preparDelayedPurchase:productID completion:completion];
+      
+      [self loadProducts];
+    } else {
+      [self processPurchase:productID completion:completion];
     }
-    
-    if (product && [_storeKitService purchase:product.storeID]) {
-      self.purchasingBlocks[product.storeID] = completion;
-      return;
-    }
-    
-    run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
   }
+}
+
+- (void)preparDelayedPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
+  QNProductsCompletionHandler productsCompletion = ^(NSDictionary<NSString *, QNProduct *> *result, NSError  *_Nullable error) {
+    if (error) {
+      run_block_on_main(completion, @{}, error, NO);
+      return;
+    }
+    
+    [self processPurchase:productID completion:completion];
+  };
+  
+  [self.productsBlocks addObject:productsCompletion];
+}
+
+- (void)processPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
+  QNProduct *product = [self QNProduct:productID];
+  if (!product) {
+    run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
+    return;
+  }
+  
+  if (self.purchasingBlocks[product.storeID]) {
+    QONVERSION_LOG(@"Purchasing in process");
+    return;
+  }
+  
+  if (product && [_storeKitService purchase:product.storeID]) {
+    self.purchasingBlocks[product.storeID] = completion;
+    return;
+  }
+  
+  run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
 }
 
 - (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion {

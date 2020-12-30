@@ -27,8 +27,8 @@
   
   [description appendFormat:@"id=%@,\n", self.qonversionID];
   [description appendFormat:@"storeID=%@,\n", self.storeID];
-  [description appendFormat:@"type=%li,\n", (long) self.type];
-  [description appendFormat:@"duration=%li,\n", (long) self.duration];
+  [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
+  [description appendFormat:@"duration=%@ (enum value = %li),\n", [self prettyDuration], (long) self.duration];
   [description appendFormat:@"skProduct=%@,\n", self.skProduct];
   [description appendString:@">"];
   return description;
@@ -44,6 +44,55 @@
   }
   
   return @"";
+}
+
+- (NSString *)prettyDuration {
+  NSString *result = @"unknown";
+  
+  switch (self.duration) {
+    case QNProductDurationWeekly:
+      result = @"weekly"; break;
+    
+    case QNProductDurationMonthly:
+      result = @"monthly"; break;
+    
+    case QNProductDuration3Months:
+      result = @"3 months"; break;
+    
+    case QNProductDuration6Months:
+      result = @"6 months"; break;
+    
+    case QNProductDurationAnnual:
+      result = @"annual"; break;
+    
+    case QNProductDurationLifetime:
+      result = @"lifetime"; break;
+      
+    default:
+      break;
+  }
+  
+  return result;
+}
+
+- (NSString *)prettyType {
+  NSString *result = @"unknown";
+  
+  switch (self.type) {
+    case QNProductTypeTrial:
+      result = @"trial"; break;
+    
+    case QNProductTypeDirectSubscription:
+      result = @"direct subscription"; break;
+    
+    case QNProductTypeOneTime:
+      result = @"one time"; break;
+      
+    default:
+      break;
+  }
+  
+  return result;
 }
 
 @end
