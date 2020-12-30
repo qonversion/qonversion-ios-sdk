@@ -3,6 +3,11 @@
 
 extern NSErrorDomain const QNErrorDomain NS_SWIFT_NAME(Qonversion.ErrorDomain);
 
+/*
+ Most errors returned by Qonversion SDK contains helpAnchor info.
+ For more detailed error description for debug you can use NSError property .helpAnchor
+ */
+
 typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
   QNErrorUnknown = 0,
   
@@ -22,7 +27,7 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
   // this device is not allowed to make the payment
   QNErrorPaymentNotAllowed,
   
-  // Apple Store didn't processe request
+  // Apple Store didn't process the request
   
   QNErrorStoreFailed,
   
@@ -32,7 +37,7 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
   // user has not allowed access to cloud service information
   QNErrorCloudServicePermissionDenied,
   
-  // the device could not connect to the nework
+  // the device could not connect to the network
   QNErrorCloudServiceNetworkConnectionFailed,
   
   // user has revoked permission to use this cloud service
