@@ -27,6 +27,7 @@ DerivedData
 *.ipa
 
 ## Other
+resetXcode.sh
 *.moved-aside
 *.xccheckout
 *.xcscmblueprint
