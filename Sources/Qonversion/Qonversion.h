@@ -89,6 +89,10 @@ NS_ASSUME_NONNULL_BEGIN
 */
 + (void)products:(QNProductsCompletionHandler)completion;
 
+
+// TODO: Comment
++ (void)offerings:(QNOfferingsCompletionHandler)completion;
+
 + (void)resetUser;
 
 /**

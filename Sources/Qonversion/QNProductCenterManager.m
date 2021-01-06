@@ -10,6 +10,8 @@
 #import "QNProduct.h"
 #import "QNErrors.h"
 #import "QNPromoPurchasesDelegate.h"
+#import "QNOfferings.h"
+#import "QNOffering.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
@@ -21,11 +23,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic) QNStoreKitService *storeKitService;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
-@property (nonatomic, strong) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
 @property (nonatomic, copy) QNRestoreCompletionHandler restorePurchasesBlock;
 
-@property (nonatomic, strong) NSMutableArray *permissionsBlocks;
-@property (nonatomic, strong) NSMutableArray *productsBlocks;
+@property (nonatomic, strong) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
+@property (nonatomic, strong) NSMutableArray<QNPermissionCompletionHandler> *permissionsBlocks;
+@property (nonatomic, strong) NSMutableArray<QNProductsCompletionHandler> *productsBlocks;
+@property (nonatomic, strong) NSMutableArray<QNOfferingsCompletionHandler> *offeringsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
 @property (nonatomic) QNLaunchResult *launchResult;
@@ -52,9 +55,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
-    _permissionsBlocks = [[NSMutableArray alloc] init];
-    _productsBlocks = [[NSMutableArray alloc] init];
     _purchasingBlocks = [[NSMutableDictionary alloc] init];
+    _permissionsBlocks = [NSMutableArray new];
+    _productsBlocks = [NSMutableArray new];
+    _offeringsBlocks = [NSMutableArray new];
   }
   
   return self;
@@ -199,13 +203,52 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
+- (void)executeOfferingsBlocks {
+  [self executeOfferingsBlocksWithError:nil];
+}
+
+- (void)executeOfferingsBlocksWithError:(NSError * _Nullable)error {
+  @synchronized (self) {
+    NSArray <QNOfferingsCompletionHandler> *blocks = [self.offeringsBlocks copy];
+    if (blocks.count == 0) {
+      return;
+    }
+    
+    [self.offeringsBlocks removeAllObjects];
+    
+    NSError *resultError = error ?: _launchError;
+    QNOfferings *offerings = nil;
+    
+    if (!resultError) {
+      offerings = [self enrichOfferingsWithStoreProducts];
+    }
+    
+    for (QNOfferingsCompletionHandler block in blocks) {
+      run_block_on_main(block, offerings, resultError);
+    }
+  }
+}
+
+- (QNOfferings *)enrichOfferingsWithStoreProducts {
+  for (QNOffering *offering in self.launchResult.offerings.availableOfferings) {
+    for (QNProduct *product in offering.products) {
+      QNProduct *qnProduct = [self productAt:product.qonversionID];
+      
+      product.skProduct = qnProduct.skProduct;
+    }
+  }
+  
+  return self.launchResult.offerings;
+  
+}
+
 - (void)executeProductsBlocks {
   [self executeProductsBlocksWithError:nil];
 }
 
 - (void)executeProductsBlocksWithError:(NSError * _Nullable)error {
   @synchronized (self) {
-    NSMutableArray <QNProductsCompletionHandler> *_blocks = [self->_productsBlocks copy];
+    NSArray <QNProductsCompletionHandler> *_blocks = [self->_productsBlocks copy];
     if (_blocks.count == 0) {
       return;
     }
@@ -260,25 +303,49 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     if (self.productsLoading) {
       return;
     }
-   
-    if (self.launchError) {
-      __block __weak QNProductCenterManager *weakSelf = self;
-      [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-        if (weakSelf.productsLoading) {
-          return;
-        } else {
-          [weakSelf executeProductsBlocks];
-        }
-      }];
-    } else {
-      NSArray *storeProducts = [self.storeKitService getLoadedProducts];
-      if (storeProducts.count > 0) {
-        [self executeProductsBlocks];
+    
+    [self retryLaunchFlowWithCompletion:^{
+      [self executeProductsBlocks];
+    }];
+  }
+}
+
+- (void)retryLaunchFlowWithCompletion:(void(^)())completion {
+  if (self.launchError) {
+    __block __weak QNProductCenterManager *weakSelf = self;
+    [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      if (weakSelf.productsLoading) {
         return;
       } else {
-        [self loadProducts];
+        completion();
       }
+    }];
+  } else {
+    NSArray *storeProducts = [self.storeKitService getLoadedProducts];
+    if (storeProducts.count > 0) {
+      completion();
+      return;
+    } else {
+      [self loadProducts];
     }
+  }
+}
+
+- (void)offerings:(QNOfferingsCompletionHandler)completion {
+  @synchronized (self) {
+    [self.offeringsBlocks addObject:completion];
+    
+    __block __weak QNProductCenterManager *weakSelf = self;
+    QNProductsCompletionHandler productsCompletion = ^(NSDictionary<NSString *, QNProduct *> *result, NSError  *_Nullable error) {
+      [weakSelf executeOfferingsBlocksWithError:error];
+    };
+    
+    [self.productsBlocks addObject:productsCompletion];
+    
+    [self retryLaunchFlowWithCompletion:^{
+      [self.productsBlocks removeObject:productsCompletion];
+      [self executeOfferingsBlocks];
+    }];
   }
 }
 
@@ -291,23 +358,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     return product;
   }
-  return nil;
-}
-
-- (QNProduct * _Nullable)QNProductAtStoreID:(NSString *)productID {
-  NSDictionary *products = _launchResult.products ?: @{};
-  NSArray *productsList = [products allValues];
-  
-  if (productsList && productsList.count == 0) {
-    return nil;
-  }
-  
-  for (QNProduct *product in productsList) {
-    if ([product.storeID isEqualToString:productID]) {
-      return product;
-    }
-  }
-  
   return nil;
 }
 

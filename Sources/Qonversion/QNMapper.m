@@ -1,34 +1,46 @@
 #import "QNUtils.h"
 #import "QNMapper.h"
 #import "QNErrors.h"
-#import "QNLaunchResult+Protected.h"
 #import "QNProduct.h"
 #import "QNPermission.h"
 #import "QNMapperObject.h"
+#import "QNOfferings.h"
+#import "QNOffering.h"
+
+#import "QNLaunchResult+Protected.h"
+#import "QNOfferings+Protected.h"
+#import "QNOffering+Protected.h"
 
 @implementation QNMapper
 
 + (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
   QNLaunchResult *result = [[QNLaunchResult alloc] init];
   
-  NSDictionary *permissionsDict = dict[@"permissions"] ?: @{};
-  NSDictionary *productsDict = dict[@"products"] ?: @{};
-  NSDictionary *userProductsDict = dict[@"user_products"] ?: @{};
+  NSArray *permissionsArray = dict[@"permissions"] ?: @[];
+  NSArray *productsArray = dict[@"products"] ?: @[];
+  NSArray *userProductsArray = dict[@"user_products"] ?: @[];
+  NSArray *offeringsArray = dict[@"offerings"];
+  
   NSNumber *timestamp = dict[@"timestamp"] ?: @0;
   
   [result setTimestamp:timestamp.unsignedIntegerValue];
   [result setUid:((NSString *)dict[@"uid"] ?: @"")];
-  [result setPermissions:[self fillPermissions:permissionsDict]];
-  [result setProducts:[self fillProducts:productsDict]];
-  [result setUserProducts:[self fillProducts:userProductsDict]];
+  [result setPermissions:[self fillPermissions:permissionsArray]];
+  [result setProducts:[self fillProducts:productsArray]];
+  [result setUserProducts:[self fillProducts:userProductsArray]];
+  
+  if (offeringsArray.count > 0) {
+    QNOfferings *offerings = [self fillOfferingsObject:offeringsArray];
+    [result setOfferings:offerings];
+  }
   
   return result;
 }
 
-+ (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSDictionary *)dict {
++ (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSArray *)data {
   NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
   
-  for (NSDictionary* itemDict in dict) {
+  for (NSDictionary* itemDict in data) {
     QNPermission *item = [self fillPermission:itemDict];
     if (item && item.permissionID) {
       permissions[item.permissionID] = item;
@@ -38,17 +50,17 @@
   return [[NSDictionary alloc] initWithDictionary:permissions];
 }
 
-+ (NSDictionary <NSString *, QNProduct *> *)fillProducts:(NSDictionary *)dict {
++ (NSDictionary <NSString *, QNProduct *> *)fillProducts:(NSArray *)data {
   NSMutableDictionary <NSString *, QNProduct *> *products = [NSMutableDictionary new];
   
-  for (NSDictionary* itemDict in dict) {
+  for (NSDictionary* itemDict in data) {
     QNProduct *item = [self fillProduct:itemDict];
     if (item && item.qonversionID) {
       products[item.qonversionID] = item;
     }
   }
   
-  return [[NSDictionary alloc] initWithDictionary:products];
+  return [products copy];
 }
 
 + (QNPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
@@ -84,6 +96,57 @@
   result.storeID = [storeId isKindOfClass:[NSString class]] ? storeId : nil;
   
   return result;
+}
+
++ (QNOfferings * _Nonnull)fillOfferingsObject:(NSArray *)data {
+  NSMutableArray<QNOffering *> *availableOfferings = [self fillOfferings:data];
+  
+  QNOffering *main;
+  
+  for (QNOffering *offering in availableOfferings) {
+    if (offering.tag == QNOfferingTagMain) {
+      main = offering;
+      break;
+    }
+  }
+  
+  QNOfferings *offerings = [[QNOfferings alloc] initWithMainOffering:main availableOfferings:[availableOfferings copy]];
+  
+  return offerings;
+}
+
++ (NSArray<QNOfferings *> * _Nonnull)fillOfferings:(NSArray *)data {
+  NSMutableArray *offerings = [NSMutableArray new];
+  
+  for (NSDictionary *offeringData in data) {
+    NSString *offeringIdentifier = offeringData[@"id"];
+    QNOfferingTag tag = [self mapOfferingTag:offeringData];
+    
+    NSArray *productsData = offeringData[@"products"];
+    NSDictionary<NSString *, QNProduct *> *products = [self fillProducts:productsData];
+    
+    QNOffering *offering = [[QNOffering alloc] initWithIdentifier:offeringIdentifier tag:tag products:[products allValues]];
+    [offerings addObject:offering];
+  }
+  
+  return [offerings copy];
+}
+
++ (QNOfferingTag)mapOfferingTag:(NSDictionary *)offeringData {
+  QNOfferingTag tag;
+  NSInteger tagValue = [self mapInteger:offeringData[@"tag"] orReturn:0];;
+  
+  switch (tagValue) {
+    case 1:
+      tag = QNOfferingTagMain;
+      break;
+      
+    default:
+      tag = QNOfferingTagNone;
+      break;
+  }
+  
+  return tag;
 }
 
 + (QNMapperObject *)mapperObjectFrom:(NSDictionary *)dict {

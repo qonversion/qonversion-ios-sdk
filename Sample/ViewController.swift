@@ -60,6 +60,10 @@ class ViewController: UIViewController {
       
       self.activityIndicator.stopAnimating()
       
+      Qonversion.offerings { (offerings, error) in
+        print("LALA")
+      }
+      
       self.products = result
       
       if let inAppPurchase = result["in_app"] {
