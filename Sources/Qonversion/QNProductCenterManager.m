@@ -340,12 +340,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [weakSelf executeOfferingsBlocksWithError:error];
     };
     
-    [self.productsBlocks addObject:productsCompletion];
-    
-    [self retryLaunchFlowWithCompletion:^{
-      [self.productsBlocks removeObject:productsCompletion];
-      [self executeOfferingsBlocks];
-    }];
+    [self products:productsCompletion];
   }
 }
 
