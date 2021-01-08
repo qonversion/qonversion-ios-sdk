@@ -99,7 +99,7 @@
 }
 
 + (QNOfferings * _Nonnull)fillOfferingsObject:(NSArray *)data {
-  NSMutableArray<QNOffering *> *availableOfferings = [self fillOfferings:data];
+  NSArray<QNOfferings *> * _Nonnull availableOfferings = [self fillOfferings:data];
   
   QNOffering *main;
   
