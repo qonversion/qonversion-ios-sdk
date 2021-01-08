@@ -98,6 +98,12 @@
 		89861D2D2501563B00E5D36B /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */; };
 		89ADA76D25069E1000EB2E54 /* ActivePermissionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */; };
+		89EA13AD25A42BB90065BCED /* QNOfferings.h in Headers */ = {isa = PBXBuildFile; fileRef = 89EA13AB25A42BB90065BCED /* QNOfferings.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		89EA13AE25A42BB90065BCED /* QNOfferings.m in Sources */ = {isa = PBXBuildFile; fileRef = 89EA13AC25A42BB90065BCED /* QNOfferings.m */; };
+		89EA13B325A42BC90065BCED /* QNOffering.h in Headers */ = {isa = PBXBuildFile; fileRef = 89EA13B125A42BC90065BCED /* QNOffering.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		89EA13B425A42BC90065BCED /* QNOffering.m in Sources */ = {isa = PBXBuildFile; fileRef = 89EA13B225A42BC90065BCED /* QNOffering.m */; };
+		89EA13B925A443070065BCED /* QNOfferings+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 89EA13B725A443070065BCED /* QNOfferings+Protected.h */; };
+		89EA13C125A482740065BCED /* QNOffering+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 89EA13BF25A482740065BCED /* QNOffering+Protected.h */; };
 		CE805C540A4C686272206968 /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E902AE0A2A73461C22DE146A /* Pods_Sample.framework */; };
 /* End PBXBuildFile section */
 
@@ -244,6 +250,12 @@
 		893045EB252DE8B500E22F75 /* QNPromoPurchasesDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNPromoPurchasesDelegate.h; sourceTree = "<group>"; };
 		89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsViewController.swift; sourceTree = "<group>"; };
 		89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsTableViewCell.swift; sourceTree = "<group>"; };
+		89EA13AB25A42BB90065BCED /* QNOfferings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNOfferings.h; sourceTree = "<group>"; };
+		89EA13AC25A42BB90065BCED /* QNOfferings.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNOfferings.m; sourceTree = "<group>"; };
+		89EA13B125A42BC90065BCED /* QNOffering.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNOffering.h; sourceTree = "<group>"; };
+		89EA13B225A42BC90065BCED /* QNOffering.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNOffering.m; sourceTree = "<group>"; };
+		89EA13B725A443070065BCED /* QNOfferings+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNOfferings+Protected.h"; sourceTree = "<group>"; };
+		89EA13BF25A482740065BCED /* QNOffering+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNOffering+Protected.h"; sourceTree = "<group>"; };
 		A4D01F9F11D02C4E478E68EC /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
 		B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QonversionTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C49A7C36E2D376FDC85E470B /* Pods-Sample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.release.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.release.xcconfig"; sourceTree = "<group>"; };
@@ -388,6 +400,12 @@
 				45F4C2EA2517E85E00AD8FF0 /* QNPermission.m */,
 				456ECD41249C76D400D2BC40 /* QNProduct.h */,
 				456ECD44249C8B2000D2BC40 /* QNProduct.m */,
+				89EA13AB25A42BB90065BCED /* QNOfferings.h */,
+				89EA13AC25A42BB90065BCED /* QNOfferings.m */,
+				89EA13B725A443070065BCED /* QNOfferings+Protected.h */,
+				89EA13B125A42BC90065BCED /* QNOffering.h */,
+				89EA13B225A42BC90065BCED /* QNOffering.m */,
+				89EA13BF25A482740065BCED /* QNOffering+Protected.h */,
 			);
 			name = Models;
 			sourceTree = "<group>";
@@ -594,6 +612,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				89EA13B325A42BC90065BCED /* QNOffering.h in Headers */,
+				89EA13AD25A42BB90065BCED /* QNOfferings.h in Headers */,
 				893045EC252DE8B500E22F75 /* QNPromoPurchasesDelegate.h in Headers */,
 				45FFA2CE24BDE5FE007EFB8F /* QNAPIClient.h in Headers */,
 				454BE230247C4AD8001FE771 /* QNUtils.h in Headers */,
@@ -614,6 +634,8 @@
 				458A8CD424BAC5F500637130 /* QNInMemoryStorage.h in Headers */,
 				45239D6F2517CEB00085D0A8 /* QonversionFramework.h in Headers */,
 				45F4C2EB2517E85E00AD8FF0 /* QNPermission.h in Headers */,
+				89EA13B925A443070065BCED /* QNOfferings+Protected.h in Headers */,
+				89EA13C125A482740065BCED /* QNOffering+Protected.h in Headers */,
 				4531CBBF245778110022C422 /* QNDevice.h in Headers */,
 				454BE22A247C3E72001FE771 /* QNProperties.h in Headers */,
 				458A8CB724B1F5F600637130 /* QNErrors.h in Headers */,
@@ -859,7 +881,9 @@
 				459DABF6243E35BC0011ECF3 /* QNUserInfo.m in Sources */,
 				8911823A25222C2300EBCDFA /* QNAPIConstants.m in Sources */,
 				459DAC04243E35BC0011ECF3 /* Qonversion.m in Sources */,
+				89EA13AE25A42BB90065BCED /* QNOfferings.m in Sources */,
 				459DABFB243E35BC0011ECF3 /* QNKeeper.m in Sources */,
+				89EA13B425A42BC90065BCED /* QNOffering.m in Sources */,
 				45F4C2EC2517E85E00AD8FF0 /* QNPermission.m in Sources */,
 				45FFA2E324BECA9D007EFB8F /* QNErrors.m in Sources */,
 				4531CBC0245778110022C422 /* QNDevice.m in Sources */,

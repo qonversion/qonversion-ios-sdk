@@ -2,7 +2,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class QNPermission, QNProduct;
+@class QNPermission, QNProduct, QNOfferings;
 
 typedef NS_ENUM(NSInteger, QNAttributionProvider) {
   QNAttributionProviderAppsFlyer = 0,
@@ -31,27 +31,32 @@ NS_SWIFT_NAME(Qonversion.LaunchResult)
 /**
  Qonversion User Identifier
  */
-@property (nonatomic, readonly) NSString *uid;
+@property (nonatomic, copy, readonly) NSString *uid;
 
 /**
  Original Server response time
  */
-@property (nonatomic, readonly) NSUInteger timestamp;
+@property (nonatomic, assign, readonly) NSUInteger timestamp;
 
 /**
  User permissions
  */
-@property (nonatomic) NSDictionary<NSString *, QNPermission *> *permissions;
+@property (nonatomic, copy) NSDictionary<NSString *, QNPermission *> *permissions;
 
 /**
  All products
  */
-@property (nonatomic) NSDictionary<NSString *, QNProduct *> *products;
+@property (nonatomic, copy) NSDictionary<NSString *, QNProduct *> *products;
+
+/**
+ Offerings
+ */
+@property (nonatomic, strong, nullable) QNOfferings *offerings;
 
 /**
  User products
  */
-@property (nonatomic) NSDictionary<NSString *, QNProduct *> *userPoducts;
+@property (nonatomic, copy) NSDictionary<NSString *, QNProduct *> *userPoducts;
 
 
 @end
@@ -65,5 +70,7 @@ typedef void (^QNPromoPurchaseCompletionHandler)(QNPurchaseCompletionHandler) NS
 typedef void (^QNRestoreCompletionHandler)(NSDictionary<NSString *, QNPermission*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.RestoreCompletionHandler);
 
 typedef void (^QNProductsCompletionHandler)(NSDictionary<NSString *, QNProduct *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ProductsCompletionHandler);
+
+typedef void (^QNOfferingsCompletionHandler)(QNOfferings *_Nullable offerings, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.OfferingsCompletionHandler);
 
 NS_ASSUME_NONNULL_END

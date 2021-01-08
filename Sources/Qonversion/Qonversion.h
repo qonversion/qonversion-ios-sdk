@@ -89,6 +89,19 @@ NS_ASSUME_NONNULL_BEGIN
 */
 + (void)products:(QNProductsCompletionHandler)completion;
 
+
+/**
+  Return Qonversion Offerings Object
+ 
+  An offering is a group of products that you can offer to a user on a given paywall based on your business logic.
+  For example, you can offer one set of products on a paywall immediately after onboarding and another set of products with discounts later on if a user has not converted.
+  Offerings allow changing the products offered remotely without releasing app updates.
+ 
+  @see [Offerings](https://qonversion.io/docs/offerings)
+  @see [Product Center](https://qonversion.io/docs/product-center)
+ */
++ (void)offerings:(QNOfferingsCompletionHandler)completion;
+
 + (void)resetUser;
 
 /**
