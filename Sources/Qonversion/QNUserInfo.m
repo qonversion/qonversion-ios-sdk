@@ -118,5 +118,11 @@
   return [NSBundle.allBundles filteredArrayUsingPredicate:predicate].firstObject;
 }
 
++ (NSString *)generateRandomUserID {
+  NSString *uuid = [[NSUUID new].UUIDString stringByReplacingOccurrencesOfString:@"-" withString:@""];
+  NSString *qonversionUID = [NSString stringWithFormat:@"$QON-%@", uuid.lowercaseString];
+  
+  return qonversionUID;
+}
 
 @end

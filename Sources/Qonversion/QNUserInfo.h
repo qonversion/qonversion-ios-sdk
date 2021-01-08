@@ -10,4 +10,6 @@
 
 + (nullable NSString *)appStoreReceipt;
 
++ (nonnull NSString *)generateRandomUserID;
+
 @end
