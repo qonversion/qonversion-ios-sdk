@@ -37,7 +37,8 @@
   [description appendFormat:@"startedDate=%@,\n", self.startedDate];
   [description appendFormat:@"expirationDate=%@,\n", self.expirationDate];
   [description appendString:@">"];
-  return description;
+  
+  return [description copy];
 }
 
 - (NSString *)prettyRenewState {

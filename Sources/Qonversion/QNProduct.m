@@ -31,7 +31,8 @@
   [description appendFormat:@"duration=%@ (enum value = %li),\n", [self prettyDuration], (long) self.duration];
   [description appendFormat:@"skProduct=%@,\n", self.skProduct];
   [description appendString:@">"];
-  return description;
+  
+  return [description copy];
 }
 
 - (void)setSkProduct:(SKProduct *)skProduct {
