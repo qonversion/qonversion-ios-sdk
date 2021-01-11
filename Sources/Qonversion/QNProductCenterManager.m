@@ -310,7 +310,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)retryLaunchFlowWithCompletion:(void(^)())completion {
+- (void)retryLaunchFlowWithCompletion:(void(^)(void))completion {
   if (self.launchError) {
     __block __weak QNProductCenterManager *weakSelf = self;
     [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
