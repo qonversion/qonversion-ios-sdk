@@ -11,6 +11,7 @@
 extern NSString *const kAPIBase;
 extern NSString *const kInitEndpoint;
 extern NSString *const kPurchaseEndpoint;
+extern NSString *const kProductsEndpoint;
 extern NSString *const kPropertiesEndpoint;
 extern NSString *const kAttributionEndpoint;
 extern NSString *const kStoredRequestsKey;

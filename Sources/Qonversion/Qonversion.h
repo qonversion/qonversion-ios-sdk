@@ -89,6 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
 */
 + (void)products:(QNProductsCompletionHandler)completion;
 
++ (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion;
 
 /**
   Return Qonversion Offerings Object

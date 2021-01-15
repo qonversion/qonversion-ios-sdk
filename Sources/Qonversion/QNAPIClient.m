@@ -76,6 +76,15 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
+- (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QNProduct *> *)products
+                                         completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *requestData = [self.requestSerializer introTrialEligibilityDataForProducts:products];
+  NSDictionary *resultBody = [self enrichParameters:requestData];
+  NSURLRequest *request = [self.requestBuilder makeIntroTrialEligibilityRequestWithData:resultBody];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self enrichParameters:@{@"properties": properties}];
   NSURLRequest *request = [self.requestBuilder makePropertiesRequestWith:body];
