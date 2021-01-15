@@ -103,7 +103,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)offerings:(QNOfferingsCompletionHandler)completion;
 
-+ (void)experimentInfo:(QNExperimentsCompletionHandler)completion;
++ (void)experiments:(QNExperimentsCompletionHandler)completion;
 
 + (void)resetUser;
 

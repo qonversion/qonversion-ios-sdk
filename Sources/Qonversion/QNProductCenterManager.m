@@ -407,7 +407,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)experimentInfo:(QNExperimentsCompletionHandler)completion {
+- (void)experiments:(QNExperimentsCompletionHandler)completion {
   @synchronized (self) {
     if (!self.launchingFinished) {
       [self.experimentsBlocks addObject:completion];

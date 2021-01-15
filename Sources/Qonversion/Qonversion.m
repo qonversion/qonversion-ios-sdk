@@ -89,8 +89,8 @@
   return [[Qonversion sharedInstance].productCenterManager offerings:completion];
 }
 
-+ (void)experimentInfo:(QNExperimentsCompletionHandler)completion {
-  [[Qonversion sharedInstance].productCenterManager experimentInfo:completion];
++ (void)experiments:(QNExperimentsCompletionHandler)completion {
+  [[Qonversion sharedInstance].productCenterManager experiments:completion];
 }
 
 + (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable {
