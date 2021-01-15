@@ -409,36 +409,34 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
   __block __weak QNProductCenterManager *weakSelf = self;
-//  [self.storeKitService receipt:^(NSString * _Nonnull receipt) {
-    [weakSelf.apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-      @synchronized (weakSelf) {
-        weakSelf.launchingFinished = YES;
-      }
+  [self.apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    @synchronized (weakSelf) {
+      weakSelf.launchingFinished = YES;
+    }
 
-      if (!completion) {
-        return;
-      }
+    if (!completion) {
+      return;
+    }
 
-      if (error) {
-        completion([[QNLaunchResult alloc] init], error);
-        return;
-      }
-      
-      QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
-      if (result.error) {
-        completion([[QNLaunchResult alloc] init], result.error);
-        return;
-      }
-      
-      QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-      completion(launchResult, nil);
-      
-      static dispatch_once_t onceToken;
-      dispatch_once(&onceToken, ^{
-        [weakSelf.apiClient processStoredRequests];
-      });
-    }];
-//  }];
+    if (error) {
+      completion([[QNLaunchResult alloc] init], error);
+      return;
+    }
+    
+    QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+    if (result.error) {
+      completion([[QNLaunchResult alloc] init], result.error);
+      return;
+    }
+    
+    QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+    completion(launchResult, nil);
+    
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+      [weakSelf.apiClient processStoredRequests];
+    });
+  }];
 }
 
 - (void)process:(NSDictionary * _Nullable)dict error:(NSError *)error
