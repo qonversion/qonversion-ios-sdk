@@ -97,7 +97,6 @@
 		896D2D6025B0585B009905A0 /* QNIntroEligibility.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D5E25B0585B009905A0 /* QNIntroEligibility.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		896D2D6125B0585B009905A0 /* QNIntroEligibility.m in Sources */ = {isa = PBXBuildFile; fileRef = 896D2D5F25B0585B009905A0 /* QNIntroEligibility.m */; };
 		896D2D6625B06447009905A0 /* QNIntroEligibility+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D6425B06447009905A0 /* QNIntroEligibility+Protected.h */; };
-		896D2D6725B06447009905A0 /* QNIntroEligibility+Protected.m in Sources */ = {isa = PBXBuildFile; fileRef = 896D2D6525B06447009905A0 /* QNIntroEligibility+Protected.m */; };
 		896D2D7D25B1A82B009905A0 /* QNExperimentInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D7B25B1A82B009905A0 /* QNExperimentInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		896D2D7E25B1A82B009905A0 /* QNExperimentInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 896D2D7C25B1A82B009905A0 /* QNExperimentInfo.m */; };
 		896D2D8925B1AF05009905A0 /* QNExperimentGroup.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D8725B1AF05009905A0 /* QNExperimentGroup.h */; };
@@ -261,7 +260,6 @@
 		896D2D5E25B0585B009905A0 /* QNIntroEligibility.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNIntroEligibility.h; sourceTree = "<group>"; };
 		896D2D5F25B0585B009905A0 /* QNIntroEligibility.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNIntroEligibility.m; sourceTree = "<group>"; };
 		896D2D6425B06447009905A0 /* QNIntroEligibility+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNIntroEligibility+Protected.h"; sourceTree = "<group>"; };
-		896D2D6525B06447009905A0 /* QNIntroEligibility+Protected.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "QNIntroEligibility+Protected.m"; sourceTree = "<group>"; };
 		896D2D7B25B1A82B009905A0 /* QNExperimentInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNExperimentInfo.h; sourceTree = "<group>"; };
 		896D2D7C25B1A82B009905A0 /* QNExperimentInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNExperimentInfo.m; sourceTree = "<group>"; };
 		896D2D8725B1AF05009905A0 /* QNExperimentGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNExperimentGroup.h; sourceTree = "<group>"; };
@@ -429,7 +427,6 @@
 				896D2D5E25B0585B009905A0 /* QNIntroEligibility.h */,
 				896D2D5F25B0585B009905A0 /* QNIntroEligibility.m */,
 				896D2D6425B06447009905A0 /* QNIntroEligibility+Protected.h */,
-				896D2D6525B06447009905A0 /* QNIntroEligibility+Protected.m */,
 				89EA13AB25A42BB90065BCED /* QNOfferings.h */,
 				89EA13AC25A42BB90065BCED /* QNOfferings.m */,
 				89EA13B725A443070065BCED /* QNOfferings+Protected.h */,
@@ -936,7 +933,6 @@
 				896D2D8A25B1AF05009905A0 /* QNExperimentGroup.m in Sources */,
 				45FFA2D424BDFCE8007EFB8F /* QNAttributionManager.m in Sources */,
 				458A8CC924B8407C00637130 /* QNStoreKitService.m in Sources */,
-				896D2D6725B06447009905A0 /* QNIntroEligibility+Protected.m in Sources */,
 				459DABF9243E35BC0011ECF3 /* QNKeychain.m in Sources */,
 				458A8CD224BAC5F500637130 /* QNUserDefaultsStorage.m in Sources */,
 			);
