@@ -69,6 +69,9 @@ NS_SWIFT_NAME(Qonversion.Product)
  */
 @property (nonatomic, assign) QNProductDuration duration;
 
+/**
+ Trial duration
+ */
 @property (nonatomic, assign) QNTrialDuration trialDuration;
 
 /**
