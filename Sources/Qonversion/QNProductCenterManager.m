@@ -30,6 +30,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNPermissionCompletionHandler> *permissionsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNProductsCompletionHandler> *productsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNOfferingsCompletionHandler> *offeringsBlocks;
+@property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
 @property (nonatomic) QNLaunchResult *launchResult;
@@ -56,10 +57,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
-    _purchasingBlocks = [[NSMutableDictionary alloc] init];
+    _purchasingBlocks = [NSMutableDictionary new];
     _permissionsBlocks = [NSMutableArray new];
     _productsBlocks = [NSMutableArray new];
     _offeringsBlocks = [NSMutableArray new];
+    _experimentsBlocks = [NSMutableArray new];
   }
   
   return self;
@@ -83,6 +85,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     weakSelf.launchError = error;
     
     [weakSelf executePermissionBlocks];
+    [weakSelf executeExperimentsBlocks];
     
     NSArray *storeProducts = [weakSelf.storeKitService getLoadedProducts];
     if (!weakSelf.productsLoading && storeProducts.count == 0) {
@@ -202,6 +205,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
     for (QNPermissionCompletionHandler block in _blocks) {
       run_block_on_main(block, self.launchResult.permissions ?: @{}, self.launchError);
+    }
+  }
+}
+
+- (void)executeExperimentsBlocks {
+  @synchronized (self) {
+    NSArray <QNExperimentsCompletionHandler> *blocks = [self.experimentsBlocks copy];
+    if (blocks.count == 0) {
+      return;
+    }
+    
+    [self.experimentsBlocks removeAllObjects];
+    
+    for (QNExperimentsCompletionHandler block in blocks) {
+      run_block_on_main(block, self.launchResult.experiments, self.launchError);
     }
   }
 }
@@ -386,6 +404,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     };
     
     [self products:productsCompletion];
+  }
+}
+
+- (void)experimentInfo:(QNExperimentsCompletionHandler)completion {
+  @synchronized (self) {
+    if (!self.launchingFinished) {
+      [self.experimentsBlocks addObject:completion];
+      return;
+    }
+    
+    if (self.launchResult) {
+      [self executeExperimentsBlocks];
+    } else {
+      [self launchWithCompletion:nil];
+    }
   }
 }
 
