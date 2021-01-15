@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@class QNMapperObject, QNLaunchResult, QNPermission, QNProduct, QNIntroEligibility;
+@class QNMapperObject, QNLaunchResult, QNPermission, QNIntroEligibility;
 
 @interface QNMapper : NSObject
 
