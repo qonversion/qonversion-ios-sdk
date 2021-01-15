@@ -337,7 +337,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
       if (result.error) {
         run_block_on_main(completion, @{}, result.error);
-        completion(nil, result.error);
         return;
       }
       
