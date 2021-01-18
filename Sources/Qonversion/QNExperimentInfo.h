@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class QNExperimentGroup;
 
+NS_SWIFT_NAME(Qonversion.ExperimentInfo)
 @interface QNExperimentInfo : NSObject
 
 @property (nonatomic, copy) NSString *identifier;

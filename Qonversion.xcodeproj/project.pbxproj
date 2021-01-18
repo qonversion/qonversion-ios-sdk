@@ -99,7 +99,7 @@
 		896D2D6625B06447009905A0 /* QNIntroEligibility+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D6425B06447009905A0 /* QNIntroEligibility+Protected.h */; };
 		896D2D7D25B1A82B009905A0 /* QNExperimentInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D7B25B1A82B009905A0 /* QNExperimentInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		896D2D7E25B1A82B009905A0 /* QNExperimentInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 896D2D7C25B1A82B009905A0 /* QNExperimentInfo.m */; };
-		896D2D8925B1AF05009905A0 /* QNExperimentGroup.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D8725B1AF05009905A0 /* QNExperimentGroup.h */; };
+		896D2D8925B1AF05009905A0 /* QNExperimentGroup.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D8725B1AF05009905A0 /* QNExperimentGroup.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		896D2D8A25B1AF05009905A0 /* QNExperimentGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 896D2D8825B1AF05009905A0 /* QNExperimentGroup.m */; };
 		896D2D8F25B1B41A009905A0 /* QNExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D8D25B1B41A009905A0 /* QNExperimentGroup+Protected.h */; };
 		896D2D9525B1B42E009905A0 /* QNExperimentInfo+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D9325B1B42E009905A0 /* QNExperimentInfo+Protected.h */; };

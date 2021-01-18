@@ -10,3 +10,5 @@
 #import <Qonversion/QNOfferings.h>
 #import <Qonversion/QNOffering.h>
 #import <Qonversion/QNIntroEligibility.h>
+#import <Qonversion/QNExperimentInfo.h>
+#import <Qonversion/QNExperimentGroup.h>
