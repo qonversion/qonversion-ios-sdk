@@ -6,10 +6,12 @@
 #import "QNMapperObject.h"
 #import "QNOfferings.h"
 #import "QNOffering.h"
+#import "QNIntroEligibility.h"
 
 #import "QNLaunchResult+Protected.h"
 #import "QNOfferings+Protected.h"
 #import "QNOffering+Protected.h"
+#import "QNIntroEligibility+Protected.h"
 
 @implementation QNMapper
 
@@ -58,6 +60,34 @@
     if (item && item.qonversionID) {
       products[item.qonversionID] = item;
     }
+  }
+  
+  return [products copy];
+}
+
++ (NSDictionary<NSString *, QNIntroEligibility *> *)mapProductsEligibility:(NSDictionary * _Nullable)dict {
+  NSDictionary *introEligibilityStatuses = @{@"non_intro_or_trial_product": @(QNIntroEligibilityStatusNonIntroProduct),
+                                             @"intro_or_trial_eligible": @(QNIntroEligibilityStatusEligible),
+                                             @"intro_or_trial_ineligible": @(QNIntroEligibilityStatusIneligible)};
+  
+  NSArray *enrichedProducts = dict[@"products_enriched"];
+  
+  NSMutableDictionary<NSString *, QNProduct *> *products = [NSMutableDictionary new];
+  
+  for (NSDictionary *item in enrichedProducts) {
+    NSDictionary *productData = item[@"product"];
+    if (!productData) {
+      continue;
+    }
+    
+    QNProduct *product = [self fillProduct:productData];
+    NSString *eligibilityStatusString = item[@"intro_eligibility_status"];
+    
+    NSNumber *eligibilityValue = introEligibilityStatuses[eligibilityStatusString];
+    QNIntroEligibilityStatus eligibilityStatus = eligibilityValue ? eligibilityValue.integerValue : QNIntroEligibilityStatusUnknown;
+    QNIntroEligibility *eligibility = [[QNIntroEligibility alloc] initWithStatus:eligibilityStatus];
+    
+    products[product.qonversionID] = eligibility;
   }
   
   return [products copy];

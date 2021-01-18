@@ -19,6 +19,10 @@
   return [self makePostRequestWith:kPurchaseEndpoint andBody:parameters];
 }
 
+- (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
+  return [self makePostRequestWith:kProductsEndpoint andBody:parameters];
+}
+
 // MARK: Private
 
 - (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body {

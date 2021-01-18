@@ -94,6 +94,9 @@
 		8911823925222C2300EBCDFA /* QNAPIConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 8911823725222C2300EBCDFA /* QNAPIConstants.h */; };
 		8911823A25222C2300EBCDFA /* QNAPIConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 8911823825222C2300EBCDFA /* QNAPIConstants.m */; };
 		893045EC252DE8B500E22F75 /* QNPromoPurchasesDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 893045EB252DE8B500E22F75 /* QNPromoPurchasesDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		896D2D6025B0585B009905A0 /* QNIntroEligibility.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D5E25B0585B009905A0 /* QNIntroEligibility.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		896D2D6125B0585B009905A0 /* QNIntroEligibility.m in Sources */ = {isa = PBXBuildFile; fileRef = 896D2D5F25B0585B009905A0 /* QNIntroEligibility.m */; };
+		896D2D6625B06447009905A0 /* QNIntroEligibility+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D6425B06447009905A0 /* QNIntroEligibility+Protected.h */; };
 		89861D2C2501563B00E5D36B /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		89861D2D2501563B00E5D36B /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */; };
@@ -248,6 +251,9 @@
 		8911823725222C2300EBCDFA /* QNAPIConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNAPIConstants.h; sourceTree = "<group>"; };
 		8911823825222C2300EBCDFA /* QNAPIConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIConstants.m; sourceTree = "<group>"; };
 		893045EB252DE8B500E22F75 /* QNPromoPurchasesDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNPromoPurchasesDelegate.h; sourceTree = "<group>"; };
+		896D2D5E25B0585B009905A0 /* QNIntroEligibility.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNIntroEligibility.h; sourceTree = "<group>"; };
+		896D2D5F25B0585B009905A0 /* QNIntroEligibility.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNIntroEligibility.m; sourceTree = "<group>"; };
+		896D2D6425B06447009905A0 /* QNIntroEligibility+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNIntroEligibility+Protected.h"; sourceTree = "<group>"; };
 		89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsViewController.swift; sourceTree = "<group>"; };
 		89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsTableViewCell.swift; sourceTree = "<group>"; };
 		89EA13AB25A42BB90065BCED /* QNOfferings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNOfferings.h; sourceTree = "<group>"; };
@@ -400,6 +406,9 @@
 				45F4C2EA2517E85E00AD8FF0 /* QNPermission.m */,
 				456ECD41249C76D400D2BC40 /* QNProduct.h */,
 				456ECD44249C8B2000D2BC40 /* QNProduct.m */,
+				896D2D5E25B0585B009905A0 /* QNIntroEligibility.h */,
+				896D2D5F25B0585B009905A0 /* QNIntroEligibility.m */,
+				896D2D6425B06447009905A0 /* QNIntroEligibility+Protected.h */,
 				89EA13AB25A42BB90065BCED /* QNOfferings.h */,
 				89EA13AC25A42BB90065BCED /* QNOfferings.m */,
 				89EA13B725A443070065BCED /* QNOfferings+Protected.h */,
@@ -612,6 +621,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				896D2D6025B0585B009905A0 /* QNIntroEligibility.h in Headers */,
 				89EA13B325A42BC90065BCED /* QNOffering.h in Headers */,
 				89EA13AD25A42BB90065BCED /* QNOfferings.h in Headers */,
 				893045EC252DE8B500E22F75 /* QNPromoPurchasesDelegate.h in Headers */,
@@ -642,6 +652,7 @@
 				458A8CD124BAC5F500637130 /* QNUserDefaultsStorage.h in Headers */,
 				4572FE1C24BC40F900A17AC4 /* QNProductCenterManager.h in Headers */,
 				458A8CC124B5E50A00637130 /* QNProduct.h in Headers */,
+				896D2D6625B06447009905A0 /* QNIntroEligibility+Protected.h in Headers */,
 				458A8CD824BAC61E00637130 /* QNRequestSerializer.h in Headers */,
 				458A8CC824B8407C00637130 /* QNStoreKitService.h in Headers */,
 				458A8CBE24B4B88F00637130 /* QNStoreKitSugare.h in Headers */,
@@ -893,6 +904,7 @@
 				459DABFC243E35BC0011ECF3 /* QNMapper.m in Sources */,
 				456ECD34249B901900D2BC40 /* QNRequestBuilder.m in Sources */,
 				4572FE2124BC4B5B00A17AC4 /* QNUserPropertiesManager.m in Sources */,
+				896D2D6125B0585B009905A0 /* QNIntroEligibility.m in Sources */,
 				458A8CBF24B4B88F00637130 /* QNStoreKitSugare.m in Sources */,
 				4531CBC424577D770022C422 /* QNConstants.m in Sources */,
 				45FFA2D424BDFCE8007EFB8F /* QNAttributionManager.m in Sources */,

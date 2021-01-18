@@ -2,6 +2,7 @@
 #import "QNUserInfo.h"
 #import "QNDevice.h"
 #import "QNStoreKitSugare.h"
+#import "QNProduct.h"
 
 @interface QNRequestSerializer ()
 
@@ -66,6 +67,27 @@ NS_ASSUME_NONNULL_BEGIN
   
   result[@"purchase"] = purchaseDict;
   return result;
+}
+
+- (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QNProduct *> *)products {
+  NSMutableDictionary *result = [[self mainData] mutableCopy];
+  
+  NSMutableArray *productsLocalData = [NSMutableArray new];
+  
+  for (QNProduct *product in products) {
+    NSMutableDictionary *param = [NSMutableDictionary new];
+    param[@"store_id"] = product.storeID;
+    
+    if (@available(iOS 12.0, macOS 10.14, watchOS 6.2, *)) {
+      param[@"subscription_group_identifier"] = product.skProduct.subscriptionGroupIdentifier;
+    }
+    
+    [productsLocalData addObject:param];
+  }
+  
+  result[@"products_local_data"] = productsLocalData;
+  
+  return [result copy];
 }
 
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {

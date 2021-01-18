@@ -9,3 +9,4 @@
 #import <Qonversion/QNErrors.h>
 #import <Qonversion/QNOfferings.h>
 #import <Qonversion/QNOffering.h>
+#import <Qonversion/QNIntroEligibility.h>

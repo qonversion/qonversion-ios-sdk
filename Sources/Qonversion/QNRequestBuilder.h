@@ -6,5 +6,6 @@
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters;
 
 @end

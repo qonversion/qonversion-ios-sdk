@@ -81,6 +81,10 @@
   return [[Qonversion sharedInstance].productCenterManager products:completion];
 }
 
++ (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion {
+  [[Qonversion sharedInstance].productCenterManager checkTrialIntroEligibilityForProductIds:productIds completion:completion];
+}
+
 + (void)offerings:(QNOfferingsCompletionHandler)completion {
   return [[Qonversion sharedInstance].productCenterManager offerings:completion];
 }
