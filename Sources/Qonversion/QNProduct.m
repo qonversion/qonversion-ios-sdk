@@ -140,13 +140,13 @@
       result = @"not available"; break;
     
     case QNTrialDurationThreeDays:
-      result = @"three days"; break;
+      result = @"3 days"; break;
     
     case QNTrialDurationWeek:
-      result = @"week"; break;
+      result = @"7 days"; break;
     
     case QNTrialDurationTwoWeeks:
-      result = @"two weeks"; break;
+      result = @"14 days"; break;
     
     case QNTrialDurationMonth:
       result = @"month"; break;
