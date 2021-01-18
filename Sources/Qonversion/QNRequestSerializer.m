@@ -78,7 +78,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSMutableDictionary *param = [NSMutableDictionary new];
     param[@"store_id"] = product.storeID;
     
-    if (@available(iOS 12.0, macOS 10.14, watchOS 6.2, *)) {
+    if (@available(iOS 12.0, tvOS 10.0, watchOS 6.2, *)) {
       param[@"subscription_group_identifier"] = product.skProduct.subscriptionGroupIdentifier;
     }
     
