@@ -71,7 +71,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return [self.persistentStorage loadObjectForKey:kLaunchResult];
 }
 
-- (void)launchWithCompletion:(QNLaunchCompletionHandler)completion {
+- (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion {
   _launchingFinished = NO;
   
   __block __weak QNProductCenterManager *weakSelf = self;
@@ -170,7 +170,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)processPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
   QNProduct *product = [self QNProduct:productID];
   if (!product) {
-    QONVERSION_LOG([NSString stringWithFormat:@"❌ product with id: %@ not found", product.qonversionID]);
+    QONVERSION_LOG(@"❌ product with id: %@ not found", product.qonversionID);
     run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
     return;
   }
@@ -185,7 +185,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
   
-  QONVERSION_LOG([NSString stringWithFormat:@"❌ product with id: %@ not found", product.qonversionID]);
+  QONVERSION_LOG(@"❌ product with id: %@ not found", product.qonversionID);
   run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
 }
 
@@ -345,7 +345,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     for (NSString *identifier in uniqueProductIdentifiers) {
       QNProduct *product = result[identifier];
       if (!product) {
-        QONVERSION_LOG([NSString stringWithFormat:@"❌ product with id: %@ not found", product.qonversionID]);
+        QONVERSION_LOG(@"❌ product with id: %@ not found", product.qonversionID);
         run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound]);
         return;
       }
@@ -359,7 +359,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       }
       
       NSDictionary<NSString *, QNIntroEligibility *> *eligibilityData = [QNMapper mapProductsEligibility:result.data];
-      NSMutableDictionary<NSString *, QNProduct *> *resultEligibility = [NSMutableDictionary new];
+      NSMutableDictionary<NSString *, QNIntroEligibility *> *resultEligibility = [NSMutableDictionary new];
       
       for (NSString *identifier in uniqueProductIdentifiers) {
         QNIntroEligibility *item = eligibilityData[identifier];

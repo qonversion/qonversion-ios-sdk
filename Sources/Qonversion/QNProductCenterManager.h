@@ -10,7 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
-- (void)launchWithCompletion:(QNLaunchCompletionHandler)completion;
+- (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion;
 - (void)checkPermissions:(QNPermissionCompletionHandler)completion;
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
 - (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;

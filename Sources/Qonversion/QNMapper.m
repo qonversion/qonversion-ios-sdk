@@ -106,14 +106,14 @@
   return [products copy];
 }
 
-+ (NSDictionary<NSString *, QNIntroEligibility *> *)mapProductsEligibility:(NSDictionary * _Nullable)dict {
++ (NSDictionary<NSString *, QNIntroEligibility *> * _Nonnull)mapProductsEligibility:(NSDictionary * _Nullable)dict {
   NSDictionary *introEligibilityStatuses = @{@"non_intro_or_trial_product": @(QNIntroEligibilityStatusNonIntroProduct),
                                              @"intro_or_trial_eligible": @(QNIntroEligibilityStatusEligible),
                                              @"intro_or_trial_ineligible": @(QNIntroEligibilityStatusIneligible)};
   
   NSArray *enrichedProducts = dict[@"products_enriched"];
   
-  NSMutableDictionary<NSString *, QNProduct *> *products = [NSMutableDictionary new];
+  NSMutableDictionary<NSString *, QNIntroEligibility *> *eligibilityInfo = [NSMutableDictionary new];
   
   for (NSDictionary *item in enrichedProducts) {
     NSDictionary *productData = item[@"product"];
@@ -128,10 +128,10 @@
     QNIntroEligibilityStatus eligibilityStatus = eligibilityValue ? eligibilityValue.integerValue : QNIntroEligibilityStatusUnknown;
     QNIntroEligibility *eligibility = [[QNIntroEligibility alloc] initWithStatus:eligibilityStatus];
     
-    products[product.qonversionID] = eligibility;
+    eligibilityInfo[product.qonversionID] = eligibility;
   }
   
-  return [products copy];
+  return [eligibilityInfo copy];
 }
 
 + (QNPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
