@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)products:(QNProductsCompletionHandler)completion;
 - (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion;
 - (void)offerings:(QNOfferingsCompletionHandler)completion;
+- (void)experiments:(QNExperimentsCompletionHandler)completion;
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 
