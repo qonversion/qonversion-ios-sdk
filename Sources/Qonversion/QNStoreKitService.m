@@ -178,6 +178,10 @@
 // MARK: - SKProductsRequestDelegate
 
 - (void)productsRequest:(nonnull SKProductsRequest *)request didReceiveResponse:(nonnull SKProductsResponse *)response {
+  if (response.invalidProductIdentifiers.count > 0) {
+    QONVERSION_LOG(@"❌ Invalid store products identifiers: %@", response.invalidProductIdentifiers);
+  }
+  
   BOOL autoTracked = NO;
   for (SKProduct *product in response.products) {
     [_products setValue:product forKey:product.productIdentifier];

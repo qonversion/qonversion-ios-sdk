@@ -89,6 +89,14 @@ NS_ASSUME_NONNULL_BEGIN
 */
 + (void)products:(QNProductsCompletionHandler)completion;
 
+/**
+ You can check if a user is eligible for an introductory offer, including a free trial. On the Apple platform, users who have not previously used an introductory offer for any products in the same subscription group are eligible for an introductory offer. Use this method to determine eligibility.
+ 
+ You can show only a regular price for users who are not eligible for an introductory offer.
+ @param productIds products identifiers that must be checked
+ @param completion Completion block that include trial eligibility check result dictionary and error
+ */
++ (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion;
 
 /**
   Return Qonversion Offerings Object
@@ -101,6 +109,13 @@ NS_ASSUME_NONNULL_BEGIN
   @see [Product Center](https://qonversion.io/docs/product-center)
  */
 + (void)offerings:(QNOfferingsCompletionHandler)completion;
+
+/**
+ Qonversion A/B tests help you grow your app revenue by making it easy to run and analyze paywall and promoted in-app product experiments. It gives you the power to measure your paywalls' performance before you roll them out widely. It is an out-of-the-box solution that does not require any third-party service.
+ 
+ @param completion Completion block that include user experiments check result dictionary and error
+ */
++ (void)experiments:(QNExperimentsCompletionHandler)completion;
 
 + (void)resetUser;
 

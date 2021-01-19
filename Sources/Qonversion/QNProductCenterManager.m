@@ -12,6 +12,7 @@
 #import "QNPromoPurchasesDelegate.h"
 #import "QNOfferings.h"
 #import "QNOffering.h"
+#import "QNIntroEligibility.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
@@ -29,6 +30,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNPermissionCompletionHandler> *permissionsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNProductsCompletionHandler> *productsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNOfferingsCompletionHandler> *offeringsBlocks;
+@property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
 @property (nonatomic) QNLaunchResult *launchResult;
@@ -55,10 +57,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
-    _purchasingBlocks = [[NSMutableDictionary alloc] init];
+    _purchasingBlocks = [NSMutableDictionary new];
     _permissionsBlocks = [NSMutableArray new];
     _productsBlocks = [NSMutableArray new];
     _offeringsBlocks = [NSMutableArray new];
+    _experimentsBlocks = [NSMutableArray new];
   }
   
   return self;
@@ -68,7 +71,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return [self.persistentStorage loadObjectForKey:kLaunchResult];
 }
 
-- (void)launchWithCompletion:(QNLaunchCompletionHandler)completion {
+- (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion {
   _launchingFinished = NO;
   
   __block __weak QNProductCenterManager *weakSelf = self;
@@ -82,6 +85,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     weakSelf.launchError = error;
     
     [weakSelf executePermissionBlocks];
+    [weakSelf executeExperimentsBlocks];
     
     NSArray *storeProducts = [weakSelf.storeKitService getLoadedProducts];
     if (!weakSelf.productsLoading && storeProducts.count == 0) {
@@ -166,6 +170,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)processPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
   QNProduct *product = [self QNProduct:productID];
   if (!product) {
+    QONVERSION_LOG(@"❌ product with id: %@ not found", product.qonversionID);
     run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
     return;
   }
@@ -180,6 +185,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
   
+  QONVERSION_LOG(@"❌ product with id: %@ not found", product.qonversionID);
   run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
 }
 
@@ -199,6 +205,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
     for (QNPermissionCompletionHandler block in _blocks) {
       run_block_on_main(block, self.launchResult.permissions ?: @{}, self.launchError);
+    }
+  }
+}
+
+- (void)executeExperimentsBlocks {
+  @synchronized (self) {
+    NSArray <QNExperimentsCompletionHandler> *blocks = [self.experimentsBlocks copy];
+    if (blocks.count == 0) {
+      return;
+    }
+    
+    [self.experimentsBlocks removeAllObjects];
+    
+    for (QNExperimentsCompletionHandler block in blocks) {
+      run_block_on_main(block, self.launchResult.experiments, self.launchError);
     }
   }
 }
@@ -255,24 +276,30 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     [_productsBlocks removeAllObjects];
     NSArray *products = [(_launchResult.products ?: @{}) allValues];;
-    NSMutableDictionary *resultProducts = [[NSMutableDictionary alloc] init];
-    for (QNProduct *_product in products) {
-      if (!_product.qonversionID) {
-        continue;
-      }
-      
-      QNProduct *qnProduct = [self productAt:_product.qonversionID];
-      if (qnProduct) {
-        [resultProducts setValue:qnProduct forKey:_product.qonversionID];
-      }
-    }
     
+    NSDictionary *resultProducts = [self enrichProductsWithStoreProducts:products];
     NSError *resultError = error ?: _launchError;
     NSDictionary *result = resultError ? @{} : [resultProducts copy];
     for (QNProductsCompletionHandler _block in _blocks) {
       run_block_on_main(_block, result, resultError);
     }
   }
+}
+
+- (NSDictionary<NSString *, QNProduct *> *)enrichProductsWithStoreProducts:(NSArray<QNProduct *> *)products {
+  NSMutableDictionary *resultProducts = [[NSMutableDictionary alloc] init];
+  for (QNProduct *_product in products) {
+    if (!_product.qonversionID) {
+      continue;
+    }
+    
+    QNProduct *qnProduct = [self productAt:_product.qonversionID];
+    if (qnProduct) {
+      [resultProducts setValue:qnProduct forKey:_product.qonversionID];
+    }
+  }
+  
+  return [resultProducts copy];
 }
 
 - (void)loadProducts {
@@ -310,6 +337,42 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
+- (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion {
+  NSArray *uniqueProductIdentifiers = [NSSet setWithArray:productIds].allObjects;
+  
+  __block __weak QNProductCenterManager *weakSelf = self;
+  [self products:^(NSDictionary<NSString *,QNProduct *> * _Nonnull result, NSError * _Nullable error) {
+    for (NSString *identifier in uniqueProductIdentifiers) {
+      QNProduct *product = result[identifier];
+      if (!product) {
+        QONVERSION_LOG(@"❌ product with id: %@ not found", product.qonversionID);
+        run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound]);
+        return;
+      }
+    }
+    
+    [weakSelf.apiClient checkTrialIntroEligibilityParamsForProducts:result.allValues completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+      if (result.error) {
+        run_block_on_main(completion, @{}, result.error);
+        return;
+      }
+      
+      NSDictionary<NSString *, QNIntroEligibility *> *eligibilityData = [QNMapper mapProductsEligibility:result.data];
+      NSMutableDictionary<NSString *, QNIntroEligibility *> *resultEligibility = [NSMutableDictionary new];
+      
+      for (NSString *identifier in uniqueProductIdentifiers) {
+        QNIntroEligibility *item = eligibilityData[identifier];
+        if (item) {
+          resultEligibility[identifier] = item;
+        }
+      }
+      
+      run_block_on_main(completion, [resultEligibility copy], nil);
+    }];
+  }];
+}
+
 - (void)retryLaunchFlowWithCompletion:(void(^)(void))completion {
   if (self.launchError) {
     __block __weak QNProductCenterManager *weakSelf = self;
@@ -344,6 +407,22 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
+- (void)experiments:(QNExperimentsCompletionHandler)completion {
+  @synchronized (self) {
+    [self.experimentsBlocks addObject:completion];
+    
+    if (!self.launchingFinished) {
+      return;
+    }
+    
+    if (self.launchResult) {
+      [self executeExperimentsBlocks];
+    } else {
+      [self launchWithCompletion:nil];
+    }
+  }
+}
+
 - (QNProduct *)productAt:(NSString *)productID {
   QNProduct *product = [self QNProduct:productID];
   if (product) {
@@ -364,8 +443,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
   __block __weak QNProductCenterManager *weakSelf = self;
-  
-  [_apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+  [self.apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     @synchronized (weakSelf) {
       weakSelf.launchingFinished = YES;
     }
