@@ -6,7 +6,7 @@
 //  Copyright © 2021 Qonversion Inc. All rights reserved.
 //
 
-#import <Qonversion/Qonversion.h>
+#import "QNExperimentInfo.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

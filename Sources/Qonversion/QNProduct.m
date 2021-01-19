@@ -33,46 +33,48 @@
   
   QNTrialDuration duration = QNTrialDurationNotAvailable;
   
-  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, *) && self.skProduct.introductoryPrice) {
-    duration = QNTrialDurationOther;
-    
-    SKProductPeriodUnit unit = self.skProduct.introductoryPrice.subscriptionPeriod.unit;
-    NSUInteger numberOfUnits = self.skProduct.introductoryPrice.subscriptionPeriod.numberOfUnits;
-    switch (unit) {
-      case SKProductPeriodUnitDay:
-        if (numberOfUnits == 3) {
-          duration = QNTrialDurationThreeDays;
-        }
-        break;
-        
-      case SKProductPeriodUnitWeek:
-        if (numberOfUnits == 1) {
-          duration = QNTrialDurationWeek;
-        } else if (numberOfUnits == 2) {
-          duration = QNTrialDurationTwoWeeks;
-        }
-        break;
-        
-      case SKProductPeriodUnitMonth:
-        if (numberOfUnits == 1) {
-          duration = QNTrialDurationMonth;
-        } else if (numberOfUnits == 2) {
-          duration = QNTrialDurationTwoMonths;
-        } else if (numberOfUnits == 3) {
-          duration = QNTrialDurationThreeMonths;
-        } else if (numberOfUnits == 6) {
-          duration = QNTrialDurationSixMonths;
-        }
-        break;
-        
-      case SKProductPeriodUnitYear:
-        if (numberOfUnits == 1) {
-          duration = QNTrialDurationYear;
-        }
-        break;
-        
-      default:
-        break;
+  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
+    if (self.skProduct.introductoryPrice) {
+      duration = QNTrialDurationOther;
+      
+      SKProductPeriodUnit unit = self.skProduct.introductoryPrice.subscriptionPeriod.unit;
+      NSUInteger numberOfUnits = self.skProduct.introductoryPrice.subscriptionPeriod.numberOfUnits;
+      switch (unit) {
+        case SKProductPeriodUnitDay:
+          if (numberOfUnits == 3) {
+            duration = QNTrialDurationThreeDays;
+          }
+          break;
+          
+        case SKProductPeriodUnitWeek:
+          if (numberOfUnits == 1) {
+            duration = QNTrialDurationWeek;
+          } else if (numberOfUnits == 2) {
+            duration = QNTrialDurationTwoWeeks;
+          }
+          break;
+          
+        case SKProductPeriodUnitMonth:
+          if (numberOfUnits == 1) {
+            duration = QNTrialDurationMonth;
+          } else if (numberOfUnits == 2) {
+            duration = QNTrialDurationTwoMonths;
+          } else if (numberOfUnits == 3) {
+            duration = QNTrialDurationThreeMonths;
+          } else if (numberOfUnits == 6) {
+            duration = QNTrialDurationSixMonths;
+          }
+          break;
+          
+        case SKProductPeriodUnitYear:
+          if (numberOfUnits == 1) {
+            duration = QNTrialDurationYear;
+          }
+          break;
+          
+        default:
+          break;
+      }
     }
   }
   
