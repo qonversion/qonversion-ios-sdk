@@ -41,7 +41,7 @@ NS_SWIFT_NAME(Qonversion.LaunchResult)
 /**
  User A/B-test experiments
  */
-@property (nonatomic, copy, readonly) NSDictionary<NSString *, QNExperimentInfo *> *experiments;
+@property (nonatomic, copy) NSDictionary<NSString *, QNExperimentInfo *> *experiments;
 /**
  User permissions
  */
