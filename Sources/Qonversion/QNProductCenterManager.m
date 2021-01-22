@@ -10,6 +10,7 @@
 #import "QNProduct.h"
 #import "QNErrors.h"
 #import "QNPromoPurchasesDelegate.h"
+#import "QNPurchasesDelegate.h"
 #import "QNOfferings.h"
 #import "QNOffering.h"
 #import "QNIntroEligibility.h"
@@ -19,6 +20,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
 
+@property (nonatomic, weak) id<QNPurchasesDelegate> purchasesDelegate;
 @property (nonatomic, weak) id<QNPromoPurchasesDelegate> promoPurchasesDelegate;
 
 @property (nonatomic) QNStoreKitService *storeKitService;
@@ -111,6 +113,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   _promoPurchasesDelegate = delegate;
 }
 
+- (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate {
+  _purchasesDelegate = delegate;
+}
+
 - (void)checkPermissions:(QNPermissionCompletionHandler)completion {
   if (!completion) {
     return;
@@ -170,7 +176,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)processPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
   QNProduct *product = [self QNProduct:productID];
   if (!product) {
-    QONVERSION_LOG(@"❌ product with id: %@ not found", product.qonversionID);
+    QONVERSION_LOG(@"❌ product with id: %@ not found", productID);
     run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
     return;
   }
@@ -185,7 +191,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
   
-  QONVERSION_LOG(@"❌ product with id: %@ not found", product.qonversionID);
+  QONVERSION_LOG(@"❌ product with id: %@ not found", productID);
   run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
 }
 
@@ -345,7 +351,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     for (NSString *identifier in uniqueProductIdentifiers) {
       QNProduct *product = result[identifier];
       if (!product) {
-        QONVERSION_LOG(@"❌ product with id: %@ not found", product.qonversionID);
+        QONVERSION_LOG(@"❌ product with id: %@ not found", identifier);
         run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound]);
         return;
       }
@@ -499,6 +505,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   completion(launchResult, nil);
 }
 
+- (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product error:(NSError *)error {
+  QNPurchaseCompletionHandler _purchasingBlock = _purchasingBlocks[product.productIdentifier];
+  if (_purchasingBlock) {
+    run_block_on_main(_purchasingBlock, @{}, error, error.code == QNErrorCancelled);
+    @synchronized (self) {
+      [_purchasingBlocks removeObjectForKey:product.productIdentifier];
+    }
+  }
+}
+
 // MARK: - QNStoreKitServiceDelegate
 
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
@@ -527,12 +543,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       @synchronized (weakSelf) {
         [weakSelf.launchResult setPermissions:launchResult.permissions];
       }
+      
       if (_purchasingBlock) {
         run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
+      } else {
+        [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedPermissions:launchResult.permissions];
       }
     }];
   }];
-  
 }
 
 - (void)handleRestoreCompletedTransactionsFinished {
@@ -575,16 +593,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self executeProductsBlocksWithError:error];
 }
 
+- (void)handleDeferredTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
+  NSError *error = [QNErrors deferredTransactionError];
+  
+  [self handleFailedTransaction:transaction forProduct:product error:error];
+}
+
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   NSError *error = [QNErrors errorFromTransactionError:transaction.error];
   
-  QNPurchaseCompletionHandler _purchasingBlock = _purchasingBlocks[product.productIdentifier];
-  if (_purchasingBlock) {
-    run_block_on_main(_purchasingBlock, @{}, error, error.code == QNErrorCancelled);
-    @synchronized (self) {
-      [_purchasingBlocks removeObjectForKey:product.productIdentifier];
-    }
-  }
+  [self handleFailedTransaction:transaction forProduct:product error:error];
 }
 
 - (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product {

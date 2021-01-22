@@ -2,12 +2,13 @@
 #import "QNLaunchResult.h"
 
 @class QNLaunchResult;
-@protocol QNPromoPurchasesDelegate;
+@protocol QNPromoPurchasesDelegate, QNPurchasesDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QNProductCenterManager : NSObject
 
+- (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate;
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
 - (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion;

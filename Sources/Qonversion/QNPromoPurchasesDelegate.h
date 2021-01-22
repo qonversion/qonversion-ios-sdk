@@ -7,6 +7,7 @@
 //
 #import "QNLaunchResult.h"
 
+NS_SWIFT_NAME(Qonversion.PromoPurchasesDelegate)
 @protocol QNPromoPurchasesDelegate <NSObject>
 
 /**
