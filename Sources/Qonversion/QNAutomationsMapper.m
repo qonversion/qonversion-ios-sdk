@@ -14,7 +14,8 @@
 @implementation QNAutomationsMapper
 
 - (nullable QNAutomationScreen *)mapScreen:(NSDictionary *)dict {
-  NSString *htmlString = dict[@"data"][@"body"];
+  NSDictionary *data = [self getDataFromObject:dict];
+  NSString *htmlString = data[@"body"];
   QNAutomationScreen *screen;
   
   if (htmlString) {
@@ -38,10 +39,12 @@
   return error;
 }
 
-- (NSArray<QNUserActionPoint *> *)mapUserActionPoints:(NSArray<NSDictionary *> *)data {
+- (NSArray<QNUserActionPoint *> *)mapUserActionPoints:(NSDictionary *)dict {
   NSMutableArray *actionPoints = [NSMutableArray new];
+  NSDictionary *data = [self getDataFromObject:dict];
+  NSArray *actionItems = data[@"items"];
   
-  for (NSDictionary *action in data) {
+  for (NSDictionary *action in actionItems) {
     NSNumber *date = action[@"created"];
     NSDate *createDate = [NSDate dateWithTimeIntervalSince1970:date.doubleValue];
     NSString *screenId = action[@"data"][@"screen"];
@@ -54,6 +57,14 @@
   }
   
   return [actionPoints copy];
+}
+
+- (NSDictionary *)getDataFromObject:(NSDictionary *)obj {
+  NSDictionary *temp = obj[@"data"];
+  
+  NSDictionary *result = [temp isKindOfClass:[NSDictionary class]] ? temp : nil;
+  
+  return result;
 }
 
 @end

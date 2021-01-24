@@ -22,7 +22,7 @@
     NSError *mappedError = [weakSelf.mapper mapError:dict];
     NSError *screenError = mappedError ?: error ;
     
-    
+    run_block_on_main(completion, screen, screenError);
   }];
 }
 

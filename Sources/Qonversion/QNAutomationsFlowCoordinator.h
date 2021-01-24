@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol QNAutomationsDelegate;
+@protocol QONAutomationsDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)sharedInstance;
 
-- (void)setAutomationsDelegate:(id<QNAutomationsDelegate> _Nullable)automationsDelegate;
+- (void)setAutomationsDelegate:(id<QONAutomationsDelegate> _Nullable)automationsDelegate;
 - (void)showAutomationWithID:(NSString *)automationID;
 - (BOOL)handlePushNotification:(NSDictionary *)userInfo;
 - (void)showAutomationIfExists;

@@ -10,7 +10,7 @@
 #import "QNAutomationsService.h"
 #import "QNAutomationsFlowAssembly.h"
 #import "QNActionsHandler.h"
-#import "QNAction.h"
+#import "QONAction.h"
 #import "QNAutomationScreen.h"
 #import "QNAutomationConstants.h"
 
@@ -79,29 +79,29 @@
 #pragma mark Actions
 
 - (void)handleAction:(WKNavigationAction *)navigationAction {
-  QNAction *action = [self.actionsHandler prepareDataForAction:navigationAction];
+  QONAction *action = [self.actionsHandler prepareDataForAction:navigationAction];
   
   switch (action.type) {
-    case QNActionTypeLink: {
+    case QONActionTypeLink: {
       [self handleLinkAction:action];
       break;
     }
-    case QNActionTypeDeeplink: {
+    case QONActionTypeDeeplink: {
       [self handleDeepLinkAction:action];
       break;
     }
-    case QNActionTypeClose:
+    case QONActionTypeClose:
       [self handleCloseAction:action];
       break;
-    case QNActionTypePurchase: {
+    case QONActionTypePurchase: {
       [self handlePurchaseAction:action];
       break;
     }
-    case QNActionTypeRestorePurchases: {
+    case QONActionTypeRestorePurchases: {
       [self handleRestoreAction:action];
       break;
     }
-    case QNActionTypeNaivgation: {
+    case QONActionTypeNaivgation: {
       [self handleNavigationAction:action];
       break;
     }
@@ -110,7 +110,7 @@
   }
 }
 
-- (void)handleLinkAction:(QNAction *)action {
+- (void)handleLinkAction:(QONAction *)action {
   NSString *urlString = action.value[kAutomationValueKey];
   if (urlString.length > 0) {
     NSURL *url = [NSURL URLWithString:urlString];
@@ -119,12 +119,12 @@
   }
 }
 
-- (void)handleCloseAction:(QNAction *)action {
+- (void)handleCloseAction:(QONAction *)action {
   [self dismissViewControllerAnimated:YES completion:nil];
   [self.delegate automationsViewController:self didFinishAction:action];
 }
 
-- (void)handleDeepLinkAction:(QNAction *)action {
+- (void)handleDeepLinkAction:(QONAction *)action {
   NSString *deeplinkString = action.value[kAutomationValueKey];
   if (deeplinkString.length > 0) {
     NSURL *url = [NSURL URLWithString:deeplinkString];
@@ -132,7 +132,7 @@
   }
 }
 
-- (void)handlePurchaseAction:(QNAction *)action {
+- (void)handlePurchaseAction:(QONAction *)action {
   NSString *productID = action.value[kAutomationValueKey];
   if (productID.length > 0) {
     [self.activityIndicator startAnimating];
@@ -155,7 +155,7 @@
   }
 }
 
-- (void)handleRestoreAction:(QNAction *)action {
+- (void)handleRestoreAction:(QONAction *)action {
   __block __weak QNAutomationsViewController *weakSelf = self;
   [self.activityIndicator startAnimating];
   [Qonversion restoreWithCompletion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
@@ -170,7 +170,7 @@
   }];
 }
 
-- (void)handleNavigationAction:(QNAction *)action {
+- (void)handleNavigationAction:(QONAction *)action {
   NSString *automationID = action.value[kAutomationValueKey];
   __block __weak QNAutomationsViewController *weakSelf = self;
   [self.activityIndicator startAnimating];

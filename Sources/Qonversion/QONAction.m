@@ -6,8 +6,8 @@
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-#import "QNAction.h"
+#import "QONAction.h"
 
-@implementation QNAction
+@implementation QONAction
 
 @end

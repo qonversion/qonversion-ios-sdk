@@ -7,6 +7,8 @@
 #import <Qonversion/QNStoreKitSugare.h>
 #import <Qonversion/QNConstants.h>
 #import <Qonversion/QNErrors.h>
-#import <Qonversion/QNAutomationsDelegate.h>
-#import <Qonversion/QNAction.h>
+
+#import <Qonversion/QONAutomation.h>
+#import <Qonversion/QONAutomationsDelegate.h>
+#import <Qonversion/QONAction.h>
 

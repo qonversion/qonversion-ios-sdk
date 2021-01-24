@@ -8,7 +8,7 @@
 
 #import "QNAutomationsFlowCoordinator.h"
 #import "QNAutomationsFlowAssembly.h"
-#import "QNAutomationsDelegate.h"
+#import "QONAutomationsDelegate.h"
 #import "QNAutomationsViewController.h"
 #import "QNAutomationsService.h"
 #import "QNAutomationScreen.h"
@@ -17,7 +17,7 @@
 
 @interface QNAutomationsFlowCoordinator() <QNAutomationsViewControllerDelegate>
 
-@property (nonatomic, weak) id<QNAutomationsDelegate> automationsDelegate;
+@property (nonatomic, weak) id<QONAutomationsDelegate> automationsDelegate;
 @property (nonatomic, strong) QNAutomationsFlowAssembly *assembly;
 @property (nonatomic, strong) QNAutomationsService *automationsService;
 
@@ -46,7 +46,7 @@
   return self;
 }
 
-- (void)setAutomationsDelegate:(id<QNAutomationsDelegate>)automationsDelegate {
+- (void)setAutomationsDelegate:(id<QONAutomationsDelegate>)automationsDelegate {
   _automationsDelegate = automationsDelegate;
 }
 
@@ -95,7 +95,7 @@
   }];
 }
 
-- (void)automationsViewController:(QNAutomationsViewController *)viewController didFinishAction:(QNAction *)action {
+- (void)automationsViewController:(QNAutomationsViewController *)viewController didFinishAction:(QONAction *)action {
   if ([self.automationsDelegate respondsToSelector:@selector(automationFlowFinishedWithAction:)]) {
     [self.automationsDelegate automationFlowFinishedWithAction:action];
   }
@@ -104,7 +104,13 @@
 #pragma mark - Priate
 
 - (UIViewController *)topLevelViewController {
-  return nil;
+  UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;
+
+  while (topController.presentedViewController) {
+    topController = topController.presentedViewController;
+  }
+
+  return topController;
 }
 
 @end

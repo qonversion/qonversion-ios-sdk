@@ -8,15 +8,15 @@
 
 #import <UIKit/UIKit.h>
 
-@class QNAutomationsService, QNActionsHandler, QNAutomationsFlowAssembly, QNAction, QNAutomationsViewController;
+@class QNAutomationsService, QNActionsHandler, QNAutomationsFlowAssembly, QONAction, QNAutomationsViewController;
+
+NS_ASSUME_NONNULL_BEGIN
 
 @protocol QNAutomationsViewControllerDelegate <NSObject>
 
-- (void)automationsViewController:(QNAutomationsViewController *)viewController didFinishAction:(QNAction *)action;
+- (void)automationsViewController:(QNAutomationsViewController *)viewController didFinishAction:(QONAction *)action;
 
 @end
-
-NS_ASSUME_NONNULL_BEGIN
 
 @interface QNAutomationsViewController : UIViewController
 

@@ -22,9 +22,6 @@
     case QNPropertyAdjustUserID:
       key = @"_q_adjust_adid";
       break;
-    case QNPropertyPushToken:
-      key = @"_q_push_token";
-      break;
   }
   
   return key;

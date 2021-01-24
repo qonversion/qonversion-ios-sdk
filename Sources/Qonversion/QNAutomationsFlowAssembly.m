@@ -15,7 +15,7 @@
 
 @implementation QNAutomationsFlowAssembly
 
-- (QNAutomationsViewController *)configureAutomationsViewControllerWithHtmlString:(NSString *)htmlString delegate:(id<QNAutomationsViewControllerDelegate>)delegate {
+- (QNAutomationsViewController *)configureAutomationsViewControllerWithHtmlString:(NSString *)htmlString delegate:(id<QNAutomationsViewControllerDelegate> _Nullable)delegate {
   QNAutomationsViewController *vc = [QNAutomationsViewController new];
   vc.htmlString = htmlString;
   vc.delegate = delegate;

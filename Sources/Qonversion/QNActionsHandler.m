@@ -7,7 +7,7 @@
 //
 
 #import "QNActionsHandler.h"
-#import "QNAction.h"
+#import "QONAction.h"
 #import <WebKit/WebKit.h>
 
 static NSString *const kQonversionSchemeRegEx = @"^(q-)\\w";
@@ -34,12 +34,12 @@ static NSString *const kCloseAction = @"close";
   
   if (self) {
     _actionsTypesDictionary = @{
-      kLinkAction: @(QNActionTypeLink),
-      kDeeplinkAction: @(QNActionTypeDeeplink),
-      kCloseAction: @(QNActionTypeClose),
-      kPurchaseAction: @(QNActionTypePurchase),
-      kRestoreAction: @(QNActionTypeRestorePurchases),
-      kNavigationAction: @(QNActionTypeNaivgation),
+      kLinkAction: @(QONActionTypeLink),
+      kDeeplinkAction: @(QONActionTypeDeeplink),
+      kCloseAction: @(QONActionTypeClose),
+      kPurchaseAction: @(QONActionTypePurchase),
+      kRestoreAction: @(QONActionTypeRestorePurchases),
+      kNavigationAction: @(QONActionTypeNaivgation),
     };
   }
   
@@ -53,9 +53,9 @@ static NSString *const kCloseAction = @"close";
   return range.location != NSNotFound && [components.host isEqualToString:kAutomationsHost];
 }
 
-- (QNAction *)prepareDataForAction:(WKNavigationAction *)action {
+- (QONAction *)prepareDataForAction:(WKNavigationAction *)action {
   NSURLComponents *components = [NSURLComponents componentsWithString:action.request.URL.absoluteString];
-  QNActionType type = QNActionTypeUnknown;
+  QONActionType type = QONActionTypeUnknown;
   NSMutableDictionary *value = [NSMutableDictionary new];
   
   for (NSURLQueryItem *item in [components queryItems]) {
@@ -66,7 +66,7 @@ static NSString *const kCloseAction = @"close";
       }
   }
   
-  QNAction *formattedAction = [QNAction new];
+  QONAction *formattedAction = [QONAction new];
   formattedAction.type = type;
   formattedAction.value = [value copy];
   

@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable QNAutomationScreen *)mapScreen:(NSDictionary *)dict;
 - (nullable NSError *)mapError:(NSDictionary *)error;
-- (NSArray<QNUserActionPoint *> *)mapUserActionPoints:(NSArray<NSDictionary *> *)data;
+- (NSArray<QNUserActionPoint *> *)mapUserActionPoints:(NSDictionary *)dict;
 
 @end
 

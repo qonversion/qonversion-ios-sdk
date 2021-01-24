@@ -79,20 +79,20 @@
 }
 
 - (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeUserActionPointsRequestWith:self.userID apiKey:self.apiKey];
+  NSURLRequest *request = [self.requestBuilder makeUserActionPointsRequestWith:self.userID apiKey:[self obtainApiKey]];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
 
 - (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID apiKey:self.apiKey];
+  NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID apiKey:[self obtainApiKey]];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID {
   NSDictionary *body = @{@"user": self.userID};
-  NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body apiKey:self.apiKey];
+  NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body apiKey:[self obtainApiKey]];
   
   return [self dataTaskWithRequest:request completion:nil];
 }
@@ -127,6 +127,10 @@
 }
 
 // MARK: - Private
+
+- (NSString *)obtainApiKey {
+  return self.debug ? [NSString stringWithFormat:@"test_%@", self.apiKey] : self.apiKey;
+}
 
 - (NSDictionary *)enrichParameters:(NSDictionary *)parameters {
   NSDictionary *_parameters = parameters ?: @{};

@@ -8,12 +8,11 @@
 #import "QNProductCenterManager.h"
 #import "QNUserInfo.h"
 #import "QNProperties.h"
-#import "QNAutomationsFlowCoordinator.h"
 #import "QNDevice.h"
+#import "QNAutomationsFlowCoordinator.h"
 
 @interface Qonversion()
 
-@property (nonatomic, weak, readwrite) id<QNAutomationsDelegate> automationsDelegate;
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
@@ -97,14 +96,6 @@
 
 + (void)products:(QNProductsCompletionHandler)completion {
   return [[Qonversion sharedInstance].productCenterManager products:completion];
-}
-
-+ (void)setAutomationsDelegate:(id<QNAutomationsDelegate>)delegate {
-  [[QNAutomationsFlowCoordinator sharedInstance] setAutomationsDelegate:delegate];
-}
-
-+ (void)showAutomationWithID:(NSString *)automationID {
-  [[QNAutomationsFlowCoordinator sharedInstance] showAutomationWithID:automationID];
 }
 
 + (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable {

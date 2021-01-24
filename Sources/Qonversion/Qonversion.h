@@ -3,7 +3,6 @@
 #import "QNLaunchResult.h"
 #import "QNProduct.h"
 #import "QNPermission.h"
-#import "QNAutomationsDelegate.h"
 
 @protocol QNPromoPurchasesDelegate;
 
@@ -100,10 +99,6 @@ NS_ASSUME_NONNULL_BEGIN
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
 + (void)products:(QNProductsCompletionHandler)completion;
-
-+ (void)setAutomationsDelegate:(id<QNAutomationsDelegate>)delegate;
-
-+ (void)showAutomationWithID:(NSString *)automationID;
 
 + (void)resetUser;
 

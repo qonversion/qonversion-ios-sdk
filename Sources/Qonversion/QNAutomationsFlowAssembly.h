@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QNAutomationsFlowAssembly : NSObject
 
-- (QNAutomationsViewController *)configureAutomationsViewControllerWithHtmlString:(NSString *)htmlString delegate:(id<QNAutomationsViewControllerDelegate>)delegate;
+- (QNAutomationsViewController *)configureAutomationsViewControllerWithHtmlString:(NSString *)htmlString delegate:(id<QNAutomationsViewControllerDelegate> _Nullable)delegate;
 - (QNAutomationsService *)automationService;
 - (QNActionsHandler *)actionsHandler;
 
