@@ -58,6 +58,8 @@
     [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
   }
   
+  [self addLocaleToRequest:request];
+  
   NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
 
   request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
@@ -82,8 +84,17 @@
   
   request.HTTPMethod = type;
   [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
+  [self addLocaleToRequest:request];
   
   return request;
+}
+
+- (void)addLocaleToRequest:(NSMutableURLRequest *)request {
+  NSString *currentLocaleIdentifier = [NSLocale currentLocale].localeIdentifier;
+  NSString *locale = [NSLocale componentsFromLocaleIdentifier:currentLocaleIdentifier][NSLocaleLanguageCode];
+  if (locale.length > 0) {
+    [request addValue:locale forHTTPHeaderField:@"User-locale"];
+  }
 }
 
 @end
