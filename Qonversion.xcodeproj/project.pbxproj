@@ -282,7 +282,6 @@
 		89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsTableViewCell.swift; sourceTree = "<group>"; };
 		89B1198925BD67F80057F6BB /* QONAutomation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomation.h; sourceTree = "<group>"; };
 		89B1198A25BD67F80057F6BB /* QONAutomation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomation.m; sourceTree = "<group>"; };
-		89B1199325BD6A570057F6BB /* Automation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automation.swift; sourceTree = "<group>"; };
 		89E6C83125931F4700CDC327 /* QNAutomationsMapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNAutomationsMapper.h; sourceTree = "<group>"; };
 		89E6C83225931F4700CDC327 /* QNAutomationsMapper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAutomationsMapper.m; sourceTree = "<group>"; };
 		89E6C8372593205F00CDC327 /* QNAutomationScreen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNAutomationScreen.h; sourceTree = "<group>"; };
@@ -351,7 +350,6 @@
 				456215C8257D6AF800548A3D /* Sample.entitlements */,
 				454EF63E24E5CC580070581E /* AppDelegate.swift */,
 				454EF64224E5CC590070581E /* ViewController.swift */,
-				89B1199325BD6A570057F6BB /* Automation.swift */,
 				89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */,
 				89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */,
 				454EF64424E5CC590070581E /* Main.storyboard */,
