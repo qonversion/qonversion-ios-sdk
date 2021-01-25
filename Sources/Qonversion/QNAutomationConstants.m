@@ -10,5 +10,6 @@
 
 NSString *const kAutomationValueKey = @"value";
 NSString *const kAutomationErrorAlertTitle = @"Error";
+NSString *const kAutomationShowScreenErrorAlertTitle = @"Failure to show app screen";
 NSString *const kAutomationErrorOkActionTitle = @"Ok";
 

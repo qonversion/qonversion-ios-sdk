@@ -30,8 +30,6 @@
 - (void)viewDidLoad {
   [super viewDidLoad];
   
-  [self.navigationController setNavigationBarHidden:NO];
-  
   self.webView = [WKWebView new];
   self.webView.navigationDelegate = self;
   [self.view addSubview:self.webView];
@@ -65,8 +63,8 @@
   [self handleAction:navigationAction];
 }
 
-- (void)showErrorAlertWithMessage:(NSString *)message {
-  UIAlertController *alert = [UIAlertController alertControllerWithTitle:kAutomationErrorAlertTitle message:message preferredStyle:UIAlertControllerStyleAlert];
+- (void)showErrorAlertWithTitle:(NSString *)title message:(NSString *)message {
+  UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
   
   UIAlertAction *action = [UIAlertAction actionWithTitle:kAutomationErrorOkActionTitle style:UIAlertActionStyleCancel handler:nil];
   [alert addAction:action];
@@ -101,7 +99,7 @@
       [self handleRestoreAction:action];
       break;
     }
-    case QONActionTypeNaivgation: {
+    case QONActionTypeNavigation: {
       [self handleNavigationAction:action];
       break;
     }
@@ -145,7 +143,7 @@
       }
       
       if (error) {
-        [weakSelf showErrorAlertWithMessage:error.localizedDescription];
+        [weakSelf showErrorAlertWithTitle:kAutomationErrorAlertTitle message:error.localizedDescription];
         return;
       }
       
@@ -161,7 +159,7 @@
   [Qonversion restoreWithCompletion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
     [weakSelf.activityIndicator stopAnimating];
     if (error) {
-      [weakSelf showErrorAlertWithMessage:error.localizedDescription];
+      [weakSelf showErrorAlertWithTitle:kAutomationErrorAlertTitle message:error.localizedDescription];
       return;
     }
     
@@ -181,7 +179,7 @@
       [weakSelf.automationsService trackScreenShownWithID:automationID];
       [weakSelf.navigationController pushViewController:viewController animated:YES];
     } else if (error) {
-      [weakSelf showErrorAlertWithMessage:error.localizedDescription];
+      [weakSelf showErrorAlertWithTitle:kAutomationShowScreenErrorAlertTitle message:error.localizedDescription];
     }
   }];
 }

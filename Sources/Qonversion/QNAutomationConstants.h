@@ -10,6 +10,7 @@
 
 extern NSString *const kAutomationValueKey;
 extern NSString *const kAutomationErrorAlertTitle;
+extern NSString *const kAutomationShowScreenErrorAlertTitle;
 extern NSString *const kAutomationErrorOkActionTitle;
 
 

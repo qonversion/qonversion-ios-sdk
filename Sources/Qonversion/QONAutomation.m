@@ -17,11 +17,7 @@
 
 @implementation QONAutomation
 
-+ (BOOL)handlePushNotification:(NSDictionary *)userInfo {
-  return [[QNAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
-}
-
-+ (void)setAutomationsDelegate:(id<QONAutomationsDelegate>)delegate {
++ (void)setDelegate:(id<QONAutomationsDelegate>)delegate {
   [[QNAutomationsFlowCoordinator sharedInstance] setAutomationsDelegate:delegate];
 }
 

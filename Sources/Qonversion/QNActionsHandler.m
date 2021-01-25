@@ -10,8 +10,8 @@
 #import "QONAction.h"
 #import <WebKit/WebKit.h>
 
-static NSString *const kQonversionSchemeRegEx = @"^(q-)\\w";
-static NSString *const kAutomationsHost = @"automations";
+static NSString *const kQonversionSchemeRegEx = @"^(qon-)\\w";
+static NSString *const kAutomationsHost = @"automation";
 static NSString *const kActionHost = @"action";
 
 static NSString *const kLinkAction = @"url";
@@ -39,7 +39,7 @@ static NSString *const kCloseAction = @"close";
       kCloseAction: @(QONActionTypeClose),
       kPurchaseAction: @(QONActionTypePurchase),
       kRestoreAction: @(QONActionTypeRestorePurchases),
-      kNavigationAction: @(QONActionTypeNaivgation),
+      kNavigationAction: @(QONActionTypeNavigation),
     };
   }
   
