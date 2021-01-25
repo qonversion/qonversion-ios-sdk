@@ -9,7 +9,7 @@
 #import "QNUserInfo.h"
 #import "QNProperties.h"
 #import "QNDevice.h"
-#import "QNAutomationsFlowCoordinator.h"
+#import "QONAutomationsFlowCoordinator.h"
 
 @interface Qonversion()
 
@@ -51,7 +51,7 @@
 }
 
 + (BOOL)handlePushNotification:(NSDictionary *)userInfo {
-  return [[QNAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
+  return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
 }
 
 + (void)setDebugMode {

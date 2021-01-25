@@ -1,28 +1,28 @@
 //
-//  QONAutomation.m
+//  QONAutomations.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 24.01.2021.
 //  Copyright © 2021 Qonversion Inc. All rights reserved.
 //
 
-#import "QONAutomation.h"
-#import "QNAutomationsFlowCoordinator.h"
+#import "QONAutomations.h"
+#import "QONAutomationsFlowCoordinator.h"
 
-@interface QONAutomation ()
+@interface QONAutomations ()
 
 @property (nonatomic, weak) id<QONAutomationsDelegate> automationsDelegate;
 
 @end
 
-@implementation QONAutomation
+@implementation QONAutomations
 
 + (void)setDelegate:(id<QONAutomationsDelegate>)delegate {
-  [[QNAutomationsFlowCoordinator sharedInstance] setAutomationsDelegate:delegate];
+  [[QONAutomationsFlowCoordinator sharedInstance] setAutomationsDelegate:delegate];
 }
 
 + (void)showAutomationWithID:(NSString *)automationID {
-  [[QNAutomationsFlowCoordinator sharedInstance] showAutomationWithID:automationID];
+  [[QONAutomationsFlowCoordinator sharedInstance] showAutomationWithID:automationID];
 }
 
 @end

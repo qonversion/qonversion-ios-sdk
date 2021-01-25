@@ -1,5 +1,5 @@
 //
-//  QNActionsHandler.h
+//  QONActionsHandler.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.09.2020.
@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QNActionsHandler : NSObject
+@interface QONAutomationsActionsHandler : NSObject
 
 - (BOOL)isActionShouldBeHandled:(WKNavigationAction *)action;
 - (QONAction *)prepareDataForAction:(WKNavigationAction *)action;

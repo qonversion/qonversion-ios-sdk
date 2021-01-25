@@ -1,31 +1,31 @@
 //
-//  QNAutomationsViewController.m
+//  QONAutomationsViewController.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.09.2020.
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-#import "QNAutomationsViewController.h"
-#import "QNAutomationsService.h"
-#import "QNAutomationsFlowAssembly.h"
-#import "QNActionsHandler.h"
+#import "QONAutomationsViewController.h"
+#import "QONAutomationsService.h"
+#import "QONAutomationsFlowAssembly.h"
+#import "QONAutomationsActionsHandler.h"
 #import "QONAction.h"
-#import "QNAutomationScreen.h"
-#import "QNAutomationConstants.h"
+#import "QONAutomationsScreen.h"
+#import "QONAutomationsConstants.h"
 
 #import "Qonversion.h"
 #import <WebKit/WebKit.h>
 #import <SafariServices/SafariServices.h>
 
-@interface QNAutomationsViewController () <WKNavigationDelegate>
+@interface QONAutomationsViewController () <WKNavigationDelegate>
 
 @property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
 
 @end
 
-@implementation QNAutomationsViewController
+@implementation QONAutomationsViewController
 
 - (void)viewDidLoad {
   [super viewDidLoad];
@@ -66,7 +66,7 @@
 - (void)showErrorAlertWithTitle:(NSString *)title message:(NSString *)message {
   UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
   
-  UIAlertAction *action = [UIAlertAction actionWithTitle:kAutomationErrorOkActionTitle style:UIAlertActionStyleCancel handler:nil];
+  UIAlertAction *action = [UIAlertAction actionWithTitle:kAutomationsErrorOkActionTitle style:UIAlertActionStyleCancel handler:nil];
   [alert addAction:action];
   
   [self.navigationController presentViewController:alert animated:YES completion:nil];
@@ -109,7 +109,7 @@
 }
 
 - (void)handleLinkAction:(QONAction *)action {
-  NSString *urlString = action.value[kAutomationValueKey];
+  NSString *urlString = action.value[kAutomationsValueKey];
   if (urlString.length > 0) {
     NSURL *url = [NSURL URLWithString:urlString];
     SFSafariViewController *safariViewController = [[SFSafariViewController alloc] initWithURL:url];
@@ -123,7 +123,7 @@
 }
 
 - (void)handleDeepLinkAction:(QONAction *)action {
-  NSString *deeplinkString = action.value[kAutomationValueKey];
+  NSString *deeplinkString = action.value[kAutomationsValueKey];
   if (deeplinkString.length > 0) {
     NSURL *url = [NSURL URLWithString:deeplinkString];
     [[UIApplication sharedApplication] openURL:url];
@@ -131,10 +131,10 @@
 }
 
 - (void)handlePurchaseAction:(QONAction *)action {
-  NSString *productID = action.value[kAutomationValueKey];
+  NSString *productID = action.value[kAutomationsValueKey];
   if (productID.length > 0) {
     [self.activityIndicator startAnimating];
-    __block __weak QNAutomationsViewController *weakSelf = self;
+    __block __weak QONAutomationsViewController *weakSelf = self;
     [Qonversion purchase:productID completion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error, BOOL cancelled) {
       [weakSelf.activityIndicator stopAnimating];
       
@@ -143,7 +143,7 @@
       }
       
       if (error) {
-        [weakSelf showErrorAlertWithTitle:kAutomationErrorAlertTitle message:error.localizedDescription];
+        [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription];
         return;
       }
       
@@ -154,12 +154,12 @@
 }
 
 - (void)handleRestoreAction:(QONAction *)action {
-  __block __weak QNAutomationsViewController *weakSelf = self;
+  __block __weak QONAutomationsViewController *weakSelf = self;
   [self.activityIndicator startAnimating];
   [Qonversion restoreWithCompletion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
     [weakSelf.activityIndicator stopAnimating];
     if (error) {
-      [weakSelf showErrorAlertWithTitle:kAutomationErrorAlertTitle message:error.localizedDescription];
+      [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription];
       return;
     }
     
@@ -169,17 +169,17 @@
 }
 
 - (void)handleNavigationAction:(QONAction *)action {
-  NSString *automationID = action.value[kAutomationValueKey];
-  __block __weak QNAutomationsViewController *weakSelf = self;
+  NSString *automationID = action.value[kAutomationsValueKey];
+  __block __weak QONAutomationsViewController *weakSelf = self;
   [self.activityIndicator startAnimating];
-  [self.automationsService automationWithID:automationID completion:^(QNAutomationScreen *screen, NSError * _Nullable error) {
+  [self.automationsService automationWithID:automationID completion:^(QONAutomationsScreen *screen, NSError * _Nullable error) {
     [weakSelf.activityIndicator stopAnimating];
     if (screen.htmlString) {
-      QNAutomationsViewController *viewController = [weakSelf.flowAssembly configureAutomationsViewControllerWithHtmlString:screen.htmlString delegate:weakSelf.delegate];
+      QONAutomationsViewController *viewController = [weakSelf.flowAssembly configureAutomationsViewControllerWithHtmlString:screen.htmlString delegate:weakSelf.delegate];
       [weakSelf.automationsService trackScreenShownWithID:automationID];
       [weakSelf.navigationController pushViewController:viewController animated:YES];
     } else if (error) {
-      [weakSelf showErrorAlertWithTitle:kAutomationShowScreenErrorAlertTitle message:error.localizedDescription];
+      [weakSelf showErrorAlertWithTitle:kAutomationsShowScreenErrorAlertTitle message:error.localizedDescription];
     }
   }];
 }

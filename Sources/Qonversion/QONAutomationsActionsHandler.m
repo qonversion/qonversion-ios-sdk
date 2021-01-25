@@ -1,12 +1,12 @@
 //
-//  QNActionsHandler.m
+//  QONActionsHandler.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.09.2020.
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-#import "QNActionsHandler.h"
+#import "QONAutomationsActionsHandler.h"
 #import "QONAction.h"
 #import <WebKit/WebKit.h>
 
@@ -21,13 +21,13 @@ static NSString *const kRestoreAction = @"restore";
 static NSString *const kNavigationAction = @"navigate";
 static NSString *const kCloseAction = @"close";
 
-@interface QNActionsHandler()
+@interface QONAutomationsActionsHandler()
 
 @property (nonatomic, copy) NSDictionary<NSString *, NSNumber *> *actionsTypesDictionary;
 
 @end
 
-@implementation QNActionsHandler
+@implementation QONAutomationsActionsHandler
 
 - (instancetype)init {
   self = [super init];

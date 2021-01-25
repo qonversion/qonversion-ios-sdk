@@ -1,25 +1,25 @@
 //
-//  QNAutomationsMapper.m
+//  QONAutomationsMapper.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.12.2020.
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-#import "QNAutomationsMapper.h"
-#import "QNAutomationScreen.h"
+#import "QONAutomationsMapper.h"
+#import "QONAutomationsScreen.h"
 #import "QNErrors.h"
 #import "QNUserActionPoint.h"
 
-@implementation QNAutomationsMapper
+@implementation QONAutomationsMapper
 
-- (nullable QNAutomationScreen *)mapScreen:(NSDictionary *)dict {
+- (nullable QONAutomationsScreen *)mapScreen:(NSDictionary *)dict {
   NSDictionary *data = [self getDataFromObject:dict];
   NSString *htmlString = data[@"body"];
-  QNAutomationScreen *screen;
+  QONAutomationsScreen *screen;
   
   if (htmlString) {
-    screen = [[QNAutomationScreen alloc] initWithHtmlString:htmlString];
+    screen = [[QONAutomationsScreen alloc] initWithHtmlString:htmlString];
   }
   
   return screen;

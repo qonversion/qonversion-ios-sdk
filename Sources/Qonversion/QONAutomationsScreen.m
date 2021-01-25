@@ -1,20 +1,20 @@
 //
-//  QNAutomationScreen.m
+//  QONAutomationsScreen.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.12.2020.
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-#import "QNAutomationScreen.h"
+#import "QONAutomationsScreen.h"
 
-@interface QNAutomationScreen ()
+@interface QONAutomationsScreen ()
 
 @property (nonatomic, copy, readwrite) NSString *htmlString;
 
 @end
 
-@implementation QNAutomationScreen
+@implementation QONAutomationsScreen
 
 - (instancetype)initWithHtmlString:(NSString *)html {
   self = [super init];

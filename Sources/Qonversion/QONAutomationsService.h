@@ -1,5 +1,5 @@
 //
-//  QNActionsService.h
+//  QONActionsService.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.09.2020.
@@ -8,17 +8,17 @@
 
 #import <Foundation/Foundation.h>
 
-@class QNAPIClient, QNAutomationsMapper, QNAutomationScreen, QNUserActionPoint;
+@class QNAPIClient, QONAutomationsMapper, QONAutomationsScreen, QNUserActionPoint;
 
 typedef void (^QNActiveAutomationCompletionHandler)(NSArray<QNUserActionPoint *> *actionPoints, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.AutomationCompletionHandler);
-typedef void (^QNAutomationsCompletionHandler)(QNAutomationScreen *screen, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.AutomationCompletionHandler);
+typedef void (^QNAutomationsCompletionHandler)(QONAutomationsScreen *screen, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.AutomationCompletionHandler);
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QNAutomationsService : NSObject
+@interface QONAutomationsService : NSObject
 
 @property (nonatomic, strong) QNAPIClient *apiClient;
-@property (nonatomic, strong) QNAutomationsMapper *mapper;
+@property (nonatomic, strong) QONAutomationsMapper *mapper;
 
 - (void)automationWithID:(NSString *)automationID completion:(QNAutomationsCompletionHandler)completion;
 - (void)trackScreenShownWithID:(NSString *)automationID;

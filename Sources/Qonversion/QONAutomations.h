@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_SWIFT_NAME(Qonversion.Automations)
+NS_SWIFT_NAME(Qonversion.Automation)
 @interface QONAutomations : NSObject
 
 + (void)setDelegate:(id<QONAutomationsDelegate>)delegate

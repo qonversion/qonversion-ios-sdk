@@ -1,29 +1,29 @@
 //
-//  QNAutomationsFlowCoordinator.m
+//  QONAutomationsFlowCoordinator.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 24.09.2020.
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-#import "QNAutomationsFlowCoordinator.h"
-#import "QNAutomationsFlowAssembly.h"
+#import "QONAutomationsFlowCoordinator.h"
+#import "QONAutomationsFlowAssembly.h"
 #import "QONAutomationsDelegate.h"
-#import "QNAutomationsViewController.h"
-#import "QNAutomationsService.h"
-#import "QNAutomationScreen.h"
-#import "QNActionsHandler.h"
+#import "QONAutomationsViewController.h"
+#import "QONAutomationsService.h"
+#import "QONAutomationsScreen.h"
+#import "QONAutomationsActionsHandler.h"
 #import "QNUserActionPoint.h"
 
-@interface QNAutomationsFlowCoordinator() <QNAutomationsViewControllerDelegate>
+@interface QONAutomationsFlowCoordinator() <QNAutomationsViewControllerDelegate>
 
 @property (nonatomic, weak) id<QONAutomationsDelegate> automationsDelegate;
-@property (nonatomic, strong) QNAutomationsFlowAssembly *assembly;
-@property (nonatomic, strong) QNAutomationsService *automationsService;
+@property (nonatomic, strong) QONAutomationsFlowAssembly *assembly;
+@property (nonatomic, strong) QONAutomationsService *automationsService;
 
 @end
 
-@implementation QNAutomationsFlowCoordinator
+@implementation QONAutomationsFlowCoordinator
 
 + (instancetype)sharedInstance {
   static id shared = nil;
@@ -39,8 +39,8 @@
   self = [super init];
   
   if (self) {
-    _assembly = [QNAutomationsFlowAssembly new];
-    _automationsService = [_assembly automationService];
+    _assembly = [QONAutomationsFlowAssembly new];
+    _automationsService = [_assembly automationsService];
   }
   
   return self;
@@ -60,7 +60,7 @@
 }
 
 - (void)showAutomationIfExists {
-  __block __weak QNAutomationsFlowCoordinator *weakSelf = self;
+  __block __weak QONAutomationsFlowCoordinator *weakSelf = self;
   [self.automationsService obtainAutomationScreensWithCompletion:^(NSArray<QNUserActionPoint *> *actionPoints, NSError * _Nullable error) {
     NSArray<QNUserActionPoint *> *sortedActions = [actionPoints sortedArrayUsingSelector:@selector(createDate)];
     QNUserActionPoint *latestAction = sortedActions.lastObject;
@@ -73,11 +73,11 @@
 }
 
 - (void)showAutomationWithID:(NSString *)automationID {
-  __block __weak QNAutomationsFlowCoordinator *weakSelf = self;
-  [self.automationsService automationWithID:automationID completion:^(QNAutomationScreen *screen, NSError * _Nullable error) {
+  __block __weak QONAutomationsFlowCoordinator *weakSelf = self;
+  [self.automationsService automationWithID:automationID completion:^(QONAutomationsScreen *screen, NSError * _Nullable error) {
     if (screen) {
       [weakSelf.automationsService trackScreenShownWithID:automationID];
-      QNAutomationsViewController *viewController = [weakSelf.assembly configureAutomationsViewControllerWithHtmlString:screen.htmlString delegate:self];
+      QONAutomationsViewController *viewController = [weakSelf.assembly configureAutomationsViewControllerWithHtmlString:screen.htmlString delegate:self];
       
       UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
       navigationController.navigationBarHidden = YES;
@@ -95,7 +95,7 @@
   }];
 }
 
-- (void)automationsViewController:(QNAutomationsViewController *)viewController didFinishAction:(QONAction *)action {
+- (void)automationsViewController:(QONAutomationsViewController *)viewController didFinishAction:(QONAction *)action {
   if ([self.automationsDelegate respondsToSelector:@selector(automationFlowFinishedWithAction:)]) {
     [self.automationsDelegate automationFlowFinishedWithAction:action];
   }

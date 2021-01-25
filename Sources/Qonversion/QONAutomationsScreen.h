@@ -1,5 +1,5 @@
 //
-//  QNAutomationScreen.h
+//  QONAutomationsScreen.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.12.2020.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QNAutomationScreen : NSObject
+@interface QONAutomationsScreen : NSObject
 
 @property (nonatomic, copy, readonly) NSString *htmlString;
 

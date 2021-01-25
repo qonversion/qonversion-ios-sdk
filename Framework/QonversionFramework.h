@@ -8,7 +8,6 @@
 #import <Qonversion/QNConstants.h>
 #import <Qonversion/QNErrors.h>
 
-#import <Qonversion/QONAutomation.h>
+#import <Qonversion/QONAutomations.h>
 #import <Qonversion/QONAutomationsDelegate.h>
 #import <Qonversion/QONAction.h>
-

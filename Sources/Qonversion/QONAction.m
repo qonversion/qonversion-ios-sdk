@@ -1,5 +1,5 @@
 //
-//  QNAction.m
+//  QONAction.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.09.2020.

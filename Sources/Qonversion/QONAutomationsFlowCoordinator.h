@@ -1,5 +1,5 @@
 //
-//  QNAutomationsFlowCoordinator.h
+//  QONAutomationsFlowCoordinator.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 24.09.2020.
@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QNAutomationsFlowCoordinator : NSObject
+@interface QONAutomationsFlowCoordinator : NSObject
 
 + (instancetype)sharedInstance;
 
