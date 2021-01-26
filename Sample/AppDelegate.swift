@@ -15,6 +15,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
   
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    Qonversion.setDebugMode()
     Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
     Qonversion.setPromoPurchasesDelegate(self)
     Qonversion.setAppleSearchAdsAttributionEnabled(true)
@@ -44,13 +45,15 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
   }
 
   func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-      
+    let isPushHandled: Bool = Qonversion.handlePushNotification(response.notification.request.content.userInfo)
+    if !isPushHandled {
+      // Qonversion can not handle this push.
+    }
     completionHandler()
   }
   
   func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-      
-    completionHandler([])
+    completionHandler([.alert, .badge, .sound])
   }
   
 }

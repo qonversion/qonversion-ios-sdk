@@ -25,6 +25,8 @@ class ViewController: UIViewController {
     
     navigationController?.isNavigationBarHidden = true
     
+    Qonversion.Automation.setDelegate(self)
+    
     subscriptionTitleLabel.text = ""
     mainProductSubscriptionButton.layer.cornerRadius = 20.0
     inAppPurchseButton.layer.cornerRadius = 20.0
@@ -62,7 +64,7 @@ class ViewController: UIViewController {
       
       self.products = result
       
-      if let inAppPurchase = result["in_app"] {
+      if let inAppPurchase = result["consumable"] {
         let permission: Qonversion.Permission? = self.permissions["standart"]
         let isActive = permission?.isActive ?? false
         let title: String = isActive ? "Purchased" : "Buy for \(inAppPurchase.prettyPrice)"
@@ -115,7 +117,7 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapInAppPurchaseButton(_ sender: Any) {
-    if let product = self.products["in_app"] {
+    if let product = self.products["consumable"] {
       activityIndicator.startAnimating()
       Qonversion.purchase(product.qonversionID) { [weak self] (result, error, flag) in
         guard let self = self else { return }
@@ -188,5 +190,15 @@ extension Qonversion.Product {
     @unknown default:
       return ""
     }
+  }
+}
+
+extension ViewController: Qonversion.AutomationsDelegate {
+  func controllerForNavigation() -> UIViewController {
+    return self
+  }
+  
+  func automationFinished(action: Qonversion.ActionResult) {
+    // automation finished
   }
 }
