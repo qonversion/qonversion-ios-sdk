@@ -30,13 +30,13 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Set push token to Qonversion to enable Qonversion push notifications
  */
-+ (void)setPushNotificationsToken:(NSString *)token API_AVAILABLE(ios(9.0));
++ (void)setNotificationsToken:(NSString *)token API_AVAILABLE(ios(9.0));
 
 /**
  Returns true when a push notification was received from Qonversion.
  Otherwise returns false, so you need to handle a notification yourself
  */
-+ (BOOL)handlePushNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
++ (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
 
 /**
  Sets debug environment for user.

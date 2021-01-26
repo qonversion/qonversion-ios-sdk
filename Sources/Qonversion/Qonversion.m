@@ -39,7 +39,7 @@
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
 }
 
-+ (void)setPushNotificationsToken:(NSString *)token {
++ (void)setNotificationsToken:(NSString *)token {
   NSString *oldToken = [QNDevice current].pushNotificationsToken;
   if ([token isEqualToString:oldToken] || token.length == 0) {
     return;
@@ -50,7 +50,7 @@
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:nil];
 }
 
-+ (BOOL)handlePushNotification:(NSDictionary *)userInfo {
++ (BOOL)handleNotification:(NSDictionary *)userInfo {
   return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
 }
 

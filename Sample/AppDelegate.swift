@@ -41,11 +41,11 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 
   func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
     let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-    Qonversion.setPushNotificationsToken(tokenString)
+    Qonversion.setNotificationsToken(tokenString)
   }
 
   func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-    let isPushHandled: Bool = Qonversion.handlePushNotification(response.notification.request.content.userInfo)
+    let isPushHandled: Bool = Qonversion.handleNotification(response.notification.request.content.userInfo)
     if !isPushHandled {
       // Qonversion can not handle this push.
     }
