@@ -44,7 +44,8 @@
 
 - (void)viewDidLayoutSubviews {
   [super viewDidLayoutSubviews];
-    
+  
+  self.activityIndicator.center = self.view.center;
   self.webView.frame = self.view.frame;
 }
 

@@ -30,10 +30,10 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Sets push notifications token
  */
-+ (void)setPushNotificationsToken:(NSString *)token;
++ (void)setPushNotificationsToken:(NSString *)token API_AVAILABLE(ios(9.0));
 
 // TODO: update comment
-+ (BOOL)handlePushNotification:(NSDictionary *)userInfo;
++ (BOOL)handlePushNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
 
 /**
  Sets debug environment for user.

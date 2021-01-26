@@ -101,7 +101,7 @@
   }
 }
 
-#pragma mark - Priate
+#pragma mark - Private
 
 - (UIViewController *)topLevelViewController {
   UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;

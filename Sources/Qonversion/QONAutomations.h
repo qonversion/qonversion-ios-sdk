@@ -12,6 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+API_AVAILABLE(ios(9.0))
 NS_SWIFT_NAME(Qonversion.Automation)
 @interface QONAutomations : NSObject
 
