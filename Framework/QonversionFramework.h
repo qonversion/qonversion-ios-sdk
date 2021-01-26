@@ -7,4 +7,8 @@
 #import <Qonversion/QNStoreKitSugare.h>
 #import <Qonversion/QNConstants.h>
 #import <Qonversion/QNErrors.h>
-
+#import <Qonversion/QNOfferings.h>
+#import <Qonversion/QNOffering.h>
+#import <Qonversion/QNIntroEligibility.h>
+#import <Qonversion/QNExperimentInfo.h>
+#import <Qonversion/QNExperimentGroup.h>

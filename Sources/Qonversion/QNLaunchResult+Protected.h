@@ -2,10 +2,11 @@
 
 @interface QNLaunchResult (Protected)
 
-@property (nonatomic, strong) NSString *uid;
-@property (nonatomic) NSUInteger timestamp;
-@property (nonatomic, strong) NSDictionary<NSString *, QNPermission *> *permissions;
-@property (nonatomic, strong) NSDictionary<NSString *, QNProduct *> *products;
-@property (nonatomic, strong) NSDictionary<NSString *, QNProduct *> *userProducts;
+@property (nonatomic, copy) NSString *uid;
+@property (nonatomic, assign) NSUInteger timestamp;
+@property (nonatomic, copy) NSDictionary<NSString *, QNExperimentInfo *> *experiments;
+@property (nonatomic, copy) NSDictionary<NSString *, QNPermission *> *permissions;
+@property (nonatomic, copy) NSDictionary<NSString *, QNProduct *> *products;
+@property (nonatomic, copy) NSDictionary<NSString *, QNProduct *> *userProducts;
 
 @end
