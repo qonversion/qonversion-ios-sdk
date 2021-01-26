@@ -13,7 +13,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 API_AVAILABLE(ios(9.0))
-NS_SWIFT_NAME(Qonversion.Automation)
+NS_SWIFT_NAME(Qonversion.Automations)
 @interface QONAutomations : NSObject
 
 + (void)setDelegate:(id<QONAutomationsDelegate>)delegate
