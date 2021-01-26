@@ -10,4 +10,4 @@
 
 #import <Qonversion/QONAutomations.h>
 #import <Qonversion/QONAutomationsDelegate.h>
-#import <Qonversion/QONAction.h>
+#import <Qonversion/QONActionResult.h>

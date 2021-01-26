@@ -95,9 +95,9 @@
   }];
 }
 
-- (void)automationsViewController:(QONAutomationsViewController *)viewController didFinishAction:(QONAction *)action {
-  if ([self.automationsDelegate respondsToSelector:@selector(automationFlowFinishedWithAction:)]) {
-    [self.automationsDelegate automationFlowFinishedWithAction:action];
+- (void)automationsViewController:(QONAutomationsViewController *)viewController didFinishAction:(QONActionResult *)action {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationFinishedWithAction:)]) {
+    [self.automationsDelegate automationFinishedWithAction:action];
   }
 }
 

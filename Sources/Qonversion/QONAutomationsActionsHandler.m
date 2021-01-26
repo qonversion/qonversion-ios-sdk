@@ -7,7 +7,7 @@
 //
 
 #import "QONAutomationsActionsHandler.h"
-#import "QONAction.h"
+#import "QONActionResult.h"
 #import <WebKit/WebKit.h>
 
 static NSString *const kQonversionSchemeRegEx = @"^(qon-)\\w";
@@ -53,9 +53,9 @@ static NSString *const kCloseAction = @"close";
   return range.location != NSNotFound && [components.host isEqualToString:kAutomationsHost];
 }
 
-- (QONAction *)prepareDataForAction:(WKNavigationAction *)action {
+- (QONActionResult *)prepareDataForAction:(WKNavigationAction *)action {
   NSURLComponents *components = [NSURLComponents componentsWithString:action.request.URL.absoluteString];
-  QONActionType type = QONActionTypeUnknown;
+  QONActionResultType type = QONActionTypeUnknown;
   NSMutableDictionary *value = [NSMutableDictionary new];
   
   for (NSURLQueryItem *item in [components queryItems]) {
@@ -66,7 +66,7 @@ static NSString *const kCloseAction = @"close";
       }
   }
   
-  QONAction *formattedAction = [QONAction new];
+  QONActionResult *formattedAction = [QONActionResult new];
   formattedAction.type = type;
   formattedAction.value = [value copy];
   

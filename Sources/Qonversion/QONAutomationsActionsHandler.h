@@ -8,14 +8,14 @@
 
 #import <Foundation/Foundation.h>
 
-@class WKNavigationAction, QONAction;
+@class WKNavigationAction, QONActionResult;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QONAutomationsActionsHandler : NSObject
 
 - (BOOL)isActionShouldBeHandled:(WKNavigationAction *)action;
-- (QONAction *)prepareDataForAction:(WKNavigationAction *)action;
+- (QONActionResult *)prepareDataForAction:(WKNavigationAction *)action;
 
 @end
 

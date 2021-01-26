@@ -10,7 +10,7 @@
 #import "QONAutomationsService.h"
 #import "QONAutomationsFlowAssembly.h"
 #import "QONAutomationsActionsHandler.h"
-#import "QONAction.h"
+#import "QONActionResult.h"
 #import "QONAutomationsScreen.h"
 #import "QONAutomationsConstants.h"
 
@@ -18,7 +18,7 @@
 #import <WebKit/WebKit.h>
 #import <SafariServices/SafariServices.h>
 
-@interface QONAutomationsViewController () <WKNavigationDelegate>
+@interface QONAutomationsViewController () <WKNavigationDelegate, UIScrollViewDelegate>
 
 @property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
@@ -40,6 +40,7 @@
   [self.view addSubview:self.activityIndicator];
   
   [self.webView loadHTMLString:self.htmlString baseURL:nil];
+  self.webView.scrollView.delegate = self;
 }
 
 - (void)viewDidLayoutSubviews {
@@ -78,7 +79,7 @@
 #pragma mark Actions
 
 - (void)handleAction:(WKNavigationAction *)navigationAction {
-  QONAction *action = [self.actionsHandler prepareDataForAction:navigationAction];
+  QONActionResult *action = [self.actionsHandler prepareDataForAction:navigationAction];
   
   switch (action.type) {
     case QONActionTypeLink: {
@@ -109,7 +110,7 @@
   }
 }
 
-- (void)handleLinkAction:(QONAction *)action {
+- (void)handleLinkAction:(QONActionResult *)action {
   NSString *urlString = action.value[kAutomationsValueKey];
   if (urlString.length > 0) {
     NSURL *url = [NSURL URLWithString:urlString];
@@ -118,20 +119,26 @@
   }
 }
 
-- (void)handleCloseAction:(QONAction *)action {
-  [self dismissViewControllerAnimated:YES completion:nil];
-  [self.delegate automationsViewController:self didFinishAction:action];
+- (void)handleCloseAction:(QONActionResult *)action {
+  __block __weak QONAutomationsViewController *weakSelf = self;
+  [self dismissViewControllerAnimated:YES completion:^{
+    [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
+  }];
 }
 
-- (void)handleDeepLinkAction:(QONAction *)action {
+- (void)handleDeepLinkAction:(QONActionResult *)action {
   NSString *deeplinkString = action.value[kAutomationsValueKey];
   if (deeplinkString.length > 0) {
+    __block __weak QONAutomationsViewController *weakSelf = self;
     NSURL *url = [NSURL URLWithString:deeplinkString];
-    [[UIApplication sharedApplication] openURL:url];
+    [self dismissViewControllerAnimated:YES completion:^{
+      [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
+      [[UIApplication sharedApplication] openURL:url];
+    }];
   }
 }
 
-- (void)handlePurchaseAction:(QONAction *)action {
+- (void)handlePurchaseAction:(QONActionResult *)action {
   NSString *productID = action.value[kAutomationsValueKey];
   if (productID.length > 0) {
     [self.activityIndicator startAnimating];
@@ -148,13 +155,14 @@
         return;
       }
       
-      [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
-      [weakSelf dismissViewControllerAnimated:YES completion:nil];
+      [weakSelf dismissViewControllerAnimated:YES completion:^{
+        [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
+      }];
     }];
   }
 }
 
-- (void)handleRestoreAction:(QONAction *)action {
+- (void)handleRestoreAction:(QONActionResult *)action {
   __block __weak QONAutomationsViewController *weakSelf = self;
   [self.activityIndicator startAnimating];
   [Qonversion restoreWithCompletion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
@@ -164,12 +172,13 @@
       return;
     }
     
-    [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
-    [weakSelf dismissViewControllerAnimated:YES completion:nil];
+    [weakSelf dismissViewControllerAnimated:YES completion:^{
+      [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
+    }];
   }];
 }
 
-- (void)handleNavigationAction:(QONAction *)action {
+- (void)handleNavigationAction:(QONActionResult *)action {
   NSString *automationID = action.value[kAutomationsValueKey];
   __block __weak QONAutomationsViewController *weakSelf = self;
   [self.activityIndicator startAnimating];
@@ -183,6 +192,12 @@
       [weakSelf showErrorAlertWithTitle:kAutomationsShowScreenErrorAlertTitle message:error.localizedDescription];
     }
   }];
+}
+
+#pragma mark - UIScrollViewDelegate
+
+- (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view {
+  scrollView.pinchGestureRecognizer.enabled = NO;
 }
 
 @end

@@ -1,5 +1,5 @@
 //
-//  QONAction.h
+//  QONActionResult.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.09.2020.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSInteger, QONActionType) {
+typedef NS_ENUM(NSInteger, QONActionResultType) {
   QONActionTypeUnknown = 0,
   QONActionTypeLink = 1,
   QONActionTypeDeeplink = 2,
@@ -18,11 +18,12 @@ typedef NS_ENUM(NSInteger, QONActionType) {
   QONActionTypePurchase = 4,
   QONActionTypeRestorePurchases = 5,
   QONActionTypeClose = 6
-} NS_SWIFT_NAME(Qonversion.ActionType);
+} NS_SWIFT_NAME(Qonversion.ActionResultType);
 
-@interface QONAction : NSObject
+NS_SWIFT_NAME(Qonversion.ActionResult)
+@interface QONActionResult : NSObject
 
-@property (nonatomic, assign) QONActionType type;
+@property (nonatomic, assign) QONActionResultType type;
 @property (nonatomic, copy) NSDictionary *value;
 
 @end
