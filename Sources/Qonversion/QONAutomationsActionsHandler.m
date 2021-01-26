@@ -34,11 +34,11 @@ static NSString *const kCloseAction = @"close";
   
   if (self) {
     _actionsTypesDictionary = @{
-      kLinkAction: @(QONActionTypeLink),
+      kLinkAction: @(QONActionTypeURL),
       kDeeplinkAction: @(QONActionTypeDeeplink),
       kCloseAction: @(QONActionTypeClose),
       kPurchaseAction: @(QONActionTypePurchase),
-      kRestoreAction: @(QONActionTypeRestorePurchases),
+      kRestoreAction: @(QONActionTypeRestore),
       kNavigationAction: @(QONActionTypeNavigation),
     };
   }

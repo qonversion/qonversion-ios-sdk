@@ -27,7 +27,7 @@
     case QONActionTypeUnknown:
       result = @"unknown"; break;
     
-    case QONActionTypeLink:
+    case QONActionTypeURL:
       result = @"link"; break;
     
     case QONActionTypeDeeplink:
@@ -39,7 +39,7 @@
     case QONActionTypePurchase:
       result = @"purchase"; break;
       
-    case QONActionTypeRestorePurchases:
+    case QONActionTypeRestore:
       result = @"restore purchases"; break;
       
     case QONActionTypeClose:

@@ -82,7 +82,7 @@
   QONActionResult *action = [self.actionsHandler prepareDataForAction:navigationAction];
   
   switch (action.type) {
-    case QONActionTypeLink: {
+    case QONActionTypeURL: {
       [self handleLinkAction:action];
       break;
     }
@@ -97,7 +97,7 @@
       [self handlePurchaseAction:action];
       break;
     }
-    case QONActionTypeRestorePurchases: {
+    case QONActionTypeRestore: {
       [self handleRestoreAction:action];
       break;
     }

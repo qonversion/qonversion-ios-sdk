@@ -24,17 +24,20 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Sets delegate for AppStore promo purchases flow
+ @param delegate - delegate for handling AppStore promo purchase flow
  */
 + (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
 /**
  Set push token to Qonversion to enable Qonversion push notifications
+ @param token - token data
  */
-+ (void)setNotificationsToken:(NSString *)token API_AVAILABLE(ios(9.0));
++ (void)setNotificationsToken:(NSData *)token API_AVAILABLE(ios(9.0));
 
 /**
  Returns true when a push notification was received from Qonversion.
  Otherwise returns false, so you need to handle a notification yourself
+ @param userInfo - notification user info
  */
 + (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
 

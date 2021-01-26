@@ -12,11 +12,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSInteger, QONActionResultType) {
   QONActionTypeUnknown = 0,
-  QONActionTypeLink = 1,
+  QONActionTypeURL = 1,
   QONActionTypeDeeplink = 2,
   QONActionTypeNavigation = 3,
   QONActionTypePurchase = 4,
-  QONActionTypeRestorePurchases = 5,
+  QONActionTypeRestore = 5,
   QONActionTypeClose = 6
 } NS_SWIFT_NAME(Qonversion.ActionResultType);
 

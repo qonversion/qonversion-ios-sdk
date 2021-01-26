@@ -40,8 +40,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
   }
 
   func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-    let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-    Qonversion.setNotificationsToken(tokenString)
+    Qonversion.setNotificationsToken(deviceToken)
   }
 
   func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
