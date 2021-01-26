@@ -134,9 +134,6 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapRestorePurchasesButton(_ sender: Any) {
-    Qonversion.setAutomationsDelegate(self)
-    Qonversion.showAutomation(withID: "da")
-    return
     activityIndicator.startAnimating()
     Qonversion.restore { [weak self] (permissions, error) in
       guard let self = self else { return }
@@ -167,22 +164,6 @@ class ViewController: UIViewController {
   
   @IBAction func didTapCheckActivePermissionsButton(_ sender: Any) {
     self.showActivePermissionsScreen()
-  }
-  
-}
-
-extension ViewController: Qonversion.AutomationsDelegate {
-  
-  func actionFlowFinished() {
-    print("YOHOHO")
-  }
-  
-  func canShowAction(withID actionID: String!) -> Bool {
-    return true
-  }
-  
-  func controllerForNavigation() -> UIViewController! {
-    return self
   }
   
 }
