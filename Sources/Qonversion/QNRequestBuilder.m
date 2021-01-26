@@ -34,6 +34,10 @@
   return [self makePostRequestWith:endpoint andBody:body apiKey:apiKey];
 }
 
+- (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
+  return [self makePostRequestWith:kProductsEndpoint andBody:parameters];
+}
+
 // MARK: Private
 
 - (NSURLRequest *)makeGetRequestWith:(NSString *)endpoint apiKey:(NSString *)apiKey {

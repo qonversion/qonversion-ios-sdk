@@ -24,6 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
                     receipt:(nullable NSString *)receipt
                  completion:(QNAPIClientCompletionHandler)completion;
 
+- (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QNProduct *> *)products
+                                         completion:(QNAPIClientCompletionHandler)completion;
+
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
 - (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion;
 - (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;

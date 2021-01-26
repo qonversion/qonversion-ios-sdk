@@ -11,6 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
                    transaction:(SKPaymentTransaction *)transaction
                        receipt:(nullable NSString *)receipt;
 
+- (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QNProduct *> *)products;
+
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;
 
 @end
