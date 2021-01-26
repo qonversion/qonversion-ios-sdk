@@ -30,7 +30,7 @@
     
   }];
 }
- 
+
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
   [[QNAPIClient shared] setApiKey:key];
   [[QNAPIClient shared] setUserID:[self getUserID:3]];

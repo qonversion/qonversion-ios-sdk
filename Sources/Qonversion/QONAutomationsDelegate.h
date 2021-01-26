@@ -8,6 +8,10 @@
 
 @class UIViewController, QONActionResult;
 
+/**
+ The delegate is responsible for handling in-app screens and actions when push notification is received.
+ Make sure the method is called before handlePushIfPossible
+ */
 NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
 @protocol QONAutomationsDelegate <NSObject>
 

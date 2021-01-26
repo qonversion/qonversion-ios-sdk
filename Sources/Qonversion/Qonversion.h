@@ -28,11 +28,14 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
 /**
- Sets push notifications token
+ Set push token to Qonversion to enable Qonversion push notifications
  */
 + (void)setPushNotificationsToken:(NSString *)token API_AVAILABLE(ios(9.0));
 
-// TODO: update comment
+/**
+ Returns true when a push notification was received from Qonversion.
+ Otherwise returns false, so you need to handle a notification yourself
+ */
 + (BOOL)handlePushNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
 
 /**
