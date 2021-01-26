@@ -22,7 +22,21 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
 
+/**
+ Sets delegate for AppStore promo purchases flow
+ */
 + (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
+
+/**
+ Set push token to Qonversion to enable Qonversion push notifications
+ */
++ (void)setNotificationsToken:(NSString *)token API_AVAILABLE(ios(9.0));
+
+/**
+ Returns true when a push notification was received from Qonversion.
+ Otherwise returns false, so you need to handle a notification yourself
+ */
++ (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
 
 /**
  Sets debug environment for user.
