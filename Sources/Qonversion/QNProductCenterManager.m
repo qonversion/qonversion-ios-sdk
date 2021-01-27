@@ -537,10 +537,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)handleRestoreCompletedTransactionsFinished {
   if (self.restorePurchasesBlock) {
+    __block __weak QNProductCenterManager *weakSelf = self;
     [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-      QNRestoreCompletionHandler restorePurchasesBlock = [self.restorePurchasesBlock copy];
-      self.restorePurchasesBlock = nil;
+      QNRestoreCompletionHandler restorePurchasesBlock = [weakSelf.restorePurchasesBlock copy];
+      weakSelf.restorePurchasesBlock = nil;
       if (result) {
+        [weakSelf.launchResult setPermissions:result.permissions];
         run_block_on_main(restorePurchasesBlock, result.permissions, error);
       } else if (error) {
         run_block_on_main(restorePurchasesBlock, @{}, error);
