@@ -34,12 +34,12 @@ static NSString *const kCloseAction = @"close";
   
   if (self) {
     _actionsTypesDictionary = @{
-      kLinkAction: @(QONActionTypeURL),
-      kDeeplinkAction: @(QONActionTypeDeeplink),
-      kCloseAction: @(QONActionTypeClose),
-      kPurchaseAction: @(QONActionTypePurchase),
-      kRestoreAction: @(QONActionTypeRestore),
-      kNavigationAction: @(QONActionTypeNavigation),
+      kLinkAction: @(QONActionResultTypeURL),
+      kDeeplinkAction: @(QONActionResultTypeDeeplink),
+      kCloseAction: @(QONActionResultTypeClose),
+      kPurchaseAction: @(QONActionResultTypePurchase),
+      kRestoreAction: @(QONActionResultTypeRestore),
+      kNavigationAction: @(QONActionResultTypeNavigation),
     };
   }
   
@@ -55,7 +55,7 @@ static NSString *const kCloseAction = @"close";
 
 - (QONActionResult *)prepareDataForAction:(WKNavigationAction *)action {
   NSURLComponents *components = [NSURLComponents componentsWithString:action.request.URL.absoluteString];
-  QONActionResultType type = QONActionTypeUnknown;
+  QONActionResultType type = QONActionResultTypeUnknown;
   NSMutableDictionary *value = [NSMutableDictionary new];
   
   for (NSURLQueryItem *item in [components queryItems]) {

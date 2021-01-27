@@ -24,25 +24,25 @@
   NSString *result = @"unknown";
   
   switch (self.type) {
-    case QONActionTypeUnknown:
+    case QONActionResultTypeUnknown:
       result = @"unknown"; break;
     
-    case QONActionTypeURL:
+    case QONActionResultTypeURL:
       result = @"link"; break;
     
-    case QONActionTypeDeeplink:
+    case QONActionResultTypeDeeplink:
       result = @"deeplink"; break;
       
-    case QONActionTypeNavigation:
+    case QONActionResultTypeNavigation:
       result = @"navigation"; break;
       
-    case QONActionTypePurchase:
+    case QONActionResultTypePurchase:
       result = @"purchase"; break;
       
-    case QONActionTypeRestore:
+    case QONActionResultTypeRestore:
       result = @"restore purchases"; break;
       
-    case QONActionTypeClose:
+    case QONActionResultTypeClose:
       result = @"close"; break;
       
     default:

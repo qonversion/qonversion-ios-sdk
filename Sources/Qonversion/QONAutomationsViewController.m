@@ -82,26 +82,26 @@
   QONActionResult *action = [self.actionsHandler prepareDataForAction:navigationAction];
   
   switch (action.type) {
-    case QONActionTypeURL: {
+    case QONActionResultTypeURL: {
       [self handleLinkAction:action];
       break;
     }
-    case QONActionTypeDeeplink: {
+    case QONActionResultTypeDeeplink: {
       [self handleDeepLinkAction:action];
       break;
     }
-    case QONActionTypeClose:
+    case QONActionResultTypeClose:
       [self handleCloseAction:action];
       break;
-    case QONActionTypePurchase: {
+    case QONActionResultTypePurchase: {
       [self handlePurchaseAction:action];
       break;
     }
-    case QONActionTypeRestore: {
+    case QONActionResultTypeRestore: {
       [self handleRestoreAction:action];
       break;
     }
-    case QONActionTypeNavigation: {
+    case QONActionResultTypeNavigation: {
       [self handleNavigationAction:action];
       break;
     }
