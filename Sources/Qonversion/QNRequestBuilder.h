@@ -4,7 +4,6 @@
 
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;
-- (NSURLRequest *)makeActionsRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter apiKey:(NSString *)apiKey;

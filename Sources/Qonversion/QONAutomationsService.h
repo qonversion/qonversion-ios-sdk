@@ -10,10 +10,10 @@
 
 @class QNAPIClient, QONAutomationsMapper, QONAutomationsScreen, QNUserActionPoint;
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef void (^QNActiveAutomationCompletionHandler)(NSArray<QNUserActionPoint *> *actionPoints, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.AutomationCompletionHandler);
 typedef void (^QNAutomationsCompletionHandler)(QONAutomationsScreen *screen, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.AutomationCompletionHandler);
-
-NS_ASSUME_NONNULL_BEGIN
 
 @interface QONAutomationsService : NSObject
 
