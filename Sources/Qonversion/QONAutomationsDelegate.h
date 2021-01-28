@@ -17,7 +17,7 @@ NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
 
 @optional
 - (void)automationsDidShowScreen:(NSString * _Nonnull)screenID
-NS_SWIFT_NAME(automationsDidShowScreen(id:));
+NS_SWIFT_NAME(automationsDidShowScreen(_:));
 
 - (void)automationsDidStartExecutingActionResult:(QONActionResult * _Nonnull)actionResult
 NS_SWIFT_NAME(automationsDidStartExecuting(actionResult:));
