@@ -96,8 +96,6 @@
 		896D2D8A25B1AF05009905A0 /* QNExperimentGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 896D2D8825B1AF05009905A0 /* QNExperimentGroup.m */; };
 		896D2D8F25B1B41A009905A0 /* QNExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D8D25B1B41A009905A0 /* QNExperimentGroup+Protected.h */; };
 		896D2D9525B1B42E009905A0 /* QNExperimentInfo+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D9325B1B42E009905A0 /* QNExperimentInfo+Protected.h */; };
-		89713B6425C1BD6300A2448E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4625C1B95700A2448E /* UIKit.framework */; };
-		89713B6725C1BD6400A2448E /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4A25C1BA1F00A2448E /* WebKit.framework */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8981E78D25C03113002310BD /* QNProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD41249C76D400D2BC40 /* QNProduct.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8981E79425C03131002310BD /* QNPermission.h in Headers */ = {isa = PBXBuildFile; fileRef = 45F4C2E92517E85D00AD8FF0 /* QNPermission.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -342,8 +340,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				89713B6725C1BD6400A2448E /* WebKit.framework in Frameworks */,
-				89713B6425C1BD6300A2448E /* UIKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

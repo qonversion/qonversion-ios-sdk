@@ -15,6 +15,7 @@ Pod::Spec.new do |s|
   s.osx.deployment_target = '10.12'
   s.watchos.deployment_target = '6.2'
   s.tvos.deployment_target = '9.0'
+  s.ios.frameworks = ['UIKit', 'WebKit']
   s.requires_arc           = true
   
 end
