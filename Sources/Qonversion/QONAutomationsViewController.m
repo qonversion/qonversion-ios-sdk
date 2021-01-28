@@ -39,8 +39,10 @@
   self.activityIndicator.hidesWhenStopped = YES;
   [self.view addSubview:self.activityIndicator];
   
-  [self.webView loadHTMLString:self.htmlString baseURL:nil];
+  [self.webView loadHTMLString:self.screen.htmlString baseURL:nil];
   self.webView.scrollView.delegate = self;
+  
+  [self.delegate automationsDidShowScreen:self.screen.screenID];
 }
 
 - (void)viewDidLayoutSubviews {
@@ -80,6 +82,7 @@
 
 - (void)handleAction:(WKNavigationAction *)navigationAction {
   QONActionResult *action = [self.actionsHandler prepareDataForAction:navigationAction];
+  [self.delegate automationsStartedActionResult:action];
   
   switch (action.type) {
     case QONActionResultTypeURL: {
@@ -111,53 +114,61 @@
 }
 
 - (void)handleLinkAction:(QONActionResult *)action {
-  NSString *urlString = action.value[kAutomationsValueKey];
+  NSString *urlString = action.parameters[kAutomationsValueKey];
   if (urlString.length > 0) {
     NSURL *url = [NSURL URLWithString:urlString];
     SFSafariViewController *safariViewController = [[SFSafariViewController alloc] initWithURL:url];
     [self.navigationController presentViewController:safariViewController animated:true completion:nil];
+    [self.delegate automationsFinishedActionResult:action];
+  } else {
+    [self.delegate automationsFailedActionResult:action];
   }
 }
 
 - (void)handleCloseAction:(QONActionResult *)action {
-  __block __weak QONAutomationsViewController *weakSelf = self;
-  [self dismissViewControllerAnimated:YES completion:^{
-    [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
-  }];
+  [self finishAndCloseAutomationsWithActionResult:action];
 }
 
 - (void)handleDeepLinkAction:(QONActionResult *)action {
-  NSString *deeplinkString = action.value[kAutomationsValueKey];
+  NSString *deeplinkString = action.parameters[kAutomationsValueKey];
   if (deeplinkString.length > 0) {
     __block __weak QONAutomationsViewController *weakSelf = self;
     NSURL *url = [NSURL URLWithString:deeplinkString];
-    [self dismissViewControllerAnimated:YES completion:^{
-      [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
+    BOOL canOpen = [[UIApplication sharedApplication] canOpenURL:url];
+    if (canOpen) {
+      [self finishAndCloseAutomationsWithActionResult:action];
       [[UIApplication sharedApplication] openURL:url];
-    }];
+    } else {
+      [self.delegate automationsFailedActionResult:action];
+      [self closeAutomationsWithActionResult:action];
+    }
+  } else {
+    [self.delegate automationsFailedActionResult:action];
   }
 }
 
 - (void)handlePurchaseAction:(QONActionResult *)action {
-  NSString *productID = action.value[kAutomationsValueKey];
+  NSString *productID = action.parameters[kAutomationsValueKey];
   if (productID.length > 0) {
     [self.activityIndicator startAnimating];
     __block __weak QONAutomationsViewController *weakSelf = self;
     [Qonversion purchase:productID completion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error, BOOL cancelled) {
       [weakSelf.activityIndicator stopAnimating];
       
+      action.error = error;
+      
       if (cancelled) {
+        [weakSelf.delegate automationsFailedActionResult:action];
         return;
       }
       
       if (error) {
+        [weakSelf.delegate automationsFailedActionResult:action];
         [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription];
         return;
       }
       
-      [weakSelf dismissViewControllerAnimated:YES completion:^{
-        [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
-      }];
+      [weakSelf finishAndCloseAutomationsWithActionResult:action];
     }];
   }
 }
@@ -167,30 +178,48 @@
   [self.activityIndicator startAnimating];
   [Qonversion restoreWithCompletion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
     [weakSelf.activityIndicator stopAnimating];
+    
+    action.error = error;
+    
     if (error) {
+      [weakSelf.delegate automationsFailedActionResult:action];
       [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription];
       return;
     }
     
-    [weakSelf dismissViewControllerAnimated:YES completion:^{
-      [weakSelf.delegate automationsViewController:weakSelf didFinishAction:action];
-    }];
+    [weakSelf finishAndCloseAutomationsWithActionResult:action];
   }];
 }
 
 - (void)handleNavigationAction:(QONActionResult *)action {
-  NSString *automationID = action.value[kAutomationsValueKey];
+  NSString *automationID = action.parameters[kAutomationsValueKey];
   __block __weak QONAutomationsViewController *weakSelf = self;
   [self.activityIndicator startAnimating];
   [self.automationsService automationWithID:automationID completion:^(QONAutomationsScreen *screen, NSError * _Nullable error) {
     [weakSelf.activityIndicator stopAnimating];
     if (screen.htmlString) {
-      QONAutomationsViewController *viewController = [weakSelf.flowAssembly configureAutomationsViewControllerWithHtmlString:screen.htmlString delegate:weakSelf.delegate];
+      QONAutomationsViewController *viewController = [weakSelf.flowAssembly configureAutomationsViewControllerWithScreen:screen delegate:weakSelf.delegate];
       [weakSelf.automationsService trackScreenShownWithID:automationID];
       [weakSelf.navigationController pushViewController:viewController animated:YES];
+      [weakSelf.delegate automationsFinishedActionResult:action];
     } else if (error) {
       [weakSelf showErrorAlertWithTitle:kAutomationsShowScreenErrorAlertTitle message:error.localizedDescription];
+      [weakSelf.delegate automationsFailedActionResult:action];
+    } else {
+      [weakSelf.delegate automationsFailedActionResult:action];
     }
+  }];
+}
+
+- (void)finishAndCloseAutomationsWithActionResult:(QONActionResult *)actionResult {
+  [self.delegate automationsFinishedActionResult:actionResult];
+  
+  [self closeAutomationsWithActionResult:actionResult];
+}
+
+- (void)closeAutomationsWithActionResult:(QONActionResult *)actionResult {
+  [self dismissViewControllerAnimated:YES completion:^{
+    [self.delegate automationsFinished];
   }];
 }
 

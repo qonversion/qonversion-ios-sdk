@@ -8,20 +8,24 @@
 
 #import <UIKit/UIKit.h>
 
-@class QONAutomationsService, QONAutomationsActionsHandler, QONAutomationsFlowAssembly, QONActionResult, QONAutomationsViewController;
+@class QONAutomationsService, QONAutomationsScreen, QONAutomationsActionsHandler, QONAutomationsFlowAssembly, QONActionResult, QONAutomationsViewController;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@protocol QNAutomationsViewControllerDelegate <NSObject>
+@protocol QONAutomationsViewControllerDelegate <NSObject>
 
-- (void)automationsViewController:(QONAutomationsViewController *)viewController didFinishAction:(QONActionResult *)action;
+- (void)automationsDidShowScreen:(NSString *)screenID;
+- (void)automationsStartedActionResult:(QONActionResult * _Nonnull)actionResult;
+- (void)automationsFailedActionResult:(QONActionResult * _Nonnull)actionResult;
+- (void)automationsFinishedActionResult:(QONActionResult * _Nonnull)actionResult;
+- (void)automationsFinished;
 
 @end
 
 @interface QONAutomationsViewController : UIViewController
 
-@property (nonatomic, weak) id<QNAutomationsViewControllerDelegate> delegate;
-@property (nonatomic, copy) NSString *htmlString;
+@property (nonatomic, weak) id<QONAutomationsViewControllerDelegate> delegate;
+@property (nonatomic, strong) QONAutomationsScreen *screen;
 @property (nonatomic, strong) QONAutomationsActionsHandler *actionsHandler;
 @property (nonatomic, strong) QONAutomationsService *automationsService;
 @property (nonatomic, strong) QONAutomationsFlowAssembly *flowAssembly;

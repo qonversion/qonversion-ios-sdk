@@ -14,7 +14,7 @@
   NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
   
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
-  [description appendFormat:@"value=%@,\n", self.value];
+  [description appendFormat:@"parameters=%@,\n", self.parameters];
   [description appendString:@">"];
   
   return [description copy];

@@ -24,7 +24,8 @@ NS_SWIFT_NAME(Qonversion.ActionResult)
 @interface QONActionResult : NSObject
 
 @property (nonatomic, assign) QONActionResultType type;
-@property (nonatomic, copy) NSDictionary *value;
+@property (nonatomic, copy) NSDictionary *parameters;
+@property (nonatomic, strong) NSError *error;
 
 @end
 

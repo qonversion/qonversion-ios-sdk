@@ -68,7 +68,7 @@ static NSString *const kCloseAction = @"close";
   
   QONActionResult *formattedAction = [QONActionResult new];
   formattedAction.type = type;
-  formattedAction.value = [value copy];
+  formattedAction.parameters = [value copy];
   
   return formattedAction;
 }

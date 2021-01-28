@@ -12,12 +12,13 @@
 #import "QONAutomationsService.h"
 #import "QNAPIClient.h"
 #import "QONAutomationsMapper.h"
+#import "QONAutomationsScreen.h"
 
 @implementation QONAutomationsFlowAssembly
 
-- (QONAutomationsViewController *)configureAutomationsViewControllerWithHtmlString:(NSString *)htmlString delegate:(id<QNAutomationsViewControllerDelegate> _Nullable)delegate {
+- (QONAutomationsViewController *)configureAutomationsViewControllerWithScreen:(QONAutomationsScreen *)screen delegate:(id<QONAutomationsViewControllerDelegate> _Nullable)delegate {
   QONAutomationsViewController *vc = [QONAutomationsViewController new];
-  vc.htmlString = htmlString;
+  vc.screen = screen;
   vc.delegate = delegate;
   
   vc.actionsHandler = [QONAutomationsActionsHandler new];

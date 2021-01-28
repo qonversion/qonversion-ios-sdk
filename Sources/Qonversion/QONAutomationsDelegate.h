@@ -16,9 +16,22 @@ NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
 @protocol QONAutomationsDelegate <NSObject>
 
 @optional
-- (void)automationFinishedWithAction:(QONActionResult * _Nonnull)action
-NS_SWIFT_NAME(automationFinished(action:));;
+- (void)automationsDidShowScreen:(NSString * _Nonnull)screenID
+NS_SWIFT_NAME(automationsDidShowScreen(id:));
+
+- (void)automationsStartedActionResult:(QONActionResult * _Nonnull)actionResult
+NS_SWIFT_NAME(automationsStarted(actionResult:));
+
+- (void)automationsFailedActionResult:(QONActionResult * _Nonnull)actionResult
+NS_SWIFT_NAME(automationsFailed(actionResult:));
+
+- (void)automationsFinishedActionResult:(QONActionResult * _Nonnull)actionResult
+NS_SWIFT_NAME(automationsFinished(actionResult:));
+
+- (void)automationsFinished
+NS_SWIFT_NAME(automationsFinished());
+
 - (UIViewController * _Nonnull)controllerForNavigation
-NS_SWIFT_NAME(controllerForNavigation());;
+NS_SWIFT_NAME(controllerForNavigation());
 
 @end

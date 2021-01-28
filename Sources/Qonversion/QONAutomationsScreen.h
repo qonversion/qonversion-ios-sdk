@@ -12,9 +12,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QONAutomationsScreen : NSObject
 
+@property (nonatomic, copy, readonly) NSString *screenID;
 @property (nonatomic, copy, readonly) NSString *htmlString;
 
-- (instancetype)initWithHtmlString:(NSString *)html;
+- (instancetype)initWithIdentifier:(NSString *)identifier htmlString:(NSString *)html;
 
 @end
 

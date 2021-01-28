@@ -8,14 +8,14 @@
 
 #import <Foundation/Foundation.h>
 
-@class QONAutomationsViewController, QONAutomationsService, QONAutomationsActionsHandler;
-@protocol QNAutomationsViewControllerDelegate;
+@class QONAutomationsViewController, QONAutomationsService, QONAutomationsActionsHandler, QONAutomationsScreen;
+@protocol QONAutomationsViewControllerDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QONAutomationsFlowAssembly : NSObject
 
-- (QONAutomationsViewController *)configureAutomationsViewControllerWithHtmlString:(NSString *)htmlString delegate:(id<QNAutomationsViewControllerDelegate> _Nullable)delegate;
+- (QONAutomationsViewController *)configureAutomationsViewControllerWithScreen:(QONAutomationsScreen *)screen delegate:(id<QONAutomationsViewControllerDelegate> _Nullable)delegate;
 - (QONAutomationsService *)automationsService;
 - (QONAutomationsActionsHandler *)actionsHandler;
 

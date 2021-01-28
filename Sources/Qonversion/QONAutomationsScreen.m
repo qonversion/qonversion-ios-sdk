@@ -10,15 +10,17 @@
 
 @interface QONAutomationsScreen ()
 
+@property (nonatomic, copy, readwrite) NSString *screenID;
 @property (nonatomic, copy, readwrite) NSString *htmlString;
 
 @end
 
 @implementation QONAutomationsScreen
 
-- (instancetype)initWithHtmlString:(NSString *)html {
+- (instancetype)initWithIdentifier:(NSString *)identifier htmlString:(NSString *)html {
   self = [super init];
   if (self) {
+    _screenID = identifier;
     _htmlString = html;
   }
   return self;

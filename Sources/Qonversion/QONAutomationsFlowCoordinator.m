@@ -15,7 +15,7 @@
 #import "QONAutomationsActionsHandler.h"
 #import "QNUserActionPoint.h"
 
-@interface QONAutomationsFlowCoordinator() <QNAutomationsViewControllerDelegate>
+@interface QONAutomationsFlowCoordinator() <QONAutomationsViewControllerDelegate>
 
 @property (nonatomic, weak) id<QONAutomationsDelegate> automationsDelegate;
 @property (nonatomic, strong) QONAutomationsFlowAssembly *assembly;
@@ -77,7 +77,7 @@
   [self.automationsService automationWithID:automationID completion:^(QONAutomationsScreen *screen, NSError * _Nullable error) {
     if (screen) {
       [weakSelf.automationsService trackScreenShownWithID:automationID];
-      QONAutomationsViewController *viewController = [weakSelf.assembly configureAutomationsViewControllerWithHtmlString:screen.htmlString delegate:self];
+      QONAutomationsViewController *viewController = [weakSelf.assembly configureAutomationsViewControllerWithScreen:screen delegate:self];
       
       UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
       navigationController.navigationBarHidden = YES;
@@ -95,9 +95,35 @@
   }];
 }
 
-- (void)automationsViewController:(QONAutomationsViewController *)viewController didFinishAction:(QONActionResult *)action {
-  if ([self.automationsDelegate respondsToSelector:@selector(automationFinishedWithAction:)]) {
-    [self.automationsDelegate automationFinishedWithAction:action];
+#pragma mark - QONAutomationsViewControllerDelegate
+
+- (void)automationsDidShowScreen:(NSString *)screenID {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationsDidShowScreen:)]) {
+    [self.automationsDelegate automationsDidShowScreen:screenID];
+  }
+}
+
+- (void)automationsStartedActionResult:(QONActionResult *)actionResult {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationsStartedActionResult:)]) {
+    [self.automationsDelegate automationsStartedActionResult:actionResult];
+  }
+}
+
+- (void)automationsFailedActionResult:(QONActionResult *)actionResult {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationsFailedActionResult:)]) {
+    [self.automationsDelegate automationsFailedActionResult:actionResult];
+  }
+}
+
+- (void)automationsFinishedActionResult:(QONActionResult *)actionResult {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationsFinishedActionResult:)]) {
+    [self.automationsDelegate automationsFinishedActionResult:actionResult];
+  }
+}
+
+- (void)automationsFinished {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationsFinished)]) {
+    [self.automationsDelegate automationsFinished];
   }
 }
 

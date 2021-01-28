@@ -16,10 +16,12 @@
 - (nullable QONAutomationsScreen *)mapScreen:(NSDictionary *)dict {
   NSDictionary *data = [self getDataFromObject:dict];
   NSString *htmlString = data[@"body"];
+  NSString *identifier = data[@"id"] ?: @"";
+  
   QONAutomationsScreen *screen;
   
   if (htmlString) {
-    screen = [[QONAutomationsScreen alloc] initWithHtmlString:htmlString];
+    screen = [[QONAutomationsScreen alloc] initWithIdentifier:identifier htmlString:htmlString];
   }
   
   return screen;
