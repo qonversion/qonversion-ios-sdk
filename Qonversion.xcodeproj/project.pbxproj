@@ -88,9 +88,9 @@
 		8911823A25222C2300EBCDFA /* QNAPIConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 8911823825222C2300EBCDFA /* QNAPIConstants.m */; };
 		893045EC252DE8B500E22F75 /* QNPromoPurchasesDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 893045EB252DE8B500E22F75 /* QNPromoPurchasesDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		893BF85025C297A500483FA4 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4625C1B95700A2448E /* UIKit.framework */; };
-		893BF85125C297A500483FA4 /* UIKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4625C1B95700A2448E /* UIKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		893BF85125C297A500483FA4 /* UIKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4625C1B95700A2448E /* UIKit.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		893BF85325C297A700483FA4 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4A25C1BA1F00A2448E /* WebKit.framework */; };
-		893BF85425C297A700483FA4 /* WebKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4A25C1BA1F00A2448E /* WebKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		893BF85425C297A700483FA4 /* WebKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4A25C1BA1F00A2448E /* WebKit.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		896D2D6025B0585B009905A0 /* QNIntroEligibility.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D5E25B0585B009905A0 /* QNIntroEligibility.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		896D2D6125B0585B009905A0 /* QNIntroEligibility.m in Sources */ = {isa = PBXBuildFile; fileRef = 896D2D5F25B0585B009905A0 /* QNIntroEligibility.m */; };
 		896D2D6625B06447009905A0 /* QNIntroEligibility+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D6425B06447009905A0 /* QNIntroEligibility+Protected.h */; };
