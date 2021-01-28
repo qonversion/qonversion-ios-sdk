@@ -82,7 +82,7 @@
 
 - (void)handleAction:(WKNavigationAction *)navigationAction {
   QONActionResult *action = [self.actionsHandler prepareDataForAction:navigationAction];
-  [self.delegate automationsStartedActionResult:action];
+  [self.delegate automationsDidStartExecutingActionResult:action];
   
   switch (action.type) {
     case QONActionResultTypeURL: {
@@ -119,9 +119,9 @@
     NSURL *url = [NSURL URLWithString:urlString];
     SFSafariViewController *safariViewController = [[SFSafariViewController alloc] initWithURL:url];
     [self.navigationController presentViewController:safariViewController animated:true completion:nil];
-    [self.delegate automationsFinishedActionResult:action];
+    [self.delegate automationsDidFinishExecutingActionResult:action];
   } else {
-    [self.delegate automationsFailedActionResult:action];
+    [self.delegate automationsDidFailExecutingActionResult:action];
   }
 }
 
@@ -139,11 +139,11 @@
       [self finishAndCloseAutomationsWithActionResult:action];
       [[UIApplication sharedApplication] openURL:url];
     } else {
-      [self.delegate automationsFailedActionResult:action];
+      [self.delegate automationsDidFailExecutingActionResult:action];
       [self closeAutomationsWithActionResult:action];
     }
   } else {
-    [self.delegate automationsFailedActionResult:action];
+    [self.delegate automationsDidFailExecutingActionResult:action];
   }
 }
 
@@ -158,12 +158,12 @@
       action.error = error;
       
       if (cancelled) {
-        [weakSelf.delegate automationsFailedActionResult:action];
+        [weakSelf.delegate automationsDidFailExecutingActionResult:action];
         return;
       }
       
       if (error) {
-        [weakSelf.delegate automationsFailedActionResult:action];
+        [weakSelf.delegate automationsDidFailExecutingActionResult:action];
         [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription];
         return;
       }
@@ -182,7 +182,7 @@
     action.error = error;
     
     if (error) {
-      [weakSelf.delegate automationsFailedActionResult:action];
+      [weakSelf.delegate automationsDidFailExecutingActionResult:action];
       [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription];
       return;
     }
@@ -201,18 +201,18 @@
       QONAutomationsViewController *viewController = [weakSelf.flowAssembly configureAutomationsViewControllerWithScreen:screen delegate:weakSelf.delegate];
       [weakSelf.automationsService trackScreenShownWithID:automationID];
       [weakSelf.navigationController pushViewController:viewController animated:YES];
-      [weakSelf.delegate automationsFinishedActionResult:action];
+      [weakSelf.delegate automationsDidFinishExecutingActionResult:action];
     } else if (error) {
       [weakSelf showErrorAlertWithTitle:kAutomationsShowScreenErrorAlertTitle message:error.localizedDescription];
-      [weakSelf.delegate automationsFailedActionResult:action];
+      [weakSelf.delegate automationsDidFailExecutingActionResult:action];
     } else {
-      [weakSelf.delegate automationsFailedActionResult:action];
+      [weakSelf.delegate automationsDidFailExecutingActionResult:action];
     }
   }];
 }
 
 - (void)finishAndCloseAutomationsWithActionResult:(QONActionResult *)actionResult {
-  [self.delegate automationsFinishedActionResult:actionResult];
+  [self.delegate automationsDidFinishExecutingActionResult:actionResult];
   
   [self closeAutomationsWithActionResult:actionResult];
 }

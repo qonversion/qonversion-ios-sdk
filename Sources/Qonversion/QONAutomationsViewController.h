@@ -15,9 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol QONAutomationsViewControllerDelegate <NSObject>
 
 - (void)automationsDidShowScreen:(NSString *)screenID;
-- (void)automationsStartedActionResult:(QONActionResult * _Nonnull)actionResult;
-- (void)automationsFailedActionResult:(QONActionResult * _Nonnull)actionResult;
-- (void)automationsFinishedActionResult:(QONActionResult * _Nonnull)actionResult;
+- (void)automationsDidStartExecutingActionResult:(QONActionResult * _Nonnull)actionResult;
+- (void)automationsDidFailExecutingActionResult:(QONActionResult * _Nonnull)actionResult;
+- (void)automationsDidFinishExecutingActionResult:(QONActionResult * _Nonnull)actionResult;
 - (void)automationsFinished;
 
 @end

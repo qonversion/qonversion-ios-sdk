@@ -103,21 +103,21 @@
   }
 }
 
-- (void)automationsStartedActionResult:(QONActionResult *)actionResult {
-  if ([self.automationsDelegate respondsToSelector:@selector(automationsStartedActionResult:)]) {
-    [self.automationsDelegate automationsStartedActionResult:actionResult];
+- (void)automationsDidStartExecutingActionResult:(QONActionResult *)actionResult {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationsDidStartExecutingActionResult:)]) {
+    [self.automationsDelegate automationsDidStartExecutingActionResult:actionResult];
   }
 }
 
-- (void)automationsFailedActionResult:(QONActionResult *)actionResult {
-  if ([self.automationsDelegate respondsToSelector:@selector(automationsFailedActionResult:)]) {
-    [self.automationsDelegate automationsFailedActionResult:actionResult];
+- (void)automationsDidFailExecutingActionResult:(QONActionResult *)actionResult {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationsDidFailExecutingActionResult:)]) {
+    [self.automationsDelegate automationsDidFailExecutingActionResult:actionResult];
   }
 }
 
-- (void)automationsFinishedActionResult:(QONActionResult *)actionResult {
-  if ([self.automationsDelegate respondsToSelector:@selector(automationsFinishedActionResult:)]) {
-    [self.automationsDelegate automationsFinishedActionResult:actionResult];
+- (void)automationsDidFinishExecutingActionResult:(QONActionResult *)actionResult {
+  if ([self.automationsDelegate respondsToSelector:@selector(automationsDidFinishExecutingActionResult:)]) {
+    [self.automationsDelegate automationsDidFinishExecutingActionResult:actionResult];
   }
 }
 

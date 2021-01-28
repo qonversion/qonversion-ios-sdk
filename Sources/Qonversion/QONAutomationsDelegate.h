@@ -19,14 +19,14 @@ NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
 - (void)automationsDidShowScreen:(NSString * _Nonnull)screenID
 NS_SWIFT_NAME(automationsDidShowScreen(id:));
 
-- (void)automationsStartedActionResult:(QONActionResult * _Nonnull)actionResult
-NS_SWIFT_NAME(automationsStarted(actionResult:));
+- (void)automationsDidStartExecutingActionResult:(QONActionResult * _Nonnull)actionResult
+NS_SWIFT_NAME(automationsDidStartExecuting(actionResult:));
 
-- (void)automationsFailedActionResult:(QONActionResult * _Nonnull)actionResult
-NS_SWIFT_NAME(automationsFailed(actionResult:));
+- (void)automationsDidFailExecutingActionResult:(QONActionResult * _Nonnull)actionResult
+NS_SWIFT_NAME(automationsDidFailExecuting(actionResult:));
 
-- (void)automationsFinishedActionResult:(QONActionResult * _Nonnull)actionResult
-NS_SWIFT_NAME(automationsFinished(actionResult:));
+- (void)automationsDidFinishExecutingActionResult:(QONActionResult * _Nonnull)actionResult
+NS_SWIFT_NAME(automationsDidFinishExecuting(actionResult:));
 
 - (void)automationsFinished
 NS_SWIFT_NAME(automationsFinished());
