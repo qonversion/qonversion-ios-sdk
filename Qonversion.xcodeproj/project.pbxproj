@@ -96,6 +96,8 @@
 		896D2D8A25B1AF05009905A0 /* QNExperimentGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 896D2D8825B1AF05009905A0 /* QNExperimentGroup.m */; };
 		896D2D8F25B1B41A009905A0 /* QNExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D8D25B1B41A009905A0 /* QNExperimentGroup+Protected.h */; };
 		896D2D9525B1B42E009905A0 /* QNExperimentInfo+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 896D2D9325B1B42E009905A0 /* QNExperimentInfo+Protected.h */; };
+		89713B6425C1BD6300A2448E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4625C1B95700A2448E /* UIKit.framework */; };
+		89713B6725C1BD6400A2448E /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89713B4A25C1BA1F00A2448E /* WebKit.framework */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8981E78D25C03113002310BD /* QNProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = 456ECD41249C76D400D2BC40 /* QNProduct.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8981E79425C03131002310BD /* QNPermission.h in Headers */ = {isa = PBXBuildFile; fileRef = 45F4C2E92517E85D00AD8FF0 /* QNPermission.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -286,6 +288,8 @@
 		896D2D8825B1AF05009905A0 /* QNExperimentGroup.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNExperimentGroup.m; sourceTree = "<group>"; };
 		896D2D8D25B1B41A009905A0 /* QNExperimentGroup+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNExperimentGroup+Protected.h"; sourceTree = "<group>"; };
 		896D2D9325B1B42E009905A0 /* QNExperimentInfo+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNExperimentInfo+Protected.h"; sourceTree = "<group>"; };
+		89713B4625C1B95700A2448E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		89713B4A25C1BA1F00A2448E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		89853B70251B5CF1009822BF /* QONAutomationsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsViewController.h; sourceTree = "<group>"; };
 		89853B71251B5CF1009822BF /* QONAutomationsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsViewController.m; sourceTree = "<group>"; };
 		89853B76251B62AD009822BF /* QONAutomationsFlowAssembly.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsFlowAssembly.h; sourceTree = "<group>"; };
@@ -338,6 +342,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				89713B6725C1BD6400A2448E /* WebKit.framework in Frameworks */,
+				89713B6425C1BD6300A2448E /* UIKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -697,6 +703,8 @@
 		BB6B3C9FD9EFBC9E1604507D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				89713B4A25C1BA1F00A2448E /* WebKit.framework */,
+				89713B4625C1B95700A2448E /* UIKit.framework */,
 				45754AE625814C7500FCA376 /* iAd.framework */,
 				4502E451257FDF5E006FC750 /* OCMock.framework */,
 				4502E457257FDF90006FC750 /* OCMock.framework */,
