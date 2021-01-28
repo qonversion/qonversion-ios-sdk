@@ -132,7 +132,6 @@
 - (void)handleDeepLinkAction:(QONActionResult *)action {
   NSString *deeplinkString = action.parameters[kAutomationsValueKey];
   if (deeplinkString.length > 0) {
-    __block __weak QONAutomationsViewController *weakSelf = self;
     NSURL *url = [NSURL URLWithString:deeplinkString];
     BOOL canOpen = [[UIApplication sharedApplication] canOpenURL:url];
     if (canOpen) {
