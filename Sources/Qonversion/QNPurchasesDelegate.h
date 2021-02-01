@@ -12,6 +12,6 @@
 NS_SWIFT_NAME(Qonversion.PurchasesDelegate)
 @protocol QNPurchasesDelegate <NSObject>
 
-- (void)qonversionDidReceiveUpdatedPermissions:(NSDictionary<NSString *, QNPermission *> *)permissions;
+- (void)qonversionDidReceiveUpdatedPermissions:(NSDictionary<NSString *, QNPermission *>  * _Nonnull)permissions;
 
 @end
