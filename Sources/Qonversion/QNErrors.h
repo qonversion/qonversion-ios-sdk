@@ -64,6 +64,8 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
   // Internal error occurred
   QNErrorInternalError,
   
+  QNErrorStorePaymentDeferred,
+  
 } NS_SWIFT_NAME(Qonversion.Error);
 
 
@@ -79,6 +81,7 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNAPIError) {
 + (NSError *)errorWithQNErrorCode:(QNError)errorCode;
 + (NSError *)errorFromURLDomainError:(NSError *)error;
 + (NSError *)errorFromTransactionError:(NSError *)error;
++ (NSError *)deferredTransactionError;
 
 @end
 

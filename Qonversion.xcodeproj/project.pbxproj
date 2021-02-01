@@ -107,6 +107,7 @@
 		89861D2D2501563B00E5D36B /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */; };
 		89ADA76D25069E1000EB2E54 /* ActivePermissionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */; };
+		89B1196825B9BC530057F6BB /* QNPurchasesDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 89B1196725B9BC530057F6BB /* QNPurchasesDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		89EA13AD25A42BB90065BCED /* QNOfferings.h in Headers */ = {isa = PBXBuildFile; fileRef = 89EA13AB25A42BB90065BCED /* QNOfferings.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		89EA13AE25A42BB90065BCED /* QNOfferings.m in Sources */ = {isa = PBXBuildFile; fileRef = 89EA13AC25A42BB90065BCED /* QNOfferings.m */; };
 		89EA13B325A42BC90065BCED /* QNOffering.h in Headers */ = {isa = PBXBuildFile; fileRef = 89EA13B125A42BC90065BCED /* QNOffering.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -268,6 +269,7 @@
 		896D2D9325B1B42E009905A0 /* QNExperimentInfo+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNExperimentInfo+Protected.h"; sourceTree = "<group>"; };
 		89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsViewController.swift; sourceTree = "<group>"; };
 		89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsTableViewCell.swift; sourceTree = "<group>"; };
+		89B1196725B9BC530057F6BB /* QNPurchasesDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNPurchasesDelegate.h; sourceTree = "<group>"; };
 		89EA13AB25A42BB90065BCED /* QNOfferings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNOfferings.h; sourceTree = "<group>"; };
 		89EA13AC25A42BB90065BCED /* QNOfferings.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNOfferings.m; sourceTree = "<group>"; };
 		89EA13B125A42BC90065BCED /* QNOffering.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNOffering.h; sourceTree = "<group>"; };
@@ -615,6 +617,7 @@
 				45747F522517F88500354B9A /* Managers */,
 				459DABE1243E35BC0011ECF3 /* Qonversion.h */,
 				893045EB252DE8B500E22F75 /* QNPromoPurchasesDelegate.h */,
+				89B1196725B9BC530057F6BB /* QNPurchasesDelegate.h */,
 				459DABF4243E35BC0011ECF3 /* Qonversion.m */,
 			);
 			path = Qonversion;
@@ -642,6 +645,7 @@
 				896D2D6025B0585B009905A0 /* QNIntroEligibility.h in Headers */,
 				896D2D7D25B1A82B009905A0 /* QNExperimentInfo.h in Headers */,
 				89EA13B325A42BC90065BCED /* QNOffering.h in Headers */,
+				89B1196825B9BC530057F6BB /* QNPurchasesDelegate.h in Headers */,
 				89EA13AD25A42BB90065BCED /* QNOfferings.h in Headers */,
 				893045EC252DE8B500E22F75 /* QNPromoPurchasesDelegate.h in Headers */,
 				896D2D8925B1AF05009905A0 /* QNExperimentGroup.h in Headers */,

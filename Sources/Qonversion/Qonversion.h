@@ -4,7 +4,7 @@
 #import "QNProduct.h"
 #import "QNPermission.h"
 
-@protocol QNPromoPurchasesDelegate;
+@protocol QNPromoPurchasesDelegate, QNPurchasesDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -22,6 +22,14 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
 
+/**
+ Set this delegate to handle pending purchases like SCA, Ask to buy, etc
+ */
++ (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate;
+
+/**
+ Set this delegate to handle AppStore promo purchases
+ */
 + (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
 /**
