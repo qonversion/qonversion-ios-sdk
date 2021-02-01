@@ -28,7 +28,7 @@
 
 + (NSError *)deferredTransactionError {
   NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
-  userInfo[NSLocalizedDescriptionKey] = @"The payment is deferred";
+  userInfo[NSLocalizedDescriptionKey] = @"The transaction is deferred";
   
   return [self errorWithQonversionErrorCode:QNErrorStorePaymentDeferred userInfo:[userInfo copy]];
 }
