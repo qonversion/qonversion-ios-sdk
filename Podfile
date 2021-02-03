@@ -10,7 +10,7 @@ end
 
 
 target 'Sample' do
-
+platform :ios, 12.0
 end
 
 

@@ -8,6 +8,9 @@
 #import "QNProductCenterManager.h"
 #import "QNUserInfo.h"
 #import "QNProperties.h"
+#import "QNDevice.h"
+#import "QNUtils.h"
+#import "QONAutomationsFlowCoordinator.h"
 
 @interface Qonversion()
 
@@ -36,6 +39,24 @@
   
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
 }
+
++ (void)setNotificationsToken:(NSData *)token {
+  NSString *tokenString = [QNUtils convertHexData:token];
+  NSString *oldToken = [QNDevice current].pushNotificationsToken;
+  if ([tokenString isEqualToString:oldToken] || tokenString.length == 0) {
+    return;
+  }
+  
+  [[QNDevice current] setPushNotificationsToken:tokenString];
+  
+  [[Qonversion sharedInstance].productCenterManager launchWithCompletion:nil];
+}
+
+#if TARGET_OS_IOS
++ (BOOL)handleNotification:(NSDictionary *)userInfo {
+  return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
+}
+#endif
 
 + (void)setDebugMode {
   [Qonversion sharedInstance].debugMode = YES;

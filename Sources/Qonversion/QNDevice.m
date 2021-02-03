@@ -1,5 +1,7 @@
 #import "QNDevice.h"
 #import "QNConstants.h"
+#import "QNUserDefaultsStorage.h"
+#import "QNLocalStorage.h"
 #if !TARGET_OS_OSX
 #import <UIKit/UIKit.h>
 #else
@@ -11,6 +13,16 @@
 
 #import <sys/sysctl.h>
 #import <sys/types.h>
+
+static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
+static NSString * const kPushTokenKey = @"pushToken";
+
+@interface QNDevice ()
+
+@property (readwrite, copy, nonatomic) NSString *pushNotificationsToken;
+@property (strong, nonatomic) id<QNLocalStorage> persistentStorage;
+
+@end
 
 @implementation QNDevice {
   NSObject* networkInfo;
@@ -25,6 +37,20 @@
   });
   
   return shared;
+}
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    QNUserDefaultsStorage *storage = [QNUserDefaultsStorage new];
+    storage.userDefaults = [[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName];
+    _persistentStorage = storage;
+    
+    NSString *token = [_persistentStorage loadObjectForKey:kPushTokenKey];
+    _pushNotificationsToken = [token isKindOfClass:[NSString class]] ? token : nil;
+  }
+  
+  return self;
 }
 
 @synthesize model = _model;
@@ -132,6 +158,11 @@
                                                                             value: [[NSLocale preferredLanguages] objectAtIndex:0]];
   }
   return _language;
+}
+
+- (void)setPushNotificationsToken:(NSString *)token {
+  _pushNotificationsToken = token;
+  [self.persistentStorage storeObject:token forKey:kPushTokenKey];
 }
 
 - (NSString *)advertiserID {

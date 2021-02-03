@@ -24,13 +24,31 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Set this delegate to handle pending purchases like SCA, Ask to buy, etc
+ The delegate will be called when the deferred transaction status updates
+ @param delegate - delegate for handling deferred purchases
  */
 + (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate;
 
 /**
  Set this delegate to handle AppStore promo purchases
+ @param delegate - delegate for handling AppStore promo purchase flow
  */
 + (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
+
+/**
+ Set push token to Qonversion to enable Qonversion push notifications
+ @param token - token data
+ */
++ (void)setNotificationsToken:(NSData *)token API_AVAILABLE(ios(9.0));
+
+#if TARGET_OS_IOS
+/**
+ Returns true when a push notification was received from Qonversion.
+ Otherwise returns false, so you need to handle a notification yourself
+ @param userInfo - notification user info
+ */
++ (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
+#endif
 
 /**
  Sets debug environment for user.
