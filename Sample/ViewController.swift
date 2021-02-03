@@ -198,8 +198,4 @@ extension ViewController: Qonversion.AutomationsDelegate {
   func controllerForNavigation() -> UIViewController {
     return self
   }
-  
-  func automationFinished(action: Qonversion.ActionResult) {
-    // automation finished
-  }
 }
