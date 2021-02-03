@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'Qonversion'
-  s.version          = '2.9.0-beta1'
+  s.version          = '2.9.0'
   s.summary          = 'qonversion.io'
   s.description      = <<-DESC
   Deep Analytics for iOS Subscriptions
@@ -15,7 +15,6 @@ Pod::Spec.new do |s|
   s.osx.deployment_target = '10.12'
   s.watchos.deployment_target = '6.2'
   s.tvos.deployment_target = '9.0'
-  s.ios.frameworks = ['UIKit', 'WebKit']
   s.requires_arc           = true
   
 end

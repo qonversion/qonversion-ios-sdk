@@ -26,6 +26,13 @@
   return [self errorWithQonversionErrorCode:QNErrorInternalError userInfo:info];
 }
 
++ (NSError *)deferredTransactionError {
+  NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
+  userInfo[NSLocalizedDescriptionKey] = @"The transaction is deferred";
+  
+  return [self errorWithQonversionErrorCode:QNErrorStorePaymentDeferred userInfo:[userInfo copy]];
+}
+
 + (NSError *)errorFromTransactionError:(NSError *)error {
   QNError errorCode = QNErrorUnknown;
   NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];

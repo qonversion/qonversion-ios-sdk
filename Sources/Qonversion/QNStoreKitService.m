@@ -170,6 +170,9 @@
     case SKPaymentTransactionStateRestored:
       [self handlePurchasedTransaction:transaction];
       break;
+    case SKPaymentTransactionStateDeferred:
+      [self handleDeferredTransaction:transaction];
+      break;
     default:
       break;
   }
@@ -226,8 +229,17 @@
     if ([self.delegate respondsToSelector:@selector(handleFailedTransaction:forProduct:)]) {
       [self.delegate handleFailedTransaction:transaction forProduct:skProduct];
     }
-    
-    return;
+  }
+}
+
+- (void)handleDeferredTransaction:(SKPaymentTransaction *)transaction {
+  NSString *productIdentifier = transaction.payment.productIdentifier;
+  SKProduct *skProduct = _products[productIdentifier];
+  
+  if (skProduct) {
+    if ([self.delegate respondsToSelector:@selector(handleDeferredTransaction:forProduct:)]) {
+      [self.delegate handleDeferredTransaction:transaction forProduct:skProduct];
+    }
   }
 }
 

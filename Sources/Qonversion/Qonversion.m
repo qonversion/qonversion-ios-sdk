@@ -60,6 +60,10 @@
   [Qonversion sharedInstance].debugMode = YES;
 }
 
++ (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate {
+  [[Qonversion sharedInstance].productCenterManager setPurchasesDelegate:delegate];
+}
+
 + (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
   [[Qonversion sharedInstance].productCenterManager setPromoPurchasesDelegate:delegate];
 }
