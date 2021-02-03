@@ -37,6 +37,13 @@ Check the [documentation](https://docs.qonversion.io) to learn details on implem
 3. If a purchase is successful, the SDK sends a request to Qonversion API for server-to-server purchase validation. Qonversion server receives accurate information on the in-app purchase status and user entitlements.
 4. SDK returns control to the application with a processing state.
 
+## Automations
+Qonversion Automation allows sending automated, personalized push notifications and in-app messages initiated by in-app purchase events. This feature is designed to increase your app's revenue and retention, provide cancellation insights, reduce subscriber churn, and improve your subscribers' user experience.
+
+
+See more in the [documentation](https://documentation.qonversion.io/docs/automations)
+![](https://qonversion.io/img/@2x/automation/in-app-constructor.gif)
+
 ## Analytics
 
 Monitor your in-app revenue metrics. Understand your customers and make better decisions with precise subscription revenue data.
