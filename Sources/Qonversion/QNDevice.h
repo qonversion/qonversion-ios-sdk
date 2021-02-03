@@ -23,5 +23,8 @@
 @property (readonly, strong, nonatomic) NSString *fbAnonID;
 
 @property (readonly, strong, nonatomic) NSString *installDate;
+@property (readonly, copy, nonatomic) NSString *pushNotificationsToken;
+
+- (void)setPushNotificationsToken:(NSString *)token;
 
 @end

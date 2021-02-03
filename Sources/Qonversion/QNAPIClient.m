@@ -2,17 +2,13 @@
 #import "QNConstants.h"
 #import "QNRequestBuilder.h"
 #import "QNRequestSerializer.h"
-#import "QNDevice.h"
-#import "QNMapper.h"
 #import "QNErrors.h"
-#import "QNMapperObject.h"
 #import "QNUtils.h"
 #import "QNUserInfo.h"
 #import "QNAPIConstants.h"
 
 @interface QNAPIClient()
 
-@property (nonatomic, strong) QNDevice *device;
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, copy) NSArray<NSNumber *> *connectionErrorCodes;
@@ -31,7 +27,6 @@
     _apiKey = @"";
     _userID = @"";
     _debug = NO;
-    _device = QNDevice.current;
     _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
     _connectionErrorCodes = @[
       @(NSURLErrorNotConnectedToInternet),
@@ -92,6 +87,25 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
+- (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeUserActionPointsRequestWith:self.userID apiKey:[self obtainApiKey]];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
+- (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID apiKey:[self obtainApiKey]];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
+- (void)trackScreenShownWithID:(NSString *)automationID {
+  NSDictionary *body = @{@"user": self.userID};
+  NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body apiKey:[self obtainApiKey]];
+  
+  return [self dataTaskWithRequest:request completion:nil];
+}
+
 - (void)attributionRequest:(QNAttributionProvider)provider
                       data:(NSDictionary *)data
                 completion:(QNAPIClientCompletionHandler)completion {
@@ -122,6 +136,10 @@
 }
 
 // MARK: - Private
+
+- (NSString *)obtainApiKey {
+  return self.debug ? [NSString stringWithFormat:@"test_%@", self.apiKey] : self.apiKey;
+}
 
 - (NSDictionary *)enrichParameters:(NSDictionary *)parameters {
   NSDictionary *_parameters = parameters ?: @{};
@@ -174,7 +192,7 @@
       return;
     }
     
-    NSError *jsonError = [[NSError alloc] init];
+    NSError *jsonError;
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
     
     if ((jsonError.code || !dict) && completion) {

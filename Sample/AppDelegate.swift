@@ -15,11 +15,44 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
   
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    Qonversion.setDebugMode()
     Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
     Qonversion.setPromoPurchasesDelegate(self)
     Qonversion.setAppleSearchAdsAttributionEnabled(true)
     
+    registerForNotifications()
+    
     return true
+  }
+  
+  func registerForNotifications() {
+      UNUserNotificationCenter.current().delegate = self
+      UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { (_, _) in }
+      UIApplication.shared.registerForRemoteNotifications()
+  }
+  
+}
+
+extension AppDelegate: UNUserNotificationCenterDelegate {
+  
+  func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+      print("error: \(error)")
+  }
+
+  func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    Qonversion.setNotificationsToken(deviceToken)
+  }
+
+  func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+    let isPushHandled: Bool = Qonversion.handleNotification(response.notification.request.content.userInfo)
+    if !isPushHandled {
+      // Qonversion can not handle this push.
+    }
+    completionHandler()
+  }
+  
+  func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    completionHandler([.alert, .badge, .sound])
   }
   
 }
