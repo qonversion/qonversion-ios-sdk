@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  excluded_files = ['Sources/Qonversion/QONAutomations.h', 'Sources/Qonversion/QONAutomations.m', 'Sources/Qonversion/QONAutomationsFlowCoordinator.h', 'Sources/Qonversion/QONAutomationsFlowCoordinator.m', 'Sources/Qonversion/QONAutomationsViewController.h', 'Sources/Qonversion/QONAutomationsViewController.m', 'Sources/Qonversion/QONAutomationsDelegate.h', 'Sources/Qonversion/QONAutomationsDelegate.m', 'Sources/Qonversion/QONAutomationsActionsHandler.h', 'Sources/Qonversion/QONAutomationsActionsHandler.m', 'Sources/Qonversion/QONAutomationsFlowAssembly.h', 'Sources/Qonversion/QONAutomationsFlowAssembly.m', 'Sources/Qonversion/QONActionResult.h', 'Sources/Qonversion/QONActionResult.m']
+  excluded_files = ['Sources/Qonversion/QONAutomations*', 'Sources/Qonversion/QONActionResult.{h,m}']
   s.name             = 'Qonversion'
   s.version          = '2.9.0'
   s.summary          = 'qonversion.io'
