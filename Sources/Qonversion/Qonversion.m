@@ -10,7 +10,10 @@
 #import "QNProperties.h"
 #import "QNDevice.h"
 #import "QNUtils.h"
+
+#if TARGET_OS_IOS
 #import "QONAutomationsFlowCoordinator.h"
+#endif
 
 @interface Qonversion()
 
