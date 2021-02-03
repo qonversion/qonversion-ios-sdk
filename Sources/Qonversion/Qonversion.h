@@ -41,12 +41,14 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)setNotificationsToken:(NSData *)token API_AVAILABLE(ios(9.0));
 
+#if TARGET_OS_IOS
 /**
  Returns true when a push notification was received from Qonversion.
  Otherwise returns false, so you need to handle a notification yourself
  @param userInfo - notification user info
  */
 + (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
+#endif
 
 /**
  Sets debug environment for user.

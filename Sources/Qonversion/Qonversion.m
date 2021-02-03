@@ -9,8 +9,8 @@
 #import "QNUserInfo.h"
 #import "QNProperties.h"
 #import "QNDevice.h"
-#import "QONAutomationsFlowCoordinator.h"
 #import "QNUtils.h"
+#import "QONAutomationsFlowCoordinator.h"
 
 @interface Qonversion()
 
@@ -52,9 +52,11 @@
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:nil];
 }
 
+#if TARGET_OS_IOS
 + (BOOL)handleNotification:(NSDictionary *)userInfo {
   return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
 }
+#endif
 
 + (void)setDebugMode {
   [Qonversion sharedInstance].debugMode = YES;

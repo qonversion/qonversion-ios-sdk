@@ -1,4 +1,5 @@
 Pod::Spec.new do |s|
+  excluded_files = ['Sources/Qonversion/QONAutomations.h', 'Sources/Qonversion/QONAutomations.m', 'Sources/Qonversion/QONAutomationsFlowCoordinator.h', 'Sources/Qonversion/QONAutomationsFlowCoordinator.m', 'Sources/Qonversion/QONAutomationsViewController.h', 'Sources/Qonversion/QONAutomationsViewController.m', 'Sources/Qonversion/QONAutomationsDelegate.h', 'Sources/Qonversion/QONAutomationsDelegate.m', 'Sources/Qonversion/QONAutomationsActionsHandler.h', 'Sources/Qonversion/QONAutomationsActionsHandler.m', 'Sources/Qonversion/QONAutomationsFlowAssembly.h', 'Sources/Qonversion/QONAutomationsFlowAssembly.m', 'Sources/Qonversion/QONActionResult.h', 'Sources/Qonversion/QONActionResult.m']
   s.name             = 'Qonversion'
   s.version          = '2.9.1'
   s.summary          = 'qonversion.io'
@@ -10,11 +11,13 @@ Pod::Spec.new do |s|
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'Qonversion Inc.' => 'hi@qonversion.io' }
   s.source_files     = 'Sources/Qonversion/*.{h,m}'
+  s.osx.exclude_files = excluded_files
+  s.tvos.exclude_files = excluded_files
+  s.watchos.exclude_files = excluded_files
   s.source           = { :git => 'https://github.com/qonversion/qonversion-ios-sdk.git', :tag => s.version.to_s }
   s.ios.deployment_target = '9.0'
   s.osx.deployment_target = '10.12'
   s.watchos.deployment_target = '6.2'
-  s.tvos.deployment_target = '9.0'
   s.ios.frameworks = ['UIKit', 'WebKit']
   s.requires_arc           = true
   
