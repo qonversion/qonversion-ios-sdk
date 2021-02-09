@@ -588,7 +588,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       if (_purchasingBlock) {
         run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
       } else {
-        [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedPermissions:launchResult.permissions];
+        if (transaction.transactionState != SKPaymentTransactionStateRestored) {
+          [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedPermissions:launchResult.permissions];
+        }
       }
     }];
   }];
