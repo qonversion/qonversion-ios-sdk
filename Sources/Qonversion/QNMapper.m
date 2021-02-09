@@ -95,16 +95,30 @@
 
 + (NSDictionary <NSString *, QNProduct *> *)fillProducts:(NSArray *)data {
   NSMutableDictionary <NSString *, QNProduct *> *products = [NSMutableDictionary new];
+  NSArray <QNProduct *> *productsList = [self fillProductsToArray:data];
   
-  for (NSDictionary* itemDict in data) {
-    QNProduct *item = [self fillProduct:itemDict];
-    if (item.qonversionID) {
-      products[item.qonversionID] = item;
+  for (QNProduct* product in productsList) {
+    if (product.qonversionID) {
+      products[product.qonversionID] = product;
     }
   }
   
   return [products copy];
 }
+
++ (NSArray <QNProduct *> *)fillProductsToArray:(NSArray *)data {
+  NSMutableArray <QNProduct *> *products = [NSMutableArray new];
+  
+  for (NSDictionary* itemDict in data) {
+    QNProduct *item = [self fillProduct:itemDict];
+    if (item.qonversionID) {
+      [products addObject:item];
+    }
+  }
+  
+  return [products copy];
+}
+
 
 + (NSDictionary<NSString *, QNIntroEligibility *> * _Nonnull)mapProductsEligibility:(NSDictionary * _Nullable)dict {
   NSDictionary *introEligibilityStatuses = @{@"non_intro_or_trial_product": @(QNIntroEligibilityStatusNonIntroProduct),
@@ -194,9 +208,10 @@
     QNOfferingTag tag = [self mapOfferingTag:offeringData];
     
     NSArray *productsData = offeringData[@"products"];
-    NSDictionary<NSString *, QNProduct *> *products = [self fillProducts:productsData];
     
-    QNOffering *offering = [[QNOffering alloc] initWithIdentifier:offeringIdentifier tag:tag products:[products allValues]];
+    NSArray<QNProduct *> *products = [self fillProductsToArray:productsData];
+    
+    QNOffering *offering = [[QNOffering alloc] initWithIdentifier:offeringIdentifier tag:tag products:products];
     [offerings addObject:offering];
   }
   
