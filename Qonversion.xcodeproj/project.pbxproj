@@ -134,7 +134,6 @@
 		89EA13B425A42BC90065BCED /* QNOffering.m in Sources */ = {isa = PBXBuildFile; fileRef = 89EA13B225A42BC90065BCED /* QNOffering.m */; };
 		89EA13B925A443070065BCED /* QNOfferings+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 89EA13B725A443070065BCED /* QNOfferings+Protected.h */; };
 		89EA13C125A482740065BCED /* QNOffering+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 89EA13BF25A482740065BCED /* QNOffering+Protected.h */; };
-		CE805C540A4C686272206968 /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E902AE0A2A73461C22DE146A /* Pods_Sample.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -333,7 +332,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				45754AE725814C7500FCA376 /* iAd.framework in Frameworks */,
-				CE805C540A4C686272206968 /* Pods_Sample.framework in Frameworks */,
 				89E6C82B2592237B00CDC327 /* Qonversion.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
