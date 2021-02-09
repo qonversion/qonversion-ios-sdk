@@ -18,9 +18,9 @@
     return [hex copy];
 }
 
-+ (BOOL)isMoreThanDayAgo:(NSTimeInterval)timeInterval {
++ (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval {
   NSDate *currentDate = [NSDate date];
-  return (currentDate.timeIntervalSince1970 - timeInterval) > (60.0 * 60.0 * 24.0);
+  return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > (60.0 * 60.0 * 24.0);
 }
 
 @end
