@@ -559,11 +559,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
       QNRestoreCompletionHandler restorePurchasesBlock = [weakSelf.restorePurchasesBlock copy];
       weakSelf.restorePurchasesBlock = nil;
-      if (result) {
+      if (error) {
+        run_block_on_main(restorePurchasesBlock, @{}, error);
+      } else if (result) {
         [weakSelf.launchResult setPermissions:result.permissions];
         run_block_on_main(restorePurchasesBlock, result.permissions, error);
-      } else if (error) {
-        run_block_on_main(restorePurchasesBlock, @{}, error);
       }
     }];
   }
