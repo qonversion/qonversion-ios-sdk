@@ -18,4 +18,9 @@
     return [hex copy];
 }
 
++ (BOOL)isMoreThanDayAgo:(NSTimeInterval)timeInterval {
+  NSDate *currentDate = [NSDate date];
+  return (currentDate.timeIntervalSince1970 - timeInterval) > (60.0 * 60.0 * 24.0);
+}
+
 @end
