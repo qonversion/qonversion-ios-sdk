@@ -76,17 +76,43 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   if (launchResult.timestamp > 0) {
     NSDate *currentDate = [NSDate date];
     
-    [self.persistentStorage storeDouble:currentDate.timeIntervalSince1970 forKey:kLaunchResultTimeStamp];
+    [self.persistentStorage storeDouble:1612931832 forKey:kLaunchResultTimeStamp];
     [self.persistentStorage storeObject:launchResult forKey:kLaunchResult];
   }
 }
 
-- (QNLaunchResult *)cachedLaunchResult {
-  return [self.persistentStorage loadObjectForKey:kLaunchResult];
+- (QNLaunchResult * _Nullable)actualCachedLaunchResult {
+  QNLaunchResult *result = [self.persistentStorage loadObjectForKey:kLaunchResult];
+  NSTimeInterval cachedLaunchResultTimeStamp = [self cachedLaunchResultTimeStamp];
+  BOOL isCacheOutdated = [QNUtils isCacheOutdated:cachedLaunchResultTimeStamp];
+  
+  return isCacheOutdated ? nil : result;
 }
 
 - (NSTimeInterval)cachedLaunchResultTimeStamp {
   return [self.persistentStorage loadDoubleForKey:kLaunchResultTimeStamp];
+}
+
+- (NSDictionary<NSString *, QNProduct *> *)getActualProducts {
+  NSDictionary *products = _launchResult.products ?: @{};
+  
+  if (self.launchError) {
+    QNLaunchResult *cachedResult = [self actualCachedLaunchResult];
+    products = cachedResult ? cachedResult.products : products;
+  }
+  
+  return products;
+}
+
+- (QNOfferings * _Nullable)getActualOfferings {
+  QNOfferings *offerings = self.launchResult.offerings ?: nil;
+  
+  if (self.launchError) {
+    QNLaunchResult *cachedResult = [self actualCachedLaunchResult];
+    offerings = cachedResult ? cachedResult.offerings : offerings;
+  }
+  
+  return offerings;
 }
 
 - (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion {
@@ -148,17 +174,17 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         run_block_on_main(completion, result.permissions, error);
       }];
     } else if (self.launchError) {
-      QNLaunchResult *result = [self cachedLaunchResult];
-      NSTimeInterval cachedLaunchResultTimeStamp = [self cachedLaunchResultTimeStamp];
-      BOOL isCacheOutdated = [QNUtils isCacheOutdated:cachedLaunchResultTimeStamp];
-      
-      if (isCacheOutdated) {
         [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-          run_block_on_main(completion, result.permissions, error);
+          QNLaunchResult *launchResult = result;
+          NSError *resultError;
+          if (error) {
+            QNLaunchResult *cachedLaunchResult = [self actualCachedLaunchResult];
+            launchResult = cachedLaunchResult ?: launchResult;
+            resultError = cachedLaunchResult ? nil : error;
+          }
+          
+          run_block_on_main(completion, launchResult.permissions, resultError);
         }];
-      } else {
-        run_block_on_main(completion, result.permissions, nil);
-      }
     } else {
       run_block_on_main(completion, self.launchResult.permissions, nil);
     }
@@ -172,7 +198,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     if (self.launchError) {
       __block __weak QNProductCenterManager *weakSelf = self;
       [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-        if (error) {
+        QNLaunchResult *cachedResult = [weakSelf actualCachedLaunchResult];
+        if (error && !cachedResult) {
           run_block_on_main(completion, @{}, error, NO);
           return;
         }
@@ -277,11 +304,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [self.offeringsBlocks removeAllObjects];
     
     NSError *resultError = error ?: _launchError;
-    QNOfferings *offerings = nil;
     
-    if (!resultError) {
-      offerings = [self enrichOfferingsWithStoreProducts];
-    }
+    QNOfferings *offerings = [self enrichOfferingsWithStoreProducts];
+    resultError = offerings ? nil : resultError;
     
     for (QNOfferingsCompletionHandler block in blocks) {
       run_block_on_main(block, offerings, resultError);
@@ -290,7 +315,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (QNOfferings *)enrichOfferingsWithStoreProducts {
-  for (QNOffering *offering in self.launchResult.offerings.availableOfferings) {
+  QNOfferings *offerings = [self getActualOfferings];
+  for (QNOffering *offering in offerings.availableOfferings) {
     for (QNProduct *product in offering.products) {
       QNProduct *qnProduct = [self productAt:product.qonversionID];
       
@@ -298,7 +324,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
   }
   
-  return self.launchResult.offerings;
+  return offerings;
   
 }
 
@@ -316,8 +342,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [_productsBlocks removeAllObjects];
     NSArray *products = [(_launchResult.products ?: @{}) allValues];;
     
-    NSDictionary *resultProducts = [self enrichProductsWithStoreProducts:products];
     NSError *resultError = error ?: _launchError;
+    
+    if (self.launchError) {
+      // check if the cache is actual, set the products, and reset the error
+      QNLaunchResult *cachedResult = [self actualCachedLaunchResult];
+      products = cachedResult ? cachedResult.products.allValues : products;
+      resultError = cachedResult ? nil : resultError;
+    }
+    
+    NSDictionary *resultProducts = [self enrichProductsWithStoreProducts:products];
     NSDictionary *result = resultError ? @{} : [resultProducts copy];
     for (QNProductsCompletionHandler _block in _blocks) {
       run_block_on_main(_block, result, resultError);
@@ -348,7 +382,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   self.productsLoading = YES;
   
-  NSArray<QNProduct *> *products = [_launchResult.products allValues];
+  NSDictionary<NSString *, QNProduct *> *productsMap = [self getActualProducts];
+  NSArray<QNProduct *> *products = productsMap.allValues;
+  
   NSMutableSet *productsSet = [[NSMutableSet alloc] init];
   
   if (products) {
@@ -475,7 +511,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (QNProduct * _Nullable)QNProduct:(NSString *)productID {
-  NSDictionary *products = _launchResult.products ?: @{};
+  NSDictionary *products = [self getActualProducts];
   
   return products[productID];
 }

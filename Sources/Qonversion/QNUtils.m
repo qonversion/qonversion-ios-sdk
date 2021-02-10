@@ -19,8 +19,9 @@
 }
 
 + (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval {
+  CGFloat dayInSeconds = 60.0 * 60.0 * 24.0;
   NSDate *currentDate = [NSDate date];
-  return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > (60.0 * 60.0 * 24.0);
+  return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > dayInSeconds;
 }
 
 @end
