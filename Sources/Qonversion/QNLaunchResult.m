@@ -24,6 +24,7 @@
     _permissions = [coder decodeObjectForKey:NSStringFromSelector(@selector(permissions))];
     _products = [coder decodeObjectForKey:NSStringFromSelector(@selector(products))];
     _userPoducts = [coder decodeObjectForKey:NSStringFromSelector(@selector(userPoducts))];
+    _offerings = [coder decodeObjectForKey:NSStringFromSelector(@selector(offerings))];
   }
   return self;
 }
@@ -35,6 +36,7 @@
   [coder encodeObject:_permissions forKey:NSStringFromSelector(@selector(permissions))];
   [coder encodeObject:_products forKey:NSStringFromSelector(@selector(products))];
   [coder encodeObject:_userPoducts forKey:NSStringFromSelector(@selector(userPoducts))];
+  [coder encodeObject:_offerings forKey:NSStringFromSelector(@selector(offerings))];
 }
 
 - (void)setUid:(NSString *)uid {

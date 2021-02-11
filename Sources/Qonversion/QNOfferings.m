@@ -31,6 +31,22 @@
   return self;
 }
 
+- (instancetype)initWithCoder:(NSCoder *)coder {
+  self = [super init];
+  
+  if (self) {
+    _availableOfferings = [coder decodeObjectForKey:NSStringFromSelector(@selector(availableOfferings))];
+    _main = [coder decodeObjectForKey:NSStringFromSelector(@selector(main))];
+  }
+  
+  return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder {
+  [coder encodeObject:_availableOfferings forKey:NSStringFromSelector(@selector(availableOfferings))];
+  [coder encodeObject:_main forKey:NSStringFromSelector(@selector(main))];
+}
+
 - (void)configureMapForOfferings:(NSArray<QNOffering *> *)offerings {
   NSMutableDictionary *offeringsDict = [NSMutableDictionary new];
   

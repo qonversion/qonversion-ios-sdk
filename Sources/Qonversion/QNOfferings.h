@@ -13,7 +13,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 NS_SWIFT_NAME(Qonversion.Offerings)
-@interface QNOfferings : NSObject
+@interface QNOfferings : NSObject <NSCoding>
 
 @property (nonatomic, copy, nonnull, readonly) NSArray<QNOffering *> *availableOfferings;
 

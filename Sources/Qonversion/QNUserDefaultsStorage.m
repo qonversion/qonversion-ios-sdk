@@ -13,6 +13,10 @@ static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefau
   [self.userDefaults synchronize];
 }
 
+- (void)storeDouble:(double)value forKey:(NSString *)key {
+  [self.userDefaults setDouble:value forKey:key];
+}
+
 - (id)loadObject {
   return [self loadObjectForKey:QNUserDefaultsStorageDefaultKey];
 }
@@ -28,6 +32,10 @@ static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefau
   }
   
   return nil;
+}
+
+- (double)loadDoubleForKey:(NSString *)key {
+  return [self.userDefaults doubleForKey:key];
 }
 
 - (void)loadObjectForKey:(NSString *)key withCompletion:(void (^)(id))completion {

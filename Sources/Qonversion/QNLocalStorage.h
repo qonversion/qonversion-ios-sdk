@@ -21,6 +21,8 @@
 @optional
 - (void)setVersion:(NSString *)version;
 - (NSString *)version;
+- (void)storeDouble:(double)value forKey:(NSString *)key;
+- (double)loadDoubleForKey:(NSString *)key;
 
 - (void)clear;
 

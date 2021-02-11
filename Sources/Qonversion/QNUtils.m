@@ -1,4 +1,4 @@
-#import <StoreKit/StoreKit.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 #import "QNUtils.h"
 #import "QNErrors.h"
@@ -16,6 +16,12 @@
         [hex appendFormat:@"%02x", bytes[i]];
     }
     return [hex copy];
+}
+
++ (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval {
+  CGFloat dayInSeconds = 60.0 * 60.0 * 24.0;
+  NSDate *currentDate = [NSDate date];
+  return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > dayInSeconds;
 }
 
 @end
