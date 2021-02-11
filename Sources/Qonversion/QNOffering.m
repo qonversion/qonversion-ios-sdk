@@ -31,6 +31,24 @@
   return self;
 }
 
+- (instancetype)initWithCoder:(NSCoder *)coder {
+  self = [super init];
+  
+  if (self) {
+    _identifier = [coder decodeObjectForKey:NSStringFromSelector(@selector(identifier))];
+    _tag = [coder decodeIntForKey:NSStringFromSelector(@selector(tag))];
+    _products = [coder decodeObjectForKey:NSStringFromSelector(@selector(products))];
+  }
+  
+  return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder {
+  [coder encodeObject:_identifier forKey:NSStringFromSelector(@selector(identifier))];
+  [coder encodeInteger:_tag forKey:NSStringFromSelector(@selector(tag))];
+  [coder encodeObject:_products forKey:NSStringFromSelector(@selector(products))];
+}
+
 - (void)configureMapForProducts:(NSArray<QNProduct *> *)products {
   NSMutableDictionary *productsMap = [NSMutableDictionary new];
   

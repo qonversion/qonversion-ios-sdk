@@ -21,7 +21,7 @@ typedef NS_ENUM(NSInteger, QNOfferingTag) {
 } NS_SWIFT_NAME(Qonversion.OfferingTag);
 
 NS_SWIFT_NAME(Qonversion.Offering)
-@interface QNOffering : NSObject
+@interface QNOffering : NSObject <NSCoding>
 
 @property (nonatomic, copy, readonly) NSString *identifier;
 @property (nonatomic, assign, readonly) QNOfferingTag tag;
