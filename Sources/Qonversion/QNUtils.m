@@ -1,4 +1,5 @@
 #import <StoreKit/StoreKit.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 #import "QNUtils.h"
 #import "QNErrors.h"

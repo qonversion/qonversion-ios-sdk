@@ -174,7 +174,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         QNLaunchResult *launchResult = result;
         NSError *resultError;
         if (error) {
-          QNLaunchResult *cachedLaunchResult = [self actualCachedLaunchResult];
+          QNLaunchResult *cachedLaunchResult = [weakSelf actualCachedLaunchResult];
           launchResult = cachedLaunchResult ?: launchResult;
           resultError = cachedLaunchResult ? nil : error;
         }
