@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   excluded_files = ['Sources/Qonversion/QONAutomations*', 'Sources/Qonversion/QONActionResult.{h,m}']
   s.name             = 'Qonversion'
-  s.version          = '2.10.1'
+  s.version          = '2.11.0'
   s.summary          = 'qonversion.io'
   s.description      = <<-DESC
   Deep Analytics for iOS Subscriptions
