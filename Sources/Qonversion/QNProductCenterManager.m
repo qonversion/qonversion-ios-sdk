@@ -76,7 +76,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   if (launchResult.timestamp > 0) {
     NSDate *currentDate = [NSDate date];
     
-    [self.persistentStorage storeDouble:1612931832 forKey:kLaunchResultTimeStamp];
+    [self.persistentStorage storeDouble:currentDate.timeIntervalSince1970 forKey:kLaunchResultTimeStamp];
     [self.persistentStorage storeObject:launchResult forKey:kLaunchResult];
   }
 }
@@ -169,22 +169,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     __block __weak QNProductCenterManager *weakSelf = self;
-    if (self.forceLaunchRetry) {
+    if (self.launchError) {
       [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-        run_block_on_main(completion, result.permissions, error);
+        QNLaunchResult *launchResult = result;
+        NSError *resultError;
+        if (error) {
+          QNLaunchResult *cachedLaunchResult = [self actualCachedLaunchResult];
+          launchResult = cachedLaunchResult ?: launchResult;
+          resultError = cachedLaunchResult ? nil : error;
+        }
+        
+        run_block_on_main(completion, launchResult.permissions, resultError);
       }];
-    } else if (self.launchError) {
-        [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-          QNLaunchResult *launchResult = result;
-          NSError *resultError;
-          if (error) {
-            QNLaunchResult *cachedLaunchResult = [self actualCachedLaunchResult];
-            launchResult = cachedLaunchResult ?: launchResult;
-            resultError = cachedLaunchResult ? nil : error;
-          }
-          
-          run_block_on_main(completion, launchResult.permissions, resultError);
-        }];
     } else {
       run_block_on_main(completion, self.launchResult.permissions, nil);
     }
@@ -617,6 +613,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       @synchronized (weakSelf) {
         weakSelf.forceLaunchRetry = NO;
         weakSelf.launchResult = launchResult;
+        weakSelf.launchError = nil;
       }
       
       [weakSelf storeLaunchResultIfNeeded:launchResult];
