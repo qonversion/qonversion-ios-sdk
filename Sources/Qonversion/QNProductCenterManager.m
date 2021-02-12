@@ -298,12 +298,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)executeOfferingsBlocksWithError:(NSError * _Nullable)error {
   @synchronized (self) {
-    NSArray <QNOfferingsCompletionHandler> *blocks = [self.offeringsBlocks copy];
-    if (blocks.count == 0) {
+    if (self.offeringsBlocks.count == 0) {
       return;
     }
     
+    NSArray <QNOfferingsCompletionHandler> *blocks = [self.offeringsBlocks copy];
+    
     [self.offeringsBlocks removeAllObjects];
+    
+    if (error) {
+      for (QNOfferingsCompletionHandler block in blocks) {
+        run_block_on_main(block, nil, error);
+      }
+      
+      return;
+    }
     
     NSError *resultError = error ?: _launchError;
     
