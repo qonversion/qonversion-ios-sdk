@@ -220,7 +220,7 @@
 
 + (QNOfferingTag)mapOfferingTag:(NSDictionary *)offeringData {
   QNOfferingTag tag;
-  NSInteger tagValue = [self mapInteger:offeringData[@"tag"] orReturn:0];;
+  NSInteger tagValue = [self mapInteger:offeringData[@"tag"] orReturn:0];
   
   switch (tagValue) {
     case 1:
