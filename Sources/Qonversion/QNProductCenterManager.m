@@ -168,22 +168,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       return;
     }
     
-    __block __weak QNProductCenterManager *weakSelf = self;
-    if (self.launchError) {
-      [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-        QNLaunchResult *launchResult = result;
-        NSError *resultError;
-        if (error) {
-          QNLaunchResult *cachedLaunchResult = [weakSelf actualCachedLaunchResult];
-          launchResult = cachedLaunchResult ?: launchResult;
-          resultError = cachedLaunchResult ? nil : error;
-        }
-        
-        run_block_on_main(completion, launchResult.permissions, resultError);
-      }];
-    } else {
-      run_block_on_main(completion, self.launchResult.permissions, nil);
-    }
+    [self preparePermissionsResultWithCompletion:completion];
   }
 }
 
@@ -256,18 +241,39 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.storeKitService restore];
 }
 
+- (void)preparePermissionsResultWithCompletion:(QNPermissionCompletionHandler)completion {
+  __block __weak QNProductCenterManager *weakSelf = self;
+  if (self.launchError) {
+    [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      QNLaunchResult *launchResult = result;
+      NSError *resultError = error;
+      if (error && !weakSelf.forceLaunchRetry) {
+        QNLaunchResult *cachedLaunchResult = [weakSelf actualCachedLaunchResult];
+        launchResult = cachedLaunchResult ?: launchResult;
+        resultError = cachedLaunchResult ? nil : error;
+      }
+      
+      run_block_on_main(completion, launchResult.permissions, resultError);
+    }];
+  } else {
+    run_block_on_main(completion, self.launchResult.permissions, nil);
+  }
+}
+
 - (void)executePermissionBlocks {
   @synchronized (self) {
-    NSMutableArray <QNPermissionCompletionHandler> *_blocks = [self->_permissionsBlocks copy];
-    if (!_blocks) {
+    if (self.permissionsBlocks.count == 0) {
       return;
     }
     
-    [self->_permissionsBlocks removeAllObjects];
-
-    for (QNPermissionCompletionHandler block in _blocks) {
-      run_block_on_main(block, self.launchResult.permissions ?: @{}, self.launchError);
-    }
+    NSMutableArray <QNPermissionCompletionHandler> *_blocks = [self.permissionsBlocks copy];
+    [self.permissionsBlocks removeAllObjects];
+    
+    [self preparePermissionsResultWithCompletion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
+      for (QNPermissionCompletionHandler block in _blocks) {
+        run_block_on_main(block, result ?: @{}, error);
+      }
+    }];
   }
 }
 
@@ -292,12 +298,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)executeOfferingsBlocksWithError:(NSError * _Nullable)error {
   @synchronized (self) {
-    NSArray <QNOfferingsCompletionHandler> *blocks = [self.offeringsBlocks copy];
-    if (blocks.count == 0) {
+    if (self.offeringsBlocks.count == 0) {
       return;
     }
     
+    NSArray <QNOfferingsCompletionHandler> *blocks = [self.offeringsBlocks copy];
+    
     [self.offeringsBlocks removeAllObjects];
+    
+    if (error) {
+      for (QNOfferingsCompletionHandler block in blocks) {
+        run_block_on_main(block, nil, error);
+      }
+      
+      return;
+    }
     
     NSError *resultError = error ?: _launchError;
     
@@ -336,15 +351,24 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     [_productsBlocks removeAllObjects];
-    NSArray *products = [(_launchResult.products ?: @{}) allValues];;
     
-    NSError *resultError = error ?: _launchError;
+    if (error) {
+      for (QNProductsCompletionHandler _block in _blocks) {
+        run_block_on_main(_block, @{}, error);
+      }
+      
+      return;
+    }
+    
+    NSArray *products = [(_launchResult.products ?: @{}) allValues];
+    
+    NSError *resultError;
     
     if (self.launchError) {
       // check if the cache is actual, set the products, and reset the error
       QNLaunchResult *cachedResult = [self actualCachedLaunchResult];
       products = cachedResult ? cachedResult.products.allValues : products;
-      resultError = cachedResult ? nil : resultError;
+      resultError = cachedResult ? nil : self.launchError;
     }
     
     NSDictionary *resultProducts = [self enrichProductsWithStoreProducts:products];
