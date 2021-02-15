@@ -20,7 +20,7 @@ let package = Package(
             publicHeadersPath: ".")
         
 #if os(macOS)
-        target.exclude = ["Qonversion/Sources/QONAutomationsViewController.h", "Qonversion/Sources/QONAutomationsViewController.m"]
+        target.exclude = ["Sources/Qonversion/QONAutomationsViewController.h", "Sources/Qonversion/QONAutomationsViewController.m"]
 #endif
 
         return [target]
