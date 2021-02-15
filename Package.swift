@@ -5,6 +5,9 @@ import PackageDescription
 
 let package = Package(
     name: "Qonversion",
+    platforms: [
+        .iOS(.v9), .watchOS("6.2"), .macOS(.v10_12), .tvOS(.v9)
+    ],
     products: [
         .library(
             name: "Qonversion",
@@ -17,7 +20,7 @@ let package = Package(
             publicHeadersPath: ".")
         
 #if os(macOS)
-        target.exclude = ["QONAutomationsViewController.h", "QONAutomationsViewController.m"]
+        target.exclude = ["Qonversion/Sources/QONAutomationsViewController.h", "Qonversion/Sources/QONAutomationsViewController.m"]
 #endif
 
         return [target]
