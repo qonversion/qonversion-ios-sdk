@@ -16,12 +16,12 @@ let package = Package(
     targets: {
         let target: Target = .target(
             name: "Qonversion",
-            exclude: [],
+            exclude: ["Sources/Qonversion/QONAutomationsViewController.h", "Sources/Qonversion/QONAutomationsViewController.m"],
             publicHeadersPath: ".")
         
-#if os(macOS)
-        target.exclude = ["Sources/Qonversion/QONAutomationsViewController.h", "Sources/Qonversion/QONAutomationsViewController.m"]
-#endif
+//#if os(macOS)
+//        target.exclude = ["Sources/Qonversion/QONAutomationsViewController.h", "Sources/Qonversion/QONAutomationsViewController.m"]
+//#endif
 
         return [target]
     }()
