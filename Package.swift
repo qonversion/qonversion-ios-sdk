@@ -10,10 +10,16 @@ let package = Package(
             name: "Qonversion",
             targets: ["Qonversion"]),
     ],
-    targets: [
-        .target(
+    targets: {
+        let target: Target = .target(
             name: "Qonversion",
             exclude: [],
-            publicHeadersPath: "."),
-    ]
+            publicHeadersPath: ".")
+        
+#if os(macOS) || os(watchOS) || os(tvOS)
+        target.exclude = ["Sources/Qonversion/QONAutomations*", "Sources/Qonversion/QONActionResult.{h,m}"]
+#endif
+
+        return [target]
+    }()
 )
