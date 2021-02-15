@@ -17,7 +17,7 @@ let package = Package(
             publicHeadersPath: ".")
         
 #if os(macOS) || os(watchOS) || os(tvOS)
-        target.exclude = ["QONAutomations*", "QONActionResult.{h,m}"]
+        target.exclude = ["QONAutomationsViewController.h", "QONAutomationsViewController.m"]
 #endif
 
         return [target]
