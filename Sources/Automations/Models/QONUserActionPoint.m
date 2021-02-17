@@ -1,14 +1,14 @@
 //
-//  QNUserActionPoint.m
+//  QONUserActionPoint.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 28.12.2020.
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-#import "QNUserActionPoint.h"
+#import "QONUserActionPoint.h"
 
-@implementation QNUserActionPoint
+@implementation QONUserActionPoint
 
 - (instancetype)initWithScreenId:(NSString *)screenId createDate:(NSDate *)createDate {
   self = [super init];

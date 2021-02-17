@@ -1,5 +1,5 @@
 //
-//  QONActionsHandler.h
+//  QONAutomationsActionsHandler.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.09.2020.

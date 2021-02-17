@@ -8,13 +8,12 @@
 #import <Qonversion/QNStoreKitSugare.h>
 #import <Qonversion/QNConstants.h>
 #import <Qonversion/QNErrors.h>
-
-#import <Qonversion/QONAutomations.h>
-#import <Qonversion/QONAutomationsDelegate.h>
-#import <Qonversion/QONActionResult.h>
-
 #import <Qonversion/QNOfferings.h>
 #import <Qonversion/QNOffering.h>
 #import <Qonversion/QNIntroEligibility.h>
 #import <Qonversion/QNExperimentInfo.h>
 #import <Qonversion/QNExperimentGroup.h>
+
+#import <Qonversion/QONAutomations.h>
+#import <Qonversion/QONAutomationsDelegate.h>
+#import <Qonversion/QONActionResult.h>
