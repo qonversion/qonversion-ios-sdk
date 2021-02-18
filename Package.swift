@@ -3,8 +3,7 @@
 
 import PackageDescription
 
-let sources = ["Qonversion/Constants", "Qonversion/Core", "Qonversion/Main", "Qonversion/Mappers", "Qonversion/Models", "Qonversion/Services", "Qonversion/Utils",
-               "Automations/Constants", "Automations/Main", "Automations/Mappers", "Automations/Models", "Automations/Services", "Automations/Views"]
+let sources = ["Qonversion/**"]
 
 let package = Package(
     name: "Qonversion",
@@ -20,8 +19,8 @@ let package = Package(
         let target: Target = .target(
             name: "Qonversion",
             path: "Sources",
-            publicHeadersPath: "Public",
-            cSettings: sources.map { CSetting.headerSearchPath($0) })
+            publicHeadersPath: "Qonversion/Public",
+            cSettings: sources.map { .headerSearchPath($0) })
 
 #if os(macOS) || os(tvOS) || os(watchOS)
         target.exclude = ["Automations"]
