@@ -14,8 +14,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QONAutomationsActionsHandler : NSObject
 
+#if !TARGET_OS_TV
 - (BOOL)isActionShouldBeHandled:(WKNavigationAction *)action;
 - (QONActionResult *)prepareDataForAction:(WKNavigationAction *)action;
+#endif
 
 @end
 

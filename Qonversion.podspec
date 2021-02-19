@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  excluded_files = ['Sources/Qonversion/QONAutomations*', 'Sources/Qonversion/QONActionResult.{h,m}']
+  excluded_files = ['Sources/Qonversion/Automations', 'Sources/Qonversion/Public/QONAutomations*.{h,m}', 'Sources/Qonversion/Public/QONActionResult.{h,m}']
   s.name         = 'Qonversion'
   s.version      = '2.11.1'
   s.summary      = 'qonversion.io'
@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.homepage                  = 'https://github.com/qonversion/qonversion-ios-sdk'
   s.license                   = { :type => 'MIT', :file => 'LICENSE' }
   s.author                    = { 'Qonversion Inc.' => 'hi@qonversion.io' }
-  s.source_files              = 'Sources/Qonversion/*.{h,m}'
+  s.source_files              = 'Sources/Qonversion/**/*.{h,m}'
   s.osx.exclude_files         = excluded_files
   s.tvos.exclude_files        = excluded_files
   s.watchos.exclude_files     = excluded_files

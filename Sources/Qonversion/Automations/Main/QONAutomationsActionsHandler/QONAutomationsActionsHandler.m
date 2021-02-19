@@ -8,7 +8,9 @@
 
 #import "QONAutomationsActionsHandler.h"
 #import "QONActionResult.h"
+#if !TARGET_OS_TV
 #import <WebKit/WebKit.h>
+#endif
 
 static NSString *const kQonversionSchemeRegEx = @"^(qon-)\\w";
 static NSString *const kAutomationsHost = @"automation";
@@ -28,6 +30,8 @@ static NSString *const kCloseAction = @"close";
 @end
 
 @implementation QONAutomationsActionsHandler
+
+#if !TARGET_OS_TV
 
 - (instancetype)init {
   self = [super init];
@@ -72,5 +76,7 @@ static NSString *const kCloseAction = @"close";
   
   return formattedAction;
 }
+
+#endif
 
 @end

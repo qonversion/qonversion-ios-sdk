@@ -16,6 +16,7 @@
 
 #import "Qonversion.h"
 
+#if !TARGET_OS_TV
 #import <WebKit/WebKit.h>
 #import <SafariServices/SafariServices.h>
 
@@ -25,9 +26,11 @@
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
 
 @end
+#endif
 
 @implementation QONAutomationsViewController
 
+#if !TARGET_OS_TV
 - (void)viewDidLoad {
   [super viewDidLoad];
   
@@ -228,5 +231,7 @@
 - (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view {
   scrollView.pinchGestureRecognizer.enabled = NO;
 }
+
+#endif
 
 @end
