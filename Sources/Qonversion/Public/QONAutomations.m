@@ -6,6 +6,7 @@
 //  Copyright © 2021 Qonversion Inc. All rights reserved.
 //
 
+#if TARGET_OS_IOS
 #import "QONAutomations.h"
 #import "QONAutomationsFlowCoordinator.h"
 
@@ -26,3 +27,5 @@
 }
 
 @end
+
+#endif

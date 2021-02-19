@@ -6,6 +6,10 @@
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
+#if TARGET_OS_IOS
+
 #import "QONAutomationsViewController.h"
 #import "QONAutomationsService.h"
 #import "QONAutomationsFlowAssembly.h"
@@ -16,7 +20,6 @@
 
 #import "Qonversion.h"
 
-#if !TARGET_OS_TV
 #import <WebKit/WebKit.h>
 #import <SafariServices/SafariServices.h>
 
@@ -26,11 +29,9 @@
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
 
 @end
-#endif
 
 @implementation QONAutomationsViewController
 
-#if !TARGET_OS_TV
 - (void)viewDidLoad {
   [super viewDidLoad];
   
@@ -79,8 +80,6 @@
   
   [self.navigationController presentViewController:alert animated:YES completion:nil];
 }
-
-#pragma mark - Private
 
 #pragma mark Actions
 
@@ -232,6 +231,6 @@
   scrollView.pinchGestureRecognizer.enabled = NO;
 }
 
-#endif
-
 @end
+
+#endif
