@@ -6,6 +6,8 @@
 //  Copyright © 2021 Qonversion Inc. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
 #if TARGET_OS_IOS
 #import "QONAutomations.h"
 #import "QONAutomationsFlowCoordinator.h"
