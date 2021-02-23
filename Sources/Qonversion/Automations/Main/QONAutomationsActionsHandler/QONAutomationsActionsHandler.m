@@ -1,10 +1,14 @@
 //
-//  QONActionsHandler.m
+//  QONAutomationsActionsHandler.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.09.2020.
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
+
+#import <Foundation/Foundation.h>
+
+#if TARGET_OS_IOS
 
 #import "QONAutomationsActionsHandler.h"
 #import "QONActionResult.h"
@@ -74,3 +78,5 @@ static NSString *const kCloseAction = @"close";
 }
 
 @end
+
+#endif

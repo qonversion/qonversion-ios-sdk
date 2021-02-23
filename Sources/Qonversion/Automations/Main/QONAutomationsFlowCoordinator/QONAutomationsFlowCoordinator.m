@@ -6,6 +6,10 @@
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
+#if TARGET_OS_IOS
+
 #import "QONAutomationsFlowCoordinator.h"
 #import "QONAutomationsFlowAssembly.h"
 #import "QONAutomationsDelegate.h"
@@ -13,7 +17,7 @@
 #import "QONAutomationsService.h"
 #import "QONAutomationsScreen.h"
 #import "QONAutomationsActionsHandler.h"
-#import "QNUserActionPoint.h"
+#import "QONUserActionPoint.h"
 
 @interface QONAutomationsFlowCoordinator() <QONAutomationsViewControllerDelegate>
 
@@ -61,9 +65,9 @@
 
 - (void)showAutomationIfExists {
   __block __weak QONAutomationsFlowCoordinator *weakSelf = self;
-  [self.automationsService obtainAutomationScreensWithCompletion:^(NSArray<QNUserActionPoint *> *actionPoints, NSError * _Nullable error) {
-    NSArray<QNUserActionPoint *> *sortedActions = [actionPoints sortedArrayUsingSelector:@selector(createDate)];
-    QNUserActionPoint *latestAction = sortedActions.lastObject;
+  [self.automationsService obtainAutomationScreensWithCompletion:^(NSArray<QONUserActionPoint *> *actionPoints, NSError * _Nullable error) {
+    NSArray<QONUserActionPoint *> *sortedActions = [actionPoints sortedArrayUsingSelector:@selector(createDate)];
+    QONUserActionPoint *latestAction = sortedActions.lastObject;
     NSString *automationID = latestAction.screenId;
     
     if (automationID.length > 0) {
@@ -140,3 +144,5 @@
 }
 
 @end
+
+#endif

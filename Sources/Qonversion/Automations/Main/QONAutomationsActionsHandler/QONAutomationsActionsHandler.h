@@ -1,5 +1,5 @@
 //
-//  QONActionsHandler.h
+//  QONAutomationsActionsHandler.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 23.09.2020.
@@ -7,6 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
+
+#if TARGET_OS_IOS
 
 @class WKNavigationAction, QONActionResult;
 
@@ -20,3 +22,5 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
+
+#endif

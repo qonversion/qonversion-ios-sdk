@@ -6,6 +6,10 @@
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
+#if TARGET_OS_IOS
+
 #import "QONAutomationsViewController.h"
 #import "QONAutomationsService.h"
 #import "QONAutomationsFlowAssembly.h"
@@ -15,6 +19,7 @@
 #import "QONAutomationsConstants.h"
 
 #import "Qonversion.h"
+
 #import <WebKit/WebKit.h>
 #import <SafariServices/SafariServices.h>
 
@@ -75,8 +80,6 @@
   
   [self.navigationController presentViewController:alert animated:YES completion:nil];
 }
-
-#pragma mark - Private
 
 #pragma mark Actions
 
@@ -229,3 +232,5 @@
 }
 
 @end
+
+#endif

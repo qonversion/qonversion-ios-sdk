@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+#if TARGET_OS_IOS
+
 @protocol QONAutomationsDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -22,3 +24,5 @@ NS_SWIFT_NAME(setDelegate(_:));
 @end
 
 NS_ASSUME_NONNULL_END
+
+#endif

@@ -1,5 +1,5 @@
 //
-//  QNUserActionPoint.h
+//  QONUserActionPoint.h
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 28.12.2020.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QNUserActionPoint : NSObject
+@interface QONUserActionPoint : NSObject
 
 @property (nonatomic, copy, readonly) NSString *screenId;
 @property (nonatomic, strong, readonly) NSDate *createDate;

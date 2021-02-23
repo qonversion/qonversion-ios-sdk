@@ -6,6 +6,9 @@
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
+#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
 
 @class QONAutomationsService, QONAutomationsScreen, QONAutomationsActionsHandler, QONAutomationsFlowAssembly, QONActionResult, QONAutomationsViewController;
@@ -21,7 +24,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)automationsFinished;
 
 @end
-
 @interface QONAutomationsViewController : UIViewController
 
 @property (nonatomic, weak) id<QONAutomationsViewControllerDelegate> delegate;
@@ -34,3 +36,4 @@ NS_ASSUME_NONNULL_BEGIN
 
 NS_ASSUME_NONNULL_END
 
+#endif

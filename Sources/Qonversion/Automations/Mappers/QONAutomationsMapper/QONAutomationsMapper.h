@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class QONAutomationsScreen, QNUserActionPoint;
+@class QONAutomationsScreen, QONUserActionPoint;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable QONAutomationsScreen *)mapScreen:(NSDictionary *)dict;
 - (nullable NSError *)mapError:(NSDictionary *)error;
-- (NSArray<QNUserActionPoint *> *)mapUserActionPoints:(NSDictionary *)dict;
+- (NSArray<QONUserActionPoint *> *)mapUserActionPoints:(NSDictionary *)dict;
 
 @end
 
