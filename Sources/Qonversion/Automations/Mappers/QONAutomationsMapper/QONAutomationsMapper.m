@@ -9,7 +9,7 @@
 #import "QONAutomationsMapper.h"
 #import "QONAutomationsScreen.h"
 #import "QNErrors.h"
-#import "QNUserActionPoint.h"
+#import "QONUserActionPoint.h"
 
 @implementation QONAutomationsMapper
 
@@ -41,7 +41,7 @@
   return error;
 }
 
-- (NSArray<QNUserActionPoint *> *)mapUserActionPoints:(NSDictionary *)dict {
+- (NSArray<QONUserActionPoint *> *)mapUserActionPoints:(NSDictionary *)dict {
   NSMutableArray *actionPoints = [NSMutableArray new];
   NSDictionary *data = [self getDataFromObject:dict];
   NSArray *actionItems = data[@"items"];
@@ -52,7 +52,7 @@
     NSString *screenId = action[@"data"][@"screen"];
     
     if ([screenId isKindOfClass:[NSString class]] && screenId.length > 0 && createDate) {
-      QNUserActionPoint *actionPoint = [[QNUserActionPoint alloc] initWithScreenId:screenId createDate:createDate];
+      QONUserActionPoint *actionPoint = [[QONUserActionPoint alloc] initWithScreenId:screenId createDate:createDate];
       
       [actionPoints addObject:actionPoint];
     }
