@@ -19,6 +19,9 @@ extern NSString *const keyQVersion;
 extern NSString *const keyQUnknownLibrary;
 extern NSString *const keyQUnknownVersion;
 extern NSString *const keyQNPropertyReg;
+extern NSString *const keyQSource;
+extern NSString *const keyQSourceVersion;
+
 extern int const kQPropertiesSendingPeriodInSeconds;
 
 // MARK: - Qonversion Underhood User Properties
