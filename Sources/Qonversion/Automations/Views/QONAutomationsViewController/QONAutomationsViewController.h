@@ -11,7 +11,7 @@
 #if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
 
-@class QONAutomationsService, QONAutomationsScreen, QONAutomationsActionsHandler, QONAutomationsFlowAssembly, QONActionResult, QONAutomationsViewController;
+@class QONAutomationsService, QONAutomationsScreen, QONAutomationsActionsHandler, QONAutomationsFlowAssembly, QONActionResult, QONAutomationsViewController, QONAutomationsScreenProcessor;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) QONAutomationsActionsHandler *actionsHandler;
 @property (nonatomic, strong) QONAutomationsService *automationsService;
 @property (nonatomic, strong) QONAutomationsFlowAssembly *flowAssembly;
+@property (nonatomic, strong) QONAutomationsScreenProcessor *screenProcessor;
 
 @end
 
