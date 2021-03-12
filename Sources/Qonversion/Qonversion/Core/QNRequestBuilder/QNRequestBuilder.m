@@ -1,5 +1,7 @@
 #import "QNRequestBuilder.h"
 #import "QNAPIConstants.h"
+#import "QNDevice.h"
+#import "QNConstants.h"
 
 @implementation QNRequestBuilder
 
@@ -62,8 +64,6 @@
     [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
   }
   
-  [self addLocaleToRequest:request];
-  
   NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
 
   request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
@@ -89,7 +89,8 @@
   request.HTTPMethod = type;
   [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
   [self addLocaleToRequest:request];
-  
+  [self addPlatformInfoToRequest:request];
+
   return request;
 }
 
@@ -99,6 +100,18 @@
   if (locale.length > 0) {
     [request addValue:locale forHTTPHeaderField:@"User-locale"];
   }
+}
+
+- (void)addPlatformInfoToRequest:(NSMutableURLRequest *)request {
+  NSString *platformVersion = [QNDevice current].osVersion;
+  NSString *platform = [QNDevice current].osName;
+  NSString *source = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSource] ?: @"iOS";
+  NSString *sourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: keyQVersion;
+  
+  [request addValue:platform forHTTPHeaderField:@"Platform"];
+  [request addValue:platformVersion forHTTPHeaderField:@"Platform-Version"];
+  [request addValue:source forHTTPHeaderField:@"Source"];
+  [request addValue:sourceVersion forHTTPHeaderField:@"Source-Version"];
 }
 
 @end
