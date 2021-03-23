@@ -22,7 +22,7 @@ typedef NS_ENUM(NSInteger, QNProperty) {
   QNPropertyAppsFlyerUserID,
   QNPropertyAdjustUserID,
   QNPropertyKochavaDeviceID,
-  QNPropertyIdfa
+  QNPropertyAdvertisingID
 } NS_SWIFT_NAME(Qonversion.Property);
 
 
