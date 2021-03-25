@@ -22,8 +22,16 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
 
+/**
+ Call this function to link a user to his unique ID in your system and share purchase data.
+ 
+ @param userID - unique user ID in your system
+ */
 + (void)identify:(NSString *)userID;
 
+/**
+ Call this function to unlink a user from his unique ID in your system and his purchase data.
+ */
 + (void)logout;
 
 /**
