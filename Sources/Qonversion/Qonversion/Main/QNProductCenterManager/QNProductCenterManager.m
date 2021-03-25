@@ -212,9 +212,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   NSString *userID = [self.userInfoService obtainUserID];
   [[QNAPIClient shared] setUserID:userID];
   
-  if (!self.launchingFinished) {
-    self.unhandledLogoutAvailable = YES;
-  }
+  self.unhandledLogoutAvailable = YES;
 }
 
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
@@ -240,8 +238,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [self.permissionsBlocks addObject:completion];
       [self identify:_pendingIdentityUserID];
       return;
-    } else if (self.unhandledLogoutAvailable) {
-      [self handleLogout];
     }
     
     [self preparePermissionsResultWithCompletion:completion];
@@ -325,8 +321,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)preparePermissionsResultWithCompletion:(QNPermissionCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
   
-  if (self.launchError) {
+  if (self.launchError || self.unhandledLogoutAvailable) {
     [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      weakSelf.unhandledLogoutAvailable = NO;
       QNLaunchResult *launchResult = result;
       NSError *resultError = error;
       if (error && !weakSelf.forceLaunchRetry && !weakSelf.pendingIdentityUserID) {
