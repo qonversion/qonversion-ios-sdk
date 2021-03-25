@@ -6,6 +6,8 @@
 //  Copyright © 2021 Qonversion Inc. All rights reserved.
 //
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol QNIdentityManagerInterface <NSObject>
 
 typedef void (^QNIdentityCompletionHandler)(NSString *_Nullable result, NSError  *_Nullable error);
@@ -14,3 +16,5 @@ typedef void (^QNIdentityCompletionHandler)(NSString *_Nullable result, NSError 
 - (void)logout;
 
 @end
+
+NS_ASSUME_NONNULL_END

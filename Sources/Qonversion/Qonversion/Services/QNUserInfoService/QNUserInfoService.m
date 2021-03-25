@@ -47,6 +47,12 @@ static NSUInteger const kKeychainAttemptsCount = 3;
   [self.localStorage setString:originalUserID forKey:kKeyQUserDefaultsUserID];
 }
 
+- (void)deleteUser {
+  [self.localStorage removeObjectForKey:kKeyQUserDefaultsUserID];
+  [self.localStorage removeObjectForKey:kKeyQUserDefaultsOriginalUserID];
+  [self.keychainStorage resetUserID];
+}
+
 #pragma mark - Private
 
 - (NSString *)generateRandomUserID {

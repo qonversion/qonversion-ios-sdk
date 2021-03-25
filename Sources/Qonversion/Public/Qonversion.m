@@ -139,6 +139,12 @@
   }
 }
 
++ (void)resetUser {
+  [[Qonversion sharedInstance].userInfoService deleteUser];
+  NSString *userID = [[Qonversion sharedInstance].userInfoService obtainUserID];
+  [[QNAPIClient shared] setUserID:userID];
+}
+
 // MARK: - Private
 
 + (instancetype)sharedInstance {

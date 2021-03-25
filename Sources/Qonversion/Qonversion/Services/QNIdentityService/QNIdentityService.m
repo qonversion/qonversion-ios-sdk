@@ -18,7 +18,7 @@
     if (identityID.length > 0) {
       completion(identityID, nil);
     } else {
-      NSError *resultError = error ?: [QNErrors errorWithCode:QNErrorInternalError];
+      NSError *resultError = error ?: [QNErrors errorWithQNErrorCode:QNErrorInternalError];
       completion(nil, resultError);
     }
   }];
