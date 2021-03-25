@@ -121,6 +121,24 @@
   XCTAssertTrue([resultUserID isEqualToString:randomUUID]);
 }
 
+- (void)testDeleteUser {
+  // given
+  NSString *storedUserIDKey = [self storedUserIDKey];
+  NSString *originalUserIDKey = [self originalUserIDKey];
+  
+  OCMExpect([self.mockLocalStorage removeObjectForKey:storedUserIDKey]);
+  OCMExpect([self.mockLocalStorage removeObjectForKey:originalUserIDKey]);
+  OCMExpect([self.mockKeychainStorage resetUserID]);
+  
+  // when
+  [self.service deleteUser];
+  
+  // then
+  OCMVerify([self.mockLocalStorage removeObjectForKey:storedUserIDKey]);
+  OCMVerify([self.mockLocalStorage removeObjectForKey:originalUserIDKey]);
+  OCMVerify([self.mockKeychainStorage resetUserID]);
+}
+
 #pragma mark - Helpers
 
 - (NSString *)storedUserIDKey {
