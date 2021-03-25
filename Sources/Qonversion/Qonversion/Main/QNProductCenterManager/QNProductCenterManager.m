@@ -6,7 +6,6 @@
 #import "QNMapper.h"
 #import "QNLaunchResult.h"
 #import "QNMapperObject.h"
-#import "QNKeeper.h"
 #import "QNProduct.h"
 #import "QNErrors.h"
 #import "QNPromoPurchasesDelegate.h"
@@ -14,6 +13,9 @@
 #import "QNOfferings.h"
 #import "QNOffering.h"
 #import "QNIntroEligibility.h"
+#import "QNServicesAssembly.h"
+#import "QNIdentityManagerInterface.h"
+#import "QNUserInfoServiceInterface.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
@@ -24,8 +26,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, weak) id<QNPurchasesDelegate> purchasesDelegate;
 @property (nonatomic, weak) id<QNPromoPurchasesDelegate> promoPurchasesDelegate;
 
-@property (nonatomic) QNStoreKitService *storeKitService;
-@property (nonatomic) QNUserDefaultsStorage *persistentStorage;
+@property (nonatomic, strong) QNStoreKitService *storeKitService;
+@property (nonatomic, strong) QNUserDefaultsStorage *persistentStorage;
+@property (nonatomic, strong) id<QNIdentityManagerInterface> identityManager;
+@property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 
 @property (nonatomic, copy) QNRestoreCompletionHandler restorePurchasesBlock;
 
@@ -36,12 +40,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
-@property (nonatomic) QNLaunchResult *launchResult;
-@property (nonatomic) NSError *launchError;
+@property (nonatomic, strong) QNLaunchResult *launchResult;
+@property (nonatomic, strong) NSError *launchError;
 
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoading;
 @property (nonatomic, assign) BOOL forceLaunchRetry;
+@property (nonatomic, assign) BOOL identityInProgress;
+@property (nonatomic, assign) BOOL unhandledLogoutAvailable;
+@property (nonatomic, copy) NSString *pendingIdentityUserID;
 
 @end
 
@@ -55,6 +62,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _forceLaunchRetry = NO;
     _launchError = nil;
     _launchResult = nil;
+    
+    QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
+    
+    _userInfoService = [servicesAssembly userInfoService];
+    _identityManager = [servicesAssembly identityManager];
     
     _apiClient = [QNAPIClient shared];
     _storeKitService = [[QNStoreKitService alloc] initWithDelegate:self];
@@ -125,8 +137,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     weakSelf.launchResult = result;
     weakSelf.launchError = error;
-    
-    [weakSelf executePermissionBlocks];
+
     [weakSelf executeExperimentsBlocks];
     
     NSArray *storeProducts = [weakSelf.storeKitService getLoadedProducts];
@@ -134,9 +145,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [weakSelf loadProducts];
     }
     
-    if (result.uid) {
-      QNKeeper.userID = result.uid;
-      [[QNAPIClient shared] setUserID:result.uid];
+    if (!weakSelf.identityInProgress) {
+      if (weakSelf.pendingIdentityUserID) {
+        [weakSelf identify:weakSelf.pendingIdentityUserID];
+      } else if (weakSelf.unhandledLogoutAvailable) {
+        [weakSelf handleLogout];
+      } else {
+        [weakSelf executePermissionBlocks];
+      }
     }
     
     if (completion) {
@@ -147,6 +163,56 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       QONVERSION_LOG(@"❗️ Request failed %@", error.description);
     }
   }];
+}
+
+- (void)identify:(NSString *)userID {
+  if (!self.launchingFinished) {
+    self.pendingIdentityUserID = userID;
+    
+    return;
+  }
+  
+  self.identityInProgress = YES;
+  if (self.launchError) {
+    __block __weak QNProductCenterManager *weakSelf = self;
+
+    [weakSelf launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
+      weakSelf.identityInProgress = NO;
+      
+      if (error) {
+        [weakSelf executePermissionBlocksWithError:error];
+      } else {
+        [weakSelf processIdentity:userID];
+      }
+    }];
+  } else {
+    [self processIdentity:userID];
+  }
+}
+
+- (void)processIdentity:(NSString *)userID {
+  __block __weak QNProductCenterManager *weakSelf = self;
+  [self.identityManager identify:userID completion:^(NSString *result, NSError * _Nullable error) {
+    weakSelf.pendingIdentityUserID = nil;
+    weakSelf.identityInProgress = NO;
+    
+    if (error) {
+      [weakSelf executePermissionBlocksWithError:error];
+    } else {
+      [[QNAPIClient shared] setUserID:result];
+      
+      [weakSelf launchWithCompletion:nil];
+    }
+  }];
+}
+
+- (void)logout {
+  [self.identityManager logout];
+  
+  NSString *userID = [self.userInfoService obtainUserID];
+  [[QNAPIClient shared] setUserID:userID];
+  
+  self.unhandledLogoutAvailable = YES;
 }
 
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
@@ -163,13 +229,24 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   
   @synchronized (self) {
-    if (!_launchingFinished) {
+    if (!_launchingFinished || _identityInProgress) {
       [self.permissionsBlocks addObject:completion];
+      return;
+    }
+    
+    if (_pendingIdentityUserID) {
+      [self.permissionsBlocks addObject:completion];
+      [self identify:_pendingIdentityUserID];
       return;
     }
     
     [self preparePermissionsResultWithCompletion:completion];
   }
+}
+
+- (void)handleLogout {
+  self.unhandledLogoutAvailable = NO;
+  [self launchWithCompletion:nil];
 }
 
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
@@ -243,11 +320,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)preparePermissionsResultWithCompletion:(QNPermissionCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
-  if (self.launchError) {
+  
+  if (self.launchError || self.unhandledLogoutAvailable) {
     [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      weakSelf.unhandledLogoutAvailable = NO;
       QNLaunchResult *launchResult = result;
       NSError *resultError = error;
-      if (error && !weakSelf.forceLaunchRetry) {
+      if (error && !weakSelf.forceLaunchRetry && !weakSelf.pendingIdentityUserID) {
         QNLaunchResult *cachedLaunchResult = [weakSelf actualCachedLaunchResult];
         launchResult = cachedLaunchResult ?: launchResult;
         resultError = cachedLaunchResult ? nil : error;
@@ -261,6 +340,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)executePermissionBlocks {
+  [self executePermissionBlocksWithError:nil];
+}
+
+- (void)executePermissionBlocksWithError:(NSError *)error {
   @synchronized (self) {
     if (self.permissionsBlocks.count == 0) {
       return;
@@ -269,11 +352,17 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     NSMutableArray <QNPermissionCompletionHandler> *_blocks = [self.permissionsBlocks copy];
     [self.permissionsBlocks removeAllObjects];
     
-    [self preparePermissionsResultWithCompletion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
+    if (error) {
       for (QNPermissionCompletionHandler block in _blocks) {
-        run_block_on_main(block, result ?: @{}, error);
+        run_block_on_main(block, @{}, error);
       }
-    }];
+    } else {
+      [self preparePermissionsResultWithCompletion:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
+        for (QNPermissionCompletionHandler block in _blocks) {
+          run_block_on_main(block, result ?: @{}, error);
+        }
+      }];
+    }
   }
 }
 
@@ -568,32 +657,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [weakSelf.apiClient processStoredRequests];
     });
   }];
-}
-
-- (void)process:(NSDictionary * _Nullable)dict error:(NSError *)error
-     completion:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion {
-  
-  @synchronized (self) {
-    self->_launchingFinished = YES;
-  }
-
-  if (!completion) {
-    return;
-  }
-
-  if (error) {
-    completion([[QNLaunchResult alloc] init], error);
-    return;
-  }
-  
-  QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
-  if (result.error) {
-    completion([[QNLaunchResult alloc] init], result.error);
-    return;
-  }
-  
-  QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-  completion(launchResult, nil);
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product error:(NSError *)error {
