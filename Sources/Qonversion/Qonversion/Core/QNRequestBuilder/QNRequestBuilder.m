@@ -37,8 +37,7 @@
 }
 
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters apiKey:(NSString *)apiKey {
-  NSString *endpoint = [NSString stringWithFormat:@"%@", kIdentityEndpoint, parameters];
-  return [self makePostRequestWith:endpoint andBody:parameters apiKey:apiKey];
+  return [self makePostRequestWith:kIdentityEndpoint andBody:parameters apiKey:apiKey];
 }
 
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
