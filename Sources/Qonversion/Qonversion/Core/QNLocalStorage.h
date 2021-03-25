@@ -24,6 +24,9 @@
 - (void)storeDouble:(double)value forKey:(NSString *)key;
 - (double)loadDoubleForKey:(NSString *)key;
 
+- (void)setString:(NSString *)value forKey:(NSString *)key;
+- (NSString *)loadStringForKey:(NSString *)key;
+
 - (void)clear;
 
 @end

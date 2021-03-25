@@ -12,59 +12,59 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
   QNErrorUnknown = 0,
   
   // user cancelled the request, etc.
-  QNErrorCancelled,
+  QNErrorCancelled = 1,
   
   // the product has not been added to the product center
   // see more https://qonversion.io/docs/create-products
-  QNErrorProductNotFound,
+  QNErrorProductNotFound = 2,
   
   // client is not allowed to issue the request, etc
-  QNErrorClientInvalid,
+  QNErrorClientInvalid = 3,
   
   // purchase identifier was invalid, etc.
-  QNErrorPaymentInvalid,
+  QNErrorPaymentInvalid = 4,
   
   // this device is not allowed to make the payment
-  QNErrorPaymentNotAllowed,
+  QNErrorPaymentNotAllowed = 5,
   
   // Apple Store didn't process the request
   
-  QNErrorStoreFailed,
+  QNErrorStoreFailed = 6,
   
   // product is not available in the current storefront
-  QNErrorStoreProductNotAvailable,
+  QNErrorStoreProductNotAvailable = 7,
   
   // user has not allowed access to cloud service information
-  QNErrorCloudServicePermissionDenied,
+  QNErrorCloudServicePermissionDenied = 8,
   
   // the device could not connect to the network
-  QNErrorCloudServiceNetworkConnectionFailed,
+  QNErrorCloudServiceNetworkConnectionFailed = 9,
   
   // user has revoked permission to use this cloud service
-  QNErrorCloudServiceRevoked,
+  QNErrorCloudServiceRevoked = 10,
   
   // user needs to acknowledge Apple's privacy policy
-  QNErrorPrivacyAcknowledgementRequired,
+  QNErrorPrivacyAcknowledgementRequired = 11,
   
   // app is attempting to use SKPayment's requestData property, but does not have the appropriate entitlement
-  QNErrorUnauthorizedRequestData,
+  QNErrorUnauthorizedRequestData = 12,
   
   // provided shared secret is incorrect, validation unavailable
-  QNErrorIncorrectSharedSecret,
+  QNErrorIncorrectSharedSecret = 13,
   
   // failed to connect to Qonversion Backend
-  QNErrorConnectionFailed,
+  QNErrorConnectionFailed = 14,
   
   // Other URL Session errors
-  QNErrorInternetConnectionFailed,
+  QNErrorInternetConnectionFailed = 15,
   
   // Network data error
-  QNErrorDataFailed,
+  QNErrorDataFailed = 16,
   
   // Internal error occurred
-  QNErrorInternalError,
+  QNErrorInternalError = 17,
   
-  QNErrorStorePaymentDeferred,
+  QNErrorStorePaymentDeferred = 18,
   
 } NS_SWIFT_NAME(Qonversion.Error);
 

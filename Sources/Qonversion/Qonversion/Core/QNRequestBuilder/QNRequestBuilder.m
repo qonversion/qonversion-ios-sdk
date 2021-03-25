@@ -36,6 +36,10 @@
   return [self makePostRequestWith:endpoint andBody:body apiKey:apiKey];
 }
 
+- (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters apiKey:(NSString *)apiKey {
+  return [self makePostRequestWith:kIdentityEndpoint andBody:parameters apiKey:apiKey];
+}
+
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
   return [self makePostRequestWith:kProductsEndpoint andBody:parameters];
 }
