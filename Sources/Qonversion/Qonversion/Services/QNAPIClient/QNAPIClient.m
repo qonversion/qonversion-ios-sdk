@@ -99,12 +99,6 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
-- (void)checkIdentityForUserID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeGetIdentityRequestWith:userID apiKey:[self obtainApiKey]];
-  
-  return [self dataTaskWithRequest:request completion:completion];
-}
-
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *parameters = @{@"anon_id": anonUserID, @"identity_id": userID};
   NSURLRequest *request = [self.requestBuilder makeCreateIdentityRequestWith:parameters apiKey:[self obtainApiKey]];

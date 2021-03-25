@@ -12,10 +12,6 @@
 
 @implementation QNIdentityService
 
-- (void)checkIdentityForUserID:(NSString *)userID completion:(QNIdentityServiceCompletionHandler)completion {
-  [self.apiClient checkIdentityForUserID:userID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {}];
-}
-
 - (void)identify:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNIdentityServiceCompletionHandler)completion {
   [self.apiClient createIdentityForUserID:userID anonUserID:anonUserID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     NSString *identityID = dict[@"data"][@"anon_id"];

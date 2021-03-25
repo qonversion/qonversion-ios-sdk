@@ -10,7 +10,6 @@
 
 typedef void (^QNIdentityServiceCompletionHandler)(NSString *_Nullable result, NSError  *_Nullable error);
 
-- (void)checkIdentityForUserID:(NSString *)userID completion:(QNIdentityServiceCompletionHandler)completion;
 - (void)identify:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNIdentityServiceCompletionHandler)completion;
 
 @end
