@@ -2,7 +2,6 @@
 #import "QNDevice.h"
 
 #import "QNUserInfo.h"
-#import "QNKeeper.h"
 
 @interface QNUserInfo (InternalUserID)
 
@@ -118,13 +117,6 @@
 + (nullable NSBundle *)bundle {
   NSPredicate *predicate = [NSPredicate predicateWithFormat:@"appStoreReceiptURL != nil"];
   return [NSBundle.allBundles filteredArrayUsingPredicate:predicate].firstObject;
-}
-
-+ (NSString *)generateRandomUserID {
-  NSString *uuid = [[NSUUID new].UUIDString stringByReplacingOccurrencesOfString:@"-" withString:@""];
-  NSString *qonversionUID = [NSString stringWithFormat:@"$QON-%@", uuid.lowercaseString];
-  
-  return qonversionUID;
 }
 
 @end

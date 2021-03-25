@@ -32,6 +32,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;
 - (void)trackScreenShownWithID:(NSString *)automationID;
 
+- (void)checkIdentityForUserID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion;
+- (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion;
+
 - (void)attributionRequest:(QNAttributionProvider)provider
                       data:(NSDictionary *)data
                 completion:(QNAPIClientCompletionHandler)completion;

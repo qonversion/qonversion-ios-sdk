@@ -34,6 +34,14 @@ static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefau
   return nil;
 }
 
+- (void)setString:(NSString *)value forKey:(NSString *)key {
+  [self.userDefaults setObject:value forKey:key];
+}
+
+- (NSString *)loadStringForKey:(NSString *)key {
+  return [self.userDefaults stringForKey:key];
+}
+
 - (double)loadDoubleForKey:(NSString *)key {
   return [self.userDefaults doubleForKey:key];
 }

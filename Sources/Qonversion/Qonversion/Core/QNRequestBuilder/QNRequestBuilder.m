@@ -36,6 +36,16 @@
   return [self makePostRequestWith:endpoint andBody:body apiKey:apiKey];
 }
 
+- (NSURLRequest *)makeGetIdentityRequestWith:(NSString *)parameters apiKey:(NSString *)apiKey {
+  NSString *endpoint = [NSString stringWithFormat:@"%@/%@", kIdentityEndpoint, parameters];
+  return [self makeGetRequestWith:endpoint apiKey:apiKey];
+}
+
+- (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters apiKey:(NSString *)apiKey {
+  NSString *endpoint = [NSString stringWithFormat:@"%@", kIdentityEndpoint, parameters];
+  return [self makePostRequestWith:endpoint andBody:parameters apiKey:apiKey];
+}
+
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
   return [self makePostRequestWith:kProductsEndpoint andBody:parameters];
 }

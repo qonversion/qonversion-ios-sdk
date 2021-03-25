@@ -22,6 +22,10 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
 
++ (void)identify:(NSString *)userID;
+
++ (void)logout;
+
 /**
  Set this delegate to handle pending purchases like SCA, Ask to buy, etc
  The delegate will be called when the deferred transaction status updates

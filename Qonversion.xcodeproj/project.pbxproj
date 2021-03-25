@@ -41,6 +41,25 @@
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		71D1AE03BA37F1D7CA063728 /* Pods_QonversionTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		89A192622603926800C3FCD9 /* QNUserInfoService.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A192602603926800C3FCD9 /* QNUserInfoService.h */; };
+		89A192632603926800C3FCD9 /* QNUserInfoService.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A192612603926800C3FCD9 /* QNUserInfoService.m */; };
+		89A192692603928A00C3FCD9 /* QNUserInfoServiceInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A192682603928A00C3FCD9 /* QNUserInfoServiceInterface.h */; };
+		89A1927F260395A700C3FCD9 /* QNKeychainStorageInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A1927E260395A700C3FCD9 /* QNKeychainStorageInterface.h */; };
+		89A19286260395B500C3FCD9 /* QNKeychainStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A19284260395B500C3FCD9 /* QNKeychainStorage.h */; };
+		89A19287260395B500C3FCD9 /* QNKeychainStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A19285260395B500C3FCD9 /* QNKeychainStorage.m */; };
+		89A1928D260396CE00C3FCD9 /* QNInternalConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A1928B260396CE00C3FCD9 /* QNInternalConstants.h */; };
+		89A1928E260396CE00C3FCD9 /* QNInternalConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A1928C260396CE00C3FCD9 /* QNInternalConstants.m */; };
+		89A1929B2604741B00C3FCD9 /* QNServicesAssembly.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A192992604741B00C3FCD9 /* QNServicesAssembly.h */; };
+		89A1929C2604741B00C3FCD9 /* QNServicesAssembly.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A1929A2604741B00C3FCD9 /* QNServicesAssembly.m */; };
+		89A192A52604974800C3FCD9 /* QNUserInfoServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */; };
+		89A1931F2604B8D600C3FCD9 /* QNKeychainStorageTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A1931E2604B8D600C3FCD9 /* QNKeychainStorageTests.m */; };
+		89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */; };
+		89A193322608702800C3FCD9 /* QNIdentityManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A193302608702800C3FCD9 /* QNIdentityManager.h */; };
+		89A193332608702800C3FCD9 /* QNIdentityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A193312608702800C3FCD9 /* QNIdentityManager.m */; };
+		89A19339260870FD00C3FCD9 /* QNIdentityService.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A19337260870FD00C3FCD9 /* QNIdentityService.h */; };
+		89A1933A260870FD00C3FCD9 /* QNIdentityService.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A19338260870FD00C3FCD9 /* QNIdentityService.m */; };
+		89A193412608711C00C3FCD9 /* QNIdentityServiceInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A193402608711C00C3FCD9 /* QNIdentityServiceInterface.h */; };
+		89A1936C2609A9AE00C3FCD9 /* QNIdentityManagerInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A1936B2609A9AE00C3FCD9 /* QNIdentityManagerInterface.h */; };
 		89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */; };
 		89ADA76D25069E1000EB2E54 /* ActivePermissionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */; };
 		89B3780F25DE71CD009D3E0D /* QONAutomationsDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 89B3778925DE71CD009D3E0D /* QONAutomationsDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -94,8 +113,6 @@
 		89B3783F25DE71CD009D3E0D /* QONAutomationsService.m in Sources */ = {isa = PBXBuildFile; fileRef = 89B377C825DE71CD009D3E0D /* QONAutomationsService.m */; };
 		89B3784025DE71CD009D3E0D /* QNUserDefaultsStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 89B377CC25DE71CD009D3E0D /* QNUserDefaultsStorage.h */; };
 		89B3784125DE71CD009D3E0D /* QNUserDefaultsStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 89B377CD25DE71CD009D3E0D /* QNUserDefaultsStorage.m */; };
-		89B3784225DE71CD009D3E0D /* QNKeeper.h in Headers */ = {isa = PBXBuildFile; fileRef = 89B377CF25DE71CD009D3E0D /* QNKeeper.h */; };
-		89B3784325DE71CD009D3E0D /* QNKeeper.m in Sources */ = {isa = PBXBuildFile; fileRef = 89B377D025DE71CD009D3E0D /* QNKeeper.m */; };
 		89B3784425DE71CD009D3E0D /* QNRequestSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 89B377D225DE71CD009D3E0D /* QNRequestSerializer.m */; };
 		89B3784525DE71CD009D3E0D /* QNRequestSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = 89B377D325DE71CD009D3E0D /* QNRequestSerializer.h */; };
 		89B3784625DE71CD009D3E0D /* QNKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = 89B377D525DE71CD009D3E0D /* QNKeychain.m */; };
@@ -229,6 +246,26 @@
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
 		89713B4625C1B95700A2448E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		89713B4A25C1BA1F00A2448E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
+		89A192602603926800C3FCD9 /* QNUserInfoService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUserInfoService.h; sourceTree = "<group>"; };
+		89A192612603926800C3FCD9 /* QNUserInfoService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserInfoService.m; sourceTree = "<group>"; };
+		89A192682603928A00C3FCD9 /* QNUserInfoServiceInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUserInfoServiceInterface.h; sourceTree = "<group>"; };
+		89A1927E260395A700C3FCD9 /* QNKeychainStorageInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNKeychainStorageInterface.h; sourceTree = "<group>"; };
+		89A19284260395B500C3FCD9 /* QNKeychainStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNKeychainStorage.h; sourceTree = "<group>"; };
+		89A19285260395B500C3FCD9 /* QNKeychainStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNKeychainStorage.m; sourceTree = "<group>"; };
+		89A1928B260396CE00C3FCD9 /* QNInternalConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNInternalConstants.h; sourceTree = "<group>"; };
+		89A1928C260396CE00C3FCD9 /* QNInternalConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNInternalConstants.m; sourceTree = "<group>"; };
+		89A192992604741B00C3FCD9 /* QNServicesAssembly.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNServicesAssembly.h; sourceTree = "<group>"; };
+		89A1929A2604741B00C3FCD9 /* QNServicesAssembly.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNServicesAssembly.m; sourceTree = "<group>"; };
+		89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserInfoServiceTests.m; sourceTree = "<group>"; };
+		89A1931E2604B8D600C3FCD9 /* QNKeychainStorageTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNKeychainStorageTests.m; sourceTree = "<group>"; };
+		89A193242604B99C00C3FCD9 /* XCTestCase+Unmock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+Unmock.h"; sourceTree = "<group>"; };
+		89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+Unmock.m"; sourceTree = "<group>"; };
+		89A193302608702800C3FCD9 /* QNIdentityManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNIdentityManager.h; sourceTree = "<group>"; };
+		89A193312608702800C3FCD9 /* QNIdentityManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNIdentityManager.m; sourceTree = "<group>"; };
+		89A19337260870FD00C3FCD9 /* QNIdentityService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNIdentityService.h; sourceTree = "<group>"; };
+		89A19338260870FD00C3FCD9 /* QNIdentityService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNIdentityService.m; sourceTree = "<group>"; };
+		89A193402608711C00C3FCD9 /* QNIdentityServiceInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNIdentityServiceInterface.h; sourceTree = "<group>"; };
+		89A1936B2609A9AE00C3FCD9 /* QNIdentityManagerInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNIdentityManagerInterface.h; sourceTree = "<group>"; };
 		89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsViewController.swift; sourceTree = "<group>"; };
 		89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsTableViewCell.swift; sourceTree = "<group>"; };
 		89B3778925DE71CD009D3E0D /* QONAutomationsDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsDelegate.h; sourceTree = "<group>"; };
@@ -282,8 +319,6 @@
 		89B377C825DE71CD009D3E0D /* QONAutomationsService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsService.m; sourceTree = "<group>"; };
 		89B377CC25DE71CD009D3E0D /* QNUserDefaultsStorage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNUserDefaultsStorage.h; sourceTree = "<group>"; };
 		89B377CD25DE71CD009D3E0D /* QNUserDefaultsStorage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNUserDefaultsStorage.m; sourceTree = "<group>"; };
-		89B377CF25DE71CD009D3E0D /* QNKeeper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNKeeper.h; sourceTree = "<group>"; };
-		89B377D025DE71CD009D3E0D /* QNKeeper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNKeeper.m; sourceTree = "<group>"; };
 		89B377D225DE71CD009D3E0D /* QNRequestSerializer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNRequestSerializer.m; sourceTree = "<group>"; };
 		89B377D325DE71CD009D3E0D /* QNRequestSerializer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNRequestSerializer.h; sourceTree = "<group>"; };
 		89B377D525DE71CD009D3E0D /* QNKeychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNKeychain.m; sourceTree = "<group>"; };
@@ -438,6 +473,8 @@
 		459DAB76243E329F0011ECF3 /* QonversionTests */ = {
 			isa = PBXGroup;
 			children = (
+				89A1931D2604B8C800C3FCD9 /* Core */,
+				89A192A32604973200C3FCD9 /* Services */,
 				456ECD35249BB67600D2BC40 /* Network */,
 				454BE219247C2EF7001FE771 /* Storage */,
 				459DAC0A243E4D420011ECF3 /* Helpers */,
@@ -513,6 +550,8 @@
 			isa = PBXGroup;
 			children = (
 				459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */,
+				89A193242604B99C00C3FCD9 /* XCTestCase+Unmock.h */,
+				89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */,
 				459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */,
 			);
 			path = Helpers;
@@ -543,6 +582,88 @@
 				45CC2EF4244085E4005CD107 /* tests.yml */,
 			);
 			path = workflows;
+			sourceTree = "<group>";
+		};
+		89A1925F2603925E00C3FCD9 /* QNUserInfoService */ = {
+			isa = PBXGroup;
+			children = (
+				89A192682603928A00C3FCD9 /* QNUserInfoServiceInterface.h */,
+				89A192602603926800C3FCD9 /* QNUserInfoService.h */,
+				89A192612603926800C3FCD9 /* QNUserInfoService.m */,
+			);
+			path = QNUserInfoService;
+			sourceTree = "<group>";
+		};
+		89A1927D2603959700C3FCD9 /* QNKeychainStorage */ = {
+			isa = PBXGroup;
+			children = (
+				89A1927E260395A700C3FCD9 /* QNKeychainStorageInterface.h */,
+				89A19284260395B500C3FCD9 /* QNKeychainStorage.h */,
+				89A19285260395B500C3FCD9 /* QNKeychainStorage.m */,
+			);
+			path = QNKeychainStorage;
+			sourceTree = "<group>";
+		};
+		89A1928A260396C400C3FCD9 /* QNInternalConstants */ = {
+			isa = PBXGroup;
+			children = (
+				89A1928B260396CE00C3FCD9 /* QNInternalConstants.h */,
+				89A1928C260396CE00C3FCD9 /* QNInternalConstants.m */,
+			);
+			path = QNInternalConstants;
+			sourceTree = "<group>";
+		};
+		89A19291260473EE00C3FCD9 /* Assemblies */ = {
+			isa = PBXGroup;
+			children = (
+				89A192982604741B00C3FCD9 /* QNServicesAssembly */,
+			);
+			path = Assemblies;
+			sourceTree = "<group>";
+		};
+		89A192982604741B00C3FCD9 /* QNServicesAssembly */ = {
+			isa = PBXGroup;
+			children = (
+				89A192992604741B00C3FCD9 /* QNServicesAssembly.h */,
+				89A1929A2604741B00C3FCD9 /* QNServicesAssembly.m */,
+			);
+			path = QNServicesAssembly;
+			sourceTree = "<group>";
+		};
+		89A192A32604973200C3FCD9 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		89A1931D2604B8C800C3FCD9 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				89A1931E2604B8D600C3FCD9 /* QNKeychainStorageTests.m */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		89A1932F2608701D00C3FCD9 /* QNIdentityManager */ = {
+			isa = PBXGroup;
+			children = (
+				89A193302608702800C3FCD9 /* QNIdentityManager.h */,
+				89A1936B2609A9AE00C3FCD9 /* QNIdentityManagerInterface.h */,
+				89A193312608702800C3FCD9 /* QNIdentityManager.m */,
+			);
+			path = QNIdentityManager;
+			sourceTree = "<group>";
+		};
+		89A19336260870E300C3FCD9 /* QNIdentityService */ = {
+			isa = PBXGroup;
+			children = (
+				89A193402608711C00C3FCD9 /* QNIdentityServiceInterface.h */,
+				89A19337260870FD00C3FCD9 /* QNIdentityService.h */,
+				89A19338260870FD00C3FCD9 /* QNIdentityService.m */,
+			);
+			path = QNIdentityService;
 			sourceTree = "<group>";
 		};
 		89B3778725DE71CD009D3E0D /* Qonversion */ = {
@@ -733,6 +854,7 @@
 		89B377C925DE71CD009D3E0D /* Qonversion */ = {
 			isa = PBXGroup;
 			children = (
+				89A19291260473EE00C3FCD9 /* Assemblies */,
 				89B377CA25DE71CD009D3E0D /* Core */,
 				89B377DE25DE71CD009D3E0D /* Constants */,
 				89B377E225DE71CD009D3E0D /* Utils */,
@@ -747,9 +869,9 @@
 		89B377CA25DE71CD009D3E0D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				89A1927D2603959700C3FCD9 /* QNKeychainStorage */,
 				89B377D725DE71CD009D3E0D /* QNLocalStorage.h */,
 				89B377CB25DE71CD009D3E0D /* QNUserDefaultsStorage */,
-				89B377CE25DE71CD009D3E0D /* QNKeeper */,
 				89B377D125DE71CD009D3E0D /* QNRequestSerializer */,
 				89B377D425DE71CD009D3E0D /* QNKeychain */,
 				89B377D825DE71CD009D3E0D /* QNInMemoryStorage */,
@@ -765,15 +887,6 @@
 				89B377CD25DE71CD009D3E0D /* QNUserDefaultsStorage.m */,
 			);
 			path = QNUserDefaultsStorage;
-			sourceTree = "<group>";
-		};
-		89B377CE25DE71CD009D3E0D /* QNKeeper */ = {
-			isa = PBXGroup;
-			children = (
-				89B377CF25DE71CD009D3E0D /* QNKeeper.h */,
-				89B377D025DE71CD009D3E0D /* QNKeeper.m */,
-			);
-			path = QNKeeper;
 			sourceTree = "<group>";
 		};
 		89B377D125DE71CD009D3E0D /* QNRequestSerializer */ = {
@@ -815,6 +928,7 @@
 		89B377DE25DE71CD009D3E0D /* Constants */ = {
 			isa = PBXGroup;
 			children = (
+				89A1928A260396C400C3FCD9 /* QNInternalConstants */,
 				89B377DF25DE71CD009D3E0D /* QNAPIConstants */,
 			);
 			path = Constants;
@@ -927,6 +1041,7 @@
 		89B377FE25DE71CD009D3E0D /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				89A1932F2608701D00C3FCD9 /* QNIdentityManager */,
 				89B377FF25DE71CD009D3E0D /* QNUserPropertiesManager */,
 				89B3780225DE71CD009D3E0D /* QNAttributionManager */,
 				89B3780525DE71CD009D3E0D /* QNProductCenterManager */,
@@ -964,6 +1079,8 @@
 		89B3780825DE71CD009D3E0D /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				89A19336260870E300C3FCD9 /* QNIdentityService */,
+				89A1925F2603925E00C3FCD9 /* QNUserInfoService */,
 				89B3780925DE71CD009D3E0D /* QNStoreKitService */,
 				89B3780C25DE71CD009D3E0D /* QNAPIClient */,
 			);
@@ -1016,21 +1133,25 @@
 				89B3781425DE71CD009D3E0D /* QNPermission.h in Headers */,
 				89B3785B25DE71CD009D3E0D /* QNExperimentGroup+Protected.h in Headers */,
 				89B3786125DE71CD009D3E0D /* QNUserPropertiesManager.h in Headers */,
-				89B3784225DE71CD009D3E0D /* QNKeeper.h in Headers */,
 				89B3785E25DE71CD009D3E0D /* QNLaunchResult+Protected.h in Headers */,
 				89B3784825DE71CD009D3E0D /* QNLocalStorage.h in Headers */,
+				89A193322608702800C3FCD9 /* QNIdentityManager.h in Headers */,
 				89B3782225DE71CD009D3E0D /* QONAutomations.h in Headers */,
 				89B3783E25DE71CD009D3E0D /* QONAutomationsService.h in Headers */,
 				89B3784525DE71CD009D3E0D /* QNRequestSerializer.h in Headers */,
 				89B3782725DE71CD009D3E0D /* QNExperimentInfo.h in Headers */,
 				89B3783925DE71CD009D3E0D /* QONAutomationsActionsHandler.h in Headers */,
+				89A1928D260396CE00C3FCD9 /* QNInternalConstants.h in Headers */,
+				89A1929B2604741B00C3FCD9 /* QNServicesAssembly.h in Headers */,
 				89B3786525DE71CD009D3E0D /* QNProductCenterManager.h in Headers */,
 				89B3784025DE71CD009D3E0D /* QNUserDefaultsStorage.h in Headers */,
 				89B3785525DE71CD009D3E0D /* QNUserInfo.h in Headers */,
 				89B3786825DE71CD009D3E0D /* QNStoreKitService.h in Headers */,
+				89A193412608711C00C3FCD9 /* QNIdentityServiceInterface.h in Headers */,
 				89B3784E25DE71CD009D3E0D /* QNAPIConstants.h in Headers */,
 				89B3785C25DE71CD009D3E0D /* QNIntroEligibility+Protected.h in Headers */,
 				89B3786425DE71CD009D3E0D /* QNAttributionManager.h in Headers */,
+				89A1936C2609A9AE00C3FCD9 /* QNIdentityManagerInterface.h in Headers */,
 				89B3782125DE71CD009D3E0D /* QNPurchasesDelegate.h in Headers */,
 				89B3785425DE71CD009D3E0D /* QNProperties.h in Headers */,
 				89B3785F25DE71CD009D3E0D /* QNMapper.h in Headers */,
@@ -1046,16 +1167,21 @@
 				8981E78825C030DD002310BD /* QonversionFramework.h in Headers */,
 				89B3781F25DE71CD009D3E0D /* QNOfferings.h in Headers */,
 				89B3782E25DE71CD009D3E0D /* QONAutomationsConstants.h in Headers */,
+				89A1927F260395A700C3FCD9 /* QNKeychainStorageInterface.h in Headers */,
 				89B3784925DE71CD009D3E0D /* QNInMemoryStorage.h in Headers */,
 				89B3782325DE71CD009D3E0D /* QNConstants.h in Headers */,
 				89B3782425DE71CD009D3E0D /* QNExperimentGroup.h in Headers */,
+				89A19286260395B500C3FCD9 /* QNKeychainStorage.h in Headers */,
 				89B3781525DE71CD009D3E0D /* QNLaunchResult.h in Headers */,
 				89B3781D25DE71CD009D3E0D /* QNOffering.h in Headers */,
+				89A19339260870FD00C3FCD9 /* QNIdentityService.h in Headers */,
 				89B3784C25DE71CD009D3E0D /* QNRequestBuilder.h in Headers */,
 				89B3783C25DE71CD009D3E0D /* QONAutomationsViewController.h in Headers */,
+				89A192692603928A00C3FCD9 /* QNUserInfoServiceInterface.h in Headers */,
 				89B3784725DE71CD009D3E0D /* QNKeychain.h in Headers */,
 				89B3783725DE71CD009D3E0D /* QONAutomationsFlowCoordinator.h in Headers */,
 				89B3785A25DE71CD009D3E0D /* QNOffering+Protected.h in Headers */,
+				89A192622603926800C3FCD9 /* QNUserInfoService.h in Headers */,
 				89B3780F25DE71CD009D3E0D /* QONAutomationsDelegate.h in Headers */,
 				89B3785925DE71CD009D3E0D /* QNOfferings+Protected.h in Headers */,
 				89B3782925DE71CD009D3E0D /* Qonversion.h in Headers */,
@@ -1289,12 +1415,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				89B3781C25DE71CD009D3E0D /* QONActionResult.m in Sources */,
-				89B3784325DE71CD009D3E0D /* QNKeeper.m in Sources */,
 				89B3782025DE71CD009D3E0D /* QNIntroEligibility.m in Sources */,
 				89B3785325DE71CD009D3E0D /* QNProperties.m in Sources */,
 				89B3781725DE71CD009D3E0D /* QNConstants.m in Sources */,
 				89B3785025DE71CD009D3E0D /* QNUtils.m in Sources */,
 				89B3781A25DE71CD009D3E0D /* Qonversion.m in Sources */,
+				89A1933A260870FD00C3FCD9 /* QNIdentityService.m in Sources */,
 				89B3783625DE71CD009D3E0D /* QONAutomationsFlowCoordinator.m in Sources */,
 				89B3784125DE71CD009D3E0D /* QNUserDefaultsStorage.m in Sources */,
 				89B3784B25DE71CD009D3E0D /* QNRequestBuilder.m in Sources */,
@@ -1306,12 +1432,15 @@
 				89B3786A25DE71CD009D3E0D /* QNAPIClient.m in Sources */,
 				89B3781025DE71CD009D3E0D /* QNOfferings.m in Sources */,
 				89B3782B25DE71CD009D3E0D /* QNOffering.m in Sources */,
+				89A19287260395B500C3FCD9 /* QNKeychainStorage.m in Sources */,
 				89B3781825DE71CD009D3E0D /* QONAutomations.m in Sources */,
 				89B3783D25DE71CD009D3E0D /* QONAutomationsViewController.m in Sources */,
 				89B3782F25DE71CD009D3E0D /* QONAutomationsConstants.m in Sources */,
 				89B3782525DE71CD009D3E0D /* QNPermission.m in Sources */,
 				89B3781625DE71CD009D3E0D /* QNExperimentGroup.m in Sources */,
 				89B3784D25DE71CD009D3E0D /* QNAPIConstants.m in Sources */,
+				89A1928E260396CE00C3FCD9 /* QNInternalConstants.m in Sources */,
+				89A1929C2604741B00C3FCD9 /* QNServicesAssembly.m in Sources */,
 				89B3784425DE71CD009D3E0D /* QNRequestSerializer.m in Sources */,
 				89B3786325DE71CD009D3E0D /* QNAttributionManager.m in Sources */,
 				89B3785225DE71CD009D3E0D /* QNDevice.m in Sources */,
@@ -1326,9 +1455,11 @@
 				89B3784625DE71CD009D3E0D /* QNKeychain.m in Sources */,
 				89B3782A25DE71CD009D3E0D /* QNErrors.m in Sources */,
 				89B3781225DE71CD009D3E0D /* QNExperimentInfo.m in Sources */,
+				89A193332608702800C3FCD9 /* QNIdentityManager.m in Sources */,
 				89B3785625DE71CD009D3E0D /* QNUserInfo.m in Sources */,
 				89B3784A25DE71CD009D3E0D /* QNInMemoryStorage.m in Sources */,
 				89B3782825DE71CD009D3E0D /* QNStoreKitSugare.m in Sources */,
+				89A192632603926800C3FCD9 /* QNUserInfoService.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1337,8 +1468,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				45FFA2DE24BE1015007EFB8F /* QNTestConstants.m in Sources */,
+				89A1931F2604B8D600C3FCD9 /* QNKeychainStorageTests.m in Sources */,
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
 				45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */,
+				89A192A52604974800C3FCD9 /* QNUserInfoServiceTests.m in Sources */,
 				454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */,
 				45FFA2DB24BE06C3007EFB8F /* APIClientTests.m in Sources */,
 				4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */,
@@ -1347,6 +1480,7 @@
 				4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */,
 				4531CBCB24581BD80022C422 /* QNUserInfoTests.m in Sources */,
 				456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */,
+				89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */,
 				45202189244DD02F00C1A928 /* QonversionTests.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
 			);
