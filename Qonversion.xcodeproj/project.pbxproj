@@ -40,6 +40,8 @@
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		71D1AE03BA37F1D7CA063728 /* Pods_QonversionTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */; };
+		8933FDE62615947800F3B8C3 /* QONMacrosProcess.h in Headers */ = {isa = PBXBuildFile; fileRef = 8933FDE42615947700F3B8C3 /* QONMacrosProcess.h */; };
+		8933FDE72615947800F3B8C3 /* QONMacrosProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = 8933FDE52615947700F3B8C3 /* QONMacrosProcess.m */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */; };
 		89ADA76D25069E1000EB2E54 /* ActivePermissionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */; };
@@ -231,6 +233,8 @@
 		45FFA2DF24BE1548007EFB8F /* broken_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = broken_data.json; sourceTree = "<group>"; };
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
+		8933FDE42615947700F3B8C3 /* QONMacrosProcess.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONMacrosProcess.h; sourceTree = "<group>"; };
+		8933FDE52615947700F3B8C3 /* QONMacrosProcess.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONMacrosProcess.m; sourceTree = "<group>"; };
 		89713B4625C1B95700A2448E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		89713B4A25C1BA1F00A2448E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsViewController.swift; sourceTree = "<group>"; };
@@ -553,6 +557,15 @@
 			path = workflows;
 			sourceTree = "<group>";
 		};
+		8933FDE32615946D00F3B8C3 /* QONMacrosProcess */ = {
+			isa = PBXGroup;
+			children = (
+				8933FDE42615947700F3B8C3 /* QONMacrosProcess.h */,
+				8933FDE52615947700F3B8C3 /* QONMacrosProcess.m */,
+			);
+			path = QONMacrosProcess;
+			sourceTree = "<group>";
+		};
 		89B3778725DE71CD009D3E0D /* Qonversion */ = {
 			isa = PBXGroup;
 			children = (
@@ -626,6 +639,7 @@
 		89B377AC25DE71CD009D3E0D /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				8933FDE32615946D00F3B8C3 /* QONMacrosProcess */,
 				89B377AD25DE71CD009D3E0D /* QONUserActionPoint */,
 				89B377B025DE71CD009D3E0D /* QONAutomationsScreen */,
 			);
@@ -1032,6 +1046,7 @@
 				89B3781B25DE71CD009D3E0D /* QNProduct.h in Headers */,
 				89B3783B25DE71CD009D3E0D /* QONAutomationsFlowAssembly.h in Headers */,
 				89B3786925DE71CD009D3E0D /* QNAPIClient.h in Headers */,
+				8933FDE62615947800F3B8C3 /* QONMacrosProcess.h in Headers */,
 				89B3781425DE71CD009D3E0D /* QNPermission.h in Headers */,
 				89B3785B25DE71CD009D3E0D /* QNExperimentGroup+Protected.h in Headers */,
 				89B3786125DE71CD009D3E0D /* QNUserPropertiesManager.h in Headers */,
@@ -1340,6 +1355,7 @@
 				89B3782625DE71CD009D3E0D /* QNLaunchResult.m in Sources */,
 				89B3783F25DE71CD009D3E0D /* QONAutomationsService.m in Sources */,
 				89B3783825DE71CD009D3E0D /* QONAutomationsActionsHandler.m in Sources */,
+				8933FDE72615947800F3B8C3 /* QONMacrosProcess.m in Sources */,
 				89B3782D25DE71CD009D3E0D /* QNProduct.m in Sources */,
 				89B3783A25DE71CD009D3E0D /* QONAutomationsFlowAssembly.m in Sources */,
 				89B3785825DE71CD009D3E0D /* QNMapperObject.m in Sources */,

@@ -10,11 +10,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^QONAutomationsScreenProcessCompletionHandler)(NSString *_Nullable result, NSError  *_Nullable error);
+typedef void (^QONAutomationsScreenProcessorCompletionHandler)(NSString *_Nullable result, NSError  *_Nullable error);
 
 @interface QONAutomationsScreenProcessor : NSObject
 
-- (void)processScreen:(NSString *)htmlString completion:(QONAutomationsScreenProcessCompletionHandler)completion;
+- (void)processScreen:(NSString *)htmlString completion:(QONAutomationsScreenProcessorCompletionHandler)completion;
 
 @end
 

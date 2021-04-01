@@ -50,6 +50,7 @@
   [self.delegate automationsDidShowScreen:self.screen.screenID];
   
   __block __weak QONAutomationsViewController *weakSelf = self;
+  
   [self.screenProcessor processScreen:self.screen.htmlString completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     if (error) {
       [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription];
