@@ -13,6 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate;
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
+- (void)presentCodeRedemptionSheet;
+
 - (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion;
 - (void)checkPermissions:(QNPermissionCompletionHandler)completion;
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;

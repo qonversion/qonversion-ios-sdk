@@ -71,6 +71,14 @@
   [[SKPaymentQueue defaultQueue] addPayment:payment];
 }
 
+- (void)presentCodeRedemptionSheet {
+#if TARGET_OS_IOS
+  if (@available(iOS 14.0, *)) {
+    [[SKPaymentQueue defaultQueue] presentCodeRedemptionSheet];
+  }
+#endif
+}
+
 - (void)restore {
   [[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
 }

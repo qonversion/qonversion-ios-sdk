@@ -73,6 +73,10 @@
 }
 #endif
 
++ (void)presentCodeRedemptionSheet {
+  [[Qonversion sharedInstance].productCenterManager presentCodeRedemptionSheet];
+}
+
 + (void)setDebugMode {
   [Qonversion sharedInstance].debugMode = YES;
 }
