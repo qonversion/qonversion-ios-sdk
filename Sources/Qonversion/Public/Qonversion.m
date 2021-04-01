@@ -1,6 +1,5 @@
 #import "Qonversion.h"
 
-#import "QNKeeper.h"
 #import "QNAPIClient.h"
 #import "QNUserPropertiesManager.h"
 #import "QNProductCenterManager.h"
@@ -10,6 +9,9 @@
 #import "QNProperties.h"
 #import "QNDevice.h"
 #import "QNUtils.h"
+#import "QNUserInfoServiceInterface.h"
+#import "QNUserInfoService.h"
+#import "QNServicesAssembly.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsFlowCoordinator.h"
@@ -20,6 +22,7 @@
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
+@property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 
 @property (nonatomic, assign) BOOL debugMode;
 
@@ -36,11 +39,20 @@
 }
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
+  NSString *userID = [[Qonversion sharedInstance].userInfoService obtainUserID];
   [[QNAPIClient shared] setApiKey:key];
-  [[QNAPIClient shared] setUserID:[self getUserID:3]];
+  [[QNAPIClient shared] setUserID:userID];
   [[QNAPIClient shared] setDebug:[Qonversion sharedInstance].debugMode];
   
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
+}
+
++ (void)identify:(NSString *)userID {
+  [[Qonversion sharedInstance].productCenterManager identify:userID];
+}
+
++ (void)logout {
+  [[Qonversion sharedInstance].productCenterManager logout];
 }
 
 + (void)setNotificationsToken:(NSData *)token {
@@ -127,6 +139,12 @@
   }
 }
 
++ (void)resetUser {
+  [[Qonversion sharedInstance].userInfoService deleteUser];
+  NSString *userID = [[Qonversion sharedInstance].userInfoService obtainUserID];
+  [[QNAPIClient shared] setUserID:userID];
+}
+
 // MARK: - Private
 
 + (instancetype)sharedInstance {
@@ -142,31 +160,18 @@
 - (instancetype)init {
   self = super.init;
   if (self) {
-    _productCenterManager = [[QNProductCenterManager alloc] init];
-    _propertiesManager = [[QNUserPropertiesManager alloc] init];
-    _attributionManager = [[QNAttributionManager alloc] init];
+    _productCenterManager = [QNProductCenterManager new];
+    _propertiesManager = [QNUserPropertiesManager new];
+    _attributionManager = [QNAttributionManager new];
+    
+    QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
+    
+    _userInfoService = [servicesAssembly userInfoService];
     
     _debugMode = NO;
   }
   
   return self;
-}
-
-+ (NSString*)getUserID:(int) maxAttempts {
-  NSString *userID = QNKeeper.userID;
-  if (userID == nil && maxAttempts > 0) {
-    return [self getUserID:maxAttempts - 1];
-  }
-  if (userID) {
-    return userID;
-  }
-  
-  return @"";
-}
-
-+ (void)resetUser {
-  QNKeeper.userID = @"";
-  [[QNAPIClient shared] setUserID:@""];
 }
 
 @end

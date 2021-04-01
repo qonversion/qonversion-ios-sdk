@@ -3,7 +3,7 @@
 
 @implementation QNKeychain
 
-+ (void)setString:(NSString *)string forKey:(NSString *)key {
+- (void)setString:(NSString *)string forKey:(NSString *)key {
   if (!string || !key || ![string isKindOfClass:NSString.class] || ![key isKindOfClass:NSString.class]) {
     return;
   }
@@ -18,7 +18,7 @@
   SecItemAdd((__bridge CFDictionaryRef)query, nil);
 }
 
-+ (nullable NSString *)stringForKey:(NSString *)key {
+- (nullable NSString *)stringForKey:(NSString *)key {
   NSData *data = [self valueForKey:key];
   if (!data) {
     return nil;
@@ -26,9 +26,17 @@
   return [NSString.alloc initWithData:data encoding:NSUTF8StringEncoding];
 }
 
+- (void)deleteValueForKey:(NSString *)key {
+  NSData *keyData = [key dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:NO];
+  NSDictionary *query = @{(id)kSecClass:(id)kSecClassGenericPassword,
+                          (id)kSecAttrAccount:keyData};
+  
+  SecItemDelete((CFDictionaryRef)query);
+}
+
 // MARK: - Private
 
-+ (nullable NSData *)valueForKey:(NSString *)key; {
+- (nullable NSData *)valueForKey:(NSString *)key; {
   NSData *keyData = [key dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:NO];
   if (!keyData) {
     return nil;

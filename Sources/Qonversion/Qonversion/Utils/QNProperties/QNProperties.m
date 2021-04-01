@@ -22,6 +22,8 @@
     case QNPropertyAdjustUserID:
       key = @"_q_adjust_adid";
       break;
+    case QNPropertyAdvertisingID:
+      key = @"_q_advertising_id";
   }
   
   return key;

@@ -2,7 +2,6 @@
 #import "QNDevice.h"
 
 #import "QNUserInfo.h"
-#import "QNKeeper.h"
 
 @interface QNUserInfo (InternalUserID)
 
@@ -119,6 +118,5 @@
   NSPredicate *predicate = [NSPredicate predicateWithFormat:@"appStoreReceiptURL != nil"];
   return [NSBundle.allBundles filteredArrayUsingPredicate:predicate].firstObject;
 }
-
 
 @end

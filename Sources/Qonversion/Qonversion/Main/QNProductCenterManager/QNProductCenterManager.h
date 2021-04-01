@@ -8,6 +8,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QNProductCenterManager : NSObject
 
+- (void)identify:(NSString *)userID;
+- (void)logout;
 - (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate;
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
