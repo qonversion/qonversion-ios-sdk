@@ -17,6 +17,7 @@
 #import "QONActionResult.h"
 #import "QONAutomationsScreen.h"
 #import "QONAutomationsConstants.h"
+#import "QONAutomationsScreenProcessor.h"
 
 #import "Qonversion.h"
 
@@ -44,10 +45,21 @@
   self.activityIndicator.hidesWhenStopped = YES;
   [self.view addSubview:self.activityIndicator];
   
-  [self.webView loadHTMLString:self.screen.htmlString baseURL:nil];
   self.webView.scrollView.delegate = self;
   
   [self.delegate automationsDidShowScreen:self.screen.screenID];
+  
+  __block __weak QONAutomationsViewController *weakSelf = self;
+  
+  [self.screenProcessor processScreen:self.screen.htmlString completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+    if (error) {
+      [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription];
+      
+      return;
+    }
+    
+    [weakSelf.webView loadHTMLString:result baseURL:nil];
+  }];
 }
 
 - (void)viewDidLayoutSubviews {

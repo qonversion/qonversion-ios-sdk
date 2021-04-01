@@ -17,6 +17,7 @@
 #import "QNAPIClient.h"
 #import "QONAutomationsMapper.h"
 #import "QONAutomationsScreen.h"
+#import "QONAutomationsScreenProcessor.h"
 
 @implementation QONAutomationsFlowAssembly
 
@@ -28,6 +29,7 @@
   vc.actionsHandler = [QONAutomationsActionsHandler new];
   vc.automationsService = [self automationsService];
   vc.flowAssembly = [QONAutomationsFlowAssembly new];
+  vc.screenProcessor = [QONAutomationsScreenProcessor new];
   
   return vc;
 }

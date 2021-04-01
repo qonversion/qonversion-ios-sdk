@@ -40,6 +40,8 @@
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		71D1AE03BA37F1D7CA063728 /* Pods_QonversionTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */; };
+		8933FDE62615947800F3B8C3 /* QONMacrosProcess.h in Headers */ = {isa = PBXBuildFile; fileRef = 8933FDE42615947700F3B8C3 /* QONMacrosProcess.h */; };
+		8933FDE72615947800F3B8C3 /* QONMacrosProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = 8933FDE52615947700F3B8C3 /* QONMacrosProcess.m */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		89A192622603926800C3FCD9 /* QNUserInfoService.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A192602603926800C3FCD9 /* QNUserInfoService.h */; };
 		89A192632603926800C3FCD9 /* QNUserInfoService.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A192612603926800C3FCD9 /* QNUserInfoService.m */; };
@@ -152,8 +154,11 @@
 		89B3786825DE71CD009D3E0D /* QNStoreKitService.h in Headers */ = {isa = PBXBuildFile; fileRef = 89B3780B25DE71CD009D3E0D /* QNStoreKitService.h */; };
 		89B3786925DE71CD009D3E0D /* QNAPIClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 89B3780D25DE71CD009D3E0D /* QNAPIClient.h */; };
 		89B3786A25DE71CD009D3E0D /* QNAPIClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 89B3780E25DE71CD009D3E0D /* QNAPIClient.m */; };
+		89C06A4825F75EA8005DD254 /* QONAutomationsScreenProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 89C06A4625F75EA8005DD254 /* QONAutomationsScreenProcessor.h */; };
+		89C06A4925F75EA8005DD254 /* QONAutomationsScreenProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = 89C06A4725F75EA8005DD254 /* QONAutomationsScreenProcessor.m */; };
 		89E6C82B2592237B00CDC327 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		89E6C82C2592237B00CDC327 /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A2649CD29A7FDF280A2EC27C /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E902AE0A2A73461C22DE146A /* Pods_Sample.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -244,6 +249,8 @@
 		45FFA2DF24BE1548007EFB8F /* broken_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = broken_data.json; sourceTree = "<group>"; };
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
+		8933FDE42615947700F3B8C3 /* QONMacrosProcess.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONMacrosProcess.h; sourceTree = "<group>"; };
+		8933FDE52615947700F3B8C3 /* QONMacrosProcess.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONMacrosProcess.m; sourceTree = "<group>"; };
 		89713B4625C1B95700A2448E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		89713B4A25C1BA1F00A2448E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		89A192602603926800C3FCD9 /* QNUserInfoService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUserInfoService.h; sourceTree = "<group>"; };
@@ -358,6 +365,8 @@
 		89B3780B25DE71CD009D3E0D /* QNStoreKitService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNStoreKitService.h; sourceTree = "<group>"; };
 		89B3780D25DE71CD009D3E0D /* QNAPIClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNAPIClient.h; sourceTree = "<group>"; };
 		89B3780E25DE71CD009D3E0D /* QNAPIClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNAPIClient.m; sourceTree = "<group>"; };
+		89C06A4625F75EA8005DD254 /* QONAutomationsScreenProcessor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsScreenProcessor.h; sourceTree = "<group>"; };
+		89C06A4725F75EA8005DD254 /* QONAutomationsScreenProcessor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsScreenProcessor.m; sourceTree = "<group>"; };
 		A4D01F9F11D02C4E478E68EC /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
 		B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QonversionTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C49A7C36E2D376FDC85E470B /* Pods-Sample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.release.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.release.xcconfig"; sourceTree = "<group>"; };
@@ -371,6 +380,7 @@
 			files = (
 				45754AE725814C7500FCA376 /* iAd.framework in Frameworks */,
 				89E6C82B2592237B00CDC327 /* Qonversion.framework in Frameworks */,
+				A2649CD29A7FDF280A2EC27C /* Pods_Sample.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -584,6 +594,15 @@
 			path = workflows;
 			sourceTree = "<group>";
 		};
+		8933FDE32615946D00F3B8C3 /* QONMacrosProcess */ = {
+			isa = PBXGroup;
+			children = (
+				8933FDE42615947700F3B8C3 /* QONMacrosProcess.h */,
+				8933FDE52615947700F3B8C3 /* QONMacrosProcess.m */,
+			);
+			path = QONMacrosProcess;
+			sourceTree = "<group>";
+		};
 		89A1925F2603925E00C3FCD9 /* QNUserInfoService */ = {
 			isa = PBXGroup;
 			children = (
@@ -739,6 +758,7 @@
 		89B377AC25DE71CD009D3E0D /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				8933FDE32615946D00F3B8C3 /* QONMacrosProcess */,
 				89B377AD25DE71CD009D3E0D /* QONUserActionPoint */,
 				89B377B025DE71CD009D3E0D /* QONAutomationsScreen */,
 			);
@@ -837,6 +857,7 @@
 		89B377C525DE71CD009D3E0D /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				89C06A4525F75E99005DD254 /* QONAutomationsScreenProcessor */,
 				89B377C625DE71CD009D3E0D /* QONAutomationsService */,
 			);
 			path = Services;
@@ -1105,6 +1126,15 @@
 			path = QNAPIClient;
 			sourceTree = "<group>";
 		};
+		89C06A4525F75E99005DD254 /* QONAutomationsScreenProcessor */ = {
+			isa = PBXGroup;
+			children = (
+				89C06A4625F75EA8005DD254 /* QONAutomationsScreenProcessor.h */,
+				89C06A4725F75EA8005DD254 /* QONAutomationsScreenProcessor.m */,
+			);
+			path = QONAutomationsScreenProcessor;
+			sourceTree = "<group>";
+		};
 		BB6B3C9FD9EFBC9E1604507D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -1130,6 +1160,7 @@
 				89B3781B25DE71CD009D3E0D /* QNProduct.h in Headers */,
 				89B3783B25DE71CD009D3E0D /* QONAutomationsFlowAssembly.h in Headers */,
 				89B3786925DE71CD009D3E0D /* QNAPIClient.h in Headers */,
+				8933FDE62615947800F3B8C3 /* QONMacrosProcess.h in Headers */,
 				89B3781425DE71CD009D3E0D /* QNPermission.h in Headers */,
 				89B3785B25DE71CD009D3E0D /* QNExperimentGroup+Protected.h in Headers */,
 				89B3786125DE71CD009D3E0D /* QNUserPropertiesManager.h in Headers */,
@@ -1177,6 +1208,7 @@
 				89A19339260870FD00C3FCD9 /* QNIdentityService.h in Headers */,
 				89B3784C25DE71CD009D3E0D /* QNRequestBuilder.h in Headers */,
 				89B3783C25DE71CD009D3E0D /* QONAutomationsViewController.h in Headers */,
+				89C06A4825F75EA8005DD254 /* QONAutomationsScreenProcessor.h in Headers */,
 				89A192692603928A00C3FCD9 /* QNUserInfoServiceInterface.h in Headers */,
 				89B3784725DE71CD009D3E0D /* QNKeychain.h in Headers */,
 				89B3783725DE71CD009D3E0D /* QONAutomationsFlowCoordinator.h in Headers */,
@@ -1443,10 +1475,12 @@
 				89A1929C2604741B00C3FCD9 /* QNServicesAssembly.m in Sources */,
 				89B3784425DE71CD009D3E0D /* QNRequestSerializer.m in Sources */,
 				89B3786325DE71CD009D3E0D /* QNAttributionManager.m in Sources */,
+				89C06A4925F75EA8005DD254 /* QONAutomationsScreenProcessor.m in Sources */,
 				89B3785225DE71CD009D3E0D /* QNDevice.m in Sources */,
 				89B3782625DE71CD009D3E0D /* QNLaunchResult.m in Sources */,
 				89B3783F25DE71CD009D3E0D /* QONAutomationsService.m in Sources */,
 				89B3783825DE71CD009D3E0D /* QONAutomationsActionsHandler.m in Sources */,
+				8933FDE72615947800F3B8C3 /* QONMacrosProcess.m in Sources */,
 				89B3782D25DE71CD009D3E0D /* QNProduct.m in Sources */,
 				89B3783A25DE71CD009D3E0D /* QONAutomationsFlowAssembly.m in Sources */,
 				89B3785825DE71CD009D3E0D /* QNMapperObject.m in Sources */,
