@@ -48,6 +48,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 
 /**
+ Shows up a sheet for users to redeem AppStore offer codes
+ */
++ (void)presentCodeRedemptionSheet API_AVAILABLE(ios(14.0)) API_UNAVAILABLE(tvos, macos, watchos);
+
+/**
  Set push token to Qonversion to enable Qonversion push notifications
  @param token - token data
  */
