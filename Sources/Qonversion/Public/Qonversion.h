@@ -167,6 +167,11 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable;
 
+/**
+ On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion if tracking is allowed and IDFA is available.
+ */
++ (void)setAdvertisingID;
+
 @end
 
 NS_ASSUME_NONNULL_END
