@@ -179,8 +179,8 @@
 }
 
 + (void)setAdvertisingID {
-  NSString *idfv = [QNDevice current].advertiserID;
-  [Qonversion setProperty:QNPropertyAdvertisingID value:idfv];
+  NSString *idfa = [QNDevice current].advertiserID;
+  [Qonversion setProperty:QNPropertyAdvertisingID value:idfa];
 }
 
 @end
