@@ -178,4 +178,9 @@
   return self;
 }
 
++ (void)setAdvertisingID {
+  NSString *idfa = [QNDevice current].advertiserID;
+  [Qonversion setProperty:QNPropertyAdvertisingID value:idfa];
+}
+
 @end
