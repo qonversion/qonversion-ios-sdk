@@ -167,6 +167,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable;
 
++ (void)setAdvertisingID;
+
 @end
 
 NS_ASSUME_NONNULL_END
