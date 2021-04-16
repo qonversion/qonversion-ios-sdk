@@ -10,6 +10,7 @@
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
 @property (nonatomic, strong, readonly) NSMutableArray<QNStoreKitServiceReceiptFetchCompletionHandler> *receiptRefreshCompletionHandlers;
 @property (nonatomic, copy) NSString *purchasingCurrently;
+@property (nonatomic, assign) BOOL isProductsLoaded;
 
 @property (nonatomic, strong) SKProductsRequest *productsRequest;
 @property (nonatomic, strong) SKReceiptRefreshRequest *receiptRefreshRequest;
@@ -43,6 +44,7 @@
     _receiptRefreshCompletionHandlers = [NSMutableArray new];
     
     _purchasingCurrently = nil;
+    _isProductsLoaded = NO;
   }
   
   [SKPaymentQueue.defaultQueue addTransactionObserver:self];
@@ -88,7 +90,7 @@
 }
 
 - (NSArray<SKProduct *> *)getLoadedProducts {
-  return self.products.allValues;
+  return self.isProductsLoaded ? self.products.allValues : @[];
 }
 
 - (void)fetchReceipt:(QNStoreKitServiceReceiptFetchCompletionHandler)completion {
@@ -212,6 +214,12 @@
       }
     }
   }
+  
+  if (request != self.productsRequest) {
+    return;
+  }
+  
+  self.isProductsLoaded = YES;
   
   if (!autoTracked && [self.delegate respondsToSelector:@selector(handleProducts:)]) {
     [self.delegate handleProducts:response.products];
