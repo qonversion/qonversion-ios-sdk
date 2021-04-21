@@ -5,11 +5,12 @@
 @interface QNStoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
 // Use SKProduct.productIdentifier as hash for fast access to entities
-@property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKPaymentTransaction *> *processingTransactions;
+@property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, NSArray<SKPaymentTransaction *> *> *processingTransactions;
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProductsRequest *> *productRequests;
 @property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, SKProduct *> *products;
 @property (nonatomic, strong, readonly) NSMutableArray<QNStoreKitServiceReceiptFetchCompletionHandler> *receiptRefreshCompletionHandlers;
 @property (nonatomic, copy) NSString *purchasingCurrently;
+@property (nonatomic, assign) BOOL isProductsLoaded;
 
 @property (nonatomic, strong) SKProductsRequest *productsRequest;
 @property (nonatomic, strong) SKReceiptRefreshRequest *receiptRefreshRequest;
@@ -43,6 +44,7 @@
     _receiptRefreshCompletionHandlers = [NSMutableArray new];
     
     _purchasingCurrently = nil;
+    _isProductsLoaded = NO;
   }
   
   [SKPaymentQueue.defaultQueue addTransactionObserver:self];
@@ -88,7 +90,7 @@
 }
 
 - (NSArray<SKProduct *> *)getLoadedProducts {
-  return self.products.allValues;
+  return self.isProductsLoaded ? self.products.allValues : @[];
 }
 
 - (void)fetchReceipt:(QNStoreKitServiceReceiptFetchCompletionHandler)completion {
@@ -198,20 +200,29 @@
     [_products setValue:product forKey:product.productIdentifier];
   
     // Transactions for auto-tracking
-    SKPaymentTransaction *transaction = [self.processingTransactions objectForKey:product.productIdentifier];
+    NSArray<SKPaymentTransaction *> *transactions = [self.processingTransactions objectForKey:product.productIdentifier];
     
-    if (transaction) {
-      SKProductsRequest *storedRequest = self.productRequests[product.productIdentifier];
+    if (transactions.count > 0) {
       [self.productRequests removeObjectForKey:product.productIdentifier];
       [self.processingTransactions removeObjectForKey:product.productIdentifier];
-      [self handleTransaction:transaction];
+      
+      for (SKPaymentTransaction *transaction in transactions) {
+        [self handleTransaction:transaction];
+      }
       
       // Auto-inited requests
+      SKProductsRequest *storedRequest = self.productRequests[product.productIdentifier];
       if (response.products.count == 1 && storedRequest) {
         autoTracked = YES;
       }
     }
   }
+  
+  if (request != self.productsRequest) {
+    return;
+  }
+  
+  self.isProductsLoaded = YES;
   
   if (!autoTracked && [self.delegate respondsToSelector:@selector(handleProducts:)]) {
     [self.delegate handleProducts:response.products];
@@ -285,8 +296,12 @@
 }
 
 - (void)processTransaction:(SKPaymentTransaction *)transaction productIdentifier:(NSString *)productIdentifier {
-  [self.processingTransactions setObject:transaction forKey:productIdentifier];
-  NSSet <NSString *> *productSet = [NSSet setWithObject:productIdentifier];
+  NSArray *transactionsArray = self.processingTransactions[productIdentifier] ?: @[];
+  NSMutableArray *transactions = [transactionsArray mutableCopy];
+  [transactions addObject:transaction];
+  
+  [self.processingTransactions setObject:[transactions copy] forKey:productIdentifier];
+  NSSet<NSString *> *productSet = [NSSet setWithObject:productIdentifier];
   SKProductsRequest *request = [[SKProductsRequest alloc] initWithProductIdentifiers:productSet];
   [self.productRequests setObject:request forKey:productIdentifier];
   
