@@ -47,7 +47,7 @@
     _isProductsLoaded = NO;
   }
   
-  [SKPaymentQueue.defaultQueue addTransactionObserver:self];
+  [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
   return self;
 }
 
@@ -69,7 +69,6 @@
   }
   
   SKPayment *payment = [SKPayment paymentWithProduct:product];
-  [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
   [[SKPaymentQueue defaultQueue] addPayment:payment];
 }
 
