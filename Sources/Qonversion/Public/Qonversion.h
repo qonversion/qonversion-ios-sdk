@@ -8,9 +8,12 @@
 #import "QNIntroEligibility.h"
 #import "QNPromoPurchasesDelegate.h"
 #import "QNPurchasesDelegate.h"
-#import "QONAutomationsDelegate.h"
 #import "QNExperimentInfo.h"
 #import "QNExperimentGroup.h"
+
+#if TARGET_OS_IOS
+#import "QONAutomationsDelegate.h"
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
