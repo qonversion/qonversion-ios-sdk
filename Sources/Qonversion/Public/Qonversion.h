@@ -3,8 +3,14 @@
 #import "QNLaunchResult.h"
 #import "QNProduct.h"
 #import "QNPermission.h"
-
-@protocol QNPromoPurchasesDelegate, QNPurchasesDelegate;
+#import "QNOfferings.h"
+#import "QNOffering.h"
+#import "QNIntroEligibility.h"
+#import "QNPromoPurchasesDelegate.h"
+#import "QNPurchasesDelegate.h"
+#import "QONAutomationsDelegate.h"
+#import "QNExperimentInfo.h"
+#import "QNExperimentGroup.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
