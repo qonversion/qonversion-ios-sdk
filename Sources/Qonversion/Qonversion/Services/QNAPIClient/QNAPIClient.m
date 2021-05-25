@@ -51,6 +51,16 @@
   return shared;
 }
 
+- (void)setApiKey:(NSString *)apiKey {
+  _apiKey = apiKey;
+  [self.requestBuilder setApiKey:[self obtainApiKey]];
+}
+
+- (void)setDebug:(BOOL)debug {
+  _debug = debug;
+  [self.requestBuilder setApiKey:[self obtainApiKey]];
+}
+
 // MARK: - Public
 
 - (void)launchRequest:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
@@ -88,27 +98,27 @@
 }
 
 - (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeUserActionPointsRequestWith:self.userID apiKey:[self obtainApiKey]];
+  NSURLRequest *request = [self.requestBuilder makeUserActionPointsRequestWith:self.userID];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
 
 - (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID apiKey:[self obtainApiKey]];
+  NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *parameters = @{@"anon_id": anonUserID, @"identity_id": userID};
-  NSURLRequest *request = [self.requestBuilder makeCreateIdentityRequestWith:parameters apiKey:[self obtainApiKey]];
+  NSURLRequest *request = [self.requestBuilder makeCreateIdentityRequestWith:parameters];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID {
   NSDictionary *body = @{@"user": self.userID};
-  NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body apiKey:[self obtainApiKey]];
+  NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body];
   
   return [self dataTaskWithRequest:request completion:nil];
 }
