@@ -149,6 +149,10 @@
   [[QNAPIClient shared] setUserID:userID];
 }
 
++ (void)userInfo:(QNUserInfoCompletionHandler)completion {
+  [[[Qonversion sharedInstance] productCenterManager] userInfo:completion];
+}
+
 // MARK: - Private
 
 + (instancetype)sharedInstance {

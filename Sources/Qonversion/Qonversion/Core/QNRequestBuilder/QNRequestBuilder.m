@@ -9,6 +9,11 @@
   return [self makePostRequestWith:kInitEndpoint andBody:parameters];
 }
 
+- (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey {
+  NSString *endpoint = [NSString stringWithFormat:kUserInfoEndpoint, userID];
+  return [self makeGetRequestWith:endpoint apiKey:apiKey];
+}
+
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters {
   return [self makePostRequestWith:kPropertiesEndpoint andBody:parameters];
 }

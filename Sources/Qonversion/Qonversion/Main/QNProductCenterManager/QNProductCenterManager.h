@@ -25,6 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)offerings:(QNOfferingsCompletionHandler)completion;
 - (void)experiments:(QNExperimentsCompletionHandler)completion;
 
+- (void)userInfo:(QNUserInfoCompletionHandler)completion;
+
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 
 @end

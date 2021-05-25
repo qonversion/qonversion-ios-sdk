@@ -171,6 +171,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)resetUser;
 
++ (void)userInfo:(QNUserInfoCompletionHandler)completion;
+
 /**
  Enable attribution collection from Apple Search Ads. NO by default.
  */

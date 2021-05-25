@@ -223,6 +223,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   _purchasesDelegate = delegate;
 }
 
+- (void)userInfo:(QNUserInfoCompletionHandler)completion {
+  [self.userInfoService obtainUserInfo:completion];
+}
+
 - (void)presentCodeRedemptionSheet {
   [self.storeKitService presentCodeRedemptionSheet];
 }

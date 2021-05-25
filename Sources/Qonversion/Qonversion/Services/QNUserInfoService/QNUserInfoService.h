@@ -9,7 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "QNUserInfoServiceInterface.h"
 
-@protocol QNLocalStorage, QNKeychainStorageInterface;
+@class QNAPIClient;
+@protocol QNLocalStorage, QNKeychainStorageInterface, QNUserInfoMapperInterface;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -17,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) id<QNKeychainStorageInterface> keychainStorage;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
+@property (nonatomic, strong) id<QNUserInfoMapperInterface> mapper;
+@property (nonatomic, strong) QNAPIClient *apiClient;
 
 @end
 

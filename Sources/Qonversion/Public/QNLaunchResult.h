@@ -80,6 +80,8 @@ typedef void (^QNEligibilityCompletionHandler)(NSDictionary<NSString *, QNIntroE
 
 typedef void (^QNExperimentsCompletionHandler)(NSDictionary<NSString *, QNExperimentInfo *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ExperimentsCompletionHandler);
 
+typedef void (^QNUserInfoCompletionHandler)(QNUser *_Nullable user, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.UserInfoCompletionHandler);
+
 typedef void (^QNOfferingsCompletionHandler)(QNOfferings *_Nullable offerings, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.OfferingsCompletionHandler);
 
 NS_ASSUME_NONNULL_END

@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion;
 - (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;
 - (void)trackScreenShownWithID:(NSString *)automationID;
+- (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion;
 
