@@ -13,6 +13,8 @@
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, copy) NSArray<NSNumber *> *connectionErrorCodes;
 @property (nonatomic, copy) NSArray<NSString *> *retriableRequests;
+@property (nonatomic, copy) NSArray<NSNumber *> *criticalErrorCodes;
+@property (nonatomic, strong) NSError *criticalError;
 
 @end
 
@@ -36,6 +38,7 @@
       @(NSURLErrorTimedOut)
     ];
     _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kPropertiesEndpoint, kAttributionEndpoint];
+    _criticalErrorCodes = @[@(401), @(402), @(403)];
   }
   
   return self;
@@ -51,12 +54,24 @@
   return shared;
 }
 
+- (void)processRequest:(NSURLRequest *)request completion:(QNAPIClientCompletionHandler)completion {
+  [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    if (error && [self.connectionErrorCodes containsObject:@(error.code)]) {
+      self.criticalError = error;
+    }
+    
+    if (completion) {
+      completion(dict, error);
+    }
+  }];
+}
+
 // MARK: - Public
 
 - (void)launchRequest:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   NSDictionary *launchData = [self enrichParameters:[self.requestSerializer launchData]];
   NSURLRequest *request = [self.requestBuilder makeInitRequestWith:launchData];
-  return [self dataTaskWithRequest:request completion:completion];
+  [self processRequest:request completion:completion];
 }
 
 - (void)purchaseRequestWith:(SKProduct *)product
@@ -68,7 +83,7 @@
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  [self processRequest:request completion:completion];
 }
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QNProduct *> *)products
@@ -84,7 +99,7 @@
   NSDictionary *body = [self enrichParameters:@{@"properties": properties}];
   NSURLRequest *request = [self.requestBuilder makePropertiesRequestWith:body];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  [self processRequest:request completion:completion];
 }
 
 - (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion {
@@ -119,7 +134,7 @@
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
   NSDictionary *resultData = [self enrichParameters:body];
   NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:resultData];
-  return [self dataTaskWithRequest:request completion:completion];
+  [self processRequest:request completion:completion];
 }
 
 - (void)processStoredRequests {
@@ -164,6 +179,11 @@
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+  if (self.criticalError && completion) {
+    completion(nil, error);
+    return;
+  }
+  
   [self dataTaskWithRequest:request tryCount:0 completion:completion];
 }
 

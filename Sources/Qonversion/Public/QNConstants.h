@@ -22,8 +22,6 @@ extern NSString *const keyQNPropertyReg;
 extern NSString *const keyQSource;
 extern NSString *const keyQSourceVersion;
 
-extern int const kQPropertiesSendingPeriodInSeconds;
-
 // MARK: - Qonversion Underhood User Properties
 
 extern NSString *const keyQNPropertyFacebookAnonUserID;
