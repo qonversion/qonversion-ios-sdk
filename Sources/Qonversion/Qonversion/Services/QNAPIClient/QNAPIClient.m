@@ -180,7 +180,7 @@
 - (void)dataTaskWithRequest:(NSURLRequest *)request
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   if (self.criticalError && completion) {
-    completion(nil, error);
+    completion(nil, self.criticalError);
     return;
   }
   
