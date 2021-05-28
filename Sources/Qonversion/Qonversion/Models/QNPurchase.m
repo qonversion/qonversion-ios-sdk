@@ -53,7 +53,7 @@
   [description appendFormat:@"platformProductID=%@", self.platformProductID];
   [description appendFormat:@"product=%@", self.product];
   [description appendFormat:@"currency=%@", self.currency];
-  [description appendFormat:@"amount=%li", self.amount];
+  [description appendFormat:@"amount=%lu", (long unsigned)self.amount];
   [description appendFormat:@"purchaseDate=%@", self.purchaseDate];
   [description appendFormat:@"createDate=%@", self.createDate];
   [description appendFormat:@"object=%@", self.object];

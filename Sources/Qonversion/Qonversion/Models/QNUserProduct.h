@@ -24,8 +24,8 @@ typedef NS_ENUM(NSInteger, QNUserProductType){
 @property (nonatomic, copy, readonly) NSString *identifier;
 @property (nonatomic, assign, readonly) QNUserProductType type;
 @property (nonatomic, copy, readonly) NSString *currency;
-@property (nonatomic, assign, readonly) NSInteger *price;
-@property (nonatomic, assign, readonly) NSInteger *introductoryPrice;
+@property (nonatomic, assign, readonly) NSInteger price;
+@property (nonatomic, assign, readonly) NSInteger introductoryPrice;
 @property (nonatomic, assign, readonly) QNPaymentMode introductoryPaymentMode;
 @property (nonatomic, copy, readonly) NSString *introductoryDuration;
 @property (nonatomic, strong, readonly) QNSubscription *subscription;

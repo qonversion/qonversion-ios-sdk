@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface QNUser : NSObject
 
 @property (nonatomic, copy, readonly) NSString *identifier;
-@property (nonatomic, copy, readonly) NSString *originalAppVersion;
+@property (nonatomic, copy, nullable, readonly) NSString *originalAppVersion;
 
 @end
 

@@ -40,8 +40,8 @@
   [description appendFormat:@"identifier=%@,\n", self.identifier];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long)self.type];
   [description appendFormat:@"currency=%@", self.currency];
-  [description appendFormat:@"price=%li", self.price];
-  [description appendFormat:@"introductoryPrice=%@", self.introductoryPrice];
+  [description appendFormat:@"price=%ld", (long)self.price];
+  [description appendFormat:@"introductoryPrice=%ld", (long)self.introductoryPrice];
   [description appendFormat:@"introductoryDuration=%@", self.introductoryDuration];
   [description appendFormat:@"subscription=%@", self.subscription];
   [description appendFormat:@"object=%@", self.object];

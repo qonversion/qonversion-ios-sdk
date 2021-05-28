@@ -11,7 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QNUserInfoMapper : NSObject
+@interface QNUserInfoMapper : NSObject <QNUserInfoMapperInterface>
 
 @end
 

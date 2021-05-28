@@ -8,16 +8,6 @@
 
 #import "QNUser.h"
 
-@interface QNUser ()
-
-@property (nonatomic, copy, readonly) NSArray<QNEntitlement *> *entitlements;
-@property (nonatomic, copy, readonly) NSArray<QNPurchase *> *purchases;
-@property (nonatomic, copy, readonly) NSString *object;
-@property (nonatomic, strong, readonly) NSDate *createDate;
-@property (nonatomic, strong, readonly) NSDate *lastOnlineDate;
-
-@end
-
 @implementation QNUser
 
 - (instancetype)initWithID:(NSString *)identifier
@@ -26,28 +16,6 @@
   
   if (self) {
     _identifier = identifier;
-    _originalAppVersion = originalAppVersion;
-  }
-  
-  return self;
-}
-
-- (instancetype)initWithID:(NSString *)identifier
-              entitlements:(NSArray<QNEntitlement *> *)entitlements
-                 purchases:(NSArray<QNPurchase *> *)purchases
-                    object:(NSString *)object
-                createDate:(NSDate *)createDate
-            lastOnlineDate:(NSDate *)lastOnlineDate
-        originalAppVersion:(NSString *)originalAppVersion {
-  self = [super init];
-  
-  if (self) {
-    _identifier = identifier;
-    _entitlements = entitlements;
-    _purchases = purchases;
-    _object = object;
-    _createDate = createDate;
-    _lastOnlineDate = lastOnlineDate;
     _originalAppVersion = originalAppVersion;
   }
   

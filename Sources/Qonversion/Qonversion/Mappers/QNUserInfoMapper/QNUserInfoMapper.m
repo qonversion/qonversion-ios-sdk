@@ -60,28 +60,9 @@
   NSDictionary *userData = [self getDataFromObject:data];
 
   NSString *userID = userData[@"id"];
-  NSString *object = userData[@"object"];
-  
-  NSNumber *createdTimestamp = userData[@"created"];
-  NSDate *createdDate = [self dateFromTimestamp:createdTimestamp];
-  
-  NSNumber *lastOnlineTimestamp = userData[@"last_online"];
-  NSDate *lastOnlineDate = [self dateFromTimestamp:lastOnlineTimestamp];
-  
-  NSArray *entitlementsData = userData[@"entitlements"];
-  NSArray *entitlements = [self mapEntitlements:entitlementsData];
-  
   NSString *originalAppVersion = userData[@"originalAppVersion"];
   
-  NSArray *purchasesData = userData[@"purchases"];
-  NSArray<QNPurchase *> *purchases = [self mapPurchases:purchasesData];
-  
   QNUser *user = [[QNUser alloc] initWithID:userID
-                               entitlements:entitlements
-                                  purchases:purchases
-                                     object:object
-                                 createDate:createdDate
-                             lastOnlineDate:lastOnlineDate
                          originalAppVersion:originalAppVersion];
   
   return user;
@@ -150,9 +131,9 @@
     NSNumber *createdTimestamp = data[@"created"];
     NSDate *createdDate = [self dateFromTimestamp:createdTimestamp];
     
-    NSArray *productsData = data[@"products"];
-    QNUserProduct *userProduct = [self mapProduct:productsData];
-    
+    NSDictionary *productData = data[@"product"];
+    QNUserProduct *userProduct = [self mapProduct:productData];
+     
     QNPurchase *purchase = [[QNPurchase alloc] initWithUserID:userID
                                                    originalID:originalID
                                                 purchaseToken:token
@@ -161,7 +142,7 @@
                                             platformProductID:platformProductID
                                                       product:userProduct
                                                      currency:currency
-                                                       amount:amount
+                                                       amount:amount.integerValue
                                                  purchaseDate:purchasedDate
                                                    createDate:createdDate
                                                        object:object];
@@ -191,7 +172,6 @@
 - (QNUserProduct *)mapProduct:(NSDictionary *)data {
   NSString *object = data[@"object"];
   NSString *productID = data[@"product_id"];
-  NSString *userID = data[@"user"];
   
   NSString *currency = data[@"currency"];
   NSNumber *price = data[@"price"];
@@ -208,8 +188,8 @@
   QNUserProduct *product = [[QNUserProduct alloc] initWithIdentifier:productID
                                                                 type:type
                                                             currency:currency
-                                                               price:price
-                                                   introductoryPrice:introductoryPrice
+                                                               price:price.integerValue
+                                                   introductoryPrice:introductoryPrice.integerValue
                                                 introductoryDuration:introductoryDuration
                                                         subscription:subscription
                                                               object:object];

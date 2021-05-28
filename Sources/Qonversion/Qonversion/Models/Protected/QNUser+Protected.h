@@ -15,14 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithID:(NSString *)identifier
         originalAppVersion:(NSString *)originalAppVersion;
 
-- (instancetype)initWithID:(NSString *)identifier
-              entitlements:(NSArray<QNEntitlement *> *)entitlements
-                 purchases:(NSArray<QNPurchase *> *)purchases
-                    object:(NSString *)object
-                createDate:(NSDate *)createDate
-            lastOnlineDate:(NSDate *)lastOnlineDate
-        originalAppVersion:(NSString *)originalAppVersion;
-
 @end
 
 NS_ASSUME_NONNULL_END

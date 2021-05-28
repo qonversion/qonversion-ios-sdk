@@ -8,7 +8,7 @@
 
 + (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary * _Nullable)dict;
 
-+ (QNUser *)fillUser:(NSDictionary * _Nullable)dict;
++ (QNUser * _Nonnull)fillUser:(NSDictionary * _Nullable)dict;
 
 + (NSDictionary<NSString *, QNIntroEligibility *> * _Nonnull)mapProductsEligibility:(NSDictionary * _Nullable)dict;
 

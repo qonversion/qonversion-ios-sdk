@@ -47,16 +47,16 @@
 		895D6A3A26554D930008C668 /* QNUserInfoMapperInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 895D6A3926554D930008C668 /* QNUserInfoMapperInterface.h */; };
 		8980CE6E264EC7E500192C51 /* QNUser.h in Headers */ = {isa = PBXBuildFile; fileRef = 8980CE6C264EC7E500192C51 /* QNUser.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8980CE6F264EC7E500192C51 /* QNUser.m in Sources */ = {isa = PBXBuildFile; fileRef = 8980CE6D264EC7E500192C51 /* QNUser.m */; };
-		8980CE72264EC7F800192C51 /* QNPurchase.h in Headers */ = {isa = PBXBuildFile; fileRef = 8980CE70264EC7F800192C51 /* QNPurchase.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		8980CE72264EC7F800192C51 /* QNPurchase.h in Headers */ = {isa = PBXBuildFile; fileRef = 8980CE70264EC7F800192C51 /* QNPurchase.h */; };
 		8980CE73264EC7F800192C51 /* QNPurchase.m in Sources */ = {isa = PBXBuildFile; fileRef = 8980CE71264EC7F800192C51 /* QNPurchase.m */; };
-		8980CE76264EC81800192C51 /* QNUserProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = 8980CE74264EC81800192C51 /* QNUserProduct.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		8980CE76264EC81800192C51 /* QNUserProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = 8980CE74264EC81800192C51 /* QNUserProduct.h */; };
 		8980CE77264EC81800192C51 /* QNUserProduct.m in Sources */ = {isa = PBXBuildFile; fileRef = 8980CE75264EC81800192C51 /* QNUserProduct.m */; };
-		8980CE7A264ECB6600192C51 /* QNSubscription.h in Headers */ = {isa = PBXBuildFile; fileRef = 8980CE78264ECB6600192C51 /* QNSubscription.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		8980CE7A264ECB6600192C51 /* QNSubscription.h in Headers */ = {isa = PBXBuildFile; fileRef = 8980CE78264ECB6600192C51 /* QNSubscription.h */; };
 		8980CE7B264ECB6600192C51 /* QNSubscription.m in Sources */ = {isa = PBXBuildFile; fileRef = 8980CE79264ECB6600192C51 /* QNSubscription.m */; };
-		8980CE7E264ECBB500192C51 /* QNEntitlement.h in Headers */ = {isa = PBXBuildFile; fileRef = 8980CE7C264ECBB500192C51 /* QNEntitlement.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		8980CE7E264ECBB500192C51 /* QNEntitlement.h in Headers */ = {isa = PBXBuildFile; fileRef = 8980CE7C264ECBB500192C51 /* QNEntitlement.h */; };
 		8980CE7F264ECBB500192C51 /* QNEntitlement.m in Sources */ = {isa = PBXBuildFile; fileRef = 8980CE7D264ECBB500192C51 /* QNEntitlement.m */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		898971F02656622A00A24927 /* QNPaymentMode.h in Headers */ = {isa = PBXBuildFile; fileRef = 898971EF2656622A00A24927 /* QNPaymentMode.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		898971F02656622A00A24927 /* QNPaymentMode.h in Headers */ = {isa = PBXBuildFile; fileRef = 898971EF2656622A00A24927 /* QNPaymentMode.h */; };
 		898971F32656ABA500A24927 /* QNPurchase+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 898971F12656ABA500A24927 /* QNPurchase+Protected.h */; };
 		898971F72656C77100A24927 /* QNUserProduct+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 898971F52656C77100A24927 /* QNUserProduct+Protected.h */; };
 		898971FB2656CAC800A24927 /* QNSubscription+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 898971F92656CAC800A24927 /* QNSubscription+Protected.h */; };
@@ -763,15 +763,6 @@
 				89B377A725DE71CD009D3E0D /* QNProduct.m */,
 				8980CE6C264EC7E500192C51 /* QNUser.h */,
 				8980CE6D264EC7E500192C51 /* QNUser.m */,
-				8980CE7C264ECBB500192C51 /* QNEntitlement.h */,
-				8980CE7D264ECBB500192C51 /* QNEntitlement.m */,
-				8980CE78264ECB6600192C51 /* QNSubscription.h */,
-				8980CE79264ECB6600192C51 /* QNSubscription.m */,
-				8980CE70264EC7F800192C51 /* QNPurchase.h */,
-				8980CE71264EC7F800192C51 /* QNPurchase.m */,
-				8980CE74264EC81800192C51 /* QNUserProduct.h */,
-				8980CE75264EC81800192C51 /* QNUserProduct.m */,
-				898971EF2656622A00A24927 /* QNPaymentMode.h */,
 				89B3779725DE71CD009D3E0D /* QNOffering.h */,
 				89B377A525DE71CD009D3E0D /* QNOffering.m */,
 				89B3779925DE71CD009D3E0D /* QNOfferings.h */,
@@ -1073,6 +1064,15 @@
 		89B377EF25DE71CD009D3E0D /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				8980CE7C264ECBB500192C51 /* QNEntitlement.h */,
+				8980CE7D264ECBB500192C51 /* QNEntitlement.m */,
+				8980CE78264ECB6600192C51 /* QNSubscription.h */,
+				8980CE79264ECB6600192C51 /* QNSubscription.m */,
+				8980CE70264EC7F800192C51 /* QNPurchase.h */,
+				8980CE71264EC7F800192C51 /* QNPurchase.m */,
+				8980CE74264EC81800192C51 /* QNUserProduct.h */,
+				8980CE75264EC81800192C51 /* QNUserProduct.m */,
+				898971EF2656622A00A24927 /* QNPaymentMode.h */,
 				89B377F025DE71CD009D3E0D /* QNMapperObject */,
 				89B377F325DE71CD009D3E0D /* Protected */,
 			);
