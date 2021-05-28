@@ -43,6 +43,8 @@
 		8933FDE62615947800F3B8C3 /* QONMacrosProcess.h in Headers */ = {isa = PBXBuildFile; fileRef = 8933FDE42615947700F3B8C3 /* QONMacrosProcess.h */; };
 		8933FDE72615947800F3B8C3 /* QONMacrosProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = 8933FDE52615947700F3B8C3 /* QONMacrosProcess.m */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		8989721F26612BB600A24927 /* OfferingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8989721E26612BB500A24927 /* OfferingsViewController.swift */; };
+		898972212661333300A24927 /* OfferingsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898972202661333300A24927 /* OfferingsTableViewCell.swift */; };
 		89A192622603926800C3FCD9 /* QNUserInfoService.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A192602603926800C3FCD9 /* QNUserInfoService.h */; };
 		89A192632603926800C3FCD9 /* QNUserInfoService.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A192612603926800C3FCD9 /* QNUserInfoService.m */; };
 		89A192692603928A00C3FCD9 /* QNUserInfoServiceInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A192682603928A00C3FCD9 /* QNUserInfoServiceInterface.h */; };
@@ -253,6 +255,8 @@
 		8933FDE52615947700F3B8C3 /* QONMacrosProcess.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONMacrosProcess.m; sourceTree = "<group>"; };
 		89713B4625C1B95700A2448E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		89713B4A25C1BA1F00A2448E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
+		8989721E26612BB500A24927 /* OfferingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferingsViewController.swift; sourceTree = "<group>"; };
+		898972202661333300A24927 /* OfferingsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferingsTableViewCell.swift; sourceTree = "<group>"; };
 		89A192602603926800C3FCD9 /* QNUserInfoService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUserInfoService.h; sourceTree = "<group>"; };
 		89A192612603926800C3FCD9 /* QNUserInfoService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserInfoService.m; sourceTree = "<group>"; };
 		89A192682603928A00C3FCD9 /* QNUserInfoServiceInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNUserInfoServiceInterface.h; sourceTree = "<group>"; };
@@ -427,6 +431,8 @@
 				456215C8257D6AF800548A3D /* Sample.entitlements */,
 				454EF63E24E5CC580070581E /* AppDelegate.swift */,
 				454EF64224E5CC590070581E /* ViewController.swift */,
+				8989721E26612BB500A24927 /* OfferingsViewController.swift */,
+				898972202661333300A24927 /* OfferingsTableViewCell.swift */,
 				89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */,
 				89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */,
 				454EF64424E5CC590070581E /* Main.storyboard */,
@@ -1435,6 +1441,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8989721F26612BB600A24927 /* OfferingsViewController.swift in Sources */,
+				898972212661333300A24927 /* OfferingsTableViewCell.swift in Sources */,
 				89ADA76D25069E1000EB2E54 /* ActivePermissionsViewController.swift in Sources */,
 				454EF64324E5CC590070581E /* ViewController.swift in Sources */,
 				89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */,
