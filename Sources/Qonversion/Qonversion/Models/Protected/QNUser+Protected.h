@@ -13,6 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface QNUser (Protected)
 
 - (instancetype)initWithID:(NSString *)identifier
+        originalAppVersion:(NSString *)originalAppVersion;
+
+- (instancetype)initWithID:(NSString *)identifier
               entitlements:(NSArray<QNEntitlement *> *)entitlements
                  purchases:(NSArray<QNPurchase *> *)purchases
                     object:(NSString *)object

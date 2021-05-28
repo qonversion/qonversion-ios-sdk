@@ -38,10 +38,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNProductsCompletionHandler> *productsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNOfferingsCompletionHandler> *offeringsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
+@property (nonatomic, strong) NSMutableArray<QNUserInfoCompletionHandler> *userInfoBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
 @property (nonatomic, strong) QNLaunchResult *launchResult;
 @property (nonatomic, strong) NSError *launchError;
+@property (nonatomic, strong) QNUser *user;
 
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoading;
@@ -79,6 +81,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _productsBlocks = [NSMutableArray new];
     _offeringsBlocks = [NSMutableArray new];
     _experimentsBlocks = [NSMutableArray new];
+    _userInfoBlocks = [NSMutableArray new];
   }
   
   return self;
@@ -139,6 +142,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     weakSelf.launchError = error;
 
     [weakSelf executeExperimentsBlocks];
+    [weakSelf executeUserBlocks];
     
     NSArray *storeProducts = [weakSelf.storeKitService getLoadedProducts];
     if (!weakSelf.productsLoading && storeProducts.count == 0) {
@@ -224,7 +228,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)userInfo:(QNUserInfoCompletionHandler)completion {
-  [self.userInfoService obtainUserInfo:completion];
+  if (!self.launchingFinished) {
+    [self.userInfoBlocks addObject:completion];
+    return;
+  }
+  
+  completion(self.user, self.launchError);
 }
 
 - (void)presentCodeRedemptionSheet {
@@ -385,6 +394,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     for (QNExperimentsCompletionHandler block in blocks) {
       run_block_on_main(block, self.launchResult.experiments, self.launchError);
+    }
+  }
+}
+
+- (void)executeUserBlocks {
+  @synchronized (self) {
+    NSArray <QNUserInfoCompletionHandler> *blocks = [self.userInfoBlocks copy];
+    if (blocks.count == 0) {
+      return;
+    }
+    
+    [self.userInfoBlocks removeAllObjects];
+    
+    for (QNUserInfoCompletionHandler block in blocks) {
+      run_block_on_main(block, self.user, self.launchError);
     }
   }
 }
@@ -657,6 +681,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     weakSelf.forceLaunchRetry = NO;
     
+    QNUser *user = [QNMapper fillUser:result.data];
+    weakSelf.user = user;
+    
     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
     completion(launchResult, nil);
     
@@ -703,6 +730,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         run_block_on_main(_purchasingBlock, @{}, result.error, NO);
         return;
       }
+      
+      QNUser *user = [QNMapper fillUser:result.data];
+      weakSelf.user = user;
       
       QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
       @synchronized (weakSelf) {

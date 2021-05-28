@@ -8,7 +8,29 @@
 
 #import "QNUser.h"
 
+@interface QNUser ()
+
+@property (nonatomic, copy, readonly) NSArray<QNEntitlement *> *entitlements;
+@property (nonatomic, copy, readonly) NSArray<QNPurchase *> *purchases;
+@property (nonatomic, copy, readonly) NSString *object;
+@property (nonatomic, strong, readonly) NSDate *createDate;
+@property (nonatomic, strong, readonly) NSDate *lastOnlineDate;
+
+@end
+
 @implementation QNUser
+
+- (instancetype)initWithID:(NSString *)identifier
+        originalAppVersion:(NSString *)originalAppVersion {
+  self = [super init];
+  
+  if (self) {
+    _identifier = identifier;
+    _originalAppVersion = originalAppVersion;
+  }
+  
+  return self;
+}
 
 - (instancetype)initWithID:(NSString *)identifier
               entitlements:(NSArray<QNEntitlement *> *)entitlements
@@ -36,11 +58,6 @@
   NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
   
   [description appendFormat:@"identifier=%@,\n", self.identifier];
-  [description appendFormat:@"entitlements=%@,\n", self.entitlements];
-  [description appendFormat:@"purchases=%@,\n", self.purchases];
-  [description appendFormat:@"object=%@", self.object];
-  [description appendFormat:@"createDate=%@", self.createDate];
-  [description appendFormat:@"lastOnlineDate=%@", self.lastOnlineDate];
   [description appendFormat:@"originalAppVersion=%@", self.originalAppVersion];
   [description appendString:@">"];
   

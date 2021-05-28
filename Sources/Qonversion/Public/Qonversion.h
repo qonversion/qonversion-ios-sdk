@@ -10,6 +10,7 @@
 #import "QNPurchasesDelegate.h"
 #import "QNExperimentInfo.h"
 #import "QNExperimentGroup.h"
+#import "QNUser.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"

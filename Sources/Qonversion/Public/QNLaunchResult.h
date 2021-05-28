@@ -2,7 +2,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class QNPermission, QNProduct, QNOfferings, QNIntroEligibility, QNExperimentInfo;
+@class QNPermission, QNProduct, QNOfferings, QNIntroEligibility, QNExperimentInfo, QNUser;
 
 typedef NS_ENUM(NSInteger, QNAttributionProvider) {
   QNAttributionProviderAppsFlyer = 0,
