@@ -3,7 +3,17 @@
 #import "QNDevice.h"
 #import "QNConstants.h"
 
+@interface QNRequestBuilder ()
+
+@property (nonatomic, copy) NSString *apiKey;
+
+@end
+
 @implementation QNRequestBuilder
+
+- (void)setApiKey:(NSString *)apiKey {
+  _apiKey = apiKey;
+}
 
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters {
   return [self makePostRequestWith:kInitEndpoint andBody:parameters];
@@ -21,23 +31,23 @@
   return [self makePostRequestWith:kPurchaseEndpoint andBody:parameters];
 }
 
-- (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter apiKey:(NSString *)apiKey {
+- (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter {
   NSString *endpoint = [NSString stringWithFormat:kActionPointsEndpointFormat, parameter];
-  return [self makeGetRequestWith:endpoint apiKey:apiKey];
+  return [self makeGetRequestWith:endpoint];
 }
 
-- (NSURLRequest *)makeScreensRequestWith:(NSString *)parameters apiKey:(NSString *)apiKey {
+- (NSURLRequest *)makeScreensRequestWith:(NSString *)parameters {
   NSString *endpoint = [NSString stringWithFormat:@"%@%@", kScreensEndpoint, parameters];
-  return [self makeGetRequestWith:endpoint apiKey:apiKey];
+  return [self makeGetRequestWith:endpoint];
 }
 
-- (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body apiKey:(NSString *)apiKey {
+- (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body {
   NSString *endpoint = [NSString stringWithFormat:kScreenShowEndpointFormat, parameter];
-  return [self makePostRequestWith:endpoint andBody:body apiKey:apiKey];
+  return [self makePostRequestWith:endpoint andBody:body];
 }
 
-- (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters apiKey:(NSString *)apiKey {
-  return [self makePostRequestWith:kIdentityEndpoint andBody:parameters apiKey:apiKey];
+- (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters {
+  return [self makePostRequestWith:kIdentityEndpoint andBody:parameters];
 }
 
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
@@ -46,37 +56,26 @@
 
 // MARK: Private
 
-- (NSURLRequest *)makeGetRequestWith:(NSString *)endpoint apiKey:(NSString *)apiKey {
+- (NSURLRequest *)makeGetRequestWith:(NSString *)endpoint {
   NSString *urlString = [kAPIBase stringByAppendingString:endpoint];
   NSURL *url = [[NSURL alloc] initWithString:urlString];
 
   NSMutableURLRequest *request = [self baseGetRequestWithURL:url];
-  NSString *authHeader = [NSString stringWithFormat:@"Bearer %@", apiKey];
-  [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
   
   return [request copy];
 }
 
-- (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body apiKey:(NSString *)apiKey {
+- (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body {
   NSString *urlString = [kAPIBase stringByAppendingString:endpoint];
   NSURL *url = [NSURL.alloc initWithString:urlString];
 
   NSMutableURLRequest *request = [self basePostRequestWithURL:url];
-  
-  if (apiKey.length > 0) {
-    NSString *authHeader = [NSString stringWithFormat:@"Bearer %@", apiKey];
-    [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
-  }
   
   NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
 
   request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
   
   return [request copy];
-}
-
-- (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body {
-  return [self makePostRequestWith:endpoint andBody:body apiKey:nil];
 }
 
 - (NSMutableURLRequest *)basePostRequestWithURL:(NSURL *)url {
@@ -92,6 +91,7 @@
   
   request.HTTPMethod = type;
   [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
+  [self addBearerToRequest:request];
   [self addLocaleToRequest:request];
   [self addPlatformInfoToRequest:request];
 
@@ -104,6 +104,12 @@
   if (locale.length > 0) {
     [request addValue:locale forHTTPHeaderField:@"User-locale"];
   }
+}
+
+- (void)addBearerToRequest:(NSMutableURLRequest *)request {
+  NSString *authHeader = [NSString stringWithFormat:@"Bearer %@", self.apiKey];
+  [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
+  [request addValue:@"402" forHTTPHeaderField:@"Code"];
 }
 
 - (void)addPlatformInfoToRequest:(NSMutableURLRequest *)request {

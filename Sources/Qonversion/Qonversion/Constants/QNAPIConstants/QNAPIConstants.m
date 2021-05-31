@@ -17,8 +17,8 @@ NSString * const kIdentityEndpoint = @"v2/identities";
 NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 NSString * const kProductsEndpoint = @"v1/products/get";
 NSString * const kPropertiesEndpoint = @"v1/properties";
-
-
 NSString * const kAttributionEndpoint = @"attribution";
 
 NSString * const kStoredRequestsKey = @"storedRequests";
+
+NSString * const kAccessDeniedError = @"Access denied";
