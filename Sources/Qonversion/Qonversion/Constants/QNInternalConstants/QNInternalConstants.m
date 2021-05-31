@@ -18,4 +18,4 @@ NSString *const kMainUserDefaultsSuiteName = @"qonversion.localstorage.main";
 NSUInteger const kQPropertiesSendingPeriodInSeconds = 5;
 CGFloat const kJitter = 0.4f;
 CGFloat const kFactor = 2.4f;
-NSUInteger const kMaxDelay = 2.4f;
+NSUInteger const kMaxDelay = 1000;

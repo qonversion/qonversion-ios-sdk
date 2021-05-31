@@ -203,7 +203,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
   NSUInteger delay = kQPropertiesSendingPeriodInSeconds + pow(kFactor, self.retriesCounter);
   NSUInteger delta = delay * kJitter;
   delay = delay + arc4random_uniform((uint32_t)(delta + 1));
-  delay = MIN(delay, 1000);
+  delay = MIN(delay, kMaxDelay);
   
   return delay;
 }
