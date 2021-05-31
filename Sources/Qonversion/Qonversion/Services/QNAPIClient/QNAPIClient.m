@@ -162,7 +162,7 @@
   NSDictionary *_parameters = parameters ?: @{};
   
   NSMutableDictionary *baseDict = [[NSMutableDictionary alloc] initWithDictionary:_parameters];
-  [baseDict setObject:_apiKey forKey:@"access_token"];
+  baseDict[@"access_token"] = _apiKey;
   
   [baseDict setObject:_userID forKey:@"q_uid"];
   [baseDict setObject:_userID forKey:@"client_uid"];

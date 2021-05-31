@@ -107,8 +107,10 @@
 }
 
 - (void)addBearerToRequest:(NSMutableURLRequest *)request {
-  NSString *authHeader = [NSString stringWithFormat:@"Bearer %@", self.apiKey];
-  [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
+  if (self.apiKey.length > 0) {
+    NSString *authHeader = [NSString stringWithFormat:@"Bearer %@", self.apiKey];
+    [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
+  }
 }
 
 - (void)addPlatformInfoToRequest:(NSMutableURLRequest *)request {
