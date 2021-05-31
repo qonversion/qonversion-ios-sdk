@@ -109,7 +109,6 @@
 - (void)addBearerToRequest:(NSMutableURLRequest *)request {
   NSString *authHeader = [NSString stringWithFormat:@"Bearer %@", self.apiKey];
   [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
-  [request addValue:@"402" forHTTPHeaderField:@"Code"];
 }
 
 - (void)addPlatformInfoToRequest:(NSMutableURLRequest *)request {
