@@ -19,3 +19,5 @@ extern NSString *const kProductsEndpoint;
 extern NSString *const kPropertiesEndpoint;
 extern NSString *const kAttributionEndpoint;
 extern NSString *const kStoredRequestsKey;
+
+extern NSString *const kAccessDeniedError;

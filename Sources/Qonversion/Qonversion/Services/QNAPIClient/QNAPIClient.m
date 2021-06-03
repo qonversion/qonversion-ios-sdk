@@ -6,6 +6,7 @@
 #import "QNUtils.h"
 #import "QNUserInfo.h"
 #import "QNAPIConstants.h"
+#import "QNConstants.h"
 
 @interface QNAPIClient()
 
@@ -13,6 +14,8 @@
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, copy) NSArray<NSNumber *> *connectionErrorCodes;
 @property (nonatomic, copy) NSArray<NSString *> *retriableRequests;
+@property (nonatomic, copy) NSArray<NSNumber *> *criticalErrorCodes;
+@property (nonatomic, strong) NSError *criticalError;
 
 @end
 
@@ -36,6 +39,7 @@
       @(NSURLErrorTimedOut)
     ];
     _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kPropertiesEndpoint, kAttributionEndpoint];
+    _criticalErrorCodes = @[@(401), @(402), @(403)];
   }
   
   return self;
@@ -61,12 +65,24 @@
   [self.requestBuilder setApiKey:[self obtainApiKey]];
 }
 
+- (void)processRequest:(NSURLRequest *)request completion:(QNAPIClientCompletionHandler)completion {
+  [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    if (!self.criticalError && error && [self.criticalErrorCodes containsObject:@(error.code)]) {
+      self.criticalError = error;
+    }
+    
+    if (completion) {
+      completion(dict, error);
+    }
+  }];
+}
+
 // MARK: - Public
 
 - (void)launchRequest:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   NSDictionary *launchData = [self enrichParameters:[self.requestSerializer launchData]];
   NSURLRequest *request = [self.requestBuilder makeInitRequestWith:launchData];
-  return [self dataTaskWithRequest:request completion:completion];
+  [self processRequest:request completion:completion];
 }
 
 - (void)purchaseRequestWith:(SKProduct *)product
@@ -78,7 +94,7 @@
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  [self processRequest:request completion:completion];
 }
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QNProduct *> *)products
@@ -94,7 +110,7 @@
   NSDictionary *body = [self enrichParameters:@{@"properties": properties}];
   NSURLRequest *request = [self.requestBuilder makePropertiesRequestWith:body];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  [self processRequest:request completion:completion];
 }
 
 - (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion {
@@ -129,7 +145,7 @@
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
   NSDictionary *resultData = [self enrichParameters:body];
   NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:resultData];
-  return [self dataTaskWithRequest:request completion:completion];
+  [self processRequest:request completion:completion];
 }
 
 - (void)processStoredRequests {
@@ -174,6 +190,11 @@
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+  if (self.criticalError && completion) {
+    completion(nil, self.criticalError);
+    return;
+  }
+  
   [self dataTaskWithRequest:request tryCount:0 completion:completion];
 }
 
@@ -204,6 +225,12 @@
       return;
     }
     
+    NSError *criticalError = [weakSelf criticalErrorFromResponse:response];
+    if (criticalError) {
+      completion(nil, criticalError);
+      return;
+    }
+    
     if ((!data || ![data isKindOfClass:NSData.class]) && completion) {
       completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedReceiveData]);
       return;
@@ -221,6 +248,23 @@
       completion(dict, nil);
     }
   }] resume];
+}
+
+- (NSError *)criticalErrorFromResponse:(NSURLResponse *)response {
+  if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+    NSHTTPURLResponse *httpURLResponse = (NSHTTPURLResponse *)response;
+    NSInteger statusCode = httpURLResponse.statusCode;
+    
+    if ([self.criticalErrorCodes containsObject:@(statusCode)]) {
+      NSMutableDictionary *userInfo = [NSMutableDictionary new];
+      userInfo[NSLocalizedDescriptionKey] = kAccessDeniedError;
+      NSError *error = [NSError errorWithDomain:keyQNErrorDomain code:statusCode userInfo:userInfo];
+      
+      return error;
+    }
+  }
+  
+  return nil;
 }
 
 - (void)storeRequestIfNeeded:(NSURLRequest *)request {
