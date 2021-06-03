@@ -1,14 +1,12 @@
 #import "QNConstants.h"
 
-NSString *const keyQVersion = @"2.13.4";
+NSString *const keyQVersion = @"2.14.0";
 NSString *const keyQUnknownLibrary = @"unknown";
 NSString *const keyQUnknownVersion = @"unknown";
 NSString *const keyQInternalUserID = @"keyQInternalUserID";
 NSString *const keyQNPropertyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
 NSString *const keyQSource = @"com.qonversion.keys.source";
 NSString *const keyQSourceVersion = @"com.qonversion.keys.sourceVersion";
-
-int const kQPropertiesSendingPeriodInSeconds = 5;
 
 NSString *const keyQNPropertyFacebookAnonUserID = @"_q_fb_anon_id";
 NSString *const keyQNPropertyUserID = @"_q_custom_user_id";

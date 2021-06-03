@@ -13,6 +13,7 @@ class ViewController: UIViewController {
   
   @IBOutlet weak var mainProductSubscriptionButton: UIButton!
   @IBOutlet weak var inAppPurchseButton: UIButton!
+  @IBOutlet weak var offeringsButton: UIButton!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
   @IBOutlet weak var subscriptionTitleLabel: UILabel!
   @IBOutlet weak var checkActivePermissionsButton: UIButton!
@@ -32,6 +33,8 @@ class ViewController: UIViewController {
     inAppPurchseButton.layer.cornerRadius = 20.0
     inAppPurchseButton.layer.borderWidth = 1.0
     inAppPurchseButton.layer.borderColor = mainProductSubscriptionButton.backgroundColor?.cgColor
+    
+    offeringsButton.layer.cornerRadius = 20.0
     
     Qonversion.checkPermissions { [weak self] (permissions, error) in
       guard let self = self else { return }
@@ -133,6 +136,19 @@ class ViewController: UIViewController {
           self.inAppPurchseButton.setTitle("Purchased", for: .normal)
         }
       }
+    }
+  }
+  
+  @IBAction func didTapOfferingsButton(_ sender: Any) {
+    offeringsButton.isEnabled = false
+    Qonversion.offerings { [weak self] offerings, error in
+      self?.offeringsButton.isEnabled = true
+      guard let offerings: Qonversion.Offerings = offerings else { return }
+      
+      let offeringsViewController = self?.storyboard?.instantiateViewController(withIdentifier: "OfferingsViewController") as! OfferingsViewController
+      offeringsViewController.offerings = offerings
+      
+      self?.navigationController?.pushViewController(offeringsViewController, animated: true)
     }
   }
   

@@ -16,6 +16,7 @@
 #import "QNIntroEligibility+Protected.h"
 #import "QNExperimentInfo+Protected.h"
 #import "QNExperimentGroup+Protected.h"
+#import "QNUser+Protected.h"
 
 @implementation QNMapper
 
@@ -43,6 +44,14 @@
   }
   
   return result;
+}
+
++ (QNUser *)fillUser:(NSDictionary * _Nullable)dict {
+  NSString *userID = dict[@"uid"];
+  NSString *originalAppVersion = dict[@"apple_extra"][@"original_application_version"];
+  QNUser *user = [[QNUser alloc] initWithID:userID originalAppVersion:originalAppVersion];
+  
+  return user;
 }
 
 + (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSArray *)data {

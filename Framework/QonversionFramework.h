@@ -17,3 +17,5 @@
 #import <Qonversion/QONAutomations.h>
 #import <Qonversion/QONAutomationsDelegate.h>
 #import <Qonversion/QONActionResult.h>
+
+#import <Qonversion/QNUser.h>

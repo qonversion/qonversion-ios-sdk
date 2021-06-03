@@ -16,6 +16,7 @@
 #import "QNIdentityManager.h"
 #import "QNIdentityService.h"
 #import "QNAPIClient.h"
+#import "QNUserInfoMapper.h"
 
 @implementation QNServicesAssembly
 
@@ -23,6 +24,8 @@
   QNUserInfoService *service = [QNUserInfoService new];
   service.keychainStorage = [self keychainStorage];
   service.localStorage = [self localStorage];
+  service.apiClient = [QNAPIClient shared];
+  service.mapper = [self userInfoMapper];
   
   return service;
 }
@@ -54,6 +57,12 @@
   storage.userDefaults = [[NSUserDefaults alloc] initWithSuiteName:kMainUserDefaultsSuiteName];
   
   return storage;
+}
+
+- (id<QNUserInfoMapperInterface>)userInfoMapper {
+  QNUserInfoMapper *mapper = [QNUserInfoMapper new];
+  
+  return mapper;
 }
 
 @end

@@ -2,7 +2,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class QNPermission, QNProduct, QNOfferings, QNIntroEligibility, QNExperimentInfo;
+@class QNPermission, QNProduct, QNOfferings, QNIntroEligibility, QNExperimentInfo, QNUser;
 
 typedef NS_ENUM(NSInteger, QNAttributionProvider) {
   QNAttributionProviderAppsFlyer = 0,
@@ -79,6 +79,8 @@ typedef void (^QNProductsCompletionHandler)(NSDictionary<NSString *, QNProduct *
 typedef void (^QNEligibilityCompletionHandler)(NSDictionary<NSString *, QNIntroEligibility *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.EligibilityCompletionHandler);
 
 typedef void (^QNExperimentsCompletionHandler)(NSDictionary<NSString *, QNExperimentInfo *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ExperimentsCompletionHandler);
+
+typedef void (^QNUserInfoCompletionHandler)(QNUser *_Nullable user, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.UserInfoCompletionHandler);
 
 typedef void (^QNOfferingsCompletionHandler)(QNOfferings *_Nullable offerings, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.OfferingsCompletionHandler);
 
