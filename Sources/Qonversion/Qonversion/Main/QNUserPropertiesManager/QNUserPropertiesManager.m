@@ -87,7 +87,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
   [self sendPropertiesInBackground];
 }
 
-- (void)sendPropertiesWithDelay:(int)delay {
+- (void)sendPropertiesWithDelay:(NSUInteger)delay {
   if (!_sendingScheduled) {
     _sendingScheduled = YES;
     __block __weak QNUserPropertiesManager *weakSelf = self;
