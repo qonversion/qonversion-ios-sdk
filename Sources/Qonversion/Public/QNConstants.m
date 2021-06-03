@@ -8,8 +8,6 @@ NSString *const keyQNPropertyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
 NSString *const keyQSource = @"com.qonversion.keys.source";
 NSString *const keyQSourceVersion = @"com.qonversion.keys.sourceVersion";
 
-int const kQPropertiesSendingPeriodInSeconds = 5;
-
 NSString *const keyQNPropertyFacebookAnonUserID = @"_q_fb_anon_id";
 NSString *const keyQNPropertyUserID = @"_q_custom_user_id";
 

@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 extern NSString *const kKeyQKeyChainUserID;
 extern NSString *const kKeyQUserDefaultsOriginalUserID;
@@ -14,3 +15,7 @@ extern NSString *const kKeyQUserDefaultsUserID;
 extern NSString *const kKeyQUserIDPrefix;
 extern NSString *const kKeyQUserIDSeparator;
 extern NSString *const kMainUserDefaultsSuiteName;
+extern NSUInteger const kQPropertiesSendingPeriodInSeconds;
+extern CGFloat const kJitter;
+extern CGFloat const kFactor;
+extern NSUInteger const kMaxDelay;

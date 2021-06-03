@@ -20,7 +20,8 @@ NSString * const kScreenShowEndpointFormat = @"v2/screens/%@/views";
 NSString * const kIdentityEndpoint = @"v2/identities";
 NSString * const kUserInfoEndpoint = @"v2/users/%@";
 
-
 NSString * const kAttributionEndpoint = @"attribution";
 
 NSString * const kStoredRequestsKey = @"storedRequests";
+
+NSString * const kAccessDeniedError = @"Access denied";
