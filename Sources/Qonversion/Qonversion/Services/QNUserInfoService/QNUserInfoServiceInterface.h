@@ -7,9 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "QNLaunchResult.h"
 
 @protocol QNUserInfoServiceInterface <NSObject>
 
+- (void)obtainUserInfo:(QNUserInfoCompletionHandler)completion;
 - (NSString *)obtainUserID;
 - (void)storeIdentity:(NSString *)userID;
 - (void)logout;

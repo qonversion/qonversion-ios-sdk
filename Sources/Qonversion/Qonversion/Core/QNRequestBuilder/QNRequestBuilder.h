@@ -4,6 +4,7 @@
 
 - (void)setApiKey:(NSString *)apiKey;
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey;
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters;

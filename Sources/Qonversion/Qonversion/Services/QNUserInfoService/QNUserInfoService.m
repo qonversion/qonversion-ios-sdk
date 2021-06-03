@@ -11,10 +11,22 @@
 #import "QNLocalStorage.h"
 #import "QNInternalConstants.h"
 #import "QNKeychainStorage.h"
+#import "QNUserInfoMapperInterface.h"
+#import "QNAPIClient.h"
 
 static NSUInteger const kKeychainAttemptsCount = 3;
 
 @implementation QNUserInfoService
+
+- (void)obtainUserInfo:(QNUserInfoCompletionHandler)completion {
+  NSString *userID = [self obtainUserID];
+  
+  __block __weak QNUserInfoService *weakSelf = self;
+  [self.apiClient userInfoRequestWithID:userID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    QNUser *user = [weakSelf.mapper mapUserInfo:dict];
+    completion(user, error);
+  }];
+}
 
 - (NSString *)obtainUserID {
   NSString *cachedUserID = [self.localStorage loadStringForKey:kKeyQUserDefaultsUserID];
