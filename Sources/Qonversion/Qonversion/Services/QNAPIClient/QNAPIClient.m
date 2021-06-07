@@ -230,13 +230,17 @@
       return;
     }
     
+    if (!completion) {
+      return;
+    }
+    
     NSError *criticalError = [weakSelf criticalErrorFromResponse:response];
     if (criticalError) {
       completion(nil, criticalError);
       return;
     }
     
-    if ((!data || ![data isKindOfClass:NSData.class]) && completion) {
+    if ((!data || ![data isKindOfClass:NSData.class])) {
       completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedReceiveData]);
       return;
     }
@@ -244,14 +248,12 @@
     NSError *jsonError;
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
     
-    if ((jsonError.code || !dict) && completion) {
+    if ((jsonError.code || !dict)) {
       completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedParseResponse]);
       return;
     }
     
-    if (completion) {
-      completion(dict, nil);
-    }
+    completion(dict, nil);
   }] resume];
 }
 

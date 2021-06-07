@@ -78,7 +78,9 @@
 }
 
 + (void)setDebugMode {
+#if DEBUG
   [Qonversion sharedInstance].debugMode = YES;
+#endif
 }
 
 + (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate {
@@ -144,9 +146,7 @@
 }
 
 + (void)resetUser {
-  [[Qonversion sharedInstance].userInfoService deleteUser];
-  NSString *userID = [[Qonversion sharedInstance].userInfoService obtainUserID];
-  [[QNAPIClient shared] setUserID:userID];
+  QONVERSION_LOG(@"⚠️ resetUser function was used in debug mode only. You can reinstall the application to get the same behavior.");
 }
 
 + (void)userInfo:(QNUserInfoCompletionHandler)completion {

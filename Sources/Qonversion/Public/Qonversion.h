@@ -170,7 +170,10 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)experiments:(QNExperimentsCompletionHandler)completion;
 
-+ (void)resetUser;
+/**
+ This function was used in debug mode only. You can reinstall the application to get the same behavior.
+ */
++ (void)resetUser DEPRECATED_MSG_ATTRIBUTE("This function was used in debug mode only. You can reinstall the application to get the same behavior.");
 
 + (void)userInfo:(QNUserInfoCompletionHandler)completion;
 
