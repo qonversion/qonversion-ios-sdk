@@ -146,7 +146,7 @@
 }
 
 + (void)resetUser {
-  QONVERSION_LOG(@"⚠️ resetUser function was used in debug mode only. You can reinstall the application to get the same behavior.");
+  QONVERSION_LOG(@"⚠️ resetUser function was used in debug mode only. You can reinstall the app if you need to reset the user ID.");
 }
 
 + (void)userInfo:(QNUserInfoCompletionHandler)completion {
