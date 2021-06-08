@@ -170,6 +170,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)identify:(NSString *)userID {
+  self.unhandledLogoutAvailable = NO;
   if (!self.launchingFinished) {
     self.pendingIdentityUserID = userID;
     
@@ -195,6 +196,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)processIdentity:(NSString *)userID {
+  NSString *currentUserID = [self.userInfoService obtainUserID];
+  
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.identityManager identify:userID completion:^(NSString *result, NSError * _Nullable error) {
     weakSelf.pendingIdentityUserID = nil;
@@ -202,6 +205,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     if (error) {
       [weakSelf executePermissionBlocksWithError:error];
+    } else if ([currentUserID isEqualToString:result]) {
+      [weakSelf executePermissionBlocks];
     } else {
       [[QNAPIClient shared] setUserID:result];
       
@@ -211,12 +216,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)logout {
-  [self.identityManager logout];
+  self.pendingIdentityUserID = nil;
+  BOOL isLogoutNeeded = [self.identityManager logoutIfNeeded];
   
-  NSString *userID = [self.userInfoService obtainUserID];
-  [[QNAPIClient shared] setUserID:userID];
-  
-  self.unhandledLogoutAvailable = YES;
+  if (isLogoutNeeded) {
+    NSString *userID = [self.userInfoService obtainUserID];
+    [[QNAPIClient shared] setUserID:userID];
+    
+    self.unhandledLogoutAvailable = YES;
+  }
 }
 
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
