@@ -16,6 +16,8 @@
 #import "QNServicesAssembly.h"
 #import "QNIdentityManagerInterface.h"
 #import "QNUserInfoServiceInterface.h"
+#import "QNProductPurchaseModel.h"
+#import "QNExperimentInfo.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
@@ -34,12 +36,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, copy) QNRestoreCompletionHandler restorePurchasesBlock;
 
 @property (nonatomic, strong) NSMutableDictionary <NSString *, QNPurchaseCompletionHandler> *purchasingBlocks;
+@property (nonatomic, strong) NSMutableDictionary <NSString *, QNProductPurchaseModel *> *purchaseModels;
 @property (nonatomic, strong) NSMutableArray<QNPermissionCompletionHandler> *permissionsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNProductsCompletionHandler> *productsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNOfferingsCompletionHandler> *offeringsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNUserInfoCompletionHandler> *userInfoBlocks;
-@property (nonatomic) QNAPIClient *apiClient;
+
+@property (nonatomic, strong) QNAPIClient *apiClient;
 
 @property (nonatomic, strong) QNLaunchResult *launchResult;
 @property (nonatomic, strong) NSError *launchError;
@@ -76,18 +80,31 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
+    _purchaseModels = [NSMutableDictionary new];
     _purchasingBlocks = [NSMutableDictionary new];
     _permissionsBlocks = [NSMutableArray new];
     _productsBlocks = [NSMutableArray new];
     _offeringsBlocks = [NSMutableArray new];
     _experimentsBlocks = [NSMutableArray new];
     _userInfoBlocks = [NSMutableArray new];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(offeringByIDWasCalled:) name:kOfferingByIDWasCalledNotificationName object:nil];
   }
   
   return self;
 }
 
+- (void)offeringByIDWasCalled:(NSNotification *)notification {
+  QNOffering *offering = notification.object;
+  BOOL isOfferingClass = [offering isMemberOfClass:[QNOffering class]];
+  if (isOfferingClass) {
+    offering.experimentInfo.accepted = YES;
+    [self.apiClient sendOfferingEvent:offering];
+  }
+}
+
 - (void)storeLaunchResultIfNeeded:(QNLaunchResult *)launchResult {
+  return;
   if (launchResult.timestamp > 0) {
     NSDate *currentDate = [NSDate date];
     
@@ -274,7 +291,20 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self launchWithCompletion:nil];
 }
 
+- (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion {
+  if (product.offeringID.length > 0) {
+    QNOffering *offering = [self.launchResult.offerings offeringForIdentifier:product.offeringID];
+    [self purchase:product.qonversionID offeringID:offering.identifier completion:completion];
+  } else {
+    [self purchase:product.qonversionID offeringID:nil completion:completion];
+  }
+}
+
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
+  [self purchase:productID offeringID:nil completion:completion];
+}
+
+- (void)purchase:(NSString *)productID offeringID:(NSString *)offeringID completion:(QNPurchaseCompletionHandler)completion {
   @synchronized (self) {
     NSArray *storeProducts = [self.storeKitService getLoadedProducts];
     
@@ -288,42 +318,61 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         }
         
         if (weakSelf.productsLoading) {
-          [weakSelf preparDelayedPurchase:productID completion:completion];
+          [weakSelf prepareDelayedPurchase:productID offeringID:offeringID completion:completion];
         } else {
-          [weakSelf processPurchase:productID completion:completion];
+          [weakSelf processPurchase:productID offeringID:offeringID completion:completion];
         }
       }];
     } else if (!self.productsLoading && storeProducts.count == 0) {
-      [self preparDelayedPurchase:productID completion:completion];
+      [self prepareDelayedPurchase:productID offeringID:offeringID completion:completion];
       
       [self loadProducts];
     } else {
-      [self processPurchase:productID completion:completion];
+      [self processPurchase:productID offeringID:offeringID completion:completion];
     }
   }
 }
 
-- (void)preparDelayedPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
+- (void)prepareDelayedPurchase:(NSString *)productID offeringID:offeringID completion:(QNPurchaseCompletionHandler)completion {
   QNProductsCompletionHandler productsCompletion = ^(NSDictionary<NSString *, QNProduct *> *result, NSError  *_Nullable error) {
     if (error) {
       run_block_on_main(completion, @{}, error, NO);
       return;
     }
     
-    [self processPurchase:productID completion:completion];
+    [self processPurchase:productID offeringID:offeringID completion:completion];
   };
   
   [self.productsBlocks addObject:productsCompletion];
 }
 
-- (void)processPurchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
-  QNProduct *product = [self QNProduct:productID];
+- (void)processPurchase:(NSString *)productID offeringID:(NSString *)offeringID completion:(QNPurchaseCompletionHandler)completion {
+  QNProduct *product;
+  QNExperimentInfo *experimentInfo;
+  if (offeringID.length > 0) {
+    QNOffering *offering = [self.launchResult.offerings offeringForIdentifier:offeringID];
+    
+    experimentInfo = offering.experimentInfo;
+    
+    for (QNProduct *tempProduct in offering.products) {
+      if ([tempProduct.qonversionID isEqualToString:productID]) {
+        product = tempProduct;
+      }
+    }
+  } else {
+    product = [self QNProduct:productID];
+  }
+  
   if (!product) {
     QONVERSION_LOG(@"❌ product with id: %@ not found", productID);
     run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
     return;
   }
   
+  [self processProductPurchase:product experimentInfo:experimentInfo completion:completion];
+}
+
+- (void)processProductPurchase:(QNProduct *)product experimentInfo:(QNExperimentInfo *)experimentInfo completion:(QNPurchaseCompletionHandler)completion {
   if (self.purchasingBlocks[product.storeID]) {
     QONVERSION_LOG(@"Purchasing in process");
     return;
@@ -331,10 +380,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   if (product && [_storeKitService purchase:product.storeID]) {
     self.purchasingBlocks[product.storeID] = completion;
+    QNProductPurchaseModel *purchaseModel = [[QNProductPurchaseModel alloc] initWithProduct:product experimentInfo:experimentInfo];
+    self.purchaseModels[purchaseModel.product.storeID] = purchaseModel;
+    
     return;
   }
   
-  QONVERSION_LOG(@"❌ product with id: %@ not found", productID);
+  QONVERSION_LOG(@"❌ Store product with id: %@ not found", product.storeID);
   run_block_on_main(completion, @{}, [QNErrors errorWithQNErrorCode:QNErrorProductNotFound], NO);
 }
 
@@ -717,8 +769,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   __block __weak QNProductCenterManager *weakSelf = self;
   
+  QNProductPurchaseModel *purchaseModel = self.purchaseModels[product.productIdentifier];
+  self.purchaseModels[product.productIdentifier] = nil;
   [self.storeKitService receipt:^(NSString * receipt) {
-    [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt purchaseModel:purchaseModel completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       [weakSelf.storeKitService finishTransaction:transaction];
       
       QNPurchaseCompletionHandler _purchasingBlock = weakSelf.purchasingBlocks[product.productIdentifier];

@@ -85,6 +85,8 @@
 		89A1936C2609A9AE00C3FCD9 /* QNIdentityManagerInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 89A1936B2609A9AE00C3FCD9 /* QNIdentityManagerInterface.h */; };
 		89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */; };
 		89ADA76D25069E1000EB2E54 /* ActivePermissionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */; };
+		89AEB268266E4435004F0CF4 /* QNProductPurchaseModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 89AEB266266E4435004F0CF4 /* QNProductPurchaseModel.h */; };
+		89AEB269266E4435004F0CF4 /* QNProductPurchaseModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 89AEB267266E4435004F0CF4 /* QNProductPurchaseModel.m */; };
 		89B3780F25DE71CD009D3E0D /* QONAutomationsDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 89B3778925DE71CD009D3E0D /* QONAutomationsDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		89B3781025DE71CD009D3E0D /* QNOfferings.m in Sources */ = {isa = PBXBuildFile; fileRef = 89B3778A25DE71CD009D3E0D /* QNOfferings.m */; };
 		89B3781125DE71CD009D3E0D /* QNIntroEligibility.h in Headers */ = {isa = PBXBuildFile; fileRef = 89B3778B25DE71CD009D3E0D /* QNIntroEligibility.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -317,6 +319,8 @@
 		89A1936B2609A9AE00C3FCD9 /* QNIdentityManagerInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNIdentityManagerInterface.h; sourceTree = "<group>"; };
 		89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsViewController.swift; sourceTree = "<group>"; };
 		89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsTableViewCell.swift; sourceTree = "<group>"; };
+		89AEB266266E4435004F0CF4 /* QNProductPurchaseModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNProductPurchaseModel.h; sourceTree = "<group>"; };
+		89AEB267266E4435004F0CF4 /* QNProductPurchaseModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNProductPurchaseModel.m; sourceTree = "<group>"; };
 		89B3778925DE71CD009D3E0D /* QONAutomationsDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsDelegate.h; sourceTree = "<group>"; };
 		89B3778A25DE71CD009D3E0D /* QNOfferings.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNOfferings.m; sourceTree = "<group>"; };
 		89B3778B25DE71CD009D3E0D /* QNIntroEligibility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNIntroEligibility.h; sourceTree = "<group>"; };
@@ -1081,6 +1085,8 @@
 				898971EF2656622A00A24927 /* QNPaymentMode.h */,
 				89B377F025DE71CD009D3E0D /* QNMapperObject */,
 				89B377F325DE71CD009D3E0D /* Protected */,
+				89AEB266266E4435004F0CF4 /* QNProductPurchaseModel.h */,
+				89AEB267266E4435004F0CF4 /* QNProductPurchaseModel.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -1283,6 +1289,7 @@
 				89B3782425DE71CD009D3E0D /* QNExperimentGroup.h in Headers */,
 				89A19286260395B500C3FCD9 /* QNKeychainStorage.h in Headers */,
 				898971F32656ABA500A24927 /* QNPurchase+Protected.h in Headers */,
+				89AEB268266E4435004F0CF4 /* QNProductPurchaseModel.h in Headers */,
 				89B3781525DE71CD009D3E0D /* QNLaunchResult.h in Headers */,
 				89B3781D25DE71CD009D3E0D /* QNOffering.h in Headers */,
 				89A19339260870FD00C3FCD9 /* QNIdentityService.h in Headers */,
@@ -1552,6 +1559,7 @@
 				89B3786A25DE71CD009D3E0D /* QNAPIClient.m in Sources */,
 				89B3781025DE71CD009D3E0D /* QNOfferings.m in Sources */,
 				89B3782B25DE71CD009D3E0D /* QNOffering.m in Sources */,
+				89AEB269266E4435004F0CF4 /* QNProductPurchaseModel.m in Sources */,
 				8980CE7B264ECB6600192C51 /* QNSubscription.m in Sources */,
 				89A19287260395B500C3FCD9 /* QNKeychainStorage.m in Sources */,
 				89B3781825DE71CD009D3E0D /* QONAutomations.m in Sources */,

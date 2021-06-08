@@ -8,22 +8,28 @@
 
 #import "QNOffering.h"
 #import "QNProduct.h"
+#import "QNExperimentInfo.h"
 
 @interface QNOffering ()
 
 @property (nonatomic, copy) NSDictionary<NSString *, QNProduct *> *productsMap;
+@property (nonatomic, copy, readwrite) NSArray<QNProduct *> *products;
 
 @end
 
 @implementation QNOffering
 
-- (instancetype)initWithIdentifier:(NSString *)identifier tag:(QNOfferingTag)tag products:(NSArray<QNProduct *> *)products {
+- (instancetype)initWithIdentifier:(NSString *)identifier
+                               tag:(QNOfferingTag)tag
+                          products:(NSArray<QNProduct *> *)products
+                    experimentInfo:(QNExperimentInfo * _Nullable)experimentInfo {
   self = [super init];
   
   if (self) {
     _identifier = identifier;
     _tag = tag;
     _products = products;
+    _experimentInfo = experimentInfo;
     
     [self configureMapForProducts:products];
   }
@@ -38,6 +44,7 @@
     _identifier = [coder decodeObjectForKey:NSStringFromSelector(@selector(identifier))];
     _tag = [coder decodeIntForKey:NSStringFromSelector(@selector(tag))];
     _products = [coder decodeObjectForKey:NSStringFromSelector(@selector(products))];
+    _experimentInfo = [coder decodeObjectForKey:NSStringFromSelector(@selector(experimentInfo))];
   }
   
   return self;
@@ -47,6 +54,7 @@
   [coder encodeObject:_identifier forKey:NSStringFromSelector(@selector(identifier))];
   [coder encodeInteger:_tag forKey:NSStringFromSelector(@selector(tag))];
   [coder encodeObject:_products forKey:NSStringFromSelector(@selector(products))];
+  [coder encodeObject:_experimentInfo forKey:NSStringFromSelector(@selector(experimentInfo))];
 }
 
 - (void)configureMapForProducts:(NSArray<QNProduct *> *)products {
@@ -59,6 +67,24 @@
   _productsMap = [productsMap copy];
 }
 
+- (NSDictionary<NSString *,QNProduct *> *)productsMap {
+  if (self.experimentInfo && !self.experimentInfo.accepted) {
+    NSNotification *notification = [NSNotification notificationWithName:kOfferingByIDWasCalledNotificationName object:self];
+    [[NSNotificationCenter defaultCenter] postNotification:notification];
+  }
+  
+  return _productsMap;
+}
+
+- (NSArray<QNProduct *> *)products {
+  if (self.experimentInfo && !self.experimentInfo.accepted) {
+    NSNotification *notification = [NSNotification notificationWithName:kOfferingByIDWasCalledNotificationName object:self];
+    [[NSNotificationCenter defaultCenter] postNotification:notification];
+  }
+  
+  return _products;
+}
+
 - (nullable QNProduct *)productForIdentifier:(NSString *)productIdentifier {
   return self.productsMap[productIdentifier];
 }
@@ -69,6 +95,7 @@
   [description appendFormat:@"id=%@,\n", self.identifier];
   [description appendFormat:@"tag=%@ (enum value = %li),\n", [self prettyTag], (long) self.tag];
   [description appendFormat:@"products=%@\n", self.products];
+  [description appendFormat:@"experimentInfo=%@\n", self.experimentInfo];
   [description appendString:@">"];
   
   return [description copy];

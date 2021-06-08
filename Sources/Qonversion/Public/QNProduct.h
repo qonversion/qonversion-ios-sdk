@@ -56,6 +56,8 @@ NS_SWIFT_NAME(Qonversion.Product)
  */
 @property (nonatomic, copy, nonnull) NSString *storeID;
 
+@property (nonatomic, copy, nullable) NSString *offeringID;
+
 /**
  Product type
  Trial, Subscription or one-time purchase

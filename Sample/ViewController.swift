@@ -123,7 +123,7 @@ class ViewController: UIViewController {
   @IBAction func didTapInAppPurchaseButton(_ sender: Any) {
     if let product = self.products["consumable"] {
       activityIndicator.startAnimating()
-      Qonversion.purchase(product.qonversionID) { [weak self] (result, error, flag) in
+      Qonversion.purchaseProduct(product) { [weak self] (result, error, flag) in
         guard let self = self else { return }
         
         self.activityIndicator.stopAnimating()
