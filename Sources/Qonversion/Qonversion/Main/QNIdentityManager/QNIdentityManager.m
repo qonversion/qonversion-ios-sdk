@@ -24,8 +24,8 @@
   }];
 }
 
-- (void)logout {
-  [self.userInfoService logout];
+- (BOOL)logoutIfNeeded {
+  return [self.userInfoService logoutIfNeeded];
 }
 
 @end
