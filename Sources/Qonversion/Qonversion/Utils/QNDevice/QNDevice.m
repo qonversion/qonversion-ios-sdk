@@ -10,6 +10,9 @@
 #import <net/if_dl.h>
 #endif
 
+#if TARGET_OS_WATCH
+#import <WatchKit/WatchKit.h>
+#endif
 
 #import <sys/sysctl.h>
 #import <sys/types.h>
@@ -325,13 +328,15 @@ static NSString * const kPushTokenKey = @"pushToken";
 
 + (NSString*)getVendorID:(int) maxAttempts {
   NSString *identifier = nil;
-  #if UI_DEVICE
-      identifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
-  #elif TARGET_OS_OSX
-      identifier = [self getMacAddress];
-  #else
-    identifier = @"";
-  #endif
+#if UI_DEVICE
+  identifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+#elif TARGET_OS_OSX
+  identifier = [self getMacAddress];
+#elif TARGET_OS_WATCH
+  identifier = [WKInterfaceDevice currentDevice].identifierForVendor.UUIDString;
+#else
+  identifier = @"";
+#endif
   
   if (identifier == nil && maxAttempts > 0) {
     // Try again every 5 seconds
