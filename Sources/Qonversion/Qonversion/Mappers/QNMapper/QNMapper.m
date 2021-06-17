@@ -89,8 +89,6 @@
     return nil;
   }
   
-  NSDictionary *experimentGroupData = dict[@"group"];
-  
   QNExperimentInfo *experiment = [[QNExperimentInfo alloc] initWithIdentifier:identifier group:nil];
   
   NSNumber *attachedNumber = dict[@"attached"];

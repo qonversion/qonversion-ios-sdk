@@ -10,7 +10,7 @@
 
 @implementation QNExperimentInfo
 
-- (instancetype)initWithIdentifier:(NSString *)identifier group:(QNExperimentGroup *)group {
+- (instancetype)initWithIdentifier:(NSString *)identifier group:(QNExperimentGroup * _Nullable)group {
   self = [super init];
   
   if (self) {
@@ -44,7 +44,7 @@
   
   [description appendFormat:@"id=%@,\n", self.identifier];
   [description appendFormat:@"group=%@\n", self.group];
-  [description appendFormat:@"accepted=%@\n", self.attached];
+  [description appendFormat:@"accepted=%d\n", self.attached];
   [description appendString:@">"];
   
   return [description copy];

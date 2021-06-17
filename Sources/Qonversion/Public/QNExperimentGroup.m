@@ -24,14 +24,14 @@
   self = [super init];
   
   if (self) {
-    _type = [coder decodeIntForKey:NSStringFromSelector(@selector(group))];
+    _type = [coder decodeIntForKey:NSStringFromSelector(@selector(type))];
   }
   
   return self;
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
-  [coder encodeInteger:_type forKey:NSStringFromSelector(@selector(group))];
+  [coder encodeInteger:_type forKey:NSStringFromSelector(@selector(type))];
 }
 
 - (NSString *)description {
