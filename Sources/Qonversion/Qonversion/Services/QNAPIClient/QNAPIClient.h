@@ -1,7 +1,7 @@
 #import "Foundation/Foundation.h"
 #import "QNLaunchResult.h"
 
-@class SKProduct, SKPaymentTransaction;
+@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QNOffering;
 
 typedef void (^QNAPIClientCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
 
@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)purchaseRequestWith:(SKProduct *)product
                 transaction:(SKPaymentTransaction *)transaction
                     receipt:(nullable NSString *)receipt
+              purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
                  completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QNProduct *> *)products
@@ -39,6 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
                       data:(NSDictionary *)data
                 completion:(QNAPIClientCompletionHandler)completion;
 - (void)processStoredRequests;
+- (void)sendOfferingEvent:(QNOffering *)offering;
 
 @end
 

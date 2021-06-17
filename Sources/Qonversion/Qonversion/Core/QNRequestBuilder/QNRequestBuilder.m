@@ -59,6 +59,15 @@
   return [self makePostRequestWith:kProductsEndpoint andBody:parameters];
 }
 
+- (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID {
+  NSMutableDictionary *body = [NSMutableDictionary new];
+  body[@"user"] = userID;
+  body[@"event"] = eventName;
+  body[@"payload"] = payload;
+  
+  return [self makePostRequestWith:kEventEndpoint andBody:[body copy]];
+}
+
 // MARK: Private
 
 - (NSURLRequest *)makeGetRequestWith:(NSString *)endpoint {

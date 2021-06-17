@@ -15,6 +15,7 @@ extern NSString *const kKeyQUserDefaultsUserID;
 extern NSString *const kKeyQUserIDPrefix;
 extern NSString *const kKeyQUserIDSeparator;
 extern NSString *const kMainUserDefaultsSuiteName;
+extern NSString *const kKeyQExperimentStartedEventName;
 extern NSUInteger const kQPropertiesSendingPeriodInSeconds;
 extern CGFloat const kJitter;
 extern CGFloat const kFactor;

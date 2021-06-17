@@ -20,4 +20,42 @@
   return self;
 }
 
+- (instancetype)initWithCoder:(NSCoder *)coder {
+  self = [super init];
+  
+  if (self) {
+    _type = [coder decodeIntForKey:NSStringFromSelector(@selector(type))];
+  }
+  
+  return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder {
+  [coder encodeInteger:_type forKey:NSStringFromSelector(@selector(type))];
+}
+
+- (NSString *)description {
+  NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+  
+  [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
+  [description appendString:@">"];
+  
+  return [description copy];
+}
+
+- (NSString *)prettyType {
+  NSString *result;
+  
+  switch (self.type) {
+    case QNExperimentGroupTypeB:
+      result = @"B"; break;
+      
+    default:
+      result = @"A";
+      break;
+  }
+  
+  return result;
+}
+
 @end
