@@ -93,8 +93,8 @@
   
   QNExperimentInfo *experiment = [[QNExperimentInfo alloc] initWithIdentifier:identifier group:nil];
   
-  NSNumber *acceptedNumber = dict[@"accepted"];
-  experiment.accepted = acceptedNumber.boolValue;
+  NSNumber *attachedNumber = dict[@"attached"];
+  experiment.attached = attachedNumber.boolValue;
   
   return experiment;
 }

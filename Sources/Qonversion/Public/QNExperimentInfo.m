@@ -27,7 +27,7 @@
   if (self) {
     _identifier = [coder decodeObjectForKey:NSStringFromSelector(@selector(identifier))];
     _group = [coder decodeObjectForKey:NSStringFromSelector(@selector(group))];
-    _accepted = [coder decodeBoolForKey:NSStringFromSelector(@selector(accepted))];
+    _attached = [coder decodeBoolForKey:NSStringFromSelector(@selector(attached))];
   }
   
   return self;
@@ -36,7 +36,7 @@
 - (void)encodeWithCoder:(NSCoder *)coder {
   [coder encodeObject:_identifier forKey:NSStringFromSelector(@selector(identifier))];
   [coder encodeObject:_group forKey:NSStringFromSelector(@selector(group))];
-  [coder encodeBool:_accepted forKey:NSStringFromSelector(@selector(accepted))];
+  [coder encodeBool:_attached forKey:NSStringFromSelector(@selector(attached))];
 }
 
 - (NSString *)description {
@@ -44,7 +44,7 @@
   
   [description appendFormat:@"id=%@,\n", self.identifier];
   [description appendFormat:@"group=%@\n", self.group];
-  [description appendFormat:@"accepted=%@\n", self.accepted];
+  [description appendFormat:@"accepted=%@\n", self.attached];
   [description appendString:@">"];
   
   return [description copy];

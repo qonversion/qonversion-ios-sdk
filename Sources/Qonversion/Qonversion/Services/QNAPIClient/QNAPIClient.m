@@ -297,7 +297,6 @@
 - (void)sendOfferingEvent:(QNOffering *)offering {
   NSMutableDictionary *payload = [NSMutableDictionary new];
   payload[@"experiment_id"] = offering.experimentInfo.identifier;
-  payload[@"group_id"] = @(offering.experimentInfo.group.type);
   
   NSURLRequest *request = [self.requestBuilder makeEventRequestWithEventName:kKeyQExperimentStartedEventName payload:[payload copy] userID:self.userID];
   

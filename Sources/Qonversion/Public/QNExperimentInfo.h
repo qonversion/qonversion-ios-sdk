@@ -17,7 +17,7 @@ NS_SWIFT_NAME(Qonversion.ExperimentInfo)
 
 @property (nonatomic, copy, readonly) NSString *identifier;
 @property (nonatomic, strong, nullable, readonly) QNExperimentGroup *group;
-@property (nonatomic, assign) BOOL accepted;
+@property (nonatomic, assign) BOOL attached;
 
 @end
 

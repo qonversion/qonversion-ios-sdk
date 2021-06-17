@@ -87,8 +87,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _offeringsBlocks = [NSMutableArray new];
     _experimentsBlocks = [NSMutableArray new];
     _userInfoBlocks = [NSMutableArray new];
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(offeringByIDWasCalled:) name:kOfferingByIDWasCalledNotificationName object:nil];
   }
   
   return self;
@@ -98,7 +96,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   QNOffering *offering = notification.object;
   BOOL isOfferingClass = [offering isMemberOfClass:[QNOffering class]];
   if (isOfferingClass) {
-    offering.experimentInfo.accepted = YES;
+    offering.experimentInfo.attached = YES;
     [self.apiClient sendOfferingEvent:offering];
   }
 }
@@ -508,6 +506,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (QNOfferings *)enrichOfferingsWithStoreProducts {
   QNOfferings *offerings = [self getActualOfferings];
+  
+  [[NSNotificationCenter defaultCenter] removeObserver:self name:kOfferingByIDWasCalledNotificationName object:nil];
+  
   for (QNOffering *offering in offerings.availableOfferings) {
     for (QNProduct *product in offering.products) {
       QNProduct *qnProduct = [self productAt:product.qonversionID];
@@ -515,6 +516,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       product.skProduct = qnProduct.skProduct;
     }
   }
+  
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(offeringByIDWasCalled:) name:kOfferingByIDWasCalledNotificationName object:nil];
   
   return offerings;
   

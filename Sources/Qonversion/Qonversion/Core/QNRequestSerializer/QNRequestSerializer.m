@@ -69,12 +69,12 @@ NS_ASSUME_NONNULL_BEGIN
     purchaseDict[@"country"] = countryCode;
   }
   
-  result[@"purchase"] = purchaseDict;
-  
   if (purchaseModel) {
-    result[@"product_id"] = purchaseModel.product.qonversionID;
-    result[@"experiment"] = [self configureExperimentInfo:purchaseModel.experimentInfo];
+    purchaseDict[@"product_id"] = purchaseModel.product.qonversionID;
+    purchaseDict[@"experiment"] = [self configureExperimentInfo:purchaseModel.experimentInfo];
   }
+  
+  result[@"purchase"] = purchaseDict;
   
   return result;
 }

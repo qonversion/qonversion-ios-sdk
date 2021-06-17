@@ -68,7 +68,7 @@
 }
 
 - (NSDictionary<NSString *,QNProduct *> *)productsMap {
-  if (self.experimentInfo && !self.experimentInfo.accepted) {
+  if (self.experimentInfo && !self.experimentInfo.attached) {
     NSNotification *notification = [NSNotification notificationWithName:kOfferingByIDWasCalledNotificationName object:self];
     [[NSNotificationCenter defaultCenter] postNotification:notification];
   }
@@ -77,7 +77,7 @@
 }
 
 - (NSArray<QNProduct *> *)products {
-  if (self.experimentInfo && !self.experimentInfo.accepted) {
+  if (self.experimentInfo && !self.experimentInfo.attached) {
     NSNotification *notification = [NSNotification notificationWithName:kOfferingByIDWasCalledNotificationName object:self];
     [[NSNotificationCenter defaultCenter] postNotification:notification];
   }

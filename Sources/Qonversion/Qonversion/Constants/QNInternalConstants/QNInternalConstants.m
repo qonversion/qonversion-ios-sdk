@@ -15,7 +15,7 @@ NSString *const kKeyQUserIDPrefix = @"QON";
 NSString *const kKeyQUserIDSeparator = @"_";
 NSString *const kMainUserDefaultsSuiteName = @"qonversion.localstorage.main";
 
-NSString *const kKeyQExperimentStartedEventName = @"experiment_started";
+NSString *const kKeyQExperimentStartedEventName = @"offering_within_experiment_called";
 
 NSUInteger const kQPropertiesSendingPeriodInSeconds = 5;
 CGFloat const kJitter = 0.4f;
