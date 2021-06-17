@@ -102,7 +102,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)storeLaunchResultIfNeeded:(QNLaunchResult *)launchResult {
-  return;
   if (launchResult.timestamp > 0) {
     NSDate *currentDate = [NSDate date];
     
