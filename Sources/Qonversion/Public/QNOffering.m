@@ -68,21 +68,22 @@
 }
 
 - (NSDictionary<NSString *,QNProduct *> *)productsMap {
-  if (self.experimentInfo && !self.experimentInfo.attached) {
-    NSNotification *notification = [NSNotification notificationWithName:kOfferingByIDWasCalledNotificationName object:self];
-    [[NSNotificationCenter defaultCenter] postNotification:notification];
-  }
+  [self sendNotificationIfNeeded];
   
   return _productsMap;
 }
 
 - (NSArray<QNProduct *> *)products {
+  [self sendNotificationIfNeeded];
+  
+  return _products;
+}
+
+- (void)sendNotificationIfNeeded {
   if (self.experimentInfo && !self.experimentInfo.attached) {
     NSNotification *notification = [NSNotification notificationWithName:kOfferingByIDWasCalledNotificationName object:self];
     [[NSNotificationCenter defaultCenter] postNotification:notification];
   }
-  
-  return _products;
 }
 
 - (nullable QNProduct *)productForIdentifier:(NSString *)productIdentifier {
