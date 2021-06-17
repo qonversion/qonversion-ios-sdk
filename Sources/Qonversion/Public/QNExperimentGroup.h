@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSInteger, QNExperimentGroupType) {
   QNExperimentGroupTypeA = 0,
-  QNExperimentGroupTypB
+  QNExperimentGroupTypeB
 } NS_SWIFT_NAME(Qonversion.ExperimentGroupType);
 
 NS_SWIFT_NAME(Qonversion.ExperimentGroup)

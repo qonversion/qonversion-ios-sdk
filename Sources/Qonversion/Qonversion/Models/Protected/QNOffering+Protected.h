@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QNOffering (Protected)
 
-- (instancetype)initWithIdentifier:(NSString *)identifier tag:(QNOfferingTag)tag products:(NSArray<QNProduct *> *)products;
+- (instancetype)initWithIdentifier:(NSString *)identifier tag:(QNOfferingTag)tag products:(NSArray<QNProduct *> *)products experimentInfo:(QNExperimentInfo * _Nullable)experimentInfo;
 
 @end
 

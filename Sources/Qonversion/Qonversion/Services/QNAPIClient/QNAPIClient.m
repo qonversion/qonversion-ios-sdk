@@ -6,7 +6,12 @@
 #import "QNUtils.h"
 #import "QNUserInfo.h"
 #import "QNAPIConstants.h"
+#import "QNInternalConstants.h"
 #import "QNConstants.h"
+#import "QNProductPurchaseModel.h"
+#import "QNOffering.h"
+#import "QNExperimentInfo.h"
+#import "QNExperimentGroup.h"
 
 @interface QNAPIClient()
 
@@ -88,8 +93,9 @@
 - (void)purchaseRequestWith:(SKProduct *)product
                 transaction:(SKPaymentTransaction *)transaction
                     receipt:(nullable NSString *)receipt
+              purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
                  completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt];
+  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseModel:purchaseModel];
   NSDictionary *resultData = [self enrichParameters:body];
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
@@ -286,6 +292,15 @@
     NSData *updatedStoredRequestsData = [NSKeyedArchiver archivedDataWithRootObject:[storedRequests copy]];
     [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
   }
+}
+
+- (void)sendOfferingEvent:(QNOffering *)offering {
+  NSMutableDictionary *payload = [NSMutableDictionary new];
+  payload[@"experiment_id"] = offering.experimentInfo.identifier;
+  
+  NSURLRequest *request = [self.requestBuilder makeEventRequestWithEventName:kKeyQExperimentStartedEventName payload:[payload copy] userID:self.userID];
+  
+  return [self dataTaskWithRequest:request completion:nil];
 }
 
 @end

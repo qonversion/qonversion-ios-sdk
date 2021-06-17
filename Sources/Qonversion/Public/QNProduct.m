@@ -92,6 +92,7 @@
   
   [description appendFormat:@"id=%@,\n", self.qonversionID];
   [description appendFormat:@"storeID=%@,\n", self.storeID];
+  [description appendFormat:@"offeringID=%@,\n", self.offeringID];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
   [description appendFormat:@"duration=%@ (enum value = %li),\n", [self prettyDuration], (long) self.duration];
   [description appendFormat:@"trial duration=%@ (enum value = %li),\n", [self prettyTrialDuration], (long) self.trialDuration];

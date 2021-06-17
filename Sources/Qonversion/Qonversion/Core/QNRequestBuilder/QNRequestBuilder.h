@@ -13,5 +13,6 @@
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body;
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters;
+- (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID;
 
 @end
