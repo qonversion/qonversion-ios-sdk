@@ -118,6 +118,12 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)checkPermissions:(QNPermissionCompletionHandler)completion;
 
+/**
+ Make a purchase and validate that through server-to-server using Qonversion's Backend
+ 
+ @param product Product create in Qonversion Dash
+ @see [Product Center](https://qonversion.io/docs/product-center)
+ */
 + (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion;
 
 /**
