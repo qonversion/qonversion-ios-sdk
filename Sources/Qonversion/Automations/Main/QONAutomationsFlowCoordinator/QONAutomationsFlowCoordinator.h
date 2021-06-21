@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "QONAutomations.h"
 
 @protocol QONAutomationsDelegate;
 
@@ -17,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)sharedInstance;
 
 - (void)setAutomationsDelegate:(id<QONAutomationsDelegate> _Nullable)automationsDelegate;
-- (void)showAutomationWithID:(NSString *)automationID;
+- (void)showAutomationWithID:(NSString *)automationID completion:(nullable QNShowScreenCompletionHandler)completion;
 - (BOOL)handlePushNotification:(NSDictionary *)userInfo;
 - (void)showAutomationIfExists;
 
