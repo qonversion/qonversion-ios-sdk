@@ -115,6 +115,10 @@
   [[Qonversion sharedInstance].productCenterManager checkPermissions:completion];
 }
 
++ (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion {
+  [[Qonversion sharedInstance].productCenterManager purchaseProduct:product completion:completion];
+}
+
 + (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager purchase:productID completion:completion];
 }

@@ -21,4 +21,6 @@ extern NSString *const kUserInfoEndpoint;
 extern NSString *const kAttributionEndpoint;
 extern NSString *const kStoredRequestsKey;
 
+extern NSString *const kEventEndpoint;
+
 extern NSString *const kAccessDeniedError;

@@ -3,6 +3,9 @@
 #import "QNDevice.h"
 #import "QNStoreKitSugare.h"
 #import "QNProduct.h"
+#import "QNProductPurchaseModel.h"
+#import "QNExperimentInfo.h"
+#import "QNExperimentGroup.h"
 
 @interface QNRequestSerializer ()
 
@@ -24,7 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction
-                       receipt:(nullable NSString *)receipt {
+                       receipt:(nullable NSString *)receipt
+                 purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel {
 
   NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
@@ -65,8 +69,24 @@ NS_ASSUME_NONNULL_BEGIN
     purchaseDict[@"country"] = countryCode;
   }
   
+  if (purchaseModel) {
+    purchaseDict[@"product_id"] = purchaseModel.product.qonversionID;
+    purchaseDict[@"experiment"] = [self configureExperimentInfo:purchaseModel.experimentInfo];
+  }
+  
   result[@"purchase"] = purchaseDict;
+  
   return result;
+}
+
+- (NSDictionary *)configureExperimentInfo:(QNExperimentInfo * _Nullable)experimentInfo {
+  NSMutableDictionary *dict = [NSMutableDictionary new];
+  
+  if (experimentInfo) {
+    dict[@"uid"] = experimentInfo.identifier;
+  }
+  
+  return [dict copy];
 }
 
 - (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QNProduct *> *)products {

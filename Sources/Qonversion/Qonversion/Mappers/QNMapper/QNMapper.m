@@ -81,16 +81,18 @@
 }
 
 + (QNExperimentInfo * _Nullable)fillExperiment:(NSDictionary *)dict {
-  NSString *identifier = dict[@"id"];
+  if (![dict isKindOfClass:[NSDictionary class]]) {
+    return nil;
+  }
+  NSString *identifier = dict[@"uid"];
   if (!identifier) {
     return nil;
   }
   
-  NSDictionary *experimentGroupData = dict[@"group"];
+  QNExperimentInfo *experiment = [[QNExperimentInfo alloc] initWithIdentifier:identifier group:nil];
   
-  QNExperimentGroup *group = [QNMapper fillExperimentGroup:experimentGroupData];
-  
-  QNExperimentInfo *experiment = [[QNExperimentInfo alloc] initWithIdentifier:identifier group:group];
+  NSNumber *attachedNumber = dict[@"attached"];
+  experiment.attached = attachedNumber.boolValue;
   
   return experiment;
 }
@@ -116,10 +118,15 @@
 }
 
 + (NSArray <QNProduct *> *)fillProductsToArray:(NSArray *)data {
+  return [self fillProductsToArray:data offeringID:nil];
+}
+
++ (NSArray <QNProduct *> *)fillProductsToArray:(NSArray *)data offeringID:(NSString * _Nullable)offeringID {
   NSMutableArray <QNProduct *> *products = [NSMutableArray new];
   
   for (NSDictionary* itemDict in data) {
     QNProduct *item = [self fillProduct:itemDict];
+    item.offeringID = offeringID;
     if (item.qonversionID) {
       [products addObject:item];
     }
@@ -218,9 +225,11 @@
     
     NSArray *productsData = offeringData[@"products"];
     
-    NSArray<QNProduct *> *products = [self fillProductsToArray:productsData];
-    
-    QNOffering *offering = [[QNOffering alloc] initWithIdentifier:offeringIdentifier tag:tag products:products];
+    NSArray<QNProduct *> *products = [self fillProductsToArray:productsData offeringID:offeringIdentifier];
+    NSDictionary *experimentInfoData = offeringData[@"experiment"];
+
+    QNExperimentInfo *experimentInfo = [self fillExperiment:experimentInfoData];
+    QNOffering *offering = [[QNOffering alloc] initWithIdentifier:offeringIdentifier tag:tag products:products experimentInfo:experimentInfo];
     [offerings addObject:offering];
   }
   

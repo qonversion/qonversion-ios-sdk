@@ -9,8 +9,11 @@
 #import <Foundation/Foundation.h>
 
 @class QNProduct;
+@class QNExperimentInfo;
 
 NS_ASSUME_NONNULL_BEGIN
+
+static NSString *const kOfferingByIDWasCalledNotificationName = @"OfferingForIDNotification";
 
 typedef NS_ENUM(NSInteger, QNOfferingTag) {
   QNOfferingTagNone = 0,
@@ -26,6 +29,7 @@ NS_SWIFT_NAME(Qonversion.Offering)
 @property (nonatomic, copy, readonly) NSString *identifier;
 @property (nonatomic, assign, readonly) QNOfferingTag tag;
 @property (nonatomic, copy, readonly) NSArray<QNProduct *> *products;
+@property (nonatomic, strong, nullable, readonly) QNExperimentInfo *experimentInfo;
 
 - (nullable QNProduct *)productForIdentifier:(NSString *)productIdentifier;
 
