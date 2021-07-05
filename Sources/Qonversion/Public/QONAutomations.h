@@ -30,7 +30,7 @@ NS_SWIFT_NAME(setDelegate(_:));
 /**
  Show the screen using its ID
  @param screenID - screen's ID that must be shown
- @param callback - callback that is called when the screen is shown to a user or an error occurred
+ @param completion - completion that is called when the screen is shown to a user or an error occurred
  */
 + (void)showScreenWithID:(NSString *)screenID completion:(nullable QONShowScreenCompletionHandler)completion;
 
