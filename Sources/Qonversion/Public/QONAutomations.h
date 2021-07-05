@@ -20,9 +20,18 @@ API_AVAILABLE(ios(9.0))
 NS_SWIFT_NAME(Qonversion.Automations)
 @interface QONAutomations : NSObject
 
+/**
+ The delegate is responsible for handling in-app screens and actions result when push notification is received.
+ @param delegate - delegate that is called when in-app screens and actions are processed
+ */
 + (void)setDelegate:(id<QONAutomationsDelegate>)delegate
 NS_SWIFT_NAME(setDelegate(_:));
 
+/**
+ Show the screen using its ID
+ @param screenID - screen's ID that must be shown
+ @param callback - callback that is called when the screen is shown to a user or an error occurred
+ */
 + (void)showScreenWithID:(NSString *)screenID completion:(nullable QONShowScreenCompletionHandler)completion;
 
 @end
