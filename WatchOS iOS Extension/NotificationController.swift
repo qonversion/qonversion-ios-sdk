@@ -2,7 +2,7 @@
 //  NotificationController.swift
 //  WatchOS iOS Extension
 //
-//  Created by Surik Sarkisyan on 15.06.2021.
+//  Created by Surik Sarkisyan on 02.07.2021.
 //  Copyright © 2021 Qonversion Inc. All rights reserved.
 //
 

@@ -13,6 +13,10 @@ target 'Sample' do
 platform :ios, 12.0
 end
 
+target 'WatchOS iOS' do
+  pod 'Qonversion', :path => '.'
+end
+
 target 'WatchOS iOS Extension' do
   pod 'Qonversion', :path => '.'
 end

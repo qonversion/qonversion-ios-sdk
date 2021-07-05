@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "89B7AD5A2678D064000970A3"
-               BuildableName = "WatchOS WatchKit App.app"
-               BlueprintName = "WatchOS WatchKit App"
+               BlueprintIdentifier = "89C21877268F4A51001F3DA1"
+               BuildableName = "WatchOS iOS.app"
+               BlueprintName = "WatchOS iOS"
                ReferencedContainer = "container:Qonversion.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -28,9 +28,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "89B7AD572678D064000970A3"
-               BuildableName = "WatchOS.app"
-               BlueprintName = "WatchOS"
+               BlueprintIdentifier = "454EF63B24E5CC580070581E"
+               BuildableName = "Sample.app"
+               BlueprintName = "Sample"
                ReferencedContainer = "container:Qonversion.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -56,16 +56,18 @@
       allowLocationSimulation = "YES"
       launchAutomaticallySubstyle = "8"
       notificationPayloadFile = "WatchOS iOS Extension/PushNotificationPayload.apns">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <RemoteRunnable
+         runnableDebuggingMode = "2"
+         BundleIdentifier = "com.apple.Carousel"
+         RemotePath = "/Sample">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "89B7AD5A2678D064000970A3"
-            BuildableName = "WatchOS WatchKit App.app"
-            BlueprintName = "WatchOS WatchKit App"
+            BlueprintIdentifier = "89C21877268F4A51001F3DA1"
+            BuildableName = "WatchOS iOS.app"
+            BlueprintName = "WatchOS iOS"
             ReferencedContainer = "container:Qonversion.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </RemoteRunnable>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -75,16 +77,27 @@
       debugDocumentVersioning = "YES"
       launchAutomaticallySubstyle = "8"
       notificationPayloadFile = "WatchOS iOS Extension/PushNotificationPayload.apns">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <RemoteRunnable
+         runnableDebuggingMode = "2"
+         BundleIdentifier = "com.apple.Carousel"
+         RemotePath = "/Sample">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "89B7AD5A2678D064000970A3"
-            BuildableName = "WatchOS WatchKit App.app"
-            BlueprintName = "WatchOS WatchKit App"
+            BlueprintIdentifier = "89C21877268F4A51001F3DA1"
+            BuildableName = "WatchOS iOS.app"
+            BlueprintName = "WatchOS iOS"
             ReferencedContainer = "container:Qonversion.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </RemoteRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "89C21877268F4A51001F3DA1"
+            BuildableName = "WatchOS iOS.app"
+            BlueprintName = "WatchOS iOS"
+            ReferencedContainer = "container:Qonversion.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
