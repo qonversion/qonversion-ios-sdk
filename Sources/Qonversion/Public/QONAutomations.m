@@ -24,8 +24,8 @@
   [[QONAutomationsFlowCoordinator sharedInstance] setAutomationsDelegate:delegate];
 }
 
-+ (void)showAutomationWithID:(NSString *)automationID {
-  [[QONAutomationsFlowCoordinator sharedInstance] showAutomationWithID:automationID];
++ (void)showScreenWithID:(NSString *)screenID completion:(nullable QONShowScreenCompletionHandler)completion {
+  [[QONAutomationsFlowCoordinator sharedInstance] showAutomationWithID:screenID completion:completion];
 }
 
 @end
