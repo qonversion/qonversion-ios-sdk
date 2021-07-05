@@ -53,7 +53,13 @@
   
   [self.screenProcessor processScreen:self.screen.htmlString completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     if (error) {
-      [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription];
+      [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription handler:^(UIAlertAction *action) {
+        if (weakSelf.navigationController.viewControllers.count > 1) {
+          [weakSelf.navigationController popViewControllerAnimated:YES];
+        } else {
+          [weakSelf dismissViewControllerAnimated:YES completion:nil];
+        }
+      }];
       
       return;
     }
@@ -84,13 +90,17 @@
   [self handleAction:navigationAction];
 }
 
-- (void)showErrorAlertWithTitle:(NSString *)title message:(NSString *)message {
+- (void)showErrorAlertWithTitle:(NSString *)title message:(NSString *)message handler:(void (^ __nullable)(UIAlertAction *action))handler {
   UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
   
-  UIAlertAction *action = [UIAlertAction actionWithTitle:kAutomationsErrorOkActionTitle style:UIAlertActionStyleCancel handler:nil];
+  UIAlertAction *action = [UIAlertAction actionWithTitle:kAutomationsErrorOkActionTitle style:UIAlertActionStyleCancel handler:handler];
   [alert addAction:action];
   
   [self.navigationController presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)showErrorAlertWithTitle:(NSString *)title message:(NSString *)message {
+  [self showErrorAlertWithTitle:title message:message handler:nil];
 }
 
 #pragma mark Actions

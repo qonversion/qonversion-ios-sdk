@@ -18,6 +18,8 @@
 #import "QONAutomationsScreen.h"
 #import "QONAutomationsActionsHandler.h"
 #import "QONUserActionPoint.h"
+#import "QONAutomations.h"
+#import "QNUtils.h"
 
 @interface QONAutomationsFlowCoordinator() <QONAutomationsViewControllerDelegate>
 
@@ -71,12 +73,12 @@
     NSString *automationID = latestAction.screenId;
     
     if (automationID.length > 0) {
-      [weakSelf showAutomationWithID:automationID];
+      [weakSelf showAutomationWithID:automationID completion:nil];
     }
   }];
 }
 
-- (void)showAutomationWithID:(NSString *)automationID {
+- (void)showAutomationWithID:(NSString *)automationID completion:(nullable QONShowScreenCompletionHandler)completion {
   __block __weak QONAutomationsFlowCoordinator *weakSelf = self;
   [self.automationsService automationWithID:automationID completion:^(QONAutomationsScreen *screen, NSError * _Nullable error) {
     if (screen) {
@@ -95,6 +97,10 @@
       }
       navigationController.modalPresentationStyle = UIModalPresentationFullScreen;
       [presentationViewController presentViewController:navigationController animated:YES completion:nil];
+      
+      run_block_on_main(completion, true, nil);
+    } else if (error) {
+      run_block_on_main(completion, false, error);
     }
   }];
 }
