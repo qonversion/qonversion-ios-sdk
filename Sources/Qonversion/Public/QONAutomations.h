@@ -12,7 +12,7 @@
 
 @protocol QONAutomationsDelegate;
 
-typedef void (^QNShowScreenCompletionHandler)(BOOL success, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ShowScreenCompletionHandler);
+typedef void (^QONShowScreenCompletionHandler)(BOOL success, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ShowScreenCompletionHandler);
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -23,7 +23,7 @@ NS_SWIFT_NAME(Qonversion.Automations)
 + (void)setDelegate:(id<QONAutomationsDelegate>)delegate
 NS_SWIFT_NAME(setDelegate(_:));
 
-+ (void)showScreenWithID:(NSString *)screenID completion:(nullable QNShowScreenCompletionHandler)completion;
++ (void)showScreenWithID:(NSString *)screenID completion:(nullable QONShowScreenCompletionHandler)completion;
 
 @end
 

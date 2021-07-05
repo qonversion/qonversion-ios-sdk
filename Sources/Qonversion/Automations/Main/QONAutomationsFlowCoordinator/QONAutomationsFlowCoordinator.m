@@ -78,7 +78,7 @@
   }];
 }
 
-- (void)showAutomationWithID:(NSString *)automationID completion:(nullable QNShowScreenCompletionHandler)completion {
+- (void)showAutomationWithID:(NSString *)automationID completion:(nullable QONShowScreenCompletionHandler)completion {
   __block __weak QONAutomationsFlowCoordinator *weakSelf = self;
   [self.automationsService automationWithID:automationID completion:^(QONAutomationsScreen *screen, NSError * _Nullable error) {
     if (screen) {
