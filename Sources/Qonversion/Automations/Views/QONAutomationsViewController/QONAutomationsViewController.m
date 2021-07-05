@@ -54,7 +54,11 @@
   [self.screenProcessor processScreen:self.screen.htmlString completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     if (error) {
       [weakSelf showErrorAlertWithTitle:kAutomationsErrorAlertTitle message:error.localizedDescription handler:^(UIAlertAction *action) {
-        [weakSelf dismissViewControllerAnimated:YES completion:nil];
+        if (weakSelf.navigationController.viewControllers.count > 1) {
+          [weakSelf.navigationController popViewControllerAnimated:YES];
+        } else {
+          [weakSelf dismissViewControllerAnimated:YES completion:nil];
+        }
       }];
       
       return;
