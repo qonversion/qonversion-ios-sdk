@@ -6,7 +6,11 @@
 //  Copyright © 2020 Qonversion Inc. All rights reserved.
 //
 
-@class UIViewController, QONActionResult;
+#import "QONAutomationsEventType.h"
+#import "QONActionResult.h"
+#import "QONAutomationsEventType.h"
+
+@class UIViewController;
 
 /**
  The delegate is responsible for handling in-app screens and actions when push notification is received.
@@ -16,6 +20,8 @@ NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
 @protocol QONAutomationsDelegate <NSObject>
 
 @optional
+- (BOOL)shouldHandleEvent:(QONAutomationsEventType)event payload:(NSDictionary<NSString *, id> * _Nonnull)payload;
+
 - (void)automationsDidShowScreen:(NSString * _Nonnull)screenID
 NS_SWIFT_NAME(automationsDidShowScreen(_:));
 

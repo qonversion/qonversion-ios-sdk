@@ -18,6 +18,7 @@
 #import "QONAutomationsMapper.h"
 #import "QONAutomationsScreen.h"
 #import "QONAutomationsScreenProcessor.h"
+#import "QONAutomationsEventsMapper.h"
 
 @implementation QONAutomationsFlowAssembly
 
@@ -48,6 +49,10 @@
 
 - (QONAutomationsActionsHandler *)actionsHandler {
   return [QONAutomationsActionsHandler new];
+}
+
+- (QONAutomationsEventsMapper *)eventsMapper {
+  return [QONAutomationsEventsMapper new];
 }
 
 @end

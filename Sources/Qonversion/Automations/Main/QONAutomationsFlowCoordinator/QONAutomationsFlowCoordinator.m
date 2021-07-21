@@ -20,12 +20,15 @@
 #import "QONUserActionPoint.h"
 #import "QONAutomations.h"
 #import "QNUtils.h"
+#import "QONAutomationsEventType.h"
+#import "QONAutomationsEventsMapper.h"
 
 @interface QONAutomationsFlowCoordinator() <QONAutomationsViewControllerDelegate>
 
 @property (nonatomic, weak) id<QONAutomationsDelegate> automationsDelegate;
 @property (nonatomic, strong) QONAutomationsFlowAssembly *assembly;
 @property (nonatomic, strong) QONAutomationsService *automationsService;
+@property (nonatomic, strong) QONAutomationsEventsMapper *eventsMapper;
 
 @end
 
@@ -47,6 +50,7 @@
   if (self) {
     _assembly = [QONAutomationsFlowAssembly new];
     _automationsService = [_assembly automationsService];
+    _eventsMapper = [_assembly eventsMapper];
   }
   
   return self;
@@ -63,6 +67,22 @@
   }
   
   return shouldShowAutomation;
+}
+
+- (void)handleEvent:(NSDictionary *)userInfo {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    BOOL shouldHandle = YES;
+    if (self.automationsDelegate && [self.automationsDelegate respondsToSelector:@selector(shouldHandleEvent:payload:)]) {
+      QONAutomationsEventType eventType = [self.eventsMapper eventTypeFromNotification:userInfo];
+      shouldHandle = [self.automationsDelegate shouldHandleEvent:eventType payload:userInfo];
+    }
+    
+    if (!shouldHandle) {
+      return;
+    }
+    
+    [self showAutomationIfExists];
+  });
 }
 
 - (void)showAutomationIfExists {
