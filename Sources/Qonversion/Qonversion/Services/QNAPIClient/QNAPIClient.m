@@ -12,11 +12,13 @@
 #import "QNOffering.h"
 #import "QNExperimentInfo.h"
 #import "QNExperimentGroup.h"
+#import "QNErrorsMapper.h"
 
 @interface QNAPIClient()
 
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
+@property (nonatomic, strong) QNErrorsMapper *errorsMapper;
 @property (nonatomic, copy) NSArray<NSNumber *> *connectionErrorCodes;
 @property (nonatomic, copy) NSArray<NSString *> *retriableRequests;
 @property (nonatomic, copy) NSArray<NSNumber *> *criticalErrorCodes;
@@ -31,6 +33,7 @@
   if (self) {
     _requestSerializer = [[QNRequestSerializer alloc] init];
     _requestBuilder = [[QNRequestBuilder alloc] init];
+    _errorsMapper = [QNErrorsMapper new];
     
     _apiKey = @"";
     _userID = @"";
@@ -256,6 +259,13 @@
     
     if ((jsonError.code || !dict)) {
       completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedParseResponse]);
+      return;
+    }
+    
+    NSError *apiError = [self.errorsMapper errorFromRequestResult:dict];
+    
+    if (apiError) {
+      completion(nil, error);
       return;
     }
     

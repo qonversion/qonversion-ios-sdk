@@ -71,13 +71,27 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
 
 typedef NS_ERROR_ENUM(QNErrorDomain, QNAPIError) {
   QNAPIErrorFailedReceiveData = 0,
-  QNAPIErrorFailedParseResponse,
-  QNAPIErrorIncorrectRequest
+  QNAPIErrorFailedParseResponse = 1,
+  QNAPIErrorIncorrectRequest = 2,
+  QNAPIErrorInternalError = 3,
+  QNAPIErrorUnknown = 4,
+  QNAPIErrorInvalidCredentials = 5,
+  QNAPIErrorInvalidClientUID = 6,
+  QNAPIErrorUnknownClientPlatform = 7,
+  QNAPIErrorFraudPurchase = 8,
+  QNAPIErrorFeatureNotSupported = 9,
+  QNAPIErrorAppleStoreError = 10,
+  QNAPIErrorPurchaseInvalid = 11,
+  QNAPIErrorProjectConfigError  = 12,
+  QNAPIErrorInvalidStoreCredentials  = 13,
+  QNAPIErrorInvalidPurchase  = 14,
+  QNAPIErrorReceiptValidation = 15
 };
 
 @interface QNErrors: NSObject
 
 + (NSError *)errorWithCode:(QNAPIError)errorCode;
++ (NSError *)errorWithCode:(QNAPIError)errorCode message:(NSString *)message;
 + (NSError *)errorWithQNErrorCode:(QNError)errorCode;
 + (NSError *)errorFromURLDomainError:(NSError *)error;
 + (NSError *)errorFromTransactionError:(NSError *)error;

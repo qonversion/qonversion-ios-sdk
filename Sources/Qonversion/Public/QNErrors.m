@@ -16,11 +16,18 @@
   return @"";
 }
 
++ (NSError *)errorWithCode:(QNAPIError)errorCode message:(NSString *)message {
+  NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil)};
+  NSError *error = [NSError errorWithDomain:keyQNAPIErrorDomain code:errorCode userInfo:info];
+  
+  return error;
+}
+
 + (NSError *)errorWithQNErrorCode:(QNError)errorCode {
   return [self errorWithQonversionErrorCode:errorCode userInfo:nil];
 }
 
-+ (NSError *)errorWithCode:(QNAPIError)errorCode  {
++ (NSError *)errorWithCode:(QNAPIError)errorCode {
   NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString([self messageForError:errorCode], nil)};
   
   return [self errorWithQonversionErrorCode:QNErrorInternalError userInfo:info];
