@@ -20,7 +20,7 @@
 #import "QONUserActionPoint.h"
 #import "QONAutomations.h"
 #import "QNUtils.h"
-#import "QONAutomationsEventType.h"
+#import "QONAutomationsEvent.h"
 #import "QONAutomationsEventsMapper.h"
 
 @interface QONAutomationsFlowCoordinator() <QONAutomationsViewControllerDelegate>
@@ -73,8 +73,8 @@
   dispatch_async(dispatch_get_main_queue(), ^{
     BOOL shouldHandle = YES;
     if (self.automationsDelegate && [self.automationsDelegate respondsToSelector:@selector(shouldHandleEvent:payload:)]) {
-      QONAutomationsEventType eventType = [self.eventsMapper eventTypeFromNotification:userInfo];
-      shouldHandle = [self.automationsDelegate shouldHandleEvent:eventType payload:userInfo];
+      QONAutomationsEvent *event = [self.eventsMapper eventFromNotification:userInfo];
+      shouldHandle = [self.automationsDelegate shouldHandleEvent:event payload:userInfo];
     }
     
     if (!shouldHandle) {

@@ -8,7 +8,7 @@
 
 #import "QONAutomationsEventType.h"
 #import "QONActionResult.h"
-#import "QONAutomationsEventType.h"
+#import "QONAutomationsEvent.h"
 
 @class UIViewController;
 
@@ -20,7 +20,7 @@ NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
 @protocol QONAutomationsDelegate <NSObject>
 
 @optional
-- (BOOL)shouldHandleEvent:(QONAutomationsEventType)event payload:(NSDictionary<NSString *, id> * _Nonnull)payload;
+- (BOOL)shouldHandleEvent:(QONAutomationsEvent *)event payload:(NSDictionary<NSString *, id> * _Nonnull)payload;
 
 - (void)automationsDidShowScreen:(NSString * _Nonnull)screenID
 NS_SWIFT_NAME(automationsDidShowScreen(_:));

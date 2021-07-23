@@ -58,6 +58,10 @@
 		89817A6226A834A8006BEDD1 /* QONAutomationsEventType.h in Headers */ = {isa = PBXBuildFile; fileRef = 89817A6126A834A8006BEDD1 /* QONAutomationsEventType.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		89817A6626A85873006BEDD1 /* QONAutomationsEventsMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 89817A6426A85873006BEDD1 /* QONAutomationsEventsMapper.h */; };
 		89817A6726A85873006BEDD1 /* QONAutomationsEventsMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 89817A6526A85873006BEDD1 /* QONAutomationsEventsMapper.m */; };
+		89817AA426AAE8F9006BEDD1 /* QONAutomationsEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 89817AA226AAE8F8006BEDD1 /* QONAutomationsEvent.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		89817AA526AAE8F9006BEDD1 /* QONAutomationsEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 89817AA326AAE8F9006BEDD1 /* QONAutomationsEvent.m */; };
+		89817AA826AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 89817AA626AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h */; };
+		89817AA926AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.m in Sources */ = {isa = PBXBuildFile; fileRef = 89817AA726AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.m */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		898971F02656622A00A24927 /* QNPaymentMode.h in Headers */ = {isa = PBXBuildFile; fileRef = 898971EF2656622A00A24927 /* QNPaymentMode.h */; };
 		898971F32656ABA500A24927 /* QNPurchase+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 898971F12656ABA500A24927 /* QNPurchase+Protected.h */; };
@@ -295,6 +299,10 @@
 		89817A6126A834A8006BEDD1 /* QONAutomationsEventType.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsEventType.h; sourceTree = "<group>"; };
 		89817A6426A85873006BEDD1 /* QONAutomationsEventsMapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsEventsMapper.h; sourceTree = "<group>"; };
 		89817A6526A85873006BEDD1 /* QONAutomationsEventsMapper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsEventsMapper.m; sourceTree = "<group>"; };
+		89817AA226AAE8F8006BEDD1 /* QONAutomationsEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsEvent.h; sourceTree = "<group>"; };
+		89817AA326AAE8F9006BEDD1 /* QONAutomationsEvent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsEvent.m; sourceTree = "<group>"; };
+		89817AA626AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONAutomationsEvent+Protected.h"; sourceTree = "<group>"; };
+		89817AA726AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "QONAutomationsEvent+Protected.m"; sourceTree = "<group>"; };
 		898971EF2656622A00A24927 /* QNPaymentMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNPaymentMode.h; sourceTree = "<group>"; };
 		898971F12656ABA500A24927 /* QNPurchase+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNPurchase+Protected.h"; sourceTree = "<group>"; };
 		898971F52656C77100A24927 /* QNUserProduct+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNUserProduct+Protected.h"; sourceTree = "<group>"; };
@@ -775,6 +783,8 @@
 				89B3779825DE71CD009D3E0D /* QNPromoPurchasesDelegate.h */,
 				89B3779B25DE71CD009D3E0D /* QNPurchasesDelegate.h */,
 				89817A6126A834A8006BEDD1 /* QONAutomationsEventType.h */,
+				89817AA226AAE8F8006BEDD1 /* QONAutomationsEvent.h */,
+				89817AA326AAE8F9006BEDD1 /* QONAutomationsEvent.m */,
 				89B3778B25DE71CD009D3E0D /* QNIntroEligibility.h */,
 				89B3779A25DE71CD009D3E0D /* QNIntroEligibility.m */,
 				89B3778D25DE71CD009D3E0D /* QNStoreKitSugare.h */,
@@ -1131,6 +1141,8 @@
 				89B377F725DE71CD009D3E0D /* QNIntroEligibility+Protected.h */,
 				89B377F825DE71CD009D3E0D /* QNExperimentInfo+Protected.h */,
 				89B377F925DE71CD009D3E0D /* QNLaunchResult+Protected.h */,
+				89817AA626AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h */,
+				89817AA726AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.m */,
 			);
 			path = Protected;
 			sourceTree = "<group>";
@@ -1265,6 +1277,7 @@
 				89B3782225DE71CD009D3E0D /* QONAutomations.h in Headers */,
 				89B3783E25DE71CD009D3E0D /* QONAutomationsService.h in Headers */,
 				89B3784525DE71CD009D3E0D /* QNRequestSerializer.h in Headers */,
+				89817AA426AAE8F9006BEDD1 /* QONAutomationsEvent.h in Headers */,
 				89B3782725DE71CD009D3E0D /* QNExperimentInfo.h in Headers */,
 				898971F02656622A00A24927 /* QNPaymentMode.h in Headers */,
 				89B3783925DE71CD009D3E0D /* QONAutomationsActionsHandler.h in Headers */,
@@ -1318,6 +1331,7 @@
 				89B3783C25DE71CD009D3E0D /* QONAutomationsViewController.h in Headers */,
 				89C06A4825F75EA8005DD254 /* QONAutomationsScreenProcessor.h in Headers */,
 				89A192692603928A00C3FCD9 /* QNUserInfoServiceInterface.h in Headers */,
+				89817AA826AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h in Headers */,
 				89B3784725DE71CD009D3E0D /* QNKeychain.h in Headers */,
 				89B3783725DE71CD009D3E0D /* QONAutomationsFlowCoordinator.h in Headers */,
 				89B3785A25DE71CD009D3E0D /* QNOffering+Protected.h in Headers */,
@@ -1593,6 +1607,7 @@
 				89B3786325DE71CD009D3E0D /* QNAttributionManager.m in Sources */,
 				89C06A4925F75EA8005DD254 /* QONAutomationsScreenProcessor.m in Sources */,
 				89B3785225DE71CD009D3E0D /* QNDevice.m in Sources */,
+				89817AA926AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.m in Sources */,
 				89B3782625DE71CD009D3E0D /* QNLaunchResult.m in Sources */,
 				89B3783F25DE71CD009D3E0D /* QONAutomationsService.m in Sources */,
 				89B3783825DE71CD009D3E0D /* QONAutomationsActionsHandler.m in Sources */,
@@ -1600,6 +1615,7 @@
 				89B3782D25DE71CD009D3E0D /* QNProduct.m in Sources */,
 				89B3783A25DE71CD009D3E0D /* QONAutomationsFlowAssembly.m in Sources */,
 				89B3785825DE71CD009D3E0D /* QNMapperObject.m in Sources */,
+				89817AA526AAE8F9006BEDD1 /* QONAutomationsEvent.m in Sources */,
 				89B3783225DE71CD009D3E0D /* QONAutomationsScreen.m in Sources */,
 				89817A6726A85873006BEDD1 /* QONAutomationsEventsMapper.m in Sources */,
 				89B3786025DE71CD009D3E0D /* QNMapper.m in Sources */,

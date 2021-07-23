@@ -7,13 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "QONAUtomationsEventType.h"
+
+@class QONAutomationsEvent;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QONAutomationsEventsMapper : NSObject
 
-- (QONAutomationsEventType)eventTypeFromNotification:(NSDictionary<NSString *, id> *)notificationInfo;
+- (QONAutomationsEvent * _Nullable)eventFromNotification:(NSDictionary<NSString *, id> *)notificationInfo;
 
 @end
 
