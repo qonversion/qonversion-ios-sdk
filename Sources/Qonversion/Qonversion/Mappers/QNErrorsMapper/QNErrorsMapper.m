@@ -30,15 +30,21 @@
   }
   
   QNAPIError errorType = [self errorTypeFromCode:codeNumber];
-  NSString *errorMessage = [self messageForErrorType:errorType];
+  NSString *apiErrorMessage = data[@"message"];
+  NSString *failureReason = [self messageForErrorType:errorType];
+  NSString *additionalMessage = [NSString stringWithFormat:@"Internal error code: %d.", codeNumber.integerValue];
   
-  NSError *error = [QNErrors errorWithCode:errorType message:errorMessage];
+  if (failureReason.length > 0) {
+    additionalMessage = [NSString stringWithFormat:@"%@\n%@", additionalMessage, failureReason];
+  }
+  
+  NSError *error = [QNErrors errorWithCode:errorType message:apiErrorMessage failureReason:additionalMessage];
   
   return error;
 }
 
 - (NSString *)messageForErrorType:(QNAPIError)errorType {
-  return @"";
+  return @"ввв";
 }
 
 - (QNAPIError)errorTypeFromCode:(NSNumber *)errorCode {
@@ -57,7 +63,6 @@
     case 20303:
     case 20399:
     case 20200:
-    case 20100:
       type = QNAPIErrorInternalError;
       break;
       
@@ -86,8 +91,6 @@
       
     case 20006:
     case 20007:
-    case 20300:
-    case 20303:
     case 20109:
     case 20199:
       type = QNAPIErrorAppleStoreError;
@@ -115,8 +118,6 @@
     case 20100:
     case 20107:
     case 20108:
-    case 20109:
-    case 20110:
     case 21099:
       type = QNAPIErrorReceiptValidation;
       break;

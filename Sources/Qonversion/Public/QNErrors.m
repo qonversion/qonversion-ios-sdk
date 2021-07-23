@@ -16,8 +16,9 @@
   return @"";
 }
 
-+ (NSError *)errorWithCode:(QNAPIError)errorCode message:(NSString *)message {
-  NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil)};
++ (NSError *)errorWithCode:(QNAPIError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason {
+  NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil),
+                         NSLocalizedFailureReasonErrorKey: NSLocalizedString(failureReason, nil)};
   NSError *error = [NSError errorWithDomain:keyQNAPIErrorDomain code:errorCode userInfo:info];
   
   return error;
