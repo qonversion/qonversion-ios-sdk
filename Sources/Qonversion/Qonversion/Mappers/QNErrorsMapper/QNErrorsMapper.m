@@ -9,7 +9,23 @@
 #import "QNErrorsMapper.h"
 #import "QNErrors.h"
 
+@interface QNErrorsMapper ()
+
+@property (nonatomic, copy) NSDictionary<NSNumber *, NSString *> *errorsMap;
+
+@end
+
 @implementation QNErrorsMapper
+
+- (instancetype)init {
+  self = [super init];
+  
+  if (self) {
+    _errorsMap = @{};
+  }
+  
+  return self;
+}
 
 - (NSError *)errorFromRequestResult:(NSDictionary *)result {
   if (![result isKindOfClass:[NSDictionary class]] || ![result[@"data"] isKindOfClass:[NSDictionary class]]) {
@@ -44,7 +60,7 @@
 }
 
 - (NSString *)messageForErrorType:(QNAPIError)errorType {
-  return @"ввв";
+  return self.errorsMap[@(errorType)];
 }
 
 - (QNAPIError)errorTypeFromCode:(NSNumber *)errorCode {
