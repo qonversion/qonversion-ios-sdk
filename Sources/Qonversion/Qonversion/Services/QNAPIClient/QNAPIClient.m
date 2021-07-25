@@ -266,7 +266,7 @@
     
     if (apiError) {
       QONVERSION_LOG(@"❌ API ERROR: %@", apiError);
-      completion(nil, error);
+      completion(nil, apiError);
       return;
     }
     

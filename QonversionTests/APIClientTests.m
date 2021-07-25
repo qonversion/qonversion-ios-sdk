@@ -95,8 +95,8 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
                           completionHandler:([OCMArg invokeBlockWithArgs:[self fileDataFromContentsOfFile:keyQNInitFailedJSON], [NSNull null], [NSNull null], nil])]);
   
   [_client dataTaskWithRequest:_request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    XCTAssertNotNil(dict);
-    XCTAssertNil(error);
+    XCTAssertNil(dict);
+    XCTAssertNotNil(error);
     [expectation fulfill];
   }];
   
