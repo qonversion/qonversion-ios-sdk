@@ -26,15 +26,19 @@
       @"trial_started": @(QONAutomationsEventTypeTrialStarted),
       @"trial_converted": @(QONAutomationsEventTypeTrialConverted),
       @"trial_canceled": @(QONAutomationsEventTypeTrialCanceled),
-      @"trial_billing_retry": @(QONAutomationsEventTypeTrialBillingRetry),
+      @"trial_billing_retry_entered": @(QONAutomationsEventTypeTrialBillingRetry),
       @"subscription_started": @(QONAutomationsEventTypeSubscriptionStarted),
       @"subscription_renewed": @(QONAutomationsEventTypeSubscriptionRenewed),
       @"subscription_refunded": @(QONAutomationsEventTypeSubscriptionRefunded),
       @"subscription_canceled": @(QONAutomationsEventTypeSubscriptionCanceled),
-      @"subscription_billing_retry": @(QONAutomationsEventTypeSubscriptionBillingRetry),
-      @"inapp_purchase": @(QONAutomationsEventTypeInAppPurchase),
+      @"subscription_billing_retry_entered": @(QONAutomationsEventTypeSubscriptionBillingRetry),
+      @"in_app_purchase": @(QONAutomationsEventTypeInAppPurchase),
       @"subscription_upgraded": @(QONAutomationsEventTypeSubscriptionUpgraded),
-      @"trial_still_active": @(QONAutomationsEventTypeTrialStillActive)
+      @"trial_still_active": @(QONAutomationsEventTypeTrialStillActive),
+      @"trial_expired" : @(QONAutomationsEventTypeTrialExpired),
+      @"subscription_expired": @(QONAutomationsEventTypeSubscriptionExpired),
+      @"subscription_downgraded": @(QONAutomationsEventTypeSubscriptionDowngraded),
+      @"subscription_product_changed": @(QONAutomationsEventTypeSubscriptionProductChanged)
     };
   }
   

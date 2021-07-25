@@ -19,5 +19,9 @@ typedef NS_ENUM(NSInteger, QONAutomationsEventType) {
   QONAutomationsEventTypeSubscriptionBillingRetry = 9,
   QONAutomationsEventTypeInAppPurchase = 10,
   QONAutomationsEventTypeSubscriptionUpgraded = 11,
-  QONAutomationsEventTypeTrialStillActive = 12
+  QONAutomationsEventTypeTrialStillActive = 12,
+  QONAutomationsEventTypeTrialExpired = 13,
+  QONAutomationsEventTypeSubscriptionExpired = 14,
+  QONAutomationsEventTypeSubscriptionDowngraded = 15,
+  QONAutomationsEventTypeSubscriptionProductChanged = 16
 } NS_SWIFT_NAME(Qonversion.AutomationsEventType);
