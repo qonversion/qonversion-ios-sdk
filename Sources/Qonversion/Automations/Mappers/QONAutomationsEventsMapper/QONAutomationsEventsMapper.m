@@ -59,6 +59,11 @@
   }
   
   NSString *eventName = notificationInfo[@"name"];
+  
+  if (eventName.length == 0) {
+    return nil;
+  }
+  
   QONAutomationsEventType eventType = self.eventsMap[eventName].integerValue;
   
   QONAutomationsEvent *event = [[QONAutomationsEvent alloc] initWithType:eventType date:date];

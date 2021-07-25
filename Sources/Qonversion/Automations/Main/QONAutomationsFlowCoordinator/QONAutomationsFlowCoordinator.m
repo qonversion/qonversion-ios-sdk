@@ -71,9 +71,10 @@
 
 - (void)handleEvent:(NSDictionary *)userInfo {
   dispatch_async(dispatch_get_main_queue(), ^{
+    QONAutomationsEvent *event = [self.eventsMapper eventFromNotification:userInfo];
+    
     BOOL shouldHandle = YES;
-    if (self.automationsDelegate && [self.automationsDelegate respondsToSelector:@selector(shouldHandleEvent:payload:)]) {
-      QONAutomationsEvent *event = [self.eventsMapper eventFromNotification:userInfo];
+    if (self.automationsDelegate && [self.automationsDelegate respondsToSelector:@selector(shouldHandleEvent:payload:)] && event) {
       shouldHandle = [self.automationsDelegate shouldHandleEvent:event payload:userInfo];
     }
     
