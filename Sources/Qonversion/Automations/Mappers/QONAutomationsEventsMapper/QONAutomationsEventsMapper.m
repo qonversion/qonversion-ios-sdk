@@ -52,19 +52,25 @@
     return nil;
   }
   
-  NSNumber *happened = notificationInfo[@"happened"];
+  NSNumber *happened = eventInfo[@"happened"];
   NSDate *date = [QNUtils dateFromTimestamp:happened];
   if (!date) {
     date = [NSDate date];
   }
   
-  NSString *eventName = notificationInfo[@"name"];
+  NSString *eventName = eventInfo[@"name"];
   
-  if (eventName.length == 0) {
+  if (![eventName isKindOfClass:[NSString class]] || eventName.length == 0) {
     return nil;
   }
   
-  QONAutomationsEventType eventType = self.eventsMap[eventName].integerValue;
+  NSNumber *eventNumber = self.eventsMap[eventName];
+  
+  if (!eventNumber) {
+    return nil;
+  }
+  
+  QONAutomationsEventType eventType = eventNumber.integerValue;
   
   QONAutomationsEvent *event = [[QONAutomationsEvent alloc] initWithType:eventType date:date];
   
