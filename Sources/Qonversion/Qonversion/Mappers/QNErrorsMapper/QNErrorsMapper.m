@@ -98,7 +98,6 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
     case 20099:
     case 20300:
     case 20303:
-    case 20399:
     case 20200:
       type = QNAPIErrorInternalError;
       break;
