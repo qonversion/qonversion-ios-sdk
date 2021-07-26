@@ -17,9 +17,14 @@
 }
 
 + (NSError *)errorWithCode:(QNAPIError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason {
-  NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString(message, nil),
-                         NSLocalizedFailureReasonErrorKey: NSLocalizedString(failureReason, nil)};
-  NSError *error = [NSError errorWithDomain:keyQNAPIErrorDomain code:errorCode userInfo:info];
+  NSMutableDictionary *info = [NSMutableDictionary new];
+  info[NSLocalizedDescriptionKey] = NSLocalizedString(message, nil);
+  
+  if (failureReason.length > 0) {
+    info[NSLocalizedFailureReasonErrorKey] = NSLocalizedString(failureReason, nil);
+  }
+  
+  NSError *error = [NSError errorWithDomain:keyQNAPIErrorDomain code:errorCode userInfo:[info copy]];
   
   return error;
 }

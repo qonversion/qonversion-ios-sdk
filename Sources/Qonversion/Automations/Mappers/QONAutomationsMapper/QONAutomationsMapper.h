@@ -15,7 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 @interface QONAutomationsMapper : NSObject
 
 - (nullable QONAutomationsScreen *)mapScreen:(NSDictionary *)dict;
-- (nullable NSError *)mapError:(NSDictionary *)error;
 - (NSArray<QONUserActionPoint *> *)mapUserActionPoints:(NSDictionary *)dict;
 
 @end

@@ -9,6 +9,8 @@
 #import "QNErrorsMapper.h"
 #import "QNErrors.h"
 
+static NSString *const kDefaultErrorMessage = @"Internal error occurred";
+
 @interface QNErrorsMapper ()
 
 @property (nonatomic, copy) NSDictionary<NSNumber *, NSString *> *errorsMap;
@@ -28,10 +30,29 @@
 }
 
 - (NSError *)errorFromRequestResult:(NSDictionary *)result {
-  if (![result isKindOfClass:[NSDictionary class]] || ![result[@"data"] isKindOfClass:[NSDictionary class]]) {
+  if (![result isKindOfClass:[NSDictionary class]]) {
     return nil;
   }
   
+  if ([result[@"data"] isKindOfClass:[NSDictionary class]]) {
+    return [self mapErrorFromData:result];
+  } else if ([result[@"error"] isKindOfClass:[NSDictionary class]]) {
+    return [self mapError:result];
+  }
+  
+  return nil;
+}
+
+- (NSError * _Nullable)mapError:(NSDictionary *)result {
+  NSDictionary *errorDict = result[@"error"];
+  NSString *errorMessage = errorDict[@"message"] ?: kDefaultErrorMessage;
+  
+  NSError *error = [QNErrors errorWithCode:QNAPIErrorInternalError message:errorMessage failureReason:nil];
+  
+  return error;
+}
+
+- (NSError * _Nullable)mapErrorFromData:(NSDictionary *)result {
   BOOL isSuccessRequest = [result[@"success"] boolValue];
   
   if (isSuccessRequest) {
@@ -42,7 +63,7 @@
   NSNumber *codeNumber = data[@"code"];
   
   if (!codeNumber) {
-    return nil;
+    return [QNErrors errorWithCode:QNAPIErrorInternalError message:kDefaultErrorMessage failureReason:nil];;
   }
   
   QNAPIError errorType = [self errorTypeFromCode:codeNumber];

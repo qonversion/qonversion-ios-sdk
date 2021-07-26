@@ -265,7 +265,7 @@
     NSError *apiError = [self.errorsMapper errorFromRequestResult:dict];
     
     if (apiError) {
-      QONVERSION_LOG(@"❌ API ERROR: %@", apiError);
+      QONVERSION_LOG(@"❌ Request failed: %@, error: %@", request.URL, apiError);
       completion(nil, apiError);
       return;
     }
