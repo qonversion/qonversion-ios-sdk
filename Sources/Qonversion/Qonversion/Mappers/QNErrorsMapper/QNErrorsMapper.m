@@ -85,7 +85,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
 }
 
 - (QNAPIError)errorTypeFromCode:(NSNumber *)errorCode {
-  QNAPIError type = QNAPIErrorUnknown;
+  QNAPIError type = QNAPIErrorInternalError;
   
   switch (errorCode.integerValue) {
     case 10000:
