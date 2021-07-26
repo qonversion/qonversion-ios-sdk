@@ -7,6 +7,8 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <OCMock/OCMock.h>
+#import "XCTestCase+Unmock.h"
 #import "QONAutomationsEventsMapper.h"
 #import "QNUserInfoService.h"
 
@@ -107,14 +109,19 @@
 
 - (void)testEventFromNotification_dateMappedForEmptyDate {
   // given
+  NSDate *currentDate = [NSDate date];
   NSDictionary *dict = @{@"qonv.event" : @{@"name": @"trial_started"}};
+  id dateMock = OCMClassMock([NSDate class]);
+  OCMStub([dateMock date]).andReturn(currentDate);
   
   // when
   QONAutomationsEvent *event = [self.mapper eventFromNotification:dict];
   
   // then
   XCTAssertNotNil(event);
-  XCTAssertNotNil(event.date);
+  XCTAssertTrue([event.date isEqualToDate:currentDate]);
+  
+  [self unmock:dateMock];
 }
 
 @end
