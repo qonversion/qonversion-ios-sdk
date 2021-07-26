@@ -62,6 +62,7 @@
 		89817AA526AAE8F9006BEDD1 /* QONAutomationsEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 89817AA326AAE8F9006BEDD1 /* QONAutomationsEvent.m */; };
 		89817AA826AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 89817AA626AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h */; };
 		89817AA926AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.m in Sources */ = {isa = PBXBuildFile; fileRef = 89817AA726AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.m */; };
+		89817AAB26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89817AAA26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		898971F02656622A00A24927 /* QNPaymentMode.h in Headers */ = {isa = PBXBuildFile; fileRef = 898971EF2656622A00A24927 /* QNPaymentMode.h */; };
 		898971F32656ABA500A24927 /* QNPurchase+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 898971F12656ABA500A24927 /* QNPurchase+Protected.h */; };
@@ -303,6 +304,7 @@
 		89817AA326AAE8F9006BEDD1 /* QONAutomationsEvent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsEvent.m; sourceTree = "<group>"; };
 		89817AA626AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONAutomationsEvent+Protected.h"; sourceTree = "<group>"; };
 		89817AA726AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "QONAutomationsEvent+Protected.m"; sourceTree = "<group>"; };
+		89817AAA26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsEventsMapperTests.m; sourceTree = "<group>"; };
 		898971EF2656622A00A24927 /* QNPaymentMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNPaymentMode.h; sourceTree = "<group>"; };
 		898971F12656ABA500A24927 /* QNPurchase+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNPurchase+Protected.h"; sourceTree = "<group>"; };
 		898971F52656C77100A24927 /* QNUserProduct+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QNUserProduct+Protected.h"; sourceTree = "<group>"; };
@@ -563,6 +565,7 @@
 				45FFA2DC24BE1015007EFB8F /* QNTestConstants.h */,
 				45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */,
 				45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */,
+				89817AAA26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m */,
 			);
 			path = QonversionTests;
 			sourceTree = "<group>";
@@ -1643,6 +1646,7 @@
 				45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */,
 				89A192A52604974800C3FCD9 /* QNUserInfoServiceTests.m in Sources */,
 				454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */,
+				89817AAB26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m in Sources */,
 				45FFA2DB24BE06C3007EFB8F /* APIClientTests.m in Sources */,
 				4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */,
 				454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */,
