@@ -6,11 +6,12 @@
 + (NSString *)messageForError:(QNAPIError)error {
   switch (error) {
     case QNAPIErrorIncorrectRequest:
-      return @"Request failed. ";
+      return @"Request failed.";
     case QNAPIErrorFailedReceiveData:
       return @"Could not receive data";
     case QNAPIErrorFailedParseResponse:
       return @"Could not parse response";
+    default: return @"Request failed.";
   }
   
   return @"";

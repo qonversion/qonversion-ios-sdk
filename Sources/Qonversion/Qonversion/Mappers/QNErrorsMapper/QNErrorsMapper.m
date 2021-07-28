@@ -69,7 +69,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   QNAPIError errorType = [self errorTypeFromCode:codeNumber];
   NSString *apiErrorMessage = data[@"message"];
   NSString *failureReason = [self messageForErrorType:errorType];
-  NSString *additionalMessage = [NSString stringWithFormat:@"Internal error code: %d.", codeNumber.integerValue];
+  NSString *additionalMessage = [NSString stringWithFormat:@"Internal error code: %li.", (long)codeNumber.integerValue];
   
   if (failureReason.length > 0) {
     additionalMessage = [NSString stringWithFormat:@"%@\n%@", additionalMessage, failureReason];
