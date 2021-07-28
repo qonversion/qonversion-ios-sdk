@@ -28,5 +28,6 @@ extern NSString *const keyQNPropertyFacebookAnonUserID;
 extern NSString *const keyQNPropertyUserID;
 
 extern NSString *const keyQNErrorDomain;
+extern NSString *const keyQNAPIErrorDomain;
 extern NSString *const kQNPlatform;
 extern NSString *const kQNOSName;
