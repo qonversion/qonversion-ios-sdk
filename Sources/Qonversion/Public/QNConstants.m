@@ -1,6 +1,6 @@
 #import "QNConstants.h"
 
-NSString *const keyQVersion = @"2.16.0";
+NSString *const keyQVersion = @"2.16.1";
 NSString *const keyQUnknownLibrary = @"unknown";
 NSString *const keyQUnknownVersion = @"unknown";
 NSString *const keyQInternalUserID = @"keyQInternalUserID";
@@ -12,6 +12,7 @@ NSString *const keyQNPropertyFacebookAnonUserID = @"_q_fb_anon_id";
 NSString *const keyQNPropertyUserID = @"_q_custom_user_id";
 
 NSString * const keyQNErrorDomain = @"com.qonversion.io";
+NSString * const keyQNAPIErrorDomain = @"com.qonversion.io.api";
 
 #if TARGET_OS_OSX
     NSString *const kQNPlatform = @"macOS";

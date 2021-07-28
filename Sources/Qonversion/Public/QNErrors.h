@@ -70,14 +70,56 @@ typedef NS_ERROR_ENUM(QNErrorDomain, QNError) {
 
 
 typedef NS_ERROR_ENUM(QNErrorDomain, QNAPIError) {
+  // Could not receive data
   QNAPIErrorFailedReceiveData = 0,
-  QNAPIErrorFailedParseResponse,
-  QNAPIErrorIncorrectRequest
+  
+  // Could not parse response
+  QNAPIErrorFailedParseResponse = 1,
+  
+  // Request failed
+  QNAPIErrorIncorrectRequest = 2,
+  
+  // Internal backend error
+  QNAPIErrorInternalError = 3,
+  
+  // An unknown error occurred
+  QNAPIErrorUnknown = 4,
+  
+  // Invalid credentials in request
+  QNAPIErrorInvalidCredentials = 5,
+  
+  // Invalid client uid received
+  QNAPIErrorInvalidClientUID = 6,
+  
+  // An unknonw client platform error
+  QNAPIErrorUnknownClientPlatform = 7,
+  
+  // Fraud purchase detected
+  QNAPIErrorFraudPurchase = 8,
+  
+  // Requested feature not supported
+  QNAPIErrorFeatureNotSupported = 9,
+  
+  // Apple Store error received
+  QNAPIErrorAppleStoreError = 10,
+  
+  // Invalid purchase error
+  QNAPIErrorPurchaseInvalid = 11,
+  
+  // Project config error. Update project settings on the Qonversion Dashboard
+  QNAPIErrorProjectConfigError  = 12,
+  
+  // Invalid Apple Store credentials error
+  QNAPIErrorInvalidStoreCredentials  = 13,
+  
+  // Receipt validation error
+  QNAPIErrorReceiptValidation = 14
 };
 
 @interface QNErrors: NSObject
 
 + (NSError *)errorWithCode:(QNAPIError)errorCode;
++ (NSError *)errorWithCode:(QNAPIError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason;
 + (NSError *)errorWithQNErrorCode:(QNError)errorCode;
 + (NSError *)errorFromURLDomainError:(NSError *)error;
 + (NSError *)errorFromTransactionError:(NSError *)error;
