@@ -22,7 +22,7 @@
   info[NSLocalizedDescriptionKey] = NSLocalizedString(message, nil);
   
   if (failureReason.length > 0) {
-    info[NSLocalizedFailureReasonErrorKey] = NSLocalizedString(failureReason, nil);
+    info[NSDebugDescriptionErrorKey] = NSLocalizedString(failureReason, nil);
   }
   
   NSError *error = [NSError errorWithDomain:keyQNAPIErrorDomain code:errorCode userInfo:[info copy]];
