@@ -62,9 +62,11 @@
     return;
   }
   
-  [[QNDevice current] setPushNotificationsToken:tokenString];
-  
-  [[Qonversion sharedInstance].productCenterManager launchWithCompletion:nil];
+  [[Qonversion sharedInstance].productCenterManager launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+    if (!error) {
+      [[QNDevice current] setPushNotificationsToken:tokenString];
+    }
+  }];
 }
 
 #if TARGET_OS_IOS

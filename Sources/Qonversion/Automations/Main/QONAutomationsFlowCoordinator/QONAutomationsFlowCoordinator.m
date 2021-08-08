@@ -63,7 +63,7 @@
 - (BOOL)handlePushNotification:(NSDictionary *)userInfo {
   BOOL shouldShowAutomation = [userInfo[@"qonv.pick_screen"] boolValue];
   if (shouldShowAutomation) {
-    [self showAutomationIfExists];
+    [self handleEvent:userInfo];
   }
   
   return shouldShowAutomation;
