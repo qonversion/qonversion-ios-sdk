@@ -19,10 +19,8 @@
   __block __weak QONAutomationsService *weakSelf = self;
   [self.apiClient automationWithID:automationID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     QONAutomationsScreen *screen = [weakSelf.mapper mapScreen:dict];
-    NSError *mappedError = [weakSelf.mapper mapError:dict];
-    NSError *screenError = mappedError ?: error ;
 
-    run_block_on_main(completion, screen, screenError);
+    run_block_on_main(completion, screen, error);
   }];
 }
 

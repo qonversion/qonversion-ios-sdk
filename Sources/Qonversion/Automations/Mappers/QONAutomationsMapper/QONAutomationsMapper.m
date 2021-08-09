@@ -27,20 +27,6 @@
   return screen;
 }
 
-- (nullable NSError *)mapError:(NSDictionary *)dict {
-  NSDictionary *errorDict = dict[@"error"];
-  NSString *errorMessage = errorDict[@"message"];
-  
-  NSError *error;
-  
-  if (errorMessage.length > 0) {
-    NSDictionary *info = @{NSLocalizedDescriptionKey: errorMessage};
-    error = [NSError errorWithDomain:keyQNErrorDomain code:QNAPIErrorIncorrectRequest userInfo:info];
-  }
-  
-  return error;
-}
-
 - (NSArray<QONUserActionPoint *> *)mapUserActionPoints:(NSDictionary *)dict {
   NSMutableArray *actionPoints = [NSMutableArray new];
   NSDictionary *data = [self getDataFromObject:dict];
