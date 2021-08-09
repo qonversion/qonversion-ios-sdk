@@ -6,21 +6,35 @@
 + (NSString *)messageForError:(QNAPIError)error {
   switch (error) {
     case QNAPIErrorIncorrectRequest:
-      return @"Request failed. ";
+      return @"Request failed.";
     case QNAPIErrorFailedReceiveData:
       return @"Could not receive data";
     case QNAPIErrorFailedParseResponse:
       return @"Could not parse response";
+    default: return @"Request failed.";
   }
   
   return @"";
+}
+
++ (NSError *)errorWithCode:(QNAPIError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason {
+  NSMutableDictionary *info = [NSMutableDictionary new];
+  info[NSLocalizedDescriptionKey] = NSLocalizedString(message, nil);
+  
+  if (failureReason.length > 0) {
+    info[NSDebugDescriptionErrorKey] = NSLocalizedString(failureReason, nil);
+  }
+  
+  NSError *error = [NSError errorWithDomain:keyQNAPIErrorDomain code:errorCode userInfo:[info copy]];
+  
+  return error;
 }
 
 + (NSError *)errorWithQNErrorCode:(QNError)errorCode {
   return [self errorWithQonversionErrorCode:errorCode userInfo:nil];
 }
 
-+ (NSError *)errorWithCode:(QNAPIError)errorCode  {
++ (NSError *)errorWithCode:(QNAPIError)errorCode {
   NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString([self messageForError:errorCode], nil)};
   
   return [self errorWithQonversionErrorCode:QNErrorInternalError userInfo:info];
