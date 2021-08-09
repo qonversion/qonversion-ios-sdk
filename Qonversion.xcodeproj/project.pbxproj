@@ -858,6 +858,7 @@
 		89B377AC25DE71CD009D3E0D /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				89817AA626AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h */,
 				8933FDE32615946D00F3B8C3 /* QONMacrosProcess */,
 				89B377AD25DE71CD009D3E0D /* QONUserActionPoint */,
 				89B377B025DE71CD009D3E0D /* QONAutomationsScreen */,
@@ -1155,7 +1156,6 @@
 				89B377F725DE71CD009D3E0D /* QNIntroEligibility+Protected.h */,
 				89B377F825DE71CD009D3E0D /* QNExperimentInfo+Protected.h */,
 				89B377F925DE71CD009D3E0D /* QNLaunchResult+Protected.h */,
-				89817AA626AAEB1E006BEDD1 /* QONAutomationsEvent+Protected.h */,
 			);
 			path = Protected;
 			sourceTree = "<group>";
