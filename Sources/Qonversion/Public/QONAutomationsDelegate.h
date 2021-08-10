@@ -36,7 +36,7 @@ NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
 
 /**
  Called when Automations screen is shown
- @param actionResult - executed action
+ @param screenID - shown screen Id
  */
 - (void)automationsDidShowScreen:(NSString * _Nonnull)screenID
 NS_SWIFT_NAME(automationsDidShowScreen(_:));
