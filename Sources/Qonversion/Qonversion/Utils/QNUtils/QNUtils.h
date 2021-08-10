@@ -55,5 +55,6 @@ dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 + (BOOL)isEmptyString:(NSString *)string;
 + (NSString *)convertHexData:(NSData *)tokenData;
 + (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval;
++ (NSDate *)dateFromTimestamp:(NSNumber *)timestamp;
 
 @end

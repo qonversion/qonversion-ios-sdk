@@ -12,6 +12,7 @@
 #import "QNEntitlement+Protected.h"
 #import "QNPurchase+Protected.h"
 #import "QNSubscription+Protected.h"
+#import "QNUtils.h"
 
 @interface QNUserInfoMapper ()
 
@@ -82,10 +83,10 @@
     NSString *userID = data[@"user"];
     
     NSNumber *startedTimestamp = data[@"started"];
-    NSDate *startedDate = [self dateFromTimestamp:startedTimestamp];
+    NSDate *startedDate = [QNUtils dateFromTimestamp:startedTimestamp];
   
     NSNumber *expirationTimestamp = data[@"expires"];
-    NSDate *expirationDate = [self dateFromTimestamp:expirationTimestamp];
+    NSDate *expirationDate = [QNUtils dateFromTimestamp:expirationTimestamp];
     
     NSArray *purchasesData = data[@"purchases"];
     NSArray *purchases = [self mapPurchases:purchasesData];
@@ -126,10 +127,10 @@
     NSNumber *amount = data[@"amount"];
     
     NSNumber *purchasedTimestamp = data[@"purchased"];
-    NSDate *purchasedDate = [self dateFromTimestamp:purchasedTimestamp];
+    NSDate *purchasedDate = [QNUtils dateFromTimestamp:purchasedTimestamp];
     
     NSNumber *createdTimestamp = data[@"created"];
-    NSDate *createdDate = [self dateFromTimestamp:createdTimestamp];
+    NSDate *createdDate = [QNUtils dateFromTimestamp:createdTimestamp];
     
     NSDictionary *productData = data[@"product"];
     QNUserProduct *userProduct = [self mapProduct:productData];
@@ -202,13 +203,13 @@
   NSString *object = subscriptionData[@"object"];
   
   NSNumber *startedTimestamp = subscriptionData[@"started"];
-  NSDate *startedDate = [self dateFromTimestamp:startedTimestamp];
+  NSDate *startedDate = [QNUtils dateFromTimestamp:startedTimestamp];
   
   NSNumber *currentPeriodStartTimestamp = subscriptionData[@"current_period_start"];
-  NSDate *currentPeriodStartDate = [self dateFromTimestamp:currentPeriodStartTimestamp];
+  NSDate *currentPeriodStartDate = [QNUtils dateFromTimestamp:currentPeriodStartTimestamp];
   
   NSNumber *currentPeriodEndTimestamp = subscriptionData[@"current_period_end"];
-  NSDate *currentPeriodEndDate = [self dateFromTimestamp:currentPeriodEndTimestamp];
+  NSDate *currentPeriodEndDate = [QNUtils dateFromTimestamp:currentPeriodEndTimestamp];
   
   NSString *currentPeriodTypeRawValue = subscriptionData[@"current_period_type"];
   NSNumber *currentPeriodTypeNumber = self.currentPeriodTypes[currentPeriodTypeRawValue];
@@ -228,16 +229,6 @@
                                                              renewState:renewState];
   
   return subscription;
-}
-
-- (NSDate *)dateFromTimestamp:(NSNumber *)timestamp {
-  NSDate *date;
-  
-  if (timestamp && ![timestamp isKindOfClass:[NSNull class]]) {
-    date = [NSDate dateWithTimeIntervalSince1970:timestamp.floatValue];
-  }
-  
-  return date;
 }
 
 - (NSDictionary *)getDataFromObject:(NSDictionary *)obj {
