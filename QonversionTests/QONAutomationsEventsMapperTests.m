@@ -21,7 +21,6 @@
 @implementation QONAutomationsEventsMapperTests
 
 - (void)setUp {
-  
   self.mapper = [QONAutomationsEventsMapper new];
 }
 
