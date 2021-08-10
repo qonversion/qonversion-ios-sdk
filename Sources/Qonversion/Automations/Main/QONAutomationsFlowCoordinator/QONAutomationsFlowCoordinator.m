@@ -20,12 +20,15 @@
 #import "QONUserActionPoint.h"
 #import "QONAutomations.h"
 #import "QNUtils.h"
+#import "QONAutomationsEvent.h"
+#import "QONAutomationsEventsMapper.h"
 
 @interface QONAutomationsFlowCoordinator() <QONAutomationsViewControllerDelegate>
 
 @property (nonatomic, weak) id<QONAutomationsDelegate> automationsDelegate;
 @property (nonatomic, strong) QONAutomationsFlowAssembly *assembly;
 @property (nonatomic, strong) QONAutomationsService *automationsService;
+@property (nonatomic, strong) QONAutomationsEventsMapper *eventsMapper;
 
 @end
 
@@ -47,6 +50,7 @@
   if (self) {
     _assembly = [QONAutomationsFlowAssembly new];
     _automationsService = [_assembly automationsService];
+    _eventsMapper = [_assembly eventsMapper];
   }
   
   return self;
@@ -59,10 +63,27 @@
 - (BOOL)handlePushNotification:(NSDictionary *)userInfo {
   BOOL shouldShowAutomation = [userInfo[@"qonv.pick_screen"] boolValue];
   if (shouldShowAutomation) {
-    [self showAutomationIfExists];
+    [self handleEvent:userInfo];
   }
   
   return shouldShowAutomation;
+}
+
+- (void)handleEvent:(NSDictionary *)userInfo {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    QONAutomationsEvent *event = [self.eventsMapper eventFromNotification:userInfo];
+    
+    BOOL shouldHandle = YES;
+    if (self.automationsDelegate && [self.automationsDelegate respondsToSelector:@selector(shouldHandleEvent:payload:)] && event) {
+      shouldHandle = [self.automationsDelegate shouldHandleEvent:event payload:userInfo];
+    }
+    
+    if (!shouldHandle) {
+      return;
+    }
+    
+    [self showAutomationIfExists];
+  });
 }
 
 - (void)showAutomationIfExists {

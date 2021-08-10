@@ -24,4 +24,14 @@
   return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > dayInSeconds;
 }
 
++ (NSDate *)dateFromTimestamp:(NSNumber *)timestamp {
+  NSDate *date;
+  
+  if (timestamp && [timestamp isKindOfClass:[NSNumber class]]) {
+    date = [NSDate dateWithTimeIntervalSince1970:timestamp.floatValue];
+  }
+  
+  return date;
+}
+
 @end
