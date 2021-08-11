@@ -6,8 +6,6 @@
 //  Copyright © 2021 Qonversion Inc. All rights reserved.
 //
 
-#import <Qonversion/Qonversion.h>
-#if TARGET_OS_IOS
 #import "QONAutomationsEvent.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -19,4 +17,4 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
-#endif
+

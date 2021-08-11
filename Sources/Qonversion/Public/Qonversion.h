@@ -11,6 +11,8 @@
 #import "QNExperimentInfo.h"
 #import "QNExperimentGroup.h"
 #import "QNUser.h"
+#import "QNErrors.h"
+#import "QNStoreKitSugare.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
