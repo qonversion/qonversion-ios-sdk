@@ -154,7 +154,7 @@
   [self finishAndCloseAutomationsWithActionResult:action];
 }
 
-- (void)handleDeepLinkAction:(QONActionResult *)action {
+- (void)handleDeepLinkAction:(QONActionResult *)action NS_EXTENSION_UNAVAILABLE("Automations is unavailable for extensions") {
   NSString *deeplinkString = action.parameters[kAutomationsValueKey];
   if (deeplinkString.length > 0) {
     NSURL *url = [NSURL URLWithString:deeplinkString];
