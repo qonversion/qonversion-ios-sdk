@@ -160,7 +160,7 @@
 
 #pragma mark - Private
 
-- (UIViewController *)topLevelViewController {
+- (UIViewController *)topLevelViewController NS_EXTENSION_UNAVAILABLE("Automations is unavailable for extensions") {
   UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;
 
   while (topController.presentedViewController) {
