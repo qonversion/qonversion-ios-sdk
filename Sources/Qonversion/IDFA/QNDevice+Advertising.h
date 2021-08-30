@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface NSObject (Advertising)
+@interface QNDevice (Advertising)
 
 - (NSString *)obtainAdvertisingID;
 

@@ -1,10 +1,12 @@
 PODS:
   - OCMock (3.7.1)
-  - Qonversion/NoIdfa (2.17.2)
+  - Qonversion (2.17.2):
+    - Qonversion/Main (= 2.17.2)
+  - Qonversion/Main (2.17.2)
 
 DEPENDENCIES:
   - OCMock
-  - Qonversion/NoIdfa (from `./`)
+  - Qonversion (from `./`)
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs.git:
@@ -18,6 +20,6 @@ SPEC CHECKSUMS:
   OCMock: 75fbeaa46a9b11f8c182bbb1d1f7e9a35ccc9955
   Qonversion: 2b3f02e0a78f73d89fca81f500f5556f2733ebab
 
-PODFILE CHECKSUM: 95736f3dd3c4f4b0669405a9e8bcd2200e48041e
+PODFILE CHECKSUM: 5d41f6e75e04ae8bca226ba334ceffa7b0736d79
 
 COCOAPODS: 1.10.0
