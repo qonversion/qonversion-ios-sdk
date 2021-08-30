@@ -1,5 +1,6 @@
 Pod::Spec.new do |s|
   excluded_files = ['Sources/Qonversion/Automations', 'Sources/Qonversion/Public/QONAutomations*.{h,m}', 'Sources/Qonversion/Public/QONActionResult.{h,m}']
+  idfa_exclude_files = ['Sources/Qonversion/IDFA']
   s.name         = 'Qonversion'
   s.version      = '2.17.2'
   s.summary      = 'qonversion.io'
@@ -10,10 +11,6 @@ Pod::Spec.new do |s|
   s.homepage                  = 'https://github.com/qonversion/qonversion-ios-sdk'
   s.license                   = { :type => 'MIT', :file => 'LICENSE' }
   s.author                    = { 'Qonversion Inc.' => 'hi@qonversion.io' }
-  s.source_files              = 'Sources/Qonversion/**/*.{h,m}'
-  s.osx.exclude_files         = excluded_files
-  s.tvos.exclude_files        = excluded_files
-  s.watchos.exclude_files     = excluded_files
   s.source                    = { :git => 'https://github.com/qonversion/qonversion-ios-sdk.git', :tag => s.version.to_s }
   s.framework                 = 'StoreKit'
   s.ios.deployment_target     = '9.0'
@@ -23,4 +20,20 @@ Pod::Spec.new do |s|
   s.ios.frameworks            = ['UIKit', 'WebKit']
   s.requires_arc              = true
   
+  s.default_subspecs = 'Main'
+  
+  s.subspec 'Main' do |ss|
+    ss.source_files              = 'Sources/Qonversion/**/*.{h,m}'
+    ss.osx.exclude_files         = excluded_files
+    ss.tvos.exclude_files        = excluded_files
+    ss.watchos.exclude_files     = excluded_files
+  end
+
+  s.subspec 'NoIdfa' do |sss|
+    sss.source_files              = 'Sources/Qonversion/**/*.{h,m}'
+    sss.osx.exclude_files         = excluded_files + idfa_exclude_files
+    sss.tvos.exclude_files        = excluded_files + idfa_exclude_files
+    sss.watchos.exclude_files     = excluded_files + idfa_exclude_files
+    sss.ios.exclude_files         = idfa_exclude_files
+  end
 end
