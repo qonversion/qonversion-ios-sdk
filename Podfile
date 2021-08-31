@@ -11,6 +11,7 @@ end
 
 target 'Sample' do
 platform :ios, 12.0
+pod 'Qonversion', :path => './'
 end
 
 
@@ -19,4 +20,3 @@ post_install do |installer|
     puts target.name
   end
 end
-
