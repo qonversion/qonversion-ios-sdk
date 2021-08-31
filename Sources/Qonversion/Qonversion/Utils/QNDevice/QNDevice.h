@@ -4,25 +4,25 @@
 
 + (instancetype)current;
 
-@property (readonly, strong, nonatomic) NSString *manufacturer;
-@property (readonly, strong, nonatomic) NSString *osName;
-@property (readonly, strong, nonatomic) NSString *osVersion;
-@property (readonly, strong, nonatomic) NSString *model;
-@property (readonly, strong, nonatomic) NSString *appVersion;
+@property (readonly, copy, nonatomic) NSString *manufacturer;
+@property (readonly, copy, nonatomic) NSString *osName;
+@property (readonly, copy, nonatomic) NSString *osVersion;
+@property (readonly, copy, nonatomic) NSString *model;
+@property (readonly, copy, nonatomic) NSString *appVersion;
 
-@property (readonly, strong, nonatomic) NSString *carrier;
-@property (readonly, strong, nonatomic) NSString *country;
+@property (readonly, copy, nonatomic) NSString *carrier;
+@property (readonly, copy, nonatomic) NSString *country;
 
-@property (readonly, strong, nonatomic) NSString *language;
-@property (readonly, strong, nonatomic) NSString *timezone;
-@property (readonly, strong, nonatomic) NSString *advertiserID;
-@property (readonly, strong, nonatomic) NSString *vendorID;
+@property (readonly, copy, nonatomic) NSString *language;
+@property (readonly, copy, nonatomic) NSString *timezone;
+@property (readonly, copy, nonatomic) NSString *advertiserID;
+@property (readonly, copy, nonatomic) NSString *vendorID;
 
-@property (readonly, strong, nonatomic) NSString *afUserID;
-@property (readonly, strong, nonatomic) NSString *adjustUserID;
-@property (readonly, strong, nonatomic) NSString *fbAnonID;
+@property (readonly, copy, nonatomic) NSString *afUserID;
+@property (readonly, copy, nonatomic) NSString *adjustUserID;
+@property (readonly, copy, nonatomic) NSString *fbAnonID;
 
-@property (readonly, strong, nonatomic) NSString *installDate;
+@property (readonly, copy, nonatomic) NSString *installDate;
 @property (readonly, copy, nonatomic) NSString *pushNotificationsToken;
 
 - (void)setPushNotificationsToken:(NSString *)token;

@@ -3,6 +3,7 @@
 
 #import "QNDevice.h"
 #import "QNConstants.h"
+#import "QNDevice+Advertising.h"
 
 // expose private methods for unit testing
 @interface QNDevice (Tests)
@@ -36,14 +37,6 @@
 
 - (void)testManufacturer {
     XCTAssertEqualObjects(@"Apple", _device.manufacturer);
-}
-
-- (void)testAdvertiserID {
-    id mockDeviceInfo = OCMClassMock([QNDevice class]);
-    [[mockDeviceInfo expect] getAdvertiserID:5];
-    XCTAssertEqualObjects(nil, _device.advertiserID);
-    [mockDeviceInfo verify];
-    [mockDeviceInfo stopMocking];
 }
 
 - (void)testAppVersion {

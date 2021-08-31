@@ -1,16 +1,25 @@
 PODS:
   - OCMock (3.7.1)
+  - Qonversion (2.17.2):
+    - Qonversion/Main (= 2.17.2)
+  - Qonversion/Main (2.17.2)
 
 DEPENDENCIES:
   - OCMock
+  - Qonversion (from `./`)
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs.git:
     - OCMock
 
+EXTERNAL SOURCES:
+  Qonversion:
+    :path: "./"
+
 SPEC CHECKSUMS:
   OCMock: 75fbeaa46a9b11f8c182bbb1d1f7e9a35ccc9955
+  Qonversion: 2b3f02e0a78f73d89fca81f500f5556f2733ebab
 
-PODFILE CHECKSUM: 6c93934f6a5ad39ddcaebb1c7c2f9b6397c6029f
+PODFILE CHECKSUM: 5d41f6e75e04ae8bca226ba334ceffa7b0736d79
 
 COCOAPODS: 1.10.0

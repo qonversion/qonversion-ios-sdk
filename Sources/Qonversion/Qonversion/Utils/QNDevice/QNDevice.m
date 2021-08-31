@@ -21,6 +21,7 @@ static NSString * const kPushTokenKey = @"pushToken";
 
 @property (readwrite, copy, nonatomic) NSString *pushNotificationsToken;
 @property (strong, nonatomic) id<QNLocalStorage> persistentStorage;
+@property (assign, nonatomic) BOOL idfaProhibited;
 
 @end
 
@@ -48,6 +49,7 @@ static NSString * const kPushTokenKey = @"pushToken";
     
     NSString *token = [_persistentStorage loadObjectForKey:kPushTokenKey];
     _pushNotificationsToken = [token isKindOfClass:[NSString class]] ? token : nil;
+    _idfaProhibited = NO;
   }
   
   return self;
@@ -166,13 +168,15 @@ static NSString * const kPushTokenKey = @"pushToken";
 }
 
 - (NSString *)advertiserID {
-  if (!_advertiserID) {
-    NSString *advertiserId = [QNDevice getAdvertiserID:5];
-    if (advertiserId != nil &&
-        ![advertiserId isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
-      _advertiserID = advertiserId;
+  if (!_advertiserID && !self.idfaProhibited) {
+    SEL selector = NSSelectorFromString(@"obtainAdvertisingID");
+    if ([[QNDevice current] respondsToSelector:selector]) {
+      _advertiserID = ((NSString * (*)(id, SEL))[[QNDevice current] methodForSelector:selector])([QNDevice current], selector);
+    } else {
+      self.idfaProhibited = YES;
     }
   }
+  
   return _advertiserID;
 }
 
@@ -227,9 +231,7 @@ static NSString * const kPushTokenKey = @"pushToken";
 }
 
 - (nullable NSString *)fbAnonID {
-  NSString *advertiserId = [QNDevice getAdvertiserID:2];
-  
-  if (advertiserId && ![advertiserId isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
+  if (self.advertiserID && ![self.advertiserID isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
     return nil;
   } else {
     Class FBSDKAppEvents = NSClassFromString(@"FBSDKAppEvents");
@@ -290,37 +292,6 @@ static NSString * const kPushTokenKey = @"pushToken";
     }
   }
   return _vendorID;
-}
-
-+ (NSString*)getAdvertiserID:(int) maxAttempts {
-  Class ASIdentifierManager = NSClassFromString(@"ASIdentifierManager");
-  SEL sharedManager = NSSelectorFromString(@"sharedManager");
-  SEL advertisingIdentifier = NSSelectorFromString(@"advertisingIdentifier");
-  if (ASIdentifierManager && sharedManager && advertisingIdentifier) {
-    id (*imp1)(id, SEL) = (id (*)(id, SEL))[ASIdentifierManager methodForSelector:sharedManager];
-    id manager = nil;
-    NSUUID *adid = nil;
-    NSString *identifier = nil;
-    if (imp1) {
-      manager = imp1(ASIdentifierManager, sharedManager);
-    }
-    NSUUID* (*imp2)(id, SEL) = (NSUUID* (*)(id, SEL))[manager methodForSelector:advertisingIdentifier];
-    if (imp2) {
-      adid = imp2(manager, advertisingIdentifier);
-    }
-    if (adid) {
-      identifier = [adid UUIDString];
-    }
-    if (identifier == nil && maxAttempts > 0) {
-      // Try again every 5 seconds
-      [NSThread sleepForTimeInterval:5.0];
-      return [QNDevice getAdvertiserID:maxAttempts - 1];
-    } else {
-      return identifier;
-    }
-  } else {
-    return nil;
-  }
 }
 
 + (NSString*)getVendorID:(int) maxAttempts {
