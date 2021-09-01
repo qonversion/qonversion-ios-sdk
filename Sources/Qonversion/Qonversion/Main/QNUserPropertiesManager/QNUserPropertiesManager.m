@@ -5,8 +5,6 @@
 #import "QNAPIClient.h"
 #import "QNDevice.h"
 #import "QNInternalConstants.h"
-#import "QNConstants.h"
-#import "QNUtils.h"
 #if !TARGET_OS_OSX
 #import <UIKit/UIKit.h>
 #else
