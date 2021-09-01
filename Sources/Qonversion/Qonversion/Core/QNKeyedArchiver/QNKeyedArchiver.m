@@ -12,12 +12,15 @@
 
 + (nullable NSData *)archivedDataWithObject:(nonnull id)object {
   NSData *data;
-  
-  if (@available(macOS 10.13, iOS 11.0, watchOS 5.0, tvOS 11.0, *)) {
+#if TARGET_OS_WATCH
+  data = [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:NO error:nil];
+#else
+  if (@available(macOS 10.13, iOS 11.0, tvOS 11.0, *)) {
     data = [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:NO error:nil];
   } else {
     data = [NSKeyedArchiver archivedDataWithRootObject:object];
   }
+#endif
   
   return data;
 }
@@ -25,11 +28,15 @@
 + (nullable id)unarchiveObjectWithData:(nonnull NSData *)data ofClass:(nonnull Class)class {
   id object;
 
-  if (@available(macOS 10.13, iOS 11.0, watchOS 5.0, tvOS 11.0, *)) {
+#if TARGET_OS_WATCH
+  object = [NSKeyedUnarchiver unarchivedObjectOfClass:class fromData:data error:nil];
+#else
+  if (@available(macOS 10.13, iOS 11.0, tvOS 11.0, *)) {
     object = [NSKeyedUnarchiver unarchivedObjectOfClass:class fromData:data error:nil];
   } else {
     object = [NSKeyedUnarchiver unarchiveObjectWithData:data];
   }
+#endif
 
   return object;
 }
