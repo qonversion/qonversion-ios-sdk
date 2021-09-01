@@ -110,7 +110,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (QNLaunchResult * _Nullable)actualCachedLaunchResult {
-  QNLaunchResult *result = [self.persistentStorage loadObjectForKey:kLaunchResult ofClass:[QNLaunchResult class]];
+  QNLaunchResult *result = [self.persistentStorage loadObjectForKey:kLaunchResult];
   NSTimeInterval cachedLaunchResultTimeStamp = [self cachedLaunchResultTimeStamp];
   BOOL isCacheOutdated = [QNUtils isCacheOutdated:cachedLaunchResultTimeStamp];
   

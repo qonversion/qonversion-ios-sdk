@@ -1,5 +1,4 @@
 #import "QNInMemoryStorage.h"
-#import "QNUtils.h"
 
 static NSString *QNInMemoryStorageDefaultKey = @"inMemoryStorageDefaultKey";
 

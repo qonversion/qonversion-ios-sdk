@@ -13,8 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface QNKeyedArchiver : NSObject
 
 + (nullable NSData *)archivedDataWithObject:(nonnull id)object;
-
-+ (nullable id)unarchiveObjectWithData:(nonnull NSData *)data ofClass:(nonnull Class)class;
++ (nullable id)unarchiveObjectWithData:(nonnull NSData *)data;
 
 @end
 

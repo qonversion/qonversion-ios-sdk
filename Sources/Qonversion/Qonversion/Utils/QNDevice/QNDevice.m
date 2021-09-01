@@ -47,7 +47,7 @@ static NSString * const kPushTokenKey = @"pushToken";
     storage.userDefaults = [[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName];
     _persistentStorage = storage;
     
-    NSString *token = [_persistentStorage loadObjectForKey:kPushTokenKey ofClass:[NSString class]];
+    NSString *token = [_persistentStorage loadObjectForKey:kPushTokenKey];
     _pushNotificationsToken = [token isKindOfClass:[NSString class]] ? token : nil;
     _idfaProhibited = NO;
   }

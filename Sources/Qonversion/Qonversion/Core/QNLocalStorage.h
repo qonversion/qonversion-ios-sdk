@@ -8,12 +8,12 @@
 - (void)storeObject:(id)object
              forKey:(NSString *)key;
 
-- (id)loadObjectOfClass:(Class)class;
-- (void)loadObjectWithCompletion:(void (^)(id))completion ofClass:(Class)class;
+- (id)loadObject;
+- (void)loadObjectWithCompletion:(void (^)(id))completion;
 
-- (id)loadObjectForKey:(NSString *)key ofClass:(Class)class;
+- (id)loadObjectForKey:(NSString *)key;
 - (void)loadObjectForKey:(NSString *)key
-          withCompletion:(void(^)(id))completion ofClass:(Class)class;
+          withCompletion:(void(^)(id))completion;
 
 - (void)removeObject;
 - (void)removeObjectForKey:(NSString *)key;

@@ -165,7 +165,7 @@
 
 - (void)processStoredRequests {
   NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
-  NSArray *storedRequests = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData ofClass:[NSArray class]];
+  NSArray *storedRequests = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData];
   
   if (![storedRequests isKindOfClass:[NSArray class]]) {
     [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
@@ -297,7 +297,7 @@
   NSString *requestString = [components.path stringByReplacingOccurrencesOfString:@"/" withString:@"" options:NSCaseInsensitiveSearch range:(NSRange){0, 1}];
   if ([self.retriableRequests containsObject:requestString]) {
     NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
-    NSArray *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData ofClass:[NSArray class]] ?: @[];
+    NSArray *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData] ?: @[];
     NSMutableArray *storedRequests = [unarchivedData mutableCopy];
     [storedRequests addObject:request];
     
