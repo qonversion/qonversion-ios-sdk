@@ -1,5 +1,4 @@
 #import "QNProductCenterManager.h"
-#import "QNInMemoryStorage.h"
 #import "QNUserDefaultsStorage.h"
 #import "QNStoreKitService.h"
 #import "QNAPIClient.h"
@@ -111,7 +110,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (QNLaunchResult * _Nullable)actualCachedLaunchResult {
-  QNLaunchResult *result = [self.persistentStorage loadObjectForKey:kLaunchResult];
+  QNLaunchResult *result = [self.persistentStorage loadObjectForKey:kLaunchResult ofClass:[QNLaunchResult class]];
   NSTimeInterval cachedLaunchResultTimeStamp = [self cachedLaunchResultTimeStamp];
   BOOL isCacheOutdated = [QNUtils isCacheOutdated:cachedLaunchResultTimeStamp];
   

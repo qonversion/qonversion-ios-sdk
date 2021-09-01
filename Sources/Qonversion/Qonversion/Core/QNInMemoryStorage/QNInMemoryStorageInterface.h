@@ -1,19 +1,26 @@
-#import "QNUtils.h"
+//
+//  QNInMemoryStorageInterface.h
+//  Qonversion
+//
+//  Created by Surik Sarkisyan on 01.09.2021.
+//  Copyright © 2021 Qonversion Inc. All rights reserved.
+//
+
 #import <Foundation/Foundation.h>
 
-@protocol QNLocalStorage <NSObject>
-@required
+@protocol QNInMemoryStorageInterface <NSObject>
+
 - (void)storeObject:(id)object;
 
 - (void)storeObject:(id)object
              forKey:(NSString *)key;
 
-- (id)loadObjectOfClass:(Class)class;
-- (void)loadObjectWithCompletion:(void (^)(id))completion ofClass:(Class)class;
+- (id)loadObject;
+- (void)loadObjectWithCompletion:(void (^)(id))completion;
 
-- (id)loadObjectForKey:(NSString *)key ofClass:(Class)class;
+- (id)loadObjectForKey:(NSString *)key;
 - (void)loadObjectForKey:(NSString *)key
-          withCompletion:(void(^)(id))completion ofClass:(Class)class;
+          withCompletion:(void(^)(id))completion;
 
 - (void)removeObject;
 - (void)removeObjectForKey:(NSString *)key;

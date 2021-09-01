@@ -1,4 +1,5 @@
 #import "QNUserDefaultsStorage.h"
+#import "QNKeyedArchiver.h"
 
 static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefaultsDefaultKey";
 
@@ -9,7 +10,7 @@ static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefau
 }
 
 - (void)storeObject:(id)object forKey:(NSString *)key {
-  [self.userDefaults setObject:[self archivedDataWith:object] forKey:key];
+  [self.userDefaults setObject:[QNKeyedArchiver archivedDataWithObject:object] forKey:key];
   [self.userDefaults synchronize];
 }
 
@@ -17,18 +18,18 @@ static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefau
   [self.userDefaults setDouble:value forKey:key];
 }
 
-- (id)loadObject {
-  return [self loadObjectForKey:QNUserDefaultsStorageDefaultKey];
+- (id)loadObjectOfClass:(Class)class {
+  return [self loadObjectForKey:QNUserDefaultsStorageDefaultKey ofClass:class];
 }
 
-- (void)loadObjectWithCompletion:(void (^)(id))completion {
-  [self loadObjectForKey:QNUserDefaultsStorageDefaultKey withCompletion:completion];
+- (void)loadObjectWithCompletion:(void (^)(id))completion ofClass:(Class)class {
+  [self loadObjectForKey:QNUserDefaultsStorageDefaultKey withCompletion:completion ofClass:class];
 }
 
-- (id)loadObjectForKey:(NSString *)key {
+- (id)loadObjectForKey:(NSString *)key ofClass:(Class)class {
   NSData *data = [self.userDefaults objectForKey:key];
   if (data) {
-    return [self unarchiveObjectWithData:data];
+    return [QNKeyedArchiver unarchiveObjectWithData:data ofClass:class];
   }
   
   return nil;
@@ -46,8 +47,8 @@ static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefau
   return [self.userDefaults doubleForKey:key];
 }
 
-- (void)loadObjectForKey:(NSString *)key withCompletion:(void (^)(id))completion {
-  completion([self loadObjectForKey:key]);
+- (void)loadObjectForKey:(NSString *)key withCompletion:(void (^)(id))completion ofClass:(Class)class {
+  completion([self loadObjectForKey:key ofClass:class]);
 }
 
 - (void)removeObject {
@@ -56,14 +57,6 @@ static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefau
 
 - (void)removeObjectForKey:(NSString *)key {
   [self.userDefaults removeObjectForKey:key];
-}
-
-- (NSData *)archivedDataWith:(id)object {
-  return [NSKeyedArchiver archivedDataWithRootObject:object];
-}
-
-- (id)unarchiveObjectWithData:(NSData *)data {
-  return [NSKeyedUnarchiver unarchiveObjectWithData:data];
 }
 
 @end

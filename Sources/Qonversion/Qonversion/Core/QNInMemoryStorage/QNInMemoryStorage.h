@@ -1,6 +1,6 @@
-#import "QNLocalStorage.h"
+#import "QNInMemoryStorageInterface.h"
 
-@interface QNInMemoryStorage : NSObject <QNLocalStorage>
+@interface QNInMemoryStorage : NSObject <QNInMemoryStorageInterface>
 
 + (instancetype)sharedInstance;
 
