@@ -10,6 +10,8 @@
 
 @implementation QNKeyedArchiver
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 + (nullable NSData *)archivedDataWithObject:(nonnull id)object {
   NSData *data = [NSKeyedArchiver archivedDataWithRootObject:object];
   
@@ -21,5 +23,6 @@
 
   return object;
 }
+#pragma GCC diagnostic pop
 
 @end
