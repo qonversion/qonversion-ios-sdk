@@ -253,7 +253,7 @@
 		459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionMapperTests.m; sourceTree = "<group>"; };
 		459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+TestJSON.h"; sourceTree = "<group>"; };
 		459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+TestJSON.m"; sourceTree = "<group>"; };
-		45CC2EF4244085E4005CD107 /* tests.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = tests.yml; sourceTree = "<group>"; };
+		45CC2EF4244085E4005CD107 /* checks.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = checks.yml; sourceTree = "<group>"; };
 		45FFA2DA24BE06C3007EFB8F /* APIClientTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = APIClientTests.m; sourceTree = "<group>"; };
 		45FFA2DC24BE1015007EFB8F /* QNTestConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNTestConstants.h; sourceTree = "<group>"; };
 		45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNTestConstants.m; sourceTree = "<group>"; };
@@ -636,7 +636,7 @@
 		45CC2EF2244085E4005CD107 /* workflows */ = {
 			isa = PBXGroup;
 			children = (
-				45CC2EF4244085E4005CD107 /* tests.yml */,
+				45CC2EF4244085E4005CD107 /* checks.yml */,
 			);
 			path = workflows;
 			sourceTree = "<group>";
