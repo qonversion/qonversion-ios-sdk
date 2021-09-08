@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="fastlane.lanes">
+    
+    
+    
+      
+      <testcase classname="fastlane.lanes" name="0: cocoapods" time="1.478704">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="1: run_tests" time="24.896968">
+        
+      </testcase>
+    
+  </testsuite>
+</testsuites>
