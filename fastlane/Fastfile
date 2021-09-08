@@ -14,3 +14,25 @@ lane :tests do
     devices: ["iPhone 7"]
   )
 end
+
+lane :bump do |options|
+  new_version = options[:version]
+
+  update_plist(
+    plist_path: "Framework/Info.plist",
+    block: proc do |plist|
+      plist[:CFBundleShortVersionString] = new_version
+    end
+  )
+
+  version_bump_podspec(
+    path: "Qonversion.podspec", 
+    version_number: new_version
+  )
+
+  file_path = Dir['../**/QNConstants.m'].first
+  file = File.read(file_path)
+  new_content = file.gsub(/NSString \*const keyQVersion = @".*";/, "NSString *const keyQVersion = @\"#{new_version}\";")
+  File.open(file_path, 'w') { |line| line.puts new_content }
+
+end
