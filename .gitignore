@@ -27,6 +27,10 @@ DerivedData
 *.hmap
 *.ipa
 
+## Fastlane
+**/fastlane/report.xml
+**/fastlane/README.md
+
 ## Other
 resetXcode.sh
 *.moved-aside
