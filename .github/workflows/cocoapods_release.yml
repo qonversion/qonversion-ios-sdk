@@ -1,0 +1,13 @@
+name: CocoaPods Release
+
+on:
+  workflow_dispatch
+    
+jobs:
+  cocoapods-release:
+    runs-on: macos-latest
+
+    steps:
+      - name: CocoaPods Release
+        run: |
+          echo test action
