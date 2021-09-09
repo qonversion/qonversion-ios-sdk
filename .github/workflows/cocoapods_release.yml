@@ -8,6 +8,11 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - uses: actions/checkout@v2
       - name: CocoaPods Release
+        with:
+          ref: main
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
         run: |
-          echo test action
+          pod trunk push Qonversion.podspec
