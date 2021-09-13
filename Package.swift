@@ -2,61 +2,33 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
+import Foundation
 
-let sources: [String] = ["Qonversion/Automations/Constants",
-                         "Qonversion/Automations/Main",
-                         "Qonversion/Automations/Main/QONAutomationsActionsHandler",
-                         "Qonversion/Automations/Main/QONAutomationsFlowAssembly",
-                         "Qonversion/Automations/Main/QONAutomationsFlowCoordinator",
-                         "Qonversion/Automations/Mappers",
-                         "Qonversion/Automations/Mappers/QONAutomationsEventsMapper",
-                         "Qonversion/Automations/Mappers/QONAutomationsMapper",
-                         "Qonversion/Automations/Models",
-                         "Qonversion/Automations/Models/QONAutomationsScreen",
-                         "Qonversion/Automations/Models/QONMacrosProcess",
-                         "Qonversion/Automations/Models/QONUserActionPoint",
-                         "Qonversion/Automations/Services",
-                         "Qonversion/Automations/Services/QONAutomationsScreenProcessor",
-                         "Qonversion/Automations/Services/QONAutomationsService",
-                         "Qonversion/Automations/Views",
-                         "Qonversion/Automations/Views/QONAutomationsViewController",
-                         "Qonversion/IDFA",
-                         "Qonversion/Public",
-                         "Qonversion/Qonversion/Assemblies",
-                         "Qonversion/Qonversion/Assemblies/QNServicesAssembly",
-                         "Qonversion/Qonversion/Constants",
-                         "Qonversion/Qonversion/Constants/QNAPIConstants",
-                         "Qonversion/Qonversion/Constants/QNInternalConstants",
-                         "Qonversion/Qonversion/Core",
-                         "Qonversion/Qonversion/Core/QNInMemoryStorage",
-                         "Qonversion/Qonversion/Core/QNKeychain",
-                         "Qonversion/Qonversion/Core/QNKeychainStorage",
-                         "Qonversion/Qonversion/Core/QNKeyedArchiver",
-                         "Qonversion/Qonversion/Core/QNRequestBuilder",
-                         "Qonversion/Qonversion/Core/QNRequestSerializer",
-                         "Qonversion/Qonversion/Core/QNUserDefaultsStorage",
-                         "Qonversion/Qonversion/Main",
-                         "Qonversion/Qonversion/Main/QNAttributionManager",
-                         "Qonversion/Qonversion/Main/QNIdentityManager",
-                         "Qonversion/Qonversion/Main/QNProductCenterManager",
-                         "Qonversion/Qonversion/Main/QNUserPropertiesManager",
-                         "Qonversion/Qonversion/Mappers",
-                         "Qonversion/Qonversion/Mappers/QNErrorsMapper",
-                         "Qonversion/Qonversion/Mappers/QNMapper",
-                         "Qonversion/Qonversion/Mappers/QNUserInfoMapper",
-                         "Qonversion/Qonversion/Models",
-                         "Qonversion/Qonversion/Models/Protected",
-                         "Qonversion/Qonversion/Models/QNMapperObject",
-                         "Qonversion/Qonversion/Services",
-                         "Qonversion/Qonversion/Services/QNAPIClient",
-                         "Qonversion/Qonversion/Services/QNIdentityService",
-                         "Qonversion/Qonversion/Services/QNStoreKitService",
-                         "Qonversion/Qonversion/Services/QNUserInfoService",
-                         "Qonversion/Qonversion/Utils",
-                         "Qonversion/Qonversion/Utils/QNDevice",
-                         "Qonversion/Qonversion/Utils/QNProperties",
-                         "Qonversion/Qonversion/Utils/QNUserInfo",
-                         "Qonversion/Qonversion/Utils/QNUtils"]
+let sources: [String] = ["Qonversion/**"]
+
+func generateHeaderSearchPaths() -> [String] {
+    var currentDirectoryPath = #filePath
+    currentDirectoryPath.removeSubrange(#filePath.range(of: "Package.swift")!)
+    let pathString = currentDirectoryPath + "Sources/"
+    var paths = [String]()
+    if let enumerator = FileManager.default.enumerator(at: URL(string: pathString)!, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) {
+        for case let fileURL as URL in enumerator {
+            do {
+                let fileAttributes = try fileURL.resourceValues(forKeys:[.isDirectoryKey])
+                if fileAttributes.isDirectory! {
+                    var result = fileURL.absoluteString.replacingOccurrences(of: "file://"+pathString, with: "", options: [], range: nil)
+                    result.removeLast()
+
+                    paths.append(result)
+                }
+            } catch { print(error, fileURL) }
+        }
+    }
+    
+    return paths
+}
+
+let headerSearchPaths = generateHeaderSearchPaths()
 
 let package = Package(
     name: "Qonversion",
@@ -71,7 +43,6 @@ let package = Package(
     targets: [.target(
                 name: "Qonversion",
                 path: "Sources",
-                sources: sources,
                 publicHeadersPath: "Qonversion/Public",
-                cSettings: sources.map { .headerSearchPath($0) })]
+                cSettings: headerSearchPaths.map { .headerSearchPath($0) })]
 )
