@@ -12,7 +12,16 @@ jobs:
       - name: Validation
         run: |
           pod lib lint
-          
+  
+  spm:
+    runs-on: macos-latest
+    
+    steps:
+      - uses: actions/checkout@v2
+      - name: SPM validation
+        run: |
+          swift build
+  
   tests:
     runs-on: macos-latest
 
