@@ -66,7 +66,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   NSNumber *codeNumber = data[@"code"];
   
   if (!codeNumber) {
-    return [QNErrors errorWithCode:QNAPIErrorInternalError message:kDefaultErrorMessage failureReason:nil];;
+    return [QNErrors errorWithCode:QNAPIErrorInternalError message:kDefaultErrorMessage failureReason:nil];
   }
   
   QNAPIError errorType = [self errorTypeFromCode:codeNumber];
