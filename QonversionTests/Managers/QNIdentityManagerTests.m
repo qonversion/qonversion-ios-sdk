@@ -61,8 +61,6 @@
   OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
   OCMStub([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
-  OCMExpect([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
-  OCMExpect([self.mockUserInfoService obtainUserID]);
   OCMExpect([self.mockUserInfoService storeIdentity:identityID]);
   
   // when
