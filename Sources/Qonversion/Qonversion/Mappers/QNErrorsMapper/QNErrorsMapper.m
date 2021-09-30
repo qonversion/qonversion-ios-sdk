@@ -25,7 +25,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   if (self) {
     _errorsMap = @{@(QNAPIErrorProjectConfigError) : @"The project is not configured or configured incorrectly in the Qonversion Dashboard.",
                    @(QNAPIErrorInvalidStoreCredentials) : @"Please check provided Store keys in the Qonversion Dashboard.",
-                   @(QNAPIErrorReceiptValidation) : @"Provided receipt can't be validated. Please check details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
+                   @(QNAPIErrorReceiptValidation) : @"Provided receipt can't be validated. Please check the details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
     };
   }
   
