@@ -69,8 +69,10 @@
   }];
   
   // then
-  XCTAssertEqual(resultString, identityID);
+  XCTAssertEqualObjects(resultString, identityID);
   XCTAssertNil(resultError);
+  
+  OCMVerify([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
 }
 
 - (void)testFailureIdentity {
@@ -104,6 +106,8 @@
   // then
   XCTAssertEqual(resultError, randomError);
   XCTAssertNil(resultString);
+  
+  OCMVerify([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
 }
 
 - (void)testFailureIdentity_emptyID {
@@ -137,6 +141,8 @@
   // then
   XCTAssertEqualObjects(resultError, expectedError);
   XCTAssertNil(resultString);
+  
+  OCMVerify([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
 }
 
 @end
