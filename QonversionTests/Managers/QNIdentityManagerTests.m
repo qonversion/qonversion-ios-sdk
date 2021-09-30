@@ -50,6 +50,9 @@
   NSString *identityID = @"result_identity_id";
   NSError *randomError = [QNErrors deferredTransactionError]; // just a random error
   
+  __block NSString *resultString;
+  __block NSError *resultError;
+  
   TestBlock testBlock = ^(NSInvocation *invocation) {
     void(^completioinBlock)(NSString *result, NSError *error);
     
@@ -65,11 +68,14 @@
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    XCTAssertEqual(result, identityID);
-    XCTAssertEqual(randomError, error);
+    resultString = result;
+    resultError = error;
   }];
   
   // then
+  XCTAssertEqual(resultString, identityID);
+  XCTAssertEqual(randomError, resultError);
+  
   OCMVerify([self.mockUserInfoService obtainUserID]);
   OCMVerify([self.mockUserInfoService storeIdentity:identityID]);
   
@@ -82,6 +88,9 @@
   NSString *anonUserID = @"anon_user_id";
   NSString *identityID = @"";
   NSError *randomError = [QNErrors deferredTransactionError]; // just a random error
+  
+  __block NSString *resultString;
+  __block NSError *resultError;
   
   TestBlock testBlock = ^(NSInvocation *invocation) {
     void(^completioinBlock)(NSString *result, NSError *error);
@@ -96,11 +105,14 @@
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    XCTAssertEqual(result, identityID);
-    XCTAssertEqual(randomError, error);
+    resultString = result;
+    resultError = error;
   }];
   
   // then
+  XCTAssertEqual(resultString, identityID);
+  XCTAssertEqual(randomError, resultError);
+  
   OCMVerify([self.mockUserInfoService obtainUserID]);
   
   OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
@@ -112,6 +124,9 @@
   NSString *anonUserID = @"anon_user_id";
   
   NSError *randomError = [QNErrors deferredTransactionError]; // just a random error
+  
+  __block NSString *resultString;
+  __block NSError *resultError;
   
   TestBlock testBlock = ^(NSInvocation *invocation) {
     void(^completioinBlock)(NSString *result, NSError *error);
@@ -126,11 +141,14 @@
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    XCTAssertEqual(error, randomError);
-    XCTAssertNil(result);
+    resultString = result;
+    resultError = error;
   }];
   
   // then
+  XCTAssertEqual(resultError, randomError);
+  XCTAssertNil(resultString);
+  
   OCMVerify([self.mockUserInfoService obtainUserID]);
   
   OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);

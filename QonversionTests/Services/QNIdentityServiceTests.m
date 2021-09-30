@@ -47,6 +47,9 @@
   NSString *anonUserID = @"anon_user_id";
   NSString *identityID = @"identity_id";
   
+  __block NSString *resultString;
+  __block NSError *resultError;
+  
   NSDictionary *data = @{@"data": @{@"anon_id": identityID}};
   
   TestBlock testBlock = ^(NSInvocation *invocation) {
@@ -61,10 +64,13 @@
   
   // when
   [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    // then
-    XCTAssertEqual(result, identityID);
-    XCTAssertNil(error);
+    resultString = result;
+    resultError = error;
   }];
+  
+  // then
+  XCTAssertEqual(resultString, identityID);
+  XCTAssertNil(resultError);
 }
 
 - (void)testFailureIdentity {
@@ -73,6 +79,9 @@
   NSString *anonUserID = @"anon_user_id";
   NSString *identityID = @"identity_id";
   NSError *randomError = [QNErrors deferredTransactionError]; // just a random error
+  
+  __block NSString *resultString;
+  __block NSError *resultError;
   
   NSDictionary *data = @{@"data": @{@"anon_id_wrong_key": identityID}};
   
@@ -88,10 +97,13 @@
   
   // when
   [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    // then
-    XCTAssertEqual(error, randomError);
-    XCTAssertNil(result);
+    resultString = result;
+    resultError = error;
   }];
+  
+  // then
+  XCTAssertEqual(resultError, randomError);
+  XCTAssertNil(resultString);
 }
 
 - (void)testFailureIdentity_emptyID {
@@ -99,7 +111,10 @@
   NSString *userID = @"random_user_id";
   NSString *anonUserID = @"anon_user_id";
   NSString *identityID = @"";
-  NSError *resultError = [QNErrors errorWithQNErrorCode:QNErrorInternalError]; // just a random error
+  NSError *expectedError = [QNErrors errorWithQNErrorCode:QNErrorInternalError]; // just a random error
+  
+  __block NSString *resultString;
+  __block NSError *resultError;
   
   NSDictionary *data = @{@"data": @{@"anon_id": identityID}};
   
@@ -115,10 +130,13 @@
   
   // when
   [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    // then
-    XCTAssertEqualObjects(error, resultError);
-    XCTAssertNil(result);
+    resultString = result;
+    resultError = error;
   }];
+  
+  // then
+  XCTAssertEqualObjects(resultError, expectedError);
+  XCTAssertNil(resultString);
 }
 
 @end
