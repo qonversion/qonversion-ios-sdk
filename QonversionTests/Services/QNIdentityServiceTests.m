@@ -94,5 +94,31 @@
   }];
 }
 
+- (void)testFailureIdentity_emptyID {
+  // given
+  NSString *userID = @"random_user_id";
+  NSString *anonUserID = @"anon_user_id";
+  NSString *identityID = @"";
+  NSError *resultError = [QNErrors errorWithQNErrorCode:QNErrorInternalError]; // just a random error
+  
+  NSDictionary *data = @{@"data": @{@"anon_id": identityID}};
+  
+  TestBlock testBlock = ^(NSInvocation *invocation) {
+    void(^completioinBlock)(NSDictionary *data, NSError *error);
+    
+    [invocation getArgument:&completioinBlock atIndex:4];
+    
+    completioinBlock(data, nil);
+  };
+  
+  OCMStub([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
+  
+  // when
+  [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+    // then
+    XCTAssertEqualObjects(error, resultError);
+    XCTAssertNil(result);
+  }];
+}
 
 @end

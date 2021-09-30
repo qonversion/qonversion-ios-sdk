@@ -78,6 +78,36 @@
   OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
 }
 
+- (void)testSuccessIdentity_emptyID {
+  // given
+  NSString *userID = @"random_user_id";
+  NSString *anonUserID = @"anon_user_id";
+  NSString *identityID = @"";
+  NSError *randomError = [QNErrors deferredTransactionError]; // just a random error
+  
+  TestBlock testBlock = ^(NSInvocation *invocation) {
+    void(^completioinBlock)(NSString *result, NSError *error);
+    
+    [invocation getArgument:&completioinBlock atIndex:4];
+    
+    completioinBlock(identityID, randomError);
+  };
+  
+  OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
+  OCMStub([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
+  
+  // when
+  [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+    XCTAssertEqual(result, identityID);
+    XCTAssertEqual(randomError, error);
+  }];
+  
+  // then
+  OCMVerify([self.mockUserInfoService obtainUserID]);
+  
+  OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
+}
+
 - (void)testFailureIdentity {
   // given
   NSString *userID = @"random_user_id";
@@ -95,9 +125,6 @@
   
   OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
   OCMStub([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
-  
-  OCMExpect([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
-  OCMExpect([self.mockUserInfoService obtainUserID]);
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
