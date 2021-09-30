@@ -69,7 +69,7 @@
   }];
   
   // then
-  XCTAssertEqualObjects(resultString, identityID);
+  XCTAssertEqual(resultString, identityID);
   XCTAssertNil(resultError);
   
   OCMVerify([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
