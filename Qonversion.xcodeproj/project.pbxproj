@@ -185,6 +185,9 @@
 		8957330A26DE5532009507A6 /* QNKeyedArchiver.m in Sources */ = {isa = PBXBuildFile; fileRef = 8957330826DE5531009507A6 /* QNKeyedArchiver.m */; };
 		895733B726DFDD6C009507A6 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		895733B826DFDD6C009507A6 /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		89673C2926F35D29008D209A /* QNIdentityServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2826F35D29008D209A /* QNIdentityServiceTests.m */; };
+		89673C2C26F37DC2008D209A /* XCTestCase+Helpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2B26F37DC2008D209A /* XCTestCase+Helpers.m */; };
+		89673C2F26F49BAA008D209A /* QNIdentityManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2E26F49BA9008D209A /* QNIdentityManagerTests.m */; };
 		89817AAB26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89817AAA26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8989721F26612BB600A24927 /* OfferingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8989721E26612BB500A24927 /* OfferingsViewController.swift */; };
@@ -428,6 +431,10 @@
 		8957327826DD03A3009507A6 /* QNIdentityServiceInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNIdentityServiceInterface.h; sourceTree = "<group>"; };
 		8957330726DE5531009507A6 /* QNKeyedArchiver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNKeyedArchiver.h; sourceTree = "<group>"; };
 		8957330826DE5531009507A6 /* QNKeyedArchiver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNKeyedArchiver.m; sourceTree = "<group>"; };
+		89673C2826F35D29008D209A /* QNIdentityServiceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNIdentityServiceTests.m; sourceTree = "<group>"; };
+		89673C2A26F37DC2008D209A /* XCTestCase+Helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+Helpers.h"; sourceTree = "<group>"; };
+		89673C2B26F37DC2008D209A /* XCTestCase+Helpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+Helpers.m"; sourceTree = "<group>"; };
+		89673C2E26F49BA9008D209A /* QNIdentityManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNIdentityManagerTests.m; sourceTree = "<group>"; };
 		89713B4625C1B95700A2448E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		89713B4A25C1BA1F00A2448E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		89817AAA26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsEventsMapperTests.m; sourceTree = "<group>"; };
@@ -557,6 +564,7 @@
 		459DAB76243E329F0011ECF3 /* QonversionTests */ = {
 			isa = PBXGroup;
 			children = (
+				89673C2D26F49B6A008D209A /* Managers */,
 				89A1931D2604B8C800C3FCD9 /* Core */,
 				89A192A32604973200C3FCD9 /* Services */,
 				456ECD35249BB67600D2BC40 /* Network */,
@@ -634,10 +642,12 @@
 		459DAC0A243E4D420011ECF3 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
-				459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */,
 				89A193242604B99C00C3FCD9 /* XCTestCase+Unmock.h */,
 				89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */,
+				459DAC0B243E4D610011ECF3 /* XCTestCase+TestJSON.h */,
 				459DAC0C243E4D610011ECF3 /* XCTestCase+TestJSON.m */,
+				89673C2A26F37DC2008D209A /* XCTestCase+Helpers.h */,
+				89673C2B26F37DC2008D209A /* XCTestCase+Helpers.m */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -1267,10 +1277,19 @@
 			path = QNKeyedArchiver;
 			sourceTree = "<group>";
 		};
+		89673C2D26F49B6A008D209A /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				89673C2E26F49BA9008D209A /* QNIdentityManagerTests.m */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
 		89A192A32604973200C3FCD9 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */,
+				89673C2826F35D29008D209A /* QNIdentityServiceTests.m */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1684,10 +1703,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				89673C2C26F37DC2008D209A /* XCTestCase+Helpers.m in Sources */,
 				45FFA2DE24BE1015007EFB8F /* QNTestConstants.m in Sources */,
 				89A1931F2604B8D600C3FCD9 /* QNKeychainStorageTests.m in Sources */,
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
 				45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */,
+				89673C2926F35D29008D209A /* QNIdentityServiceTests.m in Sources */,
 				89A192A52604974800C3FCD9 /* QNUserInfoServiceTests.m in Sources */,
 				454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */,
 				89817AAB26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m in Sources */,
@@ -1696,6 +1717,7 @@
 				454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */,
 				458A8CCB24B9A3DF00637130 /* StoreKitServiceTests.m in Sources */,
 				4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */,
+				89673C2F26F49BAA008D209A /* QNIdentityManagerTests.m in Sources */,
 				4531CBCB24581BD80022C422 /* QNUserInfoTests.m in Sources */,
 				456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */,
 				89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */,
