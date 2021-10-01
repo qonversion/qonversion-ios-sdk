@@ -139,6 +139,20 @@
   OCMVerify([self.mockKeychainStorage resetUserID]);
 }
 
+- (void)testStoreIdentity {
+  // given
+  NSString *testID = @"some_test_id";
+  NSString *key = @"com.qonversion.keys.storedUserID";
+  
+  OCMExpect([self.mockLocalStorage setString:testID forKey:key]);
+  
+  // when
+  [self.service storeIdentity:testID];
+  
+  // then
+  OCMVerifyAll(self.mockLocalStorage);
+}
+
 #pragma mark - Helpers
 
 - (NSString *)storedUserIDKey {
