@@ -7,16 +7,34 @@
 //
 
 import UIKit
-
+import GoogleSignIn
+import FirebaseAuth
 class AuthViewController: UIViewController {
 
+  @IBOutlet var signInButton: GIDSignInButton!
+  
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
+      
+      guard GIDSignIn.sharedInstance.hasPreviousSignIn() else { return }
+      
+      GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, err in
+        self?.showMainScreen()
+      }
     }
     
-
+  @IBAction func didTouchSignInButton(_ sender: Any) {
+    let conf = GIDConfiguration(clientID: "11599271839-qalspkpqrihnkl1e12be731tgmre5uop.apps.googleusercontent.com")
+    GIDSignIn.sharedInstance.signIn(with: conf, presenting: self) { [weak self] user, error in
+      self?.showMainScreen()
+    }
+  }
+  
+  func showMainScreen() {
+    let viewController = self.storyboard?.instantiateViewController(withIdentifier: "MainViewController") as! ViewController
+    
+    self.navigationController?.pushViewController(viewController, animated: true)
+  }
     /*
     // MARK: - Navigation
 

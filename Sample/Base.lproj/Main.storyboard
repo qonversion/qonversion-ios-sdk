@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="18122" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Ebn-7h-m5V">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19455" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Ebn-7h-m5V">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="18093"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19454"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -12,7 +12,7 @@
         <!--View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="Sample" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="MainViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="BYZ-38-t0r" customClass="ViewController" customModule="Sample" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -185,7 +185,7 @@
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <prototypes>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="ActivePermissionsTableViewCell" rowHeight="143" id="0an-eY-haS" customClass="ActivePermissionsTableViewCell" customModule="Sample" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="24.5" width="414" height="143"/>
+                                        <rect key="frame" x="0.0" y="44.5" width="414" height="143"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="0an-eY-haS" id="FK1-6g-MDh">
                                             <rect key="frame" x="0.0" y="0.0" width="414" height="143"/>
@@ -261,23 +261,10 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1KQ-az-FTb">
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1KQ-az-FTb">
                                 <rect key="frame" x="192" y="541" width="30" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <state key="normal" title="Skip"/>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" verticalCompressionResistancePriority="1000" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5k5-VV-sbt">
-                                <rect key="frame" x="32" y="419" width="362" height="61"/>
-                                <color key="backgroundColor" red="0.23921568630000001" green="0.36470588240000001" blue="0.88235294119999996" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="54" id="1Y9-GA-a3y"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" weight="medium" pointSize="17"/>
-                                <state key="normal" title="Login">
-                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                </state>
-                                <connections>
-                                    <action selector="didTapMainProductSubscriptionButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Ns7-1k-u46"/>
-                                </connections>
                             </button>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="qonversion_icon" translatesAutoresizingMaskIntoConstraints="NO" id="uDs-yJ-Ide">
                                 <rect key="frame" x="157" y="227" width="100" height="100"/>
@@ -286,20 +273,26 @@
                                     <constraint firstAttribute="width" constant="100" id="gLE-b0-hnz"/>
                                 </constraints>
                             </imageView>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ltg-vY-Erk" customClass="GIDSignInButton">
+                                <rect key="frame" x="87" y="335" width="240" height="128"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <connections>
+                                    <action selector="didTouchSignInButton:" destination="lOC-Q6-7Jo" eventType="touchUpInside" id="7xU-Ld-sQd"/>
+                                </connections>
+                            </view>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="YJA-BN-Hcz"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="5k5-VV-sbt" firstAttribute="centerX" secondItem="uDs-yJ-Ide" secondAttribute="centerX" id="4GX-PQ-6PT"/>
-                            <constraint firstItem="5k5-VV-sbt" firstAttribute="centerX" secondItem="1KQ-az-FTb" secondAttribute="centerX" id="Dz5-42-Nt8"/>
-                            <constraint firstItem="5k5-VV-sbt" firstAttribute="top" secondItem="uDs-yJ-Ide" secondAttribute="bottom" constant="99" id="TaN-hJ-uKl"/>
-                            <constraint firstItem="5k5-VV-sbt" firstAttribute="leading" secondItem="YJA-BN-Hcz" secondAttribute="leading" constant="32" id="Y9x-zV-dcH"/>
                             <constraint firstItem="uDs-yJ-Ide" firstAttribute="leading" secondItem="YJA-BN-Hcz" secondAttribute="leading" constant="157" id="Z3l-PQ-PZR"/>
-                            <constraint firstItem="1KQ-az-FTb" firstAttribute="top" secondItem="5k5-VV-sbt" secondAttribute="bottom" constant="61" id="cN4-WR-Vm2"/>
                             <constraint firstItem="uDs-yJ-Ide" firstAttribute="top" secondItem="YJA-BN-Hcz" secondAttribute="top" constant="139" id="jsP-Sw-uSw"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="UUW-TN-hGa"/>
+                    <connections>
+                        <outlet property="signInButton" destination="Ltg-vY-Erk" id="vFJ-Qs-Ry4"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Jhz-ZD-Fq0" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -336,7 +329,7 @@
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <prototypes>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="OfferingsTableViewCell" rowHeight="260" id="XAs-ru-Mmq" customClass="OfferingsTableViewCell" customModule="Sample" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="24.5" width="414" height="260"/>
+                                        <rect key="frame" x="0.0" y="44.5" width="414" height="260"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="XAs-ru-Mmq" id="BfF-SR-Wlf">
                                             <rect key="frame" x="0.0" y="0.0" width="414" height="260"/>
