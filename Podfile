@@ -11,6 +11,7 @@ end
 
 target 'Sample' do
 platform :ios, 12.0
+pod 'Firebase/Auth'
 #pod 'Qonversion', :path => './'
 end
 
