@@ -9,31 +9,34 @@
 import UIKit
 import GoogleSignIn
 import FirebaseAuth
+import Qonversion
 
 class AuthViewController: UIViewController {
-
+  
   @IBOutlet var signInButton: GIDSignInButton!
   
-    override func viewDidLoad() {
-        super.viewDidLoad()
-      
-      guard GIDSignIn.sharedInstance.hasPreviousSignIn() else { return }
-      
-      GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, err in
-        self?.showMainScreen()
-      }
-    }
+  override func viewDidLoad() {
+    super.viewDidLoad()
     
+    guard GIDSignIn.sharedInstance.hasPreviousSignIn() else { return }
+    
+    GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, err in
+      if let userID = user?.userID {
+        Qonversion.identify(userID)
+      }
+      self?.showMainScreen()
+    }
+  }
+  
   @IBAction func didTouchSignInButton(_ sender: Any) {
     let conf = GIDConfiguration(clientID: "11599271839-qalspkpqrihnkl1e12be731tgmre5uop.apps.googleusercontent.com")
     GIDSignIn.sharedInstance.signIn(with: conf, presenting: self) { [weak self] user, error in
-      guard let error = error else {
-        self?.showMainScreen()
-        return
+      guard let userID = user?.userID else {
+        return print(error ?? "")
       }
       
-      print(error)
-      // handle error here
+      Qonversion.identify(userID)
+      self?.showMainScreen()
     }
   }
   
@@ -42,14 +45,4 @@ class AuthViewController: UIViewController {
     
     self.navigationController?.pushViewController(viewController, animated: true)
   }
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
 }
