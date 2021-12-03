@@ -8,6 +8,7 @@
 
 import UIKit
 import Qonversion
+import GoogleSignIn
 
 class ViewController: UIViewController {
   
@@ -183,6 +184,11 @@ class ViewController: UIViewController {
   
   @IBAction func didTapCheckActivePermissionsButton(_ sender: Any) {
     self.showActivePermissionsScreen()
+  }
+  
+  @IBAction func didTapLogoutButton(_ sender: Any) {
+    GIDSignIn.sharedInstance.signOut()
+    Qonversion.logout()
   }
   
 }
