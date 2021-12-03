@@ -9,6 +9,7 @@
 import UIKit
 import Qonversion
 import GoogleSignIn
+import FirebaseAuth
 
 class ViewController: UIViewController {
   
@@ -192,9 +193,15 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapLogoutButton(_ sender: Any) {
-    GIDSignIn.sharedInstance.signOut()
-    Qonversion.logout()
-    self.navigationController?.popViewController(animated: true)
+    
+    do {
+      try Auth.auth().signOut()
+      GIDSignIn.sharedInstance.signOut()
+      Qonversion.logout()
+      self.navigationController?.popViewController(animated: true)
+    } catch {
+      // handle error
+    }
   }
   
 }

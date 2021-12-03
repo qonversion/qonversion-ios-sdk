@@ -21,21 +21,35 @@ class AuthViewController: UIViewController {
     guard GIDSignIn.sharedInstance.hasPreviousSignIn() else { return }
     
     GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, err in
-      if let userID = user?.userID {
-        Qonversion.identify(userID)
+      if let user = user {
+        self?.processUserLogin(user: user)
       }
-      self?.showMainScreen()
     }
   }
   
   @IBAction func didTouchSignInButton(_ sender: Any) {
     let conf = GIDConfiguration(clientID: "11599271839-qalspkpqrihnkl1e12be731tgmre5uop.apps.googleusercontent.com")
     GIDSignIn.sharedInstance.signIn(with: conf, presenting: self) { [weak self] user, error in
-      guard let userID = user?.userID else {
-        return print(error ?? "")
+      guard let user = user else { return }
+      
+      self?.processUserLogin(user: user)
+    }
+  }
+  
+  func processUserLogin(user: GIDGoogleUser) {
+    guard let idToken = user.authentication.idToken else { return }
+    
+    let credential = GoogleAuthProvider.credential(withIDToken: idToken,
+                                                   accessToken: user.authentication.accessToken)
+    
+    Auth.auth().signIn(with: credential) { [weak self] authResult, error in
+      if let error = error {
+        // handle error
       }
       
-      Qonversion.identify(userID)
+      guard let uid = authResult?.user.uid else  { return }
+      
+      Qonversion.identify(uid)
       self?.showMainScreen()
     }
   }
