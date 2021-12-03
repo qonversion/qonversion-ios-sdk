@@ -40,6 +40,8 @@
 
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
   NSString *userID = [[Qonversion sharedInstance].userInfoService obtainUserID];
+  QONVERSION_LOG(@"🚀 Qonversion initialized with userID: %@", userID);
+  
   [[QNAPIClient shared] setApiKey:key];
   [[QNAPIClient shared] setUserID:userID];
   [[QNAPIClient shared] setDebug:[Qonversion sharedInstance].debugMode];
