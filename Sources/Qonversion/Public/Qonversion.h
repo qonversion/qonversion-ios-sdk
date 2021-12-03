@@ -105,7 +105,7 @@ NS_ASSUME_NONNULL_BEGIN
  Associate a user with their unique ID in your system
  @param userID            Your database user ID
  */
-+ (void)setUserID:(NSString *)userID;
++ (void)setUserID:(NSString *)userID DEPRECATED_MSG_ATTRIBUTE("Use setProperty function instead. ass userID value of QNProperty enum and your App side user identifier you want to set");
 
 /**
  Send your attribution data
