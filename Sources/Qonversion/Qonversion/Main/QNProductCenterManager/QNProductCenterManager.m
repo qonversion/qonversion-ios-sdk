@@ -1,5 +1,4 @@
 #import "QNProductCenterManager.h"
-#import "QNInMemoryStorage.h"
 #import "QNUserDefaultsStorage.h"
 #import "QNStoreKitService.h"
 #import "QNAPIClient.h"

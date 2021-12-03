@@ -25,7 +25,6 @@ extern NSString *const keyQSourceVersion;
 // MARK: - Qonversion Underhood User Properties
 
 extern NSString *const keyQNPropertyFacebookAnonUserID;
-extern NSString *const keyQNPropertyUserID;
 
 extern NSString *const keyQNErrorDomain;
 extern NSString *const keyQNAPIErrorDomain;

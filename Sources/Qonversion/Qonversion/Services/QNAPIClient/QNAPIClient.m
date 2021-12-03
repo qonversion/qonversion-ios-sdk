@@ -13,6 +13,7 @@
 #import "QNExperimentInfo.h"
 #import "QNExperimentGroup.h"
 #import "QNErrorsMapper.h"
+#import "QNKeyedArchiver.h"
 
 @interface QNAPIClient()
 
@@ -164,7 +165,7 @@
 
 - (void)processStoredRequests {
   NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
-  NSArray *storedRequests = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData];
+  NSArray *storedRequests = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData];
   
   if (![storedRequests isKindOfClass:[NSArray class]]) {
     [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
@@ -296,11 +297,11 @@
   NSString *requestString = [components.path stringByReplacingOccurrencesOfString:@"/" withString:@"" options:NSCaseInsensitiveSearch range:(NSRange){0, 1}];
   if ([self.retriableRequests containsObject:requestString]) {
     NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
-    NSArray *unarchivedData = [NSKeyedUnarchiver unarchiveObjectWithData:storedRequestsData] ?: @[];
+    NSArray *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData] ?: @[];
     NSMutableArray *storedRequests = [unarchivedData mutableCopy];
     [storedRequests addObject:request];
     
-    NSData *updatedStoredRequestsData = [NSKeyedArchiver archivedDataWithRootObject:[storedRequests copy]];
+    NSData *updatedStoredRequestsData = [QNKeyedArchiver archivedDataWithObject:[storedRequests copy]];
     [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
   }
 }

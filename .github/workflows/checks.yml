@@ -1,0 +1,32 @@
+name: Checks
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lint:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Validation
+        run: |
+          pod lib lint
+  
+  spm:
+    runs-on: macos-latest
+    
+    steps:
+      - uses: actions/checkout@v2
+      - name: SPM validation
+        run: |
+          swift build
+  
+  tests:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Tests
+        run: |
+          fastlane tests
