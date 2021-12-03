@@ -110,7 +110,7 @@
 }
 
 + (void)setUserID:(NSString *)userID {
-  [[Qonversion sharedInstance].propertiesManager setUserID:userID];
+  [self setProperty:QNPropertyUserID value:userID];
 }
 
 + (void)checkPermissions:(QNPermissionCompletionHandler)completion {
