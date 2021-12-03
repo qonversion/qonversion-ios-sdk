@@ -5,12 +5,12 @@
     
     
       
-      <testcase classname="fastlane.lanes" name="0: cocoapods" time="1.478704">
+      <testcase classname="fastlane.lanes" name="0: update_plist" time="0.115434">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="1: run_tests" time="24.896968">
+      <testcase classname="fastlane.lanes" name="1: version_bump_podspec" time="0.001377">
         
       </testcase>
     
