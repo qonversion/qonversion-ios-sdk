@@ -26,7 +26,7 @@
       key = @"_q_advertising_id";
       break;
     case QNPropertyUserID:
-      key = keyQNPropertyUserID;
+      key = @"_q_custom_user_id";
       break;
   }
   
