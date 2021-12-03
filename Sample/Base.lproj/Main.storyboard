@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="18122" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Ebn-7h-m5V">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19455" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Ebn-7h-m5V">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="18093"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19454"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -91,14 +91,6 @@
                                     <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="Fcm-9x-hwK">
                                         <rect key="frame" x="188.5" y="104.5" width="37" height="37"/>
                                     </activityIndicatorView>
-                                    <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="GDR-fR-MEn">
-                                        <rect key="frame" x="161" y="8" width="52" height="42"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <state key="normal" title="Logout"/>
-                                        <connections>
-                                            <action selector="didTapLogoutButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="bvw-ZU-Bib"/>
-                                        </connections>
-                                    </button>
                                 </subviews>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <constraints>
@@ -135,6 +127,18 @@
                                     <action selector="didTapOfferingsButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="hMe-r7-KCU"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="GDR-fR-MEn">
+                                <rect key="frame" x="314" y="89" width="68" height="30"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="68" id="kYc-qt-bH3"/>
+                                </constraints>
+                                <state key="normal" title="Logout">
+                                    <color key="titleColor" red="0.23921568630000001" green="0.36470588240000001" blue="0.88235294119999996" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="didTapLogoutButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="bvw-ZU-Bib"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
@@ -158,11 +162,13 @@
                             <constraint firstItem="b5Y-jw-eoO" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="b3N-9l-3jK"/>
                             <constraint firstItem="T59-6l-CJ1" firstAttribute="top" secondItem="x6n-H3-7BD" secondAttribute="bottom" constant="18" id="dmV-fc-80Z"/>
                             <constraint firstItem="T59-6l-CJ1" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="32" id="he2-MQ-g96"/>
+                            <constraint firstItem="GDR-fR-MEn" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="45" id="lCe-op-Cs0"/>
                             <constraint firstItem="zmr-Ji-XJA" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="32" id="lMX-oy-Q1O"/>
                             <constraint firstItem="x6n-H3-7BD" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="o1p-gC-i1G"/>
                             <constraint firstItem="VA4-u2-ECB" firstAttribute="top" secondItem="zmr-Ji-XJA" secondAttribute="bottom" constant="10" id="pLY-Su-efe"/>
                             <constraint firstItem="0ow-ud-r2G" firstAttribute="centerX" secondItem="4rd-Ug-s4I" secondAttribute="centerX" id="rAr-dU-XtV"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="vSs-Ne-zf2" secondAttribute="trailing" id="u1C-e7-edO"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="GDR-fR-MEn" secondAttribute="trailing" constant="32" id="uP0-c5-1zp"/>
                             <constraint firstItem="x6n-H3-7BD" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="uho-iP-UqB"/>
                         </constraints>
                     </view>
@@ -171,6 +177,7 @@
                         <outlet property="activityIndicator" destination="Fcm-9x-hwK" id="WYM-3e-vvq"/>
                         <outlet property="checkActivePermissionsButton" destination="v0d-JE-oiB" id="H18-P0-Pyr"/>
                         <outlet property="inAppPurchseButton" destination="zmr-Ji-XJA" id="Z9c-71-LjJ"/>
+                        <outlet property="logoutButton" destination="GDR-fR-MEn" id="z8K-bR-Ayd"/>
                         <outlet property="mainProductSubscriptionButton" destination="T59-6l-CJ1" id="XWt-wH-fWl"/>
                         <outlet property="offeringsButton" destination="STb-3J-RUB" id="XtT-pU-IDY"/>
                         <outlet property="subscriptionTitleLabel" destination="x6n-H3-7BD" id="6Vf-cJ-Q2o"/>
@@ -193,7 +200,7 @@
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <prototypes>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="ActivePermissionsTableViewCell" rowHeight="143" id="0an-eY-haS" customClass="ActivePermissionsTableViewCell" customModule="Sample" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="24.5" width="414" height="143"/>
+                                        <rect key="frame" x="0.0" y="44.5" width="414" height="143"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="0an-eY-haS" id="FK1-6g-MDh">
                                             <rect key="frame" x="0.0" y="0.0" width="414" height="143"/>
@@ -337,7 +344,7 @@
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <prototypes>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="OfferingsTableViewCell" rowHeight="260" id="XAs-ru-Mmq" customClass="OfferingsTableViewCell" customModule="Sample" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="24.5" width="414" height="260"/>
+                                        <rect key="frame" x="0.0" y="44.5" width="414" height="260"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="XAs-ru-Mmq" id="BfF-SR-Wlf">
                                             <rect key="frame" x="0.0" y="0.0" width="414" height="260"/>

@@ -18,6 +18,7 @@ class ViewController: UIViewController {
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
   @IBOutlet weak var subscriptionTitleLabel: UILabel!
   @IBOutlet weak var checkActivePermissionsButton: UIButton!
+  @IBOutlet weak var logoutButton: UIButton!
   
   var permissions: [String: Qonversion.Permission] = [:]
   var products: [String: Qonversion.Product] = [:]
@@ -33,7 +34,11 @@ class ViewController: UIViewController {
     mainProductSubscriptionButton.layer.cornerRadius = 20.0
     inAppPurchseButton.layer.cornerRadius = 20.0
     inAppPurchseButton.layer.borderWidth = 1.0
-    inAppPurchseButton.layer.borderColor = mainProductSubscriptionButton.backgroundColor?.cgColor
+    
+    logoutButton.layer.cornerRadius = logoutButton.frame.height / 2.0
+    logoutButton.layer.borderWidth = 1.0
+    logoutButton.layer.borderColor = logoutButton.backgroundColor?.cgColor
+    logoutButton.layer.borderColor = mainProductSubscriptionButton.backgroundColor?.cgColor
     
     offeringsButton.layer.cornerRadius = 20.0
     
@@ -189,6 +194,7 @@ class ViewController: UIViewController {
   @IBAction func didTapLogoutButton(_ sender: Any) {
     GIDSignIn.sharedInstance.signOut()
     Qonversion.logout()
+    self.navigationController?.popViewController(animated: true)
   }
   
 }
