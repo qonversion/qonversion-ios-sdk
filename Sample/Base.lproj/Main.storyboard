@@ -176,7 +176,7 @@
                     <connections>
                         <outlet property="activityIndicator" destination="Fcm-9x-hwK" id="WYM-3e-vvq"/>
                         <outlet property="checkActivePermissionsButton" destination="v0d-JE-oiB" id="H18-P0-Pyr"/>
-                        <outlet property="inAppPurchseButton" destination="zmr-Ji-XJA" id="Z9c-71-LjJ"/>
+                        <outlet property="inAppPurchaseButton" destination="zmr-Ji-XJA" id="Uev-M2-tyT"/>
                         <outlet property="logoutButton" destination="GDR-fR-MEn" id="z8K-bR-Ayd"/>
                         <outlet property="mainProductSubscriptionButton" destination="T59-6l-CJ1" id="XWt-wH-fWl"/>
                         <outlet property="offeringsButton" destination="STb-3J-RUB" id="XtT-pU-IDY"/>
@@ -284,24 +284,24 @@
                                 </constraints>
                             </imageView>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ltg-vY-Erk" customClass="GIDSignInButton">
-                                <rect key="frame" x="107" y="747" width="200" height="55"/>
+                                <rect key="frame" x="57" y="667" width="300" height="55"/>
                                 <color key="backgroundColor" systemColor="systemPurpleColor"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="55" id="CxZ-BL-L72"/>
-                                    <constraint firstAttribute="width" constant="200" id="XYu-en-mnk"/>
+                                    <constraint firstAttribute="width" constant="300" id="XYu-en-mnk"/>
                                 </constraints>
                                 <connections>
                                     <action selector="didTouchSignInButton:" destination="lOC-Q6-7Jo" eventType="touchUpInside" id="7xU-Ld-sQd"/>
                                 </connections>
                             </view>
                             <view contentMode="scaleToFill" horizontalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oqt-i4-ZZ7">
-                                <rect key="frame" x="0.0" y="233" width="414" height="514"/>
+                                <rect key="frame" x="0.0" y="233" width="414" height="434"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="FFt-Om-ub8">
-                                        <rect key="frame" x="20" y="20" width="374" height="474"/>
+                                        <rect key="frame" x="20" y="20" width="374" height="394"/>
                                         <string key="text">Welcome to Qonversion sample app.   
 Please use the sign-in with Google option to test cross-platform subscription management.</string>
-                                        <fontDescription key="fontDescription" type="system" pointSize="26"/>
+                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="20"/>
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
@@ -323,7 +323,7 @@ Please use the sign-in with Google option to test cross-platform subscription ma
                             <constraint firstItem="oqt-i4-ZZ7" firstAttribute="trailing" secondItem="YJA-BN-Hcz" secondAttribute="trailing" id="7HO-XO-1SN"/>
                             <constraint firstItem="oqt-i4-ZZ7" firstAttribute="top" secondItem="uDs-yJ-Ide" secondAttribute="bottom" id="DsI-S4-3jd"/>
                             <constraint firstItem="oqt-i4-ZZ7" firstAttribute="leading" secondItem="YJA-BN-Hcz" secondAttribute="leading" id="IF3-TB-cvc"/>
-                            <constraint firstItem="YJA-BN-Hcz" firstAttribute="bottom" secondItem="Ltg-vY-Erk" secondAttribute="bottom" constant="60" id="Umz-gd-gEz"/>
+                            <constraint firstItem="YJA-BN-Hcz" firstAttribute="bottom" secondItem="Ltg-vY-Erk" secondAttribute="bottom" constant="140" id="Umz-gd-gEz"/>
                             <constraint firstItem="uDs-yJ-Ide" firstAttribute="top" secondItem="YJA-BN-Hcz" secondAttribute="top" constant="45" id="iSF-UT-Gos"/>
                             <constraint firstItem="Ltg-vY-Erk" firstAttribute="top" secondItem="oqt-i4-ZZ7" secondAttribute="bottom" id="m75-4U-Qsa"/>
                         </constraints>
