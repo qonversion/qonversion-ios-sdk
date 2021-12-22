@@ -111,7 +111,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
-  NSMutableDictionary *body = @{@"d": self.mainData}.mutableCopy;
+  NSMutableDictionary *deviceData = [self.mainData mutableCopy];
+  // remove unused field for attribution request
+  deviceData[@"receipt"] = nil;
+  
+  NSMutableDictionary *body = @{@"d": [deviceData copy]}.mutableCopy;
   NSMutableDictionary *providerData = [NSMutableDictionary new];
   
   switch (provider) {
@@ -126,6 +130,9 @@ NS_ASSUME_NONNULL_BEGIN
       break;
     case QNAttributionProviderAppleSearchAds:
       [providerData setValue:@"apple_search_ads" forKey:@"provider"];
+      break;
+    case QNAttributionProviderAppleAdServices:
+      [providerData setValue:@"apple_adservices_token" forKey:@"provider"];
       break;
   }
   
