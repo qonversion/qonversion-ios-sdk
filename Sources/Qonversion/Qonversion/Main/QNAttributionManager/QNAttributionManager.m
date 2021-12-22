@@ -47,26 +47,65 @@
 
 - (void)fetchAppleSearchAttributionData {
 #if TARGET_OS_IOS
+  NSString *token;
+  NSTimeInterval requestTimestamp = [NSDate date].timeIntervalSince1970;
   
-  Class ADClientClass = NSClassFromString(@"ADClient");
-  if (ADClientClass == nil) {
-    QONVERSION_LOG(@"⚠️ iAd framework not found. Make sure that you import iAd");
-    return;
-  }
-  SEL sharedClientSelector = NSSelectorFromString(@"sharedClient");
-  if (![ADClientClass respondsToSelector:sharedClientSelector]) {
-    QONVERSION_LOG(@"⚠️ sharedClient method not found. Make sure that you import iAd");
-    return;
-  }
-  
-  id ADClientSharedClientInstance = [ADClientClass performSelector:sharedClientSelector];
-  if (ADClientSharedClientInstance == nil) {
-    QONVERSION_LOG(@"⚠️ iAd framework not found (ADClientSharedClientInstance is nil). Make sure that you import iAd");
-    return;
+  if (@available(iOS 14.3, *)) {
+    Class attributionClass = NSClassFromString(@"AAAttribution");
+    if (attributionClass == nil) {
+      QONVERSION_LOG(@"⚠️ AdServices framework not found. Make sure that you import AdServices");
+    }
+    
+    SEL tokenSelector = NSSelectorFromString(@"attributionTokenWithError:");
+    if (![attributionClass respondsToSelector:tokenSelector]) {
+      QONVERSION_LOG(@"⚠️ attributionTokenWithError method not found. Make sure that you import AdServices");
+    }
+    
+    QONVERSION_LOG(@"✅ AdServices framework found successfully");
+    
+    NSMethodSignature *methodSignature = [attributionClass methodSignatureForSelector:tokenSelector];
+    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSignature];
+    invocation.selector = tokenSelector;
+    invocation.target = attributionClass;
+    
+    __autoreleasing NSError *error;
+    [invocation setArgument:&error atIndex:2];
+    [invocation invoke];
+    
+    if (error) {
+      QONVERSION_LOG(@"❌ AdServices attributionTokenWithError failed");
+    }
+
+    NSString * __unsafe_unretained tempResult = nil;
+    [invocation getReturnValue:&tempResult];
+    token = tempResult;
   }
 
-  QONVERSION_LOG(@"✅ iAd framework found successfully");
-  [self tryToFetchAppleSearchAttributionData:ADClientSharedClientInstance];
+  if (token.length > 0) {
+    QONVERSION_LOG(@"✅ AdServices token fetched");
+    [self sendAttributionData:@{@"token": token, @"requested_at": @(requestTimestamp)} provider:QNAttributionProviderAppleAdServices];
+    return;
+  } else {
+    Class ADClientClass = NSClassFromString(@"ADClient");
+    if (ADClientClass == nil) {
+      QONVERSION_LOG(@"⚠️ iAd framework not found. Make sure that you import iAd");
+      return;
+    }
+    SEL sharedClientSelector = NSSelectorFromString(@"sharedClient");
+    if (![ADClientClass respondsToSelector:sharedClientSelector]) {
+      QONVERSION_LOG(@"⚠️ sharedClient method not found. Make sure that you import iAd");
+      return;
+    }
+    
+    id ADClientSharedClientInstance = [ADClientClass performSelector:sharedClientSelector];
+    if (ADClientSharedClientInstance == nil) {
+      QONVERSION_LOG(@"⚠️ iAd framework not found (ADClientSharedClientInstance is nil). Make sure that you import iAd");
+      return;
+    }
+    
+    QONVERSION_LOG(@"✅ iAd framework found successfully");
+    [self tryToFetchAppleSearchAttributionData:ADClientSharedClientInstance];
+  }
 #endif
 }
 
@@ -78,9 +117,12 @@
   
   [ADClientSharedClientInstance performSelector:iAdDetailsSelector
                                      withObject:^(NSDictionary *attributionDetails, NSError *error) {
-    
-    [self.client attributionRequest:QNAttributionProviderAppleSearchAds data:attributionDetails completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) { }];
+    [self sendAttributionData:attributionDetails provider:QNAttributionProviderAppleSearchAds];
   }];
+}
+
+- (void)sendAttributionData:(NSDictionary *)attributionData provider:(QNAttributionProvider)provider {
+  [self.client attributionRequest:provider data:attributionData completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) { }];
 }
 
 @end
