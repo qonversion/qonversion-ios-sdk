@@ -1,7 +1,6 @@
 #import "QNAttributionManager.h"
 #import "QNAPIClient.h"
 #import "QNUtils.h"
-#import <AdServices/AdServices.h>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
@@ -52,11 +51,38 @@
   NSTimeInterval requestTimestamp = [NSDate date].timeIntervalSince1970;
   
   if (@available(iOS 14.3, *)) {
-    NSError *tokenError;
-    token = [AAAttribution attributionTokenWithError:&tokenError];
+    Class attributionClass = NSClassFromString(@"AAAttribution");
+    if (attributionClass == nil) {
+      QONVERSION_LOG(@"⚠️ AdServices framework not found. Make sure that you import AdServices");
+    }
+    
+    SEL tokenSelector = NSSelectorFromString(@"attributionTokenWithError:");
+    if (![attributionClass respondsToSelector:tokenSelector]) {
+      QONVERSION_LOG(@"⚠️ attributionTokenWithError method not found. Make sure that you import AdServices");
+    }
+    
+    QONVERSION_LOG(@"✅ AdServices framework found successfully");
+    
+    NSMethodSignature *methodSignature = [attributionClass methodSignatureForSelector:tokenSelector];
+    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSignature];
+    invocation.selector = tokenSelector;
+    invocation.target = attributionClass;
+    
+    __autoreleasing NSError *error;
+    [invocation setArgument:&error atIndex:2];
+    [invocation invoke];
+    
+    if (error) {
+      QONVERSION_LOG(@"❌ AdServices attributionTokenWithError failed");
+    }
+
+    NSString * __unsafe_unretained tempResult = nil;
+    [invocation getReturnValue:&tempResult];
+    token = tempResult;
   }
-  
+
   if (token.length > 0) {
+    QONVERSION_LOG(@"✅ AdServices token fetched");
     [self sendAttributionData:@{@"token": token, @"requested_at": @(requestTimestamp)} provider:QNAttributionProviderAppleAdServices];
     return;
   } else {
