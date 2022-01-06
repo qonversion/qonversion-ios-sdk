@@ -65,10 +65,6 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
   }
 }
 
-- (void)setUserID:(NSString *)userID {
-  [self setUserProperty:keyQNPropertyUserID value:userID];
-}
-
 - (void)addObservers {
   NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
   [center addObserver:self selector:@selector(enterBackground) name:DID_ENTER_BACKGROUND_NOTIFICATION_NAME object:nil];
