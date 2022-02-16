@@ -59,26 +59,26 @@
     SEL tokenSelector = NSSelectorFromString(@"attributionTokenWithError:");
     if (![attributionClass respondsToSelector:tokenSelector]) {
       QONVERSION_LOG(@"⚠️ attributionTokenWithError method not found. Make sure that you import AdServices");
-    }
-    
-    QONVERSION_LOG(@"✅ AdServices framework found successfully");
-    
-    NSMethodSignature *methodSignature = [attributionClass methodSignatureForSelector:tokenSelector];
-    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSignature];
-    invocation.selector = tokenSelector;
-    invocation.target = attributionClass;
-    
-    __autoreleasing NSError *error;
-    [invocation setArgument:&error atIndex:2];
-    [invocation invoke];
-    
-    if (error) {
-      QONVERSION_LOG(@"❌ AdServices attributionTokenWithError failed");
-    }
+    } else {
+      QONVERSION_LOG(@"✅ AdServices framework found successfully");
+      
+      NSMethodSignature *methodSignature = [attributionClass methodSignatureForSelector:tokenSelector];
+      NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSignature];
+      invocation.selector = tokenSelector;
+      invocation.target = attributionClass;
+      
+      __autoreleasing NSError *error;
+      [invocation setArgument:&error atIndex:2];
+      [invocation invoke];
+      
+      if (error) {
+        QONVERSION_LOG(@"❌ AdServices attributionTokenWithError failed");
+      }
 
-    NSString * __unsafe_unretained tempResult = nil;
-    [invocation getReturnValue:&tempResult];
-    token = tempResult;
+      NSString * __unsafe_unretained tempResult = nil;
+      [invocation getReturnValue:&tempResult];
+      token = tempResult;
+    }
   }
 
   if (token.length > 0) {
