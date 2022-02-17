@@ -8,15 +8,18 @@
 
 import UIKit
 import Qonversion
+import GoogleSignIn
+import FirebaseAuth
 
 class ViewController: UIViewController {
   
   @IBOutlet weak var mainProductSubscriptionButton: UIButton!
-  @IBOutlet weak var inAppPurchseButton: UIButton!
+  @IBOutlet weak var inAppPurchaseButton: UIButton!
   @IBOutlet weak var offeringsButton: UIButton!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
   @IBOutlet weak var subscriptionTitleLabel: UILabel!
   @IBOutlet weak var checkActivePermissionsButton: UIButton!
+  @IBOutlet weak var logoutButton: UIButton!
   
   var permissions: [String: Qonversion.Permission] = [:]
   var products: [String: Qonversion.Product] = [:]
@@ -30,18 +33,24 @@ class ViewController: UIViewController {
     
     subscriptionTitleLabel.text = ""
     mainProductSubscriptionButton.layer.cornerRadius = 20.0
-    inAppPurchseButton.layer.cornerRadius = 20.0
-    inAppPurchseButton.layer.borderWidth = 1.0
-    inAppPurchseButton.layer.borderColor = mainProductSubscriptionButton.backgroundColor?.cgColor
+    inAppPurchaseButton.layer.cornerRadius = 20.0
+    inAppPurchaseButton.layer.borderWidth = 1.0
+    
+    logoutButton.layer.cornerRadius = logoutButton.frame.height / 2.0
+    logoutButton.layer.borderWidth = 1.0
+    logoutButton.layer.borderColor = logoutButton.backgroundColor?.cgColor
+    logoutButton.layer.borderColor = mainProductSubscriptionButton.backgroundColor?.cgColor
     
     offeringsButton.layer.cornerRadius = 20.0
     
     Qonversion.checkPermissions { [weak self] (permissions, error) in
       guard let self = self else { return }
 
-      self.activityIndicator.stopAnimating()
-
+      self.permissions = permissions
+      
       self.checkProducts()
+      
+      self.activityIndicator.stopAnimating()
       
       if let _ = error {
         // handle error
@@ -51,8 +60,6 @@ class ViewController: UIViewController {
       guard permissions.values.contains(where: {$0.isActive == true}) else { return }
       
       self.checkActivePermissionsButton.isHidden = false
-      
-      self.permissions = permissions
       
       self.showActivePermissionsScreen()
     }
@@ -71,15 +78,19 @@ class ViewController: UIViewController {
       if let inAppPurchase = result["consumable"] {
         let permission: Qonversion.Permission? = self.permissions["standart"]
         let isActive = permission?.isActive ?? false
-        let title: String = isActive ? "Purchased" : "Buy for \(inAppPurchase.prettyPrice)"
-        self.inAppPurchseButton.setTitle(title, for: .normal)
+        let title: String = isActive ? "Successfully purchased" : "Buy for \(inAppPurchase.prettyPrice)"
+        self.inAppPurchaseButton.setTitle(title, for: .normal)
+        self.inAppPurchaseButton.backgroundColor = isActive ? .systemGreen : self.inAppPurchaseButton.backgroundColor
+        self.checkActivePermissionsButton.isHidden = isActive ? true : false
       }
       
       if let mainSubscription = result["main"] {
         let permission: Qonversion.Permission? = self.permissions["plus"]
         let isActive = permission?.isActive ?? false
-        let title: String = isActive ? "Purchased" : "Subscribe for \(mainSubscription.prettyPrice) / \(mainSubscription.prettyDuration)"
+        let title: String = isActive ? "Successfully purchased" : "Subscribe for \(mainSubscription.prettyPrice) / \(mainSubscription.prettyDuration)"
         self.mainProductSubscriptionButton.setTitle(title, for: .normal)
+        self.mainProductSubscriptionButton.backgroundColor = isActive ? .systemGreen : self.mainProductSubscriptionButton.backgroundColor
+        self.checkActivePermissionsButton.isHidden = isActive ? true : false
       }
     }
   }
@@ -113,7 +124,8 @@ class ViewController: UIViewController {
         }
         
         if !result.isEmpty {
-          self.mainProductSubscriptionButton.setTitle("Purchased", for: .normal)
+          self.mainProductSubscriptionButton.setTitle("Successfully purchased", for: .normal)
+          self.mainProductSubscriptionButton.backgroundColor = .systemGreen
         }
         
       }
@@ -133,7 +145,8 @@ class ViewController: UIViewController {
         }
         
         if !result.isEmpty {
-          self.inAppPurchseButton.setTitle("Purchased", for: .normal)
+          self.inAppPurchaseButton.setTitle("Successfully purchased", for: .normal)
+          self.inAppPurchaseButton.backgroundColor = .systemGreen
         }
       }
     }
@@ -172,7 +185,7 @@ class ViewController: UIViewController {
       self.permissions = permissions
       
       if let permission: Qonversion.Permission = self.permissions["standart"], permission.isActive {
-        self.inAppPurchseButton.setTitle("Restored", for: .normal)
+        self.inAppPurchaseButton.setTitle("Restored", for: .normal)
       }
       
       if let permission: Qonversion.Permission = self.permissions["plus"], permission.isActive {
@@ -183,6 +196,18 @@ class ViewController: UIViewController {
   
   @IBAction func didTapCheckActivePermissionsButton(_ sender: Any) {
     self.showActivePermissionsScreen()
+  }
+  
+  @IBAction func didTapLogoutButton(_ sender: Any) {
+    
+    do {
+      try Auth.auth().signOut()
+      GIDSignIn.sharedInstance.signOut()
+      Qonversion.logout()
+      self.navigationController?.popViewController(animated: true)
+    } catch {
+      // handle error
+    }
   }
   
 }
