@@ -88,6 +88,17 @@
 
 // MARK: - Public
 
+- (void)sendPushToken:(void (^)(BOOL success))completion {
+  NSDictionary *data = [self.requestSerializer pushTokenData];
+  data = [self enrichPushTokenData:data];
+  NSURLRequest *request = [self.requestBuilder makeInitRequestWith:data];
+  
+  [self processRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    // TODO: handle result
+//    completion(YES);
+  }];
+}
+
 - (void)launchRequest:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   NSDictionary *launchData = [self enrichParameters:[self.requestSerializer launchData]];
   NSURLRequest *request = [self.requestBuilder makeInitRequestWith:launchData];
@@ -184,6 +195,14 @@
 }
 
 // MARK: - Private
+
+- (NSDictionary *)enrichPushTokenData:(NSDictionary *)data {
+  NSMutableDictionary *mutableData = [data mutableCopy];
+  mutableData[@"access_token"] = _apiKey;
+  mutableData[@"q_uid"] = _userID;
+  
+  return [mutableData copy];
+}
 
 - (NSString *)obtainApiKey {
   return self.debug ? [NSString stringWithFormat:@"test_%@", self.apiKey] : self.apiKey;

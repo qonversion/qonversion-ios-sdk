@@ -15,6 +15,14 @@ static NSString *QNUserDefaultsStorageDefaultKey = @"com.qonversion.io.userDefau
   [self.userDefaults synchronize];
 }
 
+- (void)storeBool:(BOOL)value forKey:(NSString *)key {
+  [self.userDefaults setBool:value forKey:key];
+}
+
+- (BOOL)loadBoolforKey:(NSString *)key {
+  return [self.userDefaults boolForKey:key];
+}
+
 - (void)storeDouble:(double)value forKey:(NSString *)key {
   [self.userDefaults setDouble:value forKey:key];
 }
