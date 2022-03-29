@@ -82,11 +82,11 @@
       return;
     }
     
-    [self showAutomationIfExists];
+    [self showScreenIfExist:nil];
   });
 }
 
-- (void)showAutomationIfExists {
+- (void)showScreenIfExist:(nullable QONShowScreenCompletionHandler)completion {
   __block __weak QONAutomationsFlowCoordinator *weakSelf = self;
   [self.automationsService obtainAutomationScreensWithCompletion:^(NSArray<QONUserActionPoint *> *actionPoints, NSError * _Nullable error) {
     NSArray<QONUserActionPoint *> *sortedActions = [actionPoints sortedArrayUsingSelector:@selector(createDate)];
@@ -94,7 +94,11 @@
     NSString *automationID = latestAction.screenId;
     
     if (automationID.length > 0) {
-      [weakSelf showAutomationWithID:automationID completion:nil];
+      [weakSelf showAutomationWithID:automationID completion:completion];
+    } else if (error) {
+      run_block_on_main(completion, NO, error);
+    } else {
+      run_block_on_main(completion, NO, nil);
     }
   }];
 }
@@ -119,9 +123,9 @@
       navigationController.modalPresentationStyle = UIModalPresentationFullScreen;
       [presentationViewController presentViewController:navigationController animated:YES completion:nil];
       
-      run_block_on_main(completion, true, nil);
+      run_block_on_main(completion, YES, nil);
     } else if (error) {
-      run_block_on_main(completion, false, error);
+      run_block_on_main(completion, NO, error);
     }
   }];
 }

@@ -28,6 +28,10 @@
   [[QONAutomationsFlowCoordinator sharedInstance] showAutomationWithID:screenID completion:completion];
 }
 
++ (void)showScreenIfExist:(nullable QONShowScreenCompletionHandler)completion {
+  [[QONAutomationsFlowCoordinator sharedInstance] showScreenIfExist:completion];
+}
+
 @end
 
 #endif

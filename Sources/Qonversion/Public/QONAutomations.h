@@ -27,6 +27,8 @@ NS_SWIFT_NAME(Qonversion.Automations)
 + (void)setDelegate:(id<QONAutomationsDelegate>)delegate
 NS_SWIFT_NAME(setDelegate(_:));
 
++ (void)showScreenIfExist:(nullable QONShowScreenCompletionHandler)completion;
+
 /**
  Show the screen using its ID
  @param screenID - screen's ID that must be shown
