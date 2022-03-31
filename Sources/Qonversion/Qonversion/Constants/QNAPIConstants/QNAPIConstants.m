@@ -10,7 +10,7 @@
 
 NSString * const kAPIBase = @"https://api.qonversion.io/";
 NSString * const kInitEndpoint = @"v1/user/init";
-NSString * const kSendPushTokenEndpoint = @"v1/user/push_token";
+NSString * const kSendPushTokenEndpoint = @"v1/user/push-token";
 NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 NSString * const kProductsEndpoint = @"v1/products/get";
 NSString * const kPropertiesEndpoint = @"v1/properties";

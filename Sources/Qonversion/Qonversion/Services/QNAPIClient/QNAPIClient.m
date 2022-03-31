@@ -91,11 +91,11 @@
 - (void)sendPushToken:(void (^)(BOOL success))completion {
   NSDictionary *data = [self.requestSerializer pushTokenData];
   data = [self enrichPushTokenData:data];
-  NSURLRequest *request = [self.requestBuilder makeInitRequestWith:data];
+  NSURLRequest *request = [self.requestBuilder makeSendPushTokenRequestWith:data];
   
   [self processRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    // TODO: handle result
-//    completion(YES);
+    BOOL isSuccess = error == nil;
+    completion(isSuccess);
   }];
 }
 
