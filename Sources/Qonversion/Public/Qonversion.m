@@ -65,6 +65,7 @@
   }
   
   [[QNDevice current] setPushNotificationsToken:tokenString];
+  [[QNDevice current] setPushTokenProcessed:NO];
   [[Qonversion sharedInstance].productCenterManager sendPushToken];
 }
 
