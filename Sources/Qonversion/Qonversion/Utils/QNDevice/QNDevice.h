@@ -25,6 +25,9 @@
 @property (readonly, copy, nonatomic) NSString *installDate;
 @property (readonly, copy, nonatomic) NSString *pushNotificationsToken;
 
+- (BOOL)isPushTokenProcessed;
+- (void)setPushTokenProcessed:(BOOL)processed;
+
 - (void)setPushNotificationsToken:(NSString *)token;
 
 @end

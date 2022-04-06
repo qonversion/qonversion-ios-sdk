@@ -17,6 +17,7 @@
 #import "QNUserInfoServiceInterface.h"
 #import "QNProductPurchaseModel.h"
 #import "QNExperimentInfo.h"
+#import "QNDevice.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
@@ -143,12 +144,35 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return offerings;
 }
 
+- (void)sendPushToken {
+  if (!_launchingFinished) {
+    return;
+  }
+
+  [self processPushTokenRequest];
+}
+
+- (void)processPushTokenRequest {
+  NSString *pushToken = [[QNDevice current] pushNotificationsToken];
+  BOOL isPushTokenProcessed = [[QNDevice current] isPushTokenProcessed];
+  if (!pushToken || isPushTokenProcessed) {
+    return;
+  }
+  
+  [self.apiClient sendPushToken:^(BOOL success) {
+    if (success) {
+      [[QNDevice current] setPushTokenProcessed:YES];
+    }
+  }];
+}
+
 - (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion {
   _launchingFinished = NO;
   
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+    [weakSelf processPushTokenRequest];
     [weakSelf storeLaunchResultIfNeeded:result];
     
     weakSelf.launchResult = result;

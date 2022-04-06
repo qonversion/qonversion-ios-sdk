@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
                  purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel;
 
 - (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QNProduct *> *)products;
+- (NSDictionary *)pushTokenData;
 
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;
 

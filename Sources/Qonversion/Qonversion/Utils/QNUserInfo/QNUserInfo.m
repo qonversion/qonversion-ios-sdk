@@ -30,8 +30,6 @@
   
   NSMutableDictionary *deviceDict = [NSMutableDictionary new];
   
-  deviceDict[@"push_token"] = device.pushNotificationsToken;
-  
   if (device.osName) {
     [deviceDict setValue:device.osName forKey:@"os"];
   }
