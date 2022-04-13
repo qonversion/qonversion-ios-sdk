@@ -15,6 +15,10 @@
   _apiKey = apiKey;
 }
 
+- (NSURLRequest *)makeSendPushTokenRequestWith:(NSDictionary *)parameters {
+  return [self makePostRequestWith:kSendPushTokenEndpoint andBody:parameters];
+}
+
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters {
   return [self makePostRequestWith:kInitEndpoint andBody:parameters];
 }

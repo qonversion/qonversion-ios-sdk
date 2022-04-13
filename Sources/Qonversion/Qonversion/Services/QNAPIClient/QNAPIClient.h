@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL debug;
 
 - (void)launchRequest:(QNAPIClientCompletionHandler)completion;
+- (void)sendPushToken:(void (^)(BOOL success))completion;
 
 - (void)purchaseRequestWith:(SKProduct *)product
                 transaction:(SKPaymentTransaction *)transaction

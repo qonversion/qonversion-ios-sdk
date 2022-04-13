@@ -19,6 +19,8 @@
 - (void)removeObjectForKey:(NSString *)key;
 
 @optional
+- (void)storeBool:(BOOL)value forKey:(NSString *)key;
+- (BOOL)loadBoolforKey:(NSString *)key;
 - (void)setVersion:(NSString *)version;
 - (NSString *)version;
 - (void)storeDouble:(double)value forKey:(NSString *)key;

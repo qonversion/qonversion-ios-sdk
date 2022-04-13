@@ -16,6 +16,7 @@
 
 static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
 static NSString * const kPushTokenKey = @"pushToken";
+static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
 
 @interface QNDevice ()
 
@@ -165,6 +166,14 @@ static NSString * const kPushTokenKey = @"pushToken";
 - (void)setPushNotificationsToken:(NSString *)token {
   _pushNotificationsToken = token;
   [self.persistentStorage storeObject:token forKey:kPushTokenKey];
+}
+
+- (BOOL)isPushTokenProcessed {
+  return [self.persistentStorage loadBoolforKey:kPushTokenProcessedKey];
+}
+
+- (void)setPushTokenProcessed:(BOOL)processed {
+  [self.persistentStorage storeBool:processed forKey:kPushTokenProcessedKey];
 }
 
 - (NSString *)advertiserID {

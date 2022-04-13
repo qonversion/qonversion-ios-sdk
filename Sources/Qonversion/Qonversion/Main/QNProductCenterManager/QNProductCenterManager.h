@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)userInfo:(QNUserInfoCompletionHandler)completion;
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion;
+- (void)sendPushToken;
 
 @end
 

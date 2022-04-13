@@ -10,6 +10,7 @@
 
 extern NSString *const kAPIBase;
 extern NSString *const kInitEndpoint;
+extern NSString *const kSendPushTokenEndpoint;
 extern NSString *const kPurchaseEndpoint;
 extern NSString *const kProductsEndpoint;
 extern NSString *const kPropertiesEndpoint;

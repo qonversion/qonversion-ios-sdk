@@ -25,6 +25,14 @@ NS_ASSUME_NONNULL_BEGIN
   return QNUserInfo.overallData;
 }
 
+- (NSDictionary *)pushTokenData {
+  NSMutableDictionary *data = [NSMutableDictionary new];
+  data[@"push_token"] = [[QNDevice current] pushNotificationsToken];
+  data[@"device_id"] = [[QNDevice current] vendorID];
+       
+  return [data copy];
+}
+
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction
                        receipt:(nullable NSString *)receipt
