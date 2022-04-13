@@ -80,9 +80,7 @@
 }
 
 + (void)setDebugMode {
-#if DEBUG
   [Qonversion sharedInstance].debugMode = YES;
-#endif
 }
 
 + (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate {
