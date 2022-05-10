@@ -56,7 +56,12 @@
 }
 
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kIdentityEndpoint andBody:parameters];
+  return [self makePostRequestWith:kPostIdentityEndpoint andBody:parameters];
+}
+
+- (NSURLRequest *)makeGetIdentityRequestWith:(NSString *)userID {
+  NSString *endpoint = [NSString stringWithFormat:kGetIdentityEndpointFormat, userID];
+  return [self makeGetRequestWith:kGetIdentityEndpointFormat];
 }
 
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {

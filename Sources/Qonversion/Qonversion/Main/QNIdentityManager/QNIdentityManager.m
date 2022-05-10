@@ -16,8 +16,14 @@
   __block __weak QNIdentityManager *weakSelf = self;
   
   NSString *anonUserID = [self.userInfoService obtainUserID];
-  [self.identityService identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    if (result.length > 0) {
+  
+  [weakSelf.identityService obtainIdentify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+    if (error.code == 404) {
+      [weakSelf.identityService createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+        completion(result, error);
+      }];
+      return;
+    } else if (result.length > 0) {
       [weakSelf.userInfoService storeIdentity:result];
     }
     completion(result, error);

@@ -36,6 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion;
+- (void)obtainIdentityForUserID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)attributionRequest:(QNAttributionProvider)provider
                       data:(NSDictionary *)data

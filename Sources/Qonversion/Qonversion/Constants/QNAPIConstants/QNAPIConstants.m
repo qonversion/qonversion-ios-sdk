@@ -18,7 +18,8 @@ NSString * const kPropertiesEndpoint = @"v1/properties";
 NSString * const kActionPointsEndpointFormat = @"v2/users/%@/action-points?type=screen_view&active=1";
 NSString * const kScreensEndpoint = @"v2/screens/";
 NSString * const kScreenShowEndpointFormat = @"v2/screens/%@/views";
-NSString * const kIdentityEndpoint = @"v2/identities";
+NSString * const kPostIdentityEndpoint = @"v3/identities";
+NSString * const kGetIdentityEndpointFormat = @"v3/identities/%@";
 NSString * const kUserInfoEndpoint = @"v2/users/%@";
 
 NSString * const kEventEndpoint = @"v2/events";

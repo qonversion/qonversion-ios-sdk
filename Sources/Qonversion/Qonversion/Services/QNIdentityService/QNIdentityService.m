@@ -12,8 +12,20 @@
 
 @implementation QNIdentityService
 
-- (void)identify:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNIdentityServiceCompletionHandler)completion {
+- (void)createIdentity:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNIdentityServiceCompletionHandler)completion {
   [self.apiClient createIdentityForUserID:userID anonUserID:anonUserID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    NSString *identityID = dict[@"data"][@"anon_id"];
+    if (identityID.length > 0) {
+      completion(identityID, nil);
+    } else {
+      NSError *resultError = error ?: [QNErrors errorWithQNErrorCode:QNErrorInternalError];
+      completion(nil, resultError);
+    }
+  }];
+}
+
+- (void)obtainIdentify:(NSString *)userID completion:(QNIdentityServiceCompletionHandler)completion {
+  [self.apiClient obtainIdentityForUserID:userID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     NSString *identityID = dict[@"data"][@"anon_id"];
     if (identityID.length > 0) {
       completion(identityID, nil);

@@ -12,7 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef void (^QNIdentityServiceCompletionHandler)(NSString *_Nullable result, NSError  *_Nullable error);
 
-- (void)identify:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNIdentityServiceCompletionHandler)completion;
+- (void)createIdentity:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNIdentityServiceCompletionHandler)completion;
+- (void)obtainIdentify:(NSString *)userID completion:(QNIdentityServiceCompletionHandler)completion;
 
 @end
 

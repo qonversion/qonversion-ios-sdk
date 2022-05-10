@@ -158,6 +158,12 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
+- (void)obtainIdentityForUserID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeGetIdentityRequestWith:userID];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
 - (void)trackScreenShownWithID:(NSString *)automationID {
   NSDictionary *body = @{@"user": self.userID};
   NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body];
