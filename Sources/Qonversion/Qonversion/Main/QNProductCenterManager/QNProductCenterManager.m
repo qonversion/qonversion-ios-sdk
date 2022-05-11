@@ -118,6 +118,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return isCacheOutdated ? nil : result;
 }
 
+- (void)resetActualCache {
+  [self.persistentStorage removeObjectForKey:kLaunchResult];
+  [self.persistentStorage removeObjectForKey:kLaunchResultTimeStamp];
+}
+
 - (NSTimeInterval)cachedLaunchResultTimeStamp {
   return [self.persistentStorage loadDoubleForKey:kLaunchResultTimeStamp];
 }
@@ -240,6 +245,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     weakSelf.pendingIdentityUserID = nil;
     weakSelf.identityInProgress = NO;
     
+    if (![currentUserID isEqualToString:userID]) {
+      [weakSelf resetActualCache];
+    }
+    
     if (error) {
       [weakSelf executePermissionBlocksWithError:error];
     } else if ([currentUserID isEqualToString:result]) {
@@ -254,14 +263,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)logout {
   self.pendingIdentityUserID = nil;
-  BOOL isLogoutNeeded = [self.identityManager logoutIfNeeded];
+  NSString *userID = [self.identityManager logout];
   
-  if (isLogoutNeeded) {
-    NSString *userID = [self.userInfoService obtainUserID];
-    [[QNAPIClient shared] setUserID:userID];
-    
-    self.unhandledLogoutAvailable = YES;
-  }
+  [[QNAPIClient shared] setUserID:userID];
+  
+  self.unhandledLogoutAvailable = YES;
+  [self resetActualCache];
+  [self handleLogout];
 }
 
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {

@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 typedef void (^QNIdentityCompletionHandler)(NSString *_Nullable result, NSError  *_Nullable error);
 
 - (void)identify:(NSString *)userID completion:(QNIdentityCompletionHandler)completion;
-- (BOOL)logoutIfNeeded;
+- (NSString *)logout;
 
 @end
 

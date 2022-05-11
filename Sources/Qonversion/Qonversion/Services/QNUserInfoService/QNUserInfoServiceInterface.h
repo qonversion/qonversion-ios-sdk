@@ -14,7 +14,7 @@
 - (void)obtainUserInfo:(QNUserInfoCompletionHandler)completion;
 - (NSString *)obtainUserID;
 - (void)storeIdentity:(NSString *)userID;
-- (BOOL)logoutIfNeeded;
+- (NSString *)logout;
 - (void)deleteUser;
 
 @end

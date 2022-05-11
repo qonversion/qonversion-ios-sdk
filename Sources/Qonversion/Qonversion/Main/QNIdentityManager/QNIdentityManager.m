@@ -30,8 +30,8 @@
   }];
 }
 
-- (BOOL)logoutIfNeeded {
-  return [self.userInfoService logoutIfNeeded];
+- (NSString *)logout {
+  return [self.userInfoService logout];
 }
 
 @end
