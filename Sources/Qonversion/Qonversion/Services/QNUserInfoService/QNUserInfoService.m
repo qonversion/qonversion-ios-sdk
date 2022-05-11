@@ -53,7 +53,6 @@ static NSUInteger const kKeychainAttemptsCount = 3;
 }
 
 - (NSString *)logout {
-  NSString *defaultUserID = [self.localStorage loadStringForKey:kKeyQUserDefaultsUserID];
   NSString *userID = [self generateRandomUserID];
   
   [self.localStorage setString:userID forKey:kKeyQUserDefaultsUserID];
