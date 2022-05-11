@@ -267,7 +267,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   [[QNAPIClient shared] setUserID:userID];
   
-  self.unhandledLogoutAvailable = YES;
   [self resetActualCache];
   [self handleLogout];
 }
