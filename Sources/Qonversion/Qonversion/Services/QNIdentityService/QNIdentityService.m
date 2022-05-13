@@ -27,7 +27,7 @@
 }
 
 - (void)handleIdentityResult:(NSDictionary *)result error:(NSError *)error completion:(QNIdentityServiceCompletionHandler)completion {
-  NSString *identityID = dict[@"data"][@"userId"];
+  NSString *identityID = result[@"data"][@"userId"];
   if (identityID.length > 0) {
     completion(identityID, nil);
   } else {
