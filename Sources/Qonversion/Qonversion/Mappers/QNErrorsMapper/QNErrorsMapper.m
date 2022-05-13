@@ -32,13 +32,26 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   return self;
 }
 
-- (NSError *)errorFromRequest:(NSURLRequest *)request result:(NSDictionary *)result {
+- (NSError *)errorFromRequest:(NSURLRequest *)request result:(NSDictionary *)result response:(NSURLResponse *)response {
   NSURLComponents *components = [NSURLComponents componentsWithString:request.URL.absoluteString];
   if (![result isKindOfClass:[NSDictionary class]]) {
     return nil;
   }
   
   if ([components.path containsString:@"v3/identities"]) {
+    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+      NSHTTPURLResponse *httpURLResponse = (NSHTTPURLResponse *)response;
+      NSInteger statusCode = httpURLResponse.statusCode;
+      
+      if (statusCode < 200 || statusCode > 299) {
+        NSMutableDictionary *userInfo = [NSMutableDictionary new];
+        userInfo[NSLocalizedDescriptionKey] = result[@"error"][@"message"];
+        NSError *error = [NSError errorWithDomain:keyQNErrorDomain code:statusCode userInfo:userInfo];
+        
+        return error;
+      }
+    }
+    
     return nil;
   }
   
