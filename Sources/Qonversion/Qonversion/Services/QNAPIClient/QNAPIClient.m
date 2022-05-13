@@ -288,7 +288,7 @@
       return;
     }
     
-    NSError *apiError = [self.errorsMapper errorFromRequest:request result:dict];
+    NSError *apiError = [self.errorsMapper errorFromRequest:request result:dict response:response];
     
     if (apiError) {
       QONVERSION_LOG(@"❌ Request failed: %@, error: %@", request.URL, apiError);
