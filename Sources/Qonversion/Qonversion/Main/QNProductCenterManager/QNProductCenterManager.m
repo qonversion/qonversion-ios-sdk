@@ -245,15 +245,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     weakSelf.pendingIdentityUserID = nil;
     weakSelf.identityInProgress = NO;
     
-    if (![currentUserID isEqualToString:userID]) {
-      [weakSelf resetActualCache];
-    }
-    
     if (error) {
       [weakSelf executePermissionBlocksWithError:error];
     } else if ([currentUserID isEqualToString:result]) {
       [weakSelf executePermissionBlocks];
     } else {
+      [weakSelf resetActualCache];
       [[QNAPIClient shared] setUserID:result];
       
       [weakSelf launchWithCompletion:nil];
