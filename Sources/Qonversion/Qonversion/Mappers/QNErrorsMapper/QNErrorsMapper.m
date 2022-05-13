@@ -32,8 +32,13 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   return self;
 }
 
-- (NSError *)errorFromRequestResult:(NSDictionary *)result {
+- (NSError *)errorFromRequest:(NSURLRequest *)request result:(NSDictionary *)result {
+  NSURLComponents *components = [NSURLComponents componentsWithString:request.URL.absoluteString];
   if (![result isKindOfClass:[NSDictionary class]]) {
+    return nil;
+  }
+  
+  if ([components.path containsString:@"v3/identities"]) {
     return nil;
   }
   
