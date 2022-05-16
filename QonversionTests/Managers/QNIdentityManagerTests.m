@@ -62,7 +62,7 @@
   };
   
   OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
-  OCMStub([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
+  OCMStub([self.mockIdentityService createIdentity:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
   OCMExpect([self.mockUserInfoService storeIdentity:identityID]);
   
@@ -79,7 +79,7 @@
   OCMVerify([self.mockUserInfoService obtainUserID]);
   OCMVerify([self.mockUserInfoService storeIdentity:identityID]);
   
-  OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
+  OCMVerify([self.mockIdentityService createIdentity:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
 }
 
 - (void)testSuccessIdentity_emptyID {
@@ -101,7 +101,7 @@
   };
   
   OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
-  OCMStub([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
+  OCMStub([self.mockIdentityService createIdentity:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
@@ -115,7 +115,7 @@
   
   OCMVerify([self.mockUserInfoService obtainUserID]);
   
-  OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
+  OCMVerify([self.mockIdentityService createIdentity:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
 }
 
 - (void)testFailureIdentity {
@@ -137,7 +137,7 @@
   };
   
   OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
-  OCMStub([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
+  OCMStub([self.mockIdentityService createIdentity:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
@@ -151,7 +151,7 @@
   
   OCMVerify([self.mockUserInfoService obtainUserID]);
   
-  OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
+  OCMVerify([self.mockIdentityService createIdentity:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
 }
 
 - (void)testLogoutIfNeeded {

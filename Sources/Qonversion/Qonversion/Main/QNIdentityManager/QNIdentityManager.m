@@ -19,7 +19,7 @@ NSInteger const kUserNotFoundErrorCode = 404;
   
   NSString *anonUserID = [self.userInfoService obtainUserID];
   
-  [weakSelf.identityService obtainIdentify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+  [weakSelf.identityService obtainIdentity:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     if (error.code == kUserNotFoundErrorCode) {
       [weakSelf.identityService createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
         completion(result, error);

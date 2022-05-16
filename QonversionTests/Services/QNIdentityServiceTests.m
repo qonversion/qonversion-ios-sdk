@@ -41,7 +41,7 @@
   [super tearDown];
 }
 
-- (void)testSuccessIdentity {
+- (void)testSuccessCreateIdentity {
   // given
   NSString *userID = @"random_user_id";
   NSString *anonUserID = @"anon_user_id";
@@ -63,7 +63,7 @@
   OCMStub([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
-  [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+  [self.service createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     resultString = result;
     resultError = error;
   }];
@@ -98,7 +98,7 @@
   OCMStub([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
-  [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+  [self.service createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     resultString = result;
     resultError = error;
   }];
@@ -133,7 +133,7 @@
   OCMStub([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
-  [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+  [self.service createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     resultString = result;
     resultError = error;
   }];

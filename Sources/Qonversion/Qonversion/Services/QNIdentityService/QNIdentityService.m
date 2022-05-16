@@ -19,7 +19,7 @@
   }];
 }
 
-- (void)obtainIdentify:(NSString *)userID completion:(QNIdentityServiceCompletionHandler)completion {
+- (void)obtainIdentity:(NSString *)userID completion:(QNIdentityServiceCompletionHandler)completion {
   __block __weak QNIdentityService *weakSelf = self;
   [self.apiClient obtainIdentityForUserID:userID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     [weakSelf handleIdentityResult:dict error:error completion:completion];
