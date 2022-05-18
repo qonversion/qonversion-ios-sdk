@@ -50,7 +50,7 @@
   __block NSString *resultString;
   __block NSError *resultError;
   
-  NSDictionary *data = @{@"data": @{@"anon_id": identityID}};
+  NSDictionary *data = @{@"data": @{@"userId": identityID}};
   
   TestBlock testBlock = ^(NSInvocation *invocation) {
     void(^completioinBlock)(NSDictionary *data, NSError *error);
