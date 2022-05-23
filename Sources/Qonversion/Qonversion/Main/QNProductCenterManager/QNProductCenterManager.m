@@ -260,12 +260,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)logout {
   self.pendingIdentityUserID = nil;
-  NSString *userID = [self.identityManager logout];
   
-  [[QNAPIClient shared] setUserID:userID];
+  BOOL isLogoutNeeded = [self.identityManager logoutIfNeeded];
   
-  [self resetActualCache];
-  [self handleLogout];
+  if (isLogoutNeeded) {
+    self.unhandledLogoutAvailable = YES;
+    NSString *userID = [self.userInfoService obtainUserID];
+    [[QNAPIClient shared] setUserID:userID];
+    
+    [self resetActualCache];
+  }
 }
 
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {

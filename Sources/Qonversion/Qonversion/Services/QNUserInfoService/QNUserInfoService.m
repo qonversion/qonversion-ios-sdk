@@ -52,17 +52,22 @@ static NSUInteger const kKeychainAttemptsCount = 3;
   [self.localStorage setString:userID forKey:kKeyQUserDefaultsUserID];
 }
 
-- (NSString *)logout {
-  NSString *userID = [self generateRandomUserID];
-  
-  [self.localStorage setString:userID forKey:kKeyQUserDefaultsUserID];
-  
-  return userID;
+- (void)storeCustomUserID:(NSString *)userID {
+  [self.localStorage setString:userID forKey:kKeyQUserDefaultsIdentityUserID];
 }
 
-- (void)deleteUser {
-  [self.localStorage removeObjectForKey:kKeyQUserDefaultsUserID];
-  [self.keychainStorage resetUserID];
+- (BOOL)logoutIfNeeded {
+  NSString *currentIdentityUserID = [self.localStorage loadStringForKey:kKeyQUserDefaultsIdentityUserID];
+  if (currentIdentityUserID.length > 0) {
+    [self.localStorage removeObjectForKey:kKeyQUserDefaultsIdentityUserID];
+    
+    NSString *userID = [self generateRandomUserID];
+    [self.localStorage setString:userID forKey:kKeyQUserDefaultsUserID];
+    
+    return YES;
+  } else {
+    return NO;
+  }
 }
 
 #pragma mark - Private
