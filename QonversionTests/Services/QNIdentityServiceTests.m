@@ -41,7 +41,7 @@
   [super tearDown];
 }
 
-- (void)testSuccessIdentity {
+- (void)testSuccessCreateIdentity {
   // given
   NSString *userID = @"random_user_id";
   NSString *anonUserID = @"anon_user_id";
@@ -50,7 +50,7 @@
   __block NSString *resultString;
   __block NSError *resultError;
   
-  NSDictionary *data = @{@"data": @{@"anon_id": identityID}};
+  NSDictionary *data = @{@"user_id": identityID};
   
   TestBlock testBlock = ^(NSInvocation *invocation) {
     void(^completioinBlock)(NSDictionary *data, NSError *error);
@@ -63,7 +63,7 @@
   OCMStub([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
-  [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+  [self.service createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     resultString = result;
     resultError = error;
   }];
@@ -85,7 +85,7 @@
   __block NSString *resultString;
   __block NSError *resultError;
   
-  NSDictionary *data = @{@"data": @{@"anon_id_wrong_key": identityID}};
+  NSDictionary *data = @{@"anon_id_wrong_key": identityID};
   
   TestBlock testBlock = ^(NSInvocation *invocation) {
     void(^completioinBlock)(NSDictionary *data, NSError *error);
@@ -98,7 +98,7 @@
   OCMStub([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
-  [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+  [self.service createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     resultString = result;
     resultError = error;
   }];
@@ -133,7 +133,7 @@
   OCMStub([self.mockApiClient createIdentityForUserID:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
-  [self.service identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+  [self.service createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     resultString = result;
     resultError = error;
   }];

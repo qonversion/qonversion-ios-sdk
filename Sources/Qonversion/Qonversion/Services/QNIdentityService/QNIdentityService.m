@@ -19,7 +19,7 @@
   }];
 }
 
-- (void)obtainIdentify:(NSString *)userID completion:(QNIdentityServiceCompletionHandler)completion {
+- (void)obtainIdentity:(NSString *)userID completion:(QNIdentityServiceCompletionHandler)completion {
   __block __weak QNIdentityService *weakSelf = self;
   [self.apiClient obtainIdentityForUserID:userID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     [weakSelf handleIdentityResult:dict error:error completion:completion];
@@ -27,7 +27,7 @@
 }
 
 - (void)handleIdentityResult:(NSDictionary *)result error:(NSError *)error completion:(QNIdentityServiceCompletionHandler)completion {
-  NSString *identityID = result[@"data"][@"userId"];
+  NSString *identityID = result[@"user_id"];
   if (identityID.length > 0) {
     completion(identityID, nil);
   } else {

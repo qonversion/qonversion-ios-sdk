@@ -89,9 +89,11 @@
 - (void)testErrorFromRequestResult_notDict {
   // given
   NSDictionary *someArray = (NSDictionary *)@[];
+  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://qovnersion.io"]];
+  NSURLResponse *response = [[NSURLResponse alloc] init];
   
   // when
-  NSError *error = [self.mapper errorFromRequestResult:someArray];
+  NSError *error = [self.mapper errorFromRequest:request result:someArray response:response];
   
   // then
   XCTAssertNil(error);
@@ -100,10 +102,12 @@
 - (void)testErrorFromRequestResult_dataIsNotDictAndNoErrorField {
   // given
   NSDictionary *result = @{@"data": @[]};
+  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://qovnersion.io"]];
+  NSURLResponse *response = [[NSURLResponse alloc] init];
   
   // when
-  NSError *error = [self.mapper errorFromRequestResult:result];
-  
+  NSError *error = [self.mapper errorFromRequest:request result:result response:response];
+    
   // then
   XCTAssertNil(error);
 }
@@ -111,9 +115,11 @@
 - (void)testErrorFromRequestResult_dataAndErrorIsNotDict {
   // given
   NSDictionary *result = @{@"data": @[], @"error": @[]};
+  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://qovnersion.io"]];
+  NSURLResponse *response = [[NSURLResponse alloc] init];
   
   // when
-  NSError *error = [self.mapper errorFromRequestResult:result];
+  NSError *error = [self.mapper errorFromRequest:request result:result response:response];
   
   // then
   XCTAssertNil(error);
@@ -122,9 +128,11 @@
 - (void)testErrorFromRequestResult_success {
   // given
   NSDictionary *result = @{@"data": @{}, @"error": @{}, @"success": @(1)};
+  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://qovnersion.io"]];
+  NSURLResponse *response = [[NSURLResponse alloc] init];
   
   // when
-  NSError *error = [self.mapper errorFromRequestResult:result];
+  NSError *error = [self.mapper errorFromRequest:request result:result response:response];
   
   // then
   XCTAssertNil(error);
@@ -134,9 +142,11 @@
   // given
   NSDictionary *data = @{};
   NSDictionary *result = @{@"data": data, @"error": @{}, @"success": @(0)};
+  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://qovnersion.io"]];
+  NSURLResponse *response = [[NSURLResponse alloc] init];
   
   // when
-  NSError *error = [self.mapper errorFromRequestResult:result];
+  NSError *error = [self.mapper errorFromRequest:request result:result response:response];
   
   // then
   XCTAssertEqual(error.code, 3);
@@ -155,8 +165,11 @@
   NSDictionary *data = @{@"message": errorMessage, @"code": code};
   NSDictionary *result = @{@"data": data, @"error": @{}, @"success": @(0)};
   
+  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://qovnersion.io"]];
+  NSURLResponse *response = [[NSURLResponse alloc] init];
+  
   // when
-  NSError *error = [self.mapper errorFromRequestResult:result];
+  NSError *error = [self.mapper errorFromRequest:request result:result response:response];
   
   // then
   XCTAssertEqual(error.code, resultAPIErrorType);
@@ -173,9 +186,11 @@
 
   NSDictionary *data = @{@"message": errorMessage, @"code": code};
   NSDictionary *result = @{@"data": data, @"error": @{}, @"success": @(0)};
+  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://qovnersion.io"]];
+  NSURLResponse *response = [[NSURLResponse alloc] init];
   
   // when
-  NSError *error = [self.mapper errorFromRequestResult:result];
+  NSError *error = [self.mapper errorFromRequest:request result:result response:response];
   
   // then
   XCTAssertEqual(error.code, resultAPIErrorType);
@@ -189,8 +204,11 @@
   NSDictionary *errorDict = @{@"message": errorMessage};
   NSDictionary *result = @{@"error": errorDict, @"success": @(0)};
   
+  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://qovnersion.io"]];
+  NSURLResponse *response = [[NSURLResponse alloc] init];
+  
   // when
-  NSError *error = [self.mapper errorFromRequestResult:result];
+  NSError *error = [self.mapper errorFromRequest:request result:result response:response];
   
   // then
   XCTAssertEqual(error.code, 3);
@@ -201,8 +219,11 @@
   // given
   NSDictionary *result = @{@"error": @{}, @"success": @(0)};
   
+  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://qovnersion.io"]];
+  NSURLResponse *response = [[NSURLResponse alloc] init];
+  
   // when
-  NSError *error = [self.mapper errorFromRequestResult:result];
+  NSError *error = [self.mapper errorFromRequest:request result:result response:response];
   
   // then
   XCTAssertEqual(error.code, 3);
