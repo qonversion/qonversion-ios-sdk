@@ -65,6 +65,11 @@
   return [self makeGetRequestWith:endpoint];
 }
 
+- (NSURLRequest *)makeGetEntitlementsRequestWith:(NSString *)userID {
+  NSString *endpoint = [NSString stringWithFormat:kEntitlementsEndpointFormat, userID];
+  return [self makeGetRequestWith:endpoint];
+}
+
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
   return [self makePostRequestWith:kProductsEndpoint andBody:parameters];
 }

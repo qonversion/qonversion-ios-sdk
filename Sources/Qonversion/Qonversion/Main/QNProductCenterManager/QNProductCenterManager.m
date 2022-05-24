@@ -294,6 +294,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)checkPermissions:(QNPermissionCompletionHandler)completion {
+  [self.apiClient obtainEntitlements:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    NSLog(@"result");
+  }];
   if (!completion) {
     return;
   }

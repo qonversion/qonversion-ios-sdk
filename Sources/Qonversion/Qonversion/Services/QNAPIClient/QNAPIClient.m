@@ -164,6 +164,12 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
+- (void)obtainEntitlements:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeGetEntitlementsRequestWith:self.userID];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
 - (void)trackScreenShownWithID:(NSString *)automationID {
   NSDictionary *body = @{@"user": self.userID};
   NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body];
