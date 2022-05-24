@@ -48,7 +48,6 @@
 - (void)testObtainUserID_userDefaultsEmpty_keychainEmpty {
   // given
   NSString *storedUserIDKey = [self storedUserIDKey];
-  NSString *originalUserIDKey = [self originalUserIDKey];
   NSString *randomUUID = [self randomUUID];
   NSString *formattedUUID = [self formattedRandomUUID];
   
@@ -61,7 +60,6 @@
   OCMExpect([self.mockKeychainStorage obtainUserID:3]);
   OCMExpect([self.mockKeychainStorage resetUserID]);
   OCMExpect([self.mockLocalStorage setString:formattedUUID forKey:storedUserIDKey]);
-  OCMExpect([self.mockLocalStorage setString:formattedUUID forKey:originalUserIDKey]);
   
   // when
   NSString *resultUserID = [self.service obtainUserID];
@@ -71,7 +69,6 @@
   OCMVerify([self.mockKeychainStorage obtainUserID:3]);
   OCMVerify([self.mockKeychainStorage resetUserID]);
   OCMVerify([self.mockLocalStorage setString:formattedUUID forKey:storedUserIDKey]);
-  OCMVerify([self.mockLocalStorage setString:formattedUUID forKey:originalUserIDKey]);
   XCTAssertTrue([resultUserID isEqualToString:formattedUUID]);
   
   [self unmock:mockUUID];
@@ -80,7 +77,6 @@
 - (void)testObtainUserID_userDefaultsEmpty_keychainNotEmpty {
   // given
   NSString *storedUserIDKey = [self storedUserIDKey];
-  NSString *originalUserIDKey = [self originalUserIDKey];
   NSString *randomUUID = [self randomUUID];
   
   OCMStub([self.mockLocalStorage loadStringForKey:storedUserIDKey]).andReturn(nil);
@@ -90,7 +86,6 @@
   OCMExpect([self.mockKeychainStorage obtainUserID:3]);
   OCMExpect([self.mockKeychainStorage resetUserID]);
   OCMExpect([self.mockLocalStorage setString:randomUUID forKey:storedUserIDKey]);
-  OCMExpect([self.mockLocalStorage setString:randomUUID forKey:originalUserIDKey]);
   
   // when
   NSString *resultUserID = [self.service obtainUserID];
@@ -100,7 +95,6 @@
   OCMVerify([self.mockKeychainStorage obtainUserID:3]);
   OCMVerify([self.mockKeychainStorage resetUserID]);
   OCMVerify([self.mockLocalStorage setString:randomUUID forKey:storedUserIDKey]);
-  OCMVerify([self.mockLocalStorage setString:randomUUID forKey:originalUserIDKey]);
   XCTAssertTrue([resultUserID isEqualToString:randomUUID]);
 }
 
@@ -121,25 +115,21 @@
   XCTAssertTrue([resultUserID isEqualToString:randomUUID]);
 }
 
-- (void)testDeleteUser {
+- (void)testStoreCustomId {
   // given
-  NSString *storedUserIDKey = [self storedUserIDKey];
-  NSString *originalUserIDKey = [self originalUserIDKey];
+  NSString *testID = @"some_test_id";
+  NSString *key = @"com.qonversion.keys.identityUserID";
   
-  OCMExpect([self.mockLocalStorage removeObjectForKey:storedUserIDKey]);
-  OCMExpect([self.mockLocalStorage removeObjectForKey:originalUserIDKey]);
-  OCMExpect([self.mockKeychainStorage resetUserID]);
+  OCMExpect([self.mockLocalStorage setString:testID forKey:key]);
   
   // when
-  [self.service deleteUser];
+  [self.service storeCustomIdentityUserID:testID];
   
   // then
-  OCMVerify([self.mockLocalStorage removeObjectForKey:storedUserIDKey]);
-  OCMVerify([self.mockLocalStorage removeObjectForKey:originalUserIDKey]);
-  OCMVerify([self.mockKeychainStorage resetUserID]);
+  OCMVerifyAll(self.mockLocalStorage);
 }
 
-- (void)testStoreIdentity {
+- (void)teststoreIdentityResult {
   // given
   NSString *testID = @"some_test_id";
   NSString *key = @"com.qonversion.keys.storedUserID";
@@ -147,7 +137,7 @@
   OCMExpect([self.mockLocalStorage setString:testID forKey:key]);
   
   // when
-  [self.service storeIdentity:testID];
+  [self.service storeIdentityResult:testID];
   
   // then
   OCMVerifyAll(self.mockLocalStorage);
@@ -157,10 +147,6 @@
 
 - (NSString *)storedUserIDKey {
   return @"com.qonversion.keys.storedUserID";
-}
-
-- (NSString *)originalUserIDKey {
-  return @"com.qonversion.keys.originalUserID";
 }
 
 - (NSString *)randomUUID {

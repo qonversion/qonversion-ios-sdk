@@ -10,7 +10,7 @@
 #import <CoreGraphics/CoreGraphics.h>
 
 extern NSString *const kKeyQKeyChainUserID;
-extern NSString *const kKeyQUserDefaultsOriginalUserID;
+extern NSString *const kKeyQUserDefaultsIdentityUserID;
 extern NSString *const kKeyQUserDefaultsUserID;
 extern NSString *const kKeyQUserIDPrefix;
 extern NSString *const kKeyQUserIDSeparator;

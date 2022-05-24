@@ -22,15 +22,25 @@ NSInteger const kUserNotFoundErrorCode = 404;
   [weakSelf.identityService obtainIdentity:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     if (error.code == kUserNotFoundErrorCode) {
       [weakSelf.identityService createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-        completion(result, error);
+        [weakSelf handleIdentityResult:userID identityResultID:result error:error completion:completion];
       }];
       return;
-      
-    } else if (result.length > 0) {
-      [weakSelf.userInfoService storeIdentity:result];
     }
-    completion(result, error);
+    
+    [weakSelf handleIdentityResult:userID identityResultID:result error:error completion:completion];
   }];
+}
+
+- (void)handleIdentityResult:(NSString *)userID identityResultID:(NSString *)resultID error:(NSError *)error completion:(QNIdentityCompletionHandler)completion {
+  if (!error) {
+    [self.userInfoService storeCustomIdentityUserID:userID];
+  }
+  
+  if (resultID.length > 0) {
+    [self.userInfoService storeIdentityResult:resultID];
+  }
+  
+  completion(resultID, error);
 }
 
 - (BOOL)logoutIfNeeded {

@@ -64,7 +64,7 @@
   OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
   OCMStub([self.mockIdentityService obtainIdentity:userID completion:OCMOCK_ANY]).andDo(testBlock);
   
-  OCMExpect([self.mockUserInfoService storeIdentity:identityID]);
+  OCMExpect([self.mockUserInfoService storeIdentityResult:identityID]);
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
@@ -77,7 +77,7 @@
   XCTAssertEqual(randomError, resultError);
   
   OCMVerify([self.mockUserInfoService obtainUserID]);
-  OCMVerify([self.mockUserInfoService storeIdentity:identityID]);
+  OCMVerify([self.mockUserInfoService storeIdentityResult:identityID]);
   
   OCMVerify([self.mockIdentityService obtainIdentity:userID completion:OCMOCK_ANY]);
 }

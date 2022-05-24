@@ -152,7 +152,7 @@
 }
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *parameters = @{@"userId": anonUserID};
+  NSDictionary *parameters = @{@"user_id": anonUserID};
   NSURLRequest *request = [self.requestBuilder makeCreateIdentityRequestWithUserID:userID parameters:parameters];
   
   return [self dataTaskWithRequest:request completion:completion];

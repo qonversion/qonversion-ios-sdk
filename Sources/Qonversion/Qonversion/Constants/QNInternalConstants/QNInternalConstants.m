@@ -9,7 +9,7 @@
 #import "QNInternalConstants.h"
 
 NSString *const kKeyQKeyChainUserID = @"Qonversion.Keeper.userID";
-NSString *const kKeyQUserDefaultsOriginalUserID = @"com.qonversion.keys.originalUserID";
+NSString *const kKeyQUserDefaultsIdentityUserID = @"com.qonversion.keys.identityUserID";
 NSString *const kKeyQUserDefaultsUserID = @"com.qonversion.keys.storedUserID";
 NSString *const kKeyQUserIDPrefix = @"QON";
 NSString *const kKeyQUserIDSeparator = @"_";

@@ -118,6 +118,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return isCacheOutdated ? nil : result;
 }
 
+- (void)resetActualCache {
+  [self.persistentStorage removeObjectForKey:kLaunchResult];
+  [self.persistentStorage removeObjectForKey:kLaunchResultTimeStamp];
+}
+
 - (NSTimeInterval)cachedLaunchResultTimeStamp {
   return [self.persistentStorage loadDoubleForKey:kLaunchResultTimeStamp];
 }
@@ -235,6 +240,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)processIdentity:(NSString *)userID {
   NSString *currentUserID = [self.userInfoService obtainUserID];
   
+  NSString *currentIdentityID = [self.userInfoService obtainCustomIdentityUserID];
+  
+  if ([currentIdentityID isEqualToString:userID]) {
+    self.pendingIdentityUserID = nil;
+    self.identityInProgress = NO;
+    [self executePermissionBlocks];
+    
+    return;
+  }
+  
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.identityManager identify:userID completion:^(NSString *result, NSError * _Nullable error) {
     weakSelf.pendingIdentityUserID = nil;
@@ -245,6 +260,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     } else if ([currentUserID isEqualToString:result]) {
       [weakSelf executePermissionBlocks];
     } else {
+      [weakSelf resetActualCache];
       [[QNAPIClient shared] setUserID:result];
       
       [weakSelf launchWithCompletion:nil];
@@ -254,13 +270,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)logout {
   self.pendingIdentityUserID = nil;
+  
   BOOL isLogoutNeeded = [self.identityManager logoutIfNeeded];
   
   if (isLogoutNeeded) {
+    self.unhandledLogoutAvailable = YES;
     NSString *userID = [self.userInfoService obtainUserID];
     [[QNAPIClient shared] setUserID:userID];
     
-    self.unhandledLogoutAvailable = YES;
+    [self resetActualCache];
   }
 }
 
