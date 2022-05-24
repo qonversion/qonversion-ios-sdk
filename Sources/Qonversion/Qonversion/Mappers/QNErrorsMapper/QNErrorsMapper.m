@@ -38,7 +38,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
     return nil;
   }
   
-  if ([components.path containsString:@"v3/identities"]) {
+  if ([self isV3Endpoint:components.path]) {
     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
       NSHTTPURLResponse *httpURLResponse = (NSHTTPURLResponse *)response;
       NSInteger statusCode = httpURLResponse.statusCode;
@@ -62,6 +62,17 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   }
   
   return nil;
+}
+
+- (BOOL)isV3Endpoint:(NSString *)path {
+  NSString *prefix = @"/v3/";
+  if (path.length >= prefix.length) {
+    NSString *version = [path substringToIndex:prefix.length];
+    
+    return [version isEqualToString:prefix];
+  }
+  
+  return NO;
 }
 
 - (NSError * _Nullable)mapError:(NSDictionary *)result {
