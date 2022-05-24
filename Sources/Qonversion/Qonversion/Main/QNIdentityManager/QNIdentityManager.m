@@ -37,7 +37,7 @@ NSInteger const kUserNotFoundErrorCode = 404;
   }
   
   if (resultID.length > 0) {
-    [self.userInfoService storeIdentity:resultID];
+    [self.userInfoService storeIdentityResult:resultID];
   }
   
   completion(resultID, error);

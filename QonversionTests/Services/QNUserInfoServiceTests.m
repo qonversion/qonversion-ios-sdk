@@ -129,7 +129,7 @@
   OCMVerifyAll(self.mockLocalStorage);
 }
 
-- (void)testStoreIdentity {
+- (void)teststoreIdentityResult {
   // given
   NSString *testID = @"some_test_id";
   NSString *key = @"com.qonversion.keys.storedUserID";
@@ -137,7 +137,7 @@
   OCMExpect([self.mockLocalStorage setString:testID forKey:key]);
   
   // when
-  [self.service storeIdentity:testID];
+  [self.service storeIdentityResult:testID];
   
   // then
   OCMVerifyAll(self.mockLocalStorage);
