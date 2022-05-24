@@ -152,8 +152,14 @@
 }
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *parameters = @{@"anon_id": anonUserID, @"identity_id": userID};
-  NSURLRequest *request = [self.requestBuilder makeCreateIdentityRequestWith:parameters];
+  NSDictionary *parameters = @{@"userId": anonUserID};
+  NSURLRequest *request = [self.requestBuilder makeCreateIdentityRequestWithUserID:userID parameters:parameters];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
+- (void)obtainIdentityForUserID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeGetIdentityRequestWith:userID];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
@@ -282,7 +288,7 @@
       return;
     }
     
-    NSError *apiError = [self.errorsMapper errorFromRequestResult:dict];
+    NSError *apiError = [self.errorsMapper errorFromRequest:request result:dict response:response];
     
     if (apiError) {
       QONVERSION_LOG(@"❌ Request failed: %@, error: %@", request.URL, apiError);

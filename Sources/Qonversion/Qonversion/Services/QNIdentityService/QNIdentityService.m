@@ -12,16 +12,28 @@
 
 @implementation QNIdentityService
 
-- (void)identify:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNIdentityServiceCompletionHandler)completion {
+- (void)createIdentity:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNIdentityServiceCompletionHandler)completion {
+  __block __weak QNIdentityService *weakSelf = self;
   [self.apiClient createIdentityForUserID:userID anonUserID:anonUserID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    NSString *identityID = dict[@"data"][@"anon_id"];
-    if (identityID.length > 0) {
-      completion(identityID, nil);
-    } else {
-      NSError *resultError = error ?: [QNErrors errorWithQNErrorCode:QNErrorInternalError];
-      completion(nil, resultError);
-    }
+    [weakSelf handleIdentityResult:dict error:error completion:completion];
   }];
+}
+
+- (void)obtainIdentity:(NSString *)userID completion:(QNIdentityServiceCompletionHandler)completion {
+  __block __weak QNIdentityService *weakSelf = self;
+  [self.apiClient obtainIdentityForUserID:userID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    [weakSelf handleIdentityResult:dict error:error completion:completion];
+  }];
+}
+
+- (void)handleIdentityResult:(NSDictionary *)result error:(NSError *)error completion:(QNIdentityServiceCompletionHandler)completion {
+  NSString *identityID = result[@"data"][@"userId"];
+  if (identityID.length > 0) {
+    completion(identityID, nil);
+  } else {
+    NSError *resultError = error ?: [QNErrors errorWithQNErrorCode:QNErrorInternalError];
+    completion(nil, resultError);
+  }
 }
 
 @end

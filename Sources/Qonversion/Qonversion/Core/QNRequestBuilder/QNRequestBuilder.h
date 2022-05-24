@@ -11,7 +11,8 @@
 - (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter;
 - (NSURLRequest *)makeScreensRequestWith:(NSString *)parameters;
-- (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makeCreateIdentityRequestWithUserID:(NSString *)userID parameters:(NSDictionary *)parameters;
+- (NSURLRequest *)makeGetIdentityRequestWith:(NSString *)userID;
 - (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body;
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters;
 - (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID;

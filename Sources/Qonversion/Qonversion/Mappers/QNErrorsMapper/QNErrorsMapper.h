@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QNErrorsMapper : NSObject
 
-- (NSError *)errorFromRequestResult:(NSDictionary *)result;
+- (NSError *)errorFromRequest:(NSURLRequest *)request result:(NSDictionary *)result response:(NSURLResponse *)response;
 
 @end
 

@@ -17,7 +17,7 @@ extern NSString *const kPropertiesEndpoint;
 extern NSString *const kActionPointsEndpointFormat;
 extern NSString *const kScreensEndpoint;
 extern NSString *const kScreenShowEndpointFormat;
-extern NSString *const kIdentityEndpoint;
+extern NSString *const kIdentityEndpointFormat;
 extern NSString *const kUserInfoEndpoint;
 extern NSString *const kAttributionEndpoint;
 extern NSString *const kStoredRequestsKey;
