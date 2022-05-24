@@ -48,11 +48,15 @@ static NSUInteger const kKeychainAttemptsCount = 3;
   return resultUserID;
 }
 
-- (void)storeIdentity:(NSString *)userID {
+- (NSString *)obtainCustomIdentityUserID {
+  return [self.localStorage loadStringForKey:kKeyQUserDefaultsIdentityUserID];
+}
+
+- (void)storeIdentityResult:(NSString *)userID {
   [self.localStorage setString:userID forKey:kKeyQUserDefaultsUserID];
 }
 
-- (void)storeCustomUserID:(NSString *)userID {
+- (void)storeCustomIdentityUserID:(NSString *)userID {
   [self.localStorage setString:userID forKey:kKeyQUserDefaultsIdentityUserID];
 }
 

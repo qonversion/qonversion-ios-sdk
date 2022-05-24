@@ -217,7 +217,7 @@
 }
 
 - (NSString *)obtainApiKey {
-  return self.debug ? [NSString stringWithFormat:@"%@", self.apiKey] : self.apiKey;
+  return self.debug ? [NSString stringWithFormat:@"test_%@", self.apiKey] : self.apiKey;
 }
 
 - (NSDictionary *)enrichParameters:(NSDictionary *)parameters {
