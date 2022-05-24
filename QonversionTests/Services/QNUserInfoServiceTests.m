@@ -123,7 +123,7 @@
   OCMExpect([self.mockLocalStorage setString:testID forKey:key]);
   
   // when
-  [self.service storeCustomUserID:testID];
+  [self.service storeCustomIdentityUserID:testID];
   
   // then
   OCMVerifyAll(self.mockLocalStorage);

@@ -240,6 +240,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)processIdentity:(NSString *)userID {
   NSString *currentUserID = [self.userInfoService obtainUserID];
   
+  NSString *currentIdentityID = [self.userInfoService obtainCustomIdentityUserID];
+  
+  if ([currentIdentityID isEqualToString:userID]) {
+    self.pendingIdentityUserID = nil;
+    self.identityInProgress = NO;
+    [self executePermissionBlocks];
+    
+    return;
+  }
+  
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.identityManager identify:userID completion:^(NSString *result, NSError * _Nullable error) {
     weakSelf.pendingIdentityUserID = nil;

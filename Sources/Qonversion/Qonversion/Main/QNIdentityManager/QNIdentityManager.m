@@ -33,7 +33,7 @@ NSInteger const kUserNotFoundErrorCode = 404;
 
 - (void)handleIdentityResult:(NSString *)userID identityResultID:(NSString *)resultID error:(NSError *)error completion:(QNIdentityCompletionHandler)completion {
   if (!error) {
-    [self.userInfoService storeCustomUserID:userID];
+    [self.userInfoService storeCustomIdentityUserID:userID];
   }
   
   if (resultID.length > 0) {
