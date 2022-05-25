@@ -164,19 +164,22 @@
 }
 
 + (QNPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
+  NSDictionary *product = dict[@"product"];
+  NSDictionary *subscription = product[@"subscription"];
+  
   QNPermission *result = [[QNPermission alloc] init];
   result.permissionID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
-  result.renewState = [self mapInteger:dict[@"renew_state"] orReturn:0];
   
-  result.productID = ((NSString *)dict[@"associated_product"] ?: @"");
+  result.renewState = [self mapInteger:subscription[@"renew_state"] orReturn:0];
+  result.productID = ((NSString *)product[@"associated_product"] ?: @"");
   
-  NSTimeInterval started = [self mapInteger:dict[@"started_timestamp"] orReturn:0];
+  NSTimeInterval started = [self mapInteger:dict[@"started"] orReturn:0];
   result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
   result.expirationDate = nil;
   
-  if ([dict[@"expiration_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval expiration = ((NSNumber *)dict[@"expiration_timestamp"] ?: @0).intValue;
+  if ([dict[@"expires"] isEqual:[NSNull null]] == NO) {
+    NSTimeInterval expiration = ((NSNumber *)dict[@"expires"] ?: @0).intValue;
     result.expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
   }
   
