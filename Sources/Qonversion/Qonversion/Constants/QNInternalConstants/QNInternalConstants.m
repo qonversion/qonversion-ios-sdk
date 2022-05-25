@@ -11,6 +11,8 @@
 NSString *const kKeyQKeyChainUserID = @"Qonversion.Keeper.userID";
 NSString *const kKeyQUserDefaultsIdentityUserID = @"com.qonversion.keys.identityUserID";
 NSString *const kKeyQUserDefaultsUserID = @"com.qonversion.keys.storedUserID";
+NSString *const kKeyQUserDefaultsPermissions = @"com.qonversion.keys.permissions";
+NSString *const kKeyQUserDefaultsPermissionsTimestamp = @"com.qonversion.keys.permissions.timestamp";
 NSString *const kKeyQUserIDPrefix = @"QON";
 NSString *const kKeyQUserIDSeparator = @"_";
 NSString *const kMainUserDefaultsSuiteName = @"qonversion.localstorage.main";

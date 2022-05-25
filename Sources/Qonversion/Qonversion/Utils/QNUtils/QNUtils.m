@@ -24,6 +24,16 @@
   return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > dayInSeconds;
 }
 
++ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval {
+  if (defaultState) {
+    CGFloat cacheLifetimeInSeconds = 60.0 * 5.0;
+    NSDate *currentDate = [NSDate date];
+    return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > cacheLifetimeInSeconds;
+  } else {
+    return [self isCacheOutdated:cacheDataTimeInterval];
+  }
+}
+
 + (NSDate *)dateFromTimestamp:(NSNumber *)timestamp {
   NSDate *date;
   
