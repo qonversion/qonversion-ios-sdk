@@ -18,6 +18,7 @@
 #import "QNProductPurchaseModel.h"
 #import "QNExperimentInfo.h"
 #import "QNDevice.h"
+#import "QNInternalConstants.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
@@ -196,8 +197,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         [weakSelf identify:weakSelf.pendingIdentityUserID];
       } else if (weakSelf.unhandledLogoutAvailable) {
         [weakSelf handleLogout];
-      } else {
-        [weakSelf executePermissionBlocks];
       }
     }
     
@@ -305,7 +304,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)checkPermissions:(QNPermissionCompletionHandler)completion {
   [self.apiClient obtainEntitlements:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    NSLog(@"result");
+    if (error.code == kNotFoundErrorCode) {
+      
+    }
   }];
   if (!completion) {
     return;

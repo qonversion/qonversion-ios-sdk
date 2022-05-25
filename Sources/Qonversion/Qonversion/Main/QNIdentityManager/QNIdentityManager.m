@@ -9,8 +9,7 @@
 #import "QNIdentityManager.h"
 #import "QNIdentityServiceInterface.h"
 #import "QNUserInfoServiceInterface.h"
-
-NSInteger const kUserNotFoundErrorCode = 404;
+#import "QNInternalConstants.h"
 
 @implementation QNIdentityManager
 
@@ -20,7 +19,7 @@ NSInteger const kUserNotFoundErrorCode = 404;
   NSString *anonUserID = [self.userInfoService obtainUserID];
   
   [weakSelf.identityService obtainIdentity:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    if (error.code == kUserNotFoundErrorCode) {
+    if (error.code == kNotFoundErrorCode) {
       [weakSelf.identityService createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
         [weakSelf handleIdentityResult:userID identityResultID:result error:error completion:completion];
       }];

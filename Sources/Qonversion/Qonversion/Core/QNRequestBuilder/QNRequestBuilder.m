@@ -3,6 +3,9 @@
 #import "QNDevice.h"
 #import "QNConstants.h"
 
+NSString *const kAPIMinorVersion = @"2";
+NSString *const kOldAPIPrefix = @"/v1/";
+
 @interface QNRequestBuilder ()
 
 @property (nonatomic, copy) NSString *apiKey;
@@ -123,6 +126,10 @@
   [self addBearerToRequest:request];
   [self addLocaleToRequest:request];
   [self addPlatformInfoToRequest:request];
+  
+  if ([url.absoluteString containsString:kOldAPIPrefix]) {
+    [self addMinorVersionToRequest:request];
+  }
 
   return request;
 }
@@ -140,6 +147,10 @@
     NSString *authHeader = [NSString stringWithFormat:@"Bearer %@", self.apiKey];
     [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
   }
+}
+
+- (void)addMinorVersionToRequest:(NSMutableURLRequest *)request {
+  [request addValue:kAPIMinorVersion forHTTPHeaderField:@"API-Minor-Version"];
 }
 
 - (void)addPlatformInfoToRequest:(NSMutableURLRequest *)request {
