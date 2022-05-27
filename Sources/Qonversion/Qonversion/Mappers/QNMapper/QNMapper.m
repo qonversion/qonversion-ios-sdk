@@ -187,11 +187,6 @@
 + (QNProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
   QNProduct *result = [[QNProduct alloc] init];
   
-  QNProductDuration duration = [self mapInteger:dict[@"duration"] orReturn:-1];
-  result.duration = duration;
-  
-  result.type = [self mapInteger:dict[@"type"] orReturn:0];
-  
   result.qonversionID = ((NSString *)dict[@"id"] ?: @"");
   NSString *storeId = (NSString *)dict[@"store_id"];
   result.storeID = [storeId isKindOfClass:[NSString class]] ? storeId : nil;

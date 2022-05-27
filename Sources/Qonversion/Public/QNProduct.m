@@ -87,6 +87,81 @@
   return _trialDuration;
 }
 
+- (QNProductType)type {
+  if (_type) {
+    return _type;
+  }
+  
+  if (!self.skProduct) {
+    return QNProductTypeUnknown;
+  }
+  
+  QNProductType type = QNProductTypeOneTime;
+  
+  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
+    if (self.skProduct.introductoryPrice && self.skProduct.introductoryPrice.paymentMode == SKProductDiscountPaymentModeFreeTrial) {
+      type = QNProductTypeTrial;
+    } else if (self.skProduct.subscriptionPeriod) {
+      type = QNProductTypeDirectSubscription;
+    }
+  }
+  
+  _type = type;
+  
+  return _type;
+}
+
+- (QNProductDuration)duration {
+  if (_duration) {
+    return _duration;
+  }
+  
+  if (!self.skProduct) {
+    return QNProductDurationUnknown;
+  }
+  
+  QNProductDuration duration = QNProductDurationUnknown;
+  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
+    if (self.skProduct.subscriptionPeriod) {
+      SKProductPeriodUnit unit = self.skProduct.subscriptionPeriod.unit;
+      NSUInteger numberOfUnits = self.skProduct.subscriptionPeriod.numberOfUnits;
+      
+      switch (unit) {
+        case SKProductPeriodUnitWeek:
+          if (numberOfUnits == 1) {
+            duration = QNProductDurationWeekly;
+          }
+          break;
+          
+        case SKProductPeriodUnitMonth:
+          if (numberOfUnits == 1) {
+            duration = QNProductDurationMonthly;
+          } else if (numberOfUnits == 3) {
+            duration = QNProductDuration3Months;
+          } else if (numberOfUnits == 6) {
+            duration = QNProductDuration6Months;
+          }
+          break;
+          
+        case SKProductPeriodUnitYear:
+          if (numberOfUnits == 1) {
+            duration = QNProductDurationAnnual;
+          }
+          
+//          QNProductDurationLifetime
+          break;
+          
+        default:
+          break;
+      }
+    }
+  }
+  
+  _duration = duration;
+  
+  return _duration;
+}
+
 - (NSString *)description {
   NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
   
