@@ -53,17 +53,21 @@
   return user;
 }
 
-+ (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSArray *)data {
++ (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSDictionary *)data {
   NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
+  NSArray *permissionsData = data[@"data"];
+  if (![permissionsData isKindOfClass:[NSArray class]]) {
+    return [permissions copy];
+  }
   
-  for (NSDictionary* itemDict in data) {
+  for (NSDictionary* itemDict in permissionsData) {
     QNPermission *item = [self fillPermission:itemDict];
     if (item && item.permissionID) {
       permissions[item.permissionID] = item;
     }
   }
   
-  return [[NSDictionary alloc] initWithDictionary:permissions];
+  return [permissions copy];
 }
 
 + (NSDictionary <NSString *, QNExperimentInfo *> *)fillExperiments:(NSArray *)data {
@@ -167,12 +171,21 @@
   NSDictionary *product = dict[@"product"];
   NSDictionary *subscription = product[@"subscription"];
   
+  NSDictionary *renewStates = @{
+    @"will_renew": @(QNPermissionRenewStateWillRenew),
+    @"canceled": @(QNPermissionRenewStateCancelled),
+    @"billing_issue": @(QNPermissionRenewStateBillingIssue)
+  };
+  
   QNPermission *result = [[QNPermission alloc] init];
   result.permissionID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
   
-  result.renewState = [self mapInteger:subscription[@"renew_state"] orReturn:0];
-  result.productID = ((NSString *)product[@"associated_product"] ?: @"");
+  NSString *renewStateRaw = subscription[@"renew_state"];
+  NSNumber *renewStateNumber = renewStates[renewStateRaw];
+  QNPermissionRenewState renewState = renewStateNumber ? renewStateNumber.integerValue : QNPermissionRenewStateNonRenewable;
+  result.renewState = renewState;
+  result.productID = ((NSString *)product[@"product_id"] ?: @"");
   
   NSTimeInterval started = [self mapInteger:dict[@"started"] orReturn:0];
   result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
