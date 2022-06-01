@@ -43,7 +43,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNOfferingsCompletionHandler> *offeringsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNUserInfoCompletionHandler> *userInfoBlocks;
-
+@property (atomic, copy) NSMutableArray<SKPaymentTransaction *> *restoredTransactions;
 @property (nonatomic, strong) QNAPIClient *apiClient;
 
 @property (nonatomic, strong) QNLaunchResult *launchResult;
@@ -877,6 +877,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 // MARK: - QNStoreKitServiceDelegate
 
+- (void)handleRestoredTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
+  self.restoredTransactions = [transactions mutableCopy];
+}
+
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   __block __weak QNProductCenterManager *weakSelf = self;
   
@@ -893,6 +897,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       
       if (error) {
         weakSelf.forcePermissionsRetry = YES;
+        
         run_block_on_main(_purchasingBlock, @{}, error, NO);
         return;
       }
@@ -916,32 +921,41 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       
       [weakSelf storeLaunchResultIfNeeded:launchResult];
       
-      if (_purchasingBlock) {
-        run_block_on_main(_purchasingBlock, launchResult.permissions, error, NO);
-      } else {
-        if (transaction.transactionState != SKPaymentTransactionStateRestored) {
-          [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedPermissions:launchResult.permissions];
+      [weakSelf checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
+        if (_purchasingBlock) {
+          run_block_on_main(_purchasingBlock, result, error, NO);
+        } else {
+          if (transaction.transactionState != SKPaymentTransactionStateRestored && !error) {
+            [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedPermissions:result];
+          } else {
+            if (error) {
+              NSLock *arrayLock = [NSLock new];
+              [arrayLock lock];
+              if ([weakSelf.restoredTransactions containsObject:transaction]) {
+                [weakSelf.restoredTransactions removeObject:transaction];
+                
+                if (weakSelf.restoredTransactions.count == 0) {
+                  [weakSelf handleRestoreResult:nil error:error];
+                }
+              }
+              [arrayLock unlock];
+            } else {
+              weakSelf.restoredTransactions = nil;
+              [weakSelf handleRestoreResult:result error:nil];
+            }
+          }
         }
-      }
+      }];
     }];
   }];
 }
 
-- (void)handleRestoreCompletedTransactionsFinished {
+- (void)handleRestoreResult:(NSDictionary<NSString *, QNPermission *> *)permissions error:(NSError *)error {
   if (self.restorePurchasesBlock) {
-    __block __weak QNProductCenterManager *weakSelf = self;
-    [self launch:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-      QNRestoreCompletionHandler restorePurchasesBlock = [weakSelf.restorePurchasesBlock copy];
-      weakSelf.restorePurchasesBlock = nil;
-      if (error) {
-        weakSelf.forcePermissionsRetry = YES;
-        run_block_on_main(restorePurchasesBlock, @{}, error);
-      } else if (result) {
-        [weakSelf storeLaunchResultIfNeeded:result];
-        weakSelf.launchResult = result;
-        run_block_on_main(restorePurchasesBlock, result.permissions, error);
-      }
-    }];
+    QNRestoreCompletionHandler restorePurchasesBlock = [self.restorePurchasesBlock copy];
+    self.restorePurchasesBlock = nil;
+    
+    run_block_on_main(restorePurchasesBlock, permissions, error);
   }
 }
 

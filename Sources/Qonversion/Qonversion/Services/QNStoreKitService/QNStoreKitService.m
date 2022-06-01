@@ -141,12 +141,6 @@
 
 // MARK: - SKPaymentTransactionObserver
 
-- (void)paymentQueueRestoreCompletedTransactionsFinished:(SKPaymentQueue *)queue {
-  if ([self.delegate respondsToSelector:@selector(handleRestoreCompletedTransactionsFinished)]) {
-    [self.delegate handleRestoreCompletedTransactionsFinished];
-  }
-}
-
 #if (TARGET_OS_IOS && !TARGET_OS_MACCATALYST) || TARGET_OS_TV
 - (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product {
   return [self.delegate paymentQueue:queue shouldAddStorePayment:payment forProduct:product];
@@ -161,6 +155,16 @@
 
 - (void)paymentQueue:(nonnull SKPaymentQueue *)queue
  updatedTransactions:(nonnull NSArray<SKPaymentTransaction *> *)transactions {
+  NSPredicate *predicate = [NSPredicate predicateWithBlock:^BOOL(id  _Nullable evaluatedObject, NSDictionary<NSString *,id> * _Nullable bindings) {
+    if (![evaluatedObject isKindOfClass:[SKPaymentTransaction class]]) {
+      return false;
+    }
+    return ((SKPaymentTransaction *)evaluatedObject).transactionState == SKPaymentTransactionStateRestored;
+  }];
+  NSArray *restoredTransactions = [transactions filteredArrayUsingPredicate:predicate];
+  if (restoredTransactions.count > 0 && [self.delegate respondsToSelector:@selector(handleRestoredTransactions:)]) {
+    [self.delegate handleRestoredTransactions:restoredTransactions];
+  }
   for (SKPaymentTransaction *transaction in transactions) {
     [self handleTransaction:transaction];
   }
