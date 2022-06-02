@@ -43,7 +43,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNOfferingsCompletionHandler> *offeringsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNUserInfoCompletionHandler> *userInfoBlocks;
-@property (atomic, copy) NSMutableArray<SKPaymentTransaction *> *restoredTransactions;
+@property (atomic, strong) NSMutableArray<SKPaymentTransaction *> *restoredTransactions;
 @property (nonatomic, strong) QNAPIClient *apiClient;
 
 @property (nonatomic, strong) QNLaunchResult *launchResult;
