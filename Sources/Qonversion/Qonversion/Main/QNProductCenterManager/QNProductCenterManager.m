@@ -360,14 +360,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       return;
     }
     
+    NSString *userID = [self.userInfoService obtainUserID];
+    
     NSDictionary<NSString *, QNPermission *> *actualPermissions = [self getActualPermissionsForDefaultState:YES];
     if (actualPermissions && !self.forcePermissionsRetry) {
       run_block_on_main(completion, actualPermissions, nil);
+      [self executePermissionBlocks:actualPermissions userID:userID];
       
       return;
     }
     
-    NSString *userID = [self.userInfoService obtainUserID];
     NSMutableArray *callbacks = self.permissionsBlocks[userID] ?: [NSMutableArray new];
     
     isRequestInProgress = callbacks.count > 0;
