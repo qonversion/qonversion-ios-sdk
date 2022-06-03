@@ -365,7 +365,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     NSDictionary<NSString *, QNPermission *> *actualPermissions = [self getActualPermissionsForDefaultState:YES];
     if (actualPermissions && !self.forcePermissionsRetry) {
       run_block_on_main(completion, actualPermissions, nil);
-      [self executePermissionBlocks:actualPermissions userID:userID];
       
       return;
     }
@@ -388,7 +387,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.apiClient obtainEntitlements:^(NSDictionary * _Nullable result, NSError * _Nullable error) {
     NSString *userID = [self.userInfoService obtainUserID];
     if (error.code == kNotFoundErrorCode) {
-      [weakSelf launchWithCompletion:nil];
+      if (weakSelf.launchResult || weakSelf.launchError) {
+        [weakSelf launchWithCompletion:nil];
+      }
       [weakSelf executePermissionBlocks:nil userID:userID];
     } else if (error) {
       [weakSelf handlePermissionsError:error userID:userID];
@@ -895,33 +896,36 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         [weakSelf.purchasingBlocks removeObjectForKey:product.productIdentifier];
       }
       
-      if (error) {
-        weakSelf.forcePermissionsRetry = YES;
-        
+      weakSelf.forcePermissionsRetry = error != nil;
+      
+      if (error && _purchasingBlock) {
         run_block_on_main(_purchasingBlock, @{}, error, NO);
         return;
+      } else if (!error) {
+        QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
+        weakSelf.forcePermissionsRetry = result.error != nil;
+        
+        if (result.error && _purchasingBlock) {
+          run_block_on_main(_purchasingBlock, @{}, result.error, NO);
+          return;
+        }
+        
+        [weakSelf.storeKitService finishTransaction:transaction];
+        
+        QNUser *user = [QNMapper fillUser:result.data];
+        weakSelf.user = user;
+        
+        QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+        NSDictionary *permissions = [launchResult performSelector:@selector(permissions)];
+        weakSelf.permissions = permissions;
+        [weakSelf storePermissions:permissions];
+        @synchronized (weakSelf) {
+          weakSelf.launchResult = launchResult;
+          weakSelf.launchError = nil;
+        }
+        
+        [weakSelf storeLaunchResultIfNeeded:launchResult];
       }
-      
-      QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
-      if (result.error) {
-        weakSelf.forcePermissionsRetry = YES;
-        run_block_on_main(_purchasingBlock, @{}, result.error, NO);
-        return;
-      }
-      
-      [weakSelf.storeKitService finishTransaction:transaction];
-      
-      QNUser *user = [QNMapper fillUser:result.data];
-      weakSelf.user = user;
-      
-      QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-      @synchronized (weakSelf) {
-        weakSelf.forcePermissionsRetry = NO;
-        weakSelf.launchResult = launchResult;
-        weakSelf.launchError = nil;
-      }
-      
-      [weakSelf storeLaunchResultIfNeeded:launchResult];
       
       [weakSelf checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
         if (_purchasingBlock) {
