@@ -135,10 +135,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return isCacheOutdated ? nil : permissions;
 }
 
-- (void)resetActualCache {
-  [self.persistentStorage removeObjectForKey:kLaunchResult];
-  [self.persistentStorage removeObjectForKey:kLaunchResultTimeStamp];
-  
+- (void)resetActualPermissionsCache {
   [self.persistentStorage removeObjectForKey:kKeyQUserDefaultsPermissions];
   [self.persistentStorage removeObjectForKey:kKeyQUserDefaultsPermissionsTimestamp];
 }
@@ -290,7 +287,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
     
     if (![result isEqualToString:currentUserID]) {
-      [weakSelf resetActualCache];
+      [weakSelf resetActualPermissionsCache];
     }
     
     [[QNAPIClient shared] setUserID:result];
@@ -319,7 +316,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     NSString *userID = [self.userInfoService obtainUserID];
     [[QNAPIClient shared] setUserID:userID];
     
-    [self resetActualCache];
+    [self resetActualPermissionsCache];
   }
 }
 
