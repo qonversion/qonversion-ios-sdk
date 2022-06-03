@@ -136,6 +136,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)resetActualPermissionsCache {
+  self.permissions = nil;
   [self.persistentStorage removeObjectForKey:kKeyQUserDefaultsPermissions];
   [self.persistentStorage removeObjectForKey:kKeyQUserDefaultsPermissionsTimestamp];
 }
