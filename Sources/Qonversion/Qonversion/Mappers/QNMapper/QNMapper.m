@@ -23,7 +23,6 @@
 + (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
   QNLaunchResult *result = [[QNLaunchResult alloc] init];
   
-  NSArray *permissionsArray = dict[@"permissions"] ?: @[];
   NSArray *productsArray = dict[@"products"] ?: @[];
   NSArray *userProductsArray = dict[@"user_products"] ?: @[];
   NSArray *offeringsArray = dict[@"offerings"];
@@ -53,8 +52,12 @@
   return user;
 }
 
-+ (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSDictionary *)data {
++ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSDictionary * _Nullable)data {
   NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
+  if (![data isKindOfClass:[NSDictionary class]]) {
+    return [permissions copy];
+  }
+  
   NSArray *permissionsData = data[@"data"];
   if (![permissionsData isKindOfClass:[NSArray class]]) {
     return [permissions copy];

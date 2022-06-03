@@ -10,7 +10,7 @@
 
 + (QNUser * _Nonnull)fillUser:(NSDictionary * _Nullable)dict;
 
-+ (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSDictionary *)data;
++ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSDictionary * _Nullable)data;
 
 + (NSDictionary<NSString *, QNIntroEligibility *> * _Nonnull)mapProductsEligibility:(NSDictionary * _Nullable)dict;
 

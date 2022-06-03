@@ -127,7 +127,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.persistentStorage storeObject:permissions forKey:kKeyQUserDefaultsPermissions];
 }
 
-- (QNLaunchResult * _Nullable)getActualPermissionsForDefaultState:(BOOL)defaultState {
+- (NSDictionary<NSString *, QNPermission *> * _Nullable)getActualPermissionsForDefaultState:(BOOL)defaultState {
   NSDictionary<NSString *, QNPermission *> *permissions = self.permissions ?: [self.persistentStorage loadObjectForKey:kKeyQUserDefaultsPermissions];
   NSTimeInterval cachedLaunchResultTimestamp = [self cachedPermissionsTimestamp];
   BOOL isCacheOutdated = [QNUtils isPermissionsOutdatedForDefaultState:defaultState cacheDataTimeInterval:cachedLaunchResultTimestamp];
@@ -295,7 +295,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     [[QNAPIClient shared] setUserID:result];
     
-    NSMutableArray *identityIdCallbacks = weakSelf.permissionsBlocks[weakSelf.pendingIdentityUserID];
+    NSMutableArray *identityIdCallbacks = weakSelf.permissionsBlocks[identityID];
     if (identityIdCallbacks) {
       weakSelf.permissionsBlocks[weakSelf.pendingIdentityUserID] = nil;
       NSMutableArray *resultIdCallbacks = weakSelf.permissionsBlocks[result] ?: [NSMutableArray new];
