@@ -121,6 +121,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)storePermissions:(NSDictionary<NSString *, QNPermission *> *)permissions {
+  self.permissions = permissions;
   NSDate *currentDate = [NSDate date];
   
   [self.persistentStorage storeDouble:currentDate.timeIntervalSince1970 forKey:kKeyQUserDefaultsPermissionsTimestamp];
@@ -232,14 +233,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)identify:(NSString *)userID {
-  self.unhandledLogoutAvailable = NO;
   self.pendingIdentityUserID = userID;
   if (!self.launchingFinished) {
     return;
   }
   
   self.identityInProgress = YES;
-  if (self.launchError) {
+  if (self.launchError || self.unhandledLogoutAvailable) {
     __block __weak QNProductCenterManager *weakSelf = self;
 
     [weakSelf launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
@@ -248,6 +248,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         NSString *userID = [weakSelf.userInfoService obtainUserID];
         [weakSelf executePermissionBlocks:nil error:error userID:userID];
       } else {
+        weakSelf.unhandledLogoutAvailable = NO;
         [weakSelf processIdentity:userID];
       }
     }];
@@ -275,7 +276,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   
   __block __weak QNProductCenterManager *weakSelf = self;
-  [self.identityManager identify:userID completion:^(NSString *result, NSError * _Nullable error) {
+  [self.identityManager identify:userID completion:^(NSString *resultUserID, NSError * _Nullable error) {
     weakSelf.identityInProgress = NO;
     
     NSString *identityID = [weakSelf.pendingIdentityUserID copy];
@@ -287,21 +288,22 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       return;
     }
     
-    if (![result isEqualToString:currentUserID]) {
+    if (![resultUserID isEqualToString:currentUserID]) {
       [weakSelf resetActualPermissionsCache];
     }
     
-    [[QNAPIClient shared] setUserID:result];
+    [[QNAPIClient shared] setUserID:resultUserID];
     
-    NSMutableArray *identityIdCallbacks = weakSelf.permissionsBlocks[identityID];
+    NSMutableArray *identityIdCallbacks = [weakSelf.permissionsBlocks[identityID] mutableCopy];
     if (identityIdCallbacks) {
-      weakSelf.permissionsBlocks[weakSelf.pendingIdentityUserID] = nil;
-      NSMutableArray *resultIdCallbacks = weakSelf.permissionsBlocks[result] ?: [NSMutableArray new];
+      weakSelf.permissionsBlocks[identityID] = nil;
+      NSMutableArray *resultIdCallbacks = weakSelf.permissionsBlocks[resultUserID] ?: [NSMutableArray new];
+      // It's important to store count value before it's been changed
       NSInteger previousCallbacksCount = resultIdCallbacks.count;
       [resultIdCallbacks addObjectsFromArray:identityIdCallbacks];
-      weakSelf.permissionsBlocks[result] = resultIdCallbacks;
+      weakSelf.permissionsBlocks[resultUserID] = resultIdCallbacks;
       if (previousCallbacksCount == 0) {
-        [weakSelf checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {}];
+        [weakSelf processEntitlementsRequestForUserID:resultUserID];
       }
     }
   }];
@@ -347,6 +349,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
   
+  NSString *userID = [self.userInfoService obtainUserID];
+  
   @synchronized (self) {
     BOOL isRequestInProgress = NO;
     if (self.pendingIdentityUserID) {
@@ -357,8 +361,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       
       return;
     }
-    
-    NSString *userID = [self.userInfoService obtainUserID];
     
     NSDictionary<NSString *, QNPermission *> *actualPermissions = [self getActualPermissionsForDefaultState:YES];
     if (actualPermissions && !self.forcePermissionsRetry) {
@@ -380,12 +382,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
   }
   
+  [self processEntitlementsRequestForUserID:userID];
+}
+
+- (void)processEntitlementsRequestForUserID:(NSString *)userID {
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [self.apiClient obtainEntitlements:^(NSDictionary * _Nullable result, NSError * _Nullable error) {
-    NSString *userID = [self.userInfoService obtainUserID];
     if (error.code == kNotFoundErrorCode) {
       if (weakSelf.launchResult || weakSelf.launchError) {
+        weakSelf.unhandledLogoutAvailable = NO;
         [weakSelf launchWithCompletion:nil];
       }
       [weakSelf executePermissionBlocks:nil userID:userID];
@@ -394,8 +400,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     } else {
       weakSelf.forcePermissionsRetry = NO;
       NSDictionary<NSString *, QNPermission *> *permissions = [QNMapper fillPermissions:result];
-      weakSelf.permissions = permissions;
-      [weakSelf storePermissions:permissions];
+      
+      NSString *currentUserID = [self.userInfoService obtainUserID];
+      if ([currentUserID isEqualToString:userID]) {
+        [weakSelf storePermissions:permissions];
+      }
       [weakSelf executePermissionBlocks:permissions userID:userID];
     }
   }];
@@ -529,22 +538,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)executePermissionBlocks:(NSDictionary *)permissions error:(NSError *)error userID:(NSString *)userID {
   @synchronized (self) {
-    if (self.permissionsBlocks.count == 0) {
+    if (self.permissionsBlocks[userID].count == 0) {
       return;
     }
     
-    NSDictionary<NSString *, NSMutableArray<QNPermissionCompletionHandler> *> *blocks = [self.permissionsBlocks copy];
-    [self.permissionsBlocks removeAllObjects];
+    NSMutableArray<QNPermissionCompletionHandler> *blocks = [self.permissionsBlocks[userID] copy];
+    self.permissionsBlocks[userID] = nil;
     
-    for (NSString *key in blocks.allKeys) {
-      NSMutableArray *completions = blocks[key];
-      
-      for (QNPermissionCompletionHandler completion in completions) {
-        if (error) {
-          run_block_on_main(completion, @{}, error);
-        } else {
-          run_block_on_main(completion, permissions ?: @{}, nil);
-        }
+    for (QNPermissionCompletionHandler completion in blocks) {
+      if (error) {
+        run_block_on_main(completion, @{}, error);
+      } else {
+        run_block_on_main(completion, permissions ?: @{}, nil);
       }
     }
   }
@@ -915,7 +920,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         
         QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
         NSDictionary *permissions = [launchResult performSelector:@selector(permissions)];
-        weakSelf.permissions = permissions;
         [weakSelf storePermissions:permissions];
         @synchronized (weakSelf) {
           weakSelf.launchResult = launchResult;
