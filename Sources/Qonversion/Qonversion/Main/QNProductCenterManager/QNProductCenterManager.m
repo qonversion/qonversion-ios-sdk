@@ -295,7 +295,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [resultIdCallbacks addObjectsFromArray:identityIdCallbacks];
       weakSelf.permissionsBlocks[resultUserID] = resultIdCallbacks;
       if (previousCallbacksCount == 0) {
-        [weakSelf processEntitlementsRequestForUserID:resultUserID];
+        [weakSelf processEntitlementsRequestForUserID:resultUserID completion:nil];
       }
     }
   }];
@@ -336,6 +336,20 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.storeKitService presentCodeRedemptionSheet];
 }
 
+- (void)addCompletionForUserID:(NSString *)userID completion:(QNPermissionCompletionHandler)completion {
+  NSMutableArray *callbacks = self.permissionsBlocks[self.pendingIdentityUserID] ?: [NSMutableArray new];
+  [callbacks addObject:completion];
+  
+  self.permissionsBlocks[self.pendingIdentityUserID] = callbacks;
+}
+
+- (void)handleNewUserEntitlements:(NSString *)userID {
+  if (self.launchingFinished) {
+    [self handleLogout];
+  }
+  [self executePermissionBlocks:nil userID:userID];
+}
+
 - (void)checkPermissions:(QNPermissionCompletionHandler)completion {
   if (!completion) {
     return;
@@ -343,13 +357,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   NSString *userID = [self.userInfoService obtainUserID];
   
+  if (self.unhandledLogoutAvailable) {
+    [self handleNewUserEntitlements:userID];
+    
+    return;
+  }
+  
   @synchronized (self) {
     BOOL isRequestInProgress = NO;
     if (self.pendingIdentityUserID) {
-      NSMutableArray *callbacks = self.permissionsBlocks[self.pendingIdentityUserID] ?: [NSMutableArray new];
-      [callbacks addObject:completion];
-      
-      self.permissionsBlocks[self.pendingIdentityUserID] = callbacks;
+      [self addCompletionForUserID:self.pendingIdentityUserID completion:completion];
       
       if (!self.identityInProgress) {
         [self identify:self.pendingIdentityUserID];
@@ -378,19 +395,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
   }
   
-  [self processEntitlementsRequestForUserID:userID];
+  [self processEntitlementsRequestForUserID:userID completion:completion];
 }
 
-- (void)processEntitlementsRequestForUserID:(NSString *)userID {
+- (void)processEntitlementsRequestForUserID:(NSString *)userID completion:(QNPermissionCompletionHandler)completion  {
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [self.apiClient obtainEntitlements:^(NSDictionary * _Nullable result, NSError * _Nullable error) {
     if (error.code == kNotFoundErrorCode) {
-      if (weakSelf.launchResult || weakSelf.launchError) {
-        weakSelf.unhandledLogoutAvailable = NO;
-        [weakSelf launchWithCompletion:nil];
-      }
-      [weakSelf executePermissionBlocks:nil userID:userID];
+      [weakSelf handleNewUserEntitlements:userID];
     } else if (error) {
       [weakSelf handlePermissionsError:error userID:userID];
     } else {
