@@ -18,13 +18,18 @@
     return [hex copy];
 }
 
++ (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval {
+  CGFloat cacheLifetimeInSeconds = [self defaultCacheLifetime];
+  return [self isCacheOutdated:cacheDataTimeInterval cacheLifetime:cacheLifetimeInSeconds];
+}
+
 + (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(CGFloat)cacheLifetimeInSeconds  {
   NSDate *currentDate = [NSDate date];
   return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > cacheLifetimeInSeconds;
 }
 
 + (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval {
-  CGFloat cacheLifetimeInSeconds = defaultState ? 60.0 * 5.0 : 60.0 * 60.0 * 24.0;
+  CGFloat cacheLifetimeInSeconds = defaultState ? 60.0 * 5.0 : [self defaultCacheLifetime];
   return [self isCacheOutdated:cacheDataTimeInterval cacheLifetime:cacheLifetimeInSeconds];
 }
 
@@ -36,6 +41,10 @@
   }
   
   return date;
+}
+
++ (CGFloat)defaultCacheLifetime {
+  return 60.0 * 60.0 * 24.0;
 }
 
 @end
