@@ -233,6 +233,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)identify:(NSString *)userID {
+  NSString *currentIdentityID = [self.userInfoService obtainCustomIdentityUserID];
+  
+  if ([currentIdentityID isEqualToString:userID]) {
+    return;
+  }
+  
   self.pendingIdentityUserID = userID;
   if (!self.launchingFinished) {
     return;
@@ -260,33 +266,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)processIdentity:(NSString *)userID {
   NSString *currentUserID = [self.userInfoService obtainUserID];
   
-  NSString *currentIdentityID = [self.userInfoService obtainCustomIdentityUserID];
-  
-  if ([currentIdentityID isEqualToString:userID]) {
-    self.pendingIdentityUserID = nil;
-    self.identityInProgress = NO;
-    NSDictionary *actualPermissions = [self getActualPermissionsForDefaultState:YES];
-    if (actualPermissions) {
-      [self executePermissionBlocks:actualPermissions userID:currentUserID];
-    } else {
-      [self checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {}];
-    }
-    
-    return;
-  }
-  
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.identityManager identify:userID completion:^(NSString *resultUserID, NSError * _Nullable error) {
     weakSelf.identityInProgress = NO;
     
     NSString *identityID = [weakSelf.pendingIdentityUserID copy];
-    weakSelf.pendingIdentityUserID = nil;
     
     if (error) {
       [weakSelf executePermissionBlocks:nil error:error userID:userID];
 
       return;
     }
+    
+    weakSelf.pendingIdentityUserID = nil;
     
     if (![resultUserID isEqualToString:currentUserID]) {
       [weakSelf resetActualPermissionsCache];
@@ -358,6 +350,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [callbacks addObject:completion];
       
       self.permissionsBlocks[self.pendingIdentityUserID] = callbacks;
+      
+      if (!self.identityInProgress) {
+        [self identify:self.pendingIdentityUserID];
+      }
       
       return;
     }
