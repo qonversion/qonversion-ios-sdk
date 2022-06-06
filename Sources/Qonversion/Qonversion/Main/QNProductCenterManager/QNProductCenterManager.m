@@ -295,7 +295,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [resultIdCallbacks addObjectsFromArray:identityIdCallbacks];
       weakSelf.permissionsBlocks[resultUserID] = resultIdCallbacks;
       if (previousCallbacksCount == 0) {
-        [weakSelf processEntitlementsRequestForUserID:resultUserID completion:nil];
+        [weakSelf processEntitlementsRequestForUserID:resultUserID];
       }
     }
   }];
@@ -395,10 +395,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
   }
   
-  [self processEntitlementsRequestForUserID:userID completion:completion];
+  [self processEntitlementsRequestForUserID:userID];
 }
 
-- (void)processEntitlementsRequestForUserID:(NSString *)userID completion:(QNPermissionCompletionHandler)completion  {
+- (void)processEntitlementsRequestForUserID:(NSString *)userID {
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [self.apiClient obtainEntitlements:^(NSDictionary * _Nullable result, NSError * _Nullable error) {
