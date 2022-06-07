@@ -58,7 +58,6 @@
   [_manager launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
     XCTAssertNotNil(result);
     XCTAssertNil(error);
-    XCTAssertEqual(result.permissions.count, 2);
     XCTAssertEqual(result.products.count, 1);
     XCTAssertEqualObjects(result.uid, @"qonversion_user_id");
     
@@ -78,24 +77,6 @@
   
   // Then
   XCTAssertEqual(_manager.permissionsBlocks.count, 1);
-}
-
-- (void)testThatCheckPermissionCallBlockWhenLaunchingFinished {
-  // Given
-  _manager.launchingFinished = YES;
-  XCTestExpectation *expectation = [self expectationWithDescription:@""];
-  
-  // When
-  [_manager checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
-    XCTAssertNil(result);
-    XCTAssertNil(error);
-    XCTAssertEqual([NSThread mainThread], [NSThread currentThread]);
-    
-    [expectation fulfill];
-  }];
-  
-  // Then
-  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
 }
 
 @end

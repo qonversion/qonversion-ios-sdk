@@ -32,11 +32,11 @@ typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSStrin
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
 - (void)handleDeferredTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
-- (void)handleRestoreCompletedTransactionsFinished;
 - (void)handleRestoreCompletedTransactionsFailed:(NSError *)error;
 - (void)handleProductsRequestFailed:(NSError *)error;
 - (void)handleProducts:(NSArray<SKProduct *> *)products;
 - (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product;
+- (void)handleRestoredTransactions:(NSArray<SKPaymentTransaction *> *)transactions;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -12,6 +12,8 @@
 extern NSString *const kKeyQKeyChainUserID;
 extern NSString *const kKeyQUserDefaultsIdentityUserID;
 extern NSString *const kKeyQUserDefaultsUserID;
+extern NSString *const kKeyQUserDefaultsPermissions;
+extern NSString *const kKeyQUserDefaultsPermissionsTimestamp;
 extern NSString *const kKeyQUserIDPrefix;
 extern NSString *const kKeyQUserIDSeparator;
 extern NSString *const kMainUserDefaultsSuiteName;
@@ -20,3 +22,4 @@ extern NSUInteger const kQPropertiesSendingPeriodInSeconds;
 extern CGFloat const kJitter;
 extern CGFloat const kFactor;
 extern NSUInteger const kMaxDelay;
+extern NSUInteger const kNotFoundErrorCode;
