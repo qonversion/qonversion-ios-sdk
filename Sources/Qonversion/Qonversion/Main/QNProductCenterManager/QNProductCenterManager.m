@@ -246,15 +246,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   self.identityInProgress = YES;
   if (self.launchError || self.unhandledLogoutAvailable) {
+    self.unhandledLogoutAvailable = NO;
+    
     __block __weak QNProductCenterManager *weakSelf = self;
-
     [weakSelf launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
       if (error) {
         weakSelf.identityInProgress = NO;
         NSString *userID = [weakSelf.userInfoService obtainUserID];
         [weakSelf executePermissionBlocks:nil error:error userID:userID];
       } else {
-        weakSelf.unhandledLogoutAvailable = NO;
         [weakSelf processIdentity:userID];
       }
     }];
