@@ -1,6 +1,6 @@
 #import "QNLaunchResult.h"
 
-@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel;
+@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QNPurchaseInfo;
 
 NS_ASSUME_NONNULL_BEGIN
 @interface QNRequestSerializer : NSObject
@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSDictionary *)pushTokenData;
 
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;
+- (NSDictionary *)purchaseInfo:(QNPurchaseInfo *)purchaseInfo receipt:(nullable NSString *)receipt;
 
 @end
 

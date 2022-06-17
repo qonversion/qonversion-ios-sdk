@@ -12,6 +12,7 @@
 #import "QNExperimentGroup.h"
 #import "QNUser.h"
 #import "QNErrors.h"
+#import "QNPurchaseInfo.h"
 #import "QNStoreKitSugare.h"
 
 #if TARGET_OS_IOS
@@ -198,6 +199,8 @@ NS_ASSUME_NONNULL_BEGIN
  For Qonversion/NoIdfa SDK advertising ID is always empty.
  */
 + (void)setAdvertisingID;
+
++ (void)handlePurchase:(QNPurchaseInfo *)purchaseInfo;
 
 @end
 

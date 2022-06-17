@@ -1,6 +1,8 @@
 #import <Foundation/Foundation.h>
 #import "QNLaunchResult.h"
 
+@class QNPurchaseInfo;
+
 @class QNLaunchResult;
 @protocol QNPromoPurchasesDelegate, QNPurchasesDelegate;
 
@@ -30,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 - (void)sendPushToken;
+- (void)handlePurchase:(QNPurchaseInfo *)purchaseInfo;
 
 @end
 
