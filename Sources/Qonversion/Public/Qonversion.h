@@ -200,6 +200,12 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)setAdvertisingID;
 
+/**
+ This function may be used to track purchases for some very rare cases in the Observer mode. But in most cases, you shouldn't use this function at all. Contact our support if you think you need to use it.
+ If you are using our SDK in the Observer mode and the implementation of your purchases based on StoreKit 2, you should use `QonversionPurchasesHandler.handle(transaction)`.
+ 
+ @param purchaseInfo - formatted info about a purchase.
+ */
 + (void)handlePurchase:(QNPurchaseInfo *)purchaseInfo;
 
 @end

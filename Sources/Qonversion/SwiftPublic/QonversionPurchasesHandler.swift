@@ -11,9 +11,19 @@ import StoreKit
 // this import can't be removed because of SPM obj-c + swift support
 import Qonversion
 
+/**
+ Use this class to handle purchases for the Observer mode and StoreKit 2.
+ */
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public class QonversionPurchasesHandler {
   
+  /**
+   This function should be used only for the Observer mode of our SDK if your own implementation of purchases logic is based on StoreKit 2.
+   You should use this function only to track a transaction that appears as a result of StoreKit 2 `Product.purchase()` function.
+   The following transactions will be handled automatically.
+   - Parameters:
+     - transaction: StoreKit 2 Transaction object.
+   */
   public static func handle(transaction: Transaction) {
     Task.init {
       let products: [Product] = try await Product.products(for: Set([transaction.productID]))
@@ -23,11 +33,11 @@ public class QonversionPurchasesHandler {
       let tempDict = try? JSONSerialization.jsonObject(with: product.jsonRepresentation, options: [])
       let jsonDict = tempDict as? [String: Any] ?? [:]
       let attributes = jsonDict["attributes"] as? [String: Any]
-        
+      
       guard let offers = attributes?["offers"] as? [[String: Any]],
             let currencyCode: String = offers.first?["currencyCode"] as? String
       else { return }
-
+      
       let purchaseInfo = QNPurchaseInfo()
       purchaseInfo.productId = product.id
       purchaseInfo.price = "\(product.price)"
@@ -38,7 +48,7 @@ public class QonversionPurchasesHandler {
       if let subscriptionInfo: Product.SubscriptionInfo = product.subscription {
         purchaseInfo.subscriptionPeriodUnit = convert(periodUnit: subscriptionInfo.subscriptionPeriod.unit)
         purchaseInfo.subscriptionPeriodNumberOfUnits = String(subscriptionInfo.subscriptionPeriod.value)
-  
+        
         if let introductoryOffer: Product.SubscriptionOffer = subscriptionInfo.introductoryOffer {
           purchaseInfo.introductoryPrice = "\(introductoryOffer.price)"
           purchaseInfo.introductoryNumberOfPeriods = String(introductoryOffer.periodCount)
