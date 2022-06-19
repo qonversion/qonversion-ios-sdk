@@ -13,6 +13,7 @@
 #import <Qonversion/QNIntroEligibility.h>
 #import <Qonversion/QNExperimentInfo.h>
 #import <Qonversion/QNExperimentGroup.h>
+#import <Qonversion/QNPurchaseInfo.h>
 
 #import <Qonversion/QONAutomations.h>
 #import <Qonversion/QONAutomationsDelegate.h>

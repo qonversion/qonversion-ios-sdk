@@ -18,6 +18,7 @@
 #import "QNProductPurchaseModel.h"
 #import "QNExperimentInfo.h"
 #import "QNDevice.h"
+#import "QNPurchaseInfo.h"
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
@@ -262,6 +263,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     self.unhandledLogoutAvailable = YES;
   }
+}
+
+- (void)handlePurchase:(QNPurchaseInfo *)purchaseInfo {
+  [self.storeKitService receipt:^(NSString * receipt) {
+    [self.apiClient handlePurchase:purchaseInfo receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+        if (error) {
+            QONVERSION_LOG(@"⚠️ Failed to handle purchase");
+        } else {
+            QONVERSION_LOG(@"✅ Purchase with transactionId: %@ has been tracked", purchaseInfo.transactionId);
+        }
+    }];
+  }];
 }
 
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {

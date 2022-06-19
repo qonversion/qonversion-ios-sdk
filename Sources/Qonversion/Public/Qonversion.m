@@ -157,6 +157,10 @@
   [[[Qonversion sharedInstance] productCenterManager] userInfo:completion];
 }
 
++ (void)handlePurchase:(QNPurchaseInfo *)purchaseInfo {
+  [[Qonversion sharedInstance].productCenterManager handlePurchase:purchaseInfo];
+}
+
 // MARK: - Private
 
 + (instancetype)sharedInstance {

@@ -40,10 +40,13 @@
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		4CADC5602759181A004FDC10 /* AuthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CADC55F2759181A004FDC10 /* AuthViewController.swift */; };
+		70580816285B746D0023309A /* QNPurchaseInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 70580814285B746D0023309A /* QNPurchaseInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		70580817285B746D0023309A /* QNPurchaseInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 70580815285B746D0023309A /* QNPurchaseInfo.m */; };
+		7058081C285CC04D0023309A /* QonversionPurchasesHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7058081B285CC04D0023309A /* QonversionPurchasesHandler.swift */; };
 		71D1AE03BA37F1D7CA063728 /* Pods_QonversionTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */; };
 		891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */; };
-		894278822759334D00A8A6EC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 894278812759334D00A8A6EC /* GoogleService-Info.plist */; };
 		891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 891ECE0927734B8900DF6A56 /* AdServices.framework */; };
+		894278822759334D00A8A6EC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 894278812759334D00A8A6EC /* GoogleService-Info.plist */; };
 		8957327926DD03A3009507A6 /* QNDevice+Advertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B626DD03A2009507A6 /* QNDevice+Advertising.h */; };
 		8957327A26DD03A3009507A6 /* QNDevice+Advertising.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731B726DD03A2009507A6 /* QNDevice+Advertising.m */; };
 		8957327B26DD03A3009507A6 /* QNUser.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B926DD03A2009507A6 /* QNUser.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -273,7 +276,7 @@
 		459DAB79243E329F0011ECF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		459DAB97243E333C0011ECF3 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		459DAB98243E333C0011ECF3 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
-		459DAB99243E333C0011ECF3 /* Qonversion.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Qonversion.podspec; sourceTree = "<group>"; };
+		459DAB99243E333C0011ECF3 /* Qonversion.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Qonversion.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		459DAB9F243E33470011ECF3 /* report.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = report.html; sourceTree = "<group>"; };
 		459DABA0243E33470011ECF3 /* report.junit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = report.junit; sourceTree = "<group>"; };
 		459DABA1243E33470011ECF3 /* Appfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Appfile; sourceTree = "<group>"; };
@@ -293,10 +296,13 @@
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
 		4CADC55F2759181A004FDC10 /* AuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewController.swift; sourceTree = "<group>"; };
+		70580814285B746D0023309A /* QNPurchaseInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNPurchaseInfo.h; sourceTree = "<group>"; };
+		70580815285B746D0023309A /* QNPurchaseInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNPurchaseInfo.m; sourceTree = "<group>"; };
+		7058081B285CC04D0023309A /* QonversionPurchasesHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QonversionPurchasesHandler.swift; sourceTree = "<group>"; };
 		891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNErrorsMapperTests.m; sourceTree = "<group>"; };
+		891ECE0927734B8900DF6A56 /* AdServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk/System/Library/Frameworks/AdServices.framework; sourceTree = DEVELOPER_DIR; };
 		894278812759334D00A8A6EC /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		894278832759351C00A8A6EC /* GoogleSignIn.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = GoogleSignIn.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		891ECE0927734B8900DF6A56 /* AdServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk/System/Library/Frameworks/AdServices.framework; sourceTree = DEVELOPER_DIR; };
 		895731B626DD03A2009507A6 /* QNDevice+Advertising.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QNDevice+Advertising.h"; sourceTree = "<group>"; };
 		895731B726DD03A2009507A6 /* QNDevice+Advertising.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QNDevice+Advertising.m"; sourceTree = "<group>"; };
 		895731B926DD03A2009507A6 /* QNUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNUser.h; sourceTree = "<group>"; };
@@ -692,6 +698,14 @@
 			path = workflows;
 			sourceTree = "<group>";
 		};
+		7058081A285CC04D0023309A /* SwiftPublic */ = {
+			isa = PBXGroup;
+			children = (
+				7058081B285CC04D0023309A /* QonversionPurchasesHandler.swift */,
+			);
+			path = SwiftPublic;
+			sourceTree = "<group>";
+		};
 		891DEA7E2703AF1D0079B439 /* Mappers */ = {
 			isa = PBXGroup;
 			children = (
@@ -703,6 +717,7 @@
 		895731B426DD03A2009507A6 /* Qonversion */ = {
 			isa = PBXGroup;
 			children = (
+				7058081A285CC04D0023309A /* SwiftPublic */,
 				895731B526DD03A2009507A6 /* IDFA */,
 				895731B826DD03A2009507A6 /* Public */,
 				895731DD26DD03A2009507A6 /* Automations */,
@@ -723,6 +738,8 @@
 		895731B826DD03A2009507A6 /* Public */ = {
 			isa = PBXGroup;
 			children = (
+				70580814285B746D0023309A /* QNPurchaseInfo.h */,
+				70580815285B746D0023309A /* QNPurchaseInfo.m */,
 				895731B926DD03A2009507A6 /* QNUser.h */,
 				895731BA26DD03A2009507A6 /* QONAutomationsDelegate.h */,
 				895731BB26DD03A2009507A6 /* QNOfferings.m */,
@@ -1421,6 +1438,7 @@
 				8957328C26DD03A3009507A6 /* QNPromoPurchasesDelegate.h in Headers */,
 				895732F726DD03A3009507A6 /* QNProductCenterManager.h in Headers */,
 				895732BC26DD03A3009507A6 /* QNKeychainStorage.h in Headers */,
+				70580816285B746D0023309A /* QNPurchaseInfo.h in Headers */,
 				895732E926DD03A3009507A6 /* QNProductPurchaseModel.h in Headers */,
 				895732E726DD03A3009507A6 /* QNSubscription+Protected.h in Headers */,
 				895732B826DD03A3009507A6 /* QNUserDefaultsStorage.h in Headers */,
@@ -1511,7 +1529,7 @@
 					};
 					459DAB68243E329F0011ECF3 = {
 						CreatedOnToolsVersion = 11.3.1;
-						LastSwiftMigration = 1140;
+						LastSwiftMigration = 1330;
 					};
 					459DAB71243E329F0011ECF3 = {
 						CreatedOnToolsVersion = 11.3.1;
@@ -1708,6 +1726,7 @@
 				895732A926DD03A3009507A6 /* QONAutomationsMapper.m in Sources */,
 				895732F226DD03A3009507A6 /* QNMapper.m in Sources */,
 				8957329C26DD03A3009507A6 /* QNOffering.m in Sources */,
+				70580817285B746D0023309A /* QNPurchaseInfo.m in Sources */,
 				8957329426DD03A3009507A6 /* QNPermission.m in Sources */,
 				8957329526DD03A3009507A6 /* QNLaunchResult.m in Sources */,
 				895732B726DD03A3009507A6 /* QONAutomationsScreenProcessor.m in Sources */,
@@ -1716,6 +1735,7 @@
 				895732EF26DD03A3009507A6 /* QNErrorsMapper.m in Sources */,
 				895732D326DD03A3009507A6 /* QNEntitlement.m in Sources */,
 				895732A426DD03A3009507A6 /* QONUserActionPoint.m in Sources */,
+				7058081C285CC04D0023309A /* QonversionPurchasesHandler.swift in Sources */,
 				8957330A26DE5532009507A6 /* QNKeyedArchiver.m in Sources */,
 				895732FC26DD03A3009507A6 /* QNStoreKitService.m in Sources */,
 				895732FA26DD03A3009507A6 /* QNIdentityManager.m in Sources */,
@@ -1814,6 +1834,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 13844A737C5779AEEAD10EB9 /* Pods-Sample.debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Sample/Sample.entitlements;
@@ -1852,6 +1873,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C49A7C36E2D376FDC85E470B /* Pods-Sample.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Sample/Sample.entitlements;
@@ -2032,6 +2054,8 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos appletvos appletvsimulator watchos watchsimulator macosx";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4";
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				WATCHOS_DEPLOYMENT_TARGET = 6.2;
@@ -2067,6 +2091,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos appletvos appletvsimulator watchos watchsimulator macosx";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4";
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				WATCHOS_DEPLOYMENT_TARGET = 6.2;
