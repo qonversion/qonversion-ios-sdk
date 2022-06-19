@@ -5,6 +5,7 @@ Pod::Spec.new do |s|
   s.version      = '2.18.4'
   s.summary      = 'qonversion.io'
   s.description  = <<-DESC
+  s.swift_version = '5.5'
   Deep Analytics for iOS Subscriptions
     Qonversion is the data platform to power in-app subscription revenue growth. Qonversion allows fast in-app subscriptions implementation. It provides the back-end infrastructure to validate user receipts and manage cross-platform user access to paid content on your app, so you do not need to build your own server. Qonversion also provides comprehensive subscription analytics and out-of-the-box integrations with the leading marketing, attribution, and product analytics platforms.
   DESC
