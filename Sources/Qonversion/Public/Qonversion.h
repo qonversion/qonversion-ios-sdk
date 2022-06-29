@@ -38,6 +38,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Disables transactions finishing.
  You can call this function If you want to finish StroreKit transactions by yourself, after handling the purchase on your own backend, for example.
+ Call this function only if you use Qonversion SDK in Observer Mode
+ @see [Observer mode](https://qonversion.io/docs/observer-mode)
  */
 + (void)disableFinishTransactions;
 
