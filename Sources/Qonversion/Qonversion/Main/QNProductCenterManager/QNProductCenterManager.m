@@ -798,8 +798,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   self.purchaseModels[product.productIdentifier] = nil;
   [self.storeKitService receipt:^(NSString * receipt) {
     [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt purchaseModel:purchaseModel completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-      [weakSelf.storeKitService finishTransaction:transaction];
-      
       QNPurchaseCompletionHandler _purchasingBlock = weakSelf.purchasingBlocks[product.productIdentifier];
       @synchronized (weakSelf) {
         [weakSelf.purchasingBlocks removeObjectForKey:product.productIdentifier];
@@ -816,6 +814,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         weakSelf.forceLaunchRetry = YES;
         run_block_on_main(_purchasingBlock, @{}, result.error, NO);
         return;
+      }
+      
+      if (!weakSelf.disableFinishTransactions) {
+        [weakSelf.storeKitService finishTransaction:transaction];
       }
       
       QNUser *user = [QNMapper fillUser:result.data];
