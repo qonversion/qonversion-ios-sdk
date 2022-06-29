@@ -36,6 +36,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
 
 /**
+ Disables transactions finishing.
+ You can call this function If you want to finish StroreKit transactions by yourself, after handling the purchase on your own backend, for example.
+ */
++ (void)disableFinishTransactions;
+
+/**
  Call this function to link a user to his unique ID in your system and share purchase data.
  
  @param userID - unique user ID in your system

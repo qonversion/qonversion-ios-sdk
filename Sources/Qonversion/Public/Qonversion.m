@@ -25,6 +25,7 @@
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 
 @property (nonatomic, assign) BOOL debugMode;
+@property (nonatomic, assign) BOOL disableFinishTransactions;
 
 @end
 
@@ -38,6 +39,14 @@
   }];
 }
 
++ (void)disableFinishTransactions {
+  [Qonversion sharedInstance].disableFinishTransactions = YES;
+  
+  if ([Qonversion sharedInstance].productCenterManager) {
+    [Qonversion sharedInstance].productCenterManager.disableFinishTransactions = YES;
+  }
+}
+
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
   NSString *userID = [[Qonversion sharedInstance].userInfoService obtainUserID];
   QONVERSION_LOG(@"🚀 Qonversion initialized with userID: %@", userID);
@@ -46,6 +55,7 @@
   [[QNAPIClient shared] setUserID:userID];
   [[QNAPIClient shared] setDebug:[Qonversion sharedInstance].debugMode];
   
+  [Qonversion sharedInstance].productCenterManager.disableFinishTransactions = [Qonversion sharedInstance].disableFinishTransactions;
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
 }
 
