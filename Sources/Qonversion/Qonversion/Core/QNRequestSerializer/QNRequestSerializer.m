@@ -37,54 +37,52 @@ NS_ASSUME_NONNULL_BEGIN
                    transaction:(SKPaymentTransaction *)transaction
                        receipt:(nullable NSString *)receipt
                  purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel {
+  NSMutableDictionary *appStoreData = [NSMutableDictionary new];
+  NSMutableDictionary *purchaseDict = [NSMutableDictionary new];
 
-  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
-  NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
-
-  if (receipt) {
-    result[@"receipt"] = receipt;
-  }
-  
-  purchaseDict[@"product"] = product.productIdentifier;
   purchaseDict[@"currency"] = product.prettyCurrency;
-  purchaseDict[@"value"] = product.price.stringValue;
-  purchaseDict[@"transaction_id"] = transaction.transactionIdentifier ?: @"";
-  purchaseDict[@"original_transaction_id"] = transaction.originalTransaction.transactionIdentifier ?: @"";
+  purchaseDict[@"price"] = product.price.stringValue;
+  purchaseDict[@"purchased"] = @([transaction.transactionDate timeIntervalSince1970]);
   
-  if (@available(iOS 11.2, macOS 10.13.2, tvOS 11.2, *)) {
-    if (product.subscriptionPeriod != nil) {
-      purchaseDict[@"period_unit"] = @(product.subscriptionPeriod.unit).stringValue;
-      purchaseDict[@"period_number_of_units"] = @(product.subscriptionPeriod.numberOfUnits).stringValue;
-    }
-    
-    if (product.introductoryPrice != nil) {
-      NSMutableDictionary *introOffer = [[NSMutableDictionary alloc] init];
-      
-      SKProductDiscount *introductoryPrice = product.introductoryPrice;
-      
-      introOffer[@"value"] = introductoryPrice.price.stringValue;
-      introOffer[@"number_of_periods"] = @(introductoryPrice.numberOfPeriods).stringValue;
-      introOffer[@"period_number_of_units"] = @(introductoryPrice.subscriptionPeriod.numberOfUnits).stringValue;
-      introOffer[@"period_unit"] = @(introductoryPrice.subscriptionPeriod.unit).stringValue;
-      introOffer[@"payment_mode"] = @(introductoryPrice.paymentMode).stringValue;
-      
-      result[@"introductory_offer"] = introOffer;
-    }
+  if (receipt) {
+    appStoreData[@"receipt"] = receipt;
   }
+  
+  appStoreData[@"product_id"] = product.productIdentifier;
+  appStoreData[@"transaction_id"] = transaction.transactionIdentifier ?: @"";
+  appStoreData[@"original_transaction_id"] = transaction.originalTransaction.transactionIdentifier ?: @"";
   
   if (@available(iOS 13.0, macos 10.15, tvOS 13.0, *)) {
     NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
-    purchaseDict[@"country"] = countryCode;
+    appStoreData[@"storefront"] = countryCode;
   }
   
-  if (purchaseModel) {
-    purchaseDict[@"product_id"] = purchaseModel.product.qonversionID;
-    purchaseDict[@"experiment"] = [self configureExperimentInfo:purchaseModel.experimentInfo];
+  if (@available(iOS 11.2, macOS 10.13.2, tvOS 11.2, *)) {
+    if (product.subscriptionPeriod != nil) {
+      NSMutableDictionary *appStorePeriodLength = [NSMutableDictionary new];
+      appStorePeriodLength[@"unit"] = [self convertSubscriptionPeriod:product.subscriptionPeriod.unit];
+      appStorePeriodLength[@"number_of_units"] = @(product.subscriptionPeriod.numberOfUnits);
+      appStoreData[@"period_length"] = appStorePeriodLength;
+    }
   }
   
-  result[@"purchase"] = purchaseDict;
+  purchaseDict[@"app_store_data"] = appStoreData;
   
-  return result;
+  return purchaseDict;
+}
+
+- (NSString *)convertSubscriptionPeriod:(SKProductPeriodUnit)unit {
+  switch (unit) {
+    case SKProductPeriodUnitDay:
+      return @"day";
+      break;
+    case SKProductPeriodUnitWeek:
+      return @"week";
+      break;
+    case SKProductPeriodUnitYear:
+      return @"year";
+      break;
+  }
 }
 
 - (NSDictionary *)configureExperimentInfo:(QNExperimentInfo * _Nullable)experimentInfo {

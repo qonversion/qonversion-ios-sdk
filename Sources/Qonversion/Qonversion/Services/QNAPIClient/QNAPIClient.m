@@ -21,7 +21,7 @@
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, strong) QNErrorsMapper *errorsMapper;
 @property (nonatomic, copy) NSArray<NSNumber *> *connectionErrorCodes;
-@property (nonatomic, copy) NSArray<NSString *> *retriableRequests;
+@property (nonatomic, copy) NSMutableArray<NSString *> *retriableRequests;
 @property (nonatomic, copy) NSArray<NSNumber *> *criticalErrorCodes;
 @property (nonatomic, strong) NSError *criticalError;
 
@@ -47,7 +47,7 @@
       @(NSURLErrorDataNotAllowed),
       @(NSURLErrorTimedOut)
     ];
-    _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kPropertiesEndpoint, kAttributionEndpoint];
+    _retriableRequests = [@[kInitEndpoint, kPropertiesEndpoint, kAttributionEndpoint] mutableCopy];
     _criticalErrorCodes = @[@(401), @(402), @(403)];
   }
   
@@ -113,7 +113,12 @@
   NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseModel:purchaseModel];
   NSDictionary *resultData = [self enrichParameters:body];
   
-  NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
+  NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData userID:self.userID];
+  
+  // synchronize
+  if (![self.retriableRequests containsObject:request.URL.absoluteString]) {
+    [self.retriableRequests addObject:request.URL.absoluteString];
+  }
   
   [self processRequest:request completion:completion];
 }
@@ -217,7 +222,7 @@
 }
 
 - (NSString *)obtainApiKey {
-  return self.debug ? [NSString stringWithFormat:@"test_%@", self.apiKey] : self.apiKey;
+  return self.debug ? [NSString stringWithFormat:@"%@", self.apiKey] : self.apiKey;
 }
 
 - (NSDictionary *)enrichParameters:(NSDictionary *)parameters {

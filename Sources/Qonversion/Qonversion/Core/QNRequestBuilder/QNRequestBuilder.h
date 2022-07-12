@@ -8,7 +8,7 @@
 - (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey;
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters;
-- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters userID:(NSString *)userID;
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter;
 - (NSURLRequest *)makeScreensRequestWith:(NSString *)parameters;
 - (NSURLRequest *)makeCreateIdentityRequestWithUserID:(NSString *)userID parameters:(NSDictionary *)parameters;

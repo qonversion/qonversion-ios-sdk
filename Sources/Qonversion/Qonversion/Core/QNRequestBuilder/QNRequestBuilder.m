@@ -39,8 +39,9 @@ NSString *const kOldAPIPrefix = @"/v1/";
   return [self makePostRequestWith:kAttributionEndpoint andBody:parameters];
 }
 
-- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kPurchaseEndpoint andBody:parameters];
+- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters userID:(NSString *)userID {
+  NSString *endpoint = [NSString stringWithFormat:kPurchaseEndpointFormat, userID];
+  return [self makePostRequestWith:endpoint andBody:parameters];
 }
 
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter {
