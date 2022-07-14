@@ -52,18 +52,24 @@
   return user;
 }
 
-+ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSDictionary * _Nullable)data {
++ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillEntitlements:(NSDictionary * _Nullable)data {
   NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
   if (![data isKindOfClass:[NSDictionary class]]) {
     return [permissions copy];
   }
   
   NSArray *permissionsData = data[@"data"];
-  if (![permissionsData isKindOfClass:[NSArray class]]) {
+  return [self fillPermissions:permissionsData];
+}
+
++ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSDictionary * _Nullable)data {
+  NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
+
+  if (![data isKindOfClass:[NSArray class]]) {
     return [permissions copy];
   }
   
-  for (NSDictionary* itemDict in permissionsData) {
+  for (NSDictionary* itemDict in data) {
     QNPermission *item = [self fillPermission:itemDict];
     if (item && item.permissionID) {
       permissions[item.permissionID] = item;

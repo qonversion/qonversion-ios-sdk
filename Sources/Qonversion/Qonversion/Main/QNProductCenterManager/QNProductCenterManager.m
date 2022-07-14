@@ -360,6 +360,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   if (self.unhandledLogoutAvailable) {
     [self handleNewUserEntitlements:userID];
     
+    run_block_on_main(completion, @{}, nil);
     return;
   }
   
@@ -408,7 +409,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [weakSelf handlePermissionsError:error userID:userID];
     } else {
       weakSelf.forcePermissionsRetry = NO;
-      NSDictionary<NSString *, QNPermission *> *permissions = [QNMapper fillPermissions:result];
+      NSDictionary<NSString *, QNPermission *> *permissions = [QNMapper fillEntitlements:result];
       
       NSString *currentUserID = [self.userInfoService obtainUserID];
       if ([currentUserID isEqualToString:userID]) {
@@ -928,7 +929,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         weakSelf.user = user;
         
         QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-        NSDictionary *permissions = [launchResult performSelector:@selector(permissions)];
+        NSDictionary *permissions = [QNMapper fillPermissions:result.data[@"permissions"]];
         [weakSelf storePermissions:permissions];
         @synchronized (weakSelf) {
           weakSelf.launchResult = launchResult;
