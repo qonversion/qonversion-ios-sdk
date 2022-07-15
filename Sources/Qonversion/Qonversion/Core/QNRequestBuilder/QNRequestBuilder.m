@@ -3,6 +3,9 @@
 #import "QNDevice.h"
 #import "QNConstants.h"
 
+NSString *const kAPIMinorVersion = @"2";
+NSString *const kOldAPIPrefix = @"/v1/";
+
 @interface QNRequestBuilder ()
 
 @property (nonatomic, copy) NSString *apiKey;
@@ -55,8 +58,19 @@
   return [self makePostRequestWith:endpoint andBody:body];
 }
 
-- (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kIdentityEndpoint andBody:parameters];
+- (NSURLRequest *)makeCreateIdentityRequestWithUserID:(NSString *)userID parameters:(NSDictionary *)parameters {
+  NSString *endpoint = [NSString stringWithFormat:kIdentityEndpointFormat, userID];
+  return [self makePostRequestWith:endpoint andBody:parameters];
+}
+
+- (NSURLRequest *)makeGetIdentityRequestWith:(NSString *)userID {
+  NSString *endpoint = [NSString stringWithFormat:kIdentityEndpointFormat, userID];
+  return [self makeGetRequestWith:endpoint];
+}
+
+- (NSURLRequest *)makeGetEntitlementsRequestWith:(NSString *)userID {
+  NSString *endpoint = [NSString stringWithFormat:kEntitlementsEndpointFormat, userID];
+  return [self makeGetRequestWith:endpoint];
 }
 
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
@@ -112,6 +126,10 @@
   [self addBearerToRequest:request];
   [self addLocaleToRequest:request];
   [self addPlatformInfoToRequest:request];
+  
+  if ([url.absoluteString containsString:kOldAPIPrefix]) {
+    [self addMinorVersionToRequest:request];
+  }
 
   return request;
 }
@@ -129,6 +147,10 @@
     NSString *authHeader = [NSString stringWithFormat:@"Bearer %@", self.apiKey];
     [request addValue:authHeader forHTTPHeaderField:@"Authorization"];
   }
+}
+
+- (void)addMinorVersionToRequest:(NSMutableURLRequest *)request {
+  [request addValue:kAPIMinorVersion forHTTPHeaderField:@"API-Minor-Version"];
 }
 
 - (void)addPlatformInfoToRequest:(NSMutableURLRequest *)request {

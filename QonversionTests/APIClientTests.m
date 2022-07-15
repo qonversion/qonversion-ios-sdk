@@ -93,7 +93,9 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   
   OCMStub([_mockSession dataTaskWithRequest:self.request
                           completionHandler:([OCMArg invokeBlockWithArgs:[self fileDataFromContentsOfFile:keyQNInitFailedJSON], [NSNull null], [NSNull null], nil])]);
-  
+  NSString *urlString = @"https://qonversion.io";
+  NSURL *url = [NSURL URLWithString:urlString];
+  OCMStub([self.request URL]).andReturn(url);
   [_client dataTaskWithRequest:_request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     XCTAssertNil(dict);
     XCTAssertNotNil(error);

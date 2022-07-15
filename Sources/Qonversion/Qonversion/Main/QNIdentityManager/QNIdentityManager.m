@@ -9,6 +9,7 @@
 #import "QNIdentityManager.h"
 #import "QNIdentityServiceInterface.h"
 #import "QNUserInfoServiceInterface.h"
+#import "QNInternalConstants.h"
 
 @implementation QNIdentityManager
 
@@ -16,12 +17,29 @@
   __block __weak QNIdentityManager *weakSelf = self;
   
   NSString *anonUserID = [self.userInfoService obtainUserID];
-  [self.identityService identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    if (result.length > 0) {
-      [weakSelf.userInfoService storeIdentity:result];
+  
+  [weakSelf.identityService obtainIdentity:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+    if (error.code == kNotFoundErrorCode) {
+      [weakSelf.identityService createIdentity:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
+        [weakSelf handleIdentityResult:userID identityResultID:result error:error completion:completion];
+      }];
+      return;
     }
-    completion(result, error);
+    
+    [weakSelf handleIdentityResult:userID identityResultID:result error:error completion:completion];
   }];
+}
+
+- (void)handleIdentityResult:(NSString *)userID identityResultID:(NSString *)resultID error:(NSError *)error completion:(QNIdentityCompletionHandler)completion {
+  if (!error) {
+    [self.userInfoService storeCustomIdentityUserID:userID];
+  }
+  
+  if (resultID.length > 0) {
+    [self.userInfoService storeIdentityResult:resultID];
+  }
+  
+  completion(resultID, error);
 }
 
 - (BOOL)logoutIfNeeded {

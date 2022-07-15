@@ -6,17 +6,26 @@
       "id": "standart",
       "associated_product": "qonversion_product",
       "active": 0,
-      "renew_state": 0,
-      "started_timestamp": 1586369486,
-      "expiration_timestamp": 1588949486,
+      "product": {
+        "product_id": "qonversion_product",
+        "subscription": {
+          "renew_state": "billing_issue"
+        }
+      },
+      "started": 1586369486,
+      "expires": 1588949486
     },
     {
       "id": "premium",
-      "associated_product": "qonversion_product",
       "active": 1,
-      "renew_state": 3,
-      "started_timestamp": 1586369486,
-      "expiration_timestamp": 1588949486,
+      "product": {
+        "product_id": "qonversion_product",
+        "subscription": {
+          "renew_state": "billing_issue"
+        }
+      },
+      "started": 1586369486,
+      "expires": 1588949486
     }
   ],
   "products": [

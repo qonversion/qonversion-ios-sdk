@@ -43,33 +43,35 @@ static NSUInteger const kKeychainAttemptsCount = 3;
   
   if (cachedUserID.length == 0) {
     [self.localStorage setString:resultUserID forKey:kKeyQUserDefaultsUserID];
-    [self.localStorage setString:resultUserID forKey:kKeyQUserDefaultsOriginalUserID];
   }
   
   return resultUserID;
 }
 
-- (void)storeIdentity:(NSString *)userID {
+- (NSString *)obtainCustomIdentityUserID {
+  return [self.localStorage loadStringForKey:kKeyQUserDefaultsIdentityUserID];
+}
+
+- (void)storeIdentityResult:(NSString *)userID {
   [self.localStorage setString:userID forKey:kKeyQUserDefaultsUserID];
 }
 
-- (BOOL)logoutIfNeeded {
-  NSString *originalUserID = [self.localStorage loadStringForKey:kKeyQUserDefaultsOriginalUserID];
-  NSString *defaultUserID = [self.localStorage loadStringForKey:kKeyQUserDefaultsUserID];
-  
-  if ([originalUserID isEqualToString:defaultUserID]) {
-    return NO;
-  }
-  
-  [self.localStorage setString:originalUserID forKey:kKeyQUserDefaultsUserID];
-  
-  return YES;
+- (void)storeCustomIdentityUserID:(NSString *)userID {
+  [self.localStorage setString:userID forKey:kKeyQUserDefaultsIdentityUserID];
 }
 
-- (void)deleteUser {
-  [self.localStorage removeObjectForKey:kKeyQUserDefaultsUserID];
-  [self.localStorage removeObjectForKey:kKeyQUserDefaultsOriginalUserID];
-  [self.keychainStorage resetUserID];
+- (BOOL)logoutIfNeeded {
+  NSString *currentIdentityUserID = [self.localStorage loadStringForKey:kKeyQUserDefaultsIdentityUserID];
+  if (currentIdentityUserID.length > 0) {
+    [self.localStorage removeObjectForKey:kKeyQUserDefaultsIdentityUserID];
+    
+    NSString *userID = [self generateRandomUserID];
+    [self.localStorage setString:userID forKey:kKeyQUserDefaultsUserID];
+    
+    return YES;
+  } else {
+    return NO;
+  }
 }
 
 #pragma mark - Private

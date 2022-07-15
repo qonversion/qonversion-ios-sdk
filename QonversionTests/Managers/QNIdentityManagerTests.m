@@ -56,15 +56,15 @@
   TestBlock testBlock = ^(NSInvocation *invocation) {
     void(^completioinBlock)(NSString *result, NSError *error);
     
-    [invocation getArgument:&completioinBlock atIndex:4];
+    [invocation getArgument:&completioinBlock atIndex:3];
     
     completioinBlock(identityID, randomError);
   };
   
   OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
-  OCMStub([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
+  OCMStub([self.mockIdentityService obtainIdentity:userID completion:OCMOCK_ANY]).andDo(testBlock);
   
-  OCMExpect([self.mockUserInfoService storeIdentity:identityID]);
+  OCMExpect([self.mockUserInfoService storeIdentityResult:identityID]);
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
@@ -77,9 +77,9 @@
   XCTAssertEqual(randomError, resultError);
   
   OCMVerify([self.mockUserInfoService obtainUserID]);
-  OCMVerify([self.mockUserInfoService storeIdentity:identityID]);
+  OCMVerify([self.mockUserInfoService storeIdentityResult:identityID]);
   
-  OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
+  OCMVerify([self.mockIdentityService obtainIdentity:userID completion:OCMOCK_ANY]);
 }
 
 - (void)testSuccessIdentity_emptyID {
@@ -95,13 +95,13 @@
   TestBlock testBlock = ^(NSInvocation *invocation) {
     void(^completioinBlock)(NSString *result, NSError *error);
     
-    [invocation getArgument:&completioinBlock atIndex:4];
+    [invocation getArgument:&completioinBlock atIndex:3];
     
     completioinBlock(identityID, randomError);
   };
   
   OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
-  OCMStub([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
+  OCMStub([self.mockIdentityService obtainIdentity:userID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
@@ -115,7 +115,7 @@
   
   OCMVerify([self.mockUserInfoService obtainUserID]);
   
-  OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
+  OCMVerify([self.mockIdentityService obtainIdentity:userID completion:OCMOCK_ANY]);
 }
 
 - (void)testFailureIdentity {
@@ -131,13 +131,13 @@
   TestBlock testBlock = ^(NSInvocation *invocation) {
     void(^completioinBlock)(NSString *result, NSError *error);
     
-    [invocation getArgument:&completioinBlock atIndex:4];
+    [invocation getArgument:&completioinBlock atIndex:3];
     
     completioinBlock(nil, randomError);
   };
   
   OCMStub([self.mockUserInfoService obtainUserID]).andReturn(anonUserID);
-  OCMStub([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]).andDo(testBlock);
+  OCMStub([self.mockIdentityService obtainIdentity:userID completion:OCMOCK_ANY]).andDo(testBlock);
   
   // when
   [self.manager identify:userID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
@@ -151,7 +151,7 @@
   
   OCMVerify([self.mockUserInfoService obtainUserID]);
   
-  OCMVerify([self.mockIdentityService identify:userID anonUserID:anonUserID completion:OCMOCK_ANY]);
+  OCMVerify([self.mockIdentityService obtainIdentity:userID completion:OCMOCK_ANY]);
 }
 
 - (void)testLogoutIfNeeded {
