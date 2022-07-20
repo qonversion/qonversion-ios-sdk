@@ -37,6 +37,7 @@
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		4CADC5602759181A004FDC10 /* AuthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CADC55F2759181A004FDC10 /* AuthViewController.swift */; };
+		70AA116228884AB3002C8F42 /* QNEntitlementCacheLifetime.h in Headers */ = {isa = PBXBuildFile; fileRef = 70AA116128884AB3002C8F42 /* QNEntitlementCacheLifetime.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		71D1AE03BA37F1D7CA063728 /* Pods_QonversionTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */; };
 		891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */; };
 		891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 891ECE0927734B8900DF6A56 /* AdServices.framework */; };
@@ -287,6 +288,7 @@
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
 		4CADC55F2759181A004FDC10 /* AuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewController.swift; sourceTree = "<group>"; };
+		70AA116128884AB3002C8F42 /* QNEntitlementCacheLifetime.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNEntitlementCacheLifetime.h; sourceTree = "<group>"; };
 		891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNErrorsMapperTests.m; sourceTree = "<group>"; };
 		891ECE0927734B8900DF6A56 /* AdServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk/System/Library/Frameworks/AdServices.framework; sourceTree = DEVELOPER_DIR; };
 		894278812759334D00A8A6EC /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -729,6 +731,7 @@
 				895731C526DD03A2009507A6 /* QNErrors.h */,
 				895731C626DD03A2009507A6 /* Qonversion.m */,
 				895731C726DD03A2009507A6 /* QNProduct.h */,
+				70AA116128884AB3002C8F42 /* QNEntitlementCacheLifetime.h */,
 				895731C826DD03A2009507A6 /* QONActionResult.m */,
 				895731C926DD03A2009507A6 /* QNOffering.h */,
 				895731CA26DD03A2009507A6 /* QNPromoPurchasesDelegate.h */,
@@ -1397,6 +1400,7 @@
 				8957330426DD03A3009507A6 /* QNIdentityService.h in Headers */,
 				895732CF26DD03A3009507A6 /* QNProperties.h in Headers */,
 				895732F326DD03A3009507A6 /* QNUserPropertiesManager.h in Headers */,
+				70AA116228884AB3002C8F42 /* QNEntitlementCacheLifetime.h in Headers */,
 				8957329226DD03A3009507A6 /* QNConstants.h in Headers */,
 				895732F126DD03A3009507A6 /* QNMapper.h in Headers */,
 				895732DF26DD03A3009507A6 /* QNUser+Protected.h in Headers */,

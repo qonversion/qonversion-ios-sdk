@@ -45,6 +45,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNUserInfoCompletionHandler> *userInfoBlocks;
 @property (atomic, strong) NSMutableArray<SKPaymentTransaction *> *restoredTransactions;
 @property (nonatomic, strong) QNAPIClient *apiClient;
+@property (nonatomic, assign) QNEntitlementCacheLifetime cacheLifetime;
 
 @property (nonatomic, strong) QNLaunchResult *launchResult;
 @property (nonatomic, copy) NSDictionary<NSString *, QNPermission *> *permissions;
@@ -70,6 +71,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _forcePermissionsRetry = YES;
     _launchError = nil;
     _launchResult = nil;
+    _cacheLifetime = QNEntitlementCacheLifetimeMonth;
     
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
     
@@ -92,6 +94,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   
   return self;
+}
+
+- (void)setEntitlementsCacheLifetime:(QNEntitlementCacheLifetime)cacheLifetime {
+  self.cacheLifetime = cacheLifetime;
 }
 
 - (void)offeringByIDWasCalled:(NSNotification *)notification {
@@ -130,7 +136,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (NSDictionary<NSString *, QNPermission *> * _Nullable)getActualPermissionsForDefaultState:(BOOL)defaultState {
   NSDictionary<NSString *, QNPermission *> *permissions = self.permissions ?: [self.persistentStorage loadObjectForKey:kKeyQUserDefaultsPermissions];
   NSTimeInterval cachedLaunchResultTimestamp = [self cachedPermissionsTimestamp];
-  BOOL isCacheOutdated = [QNUtils isPermissionsOutdatedForDefaultState:defaultState cacheDataTimeInterval:cachedLaunchResultTimestamp];
+  BOOL isCacheOutdated = [QNUtils isPermissionsOutdatedForDefaultState:defaultState cacheDataTimeInterval:cachedLaunchResultTimestamp cacheLifetime:self.cacheLifetime];
   
   return isCacheOutdated ? nil : permissions;
 }
