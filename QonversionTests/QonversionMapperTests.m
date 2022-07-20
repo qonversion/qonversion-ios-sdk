@@ -32,7 +32,7 @@
 
 - (void)testThatMapperParsePermissions {
   NSDictionary *rawPermissions = self.userInitSuccess[@"permissions"];
-  NSDictionary *result = [QNMapper fillPermissions:@{@"data": rawPermissions}];
+  NSDictionary *result = [QNMapper fillPermissions:rawPermissions];
   
   XCTAssertNotNil(result);
   
@@ -52,7 +52,7 @@
 
 - (void)testThatMapperParseFewPermissionsCorrectly {
   NSDictionary *rawPermissions = self.userInitSuccess[@"permissions"];
-  NSDictionary *result = [QNMapper fillPermissions:@{@"data": rawPermissions}];
+  NSDictionary *result = [QNMapper fillPermissions:rawPermissions];
   
   XCTAssertNotNil(result);
   XCTAssertEqual(result.count, 2);
