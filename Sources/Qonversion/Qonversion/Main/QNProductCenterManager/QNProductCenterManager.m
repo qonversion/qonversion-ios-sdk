@@ -114,7 +114,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (QNLaunchResult * _Nullable)cachedLaunchResult {
   QNLaunchResult *result = [self.persistentStorage loadObjectForKey:kLaunchResult];
-  NSTimeInterval cachedLaunchResultTimestamp = [self cachedLaunchResultTimestamp];
   
   return result;
 }
