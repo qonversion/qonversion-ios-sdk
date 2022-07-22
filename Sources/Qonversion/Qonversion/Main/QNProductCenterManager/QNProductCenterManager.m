@@ -112,12 +112,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (QNLaunchResult * _Nullable)actualCachedLaunchResult {
+- (QNLaunchResult * _Nullable)cachedLaunchResult {
   QNLaunchResult *result = [self.persistentStorage loadObjectForKey:kLaunchResult];
-  NSTimeInterval cachedLaunchResultTimestamp = [self cachedLaunchResultTimestamp];
-  BOOL isCacheOutdated = [QNUtils isCacheOutdated:cachedLaunchResultTimestamp];
   
-  return isCacheOutdated ? nil : result;
+  return result;
 }
 
 - (void)storePermissions:(NSDictionary<NSString *, QNPermission *> *)permissions {
@@ -154,7 +152,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   NSDictionary *products = _launchResult.products ?: @{};
   
   if (self.launchError) {
-    QNLaunchResult *cachedResult = [self actualCachedLaunchResult];
+    QNLaunchResult *cachedResult = [self cachedLaunchResult];
     products = cachedResult ? cachedResult.products : products;
   }
   
@@ -165,7 +163,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   QNOfferings *offerings = self.launchResult.offerings ?: nil;
   
   if (self.launchError) {
-    QNLaunchResult *cachedResult = [self actualCachedLaunchResult];
+    QNLaunchResult *cachedResult = [self cachedLaunchResult];
     offerings = cachedResult ? cachedResult.offerings : offerings;
   }
   
@@ -458,7 +456,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     if (self.launchError) {
       __block __weak QNProductCenterManager *weakSelf = self;
       [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
-        QNLaunchResult *cachedResult = [weakSelf actualCachedLaunchResult];
+        QNLaunchResult *cachedResult = [weakSelf cachedLaunchResult];
         if (error && !cachedResult) {
           run_block_on_main(completion, @{}, error, NO);
           return;
@@ -674,7 +672,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     if (self.launchError) {
       // check if the cache is actual, set the products, and reset the error
-      QNLaunchResult *cachedResult = [self actualCachedLaunchResult];
+      QNLaunchResult *cachedResult = [self cachedLaunchResult];
       products = cachedResult ? cachedResult.products.allValues : products;
       resultError = cachedResult ? nil : self.launchError;
     }

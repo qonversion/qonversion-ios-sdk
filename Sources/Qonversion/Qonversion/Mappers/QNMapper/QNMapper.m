@@ -62,7 +62,7 @@
   return [self fillPermissions:permissionsData];
 }
 
-+ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSDictionary * _Nullable)data {
++ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSArray * _Nullable)data {
   NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
 
   if (![data isKindOfClass:[NSArray class]]) {
