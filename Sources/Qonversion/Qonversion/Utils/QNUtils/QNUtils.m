@@ -28,9 +28,41 @@
   return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > cacheLifetimeInSeconds;
 }
 
-+ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval {
-  CGFloat cacheLifetimeInSeconds = defaultState ? 60.0 * 5.0 : [self defaultCacheLifetime];
++ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(QNEntitlementCacheLifetime)cacheLifetime {
+  CGFloat cacheLifetimeInSeconds = defaultState ? 60.0 * 5.0 : [self cacheLifetimeInSeconds:cacheLifetime];
   return [self isCacheOutdated:cacheDataTimeInterval cacheLifetime:cacheLifetimeInSeconds];
+}
+
++ (CGFloat)cacheLifetimeInSeconds:(QNEntitlementCacheLifetime)cacheLifetime {
+  NSUInteger days = 0;
+  switch (cacheLifetime) {
+    case QNEntitlementCacheLifetimeWeek:
+      days = 7;
+      break;
+    case QNEntitlementCacheLifetimeTwoWeeks:
+      days = 14;
+      break;
+    case QNEntitlementCacheLifetimeMonth:
+      days = 30;
+      break;
+    case QNEntitlementCacheLifetimeThreeMonth:
+      days = 90;
+      break;
+    case QNEntitlementCacheLifetimeSixMonth:
+      days = 180;
+      break;
+    case QNEntitlementCacheLifetimeYear:
+      days = 365;
+      break;
+    case QNEntitlementCacheLifetimeUnlimited:
+      return CGFLOAT_MAX;;
+      break;
+      
+    default:
+      break;
+  }
+  
+  return days * 24.0 * 60.0 * 60.0;
 }
 
 + (NSDate *)dateFromTimestamp:(NSNumber *)timestamp {

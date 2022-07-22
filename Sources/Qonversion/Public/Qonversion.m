@@ -59,6 +59,10 @@
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
 }
 
++ (void)setEntitlementsCacheLifetime:(QNEntitlementCacheLifetime)cacheLifetime {
+  [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:cacheLifetime];
+}
+
 + (void)identify:(NSString *)userID {
   [[Qonversion sharedInstance].productCenterManager identify:userID];
 }

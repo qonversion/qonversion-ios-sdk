@@ -49,6 +49,7 @@ dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 
 #import <Foundation/Foundation.h>
 #import "QNErrors.h"
+#import "QNEntitlementCacheLifetime.h"
 
 @interface QNUtils : NSObject
 
@@ -56,6 +57,6 @@ dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 + (NSString *)convertHexData:(NSData *)tokenData;
 + (NSDate *)dateFromTimestamp:(NSNumber *)timestamp;
 + (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval;
-+ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval;
++ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(QNEntitlementCacheLifetime)cacheLifetime;
 
 @end
