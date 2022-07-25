@@ -57,6 +57,8 @@
   
   [Qonversion sharedInstance].productCenterManager.disableFinishTransactions = [Qonversion sharedInstance].disableFinishTransactions;
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
+  
+  [Qonversion sharedInstance].propertiesManager.productCenterManager = [Qonversion sharedInstance].productCenterManager;
 }
 
 + (void)identify:(NSString *)userID {
