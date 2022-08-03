@@ -10,8 +10,9 @@ typedef NS_ENUM(NSInteger, QNEntitlementCacheLifetime) {
   QNEntitlementCacheLifetimeWeek = 1,
   QNEntitlementCacheLifetimeTwoWeeks = 2,
   QNEntitlementCacheLifetimeMonth = 3,
-  QNEntitlementCacheLifetimeThreeMonth = 4,
-  QNEntitlementCacheLifetimeSixMonth = 5,
-  QNEntitlementCacheLifetimeYear = 6,
-  QNEntitlementCacheLifetimeUnlimited = 7,
+  QNEntitlementCacheLifetimeTwoMonth = 4,
+  QNEntitlementCacheLifetimeThreeMonth = 5,
+  QNEntitlementCacheLifetimeSixMonth = 6,
+  QNEntitlementCacheLifetimeYear = 7,
+  QNEntitlementCacheLifetimeUnlimited = 8,
 } NS_SWIFT_NAME(Qonversion.EntitlementCacheLifetime);

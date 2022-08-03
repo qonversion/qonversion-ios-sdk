@@ -44,6 +44,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNUserInfoCompletionHandler> *userInfoBlocks;
 @property (atomic, strong) NSMutableArray<SKPaymentTransaction *> *restoredTransactions;
+@property (atomic, copy) NSArray<SKPaymentTransaction *> *restoredTransactionsCopy;
 @property (nonatomic, strong) QNAPIClient *apiClient;
 @property (nonatomic, assign) QNEntitlementCacheLifetime cacheLifetime;
 
@@ -899,6 +900,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)handleRestoredTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
   self.restoredTransactions = [transactions mutableCopy];
+  self.restoredTransactionsCopy = transactions;
 }
 
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
@@ -908,6 +910,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   self.purchaseModels[product.productIdentifier] = nil;
   [self.storeKitService receipt:^(NSString * receipt) {
     [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt purchaseModel:purchaseModel completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      NSError *purchaseRequestError = error;
       QNPurchaseCompletionHandler _purchasingBlock = weakSelf.purchasingBlocks[product.productIdentifier];
       @synchronized (weakSelf) {
         [weakSelf.purchasingBlocks removeObjectForKey:product.productIdentifier];
@@ -916,14 +919,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       weakSelf.forcePermissionsRetry = error != nil;
       
       if (error && _purchasingBlock) {
-        run_block_on_main(_purchasingBlock, @{}, error, NO);
+        [weakSelf handlePurchaseResult:@{} error:error cancelled:NO transaction:transaction product:product completion:_purchasingBlock];
         return;
       } else if (!error) {
         QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
         weakSelf.forcePermissionsRetry = result.error != nil;
+        purchaseRequestError = result.error;
         
         if (result.error && _purchasingBlock) {
-          run_block_on_main(_purchasingBlock, @{}, result.error, NO);
+          [weakSelf handlePurchaseResult:@{} error:result.error cancelled:NO transaction:transaction product:product completion:_purchasingBlock];
           return;
         }
         
@@ -947,24 +951,25 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       
       [weakSelf checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
         if (_purchasingBlock) {
-          run_block_on_main(_purchasingBlock, result, error, NO);
+          [weakSelf handlePurchaseResult:result error:error cancelled:NO transaction:transaction product:product completion:_purchasingBlock];
         } else {
           if (transaction.transactionState != SKPaymentTransactionStateRestored && !error) {
             [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedPermissions:result];
           } else {
-            if (error) {
+            if (error || purchaseRequestError) {
+              // handle purchase error for restore case
               NSLock *arrayLock = [NSLock new];
               [arrayLock lock];
               if ([weakSelf.restoredTransactions containsObject:transaction]) {
                 [weakSelf.restoredTransactions removeObject:transaction];
                 
                 if (weakSelf.restoredTransactions.count == 0) {
+                  // calculate
                   [weakSelf handleRestoreResult:nil error:error];
                 }
               }
               [arrayLock unlock];
             } else {
-              weakSelf.restoredTransactions = nil;
               [weakSelf handleRestoreResult:result error:nil];
             }
           }
@@ -974,7 +979,103 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }];
 }
 
+- (void)handlePurchaseResult:(NSDictionary<NSString *,QNPermission *> *)result
+                       error:(NSError *)error
+                   cancelled:(BOOL)cancelled
+                 transaction:(SKPaymentTransaction *)transaction
+                     product:(SKProduct *)product
+                  completion:(QNPurchaseCompletionHandler)completion {
+  if (error) {
+    
+  } else {
+    run_block_on_main(completion, result, nil, cancelled);
+  }
+}
+
+- (NSDictionary<NSString *, QNPermission *> *)calculatePermissionsForRestoredTransactions:(NSArray<SKPaymentTransaction *> *)transactions
+                                                                                 products:(NSArray<SKProduct *> *)products {
+  NSSortDescriptor *dateDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"transactionDate" ascending:NO];
+  NSArray *sortDescriptors = [NSArray arrayWithObject:dateDescriptor];
+  NSArray *sortedTransactions = [transactions sortedArrayUsingDescriptors:sortDescriptors];
+  
+  NSMutableDictionary *resultTransactionsDict = [NSMutableDictionary new];
+  for (SKPaymentTransaction *transaction in sortedTransactions) {
+    if (resultTransactionsDict[transaction.payment.productIdentifier] == nil) {
+      resultTransactionsDict[transaction.payment.productIdentifier] = transaction;
+    }
+  }
+  
+  return [self calculatePermissionsForTransactions:resultTransactionsDict.allValues products:products];
+}
+
+- (NSDictionary<NSString *, QNPermission *> *)calculatePermissionsForTransactions:(NSArray<SKPaymentTransaction *> *)transactions
+                                                                         products:(NSArray<SKProduct *> *)products {
+  NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = [NSMutableDictionary new];
+  NSMutableDictionary<NSString *, SKProduct *> *productsMap = [NSMutableDictionary new];
+  
+  for (SKProduct *product in products) {
+    productsMap[product.productIdentifier] = product;
+  }
+  
+  NSMutableDictionary<NSString *, QNProduct *> *qonversionProductsMap = [NSMutableDictionary new];
+  for (QNProduct *value in self.launchResult.products.allValues) {
+    qonversionProductsMap[value.storeID] = value;
+  }
+  
+  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
+    for (SKPaymentTransaction *transaction in transactions) {
+      SKProduct *product = productsMap[product.productIdentifier];
+      NSDate *expirationDate = [QNUtils calculateExpirationDateForPeriod:product.subscriptionPeriod fromDate:transaction.transactionDate];
+      if (!expirationDate || [expirationDate compare:[NSDate date]] == NSOrderedDescending) {
+        // create permission
+        QNProduct *qonversionProduct = qonversionProductsMap[transaction.payment.productIdentifier];
+        
+      }
+    }
+  } else {
+    for (SKPaymentTransaction *transaction in transactions) {
+      QNProduct *qonversionProduct = qonversionProductsMap[transaction.payment.productIdentifier];
+      NSDate *expirationDate = [QNUtils calculateExpirationDateForProduct:qonversionProduct fromDate:transaction.transactionDate];
+      if (!expirationDate || [expirationDate compare:[NSDate date]] == NSOrderedDescending) {
+        // create permission
+      }
+    }
+  }
+  
+  return [resultPermissions copy];
+}
+
+- (QNPermission *)calculatePermissionsForProduct:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
+  QNProduct *qonversionProduct;
+  for (QNProduct *value in self.launchResult.products.allValues) {
+    if ([value.storeID isEqualToString:product.productIdentifier]) {
+      qonversionProduct = value;
+      break;
+    }
+  }
+  
+  if (!qonversionProduct) {
+    return nil;
+  }
+  
+  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
+    if (product.subscriptionPeriod) {
+      NSDate *expirationDate = [QNUtils calculateExpirationDateForPeriod:product.subscriptionPeriod fromDate:transaction.transactionDate];
+    }
+  }
+  
+   // iOS > 11.2
+  // get QNProduct and check type
+//  if (transaction.transactionDate) {
+//    <#statements#>
+//  }
+  
+  return nil;
+}
+
 - (void)handleRestoreResult:(NSDictionary<NSString *, QNPermission *> *)permissions error:(NSError *)error {
+  self.restoredTransactions = nil;
+  self.restoredTransactionsCopy = nil;
   if (self.restorePurchasesBlock) {
     QNRestoreCompletionHandler restorePurchasesBlock = [self.restorePurchasesBlock copy];
     self.restorePurchasesBlock = nil;
