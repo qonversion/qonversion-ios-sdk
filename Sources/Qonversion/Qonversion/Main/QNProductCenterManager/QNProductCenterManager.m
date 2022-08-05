@@ -47,6 +47,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (atomic, copy) NSArray<SKPaymentTransaction *> *restoredTransactionsCopy;
 @property (nonatomic, strong) QNAPIClient *apiClient;
 @property (nonatomic, assign) QNEntitlementCacheLifetime cacheLifetime;
+@property (nonatomic, copy) NSDictionary<NSString *, NSString *> *productsPermissionsRelation;
 
 @property (nonatomic, strong) QNLaunchResult *launchResult;
 @property (nonatomic, copy) NSDictionary<NSString *, QNPermission *> *permissions;
@@ -84,6 +85,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
+    
+    _productsPermissionsRelation = [_persistentStorage loadObjectForKey:kKeyQUserDefaultsProductsPermissionsRelation];
     
     _purchaseModels = [NSMutableDictionary new];
     _purchasingBlocks = [NSMutableDictionary new];
@@ -876,6 +879,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     QNUser *user = [QNMapper fillUser:result.data];
     weakSelf.user = user;
     
+    weakSelf.productsPermissionsRelation = [QNMapper mapProductsPermissionsRelation:result.data];
+    [weakSelf.persistentStorage storeObject:weakSelf.productsPermissionsRelation forKey:kKeyQUserDefaultsProductsPermissionsRelation];
+    
     QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
     completion(launchResult, nil);
     
@@ -964,9 +970,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
                 [weakSelf.restoredTransactions removeObject:transaction];
                 
                 if (weakSelf.restoredTransactions.count == 0) {
-                  // calculate
-                  [weakSelf handleRestoreResult:nil error:error];
+                  NSDictionary<NSString *, QNPermission *> *calculatedPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
+                  [weakSelf handleRestoreResult:calculatedPermissions error:nil];
                 }
+              } else {
+                [weakSelf handlePurchaseResult:result error:error cancelled:NO transaction:transaction product:product completion:nil];
               }
               [arrayLock unlock];
             } else {
@@ -985,8 +993,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
                  transaction:(SKPaymentTransaction *)transaction
                      product:(SKProduct *)product
                   completion:(QNPurchaseCompletionHandler)completion {
-  if (error) {
-    
+  if (error) { // add a check and do this logic not for every error
+    NSDictionary<NSString *, QNPermission *> *calculatedPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
+    run_block_on_main(completion, calculatedPermissions, nil, cancelled);
   } else {
     run_block_on_main(completion, result, nil, cancelled);
   }
@@ -1019,17 +1028,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   NSMutableDictionary<NSString *, QNProduct *> *qonversionProductsMap = [NSMutableDictionary new];
   for (QNProduct *value in self.launchResult.products.allValues) {
-    qonversionProductsMap[value.storeID] = value;
+    if (value.storeID.length > 0) {
+      qonversionProductsMap[value.storeID] = value;
+    }
   }
   
   if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
     for (SKPaymentTransaction *transaction in transactions) {
-      SKProduct *product = productsMap[product.productIdentifier];
+      SKProduct *product = productsMap[transaction.payment.productIdentifier];
       NSDate *expirationDate = [QNUtils calculateExpirationDateForPeriod:product.subscriptionPeriod fromDate:transaction.transactionDate];
       if (!expirationDate || [expirationDate compare:[NSDate date]] == NSOrderedDescending) {
-        // create permission
-        QNProduct *qonversionProduct = qonversionProductsMap[transaction.payment.productIdentifier];
+        NSDictionary<NSString *, QNPermission *> *permissions = [self createPermissionsForProductsMap:qonversionProductsMap transaction:transaction expirationDate:expirationDate];
         
+        [resultPermissions addEntriesFromDictionary:permissions];
       }
     }
   } else {
@@ -1037,40 +1048,63 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       QNProduct *qonversionProduct = qonversionProductsMap[transaction.payment.productIdentifier];
       NSDate *expirationDate = [QNUtils calculateExpirationDateForProduct:qonversionProduct fromDate:transaction.transactionDate];
       if (!expirationDate || [expirationDate compare:[NSDate date]] == NSOrderedDescending) {
-        // create permission
+        NSDictionary<NSString *, QNPermission *> *permissions = [self createPermissionsForProductsMap:qonversionProductsMap transaction:transaction expirationDate:expirationDate];
+        
+        [resultPermissions addEntriesFromDictionary:permissions];
       }
     }
+  }
+  
+  resultPermissions = [self mergePermissions:resultPermissions];
+  
+  [self storePermissions:resultPermissions];
+  
+  return [resultPermissions copy];
+}
+
+- (NSDictionary<NSString *, QNPermission *> *)mergePermissions:(NSDictionary *)permissions {
+  NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = [self.permissions mutableCopy];
+  
+  for (QNPermission *permission in permissions.allValues) {
+    QNPermission *currentPermission = resultPermissions[permission.permissionID];
+    if (currentPermission && [permission.expirationDate compare:currentPermission.expirationDate] == NSOrderedDescending) {
+      resultPermissions[permission.permissionID] = permission;
+    }
+  }
+  
+  return resultPermissions;
+}
+
+- (NSDictionary<NSString *, QNPermission *> *)createPermissionsForProductsMap:(NSDictionary *)productsMap
+                                                                  transaction:(SKPaymentTransaction *)transaction
+                                                               expirationDate:(NSDate *)expirationDate {
+  NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = [NSMutableDictionary new];
+  
+  QNProduct *qonversionProduct = productsMap[transaction.payment.productIdentifier];
+  
+  NSArray<NSString *> *permissionsIds = self.productsPermissionsRelation[qonversionProduct.qonversionID];
+  for (NSString *permissionId in permissionsIds) {
+    QNPermission *permission = [self createPermissionsForId:permissionId qonversionProduct:qonversionProduct transaction:transaction expirationDate:expirationDate];
+   
+    resultPermissions[permission.permissionID] = permission;
   }
   
   return [resultPermissions copy];
 }
 
-- (QNPermission *)calculatePermissionsForProduct:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction {
-  QNProduct *qonversionProduct;
-  for (QNProduct *value in self.launchResult.products.allValues) {
-    if ([value.storeID isEqualToString:product.productIdentifier]) {
-      qonversionProduct = value;
-      break;
-    }
-  }
+- (QNPermission *)createPermissionsForId:(NSString *)permissionId
+                       qonversionProduct:(QNProduct *)qonversionProduct
+                             transaction:(SKPaymentTransaction *)transaction
+                          expirationDate:(NSDate *)expirationDate {
+  QNPermission *permission = [[QNPermission alloc] init];
+  permission.permissionID = permissionId;
+  permission.isActive = YES;
+  permission.renewState = QNPermissionRenewStateUnknown;
+  permission.productID = qonversionProduct.qonversionID;
+  permission.startedDate = transaction.transactionDate;
+  permission.expirationDate = expirationDate;
   
-  if (!qonversionProduct) {
-    return nil;
-  }
-  
-  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
-    if (product.subscriptionPeriod) {
-      NSDate *expirationDate = [QNUtils calculateExpirationDateForPeriod:product.subscriptionPeriod fromDate:transaction.transactionDate];
-    }
-  }
-  
-   // iOS > 11.2
-  // get QNProduct and check type
-//  if (transaction.transactionDate) {
-//    <#statements#>
-//  }
-  
-  return nil;
+  return permission;
 }
 
 - (void)handleRestoreResult:(NSDictionary<NSString *, QNPermission *> *)permissions error:(NSError *)error {

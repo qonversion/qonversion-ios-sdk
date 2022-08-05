@@ -20,6 +20,10 @@
 
 @implementation QNMapper
 
++ (NSDictionary * _Nullable)mapProductsPermissionsRelation:(NSDictionary *)dict {
+  return dict[@"products_permissions"];
+}
+
 + (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
   QNLaunchResult *result = [[QNLaunchResult alloc] init];
   

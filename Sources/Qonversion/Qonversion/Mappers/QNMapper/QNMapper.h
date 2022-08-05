@@ -10,6 +10,8 @@
 
 + (QNUser * _Nonnull)fillUser:(NSDictionary * _Nullable)dict;
 
++ (NSDictionary * _Nullable)mapProductsPermissionsRelation:(NSDictionary *)dict;
+
 + (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillEntitlements:(NSDictionary * _Nullable)data;
 + (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSArray * _Nullable)data;
 

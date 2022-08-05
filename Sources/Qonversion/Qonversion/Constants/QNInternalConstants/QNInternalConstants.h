@@ -14,6 +14,7 @@ extern NSString *const kKeyQUserDefaultsIdentityUserID;
 extern NSString *const kKeyQUserDefaultsUserID;
 extern NSString *const kKeyQUserDefaultsPermissions;
 extern NSString *const kKeyQUserDefaultsPermissionsTimestamp;
+extern NSString *const kKeyQUserDefaultsProductsPermissionsRelation;
 extern NSString *const kKeyQUserIDPrefix;
 extern NSString *const kKeyQUserIDSeparator;
 extern NSString *const kMainUserDefaultsSuiteName;
