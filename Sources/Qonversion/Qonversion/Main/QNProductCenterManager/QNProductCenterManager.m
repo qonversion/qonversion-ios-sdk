@@ -429,15 +429,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   if (self.launchError || self.unhandledLogoutAvailable) {
     [self launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
       weakSelf.unhandledLogoutAvailable = NO;
-      QNLaunchResult *launchResult = result;
+      NSDictionary<NSString *, QNPermission *> *permissions = result.permissions;
       NSError *resultError = error;
       if (error && !weakSelf.forceLaunchRetry && !weakSelf.pendingIdentityUserID) {
-        QNLaunchResult *cachedLaunchResult = [weakSelf cachedLaunchResult];
-        launchResult = cachedLaunchResult ?: launchResult;
-        resultError = cachedLaunchResult ? nil : error;
+        NSDictionary<NSString *, QNPermission *> *cachedPermissions = [weakSelf getActualPermissionsForDefaultState:NO];
+        permissions = cachedPermissions ?: permissions;
+        resultError = permissions.count > 0 ? nil : error;
       }
       
-      run_block_on_main(completion, launchResult.permissions, resultError);
+      run_block_on_main(completion, permissions, resultError);
     }];
   } else {
     run_block_on_main(completion, self.launchResult.permissions, nil);
@@ -941,6 +941,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   [self.persistentStorage storeDouble:currentDate.timeIntervalSince1970 forKey:kKeyQUserDefaultsPermissionsTimestamp];
   [self.persistentStorage storeObject:permissions forKey:kKeyQUserDefaultsPermissions];
+}
+
+- (NSDictionary<NSString *, QNPermission *> * _Nullable)getActualPermissionsForDefaultState:(BOOL)defaultState {
+  NSDictionary<NSString *, QNPermission *> *permissions = self.permissions ?: [self.persistentStorage loadObjectForKey:kKeyQUserDefaultsPermissions];
+  NSTimeInterval cachedPermissionsTimestamp = [self cachedPermissionsTimestamp];
+  BOOL isCacheOutdated = [QNUtils isPermissionsOutdatedForDefaultState:defaultState cacheDataTimeInterval:cachedPermissionsTimestamp cacheLifetime:self.cacheLifetime];
+
+  return isCacheOutdated ? nil : permissions;
+}
+
+- (NSTimeInterval)cachedPermissionsTimestamp {
+  return [self.persistentStorage loadDoubleForKey:kKeyQUserDefaultsPermissionsTimestamp];
 }
 
 // MARK: - Move to separate file
