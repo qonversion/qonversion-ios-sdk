@@ -13,6 +13,7 @@
 #import "QNUser.h"
 #import "QNErrors.h"
 #import "QNStoreKitSugare.h"
+#import "QNEntitlementCacheLifetime.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
@@ -34,6 +35,14 @@ NS_ASSUME_NONNULL_BEGIN
  @param completion - will return `uid` for Ads integrations.
  */
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
+
+/**
+ Entitlements cache is used when there are problems with the Qonversion API or internet connection.
+ If so, Qonversion will return the last successfully loaded entitlements. The current method allows you to configure how long that cache may be used.
+ The default value is QNEntitlementCacheLifetimeMonth.
+ @param cacheLifetime desired entitlements cache lifetime duration
+ */
++ (void)setEntitlementsCacheLifetime:(QNEntitlementCacheLifetime)cacheLifetime;
 
 /**
  Disables transactions finishing.

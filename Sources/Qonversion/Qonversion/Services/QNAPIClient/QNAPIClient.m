@@ -47,7 +47,7 @@
       @(NSURLErrorDataNotAllowed),
       @(NSURLErrorTimedOut)
     ];
-    _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kPropertiesEndpoint, kAttributionEndpoint];
+    _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kAttributionEndpoint];
     _criticalErrorCodes = @[@(401), @(402), @(403)];
   }
   

@@ -19,9 +19,52 @@
 }
 
 + (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval {
-  CGFloat dayInSeconds = 60.0 * 60.0 * 24.0;
+  CGFloat cacheLifetimeInSeconds = [self defaultCacheLifetime];
+  return [self isCacheOutdated:cacheDataTimeInterval cacheLifetime:cacheLifetimeInSeconds];
+}
+
++ (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(CGFloat)cacheLifetimeInSeconds  {
   NSDate *currentDate = [NSDate date];
-  return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > dayInSeconds;
+  return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > cacheLifetimeInSeconds;
+}
+
++ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(QNEntitlementCacheLifetime)cacheLifetime {
+  CGFloat cacheLifetimeInSeconds = defaultState ? 60.0 * 5.0 : [self cacheLifetimeInSeconds:cacheLifetime];
+  return [self isCacheOutdated:cacheDataTimeInterval cacheLifetime:cacheLifetimeInSeconds];
+}
+
++ (CGFloat)cacheLifetimeInSeconds:(QNEntitlementCacheLifetime)cacheLifetime {
+  NSUInteger days = 0;
+  switch (cacheLifetime) {
+    case QNEntitlementCacheLifetimeWeek:
+      days = 7;
+      break;
+    case QNEntitlementCacheLifetimeTwoWeeks:
+      days = 14;
+      break;
+    case QNEntitlementCacheLifetimeMonth:
+      days = 30;
+      break;
+    case QNEntitlementCacheLifetimeTwoMonth:
+      days = 60;
+    case QNEntitlementCacheLifetimeThreeMonth:
+      days = 90;
+      break;
+    case QNEntitlementCacheLifetimeSixMonth:
+      days = 180;
+      break;
+    case QNEntitlementCacheLifetimeYear:
+      days = 365;
+      break;
+    case QNEntitlementCacheLifetimeUnlimited:
+      return CGFLOAT_MAX;;
+      break;
+      
+    default:
+      break;
+  }
+  
+  return days * 24.0 * 60.0 * 60.0;
 }
 
 + (NSDate *)dateFromTimestamp:(NSNumber *)timestamp {
@@ -32,6 +75,78 @@
   }
   
   return date;
+}
+
++ (NSDate *)calculateExpirationDateForProduct:(QNProduct *)product fromDate:(NSDate *)transactionDate {
+  if (product.type == QNProductTypeDirectSubscription || QNProductTypeTrial) {
+    NSInteger days = 0;
+    switch (product.duration) {
+      case QNProductDurationWeekly:
+        days = 7;
+        break;
+      case QNProductDurationMonthly:
+        days = 30;
+        break;
+      case QNProductDuration3Months:
+        days = 90;
+        break;
+      case QNProductDuration6Months:
+        days = 180;
+        break;
+      case QNProductDurationAnnual:
+        days = 365;
+        break;
+      case QNProductDurationLifetime:
+        return nil;
+      case QNProductDurationUnknown:
+        return nil;
+        
+      default:
+        return nil;
+    }
+    
+    return [NSDate dateWithTimeIntervalSince1970:days * [self dayInSeconds]];
+  } else {
+    return nil;
+  }
+}
+
++ (NSDate *)calculateExpirationDateForPeriod:(SKProductSubscriptionPeriod *)period fromDate:(NSDate *)transactionDate {
+  if (!period) {
+    return nil;
+  }
+  
+  NSDate *startDate = transactionDate ?: [NSDate date];
+  NSInteger days = 1;
+  switch (period.unit) {
+    case SKProductPeriodUnitDay:
+      days = 1;
+      break;
+    case SKProductPeriodUnitWeek:
+      days = 7;
+      break;
+    case SKProductPeriodUnitMonth:
+      days = 30;
+      break;
+    case SKProductPeriodUnitYear:
+      days = 365;
+      break;
+      
+    default:
+      break;
+  }
+  
+  CGFloat periodInSeconds = days * period.numberOfUnits * [self dayInSeconds];
+  
+  return [NSDate dateWithTimeInterval:periodInSeconds sinceDate:startDate];
+}
+
++ (CGFloat)defaultCacheLifetime {
+  return [self dayInSeconds];
+}
+
++ (CGFloat)dayInSeconds {
+  return 60.0 * 60.0 * 24.0;
 }
 
 @end

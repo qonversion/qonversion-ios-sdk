@@ -46,6 +46,10 @@
   return result;
 }
 
++ (NSDictionary * _Nullable)mapProductsPermissionsRelation:(NSDictionary *)dict {
+  return dict[@"products_permissions"];
+}
+
 + (QNUser *)fillUser:(NSDictionary * _Nullable)dict {
   NSString *userID = dict[@"uid"];
   NSString *originalAppVersion = dict[@"apple_extra"][@"original_application_version"];
