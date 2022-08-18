@@ -18,11 +18,6 @@
     return [hex copy];
 }
 
-+ (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval {
-  CGFloat cacheLifetimeInSeconds = [self defaultCacheLifetime];
-  return [self isCacheOutdated:cacheDataTimeInterval cacheLifetime:cacheLifetimeInSeconds];
-}
-
 + (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(CGFloat)cacheLifetimeInSeconds  {
   NSDate *currentDate = [NSDate date];
   return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > cacheLifetimeInSeconds;
@@ -57,14 +52,14 @@
       days = 365;
       break;
     case QNPermissionsCacheLifetimeUnlimited:
-      return CGFLOAT_MAX;;
+      return CGFLOAT_MAX;
       break;
       
     default:
       break;
   }
   
-  return days * 24.0 * 60.0 * 60.0;
+  return days * [self dayInSeconds];
 }
 
 + (NSDate *)dateFromTimestamp:(NSNumber *)timestamp {
@@ -139,10 +134,6 @@
   CGFloat periodInSeconds = days * period.numberOfUnits * [self dayInSeconds];
   
   return [NSDate dateWithTimeInterval:periodInSeconds sinceDate:startDate];
-}
-
-+ (CGFloat)defaultCacheLifetime {
-  return [self dayInSeconds];
 }
 
 + (CGFloat)dayInSeconds {

@@ -998,7 +998,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
   NSMutableDictionary<NSString *, QNProduct *> *qonversionProductsMap = [NSMutableDictionary new];
   QNLaunchResult *launchResult = self.launchError ? [self cachedLaunchResult] : self.launchResult;
-  for (QNProduct *value in self.launchResult.products.allValues) {
+  for (QNProduct *value in launchResult.products.allValues) {
     if (value.storeID.length > 0) {
       qonversionProductsMap[value.storeID] = value;
     }
@@ -1034,11 +1034,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (NSDictionary<NSString *, QNPermission *> *)mergePermissions:(NSDictionary *)permissions {
-  NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = [self.permissions mutableCopy];
+  NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = self.permissions.count > 0 ? self.permissions : [self getActualPermissionsForDefaultState:NO];
 
   for (QNPermission *permission in permissions.allValues) {
     QNPermission *currentPermission = resultPermissions[permission.permissionID];
-    if (currentPermission && ([permission.expirationDate compare:currentPermission.expirationDate] == NSOrderedDescending || !currentPermission.isActive)) {
+    if (currentPermission && (!currentPermission.isActive || [permission.expirationDate compare:currentPermission.expirationDate] == NSOrderedDescending)) {
       resultPermissions[permission.permissionID] = permission;
     }
   }
