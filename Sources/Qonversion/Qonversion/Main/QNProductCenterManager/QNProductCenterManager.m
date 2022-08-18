@@ -440,7 +440,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       if (error && !weakSelf.forceLaunchRetry && !weakSelf.pendingIdentityUserID) {
         NSDictionary<NSString *, QNPermission *> *cachedPermissions = [weakSelf getActualPermissionsForDefaultState:NO];
         permissions = cachedPermissions ?: permissions;
-        resultError = permissions.count > 0 ? nil : error;
+        resultError = permissions ? nil : error;
       }
       
       run_block_on_main(completion, permissions, resultError);
@@ -950,11 +950,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (NSDictionary<NSString *, QNPermission *> * _Nullable)getActualPermissionsForDefaultState:(BOOL)defaultState {
-  NSDictionary<NSString *, QNPermission *> *permissions = self.permissions ?: [self.persistentStorage loadObjectForKey:kKeyQUserDefaultsPermissions];
+  if (self.permissions) {
+    return self.permissions;
+  }
+  
+  NSDictionary<NSString *, QNPermission *> *permissions = [self.persistentStorage loadObjectForKey:kKeyQUserDefaultsPermissions];
   NSTimeInterval cachedPermissionsTimestamp = [self cachedPermissionsTimestamp];
   BOOL isCacheOutdated = [QNUtils isPermissionsOutdatedForDefaultState:defaultState cacheDataTimeInterval:cachedPermissionsTimestamp cacheLifetime:self.cacheLifetime];
 
-  return isCacheOutdated ? nil : permissions;
+  if (!isCacheOutdated) {
+    self.permissions = permissions;
+  }
+  
+  return self.permissions;
 }
 
 - (NSTimeInterval)cachedPermissionsTimestamp {
