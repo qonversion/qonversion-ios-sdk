@@ -43,7 +43,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNOfferingsCompletionHandler> *offeringsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNUserInfoCompletionHandler> *userInfoBlocks;
-@property (nonatomic, assign) QNEntitlementCacheLifetime cacheLifetime;
+@property (nonatomic, assign) QNPermissionsCacheLifetime cacheLifetime;
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *productsPermissionsRelation;
 @property (nonatomic, copy) NSDictionary<NSString *, QNPermission *> *permissions;
 @property (nonatomic, strong) QNAPIClient *apiClient;
@@ -71,7 +71,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _forceLaunchRetry = NO;
     _launchError = nil;
     _launchResult = nil;
-    _cacheLifetime = QNEntitlementCacheLifetimeMonth;
+    _cacheLifetime = QNPermissionsCacheLifetimeMonth;
     
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
     
@@ -107,7 +107,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)setEntitlementsCacheLifetime:(QNEntitlementCacheLifetime)cacheLifetime {
+- (void)setEntitlementsCacheLifetime:(QNPermissionsCacheLifetime)cacheLifetime {
   self.cacheLifetime = cacheLifetime;
 }
 

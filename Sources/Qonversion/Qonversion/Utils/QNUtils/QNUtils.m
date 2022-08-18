@@ -28,35 +28,35 @@
   return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > cacheLifetimeInSeconds;
 }
 
-+ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(QNEntitlementCacheLifetime)cacheLifetime {
++ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(QNPermissionsCacheLifetime)cacheLifetime {
   CGFloat cacheLifetimeInSeconds = defaultState ? 60.0 * 5.0 : [self cacheLifetimeInSeconds:cacheLifetime];
   return [self isCacheOutdated:cacheDataTimeInterval cacheLifetime:cacheLifetimeInSeconds];
 }
 
-+ (CGFloat)cacheLifetimeInSeconds:(QNEntitlementCacheLifetime)cacheLifetime {
++ (CGFloat)cacheLifetimeInSeconds:(QNPermissionsCacheLifetime)cacheLifetime {
   NSUInteger days = 0;
   switch (cacheLifetime) {
-    case QNEntitlementCacheLifetimeWeek:
+    case QNPermissionsCacheLifetimeWeek:
       days = 7;
       break;
-    case QNEntitlementCacheLifetimeTwoWeeks:
+    case QNPermissionsCacheLifetimeTwoWeeks:
       days = 14;
       break;
-    case QNEntitlementCacheLifetimeMonth:
+    case QNPermissionsCacheLifetimeMonth:
       days = 30;
       break;
-    case QNEntitlementCacheLifetimeTwoMonth:
+    case QNPermissionsCacheLifetimeTwoMonth:
       days = 60;
-    case QNEntitlementCacheLifetimeThreeMonth:
+    case QNPermissionsCacheLifetimeThreeMonth:
       days = 90;
       break;
-    case QNEntitlementCacheLifetimeSixMonth:
+    case QNPermissionsCacheLifetimeSixMonth:
       days = 180;
       break;
-    case QNEntitlementCacheLifetimeYear:
+    case QNPermissionsCacheLifetimeYear:
       days = 365;
       break;
-    case QNEntitlementCacheLifetimeUnlimited:
+    case QNPermissionsCacheLifetimeUnlimited:
       return CGFLOAT_MAX;;
       break;
       

@@ -61,7 +61,7 @@
   [Qonversion sharedInstance].propertiesManager.productCenterManager = [Qonversion sharedInstance].productCenterManager;
 }
 
-+ (void)setEntitlementsCacheLifetime:(QNEntitlementCacheLifetime)cacheLifetime {
++ (void)setPermissionsCacheLifetime:(QNPermissionsCacheLifetime)cacheLifetime {
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:cacheLifetime];
 }
 
