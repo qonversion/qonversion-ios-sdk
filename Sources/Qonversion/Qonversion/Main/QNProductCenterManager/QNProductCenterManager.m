@@ -250,9 +250,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     if (error) {
       [weakSelf executePermissionBlocksWithError:error];
-    } else if ([currentUserID isEqualToString:result]) {
+      return;
+    }
+    
+    if ([currentUserID isEqualToString:result]) {
       [weakSelf executePermissionBlocks];
     } else {
+      [weakSelf resetActualPermissionsCache];
+      
       [[QNAPIClient shared] setUserID:result];
       
       [weakSelf launchWithCompletion:nil];
@@ -265,10 +270,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   BOOL isLogoutNeeded = [self.identityManager logoutIfNeeded];
   
   if (isLogoutNeeded) {
+    self.unhandledLogoutAvailable = YES;
     NSString *userID = [self.userInfoService obtainUserID];
     [[QNAPIClient shared] setUserID:userID];
     
-    self.unhandledLogoutAvailable = YES;
+    [self resetActualPermissionsCache];
   }
 }
 
@@ -953,6 +959,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (NSTimeInterval)cachedPermissionsTimestamp {
   return [self.persistentStorage loadDoubleForKey:kKeyQUserDefaultsPermissionsTimestamp];
+}
+
+- (void)resetActualPermissionsCache {
+  self.permissions = nil;
+  [self.persistentStorage removeObjectForKey:kKeyQUserDefaultsPermissions];
+  [self.persistentStorage removeObjectForKey:kKeyQUserDefaultsPermissionsTimestamp];
 }
 
 // MARK: - Move to separate file
