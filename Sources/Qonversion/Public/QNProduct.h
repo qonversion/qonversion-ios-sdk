@@ -61,13 +61,13 @@ NS_SWIFT_NAME(Qonversion.Product)
 /**
  Product type
  Trial, Subscription or one-time purchase
- @see [Products types](https://qonversion.io/docs/product-types)
+ @see [Products types](https://qonversion.io/docs/create-products#product-type)
  */
 @property (nonatomic, assign) QNProductType type;
 
 /**
  Product duration
- @see [Products durations](https://qonversion.io/docs/product-durations)
+ @see [Products durations](https://qonversion.io/docs/create-products#product-type)
  */
 @property (nonatomic, assign) QNProductDuration duration;
 

@@ -8,6 +8,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QNProductCenterManager : NSObject
 
+@property (nonatomic, assign) BOOL disableFinishTransactions;
+
 - (void)identify:(NSString *)userID;
 - (void)logout;
 - (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate;
@@ -29,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)userInfo:(QNUserInfoCompletionHandler)completion;
 
 - (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion;
+- (void)sendPushToken;
 
 @end
 

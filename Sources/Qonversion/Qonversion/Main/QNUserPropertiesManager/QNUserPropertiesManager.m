@@ -5,6 +5,7 @@
 #import "QNAPIClient.h"
 #import "QNDevice.h"
 #import "QNInternalConstants.h"
+#import "QNProductCenterManager.h"
 #if !TARGET_OS_OSX
 #import <UIKit/UIKit.h>
 #else
@@ -132,11 +133,13 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
       weakSelf.updatingCurrently = NO;
       
       if (error) {
-        weakSelf.retriesCounter += 1;
-        
-        weakSelf.retryDelay = [weakSelf countDelay];
-        
-        [weakSelf sendPropertiesWithDelay:weakSelf.retryDelay];
+        if ([error.domain isEqualToString:keyQNAPIErrorDomain] && error.code == QNAPIErrorInvalidClientUID) {
+          [weakSelf.productCenterManager launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+            [weakSelf retryProperties];
+          }];
+        } else {
+          [weakSelf retryProperties];
+        }
       } else {
         weakSelf.retryDelay = kQPropertiesSendingPeriodInSeconds;
         weakSelf.retriesCounter = 0;
@@ -144,6 +147,14 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
       }
     }];
   }];
+}
+
+- (void)retryProperties {
+  self.retriesCounter += 1;
+  
+  self.retryDelay = [self countDelay];
+  
+  [self sendPropertiesWithDelay:self.retryDelay];
 }
 
 - (void)clearProperties:(NSDictionary *)properties {
