@@ -1,6 +1,6 @@
-<p align="center">
- <a href="https://qonversion.io" target="_blank"><img width="360" height="45" src="https://qcdn3.sfo3.digitaloceanspaces.com/github/qonversion_logo.png"></a>
-</p>
+<h1 align="center">
+    Qonversion
+</h1>
 
 Qonversion is the data platform to power in-app subscription revenue growth. 
 
@@ -27,7 +27,7 @@ Qonversion is the data platform to power in-app subscription revenue growth.
 ## How It Works: Product Center
 
 <p align="center">
-     <a href="https://documentation.qonversion.io/docs/integrations-overview"><img width="90%" src="https://qcdn3.sfo3.digitaloceanspaces.com/github/qonversion_pc.png">
+     <a href="https://documentation.qonversion.io/docs/integrations-overview"><img width="90%" src="https://user-images.githubusercontent.com/13959241/161107203-8ef3ecee-86be-47a2-ac57-b21d3da19339.png">
      </a>
 </p>
 
@@ -67,7 +67,7 @@ See more in the [documentation](https://documentation.qonversion.io/docs/automat
 Boost conversion rates with paywalls and in-app purchases A/B testing. Find the best pricing and paywall variations. Be flexible to prove hypotheses without app releases.
 
 <p align="center">
-     <a href="https://documentation.qonversion.io/docs/subscription-ab-testing"><img width="90%" src="https://qcdn3.sfo3.digitaloceanspaces.com/github/ab_test.png">
+     <a href="https://documentation.qonversion.io/docs/subscription-ab-testing"><img width="90%" src="https://user-images.githubusercontent.com/13959241/161716071-b30311b3-b60f-482d-a5d3-c40c1951253b.png">
      </a>
 </p>
 
