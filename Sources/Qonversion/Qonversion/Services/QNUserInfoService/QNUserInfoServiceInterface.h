@@ -16,5 +16,7 @@
 - (void)storeIdentity:(NSString *)userID;
 - (BOOL)logoutIfNeeded;
 - (void)deleteUser;
+- (NSString *)obtainCustomIdentityUserID;
+- (void)storeCustomIdentityUserID:(NSString *)userID;
 
 @end

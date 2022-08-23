@@ -215,6 +215,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)identify:(NSString *)userID {
   self.unhandledLogoutAvailable = NO;
+  
+  NSString *currentIdentityID = [self.userInfoService obtainCustomIdentityUserID];
+  if ([currentIdentityID isEqualToString:userID]) {
+    return;
+  }
+  
+  [self resetActualPermissionsCache];
+  
   if (!self.launchingFinished) {
     self.pendingIdentityUserID = userID;
     
@@ -226,9 +234,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     __block __weak QNProductCenterManager *weakSelf = self;
 
     [weakSelf launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
-      weakSelf.identityInProgress = NO;
-      
       if (error) {
+        weakSelf.identityInProgress = NO;
         [weakSelf executePermissionBlocksWithError:error];
       } else {
         [weakSelf processIdentity:userID];
@@ -244,7 +251,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.identityManager identify:userID completion:^(NSString *result, NSError * _Nullable error) {
-    weakSelf.pendingIdentityUserID = nil;
     weakSelf.identityInProgress = NO;
     
     if (error) {
@@ -252,11 +258,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       return;
     }
     
+    weakSelf.pendingIdentityUserID = nil;
+    
+    [weakSelf.userInfoService storeCustomIdentityUserID:userID];
+    
     if ([currentUserID isEqualToString:result]) {
       [weakSelf executePermissionBlocks];
     } else {
-      [weakSelf resetActualPermissionsCache];
-      
       [[QNAPIClient shared] setUserID:result];
       
       [weakSelf launchWithCompletion:nil];
@@ -269,6 +277,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   BOOL isLogoutNeeded = [self.identityManager logoutIfNeeded];
   
   if (isLogoutNeeded) {
+    [self.userInfoService storeCustomIdentityUserID:nil];
     self.unhandledLogoutAvailable = YES;
     NSString *userID = [self.userInfoService obtainUserID];
     [[QNAPIClient shared] setUserID:userID];
