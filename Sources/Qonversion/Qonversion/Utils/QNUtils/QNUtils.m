@@ -73,7 +73,7 @@
 }
 
 + (NSDate *)calculateExpirationDateForProduct:(QNProduct *)product fromDate:(NSDate *)transactionDate {
-  if (product.type == QNProductTypeDirectSubscription || QNProductTypeTrial) {
+  if (product.type == QNProductTypeDirectSubscription || product.type == QNProductTypeTrial) {
     NSInteger days = 0;
     switch (product.duration) {
       case QNProductDurationWeekly:
@@ -100,7 +100,7 @@
         return nil;
     }
     
-    return [NSDate dateWithTimeIntervalSince1970:days * [self dayInSeconds]];
+    return [NSDate dateWithTimeInterval:days * [self dayInSeconds] sinceDate:transactionDate];
   } else {
     return nil;
   }

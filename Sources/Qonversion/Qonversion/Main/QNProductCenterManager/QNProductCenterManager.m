@@ -832,14 +832,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         return;
       }
       
-      if (!weakSelf.disableFinishTransactions) {
-        [weakSelf.storeKitService finishTransaction:transaction];
-      }
-      
       QNUser *user = [QNMapper fillUser:result.data];
       weakSelf.user = user;
       
       NSError *resultError = error ?: result.error;
+      
+      if (!weakSelf.disableFinishTransactions && !resultError) {
+        [weakSelf.storeKitService finishTransaction:transaction];
+      }
       
       QNLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
       
