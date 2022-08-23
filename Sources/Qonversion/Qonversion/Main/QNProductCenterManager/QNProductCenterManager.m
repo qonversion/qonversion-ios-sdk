@@ -45,7 +45,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QNExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic, strong) NSMutableArray<QNUserInfoCompletionHandler> *userInfoBlocks;
 @property (nonatomic, assign) QNPermissionsCacheLifetime cacheLifetime;
-@property (nonatomic, copy) NSDictionary<NSString *, NSString *> *productsPermissionsRelation;
+@property (nonatomic, copy) NSDictionary<NSString *, NSArray *> *productsPermissionsRelation;
 @property (nonatomic, copy) NSDictionary<NSString *, QNPermission *> *permissions;
 @property (nonatomic, strong) QNAPIClient *apiClient;
 
@@ -1075,13 +1075,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 
   resultPermissions = [self mergePermissions:resultPermissions];
+  
+  NSDictionary<NSString *, QNPermission *> *resultPermissionsCopy = [resultPermissions copy];
 
-  [self storePermissions:resultPermissions];
+  [self storePermissions:resultPermissionsCopy];
 
-  return [resultPermissions copy];
+  return resultPermissionsCopy;
 }
 
-- (NSDictionary<NSString *, QNPermission *> *)mergePermissions:(NSDictionary *)permissions {
+- (NSMutableDictionary<NSString *, QNPermission *> *)mergePermissions:(NSMutableDictionary *)permissions {
   NSDictionary *currentPermissions = self.permissions.count > 0 ? self.permissions : [self getActualPermissionsForDefaultState:NO];
   NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = [currentPermissions mutableCopy];
 

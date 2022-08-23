@@ -46,7 +46,7 @@
   return result;
 }
 
-+ (NSDictionary * _Nullable)mapProductsPermissionsRelation:(NSDictionary *)dict {
++ (NSDictionary * _Nullable)mapProductsPermissionsRelation:(NSDictionary * _Nullable)dict {
   return dict[@"products_permissions"];
 }
 
