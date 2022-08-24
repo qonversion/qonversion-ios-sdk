@@ -24,7 +24,8 @@ typedef NS_ENUM(NSInteger, QNProperty) {
   QNPropertyAdjustUserID,
   QNPropertyKochavaDeviceID,
   QNPropertyAdvertisingID,
-  QNPropertyUserID
+  QNPropertyUserID,
+  QNPropertyFirebaseAppInstanceId
 } NS_SWIFT_NAME(Qonversion.Property);
 
 

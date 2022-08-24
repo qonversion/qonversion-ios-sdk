@@ -28,6 +28,9 @@
     case QNPropertyUserID:
       key = @"_q_custom_user_id";
       break;
+    case QNPropertyFirebaseAppInstanceId:
+      key = @"_q_firebase_instance_id";
+      break;
   }
   
   return key;
