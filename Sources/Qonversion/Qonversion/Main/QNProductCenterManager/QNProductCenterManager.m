@@ -885,7 +885,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (BOOL)shouldCalculatePermissionsForError:(NSError *)error {
-  return (error.code >= kInternalServerErrorFirstCode && error <= kInternalServerErrorLastCode);
+  return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode);
 }
 
 - (void)handleRestoreResult:(NSDictionary<NSString *, QNPermission *> *)permissions error:(NSError *)error {
