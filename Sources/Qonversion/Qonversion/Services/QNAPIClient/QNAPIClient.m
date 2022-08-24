@@ -269,6 +269,12 @@
       return;
     }
     
+    NSError *responseError = [weakSelf internalErrorFromResponse:response];
+    if (responseError) {
+      completion(nil, responseError);
+      return;
+    }
+    
     if ((!data || ![data isKindOfClass:NSData.class])) {
       completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedReceiveData]);
       return;
@@ -292,6 +298,22 @@
     
     completion(dict, nil);
   }] resume];
+}
+
+- (NSError *)internalErrorFromResponse:(NSURLResponse *)response {
+  if (![response isKindOfClass:[NSHTTPURLResponse class]]) {
+    return nil;
+  }
+  
+  NSHTTPURLResponse *httpURLResponse = (NSHTTPURLResponse *)response;
+  
+  if (httpURLResponse.statusCode >= kInternalServerErrorFirstCode && httpURLResponse.statusCode <= kInternalServerErrorLastCode) {
+    NSMutableDictionary *userInfo = [NSMutableDictionary new];
+    userInfo[NSLocalizedDescriptionKey] = kInternalServerError;
+    NSError *error = [NSError errorWithDomain:keyQNErrorDomain code:httpURLResponse.statusCode userInfo:userInfo];
+    
+    return error;
+  }
 }
 
 - (NSError *)criticalErrorFromResponse:(NSURLResponse *)response {

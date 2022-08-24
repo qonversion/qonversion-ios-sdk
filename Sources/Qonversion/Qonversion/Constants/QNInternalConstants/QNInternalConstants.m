@@ -25,3 +25,6 @@ NSUInteger const kQPropertiesSendingPeriodInSeconds = 5;
 CGFloat const kJitter = 0.4f;
 CGFloat const kFactor = 2.4f;
 NSUInteger const kMaxDelay = 1000;
+
+NSInteger const kInternalServerErrorFirstCode = 500;
+NSInteger const kInternalServerErrorLastCode = 599;

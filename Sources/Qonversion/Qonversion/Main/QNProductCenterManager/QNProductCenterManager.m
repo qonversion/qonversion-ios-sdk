@@ -871,14 +871,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         } else {
           NSDictionary<NSString *, QNPermission *> *resultPermissions = launchResult.permissions;
           if (resultError) {
-            resultPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
+            if ([self shouldCalculatePermissionsForError:error]) {
+              resultPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
+              [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedPermissions:resultPermissions];
+            }
+          } else {
+            [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedPermissions:resultPermissions];
           }
-          
-          [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedPermissions:resultPermissions];
         }
       }
     }];
   }];
+}
+
+- (BOOL)shouldCalculatePermissionsForError:(NSError *)error {
+  return (error.code >= kInternalServerErrorFirstCode && error <= kInternalServerErrorLastCode);
 }
 
 - (void)handleRestoreResult:(NSDictionary<NSString *, QNPermission *> *)permissions error:(NSError *)error {
@@ -902,10 +909,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       QNRestoreCompletionHandler restorePurchasesBlock = [weakSelf.restorePurchasesBlock copy];
       weakSelf.restorePurchasesBlock = nil;
       if (error) {
-        NSArray<SKProduct *> *storeProducts = [weakSelf.storeKitService getLoadedProducts];
-        NSDictionary<NSString *, QNPermission *> *calculatedPermissions = [weakSelf calculatePermissionsForRestoredTransactions:restoredTransactionsCopy products:storeProducts];
-        
-        run_block_on_main(restorePurchasesBlock, calculatedPermissions, nil);
+        if ([weakSelf shouldCalculatePermissionsForError:error]) {
+          NSArray<SKProduct *> *storeProducts = [weakSelf.storeKitService getLoadedProducts];
+          NSDictionary<NSString *, QNPermission *> *calculatedPermissions = [weakSelf calculatePermissionsForRestoredTransactions:restoredTransactionsCopy products:storeProducts];
+          
+          run_block_on_main(restorePurchasesBlock, calculatedPermissions, nil);
+        } else {
+          run_block_on_main(restorePurchasesBlock, nil, error);
+        }
       } else if (result) {
         [weakSelf storeLaunchResultIfNeeded:result];
         weakSelf.launchResult = result;
@@ -1011,9 +1022,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
                  transaction:(SKPaymentTransaction *)transaction
                      product:(SKProduct *)product
                   completion:(QNPurchaseCompletionHandler)completion {
-  if (error) { // add a check and do this logic not for every error
-    NSDictionary<NSString *, QNPermission *> *calculatedPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
-    run_block_on_main(completion, calculatedPermissions, nil, cancelled);
+  if (error) {
+    if ([self shouldCalculatePermissionsForError:error]) {
+      NSDictionary<NSString *, QNPermission *> *calculatedPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
+      run_block_on_main(completion, calculatedPermissions, nil, cancelled);
+    } else {
+      run_block_on_main(completion, nil, error, cancelled);
+    }
   } else {
     run_block_on_main(completion, result, nil, cancelled);
   }
