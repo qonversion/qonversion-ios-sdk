@@ -17,4 +17,4 @@ jobs:
           exempt-all-pr-assignees: true
           start-date: '2022-08-23 00:00:00.000'
           stale-issue-label: 'awaiting answers'
-          exempt-issue-labels: 'investigating, in progress'
+          exempt-issue-labels: 'investigating, in progress, enhancement'
