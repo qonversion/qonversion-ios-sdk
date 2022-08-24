@@ -106,6 +106,18 @@
   }
 }
 
++ (BOOL)isConnectionError:(NSError *)error {
+  NSArray *connectionErrorCodes = @[
+    @(NSURLErrorNotConnectedToInternet),
+    @(NSURLErrorCallIsActive),
+    @(NSURLErrorNetworkConnectionLost),
+    @(NSURLErrorDataNotAllowed),
+    @(NSURLErrorTimedOut)
+  ];
+  
+  return [connectionErrorCodes containsObject:@(error.code)];
+}
+
 + (NSDate *)calculateExpirationDateForPeriod:(SKProductSubscriptionPeriod *)period fromDate:(NSDate *)transactionDate {
   if (!period) {
     return nil;

@@ -885,7 +885,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (BOOL)shouldCalculatePermissionsForError:(NSError *)error {
-  return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode);
+  return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode) || [QNUtils isConnectionError:error];
 }
 
 - (void)handleRestoreResult:(NSDictionary<NSString *, QNPermission *> *)permissions error:(NSError *)error {
@@ -915,7 +915,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           
           run_block_on_main(restorePurchasesBlock, calculatedPermissions, nil);
         } else {
-          run_block_on_main(restorePurchasesBlock, nil, error);
+          run_block_on_main(restorePurchasesBlock, @{}, error);
         }
       } else if (result) {
         [weakSelf storeLaunchResultIfNeeded:result];
@@ -1027,7 +1027,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       NSDictionary<NSString *, QNPermission *> *calculatedPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
       run_block_on_main(completion, calculatedPermissions, nil, cancelled);
     } else {
-      run_block_on_main(completion, nil, error, cancelled);
+      run_block_on_main(completion, @{}, error, cancelled);
     }
   } else {
     run_block_on_main(completion, result, nil, cancelled);

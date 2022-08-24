@@ -20,7 +20,6 @@
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, strong) QNErrorsMapper *errorsMapper;
-@property (nonatomic, copy) NSArray<NSNumber *> *connectionErrorCodes;
 @property (nonatomic, copy) NSArray<NSString *> *retriableRequests;
 @property (nonatomic, copy) NSArray<NSNumber *> *criticalErrorCodes;
 @property (nonatomic, strong) NSError *criticalError;
@@ -40,13 +39,6 @@
     _userID = @"";
     _debug = NO;
     _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
-    _connectionErrorCodes = @[
-      @(NSURLErrorNotConnectedToInternet),
-      @(NSURLErrorCallIsActive),
-      @(NSURLErrorNetworkConnectionLost),
-      @(NSURLErrorDataNotAllowed),
-      @(NSURLErrorTimedOut)
-    ];
     _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kAttributionEndpoint];
     _criticalErrorCodes = @[@(401), @(402), @(403)];
   }
@@ -240,7 +232,7 @@
   __block __weak QNAPIClient *weakSelf = self;
   [[self.session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
     if (error) {
-      BOOL isConnectionError = [weakSelf.connectionErrorCodes containsObject:@(error.code)];
+      BOOL isConnectionError = [QNUtils isConnectionError:error];
       if (isConnectionError) {
         if (doneTryCount < 3) {
           doneTryCount++;
@@ -301,19 +293,19 @@
 }
 
 - (NSError *)internalErrorFromResponse:(NSURLResponse *)response {
-  if (![response isKindOfClass:[NSHTTPURLResponse class]]) {
-    return nil;
-  }
-  
-  NSHTTPURLResponse *httpURLResponse = (NSHTTPURLResponse *)response;
-  
-  if (httpURLResponse.statusCode >= kInternalServerErrorFirstCode && httpURLResponse.statusCode <= kInternalServerErrorLastCode) {
-    NSMutableDictionary *userInfo = [NSMutableDictionary new];
-    userInfo[NSLocalizedDescriptionKey] = kInternalServerError;
-    NSError *error = [NSError errorWithDomain:keyQNErrorDomain code:httpURLResponse.statusCode userInfo:userInfo];
+  if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+    NSHTTPURLResponse *httpURLResponse = (NSHTTPURLResponse *)response;
     
-    return error;
+    if (httpURLResponse.statusCode >= kInternalServerErrorFirstCode && httpURLResponse.statusCode <= kInternalServerErrorLastCode) {
+      NSMutableDictionary *userInfo = [NSMutableDictionary new];
+      userInfo[NSLocalizedDescriptionKey] = kInternalServerError;
+      NSError *error = [NSError errorWithDomain:keyQNErrorDomain code:httpURLResponse.statusCode userInfo:userInfo];
+      
+      return error;
+    }
   }
+  
+  return nil;
 }
 
 - (NSError *)criticalErrorFromResponse:(NSURLResponse *)response {
