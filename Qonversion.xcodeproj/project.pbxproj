@@ -40,10 +40,11 @@
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		4CADC5602759181A004FDC10 /* AuthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CADC55F2759181A004FDC10 /* AuthViewController.swift */; };
+		70F07B1B28AD085600A45D41 /* QNPermissionsCacheLifetime.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F07B1A28AD085600A45D41 /* QNPermissionsCacheLifetime.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		71D1AE03BA37F1D7CA063728 /* Pods_QonversionTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */; };
 		891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */; };
-		894278822759334D00A8A6EC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 894278812759334D00A8A6EC /* GoogleService-Info.plist */; };
 		891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 891ECE0927734B8900DF6A56 /* AdServices.framework */; };
+		894278822759334D00A8A6EC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 894278812759334D00A8A6EC /* GoogleService-Info.plist */; };
 		8957327926DD03A3009507A6 /* QNDevice+Advertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B626DD03A2009507A6 /* QNDevice+Advertising.h */; };
 		8957327A26DD03A3009507A6 /* QNDevice+Advertising.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731B726DD03A2009507A6 /* QNDevice+Advertising.m */; };
 		8957327B26DD03A3009507A6 /* QNUser.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B926DD03A2009507A6 /* QNUser.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -293,10 +294,11 @@
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
 		4CADC55F2759181A004FDC10 /* AuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewController.swift; sourceTree = "<group>"; };
+		70F07B1A28AD085600A45D41 /* QNPermissionsCacheLifetime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNPermissionsCacheLifetime.h; sourceTree = "<group>"; };
 		891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNErrorsMapperTests.m; sourceTree = "<group>"; };
+		891ECE0927734B8900DF6A56 /* AdServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk/System/Library/Frameworks/AdServices.framework; sourceTree = DEVELOPER_DIR; };
 		894278812759334D00A8A6EC /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		894278832759351C00A8A6EC /* GoogleSignIn.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = GoogleSignIn.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		891ECE0927734B8900DF6A56 /* AdServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk/System/Library/Frameworks/AdServices.framework; sourceTree = DEVELOPER_DIR; };
 		895731B626DD03A2009507A6 /* QNDevice+Advertising.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QNDevice+Advertising.h"; sourceTree = "<group>"; };
 		895731B726DD03A2009507A6 /* QNDevice+Advertising.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QNDevice+Advertising.m"; sourceTree = "<group>"; };
 		895731B926DD03A2009507A6 /* QNUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNUser.h; sourceTree = "<group>"; };
@@ -723,6 +725,7 @@
 		895731B826DD03A2009507A6 /* Public */ = {
 			isa = PBXGroup;
 			children = (
+				70F07B1A28AD085600A45D41 /* QNPermissionsCacheLifetime.h */,
 				895731B926DD03A2009507A6 /* QNUser.h */,
 				895731BA26DD03A2009507A6 /* QONAutomationsDelegate.h */,
 				895731BB26DD03A2009507A6 /* QNOfferings.m */,
@@ -1406,6 +1409,7 @@
 				8957330426DD03A3009507A6 /* QNIdentityService.h in Headers */,
 				895732CF26DD03A3009507A6 /* QNProperties.h in Headers */,
 				895732F326DD03A3009507A6 /* QNUserPropertiesManager.h in Headers */,
+				70F07B1B28AD085600A45D41 /* QNPermissionsCacheLifetime.h in Headers */,
 				8957329226DD03A3009507A6 /* QNConstants.h in Headers */,
 				895732F126DD03A3009507A6 /* QNMapper.h in Headers */,
 				895732DF26DD03A3009507A6 /* QNUser+Protected.h in Headers */,
@@ -1515,6 +1519,7 @@
 					};
 					459DAB71243E329F0011ECF3 = {
 						CreatedOnToolsVersion = 11.3.1;
+						TestTargetID = 454EF63B24E5CC580070581E;
 					};
 				};
 			};
@@ -2095,6 +2100,7 @@
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SUPPORTS_MACCATALYST = YES;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4,6";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sample.app/Sample";
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				WATCHOS_DEPLOYMENT_TARGET = 6.2;
 			};
@@ -2122,6 +2128,7 @@
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SUPPORTS_MACCATALYST = YES;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4,6";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sample.app/Sample";
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				WATCHOS_DEPLOYMENT_TARGET = 6.2;
 			};
