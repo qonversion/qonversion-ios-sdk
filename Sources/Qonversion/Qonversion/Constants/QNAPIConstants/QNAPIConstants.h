@@ -25,3 +25,4 @@ extern NSString *const kStoredRequestsKey;
 extern NSString *const kEventEndpoint;
 
 extern NSString *const kAccessDeniedError;
+extern NSString *const kInternalServerError;

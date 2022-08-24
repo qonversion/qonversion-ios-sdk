@@ -28,3 +28,4 @@ NSString * const kAttributionEndpoint = @"attribution";
 NSString * const kStoredRequestsKey = @"storedRequests";
 
 NSString * const kAccessDeniedError = @"Access denied";
+NSString * const kInternalServerError = @"Internal server error";

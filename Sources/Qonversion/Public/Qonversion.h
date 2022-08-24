@@ -13,6 +13,7 @@
 #import "QNUser.h"
 #import "QNErrors.h"
 #import "QNStoreKitSugare.h"
+#import "QNPermissionsCacheLifetime.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
@@ -34,6 +35,14 @@ NS_ASSUME_NONNULL_BEGIN
  @param completion - will return `uid` for Ads integrations.
  */
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
+
+/**
+ Permissions cache is used when there are problems with the Qonversion API or internet connection.
+ If so, Qonversion will return the last successfully loaded permissions. The current method allows you to configure how long that cache may be used.
+ The default value is QNEntitlementCacheLifetimeMonth.
+ @param cacheLifetime desired permissions cache lifetime duration
+ */
++ (void)setPermissionsCacheLifetime:(QNPermissionsCacheLifetime)cacheLifetime;
 
 /**
  Disables transactions finishing.

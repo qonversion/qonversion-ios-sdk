@@ -72,6 +72,14 @@ static NSUInteger const kKeychainAttemptsCount = 3;
   [self.keychainStorage resetUserID];
 }
 
+- (NSString *)obtainCustomIdentityUserID {
+  return [self.localStorage loadStringForKey:kKeyQUserDefaultsIdentityUserID];
+}
+
+- (void)storeCustomIdentityUserID:(NSString *)userID {
+  [self.localStorage setString:userID forKey:kKeyQUserDefaultsIdentityUserID];
+}
+
 #pragma mark - Private
 
 - (NSString *)generateRandomUserID {

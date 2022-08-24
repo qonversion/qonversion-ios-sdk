@@ -161,6 +161,17 @@
 
 - (void)paymentQueue:(nonnull SKPaymentQueue *)queue
  updatedTransactions:(nonnull NSArray<SKPaymentTransaction *> *)transactions {
+  NSPredicate *predicate = [NSPredicate predicateWithBlock:^BOOL(id  _Nullable evaluatedObject, NSDictionary<NSString *,id> * _Nullable bindings) {
+    if (![evaluatedObject isKindOfClass:[SKPaymentTransaction class]]) {
+      return false;
+    }
+    return ((SKPaymentTransaction *)evaluatedObject).transactionState == SKPaymentTransactionStateRestored;
+  }];
+  NSArray *restoredTransactions = [transactions filteredArrayUsingPredicate:predicate];
+  if (restoredTransactions.count > 0 && [self.delegate respondsToSelector:@selector(handleRestoredTransactions:)]) {
+    [self.delegate handleRestoredTransactions:restoredTransactions];
+  }
+  
   for (SKPaymentTransaction *transaction in transactions) {
     [self handleTransaction:transaction];
   }

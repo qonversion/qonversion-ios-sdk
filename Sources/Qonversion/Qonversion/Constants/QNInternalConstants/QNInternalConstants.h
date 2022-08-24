@@ -10,13 +10,19 @@
 #import <CoreGraphics/CoreGraphics.h>
 
 extern NSString *const kKeyQKeyChainUserID;
+extern NSString *const kKeyQUserDefaultsIdentityUserID;
 extern NSString *const kKeyQUserDefaultsOriginalUserID;
 extern NSString *const kKeyQUserDefaultsUserID;
 extern NSString *const kKeyQUserIDPrefix;
 extern NSString *const kKeyQUserIDSeparator;
+extern NSString *const kKeyQUserDefaultsPermissions;
+extern NSString *const kKeyQUserDefaultsPermissionsTimestamp;
+extern NSString *const kKeyQUserDefaultsProductsPermissionsRelation;
 extern NSString *const kMainUserDefaultsSuiteName;
 extern NSString *const kKeyQExperimentStartedEventName;
 extern NSUInteger const kQPropertiesSendingPeriodInSeconds;
 extern CGFloat const kJitter;
 extern CGFloat const kFactor;
 extern NSUInteger const kMaxDelay;
+extern NSInteger const kInternalServerErrorFirstCode;
+extern NSInteger const kInternalServerErrorLastCode;

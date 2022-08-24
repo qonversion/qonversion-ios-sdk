@@ -31,10 +31,6 @@
     XCTAssertNotNil(_device.osVersion);
 }
 
-- (void)testModel {
-    XCTAssertEqualObjects(@"x86_64", _device.model);
-}
-
 - (void)testManufacturer {
     XCTAssertEqualObjects(@"Apple", _device.manufacturer);
 }

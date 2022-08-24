@@ -49,12 +49,18 @@ dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 
 #import <Foundation/Foundation.h>
 #import "QNErrors.h"
+#import "QNPermissionsCacheLifetime.h"
+#import <StoreKit/StoreKit.h>
+#import "QNProduct.h"
 
 @interface QNUtils : NSObject
 
 + (BOOL)isEmptyString:(NSString *)string;
 + (NSString *)convertHexData:(NSData *)tokenData;
-+ (BOOL)isCacheOutdated:(NSTimeInterval)cacheDataTimeInterval;
 + (NSDate *)dateFromTimestamp:(NSNumber *)timestamp;
++ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(QNPermissionsCacheLifetime)cacheLifetime;
++ (NSDate *)calculateExpirationDateForPeriod:(SKProductSubscriptionPeriod *)period fromDate:(NSDate *)transactionDate API_AVAILABLE(ios(11.2), watchos(6.2), macosx(10.13.2), tvos(11.2));
++ (NSDate *)calculateExpirationDateForProduct:(QNProduct *)product fromDate:(NSDate *)transactionDate;
++ (BOOL)isConnectionError:(NSError *)error;
 
 @end
