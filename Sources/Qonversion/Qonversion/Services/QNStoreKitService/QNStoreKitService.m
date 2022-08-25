@@ -172,9 +172,33 @@
     [self.delegate handleRestoredTransactions:restoredTransactions];
   }
   
+  if (transactions.count > 1) {
+    transactions = [self filterOriginalTransactions:transactions];
+  }
+  
   for (SKPaymentTransaction *transaction in transactions) {
     [self handleTransaction:transaction];
   }
+}
+
+- (NSArray<SKPaymentTransaction *> *)filterOriginalTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
+  NSMutableDictionary *resultTransactionsDict = [NSMutableDictionary new];
+  for (SKPaymentTransaction *transaction in transactions) {
+    if (transaction.transactionIdentifier.length == 0) {
+      continue;
+    }
+    
+    if (!transaction.originalTransaction || transaction.originalTransaction.transactionIdentifier.length == 0) {
+      resultTransactionsDict[transaction.transactionIdentifier] = transaction;
+    } else {
+      SKPaymentTransaction *currentStoredTransaction = resultTransactionsDict[transaction.originalTransaction.transactionIdentifier];
+      if (!currentStoredTransaction) {
+        resultTransactionsDict[transaction.originalTransaction.transactionIdentifier] = transaction.originalTransaction;
+      }
+    }
+  }
+  
+  return resultTransactionsDict.allValues;
 }
 
 - (void)handleTransaction:(nonnull SKPaymentTransaction *)transaction {
