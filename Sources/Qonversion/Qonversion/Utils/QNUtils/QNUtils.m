@@ -40,12 +40,12 @@
     case QNPermissionsCacheLifetimeMonth:
       days = 30;
       break;
-    case QNPermissionsCacheLifetimeTwoMonth:
+    case QNPermissionsCacheLifetimeTwoMonths:
       days = 60;
-    case QNPermissionsCacheLifetimeThreeMonth:
+    case QNPermissionsCacheLifetimeThreeMonths:
       days = 90;
       break;
-    case QNPermissionsCacheLifetimeSixMonth:
+    case QNPermissionsCacheLifetimeSixMonths:
       days = 180;
       break;
     case QNPermissionsCacheLifetimeYear:
