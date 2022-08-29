@@ -172,33 +172,66 @@
     [self.delegate handleRestoredTransactions:restoredTransactions];
   }
   
-  if (transactions.count > 1) {
-    transactions = [self filterOriginalTransactions:transactions];
-  }
-  
-  for (SKPaymentTransaction *transaction in transactions) {
-    [self handleTransaction:transaction];
+  if (transactions.count == 1) {
+    [self handleTransaction:[transactions firstObject]];
+  } else {
+    NSArray *filteredTransactions = [self filterTransactions:transactions];
+    for (SKPaymentTransaction *transaction in filteredTransactions) {
+      [self handleTransaction:transaction];
+    }
+    
+    NSArray<SKPaymentTransaction *> *excessTransactions = [transactions filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(id evaluatedObject, NSDictionary *bindings) {
+        return ![filteredTransactions containsObject:evaluatedObject];
+    }]];
+    
+    if (excessTransactions.count > 0 && [self.delegate respondsToSelector:@selector(handleExcessTransactions:)]) {
+      [self.delegate handleExcessTransactions:excessTransactions];
+    }
   }
 }
 
-- (NSArray<SKPaymentTransaction *> *)filterOriginalTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
-  NSMutableDictionary *resultTransactionsDict = [NSMutableDictionary new];
-  for (SKPaymentTransaction *transaction in transactions) {
+- (NSArray<SKPaymentTransaction *> *)filterTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
+  NSSortDescriptor *dateDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"transactionDate" ascending:YES];
+  NSArray *sortDescriptors = [NSArray arrayWithObject:dateDescriptor];
+  NSArray *sortedTransactions = [transactions sortedArrayUsingDescriptors:sortDescriptors];
+  
+  NSMutableDictionary *groupedTransactionsMap = [NSMutableDictionary new];
+  for (SKPaymentTransaction *transaction in sortedTransactions) {
     if (transaction.transactionIdentifier.length == 0) {
       continue;
     }
     
     if (!transaction.originalTransaction || transaction.originalTransaction.transactionIdentifier.length == 0) {
-      resultTransactionsDict[transaction.transactionIdentifier] = transaction;
-    } else {
-      SKPaymentTransaction *currentStoredTransaction = resultTransactionsDict[transaction.originalTransaction.transactionIdentifier];
-      if (!currentStoredTransaction) {
-        resultTransactionsDict[transaction.originalTransaction.transactionIdentifier] = transaction.originalTransaction;
+      groupedTransactionsMap[transaction.transactionIdentifier] = [NSMutableArray arrayWithObject:transaction];
+      continue;
+    }
+    
+    NSMutableArray *transactionsByOriginalId = groupedTransactionsMap[transaction.originalTransaction.transactionIdentifier] ?: [NSMutableArray new];
+    
+    [transactionsByOriginalId addObject:transaction];
+    
+    groupedTransactionsMap[transaction.originalTransaction.transactionIdentifier] = transactionsByOriginalId;
+  }
+  
+  NSMutableArray *resultTransactions = [NSMutableArray new];
+  for (NSString *key in groupedTransactionsMap) {
+    NSArray *groupedTransactions = groupedTransactionsMap[key];
+    if (groupedTransactions.count > 1) {
+      NSString *previousHandledProductId;
+      
+      for (SKPaymentTransaction *transaction in groupedTransactions) {
+        BOOL isTheSameProductId = [previousHandledProductId isEqualToString:transaction.payment.productIdentifier];
+        if (!isTheSameProductId) {
+          [resultTransactions addObject:transaction];
+          previousHandledProductId = transaction.payment.productIdentifier;
+        }
       }
+    } else {
+      [resultTransactions addObjectsFromArray:groupedTransactions];
     }
   }
   
-  return resultTransactionsDict.allValues;
+  return [resultTransactions copy];
 }
 
 - (void)handleTransaction:(nonnull SKPaymentTransaction *)transaction {

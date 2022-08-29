@@ -818,6 +818,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   self.restoredTransactions = [transactions copy];
 }
 
+- (void)handleExcessTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
+  if (!self.disableFinishTransactions) {
+    for (SKPaymentTransaction *transaction in transactions) {
+      [self.storeKitService finishTransaction:transaction];
+    }
+  }
+}
+
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product {
   __block __weak QNProductCenterManager *weakSelf = self;
   
