@@ -5,9 +5,31 @@
 
 #import "QNStoreKitService.h"
 
+@interface StoreKitTestsMocks : NSObject
+
+@property (nonatomic, copy) NSDictionary *groupedTransactions;
+@property (nonatomic, copy) NSArray *transactions;
+@property (nonatomic, copy) NSArray *filteredGroupedTransactions;
+
+@end
+
+@implementation StoreKitTestsMocks
+
+@end
+
+@interface MockTransactionWithDate : NSObject
+
+@property (nonatomic, strong) NSDate *transactionDate;
+
+@end
+
+@implementation MockTransactionWithDate
+
+@end
+
 @interface QNStoreKitService ()
 
-- (NSArray<SKPaymentTransaction *> *)sortTransactionsByDate:(NSArray<SKPaymentTransaction *> *)transactions;
+- (NSArray<SKPaymentTransaction *> *)sortTransactionsByDate:(NSArray *)transactions;
 - (NSDictionary<NSString *, NSArray<SKPaymentTransaction *> *> *)groupTransactions:(NSArray<SKPaymentTransaction *> *)transactions;
 - (NSArray<SKPaymentTransaction *> *)filterGroupedTransactions:(NSDictionary<NSString *, NSArray<SKPaymentTransaction *> *> *)groupedTransactionsMap;
 - (NSArray<SKPaymentTransaction *> *)filterTransactions:(NSArray<SKPaymentTransaction *> *)transactions;
@@ -36,13 +58,12 @@
 
 - (void)testSortTransactionsByDate {
   // given
-  id firstTransaction = OCMClassMock([SKPaymentTransaction class]);
-  id secondTransaction = OCMClassMock([SKPaymentTransaction class]);
-  id thirdTransaction = OCMClassMock([SKPaymentTransaction class]);
-  
-  OCMStub([firstTransaction transactionDate]).andReturn([NSDate dateWithTimeIntervalSince1970:123456789]);
-  OCMStub([secondTransaction transactionDate]).andReturn([NSDate dateWithTimeIntervalSince1970:1234567890]);
-  OCMStub([thirdTransaction transactionDate]).andReturn([NSDate dateWithTimeIntervalSince1970:1234569999]);
+  MockTransactionWithDate *firstTransaction = [MockTransactionWithDate new];
+  MockTransactionWithDate *secondTransaction = [MockTransactionWithDate new];
+  MockTransactionWithDate *thirdTransaction = [MockTransactionWithDate new];
+  firstTransaction.transactionDate = [NSDate dateWithTimeIntervalSince1970:123456789];
+  secondTransaction.transactionDate = [NSDate dateWithTimeIntervalSince1970:1234567890];
+  thirdTransaction.transactionDate = [NSDate dateWithTimeIntervalSince1970:1234569999];
   
   NSArray *transactions = @[secondTransaction, thirdTransaction, firstTransaction];
   
@@ -55,67 +76,19 @@
   
   // then
   for (NSUInteger i = 0; i < expectedResult.count; i++) {
-    SKPaymentTransaction *expectedTransaction = expectedResult[i];
-    SKPaymentTransaction *resultTransaction = sortedTransactions[i];
+    id expectedTransaction = expectedResult[i];
+    id resultTransaction = sortedTransactions[i];
     XCTAssertEqual(expectedTransaction, resultTransaction);
   }
 }
 
 - (void)testGroupTransactions {
   // given
-  id transaction1 = OCMClassMock([SKPaymentTransaction class]);
-  id transaction2 = OCMClassMock([SKPaymentTransaction class]);
-  id transaction3 = OCMClassMock([SKPaymentTransaction class]);
-  id transaction4 = OCMClassMock([SKPaymentTransaction class]);
-  id transaction5 = OCMClassMock([SKPaymentTransaction class]);
-  id transaction6 = OCMClassMock([SKPaymentTransaction class]);
-  id transaction7 = OCMClassMock([SKPaymentTransaction class]);
-  id transaction8 = OCMClassMock([SKPaymentTransaction class]);
-  id transaction9 = OCMClassMock([SKPaymentTransaction class]);
-  id originalTransaction1 = OCMClassMock([SKPaymentTransaction class]);
-  id originalTransaction2 = OCMClassMock([SKPaymentTransaction class]);
-  id originalTransaction3 = OCMClassMock([SKPaymentTransaction class]);
-  id originalTransaction4 = OCMClassMock([SKPaymentTransaction class]);
-  id originalTransaction5 = OCMClassMock([SKPaymentTransaction class]);
-  id originalTransaction6 = OCMClassMock([SKPaymentTransaction class]);
-  
-  
-  OCMStub([transaction2 transactionIdentifier]).andReturn(@"2");
-  OCMStub([transaction3 transactionIdentifier]).andReturn(@"3");
-  OCMStub([transaction3 originalTransaction]).andReturn(originalTransaction1);
-  OCMStub([originalTransaction2 transactionIdentifier]).andReturn(@"4");
-  OCMStub([transaction4 originalTransaction]).andReturn(originalTransaction2);
-  OCMStub([originalTransaction6 transactionIdentifier]).andReturn(@"6");
-  OCMStub([transaction6 originalTransaction]).andReturn(originalTransaction6);
-  OCMStub([originalTransaction3 transactionIdentifier]).andReturn(@"8");
-  OCMStub([transaction8 originalTransaction]).andReturn(originalTransaction3);
-  OCMStub([originalTransaction4 transactionIdentifier]).andReturn(@"9");
-  OCMStub([transaction9 originalTransaction]).andReturn(originalTransaction4);
-  OCMStub([originalTransaction5 transactionIdentifier]).andReturn(@"2");
-  OCMStub([transaction5 originalTransaction]).andReturn(originalTransaction5);
-  OCMStub([transaction7 originalTransaction]).andReturn(originalTransaction5);
-  
-  OCMStub([transaction4 transactionIdentifier]).andReturn(@"doesn't matter");
-  OCMStub([transaction5 transactionIdentifier]).andReturn(@"doesn't matter");
-  OCMStub([transaction6 transactionIdentifier]).andReturn(@"doesn't matter");
-  OCMStub([transaction7 transactionIdentifier]).andReturn(@"doesn't matter");
-  OCMStub([transaction8 transactionIdentifier]).andReturn(@"doesn't matter");
-  OCMStub([transaction9 transactionIdentifier]).andReturn(@"doesn't matter");
-  
-  
-  NSArray *transactions = @[transaction1, transaction2, transaction3, transaction4, transaction5, transaction6, transaction7, transaction8, transaction9];
-  
-  NSDictionary *expectedResult = @{
-    @"2": @[transaction2, transaction5, transaction7],
-    @"3": @[transaction3],
-    @"4": @[transaction4],
-    @"6": @[transaction6],
-    @"8": @[transaction8],
-    @"9": @[transaction9]
-  };
+  StoreKitTestsMocks *mocks = [self prepareExpectedResult];
+  NSDictionary *expectedResult = mocks.groupedTransactions;
   
   // when
-  NSDictionary *resultTransactions = [self.storeKitService groupTransactions:transactions];
+  NSDictionary *resultTransactions = [self.storeKitService groupTransactions:mocks.transactions];
   
   // then
   XCTAssertEqual(expectedResult.count, resultTransactions.count);
@@ -131,6 +104,101 @@
       XCTAssertEqual(expectedTransaction, resultTransaction);
     }
   }
+}
+
+- (void)testGroupedTransactions {
+  // given
+  StoreKitTestsMocks *mocks = [self prepareExpectedResult];
+  NSArray *expectedFilteredTransactions = mocks.filteredGroupedTransactions;
+  
+  // when
+  NSArray<SKPaymentTransaction *> *result = [self.storeKitService filterGroupedTransactions:mocks.groupedTransactions];
+  
+  // then
+  XCTAssertEqual(expectedFilteredTransactions.count, result.count);
+  
+  for (SKPaymentTransaction *transaction in expectedFilteredTransactions) {
+    XCTAssertTrue([result containsObject:transaction]);
+  }
+}
+
+- (StoreKitTestsMocks *)prepareExpectedResult {
+  id payment1 = OCMClassMock([SKPayment class]);
+  id payment2 = OCMClassMock([SKPayment class]);
+  id payment3 = OCMClassMock([SKPayment class]);
+  
+  id transaction1 = OCMClassMock([SKPaymentTransaction class]);
+  id transaction2 = OCMClassMock([SKPaymentTransaction class]); // it's original transaction for transactions 5 and 7. Field originalTransaction is empty
+  id transaction3 = OCMClassMock([SKPaymentTransaction class]);
+  id transaction4 = OCMClassMock([SKPaymentTransaction class]);
+  id transaction5 = OCMClassMock([SKPaymentTransaction class]);
+  id transaction6 = OCMClassMock([SKPaymentTransaction class]); // nonconsumable
+  id transaction7 = OCMClassMock([SKPaymentTransaction class]);
+  id transaction8 = OCMClassMock([SKPaymentTransaction class]);
+  id transaction9 = OCMClassMock([SKPaymentTransaction class]);
+  id transaction10 = OCMClassMock([SKPaymentTransaction class]);
+  
+  id originalTransaction1 = OCMClassMock([SKPaymentTransaction class]);
+  id originalTransaction2 = OCMClassMock([SKPaymentTransaction class]);
+  id originalTransaction3 = OCMClassMock([SKPaymentTransaction class]);
+  id originalTransaction4 = OCMClassMock([SKPaymentTransaction class]);
+  
+  OCMStub([payment1 productIdentifier]).andReturn(@"weekly");
+  OCMStub([payment2 productIdentifier]).andReturn(@"monthly");
+  OCMStub([payment3 productIdentifier]).andReturn(@"nonconsumable");
+  
+  OCMStub([transaction2 payment]).andReturn(payment1);
+  OCMStub([transaction5 payment]).andReturn(payment2);
+  OCMStub([transaction7 payment]).andReturn(payment1);
+  OCMStub([transaction8 payment]).andReturn(payment1);
+  OCMStub([transaction10 payment]).andReturn(payment1);
+  
+  OCMStub([transaction3 payment]).andReturn(payment1);
+  OCMStub([transaction4 payment]).andReturn(payment2);
+  OCMStub([transaction6 payment]).andReturn(payment3);
+  
+  OCMStub([originalTransaction2 transactionIdentifier]).andReturn(@"4");
+  OCMStub([originalTransaction3 transactionIdentifier]).andReturn(@"8");
+  OCMStub([originalTransaction4 transactionIdentifier]).andReturn(@"9");
+  
+  OCMStub([transaction2 transactionIdentifier]).andReturn(@"2");
+  OCMStub([transaction3 transactionIdentifier]).andReturn(@"3");
+  OCMStub([transaction6 transactionIdentifier]).andReturn(@"6");
+  
+  OCMStub([transaction3 originalTransaction]).andReturn(originalTransaction1);
+  OCMStub([transaction4 originalTransaction]).andReturn(originalTransaction2);
+  OCMStub([transaction8 originalTransaction]).andReturn(originalTransaction3);
+  OCMStub([transaction10 originalTransaction]).andReturn(originalTransaction3);
+  OCMStub([transaction9 originalTransaction]).andReturn(originalTransaction4);
+  OCMStub([transaction5 originalTransaction]).andReturn(transaction2);
+  OCMStub([transaction7 originalTransaction]).andReturn(transaction2);
+  
+  OCMStub([transaction4 transactionIdentifier]).andReturn(@"doesn't matter");
+  OCMStub([transaction5 transactionIdentifier]).andReturn(@"doesn't matter");
+  OCMStub([transaction7 transactionIdentifier]).andReturn(@"doesn't matter");
+  OCMStub([transaction8 transactionIdentifier]).andReturn(@"doesn't matter");
+  OCMStub([transaction9 transactionIdentifier]).andReturn(@"doesn't matter");
+  OCMStub([transaction10 transactionIdentifier]).andReturn(@"doesn't matter");
+  
+  NSArray *transactions = @[transaction1, transaction2, transaction3, transaction4, transaction5, transaction6, transaction7, transaction8, transaction9, transaction10];
+  
+  NSDictionary *groupedTransactions = @{
+    @"2": @[transaction2, transaction5, transaction7],
+    @"3": @[transaction3],
+    @"4": @[transaction4],
+    @"6": @[transaction6],
+    @"8": @[transaction8, transaction10],
+    @"9": @[transaction9]
+  };
+  
+  NSArray *filteredGroupedTransactions = @[transaction2, transaction5, transaction7, transaction3, transaction4, transaction6, transaction8, transaction9];
+  
+  StoreKitTestsMocks *result = [StoreKitTestsMocks new];
+  result.transactions = transactions;
+  result.groupedTransactions = groupedTransactions;
+  result.filteredGroupedTransactions = filteredGroupedTransactions;
+  
+  return result;
 }
 
 @end
