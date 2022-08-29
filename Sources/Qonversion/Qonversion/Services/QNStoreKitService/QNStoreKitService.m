@@ -190,13 +190,17 @@
   }
 }
 
-- (NSArray<SKPaymentTransaction *> *)filterTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
+- (NSArray<SKPaymentTransaction *> *)sortTransactionsByDate:(NSArray<SKPaymentTransaction *> *)transactions {
   NSSortDescriptor *dateDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"transactionDate" ascending:YES];
   NSArray *sortDescriptors = [NSArray arrayWithObject:dateDescriptor];
   NSArray *sortedTransactions = [transactions sortedArrayUsingDescriptors:sortDescriptors];
   
+  return sortedTransactions;
+}
+
+- (NSDictionary<NSString *, NSArray<SKPaymentTransaction *> *> *)groupTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
   NSMutableDictionary *groupedTransactionsMap = [NSMutableDictionary new];
-  for (SKPaymentTransaction *transaction in sortedTransactions) {
+  for (SKPaymentTransaction *transaction in transactions) {
     if (transaction.transactionIdentifier.length == 0) {
       continue;
     }
@@ -213,7 +217,11 @@
     groupedTransactionsMap[transaction.originalTransaction.transactionIdentifier] = transactionsByOriginalId;
   }
   
-  NSMutableArray *resultTransactions = [NSMutableArray new];
+  return [groupedTransactionsMap copy];
+}
+
+- (NSArray<SKPaymentTransaction *> *)filterGroupedTransactions:(NSDictionary<NSString *, NSArray<SKPaymentTransaction *> *> *)groupedTransactionsMap {
+  NSMutableArray<SKPaymentTransaction *> *resultTransactions = [NSMutableArray new];
   for (NSString *key in groupedTransactionsMap) {
     NSArray *groupedTransactions = groupedTransactionsMap[key];
     if (groupedTransactions.count > 1) {
@@ -232,6 +240,16 @@
   }
   
   return [resultTransactions copy];
+}
+
+- (NSArray<SKPaymentTransaction *> *)filterTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
+  NSArray *sortedTransactions = [self sortTransactionsByDate:transactions];
+  
+  NSDictionary<NSString *, NSArray<SKPaymentTransaction *> *> *groupedTransactionsMap = [self groupTransactions:sortedTransactions];
+  
+  NSArray *resultTransactions = [self filterGroupedTransactions:groupedTransactionsMap];
+  
+  return resultTransactions;
 }
 
 - (void)handleTransaction:(nonnull SKPaymentTransaction *)transaction {
