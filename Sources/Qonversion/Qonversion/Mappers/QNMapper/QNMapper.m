@@ -47,7 +47,12 @@
 }
 
 + (NSDictionary * _Nullable)mapProductsPermissionsRelation:(NSDictionary * _Nullable)dict {
-  return dict[@"products_permissions"];
+  NSDictionary *relations = dict[@"products_permissions"];
+  if ([relations isKindOfClass:[NSDictionary class]]) {
+    return relations;
+  } else {
+    return nil;
+  }
 }
 
 + (QNUser *)fillUser:(NSDictionary * _Nullable)dict {
