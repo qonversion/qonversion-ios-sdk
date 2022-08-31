@@ -52,10 +52,6 @@
     XCTAssertEqualObjects(_device.vendorID, [[[UIDevice currentDevice] identifierForVendor] UUIDString]);
 }
 
-- (void)testLanguage {
-    XCTAssertEqualObjects(@"English", _device.language);
-}
-
 - (void)testAfUserID {
     XCTAssertNil(_device.afUserID);
     XCTAssertNil(_device.adjustUserID);
