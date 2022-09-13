@@ -1043,6 +1043,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)handleRestoreCompletedTransactionsFinished {
   if (self.restorePurchasesBlock) {
+    self.forcePermissionsRetry = YES;
     NSArray *restoredTransactionsCopy = [self.restoredTransactions copy];
     self.restoredTransactions = nil;
     __block __weak QNProductCenterManager *weakSelf = self;
