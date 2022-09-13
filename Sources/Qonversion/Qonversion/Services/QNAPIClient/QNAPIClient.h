@@ -43,6 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)processStoredRequests;
 - (void)sendOfferingEvent:(QNOffering *)offering;
 
+- (void)obtainEntitlements:(QNAPIClientCompletionHandler)completion;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -186,6 +186,12 @@
   [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
 }
 
+- (void)obtainEntitlements:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeGetEntitlementsRequestWith:self.userID];
+
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
 // MARK: - Private
 
 - (NSDictionary *)enrichPushTokenData:(NSDictionary *)data {
@@ -197,7 +203,7 @@
 }
 
 - (NSString *)obtainApiKey {
-  return self.debug ? [NSString stringWithFormat:@"test_%@", self.apiKey] : self.apiKey;
+  return self.debug ? [NSString stringWithFormat:@"%@", self.apiKey] : self.apiKey;
 }
 
 - (NSDictionary *)enrichParameters:(NSDictionary *)parameters {
@@ -280,7 +286,7 @@
       return;
     }
     
-    NSError *apiError = [self.errorsMapper errorFromRequestResult:dict];
+    NSError *apiError = [self.errorsMapper errorFromRequest:request result:dict response:response];
     
     if (apiError) {
       QONVERSION_LOG(@"❌ Request failed: %@, error: %@", request.URL, apiError);

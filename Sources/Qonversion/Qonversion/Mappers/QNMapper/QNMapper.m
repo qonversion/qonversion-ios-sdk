@@ -23,7 +23,6 @@
 + (QNLaunchResult * _Nonnull)fillLaunchResult:(NSDictionary *)dict {
   QNLaunchResult *result = [[QNLaunchResult alloc] init];
   
-  NSArray *permissionsArray = dict[@"permissions"] ?: @[];
   NSArray *productsArray = dict[@"products"] ?: @[];
   NSArray *userProductsArray = dict[@"user_products"] ?: @[];
   NSArray *offeringsArray = dict[@"offerings"];
@@ -33,7 +32,6 @@
   
   [result setTimestamp:timestamp.unsignedIntegerValue];
   [result setUid:((NSString *)dict[@"uid"] ?: @"")];
-  [result setPermissions:[self fillPermissions:permissionsArray]];
   [result setProducts:[self fillProducts:productsArray]];
   [result setUserProducts:[self fillProducts:userProductsArray]];
   [result setExperiments:[self fillExperiments:experiments]];
@@ -73,7 +71,7 @@
     }
   }
   
-  return [[NSDictionary alloc] initWithDictionary:permissions];
+  return [permissions copy];
 }
 
 + (NSDictionary <NSString *, QNExperimentInfo *> *)fillExperiments:(NSArray *)data {
@@ -173,20 +171,55 @@
   return [eligibilityInfo copy];
 }
 
++ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillEntitlements:(NSDictionary * _Nullable)data {
+  NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
+  if (![data isKindOfClass:[NSDictionary class]]) {
+    return [permissions copy];
+  }
+
+  NSArray *permissionsData = data[@"data"];
+  return [self fillPermissions:permissionsData];
+}
+
 + (QNPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
+  NSDictionary *product = dict[@"product"];
+  NSDictionary *subscription = product[@"subscription"];
+  
+  NSDictionary *renewStates = @{
+    @"will_renew": @(QNPermissionRenewStateWillRenew),
+    @"canceled": @(QNPermissionRenewStateCancelled),
+    @"billing_issue": @(QNPermissionRenewStateBillingIssue)
+  };
+  
+  NSDictionary *sources = @{
+    @"appstore": @(QNPermissionSourceAppStore),
+    @"playstore": @(QNPermissionSourcePlayStore),
+    @"stripe": @(QNPermissionSourceStripe),
+    @"manual": @(QNPermissionSourceManual),
+    @"unknown": @(QNPermissionSourceUnknown)
+  };
+  
   QNPermission *result = [[QNPermission alloc] init];
   result.permissionID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
-  result.renewState = [self mapInteger:dict[@"renew_state"] orReturn:0];
   
-  result.productID = ((NSString *)dict[@"associated_product"] ?: @"");
+  NSString *renewStateRaw = subscription[@"renew_state"];
+  NSNumber *renewStateNumber = renewStates[renewStateRaw];
+  QNPermissionRenewState renewState = renewStateNumber ? renewStateNumber.integerValue : QNPermissionRenewStateNonRenewable;
+  result.renewState = renewState;
+  result.productID = ((NSString *)product[@"product_id"] ?: @"");
   
-  NSTimeInterval started = [self mapInteger:dict[@"started_timestamp"] orReturn:0];
+  NSString *sourceRaw = subscription[@"source"];
+  NSNumber *sourceNumber = sources[sourceRaw];
+  QNPermissionSource source = sourceNumber ? sourceNumber.integerValue : QNPermissionSourceUnknown;
+  result.source = source;
+  
+  NSTimeInterval started = [self mapInteger:dict[@"started"] orReturn:0];
   result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
   result.expirationDate = nil;
   
-  if ([dict[@"expiration_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval expiration = ((NSNumber *)dict[@"expiration_timestamp"] ?: @0).intValue;
+  if ([dict[@"expires"] isEqual:[NSNull null]] == NO) {
+    NSTimeInterval expiration = ((NSNumber *)dict[@"expires"] ?: @0).intValue;
     result.expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
   }
   

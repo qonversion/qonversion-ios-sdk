@@ -32,11 +32,29 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   return self;
 }
 
-- (NSError *)errorFromRequestResult:(NSDictionary *)result {
+- (NSError *)errorFromRequest:(NSURLRequest *)request result:(NSDictionary *)result response:(NSURLResponse *)response {
+  NSURLComponents *components = [NSURLComponents componentsWithString:request.URL.absoluteString];
   if (![result isKindOfClass:[NSDictionary class]]) {
     return nil;
   }
-  
+
+  if ([self isV3Endpoint:components.path]) {
+    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+      NSHTTPURLResponse *httpURLResponse = (NSHTTPURLResponse *)response;
+      NSInteger statusCode = httpURLResponse.statusCode;
+
+      if (statusCode < 200 || statusCode > 299) {
+        NSMutableDictionary *userInfo = [NSMutableDictionary new];
+        userInfo[NSLocalizedDescriptionKey] = result[@"error"][@"message"];
+        NSError *error = [NSError errorWithDomain:keyQNErrorDomain code:statusCode userInfo:userInfo];
+
+        return error;
+      }
+    }
+
+    return nil;
+  }
+
   if ([result[@"data"] isKindOfClass:[NSDictionary class]]) {
     return [self mapErrorFromData:result];
   } else if ([result[@"error"] isKindOfClass:[NSDictionary class]]) {
@@ -44,6 +62,17 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   }
   
   return nil;
+}
+
+- (BOOL)isV3Endpoint:(NSString *)path {
+  NSString *prefix = @"/v3/";
+  if (path.length >= prefix.length) {
+    NSString *version = [path substringToIndex:prefix.length];
+
+    return [version isEqualToString:prefix];
+  }
+
+  return NO;
 }
 
 - (NSError * _Nullable)mapError:(NSDictionary *)result {

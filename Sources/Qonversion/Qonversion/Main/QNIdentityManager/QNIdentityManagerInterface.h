@@ -10,7 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol QNIdentityManagerInterface <NSObject>
 
-typedef void (^QNIdentityCompletionHandler)(NSString *_Nullable result, NSError  *_Nullable error);
+typedef void (^QNIdentityCompletionHandler)(NSString *_Nullable resultUserID, NSError  *_Nullable error);
 
 - (void)identify:(NSString *)userID completion:(QNIdentityCompletionHandler)completion;
 - (BOOL)logoutIfNeeded;

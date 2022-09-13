@@ -31,13 +31,12 @@
 }
 
 - (void)testThatMapperParsePermissions {
-  QNLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
+  NSDictionary *rawPermissions = self.userInitSuccess[@"permissions"];
+  NSDictionary *result = [QNMapper fillPermissions:rawPermissions];
   
   XCTAssertNotNil(result);
-  XCTAssertTrue([result.uid isEqualToString:@"qonversion_user_id"]);
-  XCTAssertTrue([result.permissions isKindOfClass:NSDictionary.class]);
   
-  QNPermission *premium = result.permissions[@"premium"];
+  QNPermission *premium = result[@"premium"];
   XCTAssertNotNil(premium);
   XCTAssertTrue(premium.isActive);
   XCTAssertEqual(premium.renewState, QNPermissionRenewStateBillingIssue);
@@ -52,12 +51,13 @@
 }
 
 - (void)testThatMapperParseFewPermissionsCorrectly {
-  QNLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
+  NSDictionary *rawPermissions = self.userInitSuccess[@"permissions"];
+  NSDictionary *result = [QNMapper fillPermissions:rawPermissions];
   
   XCTAssertNotNil(result);
-  XCTAssertEqual(result.permissions.count, 2);
+  XCTAssertEqual(result.count, 2);
   
-  QNPermission *standart = result.permissions[@"standart"];
+  QNPermission *standart = result[@"standart"];
   XCTAssertNotNil(standart);
   XCTAssertTrue([standart.permissionID isEqualToString:@"standart"]);
   XCTAssertFalse(standart.isActive);

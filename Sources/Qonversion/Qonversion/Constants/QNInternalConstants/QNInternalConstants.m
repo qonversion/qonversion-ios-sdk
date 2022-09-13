@@ -28,3 +28,4 @@ NSUInteger const kMaxDelay = 1000;
 
 NSInteger const kInternalServerErrorFirstCode = 500;
 NSInteger const kInternalServerErrorLastCode = 599;
+NSInteger const kNotFoundErrorCode = 404;

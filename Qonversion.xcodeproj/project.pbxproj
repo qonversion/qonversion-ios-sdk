@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		45202189244DD02F00C1A928 /* QonversionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45202188244DD02F00C1A928 /* QonversionTests.m */; };
 		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
 		4531CBC824578D300022C422 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 4531CBC724578D300022C422 /* Podfile */; };
 		4531CBCB24581BD80022C422 /* QNUserInfoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC92457F6E00022C422 /* QNUserInfoTests.m */; };
@@ -22,7 +21,6 @@
 		456ECD47249C8EEE00D2BC40 /* init.json in Resources */ = {isa = PBXBuildFile; fileRef = 456ECD46249C8EEE00D2BC40 /* init.json */; };
 		456ECD49249CA28300D2BC40 /* init_failed_state.json in Resources */ = {isa = PBXBuildFile; fileRef = 456ECD48249CA28300D2BC40 /* init_failed_state.json */; };
 		45754AE725814C7500FCA376 /* iAd.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45754AE625814C7500FCA376 /* iAd.framework */; };
-		4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4587136B24AB963100F4B418 /* QRequestSerializerTests.m */; };
 		458A8CCB24B9A3DF00637130 /* StoreKitServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 458A8CCA24B9A3DF00637130 /* StoreKitServiceTests.m */; };
 		459DAB9A243E333C0011ECF3 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB97243E333C0011ECF3 /* README.md */; };
 		459DAB9B243E333C0011ECF3 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 459DAB98243E333C0011ECF3 /* LICENSE */; };
@@ -248,7 +246,6 @@
 		420D8FEF3C704502C737C449 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
 		4502E451257FDF5E006FC750 /* OCMock.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OCMock.framework; path = "../../../../Volumes/OCMock 3.7.1/macOS/OCMock.framework"; sourceTree = "<group>"; };
 		4502E457257FDF90006FC750 /* OCMock.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OCMock.framework; path = "../../../../Volumes/OCMock 3.7.1/iOS framework/OCMock.framework"; sourceTree = "<group>"; };
-		45202188244DD02F00C1A928 /* QonversionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionTests.m; sourceTree = "<group>"; };
 		45239D6E2517CEB00085D0A8 /* QonversionFramework.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionFramework.h; sourceTree = "<group>"; };
 		4531CBC5245789D40022C422 /* QDeviceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QDeviceTests.m; sourceTree = "<group>"; };
 		4531CBC724578D300022C422 /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
@@ -267,7 +264,6 @@
 		456ECD46249C8EEE00D2BC40 /* init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init.json; sourceTree = "<group>"; };
 		456ECD48249CA28300D2BC40 /* init_failed_state.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = init_failed_state.json; sourceTree = "<group>"; };
 		45754AE625814C7500FCA376 /* iAd.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = iAd.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.0.sdk/System/iOSSupport/System/Library/Frameworks/iAd.framework; sourceTree = DEVELOPER_DIR; };
-		4587136B24AB963100F4B418 /* QRequestSerializerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRequestSerializerTests.m; sourceTree = "<group>"; };
 		458A8CCA24B9A3DF00637130 /* StoreKitServiceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StoreKitServiceTests.m; sourceTree = "<group>"; };
 		459DAB69243E329F0011ECF3 /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		459DAB72243E329F0011ECF3 /* QonversionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QonversionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -587,12 +583,10 @@
 				459DAC0A243E4D420011ECF3 /* Helpers */,
 				459DAC07243E4AF20011ECF3 /* Resources */,
 				459DAC05243E49C20011ECF3 /* QonversionMapperTests.m */,
-				45202188244DD02F00C1A928 /* QonversionTests.m */,
 				459DAB79243E329F0011ECF3 /* Info.plist */,
 				4531CBC5245789D40022C422 /* QDeviceTests.m */,
 				4531CBC92457F6E00022C422 /* QNUserInfoTests.m */,
 				454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */,
-				4587136B24AB963100F4B418 /* QRequestSerializerTests.m */,
 				458A8CCA24B9A3DF00637130 /* StoreKitServiceTests.m */,
 				45FFA2DA24BE06C3007EFB8F /* APIClientTests.m */,
 				45FFA2DC24BE1015007EFB8F /* QNTestConstants.h */,
@@ -1761,7 +1755,6 @@
 				454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */,
 				89817AAB26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m in Sources */,
 				45FFA2DB24BE06C3007EFB8F /* APIClientTests.m in Sources */,
-				4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */,
 				454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */,
 				458A8CCB24B9A3DF00637130 /* StoreKitServiceTests.m in Sources */,
 				4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */,
@@ -1770,7 +1763,6 @@
 				4531CBCB24581BD80022C422 /* QNUserInfoTests.m in Sources */,
 				456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */,
 				89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */,
-				45202189244DD02F00C1A928 /* QonversionTests.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

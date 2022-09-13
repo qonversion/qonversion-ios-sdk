@@ -16,4 +16,7 @@
 
 + (NSInteger)mapInteger:(NSObject * _Nullable)object orReturn:(NSInteger)defaultValue;
 
++ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillEntitlements:(NSDictionary * _Nullable)data;
++ (NSDictionary <NSString *, QNPermission *> * _Nonnull)fillPermissions:(NSArray * _Nullable)data;
+
 @end

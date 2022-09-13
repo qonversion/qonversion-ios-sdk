@@ -49,7 +49,7 @@ NS_SWIFT_NAME(Qonversion.LaunchResult)
 /**
  User permissions
  */
-@property (nonatomic, copy) NSDictionary<NSString *, QNPermission *> *permissions;
+@property (nonatomic, copy) NSDictionary<NSString *, QNPermission *> *permissions DEPRECATED_MSG_ATTRIBUTE("Use Qonversion.checkPermissions() instead");
 
 /**
  All products

@@ -1,6 +1,14 @@
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(NSInteger, QNPermissionRenewState){
+typedef NS_ENUM(NSInteger, QNPermissionSource) {
+  QNPermissionSourceUnknown = -1, // Unable to detect the source
+  QNPermissionSourceAppStore = 1, // App Store
+  QNPermissionSourcePlayStore = 2, // Play Store
+  QNPermissionSourceStripe = 3, // Stripe
+  QNPermissionSourceManual = 4 // The entitlement was activated manually
+} NS_SWIFT_NAME(Qonversion.PermissionSource);
+
+typedef NS_ENUM(NSInteger, QNPermissionRenewState) {
   /**
    For in-app purchases.
    */
@@ -50,7 +58,12 @@ NS_SWIFT_NAME(Qonversion.Permission)
 /**
  A renew state for an associate product that unlocked permission
  */
-@property (nonatomic) QNPermissionRenewState renewState;
+@property (nonatomic, assign) QNPermissionRenewState renewState;
+
+/**
+ Source of the purchase via which the entitlement was activated.
+ */
+@property (nonatomic, assign) QNPermissionSource source;
 
 /**
  Purchase date
