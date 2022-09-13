@@ -209,7 +209,7 @@
   result.renewState = renewState;
   result.productID = ((NSString *)product[@"product_id"] ?: @"");
   
-  NSString *sourceRaw = subscription[@"source"];
+  NSString *sourceRaw = dict[@"source"];
   NSNumber *sourceNumber = sources[sourceRaw];
   QNPermissionSource source = sourceNumber ? sourceNumber.integerValue : QNPermissionSourceUnknown;
   result.source = source;
