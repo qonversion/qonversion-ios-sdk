@@ -17,9 +17,6 @@
   
   NSString *anonUserID = [self.userInfoService obtainUserID];
   [self.identityService identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    if (result.length > 0) {
-      [weakSelf.userInfoService storeIdentity:result];
-    }
     completion(result, error);
   }];
 }
