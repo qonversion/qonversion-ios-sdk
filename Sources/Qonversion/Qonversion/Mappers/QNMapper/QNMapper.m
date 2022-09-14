@@ -174,10 +174,23 @@
 }
 
 + (QNPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
+  NSDictionary *sources = @{
+       @"appstore": @(QNPermissionSourceAppStore),
+       @"playstore": @(QNPermissionSourcePlayStore),
+       @"stripe": @(QNPermissionSourceStripe),
+       @"manual": @(QNPermissionSourceManual),
+       @"unknown": @(QNPermissionSourceUnknown)
+     };
+  
   QNPermission *result = [[QNPermission alloc] init];
   result.permissionID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
   result.renewState = [self mapInteger:dict[@"renew_state"] orReturn:0];
+  
+  NSString *sourceRaw = dict[@"source"];
+  NSNumber *sourceNumber = sources[sourceRaw];
+  QNPermissionSource source = sourceNumber ? sourceNumber.integerValue : QNPermissionSourceUnknown;
+  result.source = source;
   
   result.productID = ((NSString *)dict[@"associated_product"] ?: @"");
   
