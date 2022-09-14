@@ -13,8 +13,6 @@
 @implementation QNIdentityManager
 
 - (void)identify:(NSString *)userID completion:(QNIdentityCompletionHandler)completion {
-  __block __weak QNIdentityManager *weakSelf = self;
-  
   NSString *anonUserID = [self.userInfoService obtainUserID];
   [self.identityService identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
     completion(result, error);
