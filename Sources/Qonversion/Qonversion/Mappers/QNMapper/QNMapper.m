@@ -220,7 +220,7 @@
   
   if ([dict[@"expires"] isEqual:[NSNull null]] == NO) {
     NSTimeInterval expiration = ((NSNumber *)dict[@"expires"] ?: @0).intValue;
-    result.expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
+    result.expirationDate = expiration == 0 ? nil : [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
   }
   
   return result;
