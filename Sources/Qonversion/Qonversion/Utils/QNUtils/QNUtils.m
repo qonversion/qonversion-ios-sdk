@@ -119,7 +119,7 @@
   return [connectionErrorCodes containsObject:@(error.code)];
 }
 
-+ (BOOL)isPurchaseRequestShouldBeRetried:(NSError *)error {
++ (BOOL)shouldPurchaseRequestBeRetried:(NSError *)error {
   if (!error) {
     return NO;
   }

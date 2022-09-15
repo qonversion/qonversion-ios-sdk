@@ -97,16 +97,13 @@
   [self processRequest:request completion:completion];
 }
 
-- (NSURLRequest *)purchaseRequestWith:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction
-                    receipt:(nullable NSString *)receipt
-              purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
-                 completion:(QNAPIClientCompletionHandler)completion {
+- (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
+                          transaction:(SKPaymentTransaction *)transaction
+                              receipt:(nullable NSString *)receipt
+                        purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
+                           completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseModel:purchaseModel];
   NSMutableDictionary *resultData = [self enrichParameters:body];
-  resultData = [resultData mutableCopy];
-  resultData[@"device"][@"device_id"] = @"00000";
-  resultData[@"q_uid"] = @"dfsgdgdfdhfdhdhdfhdaehdndgsd2";
-  resultData[@"client_uid"] = @"dfsgdgdfdhfdhdhdfhdaehdndgsd2";
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
   
@@ -203,7 +200,7 @@
     NSURLRequest *request = unarchivedData[transactionId];
     if ([request isKindOfClass:[NSURLRequest class]]) {
       [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-        if (![QNUtils isPurchaseRequestShouldBeRetried:error]) {
+        if (![QNUtils shouldPurchaseRequestBeRetried:error]) {
           [self removeStoredRequestForTransactionId:transactionId];
         }
       }];

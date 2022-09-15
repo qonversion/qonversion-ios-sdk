@@ -838,13 +838,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         [weakSelf.purchasingBlocks removeObjectForKey:product.productIdentifier];
       }
       
-      if (error) {
-        BOOL shouldStoreRequestForRetry = [QNUtils isPurchaseRequestShouldBeRetried:error];
-        if (shouldStoreRequestForRetry) {
-          [weakSelf.apiClient storeRequestForRetry:request transactionId:transaction.transactionIdentifier];
-        } else {
-          [weakSelf.apiClient removeStoredRequestForTransactionId:transaction.transactionIdentifier];
-        }
+      if (error && [QNUtils shouldPurchaseRequestBeRetried:error]) {
+        [weakSelf.apiClient storeRequestForRetry:request transactionId:transaction.transactionIdentifier];
+      } else {
+        [weakSelf.apiClient removeStoredRequestForTransactionId:transaction.transactionIdentifier];
       }
      
       if (error && _purchasingBlock) {
