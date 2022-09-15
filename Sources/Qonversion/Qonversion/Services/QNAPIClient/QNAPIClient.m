@@ -190,11 +190,7 @@
 }
 
 - (void)processStorePurchasesRequests {
-  NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kKeyQUserDefaultsStoredPurchasesRequests];
-  NSDictionary *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData] ?: @{};
-  if (![unarchivedData isKindOfClass:[NSDictionary class]]) {
-    return;
-  }
+  NSDictionary *unarchivedData = [self storedPurchasesRequests];
   
   for (NSString *transactionId in unarchivedData.allKeys) {
     NSURLRequest *request = unarchivedData[transactionId];
