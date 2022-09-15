@@ -103,7 +103,7 @@
                         purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
                            completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseModel:purchaseModel];
-  NSMutableDictionary *resultData = [self enrichParameters:body];
+  NSDictionary *resultData = [self enrichParameters:body];
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
   
