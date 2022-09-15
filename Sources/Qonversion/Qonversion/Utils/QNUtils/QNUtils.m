@@ -2,6 +2,7 @@
 
 #import "QNUtils.h"
 #import "QNErrors.h"
+#import "QNInternalConstants.h"
 
 @implementation QNUtils
 
@@ -116,6 +117,14 @@
   ];
   
   return [connectionErrorCodes containsObject:@(error.code)];
+}
+
++ (BOOL)isPurchaseRequestShouldBeRetried:(NSError *)error {
+  if (!error) {
+    return NO;
+  }
+  
+  return error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode;
 }
 
 + (NSDate *)calculateExpirationDateForPeriod:(SKProductSubscriptionPeriod *)period fromDate:(NSDate *)transactionDate {

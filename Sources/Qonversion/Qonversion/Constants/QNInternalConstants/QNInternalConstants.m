@@ -18,6 +18,7 @@ NSString *const kKeyQUserDefaultsPermissions = @"com.qonversion.keys.permissions
 NSString *const kKeyQUserDefaultsPermissionsTimestamp = @"com.qonversion.keys.permissions.timestamp";
 NSString *const kKeyQUserDefaultsProductsPermissionsRelation = @"com.qonversion.keys.products.permissions.relation";
 NSString *const kMainUserDefaultsSuiteName = @"qonversion.localstorage.main";
+NSString *const kKeyQUserDefaultsStoredPurchasesRequests = @"com.qonversion.keys.requests.stored.purchases";
 
 NSString *const kKeyQExperimentStartedEventName = @"offering_within_experiment_called";
 

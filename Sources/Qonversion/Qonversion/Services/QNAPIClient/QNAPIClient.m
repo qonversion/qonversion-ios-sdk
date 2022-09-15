@@ -97,17 +97,22 @@
   [self processRequest:request completion:completion];
 }
 
-- (void)purchaseRequestWith:(SKProduct *)product
-                transaction:(SKPaymentTransaction *)transaction
+- (NSURLRequest *)purchaseRequestWith:(SKProduct *)product transaction:(SKPaymentTransaction *)transaction
                     receipt:(nullable NSString *)receipt
               purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
                  completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseModel:purchaseModel];
-  NSDictionary *resultData = [self enrichParameters:body];
+  NSMutableDictionary *resultData = [self enrichParameters:body];
+  resultData = [resultData mutableCopy];
+  resultData[@"device"][@"device_id"] = @"00000";
+  resultData[@"q_uid"] = @"dfsgdgdfdhfdhdhdfhdaehdndgsd2";
+  resultData[@"client_uid"] = @"dfsgdgdfdhfdhdhdfhdaehdndgsd2";
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
   
   [self processRequest:request completion:completion];
+  
+  return [request copy];
 }
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QNProduct *> *)products
@@ -172,18 +177,38 @@
   
   if (![storedRequests isKindOfClass:[NSArray class]]) {
     [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
+  } else {
+    for (NSInteger i = 0; i < [storedRequests count]; i++) {
+      if ([storedRequests[i] isKindOfClass:[NSURLRequest class]]) {
+        NSURLRequest *request = storedRequests[i];
+        
+        [self dataTaskWithRequest:request completion:nil];
+      }
+    }
+    
+    [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
+  }
+  
+  [self processStorePurchasesRequests];
+}
+
+- (void)processStorePurchasesRequests {
+  NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kKeyQUserDefaultsStoredPurchasesRequests];
+  NSDictionary *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData] ?: @{};
+  if (![unarchivedData isKindOfClass:[NSDictionary class]]) {
     return;
   }
   
-  for (NSInteger i = 0; i < [storedRequests count]; i++) {
-    if ([storedRequests[i] isKindOfClass:[NSURLRequest class]]) {
-      NSURLRequest *request = storedRequests[i];
-      
-      [self dataTaskWithRequest:request completion:nil];
+  for (NSString *transactionId in unarchivedData.allKeys) {
+    NSURLRequest *request = unarchivedData[transactionId];
+    if ([request isKindOfClass:[NSURLRequest class]]) {
+      [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+        if (![QNUtils isPurchaseRequestShouldBeRetried:error]) {
+          [self removeStoredRequestForTransactionId:transactionId];
+        }
+      }];
     }
   }
-  
-  [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
 }
 
 // MARK: - Private
@@ -280,7 +305,7 @@
       return;
     }
     
-    NSError *apiError = [self.errorsMapper errorFromRequestResult:dict];
+    NSError *apiError = [weakSelf.errorsMapper errorFromRequestResult:dict];
     
     if (apiError) {
       QONVERSION_LOG(@"❌ Request failed: %@, error: %@", request.URL, apiError);
@@ -323,6 +348,35 @@
   }
   
   return nil;
+}
+
+- (void)removeStoredRequestForTransactionId:(NSString *)transactionId {
+  NSMutableDictionary *storedRequests = [[self storedPurchasesRequests] mutableCopy];
+  storedRequests[transactionId] = nil;
+  
+  [self storePurchaseRequests:storedRequests];
+}
+
+- (void)storePurchaseRequests:(NSDictionary *)requests {
+  NSData *updatedStoredRequestsData = [QNKeyedArchiver archivedDataWithObject:[requests copy]];
+  [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kKeyQUserDefaultsStoredPurchasesRequests];
+}
+
+- (NSDictionary *)storedPurchasesRequests {
+  NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kKeyQUserDefaultsStoredPurchasesRequests];
+  NSDictionary *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData] ?: @{};
+  if (![unarchivedData isKindOfClass:[NSDictionary class]]) {
+    unarchivedData = @{};
+  }
+  
+  return unarchivedData;
+}
+
+- (void)storeRequestForRetry:(NSURLRequest *)request transactionId:(NSString *)transactionId {
+  NSMutableDictionary *storedRequests = [[self storedPurchasesRequests] mutableCopy];
+  storedRequests[transactionId] = request;
+  
+  [self storePurchaseRequests:storedRequests];
 }
 
 - (void)storeRequestIfNeeded:(NSURLRequest *)request {

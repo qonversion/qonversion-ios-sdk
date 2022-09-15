@@ -20,11 +20,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchRequest:(QNAPIClientCompletionHandler)completion;
 - (void)sendPushToken:(void (^)(BOOL success))completion;
 
-- (void)purchaseRequestWith:(SKProduct *)product
-                transaction:(SKPaymentTransaction *)transaction
-                    receipt:(nullable NSString *)receipt
-              purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
-                 completion:(QNAPIClientCompletionHandler)completion;
+- (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
+                          transaction:(SKPaymentTransaction *)transaction
+                              receipt:(nullable NSString *)receipt
+                        purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
+                           completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QNProduct *> *)products
                                          completion:(QNAPIClientCompletionHandler)completion;
@@ -42,6 +42,8 @@ NS_ASSUME_NONNULL_BEGIN
                 completion:(QNAPIClientCompletionHandler)completion;
 - (void)processStoredRequests;
 - (void)sendOfferingEvent:(QNOffering *)offering;
+- (void)storeRequestForRetry:(NSURLRequest *)request transactionId:(NSString *)transactionId;
+- (void)removeStoredRequestForTransactionId:(NSString *)transactionId;
 
 @end
 
