@@ -91,8 +91,8 @@
   return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
 }
 
-+ (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)initialPayload {
-  NSDictionary *customPayload = initialPayload[kKeyNotificationsCustomPayload];
++ (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)userInfo {
+  NSDictionary *customPayload = userInfo[kKeyNotificationsCustomPayload];
   if (![customPayload isKindOfClass:[NSDictionary class]]) {
     return nil;
   }

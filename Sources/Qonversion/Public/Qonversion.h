@@ -96,7 +96,12 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
 
-+ (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)initialPayload;
+/**
+ Get parsed custom payload, which you added to the notification in the dashboard
+ @param userInfo - notification user info
+ @return a map with custom payload from the notification or nil if it's not provided.
+ */
++ (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)userInfo;
 #endif
 
 /**
