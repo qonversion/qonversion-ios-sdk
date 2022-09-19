@@ -70,18 +70,19 @@
 - (NSString *)prettySource {
    switch (self.source) {
      case QNPermissionSourceUnknown:
-       return @"Unknown"; break;
+       return @"Unknown";
 
      case QNPermissionSourceAppStore:
-       return @"App Store"; break;
+       return @"App Store";
 
      case QNPermissionSourcePlayStore:
-       return @"Play Store"; break;
+       return @"Play Store";
 
      case QNPermissionSourceStripe:
-       return @"Stripe"; break;
+       return @"Stripe";
+       
      case QNPermissionSourceManual:
-       return @"Manual"; break;
+       return @"Manual";
    }
  }
 
