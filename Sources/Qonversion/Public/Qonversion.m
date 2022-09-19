@@ -12,7 +12,7 @@
 #import "QNUserInfoServiceInterface.h"
 #import "QNUserInfoService.h"
 #import "QNServicesAssembly.h"
-#import "QNInternalConstants.h""
+#import "QNInternalConstants.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsFlowCoordinator.h"
