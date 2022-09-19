@@ -12,6 +12,7 @@
 #import "QNUserInfoServiceInterface.h"
 #import "QNUserInfoService.h"
 #import "QNServicesAssembly.h"
+#import "QNInternalConstants.h""
 
 #if TARGET_OS_IOS
 #import "QONAutomationsFlowCoordinator.h"
@@ -88,6 +89,15 @@
 #if TARGET_OS_IOS
 + (BOOL)handleNotification:(NSDictionary *)userInfo {
   return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
+}
+
++ (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)initialPayload {
+  NSDictionary *customPayload = initialPayload[kKeyNotificationsCustomPayload];
+  if (![customPayload isKindOfClass:[NSDictionary class]]) {
+    return nil;
+  }
+  
+  return customPayload;
 }
 #endif
 

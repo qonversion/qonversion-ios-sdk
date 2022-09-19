@@ -95,6 +95,8 @@ NS_ASSUME_NONNULL_BEGIN
  @param userInfo - notification user info
  */
 + (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
+
++ (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)initialPayload;
 #endif
 
 /**
