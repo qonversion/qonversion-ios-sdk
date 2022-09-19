@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QONAutomationsEvent (Protected)
 
-- (instancetype)initWithType:(QONAutomationsEventType)type date:(NSDate *)date;
+- (instancetype)initWithType:(QONAutomationsEventType)type date:(NSDate *)date productId:(NSString *)productId;
 
 @end
 
