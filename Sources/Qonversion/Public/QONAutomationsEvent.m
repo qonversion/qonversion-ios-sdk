@@ -8,6 +8,12 @@
 
 #import "QONAutomationsEvent.h"
 
+@interface QONAutomationsEvent ()
+
+@property (nonatomic, copy, nullable) NSString *productId;
+
+@end
+
 @implementation QONAutomationsEvent
 
 - (instancetype)initWithType:(QONAutomationsEventType)type date:(NSDate *)date productId:(NSString *)productId {
