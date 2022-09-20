@@ -19,6 +19,7 @@ extern NSString *const kKeyQUserDefaultsPermissions;
 extern NSString *const kKeyQUserDefaultsPermissionsTimestamp;
 extern NSString *const kKeyQUserDefaultsProductsPermissionsRelation;
 extern NSString *const kMainUserDefaultsSuiteName;
+extern NSString *const kKeyQUserDefaultsStoredPurchasesRequests;
 extern NSString *const kKeyQExperimentStartedEventName;
 extern NSUInteger const kQPropertiesSendingPeriodInSeconds;
 extern CGFloat const kJitter;
