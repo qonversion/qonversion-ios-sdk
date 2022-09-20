@@ -1145,6 +1145,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   permission.permissionID = permissionId;
   permission.isActive = YES;
   permission.renewState = QNPermissionRenewStateUnknown;
+  permission.source = QNPermissionSourceAppStore;
   permission.productID = qonversionProduct.qonversionID;
   permission.startedDate = transaction.transactionDate;
   permission.expirationDate = expirationDate;
