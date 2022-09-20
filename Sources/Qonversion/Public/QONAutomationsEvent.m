@@ -10,12 +10,13 @@
 
 @implementation QONAutomationsEvent
 
-- (instancetype)initWithType:(QONAutomationsEventType)type date:(NSDate *)date {
+- (instancetype)initWithType:(QONAutomationsEventType)type date:(NSDate *)date productId:(NSString *)productId {
   self = [super init];
   
   if (self) {
     _type = type;
     _date = date;
+    _productId = productId;
   }
   
   return self;

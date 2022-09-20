@@ -22,6 +22,8 @@ NSString *const kKeyQUserDefaultsStoredPurchasesRequests = @"com.qonversion.keys
 
 NSString *const kKeyQExperimentStartedEventName = @"offering_within_experiment_called";
 
+NSString *const kKeyNotificationsCustomPayload = @"qonv.custom_payload";
+
 NSUInteger const kQPropertiesSendingPeriodInSeconds = 5;
 CGFloat const kJitter = 0.4f;
 CGFloat const kFactor = 2.4f;

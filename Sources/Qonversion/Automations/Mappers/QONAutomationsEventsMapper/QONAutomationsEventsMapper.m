@@ -71,8 +71,9 @@
   }
   
   QONAutomationsEventType eventType = eventNumber.integerValue;
+  NSString *productId = eventInfo[@"product_id"];
   
-  QONAutomationsEvent *event = [[QONAutomationsEvent alloc] initWithType:eventType date:date];
+  QONAutomationsEvent *event = [[QONAutomationsEvent alloc] initWithType:eventType date:date productId:productId];
   
   return event;
 }

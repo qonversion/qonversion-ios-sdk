@@ -14,7 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface QONAutomationsEvent : NSObject
 
 @property (nonatomic, assign, readonly) QONAutomationsEventType type;
-@property (nonatomic, strong, readonly) NSDate *date;
+@property (nonatomic, copy, nonnull, readonly) NSDate *date;
+@property (nonatomic, copy, nullable, readonly) NSString *productId;
 
 @end
 
