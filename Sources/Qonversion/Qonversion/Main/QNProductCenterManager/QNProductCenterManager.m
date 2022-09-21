@@ -832,12 +832,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   QNProductPurchaseModel *purchaseModel = self.purchaseModels[product.productIdentifier];
   self.purchaseModels[product.productIdentifier] = nil;
   [self.storeKitService receipt:^(NSString * receipt) {
-    [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt purchaseModel:purchaseModel completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    __block NSURLRequest *request = [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt purchaseModel:purchaseModel completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       QNPurchaseCompletionHandler _purchasingBlock = weakSelf.purchasingBlocks[product.productIdentifier];
       @synchronized (weakSelf) {
         [weakSelf.purchasingBlocks removeObjectForKey:product.productIdentifier];
       }
       
+      if (error && [QNUtils shouldPurchaseRequestBeRetried:error]) {
+        [weakSelf.apiClient storeRequestForRetry:request transactionId:transaction.transactionIdentifier];
+      } else {
+        [weakSelf.apiClient removeStoredRequestForTransactionId:transaction.transactionIdentifier];
+      }
+     
       if (error && _purchasingBlock) {
         [weakSelf handlePurchaseResult:@{} error:error cancelled:NO transaction:transaction product:product completion:_purchasingBlock];
         return;
@@ -1145,6 +1151,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   permission.permissionID = permissionId;
   permission.isActive = YES;
   permission.renewState = QNPermissionRenewStateUnknown;
+  permission.source = QNPermissionSourceAppStore;
   permission.productID = qonversionProduct.qonversionID;
   permission.startedDate = transaction.transactionDate;
   permission.expirationDate = expirationDate;
