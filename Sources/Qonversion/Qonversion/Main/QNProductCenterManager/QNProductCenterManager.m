@@ -673,8 +673,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         return;
       }
     }
+
+    NSMutableArray<QNProduct *> *products = [result.allValues mutableCopy];
+    [products filterUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(QNProduct *product, NSDictionary *bindings) {
+      return product.storeID != nil;
+    }]];
     
-    [weakSelf.apiClient checkTrialIntroEligibilityParamsForProducts:result.allValues completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    if (products.count == 0) {
+      run_block_on_main(completion, [NSDictionary new], nil);
+      return;
+    }
+    
+    [weakSelf.apiClient checkTrialIntroEligibilityParamsForProducts:products completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
       if (result.error) {
         run_block_on_main(completion, @{}, result.error);
