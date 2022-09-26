@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
+        with:
+          ref: main
 
       - name: CocoaPods Release
         run: pod trunk push QonversionSandwich.podspec
