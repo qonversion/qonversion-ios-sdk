@@ -674,9 +674,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       }
     }
 
-    NSMutableArray<QNProduct *> *products = [result.allValues mutableCopy];
-    [products filterUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(QNProduct *product, NSDictionary *bindings) {
-      return product.storeID != nil;
+    NSArray<QNProduct *> *products = [result.allValues filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(QNProduct *product, NSDictionary *bindings) {
+      return product.storeID.length > 0;
     }]];
     
     [weakSelf.apiClient checkTrialIntroEligibilityParamsForProducts:products completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
