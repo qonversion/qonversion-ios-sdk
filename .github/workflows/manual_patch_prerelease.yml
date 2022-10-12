@@ -1,0 +1,13 @@
+name: Manual Patch Prerelease
+
+on:
+  workflow_dispatch
+    
+jobs:
+  patch-prerelease:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Patch
+        run: |
+          fastlane patch
