@@ -18,17 +18,15 @@ end
 lane :patch do
   tag = get_tag
   new_version = calculate_patch_version(tag)
-  puts "#{new_version}"
   new_tag = "prerelease/" + new_version
-#  push_tag(new_tag)
+  push_tag(new_tag)
 end
 
 lane :minor do
   tag = get_tag
   new_version = calculate_minor_version(tag)
   new_tag = "prerelease/" + new_version
-  puts "#{new_tag}"
-#  push_tag(new_tag)
+  push_tag(new_tag)
 end
 
 def get_tag
@@ -55,8 +53,8 @@ end
 def push_tag(tag)
   system("git checkout develop")
   system("git pull origin develop")
-  add_git_tag(tag: new_tag)
-  push_git_tags(tag: new_tag)
+  add_git_tag(tag: tag)
+  push_git_tags(tag: tag)
 end
 
 def parse_versions(tag)
