@@ -1,0 +1,13 @@
+name: Manual Minor Prerelease
+
+on:
+  workflow_dispatch
+    
+jobs:
+  patch-minor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Minor
+        run: |
+          fastlane minor
