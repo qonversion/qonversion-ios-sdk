@@ -32,10 +32,10 @@
   }
   
   if (!self.skProduct) {
-      return QNTrialDurationNotAvailable;
+      return QNTrialDurationUnknown;
   }
   
-  QNTrialDuration duration = QNTrialDurationNotAvailable;
+  QNTrialDuration duration = QNTrialDurationUnknown;
   
   if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
     if (self.skProduct.introductoryPrice) {
@@ -79,6 +79,8 @@
         default:
           break;
       }
+    } else {
+      duration = QNTrialDurationNotAvailable;
     }
   }
   

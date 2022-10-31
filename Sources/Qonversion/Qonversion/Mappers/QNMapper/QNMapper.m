@@ -260,16 +260,19 @@
 
 + (QNOfferingTag)mapOfferingTag:(NSDictionary *)offeringData {
   QNOfferingTag tag;
-  NSInteger tagValue = [self mapInteger:offeringData[@"tag"] orReturn:0];
-  
-  switch (tagValue) {
-    case 1:
-      tag = QNOfferingTagMain;
-      break;
-      
-    default:
-      tag = QNOfferingTagNone;
-      break;
+  NSNumber *tagNumber = offeringData[@"tag"];
+  if (tagNumber) {
+    switch (tagNumber.integerValue) {
+      case 1:
+        tag = QNOfferingTagMain;
+        break;
+        
+      default:
+        tag = QNOfferingTagUnknown;
+        break;
+    }
+  } else {
+    tag = QNOfferingTagNone;
   }
   
   return tag;
