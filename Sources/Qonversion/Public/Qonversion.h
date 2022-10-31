@@ -126,12 +126,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)setUserProperty:(NSString *)property value:(NSString *)value;
 
 /**
- Associate a user with their unique ID in your system
- @param userID            Your database user ID
- */
-+ (void)setUserID:(NSString *)userID DEPRECATED_MSG_ATTRIBUTE("Use setProperty function instead. Pass userID value of QNProperty enum and your App side user identifier you want to set");
-
-/**
  Send your attribution data
  @param data Dictionary received by the provider
  @param provider Attribution provider
@@ -197,18 +191,6 @@ NS_ASSUME_NONNULL_BEGIN
   @see [Product Center](https://qonversion.io/docs/product-center)
  */
 + (void)offerings:(QNOfferingsCompletionHandler)completion;
-
-/**
- Qonversion A/B tests help you grow your app revenue by making it easy to run and analyze paywall and promoted in-app product experiments. It gives you the power to measure your paywalls' performance before you roll them out widely. It is an out-of-the-box solution that does not require any third-party service.
- 
- @param completion Completion block that include user experiments check result dictionary and error
- */
-+ (void)experiments:(QNExperimentsCompletionHandler)completion;
-
-/**
- This function was used in debug mode only. You can reinstall the app if you need to reset the user ID.
- */
-+ (void)resetUser DEPRECATED_MSG_ATTRIBUTE("This function was used in debug mode only. You can reinstall the app if you need to reset the user ID.");
 
 + (void)userInfo:(QNUserInfoCompletionHandler)completion;
 
