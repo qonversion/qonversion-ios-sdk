@@ -6,7 +6,7 @@
 #import "QNTestConstants.h"
 
 #import "QNMapperObject.h"
-#import "QNPermission.h"
+#import "QNEntitlement.h"
 #import "QNLaunchResult.h"
 
 @interface QNMapperTests : XCTestCase
@@ -40,7 +40,7 @@
   QNEntitlement *premium = result.entitlements[@"premium"];
   XCTAssertNotNil(premium);
   XCTAssertTrue(premium.isActive);
-  XCTAssertEqual(premium.renewState, QNPermissionRenewStateBillingIssue);
+  XCTAssertEqual(premium.renewState, QNEntitlementRenewStateBillingIssue);
   
   XCTAssertNotNil(premium.startedDate);
   
@@ -59,7 +59,7 @@
   
   QNEntitlement *standart = result.entitlements[@"standart"];
   XCTAssertNotNil(standart);
-  XCTAssertTrue([standart.permissionID isEqualToString:@"standart"]);
+  XCTAssertTrue([standart.entitlementID isEqualToString:@"standart"]);
   XCTAssertFalse(standart.isActive);
 }
 

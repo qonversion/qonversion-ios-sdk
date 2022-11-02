@@ -15,20 +15,20 @@ class ActivePermissionsTableViewCell: UITableViewCell {
   @IBOutlet weak var productIdLabel: UILabel!
   @IBOutlet weak var renewStateLabel: UILabel!
   
-  func setup(with permission: Qonversion.Permission) {
-    permissionIdLabel.text = "Permission id: \(permission.permissionID)"
+  func setup(with permission: Qonversion.Entitlement) {
+    permissionIdLabel.text = "Permission id: \(permission.entitlementID)"
     productIdLabel.text = "Product id: \(permission.productID)"
     var renewState = ""
     switch permission.renewState {
-    case Qonversion.PermissionRenewState.nonRenewable:
+    case .nonRenewable:
       renewState = "non renewable"
-    case Qonversion.PermissionRenewState.unknown:
+    case .unknown:
       renewState = "unknown"
-    case Qonversion.PermissionRenewState.willRenew:
+    case .willRenew:
       renewState = "will renew"
-    case Qonversion.PermissionRenewState.cancelled:
+    case .cancelled:
       renewState = "canceled"
-    case Qonversion.PermissionRenewState.billingIssue:
+    case .billingIssue:
       renewState = "billing issue"
     default:
       renewState = "\(permission.renewState.rawValue)"

@@ -26,7 +26,7 @@
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoaded;
 
-- (void)checkPermissions:(QNEntitlementsCompletionHandler)()result;
+- (void)checkPermissions:(QNEntitlementsCompletionHandler)result;
 
 @end
 

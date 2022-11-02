@@ -21,7 +21,7 @@ class ViewController: UIViewController {
   @IBOutlet weak var checkActivePermissionsButton: UIButton!
   @IBOutlet weak var logoutButton: UIButton!
   
-  var permissions: [String: Qonversion.Permission] = [:]
+  var permissions: [String: Qonversion.Entitlement] = [:]
   var products: [String: Qonversion.Product] = [:]
   
   override func viewDidLoad() {
@@ -43,7 +43,7 @@ class ViewController: UIViewController {
     
     offeringsButton.layer.cornerRadius = 20.0
     
-    Qonversion.checkPermissions { [weak self] (permissions, error) in
+    Qonversion.checkEntitlements { [weak self] (permissions, error) in
       guard let self = self else { return }
 
       self.permissions = permissions
@@ -76,7 +76,7 @@ class ViewController: UIViewController {
       self.products = result
       
       if let inAppPurchase = result["consumable"] {
-        let permission: Qonversion.Permission? = self.permissions["standart"]
+        let permission: Qonversion.Entitlement? = self.permissions["standart"]
         let isActive = permission?.isActive ?? false
         let title: String = isActive ? "Successfully purchased" : "Buy for \(inAppPurchase.prettyPrice)"
         self.inAppPurchaseButton.setTitle(title, for: .normal)
@@ -85,7 +85,7 @@ class ViewController: UIViewController {
       }
       
       if let mainSubscription = result["main"] {
-        let permission: Qonversion.Permission? = self.permissions["plus"]
+        let permission: Qonversion.Entitlement? = self.permissions["plus"]
         let isActive = permission?.isActive ?? false
         let title: String = isActive ? "Successfully purchased" : "Subscribe for \(mainSubscription.prettyPrice) / \(mainSubscription.prettyDuration)"
         self.mainProductSubscriptionButton.setTitle(title, for: .normal)
@@ -184,11 +184,11 @@ class ViewController: UIViewController {
       
       self.permissions = permissions
       
-      if let permission: Qonversion.Permission = self.permissions["standart"], permission.isActive {
+      if let permission: Qonversion.Entitlement = self.permissions["standart"], permission.isActive {
         self.inAppPurchaseButton.setTitle("Restored", for: .normal)
       }
       
-      if let permission: Qonversion.Permission = self.permissions["plus"], permission.isActive {
+      if let permission: Qonversion.Entitlement = self.permissions["plus"], permission.isActive {
         self.mainProductSubscriptionButton.setTitle("Restored", for: .normal)
       }
     }
