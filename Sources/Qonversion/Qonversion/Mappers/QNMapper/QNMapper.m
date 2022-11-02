@@ -2,7 +2,7 @@
 #import "QNMapper.h"
 #import "QNErrors.h"
 #import "QNProduct.h"
-#import "QNPermission.h"
+#import "QNEntitlement.h"
 #import "QNMapperObject.h"
 #import "QNOfferings.h"
 #import "QNOffering.h"
@@ -33,7 +33,7 @@
   
   [result setTimestamp:timestamp.unsignedIntegerValue];
   [result setUid:((NSString *)dict[@"uid"] ?: @"")];
-  [result setPermissions:[self fillPermissions:permissionsArray]];
+  [result setEntitlements:[self fillPermissions:permissionsArray]];
   [result setProducts:[self fillProducts:productsArray]];
   [result setUserProducts:[self fillProducts:userProductsArray]];
   [result setExperiments:[self fillExperiments:experiments]];
@@ -63,13 +63,13 @@
   return user;
 }
 
-+ (NSDictionary <NSString *, QNPermission *> *)fillPermissions:(NSArray *)data {
-  NSMutableDictionary <NSString *, QNPermission *> *permissions = [NSMutableDictionary new];
++ (NSDictionary <NSString *, QNEntitlement *> *)fillPermissions:(NSArray *)data {
+  NSMutableDictionary <NSString *, QNEntitlement *> *permissions = [NSMutableDictionary new];
   
   for (NSDictionary* itemDict in data) {
-    QNPermission *item = [self fillPermission:itemDict];
-    if (item && item.permissionID) {
-      permissions[item.permissionID] = item;
+    QNEntitlement *item = [self fillPermission:itemDict];
+    if (item && item.entitlementID) {
+      permissions[item.entitlementID] = item;
     }
   }
   
@@ -173,23 +173,23 @@
   return [eligibilityInfo copy];
 }
 
-+ (QNPermission * _Nonnull)fillPermission:(NSDictionary *)dict {
++ (QNEntitlement * _Nonnull)fillPermission:(NSDictionary *)dict {
   NSDictionary *sources = @{
-       @"appstore": @(QNPermissionSourceAppStore),
-       @"playstore": @(QNPermissionSourcePlayStore),
-       @"stripe": @(QNPermissionSourceStripe),
-       @"manual": @(QNPermissionSourceManual),
-       @"unknown": @(QNPermissionSourceUnknown)
+       @"appstore": @(QNEntitlementSourceAppStore),
+       @"playstore": @(QNEntitlementSourcePlayStore),
+       @"stripe": @(QNEntitlementSourceStripe),
+       @"manual": @(QNEntitlementSourceManual),
+       @"unknown": @(QNEntitlementSourceUnknown)
      };
   
-  QNPermission *result = [[QNPermission alloc] init];
-  result.permissionID = dict[@"id"];
+  QNEntitlement *result = [[QNEntitlement alloc] init];
+  result.entitlementID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
   result.renewState = [self mapInteger:dict[@"renew_state"] orReturn:0];
   
   NSString *sourceRaw = dict[@"source"];
   NSNumber *sourceNumber = sources[sourceRaw];
-  QNPermissionSource source = sourceNumber ? sourceNumber.integerValue : QNPermissionSourceUnknown;
+  QNEntitlementSource source = sourceNumber ? sourceNumber.integerValue : QNEntitlementSourceUnknown;
   result.source = source;
   
   result.productID = ((NSString *)dict[@"associated_product"] ?: @"");

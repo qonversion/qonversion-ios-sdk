@@ -2,7 +2,7 @@
 
 #import "QNLaunchResult.h"
 #import "QNProduct.h"
-#import "QNPermission.h"
+#import "QNEntitlement.h"
 #import "QNOfferings.h"
 #import "QNOffering.h"
 #import "QNIntroEligibility.h"
@@ -13,7 +13,7 @@
 #import "QNUser.h"
 #import "QNErrors.h"
 #import "QNStoreKitSugare.h"
-#import "QNPermissionsCacheLifetime.h"
+#import "QNEntitlementsCacheLifetime.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
@@ -37,12 +37,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
 
 /**
- Permissions cache is used when there are problems with the Qonversion API or internet connection.
- If so, Qonversion will return the last successfully loaded permissions. The current method allows you to configure how long that cache may be used.
+ Entitlements cache is used when there are problems with the Qonversion API or internet connection.
+ If so, Qonversion will return the last successfully loaded entitlements. The current method allows you to configure how long that cache may be used.
  The default value is QNEntitlementCacheLifetimeMonth.
- @param cacheLifetime desired permissions cache lifetime duration
+ @param cacheLifetime desired entitlements cache lifetime duration
  */
-+ (void)setPermissionsCacheLifetime:(QNPermissionsCacheLifetime)cacheLifetime;
++ (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime;
 
 /**
  Disables transactions finishing.
@@ -133,11 +133,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;
 
 /**
- Check user permissions based on product center details
- @param completion Complition block that include permissions dictionary and error
+ Check user entitlements based on product center details
+ @param completion Completion block that include entitlements dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)checkPermissions:(QNPermissionCompletionHandler)completion;
++ (void)checkEntitlements:(QNEntitlementsCompletionHandler)completion;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -156,8 +156,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
 
 /**
- Restore user permissions based on product center details
- @param completion Completion block that include permissions dictionary and error
+ Restore user entitlements based on product center details
+ @param completion Completion block that include entitlements dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
 + (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;

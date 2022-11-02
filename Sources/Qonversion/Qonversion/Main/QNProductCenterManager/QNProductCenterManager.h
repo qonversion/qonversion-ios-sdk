@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "QNLaunchResult.h"
-#import "QNPermissionsCacheLifetime.h"
+#import "QNEntitlementsCacheLifetime.h"
 
 @class QNLaunchResult;
 @protocol QNPromoPurchasesDelegate, QNPurchasesDelegate;
@@ -15,12 +15,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)logout;
 - (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate;
 - (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
-- (void)setEntitlementsCacheLifetime:(QNPermissionsCacheLifetime)cacheLifetime;
+- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime;
 
 - (void)presentCodeRedemptionSheet;
 
 - (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion;
-- (void)checkPermissions:(QNPermissionCompletionHandler)completion;
+- (void)checkPermissions:(QNEntitlementsCompletionHandler)completion;
 - (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion;
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
 - (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;
