@@ -8,7 +8,6 @@ jobs:
   cocoapods-release:
     runs-on: macos-latest
     steps:
-      - name: Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '13.4.1'
