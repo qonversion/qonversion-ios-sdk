@@ -47,6 +47,10 @@
         case SKProductPeriodUnitDay:
           if (numberOfUnits == 3) {
             duration = QNTrialDurationThreeDays;
+          } else if (numberOfUnits == 7) {
+            duration = QNTrialDurationWeek;
+          } else if (numberOfUnits == 14) {
+            duration = QNTrialDurationTwoWeeks;
           }
           break;
           
