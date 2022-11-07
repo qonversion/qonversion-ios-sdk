@@ -5,10 +5,10 @@ on:
     types: [released]
 
 jobs:
-  cocoapods-release:
+  podrelease:
     runs-on: macos-latest
     steps:
-        uses: maxim-lobanov/setup-xcode@v1
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '13.4.1'
       - name: Check out code
