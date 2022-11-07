@@ -1,7 +1,7 @@
 name: CocoaPods Release
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
   release:
     types: [released]
 
