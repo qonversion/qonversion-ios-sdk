@@ -1,18 +1,22 @@
 name: CocoaPods Release
 
 on:
-  workflow_dispatch
-    
-jobs:
-  cocoapods-release:
-    runs-on: macos-latest
+  release:
+    types: [released]
 
+jobs:
+  podrelease:
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: CocoaPods Release
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '13.4.1'
+      - name: Check out code
+        uses: actions/checkout@v2
         with:
           ref: main
+
+      - name: CocoaPods Release
+        run: pod trunk push QonversionSandwich.podspec
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
-        run: |
-          pod trunk push Qonversion.podspec
