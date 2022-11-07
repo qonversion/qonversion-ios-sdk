@@ -1,6 +1,7 @@
 name: CocoaPods Release
 
 on:
+  workflow_dispatch:
   release:
     types: [released]
 
@@ -17,6 +18,6 @@ jobs:
           ref: main
 
       - name: CocoaPods Release
-        run: pod trunk push QonversionSandwich.podspec
+        run: pod trunk push Qonversion.podspec
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
