@@ -30,6 +30,7 @@ typedef NS_ENUM(NSInteger, QNProductDuration) {
 
 typedef NS_ENUM(NSInteger, QNTrialDuration) {
   QNTrialDurationNotAvailable = -1,
+  QNTrialDurationUnknown = 0,
   QNTrialDurationThreeDays = 1,
   QNTrialDurationWeek = 2,
   QNTrialDurationTwoWeeks = 3,

@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 static NSString *const kOfferingByIDWasCalledNotificationName = @"OfferingForIDNotification";
 
 typedef NS_ENUM(NSInteger, QNOfferingTag) {
+  QNOfferingTagUnknown = -1,
   QNOfferingTagNone = 0,
   /**
    Provides access to content on a recurring basis with a free introductory offer
