@@ -43,6 +43,7 @@
       break;
     case QNPermissionsCacheLifetimeTwoMonths:
       days = 60;
+      break;
     case QNPermissionsCacheLifetimeThreeMonths:
       days = 90;
       break;
