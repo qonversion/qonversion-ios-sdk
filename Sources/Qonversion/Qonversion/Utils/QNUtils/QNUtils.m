@@ -43,6 +43,7 @@
       break;
     case QNEntitlementsCacheLifetimeTwoMonths:
       days = 60;
+      break;
     case QNEntitlementsCacheLifetimeThreeMonths:
       days = 90;
       break;
