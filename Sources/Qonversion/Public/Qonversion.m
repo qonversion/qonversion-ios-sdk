@@ -133,10 +133,6 @@
   [[Qonversion sharedInstance].propertiesManager setUserProperty:property value:value];
 }
 
-+ (void)setUserID:(NSString *)userID {
-  [self setProperty:QNPropertyUserID value:userID];
-}
-
 + (void)checkPermissions:(QNPermissionCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager checkPermissions:completion];
 }
@@ -165,18 +161,10 @@
   return [[Qonversion sharedInstance].productCenterManager offerings:completion];
 }
 
-+ (void)experiments:(QNExperimentsCompletionHandler)completion {
-  [[Qonversion sharedInstance].productCenterManager experiments:completion];
-}
-
 + (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable {
   if (enable) {
     [[Qonversion sharedInstance].attributionManager addAppleSearchAttributionData];
   }
-}
-
-+ (void)resetUser {
-  QONVERSION_LOG(@"⚠️ resetUser function was used in debug mode only. You can reinstall the app if you need to reset the user ID.");
 }
 
 + (void)userInfo:(QNUserInfoCompletionHandler)completion {
