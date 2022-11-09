@@ -26,11 +26,18 @@ NS_ASSUME_NONNULL_BEGIN
 @interface Qonversion : NSObject
 
 /**
- Launches Qonversion SDK with the given project key, you can get one in your account on dash.qonversion.io
- @param key - project key to setup the SDK
- */
+ An entry point to use Qonversion SDK. Call to initialize Qonversion SDK with required and extra configs.
+ The function is the best way to set additional configs you need to use Qonversion SDK.
+ @param configuration a config that contains key SDK settings.
+ @return Initialized instance of the Qonversion SDK.
+*/
 + (instancetype)initWithConfig:(QONConfiguration *)configuration;
 
+/**
+ Use this variable to get a current initialized instance of the Qonversion SDK.
+ Please, use the variable only after initializing the SDK.
+ @return Current initialized instance of the Qonversion SDK.
+*/
 + (instancetype)sharedInstance NS_SWIFT_NAME(shared());
 
 /**

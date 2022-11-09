@@ -40,7 +40,7 @@
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configuration.entitlementsCacheLifetime];
   [[Qonversion sharedInstance] setEntitlementsUpdateListener:configuration.entitlementsUpdateListener];
   
-  [self launchWithKey:configuration.projectKey completion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+  [[Qonversion sharedInstance] launchWithKey:configuration.projectKey completion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
     
   }];
 }
