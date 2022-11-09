@@ -176,7 +176,7 @@
   if (productID.length > 0) {
     [self.activityIndicator startAnimating];
     __block __weak QONAutomationsViewController *weakSelf = self;
-    [Qonversion purchase:productID completion:^(NSDictionary<NSString *,QNEntitlement *> * _Nonnull result, NSError * _Nullable error, BOOL cancelled) {
+    [[Qonversion sharedInstance] purchase:productID completion:^(NSDictionary<NSString *,QNEntitlement *> * _Nonnull result, NSError * _Nullable error, BOOL cancelled) {
       [weakSelf.activityIndicator stopAnimating];
       
       action.error = error;
@@ -200,7 +200,7 @@
 - (void)handleRestoreAction:(QONActionResult *)action {
   __block __weak QONAutomationsViewController *weakSelf = self;
   [self.activityIndicator startAnimating];
-  [Qonversion restoreWithCompletion:^(NSDictionary<NSString *,QNEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+  [[Qonversion sharedInstance] restoreWithCompletion:^(NSDictionary<NSString *,QNEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     [weakSelf.activityIndicator stopAnimating];
     
     action.error = error;

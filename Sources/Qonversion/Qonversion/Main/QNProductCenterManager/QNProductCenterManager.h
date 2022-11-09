@@ -1,20 +1,21 @@
 #import <Foundation/Foundation.h>
 #import "QNLaunchResult.h"
 #import "QNEntitlementsCacheLifetime.h"
+#import "QONLaunchMode.h"
 
 @class QNLaunchResult;
-@protocol QNPromoPurchasesDelegate, QNPurchasesDelegate;
+@protocol QONEntitlementsUpdateListener, QONEntitlementsUpdateListener;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QNProductCenterManager : NSObject
 
-@property (nonatomic, assign) BOOL disableFinishTransactions;
+@property (nonatomic, assign) QONLaunchMode launchMode;
 
 - (void)identify:(NSString *)userID;
 - (void)logout;
-- (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate;
-- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
+- (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate;
+- (void)setPromoPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate;
 - (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime;
 
 - (void)presentCodeRedemptionSheet;

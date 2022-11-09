@@ -7,8 +7,8 @@
 #import "QNMapperObject.h"
 #import "QNProduct.h"
 #import "QNErrors.h"
+#import "QONEntitlementsUpdateListener.h"
 #import "QNPromoPurchasesDelegate.h"
-#import "QNPurchasesDelegate.h"
 #import "QNOfferings.h"
 #import "QNOffering.h"
 #import "QNIntroEligibility.h"
@@ -26,7 +26,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
 
-@property (nonatomic, weak) id<QNPurchasesDelegate> purchasesDelegate;
+@property (nonatomic, weak) id<QONEntitlementsUpdateListener> purchasesDelegate;
 @property (nonatomic, weak) id<QNPromoPurchasesDelegate> promoPurchasesDelegate;
 
 @property (nonatomic, strong) QNStoreKitService *storeKitService;
@@ -286,11 +286,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
+- (void)setPromoPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate {
   _promoPurchasesDelegate = delegate;
 }
 
-- (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate {
+- (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate {
   _purchasesDelegate = delegate;
 }
 
@@ -823,7 +823,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handleExcessTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
-  if (!self.disableFinishTransactions) {
+  if (self.launchMode == QONLaunchModeSubscriptionManagement) {
     for (SKPaymentTransaction *transaction in transactions) {
       [self.storeKitService finishTransaction:transaction];
     }
@@ -864,7 +864,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       
       NSError *resultError = error ?: result.error;
       
-      if (!weakSelf.disableFinishTransactions && !resultError) {
+      if (weakSelf.launchMode == QONLaunchModeSubscriptionManagement && !resultError) {
         [weakSelf.storeKitService finishTransaction:transaction];
       }
       
@@ -891,10 +891,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           if (resultError) {
             if ([self shouldCalculatePermissionsForError:error]) {
               resultPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
-              [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedEntitlements:resultPermissions];
+              [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultPermissions];
             }
           } else {
-            [weakSelf.purchasesDelegate qonversionDidReceiveUpdatedEntitlements:resultPermissions];
+            [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultPermissions];
           }
         }
       }
