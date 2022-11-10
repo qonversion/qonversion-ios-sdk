@@ -68,7 +68,7 @@ extension OfferingsViewController: UITableViewDelegate {
     
     guard let product: Qonversion.Product = offerings.main?.products[indexPath.row] else { return }
     
-    Qonversion.purchaseProduct(product) { [weak self] result, error, canceled in
+    Qonversion.shared().purchaseProduct(product) { [weak self] result, error, canceled in
       guard !canceled else { return }
       
       guard error == nil else {

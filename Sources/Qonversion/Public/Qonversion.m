@@ -26,7 +26,7 @@
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 
 @property (nonatomic, assign) BOOL debugMode;
-@property (nonatomic, assign) BOOL disableFinishTransactions;
+@property (nonatomic, assign) QONLaunchMode launchMode;
 
 @end
 
@@ -34,21 +34,22 @@
 
 // MARK: - Public
 
-+ (void)launchWithKey:(nonnull NSString *)key {
-  [self launchWithKey:key completion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
++ (instancetype)initWithConfig:(QONConfiguration *)configuration {
+  QONConfiguration *configCopy = [configuration copy];
+  [Qonversion sharedInstance].debugMode = configCopy.environment == QONEnvironmentSandbox;
+  
+  [Qonversion sharedInstance].launchMode = configCopy.launchMode;
+  [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
+  [[Qonversion sharedInstance] setEntitlementsUpdateListener:configCopy.entitlementsUpdateListener];
+  
+  [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
     
   }];
-}
-
-+ (void)disableFinishTransactions {
-  [Qonversion sharedInstance].disableFinishTransactions = YES;
   
-  if ([Qonversion sharedInstance].productCenterManager) {
-    [Qonversion sharedInstance].productCenterManager.disableFinishTransactions = YES;
-  }
+  return [Qonversion sharedInstance];
 }
 
-+ (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
+- (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {
   NSString *userID = [[Qonversion sharedInstance].userInfoService obtainUserID];
   QONVERSION_LOG(@"🚀 Qonversion initialized with userID: %@", userID);
   
@@ -56,25 +57,25 @@
   [[QNAPIClient shared] setUserID:userID];
   [[QNAPIClient shared] setDebug:[Qonversion sharedInstance].debugMode];
   
-  [Qonversion sharedInstance].productCenterManager.disableFinishTransactions = [Qonversion sharedInstance].disableFinishTransactions;
+  [Qonversion sharedInstance].productCenterManager.launchMode = [Qonversion sharedInstance].launchMode;
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
   
   [Qonversion sharedInstance].propertiesManager.productCenterManager = [Qonversion sharedInstance].productCenterManager;
 }
 
-+ (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime {
-  [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:cacheLifetime];
-}
-
-+ (void)identify:(NSString *)userID {
+- (void)identify:(NSString *)userID {
   [[Qonversion sharedInstance].productCenterManager identify:userID];
 }
 
-+ (void)logout {
+- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime {
+  [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:cacheLifetime];
+}
+
+- (void)logout {
   [[Qonversion sharedInstance].productCenterManager logout];
 }
 
-+ (void)setNotificationsToken:(NSData *)token {
+- (void)setNotificationsToken:(NSData *)token {
   NSString *tokenString = [QNUtils convertHexData:token];
   NSString *oldToken = [QNDevice current].pushNotificationsToken;
   if ([tokenString isEqualToString:oldToken] || tokenString.length == 0) {
@@ -87,11 +88,11 @@
 }
 
 #if TARGET_OS_IOS
-+ (BOOL)handleNotification:(NSDictionary *)userInfo {
+- (BOOL)handleNotification:(NSDictionary *)userInfo {
   return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
 }
 
-+ (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)userInfo {
+- (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)userInfo {
   NSDictionary *customPayload = userInfo[kKeyNotificationsCustomPayload];
   if (![customPayload isKindOfClass:[NSDictionary class]]) {
     return nil;
@@ -101,27 +102,27 @@
 }
 #endif
 
-+ (void)presentCodeRedemptionSheet {
+- (void)presentCodeRedemptionSheet {
   [[Qonversion sharedInstance].productCenterManager presentCodeRedemptionSheet];
 }
 
-+ (void)setDebugMode {
+- (void)setDebugMode {
   [Qonversion sharedInstance].debugMode = YES;
 }
 
-+ (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate {
+- (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)delegate {
   [[Qonversion sharedInstance].productCenterManager setPurchasesDelegate:delegate];
 }
 
-+ (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
+- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
   [[Qonversion sharedInstance].productCenterManager setPromoPurchasesDelegate:delegate];
 }
 
-+ (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
+- (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
   [[Qonversion sharedInstance].attributionManager addAttributionData:data fromProvider:provider];
 }
 
-+ (void)setProperty:(QNProperty)property value:(NSString *)value {
+- (void)setProperty:(QNProperty)property value:(NSString *)value {
   NSString *key = [QNProperties keyForProperty:property];
   
   if (key) {
@@ -129,45 +130,45 @@
   }
 }
 
-+ (void)setUserProperty:(NSString *)property value:(NSString *)value {
+- (void)setUserProperty:(NSString *)property value:(NSString *)value {
   [[Qonversion sharedInstance].propertiesManager setUserProperty:property value:value];
 }
 
-+ (void)checkEntitlements:(QNEntitlementsCompletionHandler)completion {
+- (void)checkEntitlements:(QNEntitlementsCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager checkPermissions:completion];
 }
 
-+ (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion {
+- (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager purchaseProduct:product completion:completion];
 }
 
-+ (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
+- (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager purchase:productID completion:completion];
 }
 
-+ (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion {
+- (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager restoreWithCompletion:completion];
 }
 
-+ (void)products:(QNProductsCompletionHandler)completion {
+- (void)products:(QNProductsCompletionHandler)completion {
   return [[Qonversion sharedInstance].productCenterManager products:completion];
 }
 
-+ (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion {
+- (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager checkTrialIntroEligibilityForProductIds:productIds completion:completion];
 }
 
-+ (void)offerings:(QNOfferingsCompletionHandler)completion {
+- (void)offerings:(QNOfferingsCompletionHandler)completion {
   return [[Qonversion sharedInstance].productCenterManager offerings:completion];
 }
 
-+ (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable {
+- (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable {
   if (enable) {
     [[Qonversion sharedInstance].attributionManager addAppleSearchAttributionData];
   }
 }
 
-+ (void)userInfo:(QNUserInfoCompletionHandler)completion {
+- (void)userInfo:(QNUserInfoCompletionHandler)completion {
   [[[Qonversion sharedInstance] productCenterManager] userInfo:completion];
 }
 
@@ -200,9 +201,9 @@
   return self;
 }
 
-+ (void)setAdvertisingID {
+- (void)setAdvertisingID {
   NSString *idfa = [QNDevice current].advertiserID;
-  [Qonversion setProperty:QNPropertyAdvertisingID value:idfa];
+  [[Qonversion sharedInstance] setProperty:QNPropertyAdvertisingID value:idfa];
 }
 
 @end

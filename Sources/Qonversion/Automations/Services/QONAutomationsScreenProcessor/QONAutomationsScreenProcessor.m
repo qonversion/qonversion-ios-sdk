@@ -65,7 +65,7 @@ static NSString *const kMacrosTrialDuration = @"trial_duration";
 }
 
 - (void)processMacroses:(NSArray<QONMacrosProcess *> *)macroses originalHTML:(NSString *)htmlString completion:(QONAutomationsScreenProcessorCompletionHandler)completion {
-  [Qonversion products:^(NSDictionary<NSString *,QNProduct *> * _Nonnull result, NSError * _Nullable error) {
+  [[Qonversion sharedInstance] products:^(NSDictionary<NSString *,QNProduct *> * _Nonnull result, NSError * _Nullable error) {
     if (error) {
       completion(nil, error);
     }
