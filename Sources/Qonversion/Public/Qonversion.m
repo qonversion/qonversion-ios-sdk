@@ -35,12 +35,16 @@
 // MARK: - Public
 
 + (instancetype)initWithConfig:(QONConfiguration *)configuration {
-  [Qonversion sharedInstance].debugMode = configuration.environment == QONEnvironmentSandbox;
-  [Qonversion sharedInstance].launchMode = configuration.launchMode;
-  [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configuration.entitlementsCacheLifetime];
-  [[Qonversion sharedInstance] setEntitlementsUpdateListener:configuration.entitlementsUpdateListener];
+  QONConfiguration *configCopy = [configuration copy];
+  [Qonversion sharedInstance].debugMode = configCopy.environment == QONEnvironmentSandbox;
+  [configuration setEnvironment:QONEnvironmentProduction];
+  [configuration setEntitlementsUpdateListener:[Qonversion sharedInstance]];
   
-  [[Qonversion sharedInstance] launchWithKey:configuration.projectKey completion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+  [Qonversion sharedInstance].launchMode = configCopy.launchMode;
+  [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
+  [[Qonversion sharedInstance] setEntitlementsUpdateListener:configCopy.entitlementsUpdateListener];
+  
+  [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
     
   }];
 }

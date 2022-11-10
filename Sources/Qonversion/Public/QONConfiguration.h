@@ -14,7 +14,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_SWIFT_NAME(Qonversion.Configuration)
+NS_SWIFT_NAME(Configuration)
 @interface QONConfiguration : NSObject <NSCopying>
 
 /**
@@ -32,8 +32,9 @@ NS_SWIFT_NAME(Qonversion.Configuration)
 /**
  Lifetime for an entitlements cache.
  Entitlements cache is used when there are problems with the Qonversion API or internet connection.
+ The default value is QNEntitlementsCacheLifetimeMonth.
  */
-@property (nonatomic, assign, readonly) QNEntitlementsCacheLifetime *entitlementsCacheLifetime;
+@property (nonatomic, assign, readonly) QNEntitlementsCacheLifetime entitlementsCacheLifetime;
          
 /**
  Current application Environment. Used to distinguish sandbox and production users.

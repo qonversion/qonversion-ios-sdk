@@ -18,8 +18,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     FirebaseApp.configure()
     
-//    Qonversion.setDebugMode()
-//    Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
+    let config = Configuration(projectKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2", launchMode: .subscriptionManagement)
+    config.setEnvironment(.sandbox)
+    config.setEntitlementsCacheLifetime(.year)
+    Qonversion.initWithConfig(config)
     Qonversion.shared().setPromoPurchasesDelegate(self)
     Qonversion.shared().setAppleSearchAdsAttributionEnabled(true)
     registerForNotifications()

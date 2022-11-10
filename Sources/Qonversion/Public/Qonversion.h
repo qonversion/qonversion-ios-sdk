@@ -26,6 +26,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface Qonversion : NSObject
 
 /**
+ Use `initWithConfig` instead.
+ */
+- (instancetype)init NS_UNAVAILABLE;
+
+/**
  An entry point to use Qonversion SDK. Call to initialize Qonversion SDK with required and extra configs.
  The function is the best way to set additional configs you need to use Qonversion SDK.
  @param configuration a config that contains key SDK settings.
