@@ -3,6 +3,7 @@
 #import <Qonversion/QNLaunchResult.h>
 #import <Qonversion/QNPromoPurchasesDelegate.h>
 #import <Qonversion/QONEntitlementsUpdateListener.h>
+#import <Qonversion/QNPurchasesDelegate.h>
 #import <Qonversion/QNEntitlement.h>
 #import <Qonversion/QNProduct.h>
 #import <Qonversion/QNStoreKitSugare.h>

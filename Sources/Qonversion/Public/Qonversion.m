@@ -67,6 +67,10 @@
   [[Qonversion sharedInstance].productCenterManager identify:userID];
 }
 
+- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime {
+  [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:cacheLifetime];
+}
+
 - (void)logout {
   [[Qonversion sharedInstance].productCenterManager logout];
 }
