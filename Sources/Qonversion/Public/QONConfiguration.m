@@ -38,7 +38,7 @@
   _environment = environment;
 }
 
-- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime *)entitlementsCacheLifetime {
+- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)entitlementsCacheLifetime {
   _entitlementsCacheLifetime = entitlementsCacheLifetime;
 }
 

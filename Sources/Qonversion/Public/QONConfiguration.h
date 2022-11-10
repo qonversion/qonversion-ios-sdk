@@ -67,7 +67,7 @@ NS_SWIFT_NAME(Configuration)
 
 /**
  Set this listener to handle entitlements update. For example, when pending purchases like SCA, Ask to buy, etc., happened.
- @param listener - listener for handling entitlements update
+ @param entitlementsUpdateListener - listener for handling entitlements update
  */
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)entitlementsUpdateListener;
 

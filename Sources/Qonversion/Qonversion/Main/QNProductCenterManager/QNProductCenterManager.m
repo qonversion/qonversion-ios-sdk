@@ -286,7 +286,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)setPromoPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate {
+- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
   _promoPurchasesDelegate = delegate;
 }
 

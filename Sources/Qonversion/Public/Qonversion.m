@@ -45,6 +45,8 @@
   [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
     
   }];
+  
+  return [Qonversion sharedInstance];
 }
 
 - (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion {

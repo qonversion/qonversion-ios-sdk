@@ -4,7 +4,7 @@
 #import "QONLaunchMode.h"
 
 @class QNLaunchResult;
-@protocol QONEntitlementsUpdateListener, QONEntitlementsUpdateListener;
+@protocol QNPromoPurchasesDelegate, QONEntitlementsUpdateListener;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)identify:(NSString *)userID;
 - (void)logout;
 - (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate;
-- (void)setPromoPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate;
+- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
 - (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime;
 
 - (void)presentCodeRedemptionSheet;
