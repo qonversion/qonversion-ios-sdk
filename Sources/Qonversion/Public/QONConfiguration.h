@@ -66,9 +66,8 @@ NS_SWIFT_NAME(Configuration)
 - (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime;
 
 /**
- Set this listener to handle pending purchases like SCA, Ask to buy, etc
- The delegate will be called when the deferred transaction status updates
- @param listener - listener for handling deferred purchases
+ Set this listener to handle entitlements update. For example, when pending purchases like SCA, Ask to buy, etc., happened.
+ @param listener - listener for handling entitlements update
  */
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)entitlementsUpdateListener;
 

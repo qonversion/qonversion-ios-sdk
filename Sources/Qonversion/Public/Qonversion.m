@@ -37,8 +37,6 @@
 + (instancetype)initWithConfig:(QONConfiguration *)configuration {
   QONConfiguration *configCopy = [configuration copy];
   [Qonversion sharedInstance].debugMode = configCopy.environment == QONEnvironmentSandbox;
-  [configuration setEnvironment:QONEnvironmentProduction];
-  [configuration setEntitlementsUpdateListener:[Qonversion sharedInstance]];
   
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
@@ -106,12 +104,12 @@
   [Qonversion sharedInstance].debugMode = YES;
 }
 
-- (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate {
+- (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)delegate {
   [[Qonversion sharedInstance].productCenterManager setPurchasesDelegate:delegate];
 }
 
-- (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)listener {
-  [[Qonversion sharedInstance].productCenterManager setPromoPurchasesDelegate:listener];
+- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
+  [[Qonversion sharedInstance].productCenterManager setPromoPurchasesDelegate:delegate];
 }
 
 - (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
