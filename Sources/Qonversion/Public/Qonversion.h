@@ -1,19 +1,19 @@
 #import <StoreKit/StoreKit.h>
 
-#import "QNLaunchResult.h"
-#import "QNProduct.h"
-#import "QNEntitlement.h"
-#import "QNOfferings.h"
-#import "QNOffering.h"
-#import "QNIntroEligibility.h"
-#import "QNPromoPurchasesDelegate.h"
+#import "QONLaunchResult.h"
+#import "QONProduct.h"
+#import "QONEntitlement.h"
+#import "QONOfferings.h"
+#import "QONOffering.h"
+#import "QONIntroEligibility.h"
+#import "QONPromoPurchasesDelegate.h"
 #import "QONEntitlementsUpdateListener.h"
-#import "QNExperimentInfo.h"
-#import "QNExperimentGroup.h"
-#import "QNUser.h"
-#import "QNErrors.h"
-#import "QNStoreKitSugare.h"
-#import "QNEntitlementsCacheLifetime.h"
+#import "QONExperimentInfo.h"
+#import "QONExperimentGroup.h"
+#import "QONUser.h"
+#import "QONErrors.h"
+#import "QONStoreKitSugare.h"
+#import "QONEntitlementsCacheLifetime.h"
 #import "QONConfiguration.h"
 
 #if TARGET_OS_IOS
@@ -70,13 +70,13 @@ NS_ASSUME_NONNULL_BEGIN
  The default value is QNEntitlementCacheLifetimeMonth.
  @param cacheLifetime desired entitlements cache lifetime duration
  */
-- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime;
+- (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime;
 
 /**
  Set this delegate to handle AppStore promo purchases
  @param delegate - delegate for handling AppStore promo purchase flow
  */
-- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
+- (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate;
 
 /**
  Shows up a sheet for users to redeem AppStore offer codes
@@ -139,7 +139,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param product Product create in Qonversion Dash
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-- (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion;
+- (void)purchaseProduct:(QONProduct *)product completion:(QNPurchaseCompletionHandler)completion;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend

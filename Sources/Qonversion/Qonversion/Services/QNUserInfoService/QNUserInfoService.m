@@ -23,7 +23,7 @@ static NSUInteger const kKeychainAttemptsCount = 3;
   
   __block __weak QNUserInfoService *weakSelf = self;
   [self.apiClient userInfoRequestWithID:userID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    QNUser *user = [weakSelf.mapper mapUserInfo:dict];
+    QONUser *user = [weakSelf.mapper mapUserInfo:dict];
     completion(user, error);
   }];
 }

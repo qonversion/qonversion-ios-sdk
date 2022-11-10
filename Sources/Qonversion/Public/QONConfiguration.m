@@ -12,7 +12,7 @@
 
 @property (nonatomic, copy, readwrite) NSString *projectKey;
 @property (nonatomic, assign, readwrite) QONLaunchMode launchMode;
-@property (nonatomic, assign, readwrite) QNEntitlementsCacheLifetime entitlementsCacheLifetime;
+@property (nonatomic, assign, readwrite) QONEntitlementsCacheLifetime entitlementsCacheLifetime;
 @property (nonatomic, assign, readwrite) BOOL debugMode;
 @property (nonatomic, weak, readwrite) id<QONEntitlementsUpdateListener> entitlementsUpdateListener;
 
@@ -28,7 +28,7 @@
     _projectKey = projectKey;
     _launchMode = launchMode;
     _environment = QONEnvironmentProduction;
-    _entitlementsCacheLifetime = QNEntitlementsCacheLifetimeMonth;
+    _entitlementsCacheLifetime = QONEntitlementsCacheLifetimeMonth;
   }
   
   return self;
@@ -38,7 +38,7 @@
   _environment = environment;
 }
 
-- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)entitlementsCacheLifetime {
+- (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)entitlementsCacheLifetime {
   _entitlementsCacheLifetime = entitlementsCacheLifetime;
 }
 

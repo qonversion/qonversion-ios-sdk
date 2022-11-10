@@ -7,11 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "QNEntitlement.h"
+#import "QONEntitlement.h"
 
 NS_SWIFT_NAME(Qonversion.EntitlementsUpdateListener)
 @protocol QONEntitlementsUpdateListener <NSObject>
 
-- (void)didReceiveUpdatedEntitlements:(NSDictionary<NSString *, QNEntitlement *>  * _Nonnull)entitlements;
+- (void)didReceiveUpdatedEntitlements:(NSDictionary<NSString *, QONEntitlement *>  * _Nonnull)entitlements;
 
 @end

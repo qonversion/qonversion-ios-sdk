@@ -1,7 +1,7 @@
 #import "QNRequestBuilder.h"
 #import "QNAPIConstants.h"
 #import "QNDevice.h"
-#import "QNConstants.h"
+#import "QONConstants.h"
 
 @interface QNRequestBuilder ()
 

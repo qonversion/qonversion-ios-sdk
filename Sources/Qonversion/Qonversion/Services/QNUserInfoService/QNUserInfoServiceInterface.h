@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "QNLaunchResult.h"
+#import "QONLaunchResult.h"
 
 @protocol QNUserInfoServiceInterface <NSObject>
 

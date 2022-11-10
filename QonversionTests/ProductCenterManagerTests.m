@@ -5,7 +5,7 @@
 #import "QNUserDefaultsStorage.h"
 #import "QNStoreKitService.h"
 #import "QNTestConstants.h"
-#import "QNLaunchResult.h"
+#import "QONLaunchResult.h"
 
 #import "Helpers/XCTestCase+TestJSON.h"
 
@@ -20,7 +20,7 @@
 @property (nonatomic, copy) NSMutableArray *productsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
-@property (nonatomic) QNLaunchResult *launchResult;
+@property (nonatomic) QONLaunchResult *launchResult;
 @property (nonatomic) NSError *launchError;
 
 @property (nonatomic, assign) BOOL launchingFinished;
@@ -55,7 +55,7 @@
   
   OCMStub([_mockClient launchRequest:([OCMArg invokeBlockWithArgs:[self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON], [NSNull null], nil])]);
   
-  [_manager launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
+  [_manager launch:^(QONLaunchResult * _Nullable result, NSError * _Nullable error) {
     XCTAssertNotNil(result);
     XCTAssertNil(error);
     XCTAssertEqual(result.entitlements.count, 2);
@@ -72,7 +72,7 @@
   // Given
   
   // When
-  [_manager checkPermissions:^(NSDictionary<NSString *,QNEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+  [_manager checkPermissions:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     
   }];
   
@@ -86,7 +86,7 @@
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   
   // When
-  [_manager checkPermissions:^(NSDictionary<NSString *,QNEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+  [_manager checkPermissions:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     XCTAssertNil(result);
     XCTAssertNil(error);
     XCTAssertEqual([NSThread mainThread], [NSThread currentThread]);

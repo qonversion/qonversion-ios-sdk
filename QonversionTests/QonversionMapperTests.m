@@ -1,13 +1,13 @@
 #import <XCTest/XCTest.h>
 
 #import "QNMapper.h"
-#import "QNErrors.h"
+#import "QONErrors.h"
 #import "Helpers/XCTestCase+TestJSON.h"
 #import "QNTestConstants.h"
 
 #import "QNMapperObject.h"
-#import "QNEntitlement.h"
-#import "QNLaunchResult.h"
+#import "QONEntitlement.h"
+#import "QONLaunchResult.h"
 
 @interface QNMapperTests : XCTestCase
 @property (nonatomic, strong) NSDictionary *userInitSuccess;
@@ -31,16 +31,16 @@
 }
 
 - (void)testThatMapperParsePermissions {
-  QNLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
+  QONLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
   
   XCTAssertNotNil(result);
   XCTAssertTrue([result.uid isEqualToString:@"qonversion_user_id"]);
   XCTAssertTrue([result.entitlements isKindOfClass:NSDictionary.class]);
   
-  QNEntitlement *premium = result.entitlements[@"premium"];
+  QONEntitlement *premium = result.entitlements[@"premium"];
   XCTAssertNotNil(premium);
   XCTAssertTrue(premium.isActive);
-  XCTAssertEqual(premium.renewState, QNEntitlementRenewStateBillingIssue);
+  XCTAssertEqual(premium.renewState, QONEntitlementRenewStateBillingIssue);
   
   XCTAssertNotNil(premium.startedDate);
   
@@ -52,12 +52,12 @@
 }
 
 - (void)testThatMapperParseFewPermissionsCorrectly {
-  QNLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
+  QONLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
   
   XCTAssertNotNil(result);
   XCTAssertEqual(result.entitlements.count, 2);
   
-  QNEntitlement *standart = result.entitlements[@"standart"];
+  QONEntitlement *standart = result.entitlements[@"standart"];
   XCTAssertNotNil(standart);
   XCTAssertTrue([standart.entitlementID isEqualToString:@"standart"]);
   XCTAssertFalse(standart.isActive);
@@ -76,7 +76,7 @@
   XCTAssertNil(brokenResult.data);
   XCTAssertNotNil(brokenResult.error);
   
-  XCTAssertEqual(brokenResult.error.code, QNErrorInternalError);
+  XCTAssertEqual(brokenResult.error.code, QONErrorInternalError);
 }
 
 - (void)testThatMapperParseIntegerFromAnyObject {

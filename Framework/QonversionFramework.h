@@ -1,21 +1,21 @@
 #import <Qonversion/Qonversion.h>
 
-#import <Qonversion/QNLaunchResult.h>
-#import <Qonversion/QNPromoPurchasesDelegate.h>
+#import <Qonversion/QONLaunchResult.h>
+#import <Qonversion/QONPromoPurchasesDelegate.h>
 #import <Qonversion/QONEntitlementsUpdateListener.h>
-#import <Qonversion/QNEntitlement.h>
-#import <Qonversion/QNProduct.h>
-#import <Qonversion/QNStoreKitSugare.h>
-#import <Qonversion/QNConstants.h>
-#import <Qonversion/QNErrors.h>
-#import <Qonversion/QNOfferings.h>
-#import <Qonversion/QNOffering.h>
-#import <Qonversion/QNIntroEligibility.h>
-#import <Qonversion/QNExperimentInfo.h>
-#import <Qonversion/QNExperimentGroup.h>
+#import <Qonversion/QONEntitlement.h>
+#import <Qonversion/QONProduct.h>
+#import <Qonversion/QONStoreKitSugare.h>
+#import <Qonversion/QONConstants.h>
+#import <Qonversion/QONErrors.h>
+#import <Qonversion/QONOfferings.h>
+#import <Qonversion/QONOffering.h>
+#import <Qonversion/QONIntroEligibility.h>
+#import <Qonversion/QONExperimentInfo.h>
+#import <Qonversion/QONExperimentGroup.h>
 
 #import <Qonversion/QONAutomations.h>
 #import <Qonversion/QONAutomationsDelegate.h>
 #import <Qonversion/QONActionResult.h>
 
-#import <Qonversion/QNUser.h>
+#import <Qonversion/QONUser.h>

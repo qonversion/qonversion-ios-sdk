@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "QONLaunchMode.h"
-#import "QNEntitlementsCacheLifetime.h"
+#import "QONEntitlementsCacheLifetime.h"
 #import "QONEntitlementsUpdateListener.h"
 #import "QONEnvironment.h"
 
@@ -32,9 +32,9 @@ NS_SWIFT_NAME(Configuration)
 /**
  Lifetime for an entitlements cache.
  Entitlements cache is used when there are problems with the Qonversion API or internet connection.
- The default value is QNEntitlementsCacheLifetimeMonth.
+ The default value is QONEntitlementsCacheLifetimeMonth.
  */
-@property (nonatomic, assign, readonly) QNEntitlementsCacheLifetime entitlementsCacheLifetime;
+@property (nonatomic, assign, readonly) QONEntitlementsCacheLifetime entitlementsCacheLifetime;
          
 /**
  Current application Environment. Used to distinguish sandbox and production users.
@@ -63,7 +63,7 @@ NS_SWIFT_NAME(Configuration)
  The default value is QNEntitlementCacheLifetimeMonth.
  @param cacheLifetime desired entitlements cache lifetime duration
  */
-- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime;
+- (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime;
 
 /**
  Set this listener to handle entitlements update. For example, when pending purchases like SCA, Ask to buy, etc., happened.

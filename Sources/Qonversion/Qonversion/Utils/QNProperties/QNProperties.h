@@ -1,4 +1,4 @@
-#import "QNLaunchResult.h"
+#import "QONLaunchResult.h"
 
 @interface QNProperties : NSObject
 

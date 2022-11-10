@@ -1,4 +1,4 @@
-#import "QNLaunchResult.h"
+#import "QONLaunchResult.h"
 
 @class SKProduct, SKPaymentTransaction, QNProductPurchaseModel;
 
@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
                        receipt:(nullable NSString *)receipt
                  purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel;
 
-- (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QNProduct *> *)products;
+- (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QONProduct *> *)products;
 - (NSDictionary *)pushTokenData;
 
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;

@@ -48,7 +48,7 @@
   NSString *userID = @"random_user_id";
   NSString *anonUserID = @"anon_user_id";
   NSString *identityID = @"result_identity_id";
-  NSError *randomError = [QNErrors deferredTransactionError]; // just a random error
+  NSError *randomError = [QONErrors deferredTransactionError]; // just a random error
   
   __block NSString *resultString;
   __block NSError *resultError;
@@ -87,7 +87,7 @@
   NSString *userID = @"random_user_id";
   NSString *anonUserID = @"anon_user_id";
   NSString *identityID = @"";
-  NSError *randomError = [QNErrors deferredTransactionError]; // just a random error
+  NSError *randomError = [QONErrors deferredTransactionError]; // just a random error
   
   __block NSString *resultString;
   __block NSError *resultError;
@@ -123,7 +123,7 @@
   NSString *userID = @"random_user_id";
   NSString *anonUserID = @"anon_user_id";
   
-  NSError *randomError = [QNErrors deferredTransactionError]; // just a random error
+  NSError *randomError = [QONErrors deferredTransactionError]; // just a random error
   
   __block NSString *resultString;
   __block NSError *resultError;

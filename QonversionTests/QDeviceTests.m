@@ -2,7 +2,7 @@
 #import <OCMock/OCMock.h>
 
 #import "QNDevice.h"
-#import "QNConstants.h"
+#import "QONConstants.h"
 #import "QNDevice+Advertising.h"
 
 // expose private methods for unit testing

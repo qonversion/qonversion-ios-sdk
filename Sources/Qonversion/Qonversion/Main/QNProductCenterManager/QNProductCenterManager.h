@@ -1,10 +1,10 @@
 #import <Foundation/Foundation.h>
-#import "QNLaunchResult.h"
-#import "QNEntitlementsCacheLifetime.h"
+#import "QONLaunchResult.h"
+#import "QONEntitlementsCacheLifetime.h"
 #import "QONLaunchMode.h"
 
-@class QNLaunchResult;
-@protocol QNPromoPurchasesDelegate, QONEntitlementsUpdateListener;
+@class QONLaunchResult;
+@protocol QONPromoPurchasesDelegate, QONEntitlementsUpdateListener;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -15,14 +15,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)identify:(NSString *)userID;
 - (void)logout;
 - (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate;
-- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
-- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime;
+- (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate;
+- (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime;
 
 - (void)presentCodeRedemptionSheet;
 
 - (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion;
 - (void)checkPermissions:(QNEntitlementsCompletionHandler)completion;
-- (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion;
+- (void)purchaseProduct:(QONProduct *)product completion:(QNPurchaseCompletionHandler)completion;
 - (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
 - (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;
 
@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)userInfo:(QNUserInfoCompletionHandler)completion;
 
-- (void)launch:(void (^)(QNLaunchResult * _Nullable result, NSError * _Nullable error))completion;
+- (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 - (void)sendPushToken;
 
 @end

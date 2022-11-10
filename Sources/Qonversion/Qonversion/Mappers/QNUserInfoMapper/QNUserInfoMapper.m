@@ -7,7 +7,7 @@
 //
 
 #import "QNUserInfoMapper.h"
-#import "QNUser+Protected.h"
+#import "QONUser+Protected.h"
 
 @interface QNUserInfoMapper ()
 
@@ -17,13 +17,13 @@
 
 @implementation QNUserInfoMapper
 
-- (QNUser *)mapUserInfo:(NSDictionary *)data {
+- (QONUser *)mapUserInfo:(NSDictionary *)data {
   NSDictionary *userData = [self getDataFromObject:data];
 
   NSString *userID = userData[@"id"];
   NSString *originalAppVersion = userData[@"originalAppVersion"];
   
-  QNUser *user = [[QNUser alloc] initWithID:userID
+  QONUser *user = [[QONUser alloc] initWithID:userID
                          originalAppVersion:originalAppVersion];
   
   return user;

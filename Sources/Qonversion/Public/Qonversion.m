@@ -42,7 +42,7 @@
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
   [[Qonversion sharedInstance] setEntitlementsUpdateListener:configCopy.entitlementsUpdateListener];
   
-  [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+  [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
     
   }];
   
@@ -67,7 +67,7 @@
   [[Qonversion sharedInstance].productCenterManager identify:userID];
 }
 
-- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime {
+- (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime {
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:cacheLifetime];
 }
 
@@ -114,7 +114,7 @@
   [[Qonversion sharedInstance].productCenterManager setPurchasesDelegate:delegate];
 }
 
-- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate {
+- (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate {
   [[Qonversion sharedInstance].productCenterManager setPromoPurchasesDelegate:delegate];
 }
 
@@ -138,7 +138,7 @@
   [[Qonversion sharedInstance].productCenterManager checkPermissions:completion];
 }
 
-- (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion {
+- (void)purchaseProduct:(QONProduct *)product completion:(QNPurchaseCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager purchaseProduct:product completion:completion];
 }
 

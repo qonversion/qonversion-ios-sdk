@@ -1,11 +1,11 @@
 #import "QNRequestSerializer.h"
 #import "QNUserInfo.h"
 #import "QNDevice.h"
-#import "QNStoreKitSugare.h"
-#import "QNProduct.h"
+#import "QONStoreKitSugare.h"
+#import "QONProduct.h"
 #import "QNProductPurchaseModel.h"
-#import "QNExperimentInfo.h"
-#import "QNExperimentGroup.h"
+#import "QONExperimentInfo.h"
+#import "QONExperimentGroup.h"
 
 @interface QNRequestSerializer ()
 
@@ -87,7 +87,7 @@ NS_ASSUME_NONNULL_BEGIN
   return result;
 }
 
-- (NSDictionary *)configureExperimentInfo:(QNExperimentInfo * _Nullable)experimentInfo {
+- (NSDictionary *)configureExperimentInfo:(QONExperimentInfo * _Nullable)experimentInfo {
   NSMutableDictionary *dict = [NSMutableDictionary new];
   
   if (experimentInfo) {
@@ -97,12 +97,12 @@ NS_ASSUME_NONNULL_BEGIN
   return [dict copy];
 }
 
-- (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QNProduct *> *)products {
+- (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QONProduct *> *)products {
   NSMutableDictionary *result = [[self mainData] mutableCopy];
   
   NSMutableArray *productsLocalData = [NSMutableArray new];
   
-  for (QNProduct *product in products) {
+  for (QONProduct *product in products) {
     NSMutableDictionary *param = [NSMutableDictionary new];
     param[@"store_id"] = product.storeID;
     

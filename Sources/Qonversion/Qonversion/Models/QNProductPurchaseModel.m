@@ -7,12 +7,12 @@
 //
 
 #import "QNProductPurchaseModel.h"
-#import "QNProduct.h"
-#import "QNExperimentInfo.h"
+#import "QONProduct.h"
+#import "QONExperimentInfo.h"
 
 @implementation QNProductPurchaseModel
 
-- (instancetype)initWithProduct:(QNProduct *)product experimentInfo:(QNExperimentInfo * _Nullable)experimentInfo {
+- (instancetype)initWithProduct:(QONProduct *)product experimentInfo:(QONExperimentInfo * _Nullable)experimentInfo {
   self = [super init];
   
   if (self) {
