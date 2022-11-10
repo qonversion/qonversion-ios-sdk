@@ -16,7 +16,7 @@
 
 @property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
 
-@property (nonatomic, copy) NSMutableArray *permissionsBlocks;
+@property (nonatomic, copy) NSMutableArray *entitlementsBlocks;
 @property (nonatomic, copy) NSMutableArray *productsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
@@ -77,7 +77,7 @@
   }];
   
   // Then
-  XCTAssertEqual(_manager.permissionsBlocks.count, 1);
+  XCTAssertEqual(_manager.entitlementsBlocks.count, 1);
 }
 
 - (void)testThatCheckPermissionCallBlockWhenLaunchingFinished {
