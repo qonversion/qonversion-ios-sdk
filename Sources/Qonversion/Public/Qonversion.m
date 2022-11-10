@@ -62,7 +62,7 @@
   [Qonversion sharedInstance].propertiesManager.productCenterManager = [Qonversion sharedInstance].productCenterManager;
 }
 
-+ (void)setPermissionsCacheLifetime:(QNPermissionsCacheLifetime)cacheLifetime {
++ (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime {
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:cacheLifetime];
 }
 
@@ -133,7 +133,7 @@
   [[Qonversion sharedInstance].propertiesManager setUserProperty:property value:value];
 }
 
-+ (void)checkPermissions:(QNPermissionCompletionHandler)completion {
++ (void)checkEntitlements:(QNEntitlementsCompletionHandler)completion {
   [[Qonversion sharedInstance].productCenterManager checkPermissions:completion];
 }
 

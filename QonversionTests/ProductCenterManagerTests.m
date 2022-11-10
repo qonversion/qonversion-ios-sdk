@@ -16,7 +16,7 @@
 
 @property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
 
-@property (nonatomic, copy) NSMutableArray *permissionsBlocks;
+@property (nonatomic, copy) NSMutableArray *entitlementsBlocks;
 @property (nonatomic, copy) NSMutableArray *productsBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
@@ -26,7 +26,7 @@
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoaded;
 
-- (void)checkPermissions:(QNPermissionCompletionHandler)result;
+- (void)checkPermissions:(QNEntitlementsCompletionHandler)result;
 
 @end
 
@@ -58,7 +58,7 @@
   [_manager launch:^(QNLaunchResult * _Nullable result, NSError * _Nullable error) {
     XCTAssertNotNil(result);
     XCTAssertNil(error);
-    XCTAssertEqual(result.permissions.count, 2);
+    XCTAssertEqual(result.entitlements.count, 2);
     XCTAssertEqual(result.products.count, 1);
     XCTAssertEqualObjects(result.uid, @"qonversion_user_id");
     
@@ -72,12 +72,12 @@
   // Given
   
   // When
-  [_manager checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
+  [_manager checkPermissions:^(NSDictionary<NSString *,QNEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     
   }];
   
   // Then
-  XCTAssertEqual(_manager.permissionsBlocks.count, 1);
+  XCTAssertEqual(_manager.entitlementsBlocks.count, 1);
 }
 
 - (void)testThatCheckPermissionCallBlockWhenLaunchingFinished {
@@ -86,7 +86,7 @@
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   
   // When
-  [_manager checkPermissions:^(NSDictionary<NSString *,QNPermission *> * _Nonnull result, NSError * _Nullable error) {
+  [_manager checkPermissions:^(NSDictionary<NSString *,QNEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     XCTAssertNil(result);
     XCTAssertNil(error);
     XCTAssertEqual([NSThread mainThread], [NSThread currentThread]);

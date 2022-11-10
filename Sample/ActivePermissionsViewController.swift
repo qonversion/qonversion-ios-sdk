@@ -11,7 +11,7 @@ import Qonversion
 
 class ActivePermissionsViewController: UIViewController {
   
-  var permissions: [Qonversion.Permission] = []
+  var permissions: [Qonversion.Entitlement] = []
   
   @IBOutlet weak var tableView: UITableView!
   
@@ -39,7 +39,7 @@ extension ActivePermissionsViewController: UITableViewDataSource {
   }
   
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let permission: Qonversion.Permission = permissions[indexPath.row]
+    let permission: Qonversion.Entitlement = permissions[indexPath.row]
     
     let cell = tableView.dequeueReusableCell(withIdentifier: "ActivePermissionsTableViewCell", for: indexPath) as! ActivePermissionsTableViewCell
     cell.setup(with: permission)

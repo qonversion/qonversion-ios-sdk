@@ -1,12 +1,12 @@
-#import "QNPermission.h"
+#import "QNEntitlement.h"
 
-@implementation QNPermission : NSObject
+@implementation QNEntitlement : NSObject
 
 - (instancetype)initWithCoder:(NSCoder *)coder
 {
   self = [super init];
   if (self) {
-    _permissionID = [coder decodeObjectForKey:NSStringFromSelector(@selector(permissionID))];
+    _entitlementID = [coder decodeObjectForKey:NSStringFromSelector(@selector(entitlementID))];
     _productID = [coder decodeObjectForKey:NSStringFromSelector(@selector(productID))];
     _isActive = [coder decodeBoolForKey:NSStringFromSelector(@selector(isActive))];
     _renewState = [coder decodeIntegerForKey:NSStringFromSelector(@selector(renewState))];
@@ -19,7 +19,7 @@
 
 - (void)encodeWithCoder:(NSCoder *)coder
 {
-  [coder encodeObject:_permissionID forKey:NSStringFromSelector(@selector(permissionID))];
+  [coder encodeObject:_entitlementID forKey:NSStringFromSelector(@selector(entitlementID))];
   [coder encodeObject:_productID forKey:NSStringFromSelector(@selector(productID))];
   [coder encodeBool:_isActive forKey:NSStringFromSelector(@selector(isActive))];
   [coder encodeInteger:_renewState forKey:NSStringFromSelector(@selector(renewState))];
@@ -32,7 +32,7 @@
 {
   NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
   
-  [description appendFormat:@"id=%@,\n", self.permissionID];
+  [description appendFormat:@"id=%@,\n", self.entitlementID];
   [description appendFormat:@"isActive=%d,\n", self.isActive];
   [description appendFormat:@"productID=%@,\n", self.productID];
   [description appendFormat:@"renewState=%@ (enum value = %li),\n", [self prettyRenewState], (long) self.renewState];
@@ -48,16 +48,16 @@
   NSString *result = @"unknown";
   
   switch (self.renewState) {
-    case QNPermissionRenewStateNonRenewable:
+    case QNEntitlementRenewStateNonRenewable:
       result = @"non renewable"; break;
     
-    case QNPermissionRenewStateWillRenew:
+    case QNEntitlementRenewStateWillRenew:
       result = @"will renew"; break;
     
-    case QNPermissionRenewStateCancelled:
+    case QNEntitlementRenewStateCancelled:
       result = @"cancelled"; break;
       
-    case QNPermissionRenewStateBillingIssue:
+    case QNEntitlementRenewStateBillingIssue:
       result = @"billing issue"; break;
       
     default:
@@ -69,19 +69,19 @@
 
 - (NSString *)prettySource {
    switch (self.source) {
-     case QNPermissionSourceUnknown:
+     case QNEntitlementSourceUnknown:
        return @"Unknown";
 
-     case QNPermissionSourceAppStore:
+     case QNEntitlementSourceAppStore:
        return @"App Store";
 
-     case QNPermissionSourcePlayStore:
+     case QNEntitlementSourcePlayStore:
        return @"Play Store";
 
-     case QNPermissionSourceStripe:
+     case QNEntitlementSourceStripe:
        return @"Stripe";
        
-     case QNPermissionSourceManual:
+     case QNEntitlementSourceManual:
        return @"Manual";
    }
  }

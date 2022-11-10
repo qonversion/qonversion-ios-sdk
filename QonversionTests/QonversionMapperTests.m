@@ -6,7 +6,7 @@
 #import "QNTestConstants.h"
 
 #import "QNMapperObject.h"
-#import "QNPermission.h"
+#import "QNEntitlement.h"
 #import "QNLaunchResult.h"
 
 @interface QNMapperTests : XCTestCase
@@ -35,12 +35,12 @@
   
   XCTAssertNotNil(result);
   XCTAssertTrue([result.uid isEqualToString:@"qonversion_user_id"]);
-  XCTAssertTrue([result.permissions isKindOfClass:NSDictionary.class]);
+  XCTAssertTrue([result.entitlements isKindOfClass:NSDictionary.class]);
   
-  QNPermission *premium = result.permissions[@"premium"];
+  QNEntitlement *premium = result.entitlements[@"premium"];
   XCTAssertNotNil(premium);
   XCTAssertTrue(premium.isActive);
-  XCTAssertEqual(premium.renewState, QNPermissionRenewStateBillingIssue);
+  XCTAssertEqual(premium.renewState, QNEntitlementRenewStateBillingIssue);
   
   XCTAssertNotNil(premium.startedDate);
   
@@ -55,11 +55,11 @@
   QNLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
   
   XCTAssertNotNil(result);
-  XCTAssertEqual(result.permissions.count, 2);
+  XCTAssertEqual(result.entitlements.count, 2);
   
-  QNPermission *standart = result.permissions[@"standart"];
+  QNEntitlement *standart = result.entitlements[@"standart"];
   XCTAssertNotNil(standart);
-  XCTAssertTrue([standart.permissionID isEqualToString:@"standart"]);
+  XCTAssertTrue([standart.entitlementID isEqualToString:@"standart"]);
   XCTAssertFalse(standart.isActive);
 }
 

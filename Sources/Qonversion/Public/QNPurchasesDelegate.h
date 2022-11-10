@@ -7,11 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "QNPermission.h"
+#import "QNEntitlement.h"
 
 NS_SWIFT_NAME(Qonversion.PurchasesDelegate)
 @protocol QNPurchasesDelegate <NSObject>
 
-- (void)qonversionDidReceiveUpdatedPermissions:(NSDictionary<NSString *, QNPermission *>  * _Nonnull)permissions;
+- (void)qonversionDidReceiveUpdatedEntitlements:(NSDictionary<NSString *, QNEntitlement *>  * _Nonnull)entitlements;
 
 @end
