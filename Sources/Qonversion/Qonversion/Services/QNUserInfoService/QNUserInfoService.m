@@ -18,7 +18,7 @@ static NSUInteger const kKeychainAttemptsCount = 3;
 
 @implementation QNUserInfoService
 
-- (void)obtainUserInfo:(QNUserInfoCompletionHandler)completion {
+- (void)obtainUserInfo:(QONUserInfoCompletionHandler)completion {
   NSString *userID = [self obtainUserID];
   
   __block __weak QNUserInfoService *weakSelf = self;

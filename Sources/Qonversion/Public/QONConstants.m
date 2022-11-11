@@ -4,11 +4,11 @@ NSString *const keyQVersion = @"2.21.1";
 NSString *const keyQUnknownLibrary = @"unknown";
 NSString *const keyQUnknownVersion = @"unknown";
 NSString *const keyQInternalUserID = @"keyQInternalUserID";
-NSString *const keyQNPropertyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
+NSString *const keyQONPropertyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
 NSString *const keyQSource = @"com.qonversion.keys.source";
 NSString *const keyQSourceVersion = @"com.qonversion.keys.sourceVersion";
 
-NSString *const keyQNPropertyFacebookAnonUserID = @"_q_fb_anon_id";
+NSString *const keyQONPropertyFacebookAnonUserID = @"_q_fb_anon_id";
 
 NSString * const keyQONErrorDomain = @"com.qonversion.io";
 NSString * const keyQONAPIErrorDomain = @"com.qonversion.io.api";

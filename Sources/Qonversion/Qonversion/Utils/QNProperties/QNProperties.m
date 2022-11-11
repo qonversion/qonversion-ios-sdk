@@ -4,31 +4,31 @@
 
 @implementation QNProperties
 
-+ (nullable NSString *)keyForProperty:(QNProperty) property {
++ (nullable NSString *)keyForProperty:(QONProperty) property {
   NSString *key = nil;
   switch (property) {
-    case QNPropertyEmail:
+    case QONPropertyEmail:
       key = @"_q_email";
       break;
-    case QNPropertyName:
+    case QONPropertyName:
       key = @"_q_name";
       break;
-    case QNPropertyKochavaDeviceID:
+    case QONPropertyKochavaDeviceID:
       key = @"_q_kochava_device_id";
       break;
-    case QNPropertyAppsFlyerUserID:
+    case QONPropertyAppsFlyerUserID:
       key = @"_q_appsflyer_user_id";
       break;
-    case QNPropertyAdjustUserID:
+    case QONPropertyAdjustUserID:
       key = @"_q_adjust_adid";
       break;
-    case QNPropertyAdvertisingID:
+    case QONPropertyAdvertisingID:
       key = @"_q_advertising_id";
       break;
-    case QNPropertyUserID:
+    case QONPropertyUserID:
       key = @"_q_custom_user_id";
       break;
-    case QNPropertyFirebaseAppInstanceId:
+    case QONPropertyFirebaseAppInstanceId:
       key = @"_q_firebase_instance_id";
       break;
   }
@@ -45,7 +45,7 @@
     return NO;
   }
   
-  NSRange range = [property rangeOfString:keyQNPropertyReg options:NSRegularExpressionSearch];
+  NSRange range = [property rangeOfString:keyQONPropertyReg options:NSRegularExpressionSearch];
   return range.location != NSNotFound;
 }
 

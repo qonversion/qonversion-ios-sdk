@@ -118,7 +118,7 @@ NS_ASSUME_NONNULL_BEGIN
   return [result copy];
 }
 
-- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
+- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider {
   NSMutableDictionary *deviceData = [self.mainData mutableCopy];
   // remove unused field for attribution request
   deviceData[@"receipt"] = nil;
@@ -127,26 +127,26 @@ NS_ASSUME_NONNULL_BEGIN
   NSMutableDictionary *providerData = [NSMutableDictionary new];
   
   switch (provider) {
-    case QNAttributionProviderAppsFlyer:
+    case QONAttributionProviderAppsFlyer:
       [providerData setValue:@"appsflyer" forKey:@"provider"];
       break;
-    case QNAttributionProviderAdjust:
+    case QONAttributionProviderAdjust:
       [providerData setValue:@"adjust" forKey:@"provider"];
       break;
-    case QNAttributionProviderBranch:
+    case QONAttributionProviderBranch:
       [providerData setValue:@"branch" forKey:@"provider"];
       break;
-    case QNAttributionProviderAppleSearchAds:
+    case QONAttributionProviderAppleSearchAds:
       [providerData setValue:@"apple_search_ads" forKey:@"provider"];
       break;
-    case QNAttributionProviderAppleAdServices:
+    case QONAttributionProviderAppleAdServices:
       [providerData setValue:@"apple_adservices_token" forKey:@"provider"];
       break;
   }
   
   NSString *_uid = nil;
   NSString *af_uid = QNDevice.current.afUserID;
-  if (af_uid && provider == QNAttributionProviderAppsFlyer) {
+  if (af_uid && provider == QONAttributionProviderAppsFlyer) {
     _uid = af_uid;
   }
   

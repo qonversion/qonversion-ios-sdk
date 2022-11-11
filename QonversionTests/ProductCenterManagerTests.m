@@ -14,7 +14,7 @@
 @property (nonatomic) QNStoreKitService *storeKitService;
 @property (nonatomic) QNUserDefaultsStorage *persistentStorage;
 
-@property (nonatomic) QNPurchaseCompletionHandler purchasingBlock;
+@property (nonatomic) QONPurchaseCompletionHandler purchasingBlock;
 
 @property (nonatomic, copy) NSMutableArray *entitlementsBlocks;
 @property (nonatomic, copy) NSMutableArray *productsBlocks;
@@ -26,7 +26,7 @@
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoaded;
 
-- (void)checkPermissions:(QNEntitlementsCompletionHandler)result;
+- (void)checkPermissions:(QONEntitlementsCompletionHandler)result;
 
 @end
 

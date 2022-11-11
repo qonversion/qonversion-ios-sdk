@@ -20,18 +20,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)presentCodeRedemptionSheet;
 
-- (void)launchWithCompletion:(nullable QNLaunchCompletionHandler)completion;
-- (void)checkPermissions:(QNEntitlementsCompletionHandler)completion;
-- (void)purchaseProduct:(QONProduct *)product completion:(QNPurchaseCompletionHandler)completion;
-- (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
+- (void)launchWithCompletion:(nullable QONLaunchCompletionHandler)completion;
+- (void)checkPermissions:(QONEntitlementsCompletionHandler)completion;
+- (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
+- (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion;
 - (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;
 
-- (void)products:(QNProductsCompletionHandler)completion;
-- (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion;
-- (void)offerings:(QNOfferingsCompletionHandler)completion;
-- (void)experiments:(QNExperimentsCompletionHandler)completion;
+- (void)products:(QONProductsCompletionHandler)completion;
+- (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion;
+- (void)offerings:(QONOfferingsCompletionHandler)completion;
+- (void)experiments:(QONExperimentsCompletionHandler)completion;
 
-- (void)userInfo:(QNUserInfoCompletionHandler)completion;
+- (void)userInfo:(QONUserInfoCompletionHandler)completion;
 
 - (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 - (void)sendPushToken;

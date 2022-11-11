@@ -4,12 +4,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class QONEntitlement, QONProduct, QONOfferings, QONIntroEligibility, QONExperimentInfo, QONUser;
 
-typedef NS_ENUM(NSInteger, QNAttributionProvider) {
-  QNAttributionProviderAppsFlyer = 0,
-  QNAttributionProviderBranch,
-  QNAttributionProviderAdjust,
-  QNAttributionProviderAppleSearchAds,
-  QNAttributionProviderAppleAdServices
+typedef NS_ENUM(NSInteger, QONAttributionProvider) {
+  QONAttributionProviderAppsFlyer = 0,
+  QONAttributionProviderBranch,
+  QONAttributionProviderAdjust,
+  QONAttributionProviderAppleSearchAds,
+  QONAttributionProviderAppleAdServices
 } NS_SWIFT_NAME(Qonversion.AttributionProvider);
 
 /**
@@ -17,15 +17,15 @@ typedef NS_ENUM(NSInteger, QNAttributionProvider) {
  We defined some common case properties and provided API for adding them
  @see [Product Center](https://qonversion.io/docs/defined-user-properties)
  */
-typedef NS_ENUM(NSInteger, QNProperty) {
-  QNPropertyEmail = 0,
-  QNPropertyName,
-  QNPropertyAppsFlyerUserID,
-  QNPropertyAdjustUserID,
-  QNPropertyKochavaDeviceID,
-  QNPropertyAdvertisingID,
-  QNPropertyUserID,
-  QNPropertyFirebaseAppInstanceId
+typedef NS_ENUM(NSInteger, QONProperty) {
+  QONPropertyEmail = 0,
+  QONPropertyName,
+  QONPropertyAppsFlyerUserID,
+  QONPropertyAdjustUserID,
+  QONPropertyKochavaDeviceID,
+  QONPropertyAdvertisingID,
+  QONPropertyUserID,
+  QONPropertyFirebaseAppInstanceId
 } NS_SWIFT_NAME(Qonversion.Property);
 
 
@@ -69,22 +69,22 @@ NS_SWIFT_NAME(Qonversion.LaunchResult)
 
 @end
 
-typedef void (^QNLaunchCompletionHandler)(QONLaunchResult *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.LaunchCompletionHandler);
+typedef void (^QONLaunchCompletionHandler)(QONLaunchResult *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.LaunchCompletionHandler);
 
-typedef void (^QNEntitlementsCompletionHandler)(NSDictionary<NSString *, QONEntitlement*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.EntitlementsCompletionHandler);
+typedef void (^QONEntitlementsCompletionHandler)(NSDictionary<NSString *, QONEntitlement*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.EntitlementsCompletionHandler);
 
-typedef void (^QNPurchaseCompletionHandler)(NSDictionary<NSString *, QONEntitlement*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
-typedef void (^QNPromoPurchaseCompletionHandler)(QNPurchaseCompletionHandler) NS_SWIFT_NAME(Qonversion.PromoPurchaseCompletionHandler);
+typedef void (^QONPurchaseCompletionHandler)(NSDictionary<NSString *, QONEntitlement*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
+typedef void (^QONPromoPurchaseCompletionHandler)(QONPurchaseCompletionHandler) NS_SWIFT_NAME(Qonversion.PromoPurchaseCompletionHandler);
 typedef void (^QNRestoreCompletionHandler)(NSDictionary<NSString *, QONEntitlement*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.RestoreCompletionHandler);
 
-typedef void (^QNProductsCompletionHandler)(NSDictionary<NSString *, QONProduct *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ProductsCompletionHandler);
+typedef void (^QONProductsCompletionHandler)(NSDictionary<NSString *, QONProduct *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ProductsCompletionHandler);
 
-typedef void (^QNEligibilityCompletionHandler)(NSDictionary<NSString *, QONIntroEligibility *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.EligibilityCompletionHandler);
+typedef void (^QONEligibilityCompletionHandler)(NSDictionary<NSString *, QONIntroEligibility *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.EligibilityCompletionHandler);
 
-typedef void (^QNExperimentsCompletionHandler)(NSDictionary<NSString *, QONExperimentInfo *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ExperimentsCompletionHandler);
+typedef void (^QONExperimentsCompletionHandler)(NSDictionary<NSString *, QONExperimentInfo *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ExperimentsCompletionHandler);
 
-typedef void (^QNUserInfoCompletionHandler)(QONUser *_Nullable user, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.UserInfoCompletionHandler);
+typedef void (^QONUserInfoCompletionHandler)(QONUser *_Nullable user, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.UserInfoCompletionHandler);
 
-typedef void (^QNOfferingsCompletionHandler)(QONOfferings *_Nullable offerings, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.OfferingsCompletionHandler);
+typedef void (^QONOfferingsCompletionHandler)(QONOfferings *_Nullable offerings, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.OfferingsCompletionHandler);
 
 NS_ASSUME_NONNULL_END

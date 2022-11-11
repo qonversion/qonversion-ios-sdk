@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QONProduct *> *)products;
 - (NSDictionary *)pushTokenData;
 
-- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;
+- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider;
 
 @end
 

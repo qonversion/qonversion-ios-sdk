@@ -159,7 +159,7 @@
   return [self dataTaskWithRequest:request completion:nil];
 }
 
-- (void)attributionRequest:(QNAttributionProvider)provider
+- (void)attributionRequest:(QONAttributionProvider)provider
                       data:(NSDictionary *)data
                 completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];

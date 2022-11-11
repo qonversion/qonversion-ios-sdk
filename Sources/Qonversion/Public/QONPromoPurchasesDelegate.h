@@ -16,6 +16,6 @@
  @param productID            StoreKit product identifier
  @param executionBlock purchase execution block
  */
-- (void)shouldPurchasePromoProductWithIdentifier:(NSString *)productID executionBlock:(QNPromoPurchaseCompletionHandler)executionBlock;
+- (void)shouldPurchasePromoProductWithIdentifier:(NSString *)productID executionBlock:(QONPromoPurchaseCompletionHandler)executionBlock;
 
 @end

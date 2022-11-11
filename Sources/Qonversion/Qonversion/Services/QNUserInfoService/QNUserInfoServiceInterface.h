@@ -11,7 +11,7 @@
 
 @protocol QNUserInfoServiceInterface <NSObject>
 
-- (void)obtainUserInfo:(QNUserInfoCompletionHandler)completion;
+- (void)obtainUserInfo:(QONUserInfoCompletionHandler)completion;
 - (NSString *)obtainUserID;
 - (void)storeIdentity:(NSString *)userID;
 - (BOOL)logoutIfNeeded;
