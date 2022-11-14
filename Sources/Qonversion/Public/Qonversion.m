@@ -67,10 +67,6 @@
   [[Qonversion sharedInstance].productCenterManager identify:userID];
 }
 
-- (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime {
-  [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:cacheLifetime];
-}
-
 - (void)logout {
   [[Qonversion sharedInstance].productCenterManager logout];
 }
@@ -146,8 +142,8 @@
   [[Qonversion sharedInstance].productCenterManager purchase:productID completion:completion];
 }
 
-- (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion {
-  [[Qonversion sharedInstance].productCenterManager restoreWithCompletion:completion];
+- (void)restore:(QNRestoreCompletionHandler)completion {
+  [[Qonversion sharedInstance].productCenterManager restore:completion];
 }
 
 - (void)products:(QONProductsCompletionHandler)completion {
@@ -162,10 +158,8 @@
   return [[Qonversion sharedInstance].productCenterManager offerings:completion];
 }
 
-- (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable {
-  if (enable) {
-    [[Qonversion sharedInstance].attributionManager addAppleSearchAttributionData];
-  }
+- (void)collectAppleSearchAdsAttribution {
+  [[Qonversion sharedInstance].attributionManager addAppleSearchAttributionData];
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
@@ -201,7 +195,7 @@
   return self;
 }
 
-- (void)setAdvertisingID {
+- (void)collectAdvertisingId {
   NSString *idfa = [QNDevice current].advertiserID;
   [[Qonversion sharedInstance] setProperty:QONPropertyAdvertisingID value:idfa];
 }

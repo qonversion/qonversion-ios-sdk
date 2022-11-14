@@ -200,7 +200,7 @@
 - (void)handleRestoreAction:(QONActionResult *)action {
   __block __weak QONAutomationsViewController *weakSelf = self;
   [self.activityIndicator startAnimating];
-  [[Qonversion sharedInstance] restoreWithCompletion:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+  [[Qonversion sharedInstance] restore:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     [weakSelf.activityIndicator stopAnimating];
     
     action.error = error;

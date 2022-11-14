@@ -432,7 +432,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorProductNotFound], NO);
 }
 
-- (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion {
+- (void)restore:(QNRestoreCompletionHandler)completion {
   self.restorePurchasesBlock = completion;
   [self.storeKitService restore];
 }

@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)checkPermissions:(QONEntitlementsCompletionHandler)completion;
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion;
-- (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;
+- (void)restore:(QNRestoreCompletionHandler)completion;
 
 - (void)products:(QONProductsCompletionHandler)completion;
 - (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion;
