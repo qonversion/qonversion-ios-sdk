@@ -22,6 +22,9 @@ NS_SWIFT_NAME(Configuration)
  */
 @property (nonatomic, copy, readonly) NSString *projectKey;
 
+/**
+ Version of Qonversion SDK
+ */
 @property (nonatomic, copy, readonly) NSString *version;
 
 /**
