@@ -37,7 +37,7 @@
 + (instancetype)initWithConfig:(QONConfiguration *)configuration {
   QONConfiguration *configCopy = [configuration copy];
   [Qonversion sharedInstance].debugMode = configCopy.environment == QONEnvironmentSandbox;
-  
+  [[QNAPIClient shared] setSDKVersion:configCopy.version];
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
   [[Qonversion sharedInstance] setEntitlementsUpdateListener:configCopy.entitlementsUpdateListener];
