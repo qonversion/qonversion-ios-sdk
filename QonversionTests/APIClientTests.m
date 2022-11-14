@@ -32,6 +32,7 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   
   [_client setSession:_mockSession];
   [_client setApiKey:kTestAPIKey];
+  [_client setSDKVersion:@"10.11.12"];
 }
 
 - (void)tearDown {

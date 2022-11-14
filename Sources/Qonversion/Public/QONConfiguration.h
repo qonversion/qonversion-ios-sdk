@@ -23,6 +23,11 @@ NS_SWIFT_NAME(Configuration)
 @property (nonatomic, copy, readonly) NSString *projectKey;
 
 /**
+ Version of Qonversion SDK
+ */
+@property (nonatomic, copy, readonly) NSString *version;
+
+/**
  Launch mode of the Qonversion SDK.
  Launch with QONLaunchModeAnalytics (former Observer) mode to use Qonversion with your existing in-app subscription flow to get comprehensive subscription analytics and user engagement tools, and send the data to the leading marketing, analytics, and engagement platforms.
  Launch with QONLaunchModeSubscriptionManagement (former Infrastructure) mode to use Qonversion SDK or API methods to process your In-App & Stripe purchases and to manage user access to the premium features. SubscriptionManagement mode includes  Analytics mode.
