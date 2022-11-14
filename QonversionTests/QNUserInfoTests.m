@@ -1,7 +1,7 @@
 #import <XCTest/XCTest.h>
 
 #import "QNUserInfo.h"
-#import "QNConstants.h"
+#import "QONConstants.h"
 
 @interface QNUserInfoTests : XCTestCase
 

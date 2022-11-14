@@ -1,19 +1,19 @@
 #import <StoreKit/StoreKit.h>
 
-#import "QNLaunchResult.h"
-#import "QNProduct.h"
-#import "QNEntitlement.h"
-#import "QNOfferings.h"
-#import "QNOffering.h"
-#import "QNIntroEligibility.h"
-#import "QNPromoPurchasesDelegate.h"
+#import "QONLaunchResult.h"
+#import "QONProduct.h"
+#import "QONEntitlement.h"
+#import "QONOfferings.h"
+#import "QONOffering.h"
+#import "QONIntroEligibility.h"
+#import "QONPromoPurchasesDelegate.h"
 #import "QONEntitlementsUpdateListener.h"
-#import "QNExperimentInfo.h"
-#import "QNExperimentGroup.h"
-#import "QNUser.h"
-#import "QNErrors.h"
-#import "QNStoreKitSugare.h"
-#import "QNEntitlementsCacheLifetime.h"
+#import "QONExperimentInfo.h"
+#import "QONExperimentGroup.h"
+#import "QONUser.h"
+#import "QONErrors.h"
+#import "QONStoreKitSugare.h"
+#import "QONEntitlementsCacheLifetime.h"
 #import "QONConfiguration.h"
 
 #if TARGET_OS_IOS
@@ -70,13 +70,13 @@ NS_ASSUME_NONNULL_BEGIN
  The default value is QNEntitlementCacheLifetimeMonth.
  @param cacheLifetime desired entitlements cache lifetime duration
  */
-- (void)setEntitlementsCacheLifetime:(QNEntitlementsCacheLifetime)cacheLifetime;
+- (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime;
 
 /**
  Set this delegate to handle AppStore promo purchases
  @param delegate - delegate for handling AppStore promo purchase flow
  */
-- (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
+- (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate;
 
 /**
  Shows up a sheet for users to redeem AppStore offer codes
@@ -110,7 +110,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param property        Defined enum key that will be transformed to string
  @param value               Property value
  */
-- (void)setProperty:(QNProperty)property value:(NSString *)value;
+- (void)setProperty:(QONProperty)property value:(NSString *)value;
 
 /**
  Sets custom user properties
@@ -124,14 +124,14 @@ NS_ASSUME_NONNULL_BEGIN
  @param data Dictionary received by the provider
  @param provider Attribution provider
  */
-- (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;
+- (void)addAttributionData:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider;
 
 /**
  Check user entitlements based on product center details
  @param completion Completion block that include entitlements dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-- (void)checkEntitlements:(QNEntitlementsCompletionHandler)completion;
+- (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -139,7 +139,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param product Product create in Qonversion Dash
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-- (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion;
+- (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -147,7 +147,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param productID Product identifier create in Qonversion Dash, pay attention that you should use qonversion id instead Apple Product ID
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-- (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
+- (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion;
 
 /**
  Restore user entitlements based on product center details
@@ -163,7 +163,7 @@ NS_ASSUME_NONNULL_BEGIN
  @see [Installing the iOS SDK](https://qonversion.io/docs/apple)
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
-- (void)products:(QNProductsCompletionHandler)completion;
+- (void)products:(QONProductsCompletionHandler)completion;
 
 /**
  You can check if a user is eligible for an introductory offer, including a free trial. On the Apple platform, users who have not previously used an introductory offer for any products in the same subscription group are eligible for an introductory offer. Use this method to determine eligibility.
@@ -172,7 +172,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param productIds products identifiers that must be checked
  @param completion Completion block that include trial eligibility check result dictionary and error
  */
-- (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion;
+- (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion;
 
 /**
   Return Qonversion Offerings Object
@@ -184,9 +184,9 @@ NS_ASSUME_NONNULL_BEGIN
   @see [Offerings](https://qonversion.io/docs/offerings)
   @see [Product Center](https://qonversion.io/docs/product-center)
  */
-- (void)offerings:(QNOfferingsCompletionHandler)completion;
+- (void)offerings:(QONOfferingsCompletionHandler)completion;
 
-- (void)userInfo:(QNUserInfoCompletionHandler)completion;
+- (void)userInfo:(QONUserInfoCompletionHandler)completion;
 
 /**
  Enable attribution collection from Apple Search Ads. NO by default.

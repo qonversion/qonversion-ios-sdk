@@ -65,7 +65,7 @@ static NSString *const kMacrosTrialDuration = @"trial_duration";
 }
 
 - (void)processMacroses:(NSArray<QONMacrosProcess *> *)macroses originalHTML:(NSString *)htmlString completion:(QONAutomationsScreenProcessorCompletionHandler)completion {
-  [[Qonversion sharedInstance] products:^(NSDictionary<NSString *,QNProduct *> * _Nonnull result, NSError * _Nullable error) {
+  [[Qonversion sharedInstance] products:^(NSDictionary<NSString *,QONProduct *> * _Nonnull result, NSError * _Nullable error) {
     if (error) {
       completion(nil, error);
     }
@@ -73,7 +73,7 @@ static NSString *const kMacrosTrialDuration = @"trial_duration";
     __block NSString *html = [htmlString copy];
     
     for (QONMacrosProcess *macrosProcess in macroses) {
-      QNProduct *product = result[macrosProcess.productID];
+      QONProduct *product = result[macrosProcess.productID];
       if (!product) {
         continue;
       }

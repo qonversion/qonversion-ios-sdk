@@ -61,7 +61,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
   
 }
 
-extension AppDelegate: QNPromoPurchasesDelegate {
+extension AppDelegate: QONPromoPurchasesDelegate {
   
   func shouldPurchasePromoProduct(withIdentifier productID: String, executionBlock: @escaping Qonversion.PromoPurchaseCompletionHandler) {
     // check productID value in case if you want to enable promoted purchase only for specific products
