@@ -6,6 +6,7 @@
 @interface QNRequestBuilder ()
 
 @property (nonatomic, copy) NSString *apiKey;
+@property (nonatomic, copy) NSString *version;
 
 @end
 
@@ -13,6 +14,10 @@
 
 - (void)setApiKey:(NSString *)apiKey {
   _apiKey = apiKey;
+}
+
+- (void)setSDKVersion:(NSString *)version {
+  _version = version;
 }
 
 - (NSURLRequest *)makeSendPushTokenRequestWith:(NSDictionary *)parameters {
@@ -135,7 +140,7 @@
   NSString *platformVersion = [QNDevice current].osVersion;
   NSString *platform = [QNDevice current].osName;
   NSString *source = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSource] ?: @"iOS";
-  NSString *sourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: keyQVersion;
+  NSString *sourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: self.version;
   
   [request addValue:platform forHTTPHeaderField:@"Platform"];
   [request addValue:platformVersion forHTTPHeaderField:@"Platform-Version"];

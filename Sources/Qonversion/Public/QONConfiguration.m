@@ -11,6 +11,7 @@
 @interface QONConfiguration ()
 
 @property (nonatomic, copy, readwrite) NSString *projectKey;
+@property (nonatomic, copy, readwrite) NSString *version;
 @property (nonatomic, assign, readwrite) QONLaunchMode launchMode;
 @property (nonatomic, assign, readwrite) QONEntitlementsCacheLifetime entitlementsCacheLifetime;
 @property (nonatomic, assign, readwrite) BOOL debugMode;
@@ -26,6 +27,8 @@
   
   if (self) {
     _projectKey = projectKey;
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    _version = bundle.infoDictionary[@"CFBundleShortVersionString"];
     _launchMode = launchMode;
     _environment = QONEnvironmentProduction;
     _entitlementsCacheLifetime = QONEntitlementsCacheLifetimeMonth;

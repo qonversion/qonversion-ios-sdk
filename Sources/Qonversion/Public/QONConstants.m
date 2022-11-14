@@ -1,6 +1,5 @@
 #import "QONConstants.h"
 
-NSString *const keyQVersion = @"2.21.1";
 NSString *const keyQUnknownLibrary = @"unknown";
 NSString *const keyQUnknownVersion = @"unknown";
 NSString *const keyQInternalUserID = @"keyQInternalUserID";

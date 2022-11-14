@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *apiKey;
 @property (nonatomic, assign) BOOL debug;
 
+- (void)setSDKVersion:(NSString *)version;
 - (void)launchRequest:(QNAPIClientCompletionHandler)completion;
 - (void)sendPushToken:(void (^)(BOOL success))completion;
 

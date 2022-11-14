@@ -23,6 +23,7 @@
 @property (nonatomic, copy) NSArray<NSString *> *retriableRequests;
 @property (nonatomic, copy) NSArray<NSNumber *> *criticalErrorCodes;
 @property (nonatomic, strong) NSError *criticalError;
+@property (nonatomic, copy) NSString *version;
 
 @end
 
@@ -59,6 +60,11 @@
 - (void)setApiKey:(NSString *)apiKey {
   _apiKey = apiKey;
   [self.requestBuilder setApiKey:[self obtainApiKey]];
+}
+
+- (void)setSDKVersion:(NSString *)version {
+  _version = version;
+  [self.requestBuilder setSDKVersion:version];
 }
 
 - (void)setDebug:(BOOL)debug {
@@ -226,7 +232,7 @@
   
   [baseDict setObject:_userID forKey:@"q_uid"];
   [baseDict setObject:_userID forKey:@"client_uid"];
-  [baseDict setObject:keyQVersion forKey:@"version"];
+  [baseDict setObject:self.version forKey:@"version"];
   [baseDict setObject:@(self.debug) forKey:@"debug_mode"];
   
   return [baseDict copy];

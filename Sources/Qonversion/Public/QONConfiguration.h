@@ -22,6 +22,8 @@ NS_SWIFT_NAME(Configuration)
  */
 @property (nonatomic, copy, readonly) NSString *projectKey;
 
+@property (nonatomic, copy, readonly) NSString *version;
+
 /**
  Launch mode of the Qonversion SDK.
  Launch with QONLaunchModeAnalytics (former Observer) mode to use Qonversion with your existing in-app subscription flow to get comprehensive subscription analytics and user engagement tools, and send the data to the leading marketing, analytics, and engagement platforms.
