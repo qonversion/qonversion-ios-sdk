@@ -65,14 +65,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)listener;
 
 /**
- Entitlements cache is used when there are problems with the Qonversion API or internet connection.
- If so, Qonversion will return the last successfully loaded entitlements. The current method allows you to configure how long that cache may be used.
- The default value is QNEntitlementCacheLifetimeMonth.
- @param cacheLifetime desired entitlements cache lifetime duration
- */
-- (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime;
-
-/**
  Set this delegate to handle AppStore promo purchases
  @param delegate - delegate for handling AppStore promo purchase flow
  */
@@ -154,7 +146,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param completion Completion block that include entitlements dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
 */
-- (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;
+- (void)restore:(QNRestoreCompletionHandler)completion;
 
 /**
  Return Qonversion Products in assotiation with Store Kit Products
@@ -186,18 +178,21 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)offerings:(QONOfferingsCompletionHandler)completion;
 
+/**
+ Information about the current Qonversion user
+ */
 - (void)userInfo:(QONUserInfoCompletionHandler)completion;
 
 /**
- Enable attribution collection from Apple Search Ads. NO by default.
+ Enable attribution collection from Apple Search Ads
  */
-- (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable;
+- (void)collectAppleSearchAdsAttribution;
 
 /**
  On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion if tracking is allowed and IDFA is available.
  For Qonversion/NoIdfa SDK advertising ID is always empty.
  */
-- (void)setAdvertisingID;
+- (void)collectAdvertisingId;
 
 @end
 

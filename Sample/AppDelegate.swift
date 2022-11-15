@@ -23,7 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     config.setEntitlementsCacheLifetime(.year)
     Qonversion.initWithConfig(config)
     Qonversion.shared().setPromoPurchasesDelegate(self)
-    Qonversion.shared().setAppleSearchAdsAttributionEnabled(true)
+    Qonversion.shared().collectAdvertisingId()
     registerForNotifications()
     
     return true
