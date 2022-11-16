@@ -75,7 +75,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _launchError = nil;
     _launchResult = nil;
     _cacheLifetime = QONEntitlementsCacheLifetimeMonth;
+
+#if TARGET_OS_IOS
     [QONAutomations sharedInstance];
+#endif
+    
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
     
     _userInfoService = [servicesAssembly userInfoService];
