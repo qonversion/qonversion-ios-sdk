@@ -6,7 +6,6 @@
 #import <Qonversion/QONEntitlement.h>
 #import <Qonversion/QONProduct.h>
 #import <Qonversion/QONStoreKitSugare.h>
-#import <Qonversion/QONConstants.h>
 #import <Qonversion/QONErrors.h>
 #import <Qonversion/QONOfferings.h>
 #import <Qonversion/QONOffering.h>

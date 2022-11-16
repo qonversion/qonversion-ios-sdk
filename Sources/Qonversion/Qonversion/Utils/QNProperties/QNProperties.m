@@ -1,4 +1,4 @@
-#import "QONConstants.h"
+#import "QNInternalConstants.h"
 #import "QNProperties.h"
 #import "QNUtils.h"
 
