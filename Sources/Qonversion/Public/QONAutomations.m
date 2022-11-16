@@ -26,7 +26,7 @@
   static dispatch_once_t once;
   dispatch_once(&once, ^{
     shared = [QONAutomations new];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didFinishLaunch) name:kLaunchIsFinishedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:shared selector:@selector(didFinishLaunch) name:kLaunchIsFinishedNotification object:nil];
   });
   
   return shared;
