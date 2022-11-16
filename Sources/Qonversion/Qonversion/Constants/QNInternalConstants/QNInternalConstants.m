@@ -31,3 +31,5 @@ NSUInteger const kMaxDelay = 1000;
 
 NSInteger const kInternalServerErrorFirstCode = 500;
 NSInteger const kInternalServerErrorLastCode = 599;
+
+NSString *const kLaunchIsFinishedNotification = @"qonv.notifications.launch.finished";

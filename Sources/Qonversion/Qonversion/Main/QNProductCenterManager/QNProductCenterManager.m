@@ -20,6 +20,10 @@
 #import "QNDevice.h"
 #import "QNInternalConstants.h"
 
+#if TARGET_OS_IOS
+#import "QONAutomations.h"
+#endif
+
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
@@ -71,7 +75,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _launchError = nil;
     _launchResult = nil;
     _cacheLifetime = QONEntitlementsCacheLifetimeMonth;
-    
+    [QONAutomations sharedInstance];
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
     
     _userInfoService = [servicesAssembly userInfoService];
@@ -151,35 +155,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return offerings;
 }
 
-- (void)sendPushToken {
-  if (!_launchingFinished) {
-    return;
-  }
-
-  [self processPushTokenRequest];
-}
-
-- (void)processPushTokenRequest {
-  NSString *pushToken = [[QNDevice current] pushNotificationsToken];
-  BOOL isPushTokenProcessed = [[QNDevice current] isPushTokenProcessed];
-  if (!pushToken || isPushTokenProcessed) {
-    return;
-  }
-  
-  [self.apiClient sendPushToken:^(BOOL success) {
-    if (success) {
-      [[QNDevice current] setPushTokenProcessed:YES];
-    }
-  }];
-}
-
 - (void)launchWithCompletion:(nullable QONLaunchCompletionHandler)completion {
   _launchingFinished = NO;
   
   __block __weak QNProductCenterManager *weakSelf = self;
   
   [self launch:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
-    [weakSelf processPushTokenRequest];
     [weakSelf storeLaunchResultIfNeeded:result];
     
     weakSelf.launchResult = result;
@@ -773,6 +754,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     @synchronized (weakSelf) {
       weakSelf.launchingFinished = YES;
+      NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:self];
+      [[NSNotificationCenter defaultCenter] postNotification:notification];
     }
 
     if (!completion) {

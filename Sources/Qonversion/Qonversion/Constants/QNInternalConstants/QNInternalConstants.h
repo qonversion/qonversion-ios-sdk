@@ -28,3 +28,5 @@ extern CGFloat const kFactor;
 extern NSUInteger const kMaxDelay;
 extern NSInteger const kInternalServerErrorFirstCode;
 extern NSInteger const kInternalServerErrorLastCode;
+
+extern NSString *const kLaunchIsFinishedNotification;

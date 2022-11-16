@@ -16,11 +16,6 @@
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONConfiguration.h"
 
-#if TARGET_OS_IOS
-#import "QONAutomationsDelegate.h"
-#import "QONAutomations.h"
-#endif
-
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Qonversion : NSObject
@@ -74,28 +69,6 @@ NS_ASSUME_NONNULL_BEGIN
  Shows up a sheet for users to redeem AppStore offer codes
  */
 - (void)presentCodeRedemptionSheet API_AVAILABLE(ios(14.0)) API_UNAVAILABLE(tvos, macos, watchos);
-
-/**
- Set push token to Qonversion to enable Qonversion push notifications
- @param token - token data
- */
-- (void)setNotificationsToken:(NSData *)token API_AVAILABLE(ios(9.0));
-
-#if TARGET_OS_IOS
-/**
- Returns true when a push notification was received from Qonversion.
- Otherwise returns false, so you need to handle a notification yourself
- @param userInfo - notification user info
- */
-- (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
-
-/**
- Get parsed custom payload, which you added to the notification in the dashboard
- @param userInfo - notification user info
- @return a map with custom payload from the notification or nil if it's not provided.
- */
-- (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)userInfo;
-#endif
 
 /**
  Sets Qonversion reservered user properties, like email or one-signal id
@@ -167,19 +140,21 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion;
 
 /**
-  Return Qonversion Offerings Object
+ Return Qonversion Offerings Object
  
-  An offering is a group of products that you can offer to a user on a given paywall based on your business logic.
-  For example, you can offer one set of products on a paywall immediately after onboarding and another set of products with discounts later on if a user has not converted.
-  Offerings allow changing the products offered remotely without releasing app updates.
+ An offering is a group of products that you can offer to a user on a given paywall based on your business logic.
+ For example, you can offer one set of products on a paywall immediately after onboarding and another set of products with discounts later on if a user has not converted.
+ Offerings allow changing the products offered remotely without releasing app updates.
  
-  @see [Offerings](https://qonversion.io/docs/offerings)
-  @see [Product Center](https://qonversion.io/docs/product-center)
+ @see [Offerings](https://qonversion.io/docs/offerings)
+ @see [Product Center](https://qonversion.io/docs/product-center)
+ @param completion Completion block that include information about the offerings user and error
  */
 - (void)offerings:(QONOfferingsCompletionHandler)completion;
 
 /**
  Information about the current Qonversion user
+ @param completion Completion block that include information about the current user and error
  */
 - (void)userInfo:(QONUserInfoCompletionHandler)completion;
 

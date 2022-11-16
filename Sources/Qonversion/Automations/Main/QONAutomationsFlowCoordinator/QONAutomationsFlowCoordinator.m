@@ -22,6 +22,9 @@
 #import "QNUtils.h"
 #import "QONAutomationsEvent.h"
 #import "QONAutomationsEventsMapper.h"
+#import "QNInternalConstants.h"
+#import "QNDevice.h"
+#import "QONNotificationsService.h"
 
 @interface QONAutomationsFlowCoordinator() <QONAutomationsViewControllerDelegate>
 
@@ -29,6 +32,8 @@
 @property (nonatomic, strong) QONAutomationsFlowAssembly *assembly;
 @property (nonatomic, strong) QONAutomationsService *automationsService;
 @property (nonatomic, strong) QONAutomationsEventsMapper *eventsMapper;
+@property (nonatomic, strong) QONNotificationsService *notificationsService;
+@property (nonatomic, assign) BOOL isSDKLaunched;
 
 @end
 
@@ -51,9 +56,16 @@
     _assembly = [QONAutomationsFlowAssembly new];
     _automationsService = [_assembly automationsService];
     _eventsMapper = [_assembly eventsMapper];
+    _notificationsService = [_assembly notificationsService];
   }
   
   return self;
+}
+
+- (void)didFinishLaunch {
+  self.isSDKLaunched = YES;
+  
+  [self processPushTokenRequest];
 }
 
 - (void)setAutomationsDelegate:(id<QONAutomationsDelegate>)automationsDelegate {
@@ -97,6 +109,33 @@
       [weakSelf showAutomationWithID:automationID completion:nil];
     }
   }];
+}
+
+- (void)sendPushToken:(NSData *)pushTokenData {
+  NSString *tokenString = [QNUtils convertHexData:pushTokenData];
+  NSString *oldToken = [QNDevice current].pushNotificationsToken;
+  if ([tokenString isEqualToString:oldToken] || tokenString.length == 0) {
+    return;
+  }
+  
+  [[QNDevice current] setPushNotificationsToken:tokenString];
+  [[QNDevice current] setPushTokenProcessed:NO];
+  
+  if (!self.isSDKLaunched) {
+    return;
+  }
+  
+  [self processPushTokenRequest];
+}
+
+- (void)processPushTokenRequest {
+  NSString *pushToken = [[QNDevice current] pushNotificationsToken];
+  BOOL isPushTokenProcessed = [[QNDevice current] isPushTokenProcessed];
+  if (!pushToken || isPushTokenProcessed) {
+    return;
+  }
+  
+  [self.notificationsService sendPushToken];
 }
 
 - (void)showAutomationWithID:(NSString *)automationID completion:(nullable QONShowScreenCompletionHandler)completion {
