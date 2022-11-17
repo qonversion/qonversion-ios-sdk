@@ -1,5 +1,4 @@
 #import <Foundation/Foundation.h>
-#import "QONConstants.h"
 
 extern NSErrorDomain const QONErrorDomain NS_SWIFT_NAME(Qonversion.ErrorDomain);
 

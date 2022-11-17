@@ -137,10 +137,10 @@ NS_ASSUME_NONNULL_BEGIN
  @param productIds products identifiers that must be checked
  @param completion Completion block that include trial eligibility check result dictionary and error
  */
-- (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion;
+- (void)checkTrialIntroEligibility:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion;
 
 /**
- Return Qonversion Offerings Object
+ Returns Qonversion Offerings Object
  
  An offering is a group of products that you can offer to a user on a given paywall based on your business logic.
  For example, you can offer one set of products on a paywall immediately after onboarding and another set of products with discounts later on if a user has not converted.

@@ -9,6 +9,31 @@
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 
+#if TARGET_OS_OSX
+#define DID_ENTER_BACKGROUND_NOTIFICATION_NAME NSApplicationDidResignActiveNotification
+#elif TARGET_OS_IOS || TARGET_OS_TV
+#define DID_ENTER_BACKGROUND_NOTIFICATION_NAME UIApplicationDidEnterBackgroundNotification
+#elif TARGET_OS_WATCH
+#define DID_ENTER_BACKGROUND_NOTIFICATION_NAME NSExtensionHostDidEnterBackgroundNotification
+#endif
+
+#if TARGET_OS_IOS || TARGET_OS_TV
+#define UI_DEVICE 1
+#else
+#define UI_DEVICE 0
+#endif
+
+extern NSString *const keyQInternalUserID;
+extern NSString *const keyQONPropertyReg;
+extern NSString *const keyQSource;
+extern NSString *const keyQSourceVersion;
+
+extern NSString *const keyQONErrorDomain;
+extern NSString *const keyQONAPIErrorDomain;
+extern NSString *const kQNPlatform;
+extern NSString *const kQNOSName;
+
+
 extern NSString *const kKeyQKeyChainUserID;
 extern NSString *const kKeyQUserDefaultsIdentityUserID;
 extern NSString *const kKeyQUserDefaultsOriginalUserID;
