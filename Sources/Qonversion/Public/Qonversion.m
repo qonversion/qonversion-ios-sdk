@@ -12,11 +12,6 @@
 #import "QNUserInfoServiceInterface.h"
 #import "QNUserInfoService.h"
 #import "QNServicesAssembly.h"
-#import "QNInternalConstants.h"
-
-#if TARGET_OS_IOS
-#import "QONAutomationsFlowCoordinator.h"
-#endif
 
 @interface Qonversion()
 
@@ -70,33 +65,6 @@
 - (void)logout {
   [[Qonversion sharedInstance].productCenterManager logout];
 }
-
-- (void)setNotificationsToken:(NSData *)token {
-  NSString *tokenString = [QNUtils convertHexData:token];
-  NSString *oldToken = [QNDevice current].pushNotificationsToken;
-  if ([tokenString isEqualToString:oldToken] || tokenString.length == 0) {
-    return;
-  }
-  
-  [[QNDevice current] setPushNotificationsToken:tokenString];
-  [[QNDevice current] setPushTokenProcessed:NO];
-  [[Qonversion sharedInstance].productCenterManager sendPushToken];
-}
-
-#if TARGET_OS_IOS
-- (BOOL)handleNotification:(NSDictionary *)userInfo {
-  return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
-}
-
-- (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)userInfo {
-  NSDictionary *customPayload = userInfo[kKeyNotificationsCustomPayload];
-  if (![customPayload isKindOfClass:[NSDictionary class]]) {
-    return nil;
-  }
-  
-  return customPayload;
-}
-#endif
 
 - (void)presentCodeRedemptionSheet {
   [[Qonversion sharedInstance].productCenterManager presentCodeRedemptionSheet];

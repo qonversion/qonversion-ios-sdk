@@ -29,7 +29,7 @@ class ViewController: UIViewController {
     
     navigationController?.isNavigationBarHidden = true
     
-    Qonversion.Automations.setDelegate(self)
+    Qonversion.Automations.shared().setDelegate(self)
     
     subscriptionTitleLabel.text = ""
     mainProductSubscriptionButton.layer.cornerRadius = 20.0

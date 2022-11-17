@@ -17,7 +17,7 @@ class AuthViewController: UIViewController {
   
   override func viewDidLoad() {
     super.viewDidLoad()
-    return showMainScreen()
+    
     guard GIDSignIn.sharedInstance.hasPreviousSignIn() else { return }
     
     GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, err in
