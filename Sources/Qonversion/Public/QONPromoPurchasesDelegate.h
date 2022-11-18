@@ -7,6 +7,7 @@
 //
 #import "QONLaunchResult.h"
 
+NS_SWIFT_NAME(Qonversion.PromoPurchasesDelegate)
 @protocol QONPromoPurchasesDelegate <NSObject>
 
 /**
@@ -16,6 +17,6 @@
  @param productID            StoreKit product identifier
  @param executionBlock purchase execution block
  */
-- (void)shouldPurchasePromoProductWithIdentifier:(NSString *)productID executionBlock:(QONPromoPurchaseCompletionHandler)executionBlock;
+- (void)shouldPurchasePromoProductWithIdentifier:(nonnull NSString *)productID executionBlock:(nonnull QONPromoPurchaseCompletionHandler)executionBlock;
 
 @end

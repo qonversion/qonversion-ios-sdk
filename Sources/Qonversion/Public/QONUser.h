@@ -10,6 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+NS_SWIFT_NAME(Qonversion.User)
 @interface QONUser : NSObject
 
 @property (nonatomic, copy, readonly) NSString *identifier;

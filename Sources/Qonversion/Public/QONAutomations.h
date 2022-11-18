@@ -31,7 +31,7 @@ NS_SWIFT_NAME(Qonversion.Automations)
  The delegate is responsible for handling in-app screens and actions result when push notification is received.
  @param delegate - delegate that is called when in-app screens and actions are processed
  */
-- (void)setDelegate:(id<QONAutomationsDelegate>)delegate
+- (void)setDelegate:(nonnull id<QONAutomationsDelegate>)delegate
 NS_SWIFT_NAME(setDelegate(_:));
 
 /**
@@ -39,27 +39,27 @@ NS_SWIFT_NAME(setDelegate(_:));
  @param screenID - screen's ID that must be shown
  @param completion - completion that is called when the screen is shown to a user or an error occurred
  */
-- (void)showScreenWithID:(NSString *)screenID completion:(nullable QONShowScreenCompletionHandler)completion;
+- (void)showScreenWithID:(nonnull NSString *)screenID completion:(nullable QONShowScreenCompletionHandler)completion;
 
 /**
  Set push token to Qonversion to enable Qonversion push notifications
  @param token - token data
  */
-- (void)setNotificationsToken:(NSData *)token API_AVAILABLE(ios(9.0));
+- (void)setNotificationsToken:(nonnull NSData *)token API_AVAILABLE(ios(9.0));
 
 /**
  Returns true when a push notification was received from Qonversion.
  Otherwise returns false, so you need to handle a notification yourself
  @param userInfo - notification user info
  */
-- (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
+- (BOOL)handleNotification:(nonnull NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
 
 /**
  Get parsed custom payload, which you added to the notification in the dashboard
  @param userInfo - notification user info
  @return a map with custom payload from the notification or nil if it's not provided.
  */
-- (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)userInfo;
+- (NSDictionary *_Nullable)getNotificationCustomPayload:(nonnull NSDictionary *)userInfo;
 
 @end
 
