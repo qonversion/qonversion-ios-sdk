@@ -33,7 +33,7 @@ NS_SWIFT_NAME(Qonversion.Offering)
 @property (nonatomic, strong, nullable, readonly) QONExperimentInfo *experimentInfo;
 
 - (nullable QONProduct *)productForIdentifier:(NSString *)productIdentifier
-NS_SWIFT_NAME(product(forIdentifier:));
+NS_SWIFT_NAME(product(for:));
 
 @end
 

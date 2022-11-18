@@ -20,7 +20,7 @@ NS_SWIFT_NAME(Qonversion.Offerings)
 @property (nonatomic, strong, nullable, readonly) QONOffering *main;
 
 - (nullable QONOffering *)offeringForIdentifier:(NSString *)offeringIdentifier
-NS_SWIFT_NAME(offering(forIdentifier:));
+NS_SWIFT_NAME(offering(for:));
 
 @end
 
