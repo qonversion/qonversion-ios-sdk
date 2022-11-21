@@ -57,7 +57,7 @@
   _offeringsMap = [offeringsDict copy];
 }
 
-- (nullable QONOffering *)offeringForIdentifier:(NSString *)offeringIdentifier {
+- (nullable QONOffering *)offeringForIdentifier:(nonnull NSString *)offeringIdentifier {
   return self.offeringsMap[offeringIdentifier];
 }
 

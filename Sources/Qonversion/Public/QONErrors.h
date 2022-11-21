@@ -113,7 +113,7 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONAPIError) {
   
   // Receipt validation error
   QONAPIErrorReceiptValidation = 14
-};
+} NS_SWIFT_NAME(Qonversion.APIError);
 
 @interface QONErrors: NSObject
 

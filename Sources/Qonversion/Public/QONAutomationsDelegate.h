@@ -32,7 +32,8 @@ NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
  @return the flag that indicates should Qonversion handle the event or not
  @see [Automation Overview](https://documentation.qonversion.io/docs/automations)
  */
-- (BOOL)shouldHandleEvent:(QONAutomationsEvent * _Nonnull)event payload:(NSDictionary<NSString *, id> * _Nonnull)payload;
+- (BOOL)shouldHandleEvent:(QONAutomationsEvent * _Nonnull)event payload:(NSDictionary<NSString *, id> * _Nonnull)payload
+NS_SWIFT_NAME(shouldHandleEvent(_:payload:));
 
 /**
  Called when Automations screen is shown

@@ -40,19 +40,19 @@
   [[QONAutomationsFlowCoordinator sharedInstance] setAutomationsDelegate:delegate];
 }
 
-- (void)showScreenWithID:(NSString *)screenID completion:(nullable QONShowScreenCompletionHandler)completion {
+- (void)showScreenWithID:(nonnull NSString *)screenID completion:(nullable QONShowScreenCompletionHandler)completion {
   [[QONAutomationsFlowCoordinator sharedInstance] showAutomationWithID:screenID completion:completion];
 }
 
-- (void)setNotificationsToken:(NSData *)token {
+- (void)setNotificationsToken:(nonnull NSData *)token {
   [[QONAutomationsFlowCoordinator sharedInstance] sendPushToken:token];
 }
 
-- (BOOL)handleNotification:(NSDictionary *)userInfo {
+- (BOOL)handleNotification:(nonnull NSDictionary *)userInfo {
   return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];
 }
 
-- (NSDictionary *_Nullable)getNotificationCustomPayload:(NSDictionary *)userInfo {
+- (NSDictionary *_Nullable)getNotificationCustomPayload:(nonnull NSDictionary *)userInfo {
   NSDictionary *customPayload = userInfo[kKeyNotificationsCustomPayload];
   if (![customPayload isKindOfClass:[NSDictionary class]]) {
     return nil;

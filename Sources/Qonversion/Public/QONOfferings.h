@@ -19,7 +19,13 @@ NS_SWIFT_NAME(Qonversion.Offerings)
 
 @property (nonatomic, strong, nullable, readonly) QONOffering *main;
 
-- (nullable QONOffering *)offeringForIdentifier:(NSString *)offeringIdentifier;
+/**
+ Returns Qonversion Offering for specific ID
+ @param offeringIdentifier - id of the offering you want to get
+ @return Qonversion Offering or nil if no offering found for the passed identifier
+ */
+- (nullable QONOffering *)offeringForIdentifier:(nonnull NSString *)offeringIdentifier
+NS_SWIFT_NAME(offering(for:));
 
 @end
 

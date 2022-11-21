@@ -86,7 +86,7 @@
   }
 }
 
-- (nullable QONProduct *)productForIdentifier:(NSString *)productIdentifier {
+- (nullable QONProduct *)productForIdentifier:(nonnull NSString *)productIdentifier {
   return self.productsMap[productIdentifier];
 }
 
