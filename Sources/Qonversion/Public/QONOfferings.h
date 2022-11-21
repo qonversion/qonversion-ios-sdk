@@ -22,7 +22,7 @@ NS_SWIFT_NAME(Qonversion.Offerings)
 /**
  Returns Qonversion Offering for specific ID
  @param offeringIdentifier - id of the offering you want to get
- @return Qonversion Offering or nil if no offering for the passed identifier
+ @return Qonversion Offering or nil if no offering found for the passed identifier
  */
 - (nullable QONOffering *)offeringForIdentifier:(nonnull NSString *)offeringIdentifier
 NS_SWIFT_NAME(offering(for:));

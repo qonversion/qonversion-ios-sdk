@@ -35,7 +35,7 @@ NS_SWIFT_NAME(Qonversion.Offering)
 /**
  Returns Qonversion Product for specific ID from the current offering
  @param productIdentifier - id of the product you want to get from the current offering
- @return Qonversion Product or nil if no product for the passed identifier
+ @return Qonversion Product or nil if no product found for the passed identifier
  */
 - (nullable QONProduct *)productForIdentifier:(nonnull NSString *)productIdentifier
 NS_SWIFT_NAME(product(for:));
