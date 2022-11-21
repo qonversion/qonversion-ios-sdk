@@ -446,8 +446,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       NSDictionary<NSString *, QNPermission *> *permissions = result.permissions;
       NSError *resultError = error;
       if (error && !weakSelf.pendingIdentityUserID) {
-        NSDictionary<NSString *, QNPermission *> *cachedPermissions = [weakSelf getActualPermissionsForDefaultState:NO];
-        permissions = cachedPermissions ?: permissions;
+        permissions = [weakSelf getActualPermissionsForDefaultState:NO];
         resultError = permissions ? nil : error;
       }
       
