@@ -2,6 +2,12 @@ name: CocoaPods Release
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch for release'
+        required: true
+        type: string
+        default: 'main'
   release:
     types: [released]
 
@@ -15,7 +21,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
         with:
-          ref: main
+          ref: ${{ github.event.inputs.branch }}
 
       - name: CocoaPods Release
         run: pod trunk push Qonversion.podspec
