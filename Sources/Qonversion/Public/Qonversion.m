@@ -36,6 +36,7 @@
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
   [[Qonversion sharedInstance] setEntitlementsUpdateListener:configCopy.entitlementsUpdateListener];
+  [[Qonversion sharedInstance] setPromoPurchasesDelegate:configCopy.promoPurchasesDelegate];
   
   [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
     

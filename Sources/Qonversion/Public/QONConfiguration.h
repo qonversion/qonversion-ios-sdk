@@ -11,6 +11,7 @@
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONEntitlementsUpdateListener.h"
 #import "QONEnvironment.h"
+#import "QONPromoPurchasesDelegate.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -52,6 +53,11 @@ NS_SWIFT_NAME(Configuration)
  */
 @property (nonatomic, weak, readonly) id<QONEntitlementsUpdateListener> entitlementsUpdateListener;
 
+/**
+ Delegate to handle App Store Promo purchases.
+ */
+@property (nonatomic, weak, readonly) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 /**
@@ -75,6 +81,12 @@ NS_SWIFT_NAME(Configuration)
  @param entitlementsUpdateListener - listener for handling entitlements update
  */
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)entitlementsUpdateListener;
+
+/**
+ Set this delegate to handle AppStore promo purchases
+ @param delegate - delegate for handling AppStore promo purchase flow
+ */
+- (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate;
 
 /**
  Set the current application Environment. Used to distinguish sandbox and production users.

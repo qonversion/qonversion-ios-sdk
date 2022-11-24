@@ -16,6 +16,7 @@
 @property (nonatomic, assign, readwrite) QONEntitlementsCacheLifetime entitlementsCacheLifetime;
 @property (nonatomic, assign, readwrite) BOOL debugMode;
 @property (nonatomic, weak, readwrite) id<QONEntitlementsUpdateListener> entitlementsUpdateListener;
+@property (nonatomic, weak, readwrite) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
 
 @end
 
@@ -47,6 +48,10 @@
 
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)entitlementsUpdateListener {
   _entitlementsUpdateListener = entitlementsUpdateListener;
+}
+
+- (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate {
+  _promoPurchasesDelegate = delegate;
 }
 
 - (id)copyWithZone:(NSZone *)zone {
