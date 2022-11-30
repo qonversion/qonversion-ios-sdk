@@ -26,7 +26,7 @@
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoaded;
 
-- (void)checkPermissions:(QONEntitlementsCompletionHandler)result;
+- (void)checkEntitlements:(QONEntitlementsCompletionHandler)result;
 
 @end
 
@@ -72,7 +72,7 @@
   // Given
   
   // When
-  [_manager checkPermissions:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+  [_manager checkEntitlements:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     
   }];
   
@@ -86,7 +86,7 @@
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   
   // When
-  [_manager checkPermissions:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+  [_manager checkEntitlements:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     XCTAssertNil(result);
     XCTAssertNil(error);
     XCTAssertEqual([NSThread mainThread], [NSThread currentThread]);

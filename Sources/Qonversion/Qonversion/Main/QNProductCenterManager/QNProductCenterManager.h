@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)presentCodeRedemptionSheet;
 
 - (void)launchWithCompletion:(nullable QONLaunchCompletionHandler)completion;
-- (void)checkPermissions:(QONEntitlementsCompletionHandler)completion;
+- (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion;
 - (void)restore:(QNRestoreCompletionHandler)completion;

@@ -83,7 +83,7 @@
   [[Qonversion sharedInstance].productCenterManager setPromoPurchasesDelegate:delegate];
 }
 
-- (void)addAttributionData:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider {
+- (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider {
   [[Qonversion sharedInstance].attributionManager addAttributionData:data fromProvider:provider];
 }
 
@@ -100,7 +100,7 @@
 }
 
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion {
-  [[Qonversion sharedInstance].productCenterManager checkPermissions:completion];
+  [[Qonversion sharedInstance].productCenterManager checkEntitlements:completion];
 }
 
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {

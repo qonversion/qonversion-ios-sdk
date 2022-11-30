@@ -19,7 +19,7 @@
     case QONPropertyAppsFlyerUserID:
       key = @"_q_appsflyer_user_id";
       break;
-    case QONPropertyAdjustUserID:
+    case QONPropertyAdjustAdID:
       key = @"_q_adjust_adid";
       break;
     case QONPropertyAdvertisingID:

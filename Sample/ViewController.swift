@@ -63,6 +63,10 @@ class ViewController: UIViewController {
       
       self.showActivePermissionsScreen()
     }
+    
+    Qonversion.shared().offerings { offerings, error in
+      
+    }
   }
   
   func checkProducts() {

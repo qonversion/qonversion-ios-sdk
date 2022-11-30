@@ -21,7 +21,7 @@ typedef NS_ENUM(NSInteger, QONProperty) {
   QONPropertyEmail = 0,
   QONPropertyName,
   QONPropertyAppsFlyerUserID,
-  QONPropertyAdjustUserID,
+  QONPropertyAdjustAdID,
   QONPropertyKochavaDeviceID,
   QONPropertyAdvertisingID,
   QONPropertyUserID,
