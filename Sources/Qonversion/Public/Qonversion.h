@@ -89,7 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param data Dictionary received by the provider
  @param provider Attribution provider
  */
-- (void)addAttributionData:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider;
+- (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider;
 
 /**
  Check user entitlements based on product center details

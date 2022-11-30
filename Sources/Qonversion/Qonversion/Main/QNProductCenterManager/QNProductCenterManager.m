@@ -49,7 +49,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QONExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic, strong) NSMutableArray<QONUserInfoCompletionHandler> *userInfoBlocks;
 @property (nonatomic, assign) QONEntitlementsCacheLifetime cacheLifetime;
-@property (nonatomic, copy) NSDictionary<NSString *, NSArray *> *productsPermissionsRelation;
+@property (nonatomic, copy) NSDictionary<NSString *, NSArray *> *productsEntitlementsRelation;
 @property (nonatomic, copy) NSDictionary<NSString *, QONEntitlement *> *entitlements;
 @property (nonatomic, strong) QNAPIClient *apiClient;
 
@@ -91,7 +91,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _persistentStorage = [[QNUserDefaultsStorage alloc] init];
     [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
     
-    _productsPermissionsRelation = [_persistentStorage loadObjectForKey:kKeyQUserDefaultsProductsPermissionsRelation];
+    _productsEntitlementsRelation = [_persistentStorage loadObjectForKey:kKeyQUserDefaultsProductsPermissionsRelation];
     
     _purchaseModels = [NSMutableDictionary new];
     _purchasingBlocks = [NSMutableDictionary new];
@@ -121,7 +121,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)storeLaunchResultIfNeeded:(QONLaunchResult *)launchResult {
   if (launchResult.timestamp > 0) {
     NSDate *currentDate = [NSDate date];
-    [self storePermissions:launchResult.entitlements];
+    [self storeEntitlements:launchResult.entitlements];
     [self.persistentStorage storeDouble:currentDate.timeIntervalSince1970 forKey:kLaunchResultTimeStamp];
     [self.persistentStorage storeObject:launchResult forKey:kLaunchResult];
   }
@@ -184,7 +184,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       } else if (weakSelf.unhandledLogoutAvailable) {
         [weakSelf handleLogout];
       } else {
-        [weakSelf executePermissionBlocks];
+        [weakSelf executeEntitlementsBlocks];
       }
     }
     
@@ -221,7 +221,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [weakSelf launch:^(QONLaunchResult * _Nullable result, NSError * _Nullable error) {
       if (error) {
         weakSelf.identityInProgress = NO;
-        [weakSelf executePermissionBlocksWithError:error];
+        [weakSelf executeEntitlementsBlocksWithError:error];
       } else {
         [weakSelf processIdentity:userID];
       }
@@ -239,7 +239,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     weakSelf.identityInProgress = NO;
     
     if (error) {
-      [weakSelf executePermissionBlocksWithError:error];
+      [weakSelf executeEntitlementsBlocksWithError:error];
       return;
     }
     
@@ -248,7 +248,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [weakSelf.userInfoService storeCustomIdentityUserID:userID];
     
     if ([currentUserID isEqualToString:result]) {
-      [weakSelf executePermissionBlocks];
+      [weakSelf executeEntitlementsBlocks];
     } else {
       [[QNAPIClient shared] setUserID:result];
       
@@ -292,7 +292,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.storeKitService presentCodeRedemptionSheet];
 }
 
-- (void)checkPermissions:(QONEntitlementsCompletionHandler)completion {
+- (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion {
   if (!completion) {
     return;
   }
@@ -309,7 +309,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       return;
     }
     
-    [self preparePermissionsResultWithCompletion:completion];
+    [self prepareEntitlementsResultWithCompletion:completion];
   }
 }
 
@@ -422,7 +422,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.storeKitService restore];
 }
 
-- (void)preparePermissionsResultWithCompletion:(QONEntitlementsCompletionHandler)completion {
+- (void)prepareEntitlementsResultWithCompletion:(QONEntitlementsCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
   
   if (self.launchError || self.unhandledLogoutAvailable) {
@@ -431,7 +431,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       NSDictionary<NSString *, QONEntitlement *> *entitlements = result.entitlements;
       NSError *resultError = error;
       if (error && !weakSelf.pendingIdentityUserID) {
-        entitlements = [weakSelf getActualPermissionsForDefaultState:NO];
+        entitlements = [weakSelf getActualEntitlementsForDefaultState:NO];
         resultError = entitlements ? nil : error;
       }
       
@@ -442,11 +442,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)executePermissionBlocks {
-  [self executePermissionBlocksWithError:nil];
+- (void)executeEntitlementsBlocks {
+  [self executeEntitlementsBlocksWithError:nil];
 }
 
-- (void)executePermissionBlocksWithError:(NSError *)error {
+- (void)executeEntitlementsBlocksWithError:(NSError *)error {
   @synchronized (self) {
     if (self.entitlementsBlocks.count == 0) {
       return;
@@ -460,7 +460,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         run_block_on_main(block, @{}, error);
       }
     } else {
-      [self preparePermissionsResultWithCompletion:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+      [self prepareEntitlementsResultWithCompletion:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
         for (QONEntitlementsCompletionHandler block in _blocks) {
           run_block_on_main(block, result ?: @{}, error);
         }
@@ -779,8 +779,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     QONUser *user = [QNMapper fillUser:result.data];
     weakSelf.user = user;
     
-    weakSelf.productsPermissionsRelation = [QNMapper mapProductsPermissionsRelation:result.data];
-    [weakSelf.persistentStorage storeObject:weakSelf.productsPermissionsRelation forKey:kKeyQUserDefaultsProductsPermissionsRelation];
+    weakSelf.productsEntitlementsRelation = [QNMapper mapProductsEntitlementsRelation:result.data];
+    [weakSelf.persistentStorage storeObject:weakSelf.productsEntitlementsRelation forKey:kKeyQUserDefaultsProductsPermissionsRelation];
     
     QONLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
     completion(launchResult, nil);
@@ -873,14 +873,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
             [weakSelf handleRestoreResult:launchResult.entitlements error:nil];
           }
         } else {
-          NSDictionary<NSString *, QONEntitlement *> *resultPermissions = launchResult.entitlements;
+          NSDictionary<NSString *, QONEntitlement *> *resultEntitlements = launchResult.entitlements;
           if (resultError) {
-            if ([self shouldCalculatePermissionsForError:error]) {
-              resultPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
-              [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultPermissions];
+            if ([self shouldCalculateEntitlementsForError:error]) {
+              resultEntitlements = [self calculateEntitlementsForTransactions:@[transaction] products:@[product]];
+              [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
             }
           } else {
-            [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultPermissions];
+            [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
           }
         }
       }
@@ -888,18 +888,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }];
 }
 
-- (BOOL)shouldCalculatePermissionsForError:(NSError *)error {
+- (BOOL)shouldCalculateEntitlementsForError:(NSError *)error {
   return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode) || [QNUtils isConnectionError:error];
 }
 
-- (void)handleRestoreResult:(NSDictionary<NSString *, QONEntitlement *> *)permissions error:(NSError *)error {
+- (void)handleRestoreResult:(NSDictionary<NSString *, QONEntitlement *> *)entitlements error:(NSError *)error {
   if (self.restorePurchasesBlock) {
     self.restoredTransactions = nil;
     
     QNRestoreCompletionHandler restorePurchasesBlock = [self.restorePurchasesBlock copy];
     self.restorePurchasesBlock = nil;
 
-    run_block_on_main(restorePurchasesBlock, permissions, error);
+    run_block_on_main(restorePurchasesBlock, entitlements, error);
   }
 }
 
@@ -913,11 +913,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       QNRestoreCompletionHandler restorePurchasesBlock = [weakSelf.restorePurchasesBlock copy];
       weakSelf.restorePurchasesBlock = nil;
       if (error) {
-        if ([weakSelf shouldCalculatePermissionsForError:error]) {
+        if ([weakSelf shouldCalculateEntitlementsForError:error]) {
           NSArray<SKProduct *> *storeProducts = [weakSelf.storeKitService getLoadedProducts];
-          NSDictionary<NSString *, QONEntitlement *> *calculatedPermissions = [weakSelf calculatePermissionsForRestoredTransactions:restoredTransactionsCopy products:storeProducts];
+          NSDictionary<NSString *, QONEntitlement *> *calculatedEntitlements = [weakSelf calculateEntitlementsForRestoredTransactions:restoredTransactionsCopy products:storeProducts];
           
-          run_block_on_main(restorePurchasesBlock, calculatedPermissions, nil);
+          run_block_on_main(restorePurchasesBlock, calculatedEntitlements, nil);
         } else {
           run_block_on_main(restorePurchasesBlock, @{}, error);
         }
@@ -984,15 +984,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return YES;
 }
 
-- (void)storePermissions:(NSDictionary<NSString *, QONEntitlement *> *)permissions {
-  self.entitlements = permissions;
+- (void)storeEntitlements:(NSDictionary<NSString *, QONEntitlement *> *)entitlements {
+  self.entitlements = entitlements;
   NSDate *currentDate = [NSDate date];
   
   [self.persistentStorage storeDouble:currentDate.timeIntervalSince1970 forKey:kKeyQUserDefaultsPermissionsTimestamp];
-  [self.persistentStorage storeObject:permissions forKey:kKeyQUserDefaultsPermissions];
+  [self.persistentStorage storeObject:entitlements forKey:kKeyQUserDefaultsPermissions];
 }
 
-- (NSDictionary<NSString *, QONEntitlement *> * _Nullable)getActualPermissionsForDefaultState:(BOOL)defaultState {
+- (NSDictionary<NSString *, QONEntitlement *> * _Nullable)getActualEntitlementsForDefaultState:(BOOL)defaultState {
   if (self.entitlements) {
     return self.entitlements;
   }
@@ -1027,9 +1027,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
                      product:(SKProduct *)product
                   completion:(QONPurchaseCompletionHandler)completion {
   if (error) {
-    if ([self shouldCalculatePermissionsForError:error]) {
-      NSDictionary<NSString *, QONEntitlement *> *calculatedPermissions = [self calculatePermissionsForTransactions:@[transaction] products:@[product]];
-      run_block_on_main(completion, calculatedPermissions, nil, cancelled);
+    if ([self shouldCalculateEntitlementsForError:error]) {
+      NSDictionary<NSString *, QONEntitlement *> *calculatedEntitlements = [self calculateEntitlementsForTransactions:@[transaction] products:@[product]];
+      run_block_on_main(completion, calculatedEntitlements, nil, cancelled);
     } else {
       run_block_on_main(completion, @{}, error, cancelled);
     }
@@ -1038,7 +1038,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (NSDictionary<NSString *, QONEntitlement *> *)calculatePermissionsForRestoredTransactions:(NSArray<SKPaymentTransaction *> *)transactions
+- (NSDictionary<NSString *, QONEntitlement *> *)calculateEntitlementsForRestoredTransactions:(NSArray<SKPaymentTransaction *> *)transactions
                                                                                  products:(NSArray<SKProduct *> *)products {
   NSSortDescriptor *dateDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"transactionDate" ascending:NO];
   NSArray *sortDescriptors = [NSArray arrayWithObject:dateDescriptor];
@@ -1051,12 +1051,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
   }
 
-  return [self calculatePermissionsForTransactions:resultTransactionsDict.allValues products:products];
+  return [self calculateEntitlementsForTransactions:resultTransactionsDict.allValues products:products];
 }
 
-- (NSDictionary<NSString *, QONEntitlement *> *)calculatePermissionsForTransactions:(NSArray<SKPaymentTransaction *> *)transactions
+- (NSDictionary<NSString *, QONEntitlement *> *)calculateEntitlementsForTransactions:(NSArray<SKPaymentTransaction *> *)transactions
                                                                          products:(NSArray<SKProduct *> *)products {
-  NSMutableDictionary<NSString *, QONEntitlement *> *resultPermissions = [NSMutableDictionary new];
+  NSMutableDictionary<NSString *, QONEntitlement *> *resultEntitlements = [NSMutableDictionary new];
   NSMutableDictionary<NSString *, SKProduct *> *productsMap = [NSMutableDictionary new];
 
   for (SKProduct *product in products) {
@@ -1076,9 +1076,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       SKProduct *product = productsMap[transaction.payment.productIdentifier];
       NSDate *expirationDate = [QNUtils calculateExpirationDateForPeriod:product.subscriptionPeriod fromDate:transaction.transactionDate];
       if (!expirationDate || [expirationDate compare:[NSDate date]] == NSOrderedDescending) {
-        NSDictionary<NSString *, QONEntitlement *> *entitlements = [self createPermissionsForProductsMap:qonversionProductsMap transaction:transaction expirationDate:expirationDate];
+        NSDictionary<NSString *, QONEntitlement *> *entitlements = [self createEntitlementsForProductsMap:qonversionProductsMap transaction:transaction expirationDate:expirationDate];
 
-        [resultPermissions addEntriesFromDictionary:entitlements];
+        [resultEntitlements addEntriesFromDictionary:entitlements];
       }
     }
   } else {
@@ -1086,27 +1086,27 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       QONProduct *qonversionProduct = qonversionProductsMap[transaction.payment.productIdentifier];
       NSDate *expirationDate = [QNUtils calculateExpirationDateForProduct:qonversionProduct fromDate:transaction.transactionDate];
       if (!expirationDate || [expirationDate compare:[NSDate date]] == NSOrderedDescending) {
-        NSDictionary<NSString *, QONEntitlement *> *entitlements = [self createPermissionsForProductsMap:qonversionProductsMap transaction:transaction expirationDate:expirationDate];
+        NSDictionary<NSString *, QONEntitlement *> *entitlements = [self createEntitlementsForProductsMap:qonversionProductsMap transaction:transaction expirationDate:expirationDate];
 
-        [resultPermissions addEntriesFromDictionary:entitlements];
+        [resultEntitlements addEntriesFromDictionary:entitlements];
       }
     }
   }
 
-  resultPermissions = [self mergePermissions:resultPermissions];
+  resultEntitlements = [self mergeEntitlements:resultEntitlements];
   
-  NSDictionary<NSString *, QONEntitlement *> *resultPermissionsCopy = [resultPermissions copy];
+  NSDictionary<NSString *, QONEntitlement *> *resultEntitlementsCopy = [resultEntitlements copy];
 
-  [self storePermissions:resultPermissionsCopy];
+  [self storeEntitlements:resultEntitlementsCopy];
 
-  return resultPermissionsCopy;
+  return resultEntitlementsCopy;
 }
 
-- (NSMutableDictionary<NSString *, QONEntitlement *> *)mergePermissions:(NSMutableDictionary *)permissions {
-  NSDictionary *currentPermissions = self.entitlements.count > 0 ? self.entitlements : [self getActualPermissionsForDefaultState:NO];
-  NSMutableDictionary<NSString *, QONEntitlement *> *resultEntitlements = [currentPermissions mutableCopy];
+- (NSMutableDictionary<NSString *, QONEntitlement *> *)mergeEntitlements:(NSMutableDictionary *)entitlements {
+  NSDictionary *currentEntitlements = self.entitlements.count > 0 ? self.entitlements : [self getActualEntitlementsForDefaultState:NO];
+  NSMutableDictionary<NSString *, QONEntitlement *> *resultEntitlements = [currentEntitlements mutableCopy];
 
-  for (QONEntitlement *entitlement in permissions.allValues) {
+  for (QONEntitlement *entitlement in entitlements.allValues) {
     QONEntitlement *currentEntitlement = resultEntitlements[entitlement.entitlementID];
     if (currentEntitlement && (!currentEntitlement.isActive || [entitlement.expirationDate compare:currentEntitlement.expirationDate] == NSOrderedDescending)) {
       resultEntitlements[entitlement.entitlementID] = entitlement;
@@ -1116,29 +1116,29 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return resultEntitlements;
 }
 
-- (NSDictionary<NSString *, QONEntitlement *> *)createPermissionsForProductsMap:(NSDictionary *)productsMap
-                                                                  transaction:(SKPaymentTransaction *)transaction
-                                                               expirationDate:(NSDate *)expirationDate {
-  NSMutableDictionary<NSString *, QONEntitlement *> *resultPermissions = [NSMutableDictionary new];
+- (NSDictionary<NSString *, QONEntitlement *> *)createEntitlementsForProductsMap:(NSDictionary *)productsMap
+                                                                     transaction:(SKPaymentTransaction *)transaction
+                                                                  expirationDate:(NSDate *)expirationDate {
+  NSMutableDictionary<NSString *, QONEntitlement *> *resultEntitlements = [NSMutableDictionary new];
 
   QONProduct *qonversionProduct = productsMap[transaction.payment.productIdentifier];
 
-  NSArray<NSString *> *entitlementsIds = self.productsPermissionsRelation[qonversionProduct.qonversionID];
+  NSArray<NSString *> *entitlementsIds = self.productsEntitlementsRelation[qonversionProduct.qonversionID];
   for (NSString *entitlementId in entitlementsIds) {
-    QONEntitlement *entitlement = [self createPermissionsForId:entitlementId qonversionProduct:qonversionProduct transaction:transaction expirationDate:expirationDate];
+    QONEntitlement *entitlement = [self createEntitlementsForId:entitlementId qonversionProduct:qonversionProduct transaction:transaction expirationDate:expirationDate];
 
-    resultPermissions[entitlement.entitlementID] = entitlement;
+    resultEntitlements[entitlement.entitlementID] = entitlement;
   }
 
-  return [resultPermissions copy];
+  return [resultEntitlements copy];
 }
 
-- (QONEntitlement *)createPermissionsForId:(NSString *)permissionId
+- (QONEntitlement *)createEntitlementsForId:(NSString *)entitlementId
                        qonversionProduct:(QONProduct *)qonversionProduct
                              transaction:(SKPaymentTransaction *)transaction
                           expirationDate:(NSDate *)expirationDate {
   QONEntitlement *entitlement = [[QONEntitlement alloc] init];
-  entitlement.entitlementID = permissionId;
+  entitlement.entitlementID = entitlementId;
   entitlement.isActive = YES;
   entitlement.renewState = QONEntitlementRenewStateUnknown;
   entitlement.source = QONEntitlementSourceAppStore;

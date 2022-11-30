@@ -46,7 +46,7 @@
   return result;
 }
 
-+ (NSDictionary * _Nullable)mapProductsPermissionsRelation:(NSDictionary * _Nullable)dict {
++ (NSDictionary * _Nullable)mapProductsEntitlementsRelation:(NSDictionary * _Nullable)dict {
   NSDictionary *relations = dict[@"products_permissions"];
   if ([relations isKindOfClass:[NSDictionary class]]) {
     return relations;
@@ -263,6 +263,10 @@
   NSNumber *tagNumber = offeringData[@"tag"];
   if (tagNumber) {
     switch (tagNumber.integerValue) {
+      case 0:
+        tag = QONOfferingTagNone;
+        break;
+
       case 1:
         tag = QONOfferingTagMain;
         break;
