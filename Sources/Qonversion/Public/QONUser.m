@@ -12,7 +12,7 @@
 
 - (instancetype)initWithID:(NSString *)qonversionId
         originalAppVersion:(NSString *)originalAppVersion
-                identityId:(NSString *)identityId {
+                identityId:(NSString *_Nullable)identityId {
   self = [super init];
   
   if (self) {

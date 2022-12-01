@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithID:(NSString *)qonversionId
         originalAppVersion:(NSString *)originalAppVersion
-                identityId:(NSString *)identityId;
+                identityId:(NSString *_Nullable)identityId;
 
 @end
 

@@ -14,7 +14,7 @@ NS_SWIFT_NAME(Qonversion.User)
 @interface QONUser : NSObject
 
 @property (nonatomic, copy, readonly) NSString *qonversionId;
-@property (nonatomic, copy, readonly) NSString *identityId;
+@property (nonatomic, copy, nullable, readonly) NSString *identityId;
 @property (nonatomic, copy, nullable, readonly) NSString *originalAppVersion;
 
 @end
