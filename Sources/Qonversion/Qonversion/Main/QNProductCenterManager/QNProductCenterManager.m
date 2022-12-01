@@ -19,6 +19,7 @@
 #import "QONExperimentInfo.h"
 #import "QNDevice.h"
 #import "QNInternalConstants.h"
+#import "QONUser+Protected.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomations.h"
@@ -285,6 +286,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
   
+  [self actualizeUserInfo];
   completion(self.user, self.launchError);
 }
 
@@ -493,6 +495,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     [self.userInfoBlocks removeAllObjects];
     
+    [self actualizeUserInfo];
     for (QONUserInfoCompletionHandler block in blocks) {
       run_block_on_main(block, self.user, self.launchError);
     }
@@ -1147,6 +1150,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   entitlement.expirationDate = expirationDate;
 
   return entitlement;
+}
+
+- (void)actualizeUserInfo {
+  NSString *qonversionId = [self.userInfoService obtainUserID];
+  NSString *identityId = [self.userInfoService obtainCustomIdentityUserID];
+
+  QONUser *actualUser = [[QONUser alloc] initWithID:qonversionId originalAppVersion:self.user.originalAppVersion identityId:identityId ];
+  
+  self.user = actualUser;
 }
 
 @end
