@@ -12,8 +12,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QONUser (Protected)
 
-- (instancetype)initWithID:(NSString *)identifier
-        originalAppVersion:(NSString *)originalAppVersion;
+- (instancetype)initWithID:(NSString *)qonversionId
+        originalAppVersion:(NSString *)originalAppVersion
+                identityId:(NSString *_Nullable)identityId;
 
 @end
 

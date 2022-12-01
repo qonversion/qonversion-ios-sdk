@@ -24,7 +24,8 @@
   NSString *originalAppVersion = userData[@"originalAppVersion"];
   
   QONUser *user = [[QONUser alloc] initWithID:userID
-                         originalAppVersion:originalAppVersion];
+                           originalAppVersion:originalAppVersion
+                                   identityId:nil];
   
   return user;
 }
