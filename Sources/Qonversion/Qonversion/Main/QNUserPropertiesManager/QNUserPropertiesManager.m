@@ -133,8 +133,8 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
       weakSelf.updatingCurrently = NO;
       
       if (error) {
-        if ([error.domain isEqualToString:keyQNAPIErrorDomain] && error.code == QNAPIErrorInvalidClientUID) {
-          [weakSelf.productCenterManager launchWithCompletion:^(QNLaunchResult * _Nonnull result, NSError * _Nullable error) {
+        if ([error.domain isEqualToString:keyQONAPIErrorDomain] && error.code == QONAPIErrorInvalidClientUID) {
+          [weakSelf.productCenterManager launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
             [weakSelf retryProperties];
           }];
         } else {

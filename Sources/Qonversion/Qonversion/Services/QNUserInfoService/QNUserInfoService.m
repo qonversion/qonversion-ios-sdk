@@ -18,12 +18,12 @@ static NSUInteger const kKeychainAttemptsCount = 3;
 
 @implementation QNUserInfoService
 
-- (void)obtainUserInfo:(QNUserInfoCompletionHandler)completion {
+- (void)obtainUserInfo:(QONUserInfoCompletionHandler)completion {
   NSString *userID = [self obtainUserID];
   
   __block __weak QNUserInfoService *weakSelf = self;
   [self.apiClient userInfoRequestWithID:userID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    QNUser *user = [weakSelf.mapper mapUserInfo:dict];
+    QONUser *user = [weakSelf.mapper mapUserInfo:dict];
     completion(user, error);
   }];
 }

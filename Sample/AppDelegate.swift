@@ -18,11 +18,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     FirebaseApp.configure()
     
-    Qonversion.setDebugMode()
-    Qonversion.launch(withKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
-    Qonversion.setPromoPurchasesDelegate(self)
-    Qonversion.setAppleSearchAdsAttributionEnabled(true)
-    
+    let config = Configuration(projectKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2", launchMode: .subscriptionManagement)
+    config.setEnvironment(.sandbox)
+    config.setEntitlementsCacheLifetime(.year)
+    Qonversion.initWithConfig(config)
+    Qonversion.shared().setPromoPurchasesDelegate(self)
+    Qonversion.shared().collectAdvertisingId()
     registerForNotifications()
     
     return true
@@ -43,11 +44,11 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
   }
 
   func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-    Qonversion.setNotificationsToken(deviceToken)
+    Qonversion.Automations.shared().setNotificationsToken(deviceToken)
   }
 
   func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-    let isPushHandled: Bool = Qonversion.handleNotification(response.notification.request.content.userInfo)
+    let isPushHandled: Bool = Qonversion.Automations.shared().handleNotification(response.notification.request.content.userInfo)
     if !isPushHandled {
       // Qonversion can not handle this push.
     }
@@ -60,7 +61,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
   
 }
 
-extension AppDelegate: QNPromoPurchasesDelegate {
+extension AppDelegate: Qonversion.PromoPurchasesDelegate {
   
   func shouldPurchasePromoProduct(withIdentifier productID: String, executionBlock: @escaping Qonversion.PromoPurchaseCompletionHandler) {
     // check productID value in case if you want to enable promoted purchase only for specific products

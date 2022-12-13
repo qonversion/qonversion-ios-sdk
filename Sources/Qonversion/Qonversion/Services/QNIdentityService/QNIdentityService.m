@@ -8,7 +8,7 @@
 
 #import "QNIdentityService.h"
 #import "QNAPIClient.h"
-#import "QNErrors.h"
+#import "QONErrors.h"
 
 @implementation QNIdentityService
 
@@ -18,7 +18,7 @@
     if (identityID.length > 0) {
       completion(identityID, nil);
     } else {
-      NSError *resultError = error ?: [QNErrors errorWithQNErrorCode:QNErrorInternalError];
+      NSError *resultError = error ?: [QONErrors errorWithQONErrorCode:QONErrorInternalError];
       completion(nil, resultError);
     }
   }];

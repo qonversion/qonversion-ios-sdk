@@ -2,7 +2,7 @@
 #import <OCMock/OCMock.h>
 
 #import "QNDevice.h"
-#import "QNConstants.h"
+#import "QNInternalConstants.h"
 #import "QNDevice+Advertising.h"
 
 // expose private methods for unit testing
@@ -37,14 +37,14 @@
 
 - (void)testAppVersion {
     XCTAssertNotNil(_device);
+    NSString *randomVersion = @"10.11.12";
     
     id mockBundle = [OCMockObject niceMockForClass:[NSBundle class]];
     [[[mockBundle stub] andReturn:mockBundle] mainBundle];
-    
-    NSDictionary *mockDictionary = @{@"CFBundleShortVersionString": keyQVersion};
+    NSDictionary *mockDictionary = @{@"CFBundleShortVersionString": randomVersion};
     OCMStub([mockBundle infoDictionary]).andReturn(mockDictionary);
     
-    XCTAssertEqualObjects(keyQVersion, _device.appVersion);
+    XCTAssertEqualObjects(randomVersion, _device.appVersion);
     [mockBundle stopMocking];
 }
 

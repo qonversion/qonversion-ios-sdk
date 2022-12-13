@@ -1,7 +1,7 @@
 #import <CoreGraphics/CoreGraphics.h>
 
 #import "QNUtils.h"
-#import "QNErrors.h"
+#import "QONErrors.h"
 #import "QNInternalConstants.h"
 
 @implementation QNUtils
@@ -24,35 +24,36 @@
   return (currentDate.timeIntervalSince1970 - cacheDataTimeInterval) > cacheLifetimeInSeconds;
 }
 
-+ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(QNPermissionsCacheLifetime)cacheLifetime {
++ (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime {
   CGFloat cacheLifetimeInSeconds = defaultState ? 60.0 * 5.0 : [self cacheLifetimeInSeconds:cacheLifetime];
   return [self isCacheOutdated:cacheDataTimeInterval cacheLifetime:cacheLifetimeInSeconds];
 }
 
-+ (CGFloat)cacheLifetimeInSeconds:(QNPermissionsCacheLifetime)cacheLifetime {
++ (CGFloat)cacheLifetimeInSeconds:(QONEntitlementsCacheLifetime)cacheLifetime {
   NSUInteger days = 0;
   switch (cacheLifetime) {
-    case QNPermissionsCacheLifetimeWeek:
+    case QONEntitlementsCacheLifetimeWeek:
       days = 7;
       break;
-    case QNPermissionsCacheLifetimeTwoWeeks:
+    case QONEntitlementsCacheLifetimeTwoWeeks:
       days = 14;
       break;
-    case QNPermissionsCacheLifetimeMonth:
+    case QONEntitlementsCacheLifetimeMonth:
       days = 30;
       break;
-    case QNPermissionsCacheLifetimeTwoMonth:
+    case QONEntitlementsCacheLifetimeTwoMonths:
       days = 60;
-    case QNPermissionsCacheLifetimeThreeMonth:
+      break;
+    case QONEntitlementsCacheLifetimeThreeMonths:
       days = 90;
       break;
-    case QNPermissionsCacheLifetimeSixMonth:
+    case QONEntitlementsCacheLifetimeSixMonths:
       days = 180;
       break;
-    case QNPermissionsCacheLifetimeYear:
+    case QONEntitlementsCacheLifetimeYear:
       days = 365;
       break;
-    case QNPermissionsCacheLifetimeUnlimited:
+    case QONEntitlementsCacheLifetimeUnlimited:
       return CGFLOAT_MAX;
       break;
       
@@ -73,28 +74,28 @@
   return date;
 }
 
-+ (NSDate *)calculateExpirationDateForProduct:(QNProduct *)product fromDate:(NSDate *)transactionDate {
-  if (product.type == QNProductTypeDirectSubscription || product.type == QNProductTypeTrial) {
++ (NSDate *)calculateExpirationDateForProduct:(QONProduct *)product fromDate:(NSDate *)transactionDate {
+  if (product.type == QONProductTypeDirectSubscription || product.type == QONProductTypeTrial) {
     NSInteger days = 0;
     switch (product.duration) {
-      case QNProductDurationWeekly:
+      case QONProductDurationWeekly:
         days = 7;
         break;
-      case QNProductDurationMonthly:
+      case QONProductDurationMonthly:
         days = 30;
         break;
-      case QNProductDuration3Months:
+      case QONProductDuration3Months:
         days = 90;
         break;
-      case QNProductDuration6Months:
+      case QONProductDuration6Months:
         days = 180;
         break;
-      case QNProductDurationAnnual:
+      case QONProductDurationAnnual:
         days = 365;
         break;
-      case QNProductDurationLifetime:
+      case QONProductDurationLifetime:
         return nil;
-      case QNProductDurationUnknown:
+      case QONProductDurationUnknown:
         return nil;
         
       default:

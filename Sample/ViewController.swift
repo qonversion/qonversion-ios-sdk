@@ -21,7 +21,7 @@ class ViewController: UIViewController {
   @IBOutlet weak var checkActivePermissionsButton: UIButton!
   @IBOutlet weak var logoutButton: UIButton!
   
-  var permissions: [String: Qonversion.Permission] = [:]
+  var permissions: [String: Qonversion.Entitlement] = [:]
   var products: [String: Qonversion.Product] = [:]
   
   override func viewDidLoad() {
@@ -29,7 +29,7 @@ class ViewController: UIViewController {
     
     navigationController?.isNavigationBarHidden = true
     
-    Qonversion.Automations.setDelegate(self)
+    Qonversion.Automations.shared().setDelegate(self)
     
     subscriptionTitleLabel.text = ""
     mainProductSubscriptionButton.layer.cornerRadius = 20.0
@@ -43,7 +43,7 @@ class ViewController: UIViewController {
     
     offeringsButton.layer.cornerRadius = 20.0
     
-    Qonversion.checkPermissions { [weak self] (permissions, error) in
+    Qonversion.shared().checkEntitlements { [weak self] (permissions, error) in
       guard let self = self else { return }
 
       self.permissions = permissions
@@ -63,12 +63,16 @@ class ViewController: UIViewController {
       
       self.showActivePermissionsScreen()
     }
+    
+    Qonversion.shared().offerings { offerings, error in
+      
+    }
   }
   
   func checkProducts() {
     activityIndicator.startAnimating()
     
-    Qonversion.products { [weak self] (result, error) in
+    Qonversion.shared().products { [weak self] (result, error) in
       guard let self = self else { return }
       
       self.activityIndicator.stopAnimating()
@@ -76,7 +80,7 @@ class ViewController: UIViewController {
       self.products = result
       
       if let inAppPurchase = result["consumable"] {
-        let permission: Qonversion.Permission? = self.permissions["standart"]
+        let permission: Qonversion.Entitlement? = self.permissions["standart"]
         let isActive = permission?.isActive ?? false
         let title: String = isActive ? "Successfully purchased" : "Buy for \(inAppPurchase.prettyPrice)"
         self.inAppPurchaseButton.setTitle(title, for: .normal)
@@ -85,7 +89,7 @@ class ViewController: UIViewController {
       }
       
       if let mainSubscription = result["main"] {
-        let permission: Qonversion.Permission? = self.permissions["plus"]
+        let permission: Qonversion.Entitlement? = self.permissions["plus"]
         let isActive = permission?.isActive ?? false
         let title: String = isActive ? "Successfully purchased" : "Subscribe for \(mainSubscription.prettyPrice) / \(mainSubscription.prettyDuration)"
         self.mainProductSubscriptionButton.setTitle(title, for: .normal)
@@ -114,7 +118,7 @@ class ViewController: UIViewController {
   @IBAction func didTapMainProductSubscriptionButton(_ sender: Any) {
     if let product = self.products["main"] {
       activityIndicator.startAnimating()
-      Qonversion.purchase(product.qonversionID) { [weak self] (result, error, flag) in
+      Qonversion.shared().purchase(product.qonversionID) { [weak self] (result, error, flag) in
         guard let self = self else { return }
         
         self.activityIndicator.stopAnimating()
@@ -135,7 +139,7 @@ class ViewController: UIViewController {
   @IBAction func didTapInAppPurchaseButton(_ sender: Any) {
     if let product = self.products["consumable"] {
       activityIndicator.startAnimating()
-      Qonversion.purchaseProduct(product) { [weak self] (result, error, flag) in
+      Qonversion.shared().purchaseProduct(product) { [weak self] (result, error, flag) in
         guard let self = self else { return }
         
         self.activityIndicator.stopAnimating()
@@ -154,7 +158,7 @@ class ViewController: UIViewController {
   
   @IBAction func didTapOfferingsButton(_ sender: Any) {
     offeringsButton.isEnabled = false
-    Qonversion.offerings { [weak self] offerings, error in
+    Qonversion.shared().offerings { [weak self] offerings, error in
       self?.offeringsButton.isEnabled = true
       guard let offerings: Qonversion.Offerings = offerings else { return }
       
@@ -167,7 +171,7 @@ class ViewController: UIViewController {
   
   @IBAction func didTapRestorePurchasesButton(_ sender: Any) {
     activityIndicator.startAnimating()
-    Qonversion.restore { [weak self] (permissions, error) in
+    Qonversion.shared().restore { [weak self] (permissions, error) in
       guard let self = self else { return }
       
       self.activityIndicator.stopAnimating()
@@ -184,11 +188,11 @@ class ViewController: UIViewController {
       
       self.permissions = permissions
       
-      if let permission: Qonversion.Permission = self.permissions["standart"], permission.isActive {
+      if let permission: Qonversion.Entitlement = self.permissions["standart"], permission.isActive {
         self.inAppPurchaseButton.setTitle("Restored", for: .normal)
       }
       
-      if let permission: Qonversion.Permission = self.permissions["plus"], permission.isActive {
+      if let permission: Qonversion.Entitlement = self.permissions["plus"], permission.isActive {
         self.mainProductSubscriptionButton.setTitle("Restored", for: .normal)
       }
     }
@@ -203,7 +207,7 @@ class ViewController: UIViewController {
     do {
       try Auth.auth().signOut()
       GIDSignIn.sharedInstance.signOut()
-      Qonversion.logout()
+      Qonversion.shared().logout()
       self.navigationController?.popViewController(animated: true)
     } catch {
       // handle error
