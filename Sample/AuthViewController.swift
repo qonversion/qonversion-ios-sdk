@@ -49,7 +49,7 @@ class AuthViewController: UIViewController {
       
       guard let uid = authResult?.user.uid else  { return }
       
-      Qonversion.identify(uid)
+      Qonversion.shared().identify(uid)
       self?.showMainScreen()
     }
   }

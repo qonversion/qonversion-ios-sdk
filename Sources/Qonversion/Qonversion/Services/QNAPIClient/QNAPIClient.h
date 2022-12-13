@@ -1,7 +1,7 @@
 #import "Foundation/Foundation.h"
-#import "QNLaunchResult.h"
+#import "QONLaunchResult.h"
 
-@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QNOffering;
+@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QONOffering;
 
 typedef void (^QNAPIClientCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
 
@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *apiKey;
 @property (nonatomic, assign) BOOL debug;
 
+- (void)setSDKVersion:(NSString *)version;
 - (void)launchRequest:(QNAPIClientCompletionHandler)completion;
 - (void)sendPushToken:(void (^)(BOOL success))completion;
 
@@ -26,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
                         purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
                            completion:(QNAPIClientCompletionHandler)completion;
 
-- (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QNProduct *> *)products
+- (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
                                          completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
@@ -37,11 +38,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion;
 
-- (void)attributionRequest:(QNAttributionProvider)provider
+- (void)attributionRequest:(QONAttributionProvider)provider
                       data:(NSDictionary *)data
                 completion:(QNAPIClientCompletionHandler)completion;
 - (void)processStoredRequests;
-- (void)sendOfferingEvent:(QNOffering *)offering;
+- (void)sendOfferingEvent:(QONOffering *)offering;
 - (void)storeRequestForRetry:(NSURLRequest *)request transactionId:(NSString *)transactionId;
 - (void)removeStoredRequestForTransactionId:(NSString *)transactionId;
 

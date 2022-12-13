@@ -32,7 +32,8 @@ NS_SWIFT_NAME(Qonversion.AutomationsDelegate)
  @return the flag that indicates should Qonversion handle the event or not
  @see [Automation Overview](https://documentation.qonversion.io/docs/automations)
  */
-- (BOOL)shouldHandleEvent:(QONAutomationsEvent * _Nonnull)event payload:(NSDictionary<NSString *, id> * _Nonnull)payload;
+- (BOOL)shouldHandleEvent:(QONAutomationsEvent * _Nonnull)event payload:(NSDictionary<NSString *, id> * _Nonnull)payload
+NS_SWIFT_NAME(shouldHandleEvent(_:payload:));
 
 /**
  Called when Automations screen is shown
@@ -59,7 +60,7 @@ NS_SWIFT_NAME(automationsDidFailExecuting(actionResult:));
  Called when Automations flow finishes executing an action
  @param actionResult - executed action.
  For instance, if the user made a purchase then action.type == QONActionResultTypePurchase
- Then you can use the Qonversion.checkPermissions() method to get available permissions
+ Then you can use the Qonversion.checkEntitlements() method to get available entitlements
  */
 - (void)automationsDidFinishExecutingActionResult:(QONActionResult * _Nonnull)actionResult
 NS_SWIFT_NAME(automationsDidFinishExecuting(actionResult:));

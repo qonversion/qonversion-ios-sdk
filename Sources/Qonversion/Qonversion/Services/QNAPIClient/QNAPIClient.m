@@ -1,17 +1,17 @@
 #import "QNAPIClient.h"
-#import "QNConstants.h"
+#import "QNInternalConstants.h"
 #import "QNRequestBuilder.h"
 #import "QNRequestSerializer.h"
-#import "QNErrors.h"
+#import "QONErrors.h"
 #import "QNUtils.h"
 #import "QNUserInfo.h"
 #import "QNAPIConstants.h"
 #import "QNInternalConstants.h"
-#import "QNConstants.h"
+#import "QNInternalConstants.h"
 #import "QNProductPurchaseModel.h"
-#import "QNOffering.h"
-#import "QNExperimentInfo.h"
-#import "QNExperimentGroup.h"
+#import "QONOffering.h"
+#import "QONExperimentInfo.h"
+#import "QONExperimentGroup.h"
 #import "QNErrorsMapper.h"
 #import "QNKeyedArchiver.h"
 
@@ -23,6 +23,7 @@
 @property (nonatomic, copy) NSArray<NSString *> *retriableRequests;
 @property (nonatomic, copy) NSArray<NSNumber *> *criticalErrorCodes;
 @property (nonatomic, strong) NSError *criticalError;
+@property (nonatomic, copy) NSString *version;
 
 @end
 
@@ -59,6 +60,11 @@
 - (void)setApiKey:(NSString *)apiKey {
   _apiKey = apiKey;
   [self.requestBuilder setApiKey:[self obtainApiKey]];
+}
+
+- (void)setSDKVersion:(NSString *)version {
+  _version = version;
+  [self.requestBuilder setSDKVersion:version];
 }
 
 - (void)setDebug:(BOOL)debug {
@@ -112,7 +118,7 @@
   return [request copy];
 }
 
-- (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QNProduct *> *)products
+- (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
                                          completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *requestData = [self.requestSerializer introTrialEligibilityDataForProducts:products];
   NSDictionary *resultBody = [self enrichParameters:requestData];
@@ -159,7 +165,7 @@
   return [self dataTaskWithRequest:request completion:nil];
 }
 
-- (void)attributionRequest:(QNAttributionProvider)provider
+- (void)attributionRequest:(QONAttributionProvider)provider
                       data:(NSDictionary *)data
                 completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
@@ -226,7 +232,7 @@
   
   [baseDict setObject:_userID forKey:@"q_uid"];
   [baseDict setObject:_userID forKey:@"client_uid"];
-  [baseDict setObject:keyQVersion forKey:@"version"];
+  [baseDict setObject:self.version forKey:@"version"];
   [baseDict setObject:@(self.debug) forKey:@"debug_mode"];
   
   return [baseDict copy];
@@ -286,7 +292,7 @@
     }
     
     if ((!data || ![data isKindOfClass:NSData.class])) {
-      completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedReceiveData]);
+      completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedReceiveData]);
       return;
     }
     
@@ -294,7 +300,7 @@
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
     
     if ((jsonError.code || !dict)) {
-      completion(nil, [QNErrors errorWithCode:QNAPIErrorFailedParseResponse]);
+      completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
       return;
     }
     
@@ -317,7 +323,7 @@
     if (httpURLResponse.statusCode >= kInternalServerErrorFirstCode && httpURLResponse.statusCode <= kInternalServerErrorLastCode) {
       NSMutableDictionary *userInfo = [NSMutableDictionary new];
       userInfo[NSLocalizedDescriptionKey] = kInternalServerError;
-      NSError *error = [NSError errorWithDomain:keyQNErrorDomain code:httpURLResponse.statusCode userInfo:userInfo];
+      NSError *error = [NSError errorWithDomain:keyQONErrorDomain code:httpURLResponse.statusCode userInfo:userInfo];
       
       return error;
     }
@@ -334,7 +340,7 @@
     if ([self.criticalErrorCodes containsObject:@(statusCode)]) {
       NSMutableDictionary *userInfo = [NSMutableDictionary new];
       userInfo[NSLocalizedDescriptionKey] = kAccessDeniedError;
-      NSError *error = [NSError errorWithDomain:keyQNErrorDomain code:statusCode userInfo:userInfo];
+      NSError *error = [NSError errorWithDomain:keyQONErrorDomain code:statusCode userInfo:userInfo];
       
       return error;
     }
@@ -386,7 +392,7 @@
   }
 }
 
-- (void)sendOfferingEvent:(QNOffering *)offering {
+- (void)sendOfferingEvent:(QONOffering *)offering {
   NSMutableDictionary *payload = [NSMutableDictionary new];
   payload[@"experiment_id"] = offering.experimentInfo.identifier;
   

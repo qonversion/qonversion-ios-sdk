@@ -6,6 +6,6 @@ extern NSString * const keyQNInitSuccessJSON;
 extern NSString * const keyQNInitFullSuccessJSON;
 extern NSString * const keyQNInitFailedJSON;
 extern NSString * const keyQNBrokenJSON;
-extern NSString * const keyQNErrorDomain;
+extern NSString * const keyQONErrorDomain;
 
 

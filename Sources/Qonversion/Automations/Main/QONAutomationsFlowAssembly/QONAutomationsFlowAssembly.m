@@ -19,6 +19,7 @@
 #import "QONAutomationsScreen.h"
 #import "QONAutomationsScreenProcessor.h"
 #import "QONAutomationsEventsMapper.h"
+#import "QONNotificationsService.h"
 
 @implementation QONAutomationsFlowAssembly
 
@@ -41,6 +42,13 @@
   automationsService.mapper = [self screensMapper];
   
   return automationsService;
+}
+
+- (QONNotificationsService *)notificationsService {
+  QONNotificationsService *notificationsService = [QONNotificationsService new];
+  notificationsService.apiClient = [QNAPIClient shared];
+  
+  return notificationsService;
 }
 
 - (QONAutomationsMapper *)screensMapper {

@@ -8,7 +8,7 @@
 
 #import "QONAutomationsMapper.h"
 #import "QONAutomationsScreen.h"
-#import "QNErrors.h"
+#import "QONErrors.h"
 #import "QONUserActionPoint.h"
 
 @implementation QONAutomationsMapper
