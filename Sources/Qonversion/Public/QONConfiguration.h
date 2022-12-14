@@ -15,7 +15,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_SWIFT_NAME(Configuration)
+NS_SWIFT_NAME(Qonversion.Configuration)
 @interface QONConfiguration : NSObject <NSCopying>
 
 /**
