@@ -11,6 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+NS_SWIFT_NAME(Qonversion.AutomationsEvent)
 @interface QONAutomationsEvent : NSObject
 
 @property (nonatomic, assign, readonly) QONAutomationsEventType type;

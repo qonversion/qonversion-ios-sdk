@@ -1,5 +1,5 @@
 #import "QNDevice.h"
-#import "QNConstants.h"
+#import "QNInternalConstants.h"
 #import "QNUserDefaultsStorage.h"
 #import "QNLocalStorage.h"
 #if !TARGET_OS_OSX

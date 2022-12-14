@@ -8,16 +8,16 @@
 
 #import <Foundation/Foundation.h>
 
-@class QNProduct, QNExperimentInfo;
+@class QONProduct, QONExperimentInfo;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QNProductPurchaseModel : NSObject
 
-@property (nonatomic, strong) QNProduct *product;
-@property (nonatomic, strong, nullable) QNExperimentInfo *experimentInfo;
+@property (nonatomic, strong) QONProduct *product;
+@property (nonatomic, strong, nullable) QONExperimentInfo *experimentInfo;
 
-- (instancetype)initWithProduct:(QNProduct *)product experimentInfo:(QNExperimentInfo * _Nullable)experimentInfo;
+- (instancetype)initWithProduct:(QONProduct *)product experimentInfo:(QONExperimentInfo * _Nullable)experimentInfo;
 
 @end
 

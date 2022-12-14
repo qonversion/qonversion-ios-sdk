@@ -8,13 +8,38 @@
 
 #import "QNInternalConstants.h"
 
+NSString *const keyQInternalUserID = @"keyQInternalUserID";
+NSString *const keyQONPropertyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
+NSString *const keyQSource = @"com.qonversion.keys.source";
+NSString *const keyQSourceVersion = @"com.qonversion.keys.sourceVersion";
+
+NSString * const keyQONErrorDomain = @"com.qonversion.io";
+NSString * const keyQONAPIErrorDomain = @"com.qonversion.io.api";
+
+#if TARGET_OS_OSX
+    NSString *const kQNPlatform = @"macOS";
+    NSString *const kQNOSName = @"macos";
+#elif TARGET_OS_TV
+    NSString *const kQNPlatform = @"tvOS";
+    NSString *const kQNOSName = @"tvos";
+#elif TARGET_OS_MACCATALYST
+    NSString *const kQNPlatform = @"macCatalyst";
+    NSString *const kQNOSName = @"macCatalyst";
+#elif TARGET_OS_WATCH
+    NSString *const kQNPlatform = @"watchOS";
+    NSString *const kQNOSName = @"watchOS";
+#else // iOS, simulator, etc.
+    NSString *const kQNPlatform = @"iOS";
+    NSString *const kQNOSName = @"ios";
+#endif
+
 NSString *const kKeyQKeyChainUserID = @"Qonversion.Keeper.userID";
 NSString *const kKeyQUserDefaultsOriginalUserID = @"com.qonversion.keys.originalUserID";
 NSString *const kKeyQUserDefaultsIdentityUserID = @"com.qonversion.keys.identityUserID";
 NSString *const kKeyQUserDefaultsUserID = @"com.qonversion.keys.storedUserID";
 NSString *const kKeyQUserIDPrefix = @"QON";
 NSString *const kKeyQUserIDSeparator = @"_";
-NSString *const kKeyQUserDefaultsPermissions = @"com.qonversion.keys.permissions";
+NSString *const kKeyQUserDefaultsPermissions = @"com.qonversion.keys.entitlements";
 NSString *const kKeyQUserDefaultsPermissionsTimestamp = @"com.qonversion.keys.permissions.timestamp";
 NSString *const kKeyQUserDefaultsProductsPermissionsRelation = @"com.qonversion.keys.products.permissions.relation";
 NSString *const kMainUserDefaultsSuiteName = @"qonversion.localstorage.main";
@@ -31,3 +56,5 @@ NSUInteger const kMaxDelay = 1000;
 
 NSInteger const kInternalServerErrorFirstCode = 500;
 NSInteger const kInternalServerErrorLastCode = 599;
+
+NSString *const kLaunchIsFinishedNotification = @"qonv.notifications.launch.finished";

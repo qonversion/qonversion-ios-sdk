@@ -83,7 +83,7 @@
 
   if (token.length > 0) {
     QONVERSION_LOG(@"✅ AdServices token fetched");
-    [self sendAttributionData:@{@"token": token, @"requested_at": @(requestTimestamp)} provider:QNAttributionProviderAppleAdServices];
+    [self sendAttributionData:@{@"token": token, @"requested_at": @(requestTimestamp)} provider:QONAttributionProviderAppleAdServices];
     return;
   } else {
     Class ADClientClass = NSClassFromString(@"ADClient");
@@ -117,11 +117,11 @@
   
   [ADClientSharedClientInstance performSelector:iAdDetailsSelector
                                      withObject:^(NSDictionary *attributionDetails, NSError *error) {
-    [self sendAttributionData:attributionDetails provider:QNAttributionProviderAppleSearchAds];
+    [self sendAttributionData:attributionDetails provider:QONAttributionProviderAppleSearchAds];
   }];
 }
 
-- (void)sendAttributionData:(NSDictionary *)attributionData provider:(QNAttributionProvider)provider {
+- (void)sendAttributionData:(NSDictionary *)attributionData provider:(QONAttributionProvider)provider {
   [self.client attributionRequest:provider data:attributionData completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) { }];
 }
 
