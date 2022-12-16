@@ -4,11 +4,6 @@ PROJECT_SCHEME = "Qonversion"
 XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
 
 lane :tests do
-#  cocoapods(
-#    repo_update: false,
-#    podfile: "./Podfile"
-#  )
-
   run_tests(
     scheme: PROJECT_SCHEME,
     devices: ["iPhone 7"]

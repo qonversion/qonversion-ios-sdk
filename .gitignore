@@ -51,7 +51,6 @@ resetXcode.sh
 # Carthage/Checkouts
 
 Carthage/Build
-#Pods/
 
 # We recommend against adding the Pods directory to your .gitignore. However
 # you should judge for yourself, the pros and cons are mentioned at:
