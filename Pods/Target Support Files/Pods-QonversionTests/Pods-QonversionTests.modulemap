@@ -1,0 +1,6 @@
+framework module Pods_QonversionTests {
+  umbrella header "Pods-QonversionTests-umbrella.h"
+
+  export *
+  module * { export * }
+}
