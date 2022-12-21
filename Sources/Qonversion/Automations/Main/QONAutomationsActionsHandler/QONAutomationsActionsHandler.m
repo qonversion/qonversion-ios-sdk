@@ -24,6 +24,7 @@ static NSString *const kPurchaseAction = @"purchase";
 static NSString *const kRestoreAction = @"restore";
 static NSString *const kNavigationAction = @"navigate";
 static NSString *const kCloseAction = @"close";
+static NSString *const kCloseAllAction = @"closeAll";
 
 @interface QONAutomationsActionsHandler()
 
@@ -41,9 +42,10 @@ static NSString *const kCloseAction = @"close";
       kLinkAction: @(QONActionResultTypeURL),
       kDeeplinkAction: @(QONActionResultTypeDeeplink),
       kCloseAction: @(QONActionResultTypeClose),
+      kCloseAllAction: @(QONActionResultTypeCloseAll),
       kPurchaseAction: @(QONActionResultTypePurchase),
       kRestoreAction: @(QONActionResultTypeRestore),
-      kNavigationAction: @(QONActionResultTypeNavigation),
+      kNavigationAction: @(QONActionResultTypeNavigation)
     };
   }
   
