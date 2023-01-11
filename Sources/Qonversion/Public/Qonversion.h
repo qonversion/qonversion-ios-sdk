@@ -35,14 +35,14 @@ NS_ASSUME_NONNULL_BEGIN
  The function is the best way to set additional configs you need to use Qonversion SDK.
  @param configuration a config that contains key SDK settings.
  @return Initialized instance of the Qonversion SDK.
-*/
+ */
 + (instancetype)initWithConfig:(QONConfiguration *)configuration;
 
 /**
  Use this variable to get a current initialized instance of the Qonversion SDK.
  Please, use the variable only after initializing the SDK.
  @return Current initialized instance of the Qonversion SDK.
-*/
+ */
 + (instancetype)sharedInstance NS_SWIFT_NAME(shared());
 
 /**
@@ -123,16 +123,16 @@ NS_ASSUME_NONNULL_BEGIN
  Restore user entitlements based on product center details
  @param completion Completion block that include entitlements dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
-*/
+ */
 - (void)restore:(QNRestoreCompletionHandler)completion;
 
 /**
  Returns Qonversion Products in assotiation with Store Kit Products
  If you get an empty SKProducts be sure your in-app purchases are correctly setted up in AppStore Connect and .storeKit file is available.
-
+ 
  @see [Installing the iOS SDK](https://qonversion.io/docs/apple)
  @see [Product Center](https://qonversion.io/docs/product-center)
-*/
+ */
 - (void)products:(QONProductsCompletionHandler)completion;
 
 /**
