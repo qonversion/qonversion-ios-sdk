@@ -25,6 +25,11 @@ NS_SWIFT_NAME(Qonversion.Automations)
  */
 - (instancetype)init NS_UNAVAILABLE;
 
+/**
+ Use this variable to get a current initialized instance of the Automations part of Qonversion SDK.
+ Please, use the variable only after initializing Qonversion SDK.
+ @return Current initialized instance of the Automations.
+*/
 + (instancetype)sharedInstance NS_SWIFT_NAME(shared());
 
 /**

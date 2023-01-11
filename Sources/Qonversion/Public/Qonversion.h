@@ -16,6 +16,11 @@
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONConfiguration.h"
 
+#if TARGET_OS_IOS
+#import "QONAutomationsDelegate.h"
+#import "QONAutomations.h"
+#endif
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Qonversion : NSObject
