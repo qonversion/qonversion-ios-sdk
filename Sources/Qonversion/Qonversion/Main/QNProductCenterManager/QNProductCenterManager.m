@@ -80,6 +80,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 #if TARGET_OS_IOS
     [QONAutomations sharedInstance];
 #endif
+    [self supportMigrationFromOldVersions];
     
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
     
@@ -104,6 +105,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   
   return self;
+}
+
+- (void)supportMigrationFromOldVersions {
+  [NSKeyedUnarchiver setClass:[QONLaunchResult class] forClassName:@"QNLaunchResult"];
+  [NSKeyedUnarchiver setClass:[QONProduct class] forClassName:@"QNProduct"];
+  [NSKeyedUnarchiver setClass:[QONOfferings class] forClassName:@"QNOfferings"];
+  [NSKeyedUnarchiver setClass:[QONOffering class] forClassName:@"QNOffering"];
+  [NSKeyedUnarchiver setClass:[QONExperimentInfo class] forClassName:@"QNExperimentInfo"];
 }
 
 - (void)offeringByIDWasCalled:(NSNotification *)notification {
