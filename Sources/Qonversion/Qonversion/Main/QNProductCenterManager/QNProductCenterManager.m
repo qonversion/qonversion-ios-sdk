@@ -903,7 +903,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (BOOL)shouldCalculatePermissionsForError:(NSError *)error {
-  return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode) || [QNUtils isConnectionError:error];
+  return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode) || [QNUtils isConnectionError:error] || [QNUtils isAuthorizationError:error];
 }
 
 - (void)handleRestoreResult:(NSDictionary<NSString *, QNPermission *> *)permissions error:(NSError *)error {
@@ -1117,12 +1117,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (NSMutableDictionary<NSString *, QNPermission *> *)mergePermissions:(NSMutableDictionary *)permissions {
-  NSDictionary *currentPermissions = self.permissions.count > 0 ? self.permissions : [self getActualPermissionsForDefaultState:NO];
-  NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = [currentPermissions mutableCopy];
+  NSDictionary *currentPermissions = [self getActualPermissionsForDefaultState:NO];
+     NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = currentPermissions ? [currentPermissions mutableCopy] : [NSMutableDictionary new];
 
   for (QNPermission *permission in permissions.allValues) {
     QNPermission *currentPermission = resultPermissions[permission.permissionID];
-    if (currentPermission && (!currentPermission.isActive || [permission.expirationDate compare:currentPermission.expirationDate] == NSOrderedDescending)) {
+    if (!currentPermission || !currentPermission.isActive || [permission.expirationDate compare:currentPermission.expirationDate] == NSOrderedDescending) {
       resultPermissions[permission.permissionID] = permission;
     }
   }
