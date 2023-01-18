@@ -1118,7 +1118,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (NSMutableDictionary<NSString *, QNPermission *> *)mergePermissions:(NSMutableDictionary *)permissions {
   NSDictionary *currentPermissions = [self getActualPermissionsForDefaultState:NO];
-   NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = currentPermissions ? [currentPermissions mutableCopy] : [NSMutableDictionary new];
+  NSMutableDictionary<NSString *, QNPermission *> *resultPermissions = currentPermissions ? [currentPermissions mutableCopy] : [NSMutableDictionary new];
 
   for (QNPermission *permission in permissions.allValues) {
     QNPermission *currentPermission = resultPermissions[permission.permissionID];
