@@ -41,7 +41,7 @@
     _debug = NO;
     _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
     _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kAttributionEndpoint];
-    _criticalErrorCodes = @[@(401), @(402), @(403)];
+    _criticalErrorCodes = [QNUtils authErrorsCodes];
   }
   
   return self;

@@ -121,9 +121,7 @@
 }
 
 + (BOOL)isAuthorizationError:(NSError *)error {
-  NSArray *authErrorCodes = @[@401, @402, @403];
-
-  return [authErrorCodes containsObject:@(error.code)];
+  return [[QNUtils authErrorsCodes] containsObject:@(error.code)];
 }
 
 + (BOOL)shouldPurchaseRequestBeRetried:(NSError *)error {
@@ -133,6 +131,10 @@
   
   return error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode;
 }
+
++ (NSArray *)authErrorsCodes {
+   return @[@401, @402, @403];
+ }
 
 + (NSDate *)calculateExpirationDateForPeriod:(SKProductSubscriptionPeriod *)period fromDate:(NSDate *)transactionDate {
   if (!period) {
