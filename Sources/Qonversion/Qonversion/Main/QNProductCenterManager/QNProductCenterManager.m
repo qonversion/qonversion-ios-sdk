@@ -901,7 +901,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (BOOL)shouldCalculateEntitlementsForError:(NSError *)error {
-  return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode) || [QNUtils isConnectionError:error];
+  return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode) || [QNUtils isConnectionError:error] || [QNUtils isAuthorizationError:error];
 }
 
 - (void)handleRestoreResult:(NSDictionary<NSString *, QONEntitlement *> *)entitlements error:(NSError *)error {
@@ -1067,7 +1067,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (NSDictionary<NSString *, QONEntitlement *> *)calculateEntitlementsForTransactions:(NSArray<SKPaymentTransaction *> *)transactions
-                                                                         products:(NSArray<SKProduct *> *)products {
+                                                                            products:(NSArray<SKProduct *> *)products {
   NSMutableDictionary<NSString *, QONEntitlement *> *resultEntitlements = [NSMutableDictionary new];
   NSMutableDictionary<NSString *, SKProduct *> *productsMap = [NSMutableDictionary new];
 
@@ -1115,12 +1115,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (NSMutableDictionary<NSString *, QONEntitlement *> *)mergeEntitlements:(NSMutableDictionary *)entitlements {
-  NSDictionary *currentEntitlements = self.entitlements.count > 0 ? self.entitlements : [self getActualEntitlementsForDefaultState:NO];
-  NSMutableDictionary<NSString *, QONEntitlement *> *resultEntitlements = [currentEntitlements mutableCopy];
+  NSDictionary *currentEntitlements = [self getActualEntitlementsForDefaultState:NO];
+  NSMutableDictionary<NSString *, QONEntitlement *> *resultEntitlements = currentEntitlements ? [currentEntitlements mutableCopy] : [NSMutableDictionary new];
 
   for (QONEntitlement *entitlement in entitlements.allValues) {
     QONEntitlement *currentEntitlement = resultEntitlements[entitlement.entitlementID];
-    if (currentEntitlement && (!currentEntitlement.isActive || [entitlement.expirationDate compare:currentEntitlement.expirationDate] == NSOrderedDescending)) {
+    if (!currentEntitlement || !currentEntitlement.isActive || [entitlement.expirationDate compare:currentEntitlement.expirationDate] == NSOrderedDescending) {
       resultEntitlements[entitlement.entitlementID] = entitlement;
     }
   }

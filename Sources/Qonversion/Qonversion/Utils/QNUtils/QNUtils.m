@@ -120,6 +120,12 @@
   return [connectionErrorCodes containsObject:@(error.code)];
 }
 
++ (BOOL)isAuthorizationError:(NSError *)error {
+  NSArray *authErrorCodes = @[@401, @402, @403];
+
+  return [authErrorCodes containsObject:@(error.code)];
+}
+
 + (BOOL)shouldPurchaseRequestBeRetried:(NSError *)error {
   if (!error) {
     return NO;
