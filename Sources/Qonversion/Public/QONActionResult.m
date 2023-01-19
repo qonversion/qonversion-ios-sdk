@@ -45,6 +45,9 @@
     case QONActionResultTypeClose:
       result = @"close"; break;
       
+    case QONActionResultTypeCloseAll:
+      result = @"close all"; break;
+      
     default:
       break;
   }

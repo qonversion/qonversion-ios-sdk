@@ -121,6 +121,9 @@
     case QONActionResultTypeClose:
       [self handleCloseAction:action];
       break;
+    case QONActionResultTypeCloseAll:
+      [self handleCloseAllAction:action];
+      break;
     case QONActionResultTypePurchase: {
       [self handlePurchaseAction:action];
       break;
@@ -151,6 +154,14 @@
 }
 
 - (void)handleCloseAction:(QONActionResult *)action {
+  if (self.navigationController.viewControllers.count > 1) {
+    [self.navigationController popViewControllerAnimated:YES];
+  } else {
+    [self finishAndCloseAutomationsWithActionResult:action];
+  }
+}
+
+- (void)handleCloseAllAction:(QONActionResult *)action {
   [self finishAndCloseAutomationsWithActionResult:action];
 }
 
@@ -242,9 +253,29 @@
 }
 
 - (void)closeAutomationsWithActionResult:(QONActionResult *)actionResult {
-  [self dismissViewControllerAnimated:YES completion:^{
-    [self.delegate automationsFinished];
-  }];
+  if (self.navigationController.presentingViewController) {
+    [self dismissViewControllerAnimated:YES completion:^{
+      [self.delegate automationsFinished];
+    }];
+  } else {
+    UIViewController *vcToPop = [self firstNonQonversionViewController];
+    
+    [self.navigationController popToViewController:vcToPop animated:YES];
+  }
+}
+
+- (UIViewController *)firstNonQonversionViewController {
+  NSArray *currentViewControllers = [self.navigationController.viewControllers copy];
+  UIViewController *firstNonQonversionVC = [currentViewControllers firstObject];
+  for (NSUInteger i = currentViewControllers.count - 1; i > 0; i--) {
+    UIViewController *controller = currentViewControllers[i];
+    if (![controller isKindOfClass:[QONAutomationsViewController class]]) {
+      firstNonQonversionVC = controller;
+      break;
+    }
+  }
+  
+  return firstNonQonversionVC;
 }
 
 #pragma mark - UIScrollViewDelegate

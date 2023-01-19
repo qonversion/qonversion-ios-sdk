@@ -19,6 +19,7 @@
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
 #import "QONAutomations.h"
+#import "QONScreenCustomizationDelegate.h"
 #endif
 
 NS_ASSUME_NONNULL_BEGIN
