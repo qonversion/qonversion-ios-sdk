@@ -41,15 +41,15 @@ NS_SWIFT_NAME(Qonversion.ScreenTransitionConfiguration)
 + (instancetype)defaultConfiguration;
 
 /**
- Iinitializer of QONScreenTransitionConfiguration.
- @param presentationStyle - style that be used to present screen.
- @return the initialized instance of QONScreenTransitionConfiguration.
+ Iinitializer of QONScreenTransitionConfiguration
+ @param presentationStyle - style that will be used to present screen
+ @return the initialized instance of QONScreenTransitionConfiguration
  */
 - (instancetype)initWithPresentationStyle:(QONScreenPresentationStyle)presentationStyle;
 
 /**
- Iinitializer of QONScreenTransitionConfiguration.
- @param presentationStyle - a style that defines screen presentation type
+ Iinitializer of QONScreenTransitionConfiguration
+ @param presentationStyle - style that defines screen presentation type
  @param animated - the flag that enables/disables screen presentation animation
  @return the initialized instance of QONScreenTransitionConfiguration
  */

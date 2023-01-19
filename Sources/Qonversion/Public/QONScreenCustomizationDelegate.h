@@ -9,7 +9,7 @@
 #import "QONScreenTransitionConfiguration.h"
 
 /**
- The delegate is responsible for customazing screens open logic (transition style, animation. etc).
+ The delegate is responsible for customizing screens representation
  */
 NS_SWIFT_NAME(Qonversion.ScreenCustomizationDelegate)
 @protocol QONScreenCustomizationDelegate <NSObject>
@@ -18,7 +18,7 @@ NS_SWIFT_NAME(Qonversion.ScreenCustomizationDelegate)
 
 /**
  The function should return the screen transactions configuration used to present the first screen in the chain.
- @return screen transaction configuration. Use `[QONScreenTransitionConfiguration defaultConfiguration]` if you don't want to override it for specific screens ids
+ @return screen transaction configuration. Use `[QONScreenTransitionConfiguration defaultConfiguration]` if you don't want to override it for specific screens
  */
 - (QONScreenTransitionConfiguration * _Nonnull)transactionConfigurationForScreen:(NSString * _Nonnull)screenId
 NS_SWIFT_NAME(transactionConfigurationForScreen(_:));;

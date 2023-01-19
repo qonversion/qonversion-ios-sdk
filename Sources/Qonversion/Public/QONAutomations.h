@@ -40,7 +40,7 @@ NS_SWIFT_NAME(Qonversion.Automations)
 NS_SWIFT_NAME(setDelegate(_:));
 
 /**
- The delegate is responsible for customazing screens open logic (transition style, animation. etc).
+ The delegate is responsible for customizing screens representation
  @param delegate - delegate that is called before opening Qonversion screens
  */
 - (void)setScreenCustomizationDelegate:(nonnull id<QONScreenCustomizationDelegate>)delegate
