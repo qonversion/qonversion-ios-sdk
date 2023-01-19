@@ -901,7 +901,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (BOOL)shouldCalculateEntitlementsForError:(NSError *)error {
-  return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode) || [QNUtils isConnectionError:error] || [QNUtils isAuthorizationError:error];
+  return (error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode) || [QNUtils isConnectionError:error];
 }
 
 - (void)handleRestoreResult:(NSDictionary<NSString *, QONEntitlement *> *)entitlements error:(NSError *)error {
