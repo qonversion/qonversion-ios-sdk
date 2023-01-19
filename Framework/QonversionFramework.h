@@ -16,6 +16,7 @@
 #import <Qonversion/QONAutomations.h>
 #import <Qonversion/QONAutomationsDelegate.h>
 #import <Qonversion/QONScreenCustomizationDelegate.h>
+#import <Qonversion/QONScreenPresentationConfiguration.h>
 #import <Qonversion/QONActionResult.h>
 
 #import <Qonversion/QONUser.h>
