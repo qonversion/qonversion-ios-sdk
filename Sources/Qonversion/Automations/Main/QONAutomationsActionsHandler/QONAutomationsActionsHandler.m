@@ -24,7 +24,7 @@ static NSString *const kPurchaseAction = @"purchase";
 static NSString *const kRestoreAction = @"restore";
 static NSString *const kNavigationAction = @"navigate";
 static NSString *const kCloseAction = @"close";
-static NSString *const kCloseAllAction = @"closeAll";
+static NSString *const kCloseAllAction = @"closeAllQScreens";
 
 @interface QONAutomationsActionsHandler()
 
