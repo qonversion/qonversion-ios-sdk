@@ -159,9 +159,9 @@
         presentationViewController = [weakSelf topLevelViewController];
       }
       
-      QONScreenTransitionConfiguration *configuration = [QONScreenTransitionConfiguration defaultConfiguration];
-      if ([weakSelf.screenCustomizationDelegate respondsToSelector:@selector(transactionConfigurationForScreen:)]) {
-        configuration = [weakSelf.screenCustomizationDelegate transactionConfigurationForScreen:screen.screenID];
+      QONScreenPresentationConfiguration *configuration = [QONScreenPresentationConfiguration defaultConfiguration];
+      if ([weakSelf.screenCustomizationDelegate respondsToSelector:@selector(presentationConfigurationForScreen:)]) {
+        configuration = [weakSelf.screenCustomizationDelegate presentationConfigurationForScreen:screen.screenID];
       }
 
       if (configuration.presentationStyle == QONScreenPresentationStylePush) {

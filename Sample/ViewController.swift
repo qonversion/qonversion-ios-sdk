@@ -247,7 +247,7 @@ extension ViewController: Qonversion.AutomationsDelegate {
 }
 
 extension ViewController: Qonversion.ScreenCustomizationDelegate {
-  func transactionConfigurationForScreen(_ screenId: String) -> Qonversion.ScreenTransitionConfiguration {
-    return Qonversion.ScreenTransitionConfiguration(presentationStyle: .push, animated: true)
+  func presentationConfigurationForScreen(_ screenId: String) -> Qonversion.ScreenPresentationConfiguration {
+    return Qonversion.ScreenPresentationConfiguration(presentationStyle: .push, animated: true)
   }
 }

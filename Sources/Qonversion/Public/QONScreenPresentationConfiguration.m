@@ -1,14 +1,14 @@
 //
-//  QONScreenTransitionConfiguration.m
+//  QONScreenPresentationConfiguration.m
 //  Qonversion
 //
 //  Created by Suren Sarkisyan on 20.12.2022.
 //  Copyright © 2022 Qonversion Inc. All rights reserved.
 //
 
-#import "QONScreenTransitionConfiguration.h"
+#import "QONScreenPresentationConfiguration.h"
 
-@implementation QONScreenTransitionConfiguration
+@implementation QONScreenPresentationConfiguration
 
 + (instancetype)defaultConfiguration {
   return [[self alloc] initWithPresentationStyle:QONScreenPresentationStyleFullScreen animated:YES];

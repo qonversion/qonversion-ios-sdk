@@ -6,7 +6,7 @@
 //  Copyright © 2022 Qonversion Inc. All rights reserved.
 //
 
-#import "QONScreenTransitionConfiguration.h"
+#import "QONScreenPresentationConfiguration.h"
 
 /**
  The delegate is responsible for customizing screens representation
@@ -18,9 +18,9 @@ NS_SWIFT_NAME(Qonversion.ScreenCustomizationDelegate)
 
 /**
  The function should return the screen transactions configuration used to present the first screen in the chain.
- @return screen transaction configuration. Use `[QONScreenTransitionConfiguration defaultConfiguration]` if you don't want to override it for specific screens
+ @return screen transaction configuration. Use `[QONScreenPresentationConfiguration defaultConfiguration]` if you don't want to override it for specific screens
  */
-- (QONScreenTransitionConfiguration * _Nonnull)transactionConfigurationForScreen:(NSString * _Nonnull)screenId
-NS_SWIFT_NAME(transactionConfigurationForScreen(_:));;
+- (QONScreenPresentationConfiguration * _Nonnull)presentationConfigurationForScreen:(NSString * _Nonnull)screenId
+NS_SWIFT_NAME(presentationConfigurationForScreen(_:));;
 
 @end
