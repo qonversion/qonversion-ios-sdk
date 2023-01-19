@@ -17,7 +17,7 @@ class AuthViewController: UIViewController {
   
   override func viewDidLoad() {
     super.viewDidLoad()
-    
+
     guard GIDSignIn.sharedInstance.hasPreviousSignIn() else { return }
     
     GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, err in
@@ -52,6 +52,10 @@ class AuthViewController: UIViewController {
       Qonversion.identify(uid)
       self?.showMainScreen()
     }
+  }
+  
+  @IBAction func didTapSkipButton(_ sender: Any) {
+    showMainScreen()
   }
   
   func showMainScreen() {

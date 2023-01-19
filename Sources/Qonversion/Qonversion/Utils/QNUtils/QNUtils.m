@@ -157,6 +157,14 @@
   return [NSDate dateWithTimeInterval:periodInSeconds sinceDate:startDate];
 }
 
++ (NSArray *)authErrorsCodes {
+  return @[@401, @402, @403];
+}
+
++ (BOOL)isAuthorizationError:(NSError *)error {
+  return [[QNUtils authErrorsCodes] containsObject:@(error.code)];
+}
+
 + (CGFloat)dayInSeconds {
   return 60.0 * 60.0 * 24.0;
 }
