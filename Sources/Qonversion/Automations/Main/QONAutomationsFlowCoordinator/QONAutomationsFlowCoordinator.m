@@ -26,6 +26,7 @@
 #import "QNDevice.h"
 #import "QONNotificationsService.h"
 #import "QONScreenCustomizationDelegate.h"
+#import "QONAutomationsNavigationController.h"
 
 @interface QONAutomationsFlowCoordinator() <QONAutomationsViewControllerDelegate>
 
@@ -167,7 +168,7 @@
       if (configuration.presentationStyle == QONScreenPresentationStylePush) {
         [presentationViewController.navigationController pushViewController:viewController animated:configuration.animated];
       } else {
-        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
+        QONAutomationsNavigationController *navigationController = [[QONAutomationsNavigationController alloc] initWithRootViewController:viewController];
         navigationController.navigationBarHidden = YES;
         UIModalPresentationStyle style = configuration.presentationStyle == QONScreenPresentationStylePopover ? UIModalPresentationPopover : UIModalPresentationFullScreen;
         navigationController.modalPresentationStyle = style;
