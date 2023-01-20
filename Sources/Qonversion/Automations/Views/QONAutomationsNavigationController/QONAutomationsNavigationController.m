@@ -8,6 +8,8 @@
 
 #import "QONAutomationsNavigationController.h"
 
+#if TARGET_OS_IOS
+
 @interface QONAutomationsNavigationController ()
 
 @end
@@ -32,3 +34,5 @@
 }
 
 @end
+
+#endif
