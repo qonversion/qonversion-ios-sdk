@@ -45,6 +45,8 @@
   self.activityIndicator.hidesWhenStopped = YES;
   [self.view addSubview:self.activityIndicator];
   
+  self.webView.scrollView.showsVerticalScrollIndicator = NO;
+  
   self.webView.scrollView.delegate = self;
   
   [self.delegate automationsDidShowScreen:self.screen.screenID];
