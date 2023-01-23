@@ -30,6 +30,7 @@ class ViewController: UIViewController {
     navigationController?.isNavigationBarHidden = true
     
     Qonversion.Automations.shared().setDelegate(self)
+    Qonversion.Automations.shared().setScreenCustomizationDelegate(self)
     
     subscriptionTitleLabel.text = ""
     mainProductSubscriptionButton.layer.cornerRadius = 20.0
@@ -242,5 +243,11 @@ extension Qonversion.Product {
 extension ViewController: Qonversion.AutomationsDelegate {
   func controllerForNavigation() -> UIViewController {
     return self
+  }
+}
+
+extension ViewController: Qonversion.ScreenCustomizationDelegate {
+  func presentationConfigurationForScreen(_ screenId: String) -> Qonversion.ScreenPresentationConfiguration {
+    return Qonversion.ScreenPresentationConfiguration(presentationStyle: .push, animated: true)
   }
 }

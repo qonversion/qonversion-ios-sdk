@@ -25,10 +25,13 @@
 #import "QNInternalConstants.h"
 #import "QNDevice.h"
 #import "QONNotificationsService.h"
+#import "QONScreenCustomizationDelegate.h"
+#import "QONAutomationsNavigationController.h"
 
 @interface QONAutomationsFlowCoordinator() <QONAutomationsViewControllerDelegate>
 
 @property (nonatomic, weak) id<QONAutomationsDelegate> automationsDelegate;
+@property (nonatomic, weak) id<QONScreenCustomizationDelegate> screenCustomizationDelegate;
 @property (nonatomic, strong) QONAutomationsFlowAssembly *assembly;
 @property (nonatomic, strong) QONAutomationsService *automationsService;
 @property (nonatomic, strong) QONAutomationsEventsMapper *eventsMapper;
@@ -70,6 +73,10 @@
 
 - (void)setAutomationsDelegate:(id<QONAutomationsDelegate>)automationsDelegate {
   _automationsDelegate = automationsDelegate;
+}
+
+- (void)setScreenCustomizationDelegate:(id<QONScreenCustomizationDelegate>)screenCustomizationDelegate {
+  _screenCustomizationDelegate = screenCustomizationDelegate;
 }
 
 - (BOOL)handlePushNotification:(NSDictionary *)userInfo {
@@ -145,9 +152,6 @@
       [weakSelf.automationsService trackScreenShownWithID:automationID];
       QONAutomationsViewController *viewController = [weakSelf.assembly configureAutomationsViewControllerWithScreen:screen delegate:self];
       
-      UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
-      navigationController.navigationBarHidden = YES;
-      
       UIViewController *presentationViewController;
       
       if ([weakSelf.automationsDelegate respondsToSelector:@selector(controllerForNavigation)]) {
@@ -155,8 +159,21 @@
       } else {
         presentationViewController = [weakSelf topLevelViewController];
       }
-      navigationController.modalPresentationStyle = UIModalPresentationFullScreen;
-      [presentationViewController presentViewController:navigationController animated:YES completion:nil];
+      
+      QONScreenPresentationConfiguration *configuration = [QONScreenPresentationConfiguration defaultConfiguration];
+      if ([weakSelf.screenCustomizationDelegate respondsToSelector:@selector(presentationConfigurationForScreen:)]) {
+        configuration = [weakSelf.screenCustomizationDelegate presentationConfigurationForScreen:screen.screenID];
+      }
+
+      if (configuration.presentationStyle == QONScreenPresentationStylePush) {
+        [presentationViewController.navigationController pushViewController:viewController animated:configuration.animated];
+      } else {
+        QONAutomationsNavigationController *navigationController = [[QONAutomationsNavigationController alloc] initWithRootViewController:viewController];
+        navigationController.navigationBarHidden = YES;
+        UIModalPresentationStyle style = configuration.presentationStyle == QONScreenPresentationStylePopover ? UIModalPresentationPopover : UIModalPresentationFullScreen;
+        navigationController.modalPresentationStyle = style;
+        [presentationViewController presentViewController:navigationController animated:configuration.animated completion:nil];
+      }
       
       run_block_on_main(completion, true, nil);
     } else if (error) {

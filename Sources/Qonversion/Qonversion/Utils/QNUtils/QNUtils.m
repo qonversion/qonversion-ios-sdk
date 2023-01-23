@@ -120,6 +120,10 @@
   return [connectionErrorCodes containsObject:@(error.code)];
 }
 
++ (BOOL)isAuthorizationError:(NSError *)error {
+  return [[QNUtils authErrorsCodes] containsObject:@(error.code)];
+}
+
 + (BOOL)shouldPurchaseRequestBeRetried:(NSError *)error {
   if (!error) {
     return NO;
@@ -127,6 +131,10 @@
   
   return error.code >= kInternalServerErrorFirstCode && error.code <= kInternalServerErrorLastCode;
 }
+
++ (NSArray *)authErrorsCodes {
+   return @[@401, @402, @403];
+ }
 
 + (NSDate *)calculateExpirationDateForPeriod:(SKProductSubscriptionPeriod *)period fromDate:(NSDate *)transactionDate {
   if (!period) {

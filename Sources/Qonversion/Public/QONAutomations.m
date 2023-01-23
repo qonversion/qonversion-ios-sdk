@@ -40,6 +40,10 @@
   [[QONAutomationsFlowCoordinator sharedInstance] setAutomationsDelegate:delegate];
 }
 
+- (void)setScreenCustomizationDelegate:(id<QONScreenCustomizationDelegate>)delegate {
+  [[QONAutomationsFlowCoordinator sharedInstance] setScreenCustomizationDelegate:delegate];
+}
+
 - (void)showScreenWithID:(nonnull NSString *)screenID completion:(nullable QONShowScreenCompletionHandler)completion {
   [[QONAutomationsFlowCoordinator sharedInstance] showAutomationWithID:screenID completion:completion];
 }

@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)didFinishLaunch;
 
 - (void)setAutomationsDelegate:(id<QONAutomationsDelegate> _Nullable)automationsDelegate;
+- (void)setScreenCustomizationDelegate:(id<QONScreenCustomizationDelegate>)screenCustomizationDelegate;
 - (void)showAutomationWithID:(NSString *)automationID completion:(nullable QONShowScreenCompletionHandler)completion;
 - (BOOL)handlePushNotification:(NSDictionary *)userInfo;
 - (void)showAutomationIfExists;

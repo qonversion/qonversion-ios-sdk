@@ -10,7 +10,7 @@
 
 #if TARGET_OS_IOS
 
-@protocol QONAutomationsDelegate;
+@protocol QONAutomationsDelegate, QONScreenCustomizationDelegate;
 
 typedef void (^QONShowScreenCompletionHandler)(BOOL success, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ShowScreenCompletionHandler);
 
@@ -38,6 +38,13 @@ NS_SWIFT_NAME(Qonversion.Automations)
  */
 - (void)setDelegate:(nonnull id<QONAutomationsDelegate>)delegate
 NS_SWIFT_NAME(setDelegate(_:));
+
+/**
+ The delegate is responsible for customizing screens representation
+ @param delegate - delegate that is called before opening Qonversion screens
+ */
+- (void)setScreenCustomizationDelegate:(nonnull id<QONScreenCustomizationDelegate>)delegate
+NS_SWIFT_NAME(setScreenCustomizationDelegate(_:));
 
 /**
  Show the screen using its ID

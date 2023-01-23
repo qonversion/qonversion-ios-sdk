@@ -17,7 +17,8 @@ typedef NS_ENUM(NSInteger, QONActionResultType) {
   QONActionResultTypeNavigation = 3,
   QONActionResultTypePurchase = 4,
   QONActionResultTypeRestore = 5,
-  QONActionResultTypeClose = 6
+  QONActionResultTypeClose = 6,
+  QONActionResultTypeCloseAll = 7
 } NS_SWIFT_NAME(Qonversion.ActionResultType);
 
 NS_SWIFT_NAME(Qonversion.ActionResult)
