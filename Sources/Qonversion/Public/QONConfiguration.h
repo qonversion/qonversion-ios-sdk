@@ -49,7 +49,7 @@ NS_SWIFT_NAME(Qonversion.Configuration)
 @property (nonatomic, assign, readonly) QONEnvironment environment;
 
 /**
- Base URL that be used for API requests.
+ Base URL that will be used for API requests.
  */
 @property (nonatomic, copy, readonly) NSString *baseURL;
 

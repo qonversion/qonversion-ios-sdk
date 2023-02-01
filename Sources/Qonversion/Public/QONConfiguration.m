@@ -59,9 +59,13 @@
 
 - (void)setProxyURL:(NSString *)url {
   if (![url hasPrefix:@"http://"] && ![url hasPrefix:@"https://"]) {
-    _baseURL = [NSString stringWithFormat:@"%@%@", @"https://", url];
+    _baseURL = [NSString stringWithFormat:@"https://%@", url];
   } else {
     _baseURL = url;
+  }
+  
+  if (![url hasSuffix:@"/"]) {
+    _baseURL = [NSString stringWithFormat:@"%@/", _baseURL];
   }
 }
 
