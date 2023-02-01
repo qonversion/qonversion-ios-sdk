@@ -104,7 +104,6 @@ NS_SWIFT_NAME(Qonversion.Configuration)
 /**
  Provide a URL to your proxy server which will redirect all the requests from the app to our API. Please, check the documentation and contact us before using this feature.
  @param url your proxy server url
- @return builder instance for chain calls.
  */
 - (void)setProxyURL:(NSString *)url;
 

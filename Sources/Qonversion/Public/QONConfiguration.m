@@ -64,7 +64,7 @@
     _baseURL = url;
   }
   
-  if (![url hasSuffix:@"/"]) {
+  if (![_baseURL hasSuffix:@"/"]) {
     _baseURL = [NSString stringWithFormat:@"%@/", _baseURL];
   }
 }
