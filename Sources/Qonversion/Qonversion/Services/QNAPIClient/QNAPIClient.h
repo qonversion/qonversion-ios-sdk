@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL debug;
 
 - (void)setSDKVersion:(NSString *)version;
+- (void)setBaseURL:(NSString *)url;
 - (void)launchRequest:(QNAPIClientCompletionHandler)completion;
 - (void)sendPushToken:(void (^)(BOOL success))completion;
 

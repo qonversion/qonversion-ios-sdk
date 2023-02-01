@@ -49,6 +49,11 @@ NS_SWIFT_NAME(Qonversion.Configuration)
 @property (nonatomic, assign, readonly) QONEnvironment environment;
 
 /**
+ Base URL that be used for API requests.
+ */
+@property (nonatomic, copy, readonly) NSString *baseURL;
+
+/**
  Listener to handle entitlements update. For example, when pending purchases like SCA, Ask to buy, etc., happened.
  */
 @property (nonatomic, weak, readonly) id<QONEntitlementsUpdateListener> entitlementsUpdateListener;
@@ -95,6 +100,13 @@ NS_SWIFT_NAME(Qonversion.Configuration)
  @param environment current environment
  */
 - (void)setEnvironment:(QONEnvironment)environment;
+
+/**
+ Provide a URL to your proxy server which will redirect all the requests from the app to our API. Please, check the documentation and contact us before using this feature.
+ @param url your proxy server url
+ @return builder instance for chain calls.
+ */
+- (void)setProxyURL:(NSString *)url;
 
 - (id)copyWithZone:(NSZone * _Nullable)zone;
 

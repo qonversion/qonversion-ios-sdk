@@ -3,6 +3,7 @@
 @interface QNRequestBuilder : NSObject
 
 - (void)setApiKey:(NSString *)apiKey;
+- (void)setBaseURL:(NSString *)url;
 - (void)setSDKVersion:(NSString *)version;
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeSendPushTokenRequestWith:(NSDictionary *)parameters;

@@ -7,6 +7,7 @@
 
 @property (nonatomic, copy) NSString *apiKey;
 @property (nonatomic, copy) NSString *version;
+@property (nonatomic, copy) NSString *baseURL;
 
 @end
 
@@ -18,6 +19,10 @@
 
 - (void)setSDKVersion:(NSString *)version {
   _version = version;
+}
+
+- (void)setBaseURL:(NSString *)url {
+  _baseURL = url;
 }
 
 - (NSURLRequest *)makeSendPushTokenRequestWith:(NSDictionary *)parameters {
@@ -80,7 +85,7 @@
 // MARK: Private
 
 - (NSURLRequest *)makeGetRequestWith:(NSString *)endpoint {
-  NSString *urlString = [kAPIBase stringByAppendingString:endpoint];
+  NSString *urlString = [self.baseURL stringByAppendingString:endpoint];
   NSURL *url = [[NSURL alloc] initWithString:urlString];
 
   NSMutableURLRequest *request = [self baseGetRequestWithURL:url];
@@ -89,7 +94,7 @@
 }
 
 - (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body {
-  NSString *urlString = [kAPIBase stringByAppendingString:endpoint];
+  NSString *urlString = [self.baseURL stringByAppendingString:endpoint];
   NSURL *url = [NSURL.alloc initWithString:urlString];
 
   NSMutableURLRequest *request = [self basePostRequestWithURL:url];
