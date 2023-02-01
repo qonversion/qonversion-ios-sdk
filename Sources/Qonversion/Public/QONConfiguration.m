@@ -7,6 +7,7 @@
 //
 
 #import "QONConfiguration.h"
+#import "QNAPIConstants.h"
 
 @interface QONConfiguration ()
 
@@ -15,6 +16,7 @@
 @property (nonatomic, assign, readwrite) QONLaunchMode launchMode;
 @property (nonatomic, assign, readwrite) QONEntitlementsCacheLifetime entitlementsCacheLifetime;
 @property (nonatomic, assign, readwrite) BOOL debugMode;
+@property (nonatomic, copy, readwrite) NSString *baseURL;
 @property (nonatomic, weak, readwrite) id<QONEntitlementsUpdateListener> entitlementsUpdateListener;
 @property (nonatomic, weak, readwrite) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
 
@@ -33,6 +35,7 @@
     _launchMode = launchMode;
     _environment = QONEnvironmentProduction;
     _entitlementsCacheLifetime = QONEntitlementsCacheLifetimeMonth;
+    _baseURL = kAPIBase;
   }
   
   return self;
@@ -52,6 +55,18 @@
 
 - (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate {
   _promoPurchasesDelegate = delegate;
+}
+
+- (void)setProxyURL:(NSString *)url {
+  if (![url hasPrefix:@"http://"] && ![url hasPrefix:@"https://"]) {
+    _baseURL = [NSString stringWithFormat:@"https://%@", url];
+  } else {
+    _baseURL = url;
+  }
+  
+  if (![_baseURL hasSuffix:@"/"]) {
+    _baseURL = [NSString stringWithFormat:@"%@/", _baseURL];
+  }
 }
 
 - (id)copyWithZone:(NSZone *)zone {

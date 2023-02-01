@@ -67,6 +67,10 @@
   [self.requestBuilder setSDKVersion:version];
 }
 
+- (void)setBaseURL:(NSString *)url {
+  [self.requestBuilder setBaseURL:url];
+}
+
 - (void)setDebug:(BOOL)debug {
   _debug = debug;
   [self.requestBuilder setApiKey:[self obtainApiKey]];

@@ -1,5 +1,6 @@
 #import <XCTest/XCTest.h>
 #import "QNRequestBuilder.h"
+#import "QNAPIConstants.h"
 
 @interface QNRequestBuilderTests : XCTestCase
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
@@ -14,11 +15,12 @@
 @implementation QNRequestBuilderTests
 
 - (void)setUp {
-    _requestBuilder = [[QNRequestBuilder alloc] init];
+  _requestBuilder = [[QNRequestBuilder alloc] init];
+  [_requestBuilder setBaseURL:kAPIBase];
 }
 
 - (void)tearDown {
-    _requestBuilder = nil;
+  _requestBuilder = nil;
 }
 
 - (void)testThatBuilderSetCorrectRequestSettings {
@@ -33,19 +35,19 @@
 }
 
 - (void)testThatInitRequestBuilderSetCorrectURL {
-    NSURLRequest *request = [_requestBuilder makeInitRequestWith:@{}];
-    XCTAssertNotNil(request);
-    
-    XCTAssertNotNil(request.URL);
-    XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/v1/user/init");
+  NSURLRequest *request = [_requestBuilder makeInitRequestWith:@{}];
+  XCTAssertNotNil(request);
+  
+  XCTAssertNotNil(request.URL);
+  XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/v1/user/init");
 }
 
 - (void)testThatPurchaseRequestBuilderSetCorrectURL {
-    NSURLRequest *request = [_requestBuilder makePurchaseRequestWith:@{}];
-    XCTAssertNotNil(request);
-    
-    XCTAssertNotNil(request.URL);
-    XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/v1/user/purchase");
+  NSURLRequest *request = [_requestBuilder makePurchaseRequestWith:@{}];
+  XCTAssertNotNil(request);
+  
+  XCTAssertNotNil(request.URL);
+  XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/v1/user/purchase");
 }
 
 @end
