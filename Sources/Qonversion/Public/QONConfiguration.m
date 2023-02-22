@@ -9,6 +9,8 @@
 #import "QONConfiguration.h"
 #import "QNAPIConstants.h"
 
+static NSString *const kSDKVersion = @"3.2.0";
+
 @interface QONConfiguration ()
 
 @property (nonatomic, copy, readwrite) NSString *projectKey;
@@ -30,8 +32,7 @@
   
   if (self) {
     _projectKey = projectKey;
-    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
-    _version = bundle.infoDictionary[@"CFBundleShortVersionString"];
+    _version = kSDKVersion;
     _launchMode = launchMode;
     _environment = QONEnvironmentProduction;
     _entitlementsCacheLifetime = QONEntitlementsCacheLifetimeMonth;
@@ -74,6 +75,7 @@
   [copyConfig setEnvironment:_environment];
   [copyConfig setEntitlementsCacheLifetime:_entitlementsCacheLifetime];
   [copyConfig setEntitlementsUpdateListener:_entitlementsUpdateListener];
+  [copyConfig setProxyURL:_baseURL];
   
   return copyConfig;
 }
