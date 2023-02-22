@@ -75,6 +75,7 @@ static NSString *const kSDKVersion = @"3.2.0";
   [copyConfig setEnvironment:_environment];
   [copyConfig setEntitlementsCacheLifetime:_entitlementsCacheLifetime];
   [copyConfig setEntitlementsUpdateListener:_entitlementsUpdateListener];
+  [copyConfig setProxyURL:_baseURL];
   
   return copyConfig;
 }
