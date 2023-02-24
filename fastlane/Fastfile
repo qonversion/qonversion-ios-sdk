@@ -83,4 +83,9 @@ lane :bump do |options|
     path: "Qonversion.podspec", 
     version_number: new_version
   )
+
+  file_path = Dir['../**/QONConfiguration.m'].first
+  file = File.read(file_path)
+  new_content = file.gsub(/NSString \*const kSDKVersion = @".*";/, "NSString *const kSDKVersion = @\"#{new_version}\";")
+  File.open(file_path, 'w') { |line| line.puts new_content }
 end

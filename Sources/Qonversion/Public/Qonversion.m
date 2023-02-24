@@ -19,7 +19,6 @@
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
-
 @property (nonatomic, assign) BOOL debugMode;
 @property (nonatomic, assign) QONLaunchMode launchMode;
 
@@ -33,7 +32,7 @@
   QONConfiguration *configCopy = [configuration copy];
   [Qonversion sharedInstance].debugMode = configCopy.environment == QONEnvironmentSandbox;
   [[QNAPIClient shared] setSDKVersion:configCopy.version];
-  [[QNAPIClient shared] setBaseURL:configuration.baseURL];
+  [[QNAPIClient shared] setBaseURL:configCopy.baseURL];
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
   [[Qonversion sharedInstance] setEntitlementsUpdateListener:configCopy.entitlementsUpdateListener];
