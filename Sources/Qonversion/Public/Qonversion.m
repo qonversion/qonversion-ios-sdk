@@ -19,7 +19,6 @@
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
-
 @property (nonatomic, assign) BOOL debugMode;
 @property (nonatomic, assign) QONLaunchMode launchMode;
 
