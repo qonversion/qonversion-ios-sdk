@@ -12,6 +12,8 @@
 #import "QNUserInfoServiceInterface.h"
 #import "QNUserInfoService.h"
 #import "QNServicesAssembly.h"
+#import "QNLocalStorage.h"
+#import "QNInternalConstants.h"
 
 @interface Qonversion()
 
@@ -19,6 +21,7 @@
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
+@property (nonatomic, strong) id<QNLocalStorage> localStorage;
 
 @property (nonatomic, assign) BOOL debugMode;
 @property (nonatomic, assign) QONLaunchMode launchMode;
@@ -58,6 +61,21 @@
   [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
   
   [Qonversion sharedInstance].propertiesManager.productCenterManager = [Qonversion sharedInstance].productCenterManager;
+}
+
+- (void)syncHistoricalData {
+  BOOL isHistoricalDataSynced = [self.localStorage loadBoolforKey:kHistoricalDataSynced];
+  if (isHistoricalDataSynced) {
+    return;
+  }
+  
+  [[Qonversion sharedInstance] restore:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+    if (error) {
+      QONVERSION_LOG(@"❌ Historical data sync failed: %@", error.localizedDescription);
+    } else {
+      [self.localStorage storeBool:YES forKey:kHistoricalDataSynced];
+    }
+  }];
 }
 
 - (void)identify:(NSString *)userID {
@@ -156,6 +174,8 @@
     _attributionManager = [QNAttributionManager new];
     
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
+ 
+    _localStorage = [servicesAssembly localStorage];
     
     _userInfoService = [servicesAssembly userInfoService];
     
