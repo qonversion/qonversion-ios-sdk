@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol QNUserInfoServiceInterface, QNIdentityManagerInterface;
+@protocol QNUserInfoServiceInterface, QNIdentityManagerInterface, QNLocalStorage;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id<QNUserInfoServiceInterface>)userInfoService;
 - (id<QNIdentityManagerInterface>)identityManager;
+- (id<QNLocalStorage>)localStorage;
 
 @end
 
