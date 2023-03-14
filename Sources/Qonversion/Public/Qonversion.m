@@ -70,7 +70,9 @@
   }
   
   [[Qonversion sharedInstance] restore:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
-    if (!error) {
+    if (error) {
+      QONVERSION_LOG(@"❌ Historical data sync failed: %@", error.localizedDescription);
+    } else {
       [self.localStorage storeBool:YES forKey:kHistoricalDataSynced];
     }
   }];
