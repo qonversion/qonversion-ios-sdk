@@ -33,6 +33,7 @@ extern NSString *const keyQONAPIErrorDomain;
 extern NSString *const kQNPlatform;
 extern NSString *const kQNOSName;
 
+extern NSString *const kHistoricalDataSynced;
 
 extern NSString *const kKeyQKeyChainUserID;
 extern NSString *const kKeyQUserDefaultsIdentityUserID;

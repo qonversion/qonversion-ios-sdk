@@ -47,6 +47,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)sharedInstance NS_SWIFT_NAME(shared());
 
 /**
+ Call this function to sync the subscriber data with the first launch when Qonversion is implemented.
+ */
+- (void)syncHistoricalData;
+
+/**
  Call this function to link a user to his unique ID in your system and share purchase data.
  
  @param userID - unique user ID in your system
