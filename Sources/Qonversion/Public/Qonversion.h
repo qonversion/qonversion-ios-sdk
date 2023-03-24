@@ -180,6 +180,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)collectAdvertisingId;
 
+- (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
+
 @end
 
 NS_ASSUME_NONNULL_END

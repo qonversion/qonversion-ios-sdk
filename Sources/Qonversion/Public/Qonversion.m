@@ -14,12 +14,14 @@
 #import "QNServicesAssembly.h"
 #import "QNLocalStorage.h"
 #import "QNInternalConstants.h"
+#import "QONRemoteConfigManager.h"
 
 @interface Qonversion()
 
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
+@property (nonatomic, strong) QONRemoteConfigManager *remoteConfigManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
 
@@ -90,10 +92,6 @@
   [[Qonversion sharedInstance].productCenterManager presentCodeRedemptionSheet];
 }
 
-- (void)setDebugMode {
-  [Qonversion sharedInstance].debugMode = YES;
-}
-
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)delegate {
   [[Qonversion sharedInstance].productCenterManager setPurchasesDelegate:delegate];
 }
@@ -154,6 +152,10 @@
   [[[Qonversion sharedInstance] productCenterManager] userInfo:completion];
 }
 
+- (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] remoteConfig:completion];
+}
+
 // MARK: - Private
 
 + (instancetype)sharedInstance {
@@ -172,6 +174,7 @@
     _productCenterManager = [QNProductCenterManager new];
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
+    _remoteConfigManager = [QONRemoteConfigManager new];
     
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
  

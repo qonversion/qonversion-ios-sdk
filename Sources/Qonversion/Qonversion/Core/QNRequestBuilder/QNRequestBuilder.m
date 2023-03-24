@@ -73,6 +73,10 @@
   return [self makePostRequestWith:kProductsEndpoint andBody:parameters];
 }
 
+- (NSURLRequest *)remoteConfigRequest {
+  return [self makeGetRequestWith:kRemoteConfigEndpoint];
+}
+
 - (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID {
   NSMutableDictionary *body = [NSMutableDictionary new];
   body[@"user"] = userID;
@@ -87,7 +91,7 @@
 - (NSURLRequest *)makeGetRequestWith:(NSString *)endpoint {
   NSString *urlString = [self.baseURL stringByAppendingString:endpoint];
   NSURL *url = [[NSURL alloc] initWithString:urlString];
-
+  
   NSMutableURLRequest *request = [self baseGetRequestWithURL:url];
   
   return [request copy];
@@ -96,11 +100,11 @@
 - (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body {
   NSString *urlString = [self.baseURL stringByAppendingString:endpoint];
   NSURL *url = [NSURL.alloc initWithString:urlString];
-
+  
   NSMutableURLRequest *request = [self basePostRequestWithURL:url];
   
   NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
-
+  
   request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
   
   return [request copy];
@@ -122,8 +126,18 @@
   [self addBearerToRequest:request];
   [self addLocaleToRequest:request];
   [self addPlatformInfoToRequest:request];
-
+  [self addAppVersionToRequest:request];
+  [self addCountryToRequest:request];
+  
   return request;
+}
+
+- (void)addAppVersionToRequest:(NSMutableURLRequest *)request {
+  [request addValue:[[QNDevice current] appVersion] forHTTPHeaderField:@"AppVersion"];
+}
+
+- (void)addCountryToRequest:(NSMutableURLRequest *)request {
+  [request addValue:[[QNDevice current] country] forHTTPHeaderField:@"Country"];
 }
 
 - (void)addLocaleToRequest:(NSMutableURLRequest *)request {

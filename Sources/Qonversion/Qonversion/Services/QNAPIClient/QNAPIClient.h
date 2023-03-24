@@ -46,6 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)sendOfferingEvent:(QONOffering *)offering;
 - (void)storeRequestForRetry:(NSURLRequest *)request transactionId:(NSString *)transactionId;
 - (void)removeStoredRequestForTransactionId:(NSString *)transactionId;
+- (void)loadRemoteConfig:(QNAPIClientCompletionHandler)completion;
 
 @end
 

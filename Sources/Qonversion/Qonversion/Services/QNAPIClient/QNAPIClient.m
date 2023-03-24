@@ -214,6 +214,12 @@
   }
 }
 
+- (void)loadRemoteConfig:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder remoteConfigRequest];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
 // MARK: - Private
 
 - (NSDictionary *)enrichPushTokenData:(NSDictionary *)data {
