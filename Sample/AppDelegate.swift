@@ -18,7 +18,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     FirebaseApp.configure()
     
-    let config = Qonversion.Configuration(projectKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2", launchMode: .subscriptionManagement)
+    let config = Qonversion.Configuration(projectKey: "V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-a", launchMode: .subscriptionManagement)
     config.setEnvironment(.sandbox)
     config.setEntitlementsCacheLifetime(.year)
     Qonversion.initWithConfig(config)

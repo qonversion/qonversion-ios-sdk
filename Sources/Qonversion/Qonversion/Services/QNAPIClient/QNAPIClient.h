@@ -27,14 +27,19 @@ NS_ASSUME_NONNULL_BEGIN
                               receipt:(nullable NSString *)receipt
                         purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
                            completion:(QNAPIClientCompletionHandler)completion;
+- (NSURLRequest *)purchaseRequestWith:(NSDictionary *) body
+                           completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
                                          completion:(QNAPIClientCompletionHandler)completion;
+- (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
+                                     completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
 - (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion;
 - (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;
 - (void)trackScreenShownWithID:(NSString *)automationID;
+- (void)trackScreenShownWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;
 - (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion;
