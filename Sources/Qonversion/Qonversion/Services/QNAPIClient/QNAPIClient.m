@@ -131,11 +131,11 @@
                                          completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *requestData = [self.requestSerializer introTrialEligibilityDataForProducts:products];
   
-  return [self checkTrialIntroEligibilityParamsForProducts:requestData completion:completion];
+  return [self checkTrialIntroEligibilityParamsForData:requestData completion:completion];
 }
 
 - (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
-                                         completion:(QNAPIClientCompletionHandler)completion {
+                                     completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *resultBody = [self enrichParameters:data];
   NSURLRequest *request = [self.requestBuilder makeIntroTrialEligibilityRequestWithData:resultBody];
   
@@ -174,7 +174,7 @@
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID {
-  return [self trackScreenShownWithID:automationID completion:nil];
+  return [self trackScreenShownWithID:automationID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {}];
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID
