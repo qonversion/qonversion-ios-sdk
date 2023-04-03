@@ -117,7 +117,7 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapMainProductSubscriptionButton(_ sender: Any) {
-    if let product = self.products["test_monthly"] {
+    if let product = self.products["main"] {
       activityIndicator.startAnimating()
       Qonversion.shared().purchase(product.qonversionID) { [weak self] (result, error, flag) in
         guard let self = self else { return }
