@@ -16,6 +16,7 @@
 
 NSString *const kSDKVersion = @"10.11.12";
 NSString *const kProjectKey = @"V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-a";
+NSString *const kIncorrectProjectKey = @"V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-aaaa";
 const int kRequestTimeout = 10;
 
 @interface QNAPIClientIntegrationTests : XCTestCase
@@ -135,6 +136,22 @@ const int kRequestTimeout = 10;
   [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
 }
 
+- (void)testInitError {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Init error call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_init"];
+  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+
+  // when
+  [client launchRequest:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [self assertProjectNotFoundError:res error:error];
+    [completionExpectation fulfill];
+  }];
+  
+  // then
+  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+}
+
 - (void)testPurchase {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Purchase call"];
@@ -185,6 +202,22 @@ const int kRequestTimeout = 10;
   [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
 }
 
+- (void)testPurchaseError {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Purchase error call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_purchase"];
+  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  
+  // when
+  [client purchaseRequestWith:self.purchaseData completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [self assertProjectNotFoundError:res error:error];
+    [completionExpectation fulfill];
+  }];
+  
+  // then
+  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+}
+
 - (void)testAttribution {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Attribution call"];
@@ -219,6 +252,27 @@ const int kRequestTimeout = 10;
   [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
 }
 
+- (void)testAttributionError {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Attribution error call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_attribution"];
+  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  
+  NSDictionary *data = @{
+    @"one": @"two",
+    @"number": @42,
+  };
+
+  // when
+  [client attributionRequest:QONAttributionProviderAdjust data:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [self assertProjectNotFoundError:res error:error];
+    [completionExpectation fulfill];
+  }];
+  
+  // then
+  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+}
+
 - (void)testProperties {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Properties call"];
@@ -245,6 +299,27 @@ const int kRequestTimeout = 10;
       XCTAssertTrue([self areDictionariesDeepEqual:expRes second:res]);
       [completionExpectation fulfill];
     }];
+  }];
+  
+  // then
+  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+}
+
+- (void)testPropertiesError {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Properties error call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_properties"];
+  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  
+  NSDictionary *data = @{
+    @"customProperty": @"custom property value",
+    [QNProperties keyForProperty:QONPropertyUserID]: @"custom user id",
+  };
+
+  // when
+  [client properties:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [self assertAccessDeniedError:res error:error];
+    [completionExpectation fulfill];
   }];
   
   // then
@@ -322,6 +397,38 @@ const int kRequestTimeout = 10;
   [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
 }
 
+- (void)testCheckTrialIntroEligibilityError {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"CheckTrialIntroEligibility error call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_checkTrialIntroEligibility"];
+  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  
+  NSMutableDictionary *data = [_mainRequestData mutableCopy];
+  data[@"products_local_data"] = @[
+    @{
+      @"store_id": @"apple_annual",
+      @"subscription_group_identifier": @20679497,
+    },
+    @{
+      @"store_id": @"apple_inapp",
+      @"subscription_group_identifier": @20679497,
+    },
+    @{
+      @"store_id": @"apple_monthly",
+      @"subscription_group_identifier": @20679497,
+    }
+  ];
+
+  // when
+  [client checkTrialIntroEligibilityParamsForData:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [self assertProjectNotFoundError:res error:error];
+    [completionExpectation fulfill];
+  }];
+  
+  // then
+  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+}
+
 - (void)testIdentify {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Identify call"];
@@ -341,6 +448,23 @@ const int kRequestTimeout = 10;
       XCTAssertTrue([identityId isEqualToString:res[@"data"][@"identity_id"]]);
       [completionExpectation fulfill];
     }];
+  }];
+  
+  // then
+  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+}
+
+- (void)testIdentifyError {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Identify error call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_identify"];
+  NSString *identityId = [NSString stringWithFormat:@"%@%@", @"identity_for_", uid];
+  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  
+  // when
+  [client createIdentityForUserID:identityId anonUserID:uid completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [self assertAccessDeniedError:res error:error];
+    [completionExpectation fulfill];
   }];
   
   // then
@@ -396,6 +520,22 @@ const int kRequestTimeout = 10;
   [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
 }
 
+- (void)testScreensError {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Screens error call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_screens"];
+  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  
+  // when
+  [client automationWithID:self.noCodeScreenId completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [self assertAccessDeniedError:res error:error];
+    [completionExpectation fulfill];
+  }];
+  
+  // then
+  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+}
+
 - (void)testViews {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Views call"];
@@ -442,6 +582,37 @@ const int kRequestTimeout = 10;
   
   // then
   [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+}
+
+- (void)testActionPointsError {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Action points call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_actionPoints"];
+  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  
+  // when
+  [client userActionPointsWithCompletion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [self assertAccessDeniedError:res error:error];
+    [completionExpectation fulfill];
+  }];
+  
+  // then
+  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+}
+
+- (void)assertProjectNotFoundError:(id)data error:(NSError *)error {
+  XCTAssertNil(data);
+  XCTAssertNotNil(error);
+  XCTAssertEqual(error.code, 5);
+  XCTAssertTrue([error.userInfo[NSDebugDescriptionErrorKey] isEqualToString:@"Internal error code: 10003."]);
+  XCTAssertTrue([error.localizedDescription isEqualToString:@"Invalid access token received"]);
+}
+
+- (void)assertAccessDeniedError:(id)data error:(NSError *)error {
+  XCTAssertNil(data);
+  XCTAssertNotNil(error);
+  XCTAssertEqual(error.code, 401);
+  XCTAssertTrue([error.localizedDescription isEqualToString:@"Access denied"]);
 }
 
 - (BOOL)areArraysDeepEqual:(NSArray *)first second:(NSArray *)second {
@@ -494,10 +665,14 @@ const int kRequestTimeout = 10;
 }
 
 - (QNAPIClient *)getClient:(NSString *)uid {
+  return [self getClient:uid projectKey:kProjectKey];
+}
+
+- (QNAPIClient *)getClient:(NSString *)uid projectKey:(NSString *)projectKey {
   QNAPIClient *client = [[QNAPIClient alloc] init];
 
   [client setBaseURL:kAPIBase];
-  [client setApiKey:kProjectKey];
+  [client setApiKey:projectKey];
   [client setSDKVersion:kSDKVersion];
   [client setUserID:uid];
   
