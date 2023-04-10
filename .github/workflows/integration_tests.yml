@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Set Outager url
         run: |
-          fastlane setOutagerUrl url:${{ secrets.OUTAGER_URL }}
+          fastlane set_outager_url url:${{ secrets.OUTAGER_URL }}
 
       - name: Tests
         run: |
