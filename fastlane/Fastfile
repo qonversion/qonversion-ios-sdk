@@ -4,15 +4,11 @@ PROJECT_SCHEME = "Qonversion"
 XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
 
 lane :tests do
-  cocoapods(
-    repo_update: false,
-    podfile: "./Podfile"
-  )
+  run_tests("QonversionTests")
+end
 
-  run_tests(
-    scheme: PROJECT_SCHEME,
-    only_testing: "QonversionTests"
-  )
+lane :integration_tests do
+  run_tests("IntegrationTests")
 end
 
 lane :patch do
@@ -27,6 +23,34 @@ lane :minor do
   new_version = calculate_minor_version(tag)
   new_tag = "prerelease/" + new_version
   push_tag(new_tag)
+end
+
+lane :set_outager_url do |options|
+  url = options[:url]
+
+  path = Dir['../**/OutagerIntegrationTests.kt'].first
+  regex = /\<paste outager link here\>/
+
+  update_file(path, regex, url)
+end
+
+lane :bump do |options|
+  new_version = options[:version]
+
+  update_plist(
+    plist_path: "Framework/Info.plist",
+    block: proc do |plist|
+      plist[:CFBundleShortVersionString] = new_version
+    end
+  )
+
+  version_bump_podspec(
+    path: "Qonversion.podspec", 
+    version_number: new_version
+  )
+
+  file_path = Dir['../**/QONConfiguration.m'].first
+  update_file(file_path, /NSString \*const kSDKVersion = @".*";/, "NSString *const kSDKVersion = @\"#{new_version}\";")
 end
 
 def get_tag
@@ -69,23 +93,20 @@ def parse_versions(tag)
   end
 end
 
-lane :bump do |options|
-  new_version = options[:version]
+def update_file(path, regex, result_value)
+  file = File.read(path)
+  new_content = file.gsub(regex, result_value)
+  File.open(path, 'w') { |line| line.puts new_content }
+end
 
-  update_plist(
-    plist_path: "Framework/Info.plist",
-    block: proc do |plist|
-      plist[:CFBundleShortVersionString] = new_version
-    end
+def runTests(suite)
+  cocoapods(
+    repo_update: false,
+    podfile: "./Podfile"
   )
 
-  version_bump_podspec(
-    path: "Qonversion.podspec", 
-    version_number: new_version
+  run_tests(
+    scheme: PROJECT_SCHEME,
+    only_testing: suite
   )
-
-  file_path = Dir['../**/QONConfiguration.m'].first
-  file = File.read(file_path)
-  new_content = file.gsub(/NSString \*const kSDKVersion = @".*";/, "NSString *const kSDKVersion = @\"#{new_version}\";")
-  File.open(file_path, 'w') { |line| line.puts new_content }
 end
