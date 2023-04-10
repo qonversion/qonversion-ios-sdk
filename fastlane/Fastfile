@@ -11,7 +11,7 @@ lane :tests do
 
   run_tests(
     scheme: PROJECT_SCHEME,
-    devices: ["iPhone 7"]
+    only_testing: "QonversionTests"
   )
 end
 
