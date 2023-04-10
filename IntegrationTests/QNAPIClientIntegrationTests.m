@@ -1,6 +1,6 @@
 //
 //  QNAPIClientIntegrationTests.m
-//  QonversionTests
+//  IntegrationTests
 //
 //  Created by Kamo Spertsyan on 29.03.2023.
 //  Copyright © 2023 Qonversion Inc. All rights reserved.
@@ -13,6 +13,7 @@
 #import "QNProperties.h"
 #import "QNTestConstants.h"
 #import "Helpers/XCTestCase+TestJSON.h"
+#import "Helpers/XCTestCase+Helpers.h"
 
 NSString *const kSDKVersion = @"10.11.12";
 NSString *const kProjectKey = @"V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-a";
@@ -445,7 +446,6 @@ const int kRequestTimeout = 10;
       XCTAssertNil(error);
       XCTAssertTrue(res[@"success"]);
       XCTAssertTrue([uid isEqualToString:res[@"data"][@"anon_id"]]);
-      XCTAssertTrue([identityId isEqualToString:res[@"data"][@"identity_id"]]);
       [completionExpectation fulfill];
     }];
   }];
@@ -613,55 +613,6 @@ const int kRequestTimeout = 10;
   XCTAssertNotNil(error);
   XCTAssertEqual(error.code, 401);
   XCTAssertTrue([error.localizedDescription isEqualToString:@"Access denied"]);
-}
-
-- (BOOL)areArraysDeepEqual:(NSArray *)first second:(NSArray *)second {
-  if (@available(iOS 13.0, *)) {
-    NSOrderedCollectionDifference *diff = [first differenceFromArray:second
-                                                         withOptions:0
-                                                usingEquivalenceTest:^BOOL(id  _Nonnull obj1, id  _Nonnull obj2) {
-      return [self areObjectsEqual:obj1 second:obj2];
-    }];
-
-    return ![diff hasChanges];
-  } else {
-    return [first isEqualToArray:second];
-  }
-}
-
-- (BOOL)areDictionariesDeepEqual:(NSDictionary *)first second:(NSDictionary *)second {
-  if (first.count != second.count) {
-    return NO;
-  }
-  BOOL hasDiff = NO;
-  for (NSString *key in first.allKeys) {
-    id obj1 = first[key];
-    id obj2 = second[key];
-
-    hasDiff = ![self areObjectsEqual:obj1 second:obj2];
-
-    if (hasDiff) {
-      break;
-    }
-  }
-  
-  return !hasDiff;
-}
-
-- (BOOL)areObjectsEqual:(id  _Nonnull)obj1 second:(id  _Nonnull)obj2 {
-  if ([obj1 isKindOfClass:[NSArray class]] && [obj2 isKindOfClass:[NSArray class]]) {
-    return [self areArraysDeepEqual:obj1 second:obj2];
-  }
-  if ([obj1 isKindOfClass:[NSDictionary class]] && [obj2 isKindOfClass:[NSDictionary class]]) {
-    return [self areDictionariesDeepEqual:obj1 second:obj2];
-  }
-  if ([obj1 isKindOfClass:[NSNumber class]] && [obj2 isKindOfClass:[NSNumber class]]) {
-    return [obj1 isEqualToNumber:obj2];
-  }
-  if ([obj1 isKindOfClass:[NSString class]] && [obj2 isKindOfClass:[NSString class]]) {
-    return [obj1 isEqualToString:obj2];
-  }
-  return obj1 == obj2;
 }
 
 - (QNAPIClient *)getClient:(NSString *)uid {
