@@ -4,11 +4,11 @@ PROJECT_SCHEME = "Qonversion"
 XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
 
 lane :tests do
-  run_tests("QonversionTests")
+  runTests("QonversionTests")
 end
 
 lane :integration_tests do
-  run_tests("IntegrationTests")
+  runTests("IntegrationTests")
 end
 
 lane :patch do
