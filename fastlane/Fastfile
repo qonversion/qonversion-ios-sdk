@@ -28,7 +28,7 @@ end
 lane :set_outager_url do |options|
   url = options[:url]
 
-  path = Dir['../**/OutagerIntegrationTests.kt'].first
+  path = Dir['../**/QNOutagerIntegrationTests.m'].first
   regex = /\<paste outager link here\>/
 
   update_file(path, regex, url)
