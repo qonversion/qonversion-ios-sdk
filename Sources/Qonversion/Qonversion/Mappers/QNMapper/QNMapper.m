@@ -65,9 +65,9 @@
 
 + (NSDictionary <NSString *, QONEntitlement *> *)fillPermissions:(NSArray *)data {
   if (![data isKindOfClass:[NSArray class]]) {
-    data = @[];
+    return @{};
   }
-  
+
   NSMutableDictionary <NSString *, QONEntitlement *> *permissions = [NSMutableDictionary new];
   
   for (NSDictionary* itemDict in data) {
@@ -82,7 +82,7 @@
 
 + (NSDictionary <NSString *, QONExperimentInfo *> *)fillExperiments:(NSArray *)data {
   if (![data isKindOfClass:[NSArray class]]) {
-    data = @[];
+    return @{};
   }
 
   NSMutableDictionary <NSString *, QONExperimentInfo *> *experiments = [NSMutableDictionary new];
@@ -123,7 +123,7 @@
 
 + (NSDictionary <NSString *, QONProduct *> *)fillProducts:(NSArray *)data {
   if (![data isKindOfClass:[NSArray class]]) {
-    data = @[];
+    return @{};
   }
 
   NSMutableDictionary <NSString *, QONProduct *> *products = [NSMutableDictionary new];
