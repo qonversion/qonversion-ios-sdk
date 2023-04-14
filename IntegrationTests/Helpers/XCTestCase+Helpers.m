@@ -35,7 +35,10 @@
   return !hasDiff;
 }
 
-- (BOOL)areObjectsEqual:(id  _Nonnull)obj1 second:(id  _Nonnull)obj2 {
+- (BOOL)areObjectsEqual:(id _Nonnull)obj1 second:(id _Nonnull)obj2 {
+  if (obj1 == nil || obj2 == nil) {
+    return false;
+  }
   if ([obj1 isKindOfClass:[NSArray class]] && [obj2 isKindOfClass:[NSArray class]]) {
     return [self areArraysDeepEqual:obj1 second:obj2];
   }

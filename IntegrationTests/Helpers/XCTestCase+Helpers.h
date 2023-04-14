@@ -8,7 +8,7 @@ typedef void (^TestBlock)(NSInvocation *);
 
 - (BOOL)areArraysDeepEqual:(NSArray *)first second:(NSArray *)second;
 - (BOOL)areDictionariesDeepEqual:(NSDictionary *)first second:(NSDictionary *)second;
-- (BOOL)areObjectsEqual:(id  _Nonnull)obj1 second:(id  _Nonnull)obj2;
+- (BOOL)areObjectsEqual:(id _Nonnull)obj1 second:(id _Nonnull)obj2;
 
 @end
 

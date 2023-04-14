@@ -29,9 +29,9 @@
 @property (nonatomic, copy) NSDictionary *purchaseData;
 @property (nonatomic, copy) NSString *noCodeScreenId;
 
-@property (nonatomic, copy) NSString *const kSDKVersion;
-@property (nonatomic, copy) NSString *const kProjectKey;
-@property (nonatomic) const int kRequestTimeout;
+@property (nonatomic, copy) NSString *kSDKVersion;
+@property (nonatomic, copy) NSString *kProjectKey;
+@property (nonatomic, assign) const int kRequestTimeout;
 
 @end
 

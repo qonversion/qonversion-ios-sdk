@@ -15,11 +15,6 @@
 #import "Helpers/XCTestCase+TestJSON.h"
 #import "Helpers/XCTestCase+Helpers.h"
 
-NSString *const kSDKVersion = @"10.11.12";
-NSString *const kProjectKey = @"V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-a";
-NSString *const kIncorrectProjectKey = @"V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-aaaa";
-const int kRequestTimeout = 10;
-
 @interface QNAPIClientIntegrationTests : XCTestCase
 
 @property (nonatomic, copy) NSString *kUidPrefix;
@@ -35,11 +30,21 @@ const int kRequestTimeout = 10;
 @property (nonatomic, copy) NSDictionary *purchaseData;
 @property (nonatomic, copy) NSString *noCodeScreenId;
 
+@property (nonatomic, copy) NSString *kSDKVersion;
+@property (nonatomic, copy) NSString *kProjectKey;
+@property (nonatomic, copy) NSString *kIncorrectProjectKey;
+@property (nonatomic, assign) const int kRequestTimeout;
+
 @end
 
 @implementation QNAPIClientIntegrationTests
 
 - (void)setUp {
+  self.kSDKVersion = @"10.11.12";
+  self.kProjectKey = @"V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-a";
+  self.kRequestTimeout = 10;
+  self.kIncorrectProjectKey = @"V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-aaaa";
+
   NSString *timestamp = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]];
   self.kUidPrefix = [NSString stringWithFormat:@"%@%@", @"QON_test_uid_ios_", timestamp];
 
@@ -134,14 +139,14 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testInitError {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Init error call"];
   NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_init"];
-  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
 
   // when
   [client launchRequest:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -150,7 +155,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testPurchase {
@@ -177,7 +182,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testPurchaseForExistingUser {
@@ -200,14 +205,14 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testPurchaseError {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Purchase error call"];
   NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_purchase"];
-  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
   
   // when
   [client purchaseRequestWith:self.purchaseData completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -216,7 +221,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testAttribution {
@@ -250,14 +255,14 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testAttributionError {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Attribution error call"];
   NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_attribution"];
-  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
   
   NSDictionary *data = @{
     @"one": @"two",
@@ -271,7 +276,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testProperties {
@@ -303,14 +308,14 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testPropertiesError {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Properties error call"];
   NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_properties"];
-  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
   
   NSDictionary *data = @{
     @"customProperty": @"custom property value",
@@ -324,7 +329,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testCheckTrialIntroEligibility {
@@ -395,14 +400,14 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testCheckTrialIntroEligibilityError {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"CheckTrialIntroEligibility error call"];
   NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_checkTrialIntroEligibility"];
-  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
   
   NSMutableDictionary *data = [_mainRequestData mutableCopy];
   data[@"products_local_data"] = @[
@@ -427,7 +432,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testIdentify {
@@ -451,7 +456,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testIdentifyError {
@@ -459,7 +464,7 @@ const int kRequestTimeout = 10;
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Identify error call"];
   NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_identify"];
   NSString *identityId = [NSString stringWithFormat:@"%@%@", @"identity_for_", uid];
-  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
   
   // when
   [client createIdentityForUserID:identityId anonUserID:uid completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -468,7 +473,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testSendPushToken {
@@ -488,7 +493,7 @@ const int kRequestTimeout = 10;
   }];
 
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testScreens {
@@ -517,14 +522,14 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testScreensError {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Screens error call"];
   NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_screens"];
-  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
   
   // when
   [client automationWithID:self.noCodeScreenId completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -533,7 +538,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testViews {
@@ -555,7 +560,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testActionPoints {
@@ -581,14 +586,14 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)testActionPointsError {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Action points call"];
   NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_actionPoints"];
-  QNAPIClient *client = [self getClient:uid projectKey:kIncorrectProjectKey];
+  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
   
   // when
   [client userActionPointsWithCompletion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -597,7 +602,7 @@ const int kRequestTimeout = 10;
   }];
   
   // then
-  [self waitForExpectationsWithTimeout:kRequestTimeout handler:nil];
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
 - (void)assertProjectNotFoundError:(id)data error:(NSError *)error {
@@ -616,7 +621,7 @@ const int kRequestTimeout = 10;
 }
 
 - (QNAPIClient *)getClient:(NSString *)uid {
-  return [self getClient:uid projectKey:kProjectKey];
+  return [self getClient:uid projectKey:self.kProjectKey];
 }
 
 - (QNAPIClient *)getClient:(NSString *)uid projectKey:(NSString *)projectKey {
@@ -624,7 +629,7 @@ const int kRequestTimeout = 10;
 
   [client setBaseURL:kAPIBase];
   [client setApiKey:projectKey];
-  [client setSDKVersion:kSDKVersion];
+  [client setSDKVersion:self.kSDKVersion];
   [client setUserID:uid];
   
   return client;
