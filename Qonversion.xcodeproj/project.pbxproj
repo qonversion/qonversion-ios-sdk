@@ -44,6 +44,8 @@
 		6A95DE9929E007A600350BD6 /* init_request_main_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 6A95DE9829E007A600350BD6 /* init_request_main_data.json */; };
 		6A95DE9C29E009E000350BD6 /* XCTestCase+TestJSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DE9B29E009E000350BD6 /* XCTestCase+TestJSON.m */; };
 		6A95DEA029E011A700350BD6 /* QNTestConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DE9F29E011A700350BD6 /* QNTestConstants.m */; };
+		6A95DEA229E40E9900350BD6 /* QNOutagerIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */; };
+		6A95DEA529E40F2E00350BD6 /* XCTestCase+Helpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA429E40F2E00350BD6 /* XCTestCase+Helpers.m */; };
 		700EC172291277130032E205 /* QONExperimentInfo+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC170291277130032E205 /* QONExperimentInfo+Protected.h */; };
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
 		702394912923EBF3003126D5 /* QONNotificationsService.h in Headers */ = {isa = PBXBuildFile; fileRef = 7023948F2923EBF3003126D5 /* QONNotificationsService.h */; };
@@ -314,6 +316,9 @@
 		6A95DE9D29E009E900350BD6 /* XCTestCase+TestJSON.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+TestJSON.h"; sourceTree = "<group>"; };
 		6A95DE9E29E0119C00350BD6 /* QNTestConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QNTestConstants.h; sourceTree = "<group>"; };
 		6A95DE9F29E011A700350BD6 /* QNTestConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNTestConstants.m; sourceTree = "<group>"; };
+		6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNOutagerIntegrationTests.m; sourceTree = "<group>"; };
+		6A95DEA329E40F2100350BD6 /* XCTestCase+Helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+Helpers.h"; sourceTree = "<group>"; };
+		6A95DEA429E40F2E00350BD6 /* XCTestCase+Helpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+Helpers.m"; sourceTree = "<group>"; };
 		700EC170291277130032E205 /* QONExperimentInfo+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONExperimentInfo+Protected.h"; sourceTree = "<group>"; };
 		700EC171291277130032E205 /* QONExperimentGroup+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONExperimentGroup+Protected.h"; sourceTree = "<group>"; };
 		7023948F2923EBF3003126D5 /* QONNotificationsService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONNotificationsService.h; sourceTree = "<group>"; };
@@ -725,6 +730,7 @@
 				6A95DE9A29E0083D00350BD6 /* Helpers */,
 				6A95DE9229E0071300350BD6 /* Resources */,
 				6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */,
+				6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */,
 				6A95DE9E29E0119C00350BD6 /* QNTestConstants.h */,
 				6A95DE9F29E011A700350BD6 /* QNTestConstants.m */,
 			);
@@ -752,6 +758,8 @@
 			children = (
 				6A95DE9B29E009E000350BD6 /* XCTestCase+TestJSON.m */,
 				6A95DE9D29E009E900350BD6 /* XCTestCase+TestJSON.h */,
+				6A95DEA429E40F2E00350BD6 /* XCTestCase+Helpers.m */,
+				6A95DEA329E40F2100350BD6 /* XCTestCase+Helpers.h */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -1882,8 +1890,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				6A95DEA029E011A700350BD6 /* QNTestConstants.m in Sources */,
+				6A95DEA529E40F2E00350BD6 /* XCTestCase+Helpers.m in Sources */,
 				6A95DE9C29E009E000350BD6 /* XCTestCase+TestJSON.m in Sources */,
 				6A8A604929DAD36E008EC7D8 /* QNAPIClientIntegrationTests.m in Sources */,
+				6A95DEA229E40E9900350BD6 /* QNOutagerIntegrationTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
