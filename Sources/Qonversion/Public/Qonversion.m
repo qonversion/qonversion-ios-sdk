@@ -154,6 +154,10 @@
   [[[Qonversion sharedInstance] productCenterManager] userInfo:completion];
 }
 
+- (void)syncStoreKit2Purchases {
+  // todo implement
+}
+
 // MARK: - Private
 
 + (instancetype)sharedInstance {
