@@ -113,6 +113,11 @@
                         purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
                            completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseModel:purchaseModel];
+  return [self purchaseRequestWith:body completion:completion];
+}
+
+- (NSURLRequest *)purchaseRequestWith:(NSDictionary *)body
+                           completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *resultData = [self enrichParameters:body];
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
@@ -125,7 +130,13 @@
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
                                          completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *requestData = [self.requestSerializer introTrialEligibilityDataForProducts:products];
-  NSDictionary *resultBody = [self enrichParameters:requestData];
+  
+  return [self checkTrialIntroEligibilityParamsForData:requestData completion:completion];
+}
+
+- (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
+                                     completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *resultBody = [self enrichParameters:data];
   NSURLRequest *request = [self.requestBuilder makeIntroTrialEligibilityRequestWithData:resultBody];
   
   return [self dataTaskWithRequest:request completion:completion];
@@ -163,10 +174,15 @@
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID {
+  return [self trackScreenShownWithID:automationID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {}];
+}
+
+- (void)trackScreenShownWithID:(NSString *)automationID
+                    completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = @{@"user": self.userID};
   NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body];
   
-  return [self dataTaskWithRequest:request completion:nil];
+  return [self dataTaskWithRequest:request completion:completion];
 }
 
 - (void)attributionRequest:(QONAttributionProvider)provider

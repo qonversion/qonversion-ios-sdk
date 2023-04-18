@@ -1,0 +1,20 @@
+name: Planned integration tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  tests:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set Outager url
+        run: |
+          fastlane set_outager_url url:${{ secrets.OUTAGER_URL }}
+
+      - name: Tests
+        run: |
+          fastlane integration_tests
