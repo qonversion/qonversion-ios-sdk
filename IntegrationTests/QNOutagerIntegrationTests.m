@@ -66,7 +66,7 @@
     @"type": @2,
   };
   
-  self.expectedProducts = @[self.annualProduct, self.inappProduct, self.monthlyProduct];
+  self.expectedProducts = @[self.monthlyProduct, self.annualProduct, self.inappProduct];
   
   self.expectedOffering = @{
     @"id": @"main",
