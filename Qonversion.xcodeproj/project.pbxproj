@@ -53,7 +53,7 @@
 		702BF8B629531A68000B6C3E /* QONScreenCustomizationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 702BF8B529531A68000B6C3E /* QONScreenCustomizationDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7052136D29F1800800164AAF /* QONStoreKit2PurchaseModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 7052136B29F1800800164AAF /* QONStoreKit2PurchaseModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7052136E29F1800800164AAF /* QONStoreKit2PurchaseModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 7052136C29F1800800164AAF /* QONStoreKit2PurchaseModel.m */; };
-		7052137029F1807A00164AAF /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7052136F29F1807A00164AAF /* PurchasesMapper.swift */; };
+		70523C9329F2B03C009F01D2 /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70523C9229F2B03C009F01D2 /* PurchasesMapper.swift */; };
 		70ADE70F2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = 70ADE70D2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70ADE7102951CC7200CB4D2E /* QONScreenPresentationConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 70ADE70E2951CC7200CB4D2E /* QONScreenPresentationConfiguration.m */; };
 		70B9A9F1297AB8A700BD30FD /* QONAutomationsNavigationController.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B9A9EF297AB8A700BD30FD /* QONAutomationsNavigationController.h */; };
@@ -330,6 +330,7 @@
 		7052136B29F1800800164AAF /* QONStoreKit2PurchaseModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONStoreKit2PurchaseModel.h; sourceTree = "<group>"; };
 		7052136C29F1800800164AAF /* QONStoreKit2PurchaseModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONStoreKit2PurchaseModel.m; sourceTree = "<group>"; };
 		7052136F29F1807A00164AAF /* PurchasesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
+		70523C9229F2B03C009F01D2 /* PurchasesMapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
 		70ADE70D2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONScreenPresentationConfiguration.h; sourceTree = "<group>"; };
 		70ADE70E2951CC7200CB4D2E /* QONScreenPresentationConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONScreenPresentationConfiguration.m; sourceTree = "<group>"; };
 		70B9A9EF297AB8A700BD30FD /* QONAutomationsNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsNavigationController.h; sourceTree = "<group>"; };
@@ -588,6 +589,7 @@
 				459DAB6A243E329F0011ECF3 /* Products */,
 				447A040961B196621A548033 /* Pods */,
 				BB6B3C9FD9EFBC9E1604507D /* Frameworks */,
+				70523C8D29F2853F009F01D2 /* Recovered References */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -788,6 +790,22 @@
 			path = QONStoreKit2PurchaseModel;
 			sourceTree = "<group>";
 		};
+		70523C8D29F2853F009F01D2 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				7052136F29F1807A00164AAF /* PurchasesMapper.swift */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		70523C9129F2B03C009F01D2 /* Swift */ = {
+			isa = PBXGroup;
+			children = (
+				70523C9229F2B03C009F01D2 /* PurchasesMapper.swift */,
+			);
+			path = Swift;
+			sourceTree = "<group>";
+		};
 		70B9A9EE297AB86400BD30FD /* QONAutomationsNavigationController */ = {
 			isa = PBXGroup;
 			children = (
@@ -795,14 +813,6 @@
 				70B9A9F0297AB8A700BD30FD /* QONAutomationsNavigationController.m */,
 			);
 			path = QONAutomationsNavigationController;
-			sourceTree = "<group>";
-		};
-		70EC019B29EEE86D00E686E2 /* Swift */ = {
-			isa = PBXGroup;
-			children = (
-				7052136F29F1807A00164AAF /* PurchasesMapper.swift */,
-			);
-			path = Swift;
 			sourceTree = "<group>";
 		};
 		891DEA7E2703AF1D0079B439 /* Mappers */ = {
@@ -1055,6 +1065,7 @@
 		8957320826DD03A3009507A6 /* Qonversion */ = {
 			isa = PBXGroup;
 			children = (
+				70523C9129F2B03C009F01D2 /* Swift */,
 				8957320926DD03A3009507A6 /* Core */,
 				8957321E26DD03A3009507A6 /* Constants */,
 				8957322526DD03A3009507A6 /* Utils */,
@@ -1838,7 +1849,7 @@
 				895732A026DD03A3009507A6 /* QONAutomationsConstants.m in Sources */,
 				895732F826DD03A3009507A6 /* QNProductCenterManager.m in Sources */,
 				895732FF26DD03A3009507A6 /* QNAPIClient.m in Sources */,
-				7052137029F1807A00164AAF /* PurchasesMapper.swift in Sources */,
+				70523C9329F2B03C009F01D2 /* PurchasesMapper.swift in Sources */,
 				895732B026DD03A3009507A6 /* QONAutomationsFlowAssembly.m in Sources */,
 				895732AE26DD03A3009507A6 /* QONAutomationsActionsHandler.m in Sources */,
 				895732D126DD03A3009507A6 /* QNUserInfo.m in Sources */,
@@ -2198,6 +2209,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos appletvos appletvsimulator watchos watchsimulator macosx";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4";
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				WATCHOS_DEPLOYMENT_TARGET = 6.2;
@@ -2233,6 +2245,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos appletvos appletvsimulator watchos watchsimulator macosx";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4";
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				WATCHOS_DEPLOYMENT_TARGET = 6.2;
