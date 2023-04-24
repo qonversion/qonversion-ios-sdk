@@ -1,7 +1,7 @@
 #import "Foundation/Foundation.h"
 #import "QONLaunchResult.h"
 
-@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QONOffering;
+@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QONOffering, QONProduct;
 
 typedef void (^QNAPIClientCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
 

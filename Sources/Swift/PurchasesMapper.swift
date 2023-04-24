@@ -8,7 +8,7 @@
 
 import Foundation
 import StoreKit
-@import Qonversion
+@_exported import Qonversion
 
 @available(iOS 15.0, *)
 final class PurchasesMapper {
