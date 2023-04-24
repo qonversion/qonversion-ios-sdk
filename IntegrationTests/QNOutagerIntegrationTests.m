@@ -160,8 +160,10 @@
       long resStartedTimestamp = [res[@"data"][@"permissions"][0][@"started_timestamp"] longValue];
       long resExpirationTimestamp = [res[@"data"][@"permissions"][0][@"expiration_timestamp"] longValue];
       long month = 30 * 24 * 60 * 60;
-      XCTAssertTrue(resStartedTimestamp >= [requestStartTimestamp longValue]);
-      XCTAssertTrue(resStartedTimestamp <= [requestEndTimestamp longValue]);
+      // Epsilon for the difference between remote and local time.
+      long eps = 5;
+      XCTAssertTrue(resStartedTimestamp >= [requestStartTimestamp longValue] - eps);
+      XCTAssertTrue(resStartedTimestamp <= [requestEndTimestamp longValue] + eps);
       XCTAssertTrue(resExpirationTimestamp == resStartedTimestamp + month);
 
       expectedPermission[@"started_timestamp"] = res[@"data"][@"permissions"][0][@"started_timestamp"];
@@ -395,7 +397,7 @@
 - (QNAPIClient *)getClient:(NSString *)uid projectKey:(NSString *)projectKey {
   QNAPIClient *client = [[QNAPIClient alloc] init];
 
-  [client setBaseURL:@"<paste outager link here>"];
+  [client setBaseURL:@"https://outager.qonversion.workers.dev/"];
   [client setApiKey:projectKey];
   [client setSDKVersion:self.kSDKVersion];
   [client setUserID:uid];
