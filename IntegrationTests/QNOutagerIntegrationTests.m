@@ -397,7 +397,7 @@
 - (QNAPIClient *)getClient:(NSString *)uid projectKey:(NSString *)projectKey {
   QNAPIClient *client = [[QNAPIClient alloc] init];
 
-  [client setBaseURL:@"https://outager.qonversion.workers.dev/"];
+  [client setBaseURL:@"<paste outager link here>"];
   [client setApiKey:projectKey];
   [client setSDKVersion:self.kSDKVersion];
   [client setUserID:uid];
