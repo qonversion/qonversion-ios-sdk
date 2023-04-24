@@ -131,7 +131,7 @@
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Purchase call"];
   NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_purchase"];
   QNAPIClient *client = [self getClient:uid];
-  NSNumber *requestStartTimestamp = [NSNumber numberWithDouble: [[NSDate date] timeIntervalSince1970]];
+  NSTimeInterval requestStartTimestamp = [[NSDate date] timeIntervalSince1970];
   NSMutableDictionary *expectedPermission = [@{
     @"active": @1,
     @"associated_product": @"test_monthly",
@@ -156,14 +156,14 @@
 
       // As we don't send purchase time with the purchase, then outager gets handler timestamp as started_timestamp for the result permission.
       // We check here, that that timestamp is between request started and ended timestamps.
-      NSNumber *requestEndTimestamp = [NSNumber numberWithDouble: [[NSDate date] timeIntervalSince1970]];
-      long resStartedTimestamp = [res[@"data"][@"permissions"][0][@"started_timestamp"] longValue];
-      long resExpirationTimestamp = [res[@"data"][@"permissions"][0][@"expiration_timestamp"] longValue];
+      NSTimeInterval requestEndTimestamp = [[NSDate date] timeIntervalSince1970];
+      NSTimeInterval resStartedTimestamp = [(NSNumber *) res[@"data"][@"permissions"][0][@"started_timestamp"] integerValue];
+      NSTimeInterval resExpirationTimestamp = [(NSNumber *) res[@"data"][@"permissions"][0][@"expiration_timestamp"] integerValue];
       long month = 30 * 24 * 60 * 60;
       // Epsilon for the difference between remote and local time.
       long eps = 5;
-      XCTAssertTrue(resStartedTimestamp >= [requestStartTimestamp longValue] - eps);
-      XCTAssertTrue(resStartedTimestamp <= [requestEndTimestamp longValue] + eps);
+      XCTAssertTrue(resStartedTimestamp >= requestStartTimestamp - eps);
+      XCTAssertTrue(resStartedTimestamp <= requestEndTimestamp + eps);
       XCTAssertTrue(resExpirationTimestamp == resStartedTimestamp + month);
 
       expectedPermission[@"started_timestamp"] = res[@"data"][@"permissions"][0][@"started_timestamp"];
