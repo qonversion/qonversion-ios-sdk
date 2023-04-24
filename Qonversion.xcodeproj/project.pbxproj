@@ -786,6 +786,7 @@
 		70283DF529F66FAC00D138BC /* Swift */ = {
 			isa = PBXGroup;
 			children = (
+				70EC019C29EEE94300E686E2 /* StoreKit2Service.swift */,
 				70283DF629F66FAC00D138BC /* PurchasesMapper.swift */,
 			);
 			name = Swift;
@@ -816,14 +817,6 @@
 				70B9A9F0297AB8A700BD30FD /* QONAutomationsNavigationController.m */,
 			);
 			path = QONAutomationsNavigationController;
-			sourceTree = "<group>";
-		};
-		70EC019B29EEE86D00E686E2 /* Swift */ = {
-			isa = PBXGroup;
-			children = (
-				70EC019C29EEE94300E686E2 /* StoreKit2Service.swift */,
-			);
-			path = Swift;
 			sourceTree = "<group>";
 		};
 		891DEA7E2703AF1D0079B439 /* Mappers */ = {
@@ -1077,7 +1070,6 @@
 		8957320826DD03A3009507A6 /* Qonversion */ = {
 			isa = PBXGroup;
 			children = (
-				70EC019B29EEE86D00E686E2 /* Swift */,
 				8957320926DD03A3009507A6 /* Core */,
 				8957321E26DD03A3009507A6 /* Constants */,
 				8957322526DD03A3009507A6 /* Utils */,

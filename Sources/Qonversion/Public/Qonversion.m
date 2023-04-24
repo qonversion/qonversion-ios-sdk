@@ -157,7 +157,11 @@
 }
 
 - (void)syncStoreKit2Purchases {
-  // todo implement
+  [self.storeKitService syncTransactions];
+}
+
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
+  [[[Qonversion sharedInstance] productCenterManager] handlePurchases:purchasesInfo];
 }
 
 // MARK: - Private

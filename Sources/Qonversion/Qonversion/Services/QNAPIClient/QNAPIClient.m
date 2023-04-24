@@ -14,6 +14,7 @@
 #import "QONExperimentGroup.h"
 #import "QNErrorsMapper.h"
 #import "QNKeyedArchiver.h"
+#import "QONStoreKit2PurchaseModel.h"
 
 @interface QNAPIClient()
 
@@ -104,6 +105,17 @@
 - (void)launchRequest:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   NSDictionary *launchData = [self enrichParameters:[self.requestSerializer launchData]];
   NSURLRequest *request = [self.requestBuilder makeInitRequestWith:launchData];
+  [self processRequest:request completion:completion];
+}
+
+- (void)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
+               receipt:(nullable NSString *)receipt
+            completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *body = [self.requestSerializer purchaseInfo:purchaseInfo receipt:receipt];
+  NSDictionary *resultData = [self enrichParameters:body];
+  
+  NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
+  
   [self processRequest:request completion:completion];
 }
 

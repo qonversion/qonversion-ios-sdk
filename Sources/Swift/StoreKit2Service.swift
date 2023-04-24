@@ -8,10 +8,13 @@
 
 import Foundation
 import StoreKit
+import Qonversion
 
 @available(iOS 15.0, *)
 @objc(QONStoreKit2Service)
 public class StoreKit2Service: NSObject {
+  
+  private let mapper = PurchasesMapper()
   
   @objc public func syncTransactions() {
     Task.init {
@@ -20,10 +23,23 @@ public class StoreKit2Service: NSObject {
         let unfinishedTransasctions: [Transaction] = await fetchTransactions(for: Transaction.unfinished)
         let currentEntitlements: [Transaction] = await fetchTransactions(for: Transaction.currentEntitlements)
         
-        let unfilteredTransactions = Set(allTransasctions + unfinishedTransasctions + currentEntitlements)
+        let mixedTransactions: [Transaction] = allTransasctions + unfinishedTransasctions + currentEntitlements
+        var uniqueTransactions: [UInt64: Transaction] = [:]
+        mixedTransactions.forEach {
+          if uniqueTransactions[$0.id] == nil {
+            uniqueTransactions[$0.id] = $0
+          }
+        }
         
-        let filteredTransaction = filter(transactions: Array(unfinishedTransasctions))
-        
+        let filteredTransactions = filter(transactions: Array(uniqueTransactions.values))
+        let productIds: [String] = filteredTransactions.map { $0.productID }
+        do {
+          let products: [Product] = try await Product.products(for: Set(productIds))
+          let mappedTransactions: [QONStoreKit2PurchaseModel] = await mapper.map(transactions: filteredTransactions, with: products)
+          Qonversion.shared().handlePurchases(mappedTransactions)
+        } catch {
+          // store transactions
+        }
       }
     }
   }
@@ -68,7 +84,7 @@ public class StoreKit2Service: NSObject {
         var previousHandledProductId = ""
         
         for transaction in transactions {
-          if previousHandledProductId == transaction.productID {
+          if previousHandledProductId != transaction.productID {
             result.append(transaction)
             previousHandledProductId = transaction.productID
           }

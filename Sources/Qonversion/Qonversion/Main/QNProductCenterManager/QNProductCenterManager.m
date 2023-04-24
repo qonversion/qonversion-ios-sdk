@@ -20,6 +20,7 @@
 #import "QNDevice.h"
 #import "QNInternalConstants.h"
 #import "QONUser+Protected.h"
+#import "QONStoreKit2PurchaseModel.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomations.h"
@@ -812,6 +813,20 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [_purchasingBlocks removeObjectForKey:product.productIdentifier];
     }
   }
+}
+
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
+  [self.storeKitService receipt:^(NSString * receipt) {
+    for (QONStoreKit2PurchaseModel *purchaseModel in purchasesInfo) {
+      [self.apiClient handlePurchase:purchaseModel receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+          if (error) {
+              QONVERSION_LOG(@"⚠️ Failed to handle purchase");
+          } else {
+              QONVERSION_LOG(@"✅ Purchase with transactionId: %@ has been tracked", purchaseModel.transactionId);
+          }
+      }];
+    }
+  }];
 }
 
 // MARK: - QNStoreKitServiceDelegate
