@@ -50,7 +50,10 @@
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
 		702394912923EBF3003126D5 /* QONNotificationsService.h in Headers */ = {isa = PBXBuildFile; fileRef = 7023948F2923EBF3003126D5 /* QONNotificationsService.h */; };
 		702394922923EBF3003126D5 /* QONNotificationsService.m in Sources */ = {isa = PBXBuildFile; fileRef = 702394902923EBF3003126D5 /* QONNotificationsService.m */; };
+		70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70283DF629F66FAC00D138BC /* PurchasesMapper.swift */; };
 		702BF8B629531A68000B6C3E /* QONScreenCustomizationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 702BF8B529531A68000B6C3E /* QONScreenCustomizationDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		7052136D29F1800800164AAF /* QONStoreKit2PurchaseModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 7052136B29F1800800164AAF /* QONStoreKit2PurchaseModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		7052136E29F1800800164AAF /* QONStoreKit2PurchaseModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 7052136C29F1800800164AAF /* QONStoreKit2PurchaseModel.m */; };
 		70ADE70F2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = 70ADE70D2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70ADE7102951CC7200CB4D2E /* QONScreenPresentationConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 70ADE70E2951CC7200CB4D2E /* QONScreenPresentationConfiguration.m */; };
 		70B9A9F1297AB8A700BD30FD /* QONAutomationsNavigationController.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B9A9EF297AB8A700BD30FD /* QONAutomationsNavigationController.h */; };
@@ -324,7 +327,11 @@
 		700EC171291277130032E205 /* QONExperimentGroup+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONExperimentGroup+Protected.h"; sourceTree = "<group>"; };
 		7023948F2923EBF3003126D5 /* QONNotificationsService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONNotificationsService.h; sourceTree = "<group>"; };
 		702394902923EBF3003126D5 /* QONNotificationsService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONNotificationsService.m; sourceTree = "<group>"; };
+		70283DF629F66FAC00D138BC /* PurchasesMapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
 		702BF8B529531A68000B6C3E /* QONScreenCustomizationDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONScreenCustomizationDelegate.h; sourceTree = "<group>"; };
+		7052136B29F1800800164AAF /* QONStoreKit2PurchaseModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONStoreKit2PurchaseModel.h; sourceTree = "<group>"; };
+		7052136C29F1800800164AAF /* QONStoreKit2PurchaseModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONStoreKit2PurchaseModel.m; sourceTree = "<group>"; };
+		7052136F29F1807A00164AAF /* PurchasesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
 		70ADE70D2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONScreenPresentationConfiguration.h; sourceTree = "<group>"; };
 		70ADE70E2951CC7200CB4D2E /* QONScreenPresentationConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONScreenPresentationConfiguration.m; sourceTree = "<group>"; };
 		70B9A9EF297AB8A700BD30FD /* QONAutomationsNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsNavigationController.h; sourceTree = "<group>"; };
@@ -584,6 +591,7 @@
 				459DAB6A243E329F0011ECF3 /* Products */,
 				447A040961B196621A548033 /* Pods */,
 				BB6B3C9FD9EFBC9E1604507D /* Frameworks */,
+				70523C8D29F2853F009F01D2 /* Recovered References */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -775,6 +783,32 @@
 			path = QONNotificationsService;
 			sourceTree = "<group>";
 		};
+		70283DF529F66FAC00D138BC /* Swift */ = {
+			isa = PBXGroup;
+			children = (
+				70283DF629F66FAC00D138BC /* PurchasesMapper.swift */,
+			);
+			name = Swift;
+			path = Sources/Swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		7052136A29F17FFA00164AAF /* QONStoreKit2PurchaseModel */ = {
+			isa = PBXGroup;
+			children = (
+				7052136B29F1800800164AAF /* QONStoreKit2PurchaseModel.h */,
+				7052136C29F1800800164AAF /* QONStoreKit2PurchaseModel.m */,
+			);
+			path = QONStoreKit2PurchaseModel;
+			sourceTree = "<group>";
+		};
+		70523C8D29F2853F009F01D2 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				7052136F29F1807A00164AAF /* PurchasesMapper.swift */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		70B9A9EE297AB86400BD30FD /* QONAutomationsNavigationController */ = {
 			isa = PBXGroup;
 			children = (
@@ -803,6 +837,7 @@
 		895731B426DD03A2009507A6 /* Qonversion */ = {
 			isa = PBXGroup;
 			children = (
+				70283DF529F66FAC00D138BC /* Swift */,
 				895731B526DD03A2009507A6 /* IDFA */,
 				895731B826DD03A2009507A6 /* Public */,
 				895731DD26DD03A2009507A6 /* Automations */,
@@ -1202,6 +1237,7 @@
 		8957323226DD03A3009507A6 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				7052136A29F17FFA00164AAF /* QONStoreKit2PurchaseModel */,
 				8957323726DD03A3009507A6 /* QNMapperObject */,
 				8957323A26DD03A3009507A6 /* QNProductPurchaseModel.m */,
 				8957323F26DD03A3009507A6 /* Protected */,
@@ -1503,6 +1539,7 @@
 				702394912923EBF3003126D5 /* QONNotificationsService.h in Headers */,
 				895732F126DD03A3009507A6 /* QNMapper.h in Headers */,
 				895732DF26DD03A3009507A6 /* QONUser+Protected.h in Headers */,
+				7052136D29F1800800164AAF /* QONStoreKit2PurchaseModel.h in Headers */,
 				8957329126DD03A3009507A6 /* QONAutomations.h in Headers */,
 				895732ED26DD03A3009507A6 /* QNUserInfoMapper.h in Headers */,
 				70ADE70F2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h in Headers */,
@@ -1833,6 +1870,7 @@
 				70ADE7102951CC7200CB4D2E /* QONScreenPresentationConfiguration.m in Sources */,
 				895732A626DD03A3009507A6 /* QONAutomationsScreen.m in Sources */,
 				70EC019D29EEE94300E686E2 /* StoreKit2Service.swift in Sources */,
+				7052136E29F1800800164AAF /* QONStoreKit2PurchaseModel.m in Sources */,
 				895732A926DD03A3009507A6 /* QONAutomationsMapper.m in Sources */,
 				895732F226DD03A3009507A6 /* QNMapper.m in Sources */,
 				70D0E2B9291A9BE3004E8DE8 /* QONConfiguration.m in Sources */,
@@ -1864,6 +1902,7 @@
 				895732D826DD03A3009507A6 /* QNProductPurchaseModel.m in Sources */,
 				702394922923EBF3003126D5 /* QONNotificationsService.m in Sources */,
 				8957328A26DD03A3009507A6 /* QONActionResult.m in Sources */,
+				70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */,
 				8957328F26DD03A3009507A6 /* QONUser.m in Sources */,
 				895732B926DD03A3009507A6 /* QNUserDefaultsStorage.m in Sources */,
 				895732BB26DD03A3009507A6 /* QNKeychainStorage.m in Sources */,
