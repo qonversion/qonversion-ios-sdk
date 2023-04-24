@@ -1,6 +1,6 @@
 #import "QONLaunchResult.h"
 
-@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel;
+@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QONProduct;
 
 NS_ASSUME_NONNULL_BEGIN
 @interface QNRequestSerializer : NSObject

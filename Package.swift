@@ -73,6 +73,7 @@ let package = Package(
     targets: [.target(
                 name: "Qonversion",
                 path: "Sources",
+                exclude: ["Swift"],
                 publicHeadersPath: "Qonversion/Public",
                 cSettings: sources.map { .headerSearchPath($0) })]
 )
