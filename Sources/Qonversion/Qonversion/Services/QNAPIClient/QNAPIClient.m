@@ -108,7 +108,7 @@
   [self processRequest:request completion:completion];
 }
 
-- (void)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
+- (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                receipt:(nullable NSString *)receipt
             completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseInfo:purchaseInfo receipt:receipt];
@@ -117,6 +117,8 @@
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
   
   [self processRequest:request completion:completion];
+  
+  return [request copy];
 }
 
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
