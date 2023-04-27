@@ -43,8 +43,8 @@ public class StoreKit2Service: NSObject {
     }
   }
   
-  @available(iOS 15.0, macOS 12.0, *)
-  func fetchTransactions(for type: Transaction.Transactions) async -> [Transaction] {
+  @available(iOS 15.0, macOS 12.0, watchOS 8.0, *)
+  private func fetchTransactions(for type: Transaction.Transactions) async -> [Transaction] {
     var transasctions: [Transaction] = []
     for await transaction in type {
       switch transaction {
@@ -58,8 +58,8 @@ public class StoreKit2Service: NSObject {
     return transasctions
   }
   
-  @available(iOS 15.0, macOS 12.0, *)
-  func filter(transactions: [Transaction]) -> [Transaction] {
+  @available(iOS 15.0, macOS 12.0, watchOS 8.0, *)
+  private func filter(transactions: [Transaction]) -> [Transaction] {
     let sortedTransactions = transactions.sorted(by: { $0.purchaseDate.compare($1.purchaseDate) == .orderedAscending })
     let groupedTransactions: [UInt64: [Transaction]] = group(transactions: sortedTransactions)
     let filteredTransactions = filterGroupedTransactions(groupedTransactions)
@@ -67,8 +67,8 @@ public class StoreKit2Service: NSObject {
     return filteredTransactions
   }
   
-  @available(iOS 15.0, macOS 12.0, *)
-  func group(transactions: [Transaction]) -> [UInt64: [Transaction]] {
+  @available(iOS 15.0, macOS 12.0, watchOS 8.0, *)
+  private func group(transactions: [Transaction]) -> [UInt64: [Transaction]] {
     var resultMap: [UInt64: [Transaction]] = [:]
     for transaction in transactions {
       var transactionsByOriginalId = resultMap[transaction.originalID] ?? []
@@ -79,8 +79,8 @@ public class StoreKit2Service: NSObject {
     return resultMap
   }
   
-  @available(iOS 15.0, macOS 12.0, *)
-  func filterGroupedTransactions(_ transactions: [UInt64: [Transaction]]) -> [Transaction] {
+  @available(iOS 15.0, macOS 12.0, watchOS 8.0, *)
+  private func filterGroupedTransactions(_ transactions: [UInt64: [Transaction]]) -> [Transaction] {
     var result: [Transaction] = []
     for (_, transactions) in transactions {
       var previousHandledProductId = ""
