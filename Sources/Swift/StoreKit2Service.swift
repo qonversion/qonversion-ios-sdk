@@ -14,7 +14,7 @@ import StoreKit
 public class StoreKit2Service: NSObject {
   
   @objc public func syncTransactions() {
-    if #available(iOS 15.0, macOS 12.0, *) {
+    if #available(iOS 15.0, macOS 12.0, watchOS 8.0, *) {
       Task.init {
         do {
           let mapper = PurchasesMapper()
