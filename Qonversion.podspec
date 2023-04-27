@@ -3,6 +3,7 @@ Pod::Spec.new do |s|
   idfa_exclude_files = ['Sources/Qonversion/IDFA']
   s.name         = 'Qonversion'
   s.version      = '3.3.0'
+  s.swift_version = '5.5'
   s.summary      = 'qonversion.io'
   s.description  = <<-DESC
   Deep Analytics for iOS Subscriptions
@@ -23,14 +24,14 @@ Pod::Spec.new do |s|
   s.default_subspecs = 'Main'
   
   s.subspec 'Main' do |ss|
-    ss.source_files              = 'Sources/Qonversion/**/*.{h,m}'
+    ss.source_files              = ['Sources/Qonversion/**/*.{h,m}', 'Sources/Swift/**/*.swift']
     ss.osx.exclude_files         = excluded_files
     ss.tvos.exclude_files        = excluded_files
     ss.watchos.exclude_files     = excluded_files
   end
 
   s.subspec 'NoIdfa' do |sss|
-    sss.source_files              = 'Sources/Qonversion/**/*.{h,m}'
+    sss.source_files              = ['Sources/Qonversion/**/*.{h,m}', 'Sources/Swift/**/*.swift']
     sss.osx.exclude_files         = excluded_files + idfa_exclude_files
     sss.tvos.exclude_files        = excluded_files + idfa_exclude_files
     sss.watchos.exclude_files     = excluded_files + idfa_exclude_files

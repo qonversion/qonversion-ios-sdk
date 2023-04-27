@@ -8,43 +8,42 @@
 
 import Foundation
 import StoreKit
-import Qonversion
+@_exported import Qonversion
 
-@available(iOS 15.0, *)
 @objc(QONStoreKit2Service)
 public class StoreKit2Service: NSObject {
   
-  private let mapper = PurchasesMapper()
-    
   @objc public func syncTransactions() {
-    Task.init {
-      do {
-        let allTransasctions: [Transaction] = await fetchTransactions(for: Transaction.all)
-        let unfinishedTransasctions: [Transaction] = await fetchTransactions(for: Transaction.unfinished)
-        let currentEntitlements: [Transaction] = await fetchTransactions(for: Transaction.currentEntitlements)
-        
-        let mixedTransactions: [Transaction] = allTransasctions + unfinishedTransasctions + currentEntitlements
-        var uniqueTransactions: [UInt64: Transaction] = [:]
-        mixedTransactions.forEach {
-          if uniqueTransactions[$0.id] == nil {
-            uniqueTransactions[$0.id] = $0
-          }
-        }
-        
-        let filteredTransactions = filter(transactions: Array(uniqueTransactions.values))
-        let productIds: [String] = filteredTransactions.map { $0.productID }
+    if #available(iOS 15.0, macOS 12.0, *) {
+      Task.init {
         do {
-          let products: [Product] = try await Product.products(for: Set(productIds))
+          let mapper = PurchasesMapper()
+          let allTransasctions: [Transaction] = await fetchTransactions(for: Transaction.all)
+          let unfinishedTransasctions: [Transaction] = await fetchTransactions(for: Transaction.unfinished)
+          let currentEntitlements: [Transaction] = await fetchTransactions(for: Transaction.currentEntitlements)
           
-          let mappedTransactions: [Qonversion.StoreKit2PurchaseModel] = await mapper.map(transactions: filteredTransactions, with: products)
-          Qonversion.shared().handlePurchases(mappedTransactions)
-        } catch {
-          // store transactions
+          let mixedTransactions: [Transaction] = allTransasctions + unfinishedTransasctions + currentEntitlements
+          var uniqueTransactions: [UInt64: Transaction] = [:]
+          mixedTransactions.forEach {
+            if uniqueTransactions[$0.id] == nil {
+              uniqueTransactions[$0.id] = $0
+            }
+          }
+          
+          let filteredTransactions = filter(transactions: Array(uniqueTransactions.values))
+          let productIds: [String] = filteredTransactions.map { $0.productID }
+          do {
+            let products: [Product] = try await Product.products(for: Set(productIds))
+            
+            let mappedTransactions: [Qonversion.StoreKit2PurchaseModel] = await mapper.map(transactions: filteredTransactions, with: products)
+            Qonversion.shared().handlePurchases(mappedTransactions)
+          }
         }
       }
     }
   }
   
+  @available(iOS 15.0, macOS 12.0, *)
   func fetchTransactions(for type: Transaction.Transactions) async -> [Transaction] {
     var transasctions: [Transaction] = []
     for await transaction in type {
@@ -59,6 +58,7 @@ public class StoreKit2Service: NSObject {
     return transasctions
   }
   
+  @available(iOS 15.0, macOS 12.0, *)
   func filter(transactions: [Transaction]) -> [Transaction] {
     let sortedTransactions = transactions.sorted(by: { $0.purchaseDate.compare($1.purchaseDate) == .orderedAscending })
     let groupedTransactions: [UInt64: [Transaction]] = group(transactions: sortedTransactions)
@@ -67,6 +67,7 @@ public class StoreKit2Service: NSObject {
     return filteredTransactions
   }
   
+  @available(iOS 15.0, macOS 12.0, *)
   func group(transactions: [Transaction]) -> [UInt64: [Transaction]] {
     var resultMap: [UInt64: [Transaction]] = [:]
     for transaction in transactions {
@@ -78,20 +79,17 @@ public class StoreKit2Service: NSObject {
     return resultMap
   }
   
+  @available(iOS 15.0, macOS 12.0, *)
   func filterGroupedTransactions(_ transactions: [UInt64: [Transaction]]) -> [Transaction] {
     var result: [Transaction] = []
     for (_, transactions) in transactions {
-      if transactions.count > 1 {
-        var previousHandledProductId = ""
-        
-        for transaction in transactions {
-          if previousHandledProductId != transaction.productID {
-            result.append(transaction)
-            previousHandledProductId = transaction.productID
-          }
+      var previousHandledProductId = ""
+      
+      for transaction in transactions {
+        if previousHandledProductId != transaction.productID {
+          result.append(transaction)
+          previousHandledProductId = transaction.productID
         }
-      } else {
-        result.append(contentsOf: transactions)
       }
     }
     

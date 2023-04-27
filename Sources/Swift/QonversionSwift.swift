@@ -6,21 +6,24 @@
 //
 
 import Foundation
-import Qonversion
+@_exported import Qonversion
 
-@available(iOS 15.0, *)
 public class QonversionSwift {
-    static public let shared = QonversionSwift(storeKitService: StoreKit2Service())
-    
-    private let storeKitService: StoreKit2Service
-    
-    init(storeKitService: StoreKit2Service) {
-        self.storeKitService = storeKitService
+  static public let shared = QonversionSwift()
+  
+  private var storeKitService: StoreKit2Service?
+  
+  init() {
+    if #available(iOS 15.0, *) {
+      self.storeKitService = StoreKit2Service()
+    } else {
+      // Fallback on earlier versions
     }
-    
-    /// Contact us before you start using this function.
-    /// Call this function to sync purchases if you are using StoreKit2.
-    public func syncStoreKit2Purchases() {
-        storeKitService.syncTransactions()
-    }
+  }
+  
+  /// Contact us before you start using this function.
+  /// Call this function to sync purchases if you are using StoreKit2.
+  public func syncStoreKit2Purchases() {
+    storeKitService?.syncTransactions()
+  }
 }
