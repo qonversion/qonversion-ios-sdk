@@ -12,6 +12,18 @@ import StoreKit
 
 @available(iOS 15.0, *)
 final class PurchasesMapper {
+  func map(transactions: [Transaction], with products:[Product]) async -> [QONStoreKit2PurchaseModel] {
+    var result: [QONStoreKit2PurchaseModel] = []
+    for transaction in transactions {
+      if let relatedProduct = products.first { $0.id == transaction.productID },
+      let model = await map(transaction: transaction, with: relatedProduct) {
+        result.append(model)
+      }
+    }
+    
+    return result
+  }
+  
   func map(transaction: Transaction, with product: Product) async -> QONStoreKit2PurchaseModel? {
     let tempDict = try? JSONSerialization.jsonObject(with: product.jsonRepresentation, options: [])
     let jsonDict = tempDict as? [String: Any] ?? [:]

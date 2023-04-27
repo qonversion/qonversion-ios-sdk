@@ -15,6 +15,7 @@
 #import "QONStoreKitSugare.h"
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONConfiguration.h"
+#import "QONStoreKit2PurchaseModel.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
@@ -185,6 +186,8 @@ NS_ASSUME_NONNULL_BEGIN
  Call this function to sync purchases if you are using StoreKit2.
  */
 - (void)syncStoreKit2Purchases;
+
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo;
 
 @end
 
