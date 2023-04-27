@@ -15,7 +15,7 @@ import Qonversion
 public class StoreKit2Service: NSObject {
   
   private let mapper = PurchasesMapper()
-  
+    
   @objc public func syncTransactions() {
     Task.init {
       do {
@@ -35,7 +35,8 @@ public class StoreKit2Service: NSObject {
         let productIds: [String] = filteredTransactions.map { $0.productID }
         do {
           let products: [Product] = try await Product.products(for: Set(productIds))
-          let mappedTransactions: [QONStoreKit2PurchaseModel] = await mapper.map(transactions: filteredTransactions, with: products)
+          
+          let mappedTransactions: [Qonversion.StoreKit2PurchaseModel] = await mapper.map(transactions: filteredTransactions, with: products)
           Qonversion.shared().handlePurchases(mappedTransactions)
         } catch {
           // store transactions
@@ -60,7 +61,7 @@ public class StoreKit2Service: NSObject {
   
   func filter(transactions: [Transaction]) -> [Transaction] {
     let sortedTransactions = transactions.sorted(by: { $0.purchaseDate.compare($1.purchaseDate) == .orderedAscending })
-    let groupedTransactions: [UInt64: [Transaction]] = group(transactions: transactions)
+    let groupedTransactions: [UInt64: [Transaction]] = group(transactions: sortedTransactions)
     let filteredTransactions = filterGroupedTransactions(groupedTransactions)
     
     return filteredTransactions
