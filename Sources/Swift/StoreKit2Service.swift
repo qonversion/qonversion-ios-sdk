@@ -14,7 +14,7 @@ import StoreKit
 public class StoreKit2Service: NSObject {
   
   @objc public func syncTransactions() {
-    if #available(iOS 15.0, macOS 12.0, watchOS 8.0, *) {
+    if #available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *) {
       Task.init {
         do {
           let mapper = PurchasesMapper()
@@ -43,7 +43,7 @@ public class StoreKit2Service: NSObject {
     }
   }
   
-  @available(iOS 15.0, macOS 12.0, watchOS 8.0, *)
+  @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
   private func fetchTransactions(for type: Transaction.Transactions) async -> [Transaction] {
     var transasctions: [Transaction] = []
     for await transaction in type {
@@ -58,7 +58,7 @@ public class StoreKit2Service: NSObject {
     return transasctions
   }
   
-  @available(iOS 15.0, macOS 12.0, watchOS 8.0, *)
+  @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
   private func filter(transactions: [Transaction]) -> [Transaction] {
     let sortedTransactions = transactions.sorted(by: { $0.purchaseDate.compare($1.purchaseDate) == .orderedAscending })
     let groupedTransactions: [UInt64: [Transaction]] = group(transactions: sortedTransactions)
@@ -67,7 +67,7 @@ public class StoreKit2Service: NSObject {
     return filteredTransactions
   }
   
-  @available(iOS 15.0, macOS 12.0, watchOS 8.0, *)
+  @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
   private func group(transactions: [Transaction]) -> [UInt64: [Transaction]] {
     var resultMap: [UInt64: [Transaction]] = [:]
     for transaction in transactions {
@@ -79,7 +79,7 @@ public class StoreKit2Service: NSObject {
     return resultMap
   }
   
-  @available(iOS 15.0, macOS 12.0, watchOS 8.0, *)
+  @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
   private func filterGroupedTransactions(_ transactions: [UInt64: [Transaction]]) -> [Transaction] {
     var result: [Transaction] = []
     for (_, transactions) in transactions {

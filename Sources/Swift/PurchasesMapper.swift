@@ -10,7 +10,7 @@ import Foundation
 import StoreKit
 @_exported import Qonversion
 
-@available(iOS 15.0, macOS 12.0, watchOS 8.0, *)
+@available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
 final class PurchasesMapper {
   func map(transactions: [Transaction], with products:[Product]) async -> [Qonversion.StoreKit2PurchaseModel] {
     var result: [Qonversion.StoreKit2PurchaseModel] = []
