@@ -86,6 +86,7 @@ public class StoreKit2Service: NSObject {
       var previousHandledProductId = ""
       
       for transaction in transactions {
+        // here we detect another product purchase
         if previousHandledProductId != transaction.productID {
           result.append(transaction)
           previousHandledProductId = transaction.productID
