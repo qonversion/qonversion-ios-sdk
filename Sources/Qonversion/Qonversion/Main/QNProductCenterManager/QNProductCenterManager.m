@@ -816,14 +816,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
+  __block __weak QNProductCenterManager *weakSelf = self;
   [self.storeKitService receipt:^(NSString * receipt) {
     for (QONStoreKit2PurchaseModel *purchaseModel in purchasesInfo) {
-      [self.apiClient handlePurchase:purchaseModel receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-          if (error) {
-              QONVERSION_LOG(@"⚠️ Failed to handle purchase");
-          } else {
-              QONVERSION_LOG(@"✅ Purchase with transactionId: %@ has been tracked", purchaseModel.transactionId);
-          }
+      __block NSURLRequest *request = [self.apiClient handlePurchase:purchaseModel receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+        if (error && [QNUtils shouldPurchaseRequestBeRetried:error]) {
+          [weakSelf.apiClient storeRequestForRetry:request transactionId:purchaseModel.transactionId];
+        } else {
+          [weakSelf.apiClient removeStoredRequestForTransactionId:purchaseModel.transactionId];
+        }
       }];
     }
   }];

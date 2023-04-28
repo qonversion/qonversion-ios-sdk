@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-//NS_SWIFT_NAME(Qonversion.StoreKit2PurchaseModel)
+NS_SWIFT_NAME(Qonversion.StoreKit2PurchaseModel)
 @interface QONStoreKit2PurchaseModel : NSObject
 
 @property (nonatomic, copy, nonnull) NSString *productId;

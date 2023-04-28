@@ -69,12 +69,17 @@ let package = Package(
     products: [
         .library(
             name: "Qonversion",
-            targets: ["Qonversion"])
+            targets: ["Qonversion", "QonversionSwift"])
     ],
     targets: [.target(
                 name: "Qonversion",
                 path: "Sources",
                 exclude: ["Swift"],
                 publicHeadersPath: "Qonversion/Public",
-                cSettings: sources.map { .headerSearchPath($0) })]
+                cSettings: sources.map { .headerSearchPath($0) }),
+              .target(
+                name: "QonversionSwift",
+                dependencies: ["Qonversion"],
+                path: "Sources",
+                exclude: ["Qonversion"])]
 )

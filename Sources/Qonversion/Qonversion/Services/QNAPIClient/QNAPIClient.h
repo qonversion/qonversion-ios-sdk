@@ -51,9 +51,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)sendOfferingEvent:(QONOffering *)offering;
 - (void)storeRequestForRetry:(NSURLRequest *)request transactionId:(NSString *)transactionId;
 - (void)removeStoredRequestForTransactionId:(NSString *)transactionId;
-- (void)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
-               receipt:(nullable NSString *)receipt
-            completion:(QNAPIClientCompletionHandler)completion;
+- (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
+                         receipt:(nullable NSString *)receipt
+                      completion:(QNAPIClientCompletionHandler)completion;
 
 @end
 

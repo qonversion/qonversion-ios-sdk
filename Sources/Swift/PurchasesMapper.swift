@@ -10,13 +10,13 @@ import Foundation
 import StoreKit
 @_exported import Qonversion
 
-@available(iOS 15.0, *)
+@available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
 final class PurchasesMapper {
-  func map(transactions: [Transaction], with products:[Product]) async -> [QONStoreKit2PurchaseModel] {
-    var result: [QONStoreKit2PurchaseModel] = []
+  func map(transactions: [Transaction], with products:[Product]) async -> [Qonversion.StoreKit2PurchaseModel] {
+    var result: [Qonversion.StoreKit2PurchaseModel] = []
     for transaction in transactions {
-      if let relatedProduct = products.first { $0.id == transaction.productID },
-      let model = await map(transaction: transaction, with: relatedProduct) {
+      if let relatedProduct = products.first(where: { $0.id == transaction.productID }),
+         let model = await map(transaction: transaction, with: relatedProduct) {
         result.append(model)
       }
     }
@@ -24,7 +24,7 @@ final class PurchasesMapper {
     return result
   }
   
-  func map(transaction: Transaction, with product: Product) async -> QONStoreKit2PurchaseModel? {
+  func map(transaction: Transaction, with product: Product) async -> Qonversion.StoreKit2PurchaseModel? {
     let tempDict = try? JSONSerialization.jsonObject(with: product.jsonRepresentation, options: [])
     let jsonDict = tempDict as? [String: Any] ?? [:]
     let attributes = jsonDict["attributes"] as? [String: Any]
@@ -33,7 +33,7 @@ final class PurchasesMapper {
           let currencyCode: String = offers.first?["currencyCode"] as? String
     else { return nil }
     
-    let purchaseInfo = QONStoreKit2PurchaseModel()
+    let purchaseInfo = Qonversion.StoreKit2PurchaseModel()
     purchaseInfo.productId = product.id
     purchaseInfo.price = "\(product.price)"
     purchaseInfo.currency = currencyCode

@@ -14,7 +14,6 @@
 #import "QNServicesAssembly.h"
 #import "QNLocalStorage.h"
 #import "QNInternalConstants.h"
-#import <Qonversion/Qonversion-Swift.h>
 
 @interface Qonversion()
 
@@ -23,7 +22,6 @@
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
-@property (nonatomic, strong) QONStoreKit2Service *storeKitService;
 
 @property (nonatomic, assign) BOOL debugMode;
 @property (nonatomic, assign) QONLaunchMode launchMode;
@@ -156,10 +154,6 @@
   [[[Qonversion sharedInstance] productCenterManager] userInfo:completion];
 }
 
-- (void)syncStoreKit2Purchases {
-  [self.storeKitService syncTransactions];
-}
-
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
   [[[Qonversion sharedInstance] productCenterManager] handlePurchases:purchasesInfo];
 }
@@ -182,7 +176,6 @@
     _productCenterManager = [QNProductCenterManager new];
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
-    _storeKitService = [QONStoreKit2Service new];
     
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
  

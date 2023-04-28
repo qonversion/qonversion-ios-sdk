@@ -183,10 +183,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Contact us before you start using this function.
- Call this function to sync purchases if you are using StoreKit2.
+ Handles purchases for StoreKit2 if you are using Qonversion in the Analytics Mode.
+ @param purchasesInfo array of StoreKit2 purchases models
  */
-- (void)syncStoreKit2Purchases;
-
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo;
 
 @end
