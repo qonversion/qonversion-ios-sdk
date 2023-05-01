@@ -48,6 +48,7 @@ let sources: [String] = ["Qonversion/Automations/Constants",
                          "Qonversion/Qonversion/Mappers/QNUserInfoMapper",
                          "Qonversion/Qonversion/Models",
                          "Qonversion/Qonversion/Models/Protected",
+                         "Qonversion/Qonversion/Models/QONStoreKit2PurchaseModel",
                          "Qonversion/Qonversion/Models/QNMapperObject",
                          "Qonversion/Qonversion/Services",
                          "Qonversion/Qonversion/Services/QNAPIClient",
@@ -68,11 +69,17 @@ let package = Package(
     products: [
         .library(
             name: "Qonversion",
-            targets: ["Qonversion"])
+            targets: ["Qonversion", "QonversionSwift"])
     ],
     targets: [.target(
                 name: "Qonversion",
                 path: "Sources",
+                exclude: ["Swift"],
                 publicHeadersPath: "Qonversion/Public",
-                cSettings: sources.map { .headerSearchPath($0) })]
+                cSettings: sources.map { .headerSearchPath($0) }),
+              .target(
+                name: "QonversionSwift",
+                dependencies: ["Qonversion"],
+                path: "Sources",
+                exclude: ["Qonversion"])]
 )

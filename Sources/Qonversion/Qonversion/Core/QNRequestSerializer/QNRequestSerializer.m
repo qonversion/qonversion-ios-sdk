@@ -6,6 +6,7 @@
 #import "QNProductPurchaseModel.h"
 #import "QONExperimentInfo.h"
 #import "QONExperimentGroup.h"
+#import "QONStoreKit2PurchaseModel.h"
 
 @interface QNRequestSerializer ()
 
@@ -81,6 +82,40 @@ NS_ASSUME_NONNULL_BEGIN
     purchaseDict[@"product_id"] = purchaseModel.product.qonversionID;
     purchaseDict[@"experiment"] = [self configureExperimentInfo:purchaseModel.experimentInfo];
   }
+  
+  result[@"purchase"] = purchaseDict;
+  
+  return result;
+}
+
+- (NSDictionary *)purchaseInfo:(QONStoreKit2PurchaseModel *)purchaseModel
+                       receipt:(nullable NSString *)receipt {
+  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
+  NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
+
+  if (receipt) {
+    result[@"receipt"] = receipt;
+  }
+  
+  purchaseDict[@"product"] = purchaseModel.productId;
+  purchaseDict[@"currency"] = purchaseModel.currency;
+  purchaseDict[@"value"] = purchaseModel.price;
+  purchaseDict[@"transaction_id"] = purchaseModel.transactionId;
+  purchaseDict[@"original_transaction_id"] = purchaseModel.originalTransactionId;
+  purchaseDict[@"period_unit"] = purchaseModel.subscriptionPeriodUnit;
+  purchaseDict[@"period_number_of_units"] = purchaseModel.subscriptionPeriodNumberOfUnits;
+    
+  NSMutableDictionary *introOffer = [[NSMutableDictionary alloc] init];
+  
+  introOffer[@"value"] = purchaseModel.price;
+  introOffer[@"number_of_periods"] = purchaseModel.introductoryNumberOfPeriods;
+  introOffer[@"period_number_of_units"] = purchaseModel.introductoryPeriodNumberOfUnits;
+  introOffer[@"period_unit"] = purchaseModel.introductoryPeriodUnit;
+  introOffer[@"payment_mode"] = purchaseModel.introductoryPaymentMode;
+  
+  result[@"introductory_offer"] = introOffer.count > 0 ? introOffer : nil;
+  
+  purchaseDict[@"country"] = purchaseModel.storefrontCountryCode;
   
   result[@"purchase"] = purchaseDict;
   
