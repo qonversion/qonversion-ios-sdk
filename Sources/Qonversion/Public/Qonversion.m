@@ -154,6 +154,10 @@
   [[[Qonversion sharedInstance] productCenterManager] userInfo:completion];
 }
 
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
+  [[[Qonversion sharedInstance] productCenterManager] handlePurchases:purchasesInfo];
+}
+
 // MARK: - Private
 
 + (instancetype)sharedInstance {

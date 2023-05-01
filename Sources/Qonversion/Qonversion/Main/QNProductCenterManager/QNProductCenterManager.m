@@ -20,6 +20,7 @@
 #import "QNDevice.h"
 #import "QNInternalConstants.h"
 #import "QONUser+Protected.h"
+#import "QONStoreKit2PurchaseModel.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomations.h"
@@ -812,6 +813,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [_purchasingBlocks removeObjectForKey:product.productIdentifier];
     }
   }
+}
+
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
+  __block __weak QNProductCenterManager *weakSelf = self;
+  [self.storeKitService receipt:^(NSString * receipt) {
+    for (QONStoreKit2PurchaseModel *purchaseModel in purchasesInfo) {
+      __block NSURLRequest *request = [self.apiClient handlePurchase:purchaseModel receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+        if (error && [QNUtils shouldPurchaseRequestBeRetried:error]) {
+          [weakSelf.apiClient storeRequestForRetry:request transactionId:purchaseModel.transactionId];
+        } else {
+          [weakSelf.apiClient removeStoredRequestForTransactionId:purchaseModel.transactionId];
+        }
+      }];
+    }
+  }];
 }
 
 // MARK: - QNStoreKitServiceDelegate

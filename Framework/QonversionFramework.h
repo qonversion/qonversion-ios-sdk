@@ -12,6 +12,7 @@
 #import <Qonversion/QONIntroEligibility.h>
 #import <Qonversion/QONExperimentInfo.h>
 #import <Qonversion/QONExperimentGroup.h>
+#import <Qonversion/QONStoreKit2PurchaseModel.h>
 
 #import <Qonversion/QONAutomations.h>
 #import <Qonversion/QONAutomationsDelegate.h>
