@@ -16,8 +16,6 @@ public class QonversionSwift {
   init() {
     if #available(iOS 15.0, *) {
       self.storeKitService = StoreKit2Service()
-    } else {
-      // Fallback on earlier versions
     }
   }
   
