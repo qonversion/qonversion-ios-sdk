@@ -190,7 +190,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [weakSelf loadProducts];
     }
 
-    [weakSelf handleEntitlementRequestsAfterIdentityChangesWithError:error];
+    [weakSelf handlePendingRequests:error];
     
     if (completion) {
       run_block_on_main(completion, result, error)
@@ -249,7 +249,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [weakSelf.userInfoService storeCustomIdentityUserID:userID];
     
     if ([currentUserID isEqualToString:result]) {
-      [weakSelf handleEntitlementRequestsAfterIdentityChangesWithError:nil];
+      [weakSelf handlePendingRequests:nil];
     } else {
       [[QNAPIClient shared] setUserID:result];
       
@@ -302,7 +302,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
   @synchronized (self) {
     [self.entitlementsBlocks addObject:completion];
-    [self handleEntitlementRequestsAfterIdentityChangesWithError:nil];
+    [self handlePendingRequests:nil];
   }
 }
 
@@ -961,7 +961,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     run_block_on_main(block, entitlements, error);
   }
 
-  [self handleEntitlementRequestsAfterIdentityChangesWithError:error];
+  [self handlePendingRequests:error];
 }
 
 - (void)handleProducts:(NSArray<SKProduct *> *)products {
@@ -1184,7 +1184,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   self.user = actualUser;
 }
 
-- (void)handleEntitlementRequestsAfterIdentityChangesWithError:(NSError *)lastError {
+- (void)handlePendingRequests:(NSError *)lastError {
   if (!self.launchingFinished || self.restoreInProgress || self.identityInProgress) {
     return;
   }
