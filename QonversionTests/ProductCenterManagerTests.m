@@ -87,7 +87,7 @@
   
   // When
   [_manager checkEntitlements:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
-    XCTAssertNil(result);
+    XCTAssertEqual(result, [NSDictionary new]);
     XCTAssertNil(error);
     XCTAssertEqual([NSThread mainThread], [NSThread currentThread]);
     
