@@ -62,6 +62,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoading;
 @property (nonatomic, assign) BOOL restoreInProgress;
+@property (nonatomic, assign) BOOL awaitingRestoreResult;
 @property (nonatomic, assign) BOOL identityInProgress;
 @property (nonatomic, assign) BOOL unhandledLogoutAvailable;
 @property (nonatomic, copy) NSString *pendingIdentityUserID;
@@ -98,8 +99,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _productsEntitlementsRelation = [_persistentStorage loadObjectForKey:kKeyQUserDefaultsProductsPermissionsRelation];
     
     _purchaseModels = [NSMutableDictionary new];
-    _restorePurchasesBlocks = [NSMutableDictionary new];
     _purchasingBlocks = [NSMutableDictionary new];
+    _restorePurchasesBlocks = [NSMutableArray new];
     _entitlementsBlocks = [NSMutableArray new];
     _productsBlocks = [NSMutableArray new];
     _offeringsBlocks = [NSMutableArray new];
@@ -410,12 +411,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)restore:(QNRestoreCompletionHandler)completion {
-  [self.restorePurchasesBlocks addObject:completion];
+  if (completion != nil) {
+    [self.restorePurchasesBlocks addObject:completion];
+  }
 
   if (self.restoreInProgress) {
     return;
   }
 
+  self.awaitingRestoreResult = YES;
   self.restoreInProgress = YES;
 
   [self.storeKitService restore];
@@ -439,10 +443,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   } else {
     run_block_on_main(completion, self.launchResult.entitlements, nil);
   }
-}
-
-- (void)executeEntitlementsBlocks {
-  [self executeEntitlementsBlocksWithError:nil];
 }
 
 - (void)executeEntitlementsBlocksWithError:(NSError *)error {
@@ -761,7 +761,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:self];
       [[NSNotificationCenter defaultCenter] postNotification:notification];
     }
-
     if (!completion) {
       return;
     }
@@ -910,12 +909,22 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handleRestoreResult:(NSDictionary<NSString *, QONEntitlement *> *)entitlements error:(NSError *)error {
+  if (!self.awaitingRestoreResult) {
+    return;
+  }
+  self.awaitingRestoreResult = NO;
+  
   self.restoredTransactions = nil;
-
+  
   [self executeRestoreBlocksWithResult:entitlements error:error];
 }
 
 - (void)handleRestoreCompletedTransactionsFinished {
+  if (!self.awaitingRestoreResult) {
+    return;
+  }
+  self.awaitingRestoreResult = NO;
+
   NSArray *restoredTransactionsCopy = [self.restoredTransactions copy];
   self.restoredTransactions = nil;
   __block __weak QNProductCenterManager *weakSelf = self;
@@ -938,6 +947,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handleRestoreCompletedTransactionsFailed:(NSError *)error {
+  self.awaitingRestoreResult = NO;
   [self executeRestoreBlocksWithResult:@{} error:error];
 }
 
