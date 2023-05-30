@@ -385,7 +385,7 @@
 
 - (void)removeStoredRequestForTransactionId:(NSString *)transactionId {
   NSMutableDictionary *storedRequests = [[self storedPurchasesRequests] mutableCopy];
-  if (transactionId) {
+  if (transactionId.length > 0) {
     storedRequests[transactionId] = nil;
   }
   
