@@ -27,7 +27,7 @@ NSString * const kEventEndpoint = @"v2/events";
 
 NSString * const kAttributionEndpoint = @"attribution";
 
-NSString * const kSdkLogsEndpoint = @"sdk.logs";
+NSString * const kSdkLogsEndpoint = @"sdk.log";
 
 NSString * const kStoredRequestsKey = @"storedRequests";
 
