@@ -4,17 +4,14 @@
 #import "QNRequestSerializer.h"
 #import "QONErrors.h"
 #import "QNUtils.h"
-#import "QNUserInfo.h"
 #import "QNAPIConstants.h"
-#import "QNInternalConstants.h"
-#import "QNInternalConstants.h"
 #import "QNProductPurchaseModel.h"
 #import "QONOffering.h"
 #import "QONExperimentInfo.h"
-#import "QONExperimentGroup.h"
 #import "QNErrorsMapper.h"
 #import "QNKeyedArchiver.h"
 #import "QONStoreKit2PurchaseModel.h"
+#import "QNDevice.h"
 
 @interface QNAPIClient()
 
@@ -78,7 +75,11 @@
 }
 
 - (void)processRequest:(NSURLRequest *)request completion:(QNAPIClientCompletionHandler)completion {
-  [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+  [self processRequest:request parseResponse:YES completion:completion];
+}
+
+- (void)processRequest:(NSURLRequest *)request parseResponse:(BOOL)parseResponse completion:(QNAPIClientCompletionHandler)completion {
+  [self dataTaskWithRequest:request parseResponse:parseResponse completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     if (!self.criticalError && error && [self.criticalErrorCodes containsObject:@(error.code)]) {
       self.criticalError = error;
     }
@@ -260,30 +261,65 @@
 
 - (NSDictionary *)enrichParameters:(NSDictionary *)parameters {
   NSDictionary *_parameters = parameters ?: @{};
-  
+
   NSMutableDictionary *baseDict = [[NSMutableDictionary alloc] initWithDictionary:_parameters];
   baseDict[@"access_token"] = _apiKey;
-  
+
   [baseDict setObject:_userID forKey:@"q_uid"];
   [baseDict setObject:_userID forKey:@"client_uid"];
   [baseDict setObject:self.version forKey:@"version"];
   [baseDict setObject:@(self.debug) forKey:@"debug_mode"];
-  
+
+  return [baseDict copy];
+}
+
+- (NSDictionary *)enrichSdkLogParameters:(NSDictionary *)parameters {
+  NSDictionary *_parameters = parameters ?: @{};
+
+  NSMutableDictionary *baseDict = [[NSMutableDictionary alloc] initWithDictionary:_parameters];
+
+  NSString *platformVersion = [QNDevice current].osVersion;
+  NSString *platform = [QNDevice current].osName;
+  NSString *source = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSource] ?: @"iOS";
+  NSString *sourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: self.version;
+
+  baseDict[@"device"] = @{
+          @"platform": platform,
+          @"platform_version": platformVersion,
+          @"source": source,
+          @"source_version": sourceVersion,
+          @"project_key": _apiKey,
+          @"uid": _userID
+  };
+
   return [baseDict copy];
 }
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request
+                 completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+  [self dataTaskWithRequest:request parseResponse:YES completion:completion];
+}
+
+- (void)dataTaskWithRequest:(NSURLRequest *)request
+              parseResponse:(BOOL)parseResponse
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   if (self.criticalError && completion) {
     completion(nil, self.criticalError);
     return;
   }
   
-  [self dataTaskWithRequest:request tryCount:0 completion:completion];
+  [self dataTaskWithRequest:request tryCount:0 parseResponse:parseResponse completion:completion];
 }
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request
                    tryCount:(NSInteger)tryCount
+                 completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+  [self dataTaskWithRequest:request tryCount:tryCount parseResponse:YES completion:completion];
+}
+
+- (void)dataTaskWithRequest:(NSURLRequest *)request
+                   tryCount:(NSInteger)tryCount
+              parseResponse:(BOOL)parseResponse
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   __block NSInteger doneTryCount = tryCount;
   
@@ -294,7 +330,7 @@
       if (isConnectionError) {
         if (doneTryCount < 3) {
           doneTryCount++;
-          [weakSelf dataTaskWithRequest:request tryCount:doneTryCount completion:completion];
+          [weakSelf dataTaskWithRequest:request tryCount:doneTryCount parseResponse:parseResponse completion:completion];
           
           return;
         } else {
@@ -329,13 +365,17 @@
       completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedReceiveData]);
       return;
     }
-    
-    NSError *jsonError;
-    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
-    
-    if ((jsonError.code || !dict)) {
-      completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
-      return;
+
+    NSDictionary *dict = nil;
+
+    if (parseResponse) {
+      NSError *jsonError;
+      dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
+
+      if ((jsonError.code || !dict)) {
+        completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+        return;
+      }
     }
     
     NSError *apiError = [weakSelf.errorsMapper errorFromRequestResult:dict];
@@ -435,6 +475,17 @@
   NSURLRequest *request = [self.requestBuilder makeEventRequestWithEventName:kKeyQExperimentStartedEventName payload:[payload copy] userID:self.userID];
   
   return [self dataTaskWithRequest:request completion:nil];
+}
+
+- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *body = [self enrichSdkLogParameters:data];
+  NSURLRequest *request = [self.requestBuilder makeSdkLogsRequestWith:body];
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
+  [mutableRequest setAllHTTPHeaderFields:@{
+          @"Content-Type": @"application/json"
+  }];
+
+  [self processRequest:mutableRequest parseResponse:NO completion:completion];
 }
 
 @end

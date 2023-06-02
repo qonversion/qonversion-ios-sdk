@@ -82,6 +82,10 @@
   return [self makePostRequestWith:kEventEndpoint andBody:[body copy]];
 }
 
+- (NSURLRequest *)makeSdkLogsRequestWith:(NSDictionary *)body {
+  return [self makePostRequestWith:kSdkLogsEndpoint andBody:[body copy] toBaseUrl:kSdkLogsBaseURL];
+}
+
 // MARK: Private
 
 - (NSURLRequest *)makeGetRequestWith:(NSString *)endpoint {
@@ -94,7 +98,11 @@
 }
 
 - (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body {
-  NSString *urlString = [self.baseURL stringByAppendingString:endpoint];
+  return [self makePostRequestWith:endpoint andBody:body toBaseUrl:self.baseURL];
+}
+
+- (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body toBaseUrl:(NSString *)baseURL {
+  NSString *urlString = [baseURL stringByAppendingString:endpoint];
   NSURL *url = [NSURL.alloc initWithString:urlString];
 
   NSMutableURLRequest *request = [self basePostRequestWithURL:url];
