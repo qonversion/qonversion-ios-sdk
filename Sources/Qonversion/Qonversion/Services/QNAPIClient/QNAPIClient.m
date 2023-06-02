@@ -288,7 +288,7 @@
           @"platform_version": platformVersion,
           @"source": source,
           @"source_version": sourceVersion,
-          @"project_key": _apiKey,
+          @"project_key": [self obtainApiKey],
           @"uid": _userID
   };
 
