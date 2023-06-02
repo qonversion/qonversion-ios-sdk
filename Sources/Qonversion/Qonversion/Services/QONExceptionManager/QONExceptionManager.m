@@ -55,6 +55,7 @@ NSString *const kCrashLogFileSuffix = @".qonversion.stacktrace";
             @"elements": backtrace,
             @"name": name,
             @"message": reason,
+            @"title": [NSString stringWithFormat:@"%@: %@", name, reason],
             @"userInfo": userInfo
     };
 
