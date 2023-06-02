@@ -127,7 +127,7 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
             if (error) {
                 QONVERSION_LOG(@"Error sending crash information to API: %@", error);
             } else {
-//                [self removeCrashReportFile:fileURL.path];
+                [self removeCrashReportFile:fileURL.path];
             }
         }];
     }
