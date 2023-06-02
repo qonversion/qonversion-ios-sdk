@@ -96,6 +96,10 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
 @implementation QONExceptionManager
 
 - (void)initialize {
+#if DEBUG
+    return;
+#endif
+
     _apiClient = [QNAPIClient shared];
 
     defaultExceptionHandler = NSGetUncaughtExceptionHandler();
