@@ -177,8 +177,6 @@
     _attributionManager = [QNAttributionManager new];
     _exceptionManager = [QONExceptionManager new];
 
-    [_exceptionManager initialize];
-
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
  
     _localStorage = [servicesAssembly localStorage];

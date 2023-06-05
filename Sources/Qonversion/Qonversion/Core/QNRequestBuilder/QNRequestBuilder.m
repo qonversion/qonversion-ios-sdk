@@ -26,11 +26,11 @@
 }
 
 - (NSURLRequest *)makeSendPushTokenRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kSendPushTokenEndpoint andBody:parameters];
+  return [self makePostRequestWithEndpoint:kSendPushTokenEndpoint body:parameters];
 }
 
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kInitEndpoint andBody:parameters];
+  return [self makePostRequestWithEndpoint:kInitEndpoint body:parameters];
 }
 
 - (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey {
@@ -39,15 +39,15 @@
 }
 
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kPropertiesEndpoint andBody:parameters];
+  return [self makePostRequestWithEndpoint:kPropertiesEndpoint body:parameters];
 }
 
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kAttributionEndpoint andBody:parameters];
+  return [self makePostRequestWithEndpoint:kAttributionEndpoint body:parameters];
 }
 
 - (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kPurchaseEndpoint andBody:parameters];
+  return [self makePostRequestWithEndpoint:kPurchaseEndpoint body:parameters];
 }
 
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter {
@@ -62,15 +62,15 @@
 
 - (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body {
   NSString *endpoint = [NSString stringWithFormat:kScreenShowEndpointFormat, parameter];
-  return [self makePostRequestWith:endpoint andBody:body];
+  return [self makePostRequestWithEndpoint:endpoint body:body];
 }
 
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kIdentityEndpoint andBody:parameters];
+  return [self makePostRequestWithEndpoint:kIdentityEndpoint body:parameters];
 }
 
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
-  return [self makePostRequestWith:kProductsEndpoint andBody:parameters];
+  return [self makePostRequestWithEndpoint:kProductsEndpoint body:parameters];
 }
 
 - (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID {
@@ -79,11 +79,11 @@
   body[@"event"] = eventName;
   body[@"payload"] = payload;
   
-  return [self makePostRequestWith:kEventEndpoint andBody:[body copy]];
+  return [self makePostRequestWithEndpoint:kEventEndpoint body:[body copy]];
 }
 
-- (NSURLRequest *)makeSdkLogsRequestWith:(NSDictionary *)body {
-  return [self makePostRequestWith:kSdkLogsEndpoint andBody:[body copy] toBaseUrl:kSdkLogsBaseURL];
+- (NSURLRequest *)makeSdkLogsRequestWithBody:(NSDictionary *)body {
+  return [self makePostRequestWithEndpoint:kSdkLogsEndpoint body:body baseUrl:kSdkLogsBaseURL];
 }
 
 // MARK: Private
@@ -97,13 +97,13 @@
   return [request copy];
 }
 
-- (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body {
-  return [self makePostRequestWith:endpoint andBody:body toBaseUrl:self.baseURL];
+- (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint body:(NSDictionary *)body {
+  return [self makePostRequestWithEndpoint:endpoint body:body baseUrl:self.baseURL];
 }
 
-- (NSURLRequest *)makePostRequestWith:(NSString *)endpoint andBody:(NSDictionary *)body toBaseUrl:(NSString *)baseURL {
+- (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint body:(NSDictionary *)body baseUrl:(NSString *)baseURL {
   NSString *urlString = [baseURL stringByAppendingString:endpoint];
-  NSURL *url = [NSURL.alloc initWithString:urlString];
+  NSURL *url = [NSURL URLWithString:urlString];
 
   NSMutableURLRequest *request = [self basePostRequestWithURL:url];
   

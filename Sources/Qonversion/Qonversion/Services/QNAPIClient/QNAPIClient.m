@@ -274,25 +274,25 @@
 }
 
 - (NSDictionary *)enrichSdkLogParameters:(NSDictionary *)parameters {
-  NSDictionary *_parameters = parameters ?: @{};
-
-  NSMutableDictionary *baseDict = [[NSMutableDictionary alloc] initWithDictionary:_parameters];
+  NSMutableDictionary *mutableParameters = [parameters mutableCopy] ?: [NSMutableDictionary new];
 
   NSString *platformVersion = [QNDevice current].osVersion;
   NSString *platform = [QNDevice current].osName;
   NSString *source = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSource] ?: @"iOS";
   NSString *sourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: self.version;
+  
+  NSMutableDictionary *device = [NSMutableDictionary new];
+  
+  device[@"platform"] = platform;
+  device[@"platform_version"] = platformVersion;
+  device[@"source"] = source;
+  device[@"source_version"] = sourceVersion;
+  device[@"project_key"] = [self obtainApiKey];
+  device[@"uid"] = self.userID;
 
-  baseDict[@"device"] = @{
-          @"platform": platform,
-          @"platform_version": platformVersion,
-          @"source": source,
-          @"source_version": sourceVersion,
-          @"project_key": [self obtainApiKey],
-          @"uid": _userID
-  };
+  mutableParameters[@"device"] = device;
 
-  return [baseDict copy];
+  return [mutableParameters copy];
 }
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request
@@ -366,16 +366,17 @@
       return;
     }
 
-    NSDictionary *dict = nil;
+    if (!parseResponse) {
+      completion(nil, nil);
+      return;
+    }
 
-    if (parseResponse) {
-      NSError *jsonError;
-      dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
+    NSError *jsonError;
+    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
 
-      if ((jsonError.code || !dict)) {
-        completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
-        return;
-      }
+    if ((jsonError.code || !dict)) {
+      completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+      return;
     }
     
     NSError *apiError = [weakSelf.errorsMapper errorFromRequestResult:dict];
@@ -479,7 +480,7 @@
 
 - (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self enrichSdkLogParameters:data];
-  NSURLRequest *request = [self.requestBuilder makeSdkLogsRequestWith:body];
+  NSURLRequest *request = [self.requestBuilder makeSdkLogsRequestWithBody:body];
   NSMutableURLRequest *mutableRequest = [request mutableCopy];
   [mutableRequest setAllHTTPHeaderFields:@{
           @"Content-Type": @"application/json"

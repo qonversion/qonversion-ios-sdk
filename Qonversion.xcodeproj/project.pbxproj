@@ -211,7 +211,6 @@
 		89ADA76D25069E1000EB2E54 /* ActivePermissionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */; };
 		A1839332BA452C481BDC499C /* QONExceptionManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839DA452F152E40ED4EB8C /* QONExceptionManager.h */; };
 		A1839D7723FB8E18EC0294C9 /* QONExceptionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */; };
-		A1839F5229693ABDE5E6DB44 /* QONExceptionManagerInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = A18394F8CEC769110379B158 /* QONExceptionManagerInterface.h */; };
 		A2649CD29A7FDF280A2EC27C /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E902AE0A2A73461C22DE146A /* Pods_Sample.framework */; };
 /* End PBXBuildFile section */
 
@@ -493,7 +492,6 @@
 		89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsViewController.swift; sourceTree = "<group>"; };
 		89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsTableViewCell.swift; sourceTree = "<group>"; };
 		A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONExceptionManager.m; sourceTree = "<group>"; };
-		A18394F8CEC769110379B158 /* QONExceptionManagerInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONExceptionManagerInterface.h; sourceTree = "<group>"; };
 		A1839DA452F152E40ED4EB8C /* QONExceptionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONExceptionManager.h; sourceTree = "<group>"; };
 		A4D01F9F11D02C4E478E68EC /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
 		B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QonversionTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1454,7 +1452,6 @@
 			children = (
 				A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */,
 				A1839DA452F152E40ED4EB8C /* QONExceptionManager.h */,
-				A18394F8CEC769110379B158 /* QONExceptionManagerInterface.h */,
 			);
 			path = QONExceptionManager;
 			sourceTree = "<group>";
@@ -1566,7 +1563,6 @@
 				8957328226DD03A3009507A6 /* QONLaunchResult.h in Headers */,
 				895732C526DD03A3009507A6 /* QNRequestBuilder.h in Headers */,
 				A1839332BA452C481BDC499C /* QONExceptionManager.h in Headers */,
-				A1839F5229693ABDE5E6DB44 /* QONExceptionManagerInterface.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

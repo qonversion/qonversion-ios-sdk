@@ -4,15 +4,20 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "QONExceptionManagerInterface.h"
 
 @class QNAPIClient;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QONExceptionManager : NSObject <QONExceptionManagerInterface>
+@interface QONExceptionManager : NSObject
 
 @property (nonatomic, strong) QNAPIClient *apiClient;
+
++ (instancetype)shared;
+
+- (BOOL)isQonversionException:(NSException * _Nonnull)exception;
+
+- (void)storeException:(NSException * _Nonnull)exception;
 
 @end
 
