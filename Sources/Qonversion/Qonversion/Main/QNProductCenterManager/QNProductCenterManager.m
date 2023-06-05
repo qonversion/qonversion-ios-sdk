@@ -312,8 +312,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
-  [NSException raise:@"Invalid foo value" format:@"foo is invalid"];
-
   if (product.offeringID.length > 0) {
     QONOffering *offering = [self.launchResult.offerings offeringForIdentifier:product.offeringID];
     [self purchase:product.qonversionID offeringID:offering.identifier completion:completion];
