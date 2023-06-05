@@ -32,9 +32,9 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
   self = [super init];
   
   if (self) {
-#if DEBUG
-    return self;
-#endif
+//#if DEBUG
+//    return self;
+//#endif
     
     _apiClient = [QNAPIClient shared];
     
