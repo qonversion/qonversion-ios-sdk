@@ -51,7 +51,7 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
   static id shared = nil;
   static dispatch_once_t once;
   dispatch_once(&once, ^{
-    shared = self.new;
+    shared = [self new];
   });
   
   return shared;
@@ -156,7 +156,7 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
   NSURL *directoryURL = [NSURL fileURLWithPath:documentsDirectory];
   
   if (!directoryURL) {
-    QONVERSION_LOG(@"Failed to find documents directory URL to retreive crash information files");
+    QONVERSION_LOG(@"Failed to find documents directory URL to retrieve crash information files");
     return @[];
   }
 

@@ -175,7 +175,7 @@
     _productCenterManager = [QNProductCenterManager new];
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
-    _exceptionManager = [QONExceptionManager new];
+    _exceptionManager = [QONExceptionManager shared];
 
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
  
