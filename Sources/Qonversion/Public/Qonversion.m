@@ -4,22 +4,21 @@
 #import "QNUserPropertiesManager.h"
 #import "QNProductCenterManager.h"
 #import "QNAttributionManager.h"
-#import "QNProductCenterManager.h"
-#import "QNUserInfo.h"
 #import "QNProperties.h"
 #import "QNDevice.h"
 #import "QNUtils.h"
 #import "QNUserInfoServiceInterface.h"
-#import "QNUserInfoService.h"
 #import "QNServicesAssembly.h"
 #import "QNLocalStorage.h"
 #import "QNInternalConstants.h"
+#import "QONExceptionManager.h"
 
 @interface Qonversion()
 
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
+@property (nonatomic, strong) QONExceptionManager *exceptionManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
 
@@ -45,7 +44,7 @@
   [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
     
   }];
-  
+
   return [Qonversion sharedInstance];
 }
 
@@ -176,7 +175,8 @@
     _productCenterManager = [QNProductCenterManager new];
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
-    
+    _exceptionManager = [QONExceptionManager shared];
+
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
  
     _localStorage = [servicesAssembly localStorage];
