@@ -16,9 +16,10 @@ NSString *const kDefaultExceptionReason = @"Unknown reason";
 static NSUncaughtExceptionHandler *defaultExceptionHandler = nil;
 
 static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
-  BOOL isQonversionException = [[QONExceptionManager shared] isQonversionException:exception];
+  BOOL isSpm = NO;
+  BOOL isQonversionException = [[QONExceptionManager shared] isQonversionException:exception isSpm:&isSpm];
   if (isQonversionException) {
-    [[QONExceptionManager shared] storeException:exception];
+    [[QONExceptionManager shared] storeException:exception isSpm:isSpm];
   }
   
   if (defaultExceptionHandler) {
@@ -57,7 +58,7 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
   return shared;
 }
 
-- (BOOL)isQonversionException:(NSException *)exception {
+- (BOOL)isQonversionException:(NSException *)exception isSpm:(BOOL *)isSpm {
   NSString *appName = [[[NSBundle mainBundle] executablePath] lastPathComponent];
   NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:kStackTraceLinePartsPattern options:0 error:nil];
   
@@ -68,9 +69,20 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
       NSString *binaryName = [callStackSymbol substringWithRange:[result rangeAtIndex:1]];
       
       if ([binaryName isEqualToString:kSdkBinaryName]) {
+        *isSpm = NO;
         return YES;
       }
       if ([binaryName isEqualToString:appName]) {
+        NSArray<NSString *> *const kQonversionClassPrefixes = @[@"Qonversion", @"QON", @"QN"];
+        for (NSString *prefix in kQonversionClassPrefixes) {
+          NSString *entry = [NSString stringWithFormat:@"-[%@", prefix];
+          NSRange range = [callStackSymbol rangeOfString:entry];
+
+          if (range.location != NSNotFound) {
+            *isSpm = YES;
+            return YES;
+          }
+        }
         return NO;
       }
     }
@@ -79,7 +91,7 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
   return NO;
 }
 
-- (void)storeException:(NSException *)exception {
+- (void)storeException:(NSException *)exception isSpm:(BOOL)isSpm {
   NSArray<NSString *> *backtrace = [exception callStackSymbols];
   NSString *rawStackTrace = [backtrace componentsJoinedByString:@"\n"];
   NSString *reason = [exception reason] ?: kDefaultExceptionReason;
@@ -92,6 +104,7 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
   crashInfo[@"elements"] = backtrace;
   crashInfo[@"name"] = name;
   crashInfo[@"message"] = reason;
+  crashInfo[@"isSpm"] = @(isSpm);
   crashInfo[@"title"] = [NSString stringWithFormat:@"%@: %@", name, reason];
   crashInfo[@"userInfo"] = userInfo;
 

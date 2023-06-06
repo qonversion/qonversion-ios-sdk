@@ -15,9 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)shared;
 
-- (BOOL)isQonversionException:(NSException * _Nonnull)exception;
+- (BOOL)isQonversionException:(NSException * _Nonnull)exception isSpm:(BOOL *)isSpm;
 
-- (void)storeException:(NSException * _Nonnull)exception;
+- (void)storeException:(NSException * _Nonnull)exception isSpm:(BOOL)isSpm;
 
 @end
 
