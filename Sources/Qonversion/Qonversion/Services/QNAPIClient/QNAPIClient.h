@@ -54,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                          receipt:(nullable NSString *)receipt
                       completion:(QNAPIClientCompletionHandler)completion;
+- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientCompletionHandler)completion;
 
 @end
 

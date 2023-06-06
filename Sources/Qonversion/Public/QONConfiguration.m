@@ -9,7 +9,7 @@
 #import "QONConfiguration.h"
 #import "QNAPIConstants.h"
 
-static NSString *const kSDKVersion = @"3.4.1";
+static NSString *const kSDKVersion = @"3.4.2";
 
 @interface QONConfiguration ()
 
@@ -17,7 +17,6 @@ static NSString *const kSDKVersion = @"3.4.1";
 @property (nonatomic, copy, readwrite) NSString *version;
 @property (nonatomic, assign, readwrite) QONLaunchMode launchMode;
 @property (nonatomic, assign, readwrite) QONEntitlementsCacheLifetime entitlementsCacheLifetime;
-@property (nonatomic, assign, readwrite) BOOL debugMode;
 @property (nonatomic, copy, readwrite) NSString *baseURL;
 @property (nonatomic, weak, readwrite) id<QONEntitlementsUpdateListener> entitlementsUpdateListener;
 @property (nonatomic, weak, readwrite) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
