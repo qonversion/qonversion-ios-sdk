@@ -11,6 +11,16 @@
 
 @implementation QONRemoteConfigService
 
+- (instancetype)init {
+  self = [super init];
+  
+  if (self) {
+    _apiClient = [QNAPIClient shared];
+  }
+  
+  return self;
+}
+
 - (void)loadRemoteConfig:(QONRemoteConfigCompletionHandler)completion {
   [self.apiClient loadRemoteConfig:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     NSLog(@"DA");

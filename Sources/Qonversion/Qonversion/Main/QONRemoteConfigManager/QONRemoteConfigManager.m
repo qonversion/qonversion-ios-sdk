@@ -18,6 +18,16 @@
 
 @implementation QONRemoteConfigManager
 
+- (instancetype)init {
+  self = [super init];
+  
+  if (self) {
+    _remoteConfigService = [QONRemoteConfigService new];
+  }
+  
+  return self;
+}
+
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
   if (self.remoteConfig) {
     return completion(self.remoteConfig, nil);

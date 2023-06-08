@@ -14,7 +14,7 @@ NSString * const kSendPushTokenEndpoint = @"v1/user/push-token";
 NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 NSString * const kProductsEndpoint = @"v1/products/get";
 NSString * const kPropertiesEndpoint = @"v1/properties";
-NSString * const kRemoteConfigEndpoint = @"v3/remote-config?user_id=123 //user_id=userUid";
+NSString * const kRemoteConfigEndpoint = @"v3/remote-config";
 
 NSString * const kActionPointsEndpointFormat = @"v2/users/%@/action-points?type=screen_view&active=1";
 NSString * const kScreensEndpoint = @"v2/screens/";

@@ -76,7 +76,11 @@
 - (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId {
   NSURLRequest *request = [self makeGetRequestWith:kRemoteConfigEndpoint];
   
-  return request;
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
+  NSString *updatedURLString = [mutableRequest.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@", userId]];
+  [mutableRequest setURL:[NSURL URLWithString:updatedURLString]];
+  
+  return [mutableRequest copy];
 }
 
 - (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID {
@@ -135,11 +139,11 @@
 }
 
 - (void)addAppVersionToRequest:(NSMutableURLRequest *)request {
-  [request addValue:[[QNDevice current] appVersion] forHTTPHeaderField:@"AppVersion"];
+  [request addValue:[[QNDevice current] appVersion] forHTTPHeaderField:@"app-version"];
 }
 
 - (void)addCountryToRequest:(NSMutableURLRequest *)request {
-  [request addValue:[[QNDevice current] country] forHTTPHeaderField:@"Country"];
+  [request addValue:[[QNDevice current] country] forHTTPHeaderField:@"country"];
 }
 
 - (void)addLocaleToRequest:(NSMutableURLRequest *)request {
