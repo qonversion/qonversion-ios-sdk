@@ -25,6 +25,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     Qonversion.shared().setPromoPurchasesDelegate(self)
     Qonversion.shared().collectAdvertisingId()
     registerForNotifications()
+    QonversionSwift.shared.syncStoreKit2Purchases()
     
     return true
   }

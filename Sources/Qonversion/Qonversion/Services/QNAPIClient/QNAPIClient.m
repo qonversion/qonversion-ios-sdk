@@ -4,14 +4,16 @@
 #import "QNRequestSerializer.h"
 #import "QONErrors.h"
 #import "QNUtils.h"
-#import "QNUserInfo.h"
 #import "QNAPIConstants.h"
 #import "QNInternalConstants.h"
 #import "QNInternalConstants.h"
 #import "QONOffering.h"
 #import "QONExperimentGroup.h"
+#import "QONOffering.h"
 #import "QNErrorsMapper.h"
 #import "QNKeyedArchiver.h"
+#import "QONStoreKit2PurchaseModel.h"
+#import "QNDevice.h"
 
 @interface QNAPIClient()
 
@@ -75,7 +77,11 @@
 }
 
 - (void)processRequest:(NSURLRequest *)request completion:(QNAPIClientCompletionHandler)completion {
-  [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+  [self processRequest:request parseResponse:YES completion:completion];
+}
+
+- (void)processRequest:(NSURLRequest *)request parseResponse:(BOOL)parseResponse completion:(QNAPIClientCompletionHandler)completion {
+  [self dataTaskWithRequest:request parseResponse:parseResponse completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     if (!self.criticalError && error && [self.criticalErrorCodes containsObject:@(error.code)]) {
       self.criticalError = error;
     }
@@ -105,11 +111,29 @@
   [self processRequest:request completion:completion];
 }
 
+- (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
+               receipt:(nullable NSString *)receipt
+            completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *body = [self.requestSerializer purchaseInfo:purchaseInfo receipt:receipt];
+  NSDictionary *resultData = [self enrichParameters:body];
+  
+  NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
+  
+  [self processRequest:request completion:completion];
+  
+  return [request copy];
+}
+
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
                            completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt];
+  return [self purchaseRequestWith:body completion:completion];
+}
+
+- (NSURLRequest *)purchaseRequestWith:(NSDictionary *)body
+                           completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *resultData = [self enrichParameters:body];
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
@@ -122,7 +146,13 @@
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
                                          completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *requestData = [self.requestSerializer introTrialEligibilityDataForProducts:products];
-  NSDictionary *resultBody = [self enrichParameters:requestData];
+  
+  return [self checkTrialIntroEligibilityParamsForData:requestData completion:completion];
+}
+
+- (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
+                                     completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *resultBody = [self enrichParameters:data];
   NSURLRequest *request = [self.requestBuilder makeIntroTrialEligibilityRequestWithData:resultBody];
   
   return [self dataTaskWithRequest:request completion:completion];
@@ -160,10 +190,15 @@
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID {
+  return [self trackScreenShownWithID:automationID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {}];
+}
+
+- (void)trackScreenShownWithID:(NSString *)automationID
+                    completion:(QNAPIClientCompletionHandler)completion {
   NSDictionary *body = @{@"user": self.userID};
   NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body];
   
-  return [self dataTaskWithRequest:request completion:nil];
+  return [self dataTaskWithRequest:request completion:completion];
 }
 
 - (void)attributionRequest:(QONAttributionProvider)provider
@@ -233,30 +268,65 @@
 
 - (NSDictionary *)enrichParameters:(NSDictionary *)parameters {
   NSDictionary *_parameters = parameters ?: @{};
-  
+
   NSMutableDictionary *baseDict = [[NSMutableDictionary alloc] initWithDictionary:_parameters];
   baseDict[@"access_token"] = _apiKey;
-  
+
   [baseDict setObject:_userID forKey:@"q_uid"];
   [baseDict setObject:_userID forKey:@"client_uid"];
   [baseDict setObject:self.version forKey:@"version"];
   [baseDict setObject:@(self.debug) forKey:@"debug_mode"];
-  
+
   return [baseDict copy];
 }
 
+- (NSDictionary *)enrichSdkLogParameters:(NSDictionary *)parameters {
+  NSMutableDictionary *mutableParameters = [parameters mutableCopy] ?: [NSMutableDictionary new];
+
+  NSString *platformVersion = [QNDevice current].osVersion;
+  NSString *platform = [QNDevice current].osName;
+  NSString *source = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSource] ?: @"iOS";
+  NSString *sourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: self.version;
+  
+  NSMutableDictionary *device = [NSMutableDictionary new];
+  
+  device[@"platform"] = platform;
+  device[@"platform_version"] = platformVersion;
+  device[@"source"] = source;
+  device[@"source_version"] = sourceVersion;
+  device[@"project_key"] = [self obtainApiKey];
+  device[@"uid"] = self.userID;
+
+  mutableParameters[@"device"] = device;
+
+  return [mutableParameters copy];
+}
+
 - (void)dataTaskWithRequest:(NSURLRequest *)request
+                 completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+  [self dataTaskWithRequest:request parseResponse:YES completion:completion];
+}
+
+- (void)dataTaskWithRequest:(NSURLRequest *)request
+              parseResponse:(BOOL)parseResponse
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   if (self.criticalError && completion) {
     completion(nil, self.criticalError);
     return;
   }
   
-  [self dataTaskWithRequest:request tryCount:0 completion:completion];
+  [self dataTaskWithRequest:request tryCount:0 parseResponse:parseResponse completion:completion];
 }
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request
                    tryCount:(NSInteger)tryCount
+                 completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+  [self dataTaskWithRequest:request tryCount:tryCount parseResponse:YES completion:completion];
+}
+
+- (void)dataTaskWithRequest:(NSURLRequest *)request
+                   tryCount:(NSInteger)tryCount
+              parseResponse:(BOOL)parseResponse
                  completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
   __block NSInteger doneTryCount = tryCount;
   
@@ -267,7 +337,7 @@
       if (isConnectionError) {
         if (doneTryCount < 3) {
           doneTryCount++;
-          [weakSelf dataTaskWithRequest:request tryCount:doneTryCount completion:completion];
+          [weakSelf dataTaskWithRequest:request tryCount:doneTryCount parseResponse:parseResponse completion:completion];
           
           return;
         } else {
@@ -302,10 +372,15 @@
       completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedReceiveData]);
       return;
     }
-    
+
+    if (!parseResponse) {
+      completion(nil, nil);
+      return;
+    }
+
     NSError *jsonError;
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
-    
+
     if ((jsonError.code || !dict)) {
       completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
       return;
@@ -358,7 +433,9 @@
 
 - (void)removeStoredRequestForTransactionId:(NSString *)transactionId {
   NSMutableDictionary *storedRequests = [[self storedPurchasesRequests] mutableCopy];
-  storedRequests[transactionId] = nil;
+  if (transactionId.length > 0) {
+    storedRequests[transactionId] = nil;
+  }
   
   [self storePurchaseRequests:storedRequests];
 }

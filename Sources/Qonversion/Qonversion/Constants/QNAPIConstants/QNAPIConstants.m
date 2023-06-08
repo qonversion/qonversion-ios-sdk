@@ -9,6 +9,8 @@
 #import "QNAPIConstants.h"
 
 NSString * const kAPIBase = @"https://api.qonversion.io/";
+NSString * const kSdkLogsBaseURL = @"https://sdk-logs.qonversion.io/";
+
 NSString * const kInitEndpoint = @"v1/user/init";
 NSString * const kSendPushTokenEndpoint = @"v1/user/push-token";
 NSString * const kPurchaseEndpoint = @"v1/user/purchase";
@@ -25,6 +27,8 @@ NSString * const kUserInfoEndpoint = @"v2/users/%@";
 NSString * const kEventEndpoint = @"v2/events";
 
 NSString * const kAttributionEndpoint = @"attribution";
+
+NSString * const kSdkLogsEndpoint = @"sdk.log";
 
 NSString * const kStoredRequestsKey = @"storedRequests";
 

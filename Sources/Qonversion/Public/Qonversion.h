@@ -14,6 +14,7 @@
 #import "QONStoreKitSugare.h"
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONConfiguration.h"
+#import "QONStoreKit2PurchaseModel.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
@@ -180,6 +181,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)collectAdvertisingId;
 
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
+
+/**
+ Contact us before you start using this function.
+ Handles purchases for StoreKit2 if you are using Qonversion in the Analytics Mode.
+ @param purchasesInfo array of StoreKit2 purchases models
+ */
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo;
 
 @end
 

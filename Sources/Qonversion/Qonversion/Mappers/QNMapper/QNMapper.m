@@ -36,7 +36,7 @@
   [result setUserProducts:[self fillProducts:userProductsArray]];
 //  [result setExperiments:[self fillExperiments:experiments]];
   
-  if (offeringsArray.count > 0) {
+  if ([offeringsArray isKindOfClass:[NSArray class]] && offeringsArray.count > 0) {
     QONOfferings *offerings = [self fillOfferingsObject:offeringsArray];
     [result setOfferings:offerings];
   }
@@ -62,6 +62,10 @@
 }
 
 + (NSDictionary <NSString *, QONEntitlement *> *)fillPermissions:(NSArray *)data {
+  if (![data isKindOfClass:[NSArray class]]) {
+    return @{};
+  }
+
   NSMutableDictionary <NSString *, QONEntitlement *> *permissions = [NSMutableDictionary new];
   
   for (NSDictionary* itemDict in data) {
@@ -109,6 +113,10 @@
 //}
 
 + (NSDictionary <NSString *, QONProduct *> *)fillProducts:(NSArray *)data {
+  if (![data isKindOfClass:[NSArray class]]) {
+    return @{};
+  }
+
   NSMutableDictionary <NSString *, QONProduct *> *products = [NSMutableDictionary new];
   NSArray <QONProduct *> *productsList = [self fillProductsToArray:data];
   

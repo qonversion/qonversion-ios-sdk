@@ -3,7 +3,7 @@
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONLaunchMode.h"
 
-@class QONLaunchResult;
+@class QONLaunchResult, QONStoreKit2PurchaseModel;
 @protocol QONPromoPurchasesDelegate, QONEntitlementsUpdateListener;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -32,6 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)experiments:(QONExperimentsCompletionHandler)completion;
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion;
+
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo;
 
 - (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 

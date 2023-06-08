@@ -1,7 +1,7 @@
 #import "Foundation/Foundation.h"
 #import "QONLaunchResult.h"
 
-@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QONOffering;
+@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QONOffering, QONProduct, QONStoreKit2PurchaseModel;
 
 typedef void (^QNAPIClientCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
 
@@ -26,14 +26,19 @@ NS_ASSUME_NONNULL_BEGIN
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
                            completion:(QNAPIClientCompletionHandler)completion;
+- (NSURLRequest *)purchaseRequestWith:(NSDictionary *) body
+                           completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
                                          completion:(QNAPIClientCompletionHandler)completion;
+- (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
+                                     completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
 - (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion;
 - (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;
 - (void)trackScreenShownWithID:(NSString *)automationID;
+- (void)trackScreenShownWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;
 - (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion;
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion;
@@ -45,6 +50,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)storeRequestForRetry:(NSURLRequest *)request transactionId:(NSString *)transactionId;
 - (void)removeStoredRequestForTransactionId:(NSString *)transactionId;
 - (void)loadRemoteConfig:(QNAPIClientCompletionHandler)completion;
+- (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
+                         receipt:(nullable NSString *)receipt
+                      completion:(QNAPIClientCompletionHandler)completion;
+- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientCompletionHandler)completion;
 
 @end
 
