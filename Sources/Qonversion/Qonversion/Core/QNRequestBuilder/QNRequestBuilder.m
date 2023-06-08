@@ -73,8 +73,10 @@
   return [self makePostRequestWith:kProductsEndpoint andBody:parameters];
 }
 
-- (NSURLRequest *)remoteConfigRequest {
-  return [self makeGetRequestWith:kRemoteConfigEndpoint];
+- (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId {
+  NSURLRequest *request = [self makeGetRequestWith:kRemoteConfigEndpoint];
+  
+  return request;
 }
 
 - (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID {

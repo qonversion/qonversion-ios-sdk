@@ -7,14 +7,12 @@
 #import "QONOfferings.h"
 #import "QONOffering.h"
 #import "QONIntroEligibility.h"
-#import "QONExperimentInfo.h"
 #import "QONExperimentGroup.h"
 
 #import "QONLaunchResult+Protected.h"
 #import "QONOfferings+Protected.h"
 #import "QONOffering+Protected.h"
 #import "QONIntroEligibility+Protected.h"
-#import "QONExperimentInfo+Protected.h"
 #import "QONExperimentGroup+Protected.h"
 #import "QONUser+Protected.h"
 
@@ -36,7 +34,7 @@
   [result setEntitlements:[self fillPermissions:permissionsArray]];
   [result setProducts:[self fillProducts:productsArray]];
   [result setUserProducts:[self fillProducts:userProductsArray]];
-  [result setExperiments:[self fillExperiments:experiments]];
+//  [result setExperiments:[self fillExperiments:experiments]];
   
   if (offeringsArray.count > 0) {
     QONOfferings *offerings = [self fillOfferingsObject:offeringsArray];
@@ -76,42 +74,39 @@
   return [[NSDictionary alloc] initWithDictionary:permissions];
 }
 
-+ (NSDictionary <NSString *, QONExperimentInfo *> *)fillExperiments:(NSArray *)data {
-  NSMutableDictionary <NSString *, QONExperimentInfo *> *experiments = [NSMutableDictionary new];
-  
-  for (NSDictionary* itemDict in data) {
-    QONExperimentInfo *item = [self fillExperiment:itemDict];
-    if (item.identifier) {
-      experiments[item.identifier] = item;
-    }
-  }
-  
-  return [experiments copy];
-}
-
-+ (QONExperimentInfo * _Nullable)fillExperiment:(NSDictionary *)dict {
-  if (![dict isKindOfClass:[NSDictionary class]]) {
-    return nil;
-  }
-  NSString *identifier = dict[@"uid"];
-  if (!identifier) {
-    return nil;
-  }
-  
-  QONExperimentInfo *experiment = [[QONExperimentInfo alloc] initWithIdentifier:identifier group:nil];
-  
-  NSNumber *attachedNumber = dict[@"attached"];
-  experiment.attached = attachedNumber.boolValue;
-  
-  return experiment;
-}
-
-+ (QONExperimentGroup * _Nonnull)fillExperimentGroup:(NSDictionary * _Nullable)dict {
-  QNExperimentGroupType type = [self mapInteger:dict[@"type"] orReturn:0];
-  QONExperimentGroup *group = [[QONExperimentGroup alloc] initWithType:type];
-  
-  return group;
-}
+//+ (NSDictionary <NSString *, QONExperimentInfo *> *)fillExperiments:(NSArray *)data {
+//  NSMutableDictionary <NSString *, QONExperimentInfo *> *experiments = [NSMutableDictionary new];
+//  
+//  for (NSDictionary* itemDict in data) {
+//    QONExperiment *item = [self fillExperiment:itemDict];
+//    if (item.identifier) {
+//      experiments[item.identifier] = item;
+//    }
+//  }
+//  
+//  return [experiments copy];
+//}
+//
+//+ (QONExperiment * _Nullable)fillExperiment:(NSDictionary *)dict {
+//  if (![dict isKindOfClass:[NSDictionary class]]) {
+//    return nil;
+//  }
+//  NSString *identifier = dict[@"uid"];
+//  if (!identifier) {
+//    return nil;
+//  }
+//  
+//  QONExperiment *experiment = [[QONExperimentInfo alloc] initWithIdentifier:identifier group:nil];
+//  
+//  return experiment;
+//}
+//
+//+ (QONExperimentGroup * _Nonnull)fillExperimentGroup:(NSDictionary * _Nullable)dict {
+//  QONExperimentGroupType type = [self mapInteger:dict[@"type"] orReturn:0];
+//  QONExperimentGroup *group = [[QONExperimentGroup alloc] initWithType:type];
+//  
+//  return group;
+//}
 
 + (NSDictionary <NSString *, QONProduct *> *)fillProducts:(NSArray *)data {
   NSMutableDictionary <NSString *, QONProduct *> *products = [NSMutableDictionary new];
@@ -250,8 +245,7 @@
     NSArray<QONProduct *> *products = [self fillProductsToArray:productsData offeringID:offeringIdentifier];
     NSDictionary *experimentInfoData = offeringData[@"experiment"];
 
-    QONExperimentInfo *experimentInfo = [self fillExperiment:experimentInfoData];
-    QONOffering *offering = [[QONOffering alloc] initWithIdentifier:offeringIdentifier tag:tag products:products experimentInfo:experimentInfo];
+    QONOffering *offering = [[QONOffering alloc] initWithIdentifier:offeringIdentifier tag:tag products:products];
     [offerings addObject:offering];
   }
   

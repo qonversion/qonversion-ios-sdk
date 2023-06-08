@@ -8,9 +8,7 @@
 #import "QNAPIConstants.h"
 #import "QNInternalConstants.h"
 #import "QNInternalConstants.h"
-#import "QNProductPurchaseModel.h"
 #import "QONOffering.h"
-#import "QONExperimentInfo.h"
 #import "QONExperimentGroup.h"
 #import "QNErrorsMapper.h"
 #import "QNKeyedArchiver.h"
@@ -110,9 +108,8 @@
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
-                        purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
                            completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseModel:purchaseModel];
+  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt];
   NSDictionary *resultData = [self enrichParameters:body];
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
@@ -215,7 +212,7 @@
 }
 
 - (void)loadRemoteConfig:(QNAPIClientCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder remoteConfigRequest];
+  NSURLRequest *request = [self.requestBuilder remoteConfigRequestForUserId:self.userID];
   
   return [self dataTaskWithRequest:request completion:completion];
 }
@@ -400,15 +397,6 @@
     NSData *updatedStoredRequestsData = [QNKeyedArchiver archivedDataWithObject:[storedRequests copy]];
     [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
   }
-}
-
-- (void)sendOfferingEvent:(QONOffering *)offering {
-  NSMutableDictionary *payload = [NSMutableDictionary new];
-  payload[@"experiment_id"] = offering.experimentInfo.identifier;
-  
-  NSURLRequest *request = [self.requestBuilder makeEventRequestWithEventName:kKeyQExperimentStartedEventName payload:[payload copy] userID:self.userID];
-  
-  return [self dataTaskWithRequest:request completion:nil];
 }
 
 @end

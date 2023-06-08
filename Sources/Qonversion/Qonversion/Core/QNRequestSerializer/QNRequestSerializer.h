@@ -9,8 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction
-                       receipt:(nullable NSString *)receipt
-                 purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel;
+                       receipt:(nullable NSString *)receipt;
 
 - (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QONProduct *> *)products;
 - (NSDictionary *)pushTokenData;

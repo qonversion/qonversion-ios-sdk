@@ -8,7 +8,6 @@
 #import "QONIntroEligibility.h"
 #import "QONPromoPurchasesDelegate.h"
 #import "QONEntitlementsUpdateListener.h"
-#import "QONExperimentInfo.h"
 #import "QONExperimentGroup.h"
 #import "QONUser.h"
 #import "QONErrors.h"

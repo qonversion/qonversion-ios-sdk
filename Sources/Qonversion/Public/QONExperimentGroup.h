@@ -10,15 +10,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSInteger, QNExperimentGroupType) {
-  QNExperimentGroupTypeA = 0,
-  QNExperimentGroupTypeB
+typedef NS_ENUM(NSInteger, QONExperimentGroupType) {
+  QONExperimentGroupTypeUnknown = -1,
+  QONExperimentGroupTypeControl = 0,
+  QONExperimentGroupTypeTreatment = 1
 } NS_SWIFT_NAME(Qonversion.ExperimentGroupType);
 
 NS_SWIFT_NAME(Qonversion.ExperimentGroup)
 @interface QONExperimentGroup : NSObject
 
-@property (nonatomic, assign) QNExperimentGroupType type;
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, assign) QONExperimentGroupType type;
 
 @end
 

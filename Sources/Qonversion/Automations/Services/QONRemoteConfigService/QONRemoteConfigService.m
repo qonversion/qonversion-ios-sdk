@@ -13,7 +13,7 @@
 
 - (void)loadRemoteConfig:(QONRemoteConfigCompletionHandler)completion {
   [self.apiClient loadRemoteConfig:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    
+    NSLog(@"DA");
   }];
 }
 
