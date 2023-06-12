@@ -20,6 +20,7 @@ NS_SWIFT_NAME(Qonversion.ExperimentGroup)
 @interface QONExperimentGroup : NSObject
 
 @property (nonatomic, copy) NSString *name;
+@property (nonatomic, copy) NSString *identifier;
 @property (nonatomic, assign) QONExperimentGroupType type;
 
 @end
