@@ -87,16 +87,10 @@ Boost conversion rates with paywalls and in-app purchases A/B testing. Find the 
 
 Convinced? Let's go!
 
-## Getting Started
-
-1. [Create a project and register your app](https://documentation.qonversion.io/docs/quickstart#1-create-a-project-and-register-your-app)
-2. [Configure entitlements](https://documentation.qonversion.io/docs/quickstart#2-configure-products--permissions-entitlements)
-3. [Install the SDK](https://documentation.qonversion.io/docs/ios-sdk-setup)
-4. [Use all SDK features in a few lines](https://documentation.qonversion.io/docs/using-the-sdks)
 
 ## Documentation
 
-Check the [documentation](https://docs.qonversion.io) to learn details on implementing and using Qonversion SDKs.
+Check the [documentation](https://documentation.qonversion.io/docs/quickstart) to learn details on implementing and using Qonversion SDKs.
 
 #### Help us improve the documentation
 
