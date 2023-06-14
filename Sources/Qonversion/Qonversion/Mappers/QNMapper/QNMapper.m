@@ -25,7 +25,6 @@
   NSArray *productsArray = dict[@"products"] ?: @[];
   NSArray *userProductsArray = dict[@"user_products"] ?: @[];
   NSArray *offeringsArray = dict[@"offerings"];
-  NSArray *experiments = dict[@"experiments"] ?: @[];
   
   NSNumber *timestamp = dict[@"timestamp"] ?: @0;
   
@@ -34,7 +33,6 @@
   [result setEntitlements:[self fillPermissions:permissionsArray]];
   [result setProducts:[self fillProducts:productsArray]];
   [result setUserProducts:[self fillProducts:userProductsArray]];
-//  [result setExperiments:[self fillExperiments:experiments]];
   
   if ([offeringsArray isKindOfClass:[NSArray class]] && offeringsArray.count > 0) {
     QONOfferings *offerings = [self fillOfferingsObject:offeringsArray];
