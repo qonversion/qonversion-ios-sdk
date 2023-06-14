@@ -14,9 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(Qonversion.Experiment)
 @interface QONExperiment : NSObject
 
-@property (nonatomic, copy) NSString *identifier;
-@property (nonatomic, copy) NSString *name;
-@property (nonatomic, strong) QONExperimentGroup *group;
+@property (nonatomic, copy, readonly) NSString *identifier;
+@property (nonatomic, copy, readonly) NSString *name;
+@property (nonatomic, strong, readonly) QONExperimentGroup *group;
 
 @end
 

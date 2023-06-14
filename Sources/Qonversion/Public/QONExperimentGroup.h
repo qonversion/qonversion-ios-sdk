@@ -19,9 +19,9 @@ typedef NS_ENUM(NSInteger, QONExperimentGroupType) {
 NS_SWIFT_NAME(Qonversion.ExperimentGroup)
 @interface QONExperimentGroup : NSObject
 
-@property (nonatomic, copy) NSString *name;
-@property (nonatomic, copy) NSString *identifier;
-@property (nonatomic, assign) QONExperimentGroupType type;
+@property (nonatomic, copy, readonly) NSString *name;
+@property (nonatomic, copy, readonly) NSString *identifier;
+@property (nonatomic, assign, readonly) QONExperimentGroupType type;
 
 @end
 

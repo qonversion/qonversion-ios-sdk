@@ -731,10 +731,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion {
   _launchingFinished = NO;
+  [self.remoteConfigManager launchFinished:self.launchingFinished];
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     @synchronized (weakSelf) {
       weakSelf.launchingFinished = YES;
+      [self.remoteConfigManager launchFinished:self.launchingFinished];
       NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:self];
       [[NSNotificationCenter defaultCenter] postNotification:notification];
     }

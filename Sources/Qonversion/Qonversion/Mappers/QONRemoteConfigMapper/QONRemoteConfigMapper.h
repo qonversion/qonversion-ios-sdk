@@ -8,9 +8,13 @@
 
 #import <Foundation/Foundation.h>
 
+@class QONRemoteConfig;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QONRemoteConfigMapper : NSObject
+
+- (QONRemoteConfig * _Nullable)mapRemoteConfig:(NSDictionary *)remoteConfigData;
 
 @end
 

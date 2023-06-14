@@ -9,14 +9,14 @@
 #import <Foundation/Foundation.h>
 #import "QONLaunchResult.h"
 
-@class QNAPIClient;
+@class QNAPIClient, QONRemoteConfigMapper;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QONRemoteConfigService : NSObject
 
 @property (nonatomic, strong) QNAPIClient *apiClient;
-//@property (nonatomic, strong) QONRemoteConfigMapper *mapper
+@property (nonatomic, strong) QONRemoteConfigMapper *mapper;
 
 - (void)loadRemoteConfig:(QONRemoteConfigCompletionHandler)completion;
 

@@ -42,4 +42,14 @@
   [coder encodeObject:_group forKey:NSStringFromSelector(@selector(group))];
 }
 
+- (NSString *)description {
+  NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+  [description appendFormat:@"identifier=%@\n", self.identifier];
+  [description appendFormat:@"name=%@\n", self.name];
+  [description appendFormat:@"group=%@\n", self.group];
+  [description appendString:@">"];
+  
+  return [description copy];
+}
+
 @end

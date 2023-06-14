@@ -17,7 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) QONRemoteConfigService *remoteConfigService;
 
-- (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
+- (void)launchFinished:(BOOL)finished;
+- (void)obtainRemoteConfig:(QONRemoteConfigCompletionHandler)completion;
 
 @end
 

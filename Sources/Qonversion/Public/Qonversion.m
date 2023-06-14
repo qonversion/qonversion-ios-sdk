@@ -152,7 +152,7 @@
 }
 
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] remoteConfig:completion];
+  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfig:completion];
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
@@ -179,6 +179,8 @@
     _attributionManager = [QNAttributionManager new];
     _remoteConfigManager = [QONRemoteConfigManager new];
     _exceptionManager = [QONExceptionManager shared];
+    
+    _productCenterManager.remoteConfigManager = _remoteConfigManager;
     
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
  

@@ -10,10 +10,11 @@
 
 @implementation QONExperimentGroup
 
-- (instancetype)initWithType:(QONExperimentGroupType)type name:(NSString *)name {
+- (instancetype)initWithIdentifier:(NSString *)identifier type:(QONExperimentGroupType)type name:(NSString *)name {
   self = [super init];
   
   if (self) {
+    _identifier = identifier;
     _type = type;
     _name = name;
   }
@@ -25,6 +26,7 @@
   self = [super init];
   
   if (self) {
+    _identifier = [coder decodeObjectForKey:NSStringFromSelector(@selector(identifier))];
     _type = [coder decodeIntForKey:NSStringFromSelector(@selector(type))];
     _name = [coder decodeObjectForKey:NSStringFromSelector(@selector(name))];
   }
@@ -33,13 +35,14 @@
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
+  [coder encodeObject:_identifier forKey:NSStringFromSelector(@selector(identifier))];
   [coder encodeInteger:_type forKey:NSStringFromSelector(@selector(type))];
   [coder encodeObject:_name forKey:NSStringFromSelector(@selector(name))];
 }
 
 - (NSString *)description {
   NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-  
+  [description appendFormat:@"identifier=%@\n", self.identifier];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
   [description appendFormat:@"name=%@\n", self.name];
   [description appendString:@">"];
@@ -51,12 +54,13 @@
   NSString *result;
   
   switch (self.type) {
+    case QONExperimentGroupTypeControl:
+      result = @"control"; break;
     case QONExperimentGroupTypeTreatment:
-      result = @"B"; break;
+      result = @"treatment"; break;
       
     default:
-      result = @"A";
-      break;
+      result = @"unknown"; break;
   }
   
   return result;

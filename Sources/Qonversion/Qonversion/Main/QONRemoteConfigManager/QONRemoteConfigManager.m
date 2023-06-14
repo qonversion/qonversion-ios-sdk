@@ -13,6 +13,9 @@
 @interface QONRemoteConfigManager ()
 
 @property (nonatomic, strong) QONRemoteConfig *remoteConfig;
+@property (nonatomic, assign) BOOL isLaunchFinished;
+@property (nonatomic, strong) NSMutableArray<QONRemoteConfigCompletionHandler> *completions;
+@property (nonatomic, assign) BOOL isRequestInProgress;
 
 @end
 
@@ -23,19 +26,52 @@
   
   if (self) {
     _remoteConfigService = [QONRemoteConfigService new];
+    _completions = [NSMutableArray new];
   }
   
   return self;
 }
 
-- (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
+- (void)launchFinished:(BOOL)finished {
+  _isLaunchFinished = finished;
+  
+  if (finished && self.completions.count > 0 && !self.isRequestInProgress) {
+    [self obtainRemoteConfig:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {}];
+  }
+}
+
+- (void)obtainRemoteConfig:(QONRemoteConfigCompletionHandler)completion {
   if (self.remoteConfig) {
     return completion(self.remoteConfig, nil);
   }
   
-  [self.remoteConfigService loadRemoteConfig:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+  if (!self.isLaunchFinished) {
+    [self.completions addObject:completion];
     
+    return;
+  }
+  
+  __block __weak QONRemoteConfigManager *weakSelf = self;
+  [self.remoteConfigService loadRemoteConfig:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+    if (error) {
+      [weakSelf executeRemoteConfigCompletions:nil error:error];
+      completion(nil, error);
+      return;
+    }
+    
+    weakSelf.remoteConfig = remoteConfig;
+    [weakSelf executeRemoteConfigCompletions:remoteConfig error:nil];
+    completion(remoteConfig, nil);
   }];
+}
+
+- (void)executeRemoteConfigCompletions:(QONRemoteConfig *)remoteConfig error:(NSError *)error {
+  NSArray *completions = [self.completions copy];
+  [self.completions removeAllObjects];
+  
+  for (QONRemoteConfigCompletionHandler completion in completions) {
+    completion(remoteConfig, error);
+  }
 }
 
 @end
