@@ -45,7 +45,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSMutableArray<QONEntitlementsCompletionHandler> *entitlementsBlocks;
 @property (nonatomic, strong) NSMutableArray<QONProductsCompletionHandler> *productsBlocks;
 @property (nonatomic, strong) NSMutableArray<QONOfferingsCompletionHandler> *offeringsBlocks;
-@property (nonatomic, strong) NSMutableArray<QONExperimentsCompletionHandler> *experimentsBlocks;
 @property (nonatomic, strong) NSMutableArray<QONUserInfoCompletionHandler> *userInfoBlocks;
 @property (nonatomic, assign) QONEntitlementsCacheLifetime cacheLifetime;
 @property (nonatomic, copy) NSDictionary<NSString *, NSArray *> *productsEntitlementsRelation;
@@ -100,7 +99,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _entitlementsBlocks = [NSMutableArray new];
     _productsBlocks = [NSMutableArray new];
     _offeringsBlocks = [NSMutableArray new];
-    _experimentsBlocks = [NSMutableArray new];
     _userInfoBlocks = [NSMutableArray new];
   }
   
@@ -168,7 +166,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     weakSelf.launchResult = result;
     weakSelf.launchError = error;
 
-    [weakSelf executeExperimentsBlocks];
     [weakSelf executeUserBlocks];
     
     NSArray *storeProducts = [weakSelf.storeKitService getLoadedProducts];
@@ -449,21 +446,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)executeExperimentsBlocks {
-  @synchronized (self) {
-    NSArray <QONExperimentsCompletionHandler> *blocks = [self.experimentsBlocks copy];
-    if (blocks.count == 0) {
-      return;
-    }
-    
-    [self.experimentsBlocks removeAllObjects];
-    
-    for (QONExperimentsCompletionHandler block in blocks) {
-      run_block_on_main(block, self.launchResult.experiments, self.launchError);
-    }
-  }
-}
-
 - (void)executeUserBlocks {
   @synchronized (self) {
     NSArray <QONUserInfoCompletionHandler> *blocks = [self.userInfoBlocks copy];
@@ -692,22 +674,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     };
     
     [self products:productsCompletion];
-  }
-}
-
-- (void)experiments:(QONExperimentsCompletionHandler)completion {
-  @synchronized (self) {
-    [self.experimentsBlocks addObject:completion];
-    
-    if (!self.launchingFinished) {
-      return;
-    }
-    
-    if (self.launchResult) {
-      [self executeExperimentsBlocks];
-    } else {
-      [self launchWithCompletion:nil];
-    }
   }
 }
 

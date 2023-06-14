@@ -78,40 +78,6 @@
   return [[NSDictionary alloc] initWithDictionary:permissions];
 }
 
-//+ (NSDictionary <NSString *, QONExperimentInfo *> *)fillExperiments:(NSArray *)data {
-//  NSMutableDictionary <NSString *, QONExperimentInfo *> *experiments = [NSMutableDictionary new];
-//  
-//  for (NSDictionary* itemDict in data) {
-//    QONExperiment *item = [self fillExperiment:itemDict];
-//    if (item.identifier) {
-//      experiments[item.identifier] = item;
-//    }
-//  }
-//  
-//  return [experiments copy];
-//}
-//
-//+ (QONExperiment * _Nullable)fillExperiment:(NSDictionary *)dict {
-//  if (![dict isKindOfClass:[NSDictionary class]]) {
-//    return nil;
-//  }
-//  NSString *identifier = dict[@"uid"];
-//  if (!identifier) {
-//    return nil;
-//  }
-//  
-//  QONExperiment *experiment = [[QONExperimentInfo alloc] initWithIdentifier:identifier group:nil];
-//  
-//  return experiment;
-//}
-//
-//+ (QONExperimentGroup * _Nonnull)fillExperimentGroup:(NSDictionary * _Nullable)dict {
-//  QONExperimentGroupType type = [self mapInteger:dict[@"type"] orReturn:0];
-//  QONExperimentGroup *group = [[QONExperimentGroup alloc] initWithType:type];
-//  
-//  return group;
-//}
-
 + (NSDictionary <NSString *, QONProduct *> *)fillProducts:(NSArray *)data {
   if (![data isKindOfClass:[NSArray class]]) {
     return @{};

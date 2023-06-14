@@ -9,7 +9,6 @@
 #import <Foundation/Foundation.h>
 
 @class QONProduct;
-@class QONExperimentInfo;
 
 NS_ASSUME_NONNULL_BEGIN
 
