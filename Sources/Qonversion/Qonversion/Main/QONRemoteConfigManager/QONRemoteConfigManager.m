@@ -51,8 +51,10 @@
     return;
   }
   
+  self.isRequestInProgress = YES;
   __block __weak QONRemoteConfigManager *weakSelf = self;
   [self.remoteConfigService loadRemoteConfig:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+    self.isRequestInProgress = NO;
     if (error) {
       [weakSelf executeRemoteConfigCompletions:nil error:error];
       completion(nil, error);
