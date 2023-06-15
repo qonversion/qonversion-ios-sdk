@@ -45,7 +45,7 @@
     return completion(self.remoteConfig, nil);
   }
   
-  if (!self.isLaunchFinished) {
+  if (!self.isLaunchFinished || self.isRequestInProgress) {
     [self.completions addObject:completion];
     
     return;
