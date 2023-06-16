@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "QONLaunchResult.h"
+#import "QONExperiment.h"
 
 @class QNAPIClient, QONRemoteConfigMapper;
 
@@ -19,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) QONRemoteConfigMapper *mapper;
 
 - (void)loadRemoteConfig:(QONRemoteConfigCompletionHandler)completion;
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion;
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion;
 
 @end
 

@@ -182,6 +182,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
 
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion;
+
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion;
+
 /**
  Contact us before you start using this function.
  Handles purchases for StoreKit2 if you are using Qonversion in the Analytics Mode.

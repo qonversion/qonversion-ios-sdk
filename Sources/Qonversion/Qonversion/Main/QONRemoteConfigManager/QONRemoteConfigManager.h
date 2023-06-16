@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "QONLaunchResult.h"
+#import "QONExperiment.h"
 
 @class QONRemoteConfigService;
 
@@ -19,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)launchFinished:(BOOL)finished;
 - (void)obtainRemoteConfig:(QONRemoteConfigCompletionHandler)completion;
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion;
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion;
 
 @end
 

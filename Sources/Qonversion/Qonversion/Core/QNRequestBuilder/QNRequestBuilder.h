@@ -1,5 +1,11 @@
 #import <Foundation/Foundation.h>
 
+typedef NS_ENUM(NSInteger, QONRequestType) {
+  QONRequestTypeGet = 0,
+  QONRequestTypePost,
+  QONRequestTypeDelete
+} NS_SWIFT_NAME(Qonversion.ExperimentGroupType);
+
 @interface QNRequestBuilder : NSObject
 
 - (void)setApiKey:(NSString *)apiKey;
@@ -16,8 +22,9 @@
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body;
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters;
-- (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID;
 - (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId;
 - (NSURLRequest *)makeSdkLogsRequestWithBody:(NSDictionary *)body;
+- (NSURLRequest *)makeAttachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID;
+- (NSURLRequest *)makeDetachUserToExperiment:(NSString *)experimentId userID:(NSString *)userID;
 
 @end

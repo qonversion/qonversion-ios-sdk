@@ -9,6 +9,7 @@
 #import "QONRemoteConfigManager.h"
 #import "QONRemoteConfigService.h"
 #import "QONRemoteConfig.h"
+#import "QONExperiment.h"
 
 @interface QONRemoteConfigManager ()
 
@@ -65,6 +66,14 @@
     [weakSelf executeRemoteConfigCompletions:remoteConfig error:nil];
     completion(remoteConfig, nil);
   }];
+}
+
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
+  [self.remoteConfigService attachUserToExperiment:experimentId groupId:groupId completion:completion];
+}
+
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
+  [self.remoteConfigService detachUserFromExperiment:experimentId completion:completion];
 }
 
 - (void)executeRemoteConfigCompletions:(QONRemoteConfig *)remoteConfig error:(NSError *)error {

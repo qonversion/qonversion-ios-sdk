@@ -26,55 +26,54 @@
 }
 
 - (NSURLRequest *)makeSendPushTokenRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWithEndpoint:kSendPushTokenEndpoint body:parameters];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:kSendPushTokenEndpoint body:parameters type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWithEndpoint:kInitEndpoint body:parameters];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:kInitEndpoint body:parameters type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey {
   NSString *endpoint = [NSString stringWithFormat:kUserInfoEndpoint, userID];
-  return [self makeGetRequestWith:endpoint];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:kUserInfoEndpoint body:nil type:QONRequestTypeGet];
 }
 
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWithEndpoint:kPropertiesEndpoint body:parameters];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:kPropertiesEndpoint body:parameters type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWithEndpoint:kAttributionEndpoint body:parameters];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:kAttributionEndpoint body:parameters type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWithEndpoint:kPurchaseEndpoint body:parameters];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:kPurchaseEndpoint body:parameters type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter {
   NSString *endpoint = [NSString stringWithFormat:kActionPointsEndpointFormat, parameter];
-  return [self makeGetRequestWith:endpoint];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:nil type:QONRequestTypeGet];
 }
 
 - (NSURLRequest *)makeScreensRequestWith:(NSString *)parameters {
   NSString *endpoint = [NSString stringWithFormat:@"%@%@", kScreensEndpoint, parameters];
-  return [self makeGetRequestWith:endpoint];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:nil type:QONRequestTypeGet];
 }
 
 - (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body {
-  NSString *endpoint = [NSString stringWithFormat:kScreenShowEndpointFormat, parameter];
-  return [self makePostRequestWithEndpoint:endpoint body:body];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:kScreenShowEndpointFormat body:body type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters {
-  return [self makePostRequestWithEndpoint:kIdentityEndpoint body:parameters];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:kIdentityEndpoint body:parameters type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters {
-  return [self makePostRequestWithEndpoint:kProductsEndpoint body:parameters];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:kProductsEndpoint body:parameters type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId {
-  NSURLRequest *request = [self makeGetRequestWith:kRemoteConfigEndpoint];
+  NSURLRequest *request = [self makeRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigEndpoint body:nil type:QONRequestTypeGet];
   
   NSMutableURLRequest *mutableRequest = [request mutableCopy];
   NSString *updatedURLString = [mutableRequest.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@", userId]];
@@ -83,53 +82,46 @@
   return [mutableRequest copy];
 }
 
-- (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID {
-  NSMutableDictionary *body = [NSMutableDictionary new];
-  body[@"user"] = userID;
-  body[@"event"] = eventName;
-  body[@"payload"] = payload;
-  
-  return [self makePostRequestWithEndpoint:kEventEndpoint body:[body copy]];
+- (NSURLRequest *)makeAttachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID {
+  NSDictionary *params = @{@"group_id": groupId};
+  NSString *endpoint = [NSString stringWithFormat:kAttachUserToExperimentEndpointFormat, experimentId, userID];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:params type:QONRequestTypePost];
+}
+
+- (NSURLRequest *)makeDetachUserToExperiment:(NSString *)experimentId userID:(NSString *)userID {
+  NSString *endpoint = [NSString stringWithFormat:kAttachUserToExperimentEndpointFormat, experimentId, userID];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:nil type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makeSdkLogsRequestWithBody:(NSDictionary *)body {
-  return [self makePostRequestWithEndpoint:kSdkLogsEndpoint body:body baseUrl:kSdkLogsBaseURL];
+  return [self makeRequestWithBaseURL:kSdkLogsBaseURL endpoint:kSdkLogsEndpoint body:body type:QONRequestTypePost];
 }
 
 // MARK: Private
 
-- (NSURLRequest *)makeGetRequestWith:(NSString *)endpoint {
-  NSString *urlString = [self.baseURL stringByAppendingString:endpoint];
-  NSURL *url = [[NSURL alloc] initWithString:urlString];
-  
-  NSMutableURLRequest *request = [self baseGetRequestWithURL:url];
-  
-  return [request copy];
-}
-
-- (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint body:(NSDictionary *)body {
-  return [self makePostRequestWithEndpoint:endpoint body:body baseUrl:self.baseURL];
-}
-
-- (NSURLRequest *)makePostRequestWithEndpoint:(NSString *)endpoint body:(NSDictionary *)body baseUrl:(NSString *)baseURL {
+- (NSURLRequest *)makeRequestWithBaseURL:(NSString *)baseURL endpoint:(NSString *)endpoint body:(NSDictionary *)body type:(QONRequestType)type {
   NSString *urlString = [baseURL stringByAppendingString:endpoint];
   NSURL *url = [NSURL URLWithString:urlString];
+  
+  switch (type) {
+    case QONRequestTypeGet:
+      return [self baseRequestWithURL:url type:@"GET"]; break;
+    case QONRequestTypePost:
+      return [self makeRequestWithURL:url body:body type:@"POST"]; break;
+    case QONRequestTypeDelete:
+      return [self makeRequestWithURL:url body:body type:@"DELETE"]; break;
+  }
+  
+  return nil;
+}
 
-  NSMutableURLRequest *request = [self basePostRequestWithURL:url];
+- (NSURLRequest *)makeRequestWithURL:(NSURL *)url body:(NSDictionary *)body type:(NSString *)type {
+  NSMutableURLRequest *request = [self baseRequestWithURL:url type:type];
   
   NSMutableDictionary *mutableBody = body.mutableCopy ?: [NSMutableDictionary new];
   
   request.HTTPBody = [NSJSONSerialization dataWithJSONObject:mutableBody options:0 error:nil];
-  
   return [request copy];
-}
-
-- (NSMutableURLRequest *)basePostRequestWithURL:(NSURL *)url {
-  return [self baseRequestWithURL:url type:@"POST"];
-}
-
-- (NSMutableURLRequest *)baseGetRequestWithURL:(NSURL *)url {
-  return [self baseRequestWithURL:url type:@"GET"];
 }
 
 - (NSMutableURLRequest *)baseRequestWithURL:(NSURL *)url type:(NSString *)type {

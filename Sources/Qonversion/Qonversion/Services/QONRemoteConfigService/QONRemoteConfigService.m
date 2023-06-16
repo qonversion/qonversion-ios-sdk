@@ -37,4 +37,16 @@
   }];
 }
 
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
+  [self.apiClient attachUserFromExperiment:experimentId groupId:groupId completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    // todo parse result
+  }];
+}
+
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
+  [self.apiClient detachUserFromExperiment:experimentId completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    // todo parse result
+  }];
+}
+
 @end
