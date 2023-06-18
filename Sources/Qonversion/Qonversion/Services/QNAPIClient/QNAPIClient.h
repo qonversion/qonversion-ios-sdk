@@ -50,7 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)storeRequestForRetry:(NSURLRequest *)request transactionId:(NSString *)transactionId;
 - (void)removeStoredRequestForTransactionId:(NSString *)transactionId;
 - (void)loadRemoteConfig:(QNAPIClientCompletionHandler)completion;
-- (void)attachUserFromExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientCompletionHandler)completion;
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientCompletionHandler)completion;
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientCompletionHandler)completion;
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                          receipt:(nullable NSString *)receipt

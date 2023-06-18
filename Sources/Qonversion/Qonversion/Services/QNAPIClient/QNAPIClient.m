@@ -252,7 +252,7 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
-- (void)attachUserFromExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientCompletionHandler)completion {
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientCompletionHandler)completion {
   NSURLRequest *request = [self.requestBuilder makeAttachUserToExperiment:experimentId groupId:groupId userID:self.userID];
   
   return [self dataTaskWithRequest:request completion:completion];
