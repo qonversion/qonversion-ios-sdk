@@ -41,6 +41,10 @@
   }
 }
 
+- (void)userHasBeenChanged {
+  self.remoteConfig = nil;
+}
+
 - (void)obtainRemoteConfig:(QONRemoteConfigCompletionHandler)completion {
   if (self.remoteConfig) {
     return completion(self.remoteConfig, nil);

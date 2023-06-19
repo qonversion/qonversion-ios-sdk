@@ -215,7 +215,6 @@
     NSArray *productsData = offeringData[@"products"];
     
     NSArray<QONProduct *> *products = [self fillProductsToArray:productsData offeringID:offeringIdentifier];
-    NSDictionary *experimentInfoData = offeringData[@"experiment"];
 
     QONOffering *offering = [[QONOffering alloc] initWithIdentifier:offeringIdentifier tag:tag products:products];
     [offerings addObject:offering];
