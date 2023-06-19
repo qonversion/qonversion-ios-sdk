@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)launchFinished:(BOOL)finished;
 - (void)obtainRemoteConfig:(QONRemoteConfigCompletionHandler)completion;
+- (void)userHasBeenChanged;
 
 @end
 

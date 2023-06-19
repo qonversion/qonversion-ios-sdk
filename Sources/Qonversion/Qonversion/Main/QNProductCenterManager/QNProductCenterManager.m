@@ -235,6 +235,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [weakSelf handlePendingRequests:nil];
     } else {
       [[QNAPIClient shared] setUserID:result];
+      [weakSelf.remoteConfigManager userHasBeenChanged];
       
       [weakSelf resetActualPermissionsCache];
       [weakSelf launchWithCompletion:nil];
@@ -249,6 +250,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   if (isLogoutNeeded) {
     [self.userInfoService storeCustomIdentityUserID:nil];
     self.unhandledLogoutAvailable = YES;
+    [self.remoteConfigManager userHasBeenChanged];
     NSString *userID = [self.userInfoService obtainUserID];
     [[QNAPIClient shared] setUserID:userID];
     
