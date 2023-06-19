@@ -181,6 +181,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     if (error) {
       QONVERSION_LOG(@"❗️ Request failed %@", error.description);
+    } else {
+      [weakSelf.remoteConfigManager launchFinished:YES];
     }
   }];
 }

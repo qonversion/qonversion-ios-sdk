@@ -90,7 +90,7 @@
 
 - (NSURLRequest *)makeDetachUserToExperiment:(NSString *)experimentId userID:(NSString *)userID {
   NSString *endpoint = [NSString stringWithFormat:kAttachUserToExperimentEndpointFormat, experimentId, userID];
-  return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:nil type:QONRequestTypePost];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:nil type:QONRequestTypeDelete];
 }
 
 - (NSURLRequest *)makeSdkLogsRequestWithBody:(NSDictionary *)body {

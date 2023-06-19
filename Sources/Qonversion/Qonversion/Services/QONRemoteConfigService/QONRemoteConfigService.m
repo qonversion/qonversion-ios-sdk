@@ -39,13 +39,21 @@
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
   [self.apiClient attachUserToExperiment:experimentId groupId:groupId completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    // todo parse result
+    if (error) {
+      completion(NO, error);
+    } else {
+      completion(YES, nil);
+    }
   }];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
   [self.apiClient detachUserFromExperiment:experimentId completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    // todo parse result
+    if (error) {
+      completion(NO, error);
+    } else {
+      completion(YES, nil);
+    }
   }];
 }
 
