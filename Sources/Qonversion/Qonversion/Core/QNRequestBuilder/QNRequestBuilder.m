@@ -35,7 +35,7 @@
 
 - (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey {
   NSString *endpoint = [NSString stringWithFormat:kUserInfoEndpoint, userID];
-  return [self makeRequestWithBaseURL:self.baseURL endpoint:kUserInfoEndpoint body:nil type:QONRequestTypeGet];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:nil type:QONRequestTypeGet];
 }
 
 - (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters {
@@ -61,7 +61,8 @@
 }
 
 - (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body {
-  return [self makeRequestWithBaseURL:self.baseURL endpoint:kScreenShowEndpointFormat body:body type:QONRequestTypePost];
+  NSString *endpoint = [NSString stringWithFormat:kScreenShowEndpointFormat, parameter];
+  return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:body type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters {
