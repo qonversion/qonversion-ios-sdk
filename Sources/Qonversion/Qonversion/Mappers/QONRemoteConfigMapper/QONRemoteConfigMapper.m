@@ -71,7 +71,7 @@ NSString *const kTreatmentGroupType = @"treatment";
   NSString *groupId = experimentGroupData[@"Uid"];
   NSString *groupName = experimentGroupData[@"Name"];
   NSString *groupTypeRawValue = experimentGroupData[@"Type"];
-  QONExperimentGroupType *groupType = [self mapGroupTypeFromString:groupTypeRawValue];
+  QONExperimentGroupType groupType = [self mapGroupTypeFromString:groupTypeRawValue];
   
   return [[QONExperimentGroup alloc] initWithIdentifier:groupId type:groupType name:groupName];
 }
