@@ -4,7 +4,7 @@ typedef NS_ENUM(NSInteger, QONRequestType) {
   QONRequestTypeGet = 0,
   QONRequestTypePost,
   QONRequestTypeDelete
-} NS_SWIFT_NAME(Qonversion.ExperimentGroupType);
+};
 
 @interface QNRequestBuilder : NSObject
 
