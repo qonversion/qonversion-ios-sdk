@@ -253,7 +253,7 @@
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeAttachUserToExperiment:experimentId groupId:groupId userID:self.userID];
+  NSURLRequest *request = [self.requestBuilder makeAttachUserToExperimentRequest:experimentId groupId:groupId userID:self.userID];
   
   [self dataTaskWithRequest:request parseResponse:NO completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     completion(@{}, error);
@@ -261,7 +261,7 @@
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeDetachUserToExperiment:experimentId userID:self.userID];
+  NSURLRequest *request = [self.requestBuilder makeDetachUserToExperimentRequest:experimentId userID:self.userID];
   
   [self dataTaskWithRequest:request parseResponse:NO completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     completion(@{}, error);

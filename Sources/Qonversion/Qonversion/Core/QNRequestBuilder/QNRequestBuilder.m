@@ -82,13 +82,13 @@
   return [mutableRequest copy];
 }
 
-- (NSURLRequest *)makeAttachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID {
+- (NSURLRequest *)makeAttachUserToExperimentRequest:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID {
   NSDictionary *params = @{@"group_id": groupId};
   NSString *endpoint = [NSString stringWithFormat:kAttachUserToExperimentEndpointFormat, experimentId, userID];
   return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:params type:QONRequestTypePost];
 }
 
-- (NSURLRequest *)makeDetachUserToExperiment:(NSString *)experimentId userID:(NSString *)userID {
+- (NSURLRequest *)makeDetachUserToExperimentRequest:(NSString *)experimentId userID:(NSString *)userID {
   NSString *endpoint = [NSString stringWithFormat:kAttachUserToExperimentEndpointFormat, experimentId, userID];
   return [self makeRequestWithBaseURL:self.baseURL endpoint:endpoint body:nil type:QONRequestTypeDelete];
 }

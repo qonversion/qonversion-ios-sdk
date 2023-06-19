@@ -24,7 +24,7 @@ typedef NS_ENUM(NSInteger, QONRequestType) {
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters;
 - (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId;
 - (NSURLRequest *)makeSdkLogsRequestWithBody:(NSDictionary *)body;
-- (NSURLRequest *)makeAttachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID;
-- (NSURLRequest *)makeDetachUserToExperiment:(NSString *)experimentId userID:(NSString *)userID;
+- (NSURLRequest *)makeAttachUserToExperimentRequest:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID;
+- (NSURLRequest *)makeDetachUserToExperimentRequest:(NSString *)experimentId userID:(NSString *)userID;
 
 @end
