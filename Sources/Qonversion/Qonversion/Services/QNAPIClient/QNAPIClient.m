@@ -246,6 +246,17 @@
   }
 }
 
+- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *body = [self enrichSdkLogParameters:data];
+  NSURLRequest *request = [self.requestBuilder makeSdkLogsRequestWithBody:body];
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
+  [mutableRequest setAllHTTPHeaderFields:@{
+          @"Content-Type": @"application/json"
+  }];
+
+  [self processRequest:mutableRequest parseResponse:NO completion:completion];
+}
+
 - (void)loadRemoteConfig:(QNAPIClientCompletionHandler)completion {
   NSURLRequest *request = [self.requestBuilder remoteConfigRequestForUserId:self.userID];
   
