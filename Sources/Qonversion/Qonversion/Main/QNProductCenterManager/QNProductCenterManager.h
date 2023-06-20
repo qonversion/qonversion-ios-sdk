@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) QONLaunchMode launchMode;
 @property (nonatomic, strong) QONRemoteConfigManager *remoteConfigManager;
 
+- (BOOL)isUserStable;
 - (void)identify:(NSString *)userID;
 - (void)logout;
 - (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate;

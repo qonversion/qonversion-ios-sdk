@@ -189,6 +189,7 @@
     _exceptionManager = [QONExceptionManager shared];
     
     _productCenterManager.remoteConfigManager = _remoteConfigManager;
+    _remoteConfigManager.productCenterManager = _productCenterManager;
     
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
  
