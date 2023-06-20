@@ -9,6 +9,8 @@
 #import "QONPromoPurchasesDelegate.h"
 #import "QONEntitlementsUpdateListener.h"
 #import "QONExperimentGroup.h"
+#import "QONExperiment.h"
+#import "QONRemoteConfig.h"
 #import "QONUser.h"
 #import "QONErrors.h"
 #import "QONStoreKitSugare.h"
