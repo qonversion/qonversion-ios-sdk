@@ -210,7 +210,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       if (error) {
         weakSelf.identityInProgress = NO;
         [weakSelf executeEntitlementsBlocksWithError:error];
-        [weakSelf.remoteConfigManager userChangingRequestsFailedWithError:error];
+        [weakSelf.remoteConfigManager userChangingRequestFailedWithError:error];
       } else {
         [weakSelf processIdentity:userID];
       }
@@ -229,7 +229,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     if (error) {
       [weakSelf executeEntitlementsBlocksWithError:error];
-      [weakSelf.remoteConfigManager userChangingRequestsFailedWithError:error];
+      [weakSelf.remoteConfigManager userChangingRequestFailedWithError:error];
       return;
     }
     

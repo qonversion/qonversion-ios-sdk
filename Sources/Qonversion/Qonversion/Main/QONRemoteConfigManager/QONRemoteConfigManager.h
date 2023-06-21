@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) QONRemoteConfigService *remoteConfigService;
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 
-- (void)userChangingRequestsFailedWithError:(NSError *)error;
+- (void)userChangingRequestFailedWithError:(NSError *)error;
 - (void)handlePendingRequests;
 - (void)obtainRemoteConfig:(QONRemoteConfigCompletionHandler)completion;
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion;

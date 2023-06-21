@@ -39,7 +39,7 @@
   }
 }
 
-- (void)userChangingRequestsFailedWithError:(NSError *)error {
+- (void)userChangingRequestFailedWithError:(NSError *)error {
   [self executeRemoteConfigCompletions:nil error:error];
 }
 
