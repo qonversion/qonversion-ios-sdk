@@ -15,6 +15,8 @@
 #import "QONStoreKit2PurchaseModel.h"
 #import "QNDevice.h"
 
+extern NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
+
 @interface QNAPIClient()
 
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
@@ -400,14 +402,14 @@
       return;
     }
 
-    if (!parseResponse) {
-      completion(nil, nil);
-      return;
-    }
-
     NSError *jsonError;
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
 
+    if (jsonError.code == kUnableToParseEmptyDataDefaultCode && !parseResponse) {
+      completion(nil, nil);
+      return;
+    }
+    
     if ((jsonError.code || !dict)) {
       completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
       return;
