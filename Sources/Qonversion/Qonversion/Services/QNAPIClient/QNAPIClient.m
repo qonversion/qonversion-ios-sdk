@@ -15,7 +15,7 @@
 #import "QONStoreKit2PurchaseModel.h"
 #import "QNDevice.h"
 
-extern NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
+NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 @interface QNAPIClient()
 
