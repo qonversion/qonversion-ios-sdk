@@ -180,6 +180,11 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)collectAdvertisingId;
 
+/**
+ Returns Qonversion remote config object
+ Use this function to get the remote config with specific payload and experiment info.
+ @param completion completion block that includes information about the remote config.
+ */
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
 
 /**
