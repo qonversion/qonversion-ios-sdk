@@ -40,8 +40,8 @@ NSString *const kTreatmentGroupType = @"treatment";
   if (![remoteConfigData isKindOfClass:[NSDictionary class]]) {
     return nil;
   }
-  NSDictionary *payload = remoteConfigData[@"Payload"];
-  NSDictionary *experimentData = remoteConfigData[@"Experiment"];
+  NSDictionary *payload = remoteConfigData[@"payload"];
+  NSDictionary *experimentData = remoteConfigData[@"experiment"];
   QONExperiment *experiment = [self mapExperiment:experimentData];
   
   return [[QONRemoteConfig alloc] initWithPayload:payload experiment:experiment];
@@ -52,13 +52,13 @@ NSString *const kTreatmentGroupType = @"treatment";
     return nil;
   }
 
-  NSDictionary *experimentGroupData = experimentData[@"Group"];
+  NSDictionary *experimentGroupData = experimentData[@"group"];
   QONExperimentGroup *group = [self mapExperimentGroup:experimentGroupData];
   if (!group) {
     return nil;
   }
-  NSString *experimentId = experimentData[@"Uid"];
-  NSString *experimentName = experimentData[@"Name"];
+  NSString *experimentId = experimentData[@"uid"];
+  NSString *experimentName = experimentData[@"name"];
   
   return [[QONExperiment alloc] initWithIdentifier:experimentId name:experimentName group:group];
 }
@@ -68,9 +68,9 @@ NSString *const kTreatmentGroupType = @"treatment";
     return nil;
   }
   
-  NSString *groupId = experimentGroupData[@"Uid"];
-  NSString *groupName = experimentGroupData[@"Name"];
-  NSString *groupTypeRawValue = experimentGroupData[@"Type"];
+  NSString *groupId = experimentGroupData[@"uid"];
+  NSString *groupName = experimentGroupData[@"name"];
+  NSString *groupTypeRawValue = experimentGroupData[@"type"];
   QONExperimentGroupType groupType = [self mapGroupTypeFromString:groupTypeRawValue];
   
   return [[QONExperimentGroup alloc] initWithIdentifier:groupId type:groupType name:groupName];
