@@ -157,6 +157,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return offerings;
 }
 
+- (BOOL)isUserStable {
+  return self.launchingFinished && !self.identityInProgress && self.pendingIdentityUserID.length == 0 && !self.unhandledLogoutAvailable;
+}
+
 - (void)launchWithCompletion:(nullable QONLaunchCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
   
@@ -206,6 +210,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       if (error) {
         weakSelf.identityInProgress = NO;
         [weakSelf executeEntitlementsBlocksWithError:error];
+        [weakSelf.remoteConfigManager userChangingRequestFailedWithError:error];
       } else {
         [weakSelf processIdentity:userID];
       }
@@ -224,6 +229,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     if (error) {
       [weakSelf executeEntitlementsBlocksWithError:error];
+      [weakSelf.remoteConfigManager userChangingRequestFailedWithError:error];
       return;
     }
     
@@ -699,12 +705,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion {
   _launchingFinished = NO;
-  [self.remoteConfigManager launchFinished:self.launchingFinished];
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     @synchronized (weakSelf) {
       weakSelf.launchingFinished = YES;
-      [self.remoteConfigManager launchFinished:self.launchingFinished];
       NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:self];
       [[NSNotificationCenter defaultCenter] postNotification:notification];
     }
@@ -1139,6 +1143,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   } else if (self.unhandledLogoutAvailable) {
     [self handleLogout];
   } else {
+    [self.remoteConfigManager handlePendingRequests];
     [self executeEntitlementsBlocksWithError:lastError];
   }
 }

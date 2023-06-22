@@ -15,6 +15,8 @@
 #import "QONStoreKit2PurchaseModel.h"
 #import "QNDevice.h"
 
+NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
+
 @interface QNAPIClient()
 
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
@@ -263,6 +265,22 @@
   return [self dataTaskWithRequest:request completion:completion];
 }
 
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeAttachUserToExperimentRequest:experimentId groupId:groupId userID:self.userID];
+  
+  [self dataTaskWithRequest:request parseResponse:NO completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    completion(@{}, error);
+  }];
+}
+
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeDetachUserToExperimentRequest:experimentId userID:self.userID];
+  
+  [self dataTaskWithRequest:request parseResponse:NO completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    completion(@{}, error);
+  }];
+}
+
 // MARK: - Private
 
 - (NSDictionary *)enrichPushTokenData:(NSDictionary *)data {
@@ -384,14 +402,14 @@
       return;
     }
 
-    if (!parseResponse) {
-      completion(nil, nil);
-      return;
-    }
-
     NSError *jsonError;
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
 
+    if (jsonError.code == kUnableToParseEmptyDataDefaultCode && !parseResponse) {
+      completion(nil, nil);
+      return;
+    }
+    
     if ((jsonError.code || !dict)) {
       completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
       return;

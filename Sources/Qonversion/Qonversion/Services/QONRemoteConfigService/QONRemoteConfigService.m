@@ -37,4 +37,24 @@
   }];
 }
 
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
+  [self.apiClient attachUserToExperiment:experimentId groupId:groupId completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    if (error) {
+      completion(NO, error);
+    } else {
+      completion(YES, nil);
+    }
+  }];
+}
+
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
+  [self.apiClient detachUserFromExperiment:experimentId completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    if (error) {
+      completion(NO, error);
+    } else {
+      completion(YES, nil);
+    }
+  }];
+}
+
 @end

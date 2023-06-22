@@ -155,6 +155,14 @@
   [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfig:completion];
 }
 
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] attachUserToExperiment:experimentId groupId:groupId completion:completion];
+}
+
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] detachUserFromExperiment:experimentId completion:completion];
+}
+
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
   [[[Qonversion sharedInstance] productCenterManager] handlePurchases:purchasesInfo];
 }
@@ -181,6 +189,7 @@
     _exceptionManager = [QONExceptionManager shared];
     
     _productCenterManager.remoteConfigManager = _remoteConfigManager;
+    _remoteConfigManager.productCenterManager = _productCenterManager;
     
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
  

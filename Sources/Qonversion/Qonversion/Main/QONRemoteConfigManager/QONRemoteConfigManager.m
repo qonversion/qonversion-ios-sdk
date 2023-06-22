@@ -9,11 +9,12 @@
 #import "QONRemoteConfigManager.h"
 #import "QONRemoteConfigService.h"
 #import "QONRemoteConfig.h"
+#import "QONExperiment.h"
+#import "QNProductCenterManager.h"
 
 @interface QONRemoteConfigManager ()
 
 @property (nonatomic, strong) QONRemoteConfig *remoteConfig;
-@property (nonatomic, assign) BOOL isLaunchFinished;
 @property (nonatomic, strong) NSMutableArray<QONRemoteConfigCompletionHandler> *completions;
 @property (nonatomic, assign) BOOL isRequestInProgress;
 
@@ -32,12 +33,14 @@
   return self;
 }
 
-- (void)launchFinished:(BOOL)finished {
-  _isLaunchFinished = finished;
-  
-  if (finished && self.completions.count > 0 && !self.isRequestInProgress) {
+- (void)handlePendingRequests {
+  if (self.completions.count > 0) {
     [self obtainRemoteConfig:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {}];
   }
+}
+
+- (void)userChangingRequestFailedWithError:(NSError *)error {
+  [self executeRemoteConfigCompletions:nil error:error];
 }
 
 - (void)userHasBeenChanged {
@@ -45,14 +48,16 @@
 }
 
 - (void)obtainRemoteConfig:(QONRemoteConfigCompletionHandler)completion {
-  if (self.remoteConfig) {
-    return completion(self.remoteConfig, nil);
-  }
+  BOOL isUserStable = [self.productCenterManager isUserStable];
   
-  if (!self.isLaunchFinished || self.isRequestInProgress) {
+  if (!isUserStable || self.isRequestInProgress) {
     [self.completions addObject:completion];
     
     return;
+  }
+  
+  if (self.remoteConfig) {
+    return completion(self.remoteConfig, nil);
   }
   
   self.isRequestInProgress = YES;
@@ -69,6 +74,16 @@
     [weakSelf executeRemoteConfigCompletions:remoteConfig error:nil];
     completion(remoteConfig, nil);
   }];
+}
+
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
+  self.remoteConfig = nil;
+  [self.remoteConfigService attachUserToExperiment:experimentId groupId:groupId completion:completion];
+}
+
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
+  self.remoteConfig = nil;
+  [self.remoteConfigService detachUserFromExperiment:experimentId completion:completion];
 }
 
 - (void)executeRemoteConfigCompletions:(QONRemoteConfig *)remoteConfig error:(NSError *)error {
