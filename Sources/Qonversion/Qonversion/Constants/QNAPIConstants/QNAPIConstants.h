@@ -20,9 +20,11 @@ extern NSString *const kScreenShowEndpointFormat;
 extern NSString *const kIdentityEndpoint;
 extern NSString *const kUserInfoEndpoint;
 extern NSString *const kAttributionEndpoint;
+extern NSString *const kAttachUserToExperimentEndpointFormat;
 extern NSString *const kSdkLogsEndpoint;
 extern NSString *const kSdkLogsBaseURL;
 extern NSString *const kStoredRequestsKey;
+extern NSString *const kRemoteConfigEndpoint;
 
 extern NSString *const kEventEndpoint;
 

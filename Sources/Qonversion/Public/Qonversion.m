@@ -11,6 +11,7 @@
 #import "QNServicesAssembly.h"
 #import "QNLocalStorage.h"
 #import "QNInternalConstants.h"
+#import "QONRemoteConfigManager.h"
 #import "QONExceptionManager.h"
 
 @interface Qonversion()
@@ -18,6 +19,7 @@
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 @property (nonatomic, strong) QNUserPropertiesManager *propertiesManager;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
+@property (nonatomic, strong) QONRemoteConfigManager *remoteConfigManager;
 @property (nonatomic, strong) QONExceptionManager *exceptionManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
@@ -89,10 +91,6 @@
   [[Qonversion sharedInstance].productCenterManager presentCodeRedemptionSheet];
 }
 
-- (void)setDebugMode {
-  [Qonversion sharedInstance].debugMode = YES;
-}
-
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)delegate {
   [[Qonversion sharedInstance].productCenterManager setPurchasesDelegate:delegate];
 }
@@ -153,6 +151,18 @@
   [[[Qonversion sharedInstance] productCenterManager] userInfo:completion];
 }
 
+- (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfig:completion];
+}
+
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] attachUserToExperiment:experimentId groupId:groupId completion:completion];
+}
+
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] detachUserFromExperiment:experimentId completion:completion];
+}
+
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
   [[[Qonversion sharedInstance] productCenterManager] handlePurchases:purchasesInfo];
 }
@@ -175,8 +185,12 @@
     _productCenterManager = [QNProductCenterManager new];
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
+    _remoteConfigManager = [QONRemoteConfigManager new];
     _exceptionManager = [QONExceptionManager shared];
-
+    
+    _productCenterManager.remoteConfigManager = _remoteConfigManager;
+    _remoteConfigManager.productCenterManager = _productCenterManager;
+    
     QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
  
     _localStorage = [servicesAssembly localStorage];

@@ -5,13 +5,17 @@
 #import "QONErrors.h"
 #import "QNUtils.h"
 #import "QNAPIConstants.h"
-#import "QNProductPurchaseModel.h"
+#import "QNInternalConstants.h"
+#import "QNInternalConstants.h"
 #import "QONOffering.h"
-#import "QONExperimentInfo.h"
+#import "QONExperimentGroup.h"
+#import "QONOffering.h"
 #import "QNErrorsMapper.h"
 #import "QNKeyedArchiver.h"
 #import "QONStoreKit2PurchaseModel.h"
 #import "QNDevice.h"
+
+NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 @interface QNAPIClient()
 
@@ -125,9 +129,8 @@
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
-                        purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel
                            completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseModel:purchaseModel];
+  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt];
   return [self purchaseRequestWith:body completion:completion];
 }
 
@@ -243,6 +246,39 @@
       }];
     }
   }
+}
+
+- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientCompletionHandler)completion {
+  NSDictionary *body = [self enrichSdkLogParameters:data];
+  NSURLRequest *request = [self.requestBuilder makeSdkLogsRequestWithBody:body];
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
+  [mutableRequest setAllHTTPHeaderFields:@{
+          @"Content-Type": @"application/json"
+  }];
+
+  [self processRequest:mutableRequest parseResponse:NO completion:completion];
+}
+
+- (void)loadRemoteConfig:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder remoteConfigRequestForUserId:self.userID];
+  
+  return [self dataTaskWithRequest:request completion:completion];
+}
+
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeAttachUserToExperimentRequest:experimentId groupId:groupId userID:self.userID];
+  
+  [self dataTaskWithRequest:request parseResponse:NO completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    completion(@{}, error);
+  }];
+}
+
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeDetachUserToExperimentRequest:experimentId userID:self.userID];
+  
+  [self dataTaskWithRequest:request parseResponse:NO completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    completion(@{}, error);
+  }];
 }
 
 // MARK: - Private
@@ -366,14 +402,14 @@
       return;
     }
 
-    if (!parseResponse) {
-      completion(nil, nil);
-      return;
-    }
-
     NSError *jsonError;
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
 
+    if (jsonError.code == kUnableToParseEmptyDataDefaultCode && !parseResponse) {
+      completion(nil, nil);
+      return;
+    }
+    
     if ((jsonError.code || !dict)) {
       completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
       return;
@@ -467,26 +503,6 @@
     NSData *updatedStoredRequestsData = [QNKeyedArchiver archivedDataWithObject:[storedRequests copy]];
     [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
   }
-}
-
-- (void)sendOfferingEvent:(QONOffering *)offering {
-  NSMutableDictionary *payload = [NSMutableDictionary new];
-  payload[@"experiment_id"] = offering.experimentInfo.identifier;
-  
-  NSURLRequest *request = [self.requestBuilder makeEventRequestWithEventName:kKeyQExperimentStartedEventName payload:[payload copy] userID:self.userID];
-  
-  return [self dataTaskWithRequest:request completion:nil];
-}
-
-- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *body = [self enrichSdkLogParameters:data];
-  NSURLRequest *request = [self.requestBuilder makeSdkLogsRequestWithBody:body];
-  NSMutableURLRequest *mutableRequest = [request mutableCopy];
-  [mutableRequest setAllHTTPHeaderFields:@{
-          @"Content-Type": @"application/json"
-  }];
-
-  [self processRequest:mutableRequest parseResponse:NO completion:completion];
 }
 
 @end

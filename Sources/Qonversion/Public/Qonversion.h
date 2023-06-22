@@ -8,8 +8,9 @@
 #import "QONIntroEligibility.h"
 #import "QONPromoPurchasesDelegate.h"
 #import "QONEntitlementsUpdateListener.h"
-#import "QONExperimentInfo.h"
 #import "QONExperimentGroup.h"
+#import "QONExperiment.h"
+#import "QONRemoteConfig.h"
 #import "QONUser.h"
 #import "QONErrors.h"
 #import "QONStoreKitSugare.h"
@@ -105,7 +106,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Check user entitlements based on product center details
- @param completion Completion block that include entitlements dictionary and error
+ @param completion Completion block that includes entitlements dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
@@ -128,7 +129,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Restore user entitlements based on product center details
- @param completion Completion block that include entitlements dictionary and error
+ @param completion Completion block that includes entitlements dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
 - (void)restore:(QNRestoreCompletionHandler)completion;
@@ -147,7 +148,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  You can show only a regular price for users who are not eligible for an introductory offer.
  @param productIds products identifiers that must be checked
- @param completion Completion block that include trial eligibility check result dictionary and error
+ @param completion Completion block that includes trial eligibility check result dictionary and error
  */
 - (void)checkTrialIntroEligibility:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion;
 
@@ -160,13 +161,13 @@ NS_ASSUME_NONNULL_BEGIN
  
  @see [Offerings](https://qonversion.io/docs/offerings)
  @see [Product Center](https://qonversion.io/docs/product-center)
- @param completion Completion block that include information about the offerings user and error
+ @param completion Completion block that includes information about the offerings user and error
  */
 - (void)offerings:(QONOfferingsCompletionHandler)completion;
 
 /**
  Information about the current Qonversion user
- @param completion Completion block that include information about the current user and error
+ @param completion Completion block that includes information about the current user and error
  */
 - (void)userInfo:(QONUserInfoCompletionHandler)completion;
 
@@ -180,6 +181,30 @@ NS_ASSUME_NONNULL_BEGIN
  For Qonversion/NoIdfa SDK advertising ID is always empty.
  */
 - (void)collectAdvertisingId;
+
+/**
+ Returns Qonversion remote config object
+ Use this function to get the remote config with specific payload and experiment info.
+ @param completion completion block that includes information about the remote config.
+ */
+- (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
+
+/**
+ This function should be used for the test purpose only. Do not forget to delete the usage of this function before the release.
+ Use this function to attach the user to the experiment.
+ @param experimentId identifier of the experiment
+ @param groupId identifier of the experiment group
+ @param completion completion block that includes information about the result of the action. Success flag or error.
+ */
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion;
+
+/**
+ This function should be used for the test purpose only. Do not forget to delete the usage of this function before the release.
+ Use this function to detach the user from the experiment.
+ @param experimentId identifier of the experiment
+ @param completion completion block that includes information about the result of the action. Success flag or error.
+ */
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion;
 
 /**
  Contact us before you start using this function.

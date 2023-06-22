@@ -4,7 +4,6 @@
 
 @property (nonatomic, copy) NSString *uid;
 @property (nonatomic, assign) NSUInteger timestamp;
-@property (nonatomic, copy) NSDictionary<NSString *, QONExperimentInfo *> *experiments;
 @property (nonatomic, copy) NSDictionary<NSString *, QONEntitlement *> *entitlements;
 @property (nonatomic, copy) NSDictionary<NSString *, QONProduct *> *products;
 @property (nonatomic, copy) NSDictionary<NSString *, QONProduct *> *userProducts;
