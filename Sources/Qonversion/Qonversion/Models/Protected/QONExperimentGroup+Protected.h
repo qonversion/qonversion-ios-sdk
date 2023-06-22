@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QONExperimentGroup (Protected)
 
-- (instancetype)initWithType:(QNExperimentGroupType)type;
+- (instancetype)initWithIdentifier:(NSString *)identifier type:(QONExperimentGroupType)type name:(NSString *)name;
 
 @end
 
