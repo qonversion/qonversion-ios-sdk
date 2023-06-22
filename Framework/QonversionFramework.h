@@ -10,8 +10,9 @@
 #import <Qonversion/QONOfferings.h>
 #import <Qonversion/QONOffering.h>
 #import <Qonversion/QONIntroEligibility.h>
-#import <Qonversion/QONExperimentInfo.h>
+#import <Qonversion/QONExperiment.h>
 #import <Qonversion/QONExperimentGroup.h>
+#import <Qonversion/QONRemoteConfig.h>
 #import <Qonversion/QONStoreKit2PurchaseModel.h>
 
 #import <Qonversion/QONAutomations.h>

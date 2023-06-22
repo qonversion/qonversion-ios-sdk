@@ -3,8 +3,7 @@
 #import "QNDevice.h"
 #import "QONStoreKitSugare.h"
 #import "QONProduct.h"
-#import "QNProductPurchaseModel.h"
-#import "QONExperimentInfo.h"
+#import "QONExperiment.h"
 #import "QONExperimentGroup.h"
 #import "QONStoreKit2PurchaseModel.h"
 
@@ -36,8 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction
-                       receipt:(nullable NSString *)receipt
-                 purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel {
+                       receipt:(nullable NSString *)receipt {
 
   NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
@@ -78,11 +76,6 @@ NS_ASSUME_NONNULL_BEGIN
     purchaseDict[@"country"] = countryCode;
   }
   
-  if (purchaseModel) {
-    purchaseDict[@"product_id"] = purchaseModel.product.qonversionID;
-    purchaseDict[@"experiment"] = [self configureExperimentInfo:purchaseModel.experimentInfo];
-  }
-  
   result[@"purchase"] = purchaseDict;
   
   return result;
@@ -120,16 +113,6 @@ NS_ASSUME_NONNULL_BEGIN
   result[@"purchase"] = purchaseDict;
   
   return result;
-}
-
-- (NSDictionary *)configureExperimentInfo:(QONExperimentInfo * _Nullable)experimentInfo {
-  NSMutableDictionary *dict = [NSMutableDictionary new];
-  
-  if (experimentInfo) {
-    dict[@"uid"] = experimentInfo.identifier;
-  }
-  
-  return [dict copy];
 }
 
 - (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QONProduct *> *)products {

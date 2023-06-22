@@ -8,7 +8,6 @@
 #import "QONIntroEligibility.h"
 #import "QONPromoPurchasesDelegate.h"
 #import "QONEntitlementsUpdateListener.h"
-#import "QONExperimentInfo.h"
 #import "QONExperimentGroup.h"
 #import "QONUser.h"
 #import "QONErrors.h"
@@ -180,6 +179,13 @@ NS_ASSUME_NONNULL_BEGIN
  For Qonversion/NoIdfa SDK advertising ID is always empty.
  */
 - (void)collectAdvertisingId;
+
+/**
+ Returns Qonversion remote config object
+ Use this function to get the remote config with specific payload and experiment info.
+ @param completion completion block that includes information about the remote config.
+ */
+- (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
 
 /**
  Contact us before you start using this function.

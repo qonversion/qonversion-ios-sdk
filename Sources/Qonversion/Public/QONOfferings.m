@@ -9,7 +9,6 @@
 #import "QONOfferings.h"
 #import "QONOffering.h"
 #import "QONOfferings+Protected.h"
-#import "QONExperimentInfo.h"
 
 @interface QONOfferings ()
 

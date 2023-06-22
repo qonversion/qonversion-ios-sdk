@@ -9,11 +9,8 @@
 #import <Foundation/Foundation.h>
 
 @class QONProduct;
-@class QONExperimentInfo;
 
 NS_ASSUME_NONNULL_BEGIN
-
-static NSString *const kOfferingByIDWasCalledNotificationName = @"OfferingForIDNotification";
 
 typedef NS_ENUM(NSInteger, QONOfferingTag) {
   QONOfferingTagUnknown = -1,
@@ -30,7 +27,6 @@ NS_SWIFT_NAME(Qonversion.Offering)
 @property (nonatomic, copy, readonly) NSString *identifier;
 @property (nonatomic, assign, readonly) QONOfferingTag tag;
 @property (nonatomic, copy, readonly) NSArray<QONProduct *> *products;
-@property (nonatomic, strong, nullable, readonly) QONExperimentInfo *experimentInfo;
 
 /**
  Returns Qonversion Product for specific ID from the current offering
