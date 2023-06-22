@@ -87,7 +87,6 @@ Boost conversion rates with paywalls and in-app purchases A/B testing. Find the 
 
 Convinced? Let's go!
 
-
 ## Documentation
 
 Check the [documentation](https://documentation.qonversion.io/docs/quickstart) to learn details on implementing and using Qonversion SDKs.
