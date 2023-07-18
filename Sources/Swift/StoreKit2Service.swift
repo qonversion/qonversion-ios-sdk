@@ -12,7 +12,7 @@ import StoreKit
 
 protocol StoreKit2ServiceInterface {
   
-  @available(iOS 13.0.0, *)
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   func syncTransactions() async throws
   
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
@@ -22,7 +22,7 @@ protocol StoreKit2ServiceInterface {
   func handleTransactions(_ transactions: [Transaction]) async throws
 }
 
-@available(iOS 15.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public class StoreKit2Service: StoreKit2ServiceInterface {
   
   let mapper = PurchasesMapper()
