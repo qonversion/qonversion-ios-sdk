@@ -24,7 +24,7 @@ public class QonversionSwift {
   public func syncStoreKit2Purchases() {
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
       Task.init {
-        try await storeKitService?.syncTransactions()
+        try? await storeKitService?.syncTransactions()
       }
     }
   }
