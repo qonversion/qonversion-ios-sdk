@@ -85,4 +85,6 @@ typedef void (^QONUserInfoCompletionHandler)(QONUser *_Nullable user, NSError  *
 
 typedef void (^QONOfferingsCompletionHandler)(QONOfferings *_Nullable offerings, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.OfferingsCompletionHandler);
 
+typedef void (^QONDefaultCompletionHandler)(BOOL success, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.DefaulthCompletionHandler);
+
 NS_ASSUME_NONNULL_END

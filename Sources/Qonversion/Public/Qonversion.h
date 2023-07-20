@@ -213,6 +213,14 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo;
 
+/**
+ Contact us before you start using this function.
+ Handles purchases for StoreKit2 if you are using Qonversion in the Analytics Mode.
+ @param purchasesInfo array of StoreKit2 purchases models
+ @param completion completion block that includes information about the result of the action. Success flag or error.
+ */
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(nullable QONDefaultCompletionHandler)completion;
+
 @end
 
 NS_ASSUME_NONNULL_END
