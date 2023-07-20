@@ -753,15 +753,22 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
-- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(QONDefaultCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
+  __block QONDefaultCompletionHandler resultCompletion = [completion copy];
   [self.storeKitService receipt:^(NSString * receipt) {
     for (QONStoreKit2PurchaseModel *purchaseModel in purchasesInfo) {
       __block NSURLRequest *request = [self.apiClient handlePurchase:purchaseModel receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+        BOOL success = error == nil;
         if (error && [QNUtils shouldPurchaseRequestBeRetried:error]) {
           [weakSelf.apiClient storeRequestForRetry:request transactionId:purchaseModel.transactionId];
         } else {
           [weakSelf.apiClient removeStoredRequestForTransactionId:purchaseModel.transactionId];
+        }
+        
+        if (resultCompletion) {
+          resultCompletion(success, error);
+          resultCompletion = nil;
         }
       }];
     }

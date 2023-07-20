@@ -10,37 +10,63 @@ import Foundation
 import StoreKit
 @_exported import Qonversion
 
-@objc(QONStoreKit2Service)
-public class StoreKit2Service: NSObject {
+protocol StoreKit2ServiceInterface {
   
-  @objc public func syncTransactions() {
-    if #available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *) {
-      Task.init {
-        do {
-          let mapper = PurchasesMapper()
-          let allTransasctions: [Transaction] = await fetchTransactions(for: Transaction.all)
-          let unfinishedTransasctions: [Transaction] = await fetchTransactions(for: Transaction.unfinished)
-          let currentEntitlements: [Transaction] = await fetchTransactions(for: Transaction.currentEntitlements)
-          
-          let mixedTransactions: [Transaction] = allTransasctions + unfinishedTransasctions + currentEntitlements
-          var uniqueTransactions: [UInt64: Transaction] = [:]
-          mixedTransactions.forEach {
-            if uniqueTransactions[$0.id] == nil {
-              uniqueTransactions[$0.id] = $0
-            }
-          }
-          
-          let filteredTransactions = filter(transactions: Array(uniqueTransactions.values))
-          let productIds: [String] = filteredTransactions.map { $0.productID }
-          do {
-            let products: [Product] = try await Product.products(for: Set(productIds))
-            
-            let mappedTransactions: [Qonversion.StoreKit2PurchaseModel] = await mapper.map(transactions: filteredTransactions, with: products)
-            Qonversion.shared().handlePurchases(mappedTransactions)
-          }
-        }
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  func syncTransactions() async throws
+  
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  func handleTransaction(_ transaction: Transaction) async throws
+  
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  func handleTransactions(_ transactions: [Transaction]) async throws
+}
+
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+public class StoreKit2Service: StoreKit2ServiceInterface {
+  
+  let mapper = PurchasesMapper()
+  
+  func syncTransactions() async throws {
+      let filteredTransactions = await fetchAllFilteredTransactions()
+      let productIds: [String] = filteredTransactions.map { $0.productID }
+      try await handleTransactions(filteredTransactions, for: productIds)
+  }
+  
+  func handleTransaction(_ transaction: Transaction) async throws {
+    try await handleTransactions([transaction], for: [transaction.productID])
+  }
+  
+  func handleTransactions(_ transactions: [Transaction]) async throws {
+    let productIds: [String] = transactions.map { $0.productID }
+    try await handleTransactions(transactions, for: productIds)
+  }
+  
+  // MARK: - Private
+  
+  private func handleTransactions(_ transactions: [Transaction], for productIds: [String]) async throws {
+    let products: [Product] = try await Product.products(for: Set(productIds))
+    let mappedTransactions: [Qonversion.StoreKit2PurchaseModel] = await mapper.map(transactions: transactions, with: products)
+    try await Qonversion.shared().handlePurchases(mappedTransactions)
+  }
+  
+  @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
+  private func fetchAllFilteredTransactions() async -> [Transaction] {
+    let allTransasctions: [Transaction] = await fetchTransactions(for: Transaction.all)
+    let unfinishedTransasctions: [Transaction] = await fetchTransactions(for: Transaction.unfinished)
+    let currentEntitlements: [Transaction] = await fetchTransactions(for: Transaction.currentEntitlements)
+    
+    let mixedTransactions: [Transaction] = allTransasctions + unfinishedTransasctions + currentEntitlements
+    var uniqueTransactions: [UInt64: Transaction] = [:]
+    mixedTransactions.forEach {
+      if uniqueTransactions[$0.id] == nil {
+        uniqueTransactions[$0.id] = $0
       }
     }
+    
+    let filteredTransactions = filter(transactions: Array(uniqueTransactions.values))
+    
+    return filteredTransactions
   }
   
   @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)

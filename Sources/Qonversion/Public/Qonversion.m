@@ -164,7 +164,11 @@
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
-  [[[Qonversion sharedInstance] productCenterManager] handlePurchases:purchasesInfo];
+  [[Qonversion sharedInstance] handlePurchases:purchasesInfo completion:nil];
+}
+
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(nullable QONDefaultCompletionHandler)completion {
+  [[[Qonversion sharedInstance] productCenterManager] handlePurchases:purchasesInfo completion:completion];
 }
 
 // MARK: - Private

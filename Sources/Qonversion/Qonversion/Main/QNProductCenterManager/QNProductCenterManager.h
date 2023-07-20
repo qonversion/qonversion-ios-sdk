@@ -35,7 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion;
 
-- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo;
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(QONDefaultCompletionHandler)completion;
 
 - (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 
