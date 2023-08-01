@@ -12,25 +12,6 @@ typedef NS_ENUM(NSInteger, QONAttributionProvider) {
   QONAttributionProviderAppleAdServices
 } NS_SWIFT_NAME(Qonversion.AttributionProvider);
 
-/**
- Qonversion Defined User Property keys
- We defined some common case properties and provided API for adding them
- @see [Product Center](https://qonversion.io/docs/defined-user-properties)
- */
-typedef NS_ENUM(NSInteger, QONUserPropertyKey) {
-  QONUserPropertyKeyEmail = 0,
-  QONUserPropertyKeyName,
-  QONUserPropertyKeyAppsFlyerUserID,
-  QONUserPropertyKeyAdjustAdID,
-  QONUserPropertyKeyKochavaDeviceID,
-  QONUserPropertyKeyAdvertisingID,
-  QONUserPropertyKeyUserID,
-  QONUserPropertyKeyFirebaseAppInstanceId,
-  QONUserPropertyKeyFacebookAttribution, // Android only
-  QONUserPropertyKeyAppSetId, // Android only
-  QONUserPropertyKeyCustom,
-} NS_SWIFT_NAME(Qonversion.UserPropertyKey);
-
 NS_SWIFT_NAME(Qonversion.LaunchResult)
 @interface QONLaunchResult : NSObject <NSCoding>
 

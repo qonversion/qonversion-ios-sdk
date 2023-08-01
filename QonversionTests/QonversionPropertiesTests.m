@@ -1,5 +1,6 @@
 #import <XCTest/XCTest.h>
 #import "QNProperties.h"
+#import "QONUserProperty.h"
 
 @interface QNPropertiesTests : XCTestCase
 

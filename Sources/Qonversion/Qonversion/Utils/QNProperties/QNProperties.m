@@ -1,6 +1,7 @@
 #import "QNInternalConstants.h"
 #import "QNProperties.h"
 #import "QNUtils.h"
+#import "QONUserProperty.h"
 
 @implementation QNProperties
 

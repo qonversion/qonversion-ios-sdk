@@ -12,6 +12,7 @@
 #import "QNLocalStorage.h"
 #import "QNInternalConstants.h"
 #import "QONExceptionManager.h"
+#import "QONUserProperty.h"
 
 @interface Qonversion()
 

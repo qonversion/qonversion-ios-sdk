@@ -17,6 +17,7 @@
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONConfiguration.h"
 #import "QONStoreKit2PurchaseModel.h"
+#import "QONUserProperty.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
