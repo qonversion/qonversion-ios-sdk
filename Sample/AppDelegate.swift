@@ -27,14 +27,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     registerForNotifications()
     QonversionSwift.shared.syncStoreKit2Purchases()
     
-    if #available(iOS 15.0, *) {
-      Task.init {
-        
-      }
-    } else {
-      // Fallback on earlier versions
-    }
-    
     return true
   }
   
