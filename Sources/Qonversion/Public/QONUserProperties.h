@@ -4,7 +4,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "QONLaunchResult.h"
+#import "QONUserProperty.h"
 
 @class QONUserProperty;
 
