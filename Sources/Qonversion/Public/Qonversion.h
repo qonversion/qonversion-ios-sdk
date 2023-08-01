@@ -84,18 +84,29 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)presentCodeRedemptionSheet API_AVAILABLE(ios(14.0)) API_UNAVAILABLE(tvos, macos, watchos);
 
 /**
- Sets Qonversion reservered user properties, like email or one-signal id
- @param property        Defined enum key that will be transformed to string
- @param value               Property value
+ Sets Qonversion reserved user properties, like email or one-signal id.
+ Note that using `QONUserPropertyKeyCustom` here will do nothing.
+ To set custom user property, use `setCustomUserProperty` method instead.
+ @param key - Defined enum key that will be transformed to string
+ @param value - Property value
  */
-- (void)setProperty:(QONProperty)property value:(NSString *)value;
+- (void)setUserProperty:(QONUserPropertyKey)key value:(NSString *)value;
 
 /**
- Sets custom user properties
- @param property        Defined enum key that will be transformed to string
- @param value               Property value
+ Sets custom user property
+ @param key - Custom property key
+ @param value - Property value
  */
-- (void)setUserProperty:(NSString *)property value:(NSString *)value;
+- (void)setCustomUserProperty:(NSString *)key value:(NSString *)value;
+
+/**
+ This method returns all the properties, set for the current Qonversion user.
+ All set properties are sent to the server with delay, so if you call
+ this function right after setting some property, it may not be included
+ in the result.
+ @param callback - callback that will be called when response is received
+ */
+- (void)getUserProperties:(QONUserPropertiesCompletionHandler)completion;
 
 /**
  Send your attribution data
@@ -135,8 +146,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)restore:(QNRestoreCompletionHandler)completion;
 
 /**
- Returns Qonversion Products in assotiation with Store Kit Products
- If you get an empty SKProducts be sure your in-app purchases are correctly setted up in AppStore Connect and .storeKit file is available.
+ Returns Qonversion Products in association with Store Kit Products
+ If you get an empty SKProducts be sure your in-app purchases are correctly set up in AppStore Connect and .storeKit file is available.
  
  @see [Installing the iOS SDK](https://qonversion.io/docs/apple)
  @see [Product Center](https://qonversion.io/docs/product-center)
@@ -144,7 +155,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)products:(QONProductsCompletionHandler)completion;
 
 /**
- You can check if a user is eligible for an introductory offer, including a free trial. On the Apple platform, users who have not previously used an introductory offer for any products in the same subscription group are eligible for an introductory offer. Use this method to determine eligibility.
+ You can check if a user is eligible for an introductory offer, including a free trial.
+ On the Apple platform, users who have not previously used an introductory offer for any products
+ in the same subscription group are eligible for an introductory offer. Use this method to determine eligibility.
  
  You can show only a regular price for users who are not eligible for an introductory offer.
  @param productIds products identifiers that must be checked
@@ -156,7 +169,8 @@ NS_ASSUME_NONNULL_BEGIN
  Returns Qonversion Offerings Object
  
  An offering is a group of products that you can offer to a user on a given paywall based on your business logic.
- For example, you can offer one set of products on a paywall immediately after onboarding and another set of products with discounts later on if a user has not converted.
+ For example, you can offer one set of products on a paywall immediately after onboarding and another set of products
+ with discounts later on if a user has not converted.
  Offerings allow changing the products offered remotely without releasing app updates.
  
  @see [Offerings](https://qonversion.io/docs/offerings)
@@ -177,7 +191,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)collectAppleSearchAdsAttribution;
 
 /**
- On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion if tracking is allowed and IDFA is available.
+ On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion
+ if tracking is allowed and IDFA is available.
  For Qonversion/NoIdfa SDK advertising ID is always empty.
  */
 - (void)collectAdvertisingId;
@@ -190,7 +205,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
 
 /**
- This function should be used for the test purpose only. Do not forget to delete the usage of this function before the release.
+ This function should be used for the test purpose only.
+ Do not forget to delete the usage of this function before the release.
  Use this function to attach the user to the experiment.
  @param experimentId identifier of the experiment
  @param groupId identifier of the experiment group
@@ -199,7 +215,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion;
 
 /**
- This function should be used for the test purpose only. Do not forget to delete the usage of this function before the release.
+ This function should be used for the test purpose only.
+ Do not forget to delete the usage of this function before the release.
  Use this function to detach the user from the experiment.
  @param experimentId identifier of the experiment
  @param completion completion block that includes information about the result of the action. Success flag or error.

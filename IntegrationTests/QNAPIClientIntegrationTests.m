@@ -287,7 +287,7 @@
   
   NSDictionary *data = @{
     @"customProperty": @"custom property value",
-    [QNProperties keyForProperty:QONPropertyUserID]: @"custom user id",
+    [QNProperties keyForProperty:QONUserPropertyKeyUserID]: @"custom user id",
   };
   
   NSDictionary *expRes = @{
@@ -299,12 +299,12 @@
   [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
-    [client properties:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-      XCTAssertNotNil(res);
-      XCTAssertNil(error);
-      XCTAssertTrue([self areDictionariesDeepEqual:expRes second:res]);
-      [completionExpectation fulfill];
-    }];
+      [client sendProperties:data completion:^(NSDictionary *_Nullable res, NSError *_Nullable error) {
+          XCTAssertNotNil(res);
+          XCTAssertNil(error);
+          XCTAssertTrue([self areDictionariesDeepEqual:expRes second:res]);
+          [completionExpectation fulfill];
+      }];
   }];
   
   // then
@@ -319,13 +319,13 @@
   
   NSDictionary *data = @{
     @"customProperty": @"custom property value",
-    [QNProperties keyForProperty:QONPropertyUserID]: @"custom user id",
+    [QNProperties keyForProperty:QONUserPropertyKeyUserID]: @"custom user id",
   };
 
   // when
-  [client properties:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-    [self assertAccessDeniedError:res error:error];
-    [completionExpectation fulfill];
+  [client sendProperties:data completion:^(NSDictionary *_Nullable res, NSError *_Nullable error) {
+      [self assertAccessDeniedError:res error:error];
+      [completionExpectation fulfill];
   }];
   
   // then

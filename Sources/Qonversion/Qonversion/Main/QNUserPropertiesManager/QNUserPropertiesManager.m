@@ -1,11 +1,12 @@
 #import "QNUserPropertiesManager.h"
 #import "QNInMemoryStorage.h"
 #import "QNProperties.h"
-#import "QNRequestSerializer.h"
 #import "QNAPIClient.h"
 #import "QNDevice.h"
 #import "QNInternalConstants.h"
 #import "QNProductCenterManager.h"
+#import "QONUserPropertiesMapper.h"
+
 #if !TARGET_OS_OSX
 #import <UIKit/UIKit.h>
 #else
@@ -44,6 +45,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     [_backgroundQueue setMaxConcurrentOperationCount:1];
     [_backgroundQueue setSuspended:NO];
     _apiClient = [QNAPIClient shared];
+    _mapper = [QONUserPropertiesMapper new];
 
     _backgroundQueue.name = kBackgrounQueueName;
     _device = QNDevice.current;
@@ -128,7 +130,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     }
     
     __block __weak QNUserPropertiesManager *weakSelf = self;
-    [self->_apiClient properties:properties
+    [self->_apiClient sendProperties:properties
                       completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       weakSelf.updatingCurrently = NO;
       
@@ -146,6 +148,17 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
         [weakSelf clearProperties:properties];
       }
     }];
+  }];
+}
+
+- (void)getUserProperties:(QONUserPropertiesCompletionHandler)completion {
+  [self->_apiClient getProperties:^(NSArray * _Nullable array, NSError * _Nullable error) {
+      if (error) {
+        completion(nil, error);
+      } else {
+        QONUserProperties *properties = [self.mapper mapUserProperties:array];
+        completion(properties, nil);
+      }
   }];
 }
 

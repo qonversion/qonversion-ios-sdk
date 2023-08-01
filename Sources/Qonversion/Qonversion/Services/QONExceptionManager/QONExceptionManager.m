@@ -147,7 +147,7 @@ static void uncaughtExceptionHandler(NSException * _Nonnull exception) {
         @"exception": crashData,
       };
       
-      [weakSelf.apiClient sendCrashReport:data completion:^(NSDictionary *dict, NSError *error) {
+      [weakSelf.apiClient sendCrashReport:data completion:^(NSError *error) {
         if (error) {
           QONVERSION_LOG(@"Error sending crash information to API: %@", error);
         } else {
