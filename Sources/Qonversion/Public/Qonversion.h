@@ -105,7 +105,7 @@ NS_ASSUME_NONNULL_BEGIN
  All set properties are sent to the server with delay, so if you call
  this function right after setting some property, it may not be included
  in the result.
- @param callback - callback that will be called when response is received
+ @param completion - Completion block that will be called when response is received
  */
 - (void)getUserProperties:(QONUserPropertiesCompletionHandler)completion;
 

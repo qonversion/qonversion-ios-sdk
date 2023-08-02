@@ -15,7 +15,7 @@
 #import <net/if_dl.h>
 #endif
 
-static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
+static NSString * const kBackgroundQueueName = @"qonversion.background.queue.name";
 
 @interface QNUserPropertiesManager()
 
@@ -27,7 +27,6 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
-@property (nonatomic, assign, readwrite) BOOL launchingFinished;
 @property (nonatomic, assign, readwrite) NSUInteger retryDelay;
 @property (nonatomic, assign, readwrite) NSUInteger retriesCounter;
 
@@ -47,7 +46,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     _apiClient = [QNAPIClient shared];
     _mapper = [QONUserPropertiesMapper new];
 
-    _backgroundQueue.name = kBackgrounQueueName;
+    _backgroundQueue.name = kBackgroundQueueName;
     _device = QNDevice.current;
     _retryDelay = kQPropertiesSendingPeriodInSeconds;
     _retriesCounter = 0;
@@ -183,7 +182,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 - (BOOL)runOnBackgroundQueue:(void (^)(void))block {
-  if ([[NSOperationQueue currentQueue].name isEqualToString:kBackgrounQueueName]) {
+  if ([[NSOperationQueue currentQueue].name isEqualToString:kBackgroundQueueName]) {
     QONVERSION_LOG(@"Already running in the background.");
     block();
     return NO;
