@@ -1348,7 +1348,7 @@
 				8957325226DD03A3009507A6 /* QNUserInfoMapper */,
 				8957325626DD03A3009507A6 /* QNErrorsMapper */,
 				8957325926DD03A3009507A6 /* QNMapper */,
-				A1839432047ACF6507225CA0 /* QONUserPropertyMapper */,
+				A1839432047ACF6507225CA0 /* QONUserPropertiesMapper */,
 			);
 			path = Mappers;
 			sourceTree = "<group>";
@@ -1524,13 +1524,13 @@
 			path = QONExceptionManager;
 			sourceTree = "<group>";
 		};
-		A1839432047ACF6507225CA0 /* QONUserPropertyMapper */ = {
+		A1839432047ACF6507225CA0 /* QONUserPropertiesMapper */ = {
 			isa = PBXGroup;
 			children = (
 				A183991B1D59C14ED8BBBC87 /* QONUserPropertiesMapper.m */,
 				A1839295D44BE8B55C48FB2C /* QONUserPropertiesMapper.h */,
 			);
-			path = QONUserPropertyMapper;
+			path = QONUserPropertiesMapper;
 			sourceTree = "<group>";
 		};
 		BB6B3C9FD9EFBC9E1604507D /* Frameworks */ = {
