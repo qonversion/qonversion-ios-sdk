@@ -5,8 +5,8 @@
 
 typedef void (^QNAPIClientEmptyCompletionHandler)(NSError * _Nullable error);
 typedef void (^QNAPIClientDictCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
-typedef void (^QNAPIClientArrayCompletionHandler)(NSArray * _Nullable dict, NSError * _Nullable error);
-typedef void (^QNAPIClientCommonCompletionHandler)(id _Nullable dict, NSError * _Nullable error);
+typedef void (^QNAPIClientArrayCompletionHandler)(NSArray * _Nullable array, NSError * _Nullable error);
+typedef void (^QNAPIClientCommonCompletionHandler)(id _Nullable data, NSError * _Nullable error);
 
 NS_ASSUME_NONNULL_BEGIN
 

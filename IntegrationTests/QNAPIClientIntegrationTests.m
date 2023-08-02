@@ -279,42 +279,49 @@
   [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
-- (void)testProperties {
+- (void)testSendProperties {
   // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Properties call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_properties"];
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Send properties call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_send_properties"];
   QNAPIClient *client = [self getClient:uid];
-  
+
   NSDictionary *data = @{
-    @"customProperty": @"custom property value",
-    [QNProperties keyForProperty:QONUserPropertyKeyUserID]: @"custom user id",
+          @"customProperty": @"custom property value",
+          [QNProperties keyForProperty:QONUserPropertyKeyUserID]: @"custom user id",
   };
   
-  NSDictionary *expRes = @{
-    @"data": @{},
-    @"success": @1,
-  };
+  NSArray *expSavedProperties = @[
+    @{
+      @"key": @"customProperty",
+      @"value": @"custom property value"
+    },
+    @{
+      @"key": @"_q_custom_user_id",
+      @"value": @"custom user id"
+    }
+  ];
 
   // when
   [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
-    XCTAssertNil(createUserError);
+      XCTAssertNil(createUserError);
 
       [client sendProperties:data completion:^(NSDictionary *_Nullable res, NSError *_Nullable error) {
           XCTAssertNotNil(res);
           XCTAssertNil(error);
-          XCTAssertTrue([self areDictionariesDeepEqual:expRes second:res]);
+          XCTAssertTrue([self areArraysDeepEqual:res[@"propertyErrors"] second:@[]]);
+          XCTAssertTrue([self areArraysOfDictionariesEqualIgnoringOrder:res[@"savedProperties"] second:expSavedProperties descriptor:@"key"]);
           [completionExpectation fulfill];
       }];
   }];
-  
+
   // then
   [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
-- (void)testPropertiesError {
+- (void)testSendPropertiesError {
   // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Properties error call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_properties"];
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Send properties error call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_send_properties"];
   QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
   
   NSDictionary *data = @{
@@ -328,6 +335,63 @@
       [completionExpectation fulfill];
   }];
   
+  // then
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
+}
+
+- (void)testGetProperties {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Get properties call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_get_properties"];
+  QNAPIClient *client = [self getClient:uid];
+
+  NSDictionary *data = @{
+          @"customProperty": @"custom property value",
+          [QNProperties keyForProperty:QONUserPropertyKeyUserID]: @"custom user id",
+  };
+
+  NSArray *expRes = @[
+    @{
+      @"key": @"customProperty",
+      @"value": @"custom property value"
+    },
+    @{
+      @"key": @"_q_custom_user_id",
+      @"value": @"custom user id"
+    }
+  ];
+
+  // when
+  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+      XCTAssertNil(createUserError);
+
+      [client sendProperties:data completion:^(NSDictionary *_Nullable sendPropertiesRes, NSError *_Nullable sendPropertiesError) {
+          XCTAssertNil(sendPropertiesError);
+
+          [client getProperties:^(NSArray *res, NSError *error) {
+              XCTAssertNil(error);
+              XCTAssertTrue([self areArraysOfDictionariesEqualIgnoringOrder:res second:expRes descriptor:@"key"]);
+              [completionExpectation fulfill];
+          }];
+      }];
+  }];
+
+  // then
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
+}
+
+- (void)testGetPropertiesError {
+  // given
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Get properties error call"];
+  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_get_properties"];
+  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
+
+  // when
+  [client getProperties:^(NSArray *_Nullable res, NSError *_Nullable error) {
+      [self assertAccessDeniedError:res error:error];
+      [completionExpectation fulfill];
+  }];
+
   // then
   [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }

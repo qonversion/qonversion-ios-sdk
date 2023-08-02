@@ -81,7 +81,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 - (void)processDictRequest:(NSURLRequest *)request completion:(QNAPIClientDictCompletionHandler)completion {
   [self processRequest:request parseResponse:YES completion:^(id _Nullable data, NSError * _Nullable error) {
-      if ([data isKindOfClass:[NSDictionary class]]) {
+      if (error != nil || [data isKindOfClass:[NSDictionary class]]) {
         completion(data, error);
       } else {
         completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
@@ -91,7 +91,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 - (void)processArrayRequest:(NSURLRequest *)request completion:(QNAPIClientArrayCompletionHandler)completion {
   [self processRequest:request parseResponse:YES completion:^(id _Nullable data, NSError * _Nullable error) {
-      if ([data isKindOfClass:[NSArray class]]) {
+      if (error != nil || [data isKindOfClass:[NSArray class]]) {
         completion(data, error);
       } else {
         completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);

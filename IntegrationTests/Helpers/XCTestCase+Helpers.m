@@ -7,13 +7,35 @@
     NSOrderedCollectionDifference *diff = [first differenceFromArray:second
                                                          withOptions:0
                                                 usingEquivalenceTest:^BOOL(id  _Nonnull obj1, id  _Nonnull obj2) {
-      return [self areObjectsEqual:obj1 second:obj2];
-    }];
+                                                    return [self areObjectsEqual:obj1 second:obj2];
+                                                }];
 
     return ![diff hasChanges];
   } else {
     return [first isEqualToArray:second];
   }
+}
+
+- (BOOL)areArraysOfDictionariesEqualIgnoringOrder:(NSArray *)first second:(NSArray *)second descriptor:(NSString *)descriptor {
+  if (first.count != second.count) {
+    return NO;
+  }
+
+  NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:descriptor ascending:YES];
+  NSArray *sortedFirst = [first sortedArrayUsingDescriptors:@[sortDescriptor]];
+  NSArray *sortedSecond = [second sortedArrayUsingDescriptors:@[sortDescriptor]];
+
+  for (NSUInteger i = 0; i < sortedFirst.count; i++) {
+    NSDictionary *dict1 = sortedFirst[i];
+    NSDictionary *dict2 = sortedSecond[i];
+
+    if (![dict1 isEqualToDictionary:dict2]) {
+      NSLog(@"The arrays are not equal.");
+      return NO;
+    }
+  }
+
+  return true;
 }
 
 - (BOOL)areDictionariesDeepEqual:(NSDictionary *)first second:(NSDictionary *)second {
