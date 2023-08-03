@@ -56,19 +56,19 @@
   for (QONUserProperty *userProperty in _properties) {
     propertiesMap[userProperty.key] = userProperty.value;
   }
-  _propertiesMap = [propertiesMap copy];
+  _flatPropertiesMap = [propertiesMap copy];
 
   NSMutableDictionary<NSNumber *, NSString *> *definedPropertiesMap = [NSMutableDictionary dictionary];
   for (QONUserProperty *userProperty in _definedProperties) {
     definedPropertiesMap[@(userProperty.definedKey)] = userProperty.value;
   }
-  _definedPropertiesMap = [definedPropertiesMap copy];
+  _flatDefinedPropertiesMap = [definedPropertiesMap copy];
 
   NSMutableDictionary<NSString *, NSString *> *customPropertiesMap = [NSMutableDictionary dictionary];
   for (QONUserProperty *userProperty in _customProperties) {
     customPropertiesMap[userProperty.key] = userProperty.value;
   }
-  _customPropertiesMap = [customPropertiesMap copy];
+  _flatCustomPropertiesMap = [customPropertiesMap copy];
 }
 
 - (nullable QONUserProperty *)propertyForKey:(NSString *)key {

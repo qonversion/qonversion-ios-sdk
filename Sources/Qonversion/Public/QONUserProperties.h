@@ -16,9 +16,9 @@ NS_SWIFT_NAME(Qonversion.UserProperties)
 @property (nonatomic, copy, nonnull, readonly) NSArray<QONUserProperty *> *properties;
 @property (nonatomic, copy, nonnull, readonly) NSArray<QONUserProperty *> *definedProperties;
 @property (nonatomic, copy, nonnull, readonly) NSArray<QONUserProperty *> *customProperties;
-@property (nonatomic, copy, nonnull, readonly) NSDictionary<NSString *, NSString*> *propertiesMap;
-@property (nonatomic, copy, nonnull, readonly) NSDictionary<NSNumber *, NSString*> *definedPropertiesMap;
-@property (nonatomic, copy, nonnull, readonly) NSDictionary<NSString *, NSString*> *customPropertiesMap;
+@property (nonatomic, copy, nonnull, readonly) NSDictionary<NSString *, NSString*> *flatPropertiesMap;
+@property (nonatomic, copy, nonnull, readonly) NSDictionary<NSNumber *, NSString*> *flatDefinedPropertiesMap;
+@property (nonatomic, copy, nonnull, readonly) NSDictionary<NSString *, NSString*> *flatCustomPropertiesMap;
 
 - (nullable QONUserProperty *)propertyForKey:(nonnull NSString *)key
 NS_SWIFT_NAME(property(for:));
