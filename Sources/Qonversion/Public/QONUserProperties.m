@@ -91,14 +91,4 @@
   return nil;
 }
 
-- (nullable QONUserProperty *)customPropertyForKey:(NSString *)key {
-  for (QONUserProperty *userProperty in _customPropertiesList) {
-    if ([userProperty.key isEqualToString:key]) {
-      return userProperty;
-    }
-  }
-
-  return nil;
-}
-
 @end

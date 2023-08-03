@@ -7,8 +7,8 @@
     NSOrderedCollectionDifference *diff = [first differenceFromArray:second
                                                          withOptions:0
                                                 usingEquivalenceTest:^BOOL(id  _Nonnull obj1, id  _Nonnull obj2) {
-                                                    return [self areObjectsEqual:obj1 second:obj2];
-                                                }];
+      return [self areObjectsEqual:obj1 second:obj2];
+    }];
 
     return ![diff hasChanges];
   } else {

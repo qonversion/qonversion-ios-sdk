@@ -26,9 +26,6 @@ NS_SWIFT_NAME(property(for:));
 - (nullable QONUserProperty *)definedPropertyForKey:(QONUserPropertyKey)key
 NS_SWIFT_NAME(definedProperty(for:));
 
-- (nullable QONUserProperty *)customPropertyForKey:(nonnull NSString *)key
-NS_SWIFT_NAME(customProperty(for:));
-
 @end
 
 NS_ASSUME_NONNULL_END
