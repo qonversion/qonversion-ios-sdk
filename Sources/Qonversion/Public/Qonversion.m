@@ -13,6 +13,7 @@
 #import "QNInternalConstants.h"
 #import "QONRemoteConfigManager.h"
 #import "QONExceptionManager.h"
+#import "QONUserProperty.h"
 
 @interface Qonversion()
 
@@ -103,16 +104,26 @@
   [[Qonversion sharedInstance].attributionManager addAttributionData:data fromProvider:provider];
 }
 
-- (void)setProperty:(QONProperty)property value:(NSString *)value {
-  NSString *key = [QNProperties keyForProperty:property];
+- (void)setUserProperty:(QONUserPropertyKey)key value:(NSString *)value {
+  if (key == QONUserPropertyKeyCustom) {
+    QONVERSION_ERROR(@"Can not set user property with the key `Custom`. "
+                     "To set custom user property, use the `setCustomUserProperty` method.");
+    return;
+  }
+
+  NSString *stringKey = [QNProperties keyForProperty:key];
   
-  if (key) {
-    [self setUserProperty:key value:value];
+  if (stringKey) {
+    [self setCustomUserProperty:stringKey value:value];
   }
 }
 
-- (void)setUserProperty:(NSString *)property value:(NSString *)value {
+- (void)setCustomUserProperty:(NSString *)property value:(NSString *)value {
   [[Qonversion sharedInstance].propertiesManager setUserProperty:property value:value];
+}
+
+- (void)userProperties:(QONUserPropertiesCompletionHandler)completion {
+  [[Qonversion sharedInstance].propertiesManager getUserProperties:completion];
 }
 
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion {
@@ -209,7 +220,7 @@
 
 - (void)collectAdvertisingId {
   NSString *idfa = [QNDevice current].advertiserID;
-  [[Qonversion sharedInstance] setProperty:QONPropertyAdvertisingID value:idfa];
+  [[Qonversion sharedInstance] setUserProperty:QONUserPropertyKeyAdvertisingID value:idfa];
 }
 
 @end

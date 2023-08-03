@@ -1,4 +1,5 @@
 #import "QONLaunchResult+Protected.h"
+#import "QONUserProperties.h"
 
 @implementation QONLaunchResult : NSObject
 

@@ -211,7 +211,15 @@
 		89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */; };
 		89ADA76D25069E1000EB2E54 /* ActivePermissionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */; };
 		A1839332BA452C481BDC499C /* QONExceptionManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839DA452F152E40ED4EB8C /* QONExceptionManager.h */; };
+		A18393481F6CF124F055056C /* QONUserProperty.m in Sources */ = {isa = PBXBuildFile; fileRef = A1839E84DBCF12F2CDC1930D /* QONUserProperty.m */; };
+		A183968F7BFAE4D93F96D32D /* QONUserProperties+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = A18396B586B0A77331A3A346 /* QONUserProperties+Protected.h */; };
+		A18396F8EAB1D96E22ECA3B5 /* QONUserPropertiesMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839295D44BE8B55C48FB2C /* QONUserPropertiesMapper.h */; };
+		A18397AF5F2CFB8C9E51769B /* QONUserProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839DCD5FA33E85193A2684 /* QONUserProperties.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A183981A2075084AD1E3D0AB /* QONUserProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A1839ACEB01696C50FEBB4F4 /* QONUserProperties.m */; };
+		A1839CFAA659B77B7DDDD910 /* QONUserProperty+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839F615CCAF96B67D8A9F2 /* QONUserProperty+Protected.h */; };
+		A1839D70E9E06E327527B4B9 /* QONUserPropertiesMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = A183991B1D59C14ED8BBBC87 /* QONUserPropertiesMapper.m */; };
 		A1839D7723FB8E18EC0294C9 /* QONExceptionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */; };
+		A1839F56181BFBE72A0DD0DF /* QONUserProperty.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839793226FD80F320A246F /* QONUserProperty.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A2649CD29A7FDF280A2EC27C /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E902AE0A2A73461C22DE146A /* Pods_Sample.framework */; };
 /* End PBXBuildFile section */
 
@@ -494,7 +502,15 @@
 		89ADA769250693C400EB2E54 /* ActivePermissionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsViewController.swift; sourceTree = "<group>"; };
 		89ADA76B250696A400EB2E54 /* ActivePermissionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivePermissionsTableViewCell.swift; sourceTree = "<group>"; };
 		A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONExceptionManager.m; sourceTree = "<group>"; };
+		A1839295D44BE8B55C48FB2C /* QONUserPropertiesMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUserPropertiesMapper.h; sourceTree = "<group>"; };
+		A18396B586B0A77331A3A346 /* QONUserProperties+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONUserProperties+Protected.h"; sourceTree = "<group>"; };
+		A1839793226FD80F320A246F /* QONUserProperty.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUserProperty.h; sourceTree = "<group>"; };
+		A183991B1D59C14ED8BBBC87 /* QONUserPropertiesMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONUserPropertiesMapper.m; sourceTree = "<group>"; };
+		A1839ACEB01696C50FEBB4F4 /* QONUserProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONUserProperties.m; sourceTree = "<group>"; };
 		A1839DA452F152E40ED4EB8C /* QONExceptionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONExceptionManager.h; sourceTree = "<group>"; };
+		A1839DCD5FA33E85193A2684 /* QONUserProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUserProperties.h; sourceTree = "<group>"; };
+		A1839E84DBCF12F2CDC1930D /* QONUserProperty.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONUserProperty.m; sourceTree = "<group>"; };
+		A1839F615CCAF96B67D8A9F2 /* QONUserProperty+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONUserProperty+Protected.h"; sourceTree = "<group>"; };
 		A4D01F9F11D02C4E478E68EC /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
 		B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QonversionTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C49A7C36E2D376FDC85E470B /* Pods-Sample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.release.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.release.xcconfig"; sourceTree = "<group>"; };
@@ -924,6 +940,10 @@
 				7094501929CD994200F55E68 /* QONRemoteConfig.m */,
 				70A26ADC2A31BC44008CE4A7 /* QONExperiment.h */,
 				70A26ADD2A31BC44008CE4A7 /* QONExperiment.m */,
+				A1839E84DBCF12F2CDC1930D /* QONUserProperty.m */,
+				A1839793226FD80F320A246F /* QONUserProperty.h */,
+				A1839ACEB01696C50FEBB4F4 /* QONUserProperties.m */,
+				A1839DCD5FA33E85193A2684 /* QONUserProperties.h */,
 			);
 			path = Public;
 			sourceTree = "<group>";
@@ -1265,6 +1285,8 @@
 				8957324526DD03A3009507A6 /* QONOffering+Protected.h */,
 				8957324726DD03A3009507A6 /* QONIntroEligibility+Protected.h */,
 				8957324926DD03A3009507A6 /* QONLaunchResult+Protected.h */,
+				A1839F615CCAF96B67D8A9F2 /* QONUserProperty+Protected.h */,
+				A18396B586B0A77331A3A346 /* QONUserProperties+Protected.h */,
 			);
 			path = Protected;
 			sourceTree = "<group>";
@@ -1293,6 +1315,7 @@
 				8957325226DD03A3009507A6 /* QNUserInfoMapper */,
 				8957325626DD03A3009507A6 /* QNErrorsMapper */,
 				8957325926DD03A3009507A6 /* QNMapper */,
+				A1839432047ACF6507225CA0 /* QONUserPropertiesMapper */,
 			);
 			path = Mappers;
 			sourceTree = "<group>";
@@ -1467,6 +1490,15 @@
 			path = QONExceptionManager;
 			sourceTree = "<group>";
 		};
+		A1839432047ACF6507225CA0 /* QONUserPropertiesMapper */ = {
+			isa = PBXGroup;
+			children = (
+				A183991B1D59C14ED8BBBC87 /* QONUserPropertiesMapper.m */,
+				A1839295D44BE8B55C48FB2C /* QONUserPropertiesMapper.h */,
+			);
+			path = QONUserPropertiesMapper;
+			sourceTree = "<group>";
+		};
 		BB6B3C9FD9EFBC9E1604507D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -1575,6 +1607,11 @@
 				8957328226DD03A3009507A6 /* QONLaunchResult.h in Headers */,
 				895732C526DD03A3009507A6 /* QNRequestBuilder.h in Headers */,
 				A1839332BA452C481BDC499C /* QONExceptionManager.h in Headers */,
+				A1839F56181BFBE72A0DD0DF /* QONUserProperty.h in Headers */,
+				A18397AF5F2CFB8C9E51769B /* QONUserProperties.h in Headers */,
+				A18396F8EAB1D96E22ECA3B5 /* QONUserPropertiesMapper.h in Headers */,
+				A1839CFAA659B77B7DDDD910 /* QONUserProperty+Protected.h in Headers */,
+				A183968F7BFAE4D93F96D32D /* QONUserProperties+Protected.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1923,6 +1960,9 @@
 				8957328F26DD03A3009507A6 /* QONUser.m in Sources */,
 				895732B926DD03A3009507A6 /* QNUserDefaultsStorage.m in Sources */,
 				A1839D7723FB8E18EC0294C9 /* QONExceptionManager.m in Sources */,
+				A18393481F6CF124F055056C /* QONUserProperty.m in Sources */,
+				A183981A2075084AD1E3D0AB /* QONUserProperties.m in Sources */,
+				A1839D70E9E06E327527B4B9 /* QONUserPropertiesMapper.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
