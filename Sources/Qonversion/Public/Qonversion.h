@@ -107,7 +107,7 @@ NS_ASSUME_NONNULL_BEGIN
  in the result.
  @param completion - Completion block that will be called when response is received
  */
-- (void)getUserProperties:(QONUserPropertiesCompletionHandler)completion;
+- (void)userProperties:(QONUserPropertiesCompletionHandler)completion;
 
 /**
  Send your attribution data

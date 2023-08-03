@@ -121,7 +121,7 @@
   [[Qonversion sharedInstance].propertiesManager setUserProperty:property value:value];
 }
 
-- (void)getUserProperties:(QONUserPropertiesCompletionHandler)completion {
+- (void)userProperties:(QONUserPropertiesCompletionHandler)completion {
   [[Qonversion sharedInstance].propertiesManager getUserProperties:completion];
 }
 
