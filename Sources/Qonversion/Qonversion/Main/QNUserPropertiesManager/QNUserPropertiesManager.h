@@ -1,8 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "QONLaunchResult.h"
 
-@class QNProductCenterManager;
-@class QONUserPropertiesMapper;
+@class QNProductCenterManager, QONUserPropertiesMapper;
 
 NS_ASSUME_NONNULL_BEGIN
 

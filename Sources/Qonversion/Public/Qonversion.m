@@ -11,6 +11,7 @@
 #import "QNServicesAssembly.h"
 #import "QNLocalStorage.h"
 #import "QNInternalConstants.h"
+#import "QONRemoteConfigManager.h"
 #import "QONExceptionManager.h"
 #import "QONUserProperty.h"
 

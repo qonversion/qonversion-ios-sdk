@@ -45,34 +45,21 @@
   return key;
 }
 
-+ (QONUserPropertyKey)propertyForKey:(NSString *)key {
-  QONUserPropertyKey propertyKey = QONUserPropertyKeyCustom;
++ (QONUserPropertyKey)propertyKeyFromString:(NSString *)key {
+  NSDictionary<NSString *, NSNumber *> *propertiesMap = @{
+          @"_q_email": @(QONUserPropertyKeyEmail),
+          @"_q_name": @(QONUserPropertyKeyName),
+          @"_q_kochava_device_id": @(QONUserPropertyKeyKochavaDeviceID),
+          @"_q_appsflyer_user_id": @(QONUserPropertyKeyAppsFlyerUserID),
+          @"_q_adjust_adid": @(QONUserPropertyKeyAdjustAdID),
+          @"_q_advertising_id": @(QONUserPropertyKeyAdvertisingID),
+          @"_q_custom_user_id": @(QONUserPropertyKeyUserID),
+          @"_q_firebase_instance_id": @(QONUserPropertyKeyFirebaseAppInstanceId),
+          @"_q_fb_attribution": @(QONUserPropertyKeyFacebookAttribution),
+          @"_q_app_set_id": @(QONUserPropertyKeyAppSetId),
+  };
 
-  if ([key isEqualToString:@"_q_email"]) {
-    propertyKey = QONUserPropertyKeyEmail;
-  } else if ([key isEqualToString:@"_q_email"]) {
-    propertyKey = QONUserPropertyKeyEmail;
-  } else if ([key isEqualToString:@"_q_name"]) {
-    propertyKey = QONUserPropertyKeyName;
-  } else if ([key isEqualToString:@"_q_kochava_device_id"]) {
-    propertyKey = QONUserPropertyKeyKochavaDeviceID;
-  } else if ([key isEqualToString:@"_q_appsflyer_user_id"]) {
-    propertyKey = QONUserPropertyKeyAppsFlyerUserID;
-  } else if ([key isEqualToString:@"_q_adjust_adid"]) {
-    propertyKey = QONUserPropertyKeyAdjustAdID;
-  } else if ([key isEqualToString:@"_q_advertising_id"]) {
-    propertyKey = QONUserPropertyKeyAdvertisingID;
-  } else if ([key isEqualToString:@"_q_custom_user_id"]) {
-    propertyKey = QONUserPropertyKeyUserID;
-  } else if ([key isEqualToString:@"_q_firebase_instance_id"]) {
-    propertyKey = QONUserPropertyKeyFirebaseAppInstanceId;
-  } else if ([key isEqualToString:@"_q_fb_attribution"]) {
-    propertyKey = QONUserPropertyKeyFacebookAttribution;
-  } else if ([key isEqualToString:@"_q_app_set_id"]) {
-    propertyKey = QONUserPropertyKeyAppSetId;
-  }
-
-  return propertyKey;
+  return propertiesMap[key].integerValue ?: QONUserPropertyKeyCustom;
 }
 
 + (BOOL)checkValue:(NSString *)value {

@@ -178,7 +178,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)sendProperties:(NSDictionary *)properties completion:(QNAPIClientDictCompletionHandler)completion {
-  NSMutableArray *propertiesForApi = [NSMutableArray array];
+  NSMutableArray *propertiesForApi = [NSMutableArray new];
   NSArray *keys = [properties allKeys];
   for (NSString *key in keys) {
     NSString *value = properties[key];

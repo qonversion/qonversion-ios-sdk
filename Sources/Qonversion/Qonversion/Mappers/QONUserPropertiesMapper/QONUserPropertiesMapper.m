@@ -16,7 +16,7 @@
     return nil;
   }
 
-  NSMutableArray<QONUserProperty *> *properties = [NSMutableArray array];
+  NSMutableArray<QONUserProperty *> *properties = [NSMutableArray new];
   for (NSDictionary *userPropertyData in userPropertiesData) {
     QONUserProperty *property = [self mapUserProperty:userPropertyData];
     if (property != nil) {
@@ -34,6 +34,11 @@
 
   NSString *key = userPropertyData[@"key"];
   NSString *value = userPropertyData[@"value"];
+
+  if (!key || !value) {
+    return nil;
+  }
+
   return [[QONUserProperty alloc] initWithKey:key value:value];
 }
 

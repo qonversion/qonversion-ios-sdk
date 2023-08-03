@@ -4,8 +4,6 @@
 //
 
 #import "QONUserProperties.h"
-#import "QONUserProperty.h"
-
 
 @implementation QONUserProperties : NSObject
 
@@ -20,54 +18,29 @@
   return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder *)coder {
-  self = [super init];
-
-  if (self) {
-    _properties = [coder decodeObjectForKey:NSStringFromSelector(@selector(properties))];
-    [self initCollections];
-  }
-
-  return self;
-}
-
-- (void)encodeWithCoder:(NSCoder *)coder {
-  [coder encodeObject:_properties forKey:NSStringFromSelector(@selector(properties))];
-}
-
 - (void)initCollections {
-  NSMutableArray<QONUserProperty *> *definedPropertiesList = [NSMutableArray array];
-  for (QONUserProperty *userProperty in _properties) {
-    if (userProperty.definedKey != QONUserPropertyKeyCustom) {
-      [definedPropertiesList addObject:userProperty];
-    }
-  }
-  _definedProperties = [definedPropertiesList copy];
+  NSMutableArray<QONUserProperty *> *definedPropertiesList = [NSMutableArray new];
+  NSMutableArray<QONUserProperty *> *customPropertiesList = [NSMutableArray new];
+  NSMutableDictionary<NSString *, NSString *> *propertiesMap = [NSMutableDictionary new];
+  NSMutableDictionary<NSNumber *, NSString *> *definedPropertiesMap = [NSMutableDictionary new];
+  NSMutableDictionary<NSString *, NSString *> *customPropertiesMap = [NSMutableDictionary new];
 
-  NSMutableArray<QONUserProperty *> *customPropertiesList = [NSMutableArray array];
-  for (QONUserProperty *userProperty in _properties) {
-    if (userProperty.definedKey == QONUserPropertyKeyCustom) {
-      [customPropertiesList addObject:userProperty];
-    }
-  }
-  _customProperties = [customPropertiesList copy];
-
-  NSMutableDictionary<NSString *, NSString *> *propertiesMap = [NSMutableDictionary dictionary];
   for (QONUserProperty *userProperty in _properties) {
     propertiesMap[userProperty.key] = userProperty.value;
+
+    if (userProperty.definedKey == QONUserPropertyKeyCustom) {
+      [customPropertiesList addObject:userProperty];
+      customPropertiesMap[userProperty.key] = userProperty.value;
+    } else {
+      [definedPropertiesList addObject:userProperty];
+      definedPropertiesMap[@(userProperty.definedKey)] = userProperty.value;
+    }
   }
+
+  _definedProperties = [definedPropertiesList copy];
+  _customProperties = [customPropertiesList copy];
   _flatPropertiesMap = [propertiesMap copy];
-
-  NSMutableDictionary<NSNumber *, NSString *> *definedPropertiesMap = [NSMutableDictionary dictionary];
-  for (QONUserProperty *userProperty in _definedProperties) {
-    definedPropertiesMap[@(userProperty.definedKey)] = userProperty.value;
-  }
   _flatDefinedPropertiesMap = [definedPropertiesMap copy];
-
-  NSMutableDictionary<NSString *, NSString *> *customPropertiesMap = [NSMutableDictionary dictionary];
-  for (QONUserProperty *userProperty in _customProperties) {
-    customPropertiesMap[userProperty.key] = userProperty.value;
-  }
   _flatCustomPropertiesMap = [customPropertiesMap copy];
 }
 

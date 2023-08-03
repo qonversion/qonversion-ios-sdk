@@ -13,24 +13,9 @@
   if (self) {
     _key = key;
     _value = value;
-    _definedKey = [QNProperties propertyForKey:_key];
+    _definedKey = [QNProperties propertyKeyFromString:key];
   }
   return self;
-}
-
-- (instancetype)initWithCoder:(NSCoder *)coder {
-  self = [super init];
-  if (self) {
-    _key = [coder decodeObjectForKey:NSStringFromSelector(@selector(key))];
-    _value = [coder decodeObjectForKey:NSStringFromSelector(@selector(value))];
-    _definedKey = [QNProperties propertyForKey:_key];
-  }
-  return self;
-}
-
-- (void)encodeWithCoder:(NSCoder *)coder {
-  [coder encodeObject:_key forKey:NSStringFromSelector(@selector(key))];
-  [coder encodeObject:_value forKey:NSStringFromSelector(@selector(value))];
 }
 
 @end

@@ -309,7 +309,7 @@
           XCTAssertNotNil(res);
           XCTAssertNil(error);
           XCTAssertTrue([self areArraysDeepEqual:res[@"propertyErrors"] second:@[]]);
-          XCTAssertTrue([self areArraysOfDictionariesEqualIgnoringOrder:res[@"savedProperties"] second:expSavedProperties descriptor:@"key"]);
+          XCTAssertTrue([self areArraysOfDictionariesEqual:res[@"savedProperties"] second:expSavedProperties descriptor:@"key"]);
           [completionExpectation fulfill];
       }];
   }];
@@ -370,7 +370,7 @@
 
           [client getProperties:^(NSArray *res, NSError *error) {
               XCTAssertNil(error);
-              XCTAssertTrue([self areArraysOfDictionariesEqualIgnoringOrder:res second:expRes descriptor:@"key"]);
+              XCTAssertTrue([self areArraysOfDictionariesEqual:res second:expRes descriptor:@"key"]);
               [completionExpectation fulfill];
           }];
       }];

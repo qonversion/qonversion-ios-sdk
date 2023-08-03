@@ -241,7 +241,7 @@
           XCTAssertNotNil(res);
           XCTAssertNil(error);
           XCTAssertTrue([self areArraysDeepEqual:res[@"propertyErrors"] second:@[]]);
-          XCTAssertTrue([self areArraysOfDictionariesEqualIgnoringOrder:res[@"savedProperties"] second:expSavedProperties descriptor:@"key"]);
+          XCTAssertTrue([self areArraysOfDictionariesEqual:res[@"savedProperties"] second:expSavedProperties descriptor:@"key"]);
           [completionExpectation fulfill];
       }];
   }];

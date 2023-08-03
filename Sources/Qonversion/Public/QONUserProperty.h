@@ -22,13 +22,13 @@ typedef NS_ENUM(NSInteger, QONUserPropertyKey) {
     QONUserPropertyKeyAdvertisingID,
     QONUserPropertyKeyUserID,
     QONUserPropertyKeyFirebaseAppInstanceId,
-    QONUserPropertyKeyFacebookAttribution, // Android only
-    QONUserPropertyKeyAppSetId, // Android only
+    QONUserPropertyKeyFacebookAttribution, // Android only, can be received via Qonversion.userProperties
+    QONUserPropertyKeyAppSetId, // Android only, can be received via Qonversion.userProperties
     QONUserPropertyKeyCustom,
 } NS_SWIFT_NAME(Qonversion.UserPropertyKey);
 
 NS_SWIFT_NAME(Qonversion.UserProperty)
-@interface QONUserProperty : NSObject <NSCoding>
+@interface QONUserProperty : NSObject
 
 /**
  Raw property key
@@ -43,7 +43,7 @@ NS_SWIFT_NAME(Qonversion.UserProperty)
 /**
  Qonversion defined property key. `Custom` for non-Qonversion properties.
  */
-@property (nonatomic, readonly) QONUserPropertyKey definedKey;
+@property (nonatomic, assign, readonly) QONUserPropertyKey definedKey;
 
 @end
 

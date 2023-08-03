@@ -16,7 +16,7 @@
   }
 }
 
-- (BOOL)areArraysOfDictionariesEqualIgnoringOrder:(NSArray *)first second:(NSArray *)second descriptor:(NSString *)descriptor {
+- (BOOL)areArraysOfDictionariesEqual:(NSArray *)first second:(NSArray *)second descriptor:(NSString *)descriptor {
   if (first.count != second.count) {
     return NO;
   }
@@ -35,7 +35,7 @@
     }
   }
 
-  return true;
+  return YES;
 }
 
 - (BOOL)areDictionariesDeepEqual:(NSDictionary *)first second:(NSDictionary *)second {
