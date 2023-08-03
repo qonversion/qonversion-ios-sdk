@@ -13,9 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(Qonversion.UserProperties)
 @interface QONUserProperties : NSObject <NSCoding>
 
-@property (nonatomic, copy, nonnull, readonly) NSArray<QONUserProperty *> *propertiesList;
-@property (nonatomic, copy, nonnull, readonly) NSArray<QONUserProperty *> *definedPropertiesList;
-@property (nonatomic, copy, nonnull, readonly) NSArray<QONUserProperty *> *customPropertiesList;
+@property (nonatomic, copy, nonnull, readonly) NSArray<QONUserProperty *> *properties;
+@property (nonatomic, copy, nonnull, readonly) NSArray<QONUserProperty *> *definedProperties;
+@property (nonatomic, copy, nonnull, readonly) NSArray<QONUserProperty *> *customProperties;
 @property (nonatomic, copy, nonnull, readonly) NSDictionary<NSString *, NSString*> *propertiesMap;
 @property (nonatomic, copy, nonnull, readonly) NSDictionary<NSNumber *, NSString*> *definedPropertiesMap;
 @property (nonatomic, copy, nonnull, readonly) NSDictionary<NSString *, NSString*> *customPropertiesMap;
