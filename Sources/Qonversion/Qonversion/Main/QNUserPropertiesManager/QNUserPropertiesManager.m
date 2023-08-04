@@ -129,7 +129,7 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
     }
     
     __block __weak QNUserPropertiesManager *weakSelf = self;
-    [self->_apiClient sendProperties:properties
+    [self.apiClient sendProperties:properties
                       completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       weakSelf.updatingCurrently = NO;
       
@@ -151,7 +151,7 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 }
 
 - (void)getUserProperties:(QONUserPropertiesCompletionHandler)completion {
-  [self->_apiClient getProperties:^(NSArray * _Nullable array, NSError * _Nullable error) {
+  [self.apiClient getProperties:^(NSArray * _Nullable array, NSError * _Nullable error) {
       if (error) {
         completion(nil, error);
       } else {
