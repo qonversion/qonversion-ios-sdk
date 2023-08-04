@@ -10,11 +10,9 @@
 #import "QNUserInfoServiceInterface.h"
 #import "QNLocalStorage.h"
 #import "QNInternalConstants.h"
-#import "QNKeychainStorage.h"
 #import "QNUserInfoMapperInterface.h"
 #import "QNAPIClient.h"
 
-static NSUInteger const kKeychainAttemptsCount = 3;
 
 @implementation QNUserInfoService
 
@@ -30,23 +28,14 @@ static NSUInteger const kKeychainAttemptsCount = 3;
 
 - (NSString *)obtainUserID {
   NSString *cachedUserID = [self.localStorage loadStringForKey:kKeyQUserDefaultsUserID];
-  NSString *resultUserID = cachedUserID;
-  
-  if (resultUserID.length == 0) {
-    resultUserID = [self.keychainStorage obtainUserID:kKeychainAttemptsCount];
-    [self.keychainStorage resetUserID];
-  }
-  
-  if (resultUserID.length == 0) {
-    resultUserID = [self generateRandomUserID];
-  }
   
   if (cachedUserID.length == 0) {
-    [self.localStorage setString:resultUserID forKey:kKeyQUserDefaultsUserID];
-    [self.localStorage setString:resultUserID forKey:kKeyQUserDefaultsOriginalUserID];
+    cachedUserID = [self generateRandomUserID];
+    [self.localStorage setString:cachedUserID forKey:kKeyQUserDefaultsUserID];
+    [self.localStorage setString:cachedUserID forKey:kKeyQUserDefaultsOriginalUserID];
   }
   
-  return resultUserID;
+  return cachedUserID;
 }
 
 - (void)storeIdentity:(NSString *)userID {
@@ -69,7 +58,6 @@ static NSUInteger const kKeychainAttemptsCount = 3;
 - (void)deleteUser {
   [self.localStorage removeObjectForKey:kKeyQUserDefaultsUserID];
   [self.localStorage removeObjectForKey:kKeyQUserDefaultsOriginalUserID];
-  [self.keychainStorage resetUserID];
 }
 
 - (NSString *)obtainCustomIdentityUserID {

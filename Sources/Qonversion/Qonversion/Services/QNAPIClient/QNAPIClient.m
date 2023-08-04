@@ -5,11 +5,6 @@
 #import "QONErrors.h"
 #import "QNUtils.h"
 #import "QNAPIConstants.h"
-#import "QNInternalConstants.h"
-#import "QNInternalConstants.h"
-#import "QONOffering.h"
-#import "QONExperimentGroup.h"
-#import "QONOffering.h"
 #import "QNErrorsMapper.h"
 #import "QNKeyedArchiver.h"
 #import "QONStoreKit2PurchaseModel.h"
@@ -78,18 +73,40 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   [self.requestBuilder setApiKey:[self obtainApiKey]];
 }
 
-- (void)processRequest:(NSURLRequest *)request completion:(QNAPIClientCompletionHandler)completion {
-  [self processRequest:request parseResponse:YES completion:completion];
+- (void)processRequestWithoutResponse:(NSURLRequest *)request completion:(QNAPIClientEmptyCompletionHandler)completion {
+  [self processRequest:request parseResponse:NO completion:^(id _Nullable data, NSError * _Nullable error) {
+      completion(error);
+  }];
 }
 
-- (void)processRequest:(NSURLRequest *)request parseResponse:(BOOL)parseResponse completion:(QNAPIClientCompletionHandler)completion {
-  [self dataTaskWithRequest:request parseResponse:parseResponse completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+- (void)processDictRequest:(NSURLRequest *)request completion:(QNAPIClientDictCompletionHandler)completion {
+  [self processRequest:request parseResponse:YES completion:^(id _Nullable data, NSError * _Nullable error) {
+      if (error != nil || [data isKindOfClass:[NSDictionary class]]) {
+        completion(data, error);
+      } else {
+        completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+      }
+  }];
+}
+
+- (void)processArrayRequest:(NSURLRequest *)request completion:(QNAPIClientArrayCompletionHandler)completion {
+  [self processRequest:request parseResponse:YES completion:^(id _Nullable data, NSError * _Nullable error) {
+      if (error != nil || [data isKindOfClass:[NSArray class]]) {
+        completion(data, error);
+      } else {
+        completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+      }
+  }];
+}
+
+- (void)processRequest:(NSURLRequest *)request parseResponse:(BOOL)parseResponse completion:(QNAPIClientCommonCompletionHandler)completion {
+  [self dataTaskWithRequest:request parseResponse:parseResponse completion:^(id _Nullable data, NSError * _Nullable error) {
     if (!self.criticalError && error && [self.criticalErrorCodes containsObject:@(error.code)]) {
       self.criticalError = error;
     }
-    
+
     if (completion) {
-      completion(dict, error);
+      completion(data, error);
     }
   }];
 }
@@ -101,27 +118,27 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   data = [self enrichPushTokenData:data];
   NSURLRequest *request = [self.requestBuilder makeSendPushTokenRequestWith:data];
   
-  [self processRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+  [self processDictRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     BOOL isSuccess = error == nil;
     completion(isSuccess);
   }];
 }
 
-- (void)launchRequest:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+- (void)launchRequest:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *launchData = [self enrichParameters:[self.requestSerializer launchData]];
   NSURLRequest *request = [self.requestBuilder makeInitRequestWith:launchData];
-  [self processRequest:request completion:completion];
+  [self processDictRequest:request completion:completion];
 }
 
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                receipt:(nullable NSString *)receipt
-            completion:(QNAPIClientCompletionHandler)completion {
+            completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseInfo:purchaseInfo receipt:receipt];
   NSDictionary *resultData = [self enrichParameters:body];
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
-  
-  [self processRequest:request completion:completion];
+
+  [self processDictRequest:request completion:completion];
   
   return [request copy];
 }
@@ -129,66 +146,79 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
-                           completion:(QNAPIClientCompletionHandler)completion {
+                           completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt];
   return [self purchaseRequestWith:body completion:completion];
 }
 
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *)body
-                           completion:(QNAPIClientCompletionHandler)completion {
+                           completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *resultData = [self enrichParameters:body];
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
   
-  [self processRequest:request completion:completion];
+  [self processDictRequest:request completion:completion];
   
   return [request copy];
 }
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
-                                         completion:(QNAPIClientCompletionHandler)completion {
+                                         completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *requestData = [self.requestSerializer introTrialEligibilityDataForProducts:products];
   
   return [self checkTrialIntroEligibilityParamsForData:requestData completion:completion];
 }
 
 - (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
-                                     completion:(QNAPIClientCompletionHandler)completion {
+                                     completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *resultBody = [self enrichParameters:data];
   NSURLRequest *request = [self.requestBuilder makeIntroTrialEligibilityRequestWithData:resultBody];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  return [self processDictRequest:request completion:completion];
 }
 
-- (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion {
-  NSDictionary *body = [self enrichParameters:@{@"properties": properties}];
-  NSURLRequest *request = [self.requestBuilder makePropertiesRequestWith:body];
+- (void)sendProperties:(NSDictionary *)properties completion:(QNAPIClientDictCompletionHandler)completion {
+  NSMutableArray *propertiesForApi = [NSMutableArray new];
+  NSArray *keys = [properties allKeys];
+  for (NSString *key in keys) {
+    NSString *value = properties[key];
+    NSDictionary *keyValueObject = @{@"key": key, @"value": value};
+    [propertiesForApi addObject:keyValueObject];
+  }
+
+  NSURLRequest *request = [self.requestBuilder makeSendPropertiesRequestForUserId:_userID parameters:propertiesForApi];
   
-  [self processRequest:request completion:completion];
+  [self processDictRequest:request completion:completion];
 }
 
-- (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion {
+- (void)getProperties:(QNAPIClientArrayCompletionHandler)completion {
+  NSURLRequest *request = [self.requestBuilder makeGetPropertiesRequestForUserId:_userID];
+
+  [self processArrayRequest:request completion:completion];
+}
+
+- (void)userActionPointsWithCompletion:(QNAPIClientDictCompletionHandler)completion {
   NSURLRequest *request = [self.requestBuilder makeUserActionPointsRequestWith:self.userID];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  return [self processDictRequest:request completion:completion];
 }
 
-- (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion {
+- (void)automationWithID:(NSString *)automationID completion:(QNAPIClientDictCompletionHandler)completion {
   NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  return [self processDictRequest:request completion:completion];
 }
 
-- (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion {
+- (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientDictCompletionHandler)completion {
   NSURLRequest *request = [self.requestBuilder makeUserInfoRequestWithID:userID apiKey:[self obtainApiKey]];
-  return [self dataTaskWithRequest:request completion:completion];
+  return [self processDictRequest:request completion:completion];
 }
 
-- (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion {
+- (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *parameters = @{@"anon_id": anonUserID, @"identity_id": userID};
   NSURLRequest *request = [self.requestBuilder makeCreateIdentityRequestWith:parameters];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  return [self processDictRequest:request completion:completion];
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID {
@@ -196,20 +226,20 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID
-                    completion:(QNAPIClientCompletionHandler)completion {
+                    completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *body = @{@"user": self.userID};
   NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  return [self processDictRequest:request completion:completion];
 }
 
 - (void)attributionRequest:(QONAttributionProvider)provider
                       data:(NSDictionary *)data
-                completion:(QNAPIClientCompletionHandler)completion {
+                completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
   NSDictionary *resultData = [self enrichParameters:body];
   NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:resultData];
-  [self processRequest:request completion:completion];
+  [self processDictRequest:request completion:completion];
 }
 
 - (void)processStoredRequests {
@@ -239,7 +269,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   for (NSString *transactionId in unarchivedData.allKeys) {
     NSURLRequest *request = unarchivedData[transactionId];
     if ([request isKindOfClass:[NSURLRequest class]]) {
-      [self dataTaskWithRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      [self dataTaskWithRequest:request completion:^(id _Nullable dict, NSError * _Nullable error) {
         if (![QNUtils shouldPurchaseRequestBeRetried:error]) {
           [self removeStoredRequestForTransactionId:transactionId];
         }
@@ -248,7 +278,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   }
 }
 
-- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientCompletionHandler)completion {
+- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientEmptyCompletionHandler)completion {
   NSDictionary *body = [self enrichSdkLogParameters:data];
   NSURLRequest *request = [self.requestBuilder makeSdkLogsRequestWithBody:body];
   NSMutableURLRequest *mutableRequest = [request mutableCopy];
@@ -256,29 +286,25 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
           @"Content-Type": @"application/json"
   }];
 
-  [self processRequest:mutableRequest parseResponse:NO completion:completion];
+  [self processRequestWithoutResponse:mutableRequest completion:completion];
 }
 
-- (void)loadRemoteConfig:(QNAPIClientCompletionHandler)completion {
+- (void)loadRemoteConfig:(QNAPIClientDictCompletionHandler)completion {
   NSURLRequest *request = [self.requestBuilder remoteConfigRequestForUserId:self.userID];
   
-  return [self dataTaskWithRequest:request completion:completion];
+  return [self processDictRequest:request completion:completion];
 }
 
-- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientCompletionHandler)completion {
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientEmptyCompletionHandler)completion {
   NSURLRequest *request = [self.requestBuilder makeAttachUserToExperimentRequest:experimentId groupId:groupId userID:self.userID];
-  
-  [self dataTaskWithRequest:request parseResponse:NO completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    completion(@{}, error);
-  }];
+
+  [self processRequestWithoutResponse:request completion:completion];
 }
 
-- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientCompletionHandler)completion {
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientEmptyCompletionHandler)completion {
   NSURLRequest *request = [self.requestBuilder makeDetachUserToExperimentRequest:experimentId userID:self.userID];
-  
-  [self dataTaskWithRequest:request parseResponse:NO completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    completion(@{}, error);
-  }];
+
+  [self processRequestWithoutResponse:request completion:completion];
 }
 
 // MARK: - Private
@@ -332,15 +358,17 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request
-                 completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+                 completion:(QNAPIClientCommonCompletionHandler)completion {
   [self dataTaskWithRequest:request parseResponse:YES completion:completion];
 }
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request
               parseResponse:(BOOL)parseResponse
-                 completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
-  if (self.criticalError && completion) {
-    completion(nil, self.criticalError);
+                 completion:(QNAPIClientCommonCompletionHandler)completion {
+  if (self.criticalError) {
+    if (completion) {
+      completion(nil, self.criticalError);
+    }
     return;
   }
   
@@ -349,18 +377,12 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 - (void)dataTaskWithRequest:(NSURLRequest *)request
                    tryCount:(NSInteger)tryCount
-                 completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
-  [self dataTaskWithRequest:request tryCount:tryCount parseResponse:YES completion:completion];
-}
-
-- (void)dataTaskWithRequest:(NSURLRequest *)request
-                   tryCount:(NSInteger)tryCount
               parseResponse:(BOOL)parseResponse
-                 completion:(void (^)(NSDictionary * _Nullable dict, NSError * _Nullable error))completion {
+                 completion:(QNAPIClientCommonCompletionHandler)completion {
   __block NSInteger doneTryCount = tryCount;
   
   __block __weak QNAPIClient *weakSelf = self;
-  [[self.session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+  [[self.session dataTaskWithRequest:request completionHandler:^(id _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
     if (error) {
       BOOL isConnectionError = [QNUtils isConnectionError:error];
       if (isConnectionError) {
@@ -373,7 +395,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
           [weakSelf storeRequestIfNeeded:request];
         }
       }
-      
+
       if (completion) {
         completion(nil, error);
       }
@@ -403,26 +425,26 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     }
 
     NSError *jsonError;
-    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
+    id dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&jsonError];
 
     if (jsonError.code == kUnableToParseEmptyDataDefaultCode && !parseResponse) {
       completion(nil, nil);
       return;
     }
-    
+
     if ((jsonError.code || !dict)) {
       completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
       return;
     }
-    
+
     NSError *apiError = [weakSelf.errorsMapper errorFromRequestResult:dict];
-    
+
     if (apiError) {
       QONVERSION_LOG(@"❌ Request failed: %@, error: %@", request.URL, apiError);
       completion(nil, apiError);
       return;
     }
-    
+
     completion(dict, nil);
   }] resume];
 }

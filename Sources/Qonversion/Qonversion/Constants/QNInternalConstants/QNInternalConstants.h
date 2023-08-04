@@ -24,7 +24,7 @@
 #endif
 
 extern NSString *const keyQInternalUserID;
-extern NSString *const keyQONPropertyReg;
+extern NSString *const keyQONUserPropertyKeyReg;
 extern NSString *const keyQSource;
 extern NSString *const keyQSourceVersion;
 

@@ -8,9 +8,6 @@
 
 #import "QNServicesAssembly.h"
 #import "QNUserInfoService.h"
-#import "QNKeychainStorage.h"
-#import "QNKeychainStorage.h"
-#import "QNKeychain.h"
 #import "QNUserDefaultsStorage.h"
 #import "QNInternalConstants.h"
 #import "QNIdentityManager.h"
@@ -22,7 +19,6 @@
 
 - (id<QNUserInfoServiceInterface>)userInfoService {
   QNUserInfoService *service = [QNUserInfoService new];
-  service.keychainStorage = [self keychainStorage];
   service.localStorage = [self localStorage];
   service.apiClient = [QNAPIClient shared];
   service.mapper = [self userInfoMapper];
@@ -43,13 +39,6 @@
   service.apiClient = [QNAPIClient shared];
   
   return service;
-}
-
-- (id<QNKeychainStorageInterface>)keychainStorage {
-  QNKeychainStorage *storage = [QNKeychainStorage new];
-  storage.keychain = [QNKeychain new];
-  
-  return storage;
 }
 
 - (id<QNLocalStorage>)localStorage {
