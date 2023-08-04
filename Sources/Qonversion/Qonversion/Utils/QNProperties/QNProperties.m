@@ -59,7 +59,7 @@
           @"_q_app_set_id": @(QONUserPropertyKeyAppSetId),
   };
 
-  return propertiesMap[key].integerValue ?: QONUserPropertyKeyCustom;
+  return propertiesMap[key] ? propertiesMap[key].integerValue : QONUserPropertyKeyCustom;
 }
 
 + (BOOL)checkValue:(NSString *)value {
