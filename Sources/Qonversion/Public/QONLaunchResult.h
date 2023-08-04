@@ -2,7 +2,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class QONEntitlement, QONProduct, QONOfferings, QONIntroEligibility, QONUser, QONRemoteConfig;
+@class QONEntitlement, QONProduct, QONOfferings, QONIntroEligibility, QONUser, QONRemoteConfig, QONUserProperties;
 
 typedef NS_ENUM(NSInteger, QONAttributionProvider) {
   QONAttributionProviderAppsFlyer = 0,
@@ -11,23 +11,6 @@ typedef NS_ENUM(NSInteger, QONAttributionProvider) {
   QONAttributionProviderAppleSearchAds,
   QONAttributionProviderAppleAdServices
 } NS_SWIFT_NAME(Qonversion.AttributionProvider);
-
-/**
- Qonversion Defined User Properties
- We defined some common case properties and provided API for adding them
- @see [Product Center](https://qonversion.io/docs/defined-user-properties)
- */
-typedef NS_ENUM(NSInteger, QONProperty) {
-  QONPropertyEmail = 0,
-  QONPropertyName,
-  QONPropertyAppsFlyerUserID,
-  QONPropertyAdjustAdID,
-  QONPropertyKochavaDeviceID,
-  QONPropertyAdvertisingID,
-  QONPropertyUserID,
-  QONPropertyFirebaseAppInstanceId
-} NS_SWIFT_NAME(Qonversion.Property);
-
 
 NS_SWIFT_NAME(Qonversion.LaunchResult)
 @interface QONLaunchResult : NSObject <NSCoding>
@@ -84,6 +67,8 @@ typedef void (^QONExperimentAttachCompletionHandler)(BOOL success, NSError  *_Nu
 typedef void (^QONUserInfoCompletionHandler)(QONUser *_Nullable user, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.UserInfoCompletionHandler);
 
 typedef void (^QONOfferingsCompletionHandler)(QONOfferings *_Nullable offerings, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.OfferingsCompletionHandler);
+
+typedef void (^QONUserPropertiesCompletionHandler)(QONUserProperties *_Nullable userProperties, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.UserPropertiesCompletionHandler);
 
 typedef void (^QONDefaultCompletionHandler)(BOOL success, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.DefaulthCompletionHandler);
 

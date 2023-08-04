@@ -14,7 +14,8 @@ typedef NS_ENUM(NSInteger, QONRequestType) {
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeSendPushTokenRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey;
-- (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makeSendPropertiesRequestForUserId:(NSString *)userId parameters:(NSArray *)parameters;
+- (NSURLRequest *)makeGetPropertiesRequestForUserId:(NSString *)userId;
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter;

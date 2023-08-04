@@ -16,7 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QNUserInfoService : NSObject <QNUserInfoServiceInterface>
 
-@property (nonatomic, strong) id<QNKeychainStorageInterface> keychainStorage;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
 @property (nonatomic, strong) id<QNUserInfoMapperInterface> mapper;
 @property (nonatomic, strong) QNAPIClient *apiClient;

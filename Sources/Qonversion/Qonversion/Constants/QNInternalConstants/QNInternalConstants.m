@@ -9,7 +9,7 @@
 #import "QNInternalConstants.h"
 
 NSString *const keyQInternalUserID = @"keyQInternalUserID";
-NSString *const keyQONPropertyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
+NSString *const keyQONUserPropertyKeyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
 NSString *const keyQSource = @"com.qonversion.keys.source";
 NSString *const keyQSourceVersion = @"com.qonversion.keys.sourceVersion";
 

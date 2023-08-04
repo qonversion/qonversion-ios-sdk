@@ -1,9 +1,12 @@
 #import "Foundation/Foundation.h"
 #import "QONLaunchResult.h"
 
-@class SKProduct, SKPaymentTransaction, QNProductPurchaseModel, QONOffering, QONProduct, QONStoreKit2PurchaseModel;
+@class SKProduct, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel;
 
-typedef void (^QNAPIClientCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
+typedef void (^QNAPIClientEmptyCompletionHandler)(NSError * _Nullable error);
+typedef void (^QNAPIClientDictCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
+typedef void (^QNAPIClientArrayCompletionHandler)(NSArray * _Nullable array, NSError * _Nullable error);
+typedef void (^QNAPIClientCommonCompletionHandler)(id _Nullable data, NSError * _Nullable error);
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -19,43 +22,44 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setSDKVersion:(NSString *)version;
 - (void)setBaseURL:(NSString *)url;
-- (void)launchRequest:(QNAPIClientCompletionHandler)completion;
+- (void)launchRequest:(QNAPIClientDictCompletionHandler)completion;
 - (void)sendPushToken:(void (^)(BOOL success))completion;
 
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
-                           completion:(QNAPIClientCompletionHandler)completion;
+                           completion:(QNAPIClientDictCompletionHandler)completion;
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *) body
-                           completion:(QNAPIClientCompletionHandler)completion;
+                           completion:(QNAPIClientDictCompletionHandler)completion;
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
-                                         completion:(QNAPIClientCompletionHandler)completion;
+                                         completion:(QNAPIClientDictCompletionHandler)completion;
 - (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
-                                     completion:(QNAPIClientCompletionHandler)completion;
+                                     completion:(QNAPIClientDictCompletionHandler)completion;
 
-- (void)properties:(NSDictionary *)properties completion:(QNAPIClientCompletionHandler)completion;
-- (void)userActionPointsWithCompletion:(QNAPIClientCompletionHandler)completion;
-- (void)automationWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;
+- (void)sendProperties:(NSDictionary *)properties completion:(QNAPIClientDictCompletionHandler)completion;
+- (void)getProperties:(QNAPIClientArrayCompletionHandler)completion;
+- (void)userActionPointsWithCompletion:(QNAPIClientDictCompletionHandler)completion;
+- (void)automationWithID:(NSString *)automationID completion:(QNAPIClientDictCompletionHandler)completion;
 - (void)trackScreenShownWithID:(NSString *)automationID;
-- (void)trackScreenShownWithID:(NSString *)automationID completion:(QNAPIClientCompletionHandler)completion;
-- (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientCompletionHandler)completion;
+- (void)trackScreenShownWithID:(NSString *)automationID completion:(QNAPIClientDictCompletionHandler)completion;
+- (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientDictCompletionHandler)completion;
 
-- (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientCompletionHandler)completion;
+- (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientDictCompletionHandler)completion;
 
 - (void)attributionRequest:(QONAttributionProvider)provider
                       data:(NSDictionary *)data
-                completion:(QNAPIClientCompletionHandler)completion;
+                completion:(QNAPIClientDictCompletionHandler)completion;
 - (void)processStoredRequests;
 - (void)storeRequestForRetry:(NSURLRequest *)request transactionId:(NSString *)transactionId;
 - (void)removeStoredRequestForTransactionId:(NSString *)transactionId;
-- (void)loadRemoteConfig:(QNAPIClientCompletionHandler)completion;
-- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientCompletionHandler)completion;
-- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientCompletionHandler)completion;
+- (void)loadRemoteConfig:(QNAPIClientDictCompletionHandler)completion;
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientEmptyCompletionHandler)completion;
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                          receipt:(nullable NSString *)receipt
-                      completion:(QNAPIClientCompletionHandler)completion;
-- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientCompletionHandler)completion;
+                      completion:(QNAPIClientDictCompletionHandler)completion;
+- (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientEmptyCompletionHandler)completion;
 
 @end
 
