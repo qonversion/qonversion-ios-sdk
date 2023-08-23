@@ -327,10 +327,10 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   NSMutableDictionary *baseDict = [[NSMutableDictionary alloc] initWithDictionary:_parameters];
   baseDict[@"access_token"] = _apiKey;
 
-  [baseDict setObject:_userID forKey:@"q_uid"];
-  [baseDict setObject:_userID forKey:@"client_uid"];
-  [baseDict setObject:self.version forKey:@"version"];
-  [baseDict setObject:@(self.debug) forKey:@"debug_mode"];
+  baseDict[@"q_uid"] = _userID;
+  baseDict[@"client_uid"] = _userID;
+  baseDict[@"version"] = self.version;
+  baseDict[@"debug_mode"] = @(self.debug);
 
   return [baseDict copy];
 }
