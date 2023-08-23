@@ -5,12 +5,12 @@
     
     
       
-      <testcase classname="fastlane.lanes" name="0: update_plist" time="0.154141">
+      <testcase classname="fastlane.lanes" name="0: update_plist" time="0.187624">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="1: version_bump_podspec" time="0.001534">
+      <testcase classname="fastlane.lanes" name="1: version_bump_podspec" time="0.001514">
         
       </testcase>
     

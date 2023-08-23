@@ -32,9 +32,17 @@
 
 @implementation Qonversion
 
+static bool _isInitialized = NO;
+
 // MARK: - Public
 
 + (instancetype)initWithConfig:(QONConfiguration *)configuration {
+  if (_isInitialized) {
+    return [Qonversion sharedInstance];
+  }
+  
+  _isInitialized = YES;
+
   QONConfiguration *configCopy = [configuration copy];
   [Qonversion sharedInstance].debugMode = configCopy.environment == QONEnvironmentSandbox;
   [[QNAPIClient shared] setSDKVersion:configCopy.version];
@@ -49,6 +57,21 @@
   }];
 
   return [Qonversion sharedInstance];
+}
+
++ (instancetype)sharedInstance {
+  if (!_isInitialized) {
+    QONVERSION_ERROR(@"Attempt to get Qonversion instance before initialization. Please, call `initWithConfig` first.");
+    return nil;
+  }
+  
+  static id shared = nil;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    shared = self.new;
+  });
+  
+  return shared;
 }
 
 - (void)launchWithKey:(nonnull NSString *)key completion:(QONLaunchCompletionHandler)completion {
@@ -183,16 +206,6 @@
 }
 
 // MARK: - Private
-
-+ (instancetype)sharedInstance {
-  static id shared = nil;
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{
-    shared = self.new;
-  });
-  
-  return shared;
-}
 
 - (instancetype)init {
   self = super.init;
