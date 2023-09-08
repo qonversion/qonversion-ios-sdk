@@ -10,12 +10,13 @@
 
 @implementation QONRemoteConfig
 
-- (instancetype)initWithPayload:(NSDictionary *)payload experiment:(QONExperiment *)experiment {
+- (instancetype)initWithPayload:(NSDictionary *)payload experiment:(QONExperiment *)experiment source:(QONRemoteConfigurationSource *)source {
   self = [super init];
   
   if (self) {
     _payload = payload;
     _experiment = experiment;
+    _source = source;
   }
   
   return self;
@@ -25,6 +26,7 @@
   NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
   [description appendFormat:@"payload=%@\n", self.payload];
   [description appendFormat:@"experiment=%@\n", self.experiment];
+  [description appendFormat:@"source=%@\n", self.source];
   [description appendString:@">"];
   
   return [description copy];
