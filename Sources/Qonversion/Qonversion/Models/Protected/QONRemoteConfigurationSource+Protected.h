@@ -6,7 +6,7 @@
 //  Copyright © 2023 Qonversion Inc. All rights reserved.
 //
 
-#import <Qonversion/Qonversion.h>
+#import "QONRemoteConfigurationSource.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
