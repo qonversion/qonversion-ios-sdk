@@ -28,7 +28,7 @@ NS_SWIFT_NAME(Qonversion.RemoteConfig)
 /**
  Remote configuration source
  */
-@property (nonatomic, strong, nullable, readonly) QONRemoteConfigurationSource *source;
+@property (nonatomic, strong, nonnull, readonly) QONRemoteConfigurationSource *source;
 
 @end
 
