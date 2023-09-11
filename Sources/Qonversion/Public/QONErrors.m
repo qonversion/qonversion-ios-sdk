@@ -31,6 +31,15 @@
   return error;
 }
 
++ (NSError *)errorWithCode:(QONError)errorCode message:(NSString *)message {
+  NSMutableDictionary *info = [NSMutableDictionary new];
+  info[NSLocalizedDescriptionKey] = NSLocalizedString(message, nil);
+  
+  NSError *error = [NSError errorWithDomain:keyQONErrorDomain code:errorCode userInfo:[info copy]];
+  
+  return error;
+}
+
 + (NSError *)errorWithQONErrorCode:(QONError)errorCode {
   return [self errorWithQonversionErrorCode:errorCode userInfo:nil];
 }

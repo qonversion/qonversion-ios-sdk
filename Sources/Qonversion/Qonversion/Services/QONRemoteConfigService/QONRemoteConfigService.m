@@ -9,6 +9,10 @@
 #import "QONRemoteConfigService.h"
 #import "QNAPIClient.h"
 #import "QONRemoteConfigMapper.h"
+#import "QONRemoteConfig.h"
+#import "QONErrors.h"
+
+static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configuration for the current user not available";
 
 @implementation QONRemoteConfigService
 
@@ -32,6 +36,12 @@
     }
     
     QONRemoteConfig *config = [weakSelf.mapper mapRemoteConfig:dict];
+    
+    if (config.payload.count == 0 && config.source == nil) {
+      NSError *error = [QONErrors errorWithCode:QONErrorRemoteConfigurationNotAvailable message:kNoRemoteConfigurationErrorMessage];
+      completion(nil, error);
+      return;
+    }
     
     completion(config, error);
   }];
