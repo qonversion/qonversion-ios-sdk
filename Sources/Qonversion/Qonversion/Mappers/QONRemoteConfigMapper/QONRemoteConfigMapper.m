@@ -117,8 +117,8 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   return [[QONExperimentGroup alloc] initWithIdentifier:groupId type:groupType name:groupName];
 }
 
-- (QONRemoteConfigurationSourceType)mapRemoteConfigurationAssignmentTypeFromString:(NSString *)typeString {
-  QONRemoteConfigurationSourceType type = QONRemoteConfigurationSourceTypeUnknown;
+- (QONRemoteConfigurationAssignmentType)mapRemoteConfigurationAssignmentTypeFromString:(NSString *)typeString {
+  QONRemoteConfigurationAssignmentType type = QONRemoteConfigurationAssignmentTypeUnknown;
   
   NSNumber *typeNumber = self.remoteConfigurationAssignmentTypes[typeString];
   if (typeNumber) {
@@ -128,8 +128,8 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   return type;
 }
 
-- (QONRemoteConfigurationAssignmentType)mapRemoteConfigurationSourceTypeFromString:(NSString *)typeString {
-  QONRemoteConfigurationAssignmentType type = QONRemoteConfigurationAssignmentTypeUnknown;
+- (QONRemoteConfigurationSourceType)mapRemoteConfigurationSourceTypeFromString:(NSString *)typeString {
+  QONRemoteConfigurationSourceType type = QONRemoteConfigurationSourceTypeUnknown;
   
   NSNumber *typeNumber = self.remoteConfigurationSourceTypes[typeString];
   if (typeNumber) {

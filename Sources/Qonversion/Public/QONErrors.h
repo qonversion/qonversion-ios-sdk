@@ -67,7 +67,7 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONError) {
   QONErrorStorePaymentDeferred = 18,
   
   // No remote configuration for the current user
-  QONErrorRemoteConfigurationNotAvailable,
+  QONErrorRemoteConfigurationNotAvailable = 19,
   
 } NS_SWIFT_NAME(Qonversion.Error);
 

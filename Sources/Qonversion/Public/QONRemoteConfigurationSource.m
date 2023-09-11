@@ -65,7 +65,7 @@
       result = @"experiment control group"; break;
       
     case QONRemoteConfigurationSourceTypeExperimentTreatmentGroup:
-      result = @"experiment source group"; break;
+      result = @"experiment treatment group"; break;
       
     default:
       result = @"unknown"; break;
