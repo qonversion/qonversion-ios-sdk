@@ -27,12 +27,12 @@ NS_SWIFT_NAME(Qonversion.RemoteConfigurationSource)
 @interface QONRemoteConfigurationSource : NSObject
 
 /**
- Remote configuration source name. In this field may be the experiment identifier or default remote configuration identifier depends on the source of the payload.
+ Remote configuration source name. Can be the experiment identifier or default remote configuration identifier, depending on the payload's source.
  */
 @property (nonatomic, copy, readonly) NSString *identifier;
 
 /**
- Remote configuration source name. In this field may be the experiment name or default remote configuration name depends on the source of the payload..
+ Remote configuration source name. Can be the experiment name or default remote configuration name, depending on the payload's source.
  */
 @property (nonatomic, copy, readonly) NSString *name;
 
