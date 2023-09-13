@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "QONExperiment.h"
+#import "QONRemoteConfigurationSource.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -23,6 +24,11 @@ NS_SWIFT_NAME(Qonversion.RemoteConfig)
  Experiment info
  */
 @property (nonatomic, strong, nullable, readonly) QONExperiment *experiment;
+
+/**
+ Remote configuration source
+ */
+@property (nonatomic, strong, nonnull, readonly) QONRemoteConfigurationSource *source;
 
 @end
 
