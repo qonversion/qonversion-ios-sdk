@@ -11,13 +11,24 @@
 #import "QONExperiment+Protected.h"
 #import "QONExperimentGroup+Protected.h"
 #import "QONRemoteConfig+Protected.h"
+#import "QONRemoteConfigurationSource+Protected.h"
 
 NSString *const kControlGroupType = @"control";
 NSString *const kTreatmentGroupType = @"treatment";
 
+NSString *const kRemoteConfigurationAssignmentTypeAuto = @"auto";
+NSString *const kRemoteConfigurationAssignmentTypeManual = @"manual";
+
+NSString *const kRemoteConfigurationSourceTypeControlGroup = @"experiment_control_group";
+NSString *const kRemoteConfigurationSourceTypeTreatmentGroup = @"experiment_treatment_group";
+NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_configuration";
+
+
 @interface QONRemoteConfigMapper ()
 
 @property (nonatomic, copy) NSDictionary<NSString *, NSNumber *> *groupTypes;
+@property (nonatomic, copy) NSDictionary<NSString *, NSNumber *> *remoteConfigurationAssignmentTypes;
+@property (nonatomic, copy) NSDictionary<NSString *, NSNumber *> *remoteConfigurationSourceTypes;
 
 @end
 
@@ -31,6 +42,17 @@ NSString *const kTreatmentGroupType = @"treatment";
       kControlGroupType: @(QONExperimentGroupTypeControl),
       kTreatmentGroupType: @(QONExperimentGroupTypeTreatment)
     };
+    
+    _remoteConfigurationAssignmentTypes = @{
+      kRemoteConfigurationAssignmentTypeAuto: @(QONRemoteConfigurationAssignmentTypeAuto),
+      kRemoteConfigurationAssignmentTypeManual: @(QONRemoteConfigurationAssignmentTypeManual)
+    };
+    
+    _remoteConfigurationSourceTypes = @{
+      kRemoteConfigurationSourceTypeControlGroup: @(QONRemoteConfigurationSourceTypeExperimentControlGroup),
+      kRemoteConfigurationSourceTypeTreatmentGroup: @(QONRemoteConfigurationSourceTypeExperimentTreatmentGroup),
+      kRemoteConfigurationSourceTypeRemoteConfiguration: @(QONRemoteConfigurationSourceTypeRemoteConfiguration)
+    };
   }
   
   return self;
@@ -42,16 +64,19 @@ NSString *const kTreatmentGroupType = @"treatment";
   }
   NSDictionary *payload = remoteConfigData[@"payload"];
   NSDictionary *experimentData = remoteConfigData[@"experiment"];
+  NSDictionary *remoteConfigurationSourceData = remoteConfigData[@"source"];
+  
+  QONRemoteConfigurationSource *remoteConfigurationSource = [self mapRemoteConfigurationSource:remoteConfigurationSourceData];
   QONExperiment *experiment = [self mapExperiment:experimentData];
   
-  return [[QONRemoteConfig alloc] initWithPayload:payload experiment:experiment];
+  return [[QONRemoteConfig alloc] initWithPayload:payload experiment:experiment source:remoteConfigurationSource];
 }
 
 - (QONExperiment *)mapExperiment:(NSDictionary *)experimentData {
   if (![experimentData isKindOfClass:[NSDictionary class]]) {
     return nil;
   }
-
+  
   NSDictionary *experimentGroupData = experimentData[@"group"];
   QONExperimentGroup *group = [self mapExperimentGroup:experimentGroupData];
   if (!group) {
@@ -61,6 +86,22 @@ NSString *const kTreatmentGroupType = @"treatment";
   NSString *experimentName = experimentData[@"name"];
   
   return [[QONExperiment alloc] initWithIdentifier:experimentId name:experimentName group:group];
+}
+
+- (QONRemoteConfigurationSource *)mapRemoteConfigurationSource:(NSDictionary *)remoteConfigurationSourceData {
+  if (![remoteConfigurationSourceData isKindOfClass:[NSDictionary class]] || remoteConfigurationSourceData.count == 0) {
+    return nil;
+  }
+  
+  NSString *uid = remoteConfigurationSourceData[@"uid"];
+  NSString *name = remoteConfigurationSourceData[@"name"];
+  NSString *typeRawValue = remoteConfigurationSourceData[@"type"];
+  QONRemoteConfigurationSourceType type = [self mapRemoteConfigurationSourceTypeFromString:typeRawValue];
+  
+  NSString *assignmentTypeRawValue = remoteConfigurationSourceData[@"assignment_type"];
+  QONRemoteConfigurationAssignmentType assignmentType = [self mapRemoteConfigurationAssignmentTypeFromString:assignmentTypeRawValue];
+  
+  return [[QONRemoteConfigurationSource alloc] initWithIdentifier:uid name:name type:type assignmentType:assignmentType];
 }
 
 - (QONExperimentGroup *)mapExperimentGroup:(NSDictionary *)experimentGroupData {
@@ -74,6 +115,28 @@ NSString *const kTreatmentGroupType = @"treatment";
   QONExperimentGroupType groupType = [self mapGroupTypeFromString:groupTypeRawValue];
   
   return [[QONExperimentGroup alloc] initWithIdentifier:groupId type:groupType name:groupName];
+}
+
+- (QONRemoteConfigurationAssignmentType)mapRemoteConfigurationAssignmentTypeFromString:(NSString *)typeString {
+  QONRemoteConfigurationAssignmentType type = QONRemoteConfigurationAssignmentTypeUnknown;
+  
+  NSNumber *typeNumber = self.remoteConfigurationAssignmentTypes[typeString];
+  if (typeNumber) {
+    type = typeNumber.integerValue;
+  }
+  
+  return type;
+}
+
+- (QONRemoteConfigurationSourceType)mapRemoteConfigurationSourceTypeFromString:(NSString *)typeString {
+  QONRemoteConfigurationSourceType type = QONRemoteConfigurationSourceTypeUnknown;
+  
+  NSNumber *typeNumber = self.remoteConfigurationSourceTypes[typeString];
+  if (typeNumber) {
+    type = typeNumber.integerValue;
+  }
+  
+  return type;
 }
 
 - (QONExperimentGroupType)mapGroupTypeFromString:(NSString *)groupTypeString {

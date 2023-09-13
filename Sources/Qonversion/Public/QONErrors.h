@@ -63,7 +63,11 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONError) {
   // Internal error occurred
   QONErrorInternalError = 17,
   
+  // The paymet was deferred
   QONErrorStorePaymentDeferred = 18,
+  
+  // No remote configuration for the current user
+  QONErrorRemoteConfigurationNotAvailable = 19,
   
 } NS_SWIFT_NAME(Qonversion.Error);
 
@@ -117,6 +121,7 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONAPIError) {
 
 @interface QONErrors: NSObject
 
++ (NSError *)errorWithCode:(QONError)errorCode message:(NSString *)message;
 + (NSError *)errorWithCode:(QONAPIError)errorCode;
 + (NSError *)errorWithCode:(QONAPIError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason;
 + (NSError *)errorWithQONErrorCode:(QONError)errorCode;
