@@ -43,7 +43,7 @@ NS_SWIFT_NAME(Qonversion.UserProperties)
  This is a flattened version of the `definedProperties` list as a key-value map, where keys are values from `QONUserPropertyKey`.
  @see `Qonversion.setUserProperty`
  */
-@property (nonatomic, copy, nonnull, readonly)  NSDictionary<NSNumber *, NSString*> *flatDefinedPropertiesMap;
+@property (nonatomic, copy, nonnull, readonly) NSDictionary<NSNumber *, NSString*> *flatDefinedPropertiesMap;
 
 /**
  Map of user properties, set for custom keys.
