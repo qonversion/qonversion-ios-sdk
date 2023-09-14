@@ -39,6 +39,16 @@
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		4CADC5602759181A004FDC10 /* AuthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CADC55F2759181A004FDC10 /* AuthViewController.swift */; };
+		6A21BF4C2AB201A7005BDA7C /* QONRateLimiter.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A21BF4B2AB201A7005BDA7C /* QONRateLimiter.h */; };
+		6A21BF4E2AB20483005BDA7C /* QONRateLimiter.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF4D2AB20483005BDA7C /* QONRateLimiter.m */; };
+		6A21BF4F2AB20483005BDA7C /* QONRateLimiter.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF4D2AB20483005BDA7C /* QONRateLimiter.m */; };
+		6A21BF502AB20483005BDA7C /* QONRateLimiter.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF4D2AB20483005BDA7C /* QONRateLimiter.m */; };
+		6A21BF512AB20483005BDA7C /* QONRateLimiter.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF4D2AB20483005BDA7C /* QONRateLimiter.m */; };
+		6A21BF532AB2059F005BDA7C /* QONRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A21BF522AB2059F005BDA7C /* QONRequest.h */; };
+		6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF542AB205AC005BDA7C /* QONRequest.m */; };
+		6A21BF562AB205AC005BDA7C /* QONRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF542AB205AC005BDA7C /* QONRequest.m */; };
+		6A21BF572AB205AC005BDA7C /* QONRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF542AB205AC005BDA7C /* QONRequest.m */; };
+		6A21BF582AB205AC005BDA7C /* QONRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF542AB205AC005BDA7C /* QONRequest.m */; };
 		6A8A604329DAD363008EC7D8 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		6A8A604929DAD36E008EC7D8 /* QNAPIClientIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */; };
 		6A95DE9929E007A600350BD6 /* init_request_main_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 6A95DE9829E007A600350BD6 /* init_request_main_data.json */; };
@@ -328,6 +338,10 @@
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
 		4CADC55F2759181A004FDC10 /* AuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewController.swift; sourceTree = "<group>"; };
+		6A21BF4B2AB201A7005BDA7C /* QONRateLimiter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRateLimiter.h; sourceTree = "<group>"; };
+		6A21BF4D2AB20483005BDA7C /* QONRateLimiter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRateLimiter.m; sourceTree = "<group>"; };
+		6A21BF522AB2059F005BDA7C /* QONRequest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRequest.h; sourceTree = "<group>"; };
+		6A21BF542AB205AC005BDA7C /* QONRequest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRequest.m; sourceTree = "<group>"; };
 		6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIClientIntegrationTests.m; sourceTree = "<group>"; };
 		6A8A603F29DAD363008EC7D8 /* IntegrationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A95DE9829E007A600350BD6 /* init_request_main_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = init_request_main_data.json; sourceTree = "<group>"; };
@@ -762,6 +776,17 @@
 				45CC2EF4244085E4005CD107 /* checks.yml */,
 			);
 			path = workflows;
+			sourceTree = "<group>";
+		};
+		6A21BF4A2AB2018C005BDA7C /* QNRateLimiter */ = {
+			isa = PBXGroup;
+			children = (
+				6A21BF4B2AB201A7005BDA7C /* QONRateLimiter.h */,
+				6A21BF4D2AB20483005BDA7C /* QONRateLimiter.m */,
+				6A21BF522AB2059F005BDA7C /* QONRequest.h */,
+				6A21BF542AB205AC005BDA7C /* QONRequest.m */,
+			);
+			path = QNRateLimiter;
 			sourceTree = "<group>";
 		};
 		6A8A604029DAD363008EC7D8 /* IntegrationTests */ = {
@@ -1220,6 +1245,7 @@
 		8957322526DD03A3009507A6 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				6A21BF4A2AB2018C005BDA7C /* QNRateLimiter */,
 				8957322626DD03A3009507A6 /* QNUtils */,
 				8957322926DD03A3009507A6 /* QNDevice */,
 				8957322C26DD03A3009507A6 /* QNProperties */,
@@ -1541,6 +1567,7 @@
 				895732AD26DD03A3009507A6 /* QONAutomationsFlowCoordinator.h in Headers */,
 				8957328626DD03A3009507A6 /* QONAutomationsEvent.h in Headers */,
 				8957329826DD03A3009507A6 /* QONAutomationsEventType.h in Headers */,
+				6A21BF4C2AB201A7005BDA7C /* QONRateLimiter.h in Headers */,
 				895732B426DD03A3009507A6 /* QONAutomationsService.h in Headers */,
 				895732CA26DD03A3009507A6 /* QNUtils.h in Headers */,
 				8957328126DD03A3009507A6 /* QONEntitlement.h in Headers */,
@@ -1568,6 +1595,7 @@
 				70D0E2BB291AA21C004E8DE8 /* QONLaunchMode.h in Headers */,
 				895732D026DD03A3009507A6 /* QNUserInfo.h in Headers */,
 				895732B126DD03A3009507A6 /* QONAutomationsFlowAssembly.h in Headers */,
+				6A21BF532AB2059F005BDA7C /* QONRequest.h in Headers */,
 				8957329026DD03A3009507A6 /* QONEntitlementsUpdateListener.h in Headers */,
 				8957329326DD03A3009507A6 /* QONExperimentGroup.h in Headers */,
 				895732A126DD03A3009507A6 /* QONMacrosProcess.h in Headers */,
@@ -1720,6 +1748,7 @@
 				TargetAttributes = {
 					454EF63B24E5CC580070581E = {
 						CreatedOnToolsVersion = 11.5;
+						LastSwiftMigration = 1430;
 					};
 					459DAB68243E329F0011ECF3 = {
 						CreatedOnToolsVersion = 11.3.1;
@@ -1895,7 +1924,9 @@
 				8989721F26612BB600A24927 /* OfferingsViewController.swift in Sources */,
 				898972212661333300A24927 /* OfferingsTableViewCell.swift in Sources */,
 				89ADA76D25069E1000EB2E54 /* ActivePermissionsViewController.swift in Sources */,
+				6A21BF502AB20483005BDA7C /* QONRateLimiter.m in Sources */,
 				4CADC5602759181A004FDC10 /* AuthViewController.swift in Sources */,
+				6A21BF572AB205AC005BDA7C /* QONRequest.m in Sources */,
 				454EF64324E5CC590070581E /* ViewController.swift in Sources */,
 				89ADA76C250696A400EB2E54 /* ActivePermissionsTableViewCell.swift in Sources */,
 				454EF63F24E5CC580070581E /* AppDelegate.swift in Sources */,
@@ -1916,6 +1947,7 @@
 				895732CE26DD03A3009507A6 /* QNProperties.m in Sources */,
 				8957327A26DD03A3009507A6 /* QNDevice+Advertising.m in Sources */,
 				895732C626DD03A3009507A6 /* QNAPIConstants.m in Sources */,
+				6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */,
 				70D05A8F29C9FC1600EA5DDF /* QONRemoteConfigManager.m in Sources */,
 				895732C426DD03A3009507A6 /* QNRequestBuilder.m in Sources */,
 				8957329726DD03A3009507A6 /* QONStoreKitSugare.m in Sources */,
@@ -1933,6 +1965,7 @@
 				895732CB26DD03A3009507A6 /* QNUtils.m in Sources */,
 				70ADE7102951CC7200CB4D2E /* QONScreenPresentationConfiguration.m in Sources */,
 				707734F52A9F607700CFF742 /* QONRemoteConfigurationSource.m in Sources */,
+				6A21BF4E2AB20483005BDA7C /* QONRateLimiter.m in Sources */,
 				895732A626DD03A3009507A6 /* QONAutomationsScreen.m in Sources */,
 				70ED951129FAAF31005F5D00 /* QONStoreKit2PurchaseModel.m in Sources */,
 				70EC019D29EEE94300E686E2 /* StoreKit2Service.swift in Sources */,
@@ -1993,11 +2026,13 @@
 				45FFA2DB24BE06C3007EFB8F /* APIClientTests.m in Sources */,
 				4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */,
 				454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */,
+				6A21BF4F2AB20483005BDA7C /* QONRateLimiter.m in Sources */,
 				458A8CCB24B9A3DF00637130 /* StoreKitServiceTests.m in Sources */,
 				4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */,
 				891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */,
 				89673C2F26F49BAA008D209A /* QNIdentityManagerTests.m in Sources */,
 				4531CBCB24581BD80022C422 /* QNUserInfoTests.m in Sources */,
+				6A21BF562AB205AC005BDA7C /* QONRequest.m in Sources */,
 				456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */,
 				89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
@@ -2011,8 +2046,10 @@
 				6A95DEA029E011A700350BD6 /* QNTestConstants.m in Sources */,
 				6A95DEA529E40F2E00350BD6 /* XCTestCase+Helpers.m in Sources */,
 				6A95DE9C29E009E000350BD6 /* XCTestCase+TestJSON.m in Sources */,
+				6A21BF582AB205AC005BDA7C /* QONRequest.m in Sources */,
 				6A8A604929DAD36E008EC7D8 /* QNAPIClientIntegrationTests.m in Sources */,
 				6A95DEA229E40E9900350BD6 /* QNOutagerIntegrationTests.m in Sources */,
+				6A21BF512AB20483005BDA7C /* QONRateLimiter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2073,6 +2110,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Sample/Sample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MTVL2X9L7N;
@@ -2112,6 +2150,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Sample/Sample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MTVL2X9L7N;

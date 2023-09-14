@@ -9,6 +9,7 @@
 #import "QNKeyedArchiver.h"
 #import "QONStoreKit2PurchaseModel.h"
 #import "QNDevice.h"
+#import "QONRateLimiter.h"
 
 NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
@@ -17,6 +18,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 @property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, strong) QNErrorsMapper *errorsMapper;
+@property (nonatomic, strong) QONRateLimiter *rateLimiter;
 @property (nonatomic, copy) NSArray<NSString *> *retriableRequests;
 @property (nonatomic, copy) NSArray<NSNumber *> *criticalErrorCodes;
 @property (nonatomic, strong) NSError *criticalError;
@@ -32,6 +34,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     _requestSerializer = [[QNRequestSerializer alloc] init];
     _requestBuilder = [[QNRequestBuilder alloc] init];
     _errorsMapper = [QNErrorsMapper new];
+    _rateLimiter = [[QONRateLimiter alloc] initWithMaxRequestsPerSecond:kMaxSimilarRequestsPerSecond];
     
     _apiKey = @"";
     _userID = @"";
@@ -138,7 +141,16 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
 
-  [self processDictRequest:request completion:completion];
+  [self.rateLimiter processWithRateLimit:QONRequestTypePurchase
+                                    hash:[purchaseInfo hash] + [receipt hash]
+                              completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    [self processDictRequest:request completion:completion];
+  }];
   
   return [request copy];
 }
@@ -154,11 +166,20 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *)body
                            completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *resultData = [self enrichParameters:body];
-  
+
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
-  
-  [self processDictRequest:request completion:completion];
-  
+
+  [self.rateLimiter processWithRateLimit:QONRequestTypePurchase
+                                    hash:[body hash]
+                              completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    [self processDictRequest:request completion:completion];
+  }];
+
   return [request copy];
 }
 
@@ -171,10 +192,19 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 - (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
                                      completion:(QNAPIClientDictCompletionHandler)completion {
-  NSDictionary *resultBody = [self enrichParameters:data];
-  NSURLRequest *request = [self.requestBuilder makeIntroTrialEligibilityRequestWithData:resultBody];
-  
-  return [self processDictRequest:request completion:completion];
+  [self.rateLimiter processWithRateLimit:QONRequestTypeEligibilityForProducts
+                                    hash:[data hash]
+                              completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    NSDictionary *resultBody = [self enrichParameters:data];
+    NSURLRequest *request = [self.requestBuilder makeIntroTrialEligibilityRequestWithData:resultBody];
+
+    return [self processDictRequest:request completion:completion];
+  }];
 }
 
 - (void)sendProperties:(NSDictionary *)properties completion:(QNAPIClientDictCompletionHandler)completion {
@@ -187,14 +217,23 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   }
 
   NSURLRequest *request = [self.requestBuilder makeSendPropertiesRequestForUserId:_userID parameters:propertiesForApi];
-  
+
   [self processDictRequest:request completion:completion];
 }
 
 - (void)getProperties:(QNAPIClientArrayCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeGetPropertiesRequestForUserId:_userID];
+  [self.rateLimiter processWithRateLimit:QONRequestTypeGetProperties
+                                    hash:[self.userID hash]
+                              completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
 
-  [self processArrayRequest:request completion:completion];
+    NSURLRequest *request = [self.requestBuilder makeGetPropertiesRequestForUserId:self.userID];
+
+    [self processArrayRequest:request completion:completion];
+  }];
 }
 
 - (void)userActionPointsWithCompletion:(QNAPIClientDictCompletionHandler)completion {
@@ -210,15 +249,34 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientDictCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeUserInfoRequestWithID:userID apiKey:[self obtainApiKey]];
-  return [self processDictRequest:request completion:completion];
+  [self.rateLimiter processWithRateLimit:QONRequestTypeUserInfo
+                                    hash:[userID hash]
+                              completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    NSURLRequest *request = [self.requestBuilder makeUserInfoRequestWithID:userID apiKey:[self obtainApiKey]];
+    return [self processDictRequest:request completion:completion];
+  }];
 }
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *parameters = @{@"anon_id": anonUserID, @"identity_id": userID};
-  NSURLRequest *request = [self.requestBuilder makeCreateIdentityRequestWith:parameters];
-  
-  return [self processDictRequest:request completion:completion];
+
+  [self.rateLimiter processWithRateLimit:QONRequestTypeIdentify
+                                    hash:[parameters hash]
+                              completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    NSURLRequest *request = [self.requestBuilder makeCreateIdentityRequestWith:parameters];
+
+    return [self processDictRequest:request completion:completion];
+  }];
 }
 
 - (void)trackScreenShownWithID:(NSString *)automationID {
@@ -237,9 +295,19 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
                       data:(NSDictionary *)data
                 completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
-  NSDictionary *resultData = [self enrichParameters:body];
-  NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:resultData];
-  [self processDictRequest:request completion:completion];
+
+  [self.rateLimiter processWithRateLimit:QONRequestTypeAttribution
+                                    hash:[body hash]
+                              completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    NSDictionary *resultData = [self enrichParameters:body];
+    NSURLRequest *request = [[self requestBuilder] makeAttributionRequestWith:resultData];
+    [self processDictRequest:request completion:completion];
+  }];
 }
 
 - (void)processStoredRequests {
@@ -290,21 +358,48 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)loadRemoteConfig:(QNAPIClientDictCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder remoteConfigRequestForUserId:self.userID];
-  
-  return [self processDictRequest:request completion:completion];
+  [self.rateLimiter processWithRateLimit:QONRequestTypeRemoteConfig
+                                    hash:[self.userID hash]
+                              completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    NSURLRequest *request = [self.requestBuilder remoteConfigRequestForUserId:self.userID];
+
+    return [self processDictRequest:request completion:completion];
+  }];
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientEmptyCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeAttachUserToExperimentRequest:experimentId groupId:groupId userID:self.userID];
+  [self.rateLimiter processWithRateLimit:QONRequestTypeAttachUserToExperiment
+                                    hash:[[NSString stringWithFormat:@"%@%@%@", self.userID, experimentId, groupId] hash]
+                              completion:^(NSError *rateLimitError) {
+      if (rateLimitError != nil) {
+        completion(rateLimitError);
+        return;
+      }
 
-  [self processRequestWithoutResponse:request completion:completion];
+      NSURLRequest *request = [self.requestBuilder makeAttachUserToExperimentRequest:experimentId groupId:groupId userID:self.userID];
+
+      [self processRequestWithoutResponse:request completion:completion];
+  }];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientEmptyCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeDetachUserToExperimentRequest:experimentId userID:self.userID];
+    [self.rateLimiter processWithRateLimit:QONRequestTypeDetachUserFromExperiment
+                                      hash:[[NSString stringWithFormat:@"%@%@", self.userID, experimentId] hash]
+                                completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(rateLimitError);
+      return;
+    }
 
-  [self processRequestWithoutResponse:request completion:completion];
+    NSURLRequest *request = [self.requestBuilder makeDetachUserToExperimentRequest:experimentId userID:self.userID];
+
+    [self processRequestWithoutResponse:request completion:completion];
+  }];
 }
 
 // MARK: - Private
