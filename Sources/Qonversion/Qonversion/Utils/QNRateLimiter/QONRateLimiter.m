@@ -32,7 +32,7 @@ static NSInteger const msInSec = 1000;
   return self;
 }
 
-- (void)processWithRateLimit:(QONRequestType)requestType
+- (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
                         hash:(NSUInteger)hash
                   completion:(QONRateLimiterCompletionHandler)completion {
   if ([self isRateLimitExceeded:requestType hash:hash]) {
@@ -43,7 +43,7 @@ static NSInteger const msInSec = 1000;
   }
 }
 
-- (void)saveRequest:(QONRequestType)requestType hash:(NSUInteger)hash {
+- (void)saveRequest:(QONRateLimitedRequestType)requestType hash:(NSUInteger)hash {
   NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970] * 1000;
 
   if (self.requests[@(requestType)] == nil) {
@@ -54,7 +54,7 @@ static NSInteger const msInSec = 1000;
   [self.requests[@(requestType)] addObject:request];
 }
 
-- (BOOL)isRateLimitExceeded:(QONRequestType)requestType hash:(NSUInteger)hash {
+- (BOOL)isRateLimitExceeded:(QONRateLimitedRequestType)requestType hash:(NSUInteger)hash {
   NSArray<QONRequest *> *requestsPerType = self.requests[@(requestType)];
   if (requestsPerType == nil) {
     return false;
@@ -62,7 +62,7 @@ static NSInteger const msInSec = 1000;
 
   NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970] * 1000;
   int matchCount = 0;
-  for (NSUInteger i = requestsPerType.count; i >= 0; --i) {
+  for (NSInteger i = requestsPerType.count - 1; i >= 0; --i) {
     QONRequest *request = requestsPerType[i];
     if (timestamp - request.timestamp >= msInSec || matchCount >= self.maxRequestsPerSecond) {
       break;

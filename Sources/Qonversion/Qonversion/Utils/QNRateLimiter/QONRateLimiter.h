@@ -13,29 +13,29 @@
 
 typedef void (^QONRateLimiterCompletionHandler)(NSError * _Nullable rateLimitError);
 
-typedef NS_ENUM(NSInteger, QONRequestType) {
-        QONRequestTypeRemoteConfig = 0,
-        QONRequestTypeAttachUserToExperiment = 1,
-        QONRequestTypeDetachUserFromExperiment = 2,
-        QONRequestTypePurchase = 3,
-        QONRequestTypeUserInfo = 4,
-        QONRequestTypeAttribution = 5,
-        QONRequestTypeGetProperties = 6,
-        QONRequestTypeEligibilityForProducts = 7,
-        QONRequestTypeIdentify = 8
+typedef NS_ENUM(NSInteger, QONRateLimitedRequestType) {
+        QONRateLimitedRequestTypeRemoteConfig = 0,
+        QONRateLimitedRequestTypeAttachUserToExperiment = 1,
+        QONRateLimitedRequestTypeDetachUserFromExperiment = 2,
+        QONRateLimitedRequestTypePurchase = 3,
+        QONRateLimitedRequestTypeUserInfo = 4,
+        QONRateLimitedRequestTypeAttribution = 5,
+        QONRateLimitedRequestTypeGetProperties = 6,
+        QONRateLimitedRequestTypeEligibilityForProducts = 7,
+        QONRateLimitedRequestTypeIdentify = 8
 };
 
 @interface QONRateLimiter : NSObject
 
 - (instancetype)initWithMaxRequestsPerSecond:(int)maxRequestsPerSecond;
 
-- (void)processWithRateLimit:(QONRequestType)requestType
+- (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
                         hash:(NSUInteger)hash
                   completion:(QONRateLimiterCompletionHandler)completion;
 
-- (void)saveRequest:(QONRequestType)requestType hash:(NSUInteger)hash;
+- (void)saveRequest:(QONRateLimitedRequestType)requestType hash:(NSUInteger)hash;
 
-- (BOOL)isRateLimitExceeded:(QONRequestType)requestType hash:(NSUInteger)hash;
+- (BOOL)isRateLimitExceeded:(QONRateLimitedRequestType)requestType hash:(NSUInteger)hash;
 
 @end
 
