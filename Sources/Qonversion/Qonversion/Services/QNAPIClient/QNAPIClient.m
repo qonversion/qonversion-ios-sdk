@@ -142,7 +142,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
 
   [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypePurchase
-                                    hash:[purchaseInfo hash] + [receipt hash]
+                                  params:body
                               completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
@@ -170,7 +170,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
 
   [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypePurchase
-                                    hash:[body hash]
+                                  params:body
                               completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
@@ -193,7 +193,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 - (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
                                      completion:(QNAPIClientDictCompletionHandler)completion {
   [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeEligibilityForProducts
-                                    hash:[data hash]
+                                  params:data
                               completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
@@ -266,7 +266,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   NSDictionary *parameters = @{@"anon_id": anonUserID, @"identity_id": userID};
 
   [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeIdentify
-                                    hash:[parameters hash]
+                                  params:parameters
                               completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
@@ -297,7 +297,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
 
   [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeAttribution
-                                    hash:[body hash]
+                                  params:body
                               completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);

@@ -30,6 +30,10 @@ typedef NS_ENUM(NSInteger, QONRateLimitedRequestType) {
 - (instancetype _Nullable)initWithMaxRequestsPerSecond:(int)maxRequestsPerSecond;
 
 - (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
+                      params:(NSDictionary *)params
+                  completion:(QONRateLimiterCompletionHandler _Nonnull)completion;
+
+- (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
                         hash:(NSUInteger)hash
                   completion:(QONRateLimiterCompletionHandler _Nonnull)completion;
 

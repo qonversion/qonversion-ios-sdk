@@ -33,6 +33,13 @@ static NSInteger const msInSec = 1000;
 }
 
 - (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
+                      params:(NSDictionary *)params
+                  completion:(QONRateLimiterCompletionHandler _Nonnull)completion {
+  NSUInteger hash = [self calculateHashForDictionary:params];
+  [self processWithRateLimit:requestType hash:hash completion:completion];
+}
+
+- (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
                         hash:(NSUInteger)hash
                   completion:(QONRateLimiterCompletionHandler)completion {
   if ([self isRateLimitExceeded:requestType hash:hash]) {
@@ -74,6 +81,50 @@ static NSInteger const msInSec = 1000;
   }
 
   return matchCount >= self.maxRequestsPerSecond;
+}
+
+// MARK: Private
+
+- (NSUInteger)calculateHashForDictionary:(NSDictionary *)dict {
+  NSUInteger prime = 31;
+  NSUInteger result = 1;
+
+  for (NSString *key in dict) {
+    id value = dict[key];
+    
+    NSUInteger keyHash = [key hash];
+    NSUInteger valueHash = [self calculateHashForValue:value];
+    
+    result = prime * result + keyHash;
+    result = prime * result + valueHash;
+  }
+  
+  return result;
+}
+
+- (NSUInteger)calculateHashForArray:(NSArray *)array {
+  NSUInteger prime = 31;
+  NSUInteger result = 1;
+
+  for (id value in array) {
+    NSUInteger valueHash = [self calculateHashForValue:value];
+    result = prime * result + valueHash;
+  }
+
+  return result;
+}
+
+- (NSUInteger)calculateHashForValue:(id)value {
+  NSUInteger valueHash = 0;
+  if ([value isKindOfClass:[NSDictionary class]]) {
+    valueHash = [self calculateHashForDictionary:value];
+  } else if ([value isKindOfClass:[NSArray class]]) {
+    valueHash = [self calculateHashForArray:value];
+  } else {
+    valueHash = [value hash];
+  }
+
+  return valueHash;
 }
 
 @end
