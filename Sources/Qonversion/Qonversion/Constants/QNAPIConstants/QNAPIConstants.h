@@ -31,4 +31,4 @@ extern NSString *const kEventEndpoint;
 extern NSString *const kAccessDeniedError;
 extern NSString *const kInternalServerError;
 
-extern int const kMaxSimilarRequestsPerSecond;
+extern NSUInteger const kMaxSimilarRequestsPerSecond;

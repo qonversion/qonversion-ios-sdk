@@ -11,19 +11,17 @@
 #import "QONRequest.h"
 #import "QONErrors.h"
 
-static NSInteger const msInSec = 1000;
-
 @interface QONRateLimiter()
 
-@property (nonatomic) int maxRequestsPerSecond;
-@property (nonatomic, copy) NSMutableDictionary<NSNumber *, NSMutableArray<QONRequest *> *> *requests;
+@property (nonatomic, assign) NSUInteger maxRequestsPerSecond;
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSMutableArray<QONRequest *> *> *requests;
 
 @end
 
 @implementation QONRateLimiter
 
-- (instancetype)initWithMaxRequestsPerSecond:(int)maxRequestsPerSecond {
-  self = super.init;
+- (instancetype)initWithMaxRequestsPerSecond:(NSUInteger)maxRequestsPerSecond {
+  self = [super init];
   if (self) {
     _maxRequestsPerSecond = maxRequestsPerSecond;
     _requests = [NSMutableDictionary new];
@@ -32,16 +30,20 @@ static NSInteger const msInSec = 1000;
   return self;
 }
 
-- (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
-                      params:(NSDictionary *)params
-                  completion:(QONRateLimiterCompletionHandler _Nonnull)completion {
+- (void)validateRateLimit:(QONRateLimitedRequestType)requestType
+                   params:(NSDictionary *)params
+               completion:(QONRateLimiterCompletionHandler _Nonnull)completion {
   NSUInteger hash = [self calculateHashForDictionary:params];
-  [self processWithRateLimit:requestType hash:hash completion:completion];
+  [self validateRateLimit:requestType hash:hash completion:completion];
 }
 
-- (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
-                        hash:(NSUInteger)hash
-                  completion:(QONRateLimiterCompletionHandler)completion {
+- (void)validateRateLimit:(QONRateLimitedRequestType)requestType
+                     hash:(NSUInteger)hash
+               completion:(QONRateLimiterCompletionHandler)completion {
+  if (!completion) {
+    return;
+  }
+
   if ([self isRateLimitExceeded:requestType hash:hash]) {
     completion([QONErrors errorWithCode:QONAPIErrorRateLimitExceeded]);
   } else {
@@ -51,9 +53,9 @@ static NSInteger const msInSec = 1000;
 }
 
 - (void)saveRequest:(QONRateLimitedRequestType)requestType hash:(NSUInteger)hash {
-  NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970] * 1000;
+  NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970];
 
-  if (self.requests[@(requestType)] == nil) {
+  if (!self.requests[@(requestType)]) {
     self.requests[@(requestType)] = [NSMutableArray new];
   }
 
@@ -65,11 +67,11 @@ static NSInteger const msInSec = 1000;
   [self removeOutdatedRequests:requestType];
 
   NSArray<QONRequest *> *requestsPerType = self.requests[@(requestType)];
-  if (requestsPerType == nil) {
+  if (!requestsPerType) {
     return false;
   }
 
-  int matchCount = 0;
+  NSUInteger matchCount = 0;
   for (NSUInteger i = 0; i < requestsPerType.count && matchCount < self.maxRequestsPerSecond; i++) {
     QONRequest *request = requestsPerType[i];
     if (request.hashValue == hash) {
@@ -84,13 +86,13 @@ static NSInteger const msInSec = 1000;
 
 - (void)removeOutdatedRequests:(QONRateLimitedRequestType)requestType {
   NSArray<QONRequest *> *requestsPerType = self.requests[@(requestType)];
-  if (requestsPerType == nil) {
+  if (!requestsPerType) {
     return;
   }
 
-  NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970] * 1000;
+  NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970];
   NSMutableArray *filteredRequests = [NSMutableArray new];
-  for (NSInteger i = requestsPerType.count - 1; i >= 0 && timestamp - requestsPerType[i].timestamp < msInSec; --i) {
+  for (NSInteger i = requestsPerType.count - 1; i >= 0 && timestamp - requestsPerType[i].timestamp < 1 /* sec */; --i) {
     [filteredRequests insertObject:requestsPerType[i] atIndex:0];
   }
 

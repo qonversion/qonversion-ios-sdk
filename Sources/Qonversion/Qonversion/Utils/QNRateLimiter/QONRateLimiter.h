@@ -28,15 +28,15 @@ typedef NS_ENUM(NSInteger, QONRateLimitedRequestType) {
 
 @interface QONRateLimiter : NSObject
 
-- (instancetype _Nullable)initWithMaxRequestsPerSecond:(int)maxRequestsPerSecond;
+- (instancetype _Nullable)initWithMaxRequestsPerSecond:(NSUInteger)maxRequestsPerSecond;
 
-- (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
-                      params:(NSDictionary * _Nonnull)params
-                  completion:(QONRateLimiterCompletionHandler _Nonnull)completion;
+- (void)validateRateLimit:(QONRateLimitedRequestType)requestType
+                   params:(NSDictionary * _Nonnull)params
+               completion:(QONRateLimiterCompletionHandler _Nonnull)completion;
 
-- (void)processWithRateLimit:(QONRateLimitedRequestType)requestType
-                        hash:(NSUInteger)hash
-                  completion:(QONRateLimiterCompletionHandler _Nonnull)completion;
+- (void)validateRateLimit:(QONRateLimitedRequestType)requestType
+                     hash:(NSUInteger)hash
+               completion:(QONRateLimiterCompletionHandler _Nonnull)completion;
 
 - (void)saveRequest:(QONRateLimitedRequestType)requestType hash:(NSUInteger)hash;
 

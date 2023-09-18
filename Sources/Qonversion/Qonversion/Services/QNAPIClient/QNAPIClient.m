@@ -130,9 +130,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 - (void)launchRequest:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *launchData = [self.requestSerializer launchData];
 
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeInit
-                                  params:launchData
-                              completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeInit
+                               params:launchData
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
       return;
@@ -152,9 +152,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
 
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypePurchase
-                                  params:body
-                              completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypePurchase
+                               params:body
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
       return;
@@ -180,9 +180,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
   NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
 
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypePurchase
-                                  params:body
-                              completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypePurchase
+                               params:body
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
       return;
@@ -203,9 +203,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 - (void)checkTrialIntroEligibilityParamsForData:(NSDictionary *)data
                                      completion:(QNAPIClientDictCompletionHandler)completion {
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeEligibilityForProducts
-                                  params:data
-                              completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeEligibilityForProducts
+                               params:data
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
       return;
@@ -233,9 +233,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)getProperties:(QNAPIClientArrayCompletionHandler)completion {
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeGetProperties
-                                    hash:[self.userID hash]
-                              completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeGetProperties
+                                 hash:[self.userID hash]
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
       return;
@@ -260,9 +260,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientDictCompletionHandler)completion {
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeUserInfo
-                                    hash:[userID hash]
-                              completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeUserInfo
+                                 hash:[userID hash]
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
       return;
@@ -276,9 +276,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *parameters = @{@"anon_id": anonUserID, @"identity_id": userID};
 
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeIdentify
-                                  params:parameters
-                              completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeIdentify
+                               params:parameters
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
       return;
@@ -307,9 +307,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
                 completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer attributionDataWithDict:data fromProvider:provider];
 
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeAttribution
-                                  params:body
-                              completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeAttribution
+                               params:body
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
       return;
@@ -369,9 +369,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)loadRemoteConfig:(QNAPIClientDictCompletionHandler)completion {
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeRemoteConfig
-                                    hash:[self.userID hash]
-                              completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeRemoteConfig
+                                 hash:[self.userID hash]
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);
       return;
@@ -384,24 +384,24 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientEmptyCompletionHandler)completion {
-  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeAttachUserToExperiment
-                                    hash:[[NSString stringWithFormat:@"%@%@%@", self.userID, experimentId, groupId] hash]
-                              completion:^(NSError *rateLimitError) {
-      if (rateLimitError != nil) {
-        completion(rateLimitError);
-        return;
-      }
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeAttachUserToExperiment
+                                 hash:[[NSString stringWithFormat:@"%@%@%@", self.userID, experimentId, groupId] hash]
+                           completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(rateLimitError);
+      return;
+    }
 
-      NSURLRequest *request = [self.requestBuilder makeAttachUserToExperimentRequest:experimentId groupId:groupId userID:self.userID];
+    NSURLRequest *request = [self.requestBuilder makeAttachUserToExperimentRequest:experimentId groupId:groupId userID:self.userID];
 
-      [self processRequestWithoutResponse:request completion:completion];
+    [self processRequestWithoutResponse:request completion:completion];
   }];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientEmptyCompletionHandler)completion {
-    [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeDetachUserFromExperiment
-                                      hash:[[NSString stringWithFormat:@"%@%@", self.userID, experimentId] hash]
-                                completion:^(NSError *rateLimitError) {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeDetachUserFromExperiment
+                                 hash:[[NSString stringWithFormat:@"%@%@", self.userID, experimentId] hash]
+                           completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(rateLimitError);
       return;

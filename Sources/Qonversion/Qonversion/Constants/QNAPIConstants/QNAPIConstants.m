@@ -37,4 +37,4 @@ NSString * const kStoredRequestsKey = @"storedRequests";
 NSString * const kAccessDeniedError = @"Access denied";
 NSString * const kInternalServerError = @"Internal server error";
 
-int const kMaxSimilarRequestsPerSecond = 5;
+NSUInteger const kMaxSimilarRequestsPerSecond = 5;
