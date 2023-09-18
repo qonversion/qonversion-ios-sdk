@@ -128,9 +128,20 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)launchRequest:(QNAPIClientDictCompletionHandler)completion {
-  NSDictionary *launchData = [self enrichParameters:[self.requestSerializer launchData]];
-  NSURLRequest *request = [self.requestBuilder makeInitRequestWith:launchData];
-  [self processDictRequest:request completion:completion];
+  NSDictionary *launchData = [self.requestSerializer launchData];
+
+  [self.rateLimiter processWithRateLimit:QONRateLimitedRequestTypeInit
+                                  params:launchData
+                              completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    NSDictionary *enrichedData = [self enrichParameters:launchData];
+    NSURLRequest *request = [self.requestBuilder makeInitRequestWith:enrichedData];
+    [self processDictRequest:request completion:completion];
+  }];
 }
 
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo

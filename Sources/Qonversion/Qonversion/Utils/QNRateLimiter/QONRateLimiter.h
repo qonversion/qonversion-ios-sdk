@@ -14,15 +14,16 @@
 typedef void (^QONRateLimiterCompletionHandler)(NSError * _Nullable rateLimitError);
 
 typedef NS_ENUM(NSInteger, QONRateLimitedRequestType) {
-        QONRateLimitedRequestTypeRemoteConfig = 0,
-        QONRateLimitedRequestTypeAttachUserToExperiment = 1,
-        QONRateLimitedRequestTypeDetachUserFromExperiment = 2,
-        QONRateLimitedRequestTypePurchase = 3,
-        QONRateLimitedRequestTypeUserInfo = 4,
-        QONRateLimitedRequestTypeAttribution = 5,
-        QONRateLimitedRequestTypeGetProperties = 6,
-        QONRateLimitedRequestTypeEligibilityForProducts = 7,
-        QONRateLimitedRequestTypeIdentify = 8
+        QONRateLimitedRequestTypeInit = 0,
+        QONRateLimitedRequestTypeRemoteConfig = 1,
+        QONRateLimitedRequestTypeAttachUserToExperiment = 2,
+        QONRateLimitedRequestTypeDetachUserFromExperiment = 3,
+        QONRateLimitedRequestTypePurchase = 4,
+        QONRateLimitedRequestTypeUserInfo = 5,
+        QONRateLimitedRequestTypeAttribution = 6,
+        QONRateLimitedRequestTypeGetProperties = 7,
+        QONRateLimitedRequestTypeEligibilityForProducts = 8,
+        QONRateLimitedRequestTypeIdentify = 9
 };
 
 @interface QONRateLimiter : NSObject
