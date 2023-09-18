@@ -62,19 +62,16 @@ static NSInteger const msInSec = 1000;
 }
 
 - (BOOL)isRateLimitExceeded:(QONRateLimitedRequestType)requestType hash:(NSUInteger)hash {
+  [self removeOutdatedRequests:requestType];
+
   NSArray<QONRequest *> *requestsPerType = self.requests[@(requestType)];
   if (requestsPerType == nil) {
     return false;
   }
 
-  NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970] * 1000;
   int matchCount = 0;
-  for (NSInteger i = requestsPerType.count - 1; i >= 0; --i) {
+  for (NSUInteger i = 0; i < requestsPerType.count && matchCount < self.maxRequestsPerSecond; i++) {
     QONRequest *request = requestsPerType[i];
-    if (timestamp - request.timestamp >= msInSec || matchCount >= self.maxRequestsPerSecond) {
-      break;
-    }
-
     if (request.hashValue == hash) {
       matchCount++;
     }
@@ -84,6 +81,21 @@ static NSInteger const msInSec = 1000;
 }
 
 // MARK: Private
+
+- (void)removeOutdatedRequests:(QONRateLimitedRequestType)requestType {
+  NSArray<QONRequest *> *requestsPerType = self.requests[@(requestType)];
+  if (requestsPerType == nil) {
+    return;
+  }
+
+  NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970] * 1000;
+  NSMutableArray *filteredRequests = [NSMutableArray new];
+  for (NSInteger i = requestsPerType.count - 1; i >= 0 && timestamp - requestsPerType[i].timestamp < msInSec; --i) {
+    [filteredRequests insertObject:requestsPerType[i] atIndex:0];
+  }
+
+  self.requests[@(requestType)] = filteredRequests;
+}
 
 - (NSUInteger)calculateHashForDictionary:(NSDictionary *)dict {
   NSUInteger prime = 31;
