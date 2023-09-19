@@ -15,6 +15,7 @@
 
 @property (nonatomic, assign) NSUInteger maxRequestsPerSecond;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSMutableArray<QONRequest *> *> *requests;
+@property (nonatomic, strong) dispatch_queue_t appealQueue;
 
 @end
 
@@ -25,6 +26,7 @@
   if (self) {
     _maxRequestsPerSecond = maxRequestsPerSecond;
     _requests = [NSMutableDictionary new];
+    _appealQueue = dispatch_queue_create("appealQueue", DISPATCH_QUEUE_CONCURRENT);
   }
 
   return self;
@@ -53,33 +55,42 @@
 }
 
 - (void)saveRequest:(QONRateLimitedRequestType)requestType hash:(NSUInteger)hash {
-  NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970];
-
-  if (!self.requests[@(requestType)]) {
-    self.requests[@(requestType)] = [NSMutableArray new];
-  }
-
-  QONRequest *request = [[QONRequest alloc] initWithTimestamp:timestamp andHash:hash];
-  [self.requests[@(requestType)] addObject:request];
+  dispatch_barrier_async(self.appealQueue, ^{
+    NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970];
+    
+    if (!self.requests[@(requestType)]) {
+      self.requests[@(requestType)] = [NSMutableArray new];
+    }
+    
+    QONRequest *request = [[QONRequest alloc] initWithTimestamp:timestamp andHash:hash];
+    [self.requests[@(requestType)] addObject:request];
+  });
 }
 
 - (BOOL)isRateLimitExceeded:(QONRateLimitedRequestType)requestType hash:(NSUInteger)hash {
-  [self removeOutdatedRequests:requestType];
+  __block BOOL result = NO;
 
-  NSArray<QONRequest *> *requestsPerType = self.requests[@(requestType)];
-  if (!requestsPerType) {
-    return false;
-  }
-
-  NSUInteger matchCount = 0;
-  for (NSUInteger i = 0; i < requestsPerType.count && matchCount < self.maxRequestsPerSecond; i++) {
-    QONRequest *request = requestsPerType[i];
-    if (request.hashValue == hash) {
-      matchCount++;
+  dispatch_barrier_async(self.appealQueue, ^{
+    [self removeOutdatedRequests:requestType];
+    
+    NSArray<QONRequest *> *requestsPerType = self.requests[@(requestType)];
+    if (!requestsPerType) {
+      result = NO;
+      return;
     }
-  }
-
-  return matchCount >= self.maxRequestsPerSecond;
+    
+    NSUInteger matchCount = 0;
+    for (NSUInteger i = 0; i < requestsPerType.count && matchCount < self.maxRequestsPerSecond; i++) {
+      QONRequest *request = requestsPerType[i];
+      if (request.hashValue == hash) {
+        matchCount++;
+      }
+    }
+    
+    result = matchCount >= self.maxRequestsPerSecond;
+  });
+  
+  return result;
 }
 
 // MARK: Private
