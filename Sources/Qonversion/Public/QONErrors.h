@@ -116,7 +116,10 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONAPIError) {
   QONAPIErrorInvalidStoreCredentials  = 13,
   
   // Receipt validation error
-  QONAPIErrorReceiptValidation = 14
+  QONAPIErrorReceiptValidation = 14,
+
+  // Rate limit exceeded
+  QONAPIErrorRateLimitExceeded = 15,
 } NS_SWIFT_NAME(Qonversion.APIError);
 
 @interface QONErrors: NSObject
