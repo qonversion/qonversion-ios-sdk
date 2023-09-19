@@ -63,6 +63,7 @@ let sources: [String] = ["Qonversion/Automations/Constants",
                          "Qonversion/Qonversion/Utils",
                          "Qonversion/Qonversion/Utils/QNDevice",
                          "Qonversion/Qonversion/Utils/QNProperties",
+                         "Qonversion/Qonversion/Utils/QNRateLimiter",
                          "Qonversion/Qonversion/Utils/QNUserInfo",
                          "Qonversion/Qonversion/Utils/QNUtils"]
 
