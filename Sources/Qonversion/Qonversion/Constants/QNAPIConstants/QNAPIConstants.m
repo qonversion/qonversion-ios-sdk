@@ -19,6 +19,7 @@ NSString * const kPropertiesEndpoint = @"v3/users/%@/properties";
 NSString * const kRemoteConfigEndpoint = @"v3/remote-config";
 
 NSString * const kAttachUserToExperimentEndpointFormat = @"v3/experiments/%@/users/%@";
+NSString * const kAttachUserToRemoteConfigurationEndpointFormat = @"v3/remote-configurations/%@/users/%@";
 
 NSString * const kActionPointsEndpointFormat = @"v2/users/%@/action-points?type=screen_view&active=1";
 NSString * const kScreensEndpoint = @"v2/screens/";

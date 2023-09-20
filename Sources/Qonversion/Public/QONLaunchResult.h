@@ -64,6 +64,8 @@ typedef void (^QONRemoteConfigCompletionHandler)(QONRemoteConfig *_Nullable remo
 
 typedef void (^QONExperimentAttachCompletionHandler)(BOOL success, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ExperimentAttachCompletionHandler);
 
+typedef void (^QONRemoteConfigurationAttachCompletionHandler)(BOOL success, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.RemoteConfigurationAttachCompletionHandler);
+
 typedef void (^QONUserInfoCompletionHandler)(QONUser *_Nullable user, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.UserInfoCompletionHandler);
 
 typedef void (^QONOfferingsCompletionHandler)(QONOfferings *_Nullable offerings, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.OfferingsCompletionHandler);
