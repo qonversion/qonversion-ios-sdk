@@ -422,7 +422,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       return;
     }
 
-    NSURLRequest *request = [self.requestBuilder makeDetachUserFromRemoteConfigurationRequest:remoteConfigurationId userID:self.userID];
+    NSURLRequest *request = [self.requestBuilder makeAttachUserToRemoteConfigurationRequest:remoteConfigurationId userID:self.userID];
 
     [self processRequestWithoutResponse:request completion:completion];
   }];
@@ -437,7 +437,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       return;
     }
 
-    NSURLRequest *request = [self.requestBuilder makeAttachUserToRemoteConfigurationRequest:remoteConfigurationId userID:self.userID];
+    NSURLRequest *request = [self.requestBuilder makeDetachUserFromRemoteConfigurationRequest:remoteConfigurationId userID:self.userID];
 
     [self processRequestWithoutResponse:request completion:completion];
   }];

@@ -207,7 +207,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
 
 /**
- This function should be used for the test purpose only.
+ This function should be used for the test purposes only.
  Do not forget to delete the usage of this function before the release.
  Use this function to attach the user to the remote configuration.
  @param remoteConfigurationId identifier of the remote configuration
@@ -216,7 +216,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)attachUserToRemoteConfiguiration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
 
 /**
- This function should be used for the test purpose only.
+ This function should be used for the test purposes only.
  Do not forget to delete the usage of this function before the release.
  Use this function to detach the user from the remote configuration.
  @param remoteConfigurationId identifier of the remote configuration
