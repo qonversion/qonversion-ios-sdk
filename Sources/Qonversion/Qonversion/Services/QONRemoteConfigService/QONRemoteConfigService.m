@@ -67,4 +67,24 @@ static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configurati
   }];
 }
 
+- (void)attachUserToRemoteConfiguration:(NSString *)remoteConfiguration completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
+  [self.apiClient attachUserToRemoteConfiguration:remoteConfiguration completion:^(NSError * _Nullable error) {
+    if (error) {
+      completion(NO, error);
+    } else {
+      completion(YES, nil);
+    }
+  }];
+}
+
+- (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfiguration completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
+  [self.apiClient detachUserFromRemoteConfiguration:remoteConfiguration completion:^(NSError * _Nullable error) {
+    if (error) {
+      completion(NO, error);
+    } else {
+      completion(YES, nil);
+    }
+  }];
+}
+
 @end

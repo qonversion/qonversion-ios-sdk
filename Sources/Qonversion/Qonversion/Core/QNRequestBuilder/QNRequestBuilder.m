@@ -97,8 +97,18 @@
   return [self makeRequestWithDictBody:params baseURL:self.baseURL endpoint:endpoint type:QONRequestTypePost];
 }
 
-- (NSURLRequest *)makeDetachUserToExperimentRequest:(NSString *)experimentId userID:(NSString *)userID {
+- (NSURLRequest *)makeDetachUserFromExperimentRequest:(NSString *)experimentId userID:(NSString *)userID {
   NSString *endpoint = [NSString stringWithFormat:kAttachUserToExperimentEndpointFormat, experimentId, userID];
+  return [self makeRequestWithDictBody:nil baseURL:self.baseURL endpoint:endpoint type:QONRequestTypeDelete];
+}
+
+- (NSURLRequest *)makeAttachUserToRemoteConfigurationRequest:(NSString *)remoteConfigurationId userID:(NSString *)userID {
+  NSString *endpoint = [NSString stringWithFormat:kAttachUserToRemoteConfigurationEndpointFormat, remoteConfigurationId, userID];
+  return [self makeRequestWithDictBody:nil baseURL:self.baseURL endpoint:endpoint type:QONRequestTypePost];
+}
+
+- (NSURLRequest *)makeDetachUserFromRemoteConfigurationRequest:(NSString *)remoteConfigurationId userID:(NSString *)userID {
+  NSString *endpoint = [NSString stringWithFormat:kAttachUserToRemoteConfigurationEndpointFormat, remoteConfigurationId, userID];
   return [self makeRequestWithDictBody:nil baseURL:self.baseURL endpoint:endpoint type:QONRequestTypeDelete];
 }
 

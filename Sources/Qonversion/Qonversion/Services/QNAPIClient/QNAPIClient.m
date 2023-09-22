@@ -407,7 +407,37 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       return;
     }
 
-    NSURLRequest *request = [self.requestBuilder makeDetachUserToExperimentRequest:experimentId userID:self.userID];
+    NSURLRequest *request = [self.requestBuilder makeDetachUserFromExperimentRequest:experimentId userID:self.userID];
+
+    [self processRequestWithoutResponse:request completion:completion];
+  }];
+}
+
+- (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeAttachUserToRemoteConfiguration
+                                 hash:[[NSString stringWithFormat:@"%@%@", self.userID, remoteConfigurationId] hash]
+                           completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(rateLimitError);
+      return;
+    }
+
+    NSURLRequest *request = [self.requestBuilder makeAttachUserToRemoteConfigurationRequest:remoteConfigurationId userID:self.userID];
+
+    [self processRequestWithoutResponse:request completion:completion];
+  }];
+}
+
+- (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeDetachUserFromRemoteConfiguration
+                                 hash:[[NSString stringWithFormat:@"%@%@", self.userID, remoteConfigurationId] hash]
+                           completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(rateLimitError);
+      return;
+    }
+
+    NSURLRequest *request = [self.requestBuilder makeDetachUserFromRemoteConfigurationRequest:remoteConfigurationId userID:self.userID];
 
     [self processRequestWithoutResponse:request completion:completion];
   }];

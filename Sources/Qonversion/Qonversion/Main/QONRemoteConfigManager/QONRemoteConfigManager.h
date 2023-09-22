@@ -24,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)obtainRemoteConfig:(QONRemoteConfigCompletionHandler)completion;
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion;
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion;
+- (void)attachUserToRemoteConfiguiration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
+- (void)detachUserFromRemoteConfiguiration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
 - (void)userHasBeenChanged;
 
 @end
