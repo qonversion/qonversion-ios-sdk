@@ -197,6 +197,14 @@ static bool _isInitialized = NO;
   [[[Qonversion sharedInstance] remoteConfigManager] detachUserFromExperiment:experimentId completion:completion];
 }
 
+- (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
+}
+
+- (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
+}
+
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
   [[Qonversion sharedInstance] handlePurchases:purchasesInfo completion:nil];
 }

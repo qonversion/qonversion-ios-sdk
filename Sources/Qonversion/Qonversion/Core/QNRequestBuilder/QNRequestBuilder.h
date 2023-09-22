@@ -26,6 +26,8 @@ typedef NS_ENUM(NSInteger, QONRequestType) {
 - (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId;
 - (NSURLRequest *)makeSdkLogsRequestWithBody:(NSDictionary *)body;
 - (NSURLRequest *)makeAttachUserToExperimentRequest:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID;
-- (NSURLRequest *)makeDetachUserToExperimentRequest:(NSString *)experimentId userID:(NSString *)userID;
+- (NSURLRequest *)makeDetachUserFromExperimentRequest:(NSString *)experimentId userID:(NSString *)userID;
+- (NSURLRequest *)makeAttachUserToRemoteConfigurationRequest:(NSString *)remoteConfigurationId userID:(NSString *)userID;
+- (NSURLRequest *)makeDetachUserFromRemoteConfigurationRequest:(NSString *)remoteConfigurationId userID:(NSString *)userID;
 
 @end

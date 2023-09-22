@@ -86,6 +86,16 @@
   [self.remoteConfigService detachUserFromExperiment:experimentId completion:completion];
 }
 
+- (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
+  self.remoteConfig = nil;
+  [self.remoteConfigService attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
+}
+
+- (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
+  self.remoteConfig = nil;
+  [self.remoteConfigService detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
+}
+
 - (void)executeRemoteConfigCompletions:(QONRemoteConfig *)remoteConfig error:(NSError *)error {
   NSArray *completions = [self.completions copy];
   [self.completions removeAllObjects];
