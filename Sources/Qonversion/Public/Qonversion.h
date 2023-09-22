@@ -213,7 +213,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param remoteConfigurationId identifier of the remote configuration
  @param completion completion block that includes information about the result of the action. Success flag or error.
  */
-- (void)attachUserToRemoteConfiguiration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
+- (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
 
 /**
  This function should be used for the test purposes only.
@@ -222,7 +222,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param remoteConfigurationId identifier of the remote configuration
  @param completion completion block that includes information about the result of the action. Success flag or error.
  */
-- (void)detachUserFromRemoteConfiguiration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
+- (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
 
 /**
  This function should be used for the test purpose only.
