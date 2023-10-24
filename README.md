@@ -72,13 +72,13 @@ See more details [here](https://documentation.qonversion.io/docs/paywall-experim
 
 Send user-level subscription data to your favorite platforms.
 
-* **Amplitude**
-* **Mixpanel**
-* **Appsflyer**
-* **Adjust**
-* **Singular**
-* **CleverTap**
-* [**All other integrations here**](qonversion.io/integrations)
+* Amplitude
+* Mixpanel
+* Appsflyer
+* Adjust
+* Singular
+* CleverTap
+* [All other integrations here](qonversion.io/integrations)
 
 <p align="center">
      <a href="https://documentation.qonversion.io/docs/integrations-overview"><img width="90%", src="https://qcdn3.sfo3.digitaloceanspaces.com/github/integrations.png">
