@@ -53,12 +53,12 @@ Qonversion provides advanced subscription analytics out-of-the-box. You can moni
 
 Qonversion's A/B Experiments feature provides everything required to quickly launch paywall and other monetization experiments, analyze results and roll out winning versions without releasing a new app build. Qonversion A/B Experiments include:
 
-* **User segmentation by country, install date, app version, free/paying user**
-* **Traffic allocation**
-* **Advanced subscription analytics**
-* **Visualization of A/B experiments results**
-* **Statistical significance of the results**
-* **Roll out winning versions without app release with remote config**
+* User segmentation by country, install date, app version, free/paying user
+* Traffic allocation
+* Advanced subscription analytics
+* Visualization of A/B experiments results
+* Statistical significance of the results
+* Roll out winning versions without app release with remote config
 
 
 <p align="center">
