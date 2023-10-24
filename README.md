@@ -2,15 +2,14 @@
     Qonversion
 </h1>
 
-Qonversion is the data platform to power in-app subscription revenue growth. 
+Qonversion - In-app subscription monetization: implement subscriptions and grow your app’s revenue with A/B experiments 
 
-* fast in-app subscriptions implementation
-* back-end infrastructure to validate user receipts
-* manage cross-platform user access to paid content on your app
-* comprehensive subscription analytics
-* out-of-the-box integrations with the leading marketing, attribution, and product analytics platforms
-* push notifications and in-app messaging to win back lapsed subscribers
-* A/B Testing for in-app purchases
+* In-app subscription management SDK
+* API and webhooks to make your subscription data available where you need it
+* Seamless Stripe integration to enable cross-platform access management
+* Subscribers CRM with user-level transactions
+* Instant access to real-time subscription analytics
+* Built-in A/B experiments for subscription business model
 
 <p align="center">
      <a href="https://qonversion.io"><img width="90%" src="https://qcdn3.sfo3.digitaloceanspaces.com/github/qonversion_platform.png">
@@ -24,50 +23,65 @@ Qonversion is the data platform to power in-app subscription revenue growth.
 [![MIT License](http://img.shields.io/cocoapods/l/Qonversion.svg?style=flat)](https://qonversion.io)
 
 
-## How It Works: Product Center
+## In-App Subscription Implementation & Management
 
 <p align="center">
      <a href="https://documentation.qonversion.io/docs/integrations-overview"><img width="90%" src="https://user-images.githubusercontent.com/13959241/161107203-8ef3ecee-86be-47a2-ac57-b21d3da19339.png">
      </a>
 </p>
 
-1. Application calls the purchase method of Qonversion SDK.
-2. Qonversion SDK communicates with StoreKit or Google Billing Client to make a purchase.
-3. If a purchase is successful, the SDK sends a request to Qonversion API for server-to-server purchase validation. Qonversion server receives accurate information on the in-app purchase status and user entitlements.
-4. SDK returns control to the application with a processing state.
+1. Qonversion SDK provides three simple methods to manage subscriptions:
+	* Get in-app product details
+	* Make purchases
+	* Check subscription status to manage premium access
+2. Qonversion communicates with Apple or Google platforms both through SDK and server-side to process native in-app payments and keep subscription statuses up to date.
+3. You can use Qonversion webhooks and API in addition to SDK to get user-level data where you need it.
+
+See the [quick start guide documentation](https://documentation.qonversion.io/docs/quickstart).
 
 ## Analytics
 
-Monitor your in-app revenue metrics. Understand your customers and make better decisions with precise subscription revenue data.
+Qonversion provides advanced subscription analytics out-of-the-box. You can monitor real-time metrics from new users and trial-to-paid conversions to revenue, MRR, ARR, cohort retention and more. Understand your customers and make better decisions with precise subscription analytics.
 
 <p align="center">
-     <a href="https://documentation.qonversion.io/docs/analytics"><img width="90%" src="https://qonversion.io/img/screenshots/desktop/mobile_subscription_analytics.jpg">
+     <a href="https://documentation.qonversion.io/docs/analytics"><img width="90%" src="https://files.readme.io/9a4fdf6-Analytics.png">
      </a>
 </p>
+
+
+## A/B Experiments
+
+Qonversion's A/B Experiments feature provides everything required to quickly launch paywall and other monetization experiments, analyze results and roll out winning versions without releasing a new app build. Qonversion A/B Experiments include:
+
+* User segmentation by country, install date, app version, free/paying user
+* Traffic allocation
+* Advanced subscription analytics
+* Visualization of A/B experiments results
+* Statistical significance of the results
+* Roll out winning versions without app release with remote config
+
+
+<p align="center">
+     <a href="https://documentation.qonversion.io/docs/subscription-ab-testing"><img width="90%" src="https://qcdn3.sfo3.digitaloceanspaces.com/github/ab_tests.png">
+     </a>
+</p>
+
+See more details [here](https://documentation.qonversion.io/docs/paywall-experiments).
 
 ## Integrations
 
-Send subscription data to your favorite platforms Share your mobile and web subscription data using our powerful integrations.
+Send user-level subscription data to your favorite platforms.
+
+* Amplitude
+* Mixpanel
+* Appsflyer
+* Adjust
+* Singular
+* CleverTap
+* [All other integrations here](qonversion.io/integrations)
 
 <p align="center">
      <a href="https://documentation.qonversion.io/docs/integrations-overview"><img width="90%", src="https://qcdn3.sfo3.digitaloceanspaces.com/github/integrations.png">
-     </a>
-</p>
-
-## Personalized push notifications & in-app messaging
-
-Qonversion allows sending automated, personalized push notifications and in-app messages initiated by in-app purchase events. This feature is designed to increase your app's revenue and retention, provide cancellation insights, reduce subscriber churn, and improve your subscribers' user experience.
-
-
-See more in the [documentation](https://documentation.qonversion.io/docs/automations)
-![](https://qonversion.io/img/@2x/automation/in-app-constructor.gif)
-
-## A/B Testing for in-app purchases
-
-Boost conversion rates with paywalls and in-app purchases A/B testing. Find the best pricing and paywall variations. Be flexible to prove hypotheses without app releases.
-
-<p align="center">
-     <a href="https://documentation.qonversion.io/docs/subscription-ab-testing"><img width="90%" src="https://user-images.githubusercontent.com/13959241/161716071-b30311b3-b60f-482d-a5d3-c40c1951253b.png">
      </a>
 </p>
 
@@ -78,7 +92,6 @@ Boost conversion rates with paywalls and in-app purchases A/B testing. Find the 
 * **Track and increase your revenue.** Qonversion provides detailed real-time revenue analytics including cohort analysis, trial conversion rates, country segmentation, and much more.
 * **Integrations with the leading mobile platforms.** Qonversion allows sending data to platforms like AppsFlyer, Adjust, Branch, Tenjin, Facebook Ads, Amplitude, Mixpanel, and many others.
 * **Change promoted in-app products.** Change promoted in-app products anytime without app releases.
-* **Win back lapsed subscribers.** Qonversion allows sending highly targeted push notifications triggered by server-side subscription events. You can send special offers to users who just canceled a free trial or a subscription. Plus you can deliver in-app messages with a beautiful native design that you create in Qonversion.
 * **A/B test** and identify winning in-app purchases, subscriptions or paywals.
 * **Cross-device and cross-platform access management.** If you provide user authorization in your app, you can easily set Qonversion to provide premium access to authorized users across devices and operating systems.
 * **SDK caches the data.** Qonversion SDK caches purchase data including in-app products and entitlements, so the user experience is not affected even with the slow or interrupting network connection.
@@ -89,7 +102,7 @@ Convinced? Let's go!
 
 ## Documentation
 
-Check the [documentation](https://documentation.qonversion.io/docs/quickstart) to learn details on implementing and using Qonversion SDKs.
+Check the [full documentation](https://documentation.qonversion.io/docs/quickstart) to learn about implementation details and available features.
 
 #### Help us improve the documentation
 

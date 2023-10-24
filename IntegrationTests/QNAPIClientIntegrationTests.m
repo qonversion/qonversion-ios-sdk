@@ -649,8 +649,8 @@
     }];
   }];
   
-  // then
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
+  // then (doubling timeout for a slow deprecated endpoint)
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout * 2 handler:nil];
 }
 
 - (void)testActionPointsError {
