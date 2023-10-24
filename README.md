@@ -48,7 +48,6 @@ Qonversion provides advanced subscription analytics out-of-the-box. You can moni
      </a>
 </p>
 
-See more details [here](https://documentation.qonversion.io/docs/paywall-experiments).
 
 ## A/B Experiments
 
@@ -67,6 +66,7 @@ Qonversion's A/B Experiments feature provides everything required to quickly lau
      </a>
 </p>
 
+See more details [here](https://documentation.qonversion.io/docs/paywall-experiments).
 
 ## Integrations
 
