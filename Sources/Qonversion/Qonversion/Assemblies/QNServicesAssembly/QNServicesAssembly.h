@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QNServicesAssembly : NSObject
 
+- (instancetype)initWithCustomUserDefaults:(NSUserDefaults *)userDefaults;
+
 - (id<QNUserInfoServiceInterface>)userInfoService;
 - (id<QNIdentityManagerInterface>)identityManager;
 - (id<QNLocalStorage>)localStorage;

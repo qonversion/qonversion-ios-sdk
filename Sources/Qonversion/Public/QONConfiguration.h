@@ -63,6 +63,13 @@ NS_SWIFT_NAME(Qonversion.Configuration)
  */
 @property (nonatomic, weak, readonly) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
 
+/**
+ Custom user defaults
+ */
+@property (nonatomic, strong, readonly) NSUserDefaults *customUserDefaults;
+
+@property (nonatomic, copy, readonly) NSString *customUserDefaultsSuiteName;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 /**
@@ -72,6 +79,14 @@ NS_SWIFT_NAME(Qonversion.Configuration)
  */
 - (instancetype)initWithProjectKey:(NSString  * _Nonnull)projectKey
                         launchMode:(QONLaunchMode)launchMode NS_DESIGNATED_INITIALIZER;
+
+/**
+ Set user defaults with suite name to share it beetween your app and shared extension.
+ @param userDefaults - user defaults with suite name for sharing beetween app and extension.
+ */
+- (void)setCustomUserDefaults:(NSUserDefaults * _Nonnull)userDefaults;
+
+- (void)setCustomUserDefaultsSuitename:(NSString * _Nonnull)customUserDefaultsSuiteName;
 
 /**
  Entitlements cache is used when there are problems with the Qonversion API or internet connection.

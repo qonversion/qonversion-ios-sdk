@@ -198,6 +198,7 @@
 - (void)addPlatformInfoToRequest:(NSMutableURLRequest *)request {
   NSString *platformVersion = [QNDevice current].osVersion;
   NSString *platform = [QNDevice current].osName;
+  // TODO: POMENYAT' TYT USER DEFAULTS || Или подумать, как тут будет работать кроссплатформа, мб не надо менять!! MOZHNO NE MENYAT'
   NSString *source = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSource] ?: @"iOS";
   NSString *sourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: self.version;
   

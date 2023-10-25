@@ -322,10 +322,12 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)processStoredRequests {
+  // TODO: POMENYAT' TYT USER DEFAULTS
   NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
   NSArray *storedRequests = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData];
   
   if (![storedRequests isKindOfClass:[NSArray class]]) {
+    // TODO: POMENYAT' TYT USER DEFAULTS
     [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
   } else {
     for (NSInteger i = 0; i < [storedRequests count]; i++) {
@@ -336,6 +338,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       }
     }
     
+    // TODO: POMENYAT' TYT USER DEFAULTS
     [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
   }
   
@@ -476,6 +479,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
   NSString *platformVersion = [QNDevice current].osVersion;
   NSString *platform = [QNDevice current].osName;
+  // TODO: POMENYAT' TYT USER DEFAULTS || Или подумать, как тут будет работать кроссплатформа!! MOJNO NE MENYAT'
   NSString *source = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSource] ?: @"iOS";
   NSString *sourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: self.version;
   
@@ -629,10 +633,12 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 - (void)storePurchaseRequests:(NSDictionary *)requests {
   NSData *updatedStoredRequestsData = [QNKeyedArchiver archivedDataWithObject:[requests copy]];
+  // TODO: POMENYAT' TYT USER DEFAULTS
   [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kKeyQUserDefaultsStoredPurchasesRequests];
 }
 
 - (NSDictionary *)storedPurchasesRequests {
+  // TODO: POMENYAT' TYT USER DEFAULTS
   NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kKeyQUserDefaultsStoredPurchasesRequests];
   NSDictionary *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData] ?: @{};
   if (![unarchivedData isKindOfClass:[NSDictionary class]]) {
@@ -653,12 +659,14 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   NSURLComponents *components = [NSURLComponents componentsWithString:request.URL.absoluteString];
   NSString *requestString = [components.path stringByReplacingOccurrencesOfString:@"/" withString:@"" options:NSCaseInsensitiveSearch range:(NSRange){0, 1}];
   if ([self.retriableRequests containsObject:requestString]) {
+    // TODO: POMENYAT' TYT USER DEFAULTS
     NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
     NSArray *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData] ?: @[];
     NSMutableArray *storedRequests = [unarchivedData mutableCopy];
     [storedRequests addObject:request];
     
     NSData *updatedStoredRequestsData = [QNKeyedArchiver archivedDataWithObject:[storedRequests copy]];
+    // TODO: POMENYAT' TYT USER DEFAULTS
     [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
   }
 }

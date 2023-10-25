@@ -104,11 +104,8 @@
   return ([receiptURL.path rangeOfString:@"sandboxReceipt"].location != NSNotFound);
 }
 
-+ (void)saveInternalUserID:(nonnull NSString *)uid {
-  [[NSUserDefaults standardUserDefaults] setObject:uid forKey:keyQInternalUserID];
-}
-
 + (NSString *)internalUserID {
+  // TODO: Проверить используется ли поле custom_uid в запросах и если нет, то удалить эту логику вообще
   return [[NSUserDefaults standardUserDefaults] stringForKey:keyQInternalUserID] ?: @"";
 }
 

@@ -15,7 +15,23 @@
 #import "QNAPIClient.h"
 #import "QNUserInfoMapper.h"
 
+@interface QNServicesAssembly ()
+
+@property (nonatomic, strong) NSUserDefaults *customUserDefaults;
+
+@end
+
 @implementation QNServicesAssembly
+
+- (instancetype)initWithCustomUserDefaults:(NSUserDefaults *)userDefaults {
+  self = [super init];
+  
+  if (self) {
+    _customUserDefaults = userDefaults;
+  }
+  
+  return self;
+}
 
 - (id<QNUserInfoServiceInterface>)userInfoService {
   QNUserInfoService *service = [QNUserInfoService new];
@@ -44,6 +60,7 @@
 - (id<QNLocalStorage>)localStorage {
   QNUserDefaultsStorage *storage = [QNUserDefaultsStorage new];
   storage.userDefaults = [[NSUserDefaults alloc] initWithSuiteName:kMainUserDefaultsSuiteName];
+  storage.customUserDefaults = self.customUserDefaults;
   
   return storage;
 }

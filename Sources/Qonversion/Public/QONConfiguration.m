@@ -15,6 +15,7 @@ static NSString *const kSDKVersion = @"5.2.0";
 
 @property (nonatomic, copy, readwrite) NSString *projectKey;
 @property (nonatomic, copy, readwrite) NSString *version;
+@property (nonatomic, strong, readwrite) NSUserDefaults *customUserDefaults;
 @property (nonatomic, assign, readwrite) QONLaunchMode launchMode;
 @property (nonatomic, assign, readwrite) QONEntitlementsCacheLifetime entitlementsCacheLifetime;
 @property (nonatomic, copy, readwrite) NSString *baseURL;
@@ -43,6 +44,14 @@ static NSString *const kSDKVersion = @"5.2.0";
 
 - (void)setEnvironment:(QONEnvironment)environment {
   _environment = environment;
+}
+
+- (void)setCustomUserDefaults:(NSUserDefaults * _Nonnull)userDefaults {
+  _customUserDefaults = userDefaults;
+}
+
+- (void)setCustomUserDefaultsSuiteName:(NSString * _Nonnull)customUserDefaultsSuiteName {
+  _customUserDefaults = [[NSUserDefaults alloc] initWithSuiteName:customUserDefaultsSuiteName];
 }
 
 - (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)entitlementsCacheLifetime {

@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) QONRemoteConfigService *remoteConfigService;
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 
+- (instancetype)initWithRemoteConfigService:(QONRemoteConfigService *)remoteConfigService;
+
 - (void)userChangingRequestFailedWithError:(NSError *)error;
 - (void)handlePendingRequests;
 - (void)obtainRemoteConfig:(QONRemoteConfigCompletionHandler)completion;
