@@ -150,7 +150,7 @@
 
   // when
   [client launchRequest:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-    [self assertProjectNotFoundError:res error:error];
+    [self assertAccessDeniedError:res error:error];
     [completionExpectation fulfill];
   }];
   
