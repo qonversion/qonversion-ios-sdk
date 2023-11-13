@@ -3,17 +3,9 @@ source 'https://github.com/CocoaPods/Specs.git'
 project 'Qonversion'
 use_frameworks!
 
-target 'QonversionTests' do
-  platform :ios, 12.0
-  pod 'OCMock'
-end
-
-
 target 'Sample' do
-platform :ios, 12.0
-pod 'Firebase/Auth'
-pod 'GoogleSignIn'
-#pod 'Qonversion', :path => './'
+platform :ios, 13.0
+#pod 'Qonversion'
 end
 
 
