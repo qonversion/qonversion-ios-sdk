@@ -150,7 +150,7 @@
 
   // when
   [client launchRequest:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-    [self assertProjectNotFoundError:res error:error];
+    [self assertAccessDeniedError:res error:error];
     [completionExpectation fulfill];
   }];
   
@@ -649,8 +649,8 @@
     }];
   }];
   
-  // then
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
+  // then (doubling timeout for a slow deprecated endpoint)
+  [self waitForExpectationsWithTimeout:self.kRequestTimeout * 2 handler:nil];
 }
 
 - (void)testActionPointsError {

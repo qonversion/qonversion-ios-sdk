@@ -48,18 +48,17 @@ Qonversion provides advanced subscription analytics out-of-the-box. You can moni
      </a>
 </p>
 
-See more details [here](https://documentation.qonversion.io/docs/paywall-experiments).
 
 ## A/B Experiments
 
 Qonversion's A/B Experiments feature provides everything required to quickly launch paywall and other monetization experiments, analyze results and roll out winning versions without releasing a new app build. Qonversion A/B Experiments include:
 
-* **User segmentation by country, install date, app version, free/paying user**
-* **Traffic allocation**
-* **Advanced subscription analytics**
-* **Visualization of A/B experiments results**
-* **Statistical significance of the results**
-* **Roll out winning versions without app release with remote config**
+* User segmentation by country, install date, app version, free/paying user
+* Traffic allocation
+* Advanced subscription analytics
+* Visualization of A/B experiments results
+* Statistical significance of the results
+* Roll out winning versions without app release with remote config
 
 
 <p align="center">
@@ -67,18 +66,19 @@ Qonversion's A/B Experiments feature provides everything required to quickly lau
      </a>
 </p>
 
+See more details [here](https://documentation.qonversion.io/docs/paywall-experiments).
 
 ## Integrations
 
 Send user-level subscription data to your favorite platforms.
 
-* **Amplitude**
-* **Mixpanel**
-* **Appsflyer**
-* **Adjust**
-* **Singular**
-* **CleverTap**
-* [**All other integrations here**](qonversion.io/integrations)
+* Amplitude
+* Mixpanel
+* Appsflyer
+* Adjust
+* Singular
+* CleverTap
+* [All other integrations here](qonversion.io/integrations)
 
 <p align="center">
      <a href="https://documentation.qonversion.io/docs/integrations-overview"><img width="90%", src="https://qcdn3.sfo3.digitaloceanspaces.com/github/integrations.png">
