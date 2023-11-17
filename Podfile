@@ -5,7 +5,6 @@ use_frameworks!
 
 target 'Sample' do
 platform :ios, 13.0
-#pod 'Qonversion'
 end
 
 
