@@ -51,6 +51,7 @@ static bool _isInitialized = NO;
   [Qonversion sharedInstanceWithCustomUserDefaults:configCopy.customUserDefaults];
   
   [Qonversion sharedInstance].debugMode = configCopy.environment == QONEnvironmentSandbox;
+  [[QNAPIClient shared] setLocalStorage:[Qonversion sharedInstance].localStorage];
   [[QNAPIClient shared] setSDKVersion:configCopy.version];
   [[QNAPIClient shared] setBaseURL:configCopy.baseURL];
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;

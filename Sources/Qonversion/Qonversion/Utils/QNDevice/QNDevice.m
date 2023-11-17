@@ -44,8 +44,6 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
 - (instancetype)init {
   self = [super init];
   if (self) {
-    // TODO: POMENYAT' TYT USER DEFAULTS
-    // TODO: MOJNO NE MENYAT'
     QNUserDefaultsStorage *storage = [QNUserDefaultsStorage new];
     storage.userDefaults = [[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName];
     _persistentStorage = storage;

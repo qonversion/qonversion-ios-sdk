@@ -1,6 +1,7 @@
 #import "Foundation/Foundation.h"
 #import "QONLaunchResult.h"
 
+@protocol QNLocalStorage;
 @class SKProduct, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel;
 
 typedef void (^QNAPIClientEmptyCompletionHandler)(NSError * _Nullable error);
@@ -19,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *userID;
 @property (nonatomic, strong) NSString *apiKey;
 @property (nonatomic, assign) BOOL debug;
+@property (nonatomic, strong) id<QNLocalStorage> localStorage;
 
 - (void)setSDKVersion:(NSString *)version;
 - (void)setBaseURL:(NSString *)url;

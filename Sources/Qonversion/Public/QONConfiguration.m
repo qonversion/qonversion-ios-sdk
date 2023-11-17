@@ -46,7 +46,7 @@ static NSString *const kSDKVersion = @"5.2.0";
   _environment = environment;
 }
 
-- (void)setCustomUserDefaults:(NSUserDefaults * _Nonnull)userDefaults {
+- (void)setCustomUserDefaults:(NSUserDefaults * _Nullable)userDefaults {
   _customUserDefaults = userDefaults;
 }
 
@@ -83,6 +83,7 @@ static NSString *const kSDKVersion = @"5.2.0";
   [copyConfig setEnvironment:_environment];
   [copyConfig setEntitlementsCacheLifetime:_entitlementsCacheLifetime];
   [copyConfig setEntitlementsUpdateListener:_entitlementsUpdateListener];
+  [copyConfig setCustomUserDefaults:_customUserDefaults];
   [copyConfig setProxyURL:_baseURL];
   
   return copyConfig;

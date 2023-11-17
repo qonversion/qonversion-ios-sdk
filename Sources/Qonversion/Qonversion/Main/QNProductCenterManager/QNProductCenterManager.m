@@ -87,11 +87,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _apiClient = [QNAPIClient shared];
     _storeKitService = [[QNStoreKitService alloc] initWithDelegate:self];
     
-    // TODO: POMENYAT' TYT USER DEFAULTS заменен, но нужно трансфер данных сделать
-//    [_persistentStorage setUserDefaults:[[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName]];
-
     _persistentStorage = localStorage;
-    
+    [self transferCachedPermissionsIfNeeded];
     _productsEntitlementsRelation = [_persistentStorage loadObjectForKey:kKeyQUserDefaultsProductsPermissionsRelation];
     
     _purchasingBlocks = [NSMutableDictionary new];
@@ -103,6 +100,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   
   return self;
+}
+
+- (void)transferCachedPermissionsIfNeeded {
+  BOOL alreadyTransfered = [self.persistentStorage loadBoolforKey:kKeyQPermissionsTransfered];
+  if (!alreadyTransfered) {
+    NSDictionary<NSString *, QONEntitlement *> *entitlements = [self.persistentStorage loadObjectForKey:kKeyQUserDefaultsPermissions];
+    NSTimeInterval cachedPermissionsTimestamp = [self cachedPermissionsTimestamp];
+    [self.persistentStorage storeObject:entitlements forKey:kKeyQUserDefaultsPermissions];
+    [self.persistentStorage storeDouble:cachedPermissionsTimestamp forKey:kKeyQUserDefaultsPermissionsTimestamp];
+    
+    [self.persistentStorage storeBool:YES forKey:kKeyQPermissionsTransfered];
+  }
 }
 
 - (void)supportMigrationFromOldVersions {
@@ -431,6 +440,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 }
 
+- (void)fireEntitlementsBlocks:(NSArray<QONEntitlementsCompletionHandler> *)blocks result:(NSDictionary<NSString *, QONEntitlement *> *)entitlements error:(NSError *)error {
+  for (QONEntitlementsCompletionHandler block in blocks) {
+    run_block_on_main(block, entitlements, error);
+  }
+}
+
 - (void)executeEntitlementsBlocksWithError:(NSError *)error {
   @synchronized (self) {
     if (self.entitlementsBlocks.count == 0) {
@@ -440,15 +455,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     NSMutableArray <QONEntitlementsCompletionHandler> *_blocks = [self.entitlementsBlocks copy];
     [self.entitlementsBlocks removeAllObjects];
     
+    NSDictionary<NSString *, QONEntitlement *> *cachedEntitlements = [self getActualEntitlementsForDefaultState:NO];
+    cachedEntitlements = cachedEntitlements ?: @{};
+    
     if (error) {
-      for (QONEntitlementsCompletionHandler block in _blocks) {
-        run_block_on_main(block, @{}, error);
+      if (self.pendingIdentityUserID.length > 0) {
+        [self fireEntitlementsBlocks:[_blocks copy] result:@{} error:error];
+      } else {
+        [self fireEntitlementsBlocks:[_blocks copy] result:cachedEntitlements error:error];
       }
     } else {
       [self prepareEntitlementsResultWithCompletion:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
-        for (QONEntitlementsCompletionHandler block in _blocks) {
-          run_block_on_main(block, result ?: @{}, error);
-        }
+        [self fireEntitlementsBlocks:[_blocks copy] result:cachedEntitlements error:error];
       }];
     }
   }

@@ -33,7 +33,7 @@
   [self.customUserDefaults setDouble:value forKey:key];
   [self.userDefaults setDouble:value forKey:key];
 }
-// если в кастом нет, забираем из дефолт и перекладываем в кастомное. если записывают, пишем в оба, если удаляют, удаляем из обоих
+
 - (id)loadObjectForKey:(NSString *)key {
   NSData *data;
   if (self.customUserDefaults) {

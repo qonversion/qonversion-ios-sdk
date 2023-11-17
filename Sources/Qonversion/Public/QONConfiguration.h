@@ -68,6 +68,9 @@ NS_SWIFT_NAME(Qonversion.Configuration)
  */
 @property (nonatomic, strong, readonly) NSUserDefaults *customUserDefaults;
 
+/**
+ Suite name that was used for creating custom user defaults on the SDK side. Available only if was setted before using `setCustomUserDefaultsSuitename`.
+ */
 @property (nonatomic, copy, readonly) NSString *customUserDefaultsSuiteName;
 
 - (instancetype)init NS_UNAVAILABLE;
@@ -81,11 +84,15 @@ NS_SWIFT_NAME(Qonversion.Configuration)
                         launchMode:(QONLaunchMode)launchMode NS_DESIGNATED_INITIALIZER;
 
 /**
- Set user defaults with suite name to share it beetween your app and shared extension.
- @param userDefaults - user defaults with suite name for sharing beetween app and extension.
+ Set user defaults with suite name to share it between your app and shared extension.
+ @param userDefaults - user defaults with suite name for sharing between app and extension.
  */
-- (void)setCustomUserDefaults:(NSUserDefaults * _Nonnull)userDefaults;
+- (void)setCustomUserDefaults:(NSUserDefaults * _Nullable)userDefaults;
 
+/**
+ Set suite name for user defaults that would be created on the SDK side to share it between your app and shared extension.
+ @param customUserDefaultsSuiteName - user defaults suite name for sharing between app and extension.
+ */
 - (void)setCustomUserDefaultsSuitename:(NSString * _Nonnull)customUserDefaultsSuiteName;
 
 /**

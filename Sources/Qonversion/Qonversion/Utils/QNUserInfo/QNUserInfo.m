@@ -3,12 +3,6 @@
 
 #import "QNUserInfo.h"
 
-@interface QNUserInfo (InternalUserID)
-
-+ (NSString *)internalUserID;
-
-@end
-
 @implementation QNUserInfo
 
 + (NSDictionary *)overallData {
@@ -18,10 +12,6 @@
   NSString *installDate = device.installDate;
   if (installDate) {
     [overallDict setValue:installDate forKey:@"install_date"];
-  }
-  
-  if ([self internalUserID]) {
-    [overallDict setValue:[self internalUserID] forKey:@"custom_uid"];
   }
   
   if ([QNUserInfo appStoreReceipt]) {
@@ -102,11 +92,6 @@
   }
   
   return ([receiptURL.path rangeOfString:@"sandboxReceipt"].location != NSNotFound);
-}
-
-+ (NSString *)internalUserID {
-  // TODO: Проверить используется ли поле custom_uid в запросах и если нет, то удалить эту логику вообще
-  return [[NSUserDefaults standardUserDefaults] stringForKey:keyQInternalUserID] ?: @"";
 }
 
 + (nullable NSBundle *)bundle {

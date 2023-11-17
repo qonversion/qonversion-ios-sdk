@@ -42,6 +42,7 @@ NSString *const kKeyQUserDefaultsUserID = @"com.qonversion.keys.storedUserID";
 NSString *const kKeyQUserIDPrefix = @"QON";
 NSString *const kKeyQUserIDSeparator = @"_";
 NSString *const kKeyQUserDefaultsPermissions = @"com.qonversion.keys.entitlements";
+NSString *const kKeyQPermissionsTransfered = @"com.qonversion.keys.entitlements.transfered";
 NSString *const kKeyQUserDefaultsPermissionsTimestamp = @"com.qonversion.keys.permissions.timestamp";
 NSString *const kKeyQUserDefaultsProductsPermissionsRelation = @"com.qonversion.keys.products.permissions.relation";
 NSString *const kMainUserDefaultsSuiteName = @"qonversion.localstorage.main";
