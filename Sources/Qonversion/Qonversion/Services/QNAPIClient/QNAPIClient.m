@@ -10,6 +10,7 @@
 #import "QONStoreKit2PurchaseModel.h"
 #import "QNDevice.h"
 #import "QONRateLimiter.h"
+#import "Qonversion.h"
 
 NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
@@ -592,7 +593,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     if (httpURLResponse.statusCode >= kInternalServerErrorFirstCode && httpURLResponse.statusCode <= kInternalServerErrorLastCode) {
       NSMutableDictionary *userInfo = [NSMutableDictionary new];
       userInfo[NSLocalizedDescriptionKey] = kInternalServerError;
-      NSError *error = [NSError errorWithDomain:keyQONErrorDomain code:httpURLResponse.statusCode userInfo:userInfo];
+      NSError *error = [NSError errorWithDomain:QonversionErrorDomain code:httpURLResponse.statusCode userInfo:userInfo];
       
       return error;
     }
@@ -609,7 +610,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     if ([self.criticalErrorCodes containsObject:@(statusCode)]) {
       NSMutableDictionary *userInfo = [NSMutableDictionary new];
       userInfo[NSLocalizedDescriptionKey] = kAccessDeniedError;
-      NSError *error = [NSError errorWithDomain:keyQONErrorDomain code:statusCode userInfo:userInfo];
+      NSError *error = [NSError errorWithDomain:QonversionErrorDomain code:statusCode userInfo:userInfo];
       
       return error;
     }

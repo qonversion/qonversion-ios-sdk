@@ -6,6 +6,7 @@
 #import "QNInternalConstants.h"
 #import "QNProductCenterManager.h"
 #import "QONUserPropertiesMapper.h"
+#import "Qonversion.h"
 
 #if !TARGET_OS_OSX
 #import <UIKit/UIKit.h>
@@ -134,7 +135,7 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       weakSelf.updatingCurrently = NO;
       
       if (error) {
-        if ([error.domain isEqualToString:keyQONAPIErrorDomain] && error.code == QONAPIErrorInvalidClientUID) {
+        if ([error.domain isEqualToString:QonversionApiErrorDomain] && error.code == QONAPIErrorInvalidClientUID) {
           [weakSelf.productCenterManager launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
             [weakSelf retryProperties];
           }];
