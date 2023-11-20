@@ -22,7 +22,7 @@
 
 @implementation QONRemoteConfigManager
 
-- (instancetype)initWithRemoteConfigService:(QONRemoteConfigService *)remoteConfigService {
+- (instancetype)init {
   self = [super init];
   
   if (self) {
