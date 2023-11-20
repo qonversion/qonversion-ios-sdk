@@ -6,7 +6,9 @@
 #import "QNStoreKitService.h"
 #import "QNTestConstants.h"
 #import "QONLaunchResult.h"
-
+#import "QNUserInfoService.h"
+#import "QNIdentityManager.h"
+#import "QNLocalStorage.h"
 #import "Helpers/XCTestCase+TestJSON.h"
 
 @interface QNProductCenterManager (Private)
@@ -41,8 +43,10 @@
 
 - (void)setUp {
   _mockClient = OCMClassMock([QNAPIClient class]);
-  
-  _manager = [[QNProductCenterManager alloc] init];
+  id mockUserInfoService = OCMClassMock([QNUserInfoService class]);
+  id mockIdentityManager = OCMClassMock([QNIdentityManager class]);
+  id mockLocalStorage = OCMProtocolMock(@protocol(QNLocalStorage));
+  _manager = [[QNProductCenterManager alloc] initWithUserInfoService:mockUserInfoService identityManager:mockIdentityManager localStorage:mockLocalStorage];
   [_manager setApiClient:_mockClient];
 }
 
