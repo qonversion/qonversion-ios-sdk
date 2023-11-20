@@ -50,7 +50,8 @@ static NSString *const kSDKVersion = @"5.2.0";
   _customUserDefaults = userDefaults;
 }
 
-- (void)setCustomUserDefaultsSuiteName:(NSString * _Nonnull)customUserDefaultsSuiteName {
+- (void)setCustomUserDefaultsSuitename:(NSString * _Nonnull)customUserDefaultsSuiteName {
+  _userDefaultsSuiteName = customUserDefaultsSuiteName;
   _customUserDefaults = [[NSUserDefaults alloc] initWithSuiteName:customUserDefaultsSuiteName];
 }
 

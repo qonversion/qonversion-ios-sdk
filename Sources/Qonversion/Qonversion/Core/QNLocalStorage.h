@@ -7,8 +7,6 @@
 - (void)storeObject:(id)object
              forKey:(NSString *)key;
 
-- (void)loadObjectWithCompletion:(void (^)(id))completion;
-
 - (id)loadObjectForKey:(NSString *)key;
 - (void)loadObjectForKey:(NSString *)key
           withCompletion:(void(^)(id))completion;

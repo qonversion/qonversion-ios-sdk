@@ -22,15 +22,6 @@ NSTimeInterval QDefaultTestTimeout = 0.1;
     [super tearDown];
 }
 
-- (void)testThatStorageKeepObjectWithoutKey {
-    NSObject *expectedObject = [NSObject new];
-    
-    [self.storage storeObject:expectedObject];
-    id resultObject = [self.storage loadObject];
-    
-    XCTAssertEqualObjects(expectedObject, resultObject);
-}
-
 - (void)testThatStorageKeepObjectByKey {
     NSObject *expectedObject = [NSObject new];
     
@@ -38,27 +29,6 @@ NSTimeInterval QDefaultTestTimeout = 0.1;
     id resultObject = [self.storage loadObjectForKey:QNInMemoryStorageKey];
     
     XCTAssertEqualObjects(expectedObject, resultObject);
-}
-
-- (void)testThatStorageKeepLastValue {
-    NSObject *firstObject = [NSObject new];
-    NSObject *expectedObject = [NSObject new];
-    
-    [self.storage storeObject:firstObject];
-    [self.storage storeObject:expectedObject];
-    id resultObject = [self.storage loadObject];
-    
-    XCTAssertEqualObjects(expectedObject, resultObject);
-}
-
-- (void)testThatStorageRetunNilAfterRemoveObjectWithoutKey {
-    NSObject *expectedObject = [NSObject new];
-    
-    [self.storage storeObject:expectedObject];
-    [self.storage removeObject];
-    id resultObject = [self.storage loadObject];
-    
-    XCTAssertNil(resultObject);
 }
 
 - (void)testThatStorageReturnNilAfterRemoveObjectByKey {
@@ -69,24 +39,6 @@ NSTimeInterval QDefaultTestTimeout = 0.1;
     id resultObject = [self.storage loadObjectForKey:QNInMemoryStorageKey];
     
     XCTAssertNil(resultObject);
-}
-
-- (void)testThatStorageReturnObjectWithoutKeyInCompletionHandler {
-    NSObject *expectedObject = [NSObject new];
-    XCTestExpectation *expectation = [self expectationWithDescription:@"Completion block was called"];
-    
-    [self.storage storeObject:expectedObject];
-    
-    __block id resultObject;
-    [self.storage loadObjectWithCompletion:^(id object) {
-        resultObject = object;
-        [expectation fulfill];
-    }];
-    
-    [self waitForExpectationsWithTimeout:QDefaultTestTimeout
-                                 handler:^(NSError * _Nullable error) {
-                                     XCTAssertEqualObjects(expectedObject, resultObject);
-                                 }];
 }
 
 - (void)testThatStorageReturnObjectByKeyInCompletionHandler {
