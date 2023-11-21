@@ -13,9 +13,6 @@ NSString *const keyQONUserPropertyKeyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
 NSString *const keyQSource = @"com.qonversion.keys.source";
 NSString *const keyQSourceVersion = @"com.qonversion.keys.sourceVersion";
 
-NSString *const keyQONErrorDomain = @"com.qonversion.io";
-NSString *const keyQONAPIErrorDomain = @"com.qonversion.io.api";
-
 NSString *const kHistoricalDataSynced = @"isHistoricalDataSynced";
 
 #if TARGET_OS_OSX

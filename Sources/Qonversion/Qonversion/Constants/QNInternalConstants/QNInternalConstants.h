@@ -28,8 +28,6 @@ extern NSString *const keyQONUserPropertyKeyReg;
 extern NSString *const keyQSource;
 extern NSString *const keyQSourceVersion;
 
-extern NSString *const keyQONErrorDomain;
-extern NSString *const keyQONAPIErrorDomain;
 extern NSString *const kQNPlatform;
 extern NSString *const kQNOSName;
 
