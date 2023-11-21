@@ -466,7 +466,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       }
     } else {
       [self prepareEntitlementsResultWithCompletion:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
-        [self fireEntitlementsBlocks:[_blocks copy] result:cachedEntitlements error:error];
+        [self fireEntitlementsBlocks:[_blocks copy] result:result ?: @{} error:error];
       }];
     }
   }

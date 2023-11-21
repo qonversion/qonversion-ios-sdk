@@ -66,10 +66,6 @@ static bool _isInitialized = NO;
   return [Qonversion sharedInstance];
 }
 
-- (void)configureDependencies {
-  
-}
-
 + (instancetype)sharedInstanceWithCustomUserDefaults:(NSUserDefaults *)userDefaults {
   static dispatch_once_t once;
   dispatch_once(&once, ^{
