@@ -66,6 +66,7 @@
     
     if (!result) {
       result = [self.userDefaults stringForKey:key];
+      [self.customUserDefaults setObject:result forKey:key];
     }
   } else {
     result = [self.userDefaults stringForKey:key];
@@ -81,6 +82,7 @@
     
     if (result == 0.0) {
       result = [self.userDefaults doubleForKey:key];
+      [self.customUserDefaults setDouble:result forKey:key];
     }
   } else {
     result = [self.userDefaults doubleForKey:key];
