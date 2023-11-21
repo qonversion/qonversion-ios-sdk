@@ -69,7 +69,7 @@ NS_SWIFT_NAME(Qonversion.Configuration)
 @property (nonatomic, strong, readonly) NSUserDefaults *customUserDefaults;
 
 /**
- Suite name that was used for creating custom user defaults on the SDK side. Available only if setted using `setCustomUserDefaultsSuitename`.
+ Suite name that was used for creating custom user defaults on the SDK side. Available only if is set using `setCustomUserDefaultsSuitename`.
  */
 @property (nonatomic, copy, readonly) NSString *userDefaultsSuiteName;
 
