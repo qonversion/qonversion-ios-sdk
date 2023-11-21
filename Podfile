@@ -11,8 +11,8 @@ end
 
 target 'Sample' do
 platform :ios, 12.0
-pod 'Firebase/Auth'
-pod 'GoogleSignIn'
+pod 'Firebase/Auth', '8.9.0'
+pod 'GoogleSignIn', '6.0.2'
 #pod 'Qonversion', :path => './'
 end
 
