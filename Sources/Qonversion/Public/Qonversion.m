@@ -15,6 +15,8 @@
 #import "QONExceptionManager.h"
 #import "QONUserProperty.h"
 
+static id shared = nil;
+
 @interface Qonversion()
 
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
@@ -42,9 +44,14 @@ static bool _isInitialized = NO;
   }
   
   _isInitialized = YES;
-
+  
   QONConfiguration *configCopy = [configuration copy];
+  
+  // Initialization of Qonversion instance
+  [Qonversion sharedInstanceWithCustomUserDefaults:configCopy.customUserDefaults];
+  
   [Qonversion sharedInstance].debugMode = configCopy.environment == QONEnvironmentSandbox;
+  [[QNAPIClient shared] setLocalStorage:[Qonversion sharedInstance].localStorage];
   [[QNAPIClient shared] setSDKVersion:configCopy.version];
   [[QNAPIClient shared] setBaseURL:configCopy.baseURL];
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
@@ -59,17 +66,20 @@ static bool _isInitialized = NO;
   return [Qonversion sharedInstance];
 }
 
++ (instancetype)sharedInstanceWithCustomUserDefaults:(NSUserDefaults *)userDefaults {
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    shared = [[self alloc] initWithCustomUserDefaults:userDefaults];
+  });
+  
+  return shared;
+}
+
 + (instancetype)sharedInstance {
   if (!_isInitialized) {
     QONVERSION_ERROR(@"Attempt to get Qonversion instance before initialization. Please, call `initWithConfig` first.");
     return nil;
   }
-  
-  static id shared = nil;
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{
-    shared = self.new;
-  });
   
   return shared;
 }
@@ -215,10 +225,16 @@ static bool _isInitialized = NO;
 
 // MARK: - Private
 
-- (instancetype)init {
-  self = super.init;
+- (instancetype)initWithCustomUserDefaults:(NSUserDefaults *)userDefaults {
+  self = [super init];
   if (self) {
-    _productCenterManager = [QNProductCenterManager new];
+    QNServicesAssembly *servicesAssembly = [[QNServicesAssembly alloc] initWithCustomUserDefaults:userDefaults];
+    
+    _userInfoService = [servicesAssembly userInfoService];
+    _localStorage = [servicesAssembly localStorage];
+    id<QNIdentityManagerInterface> identityManager = [servicesAssembly identityManager];
+    
+    _productCenterManager = [[QNProductCenterManager alloc] initWithUserInfoService:_userInfoService identityManager:identityManager localStorage:_localStorage];
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
     _remoteConfigManager = [QONRemoteConfigManager new];
@@ -227,11 +243,6 @@ static bool _isInitialized = NO;
     _productCenterManager.remoteConfigManager = _remoteConfigManager;
     _remoteConfigManager.productCenterManager = _productCenterManager;
     
-    QNServicesAssembly *servicesAssembly = [QNServicesAssembly new];
- 
-    _localStorage = [servicesAssembly localStorage];
-    
-    _userInfoService = [servicesAssembly userInfoService];
     
     _debugMode = NO;
   }

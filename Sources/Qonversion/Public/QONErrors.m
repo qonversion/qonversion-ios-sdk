@@ -1,5 +1,6 @@
 #import "QONErrors.h"
 #import "QNInternalConstants.h"
+#import "Qonversion.h"
 #import <StoreKit/StoreKit.h>
 
 @implementation QONErrors
@@ -26,7 +27,7 @@
     info[NSDebugDescriptionErrorKey] = NSLocalizedString(failureReason, nil);
   }
   
-  NSError *error = [NSError errorWithDomain:keyQONAPIErrorDomain code:errorCode userInfo:[info copy]];
+  NSError *error = [NSError errorWithDomain:QonversionApiErrorDomain code:errorCode userInfo:[info copy]];
   
   return error;
 }
@@ -35,7 +36,7 @@
   NSMutableDictionary *info = [NSMutableDictionary new];
   info[NSLocalizedDescriptionKey] = NSLocalizedString(message, nil);
   
-  NSError *error = [NSError errorWithDomain:keyQONErrorDomain code:errorCode userInfo:[info copy]];
+  NSError *error = [NSError errorWithDomain:QonversionErrorDomain code:errorCode userInfo:[info copy]];
   
   return error;
 }
@@ -131,7 +132,7 @@
 
 + (NSError *)errorWithQonversionErrorCode:(QONError)code
                                 userInfo:(nullable NSDictionary<NSErrorUserInfoKey, id> *)dict {
-  return [NSError errorWithDomain:keyQONErrorDomain code:code userInfo:dict];
+  return [NSError errorWithDomain:QonversionErrorDomain code:code userInfo:dict];
 }
 
 + (NSString *)helpAnchorForErrorCode:(QONError)errorCode {

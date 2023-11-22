@@ -28,8 +28,6 @@ extern NSString *const keyQONUserPropertyKeyReg;
 extern NSString *const keyQSource;
 extern NSString *const keyQSourceVersion;
 
-extern NSString *const keyQONErrorDomain;
-extern NSString *const keyQONAPIErrorDomain;
 extern NSString *const kQNPlatform;
 extern NSString *const kQNOSName;
 
@@ -42,6 +40,7 @@ extern NSString *const kKeyQUserDefaultsUserID;
 extern NSString *const kKeyQUserIDPrefix;
 extern NSString *const kKeyQUserIDSeparator;
 extern NSString *const kKeyQUserDefaultsPermissions;
+extern NSString *const kKeyQPermissionsTransfered;
 extern NSString *const kKeyQUserDefaultsPermissionsTimestamp;
 extern NSString *const kKeyQUserDefaultsProductsPermissionsRelation;
 extern NSString *const kMainUserDefaultsSuiteName;

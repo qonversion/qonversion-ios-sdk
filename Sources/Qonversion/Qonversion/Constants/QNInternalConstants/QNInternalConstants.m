@@ -13,9 +13,6 @@ NSString *const keyQONUserPropertyKeyReg = @"(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$";
 NSString *const keyQSource = @"com.qonversion.keys.source";
 NSString *const keyQSourceVersion = @"com.qonversion.keys.sourceVersion";
 
-NSString *const keyQONErrorDomain = @"com.qonversion.io";
-NSString *const keyQONAPIErrorDomain = @"com.qonversion.io.api";
-
 NSString *const kHistoricalDataSynced = @"isHistoricalDataSynced";
 
 #if TARGET_OS_OSX
@@ -42,6 +39,7 @@ NSString *const kKeyQUserDefaultsUserID = @"com.qonversion.keys.storedUserID";
 NSString *const kKeyQUserIDPrefix = @"QON";
 NSString *const kKeyQUserIDSeparator = @"_";
 NSString *const kKeyQUserDefaultsPermissions = @"com.qonversion.keys.entitlements";
+NSString *const kKeyQPermissionsTransfered = @"com.qonversion.keys.entitlements.transfered";
 NSString *const kKeyQUserDefaultsPermissionsTimestamp = @"com.qonversion.keys.permissions.timestamp";
 NSString *const kKeyQUserDefaultsProductsPermissionsRelation = @"com.qonversion.keys.products.permissions.relation";
 NSString *const kMainUserDefaultsSuiteName = @"qonversion.localstorage.main";

@@ -51,6 +51,8 @@
 		6A95DEA229E40E9900350BD6 /* QNOutagerIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */; };
 		6A95DEA529E40F2E00350BD6 /* XCTestCase+Helpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA429E40F2E00350BD6 /* XCTestCase+Helpers.m */; };
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
+		701922272B0B812400724926 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
+		701922282B0B812400724926 /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		702394912923EBF3003126D5 /* QONNotificationsService.h in Headers */ = {isa = PBXBuildFile; fileRef = 7023948F2923EBF3003126D5 /* QONNotificationsService.h */; };
 		702394922923EBF3003126D5 /* QONNotificationsService.m in Sources */ = {isa = PBXBuildFile; fileRef = 702394902923EBF3003126D5 /* QONNotificationsService.m */; };
 		70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70283DF629F66FAC00D138BC /* PurchasesMapper.swift */; };
@@ -77,6 +79,7 @@
 		70D0E2B8291A9BE3004E8DE8 /* QONConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = 70D0E2B6291A9BE3004E8DE8 /* QONConfiguration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70D0E2B9291A9BE3004E8DE8 /* QONConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 70D0E2B7291A9BE3004E8DE8 /* QONConfiguration.m */; };
 		70D0E2BB291AA21C004E8DE8 /* QONLaunchMode.h in Headers */ = {isa = PBXBuildFile; fileRef = 70D0E2BA291AA21C004E8DE8 /* QONLaunchMode.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		70D9CBDF2B03BF07003F1878 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70D9CBDE2B03BF07003F1878 /* StoreKit.framework */; };
 		70E99384291BC60A006E0A64 /* QONEnvironment.h in Headers */ = {isa = PBXBuildFile; fileRef = 70E99383291BC60A006E0A64 /* QONEnvironment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70EC019D29EEE94300E686E2 /* StoreKit2Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EC019C29EEE94300E686E2 /* StoreKit2Service.swift */; };
 		70ED951029FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 70ED950E29FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -204,8 +207,6 @@
 		8957330526DD03A3009507A6 /* QNIdentityServiceInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 8957327826DD03A3009507A6 /* QNIdentityServiceInterface.h */; };
 		8957330926DE5531009507A6 /* QNKeyedArchiver.h in Headers */ = {isa = PBXBuildFile; fileRef = 8957330726DE5531009507A6 /* QNKeyedArchiver.h */; };
 		8957330A26DE5532009507A6 /* QNKeyedArchiver.m in Sources */ = {isa = PBXBuildFile; fileRef = 8957330826DE5531009507A6 /* QNKeyedArchiver.m */; };
-		895733B726DFDD6C009507A6 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
-		895733B826DFDD6C009507A6 /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		89673C2926F35D29008D209A /* QNIdentityServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2826F35D29008D209A /* QNIdentityServiceTests.m */; };
 		89673C2C26F37DC2008D209A /* XCTestCase+Helpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2B26F37DC2008D209A /* XCTestCase+Helpers.m */; };
 		89673C2F26F49BAA008D209A /* QNIdentityManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2E26F49BA9008D209A /* QNIdentityManagerTests.m */; };
@@ -259,7 +260,7 @@
 			remoteGlobalIDString = 454EF63B24E5CC580070581E;
 			remoteInfo = Sample;
 		};
-		895733B926DFDD6C009507A6 /* PBXContainerItemProxy */ = {
+		701922292B0B812400724926 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 459DAB60243E329F0011ECF3 /* Project object */;
 			proxyType = 1;
@@ -269,13 +270,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		895733BB26DFDD6C009507A6 /* Embed Frameworks */ = {
+		7019222B2B0B812400724926 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				895733B826DFDD6C009507A6 /* Qonversion.framework in Embed Frameworks */,
+				701922282B0B812400724926 /* Qonversion.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -374,6 +375,7 @@
 		70D0E2B6291A9BE3004E8DE8 /* QONConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONConfiguration.h; sourceTree = "<group>"; };
 		70D0E2B7291A9BE3004E8DE8 /* QONConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONConfiguration.m; sourceTree = "<group>"; };
 		70D0E2BA291AA21C004E8DE8 /* QONLaunchMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONLaunchMode.h; sourceTree = "<group>"; };
+		70D9CBDE2B03BF07003F1878 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		70E99383291BC60A006E0A64 /* QONEnvironment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONEnvironment.h; sourceTree = "<group>"; };
 		70EC019C29EEE94300E686E2 /* StoreKit2Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKit2Service.swift; sourceTree = "<group>"; };
 		70ED950E29FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONStoreKit2PurchaseModel.h; sourceTree = "<group>"; };
@@ -538,8 +540,9 @@
 			files = (
 				45754AE725814C7500FCA376 /* iAd.framework in Frameworks */,
 				891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */,
+				701922272B0B812400724926 /* Qonversion.framework in Frameworks */,
+				70D9CBDF2B03BF07003F1878 /* StoreKit.framework in Frameworks */,
 				A2649CD29A7FDF280A2EC27C /* Pods_Sample.framework in Frameworks */,
-				895733B726DFDD6C009507A6 /* Qonversion.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1531,6 +1534,7 @@
 		BB6B3C9FD9EFBC9E1604507D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				70D9CBDE2B03BF07003F1878 /* StoreKit.framework */,
 				894278832759351C00A8A6EC /* GoogleSignIn.framework */,
 				891ECE0927734B8900DF6A56 /* AdServices.framework */,
 				89713B4A25C1BA1F00A2448E /* WebKit.framework */,
@@ -1659,13 +1663,13 @@
 				454EF63824E5CC580070581E /* Sources */,
 				454EF63924E5CC580070581E /* Frameworks */,
 				454EF63A24E5CC580070581E /* Resources */,
-				895733BB26DFDD6C009507A6 /* Embed Frameworks */,
 				4CB079286CCC86BD200EEDB0 /* [CP] Embed Pods Frameworks */,
+				7019222B2B0B812400724926 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				895733BA26DFDD6C009507A6 /* PBXTargetDependency */,
+				7019222A2B0B812400724926 /* PBXTargetDependency */,
 			);
 			name = Sample;
 			productName = Sample;
@@ -2064,10 +2068,10 @@
 			target = 454EF63B24E5CC580070581E /* Sample */;
 			targetProxy = 6A8A604C29DAD5CB008EC7D8 /* PBXContainerItemProxy */;
 		};
-		895733BA26DFDD6C009507A6 /* PBXTargetDependency */ = {
+		7019222A2B0B812400724926 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 459DAB68243E329F0011ECF3 /* Qonversion */;
-			targetProxy = 895733B926DFDD6C009507A6 /* PBXContainerItemProxy */;
+			targetProxy = 701922292B0B812400724926 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -2095,13 +2099,12 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 13844A737C5779AEEAD10EB9 /* Pods-Sample.debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Sample/Sample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = MTVL2X9L7N;
+				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${PODS_ROOT}/AppsFlyerFramework/iOS\"",
@@ -2118,7 +2121,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.sample;
+				PRODUCT_BUNDLE_IDENTIFIER = io.qonversion.sample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -2135,13 +2138,12 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C49A7C36E2D376FDC85E470B /* Pods-Sample.release.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Sample/Sample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = MTVL2X9L7N;
+				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${PODS_ROOT}/AppsFlyerFramework/iOS\"",
@@ -2158,7 +2160,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.sample;
+				PRODUCT_BUNDLE_IDENTIFIER = io.qonversion.sample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;

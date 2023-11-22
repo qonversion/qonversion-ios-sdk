@@ -9,12 +9,13 @@
 #import "QONConfiguration.h"
 #import "QNAPIConstants.h"
 
-static NSString *const kSDKVersion = @"5.2.0";
+static NSString *const kSDKVersion = @"5.3.0";
 
 @interface QONConfiguration ()
 
 @property (nonatomic, copy, readwrite) NSString *projectKey;
 @property (nonatomic, copy, readwrite) NSString *version;
+@property (nonatomic, strong, readwrite) NSUserDefaults *customUserDefaults;
 @property (nonatomic, assign, readwrite) QONLaunchMode launchMode;
 @property (nonatomic, assign, readwrite) QONEntitlementsCacheLifetime entitlementsCacheLifetime;
 @property (nonatomic, copy, readwrite) NSString *baseURL;
@@ -43,6 +44,15 @@ static NSString *const kSDKVersion = @"5.2.0";
 
 - (void)setEnvironment:(QONEnvironment)environment {
   _environment = environment;
+}
+
+- (void)setCustomUserDefaults:(NSUserDefaults * _Nullable)userDefaults {
+  _customUserDefaults = userDefaults;
+}
+
+- (void)setCustomUserDefaultsSuitename:(NSString * _Nonnull)customUserDefaultsSuiteName {
+  _userDefaultsSuiteName = customUserDefaultsSuiteName;
+  _customUserDefaults = [[NSUserDefaults alloc] initWithSuiteName:customUserDefaultsSuiteName];
 }
 
 - (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)entitlementsCacheLifetime {
@@ -74,6 +84,7 @@ static NSString *const kSDKVersion = @"5.2.0";
   [copyConfig setEnvironment:_environment];
   [copyConfig setEntitlementsCacheLifetime:_entitlementsCacheLifetime];
   [copyConfig setEntitlementsUpdateListener:_entitlementsUpdateListener];
+  [copyConfig setCustomUserDefaults:_customUserDefaults];
   [copyConfig setProxyURL:_baseURL];
   
   return copyConfig;

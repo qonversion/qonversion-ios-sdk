@@ -10,6 +10,8 @@
 #import "QONStoreKit2PurchaseModel.h"
 #import "QNDevice.h"
 #import "QONRateLimiter.h"
+#import "QNLocalStorage.h"
+#import "Qonversion.h"
 
 NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
@@ -322,11 +324,11 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)processStoredRequests {
-  NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
+  NSData *storedRequestsData = [self.localStorage loadObjectForKey:kStoredRequestsKey];
   NSArray *storedRequests = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData];
   
   if (![storedRequests isKindOfClass:[NSArray class]]) {
-    [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
+    [self.localStorage storeObject:nil forKey:kStoredRequestsKey];
   } else {
     for (NSInteger i = 0; i < [storedRequests count]; i++) {
       if ([storedRequests[i] isKindOfClass:[NSURLRequest class]]) {
@@ -336,7 +338,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       }
     }
     
-    [[NSUserDefaults standardUserDefaults] setValue:nil forKey:kStoredRequestsKey];
+    [self.localStorage storeObject:nil forKey:kStoredRequestsKey];
   }
   
   [self processStorePurchasesRequests];
@@ -592,7 +594,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     if (httpURLResponse.statusCode >= kInternalServerErrorFirstCode && httpURLResponse.statusCode <= kInternalServerErrorLastCode) {
       NSMutableDictionary *userInfo = [NSMutableDictionary new];
       userInfo[NSLocalizedDescriptionKey] = kInternalServerError;
-      NSError *error = [NSError errorWithDomain:keyQONErrorDomain code:httpURLResponse.statusCode userInfo:userInfo];
+      NSError *error = [NSError errorWithDomain:QonversionErrorDomain code:httpURLResponse.statusCode userInfo:userInfo];
       
       return error;
     }
@@ -609,7 +611,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     if ([self.criticalErrorCodes containsObject:@(statusCode)]) {
       NSMutableDictionary *userInfo = [NSMutableDictionary new];
       userInfo[NSLocalizedDescriptionKey] = kAccessDeniedError;
-      NSError *error = [NSError errorWithDomain:keyQONErrorDomain code:statusCode userInfo:userInfo];
+      NSError *error = [NSError errorWithDomain:QonversionErrorDomain code:statusCode userInfo:userInfo];
       
       return error;
     }
@@ -629,11 +631,11 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 - (void)storePurchaseRequests:(NSDictionary *)requests {
   NSData *updatedStoredRequestsData = [QNKeyedArchiver archivedDataWithObject:[requests copy]];
-  [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kKeyQUserDefaultsStoredPurchasesRequests];
+  [self.localStorage storeObject:updatedStoredRequestsData forKey:kKeyQUserDefaultsStoredPurchasesRequests];
 }
 
 - (NSDictionary *)storedPurchasesRequests {
-  NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kKeyQUserDefaultsStoredPurchasesRequests];
+  NSData *storedRequestsData = [self.localStorage loadObjectForKey:kKeyQUserDefaultsStoredPurchasesRequests];
   NSDictionary *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData] ?: @{};
   if (![unarchivedData isKindOfClass:[NSDictionary class]]) {
     unarchivedData = @{};
@@ -653,13 +655,13 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   NSURLComponents *components = [NSURLComponents componentsWithString:request.URL.absoluteString];
   NSString *requestString = [components.path stringByReplacingOccurrencesOfString:@"/" withString:@"" options:NSCaseInsensitiveSearch range:(NSRange){0, 1}];
   if ([self.retriableRequests containsObject:requestString]) {
-    NSData *storedRequestsData = [[NSUserDefaults standardUserDefaults] valueForKey:kStoredRequestsKey];
+    NSData *storedRequestsData = [self.localStorage loadObjectForKey:kStoredRequestsKey];
     NSArray *unarchivedData = [QNKeyedArchiver unarchiveObjectWithData:storedRequestsData] ?: @[];
     NSMutableArray *storedRequests = [unarchivedData mutableCopy];
     [storedRequests addObject:request];
     
     NSData *updatedStoredRequestsData = [QNKeyedArchiver archivedDataWithObject:[storedRequests copy]];
-    [[NSUserDefaults standardUserDefaults] setValue:updatedStoredRequestsData forKey:kStoredRequestsKey];
+    [self.localStorage storeObject:updatedStoredRequestsData forKey:kStoredRequestsKey];
   }
 }
 

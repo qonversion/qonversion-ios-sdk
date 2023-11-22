@@ -89,7 +89,7 @@ class ViewController: UIViewController {
         self.checkActivePermissionsButton.isHidden = isActive ? true : false
       }
       
-      if let mainSubscription = result["main"] {
+      if let mainSubscription = result["subs_plus_trial"] {
         let permission: Qonversion.Entitlement? = self.permissions["plus"]
         let isActive = permission?.isActive ?? false
         let title: String = isActive ? "Successfully purchased" : "Subscribe for \(mainSubscription.prettyPrice) / \(mainSubscription.prettyDuration)"
@@ -117,7 +117,7 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapMainProductSubscriptionButton(_ sender: Any) {
-    if let product = self.products["main"] {
+    if let product = self.products["subs_plus_trial"] {
       activityIndicator.startAnimating()
       Qonversion.shared().purchase(product.qonversionID) { [weak self] (result, error, flag) in
         guard let self = self else { return }
