@@ -176,9 +176,12 @@
 + (QONProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
   QONProduct *result = [[QONProduct alloc] init];
   
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  // Warning muted for linter
   QONProductDuration duration = [self mapInteger:dict[@"duration"] orReturn:-1];
   result.duration = duration;
-  
+#pragma GCC diagnostic pop
   result.qonversionID = ((NSString *)dict[@"id"] ?: @"");
   NSString *storeId = (NSString *)dict[@"store_id"];
   result.storeID = [storeId isKindOfClass:[NSString class]] ? storeId : nil;

@@ -74,6 +74,9 @@
   return date;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+// Warning muted for linter
 + (NSDate *)calculateExpirationDateForProduct:(QONProduct *)product fromDate:(NSDate *)transactionDate {
   if (product.type == QONProductTypeDirectSubscription || product.type == QONProductTypeTrial) {
     NSInteger days = 0;
@@ -107,6 +110,7 @@
     return nil;
   }
 }
+#pragma GCC diagnostic pop
 
 + (BOOL)isConnectionError:(NSError *)error {
   NSArray *connectionErrorCodes = @[

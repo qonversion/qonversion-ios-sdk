@@ -178,7 +178,12 @@
   [description appendFormat:@"storeID=%@,\n", self.storeID];
   [description appendFormat:@"offeringID=%@,\n", self.offeringID];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
+  
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  // Warning muted for linter
   [description appendFormat:@"duration=%@ (enum value = %li),\n", [self prettyDuration], (long) self.duration];
+#pragma GCC diagnostic pop
   [description appendFormat:@"subscription duration=%@ (enum value = %li),\n", [self prettySubscriptionDuration], (long) self.subscriptionDuration];
   [description appendFormat:@"trial duration=%@ (enum value = %li),\n", [self prettyTrialDuration], (long) self.trialDuration];
   [description appendFormat:@"skProduct=%@,\n", self.skProduct];
@@ -195,6 +200,9 @@
   return @"";
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+// Warning muted for linter
 - (NSString *)prettyDuration {
   NSString *result = @"unknown";
   
@@ -223,6 +231,7 @@
   
   return result;
 }
+#pragma GCC diagnostic pop
 
 - (NSString *)prettySubscriptionDuration {
   NSString *result = @"unknown";

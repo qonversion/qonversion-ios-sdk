@@ -81,7 +81,7 @@ NS_SWIFT_NAME(Qonversion.Product)
  Product duration setted via Qonversion Dashboard
  @see [Products durations](https://qonversion.io/docs/create-products#product-type)
  */
-@property (nonatomic, assign) QONProductDuration duration;
+@property (nonatomic, assign) QONProductDuration duration DEPRECATED_MSG_ATTRIBUTE("Use subscription duration instead.");
 
 /**
  Product duration based on Apple Store Product.
