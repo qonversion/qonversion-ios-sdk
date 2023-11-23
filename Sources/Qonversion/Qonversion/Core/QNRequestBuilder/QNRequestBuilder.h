@@ -1,12 +1,21 @@
 #import <Foundation/Foundation.h>
 
+typedef NS_ENUM(NSInteger, QONRequestType) {
+  QONRequestTypeGet = 0,
+  QONRequestTypePost,
+  QONRequestTypeDelete
+};
+
 @interface QNRequestBuilder : NSObject
 
 - (void)setApiKey:(NSString *)apiKey;
+- (void)setBaseURL:(NSString *)url;
+- (void)setSDKVersion:(NSString *)version;
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeSendPushTokenRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey;
-- (NSURLRequest *)makePropertiesRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makeSendPropertiesRequestForUserId:(NSString *)userId parameters:(NSArray *)parameters;
+- (NSURLRequest *)makeGetPropertiesRequestForUserId:(NSString *)userId;
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter;
@@ -14,6 +23,11 @@
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body;
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters;
-- (NSURLRequest *)makeEventRequestWithEventName:(NSString *)eventName payload:(NSDictionary *)payload userID:(NSString *)userID;
+- (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId;
+- (NSURLRequest *)makeSdkLogsRequestWithBody:(NSDictionary *)body;
+- (NSURLRequest *)makeAttachUserToExperimentRequest:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID;
+- (NSURLRequest *)makeDetachUserFromExperimentRequest:(NSString *)experimentId userID:(NSString *)userID;
+- (NSURLRequest *)makeAttachUserToRemoteConfigurationRequest:(NSString *)remoteConfigurationId userID:(NSString *)userID;
+- (NSURLRequest *)makeDetachUserFromRemoteConfigurationRequest:(NSString *)remoteConfigurationId userID:(NSString *)userID;
 
 @end

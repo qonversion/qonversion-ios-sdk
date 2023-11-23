@@ -37,6 +37,9 @@ typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSStrin
 - (void)handleProductsRequestFailed:(NSError *)error;
 - (void)handleProducts:(NSArray<SKProduct *> *)products;
 - (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product;
+- (void)handleRestoredTransactions:(NSArray<SKPaymentTransaction *> *)transactions;
+- (void)handleExcessTransactions:(NSArray<SKPaymentTransaction *> *)transactions;
+
 @end
 
 NS_ASSUME_NONNULL_END

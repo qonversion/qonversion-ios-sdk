@@ -8,9 +8,6 @@
 
 #import "QNServicesAssembly.h"
 #import "QNUserInfoService.h"
-#import "QNKeychainStorage.h"
-#import "QNKeychainStorage.h"
-#import "QNKeychain.h"
 #import "QNUserDefaultsStorage.h"
 #import "QNInternalConstants.h"
 #import "QNIdentityManager.h"
@@ -18,11 +15,26 @@
 #import "QNAPIClient.h"
 #import "QNUserInfoMapper.h"
 
+@interface QNServicesAssembly ()
+
+@property (nonatomic, strong) NSUserDefaults *customUserDefaults;
+
+@end
+
 @implementation QNServicesAssembly
+
+- (instancetype)initWithCustomUserDefaults:(NSUserDefaults *)userDefaults {
+  self = [super init];
+  
+  if (self) {
+    _customUserDefaults = userDefaults;
+  }
+  
+  return self;
+}
 
 - (id<QNUserInfoServiceInterface>)userInfoService {
   QNUserInfoService *service = [QNUserInfoService new];
-  service.keychainStorage = [self keychainStorage];
   service.localStorage = [self localStorage];
   service.apiClient = [QNAPIClient shared];
   service.mapper = [self userInfoMapper];
@@ -45,16 +57,10 @@
   return service;
 }
 
-- (id<QNKeychainStorageInterface>)keychainStorage {
-  QNKeychainStorage *storage = [QNKeychainStorage new];
-  storage.keychain = [QNKeychain new];
-  
-  return storage;
-}
-
 - (id<QNLocalStorage>)localStorage {
   QNUserDefaultsStorage *storage = [QNUserDefaultsStorage new];
   storage.userDefaults = [[NSUserDefaults alloc] initWithSuiteName:kMainUserDefaultsSuiteName];
+  storage.customUserDefaults = self.customUserDefaults;
   
   return storage;
 }

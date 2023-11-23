@@ -1,11 +1,11 @@
 #import "QNRequestSerializer.h"
 #import "QNUserInfo.h"
 #import "QNDevice.h"
-#import "QNStoreKitSugare.h"
-#import "QNProduct.h"
-#import "QNProductPurchaseModel.h"
-#import "QNExperimentInfo.h"
-#import "QNExperimentGroup.h"
+#import "QONStoreKitSugare.h"
+#import "QONProduct.h"
+#import "QONExperiment.h"
+#import "QONExperimentGroup.h"
+#import "QONStoreKit2PurchaseModel.h"
 
 @interface QNRequestSerializer ()
 
@@ -35,8 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction
-                       receipt:(nullable NSString *)receipt
-                 purchaseModel:(nullable QNProductPurchaseModel *)purchaseModel {
+                       receipt:(nullable NSString *)receipt {
 
   NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
@@ -77,32 +76,51 @@ NS_ASSUME_NONNULL_BEGIN
     purchaseDict[@"country"] = countryCode;
   }
   
-  if (purchaseModel) {
-    purchaseDict[@"product_id"] = purchaseModel.product.qonversionID;
-    purchaseDict[@"experiment"] = [self configureExperimentInfo:purchaseModel.experimentInfo];
+  result[@"purchase"] = purchaseDict;
+  
+  return result;
+}
+
+- (NSDictionary *)purchaseInfo:(QONStoreKit2PurchaseModel *)purchaseModel
+                       receipt:(nullable NSString *)receipt {
+  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
+  NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
+
+  if (receipt) {
+    result[@"receipt"] = receipt;
   }
+  
+  purchaseDict[@"product"] = purchaseModel.productId;
+  purchaseDict[@"currency"] = purchaseModel.currency;
+  purchaseDict[@"value"] = purchaseModel.price;
+  purchaseDict[@"transaction_id"] = purchaseModel.transactionId;
+  purchaseDict[@"original_transaction_id"] = purchaseModel.originalTransactionId;
+  purchaseDict[@"period_unit"] = purchaseModel.subscriptionPeriodUnit;
+  purchaseDict[@"period_number_of_units"] = purchaseModel.subscriptionPeriodNumberOfUnits;
+    
+  NSMutableDictionary *introOffer = [[NSMutableDictionary alloc] init];
+  
+  introOffer[@"value"] = purchaseModel.price;
+  introOffer[@"number_of_periods"] = purchaseModel.introductoryNumberOfPeriods;
+  introOffer[@"period_number_of_units"] = purchaseModel.introductoryPeriodNumberOfUnits;
+  introOffer[@"period_unit"] = purchaseModel.introductoryPeriodUnit;
+  introOffer[@"payment_mode"] = purchaseModel.introductoryPaymentMode;
+  
+  result[@"introductory_offer"] = introOffer.count > 0 ? introOffer : nil;
+  
+  purchaseDict[@"country"] = purchaseModel.storefrontCountryCode;
   
   result[@"purchase"] = purchaseDict;
   
   return result;
 }
 
-- (NSDictionary *)configureExperimentInfo:(QNExperimentInfo * _Nullable)experimentInfo {
-  NSMutableDictionary *dict = [NSMutableDictionary new];
-  
-  if (experimentInfo) {
-    dict[@"uid"] = experimentInfo.identifier;
-  }
-  
-  return [dict copy];
-}
-
-- (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QNProduct *> *)products {
+- (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QONProduct *> *)products {
   NSMutableDictionary *result = [[self mainData] mutableCopy];
   
   NSMutableArray *productsLocalData = [NSMutableArray new];
   
-  for (QNProduct *product in products) {
+  for (QONProduct *product in products) {
     NSMutableDictionary *param = [NSMutableDictionary new];
     param[@"store_id"] = product.storeID;
     
@@ -118,7 +136,7 @@ NS_ASSUME_NONNULL_BEGIN
   return [result copy];
 }
 
-- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider {
+- (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider {
   NSMutableDictionary *deviceData = [self.mainData mutableCopy];
   // remove unused field for attribution request
   deviceData[@"receipt"] = nil;
@@ -127,26 +145,26 @@ NS_ASSUME_NONNULL_BEGIN
   NSMutableDictionary *providerData = [NSMutableDictionary new];
   
   switch (provider) {
-    case QNAttributionProviderAppsFlyer:
+    case QONAttributionProviderAppsFlyer:
       [providerData setValue:@"appsflyer" forKey:@"provider"];
       break;
-    case QNAttributionProviderAdjust:
+    case QONAttributionProviderAdjust:
       [providerData setValue:@"adjust" forKey:@"provider"];
       break;
-    case QNAttributionProviderBranch:
+    case QONAttributionProviderBranch:
       [providerData setValue:@"branch" forKey:@"provider"];
       break;
-    case QNAttributionProviderAppleSearchAds:
+    case QONAttributionProviderAppleSearchAds:
       [providerData setValue:@"apple_search_ads" forKey:@"provider"];
       break;
-    case QNAttributionProviderAppleAdServices:
+    case QONAttributionProviderAppleAdServices:
       [providerData setValue:@"apple_adservices_token" forKey:@"provider"];
       break;
   }
   
   NSString *_uid = nil;
   NSString *af_uid = QNDevice.current.afUserID;
-  if (af_uid && provider == QNAttributionProviderAppsFlyer) {
+  if (af_uid && provider == QONAttributionProviderAppsFlyer) {
     _uid = af_uid;
   }
   

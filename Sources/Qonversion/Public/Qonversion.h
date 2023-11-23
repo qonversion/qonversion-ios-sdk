@@ -1,125 +1,131 @@
 #import <StoreKit/StoreKit.h>
 
-#import "QNLaunchResult.h"
-#import "QNProduct.h"
-#import "QNPermission.h"
-#import "QNOfferings.h"
-#import "QNOffering.h"
-#import "QNIntroEligibility.h"
-#import "QNPromoPurchasesDelegate.h"
-#import "QNPurchasesDelegate.h"
-#import "QNExperimentInfo.h"
-#import "QNExperimentGroup.h"
-#import "QNUser.h"
-#import "QNErrors.h"
-#import "QNStoreKitSugare.h"
+#import "QONLaunchResult.h"
+#import "QONProduct.h"
+#import "QONEntitlement.h"
+#import "QONOfferings.h"
+#import "QONOffering.h"
+#import "QONIntroEligibility.h"
+#import "QONPromoPurchasesDelegate.h"
+#import "QONEntitlementsUpdateListener.h"
+#import "QONExperimentGroup.h"
+#import "QONExperiment.h"
+#import "QONRemoteConfig.h"
+#import "QONUser.h"
+#import "QONErrors.h"
+#import "QONStoreKitSugare.h"
+#import "QONEntitlementsCacheLifetime.h"
+#import "QONConfiguration.h"
+#import "QONStoreKit2PurchaseModel.h"
+#import "QONUserProperties.h"
+#import "QONUserProperty.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
 #import "QONAutomations.h"
+#import "QONScreenCustomizationDelegate.h"
 #endif
 
 NS_ASSUME_NONNULL_BEGIN
 
+static NSString *const QonversionErrorDomain = @"com.qonversion.io";
+static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
+
 @interface Qonversion : NSObject
 
 /**
- Launches Qonversion SDK with the given project key, you can get one in your account on dash.qonversion.io
- @param key - project key to setup the SDK
+ Use `initWithConfig` instead.
  */
-+ (void)launchWithKey:(nonnull NSString *)key;
+- (instancetype)init NS_UNAVAILABLE;
 
 /**
- @param key - project key to setup the SDK.
- @param completion - will return `uid` for Ads integrations.
+ An entry point to use Qonversion SDK. Call to initialize Qonversion SDK with required and extra configs.
+ The function is the best way to set additional configs you need to use Qonversion SDK.
+ @param configuration a config that contains key SDK settings.
+ @return Initialized instance of the Qonversion SDK.
  */
-+ (void)launchWithKey:(nonnull NSString *)key completion:(QNLaunchCompletionHandler)completion;
++ (instancetype)initWithConfig:(QONConfiguration *)configuration;
+
+/**
+ Use this variable to get a current initialized instance of the Qonversion SDK.
+ Please, use the variable only after initializing the SDK.
+ @return Current initialized instance of the Qonversion SDK.
+ */
++ (instancetype)sharedInstance NS_SWIFT_NAME(shared());
+
+/**
+ Call this function to sync the subscriber data with the first launch when Qonversion is implemented.
+ */
+- (void)syncHistoricalData;
 
 /**
  Call this function to link a user to his unique ID in your system and share purchase data.
  
  @param userID - unique user ID in your system
  */
-+ (void)identify:(NSString *)userID;
+- (void)identify:(NSString *)userID;
 
 /**
  Call this function to unlink a user from his unique ID in your system and his purchase data.
  */
-+ (void)logout;
+- (void)logout;
 
 /**
- Set this delegate to handle pending purchases like SCA, Ask to buy, etc
+ Set this listener to handle pending purchases like SCA, Ask to buy, etc
  The delegate will be called when the deferred transaction status updates
- @param delegate - delegate for handling deferred purchases
+ @param listener - listener for handling deferred purchases
  */
-+ (void)setPurchasesDelegate:(id<QNPurchasesDelegate>)delegate;
+- (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)listener;
 
 /**
  Set this delegate to handle AppStore promo purchases
  @param delegate - delegate for handling AppStore promo purchase flow
  */
-+ (void)setPromoPurchasesDelegate:(id<QNPromoPurchasesDelegate>)delegate;
+- (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate;
 
 /**
  Shows up a sheet for users to redeem AppStore offer codes
  */
-+ (void)presentCodeRedemptionSheet API_AVAILABLE(ios(14.0)) API_UNAVAILABLE(tvos, macos, watchos);
+- (void)presentCodeRedemptionSheet API_AVAILABLE(ios(14.0)) API_UNAVAILABLE(tvos, macos, watchos);
 
 /**
- Set push token to Qonversion to enable Qonversion push notifications
- @param token - token data
+ Sets Qonversion reserved user properties, like email or one-signal id.
+ Note that using `QONUserPropertyKeyCustom` here will do nothing.
+ To set custom user property, use `setCustomUserProperty` method instead.
+ @param key - Defined enum key that will be transformed to string
+ @param value - Property value
  */
-+ (void)setNotificationsToken:(NSData *)token API_AVAILABLE(ios(9.0));
-
-#if TARGET_OS_IOS
-/**
- Returns true when a push notification was received from Qonversion.
- Otherwise returns false, so you need to handle a notification yourself
- @param userInfo - notification user info
- */
-+ (BOOL)handleNotification:(NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
-#endif
+- (void)setUserProperty:(QONUserPropertyKey)key value:(NSString *)value;
 
 /**
- Sets debug environment for user.
- If debug mode set, user purchases will not be sent to third-party integrations.
- @see [Setting Debug Mode](https://qonversion.io/docs/debug-mode)
+ Sets custom user property
+ @param key - Custom property key
+ @param value - Property value
  */
-+ (void)setDebugMode;
+- (void)setCustomUserProperty:(NSString *)key value:(NSString *)value;
 
 /**
- Sets Qonversion reservered user properties, like email or one-signal id
- @param property        Defined enum key that will be transformed to string
- @param value               Property value
+ This method returns all the properties, set for the current Qonversion user.
+ All set properties are sent to the server with delay, so if you call
+ this function right after setting some property, it may not be included
+ in the result.
+ @param completion - Completion block that will be called when response is received
  */
-+ (void)setProperty:(QNProperty)property value:(NSString *)value;
-
-/**
- Sets custom user properties
- @param property        Defined enum key that will be transformed to string
- @param value               Property value
- */
-+ (void)setUserProperty:(NSString *)property value:(NSString *)value;
-
-/**
- Associate a user with their unique ID in your system
- @param userID            Your database user ID
- */
-+ (void)setUserID:(NSString *)userID DEPRECATED_MSG_ATTRIBUTE("Use setProperty function instead. Pass userID value of QNProperty enum and your App side user identifier you want to set");
+- (void)userProperties:(QONUserPropertiesCompletionHandler)completion;
 
 /**
  Send your attribution data
  @param data Dictionary received by the provider
  @param provider Attribution provider
  */
-+ (void)addAttributionData:(NSDictionary *)data fromProvider:(QNAttributionProvider)provider;
+- (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider;
 
 /**
- Check user permissions based on product center details
- @param completion Complition block that include permissions dictionary and error
+ Check user entitlements based on product center details
+ @param completion Completion block that includes entitlements dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)checkPermissions:(QNPermissionCompletionHandler)completion;
+- (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -127,7 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param product Product create in Qonversion Dash
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)purchaseProduct:(QNProduct *)product completion:(QNPurchaseCompletionHandler)completion;
+- (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -135,69 +141,125 @@ NS_ASSUME_NONNULL_BEGIN
  @param productID Product identifier create in Qonversion Dash, pay attention that you should use qonversion id instead Apple Product ID
  @see [Product Center](https://qonversion.io/docs/product-center)
  */
-+ (void)purchase:(NSString *)productID completion:(QNPurchaseCompletionHandler)completion;
+- (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion;
 
 /**
- Restore user permissions based on product center details
- @param completion Completion block that include permissions dictionary and error
+ Restore user entitlements based on product center details
+ @param completion Completion block that includes entitlements dictionary and error
  @see [Product Center](https://qonversion.io/docs/product-center)
-*/
-+ (void)restoreWithCompletion:(QNRestoreCompletionHandler)completion;
+ */
+- (void)restore:(QNRestoreCompletionHandler)completion;
 
 /**
- Return Qonversion Products in assotiation with Store Kit Products
- If you get an empty SKProducts be sure your in-app purchases are correctly setted up in AppStore Connect and .storeKit file is available.
-
+ Returns Qonversion Products in association with Store Kit Products
+ If you get an empty SKProducts be sure your in-app purchases are correctly set up in AppStore Connect and .storeKit file is available.
+ 
  @see [Installing the iOS SDK](https://qonversion.io/docs/apple)
  @see [Product Center](https://qonversion.io/docs/product-center)
-*/
-+ (void)products:(QNProductsCompletionHandler)completion;
+ */
+- (void)products:(QONProductsCompletionHandler)completion;
 
 /**
- You can check if a user is eligible for an introductory offer, including a free trial. On the Apple platform, users who have not previously used an introductory offer for any products in the same subscription group are eligible for an introductory offer. Use this method to determine eligibility.
+ You can check if a user is eligible for an introductory offer, including a free trial.
+ On the Apple platform, users who have not previously used an introductory offer for any products
+ in the same subscription group are eligible for an introductory offer. Use this method to determine eligibility.
  
  You can show only a regular price for users who are not eligible for an introductory offer.
  @param productIds products identifiers that must be checked
- @param completion Completion block that include trial eligibility check result dictionary and error
+ @param completion Completion block that includes trial eligibility check result dictionary and error
  */
-+ (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QNEligibilityCompletionHandler)completion;
+- (void)checkTrialIntroEligibility:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion;
 
 /**
-  Return Qonversion Offerings Object
+ Returns Qonversion Offerings Object
  
-  An offering is a group of products that you can offer to a user on a given paywall based on your business logic.
-  For example, you can offer one set of products on a paywall immediately after onboarding and another set of products with discounts later on if a user has not converted.
-  Offerings allow changing the products offered remotely without releasing app updates.
+ An offering is a group of products that you can offer to a user on a given paywall based on your business logic.
+ For example, you can offer one set of products on a paywall immediately after onboarding and another set of products
+ with discounts later on if a user has not converted.
+ Offerings allow changing the products offered remotely without releasing app updates.
  
-  @see [Offerings](https://qonversion.io/docs/offerings)
-  @see [Product Center](https://qonversion.io/docs/product-center)
+ @see [Offerings](https://qonversion.io/docs/offerings)
+ @see [Product Center](https://qonversion.io/docs/product-center)
+ @param completion Completion block that includes information about the offerings user and error
  */
-+ (void)offerings:(QNOfferingsCompletionHandler)completion;
+- (void)offerings:(QONOfferingsCompletionHandler)completion;
 
 /**
- Qonversion A/B tests help you grow your app revenue by making it easy to run and analyze paywall and promoted in-app product experiments. It gives you the power to measure your paywalls' performance before you roll them out widely. It is an out-of-the-box solution that does not require any third-party service.
- 
- @param completion Completion block that include user experiments check result dictionary and error
+ Information about the current Qonversion user
+ @param completion Completion block that includes information about the current user and error
  */
-+ (void)experiments:(QNExperimentsCompletionHandler)completion;
+- (void)userInfo:(QONUserInfoCompletionHandler)completion;
 
 /**
- This function was used in debug mode only. You can reinstall the app if you need to reset the user ID.
+ Enable attribution collection from Apple Search Ads
  */
-+ (void)resetUser DEPRECATED_MSG_ATTRIBUTE("This function was used in debug mode only. You can reinstall the app if you need to reset the user ID.");
-
-+ (void)userInfo:(QNUserInfoCompletionHandler)completion;
+- (void)collectAppleSearchAdsAttribution;
 
 /**
- Enable attribution collection from Apple Search Ads. NO by default.
- */
-+ (void)setAppleSearchAdsAttributionEnabled:(BOOL)enable;
-
-/**
- On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion if tracking is allowed and IDFA is available.
+ On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion
+ if tracking is allowed and IDFA is available.
  For Qonversion/NoIdfa SDK advertising ID is always empty.
  */
-+ (void)setAdvertisingID;
+- (void)collectAdvertisingId;
+
+/**
+ Returns Qonversion remote config object
+ Use this function to get the remote config with specific payload and experiment info.
+ @param completion completion block that includes information about the remote config.
+ */
+- (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
+
+/**
+ This function should be used for the test purposes only.
+ Do not forget to delete the usage of this function before the release.
+ Use this function to attach the user to the remote configuration.
+ @param remoteConfigurationId identifier of the remote configuration
+ @param completion completion block that includes information about the result of the action. Success flag or error.
+ */
+- (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
+
+/**
+ This function should be used for the test purposes only.
+ Do not forget to delete the usage of this function before the release.
+ Use this function to detach the user from the remote configuration.
+ @param remoteConfigurationId identifier of the remote configuration
+ @param completion completion block that includes information about the result of the action. Success flag or error.
+ */
+- (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
+
+/**
+ This function should be used for the test purpose only.
+ Do not forget to delete the usage of this function before the release.
+ Use this function to attach the user to the experiment.
+ @param experimentId identifier of the experiment
+ @param groupId identifier of the experiment group
+ @param completion completion block that includes information about the result of the action. Success flag or error.
+ */
+- (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion;
+
+/**
+ This function should be used for the test purpose only.
+ Do not forget to delete the usage of this function before the release.
+ Use this function to detach the user from the experiment.
+ @param experimentId identifier of the experiment
+ @param completion completion block that includes information about the result of the action. Success flag or error.
+ */
+- (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion;
+
+/**
+ Contact us before you start using this function.
+ Handles purchases for StoreKit2 if you are using Qonversion in the Analytics Mode.
+ @param purchasesInfo array of StoreKit2 purchases models
+ */
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo;
+
+/**
+ Contact us before you start using this function.
+ Handles purchases for StoreKit2 if you are using Qonversion in the Analytics Mode.
+ @param purchasesInfo array of StoreKit2 purchases models
+ @param completion completion block that includes information about the result of the action. Success flag or error.
+ */
+- (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(nullable QONDefaultCompletionHandler)completion;
 
 @end
 

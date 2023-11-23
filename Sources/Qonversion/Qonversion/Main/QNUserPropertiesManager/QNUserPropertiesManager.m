@@ -1,10 +1,13 @@
 #import "QNUserPropertiesManager.h"
 #import "QNInMemoryStorage.h"
 #import "QNProperties.h"
-#import "QNRequestSerializer.h"
 #import "QNAPIClient.h"
 #import "QNDevice.h"
 #import "QNInternalConstants.h"
+#import "QNProductCenterManager.h"
+#import "QONUserPropertiesMapper.h"
+#import "Qonversion.h"
+
 #if !TARGET_OS_OSX
 #import <UIKit/UIKit.h>
 #else
@@ -13,7 +16,7 @@
 #import <net/if_dl.h>
 #endif
 
-static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name";
+static NSString * const kBackgroundQueueName = @"qonversion.background.queue.name";
 
 @interface QNUserPropertiesManager()
 
@@ -25,7 +28,6 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
-@property (nonatomic, assign, readwrite) BOOL launchingFinished;
 @property (nonatomic, assign, readwrite) NSUInteger retryDelay;
 @property (nonatomic, assign, readwrite) NSUInteger retriesCounter;
 
@@ -43,8 +45,9 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     [_backgroundQueue setMaxConcurrentOperationCount:1];
     [_backgroundQueue setSuspended:NO];
     _apiClient = [QNAPIClient shared];
+    _mapper = [QONUserPropertiesMapper new];
 
-    _backgroundQueue.name = kBackgrounQueueName;
+    _backgroundQueue.name = kBackgroundQueueName;
     _device = QNDevice.current;
     _retryDelay = kQPropertiesSendingPeriodInSeconds;
     _retriesCounter = 0;
@@ -127,16 +130,18 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
     }
     
     __block __weak QNUserPropertiesManager *weakSelf = self;
-    [self->_apiClient properties:properties
+    [self.apiClient sendProperties:properties
                       completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       weakSelf.updatingCurrently = NO;
       
       if (error) {
-        weakSelf.retriesCounter += 1;
-        
-        weakSelf.retryDelay = [weakSelf countDelay];
-        
-        [weakSelf sendPropertiesWithDelay:weakSelf.retryDelay];
+        if ([error.domain isEqualToString:QonversionApiErrorDomain] && error.code == QONAPIErrorInvalidClientUID) {
+          [weakSelf.productCenterManager launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+            [weakSelf retryProperties];
+          }];
+        } else {
+          [weakSelf retryProperties];
+        }
       } else {
         weakSelf.retryDelay = kQPropertiesSendingPeriodInSeconds;
         weakSelf.retriesCounter = 0;
@@ -144,6 +149,25 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
       }
     }];
   }];
+}
+
+- (void)getUserProperties:(QONUserPropertiesCompletionHandler)completion {
+  [self.apiClient getProperties:^(NSArray * _Nullable array, NSError * _Nullable error) {
+      if (error) {
+        completion(nil, error);
+      } else {
+        QONUserProperties *properties = [self.mapper mapUserProperties:array];
+        completion(properties, nil);
+      }
+  }];
+}
+
+- (void)retryProperties {
+  self.retriesCounter += 1;
+  
+  self.retryDelay = [self countDelay];
+  
+  [self sendPropertiesWithDelay:self.retryDelay];
 }
 
 - (void)clearProperties:(NSDictionary *)properties {
@@ -159,7 +183,7 @@ static NSString * const kBackgrounQueueName = @"qonversion.background.queue.name
 }
 
 - (BOOL)runOnBackgroundQueue:(void (^)(void))block {
-  if ([[NSOperationQueue currentQueue].name isEqualToString:kBackgrounQueueName]) {
+  if ([[NSOperationQueue currentQueue].name isEqualToString:kBackgroundQueueName]) {
     QONVERSION_LOG(@"Already running in the background.");
     block();
     return NO;

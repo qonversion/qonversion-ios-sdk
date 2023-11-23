@@ -31,7 +31,7 @@ class AuthViewController: UIViewController {
     let conf = GIDConfiguration(clientID: "11599271839-qalspkpqrihnkl1e12be731tgmre5uop.apps.googleusercontent.com")
     GIDSignIn.sharedInstance.signIn(with: conf, presenting: self) { [weak self] user, error in
       guard let user = user else { return }
-      
+
       self?.processUserLogin(user: user)
     }
   }
@@ -49,7 +49,7 @@ class AuthViewController: UIViewController {
       
       guard let uid = authResult?.user.uid else  { return }
       
-      Qonversion.identify(uid)
+      Qonversion.shared().identify(uid)
       self?.showMainScreen()
     }
   }

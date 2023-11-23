@@ -17,10 +17,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)sharedInstance;
 
+- (void)didFinishLaunch;
+
 - (void)setAutomationsDelegate:(id<QONAutomationsDelegate> _Nullable)automationsDelegate;
+- (void)setScreenCustomizationDelegate:(id<QONScreenCustomizationDelegate>)screenCustomizationDelegate;
 - (void)showAutomationWithID:(NSString *)automationID completion:(nullable QONShowScreenCompletionHandler)completion;
 - (BOOL)handlePushNotification:(NSDictionary *)userInfo;
 - (void)showAutomationIfExists;
+- (void)sendPushToken:(NSData *)pushTokenData;
 
 @end
 

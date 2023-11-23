@@ -9,13 +9,13 @@
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
 #import "QNErrorsMapper.h"
-#import "QNErrors.h"
+#import "QONErrors.h"
 #import <Foundation/Foundation.h>
 
 @interface QNErrorsMapper ()
 
-- (NSString *)messageForErrorType:(QNAPIError)errorType;
-- (QNAPIError)errorTypeFromCode:(NSNumber *)errorCode;
+- (NSString *)messageForErrorType:(QONAPIError)errorType;
+- (QONAPIError)errorTypeFromCode:(NSNumber *)errorCode;
 
 @end
 
@@ -32,9 +32,9 @@
 - (void)setUp {
   [super setUp];
   
-  self.errorsMap = @{@(QNAPIErrorProjectConfigError) : @"The project is not configured or configured incorrectly in the Qonversion Dashboard.",
-                     @(QNAPIErrorInvalidStoreCredentials) : @"Please check provided Store keys in the Qonversion Dashboard.",
-                     @(QNAPIErrorReceiptValidation) : @"Provided receipt can't be validated. Please check the details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
+  self.errorsMap = @{@(QONAPIErrorProjectConfigError) : @"The project is not configured or configured incorrectly in the Qonversion Dashboard.",
+                     @(QONAPIErrorInvalidStoreCredentials) : @"Please check provided Store keys in the Qonversion Dashboard.",
+                     @(QONAPIErrorReceiptValidation) : @"Provided receipt can't be validated. Please check the details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
   };
   
   self.errorsCodesMap = @{

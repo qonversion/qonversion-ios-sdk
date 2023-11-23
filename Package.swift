@@ -19,7 +19,9 @@ let sources: [String] = ["Qonversion/Automations/Constants",
                          "Qonversion/Automations/Services/QONAutomationsScreenProcessor",
                          "Qonversion/Automations/Services/QONAutomationsService",
                          "Qonversion/Automations/Views",
+                         "Qonversion/Automations/Views/QONAutomationsNavigationController",
                          "Qonversion/Automations/Views/QONAutomationsViewController",
+                         "Qonversion/Automations/Services/QONNotificationsService",
                          "Qonversion/IDFA",
                          "Qonversion/Public",
                          "Qonversion/Qonversion/Assemblies",
@@ -40,21 +42,28 @@ let sources: [String] = ["Qonversion/Automations/Constants",
                          "Qonversion/Qonversion/Main/QNIdentityManager",
                          "Qonversion/Qonversion/Main/QNProductCenterManager",
                          "Qonversion/Qonversion/Main/QNUserPropertiesManager",
+                         "Qonversion/Qonversion/Main/QONRemoteConfigManager",
                          "Qonversion/Qonversion/Mappers",
                          "Qonversion/Qonversion/Mappers/QNErrorsMapper",
                          "Qonversion/Qonversion/Mappers/QNMapper",
                          "Qonversion/Qonversion/Mappers/QNUserInfoMapper",
+                         "Qonversion/Qonversion/Mappers/QONRemoteConfigMapper",
+                         "Qonversion/Qonversion/Mappers/QONUserPropertiesMapper",
                          "Qonversion/Qonversion/Models",
                          "Qonversion/Qonversion/Models/Protected",
+                         "Qonversion/Qonversion/Models/QONStoreKit2PurchaseModel",
                          "Qonversion/Qonversion/Models/QNMapperObject",
                          "Qonversion/Qonversion/Services",
                          "Qonversion/Qonversion/Services/QNAPIClient",
                          "Qonversion/Qonversion/Services/QNIdentityService",
                          "Qonversion/Qonversion/Services/QNStoreKitService",
                          "Qonversion/Qonversion/Services/QNUserInfoService",
+                         "Qonversion/Qonversion/Services/QONRemoteConfigService",
+                         "Qonversion/Qonversion/Services/QONExceptionManager",
                          "Qonversion/Qonversion/Utils",
                          "Qonversion/Qonversion/Utils/QNDevice",
                          "Qonversion/Qonversion/Utils/QNProperties",
+                         "Qonversion/Qonversion/Utils/QNRateLimiter",
                          "Qonversion/Qonversion/Utils/QNUserInfo",
                          "Qonversion/Qonversion/Utils/QNUtils"]
 
@@ -66,11 +75,17 @@ let package = Package(
     products: [
         .library(
             name: "Qonversion",
-            targets: ["Qonversion"])
+            targets: ["Qonversion", "QonversionSwift"])
     ],
     targets: [.target(
                 name: "Qonversion",
                 path: "Sources",
+                exclude: ["Swift"],
                 publicHeadersPath: "Qonversion/Public",
-                cSettings: sources.map { .headerSearchPath($0) })]
+                cSettings: sources.map { .headerSearchPath($0) }),
+              .target(
+                name: "QonversionSwift",
+                dependencies: ["Qonversion"],
+                path: "Sources",
+                exclude: ["Qonversion"])]
 )

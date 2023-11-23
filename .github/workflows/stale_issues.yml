@@ -1,0 +1,8 @@
+name: Close stale issues
+on:
+  schedule:
+    - cron: '30 1 * * *'
+
+jobs:
+  stale_issues:
+    uses: qonversion/shared-sdk-workflows/.github/workflows/stale_issues.yml@main

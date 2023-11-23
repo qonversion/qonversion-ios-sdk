@@ -8,13 +8,13 @@
 
 #import <Foundation/Foundation.h>
 
-@class QNUser;
+@class QONUser;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol QNUserInfoMapperInterface <NSObject>
 
-- (QNUser *)mapUserInfo:(NSDictionary *)data;
+- (QONUser *)mapUserInfo:(NSDictionary *)data;
 
 @end
 
