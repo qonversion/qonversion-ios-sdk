@@ -121,9 +121,8 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
 - (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider;
 
 /**
- Check user entitlements based on product center details
+ Check user entitlements
  @param completion Completion block that includes entitlements dictionary and error
- @see [Product Center](https://qonversion.io/docs/product-center)
  */
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
 
@@ -131,7 +130,6 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  Make a purchase and validate that through server-to-server using Qonversion's Backend
  
  @param product Product create in Qonversion Dash
- @see [Product Center](https://qonversion.io/docs/product-center)
  */
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
 
@@ -139,14 +137,12 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  Make a purchase and validate that through server-to-server using Qonversion's Backend
  
  @param productID Product identifier create in Qonversion Dash, pay attention that you should use qonversion id instead Apple Product ID
- @see [Product Center](https://qonversion.io/docs/product-center)
  */
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion;
 
 /**
- Restore user entitlements based on product center details
+ Restore user entitlements based on purchases
  @param completion Completion block that includes entitlements dictionary and error
- @see [Product Center](https://qonversion.io/docs/product-center)
  */
 - (void)restore:(QNRestoreCompletionHandler)completion;
 
@@ -155,7 +151,6 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  If you get an empty SKProducts be sure your in-app purchases are correctly set up in AppStore Connect and .storeKit file is available.
  
  @see [Installing the iOS SDK](https://qonversion.io/docs/apple)
- @see [Product Center](https://qonversion.io/docs/product-center)
  */
 - (void)products:(QONProductsCompletionHandler)completion;
 
@@ -179,7 +174,6 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  Offerings allow changing the products offered remotely without releasing app updates.
  
  @see [Offerings](https://qonversion.io/docs/offerings)
- @see [Product Center](https://qonversion.io/docs/product-center)
  @param completion Completion block that includes information about the offerings user and error
  */
 - (void)offerings:(QONOfferingsCompletionHandler)completion;

@@ -13,7 +13,7 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONError) {
   // user cancelled the request, etc.
   QONErrorCancelled = 1,
   
-  // the product has not been added to the product center
+  // the product has not been added in Qonversion Dashboard
   // see more https://qonversion.io/docs/create-products
   QONErrorProductNotFound = 2,
   

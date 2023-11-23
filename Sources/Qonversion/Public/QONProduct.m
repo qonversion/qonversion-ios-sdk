@@ -93,22 +93,24 @@
   return _trialDuration;
 }
 
-- (QNProductType)type {
+- (QONProductType)type {
   if (_type) {
     return _type;
   }
   
   if (!self.skProduct) {
-    return QNProductTypeUnknown;
+    return QONProductTypeUnknown;
   }
   
-  QNProductType type = QNProductTypeOneTime;
+  QONProductType type = QONProductTypeUnknown;
   
   if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
     if (self.skProduct.introductoryPrice && self.skProduct.introductoryPrice.paymentMode == SKProductDiscountPaymentModeFreeTrial) {
-      type = QNProductTypeTrial;
+      type = QONProductTypeTrial;
     } else if (self.skProduct.subscriptionPeriod) {
-      type = QNProductTypeDirectSubscription;
+      type = QONProductTypeDirectSubscription;
+    } else {
+      type = QONProductTypeOneTime;
     }
   }
   
@@ -117,16 +119,16 @@
   return _type;
 }
 
-- (QNProductDuration)duration {
-  if (_duration) {
-    return _duration;
+- (QONSubscriptionDuration)subscriptionDuration {
+  if (_subscriptionDuration) {
+    return _subscriptionDuration;
   }
   
   if (!self.skProduct) {
-    return QNProductDurationUnknown;
+    return QONSubscriptionDurationUnknown;
   }
   
-  QNProductDuration duration = QNProductDurationUnknown;
+  QONSubscriptionDuration subscriptionDuration = QONSubscriptionDurationUnknown;
   if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
     if (self.skProduct.subscriptionPeriod) {
       SKProductPeriodUnit unit = self.skProduct.subscriptionPeriod.unit;
@@ -135,37 +137,38 @@
       switch (unit) {
         case SKProductPeriodUnitWeek:
           if (numberOfUnits == 1) {
-            duration = QNProductDurationWeekly;
+            subscriptionDuration = QONSubscriptionDurationWeekly;
           }
           break;
           
         case SKProductPeriodUnitMonth:
           if (numberOfUnits == 1) {
-            duration = QNProductDurationMonthly;
+            subscriptionDuration = QONSubscriptionDurationMonthly;
+          } else if (numberOfUnits == 2) {
+            subscriptionDuration = QONSubscriptionDurationTwoMonths;
           } else if (numberOfUnits == 3) {
-            duration = QNProductDuration3Months;
+            subscriptionDuration = QONSubscriptionDurationThreeMonths;
           } else if (numberOfUnits == 6) {
-            duration = QNProductDuration6Months;
+            subscriptionDuration = QONSubscriptionDurationSixMonths;
           }
           break;
           
         case SKProductPeriodUnitYear:
           if (numberOfUnits == 1) {
-            duration = QNProductDurationAnnual;
+            subscriptionDuration = QONSubscriptionDurationAnnual;
           }
-          
-//          QNProductDurationLifetime
           break;
           
         default:
+          subscriptionDuration = QONSubscriptionDurationOther;
           break;
       }
     }
   }
   
-  _duration = duration;
+  _subscriptionDuration = subscriptionDuration;
   
-  return _duration;
+  return _subscriptionDuration;
 }
 
 - (NSString *)description {
@@ -176,6 +179,7 @@
   [description appendFormat:@"offeringID=%@,\n", self.offeringID];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
   [description appendFormat:@"duration=%@ (enum value = %li),\n", [self prettyDuration], (long) self.duration];
+  [description appendFormat:@"subscription duration=%@ (enum value = %li),\n", [self prettySubscriptionDuration], (long) self.subscriptionDuration];
   [description appendFormat:@"trial duration=%@ (enum value = %li),\n", [self prettyTrialDuration], (long) self.trialDuration];
   [description appendFormat:@"skProduct=%@,\n", self.skProduct];
   [description appendString:@">"];
@@ -214,6 +218,36 @@
       result = @"lifetime"; break;
       
     default:
+      break;
+  }
+  
+  return result;
+}
+
+- (NSString *)prettySubscriptionDuration {
+  NSString *result = @"unknown";
+  
+  switch (self.subscriptionDuration) {
+    case QONSubscriptionDurationWeekly:
+      result = @"weekly"; break;
+    
+    case QONSubscriptionDurationMonthly:
+      result = @"monthly"; break;
+      
+    case QONSubscriptionDurationTwoMonths:
+      result = @"2 months"; break;
+    
+    case QONSubscriptionDurationThreeMonths:
+      result = @"3 months"; break;
+    
+    case QONSubscriptionDurationSixMonths:
+      result = @"6 months"; break;
+    
+    case QONSubscriptionDurationAnnual:
+      result = @"annual"; break;
+      
+    default:
+      result = @"other";
       break;
   }
   

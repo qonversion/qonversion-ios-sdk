@@ -18,6 +18,17 @@ typedef NS_ENUM(NSInteger, QONProductType) {
   QONProductTypeOneTime = 2
 } NS_SWIFT_NAME(Qonversion.ProductType);
 
+typedef NS_ENUM(NSInteger, QONSubscriptionDuration) {
+  QONSubscriptionDurationUnknown = -1,
+  QONSubscriptionDurationWeekly = 0,
+  QONSubscriptionDurationMonthly = 1,
+  QONSubscriptionDurationTwoMonths = 2,
+  QONSubscriptionDurationThreeMonths = 3,
+  QONSubscriptionDurationSixMonths = 4,
+  QONSubscriptionDurationAnnual = 5,
+  QONSubscriptionDurationOther = 6
+} NS_SWIFT_NAME(Qonversion.SubscriptionDuration);
+
 typedef NS_ENUM(NSInteger, QONProductDuration) {
   QONProductDurationUnknown = -1,
   QONProductDurationWeekly = 0,
@@ -67,10 +78,17 @@ NS_SWIFT_NAME(Qonversion.Product)
 @property (nonatomic, assign) QONProductType type;
 
 /**
- Product duration
+ Product duration setted via Qonversion Dashboard
  @see [Products durations](https://qonversion.io/docs/create-products#product-type)
  */
 @property (nonatomic, assign) QONProductDuration duration;
+
+/**
+ Product duration based on Apple Store Product.
+ Returns QONSubscriptionDurationUnknown if store product is not available or it's not a subscription.
+ Returns QONSubscriptionDurationOther in case we can't determine the duration. Check SKProduct directly to get the duration.
+ */
+@property (nonatomic, assign) QONSubscriptionDuration subscriptionDuration;
 
 /**
  Trial duration
