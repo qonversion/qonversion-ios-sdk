@@ -6,7 +6,6 @@
 //  Copyright © 2023 Qonversion Inc. All rights reserved.
 //
 
-#import <Qonversion/Qonversion.h>
 #import <StoreKit/StoreKit.h>
 
 NS_ASSUME_NONNULL_BEGIN

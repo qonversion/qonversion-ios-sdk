@@ -18,6 +18,7 @@ typedef NS_ENUM(NSInteger, QONSubscriptionPeriodUnit) {
 } NS_SWIFT_NAME(Qonversion.SubscriptionPeriodUnit);
 
 API_AVAILABLE(ios(11.2), macosx(10.13.2), watchos(6.2), tvos(11.2))
+NS_SWIFT_NAME(Qonversion.SubscriptionPeriod)
 @interface QONSubscriptionPeriod : NSObject
 
 @property (nonatomic, assign) QONSubscriptionPeriodUnit unit;
