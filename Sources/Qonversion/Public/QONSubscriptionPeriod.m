@@ -69,7 +69,7 @@
   NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
   
   [description appendFormat:@"unit=%@,\n", [QONSubscriptionPeriod unitStringFormat:self.unit]];
-  [description appendFormat:@"count= %li", (long) self.unitCount];
+  [description appendFormat:@"count= %li \n", (long) self.unitCount];
   [description appendString:@">"];
   
   return [description copy];

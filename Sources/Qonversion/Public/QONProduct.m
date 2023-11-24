@@ -159,8 +159,8 @@
   [description appendFormat:@"trial duration=%@ (enum value = %li),\n", [self prettyTrialDuration], (long) self.trialDuration];
 #pragma GCC diagnostic pop
   if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
-    [description appendFormat:@"subscription period=%@", self.subscriptionPeriod];
-    [description appendFormat:@"trial period=%@", self.trialPeriod];
+    [description appendFormat:@"subscription period=%@, \n", self.subscriptionPeriod];
+    [description appendFormat:@"trial period=%@, \n", self.trialPeriod];
   }
   [description appendFormat:@"skProduct=%@,\n", self.skProduct];
   [description appendString:@">"];
