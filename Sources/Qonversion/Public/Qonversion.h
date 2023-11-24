@@ -19,6 +19,7 @@
 #import "QONStoreKit2PurchaseModel.h"
 #import "QONUserProperties.h"
 #import "QONUserProperty.h"
+#import "QONSubscriptionPeriod.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"

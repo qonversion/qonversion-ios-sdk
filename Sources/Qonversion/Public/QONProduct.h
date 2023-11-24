@@ -1,4 +1,5 @@
 #import <StoreKit/StoreKit.h>
+#import "QONSubscriptionPeriod.h"
 
 typedef NS_ENUM(NSInteger, QONProductType) {
   QONProductTypeUnknown = -1,
@@ -17,17 +18,6 @@ typedef NS_ENUM(NSInteger, QONProductType) {
    */
   QONProductTypeOneTime = 2
 } NS_SWIFT_NAME(Qonversion.ProductType);
-
-typedef NS_ENUM(NSInteger, QONSubscriptionDuration) {
-  QONSubscriptionDurationUnknown = -1,
-  QONSubscriptionDurationWeekly = 0,
-  QONSubscriptionDurationMonthly = 1,
-  QONSubscriptionDurationTwoMonths = 2,
-  QONSubscriptionDurationThreeMonths = 3,
-  QONSubscriptionDurationSixMonths = 4,
-  QONSubscriptionDurationAnnual = 5,
-  QONSubscriptionDurationOther = 6
-} NS_SWIFT_NAME(Qonversion.SubscriptionDuration);
 
 typedef NS_ENUM(NSInteger, QONProductDuration) {
   QONProductDurationUnknown = -1,
@@ -81,19 +71,24 @@ NS_SWIFT_NAME(Qonversion.Product)
  Product duration set via Qonversion Dashboard
  @see [Products durations](https://qonversion.io/docs/create-products#product-type)
  */
-@property (nonatomic, assign) QONProductDuration duration DEPRECATED_MSG_ATTRIBUTE("Use subscription duration instead.");
+@property (nonatomic, assign) QONProductDuration duration DEPRECATED_MSG_ATTRIBUTE("Use subscriptionPeriod instead.");
 
 /**
- Product duration based on Apple Store Product.
- Returns QONSubscriptionDurationUnknown if store product is not available or it's not a subscription.
- Returns QONSubscriptionDurationOther in case we can't determine the duration. Check SKProduct directly to get the duration.
+ Product subscription period based on Apple Store Product.
+ Returns nil if the product is not a subpscription or the store product can't be loaded from the Storekit.
  */
-@property (nonatomic, assign) QONSubscriptionDuration subscriptionDuration;
+@property (nonatomic, strong, nullable) QONSubscriptionPeriod *subscriptionPeriod API_AVAILABLE(ios(11.2), macosx(10.13.2), watchos(6.2), tvos(11.2));
+
+/**
+ Product trial period based on Apple Store Product.
+ Returns nil if the product is not a subpscription, or trial is not available, or the store product can't be loaded from the Storekit.
+ */
+@property (nonatomic, strong, nullable) QONSubscriptionPeriod *trialPeriod API_AVAILABLE(ios(11.2), macosx(10.13.2), watchos(6.2), tvos(11.2));
 
 /**
  Trial duration
  */
-@property (nonatomic, assign) QONTrialDuration trialDuration;
+@property (nonatomic, assign) QONTrialDuration trialDuration DEPRECATED_MSG_ATTRIBUTE("Use trialPeriod instead.");
 
 /**
   Associated StoreKit Product

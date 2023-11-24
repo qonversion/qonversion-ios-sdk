@@ -1,5 +1,6 @@
 #import "QONStoreKitSugare.h"
 #import "QONProduct.h"
+#import "QONSubscriptionPeriod+Protected.h"
 
 @implementation QONProduct : NSObject
 
@@ -24,6 +25,18 @@
 
 - (void)setSkProduct:(SKProduct *)skProduct {
   _skProduct = skProduct;
+}
+
+- (QONSubscriptionPeriod *)trialPeriod {
+  if (_trialPeriod) {
+    return _trialPeriod;
+  }
+  
+  if (self.skProduct.introductoryPrice) {
+    _trialPeriod = [[QONSubscriptionPeriod alloc] initWithStoreSubscriptionPeriod:self.skProduct.introductoryPrice.subscriptionPeriod];
+  }
+  
+  return _trialPeriod;
 }
 
 - (QONTrialDuration)trialDuration {
@@ -119,56 +132,16 @@
   return _type;
 }
 
-- (QONSubscriptionDuration)subscriptionDuration {
-  if (_subscriptionDuration) {
-    return _subscriptionDuration;
+- (QONSubscriptionPeriod *)subscriptionPeriod {
+  if (_subscriptionPeriod) {
+    return _subscriptionPeriod;
   }
   
-  if (!self.skProduct) {
-    return QONSubscriptionDurationUnknown;
+  if (self.skProduct.subscriptionPeriod) {
+    _subscriptionPeriod = [[QONSubscriptionPeriod alloc] initWithStoreSubscriptionPeriod:self.skProduct.subscriptionPeriod];
   }
   
-  QONSubscriptionDuration subscriptionDuration = QONSubscriptionDurationUnknown;
-  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
-    if (self.skProduct.subscriptionPeriod) {
-      SKProductPeriodUnit unit = self.skProduct.subscriptionPeriod.unit;
-      NSUInteger numberOfUnits = self.skProduct.subscriptionPeriod.numberOfUnits;
-      
-      switch (unit) {
-        case SKProductPeriodUnitWeek:
-          if (numberOfUnits == 1) {
-            subscriptionDuration = QONSubscriptionDurationWeekly;
-          }
-          break;
-          
-        case SKProductPeriodUnitMonth:
-          if (numberOfUnits == 1) {
-            subscriptionDuration = QONSubscriptionDurationMonthly;
-          } else if (numberOfUnits == 2) {
-            subscriptionDuration = QONSubscriptionDurationTwoMonths;
-          } else if (numberOfUnits == 3) {
-            subscriptionDuration = QONSubscriptionDurationThreeMonths;
-          } else if (numberOfUnits == 6) {
-            subscriptionDuration = QONSubscriptionDurationSixMonths;
-          }
-          break;
-          
-        case SKProductPeriodUnitYear:
-          if (numberOfUnits == 1) {
-            subscriptionDuration = QONSubscriptionDurationAnnual;
-          }
-          break;
-          
-        default:
-          subscriptionDuration = QONSubscriptionDurationOther;
-          break;
-      }
-    }
-  }
-  
-  _subscriptionDuration = subscriptionDuration;
-  
-  return _subscriptionDuration;
+  return _subscriptionPeriod;
 }
 
 - (NSString *)description {
@@ -183,9 +156,12 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   // Warning muted for linter
   [description appendFormat:@"duration=%@ (enum value = %li),\n", [self prettyDuration], (long) self.duration];
-#pragma GCC diagnostic pop
-  [description appendFormat:@"subscription duration=%@ (enum value = %li),\n", [self prettySubscriptionDuration], (long) self.subscriptionDuration];
   [description appendFormat:@"trial duration=%@ (enum value = %li),\n", [self prettyTrialDuration], (long) self.trialDuration];
+#pragma GCC diagnostic pop
+  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
+    [description appendFormat:@"subscription period=%@", self.subscriptionPeriod];
+    [description appendFormat:@"trial period=%@", self.trialPeriod];
+  }
   [description appendFormat:@"skProduct=%@,\n", self.skProduct];
   [description appendString:@">"];
   
@@ -226,37 +202,6 @@
       result = @"lifetime"; break;
       
     default:
-      break;
-  }
-  
-  return result;
-}
-#pragma GCC diagnostic pop
-
-- (NSString *)prettySubscriptionDuration {
-  NSString *result = @"unknown";
-  
-  switch (self.subscriptionDuration) {
-    case QONSubscriptionDurationWeekly:
-      result = @"weekly"; break;
-    
-    case QONSubscriptionDurationMonthly:
-      result = @"monthly"; break;
-      
-    case QONSubscriptionDurationTwoMonths:
-      result = @"2 months"; break;
-    
-    case QONSubscriptionDurationThreeMonths:
-      result = @"3 months"; break;
-    
-    case QONSubscriptionDurationSixMonths:
-      result = @"6 months"; break;
-    
-    case QONSubscriptionDurationAnnual:
-      result = @"annual"; break;
-      
-    default:
-      result = @"other";
       break;
   }
   
@@ -303,6 +248,8 @@
   
   return result;
 }
+
+#pragma GCC diagnostic pop
 
 - (NSString *)prettyType {
   NSString *result = @"unknown";

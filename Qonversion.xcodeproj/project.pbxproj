@@ -51,8 +51,9 @@
 		6A95DEA229E40E9900350BD6 /* QNOutagerIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */; };
 		6A95DEA529E40F2E00350BD6 /* XCTestCase+Helpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA429E40F2E00350BD6 /* XCTestCase+Helpers.m */; };
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
-		701922272B0B812400724926 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
-		701922282B0B812400724926 /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922712B10981200724926 /* QONSubscriptionPeriod.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */ = {isa = PBXBuildFile; fileRef = 701922722B10981200724926 /* QONSubscriptionPeriod.m */; };
+		701922762B10AB3300724926 /* QONSubscriptionPeriod+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922752B10AB3300724926 /* QONSubscriptionPeriod+Protected.h */; };
 		702394912923EBF3003126D5 /* QONNotificationsService.h in Headers */ = {isa = PBXBuildFile; fileRef = 7023948F2923EBF3003126D5 /* QONNotificationsService.h */; };
 		702394922923EBF3003126D5 /* QONNotificationsService.m in Sources */ = {isa = PBXBuildFile; fileRef = 702394902923EBF3003126D5 /* QONNotificationsService.m */; };
 		70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70283DF629F66FAC00D138BC /* PurchasesMapper.swift */; };
@@ -260,28 +261,7 @@
 			remoteGlobalIDString = 454EF63B24E5CC580070581E;
 			remoteInfo = Sample;
 		};
-		701922292B0B812400724926 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 459DAB60243E329F0011ECF3 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 459DAB68243E329F0011ECF3;
-			remoteInfo = Qonversion;
-		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		7019222B2B0B812400724926 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				701922282B0B812400724926 /* Qonversion.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13844A737C5779AEEAD10EB9 /* Pods-Sample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.debug.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.debug.xcconfig"; sourceTree = "<group>"; };
@@ -348,6 +328,9 @@
 		6A95DEA329E40F2100350BD6 /* XCTestCase+Helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+Helpers.h"; sourceTree = "<group>"; };
 		6A95DEA429E40F2E00350BD6 /* XCTestCase+Helpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+Helpers.m"; sourceTree = "<group>"; };
 		700EC171291277130032E205 /* QONExperimentGroup+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONExperimentGroup+Protected.h"; sourceTree = "<group>"; };
+		701922712B10981200724926 /* QONSubscriptionPeriod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONSubscriptionPeriod.h; sourceTree = "<group>"; };
+		701922722B10981200724926 /* QONSubscriptionPeriod.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONSubscriptionPeriod.m; sourceTree = "<group>"; };
+		701922752B10AB3300724926 /* QONSubscriptionPeriod+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONSubscriptionPeriod+Protected.h"; sourceTree = "<group>"; };
 		7023948F2923EBF3003126D5 /* QONNotificationsService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONNotificationsService.h; sourceTree = "<group>"; };
 		702394902923EBF3003126D5 /* QONNotificationsService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONNotificationsService.m; sourceTree = "<group>"; };
 		70283DF629F66FAC00D138BC /* PurchasesMapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
@@ -540,7 +523,6 @@
 			files = (
 				45754AE725814C7500FCA376 /* iAd.framework in Frameworks */,
 				891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */,
-				701922272B0B812400724926 /* Qonversion.framework in Frameworks */,
 				70D9CBDF2B03BF07003F1878 /* StoreKit.framework in Frameworks */,
 				A2649CD29A7FDF280A2EC27C /* Pods_Sample.framework in Frameworks */,
 			);
@@ -960,6 +942,8 @@
 				895731DA26DD03A2009507A6 /* QONOffering.m */,
 				895731DB26DD03A2009507A6 /* QONActionResult.h */,
 				895731DC26DD03A2009507A6 /* QONProduct.m */,
+				701922712B10981200724926 /* QONSubscriptionPeriod.h */,
+				701922722B10981200724926 /* QONSubscriptionPeriod.m */,
 				70D0E2BA291AA21C004E8DE8 /* QONLaunchMode.h */,
 				70E99383291BC60A006E0A64 /* QONEnvironment.h */,
 				70D0E2B6291A9BE3004E8DE8 /* QONConfiguration.h */,
@@ -1313,6 +1297,7 @@
 				707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */,
 				702DBDEB2A3216C900D590D0 /* QONExperiment+Protected.h */,
 				8957324226DD03A3009507A6 /* QONUser+Protected.h */,
+				701922752B10AB3300724926 /* QONSubscriptionPeriod+Protected.h */,
 				8957324326DD03A3009507A6 /* QONOfferings+Protected.h */,
 				8957324526DD03A3009507A6 /* QONOffering+Protected.h */,
 				8957324726DD03A3009507A6 /* QONIntroEligibility+Protected.h */,
@@ -1606,6 +1591,7 @@
 				895732FB26DD03A3009507A6 /* QNIdentityManager.h in Headers */,
 				895732C226DD03A3009507A6 /* QNInMemoryStorage.h in Headers */,
 				895732A326DD03A3009507A6 /* QONAutomationsEvent+Protected.h in Headers */,
+				701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */,
 				895732C126DD03A3009507A6 /* QNLocalStorage.h in Headers */,
 				707734F72A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h in Headers */,
 				700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */,
@@ -1624,6 +1610,7 @@
 				70ED951029FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h in Headers */,
 				8957329126DD03A3009507A6 /* QONAutomations.h in Headers */,
 				895732ED26DD03A3009507A6 /* QNUserInfoMapper.h in Headers */,
+				701922762B10AB3300724926 /* QONSubscriptionPeriod+Protected.h in Headers */,
 				70ADE70F2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h in Headers */,
 				8957327C26DD03A3009507A6 /* QONAutomationsDelegate.h in Headers */,
 				8957330126DD03A3009507A6 /* QNUserInfoServiceInterface.h in Headers */,
@@ -1664,12 +1651,10 @@
 				454EF63924E5CC580070581E /* Frameworks */,
 				454EF63A24E5CC580070581E /* Resources */,
 				4CB079286CCC86BD200EEDB0 /* [CP] Embed Pods Frameworks */,
-				7019222B2B0B812400724926 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				7019222A2B0B812400724926 /* PBXTargetDependency */,
 			);
 			name = Sample;
 			productName = Sample;
@@ -1965,6 +1950,7 @@
 				895732A626DD03A3009507A6 /* QONAutomationsScreen.m in Sources */,
 				70ED951129FAAF31005F5D00 /* QONStoreKit2PurchaseModel.m in Sources */,
 				70EC019D29EEE94300E686E2 /* StoreKit2Service.swift in Sources */,
+				701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */,
 				895732A926DD03A3009507A6 /* QONAutomationsMapper.m in Sources */,
 				895732F226DD03A3009507A6 /* QNMapper.m in Sources */,
 				70D0E2B9291A9BE3004E8DE8 /* QONConfiguration.m in Sources */,
@@ -2067,11 +2053,6 @@
 			isa = PBXTargetDependency;
 			target = 454EF63B24E5CC580070581E /* Sample */;
 			targetProxy = 6A8A604C29DAD5CB008EC7D8 /* PBXContainerItemProxy */;
-		};
-		7019222A2B0B812400724926 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 459DAB68243E329F0011ECF3 /* Qonversion */;
-			targetProxy = 701922292B0B812400724926 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
