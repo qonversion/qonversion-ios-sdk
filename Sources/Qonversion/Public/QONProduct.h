@@ -74,14 +74,14 @@ NS_SWIFT_NAME(Qonversion.Product)
 @property (nonatomic, assign) QONProductDuration duration DEPRECATED_MSG_ATTRIBUTE("Use subscriptionPeriod instead.");
 
 /**
- Product subscription period based on Apple Store Product.
- Returns nil if the product is not a subpscription or the store product can't be loaded from the Storekit.
+ Product subscription period based on the Apple Store Product.
+ Returns nil if the product is not a subscription or the store product can't be loaded from the Storekit.
  */
 @property (nonatomic, strong, nullable) QONSubscriptionPeriod *subscriptionPeriod API_AVAILABLE(ios(11.2), macosx(10.13.2), watchos(6.2), tvos(11.2));
 
 /**
- Product trial period based on Apple Store Product.
- Returns nil if the product is not a subpscription, or trial is not available, or the store product can't be loaded from the Storekit.
+ Product trial period based on the Apple Store Product.
+ Returns nil if the product is not a subscription, or trial is not available, or the store product can't be loaded from the Storekit.
  */
 @property (nonatomic, strong, nullable) QONSubscriptionPeriod *trialPeriod API_AVAILABLE(ios(11.2), macosx(10.13.2), watchos(6.2), tvos(11.2));
 
