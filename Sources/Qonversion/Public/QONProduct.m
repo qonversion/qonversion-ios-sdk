@@ -1,5 +1,6 @@
 #import "QONStoreKitSugare.h"
 #import "QONProduct.h"
+#import "QONSubscriptionPeriod+Protected.h"
 
 @implementation QONProduct : NSObject
 
@@ -24,6 +25,18 @@
 
 - (void)setSkProduct:(SKProduct *)skProduct {
   _skProduct = skProduct;
+}
+
+- (QONSubscriptionPeriod *)trialPeriod {
+  if (_trialPeriod) {
+    return _trialPeriod;
+  }
+  
+  if (self.skProduct.introductoryPrice) {
+    _trialPeriod = [[QONSubscriptionPeriod alloc] initWithStoreSubscriptionPeriod:self.skProduct.introductoryPrice.subscriptionPeriod];
+  }
+  
+  return _trialPeriod;
 }
 
 - (QONTrialDuration)trialDuration {
@@ -93,6 +106,44 @@
   return _trialDuration;
 }
 
+- (QONProductType)type {
+  if (_type) {
+    return _type;
+  }
+  
+  if (!self.skProduct) {
+    return QONProductTypeUnknown;
+  }
+  
+  QONProductType type = QONProductTypeUnknown;
+  
+  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
+    if (self.skProduct.introductoryPrice && self.skProduct.introductoryPrice.paymentMode == SKProductDiscountPaymentModeFreeTrial) {
+      type = QONProductTypeTrial;
+    } else if (self.skProduct.subscriptionPeriod) {
+      type = QONProductTypeDirectSubscription;
+    } else {
+      type = QONProductTypeOneTime;
+    }
+  }
+  
+  _type = type;
+  
+  return _type;
+}
+
+- (QONSubscriptionPeriod *)subscriptionPeriod {
+  if (_subscriptionPeriod) {
+    return _subscriptionPeriod;
+  }
+  
+  if (self.skProduct.subscriptionPeriod) {
+    _subscriptionPeriod = [[QONSubscriptionPeriod alloc] initWithStoreSubscriptionPeriod:self.skProduct.subscriptionPeriod];
+  }
+  
+  return _subscriptionPeriod;
+}
+
 - (NSString *)description {
   NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
   
@@ -100,8 +151,17 @@
   [description appendFormat:@"storeID=%@,\n", self.storeID];
   [description appendFormat:@"offeringID=%@,\n", self.offeringID];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
+  
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  // Warning muted for linter
   [description appendFormat:@"duration=%@ (enum value = %li),\n", [self prettyDuration], (long) self.duration];
   [description appendFormat:@"trial duration=%@ (enum value = %li),\n", [self prettyTrialDuration], (long) self.trialDuration];
+#pragma GCC diagnostic pop
+  if (@available(iOS 11.2, macOS 10.13.2, watchOS 6.2, tvOS 11.2, *)) {
+    [description appendFormat:@"subscription period=%@, \n", self.subscriptionPeriod];
+    [description appendFormat:@"trial period=%@, \n", self.trialPeriod];
+  }
   [description appendFormat:@"skProduct=%@,\n", self.skProduct];
   [description appendString:@">"];
   
@@ -116,6 +176,9 @@
   return @"";
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+// Warning muted for linter
 - (NSString *)prettyDuration {
   NSString *result = @"unknown";
   
@@ -185,6 +248,8 @@
   
   return result;
 }
+
+#pragma GCC diagnostic pop
 
 - (NSString *)prettyType {
   NSString *result = @"unknown";
