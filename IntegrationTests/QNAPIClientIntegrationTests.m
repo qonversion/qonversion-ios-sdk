@@ -423,6 +423,7 @@
       @{
         @"intro_eligibility_status": @"non_intro_or_trial_product",
         @"product": @{
+          @"base_plan_id": [NSNull null],
           @"duration": @1,
           @"id": @"test_monthly",
           @"store_id": @"apple_monthly",
@@ -432,6 +433,7 @@
       @{
         @"intro_eligibility_status": @"intro_or_trial_eligible",
         @"product": @{
+          @"base_plan_id": [NSNull null],
           @"duration": @4,
           @"id": @"test_annual",
           @"store_id": @"apple_annual",
@@ -441,6 +443,7 @@
       @{
         @"intro_eligibility_status": @"non_intro_or_trial_product",
         @"product": @{
+          @"base_plan_id": [NSNull null],
           @"duration": [NSNull null],
           @"id": @"test_inapp",
           @"store_id": @"apple_inapp",
@@ -621,48 +624,6 @@
       XCTAssertTrue([@"Could not find required related object" isEqualToString:[error localizedDescription]]);
       [completionExpectation fulfill];
     }];
-  }];
-  
-  // then
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
-}
-
-- (void)testActionPoints {
-  // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Action points call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_actionPoints"];
-  QNAPIClient *client = [self getClient:uid];
-  
-  NSDictionary *expRes = @{
-    @"items": @[],
-  };
-
-  // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
-    XCTAssertNil(createUserError);
-
-    [client userActionPointsWithCompletion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-      XCTAssertNotNil(res);
-      XCTAssertNil(error);
-      XCTAssertTrue([self areDictionariesDeepEqual:expRes second:res[@"data"]]);
-      [completionExpectation fulfill];
-    }];
-  }];
-  
-  // then (doubling timeout for a slow deprecated endpoint)
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout * 2 handler:nil];
-}
-
-- (void)testActionPointsError {
-  // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Action points call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_actionPoints"];
-  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
-  
-  // when
-  [client userActionPointsWithCompletion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-    [self assertAccessDeniedError:res error:error];
-    [completionExpectation fulfill];
   }];
   
   // then
