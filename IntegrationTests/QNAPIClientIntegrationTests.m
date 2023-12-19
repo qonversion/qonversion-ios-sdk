@@ -423,7 +423,6 @@
       @{
         @"intro_eligibility_status": @"non_intro_or_trial_product",
         @"product": @{
-          @"base_plan_id": [NSNull null],
           @"duration": @1,
           @"id": @"test_monthly",
           @"store_id": @"apple_monthly",
@@ -433,7 +432,6 @@
       @{
         @"intro_eligibility_status": @"intro_or_trial_eligible",
         @"product": @{
-          @"base_plan_id": [NSNull null],
           @"duration": @4,
           @"id": @"test_annual",
           @"store_id": @"apple_annual",
@@ -443,7 +441,6 @@
       @{
         @"intro_eligibility_status": @"non_intro_or_trial_product",
         @"product": @{
-          @"base_plan_id": [NSNull null],
           @"duration": [NSNull null],
           @"id": @"test_inapp",
           @"store_id": @"apple_inapp",
