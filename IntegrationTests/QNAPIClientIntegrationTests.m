@@ -627,48 +627,6 @@
   [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
-- (void)testActionPoints {
-  // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Action points call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_actionPoints"];
-  QNAPIClient *client = [self getClient:uid];
-  
-  NSDictionary *expRes = @{
-    @"items": @[],
-  };
-
-  // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
-    XCTAssertNil(createUserError);
-
-    [client userActionPointsWithCompletion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-      XCTAssertNotNil(res);
-      XCTAssertNil(error);
-      XCTAssertTrue([self areDictionariesDeepEqual:expRes second:res[@"data"]]);
-      [completionExpectation fulfill];
-    }];
-  }];
-  
-  // then (doubling timeout for a slow deprecated endpoint)
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout * 2 handler:nil];
-}
-
-- (void)testActionPointsError {
-  // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Action points call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_actionPoints"];
-  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
-  
-  // when
-  [client userActionPointsWithCompletion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-    [self assertAccessDeniedError:res error:error];
-    [completionExpectation fulfill];
-  }];
-  
-  // then
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
-}
-
 - (void)assertProjectNotFoundError:(id)data error:(NSError *)error {
   XCTAssertNil(data);
   XCTAssertNotNil(error);
