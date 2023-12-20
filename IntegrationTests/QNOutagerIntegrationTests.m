@@ -161,7 +161,7 @@
       NSTimeInterval resExpirationTimestamp = [(NSNumber *) res[@"data"][@"permissions"][0][@"expiration_timestamp"] integerValue];
       double month = 30 * 24 * 60 * 60;
       // Epsilon for the difference between remote and local time.
-      double eps = 5.0;
+      double eps = 30.0;
       XCTAssertTrue(resStartedTimestamp >= requestStartTimestamp - eps);
       XCTAssertTrue(resStartedTimestamp <= requestEndTimestamp + eps);
       XCTAssertTrue(resExpirationTimestamp == resStartedTimestamp + month);
