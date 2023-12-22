@@ -104,13 +104,12 @@
   requestData[@"purchase"] = @{
     @"country": @"USA",
     @"currency": @"USD",
-    @"experiment": @{},
     @"original_transaction_id": @"",
-    @"period_number_of_units": @1,
-    @"period_unit": @2,
+    @"period_number_of_units": @"1",
+    @"period_unit": @"2",
     @"product": @"apple_monthly",
     @"product_id": @"test_monthly",
-    @"transaction_id": @2000000305530406,
+    @"transaction_id": @"2000000305530406",
     @"value": @"4.99",
   };
 
