@@ -116,13 +116,6 @@
 - (NSString *)prettyType {
   NSString *result = @"subscription renewed";
   
-//  QONTransactionTypeSubscriptionStarted = 0,
-//  QONTransactionTypeSubscriptionRenewed = 1,
-//  QONTransactionTypeTrialStrated = 2,
-//  QONTransactionTypeIntroStarted = 3,
-//  QONTransactionTypeIntroRenewed = 4,
-//  QONTransactionTypeNonConsumablePurchase = 5
-  
   switch (self.type) {
     case QONTransactionTypeSubscriptionStarted:
       result = @"subscription started"; break;
