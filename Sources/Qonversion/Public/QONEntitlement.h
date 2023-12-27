@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import "QONTransaction.h"
 
 typedef NS_ENUM(NSInteger, QONEntitlementSource) {
    QONEntitlementSourceUnknown = -1, // Unable to detect the source
@@ -7,6 +8,13 @@ typedef NS_ENUM(NSInteger, QONEntitlementSource) {
    QONEntitlementSourceStripe = 3, // Stripe
    QONEntitlementSourceManual = 4 // The entitlement was activated manually
  } NS_SWIFT_NAME(Qonversion.EntitlementSource);
+
+typedef NS_ENUM(NSInteger, QONEntitlementGrantType) {
+  QONEntitlementGrantTypePurchase = 0,
+  QONEntitlementGrantTypeFamilySharing = 1,
+  QONEntitlementGrantTypeOfferCode = 2,
+  QONEntitlementGrantTypeManual = 3
+ } NS_SWIFT_NAME(Qonversion.EntitlementGrantType);
 
 typedef NS_ENUM(NSInteger, QONEntitlementRenewState){
   /**
@@ -77,5 +85,21 @@ NS_SWIFT_NAME(Qonversion.Entitlement)
  Expiration date for subscriptions
  */
 @property (nonatomic, copy, nullable) NSDate *expirationDate;
+
+@property (nonatomic, assign) NSUInteger renewsCount;
+
+@property (nonatomic, strong, nullable) NSDate *trialStartDate;
+
+@property (nonatomic, strong, nullable) NSDate *firstPurchaseDate;
+
+@property (nonatomic, strong, nullable) NSDate *lastPurchaseDate;
+
+@property (nonatomic, copy, nullable) NSString *lastActivatedOfferCode;
+
+@property (nonatomic, assign) QONEntitlementGrantType grantType;
+
+@property (nonatomic, strong, nullable) NSDate *autoRenewDisableDate;
+
+@property (nonatomic, copy, nonnull) NSArray<QONTransaction *> *transactions;
 
 @end
