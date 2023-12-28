@@ -21,12 +21,13 @@ typedef NS_ENUM(NSInteger, QONTransactionOwnershipType) {
  } NS_SWIFT_NAME(Qonversion.TransactionOwnershipType);
 
 typedef NS_ENUM(NSInteger, QONTransactionType) {
-  QONTransactionTypeSubscriptionStarted = 0,
-  QONTransactionTypeSubscriptionRenewed = 1,
-  QONTransactionTypeTrialStrated = 2,
-  QONTransactionTypeIntroStarted = 3,
-  QONTransactionTypeIntroRenewed = 4,
-  QONTransactionTypeNonConsumablePurchase = 5
+  QONTransactionTypeUnknown = 0,
+  QONTransactionTypeSubscriptionStarted = 1,
+  QONTransactionTypeSubscriptionRenewed = 2,
+  QONTransactionTypeTrialStrated = 3,
+  QONTransactionTypeIntroStarted = 4,
+  QONTransactionTypeIntroRenewed = 5,
+  QONTransactionTypeNonConsumablePurchase = 6
  } NS_SWIFT_NAME(Qonversion.TransactionType);
 
 NS_SWIFT_NAME(Qonversion.Transaction)

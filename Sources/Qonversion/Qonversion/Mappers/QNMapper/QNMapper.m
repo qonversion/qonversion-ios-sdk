@@ -278,7 +278,7 @@
   
   NSString *typeRaw = rawTransaction[@"type"];
   NSNumber *transactionTypeNumber = transactionTypes[typeRaw];
-  QONTransactionType transactionType = transactionTypes ? transactionTypeNumber.integerValue : QONTransactionTypeSubscriptionStarted;
+  QONTransactionType transactionType = transactionTypes ? transactionTypeNumber.integerValue : QONTransactionTypeUnknown;
   
   QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate environment:environment ownershipType:ownershipType type:transactionType];
   

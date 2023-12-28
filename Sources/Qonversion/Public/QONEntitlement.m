@@ -29,7 +29,8 @@
   [coder encodeObject:_entitlementID forKey:NSStringFromSelector(@selector(entitlementID))];
   [coder encodeObject:_productID forKey:NSStringFromSelector(@selector(productID))];
   [coder encodeBool:_isActive forKey:NSStringFromSelector(@selector(isActive))];
-  [coder encodeInteger:_grantType forKey:NSStringFromSelector(@selector(renewState))];
+  [coder encodeInteger:_renewState forKey:NSStringFromSelector(@selector(renewState))];
+  [coder encodeInteger:_grantType forKey:NSStringFromSelector(@selector(grantType))];
   [coder encodeInteger:_source forKey:NSStringFromSelector(@selector(source))];
   [coder encodeObject:_startedDate forKey:NSStringFromSelector(@selector(startedDate))];
   [coder encodeObject:_expirationDate forKey:NSStringFromSelector(@selector(expirationDate))];
