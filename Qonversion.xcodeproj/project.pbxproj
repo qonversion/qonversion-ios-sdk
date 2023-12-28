@@ -73,6 +73,9 @@
 		70A26ADF2A31BC44008CE4A7 /* QONExperiment.m in Sources */ = {isa = PBXBuildFile; fileRef = 70A26ADD2A31BC44008CE4A7 /* QONExperiment.m */; };
 		70ADE70F2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = 70ADE70D2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70ADE7102951CC7200CB4D2E /* QONScreenPresentationConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 70ADE70E2951CC7200CB4D2E /* QONScreenPresentationConfiguration.m */; };
+		70B917642B3314BD00BF0689 /* QONTransaction.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B917622B3314BD00BF0689 /* QONTransaction.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		70B917652B3314BD00BF0689 /* QONTransaction.m in Sources */ = {isa = PBXBuildFile; fileRef = 70B917632B3314BD00BF0689 /* QONTransaction.m */; };
+		70B917672B34284200BF0689 /* QONTransaction+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B917662B34284200BF0689 /* QONTransaction+Protected.h */; };
 		70B9A9F1297AB8A700BD30FD /* QONAutomationsNavigationController.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B9A9EF297AB8A700BD30FD /* QONAutomationsNavigationController.h */; };
 		70B9A9F2297AB8A700BD30FD /* QONAutomationsNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 70B9A9F0297AB8A700BD30FD /* QONAutomationsNavigationController.m */; };
 		70D05A8E29C9FC1600EA5DDF /* QONRemoteConfigManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 70D05A8C29C9FC1600EA5DDF /* QONRemoteConfigManager.h */; };
@@ -372,6 +375,9 @@
 		70A26ADD2A31BC44008CE4A7 /* QONExperiment.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONExperiment.m; sourceTree = "<group>"; };
 		70ADE70D2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONScreenPresentationConfiguration.h; sourceTree = "<group>"; };
 		70ADE70E2951CC7200CB4D2E /* QONScreenPresentationConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONScreenPresentationConfiguration.m; sourceTree = "<group>"; };
+		70B917622B3314BD00BF0689 /* QONTransaction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONTransaction.h; sourceTree = "<group>"; };
+		70B917632B3314BD00BF0689 /* QONTransaction.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONTransaction.m; sourceTree = "<group>"; };
+		70B917662B34284200BF0689 /* QONTransaction+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONTransaction+Protected.h"; sourceTree = "<group>"; };
 		70B9A9EF297AB8A700BD30FD /* QONAutomationsNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsNavigationController.h; sourceTree = "<group>"; };
 		70B9A9F0297AB8A700BD30FD /* QONAutomationsNavigationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsNavigationController.m; sourceTree = "<group>"; };
 		70D05A8C29C9FC1600EA5DDF /* QONRemoteConfigManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigManager.h; sourceTree = "<group>"; };
@@ -940,6 +946,8 @@
 				895731BC26DD03A2009507A6 /* QONIntroEligibility.h */,
 				895731BE26DD03A2009507A6 /* QONStoreKitSugare.h */,
 				895731BF26DD03A2009507A6 /* QONEntitlement.h */,
+				70B917622B3314BD00BF0689 /* QONTransaction.h */,
+				70B917632B3314BD00BF0689 /* QONTransaction.m */,
 				895731C026DD03A2009507A6 /* QONLaunchResult.h */,
 				895731C126DD03A2009507A6 /* QONExperimentGroup.m */,
 				895731C326DD03A2009507A6 /* QONAutomations.m */,
@@ -1322,6 +1330,7 @@
 				702DBDEB2A3216C900D590D0 /* QONExperiment+Protected.h */,
 				8957324226DD03A3009507A6 /* QONUser+Protected.h */,
 				701922752B10AB3300724926 /* QONSubscriptionPeriod+Protected.h */,
+				70B917662B34284200BF0689 /* QONTransaction+Protected.h */,
 				8957324326DD03A3009507A6 /* QONOfferings+Protected.h */,
 				8957324526DD03A3009507A6 /* QONOffering+Protected.h */,
 				8957324726DD03A3009507A6 /* QONIntroEligibility+Protected.h */,
@@ -1575,6 +1584,7 @@
 				8957328626DD03A3009507A6 /* QONAutomationsEvent.h in Headers */,
 				8957329826DD03A3009507A6 /* QONAutomationsEventType.h in Headers */,
 				6A21BF4C2AB201A7005BDA7C /* QONRateLimiter.h in Headers */,
+				70B917672B34284200BF0689 /* QONTransaction+Protected.h in Headers */,
 				895732B426DD03A3009507A6 /* QONAutomationsService.h in Headers */,
 				895732CA26DD03A3009507A6 /* QNUtils.h in Headers */,
 				8957328126DD03A3009507A6 /* QONEntitlement.h in Headers */,
@@ -1640,6 +1650,7 @@
 				8957330126DD03A3009507A6 /* QNUserInfoServiceInterface.h in Headers */,
 				895732C926DD03A3009507A6 /* QNInternalConstants.h in Headers */,
 				895732AF26DD03A3009507A6 /* QONAutomationsActionsHandler.h in Headers */,
+				70B917642B3314BD00BF0689 /* QONTransaction.h in Headers */,
 				8957328926DD03A3009507A6 /* QONProduct.h in Headers */,
 				702DBDEC2A3216C900D590D0 /* QONExperiment+Protected.h in Headers */,
 				8957328D26DD03A3009507A6 /* QONOfferings.h in Headers */,
@@ -1955,6 +1966,7 @@
 				8957327A26DD03A3009507A6 /* QNDevice+Advertising.m in Sources */,
 				895732C626DD03A3009507A6 /* QNAPIConstants.m in Sources */,
 				6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */,
+				70B917652B3314BD00BF0689 /* QONTransaction.m in Sources */,
 				70D05A8F29C9FC1600EA5DDF /* QONRemoteConfigManager.m in Sources */,
 				895732C426DD03A3009507A6 /* QNRequestBuilder.m in Sources */,
 				8957329726DD03A3009507A6 /* QONStoreKitSugare.m in Sources */,
