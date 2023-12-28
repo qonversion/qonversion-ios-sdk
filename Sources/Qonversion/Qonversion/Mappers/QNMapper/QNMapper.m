@@ -8,6 +8,7 @@
 #import "QONOffering.h"
 #import "QONIntroEligibility.h"
 #import "QONExperimentGroup.h"
+#import "QONTransaction.h"
 
 #import "QONLaunchResult+Protected.h"
 #import "QONOfferings+Protected.h"
@@ -15,6 +16,7 @@
 #import "QONIntroEligibility+Protected.h"
 #import "QONExperimentGroup+Protected.h"
 #import "QONUser+Protected.h"
+#import "QONTransaction+Protected.h"
 
 @implementation QNMapper
 
@@ -149,6 +151,13 @@
        @"unknown": @(QONEntitlementSourceUnknown)
      };
   
+  NSDictionary *grantTypes = @{
+       @"manual": @(QONEntitlementGrantTypeManual),
+       @"purchase": @(QONEntitlementGrantTypePurchase),
+       @"offer_code": @(QONEntitlementGrantTypeOfferCode),
+       @"family_sharing": @(QONEntitlementGrantTypeFamilySharing)
+     };
+  
   QONEntitlement *result = [[QONEntitlement alloc] init];
   result.entitlementID = dict[@"id"];
   result.isActive = ((NSNumber *)dict[@"active"] ?: @0).boolValue;
@@ -163,14 +172,92 @@
   
   NSTimeInterval started = [self mapInteger:dict[@"started_timestamp"] orReturn:0];
   result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
-  result.expirationDate = nil;
+  result.expirationDate = [self mapDateFromSource:dict key:@"expiration_timestamp"];
+  result.trialStartDate = [self mapDateFromSource:dict key:@"trial_start_timestamp"];
+  result.firstPurchaseDate = [self mapDateFromSource:dict key:@"first_purchase_timestamp"];
+  result.lastPurchaseDate = [self mapDateFromSource:dict key:@"last_purchase_timestamp"];
+  result.autoRenewDisableDate = [self mapDateFromSource:dict key:@"auto_renew_disable_timestamp"];
   
-  if ([dict[@"expiration_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval expiration = ((NSNumber *)dict[@"expiration_timestamp"] ?: @0).intValue;
-    result.expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
-  }
+  result.renewsCount = [self mapInteger:dict[@"renews_count"] orReturn:0];
+  result.lastActivatedOfferCode = dict[@"last_activated_offer_code"];
+  NSString *grantTypeRaw = dict[@"grant_type"];
+  NSNumber *grantTypeNumber = grantTypes[grantTypeRaw];
+  
+  result.grantType = grantTypeNumber ? grantTypeNumber.integerValue : QONEntitlementGrantTypePurchase;
+  
+  result.transactions = [self mapEntitlementTransactions:dict[@"store_transactions"]];
+
   
   return result;
+}
+
++ (NSArray<QONTransaction *> *)mapEntitlementTransactions:(NSArray *)rawTransactions {
+  NSMutableArray<QONTransaction *> *transactions = [NSMutableArray new];
+  
+  if (![rawTransactions isKindOfClass:[NSArray class]]) {
+    return  @[];
+  }
+  
+  for (NSDictionary *rawTransaction in rawTransactions) {
+    QONTransaction *transaction = [self mapEntitlementTransaction:rawTransaction];
+    if (transaction) {
+      [transactions addObject:transaction];
+    }
+  }
+  
+  return [transactions copy];
+}
+
++ (QONTransaction *)mapEntitlementTransaction:(NSDictionary *)rawTransaction {
+  if (![rawTransaction isKindOfClass:[NSDictionary class]]) {
+    return nil;
+  }
+  
+  NSDictionary *environmentTypes = @{@"sandbox": @(QONTransactionEnvironmentSandbox),
+                                     @"production": @(QONTransactionEnvironmentProduction)};
+  
+  NSDictionary *ownershipTypes = @{@"owner": @(QONTransactionOwnershipTypeOwner),
+                                   @"family_sharing": @(QONTransactionOwnershipTypeFamilySharing)};
+  
+  NSDictionary *transactionTypes = @{@"subscription_started": @(QONTransactionTypeSubscriptionStarted),
+                                     @"subscription_renewed": @(QONTransactionTypeSubscriptionRenewed),
+                                     @"trial_started": @(QONTransactionTypeTrialStrated),
+                                     @"intro_started": @(QONTransactionTypeIntroStarted),
+                                     @"intro_renewed": @(QONTransactionTypeIntroRenewed),
+                                     @"nonconsumable_purchase": @(QONTransactionTypeNonConsumablePurchase)};
+  
+  NSString *originalTransactionId = rawTransaction[@"original_transaction_id"];
+  NSString *transactionId = rawTransaction[@"transaction_id"];
+  NSString *offerCode = rawTransaction[@"offer_code"];
+    
+  NSDate *transactionDate = [self mapDateFromSource:rawTransaction key:@"transaction_timestamp"];
+  NSDate *expirationDate = [self mapDateFromSource:rawTransaction key:@"expiration_timestamp"];
+  NSDate *transactionRevocationDate = [self mapDateFromSource:rawTransaction key:@"transaction_revoke_timestamp"];
+  
+  NSString *envRaw = rawTransaction[@"environment"];
+  NSNumber *environmentNumber = environmentTypes[envRaw];
+  QONTransactionEnvironment environment = environmentNumber ? environmentNumber.integerValue : QONTransactionEnvironmentProduction;
+  
+  NSString *ownershipRaw = rawTransaction[@"ownership_type"];
+  NSNumber *ownershipNumber = ownershipTypes[ownershipRaw];
+  QONTransactionOwnershipType ownershipType = ownershipNumber ? ownershipNumber.integerValue : QONTransactionOwnershipTypeOwner;
+  
+  NSString *typeRaw = rawTransaction[@"type"];
+  NSNumber *transactionTypeNumber = transactionTypes[typeRaw];
+  QONTransactionType transactionType = transactionTypes ? transactionTypeNumber.integerValue : QONTransactionTypeUnknown;
+  
+  QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate environment:environment ownershipType:ownershipType type:transactionType];
+  
+  return transaction;
+}
+
++ (NSDate *)mapDateFromSource:(NSDictionary *)source key:(NSString *)key {
+  if (source[key] && [source[key] isEqual:[NSNull null]] == NO) {
+    NSTimeInterval transactionTimestamp = [self mapInteger:source[key] orReturn:0];
+    return [[NSDate alloc] initWithTimeIntervalSince1970:transactionTimestamp];
+  }
+  
+  return nil;
 }
 
 + (QONProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
