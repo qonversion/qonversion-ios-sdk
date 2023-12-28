@@ -33,14 +33,49 @@ typedef NS_ENUM(NSInteger, QONTransactionType) {
 NS_SWIFT_NAME(Qonversion.Transaction)
 @interface QONTransaction : NSObject <NSCoding>
 
+/**
+ Original transaction identifier.
+ */
 @property (nonatomic, copy, nonnull) NSString *originalTransactionId;
+
+/**
+ Transaction identifier.
+ */
 @property (nonatomic, copy, nonnull) NSString *transactionId;
+
+/**
+ Offer code.
+ */
 @property (nonatomic, copy, nullable) NSString *offerCode;
+
+/**
+ Transaction date.
+ */
 @property (nonatomic, strong, nonnull) NSDate *transactionDate;
+
+/**
+ Expiration date for subscriptions.
+ */
 @property (nonatomic, strong, nullable) NSDate *expirationDate;
+
+/**
+ The date when transaction was revoked. This field represents the time and date the App Store refunded a transaction or revoked it from family sharing.
+ */
 @property (nonatomic, strong, nullable) NSDate *transactionRevocationDate;
+
+/**
+ Environment of the transaction.
+ */
 @property (nonatomic, assign) QONTransactionEnvironment environment;
+
+/**
+ Type of ownership for the transaction.  Owner/Family sharing.
+ */
 @property (nonatomic, assign) QONTransactionOwnershipType ownershipType;
+
+/**
+ Type of the transaction.
+ */
 @property (nonatomic, assign) QONTransactionType type;
 
 @end
