@@ -54,7 +54,7 @@
   [description appendFormat:@"source=%@ (enum value = %li),\n", [self prettySource], (long) self.source];
   [description appendFormat:@"startedDate=%@,\n", self.startedDate];
   [description appendFormat:@"expirationDate=%@,\n", self.expirationDate];
-  [description appendFormat:@"renewsCount=%lu,\n", self.renewsCount];
+  [description appendFormat:@"renewsCount=%lu,\n", (unsigned long)self.renewsCount];
   [description appendFormat:@"trialStartDate=%@,\n", self.trialStartDate];
   [description appendFormat:@"firstPurchaseDate=%@,\n", self.firstPurchaseDate];
   [description appendFormat:@"lastPurchaseDate=%@,\n", self.lastPurchaseDate];
