@@ -172,32 +172,11 @@
   
   NSTimeInterval started = [self mapInteger:dict[@"started_timestamp"] orReturn:0];
   result.startedDate = [[NSDate alloc] initWithTimeIntervalSince1970:started];
-  result.expirationDate = nil;
-  
-  if (dict[@"expiration_timestamp"] && [dict[@"expiration_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval expiration = ((NSNumber *)dict[@"expiration_timestamp"] ?: @0).intValue;
-    result.expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:expiration];
-  }
-  
-  if (dict[@"trial_start_timestamp"] && [dict[@"trial_start_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval trialStartTimestamp = [self mapInteger:dict[@"trial_start_timestamp"] orReturn:0];
-    result.trialStartDate = [[NSDate alloc] initWithTimeIntervalSince1970:trialStartTimestamp];
-  }
-  
-  if (dict[@"first_purchase_timestamp"] && [dict[@"first_purchase_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval firstPurchaseTimestamp = [self mapInteger:dict[@"first_purchase_timestamp"] orReturn:0];
-    result.firstPurchaseDate = [[NSDate alloc] initWithTimeIntervalSince1970:firstPurchaseTimestamp];
-  }
-  
-  if (dict[@"last_purchase_timestamp"] && [dict[@"last_purchase_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval lastPurchaseTimestamp = [self mapInteger:dict[@"last_purchase_timestamp"] orReturn:0];
-    result.lastPurchaseDate = [[NSDate alloc] initWithTimeIntervalSince1970:lastPurchaseTimestamp];
-  }
-  
-  if (dict[@"auto_renew_disable_timestamp"] && [dict[@"auto_renew_disable_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval autoRenewDisableTimestamp = [self mapInteger:dict[@"auto_renew_disable_timestamp"] orReturn:0];
-    result.autoRenewDisableDate = [[NSDate alloc] initWithTimeIntervalSince1970:autoRenewDisableTimestamp];
-  }
+  result.expirationDate = [self mapDateFromSource:dict key:@"expiration_timestamp"];
+  result.trialStartDate = [self mapDateFromSource:dict key:@"trial_start_timestamp"];
+  result.firstPurchaseDate = [self mapDateFromSource:dict key:@"first_purchase_timestamp"];
+  result.lastPurchaseDate = [self mapDateFromSource:dict key:@"last_purchase_timestamp"];
+  result.autoRenewDisableDate = [self mapDateFromSource:dict key:@"auto_renew_disable_timestamp"];
   
   result.renewsCount = [self mapInteger:dict[@"renews_count"] orReturn:0];
   result.lastActivatedOfferCode = dict[@"last_activated_offer_code"];
@@ -250,23 +229,10 @@
   NSString *originalTransactionId = rawTransaction[@"original_transaction_id"];
   NSString *transactionId = rawTransaction[@"transaction_id"];
   NSString *offerCode = rawTransaction[@"offer_code"];
-  NSDate *transactionDate;
-  NSDate *expirationDate;
-  NSDate *transactionRevocationDate;
-  if (rawTransaction[@"transaction_timestamp"] && [rawTransaction[@"transaction_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval transactionTimestamp = [self mapInteger:rawTransaction[@"transaction_timestamp"] orReturn:0];
-    transactionDate = [[NSDate alloc] initWithTimeIntervalSince1970:transactionTimestamp];
-  }
-  
-  if (rawTransaction[@"expiration_timestamp"] && [rawTransaction[@"expiration_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval transactionTimestamp = [self mapInteger:rawTransaction[@"expiration_timestamp"] orReturn:0];
-    expirationDate = [[NSDate alloc] initWithTimeIntervalSince1970:transactionTimestamp];
-  }
-  
-  if (rawTransaction[@"transaction_revoke_timestamp"] && [rawTransaction[@"transaction_revoke_timestamp"] isEqual:[NSNull null]] == NO) {
-    NSTimeInterval transactionTimestamp = [self mapInteger:rawTransaction[@"transaction_revoke_timestamp"] orReturn:0];
-    transactionRevocationDate = [[NSDate alloc] initWithTimeIntervalSince1970:transactionTimestamp];
-  }
+    
+  NSDate *transactionDate = [self mapDateFromSource:rawTransaction key:@"transaction_timestamp"];
+  NSDate *expirationDate = [self mapDateFromSource:rawTransaction key:@"expiration_timestamp"];
+  NSDate *transactionRevocationDate = [self mapDateFromSource:rawTransaction key:@"transaction_revoke_timestamp"];
   
   NSString *envRaw = rawTransaction[@"environment"];
   NSNumber *environmentNumber = environmentTypes[envRaw];
@@ -283,6 +249,15 @@
   QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate environment:environment ownershipType:ownershipType type:transactionType];
   
   return transaction;
+}
+
++ (NSDate *)mapDateFromSource:(NSDictionary *)source key:(NSString *)key {
+  if (source[key] && [source[key] isEqual:[NSNull null]] == NO) {
+    NSTimeInterval transactionTimestamp = [self mapInteger:source[key] orReturn:0];
+    return [[NSDate alloc] initWithTimeIntervalSince1970:transactionTimestamp];
+  }
+  
+  return nil;
 }
 
 + (QONProduct * _Nonnull)fillProduct:(NSDictionary *)dict {
