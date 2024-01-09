@@ -123,7 +123,7 @@
     case QONTransactionTypeSubscriptionRenewed:
       result = @"subscription renewed"; break;
       
-    case QONTransactionTypeTrialStrated:
+    case QONTransactionTypeTrialStarted:
       result = @"trial started"; break;
       
     case QONTransactionTypeIntroStarted:
