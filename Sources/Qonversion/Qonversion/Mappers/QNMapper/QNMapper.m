@@ -221,7 +221,7 @@
   
   NSDictionary *transactionTypes = @{@"subscription_started": @(QONTransactionTypeSubscriptionStarted),
                                      @"subscription_renewed": @(QONTransactionTypeSubscriptionRenewed),
-                                     @"trial_started": @(QONTransactionTypeTrialStrated),
+                                     @"trial_started": @(QONTransactionTypeTrialStarted),
                                      @"intro_started": @(QONTransactionTypeIntroStarted),
                                      @"intro_renewed": @(QONTransactionTypeIntroRenewed),
                                      @"nonconsumable_purchase": @(QONTransactionTypeNonConsumablePurchase)};
