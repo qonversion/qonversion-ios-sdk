@@ -24,7 +24,7 @@ typedef NS_ENUM(NSInteger, QONTransactionType) {
   QONTransactionTypeUnknown = 0,
   QONTransactionTypeSubscriptionStarted = 1,
   QONTransactionTypeSubscriptionRenewed = 2,
-  QONTransactionTypeTrialStrated = 3,
+  QONTransactionTypeTrialStarted = 3,
   QONTransactionTypeIntroStarted = 4,
   QONTransactionTypeIntroRenewed = 5,
   QONTransactionTypeNonConsumablePurchase = 6
