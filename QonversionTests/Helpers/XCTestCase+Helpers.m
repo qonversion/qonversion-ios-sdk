@@ -8,6 +8,6 @@
 
 #import "XCTestCase+Helpers.h"
 
-@implementation XCTestCase (Helpers)
+@implementation XCTestCase (TestsHelpers)
 
 @end

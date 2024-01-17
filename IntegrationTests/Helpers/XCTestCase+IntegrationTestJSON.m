@@ -1,6 +1,6 @@
 #import "XCTestCase+TestJSON.h"
 
-@implementation XCTestCase (TestJSON)
+@implementation XCTestCase (IntegrationTestJSON)
 
 - (NSDictionary *)dictionaryFromContentsOfFile:(NSString *)filePath {
   NSData *fileData = [self fileDataFromContentsOfFile:filePath];
@@ -17,6 +17,12 @@
   NSString *pathToFile = [bundle pathForResource:fileName ofType:fileExtension];
   
   return [NSData dataWithContentsOfFile:pathToFile];
+}
+
+- (id)JSONObjectFromContentsOfFile:(NSString *)filePath {
+    NSData *fileData = [self fileDataFromContentsOfFile:filePath];
+    
+    return [NSJSONSerialization JSONObjectWithData:fileData options:kNilOptions error:nil];
 }
 
 @end

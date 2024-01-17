@@ -11,9 +11,9 @@
 #import "QNAPIClient.h"
 #import "QNAPIConstants.h"
 #import "QNProperties.h"
-#import "QNTestConstants.h"
-#import "Helpers/XCTestCase+TestJSON.h"
-#import "Helpers/XCTestCase+Helpers.h"
+#import "QNIntegrationTestConstants.h"
+#import "XCTestCase+IntegrationTestJSON.h"
+#import "XCTestCase+IntegrationTestsHelpers.h"
 
 @interface QNAPIClientIntegrationTests : XCTestCase
 
@@ -85,9 +85,10 @@
     self.inappProduct[@"id"]: @[@"noAds"],
   };
   
+  
   self.expectedPermissions = [self JSONObjectFromContentsOfFile:keyQNExpectedEntitlementsJSON];
   
-  self.mainRequestData = [self dictionaryFromContentsOfFile:keyQNInitRequestMainDataJSON];
+  self.mainRequestData = [self  dictionaryFromContentsOfFile:keyQNInitRequestMainDataJSON];
 
   NSMutableDictionary *requestData = [self.mainRequestData mutableCopy];
   requestData[@"purchase"] = @{

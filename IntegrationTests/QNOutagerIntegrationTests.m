@@ -10,9 +10,9 @@
 #import <XCTest/XCTest.h>
 #import "QNAPIClient.h"
 #import "QNProperties.h"
-#import "QNTestConstants.h"
-#import "Helpers/XCTestCase+TestJSON.h"
-#import "Helpers/XCTestCase+Helpers.h"
+#import "QNIntegrationTestConstants.h"
+#import "XCTestCase+IntegrationTestJSON.h"
+#import "XCTestCase+IntegrationTestsHelpers.h"
 
 
 @interface QNOutagerIntegrationTests : XCTestCase
@@ -423,7 +423,7 @@
 - (QNAPIClient *)getClient:(NSString *)uid projectKey:(NSString *)projectKey {
   QNAPIClient *client = [[QNAPIClient alloc] init];
 
-  [client setBaseURL:@"<paste outager link here>"];
+  [client setBaseURL:@"https://outager.qonversion.workers.dev/"];
   [client setApiKey:projectKey];
   [client setSDKVersion:self.kSDKVersion];
   [client setUserID:uid];
