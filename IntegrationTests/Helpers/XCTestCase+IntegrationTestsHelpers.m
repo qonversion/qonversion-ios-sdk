@@ -1,6 +1,6 @@
 #import "XCTestCase+Helpers.h"
 
-@implementation XCTestCase (Helpers)
+@implementation XCTestCase (IntegrationTestsHelpers)
 
 - (BOOL)areArraysDeepEqual:(NSArray *)first second:(NSArray *)second {
   if (@available(iOS 13.0, *)) {

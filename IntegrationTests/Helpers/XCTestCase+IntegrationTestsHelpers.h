@@ -4,7 +4,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef void (^TestBlock)(NSInvocation *);
 
-@interface XCTestCase (Helpers)
+@interface XCTestCase (IntegrationTestsHelpers)
 
 - (BOOL)areArraysDeepEqual:(NSArray *)first second:(NSArray *)second;
 - (BOOL)areArraysOfDictionariesEqual:(NSArray *)first second:(NSArray *)second descriptor:(NSString *)descriptor;
