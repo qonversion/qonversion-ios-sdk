@@ -7,13 +7,12 @@
 //
 
 #import <XCTest/XCTest.h>
-#import <OCMock/OCMock.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 typedef void (^TestBlock)(NSInvocation *);
 
-@interface XCTestCase (Helpers)
+@interface XCTestCase (TestsHelpers)
 
 @end
 

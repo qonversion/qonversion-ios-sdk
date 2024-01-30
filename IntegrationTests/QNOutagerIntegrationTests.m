@@ -10,9 +10,9 @@
 #import <XCTest/XCTest.h>
 #import "QNAPIClient.h"
 #import "QNProperties.h"
-#import "QNTestConstants.h"
-#import "Helpers/XCTestCase+TestJSON.h"
-#import "Helpers/XCTestCase+Helpers.h"
+#import "QNIntegrationTestConstants.h"
+#import "XCTestCase+IntegrationTestJSON.h"
+#import "XCTestCase+IntegrationTestsHelpers.h"
 
 
 @interface QNOutagerIntegrationTests : XCTestCase
