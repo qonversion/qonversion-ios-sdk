@@ -420,11 +420,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.storeKitService restore];
 }
 
-- (void)prepareEntitlementsResultWithCompletion:(QONEntitlementsCompletionHandler)completion {
+- (void)actualizeEntitlements:(QONEntitlementsCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
-  
-  if (self.launchError || self.unhandledLogoutAvailable) {
-    [self launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+
+  [self launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
       weakSelf.unhandledLogoutAvailable = NO;
       NSDictionary<NSString *, QONEntitlement *> *entitlements = result.entitlements;
       NSError *resultError = error;
@@ -432,11 +431,33 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         entitlements = [weakSelf getActualEntitlementsForDefaultState:NO];
         resultError = entitlements ? nil : error;
       }
-      
+
       run_block_on_main(completion, entitlements, resultError);
-    }];
+  }];
+}
+
+- (void)prepareEntitlementsResultWithCompletion:(QONEntitlementsCompletionHandler)completion {
+  if (self.launchError || self.unhandledLogoutAvailable) {
+    [self actualizeEntitlements:completion];
+    return;
+  }
+
+  NSDictionary<NSString *, QONEntitlement *> *entitlements = [self getActualEntitlementsForDefaultState:YES] ?: @{};
+
+  BOOL entitlementsAreActual = YES;
+  NSDate *currentDate = [NSDate date];
+  for (NSString *entitlementId in entitlements) {
+    QONEntitlement *value = entitlements[entitlementId];
+    if (value.isActive && value.expirationDate != nil && value.expirationDate.timeIntervalSince1970 < currentDate.timeIntervalSince1970) {
+      entitlementsAreActual = NO;
+      break;
+    }
+  }
+
+  if (entitlementsAreActual) {
+    run_block_on_main(completion, entitlements, nil);
   } else {
-    run_block_on_main(completion, self.launchResult.entitlements, nil);
+    [self actualizeEntitlements:completion];
   }
 }
 
@@ -455,13 +476,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     NSMutableArray <QONEntitlementsCompletionHandler> *_blocks = [self.entitlementsBlocks copy];
     [self.entitlementsBlocks removeAllObjects];
     
-    NSDictionary<NSString *, QONEntitlement *> *cachedEntitlements = [self getActualEntitlementsForDefaultState:NO];
-    cachedEntitlements = cachedEntitlements ?: @{};
-    
     if (error) {
       if (self.pendingIdentityUserID.length > 0) {
         [self fireEntitlementsBlocks:[_blocks copy] result:@{} error:error];
       } else {
+        NSDictionary<NSString *, QONEntitlement *> *cachedEntitlements = [self getActualEntitlementsForDefaultState:NO] ?: @{};
         [self fireEntitlementsBlocks:[_blocks copy] result:cachedEntitlements error:error];
       }
     } else {
