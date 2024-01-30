@@ -442,7 +442,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
 
-  NSDictionary<NSString *, QONEntitlement *> *entitlements = [self getActualEntitlementsForDefaultState:YES] ?: @{};
+  NSDictionary<NSString *, QONEntitlement *> *entitlements = [self getActualEntitlementsForDefaultState:YES];
+  entitlements = entitlements ?: @{};
 
   BOOL entitlementsAreActual = YES;
   NSDate *currentDate = [NSDate date];
@@ -480,7 +481,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       if (self.pendingIdentityUserID.length > 0) {
         [self fireEntitlementsBlocks:[_blocks copy] result:@{} error:error];
       } else {
-        NSDictionary<NSString *, QONEntitlement *> *cachedEntitlements = [self getActualEntitlementsForDefaultState:NO] ?: @{};
+        NSDictionary<NSString *, QONEntitlement *> *cachedEntitlements = [self getActualEntitlementsForDefaultState:NO];
+        cachedEntitlements = cachedEntitlements ?: @{};
         [self fireEntitlementsBlocks:[_blocks copy] result:cachedEntitlements error:error];
       }
     } else {
