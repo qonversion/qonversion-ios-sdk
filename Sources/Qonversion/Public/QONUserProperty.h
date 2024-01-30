@@ -23,6 +23,10 @@ typedef NS_ENUM(NSInteger, QONUserPropertyKey) {
     QONUserPropertyKeyFirebaseAppInstanceId,
     QONUserPropertyKeyFacebookAttribution, // Android only, can be received via Qonversion.userProperties
     QONUserPropertyKeyAppSetId, // Android only, can be received via Qonversion.userProperties
+    QONUserPropertyKeyPushWooshUserId,
+    QONUserPropertyKeyPushWooshHwId,
+    QONUserPropertyKeyAppMetricaDeviceId,
+    QONUserPropertyKeyAppMetricaUserProfileId,
     QONUserPropertyKeyCustom,
 } NS_SWIFT_NAME(Qonversion.UserPropertyKey);
 
