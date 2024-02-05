@@ -18,7 +18,7 @@ private let OsName = "iOS"
 
 public class DeviceInfoCollector: DeviceInfoCollectorInterface {
   
-  let lastPreparedDevice: Device? = nil
+  var lastPreparedDevice: Device? = nil
   
   func getDeviceInfo() -> Device {
     guard let deviceInfo = lastPreparedDevice else {
@@ -33,8 +33,8 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
       let timezone = TimeZone.current.identifier
       let advertisingId = getAdvertisingId()
       let vendorId = getVendorId()
-      
-      return Device(
+
+      let deviceInfo = Device(
         manufacturer: manufacturer,
         osName: OsName,
         osVersion: osVersion,
@@ -48,6 +48,9 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
         vendorID: vendorId,
         installDate: installDate
       )
+
+      lastPreparedDevice = deviceInfo
+      return deviceInfo
     }
   
     return deviceInfo
