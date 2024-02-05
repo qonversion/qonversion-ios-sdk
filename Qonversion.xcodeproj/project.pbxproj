@@ -49,6 +49,8 @@
 		6A95DEA029E011A700350BD6 /* QNIntegrationTestConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DE9F29E011A700350BD6 /* QNIntegrationTestConstants.m */; };
 		6A95DEA229E40E9900350BD6 /* QNOutagerIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */; };
 		6A95DEA529E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA429E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m */; };
+		6AEA89162B6B8646002B72DF /* DeviceInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AEA89152B6B8646002B72DF /* DeviceInfoCollector.swift */; };
+		6AEA89182B6B884A002B72DF /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AEA89172B6B884A002B72DF /* Device.swift */; };
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
 		701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922712B10981200724926 /* QONSubscriptionPeriod.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */ = {isa = PBXBuildFile; fileRef = 701922722B10981200724926 /* QONSubscriptionPeriod.m */; };
@@ -354,6 +356,8 @@
 		6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNOutagerIntegrationTests.m; sourceTree = "<group>"; };
 		6A95DEA329E40F2100350BD6 /* XCTestCase+IntegrationTestsHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+IntegrationTestsHelpers.h"; sourceTree = "<group>"; };
 		6A95DEA429E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+IntegrationTestsHelpers.m"; sourceTree = "<group>"; };
+		6AEA89152B6B8646002B72DF /* DeviceInfoCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollector.swift; sourceTree = "<group>"; };
+		6AEA89172B6B884A002B72DF /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
 		700EC171291277130032E205 /* QONExperimentGroup+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONExperimentGroup+Protected.h"; sourceTree = "<group>"; };
 		701922712B10981200724926 /* QONSubscriptionPeriod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONSubscriptionPeriod.h; sourceTree = "<group>"; };
 		701922722B10981200724926 /* QONSubscriptionPeriod.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONSubscriptionPeriod.m; sourceTree = "<group>"; };
@@ -856,6 +860,8 @@
 				70ED967029FAC8D3005F5D00 /* QonversionSwift.swift */,
 				70EC019C29EEE94300E686E2 /* StoreKit2Service.swift */,
 				70283DF629F66FAC00D138BC /* PurchasesMapper.swift */,
+				6AEA89152B6B8646002B72DF /* DeviceInfoCollector.swift */,
+				6AEA89172B6B884A002B72DF /* Device.swift */,
 			);
 			name = Swift;
 			path = Sources/Swift;
@@ -1983,6 +1989,7 @@
 				895732B026DD03A3009507A6 /* QONAutomationsFlowAssembly.m in Sources */,
 				895732AE26DD03A3009507A6 /* QONAutomationsActionsHandler.m in Sources */,
 				895732D126DD03A3009507A6 /* QNUserInfo.m in Sources */,
+				6AEA89182B6B884A002B72DF /* Device.swift in Sources */,
 				895732AA26DD03A3009507A6 /* QONAutomationsEventsMapper.m in Sources */,
 				70B9A9F2297AB8A700BD30FD /* QONAutomationsNavigationController.m in Sources */,
 				895732CB26DD03A3009507A6 /* QNUtils.m in Sources */,
@@ -1998,6 +2005,7 @@
 				70D0E2B9291A9BE3004E8DE8 /* QONConfiguration.m in Sources */,
 				8957329C26DD03A3009507A6 /* QONOffering.m in Sources */,
 				70A26ADF2A31BC44008CE4A7 /* QONExperiment.m in Sources */,
+				6AEA89162B6B8646002B72DF /* DeviceInfoCollector.swift in Sources */,
 				8957329426DD03A3009507A6 /* QONEntitlement.m in Sources */,
 				8957329526DD03A3009507A6 /* QONLaunchResult.m in Sources */,
 				70D05A9429C9FF3C00EA5DDF /* QONRemoteConfigService.m in Sources */,
