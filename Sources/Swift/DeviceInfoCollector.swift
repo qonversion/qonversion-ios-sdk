@@ -95,14 +95,16 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
   }
   
   private func getCarrier() -> String {
-    var carrierName: String? = nil
+    var result = "Unknown"
 
-    let networkInfo = CTTelephonyNetworkInfo()
-    if let carrier = networkInfo.subscriberCellularProvider {
-      carrierName = carrier.carrierName
+    if #available(iOS 13.0, *) {
+      let networkInfo = CTTelephonyNetworkInfo()
+      if let carrier = networkInfo.subscriberCellularProvider {
+        result = carrier.carrierName ?? result
+      }
     }
-
-    return carrierName ?? "Unknown"
+    
+    return result
   }
 
   private func getCountry() -> String {
