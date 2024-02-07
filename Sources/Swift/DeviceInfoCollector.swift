@@ -7,14 +7,30 @@
 //
 
 import Foundation
-import CoreTelephony
+#if canImport(AdSupport)
 import AdSupport
+#endif
+#if os(macOS)
+import IOKit
+#elseif os(watchOS)
+import WatchKit
+#endif
 
 protocol DeviceInfoCollectorInterface {
   func getDeviceInfo() -> Device
 }
 
-private let OsName = "iOS"
+#if os(macOS)
+  private let OsName = "macOS";
+#elseif os(tvOS)
+  private let OsName = "tvos";
+#elseif targetEnvironment(macCatalyst)
+  private let OsName = "macCatalyst";
+#elseif os(watchOS)
+  private let OsName = "watchOS";
+#else // iOS, simulator, etc.
+  private let OsName = "iOS"
+#endif
 
 public class DeviceInfoCollector: DeviceInfoCollectorInterface {
   
@@ -27,7 +43,6 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
       let osVersion = getOsVersion()
       let model = getDeviceModel()
       let installDate = getInstallDate()
-      let carrier = getCarrier()
       let country = getCountry()
       let language = getLanguage()
       let timezone = TimeZone.current.identifier
@@ -40,7 +55,6 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
         osVersion: osVersion,
         model: model,
         appVersion: appVersion,
-        carrier: carrier,
         country: country,
         language: language,
         timezone: timezone,
@@ -59,8 +73,10 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
   private func getOsVersion() -> String {
     var osVersion = ""
     
-#if UI_DEVICE
+#if os(iOS)
     osVersion = UIDevice.current.systemVersion
+#elseif os(watchOS)
+    osVersion = WKInterfaceDevice.current().systemVersion
 #else
     let systemVersion = ProcessInfo.processInfo.operatingSystemVersion
     osVersion = "\(systemVersion.majorVersion).\(systemVersion.minorVersion).\(systemVersion.patchVersion)"
@@ -93,19 +109,6 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
     
     return ""
   }
-  
-  private func getCarrier() -> String {
-    var result = "Unknown"
-
-    if #available(iOS 13.0, *) {
-      let networkInfo = CTTelephonyNetworkInfo()
-      if let carrier = networkInfo.subscriberCellularProvider {
-        result = carrier.carrierName ?? result
-      }
-    }
-    
-    return result
-  }
 
   private func getCountry() -> String {
     let country = NSLocale(localeIdentifier: "en_US").displayName(forKey: .countryCode, value: Locale.current.regionCode ?? "")
@@ -120,17 +123,74 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
   }
   
   private func getAdvertisingId() -> String {
-    let advertisingId = ASIdentifierManager.shared().advertisingIdentifier
-    
-    let uuid = advertisingId.uuidString
-    if uuid == "00000000-0000-0000-0000-000000000000" {
-      return ""
-    }
+    var result = ""
 
-    return uuid
+#if canImport(AdSupport)
+    let advertisingId = ASIdentifierManager.shared().advertisingIdentifier
+    result = advertisingId.uuidString
+      
+    if result == "00000000-0000-0000-0000-000000000000" {
+      result = ""
+    }
+#endif
+
+    return result
   }
 
   private func getVendorId() -> String {
-    UIDevice.current.identifierForVendor?.uuidString ?? "";
+    var identifier: String? = nil
+#if os(iOS)
+    identifier = UIDevice.current.identifierForVendor?.uuidString;
+#elseif os(watchOS)
+    identifier = WKInterfaceDevice.current().identifierForVendor?.uuidString
+#elseif os(macOS)
+    identifier = getMacAddress()
+#endif
+    
+    return identifier ?? ""
   }
+
+#if os(macOS)
+  private func getMacAddress(_ name: String = "en0") -> String? {
+    var iterator = io_iterator_t()
+    defer {
+      if iterator != IO_OBJECT_NULL {
+        IOObjectRelease(iterator)
+      }
+    }
+
+      guard let matchingDict = IOBSDNameMatching(kIOMainPortDefault, 0, name),
+            IOServiceGetMatchingServices(kIOMainPortDefault,
+            matchingDict as CFDictionary,
+            &iterator) == KERN_SUCCESS,
+          iterator != IO_OBJECT_NULL
+    else {
+      return nil
+    }
+
+    var candidate = IOIteratorNext(iterator)
+    while candidate != IO_OBJECT_NULL {
+      if let cftype = IORegistryEntryCreateCFProperty(candidate, "IOBuiltin" as CFString, kCFAllocatorDefault, 0) {
+        // swiftlint:disable:next force_cast
+        let isBuiltIn = cftype.takeRetainedValue() as! CFBoolean
+        if CFBooleanGetValue(isBuiltIn) {
+          let property = IORegistryEntrySearchCFProperty(
+            candidate,
+            kIOServicePlane,
+            "IOMACAddress" as CFString,
+            kCFAllocatorDefault,
+            IOOptionBits(kIORegistryIterateRecursively | kIORegistryIterateParents)
+          ) as? Data
+          IOObjectRelease(candidate)
+          return property?.map { String(format: "%02X", $0) }.joined(separator: ":")
+        }
+      }
+
+      IOObjectRelease(candidate)
+      candidate = IOIteratorNext(iterator)
+    }
+
+    return nil
+  }
+#endif
 }

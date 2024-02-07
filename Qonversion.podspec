@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
   s.source                    = { :git => 'https://github.com/qonversion/qonversion-ios-sdk.git', :tag => s.version.to_s }
   s.framework                 = 'StoreKit'
   s.ios.deployment_target     = '9.0'
-  s.osx.deployment_target     = '10.12'
+  s.osx.deployment_target     = '10.14'
   s.tvos.deployment_target    = '9.0'
   s.watchos.deployment_target = '6.2'
   s.ios.frameworks            = ['UIKit', 'WebKit']

@@ -14,7 +14,6 @@ class Device {
   let osVersion: String
   let model: String
   let appVersion: String
-  let carrier: String
   let country: String
   let language: String
   let timezone: String
@@ -28,7 +27,6 @@ class Device {
     osVersion: String,
     model: String,
     appVersion: String,
-    carrier: String,
     country: String,
     language: String,
     timezone: String,
@@ -41,7 +39,6 @@ class Device {
     self.osVersion = osVersion
     self.model = model
     self.appVersion = appVersion
-    self.carrier = carrier
     self.country = country
     self.language = language
     self.timezone = timezone

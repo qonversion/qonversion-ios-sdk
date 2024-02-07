@@ -2348,7 +2348,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MARKETING_VERSION = 2.18.0;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
@@ -2384,7 +2384,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MARKETING_VERSION = 2.18.0;
 				MODULEMAP_FILE = Framework/Qonversion.modulemap;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qonversion.Qonversion;
