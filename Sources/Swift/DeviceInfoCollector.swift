@@ -159,10 +159,11 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
       }
     }
 
-    var port = if #available(macOS 12.0, *) {
-      kIOMainPortDefault
+    var port: mach_port_t
+    if #available(macOS 12.0, *) {
+        port = kIOMainPortDefault
     } else {
-      kIOMasterPortDefault
+        port = kIOMasterPortDefault
     }
     guard let matchingDict = IOBSDNameMatching(port, 0, name),
           IOServiceGetMatchingServices(port,
