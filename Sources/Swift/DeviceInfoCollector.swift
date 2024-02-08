@@ -159,11 +159,16 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
       }
     }
 
-      guard let matchingDict = IOBSDNameMatching(kIOMainPortDefault, 0, name),
-            IOServiceGetMatchingServices(kIOMainPortDefault,
-            matchingDict as CFDictionary,
-            &iterator) == KERN_SUCCESS,
-          iterator != IO_OBJECT_NULL
+    var port = if #available(macOS 12.0, *) {
+      kIOMainPortDefault
+    } else {
+      kIOMasterPortDefault
+    }
+    guard let matchingDict = IOBSDNameMatching(port, 0, name),
+          IOServiceGetMatchingServices(port,
+          matchingDict as CFDictionary,
+          &iterator) == KERN_SUCCESS,
+        iterator != IO_OBJECT_NULL
     else {
       return nil
     }
