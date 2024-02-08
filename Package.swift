@@ -70,7 +70,7 @@ let sources: [String] = ["Qonversion/Automations/Constants",
 let package = Package(
     name: "Qonversion",
     platforms: [
-        .iOS(.v9), .watchOS("6.2"), .macOS(.v10_12), .tvOS(.v9)
+        .iOS(.v9), .watchOS("6.2"), .macOS(.v10_14), .tvOS(.v9)
     ],
     products: [
         .library(
