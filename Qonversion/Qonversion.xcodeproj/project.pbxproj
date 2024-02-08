@@ -7,11 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6AA8AEBD2B74E00100BB6A21 /* Device in Resources */ = {isa = PBXBuildFile; fileRef = 6AA8AEBC2B74E00100BB6A21 /* Device */; };
 		70F163A72B6D0D3D00033BEF /* Qonversion.docc in Sources */ = {isa = PBXBuildFile; fileRef = 70F163A62B6D0D3D00033BEF /* Qonversion.docc */; };
 		70F163A82B6D0D3D00033BEF /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F163A52B6D0D3D00033BEF /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6AA8AEBC2B74E00100BB6A21 /* Device */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Device; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		70F163A52B6D0D3D00033BEF /* Qonversion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
 		70F163A62B6D0D3D00033BEF /* Qonversion.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = Qonversion.docc; sourceTree = "<group>"; };
@@ -48,6 +50,7 @@
 			isa = PBXGroup;
 			children = (
 				70F163A52B6D0D3D00033BEF /* Qonversion.h */,
+				6AA8AEBC2B74E00100BB6A21 /* Device */,
 				70F163A62B6D0D3D00033BEF /* Qonversion.docc */,
 			);
 			path = Qonversion;
@@ -122,6 +125,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6AA8AEBD2B74E00100BB6A21 /* Device in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
