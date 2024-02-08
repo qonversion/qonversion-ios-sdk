@@ -5,7 +5,7 @@
 //  Created by Suren Sarkisyan on 02.02.2024.
 //
 
-class NetworkProvider {
+class NetworkProvider: NetworkProviderInterface {
     let session: URLSession
     
     init(session: URLSession) {
