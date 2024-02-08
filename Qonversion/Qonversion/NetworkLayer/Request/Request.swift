@@ -5,14 +5,16 @@
 //  Created by Suren Sarkisyan on 06.02.2024.
 //
 
+typealias RequestBody = [String: Any]
+
 enum Request {
     // All requests are just examples and should be overridden
     case getUser(id: String, endpoint: String = "v3/users/", type: RequestType = .get)
-    case createUser(id: String, endpoint: String = "v3/users", body: [String: Any], type: RequestType = .post)
+    case createUser(id: String, endpoint: String = "v3/users", body: RequestBody, type: RequestType = .post)
     case entitlements(userId: String, endpoint: String = "v3/entitlements", type: RequestType = .post)
     
     func convertToURLRequest() -> URLRequest? {
-        func defaultRequest(urlString: String, body: [String: Any]?, type: RequestType) -> URLRequest? {
+        func defaultRequest(urlString: String, body: RequestBody?, type: RequestType) -> URLRequest? {
             guard let url = URL(string: urlString) else { return nil }
             var request = URLRequest(url: url)
             request.httpMethod = type.rawValue

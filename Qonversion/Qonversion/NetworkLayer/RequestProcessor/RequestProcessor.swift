@@ -28,11 +28,15 @@ class RequestProcessor: RequestProcessorInterface {
         do {
             let (data, resposne) = try await networkProvider.send(request: urlRequest)
             // handle Qonversion API specific errors here using errorHandler
-            let result: T = try decoder.decode(responseType, from: data)
-            
-            return result
+            do {
+                let result: T = try decoder.decode(responseType, from: data)
+                
+                return result
+            } catch {
+                throw QonversionError(type: .invalidResponse, message: "Invalid response", error: error, additionalInfo: nil)
+            }
         } catch {
-            throw QonversionError(type: .invalidResponse, message: "Invalid response", error: error, additionalInfo: nil)
+            throw QonversionError(type: .invalidResponse, message: "Request failed", error: error, additionalInfo: nil)
         }
     }
 }
