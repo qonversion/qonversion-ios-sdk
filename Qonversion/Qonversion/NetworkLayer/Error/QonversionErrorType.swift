@@ -8,4 +8,5 @@
 enum QonversionErrorType {
     case invalidRequest
     case invalidResponse
+    case rateLimitExceeded
 }

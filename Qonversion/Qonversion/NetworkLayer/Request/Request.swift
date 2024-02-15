@@ -5,7 +5,7 @@
 //  Created by Suren Sarkisyan on 06.02.2024.
 //
 
-typealias RequestBody = [String: Any]
+typealias RequestBody = [String: AnyHashable]
 
 enum Request {
     // All requests are just examples and should be overridden
