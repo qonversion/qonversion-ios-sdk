@@ -21,6 +21,9 @@
 		701C76752B73D27B00723027 /* ResponseDecoderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C76672B73D27B00723027 /* ResponseDecoderInterface.swift */; };
 		701C76762B73D27B00723027 /* ResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C76682B73D27B00723027 /* ResponseDecoder.swift */; };
 		701C76782B73D29600723027 /* QonversionErrorType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C76772B73D29600723027 /* QonversionErrorType.swift */; };
+		701C767B2B75229200723027 /* RequestsStorageInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C767A2B75229200723027 /* RequestsStorageInterface.swift */; };
+		701C767D2B75229800723027 /* RequestsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C767C2B75229800723027 /* RequestsStorage.swift */; };
+		701C767F2B75236D00723027 /* StorageConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C767E2B75236D00723027 /* StorageConstants.swift */; };
 		70F163A72B6D0D3D00033BEF /* Qonversion.docc in Sources */ = {isa = PBXBuildFile; fileRef = 70F163A62B6D0D3D00033BEF /* Qonversion.docc */; };
 		70F163A82B6D0D3D00033BEF /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F163A52B6D0D3D00033BEF /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
@@ -40,6 +43,9 @@
 		701C76672B73D27B00723027 /* ResponseDecoderInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ResponseDecoderInterface.swift; sourceTree = "<group>"; };
 		701C76682B73D27B00723027 /* ResponseDecoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ResponseDecoder.swift; sourceTree = "<group>"; };
 		701C76772B73D29600723027 /* QonversionErrorType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QonversionErrorType.swift; sourceTree = "<group>"; };
+		701C767A2B75229200723027 /* RequestsStorageInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestsStorageInterface.swift; sourceTree = "<group>"; };
+		701C767C2B75229800723027 /* RequestsStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestsStorage.swift; sourceTree = "<group>"; };
+		701C767E2B75236D00723027 /* StorageConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageConstants.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		70F163A52B6D0D3D00033BEF /* Qonversion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
 		70F163A62B6D0D3D00033BEF /* Qonversion.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = Qonversion.docc; sourceTree = "<group>"; };
@@ -119,6 +125,15 @@
 			path = ResponseDecoder;
 			sourceTree = "<group>";
 		};
+		701C76792B75227C00723027 /* RequestsStorage */ = {
+			isa = PBXGroup;
+			children = (
+				701C767A2B75229200723027 /* RequestsStorageInterface.swift */,
+				701C767C2B75229800723027 /* RequestsStorage.swift */,
+			);
+			path = RequestsStorage;
+			sourceTree = "<group>";
+		};
 		70F163982B6D0D3D00033BEF = {
 			isa = PBXGroup;
 			children = (
@@ -138,6 +153,7 @@
 		70F163A42B6D0D3D00033BEF /* Qonversion */ = {
 			isa = PBXGroup;
 			children = (
+				701C767E2B75236D00723027 /* StorageConstants.swift */,
 				70F163AE2B6D0D8800033BEF /* NetworkLayer */,
 				70F163A52B6D0D3D00033BEF /* Qonversion.h */,
 				70F163A62B6D0D3D00033BEF /* Qonversion.docc */,
@@ -148,6 +164,7 @@
 		70F163AE2B6D0D8800033BEF /* NetworkLayer */ = {
 			isa = PBXGroup;
 			children = (
+				701C76792B75227C00723027 /* RequestsStorage */,
 				701C765A2B73D27B00723027 /* Error */,
 				701C76542B73D27B00723027 /* HeadersBuilder */,
 				701C765D2B73D27B00723027 /* NetworkErrorHandler */,
@@ -239,6 +256,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				701C76702B73D27B00723027 /* NetworkErrorHandler.swift in Sources */,
+				701C767F2B75236D00723027 /* StorageConstants.swift in Sources */,
 				701C76732B73D27B00723027 /* Request.swift in Sources */,
 				701C76742B73D27B00723027 /* RequestType.swift in Sources */,
 				701C76722B73D27B00723027 /* NetworkProviderInterface.swift in Sources */,
@@ -249,7 +267,9 @@
 				701C76762B73D27B00723027 /* ResponseDecoder.swift in Sources */,
 				701C766C2B73D27B00723027 /* RequestProcessorInterface.swift in Sources */,
 				701C76692B73D27B00723027 /* HeadersBuilder.swift in Sources */,
+				701C767B2B75229200723027 /* RequestsStorageInterface.swift in Sources */,
 				701C766B2B73D27B00723027 /* RequestProcessor.swift in Sources */,
+				701C767D2B75229800723027 /* RequestsStorage.swift in Sources */,
 				70F163A72B6D0D3D00033BEF /* Qonversion.docc in Sources */,
 				701C76712B73D27B00723027 /* NetworkProvider.swift in Sources */,
 				701C76752B73D27B00723027 /* ResponseDecoderInterface.swift in Sources */,

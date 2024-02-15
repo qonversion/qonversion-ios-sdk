@@ -6,6 +6,8 @@
 //
 
 enum QonversionErrorType {
+    case unknown
     case invalidRequest
     case invalidResponse
+    case authorizationFailed
 }

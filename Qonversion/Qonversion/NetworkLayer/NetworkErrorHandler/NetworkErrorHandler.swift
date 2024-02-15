@@ -7,4 +7,10 @@
 
 class NetworkErrorHandler: NetworkErrorHandlerInterface {
     
+    func extractError(from response: URLResponse) -> Error? {
+        guard let httpResponse = response as? HTTPURLResponse else { return nil }
+        
+        let statusCode = httpResponse.statusCode
+    }
+    
 }
