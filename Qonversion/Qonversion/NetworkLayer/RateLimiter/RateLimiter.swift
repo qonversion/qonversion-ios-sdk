@@ -7,8 +7,6 @@
 //
 import Foundation
 
-typealias RateLimiterCompletionHandler = (Error?) -> Void
-
 enum RateLimitedRequestType: Int {
   case initRequest
   case remoteConfig
@@ -32,24 +30,23 @@ final class RateLimiter {
     self.maxRequestsPerSecond = maxRequestsPerSecond
   }
   
-  func validateRateLimit(requestType: RateLimitedRequestType, params: RequestBody, completion: @escaping RateLimiterCompletionHandler) {
-    let hash = calculateHashForDictionary(dict: params)
-    validateRateLimit(requestType: requestType, hash: hash, completion: completion)
+  func validateRateLimit(requestType: RateLimitedRequestType, params: RequestBody) -> QonversionError? {
+    let hash: Int = calculateHashForDictionary(dict: params)
+    return validateRateLimit(requestType: requestType, hash: hash)
   }
-  
-  func validateRateLimit(requestType: RateLimitedRequestType, hash: Int, completion: @escaping RateLimiterCompletionHandler) {
+
+  func validateRateLimit(requestType: RateLimitedRequestType, hash: Int) -> QonversionError? {
     if isRateLimitExceeded(requestType: requestType, hash: hash) {
       let error = QonversionError(type: .rateLimitExceeded, message: "Rate limit exceeded for the current request", error: nil, additionalInfo: nil)
-      completion(error)
+      return error
     } else {
       saveRequest(requestType: requestType, hash: hash)
-      completion(nil)
+      return nil
     }
   }
   
   func saveRequest(requestType: RateLimitedRequestType, hash: Int) {
-    // todo synchronize with isRateLimitExceeded
-    let timestamp = Date().timeIntervalSince1970
+    let timestamp: TimeInterval = Date().timeIntervalSince1970
     
     if requests[requestType] == nil {
       requests[requestType] = []
@@ -60,7 +57,6 @@ final class RateLimiter {
   }
   
   func isRateLimitExceeded(requestType: RateLimitedRequestType, hash: Int) -> Bool {
-    // todo synchronize with saveRequest
     removeOutdatedRequests(requestType: requestType)
     
     guard let requestsPerType = requests[requestType] else {
@@ -84,7 +80,7 @@ final class RateLimiter {
       return
     }
     
-    let timestamp = Date().timeIntervalSince1970
+    let timestamp: TimeInterval = Date().timeIntervalSince1970
     var filteredRequests: [LimitedRequest] = []
     for request in requestsPerType.reversed() {
       let ts: TimeInterval = request.timestamp
@@ -103,8 +99,8 @@ final class RateLimiter {
     let prime: Int = 31
     
     for (key, value) in dict {
-      let keyHash = key.hashValue
-      let valueHash = calculateHashForValue(value: value)
+      let keyHash: Int = key.hashValue
+      let valueHash: Int = calculateHashForValue(value: value)
       
       result = prime &* result &+ Int(keyHash)
       result = prime &* result &+ valueHash
@@ -118,7 +114,7 @@ final class RateLimiter {
     let prime: Int = 31
     
     for value in array {
-      let valueHash = calculateHashForValue(value: value)
+      let valueHash: Int = calculateHashForValue(value: value)
       result = prime &* result &+ valueHash
     }
     
