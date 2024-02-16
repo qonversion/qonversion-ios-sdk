@@ -24,7 +24,7 @@ enum RateLimitedRequestType: Int {
   case detachUserFromRemoteConfiguration
 }
 
-class RateLimiter {
+final class RateLimiter {
   private var maxRequestsPerSecond: UInt
   private var requests: [RateLimitedRequestType: [LimitedRequest]] = [:]
   

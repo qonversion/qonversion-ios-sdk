@@ -8,7 +8,7 @@
 
 import Foundation
 
-class LimitedRequest {
+struct LimitedRequest {
     
     public let timestamp: TimeInterval;
     public let hash: Int;
