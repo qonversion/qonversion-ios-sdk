@@ -7,18 +7,18 @@
 //
 
 import Foundation
+
 #if canImport(AdSupport)
 import AdSupport
 #endif
-#if os(macOS)
+
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
 import IOKit
 #elseif os(watchOS)
 import WatchKit
 #endif
-
-protocol DeviceInfoCollectorInterface {
-  func getDeviceInfo() -> Device
-}
 
 #if os(macOS)
   private let OsName = "macOS";
@@ -32,46 +32,46 @@ protocol DeviceInfoCollectorInterface {
   private let OsName = "iOS"
 #endif
 
-public class DeviceInfoCollector: DeviceInfoCollectorInterface {
+final class DeviceInfoCollector: DeviceInfoCollectorInterface {
 
   var lastPreparedDevice: Device? = nil
 
-  func getDeviceInfo() -> Device {
-    guard let deviceInfo = lastPreparedDevice else {
-      let manufacturer = "Apple"
-      let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String  ?? ""
-      let osVersion = getOsVersion()
-      let model = getDeviceModel()
-      let installDate = getInstallDate()
-      let country = getCountry()
-      let language = getLanguage()
-      let timezone = TimeZone.current.identifier
-      let advertisingId = getAdvertisingId()
-      let vendorId = getVendorId()
-
-      let deviceInfo = Device(
-        manufacturer: manufacturer,
-        osName: OsName,
-        osVersion: osVersion,
-        model: model,
-        appVersion: appVersion,
-        country: country,
-        language: language,
-        timezone: timezone,
-        advertisingId: advertisingId,
-        vendorID: vendorId,
-        installDate: installDate
-      )
-
-      lastPreparedDevice = deviceInfo
-      return deviceInfo
+  func deviceInfo() -> Device {
+    if let savedDevice = lastPreparedDevice {
+      return savedDevice
     }
 
+    let manufacturer = "Apple"
+    let appVersion: String? = Bundle.appVersion
+    let osVersion: String? = osVersion()
+    let model: String? = deviceModel()
+    let installDate: TimeInterval = installDate()
+    let country: String? = country()
+    let language: String? = language()
+    let timezone: String = TimeZone.current.identifier
+    let advertisingId: String? = advertisingId()
+    let vendorId: String? = vendorId()
+
+    let deviceInfo = Device(
+      manufacturer: manufacturer,
+      osName: OsName,
+      osVersion: osVersion,
+      model: model,
+      appVersion: appVersion,
+      country: country,
+      language: language,
+      timezone: timezone,
+      advertisingId: advertisingId,
+      vendorID: vendorId,
+      installDate: installDate
+    )
+
+    lastPreparedDevice = deviceInfo
     return deviceInfo
   }
 
-  private func getOsVersion() -> String {
-    var osVersion = ""
+  private func osVersion() -> String? {
+    var osVersion: String? = nil
 
 #if os(iOS)
     osVersion = UIDevice.current.systemVersion
@@ -85,48 +85,44 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
     return osVersion
   }
 
-  private func getDeviceModel() -> String {
+  private func deviceModel() -> String? {
     var systemInfo = utsname()
     uname(&systemInfo)
-    let modelCode = withUnsafePointer(to: &systemInfo.machine) {
+    let modelCode: String? = withUnsafePointer(to: &systemInfo.machine) {
         $0.withMemoryRebound(to: CChar.self, capacity: 1) {
             ptr in String.init(validatingUTF8: ptr)
         }
     }
-    return modelCode ?? ""
+    return modelCode
   }
 
-  private func getInstallDate() -> String {
-    let docsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-    if let docsURL = docsURL {
-        if let docsAttributes = try? FileManager.default.attributesOfItem(atPath: docsURL.path) {
-            if let date = docsAttributes[.creationDate] as? Date {
-                let installDate = "\(Int(round(date.timeIntervalSince1970)))"
-                return installDate
-            }
-        }
+  private func installDate() -> TimeInterval {
+    if let docsURL: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+       let docsAttributes: [FileAttributeKey : Any] = try? FileManager.default.attributesOfItem(atPath: docsURL.path),
+       let date = docsAttributes[.creationDate] as? Date {
+      return date.timeIntervalSince1970
     }
 
-    return ""
+    return Date().timeIntervalSince1970
   }
 
-  private func getCountry() -> String {
-    let country = NSLocale(localeIdentifier: "en_US").displayName(forKey: .countryCode, value: Locale.current.regionCode ?? "")
+  private func country() -> String? {
+    let country: String? = NSLocale(localeIdentifier: "en_US").displayName(forKey: .countryCode, value: Locale.current.regionCode ?? "")
 
-    return country ?? ""
+    return country
   }
 
-  private func getLanguage() -> String {
-    let language = NSLocale(localeIdentifier: "en_US").displayName(forKey: .languageCode, value: NSLocale.preferredLanguages[0])
+  private func language() -> String? {
+    let language: String? = NSLocale(localeIdentifier: "en_US").displayName(forKey: .languageCode, value: NSLocale.preferredLanguages[0])
 
-    return language ?? "";
+    return language;
   }
 
-  private func getAdvertisingId() -> String {
-    var result = ""
+  private func advertisingId() -> String? {
+    var result: String? = nil
 
 #if canImport(AdSupport)
-    let advertisingId = ASIdentifierManager.shared().advertisingIdentifier
+    let advertisingId: UUID = ASIdentifierManager.shared().advertisingIdentifier
     result = advertisingId.uuidString
 
     if result == "00000000-0000-0000-0000-000000000000" {
@@ -137,7 +133,7 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
     return result
   }
 
-  private func getVendorId() -> String {
+  private func vendorId() -> String? {
     var identifier: String? = nil
 #if os(iOS)
     identifier = UIDevice.current.identifierForVendor?.uuidString;
@@ -147,7 +143,7 @@ public class DeviceInfoCollector: DeviceInfoCollectorInterface {
     identifier = getMacAddress()
 #endif
 
-    return identifier ?? ""
+    return identifier
   }
 
 #if os(macOS)

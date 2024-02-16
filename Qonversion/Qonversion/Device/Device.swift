@@ -8,31 +8,31 @@
 
 import Foundation
 
-class Device {
+struct Device {
   let manufacturer: String
   let osName: String
-  let osVersion: String
-  let model: String
-  let appVersion: String
-  let country: String
-  let language: String
-  let timezone: String
-  let advertisingId: String
-  let vendorID: String
-  let installDate: String
+  let osVersion: String?
+  let model: String?
+  let appVersion: String?
+  let country: String?
+  let language: String?
+  let timezone: String?
+  let advertisingId: String?
+  let vendorID: String?
+  let installDate: TimeInterval
 
   init(
     manufacturer: String,
     osName: String,
-    osVersion: String,
-    model: String,
-    appVersion: String,
-    country: String,
-    language: String,
+    osVersion: String?,
+    model: String?,
+    appVersion: String?,
+    country: String?,
+    language: String?,
     timezone: String,
-    advertisingId: String,
-    vendorID: String,
-    installDate: String
+    advertisingId: String?,
+    vendorID: String?,
+    installDate: TimeInterval
   ) {
     self.manufacturer = manufacturer
     self.osName = osName
