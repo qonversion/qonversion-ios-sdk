@@ -107,15 +107,19 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
   }
 
   private func country() -> String? {
-    let country: String? = NSLocale(localeIdentifier: "en_US").displayName(forKey: .countryCode, value: Locale.current.regionCode ?? "")
-
-    return country
+    return if #available(iOS 16, *) {
+      Locale.current.region?.identifier
+    } else {
+      Locale.current.regionCode
+    }
   }
 
   private func language() -> String? {
-    let language: String? = NSLocale(localeIdentifier: "en_US").displayName(forKey: .languageCode, value: NSLocale.preferredLanguages[0])
-
-    return language;
+    return if #available(iOS 16, *) {
+      Locale.current.language.languageCode?.identifier
+    } else {
+      Locale.current.languageCode
+    };
   }
 
   private func advertisingId() -> String? {
