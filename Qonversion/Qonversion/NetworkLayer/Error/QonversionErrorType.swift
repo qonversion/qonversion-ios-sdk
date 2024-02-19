@@ -7,7 +7,19 @@
 
 enum QonversionErrorType {
     case unknown
+    case `internal`
     case invalidRequest
     case invalidResponse
     case authorizationFailed
+    case critical
+    
+    func message() -> String {
+        // handle other errors here
+        switch self {
+        case .internal:
+            return "Internal error occurred"
+        default:
+            return "Unknown error occurred"
+        }
+    }
 }

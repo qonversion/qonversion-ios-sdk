@@ -7,6 +7,6 @@
 
 protocol NetworkErrorHandlerInterface {
     
-    func extractError(from response: URLResponse) -> Error?
+    func extractError(from response: URLResponse) -> QonversionError?
     
 }

@@ -12,6 +12,7 @@ class RequestProcessor: RequestProcessorInterface {
     let errorHandler: NetworkErrorHandler
     let decoder: ResponseDecoderInterface
     let retriableRequestsList: [Request]
+    var criticalError: QonversionError?
     
     init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandler, decoder: ResponseDecoderInterface, retriableRequestsList: [Request]) {
         self.baseURL = baseURL
@@ -23,14 +24,22 @@ class RequestProcessor: RequestProcessorInterface {
     }
     
     func process<T>(request: Request, responseType: T.Type) async throws -> T? where T : Decodable {
+        guard criticalError == nil else { throw criticalError! }
+        
         guard let urlRequest: URLRequest = request.convertToURLRequest() else {
             throw QonversionError(type: .invalidRequest, message: "Invalud URL", error: nil, additionalInfo: nil)
         }
         
         do {
             let (data, resposne) = try await networkProvider.send(request: urlRequest)
-            let error: Error? = errorHandler.extractError(from: resposne)
-            // handle Qonversion API specific errors here using errorHandler
+            let error: QonversionError? = errorHandler.extractError(from: resposne)
+            if error?.type == .critical {
+                criticalError = error
+            }
+            
+            guard error == nil else { throw error! }
+            
+            
             do {
                 let result: T = try decoder.decode(responseType, from: data)
                 

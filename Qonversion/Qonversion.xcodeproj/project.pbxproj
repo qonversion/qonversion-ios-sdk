@@ -24,6 +24,7 @@
 		701C767B2B75229200723027 /* RequestsStorageInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C767A2B75229200723027 /* RequestsStorageInterface.swift */; };
 		701C767D2B75229800723027 /* RequestsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C767C2B75229800723027 /* RequestsStorage.swift */; };
 		701C767F2B75236D00723027 /* StorageConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C767E2B75236D00723027 /* StorageConstants.swift */; };
+		70D876C72B839D440059AA2B /* ErrorConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D876C62B839D440059AA2B /* ErrorConstants.swift */; };
 		70F163A72B6D0D3D00033BEF /* Qonversion.docc in Sources */ = {isa = PBXBuildFile; fileRef = 70F163A62B6D0D3D00033BEF /* Qonversion.docc */; };
 		70F163A82B6D0D3D00033BEF /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F163A52B6D0D3D00033BEF /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
@@ -46,6 +47,7 @@
 		701C767A2B75229200723027 /* RequestsStorageInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestsStorageInterface.swift; sourceTree = "<group>"; };
 		701C767C2B75229800723027 /* RequestsStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestsStorage.swift; sourceTree = "<group>"; };
 		701C767E2B75236D00723027 /* StorageConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageConstants.swift; sourceTree = "<group>"; };
+		70D876C62B839D440059AA2B /* ErrorConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorConstants.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		70F163A52B6D0D3D00033BEF /* Qonversion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
 		70F163A62B6D0D3D00033BEF /* Qonversion.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = Qonversion.docc; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 			children = (
 				701C765B2B73D27B00723027 /* QonversionError.swift */,
 				701C76772B73D29600723027 /* QonversionErrorType.swift */,
+				70D876C62B839D440059AA2B /* ErrorConstants.swift */,
 			);
 			path = Error;
 			sourceTree = "<group>";
@@ -257,6 +260,7 @@
 			files = (
 				701C76702B73D27B00723027 /* NetworkErrorHandler.swift in Sources */,
 				701C767F2B75236D00723027 /* StorageConstants.swift in Sources */,
+				70D876C72B839D440059AA2B /* ErrorConstants.swift in Sources */,
 				701C76732B73D27B00723027 /* Request.swift in Sources */,
 				701C76742B73D27B00723027 /* RequestType.swift in Sources */,
 				701C76722B73D27B00723027 /* NetworkProviderInterface.swift in Sources */,
