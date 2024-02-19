@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6ABCBD992B7E3A71003DB107 /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBD972B7E3A71003DB107 /* Device.swift */; };
+		6ABCBD9A2B7E3A71003DB107 /* DeviceInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBD982B7E3A71003DB107 /* DeviceInfoCollector.swift */; };
+		6ABCBD9C2B7E617E003DB107 /* DeviceInfoCollectorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBD9B2B7E617E003DB107 /* DeviceInfoCollectorInterface.swift */; };
+		6ABCBDA02B7E6582003DB107 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBD9F2B7E6582003DB107 /* Utils.swift */; };
 		701C76692B73D27B00723027 /* HeadersBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C76552B73D27B00723027 /* HeadersBuilder.swift */; };
 		701C766A2B73D27B00723027 /* HeadersBuilderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C76562B73D27B00723027 /* HeadersBuilderInterface.swift */; };
 		701C766B2B73D27B00723027 /* RequestProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C76582B73D27B00723027 /* RequestProcessor.swift */; };
@@ -30,6 +34,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6ABCBD972B7E3A71003DB107 /* Device.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
+		6ABCBD982B7E3A71003DB107 /* DeviceInfoCollector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollector.swift; sourceTree = "<group>"; };
+		6ABCBD9B2B7E617E003DB107 /* DeviceInfoCollectorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollectorInterface.swift; sourceTree = "<group>"; };
+		6ABCBD9F2B7E6582003DB107 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		701C76552B73D27B00723027 /* HeadersBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeadersBuilder.swift; sourceTree = "<group>"; };
 		701C76562B73D27B00723027 /* HeadersBuilderInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeadersBuilderInterface.swift; sourceTree = "<group>"; };
 		701C76582B73D27B00723027 /* RequestProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestProcessor.swift; sourceTree = "<group>"; };
@@ -64,6 +72,25 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6ABCBD962B7E3A71003DB107 /* Device */ = {
+			isa = PBXGroup;
+			children = (
+				6ABCBD972B7E3A71003DB107 /* Device.swift */,
+				6ABCBD982B7E3A71003DB107 /* DeviceInfoCollector.swift */,
+				6ABCBD9B2B7E617E003DB107 /* DeviceInfoCollectorInterface.swift */,
+			);
+			name = Device;
+			path = Qonversion/Device;
+			sourceTree = SOURCE_ROOT;
+		};
+		6ABCBD9E2B7E6573003DB107 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				6ABCBD9F2B7E6582003DB107 /* Utils.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
 		701C76542B73D27B00723027 /* HeadersBuilder */ = {
 			isa = PBXGroup;
 			children = (
@@ -157,6 +184,7 @@
 			isa = PBXGroup;
 			children = (
 				701C767E2B75236D00723027 /* StorageConstants.swift */,
+				6ABCBD9E2B7E6573003DB107 /* Utils */,
 				70F163AE2B6D0D8800033BEF /* NetworkLayer */,
 				70F163A52B6D0D3D00033BEF /* Qonversion.h */,
 				70F163A62B6D0D3D00033BEF /* Qonversion.docc */,
@@ -168,6 +196,7 @@
 			isa = PBXGroup;
 			children = (
 				701C76792B75227C00723027 /* RequestsStorage */,
+				6ABCBD962B7E3A71003DB107 /* Device */,
 				701C765A2B73D27B00723027 /* Error */,
 				701C76542B73D27B00723027 /* HeadersBuilder */,
 				701C765D2B73D27B00723027 /* NetworkErrorHandler */,
@@ -262,13 +291,16 @@
 				701C767F2B75236D00723027 /* StorageConstants.swift in Sources */,
 				70D876C72B839D440059AA2B /* ErrorConstants.swift in Sources */,
 				701C76732B73D27B00723027 /* Request.swift in Sources */,
+				6ABCBD9A2B7E3A71003DB107 /* DeviceInfoCollector.swift in Sources */,
 				701C76742B73D27B00723027 /* RequestType.swift in Sources */,
 				701C76722B73D27B00723027 /* NetworkProviderInterface.swift in Sources */,
 				701C76782B73D29600723027 /* QonversionErrorType.swift in Sources */,
 				701C766F2B73D27B00723027 /* NetworkErrorHandlerInterface.swift in Sources */,
 				701C766D2B73D27B00723027 /* QonversionError.swift in Sources */,
+				6ABCBD992B7E3A71003DB107 /* Device.swift in Sources */,
 				701C766A2B73D27B00723027 /* HeadersBuilderInterface.swift in Sources */,
 				701C76762B73D27B00723027 /* ResponseDecoder.swift in Sources */,
+				6ABCBD9C2B7E617E003DB107 /* DeviceInfoCollectorInterface.swift in Sources */,
 				701C766C2B73D27B00723027 /* RequestProcessorInterface.swift in Sources */,
 				701C76692B73D27B00723027 /* HeadersBuilder.swift in Sources */,
 				701C767B2B75229200723027 /* RequestsStorageInterface.swift in Sources */,
@@ -276,6 +308,7 @@
 				701C767D2B75229800723027 /* RequestsStorage.swift in Sources */,
 				70F163A72B6D0D3D00033BEF /* Qonversion.docc in Sources */,
 				701C76712B73D27B00723027 /* NetworkProvider.swift in Sources */,
+				6ABCBDA02B7E6582003DB107 /* Utils.swift in Sources */,
 				701C76752B73D27B00723027 /* ResponseDecoderInterface.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
