@@ -21,13 +21,13 @@ import WatchKit
 #endif
 
 #if os(macOS)
-  private let OsName = "macOS";
+  private let OsName = "macOS"
 #elseif os(tvOS)
-  private let OsName = "tvos";
+  private let OsName = "tvos"
 #elseif targetEnvironment(macCatalyst)
-  private let OsName = "macCatalyst";
+  private let OsName = "macCatalyst"
 #elseif os(watchOS)
-  private let OsName = "watchOS";
+  private let OsName = "watchOS"
 #else // iOS, simulator, etc.
   private let OsName = "iOS"
 #endif
@@ -119,7 +119,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
       Locale.current.language.languageCode?.identifier
     } else {
       Locale.current.languageCode
-    };
+    }
   }
 
   private func advertisingId() -> String? {
@@ -140,7 +140,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
   private func vendorId() -> String? {
     var identifier: String? = nil
 #if os(iOS)
-    identifier = UIDevice.current.identifierForVendor?.uuidString;
+    identifier = UIDevice.current.identifierForVendor?.uuidString
 #elseif os(watchOS)
     identifier = WKInterfaceDevice.current().identifierForVendor?.uuidString
 #elseif os(macOS)
