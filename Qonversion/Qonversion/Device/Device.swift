@@ -11,7 +11,7 @@ import Foundation
 struct Device {
   let manufacturer: String
   let osName: String
-  let osVersion: String?
+  let osVersion: String
   let model: String?
   let appVersion: String?
   let country: String?
@@ -24,7 +24,7 @@ struct Device {
   init(
     manufacturer: String,
     osName: String,
-    osVersion: String?,
+    osVersion: String,
     model: String?,
     appVersion: String?,
     country: String?,

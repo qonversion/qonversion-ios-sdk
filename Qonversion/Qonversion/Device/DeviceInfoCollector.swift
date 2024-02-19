@@ -43,7 +43,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
 
     let manufacturer = "Apple"
     let appVersion: String? = Bundle.appVersion
-    let osVersion: String? = osVersion()
+    let osVersion: String = osVersion()
     let model: String? = deviceModel()
     let installDate: TimeInterval = installDate()
     let country: String? = country()
@@ -70,7 +70,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
     return deviceInfo
   }
 
-  private func osVersion() -> String? {
+  private func osVersion() -> String {
     var osVersion: String? = nil
 
 #if os(iOS)
@@ -82,7 +82,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
     osVersion = "\(systemVersion.majorVersion).\(systemVersion.minorVersion).\(systemVersion.patchVersion)"
 #endif
 
-    return osVersion
+    return osVersion ?? ""
   }
 
   private func deviceModel() -> String? {
