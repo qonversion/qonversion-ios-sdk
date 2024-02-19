@@ -37,7 +37,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
   var lastPreparedDevice: Device? = nil
 
   func deviceInfo() -> Device {
-    if let savedDevice = lastPreparedDevice {
+    if let savedDevice: Device = lastPreparedDevice {
       return savedDevice
     }
 
