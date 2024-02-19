@@ -166,13 +166,9 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         port = kIOMasterPortDefault
     }
     guard let matchingDict = IOBSDNameMatching(port, 0, name),
-          IOServiceGetMatchingServices(port,
-          matchingDict as CFDictionary,
-          &iterator) == KERN_SUCCESS,
+          IOServiceGetMatchingServices(port, matchingDict as CFDictionary, &iterator) == KERN_SUCCESS,
         iterator != IO_OBJECT_NULL
-    else {
-      return nil
-    }
+    else { return nil }
 
     var candidate = IOIteratorNext(iterator)
     while candidate != IO_OBJECT_NULL {
