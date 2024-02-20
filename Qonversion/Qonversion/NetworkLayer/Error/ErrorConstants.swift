@@ -11,6 +11,6 @@ enum ErrorCodes: Int {
     case unauthorized = 401
     case paymentRequired = 402
     case forbidden = 403
-    case internalErrorStart = 500
-    case internalErrorEnd = 599
+    case internalErrorMin = 500
+    case internalErrorMax = 599
 }
