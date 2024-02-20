@@ -25,7 +25,7 @@ typedef NS_ENUM(NSInteger, QONUserPropertyKey) {
     QONUserPropertyKeyAppSetId, // Android only, can be received via Qonversion.userProperties
     QONUserPropertyKeyPushWooshUserId,
     QONUserPropertyKeyPushWooshHwId,
-    QONUserPropertyKeyAppMetricaDeviceId,
+    QONUserPropertyKeyAppMetricaDeviceIdHash,
     QONUserPropertyKeyAppMetricaUserProfileId,
     QONUserPropertyKeyCustom,
 } NS_SWIFT_NAME(Qonversion.UserPropertyKey);

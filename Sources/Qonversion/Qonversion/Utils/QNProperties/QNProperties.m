@@ -43,7 +43,7 @@
     case QONUserPropertyKeyPushWooshHwId:
       key = @"_q_pushwoosh_hwid";
       break;
-    case QONUserPropertyKeyAppMetricaDeviceId:
+    case QONUserPropertyKeyAppMetricaDeviceIdHash:
       key = @"_q_appmetrica_device_id";
       break;
     case QONUserPropertyKeyAppMetricaUserProfileId:
@@ -71,7 +71,7 @@
           @"_q_app_set_id": @(QONUserPropertyKeyAppSetId),
           @"_q_pushwoosh_user_id": @(QONUserPropertyKeyPushWooshUserId),
           @"_q_pushwoosh_hwid": @(QONUserPropertyKeyPushWooshHwId),
-          @"_q_appmetrica_device_id": @(QONUserPropertyKeyAppMetricaDeviceId),
+          @"_q_appmetrica_device_id": @(QONUserPropertyKeyAppMetricaDeviceIdHash),
           @"_q_appmetrica_user_profile_id": @(QONUserPropertyKeyAppMetricaUserProfileId),
   };
 
