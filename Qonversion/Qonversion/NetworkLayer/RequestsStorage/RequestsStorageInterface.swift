@@ -9,8 +9,10 @@ protocol RequestsStorageInterface {
     
     func store(requests: [URLRequest], key: String)
     
-    func enrichStoredRequests(_ requests: [URLRequest], key: String)
+    func append(requests: [URLRequest], key: String)
     
-    func fetchStoredRequests(for key: String) -> [URLRequest]
+    func fetchRequests() -> [URLRequest]
+    
+    func clean()
     
 }

@@ -8,26 +8,32 @@
 class RequestsStorage: RequestsStorageInterface {
     
     let userDefaults: UserDefaults
+    let storeKey: String
     
-    init(userDefaults: UserDefaults, storeRequestsKey: String) {
+    init(userDefaults: UserDefaults, storeKey: String) {
         self.userDefaults = userDefaults
+        self.storeKey = storeKey
     }
     
     func store(requests: [URLRequest], key: String) {
-        userDefaults.set(requests, forKey: key)
+        userDefaults.set(requests, forKey: storeKey)
     }
     
-    func enrichStoredRequests(_ requests: [URLRequest], key: String) {
-        var storedRequests: [URLRequest] = userDefaults.object(forKey: key) as? [URLRequest] ?? []
+    func append(requests: [URLRequest], key: String) {
+        var storedRequests: [URLRequest] = fetchRequests()
         storedRequests.append(contentsOf: requests)
         
-        store(requests: storedRequests, key: key)
+        store(requests: storedRequests, key: storeKey)
     }
     
-    func fetchStoredRequests(for key: String) -> [URLRequest] {
-        let storedRequests: [URLRequest] = userDefaults.object(forKey: key) as? [URLRequest] ?? []
+    func fetchRequests() -> [URLRequest] {
+        let storedRequests: [URLRequest] = userDefaults.object(forKey: storeKey) as? [URLRequest] ?? []
         
         return storedRequests
+    }
+    
+    func clean() {
+        userDefaults.removeObject(forKey: storeKey)
     }
     
 }

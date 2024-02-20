@@ -9,25 +9,42 @@ class RequestProcessor: RequestProcessorInterface {
     let baseURL: String
     let networkProvider: NetworkProvider
     let headersBuilder: HeadersBuilderInterface
-    let errorHandler: NetworkErrorHandler
+    let errorHandler: NetworkErrorHandlerInterface
     let decoder: ResponseDecoderInterface
     let retriableRequestsList: [Request]
+    let requestsStorage: RequestsStorageInterface
     var criticalError: QonversionError?
     
-    init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandler, decoder: ResponseDecoderInterface, retriableRequestsList: [Request]) {
+    init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, criticalError: QonversionError? = nil) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
         self.errorHandler = errorHandler
         self.decoder = decoder
         self.retriableRequestsList = retriableRequestsList
+        self.requestsStorage = requestsStorage
+        self.criticalError = criticalError
+        
+        processStoredRequests()
+    }
+    
+    func processStoredRequests() {
+        let requests: [URLRequest] = requestsStorage.fetchRequests()
+        let requestsCopy: [URLRequest] = requests
+        
+        #warning("Resend all requests here and remove from the storage")
+        
+        requestsStorage.clean()
     }
     
     func process<T>(request: Request, responseType: T.Type) async throws -> T? where T : Decodable {
-        guard criticalError == nil else { throw criticalError! }
+        if let error = criticalError {
+            throw error
+        }
         
         guard let urlRequest: URLRequest = request.convertToURLRequest() else {
-            throw QonversionError(type: .invalidRequest, message: "Invalud URL", error: nil, additionalInfo: nil)
+            let errorType: QonversionErrorType = .invalidRequest
+            throw QonversionError(type: errorType, message: errorType.message())
         }
         
         do {
@@ -45,10 +62,12 @@ class RequestProcessor: RequestProcessorInterface {
                 
                 return result
             } catch {
-                throw QonversionError(type: .invalidResponse, message: "Invalid response", error: error, additionalInfo: nil)
+                let errorType: QonversionErrorType = .invalidResponse
+                throw QonversionError(type: errorType, message: errorType.message(), error: error)
             }
         } catch {
-            throw QonversionError(type: .invalidResponse, message: "Request failed", error: error, additionalInfo: nil)
+            let errorType: QonversionErrorType = .invalidResponse
+            throw QonversionError(type: errorType, message: errorType.message(), error: error)
         }
     }
 }

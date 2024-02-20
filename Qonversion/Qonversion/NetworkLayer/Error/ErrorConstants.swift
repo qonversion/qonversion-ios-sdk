@@ -7,7 +7,13 @@
 
 import Foundation
 
-enum ErrorCodes: Int {
+enum ErrorConstants: String {
+    case messageKey = "message"
+}
+
+enum ResponseCode: Int {
+    case successMin = 200
+    case successMax = 299
     case unauthorized = 401
     case paymentRequired = 402
     case forbidden = 403
