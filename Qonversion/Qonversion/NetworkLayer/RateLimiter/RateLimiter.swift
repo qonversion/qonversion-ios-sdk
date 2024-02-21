@@ -15,9 +15,10 @@ final class RateLimiter {
         self.maxRequestsPerSecond = maxRequestsPerSecond
     }
 
-    func validateRateLimit(request: Request) -> QonversionError? {
+    func validateRateLimit(for request: Request) -> QonversionError? {
         let hash: Int = request.hashValue
-        if isRateLimitExceeded(hash: hash) {
+        let isLimitExceeded: Bool = isRateLimitExceeded(hash: hash)
+        if isLimitExceeded {
             let error = QonversionError(type: .rateLimitExceeded, message: "Rate limit exceeded for the current request", error: nil, additionalInfo: nil)
             return error
         } else {
@@ -39,17 +40,13 @@ final class RateLimiter {
     func isRateLimitExceeded(hash: Int) -> Bool {
         removeOutdatedRequests(hash: hash)
 
-        guard let requestsPerType = requests[hash] else {
-            return false
-        }
+        guard let requestsPerType: [TimeInterval] = requests[hash] else { return false }
 
         return requestsPerType.count >= maxRequestsPerSecond
     }
 
     private func removeOutdatedRequests(hash: Int) {
-        guard let requestTimestamps: [TimeInterval] = requests[hash] else {
-            return
-        }
+        guard let requestTimestamps: [TimeInterval] = requests[hash] else { return }
 
         let timestamp: TimeInterval = Date().timeIntervalSince1970
         var filteredRequestTimestamps: [TimeInterval] = []
