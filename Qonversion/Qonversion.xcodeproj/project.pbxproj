@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6ABCBD8A2B7618A9003DB107 /* LimitedRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBD882B7618A9003DB107 /* LimitedRequest.swift */; };
+		6ABCBD8B2B7618A9003DB107 /* RateLimiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBD892B7618A9003DB107 /* RateLimiter.swift */; };
 		6ABCBD992B7E3A71003DB107 /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBD972B7E3A71003DB107 /* Device.swift */; };
 		6ABCBD9A2B7E3A71003DB107 /* DeviceInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBD982B7E3A71003DB107 /* DeviceInfoCollector.swift */; };
 		6ABCBD9C2B7E617E003DB107 /* DeviceInfoCollectorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBD9B2B7E617E003DB107 /* DeviceInfoCollectorInterface.swift */; };
@@ -30,6 +32,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6ABCBD882B7618A9003DB107 /* LimitedRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimitedRequest.swift; sourceTree = "<group>"; };
+		6ABCBD892B7618A9003DB107 /* RateLimiter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimiter.swift; sourceTree = "<group>"; };
 		6ABCBD972B7E3A71003DB107 /* Device.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
 		6ABCBD982B7E3A71003DB107 /* DeviceInfoCollector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollector.swift; sourceTree = "<group>"; };
 		6ABCBD9B2B7E617E003DB107 /* DeviceInfoCollectorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollectorInterface.swift; sourceTree = "<group>"; };
@@ -64,6 +68,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6ABCBD8C2B7618CA003DB107 /* RateLimiter */ = {
+			isa = PBXGroup;
+			children = (
+				6ABCBD882B7618A9003DB107 /* LimitedRequest.swift */,
+				6ABCBD892B7618A9003DB107 /* RateLimiter.swift */,
+			);
+			path = RateLimiter;
+			sourceTree = "<group>";
+		};
 		6ABCBD962B7E3A71003DB107 /* Device */ = {
 			isa = PBXGroup;
 			children = (
@@ -176,6 +189,7 @@
 		70F163AE2B6D0D8800033BEF /* NetworkLayer */ = {
 			isa = PBXGroup;
 			children = (
+				6ABCBD8C2B7618CA003DB107 /* RateLimiter */,
 				6ABCBD962B7E3A71003DB107 /* Device */,
 				701C765A2B73D27B00723027 /* Error */,
 				701C76542B73D27B00723027 /* HeadersBuilder */,
@@ -267,11 +281,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6ABCBD8A2B7618A9003DB107 /* LimitedRequest.swift in Sources */,
 				701C76702B73D27B00723027 /* NetworkErrorHandler.swift in Sources */,
 				701C76732B73D27B00723027 /* Request.swift in Sources */,
 				6ABCBD9A2B7E3A71003DB107 /* DeviceInfoCollector.swift in Sources */,
 				701C76742B73D27B00723027 /* RequestType.swift in Sources */,
 				701C76722B73D27B00723027 /* NetworkProviderInterface.swift in Sources */,
+				6ABCBD8B2B7618A9003DB107 /* RateLimiter.swift in Sources */,
 				701C76782B73D29600723027 /* QonversionErrorType.swift in Sources */,
 				701C766F2B73D27B00723027 /* NetworkErrorHandlerInterface.swift in Sources */,
 				701C766D2B73D27B00723027 /* QonversionError.swift in Sources */,
