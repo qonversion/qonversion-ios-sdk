@@ -30,7 +30,7 @@ class RequestProcessor: RequestProcessorInterface {
     }
     
     func process<T>(request: Request, responseType: T.Type) async throws -> T? where T : Decodable {
-        if let rateLimitError = rateLimiter.validateRateLimit(request: request) {
+        if let rateLimitError: QonversionError? = rateLimiter.validateRateLimit(request: request) {
             throw rateLimitError
         }
 
