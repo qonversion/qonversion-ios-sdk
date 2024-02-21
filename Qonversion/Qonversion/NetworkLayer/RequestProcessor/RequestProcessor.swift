@@ -11,22 +11,36 @@ class RequestProcessor: RequestProcessorInterface {
     let headersBuilder: HeadersBuilderInterface
     let errorHandler: NetworkErrorHandler
     let decoder: ResponseDecoderInterface
+    let rateLimiter: RateLimiter
     
-    init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandler, decoder: ResponseDecoderInterface) {
+    init(
+        baseURL: String,
+        networkProvider: NetworkProvider,
+        headersBuilder: HeadersBuilderInterface,
+        errorHandler: NetworkErrorHandler,
+        decoder: ResponseDecoderInterface,
+        rateLimiter: RateLimiter
+    ) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
         self.errorHandler = errorHandler
         self.decoder = decoder
+        self.rateLimiter = rateLimiter
     }
     
     func process<T>(request: Request, responseType: T.Type) async throws -> T? where T : Decodable {
+        let rateLimitError = rateLimiter.validateRateLimit(request: request)
+        if (rateLimitError != nil) {
+            throw rateLimitError
+        }
+
         guard let urlRequest: URLRequest = request.convertToURLRequest() else {
             throw QonversionError(type: .invalidRequest, message: "Invalud URL", error: nil, additionalInfo: nil)
         }
         
         do {
-            let (data, resposne) = try await networkProvider.send(request: urlRequest)
+            let (data, response) = try await networkProvider.send(request: urlRequest)
             // handle Qonversion API specific errors here using errorHandler
             do {
                 let result: T = try decoder.decode(responseType, from: data)

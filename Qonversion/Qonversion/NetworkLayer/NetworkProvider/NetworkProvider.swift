@@ -15,5 +15,4 @@ class NetworkProvider: NetworkProviderInterface {
     func send(request: URLRequest) async throws -> (Data, URLResponse) {
         return try await session.data(for: request)
     }
-    
 }
