@@ -13,6 +13,7 @@ class RequestProcessor: RequestProcessorInterface {
     let decoder: ResponseDecoderInterface
     let retriableRequestsList: [Request]
     let requestsStorage: RequestsStorageInterface
+    let rateLimiter: RateLimiter
     var criticalError: QonversionError?
     
     init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiter) {
