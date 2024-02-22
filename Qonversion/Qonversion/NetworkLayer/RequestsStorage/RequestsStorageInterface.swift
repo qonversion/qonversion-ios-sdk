@@ -7,9 +7,9 @@
 
 protocol RequestsStorageInterface {
     
-    func store(requests: [URLRequest], key: String)
+    func store(requests: [URLRequest])
     
-    func append(requests: [URLRequest], key: String)
+    func append(requests: [URLRequest])
     
     func fetchRequests() -> [URLRequest]
     

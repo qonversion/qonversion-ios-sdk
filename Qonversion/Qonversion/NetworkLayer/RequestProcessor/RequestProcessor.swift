@@ -15,7 +15,7 @@ class RequestProcessor: RequestProcessorInterface {
     let requestsStorage: RequestsStorageInterface
     var criticalError: QonversionError?
     
-    init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, criticalError: QonversionError? = nil) {
+    init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiter) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
@@ -23,7 +23,7 @@ class RequestProcessor: RequestProcessorInterface {
         self.decoder = decoder
         self.retriableRequestsList = retriableRequestsList
         self.requestsStorage = requestsStorage
-        self.criticalError = criticalError
+        self.rateLimiter = rateLimiter
         
         processStoredRequests()
     }
@@ -42,9 +42,12 @@ class RequestProcessor: RequestProcessorInterface {
             throw error
         }
         
+        if let rateLimitError: QonversionError = rateLimiter.validateRateLimit(for: request) {
+            throw rateLimitError
+        }
+
         guard let urlRequest: URLRequest = request.convertToURLRequest() else {
-            let errorType: QonversionErrorType = .invalidRequest
-            throw QonversionError(type: errorType, message: errorType.message())
+            throw QonversionError(type: .invalidRequest)
         }
         
         do {
@@ -56,18 +59,15 @@ class RequestProcessor: RequestProcessorInterface {
             
             guard error == nil else { throw error! }
             
-            
             do {
                 let result: T = try decoder.decode(responseType, from: data)
                 
                 return result
             } catch {
-                let errorType: QonversionErrorType = .invalidResponse
-                throw QonversionError(type: errorType, message: errorType.message(), error: error)
+                throw QonversionError(type: .invalidResponse, error: error)
             }
         } catch {
-            let errorType: QonversionErrorType = .invalidResponse
-            throw QonversionError(type: errorType, message: errorType.message(), error: error)
+            throw QonversionError(type: .invalidResponse, error: error)
         }
     }
 }

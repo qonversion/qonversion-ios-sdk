@@ -15,15 +15,15 @@ class RequestsStorage: RequestsStorageInterface {
         self.storeKey = storeKey
     }
     
-    func store(requests: [URLRequest], key: String) {
+    func store(requests: [URLRequest]) {
         userDefaults.set(requests, forKey: storeKey)
     }
     
-    func append(requests: [URLRequest], key: String) {
+    func append(requests: [URLRequest]) {
         var storedRequests: [URLRequest] = fetchRequests()
         storedRequests.append(contentsOf: requests)
         
-        store(requests: storedRequests, key: storeKey)
+        store(requests: storedRequests)
     }
     
     func fetchRequests() -> [URLRequest] {
