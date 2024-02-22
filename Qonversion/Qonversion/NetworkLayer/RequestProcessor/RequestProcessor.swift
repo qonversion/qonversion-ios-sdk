@@ -9,47 +9,66 @@ class RequestProcessor: RequestProcessorInterface {
     let baseURL: String
     let networkProvider: NetworkProvider
     let headersBuilder: HeadersBuilderInterface
-    let errorHandler: NetworkErrorHandler
+    let errorHandler: NetworkErrorHandlerInterface
     let decoder: ResponseDecoderInterface
+    let retriableRequestsList: [Request]
+    let requestsStorage: RequestsStorageInterface
+    var criticalError: QonversionError?
     let rateLimiter: RateLimiter
     
-    init(
-        baseURL: String,
-        networkProvider: NetworkProvider,
-        headersBuilder: HeadersBuilderInterface,
-        errorHandler: NetworkErrorHandler,
-        decoder: ResponseDecoderInterface,
-        rateLimiter: RateLimiter
-    ) {
+    init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiter) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
         self.errorHandler = errorHandler
         self.decoder = decoder
+        self.retriableRequestsList = retriableRequestsList
+        self.requestsStorage = requestsStorage
         self.rateLimiter = rateLimiter
+        
+        processStoredRequests()
+    }
+    
+    func processStoredRequests() {
+        let requests: [URLRequest] = requestsStorage.fetchRequests()
+        let requestsCopy: [URLRequest] = requests
+        
+        #warning("Resend all requests here and remove from the storage")
+        
+        requestsStorage.clean()
     }
     
     func process<T>(request: Request, responseType: T.Type) async throws -> T? where T : Decodable {
-        if let rateLimitError: QonversionError? = rateLimiter.validateRateLimit(for: request) {
+        if let error = criticalError {
+            throw error
+        }
+        
+        if let rateLimitError: QonversionError = rateLimiter.validateRateLimit(for: request) {
             throw rateLimitError
         }
 
         guard let urlRequest: URLRequest = request.convertToURLRequest() else {
-            throw QonversionError(type: .invalidRequest, message: "Invalud URL", error: nil, additionalInfo: nil)
+            throw QonversionError(type: .invalidRequest)
         }
         
         do {
-            let (data, response) = try await networkProvider.send(request: urlRequest)
-            // handle Qonversion API specific errors here using errorHandler
+            let (data, resposne) = try await networkProvider.send(request: urlRequest)
+            let error: QonversionError? = errorHandler.extractError(from: resposne)
+            if error?.type == .critical {
+                criticalError = error
+            }
+            
+            guard error == nil else { throw error! }
+            
             do {
                 let result: T = try decoder.decode(responseType, from: data)
                 
                 return result
             } catch {
-                throw QonversionError(type: .invalidResponse, message: "Invalid response", error: error, additionalInfo: nil)
+                throw QonversionError(type: .invalidResponse, error: error)
             }
         } catch {
-            throw QonversionError(type: .invalidResponse, message: "Request failed", error: error, additionalInfo: nil)
+            throw QonversionError(type: .invalidResponse, error: error)
         }
     }
 }
