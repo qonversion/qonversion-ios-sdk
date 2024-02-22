@@ -21,7 +21,7 @@ class NetworkErrorHandler: NetworkErrorHandlerInterface {
         } else if criticalErrorCodes.map({ $0.rawValue }).contains(httpResponse.statusCode) {
             return configureError(for: httpResponse, type: .critical)
         } else if !(ResponseCode.successMin.rawValue...ResponseCode.successMax.rawValue).contains(httpResponse.statusCode) {
-            return configureError(for: httpResponse, type: .unknown, error: nil)
+            return configureError(for: httpResponse, type: .unknown)
         }
         
         return nil
