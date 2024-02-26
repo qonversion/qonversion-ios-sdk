@@ -47,10 +47,11 @@ class RequestProcessor: RequestProcessorInterface {
             throw rateLimitError
         }
 
-        guard let urlRequest: URLRequest = request.convertToURLRequest() else {
+        guard var urlRequest: URLRequest = request.convertToURLRequest() else {
             throw QonversionError(type: .invalidRequest)
         }
-        
+        headersBuilder.addHeaders(to: &urlRequest)
+
         do {
             let (data, resposne) = try await networkProvider.send(request: urlRequest)
             let error: QonversionError? = errorHandler.extractError(from: resposne)
