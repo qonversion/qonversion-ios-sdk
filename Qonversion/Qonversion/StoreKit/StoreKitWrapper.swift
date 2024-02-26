@@ -52,14 +52,14 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
             case .verified(let transaction):
                 return transaction
             case .unverified(let transaction, let verificationError):
-                // throw error here using verification error
+                #warning("throw error here using verification error")
                 throw QonversionError(type: .critical)
             }
         case .userCancelled:
-            // update error here
+            #warning("update error here")
             throw QonversionError(type: .critical)
         @unknown default:
-            // update error here
+            #warning("update error here")
             throw QonversionError(type: .critical)
         }
     }
