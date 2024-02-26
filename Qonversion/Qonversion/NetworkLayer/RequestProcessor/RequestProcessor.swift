@@ -47,7 +47,7 @@ class RequestProcessor: RequestProcessorInterface {
             throw rateLimitError
         }
 
-        guard let urlRequest: URLRequest = request.convertToURLRequest() else {
+        guard let urlRequest: URLRequest = request.convertToURLRequest(baseURL) else {
             throw QonversionError(type: .invalidRequest)
         }
         
