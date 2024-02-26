@@ -16,13 +16,7 @@ struct UserProperty : Decodable {
     private enum CodingKeys: String, CodingKey {
         case key, value
     }
-//    
-//    init(key: String, value: String) {
-//        self.key = key
-//        self.value = value
-//        definedKey = UserPropertyKey.from(key: key)
-//    }
-//    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         key = try container.decode(String.self, forKey: .key)
