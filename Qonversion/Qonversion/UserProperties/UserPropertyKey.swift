@@ -26,9 +26,5 @@ enum UserPropertyKey: String {
     case pushWooshHwId = "_q_pushwoosh_hwid"
     case appMetricaDeviceId = "_q_appmetrica_device_id"
     case appMetricaUserProfileId = "_q_appmetrica_user_profile_id"
-    case custom = "";
-    
-    static func from(key: String) -> UserPropertyKey {
-        return UserPropertyKey(rawValue: key) ?? .custom
-    }
+    case custom = ""
 }

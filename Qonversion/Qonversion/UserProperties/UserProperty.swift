@@ -21,6 +21,6 @@ struct UserProperty : Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         key = try container.decode(String.self, forKey: .key)
         value = try container.decode(String.self, forKey: .value)
-        definedKey = UserPropertyKey.from(key: key)
+        definedKey = UserPropertyKey(rawValue: key) ?? .custom
     }
 }
