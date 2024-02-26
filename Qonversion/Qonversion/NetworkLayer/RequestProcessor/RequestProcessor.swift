@@ -15,7 +15,8 @@ class RequestProcessor: RequestProcessorInterface {
     let requestsStorage: RequestsStorageInterface
     var criticalError: QonversionError?
     let rateLimiter: RateLimiter
-    
+    var criticalError: QonversionError?
+
     init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiter) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
@@ -47,10 +48,11 @@ class RequestProcessor: RequestProcessorInterface {
             throw rateLimitError
         }
 
-        guard let urlRequest: URLRequest = request.convertToURLRequest(baseURL) else {
+        guard var urlRequest: URLRequest = request.convertToURLRequest(baseURL) else {
             throw QonversionError(type: .invalidRequest)
         }
-        
+        headersBuilder.addHeaders(to: &urlRequest)
+
         do {
             let (data, resposne) = try await networkProvider.send(request: urlRequest)
             let error: QonversionError? = errorHandler.extractError(from: resposne)
