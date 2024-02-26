@@ -14,11 +14,11 @@ import Foundation
 enum UserPropertyKey: String {
     case email = "_q_email"
     case name = "_q_name"
-    case appsFlyerUserID = "_q_appsflyer_user_id"
-    case adjustAdID = "_q_adjust_adid"
-    case kochavaDeviceID = "_q_kochava_device_id"
-    case advertisingID = "_q_advertising_id"
-    case userID = "_q_custom_user_id"
+    case appsFlyerUserId = "_q_appsflyer_user_id"
+    case adjustAdId = "_q_adjust_adid"
+    case kochavaDeviceId = "_q_kochava_device_id"
+    case advertisingId = "_q_advertising_id"
+    case userId = "_q_custom_user_id"
     case firebaseAppInstanceId = "_q_firebase_instance_id"
     case facebookAttribution = "_q_fb_attribution" // Android only can be received via Qonversion.userProperties
     case appSetId = "_q_app_set_id" // Android only can be received via Qonversion.userProperties
