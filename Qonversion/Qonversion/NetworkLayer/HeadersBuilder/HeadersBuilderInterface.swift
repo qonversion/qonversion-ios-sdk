@@ -7,4 +7,5 @@
 
 protocol HeadersBuilderInterface {
     
+    func addHeaders(to request: inout URLRequest)
 }
