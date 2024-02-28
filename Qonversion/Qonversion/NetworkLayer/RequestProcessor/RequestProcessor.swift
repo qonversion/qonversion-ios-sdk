@@ -15,7 +15,6 @@ class RequestProcessor: RequestProcessorInterface {
     let requestsStorage: RequestsStorageInterface
     var criticalError: QonversionError?
     let rateLimiter: RateLimiter
-    var criticalError: QonversionError?
 
     init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiter) {
         self.baseURL = baseURL

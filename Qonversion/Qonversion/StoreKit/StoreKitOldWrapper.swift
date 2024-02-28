@@ -55,7 +55,7 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
 extension StoreKitOldWrapper: SKPaymentTransactionObserver {
     
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
-        delegate.updated(transactions)
+        delegate.updated(transactions: transactions)
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
