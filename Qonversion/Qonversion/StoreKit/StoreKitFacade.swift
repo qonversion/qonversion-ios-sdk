@@ -10,23 +10,20 @@ import StoreKit
 
 class StoreKitFacade: StoreKitFacadeInterface {
     let storeKitOldWrapper: StoreKitOldWrapperInterface?
-    
     let storeKitWrapper: StoreKitWrapperInterface?
+    let storeKitMapper: StoreKitMapperInterface
     
-    init(storeKitOldWrapper: StoreKitOldWrapperInterface?, storeKitWrapper: StoreKitWrapperInterface?) {
+    init(storeKitOldWrapper: StoreKitOldWrapperInterface?, storeKitWrapper: StoreKitWrapperInterface?, storeKitMapper: StoreKitMapperInterface) {
         self.storeKitOldWrapper = storeKitOldWrapper
         self.storeKitWrapper = storeKitWrapper
+        self.storeKitMapper = storeKitMapper
     }
     
     func currentEntitlements() async -> [String] {
-        guard let storeKitWrapper = storeKitWrapper else { return [] }
+        guard #available(iOS 15.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
         
-        if #available(iOS 15.0, *) {
-            let transactions: [Transaction] = await storeKitWrapper.currentEntitlements()
-            return []
-        } else {
-            return []
-        }
+        let transactions: [Transaction] = await storeKitWrapper.currentEntitlements()
+        return []
     }
     
     func restore() async throws {
