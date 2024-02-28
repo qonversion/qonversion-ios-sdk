@@ -122,6 +122,11 @@
 		70D877002B8DC54E0059AA2B /* StoreKitFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitFacade.swift; sourceTree = "<group>"; };
 		70D877022B8F3A1B0059AA2B /* StoreKitMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitMapper.swift; sourceTree = "<group>"; };
 		70D877042B8F3A240059AA2B /* StoreKitMapperInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitMapperInterface.swift; sourceTree = "<group>"; };
+		70D876F12B8CA7B70059AA2B /* SampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleApp.swift; sourceTree = "<group>"; };
+		70D876F32B8CA7B70059AA2B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		70D876F52B8CA7B90059AA2B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		70D876F72B8CA7B90059AA2B /* Sample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Sample.entitlements; sourceTree = "<group>"; };
+		70D876F92B8CA7B90059AA2B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		70D8770F2B8F4E5E0059AA2B /* Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		70D877112B8F4E5E0059AA2B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		70D877132B8F4E5E0059AA2B /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
