@@ -82,7 +82,7 @@ extension StoreKitOldWrapper: SKProductsRequestDelegate {
     }
     
     func request(_ request: SKRequest, didFailWithError error: Error) {
-        guard let request = request as? SKProductsRequest else { return }
+        guard request is SKProductsRequest else { return }
         
         delegate.handle(productsRequestError: error)
     }
