@@ -13,6 +13,8 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     let paymentQueue: SKPaymentQueue
     
     var productsRequest: SKProductsRequest?
+    var productsCompletions: [SKProductRequest: StoreKitOldProductsCompletion] = [:]
+    var purchaseCompletion: StoreKitOldPurchaseCompletion?
     
     init(delegate: StoreKitOldWrapperDelegate, paymentQueue: SKPaymentQueue) {
         self.delegate = delegate
@@ -23,12 +25,13 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
         paymentQueue.add(self)
     }
     
-    func loadProducts(for ids:[String]) {
+    func loadProducts(for ids:[String], completion: @escaping  StoreKitOldProductsCompletion) {
         let request = SKProductsRequest.init(productIdentifiers: Set(ids))
         request.delegate = self
         request.start()
         
         productsRequest = request
+        productsCompletions[request] = completion
     }
     
     func restore() {
@@ -40,9 +43,10 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
         paymentQueue.presentCodeRedemptionSheet()
     }
     
-    func purchase(product: SKProduct) {
+    func purchase(product: SKProduct, completion: @escaping StoreKitOldPurchaseCompletion) {
         let payment = SKPayment(product: product)
         paymentQueue.add(payment)
+        purchaseCompletion = completion
     }
     
     func finish(transaction: SKPaymentTransaction) {
@@ -55,6 +59,7 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
 extension StoreKitOldWrapper: SKPaymentTransactionObserver {
     
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+        
         delegate.updatedTransactions(transactions)
     }
     
@@ -75,12 +80,15 @@ extension StoreKitOldWrapper: SKPaymentTransactionObserver {
 extension StoreKitOldWrapper: SKProductsRequestDelegate {
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
         delegate.handle(productsResponse: response)
+        let completion: StoreKitOldProductsCompletion? = productsCompletions[request]
+        completion?(response, nil)
     }
     
     func request(_ request: SKRequest, didFailWithError error: Error) {
-        guard let request = request as? SKProductsRequest else { return }
+        guard request is SKProductsRequest else { return }
         
-        delegate.productsRequestDidFail(with: error)
+        let completion: StoreKitOldProductsCompletion? = productsCompletions[request]
+        completion?(nil, error)
     }
     
 }

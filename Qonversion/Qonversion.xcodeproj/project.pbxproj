@@ -42,6 +42,8 @@
 		70D876D32B88ACD20059AA2B /* StoreKitOldWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D876D22B88ACD20059AA2B /* StoreKitOldWrapper.swift */; };
 		70D876D52B88ACDC0059AA2B /* StoreKitOldWrapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D876D42B88ACDC0059AA2B /* StoreKitOldWrapperInterface.swift */; };
 		70D876D72B88B0110059AA2B /* StoreKitOldWrapperDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D876D62B88B0110059AA2B /* StoreKitOldWrapperDelegate.swift */; };
+		70D876FF2B8DC53D0059AA2B /* StoreKitFacadeInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D876FE2B8DC53D0059AA2B /* StoreKitFacadeInterface.swift */; };
+		70D877012B8DC54E0059AA2B /* StoreKitFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877002B8DC54E0059AA2B /* StoreKitFacade.swift */; };
 		70F163A72B6D0D3D00033BEF /* Qonversion.docc in Sources */ = {isa = PBXBuildFile; fileRef = 70F163A62B6D0D3D00033BEF /* Qonversion.docc */; };
 		70F163A82B6D0D3D00033BEF /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F163A52B6D0D3D00033BEF /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
@@ -84,6 +86,8 @@
 		70D876D22B88ACD20059AA2B /* StoreKitOldWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitOldWrapper.swift; sourceTree = "<group>"; };
 		70D876D42B88ACDC0059AA2B /* StoreKitOldWrapperInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitOldWrapperInterface.swift; sourceTree = "<group>"; };
 		70D876D62B88B0110059AA2B /* StoreKitOldWrapperDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitOldWrapperDelegate.swift; sourceTree = "<group>"; };
+		70D876FE2B8DC53D0059AA2B /* StoreKitFacadeInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitFacadeInterface.swift; sourceTree = "<group>"; };
+		70D877002B8DC54E0059AA2B /* StoreKitFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitFacade.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		70F163A52B6D0D3D00033BEF /* Qonversion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
 		70F163A62B6D0D3D00033BEF /* Qonversion.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = Qonversion.docc; sourceTree = "<group>"; };
@@ -218,6 +222,8 @@
 				70D876D42B88ACDC0059AA2B /* StoreKitOldWrapperInterface.swift */,
 				70D876D02B879B5D0059AA2B /* StoreKitWrapperDelegate.swift */,
 				70D876CB2B8618DE0059AA2B /* StoreKitWrapperInterface.swift */,
+				70D876FE2B8DC53D0059AA2B /* StoreKitFacadeInterface.swift */,
+				70D877002B8DC54E0059AA2B /* StoreKitFacade.swift */,
 			);
 			path = StoreKit;
 			sourceTree = "<group>";
@@ -420,6 +426,7 @@
 			files = (
 				701C76702B73D27B00723027 /* NetworkErrorHandler.swift in Sources */,
 				701C767F2B75236D00723027 /* StorageConstants.swift in Sources */,
+				70D876FF2B8DC53D0059AA2B /* StoreKitFacadeInterface.swift in Sources */,
 				70D876C72B839D440059AA2B /* ErrorConstants.swift in Sources */,
 				701C76732B73D27B00723027 /* Request.swift in Sources */,
 				70D876D52B88ACDC0059AA2B /* StoreKitOldWrapperInterface.swift in Sources */,
@@ -434,6 +441,7 @@
 				701C766A2B73D27B00723027 /* HeadersBuilderInterface.swift in Sources */,
 				701C76762B73D27B00723027 /* ResponseDecoder.swift in Sources */,
 				70D876CC2B8618DE0059AA2B /* StoreKitWrapperInterface.swift in Sources */,
+				70D877012B8DC54E0059AA2B /* StoreKitFacade.swift in Sources */,
 				6ABCBD9C2B7E617E003DB107 /* DeviceInfoCollectorInterface.swift in Sources */,
 				70D876CA2B8618CD0059AA2B /* StoreKitWrapper.swift in Sources */,
 				6ABCBDF32B8C81BE003DB107 /* Header.swift in Sources */,
