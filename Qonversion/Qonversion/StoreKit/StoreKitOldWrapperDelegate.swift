@@ -13,7 +13,7 @@ protocol StoreKitOldWrapperDelegate {
     func handle(restoreTransactionsError: Error)
     func handleRestoreFinished()
     func shouldAdd(storePayment: SKPayment, for product: SKProduct) -> Bool
-    func productsRequestDidFail(with error: Error)
-    func updatedTransactions(_ transactions: [SKPaymentTransaction])
+    func handle(productsRequestError: Error)
+    func updated(transactions: [SKPaymentTransaction])
     
 }
