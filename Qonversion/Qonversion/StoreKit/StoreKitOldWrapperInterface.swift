@@ -8,18 +8,18 @@
 import StoreKit
 
 typealias StoreKitOldProductsCompletion = (SKProductsResponse?, Error?) -> ()
-typealias StoreKitOldPurchaseCompletion = ([SKPaymentTransaction], Error) -> ()
+typealias StoreKitOldTransactionsCompletion = ([SKPaymentTransaction], Error?) -> ()
 
 protocol StoreKitOldWrapperInterface {
     
-    func loadProducts(for ids:[String], completion: @escaping StoreKitOldProductsCompletion)
+    func products(for ids:[String], completion: @escaping StoreKitOldProductsCompletion)
     
-    func restore()
+    func restore(with completion: @escaping StoreKitOldTransactionsCompletion)
     
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet()
     
-    func purchase(product: SKProduct, completion: @escaping StoreKitOldPurchaseCompletion)
+    func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion)
     
     func finish(transaction: SKPaymentTransaction)
     

@@ -53,12 +53,15 @@
 		70D877192B8F4E5E0059AA2B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 70D877172B8F4E5E0059AA2B /* Main.storyboard */; };
 		70D8771B2B8F4E5F0059AA2B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 70D8771A2B8F4E5F0059AA2B /* Assets.xcassets */; };
 		70D8771E2B8F4E5F0059AA2B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 70D8771C2B8F4E5F0059AA2B /* LaunchScreen.storyboard */; };
+		70D877232B8F5B370059AA2B /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70F163A22B6D0D3D00033BEF /* Qonversion.framework */; };
+		70D877242B8F5B370059AA2B /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 70F163A22B6D0D3D00033BEF /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		70D8774D2B90E3CC0059AA2B /* TemporaryFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D8774C2B90E3CC0059AA2B /* TemporaryFactory.swift */; };
 		70F163A72B6D0D3D00033BEF /* Qonversion.docc in Sources */ = {isa = PBXBuildFile; fileRef = 70F163A62B6D0D3D00033BEF /* Qonversion.docc */; };
 		70F163A82B6D0D3D00033BEF /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F163A52B6D0D3D00033BEF /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		70D877082B8F49570059AA2B /* PBXContainerItemProxy */ = {
+		70D877252B8F5B370059AA2B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 70F163992B6D0D3D00033BEF /* Project object */;
 			proxyType = 1;
@@ -68,13 +71,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		70D8770A2B8F49570059AA2B /* Embed Frameworks */ = {
+		70D877272B8F5B370059AA2B /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				70D877072B8F49570059AA2B /* Qonversion.framework in Embed Frameworks */,
+				70D877242B8F5B370059AA2B /* Qonversion.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -122,11 +125,6 @@
 		70D877002B8DC54E0059AA2B /* StoreKitFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitFacade.swift; sourceTree = "<group>"; };
 		70D877022B8F3A1B0059AA2B /* StoreKitMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitMapper.swift; sourceTree = "<group>"; };
 		70D877042B8F3A240059AA2B /* StoreKitMapperInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitMapperInterface.swift; sourceTree = "<group>"; };
-		70D876F12B8CA7B70059AA2B /* SampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleApp.swift; sourceTree = "<group>"; };
-		70D876F32B8CA7B70059AA2B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		70D876F52B8CA7B90059AA2B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		70D876F72B8CA7B90059AA2B /* Sample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Sample.entitlements; sourceTree = "<group>"; };
-		70D876F92B8CA7B90059AA2B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		70D8770F2B8F4E5E0059AA2B /* Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		70D877112B8F4E5E0059AA2B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		70D877132B8F4E5E0059AA2B /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -135,6 +133,7 @@
 		70D8771A2B8F4E5F0059AA2B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		70D8771D2B8F4E5F0059AA2B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		70D8771F2B8F4E5F0059AA2B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		70D8774C2B90E3CC0059AA2B /* TemporaryFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryFactory.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		70F163A52B6D0D3D00033BEF /* Qonversion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
 		70F163A62B6D0D3D00033BEF /* Qonversion.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = Qonversion.docc; sourceTree = "<group>"; };
@@ -145,7 +144,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				70D877062B8F49570059AA2B /* Qonversion.framework in Frameworks */,
+				70D877232B8F5B370059AA2B /* Qonversion.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,26 +297,6 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		70D876F02B8CA7B70059AA2B /* Sample */ = {
-			isa = PBXGroup;
-			children = (
-				70D876F12B8CA7B70059AA2B /* SampleApp.swift */,
-				70D876F32B8CA7B70059AA2B /* ContentView.swift */,
-				70D876F52B8CA7B90059AA2B /* Assets.xcassets */,
-				70D876F72B8CA7B90059AA2B /* Sample.entitlements */,
-				70D876F82B8CA7B90059AA2B /* Preview Content */,
-			);
-			path = Sample;
-			sourceTree = "<group>";
-		};
-		70D876F82B8CA7B90059AA2B /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				70D876F92B8CA7B90059AA2B /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
-			sourceTree = "<group>";
-		};
 		70D877102B8F4E5E0059AA2B /* Sample */ = {
 			isa = PBXGroup;
 			children = (
@@ -336,7 +315,6 @@
 			isa = PBXGroup;
 			children = (
 				70F163A42B6D0D3D00033BEF /* Qonversion */,
-				70D876F02B8CA7B70059AA2B /* Sample */,
 				70D877102B8F4E5E0059AA2B /* Sample */,
 				70F163A32B6D0D3D00033BEF /* Products */,
 				70D876CD2B8634220059AA2B /* Frameworks */,
@@ -362,6 +340,7 @@
 				70F163AE2B6D0D8800033BEF /* NetworkLayer */,
 				70F163A52B6D0D3D00033BEF /* Qonversion.h */,
 				70F163A62B6D0D3D00033BEF /* Qonversion.docc */,
+				70D8774C2B90E3CC0059AA2B /* TemporaryFactory.swift */,
 			);
 			path = Qonversion;
 			sourceTree = "<group>";
@@ -404,11 +383,12 @@
 				70D8770B2B8F4E5E0059AA2B /* Sources */,
 				70D8770C2B8F4E5E0059AA2B /* Frameworks */,
 				70D8770D2B8F4E5E0059AA2B /* Resources */,
+				70D877272B8F5B370059AA2B /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				70D877092B8F49570059AA2B /* PBXTargetDependency */,
+				70D877262B8F5B370059AA2B /* PBXTargetDependency */,
 			);
 			name = Sample;
 			productName = Sample;
@@ -509,6 +489,7 @@
 				701C767F2B75236D00723027 /* StorageConstants.swift in Sources */,
 				70D876FF2B8DC53D0059AA2B /* StoreKitFacadeInterface.swift in Sources */,
 				70D877052B8F3A240059AA2B /* StoreKitMapperInterface.swift in Sources */,
+				70D8774D2B90E3CC0059AA2B /* TemporaryFactory.swift in Sources */,
 				6ABCBDB22B8881B4003DB107 /* UserPropertyKey.swift in Sources */,
 				70D876C72B839D440059AA2B /* ErrorConstants.swift in Sources */,
 				701C76732B73D27B00723027 /* Request.swift in Sources */,
@@ -549,6 +530,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		70D877262B8F5B370059AA2B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 70F163A12B6D0D3D00033BEF /* Qonversion */;
+			targetProxy = 70D877252B8F5B370059AA2B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		70D877172B8F4E5E0059AA2B /* Main.storyboard */ = {

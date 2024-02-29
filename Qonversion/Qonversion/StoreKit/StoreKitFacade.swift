@@ -23,24 +23,61 @@ class StoreKitFacade: StoreKitFacadeInterface {
         guard #available(iOS 15.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
         
         let transactions: [Transaction] = await storeKitWrapper.currentEntitlements()
-        return []
-    }
-    
-    func restore() async throws {
+        #warning("Map response here")
         
+        return []
     }
     
-    func historicalData() async -> [String] {
-        return []
+    func restore() async throws -> [String] {
+        if #available(iOS 15.0, *) {
+            guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+            
+            try await storeKitWrapper.restore()
+
+            #warning("Fetch all products and map response here")
+            return [""]
+        } else {
+            guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+            
+            return try await withCheckedThrowingContinuation { continuation in
+                storeKitWrapper.restore { transactions, error in
+                    if let error {
+                        #warning("Handle error here")
+                        continuation.resume(throwing: QonversionError(type: .critical))
+                    } else {
+                        #warning("Map response here")
+                        continuation.resume(returning: [""])
+                    }
+                }
+            }
+        }
+    }
+    
+    @available(iOS 14.0, *)
+    func presentCodeRedemptionSheet() {
+        guard let storeKitWrapper = storeKitOldWrapper else { return }
+        
+        storeKitWrapper.presentCodeRedemptionSheet()
+    }
+    
+    @available(iOS 16.0, *)
+    func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
+        guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+        
+        try await storeKitWrapper.presentOfferCodeRedeemSheet(in: scene)
     }
     
     func finish(transaction: SKPaymentTransaction) {
+        guard let storeKitWrapper = storeKitOldWrapper else { return }
         
+        storeKitWrapper.finish(transaction: transaction)
     }
     
     @available(iOS 15.0, *)
-    func finish(transaction: Transaction) {
+    func finish(transaction: Transaction) async {
+        guard let storeKitWrapper = storeKitWrapper else { return }
         
+        await transaction.finish()
     }
     
     func subscribe() async -> [String] {
@@ -48,7 +85,27 @@ class StoreKitFacade: StoreKitFacadeInterface {
     }
     
     func products(for ids: [String]) async throws -> [String] {
-        return []
+        if #available(iOS 15.0, *) {
+            guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+            
+            let products = try await storeKitWrapper.products(for: ids)
+            #warning("Map response here")
+            return [products.description]
+        } else {
+            guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+            
+            return try await withCheckedThrowingContinuation { continuation in
+                storeKitWrapper.products(for: ids, completion: { response, error in
+                    if let error {
+                        #warning("Handle error here")
+                        continuation.resume(throwing: QonversionError(type: .critical))
+                    } else {
+                        #warning("Map response here")
+                        continuation.resume(returning: [""])
+                    }
+                })
+            }
+        }
     }
     
 }

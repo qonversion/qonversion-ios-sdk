@@ -13,6 +13,7 @@ enum QonversionErrorType {
     case authorizationFailed
     case critical
     case rateLimitExceeded
+    case storeKitUnavailable
     
     func message() -> String {
         // handle other errors here
