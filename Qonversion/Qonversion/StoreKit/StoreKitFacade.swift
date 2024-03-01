@@ -36,12 +36,26 @@ class StoreKitFacade: StoreKitFacadeInterface {
             try await storeKitWrapper.restore()
 
             #warning("Fetch all products and map response here")
+            let res = try await historicalData()
             return [""]
+        } else {
+            let res = try await historicalData()
+            return [""]
+        }
+    }
+    
+    func historicalData() async throws -> [String] {
+        if #available(iOS 15.0, *) {
+            guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+            
+            let products = try await storeKitWrapper.fetchAll()
+            #warning("Map response here")
+            return [products.description]
         } else {
             guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             return try await withCheckedThrowingContinuation { continuation in
-                storeKitWrapper.restore { transactions, error in
+                storeKitWrapper.restore { response, error in
                     if let error {
                         #warning("Handle error here")
                         continuation.resume(throwing: QonversionError(type: .critical))
