@@ -9,5 +9,13 @@ import Foundation
 
 protocol UserPropertiesManagerInterface {
   
-    func userProperties(for userId: String) async throws -> UserProperties
+    func userProperties() async throws -> UserProperties
+    
+    func setUserProperty(key: UserPropertyKey, value: String)
+
+    func setCustomUserProperty(key: String, value: String)
+    
+    func sendProperties() async throws
+    
+    func clearDelayedProperties()
 }

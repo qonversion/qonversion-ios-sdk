@@ -13,7 +13,6 @@ class RequestProcessor: RequestProcessorInterface {
     let decoder: ResponseDecoderInterface
     let retriableRequestsList: [Request]
     let requestsStorage: RequestsStorageInterface
-    var criticalError: QonversionError?
     let rateLimiter: RateLimiter
     var criticalError: QonversionError?
 
@@ -53,22 +52,25 @@ class RequestProcessor: RequestProcessorInterface {
         }
         headersBuilder.addHeaders(to: &urlRequest)
 
+        let response: Data
+        let error: QonversionError?
         do {
             let (data, resposne) = try await networkProvider.send(request: urlRequest)
-            let error: QonversionError? = errorHandler.extractError(from: resposne)
+            error = errorHandler.extractError(from: resposne)
+            response = data
             if error?.type == .critical {
                 criticalError = error
             }
+        } catch {
+            throw QonversionError(type: .invalidResponse, error: error)
+        }
+
+        guard error == nil else { throw error! }
+        
+        do {
+            let result: T = try decoder.decode(responseType, from: response)
             
-            guard error == nil else { throw error! }
-            
-            do {
-                let result: T = try decoder.decode(responseType, from: data)
-                
-                return result
-            } catch {
-                throw QonversionError(type: .invalidResponse, error: error)
-            }
+            return result
         } catch {
             throw QonversionError(type: .invalidResponse, error: error)
         }
