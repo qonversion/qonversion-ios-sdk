@@ -16,7 +16,7 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     var productsRequest: SKProductsRequest?
     var productsCompletions: [SKProductsRequest: StoreKitOldProductsCompletion] = [:]
     var purchaseCompletion: StoreKitOldTransactionsCompletion?
-    var restoreCompletion: StoreKitOldTransactionsCompletion?
+    var restoreCompletions: [StoreKitOldTransactionsCompletion] = []
     
     init(delegate: StoreKitOldWrapperDelegate, paymentQueue: SKPaymentQueue) {
         self.delegate = delegate
@@ -37,7 +37,7 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     }
     
     func restore(with completion: @escaping StoreKitOldTransactionsCompletion) {
-        restoreCompletion = completion
+        restoreCompletions.append(completion)
         paymentQueue.restoreCompletedTransactions()
     }
     
@@ -60,11 +60,16 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
 }
 
 extension StoreKitOldWrapper: SKPaymentTransactionObserver {
-    
+ 
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
-        if transactions.count > 1, let restoreCompletion = restoreCompletion  {
-            return restoreCompletion(transactions, nil)
-        } else if let completion = purchaseCompletion {
+        let restoredTransactions: [SKPaymentTransaction] = transactions.filter { $0.transactionState == .restored }
+        if restoredTransactions.count > 0, restoreCompletions.count > 0  {
+            restoreCompletions.forEach { $0(restoredTransactions, nil) }
+            restoreCompletions.removeAll()
+        }
+        
+        if let completion = purchaseCompletion {
+            let otherTransactions = transactions.filter { $0.transactionState != .restored }
             return completion(transactions, nil)
         } else {
             delegate.updated(transactions: transactions)
@@ -72,11 +77,12 @@ extension StoreKitOldWrapper: SKPaymentTransactionObserver {
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
-        guard let completion = restoreCompletion else {
+        guard restoreCompletions.count > 0 else {
             return delegate.handle(restoreTransactionsError: error)
         }
         
-        completion([], error)
+        restoreCompletions.forEach { $0([], nil)}
+        restoreCompletions.removeAll()
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
