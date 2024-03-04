@@ -56,9 +56,10 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
 
         let userProperty = UserProperty(key: key, value: value)
         propertiesStorage.save(userProperty)
-        if (sendingTask == nil) {
-            scheduleSendingProperties(withDelay: sendPropertiesRetryDelay)
-        }
+        
+        guard sendingTask == nil else { return }
+
+        scheduleSendingProperties(withDelay: sendPropertiesRetryDelay)
     }
 
     func sendProperties() async throws {

@@ -16,7 +16,7 @@ final class UserPropertiesStorage: PropertiesStorage {
     }
 
     func clear(properties: [UserProperty]) {
-        userProperties = userProperties.filter { userProperty in !properties.contains { $0 == userProperty } }
+        userProperties.removeAll(where: { properties.contains($0) })
     }
 
     func clear() {

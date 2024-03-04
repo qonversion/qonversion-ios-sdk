@@ -52,24 +52,27 @@ class RequestProcessor: RequestProcessorInterface {
         }
         headersBuilder.addHeaders(to: &urlRequest)
 
-        let response: Data
+        let responseBody: Data
         let error: QonversionError?
         do {
-            let (data, resposne) = try await networkProvider.send(request: urlRequest)
-            error = errorHandler.extractError(from: resposne)
-            response = data
-            if error?.type == .critical {
-                criticalError = error
-            }
+            let (data, urlResponse) = try await networkProvider.send(request: urlRequest)
+            error = errorHandler.extractError(from: urlResponse)
+            responseBody = data
         } catch {
             throw QonversionError(type: .invalidResponse, error: error)
         }
 
-        guard error == nil else { throw error! }
-        
+        guard error == nil else {
+            if error?.type == .critical {
+                criticalError = error
+            }
+
+            throw error!
+        }
+
         do {
-            let result: T = try decoder.decode(responseType, from: response)
-            
+            let result: T = try decoder.decode(responseType, from: responseBody)
+
             return result
         } catch {
             throw QonversionError(type: .invalidResponse, error: error)
