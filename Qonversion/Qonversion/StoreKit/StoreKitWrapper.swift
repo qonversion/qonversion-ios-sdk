@@ -11,9 +11,9 @@ import StoreKit
 @available(iOS 15.0, *)
 final class StoreKitWrapper: StoreKitWrapperInterface {
     
-    let delegate: StoreKitWrapperDelegate
+    let delegate: StoreKitWrapperDelegate?
     
-    init(delegate: StoreKitWrapperDelegate) {
+    init(delegate: StoreKitWrapperDelegate? = nil) {
         self.delegate = delegate
     }
     
@@ -72,7 +72,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
     func subscribeToPromoPurchases() {
         Task.detached {
             for await purchaseIntent in PurchaseIntent.intents {
-                self.delegate.promoPurchaseIntent(product: purchaseIntent.product)
+                self.delegate?.promoPurchaseIntent(product: purchaseIntent.product)
             }
         }
     }
