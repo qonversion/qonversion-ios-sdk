@@ -37,7 +37,13 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     }
     
     func restore(with completion: @escaping StoreKitOldTransactionsCompletion) {
-        restoreCompletions.append(completion)
+        defer {
+            restoreCompletions.append(completion)
+        }
+        
+        if restoreCompletions.count > 0 {
+            return
+        }
         paymentQueue.restoreCompletedTransactions()
     }
     
@@ -59,23 +65,17 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     }
 }
 
+// MARK: - SKPaymentTransactionObserver
+
 extension StoreKitOldWrapper: SKPaymentTransactionObserver {
  
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         let restoredTransactions: [SKPaymentTransaction] = transactions.filter { $0.transactionState == .restored }
         if restoredTransactions.count > 0, restoreCompletions.count > 0  {
-            restoreCompletions.forEach { $0(restoredTransactions, nil) }
-            restoreCompletions.removeAll()
+            fireRestoreCompletions(with: restoredTransactions)
         }
         
-        let completionsCopy: [SKPayment: StoreKitOldTransactionsCompletion] = purchaseCompletions
-        completionsCopy.keys.forEach { payment in
-            if let transaction: SKPaymentTransaction = transactions.first(where: { $0.payment == payment }),
-               let completion: StoreKitOldTransactionsCompletion = completionsCopy[payment] {
-                completion(transactions, nil)
-                purchaseCompletions[payment] = nil
-            }
-        }
+        firePurchaseCompletions(with: transactions)
         
         if purchaseCompletions.isEmpty {
             delegate.updated(transactions: transactions)
@@ -97,6 +97,8 @@ extension StoreKitOldWrapper: SKPaymentTransactionObserver {
     
 }
 
+// MARK: - SKProductsRequestDelegate
+
 extension StoreKitOldWrapper: SKProductsRequestDelegate {
    
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
@@ -113,4 +115,25 @@ extension StoreKitOldWrapper: SKProductsRequestDelegate {
         delegate.handle(productsRequestError: error)
     }
     
+}
+
+// MARK: - Private
+
+extension StoreKitOldWrapper {
+    
+    func fireRestoreCompletions(with transactions: [SKPaymentTransaction]) {
+        restoreCompletions.forEach { $0(transactions, nil) }
+        restoreCompletions.removeAll()
+    }
+    
+    func firePurchaseCompletions(with transactions: [SKPaymentTransaction]) {
+        let completionsCopy: [SKPayment: StoreKitOldTransactionsCompletion] = purchaseCompletions
+        completionsCopy.keys.forEach { payment in
+            if let transaction: SKPaymentTransaction = transactions.first(where: { $0.payment == payment }),
+               let completion: StoreKitOldTransactionsCompletion = completionsCopy[payment] {
+                completion(transactions, nil)
+                purchaseCompletions[payment] = nil
+            }
+        }
+    }
 }
