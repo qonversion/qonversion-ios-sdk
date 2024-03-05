@@ -15,7 +15,7 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     
     var productsRequest: SKProductsRequest?
     var productsCompletions: [SKProductsRequest: StoreKitOldProductsCompletion] = [:]
-    var purchaseCompletion: StoreKitOldTransactionsCompletion?
+    var purchaseCompletions: [SKPayment: StoreKitOldTransactionsCompletion] = [:]
     var restoreCompletions: [StoreKitOldTransactionsCompletion] = []
     
     init(delegate: StoreKitOldWrapperDelegate, paymentQueue: SKPaymentQueue) {
@@ -49,7 +49,7 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion) {
         let payment = SKPayment(product: product)
         paymentQueue.add(payment)
-        purchaseCompletion = completion
+        purchaseCompletions[payment] = completion
     }
     
     func finish(transaction: SKPaymentTransaction) {
@@ -68,10 +68,16 @@ extension StoreKitOldWrapper: SKPaymentTransactionObserver {
             restoreCompletions.removeAll()
         }
         
-        if let completion = purchaseCompletion {
-            let otherTransactions = transactions.filter { $0.transactionState != .restored }
-            return completion(transactions, nil)
-        } else {
+        let completionsCopy: [SKPayment: StoreKitOldTransactionsCompletion] = purchaseCompletions
+        completionsCopy.keys.forEach { payment in
+            if let transaction: SKPaymentTransaction = transactions.first(where: { $0.payment == payment }),
+               let completion: StoreKitOldTransactionsCompletion = completionsCopy[payment] {
+                completion(transactions, nil)
+                purchaseCompletions[payment] = nil
+            }
+        }
+        
+        if purchaseCompletions.isEmpty {
             delegate.updated(transactions: transactions)
         }
     }
