@@ -11,28 +11,28 @@ import StoreKit
 protocol StoreKitWrapperInterface {
     
     @available(iOS 15.0, *)
-    func purchase(product: Product) async throws -> Transaction
+    func purchase(product: StoreKit.Product) async throws -> StoreKit.Transaction
     
     @available(iOS 15.0, *)
-    func products(for ids:[String]) async throws -> [Product]
+    func products(for ids:[String]) async throws -> [StoreKit.Product]
     
     @available(iOS 15.0, *)
-    func currentEntitlements() async -> [Transaction]
+    func currentEntitlements() async -> [StoreKit.Transaction]
     
     @available(iOS 15.0, *)
     func restore() async throws
     
     @available(iOS 15.0, *)
-    func fetchAll() async -> [Transaction]
+    func fetchAll() async -> [StoreKit.Transaction]
     
     @available(iOS 15.0, *)
-    func fetchUnfinished() async -> [Transaction]
+    func fetchUnfinished() async -> [StoreKit.Transaction]
     
     @available(iOS 15.0, *)
-    func finish(transaction: Transaction) async
+    func finish(transaction: StoreKit.Transaction) async
     
     @available(iOS 15.0, *)
-    func subscribe() async -> [Transaction]
+    func subscribe() async -> [StoreKit.Transaction]
         
     @available(iOS 16.0, *)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws
