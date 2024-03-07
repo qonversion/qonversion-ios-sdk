@@ -196,7 +196,7 @@ static bool _isInitialized = NO;
 }
 
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
-  [[Qonversion sharedInstance] remoteConfig:nil completion:completion];
+  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigWithContextKey:nil completion:completion];
 }
 
 - (void)remoteConfig:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion {

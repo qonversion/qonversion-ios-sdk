@@ -96,7 +96,7 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   NSString *uid = remoteConfigurationSourceData[@"uid"];
   NSString *name = remoteConfigurationSourceData[@"name"];
   NSString *contextKey = remoteConfigurationSourceData[@"context_key"];
-  if (contextKey == @"") {
+  if ([contextKey isEqualToString:@""]) {
     contextKey = nil;
   }
 
