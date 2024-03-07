@@ -10,14 +10,10 @@
 #import "QONLaunchResult.h"
 #import "QONExperiment.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @interface QONRemoteConfigLoadingState : NSObject
 
-@property (nonatomic, strong) QONRemoteConfig *loadedConfig;
-@property (nonatomic, strong) NSMutableArray<QONRemoteConfigCompletionHandler> *completions;
+@property (nonatomic, strong) QONRemoteConfig * _Nullable loadedConfig;
+@property (nonatomic, strong) NSMutableArray<QONRemoteConfigCompletionHandler> * _Nonnull completions;
 @property (nonatomic, assign) BOOL isInProgress;
 
 @end
-
-NS_ASSUME_NONNULL_END

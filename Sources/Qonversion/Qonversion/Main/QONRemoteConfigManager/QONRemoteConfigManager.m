@@ -13,7 +13,7 @@
 #import "QNProductCenterManager.h"
 #import "QONRemoteConfigLoadingState.h"
 
-static NSString *const DefaultLoadingStateKey = @"";
+static NSString *const kDefaultLoadingStateKey = @"";
 
 @interface QONRemoteConfigManager ()
 
@@ -35,7 +35,7 @@ static NSString *const DefaultLoadingStateKey = @"";
 }
 
 - (void)handlePendingRequests {
-  for (id contextKey in self.loadingStates) {
+  for (NSString *contextKey in self.loadingStates) {
     QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
     if (loadingState && loadingState.completions.count > 0) {
       [self obtainRemoteConfigWithContextKey:contextKey
@@ -45,7 +45,7 @@ static NSString *const DefaultLoadingStateKey = @"";
 }
 
 - (void)userChangingRequestFailedWithError:(NSError *)error {
-  for (id contextKey in self.loadingStates) {
+  for (NSString *contextKey in self.loadingStates) {
     QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
     if (loadingState) {
       [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
@@ -62,7 +62,7 @@ static NSString *const DefaultLoadingStateKey = @"";
   QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
   if (loadingState == nil) {
     loadingState = [QONRemoteConfigLoadingState new];
-    self.loadingStates[contextKey ?: DefaultLoadingStateKey] = loadingState;
+    self.loadingStates[contextKey ?: kDefaultLoadingStateKey] = loadingState;
   }
 
   if (!isUserStable || loadingState.isInProgress) {
@@ -92,22 +92,22 @@ static NSString *const DefaultLoadingStateKey = @"";
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
-  self.loadingStates[DefaultLoadingStateKey] = nil;
+  self.loadingStates[kDefaultLoadingStateKey] = nil;
   [self.remoteConfigService attachUserToExperiment:experimentId groupId:groupId completion:completion];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
-  self.loadingStates[DefaultLoadingStateKey] = nil;
+  self.loadingStates[kDefaultLoadingStateKey] = nil;
   [self.remoteConfigService detachUserFromExperiment:experimentId completion:completion];
 }
 
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  self.loadingStates[DefaultLoadingStateKey] = nil;
+  self.loadingStates[kDefaultLoadingStateKey] = nil;
   [self.remoteConfigService attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  self.loadingStates[DefaultLoadingStateKey] = nil;
+  self.loadingStates[kDefaultLoadingStateKey] = nil;
   [self.remoteConfigService detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
@@ -124,7 +124,7 @@ static NSString *const DefaultLoadingStateKey = @"";
 }
 
 - (QONRemoteConfigLoadingState *)loadingStateForContextKey:(NSString *)contextKey {
-  NSString *key = contextKey ?: DefaultLoadingStateKey;
+  NSString *key = contextKey ?: kDefaultLoadingStateKey;
   return self.loadingStates[key];
 }
 

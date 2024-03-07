@@ -210,7 +210,8 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  @param contextKey context key for the requested remote config.
  @param completion completion block that includes information about the remote config.
  */
-- (void)remoteConfigForContextKey:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion;
+- (void)remoteConfig:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion
+NS_SWIFT_NAME(remoteConfig(contextKey:completion:));
 
 /**
  This function should be used for the test purposes only.
