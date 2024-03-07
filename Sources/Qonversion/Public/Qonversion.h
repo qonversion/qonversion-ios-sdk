@@ -198,11 +198,19 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
 - (void)collectAdvertisingId;
 
 /**
- Returns Qonversion remote config object
+ Returns default Qonversion remote config object
  Use this function to get the remote config with specific payload and experiment info.
  @param completion completion block that includes information about the remote config.
  */
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion;
+
+/**
+ Returns Qonversion remote config object by context key.
+ Use this function to get the remote config with specific payload and experiment info.
+ @param contextKey context key for the requested remote config.
+ @param completion completion block that includes information about the remote config.
+ */
+- (void)remoteConfigForContextKey:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion;
 
 /**
  This function should be used for the test purposes only.
