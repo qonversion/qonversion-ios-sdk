@@ -7,7 +7,7 @@
 
 @interface QNAttributionManager()
 
-@property (nonatomic) QNAPIClient *client;
+@property (nonatomic, strong) QNAPIClient *client;
 
 @end
 
@@ -29,7 +29,7 @@
 
   dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
     
-    [self->_client attributionRequest:provider data:data completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    [self.client attributionRequest:provider data:data completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
         QONVERSION_LOG(@"Attribution Request Log Response:\n%@", dict);
       }
