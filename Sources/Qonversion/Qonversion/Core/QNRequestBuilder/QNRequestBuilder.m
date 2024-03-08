@@ -86,11 +86,10 @@
   
   NSMutableURLRequest *mutableRequest = [request mutableCopy];
   NSString *updatedURLString = [mutableRequest.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@", userId]];
-  NSString *resultString = updatedURLString;
   if (contextKey) {
-    resultString = [updatedURLString stringByAppendingString:[NSString stringWithFormat:@"&context_key=%@", contextKey]];
+    updatedURLString = [updatedURLString stringByAppendingString:[NSString stringWithFormat:@"&context_key=%@", contextKey]];
   }
-  [mutableRequest setURL:[NSURL URLWithString:resultString]];
+  [mutableRequest setURL:[NSURL URLWithString:updatedURLString]];
   
   return [mutableRequest copy];
 }
