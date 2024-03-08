@@ -196,7 +196,11 @@ static bool _isInitialized = NO;
 }
 
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfig:completion];
+  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigWithContextKey:nil completion:completion];
+}
+
+- (void)remoteConfig:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigWithContextKey:contextKey completion:completion];
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {

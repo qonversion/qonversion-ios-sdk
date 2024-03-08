@@ -49,6 +49,8 @@
 		6A95DEA029E011A700350BD6 /* QNIntegrationTestConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DE9F29E011A700350BD6 /* QNIntegrationTestConstants.m */; };
 		6A95DEA229E40E9900350BD6 /* QNOutagerIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */; };
 		6A95DEA529E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA429E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m */; };
+		6ABCBE182B99A79E003DB107 /* QONRemoteConfigLoadingState.h in Headers */ = {isa = PBXBuildFile; fileRef = 6ABCBE162B99A79E003DB107 /* QONRemoteConfigLoadingState.h */; };
+		6ABCBE192B99A79E003DB107 /* QONRemoteConfigLoadingState.m in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBE172B99A79E003DB107 /* QONRemoteConfigLoadingState.m */; };
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
 		701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922712B10981200724926 /* QONSubscriptionPeriod.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */ = {isa = PBXBuildFile; fileRef = 701922722B10981200724926 /* QONSubscriptionPeriod.m */; };
@@ -354,6 +356,8 @@
 		6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNOutagerIntegrationTests.m; sourceTree = "<group>"; };
 		6A95DEA329E40F2100350BD6 /* XCTestCase+IntegrationTestsHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+IntegrationTestsHelpers.h"; sourceTree = "<group>"; };
 		6A95DEA429E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+IntegrationTestsHelpers.m"; sourceTree = "<group>"; };
+		6ABCBE162B99A79E003DB107 /* QONRemoteConfigLoadingState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigLoadingState.h; sourceTree = "<group>"; };
+		6ABCBE172B99A79E003DB107 /* QONRemoteConfigLoadingState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigLoadingState.m; sourceTree = "<group>"; };
 		700EC171291277130032E205 /* QONExperimentGroup+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONExperimentGroup+Protected.h"; sourceTree = "<group>"; };
 		701922712B10981200724926 /* QONSubscriptionPeriod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONSubscriptionPeriod.h; sourceTree = "<group>"; };
 		701922722B10981200724926 /* QONSubscriptionPeriod.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONSubscriptionPeriod.m; sourceTree = "<group>"; };
@@ -892,6 +896,8 @@
 			children = (
 				70D05A8C29C9FC1600EA5DDF /* QONRemoteConfigManager.h */,
 				70D05A8D29C9FC1600EA5DDF /* QONRemoteConfigManager.m */,
+				6ABCBE162B99A79E003DB107 /* QONRemoteConfigLoadingState.h */,
+				6ABCBE172B99A79E003DB107 /* QONRemoteConfigLoadingState.m */,
 			);
 			path = QONRemoteConfigManager;
 			sourceTree = "<group>";
@@ -1610,6 +1616,7 @@
 				895732EB26DD03A3009507A6 /* QNServicesAssembly.h in Headers */,
 				895732E226DD03A3009507A6 /* QONOffering+Protected.h in Headers */,
 				895732B226DD03A3009507A6 /* QONAutomationsViewController.h in Headers */,
+				6ABCBE182B99A79E003DB107 /* QONRemoteConfigLoadingState.h in Headers */,
 				895732CC26DD03A3009507A6 /* QNDevice.h in Headers */,
 				8957328726DD03A3009507A6 /* QONErrors.h in Headers */,
 				70D0E2BB291AA21C004E8DE8 /* QONLaunchMode.h in Headers */,
@@ -1976,6 +1983,7 @@
 				8957329726DD03A3009507A6 /* QONStoreKitSugare.m in Sources */,
 				895732A226DD03A3009507A6 /* QONMacrosProcess.m in Sources */,
 				8957329E26DD03A3009507A6 /* QONProduct.m in Sources */,
+				6ABCBE192B99A79E003DB107 /* QONRemoteConfigLoadingState.m in Sources */,
 				895732A026DD03A3009507A6 /* QONAutomationsConstants.m in Sources */,
 				7094501B29CD994200F55E68 /* QONRemoteConfig.m in Sources */,
 				895732F826DD03A3009507A6 /* QNProductCenterManager.m in Sources */,

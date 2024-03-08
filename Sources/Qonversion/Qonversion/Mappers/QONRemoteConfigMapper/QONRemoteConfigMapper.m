@@ -95,13 +95,18 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   
   NSString *uid = remoteConfigurationSourceData[@"uid"];
   NSString *name = remoteConfigurationSourceData[@"name"];
+  NSString *contextKey = remoteConfigurationSourceData[@"context_key"];
+  if ([contextKey isEqualToString:@""]) {
+    contextKey = nil;
+  }
+
   NSString *typeRawValue = remoteConfigurationSourceData[@"type"];
   QONRemoteConfigurationSourceType type = [self mapRemoteConfigurationSourceTypeFromString:typeRawValue];
-  
+
   NSString *assignmentTypeRawValue = remoteConfigurationSourceData[@"assignment_type"];
   QONRemoteConfigurationAssignmentType assignmentType = [self mapRemoteConfigurationAssignmentTypeFromString:assignmentTypeRawValue];
-  
-  return [[QONRemoteConfigurationSource alloc] initWithIdentifier:uid name:name type:type assignmentType:assignmentType];
+
+  return [[QONRemoteConfigurationSource alloc] initWithIdentifier:uid name:name type:type assignmentType:assignmentType contextKey:contextKey];
 }
 
 - (QONExperimentGroup *)mapExperimentGroup:(NSDictionary *)experimentGroupData {

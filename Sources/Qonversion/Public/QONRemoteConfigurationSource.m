@@ -13,7 +13,8 @@
 - (instancetype)initWithIdentifier:(NSString *)identifier
                               name:(NSString *)name
                               type:(QONRemoteConfigurationSourceType)type
-                    assignmentType:(QONRemoteConfigurationAssignmentType)assignmentType {
+                    assignmentType:(QONRemoteConfigurationAssignmentType)assignmentType
+                        contextKey:(NSString * _Nullable)contextKey {
   self = [super init];
   
   if (self) {
@@ -21,6 +22,7 @@
     _name = name;
     _type = type;
     _assignmentType = assignmentType;
+    _contextKey = contextKey;
   }
   
   return self;
@@ -32,6 +34,7 @@
   [description appendFormat:@"name=%@\n", self.name];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
   [description appendFormat:@"assignmentType=%@ (enum value = %li),\n", [self prettyAssignmentType], (long) self.assignmentType];
+  [description appendFormat:@"contextKey=%@\n", self.contextKey];
   [description appendString:@">"];
   
   return [description copy];

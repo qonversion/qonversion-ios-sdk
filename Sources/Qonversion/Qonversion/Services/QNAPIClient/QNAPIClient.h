@@ -55,7 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)processStoredRequests;
 - (void)storeRequestForRetry:(NSURLRequest *)request transactionId:(NSString *)transactionId;
 - (void)removeStoredRequestForTransactionId:(NSString *)transactionId;
-- (void)loadRemoteConfig:(QNAPIClientDictCompletionHandler)completion;
+- (void)loadRemoteConfig:(NSString * _Nullable)contextKey completion:(QNAPIClientDictCompletionHandler)completion;
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion;
