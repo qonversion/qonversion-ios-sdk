@@ -12,8 +12,8 @@
 
 @interface QONRemoteConfigLoadingState : NSObject
 
-@property (nonatomic, strong) QONRemoteConfig * _Nullable loadedConfig;
-@property (nonatomic, strong) NSMutableArray<QONRemoteConfigCompletionHandler> * _Nonnull completions;
+@property (nonatomic, strong, nullable) QONRemoteConfig * loadedConfig;
+@property (nonatomic, strong, nonnull) NSMutableArray<QONRemoteConfigCompletionHandler> * completions;
 @property (nonatomic, assign) BOOL isInProgress;
 
 @end
