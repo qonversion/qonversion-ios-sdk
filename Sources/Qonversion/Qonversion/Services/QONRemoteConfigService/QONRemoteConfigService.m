@@ -12,7 +12,7 @@
 #import "QONRemoteConfig.h"
 #import "QONErrors.h"
 
-static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configuration for the current user not available";
+static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configuration is not available for the current user or for the provided context key";
 
 @implementation QONRemoteConfigService
 
