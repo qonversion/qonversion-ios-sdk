@@ -57,7 +57,7 @@ static NSString *const kDefaultLoadingStateKey = @"";
   self.loadingStates = [NSMutableDictionary new];
 }
 
-- (void)obtainRemoteConfigWithContextKey:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
+- (void)obtainRemoteConfigWithContextKey:(NSString * _Nullable)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
   BOOL isUserStable = [self.productCenterManager isUserStable];
   QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
   if (loadingState == nil) {
