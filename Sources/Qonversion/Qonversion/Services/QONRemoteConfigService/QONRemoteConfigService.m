@@ -27,9 +27,9 @@ static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configurati
   return self;
 }
 
-- (void)loadRemoteConfig:(QONRemoteConfigCompletionHandler)completion {
+- (void)loadRemoteConfig:(NSString * _Nullable)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
   __block __weak QONRemoteConfigService *weakSelf = self;
-  [self.apiClient loadRemoteConfig:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+  [self.apiClient loadRemoteConfig:contextKey completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     if (error) {
       completion(nil, error);
       return;

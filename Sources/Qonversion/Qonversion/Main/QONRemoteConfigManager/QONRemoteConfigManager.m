@@ -77,7 +77,7 @@ static NSString *const kDefaultLoadingStateKey = @"";
   
   loadingState.isInProgress = YES;
   __block __weak QONRemoteConfigManager *weakSelf = self;
-  [self.remoteConfigService loadRemoteConfig:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+  [self.remoteConfigService loadRemoteConfig:contextKey completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
     loadingState.isInProgress = NO;
     if (error) {
       [weakSelf executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];

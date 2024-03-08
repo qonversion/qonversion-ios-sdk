@@ -81,12 +81,16 @@
   return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kProductsEndpoint type:QONRequestTypePost];
 }
 
-- (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId {
+- (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId contextKey:(NSString * _Nullable)contextKey {
   NSURLRequest *request = [self makeGetRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigEndpoint];
   
   NSMutableURLRequest *mutableRequest = [request mutableCopy];
   NSString *updatedURLString = [mutableRequest.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@", userId]];
-  [mutableRequest setURL:[NSURL URLWithString:updatedURLString]];
+  NSString *resultString = updatedURLString;
+  if (contextKey) {
+    resultString = [updatedURLString stringByAppendingString:[NSString stringWithFormat:@"&context_key=%@", contextKey]];
+  }
+  [mutableRequest setURL:[NSURL URLWithString:resultString]];
   
   return [mutableRequest copy];
 }

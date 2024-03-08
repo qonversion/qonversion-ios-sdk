@@ -370,7 +370,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   [self processRequestWithoutResponse:mutableRequest completion:completion];
 }
 
-- (void)loadRemoteConfig:(QNAPIClientDictCompletionHandler)completion {
+- (void)loadRemoteConfig:(NSString * _Nullable)contextKey completion:(QNAPIClientDictCompletionHandler)completion {
   [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeRemoteConfig
                                  hash:[self.userID hash]
                            completion:^(NSError *rateLimitError) {
@@ -379,7 +379,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       return;
     }
 
-    NSURLRequest *request = [self.requestBuilder remoteConfigRequestForUserId:self.userID];
+    NSURLRequest *request = [self.requestBuilder remoteConfigRequestForUserId:self.userID contextKey:contextKey];
 
     return [self processDictRequest:request completion:completion];
   }];
