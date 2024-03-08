@@ -81,7 +81,7 @@
   return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kProductsEndpoint type:QONRequestTypePost];
 }
 
-- (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId contextKey:(NSString * _Nullable)contextKey {
+- (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId contextKey:(NSString *)contextKey {
   NSURLRequest *request = [self makeGetRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigEndpoint];
   
   NSMutableURLRequest *mutableRequest = [request mutableCopy];
