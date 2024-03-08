@@ -46,6 +46,11 @@ NS_SWIFT_NAME(Qonversion.RemoteConfigurationSource)
  */
 @property (nonatomic, assign, readonly) QONRemoteConfigurationAssignmentType assignmentType;
 
+/**
+ Remote configuration context key. Empty string if not specified.
+ */
+@property (nonatomic, copy, readonly) NSString * _Nullable contextKey;
+
 @end
 
 NS_ASSUME_NONNULL_END

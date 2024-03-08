@@ -12,7 +12,7 @@
 #import "QONRemoteConfig.h"
 #import "QONErrors.h"
 
-static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configuration for the current user not available";
+static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configuration is not available for the current user or for the provided context key";
 
 @implementation QONRemoteConfigService
 
@@ -27,9 +27,9 @@ static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configurati
   return self;
 }
 
-- (void)loadRemoteConfig:(QONRemoteConfigCompletionHandler)completion {
+- (void)loadRemoteConfig:(NSString * _Nullable)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
   __block __weak QONRemoteConfigService *weakSelf = self;
-  [self.apiClient loadRemoteConfig:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+  [self.apiClient loadRemoteConfig:contextKey completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     if (error) {
       completion(nil, error);
       return;
