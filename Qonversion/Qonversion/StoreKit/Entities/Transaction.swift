@@ -214,7 +214,7 @@ public struct Transaction {
     public var deviceVerificationNonce: UUID? { storeKitTransaction?.deviceVerificationNonce }
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    public var signedDate: Date { storeKitTransaction?.signedDate ?? Date.now }
+    public var signedDate: Date? { storeKitTransaction?.signedDate }
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     public var ownershipType: Qonversion.Transaction.OwnershipType {
@@ -255,7 +255,7 @@ public struct Transaction {
         self.skPaymentTransaction = transaction
     }
     
-    @available(iOS 15.0, *)
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     init(transaction: StoreKit.Transaction) {
         self.jsonRepresentation = transaction.jsonRepresentation
         self.id = String(transaction.id)
