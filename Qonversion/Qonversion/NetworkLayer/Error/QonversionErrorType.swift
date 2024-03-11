@@ -14,6 +14,7 @@ enum QonversionErrorType {
     case critical
     case rateLimitExceeded
     case storeKitUnavailable
+    case userLoadingFailed
     
     func message() -> String {
         // handle other errors here
