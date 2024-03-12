@@ -24,7 +24,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
     }
     
     func currentEntitlements() async -> [StoreKit.Transaction] {
-        return await fetchTransactions(for: Transaction.currentEntitlements)
+        return await fetchTransactions(for: StoreKit.Transaction.currentEntitlements)
     }
     
     func restore() async throws {
@@ -50,7 +50,6 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
         case .success(let verificationResult):
             switch verificationResult {
             case .verified(let transaction):
-                transaction.reason == .renewal
                 return transaction
             case .unverified(let transaction, let verificationError):
 #warning("throw error here using verification error")
