@@ -11,6 +11,8 @@ protocol UserServiceInterface {
     
     func user() async throws -> User
     
+    func createUser() async throws -> User
+    
     func userId() -> String
     
 }

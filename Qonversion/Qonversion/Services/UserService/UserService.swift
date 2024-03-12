@@ -40,6 +40,18 @@ final class UserService: UserServiceInterface {
         return userId
     }
     
+    func createUser() async throws -> User {
+        let userId: String = generateUserId()
+        do {
+            let request = Request.createUser(id: userId, body: ["environment": "sandbox"])
+            let user: User = try await requestProcessor.process(request: request, responseType: User.self)
+            
+            return user
+        } catch {
+            throw QonversionError(type: .userCreationFailed, message: nil, error: error)
+        }
+    }
+    
     func user() async throws -> User {
         let request = Request.getUser(id: internalConfig.userId)
         do {
