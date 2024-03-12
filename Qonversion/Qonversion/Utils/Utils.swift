@@ -14,3 +14,11 @@ enum InternalConstants: String {
 extension Bundle {
   static var appVersion: String? { main.infoDictionary?[InternalConstants.appVersionBundleKey.rawValue] as? String }
 }
+
+extension String {
+    func toCurrencySymbol() -> String? {
+        let locale: Locale? = Locale.availableIdentifiers.map { Locale(identifier: $0) }.first { $0.currencyCode == self }
+        
+        return locale?.currencySymbol
+    }
+}
