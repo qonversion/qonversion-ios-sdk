@@ -7,7 +7,7 @@
 //
 import Foundation
 
-final class RateLimiter {
+final class RateLimiter: RateLimiterInterface {
     private var maxRequestsPerSecond: UInt
     private var requests: [Int: [TimeInterval]] = [:]
 
@@ -26,8 +26,13 @@ final class RateLimiter {
             return nil
         }
     }
+}
 
-    func saveRequest(hash: Int) {
+// MARK: - Private
+
+extension RateLimiter {
+    
+    private func saveRequest(hash: Int) {
         let timestamp: TimeInterval = Date().timeIntervalSince1970
 
         if requests[hash] == nil {
@@ -60,4 +65,5 @@ final class RateLimiter {
 
         requests[hash] = filteredRequestTimestamps
     }
+    
 }
