@@ -17,8 +17,14 @@ final class QonversionAssembly {
     
     func userPropertiesManager() -> UserPropertiesManagerInterface {
         let requestProcessor = servicesAssembly.requestProcessor()
-        let propertiesStorage = PropertiesStorage(
-        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: <#T##any PropertiesStorage#>, delayCalculator: <#T##IncrementalDelayCalculator#>, internalConfig: <#T##InternalConfig#>)
+        let propertiesStorage = UserPropertiesStorage()
+        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator(), internalConfig: InternalConfig(userId: "da"))
+        
+        return userPropertiesManager
+    }
+    
+    func delayCalculator() -> IncrementalDelayCalculator {
+        return IncrementalDelayCalculator()
     }
     
 }

@@ -7,10 +7,27 @@
 
 import Foundation
 
-final class Qonversion {
-    static let shared = Qonversion()
+public struct Configuration {
+    let apiKey: String
+    let userDefaults: UserDefaults?
     
-    private init() {
-        
+    public init(apiKey: String, userDefaults: UserDefaults?) {
+        self.apiKey = apiKey
+        self.userDefaults = userDefaults
+    }
+}
+
+public final class Qonversion {
+    public static let shared = Qonversion()
+    
+    private var userPropertiesManager: UserPropertiesManagerInterface?
+    private var qonversionAssembly: QonversionAssembly?
+    
+    private init() { }
+    
+    public static func initialize(with configuration: Configuration) {
+        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
+        Qonversion.shared.qonversionAssembly = assembly
+        Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
     }
 }

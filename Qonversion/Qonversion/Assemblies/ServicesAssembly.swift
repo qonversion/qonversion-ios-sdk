@@ -79,7 +79,7 @@ final class ServicesAssembly {
     
     func headersBuilder() -> HeadersBuilderInterface {
         let deviceInfoCollector = deviceInfoCollector()
-        let headersBuilder = HeadersBuilder(apiKey: apiKey, sdkVersion: <#T##String#>, deviceInfoCollector: deviceInfoCollector)
+        let headersBuilder = HeadersBuilder(apiKey: apiKey, sdkVersion: SDKLevelConstants.version.rawValue, deviceInfoCollector: deviceInfoCollector)
         
         return headersBuilder
     }
