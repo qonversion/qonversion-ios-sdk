@@ -8,7 +8,11 @@ on:
 jobs:
   tests:
     runs-on: macos-latest
-
+    
+    concurrency:
+      group: ios_integration_tests
+      cancel-in-progress: true
+    
     steps:
       - uses: actions/checkout@v2
       - name: Set Outager url
