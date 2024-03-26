@@ -149,17 +149,17 @@ public struct Transaction {
 
     public let id: String?
 
-    public let originalID: String?
+    public let originalId: String?
 
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    public var webOrderLineItemID: String? { storeKitTransaction?.webOrderLineItemID }
+    public var webOrderLineItemId: String? { storeKitTransaction?.webOrderLineItemID }
 
-    public let productID: String
+    public let productId: String
 
-    public let subscriptionGroupID: String?
+    public let subscriptionGroupId: String?
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    public var appBundleID: String? { storeKitTransaction?.appBundleID }
+    public var appBundleId: String? { storeKitTransaction?.appBundleID }
 
     public let purchaseDate: Date?
 
@@ -231,9 +231,9 @@ public struct Transaction {
     init(transaction: SKPaymentTransaction, product: SKProduct) {
         self.jsonRepresentation = nil
         self.id = transaction.transactionIdentifier
-        self.originalID = transaction.original?.transactionIdentifier
-        self.productID = transaction.payment.productIdentifier
-        self.subscriptionGroupID = product.subscriptionGroupIdentifier
+        self.originalId = transaction.original?.transactionIdentifier
+        self.productId = transaction.payment.productIdentifier
+        self.subscriptionGroupId = product.subscriptionGroupIdentifier
         self.purchaseDate = transaction.transactionDate
         self.originalPurchaseDate = transaction.original?.transactionDate
         self.purchasedQuantity = transaction.payment.quantity
@@ -258,9 +258,9 @@ public struct Transaction {
     init(transaction: StoreKit.Transaction) {
         self.jsonRepresentation = transaction.jsonRepresentation
         self.id = String(transaction.id)
-        self.originalID = String(transaction.originalID)
-        self.productID = transaction.productID
-        self.subscriptionGroupID = transaction.subscriptionGroupID
+        self.originalId = String(transaction.originalID)
+        self.productId = transaction.productID
+        self.subscriptionGroupId = transaction.subscriptionGroupID
         self.purchaseDate = transaction.purchaseDate
         self.originalPurchaseDate = transaction.originalPurchaseDate
         self.purchasedQuantity = transaction.purchasedQuantity
