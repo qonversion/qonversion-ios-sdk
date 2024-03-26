@@ -65,6 +65,7 @@
 		70D8777A2B9EF8630059AA2B /* UserServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877732B9E338C0059AA2B /* UserServiceInterface.swift */; };
 		70D8777B2B9EF8660059AA2B /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877752B9E33950059AA2B /* UserService.swift */; };
 		70D8777C2B9F192C0059AA2B /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877782B9E33FC0059AA2B /* User.swift */; };
+		70D877502B920AF30059AA2B /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D8774F2B920AF30059AA2B /* Transaction.swift */; };
 		70F163A72B6D0D3D00033BEF /* Qonversion.docc in Sources */ = {isa = PBXBuildFile; fileRef = 70F163A62B6D0D3D00033BEF /* Qonversion.docc */; };
 		70F163A82B6D0D3D00033BEF /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F163A52B6D0D3D00033BEF /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
@@ -155,6 +156,7 @@
 		70D877732B9E338C0059AA2B /* UserServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserServiceInterface.swift; sourceTree = "<group>"; };
 		70D877752B9E33950059AA2B /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		70D877782B9E33FC0059AA2B /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		70D8774F2B920AF30059AA2B /* Transaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transaction.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		70F163A52B6D0D3D00033BEF /* Qonversion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
 		70F163A62B6D0D3D00033BEF /* Qonversion.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = Qonversion.docc; sourceTree = "<group>"; };
@@ -311,6 +313,7 @@
 		70D876C82B8618C40059AA2B /* StoreKit */ = {
 			isa = PBXGroup;
 			children = (
+				70D8774E2B9208850059AA2B /* Entities */,
 				70D876C92B8618CD0059AA2B /* StoreKitWrapper.swift */,
 				70D876D22B88ACD20059AA2B /* StoreKitOldWrapper.swift */,
 				70D876D62B88B0110059AA2B /* StoreKitOldWrapperDelegate.swift */,
@@ -364,10 +367,11 @@
 			path = UserService;
 			sourceTree = "<group>";
 		};
-		70D877772B9E33EE0059AA2B /* Entities */ = {
+		70D8774E2B9208850059AA2B /* Entities */ = {
 			isa = PBXGroup;
 			children = (
-				70D877782B9E33FC0059AA2B /* User.swift */,
+				70D8774F2B920AF30059AA2B /* Transaction.swift */,
+                70D877782B9E33FC0059AA2B /* User.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
@@ -568,6 +572,7 @@
 				6ABCBDFF2B906E05003DB107 /* ConcurrencyExtensions.swift in Sources */,
 				701C76722B73D27B00723027 /* NetworkProviderInterface.swift in Sources */,
 				6ABCBD8B2B7618A9003DB107 /* RateLimiter.swift in Sources */,
+				70D877502B920AF30059AA2B /* Transaction.swift in Sources */,
 				701C76782B73D29600723027 /* QonversionErrorType.swift in Sources */,
 				701C766F2B73D27B00723027 /* NetworkErrorHandlerInterface.swift in Sources */,
 				6ABCBDB62B888405003DB107 /* UserProperties.swift in Sources */,

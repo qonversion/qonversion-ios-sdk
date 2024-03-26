@@ -62,7 +62,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
             language: language,
             timezone: timezone,
             advertisingId: advertisingId,
-            vendorID: vendorId,
+            vendorId: vendorId,
             installDate: installDate
         )
 

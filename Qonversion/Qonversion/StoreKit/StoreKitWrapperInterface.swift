@@ -11,6 +11,7 @@ import StoreKit
 protocol StoreKitWrapperInterface {
     
     @available(iOS 15.0, *)
+
     func purchase(product: Product) async throws -> Transaction
     
     @available(iOS 15.0, *)
