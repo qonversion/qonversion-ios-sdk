@@ -7,20 +7,9 @@
 
 import Foundation
 
-struct UserProperty : Decodable {
-    
+struct UserProperty : Decodable, Encodable, Equatable, Hashable {
+
     let key: String
     let value: String
-    let definedKey: UserPropertyKey
-    
-    private enum CodingKeys: String, CodingKey {
-        case key, value
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        key = try container.decode(String.self, forKey: .key)
-        value = try container.decode(String.self, forKey: .value)
-        definedKey = UserPropertyKey(rawValue: key) ?? .custom
-    }
+    var definedKey: UserPropertyKey { UserPropertyKey(rawValue: key) ?? .custom }
 }

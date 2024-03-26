@@ -13,8 +13,8 @@ class RequestProcessor: RequestProcessorInterface {
     let decoder: ResponseDecoderInterface
     let retriableRequestsList: [Request]
     let requestsStorage: RequestsStorageInterface
-    var criticalError: QonversionError?
     let rateLimiter: RateLimiter
+    var criticalError: QonversionError?
 
     init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiter) {
         self.baseURL = baseURL
@@ -52,22 +52,28 @@ class RequestProcessor: RequestProcessorInterface {
         }
         headersBuilder.addHeaders(to: &urlRequest)
 
+        let responseBody: Data
+        let error: QonversionError?
         do {
-            let (data, resposne) = try await networkProvider.send(request: urlRequest)
-            let error: QonversionError? = errorHandler.extractError(from: resposne)
+            let (data, urlResponse) = try await networkProvider.send(request: urlRequest)
+            error = errorHandler.extractError(from: urlResponse)
+            responseBody = data
+        } catch {
+            throw QonversionError(type: .invalidResponse, error: error)
+        }
+
+        guard error == nil else {
             if error?.type == .critical {
                 criticalError = error
             }
-            
-            guard error == nil else { throw error! }
-            
-            do {
-                let result: T = try decoder.decode(responseType, from: data)
-                
-                return result
-            } catch {
-                throw QonversionError(type: .invalidResponse, error: error)
-            }
+
+            throw error!
+        }
+
+        do {
+            let result: T = try decoder.decode(responseType, from: responseBody)
+
+            return result
         } catch {
             throw QonversionError(type: .invalidResponse, error: error)
         }

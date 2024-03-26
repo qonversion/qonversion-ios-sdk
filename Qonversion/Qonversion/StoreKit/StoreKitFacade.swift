@@ -43,10 +43,10 @@ class StoreKitFacade: StoreKitFacadeInterface {
 
             #warning("Fetch all products and map response here")
             let res = try await historicalData()
-            return [""]
+            return []
         } else {
             let res = try await historicalData()
-            return [""]
+            return []
         }
     }
     
