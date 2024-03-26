@@ -14,8 +14,14 @@ class StoreKitFacade: StoreKitFacadeInterface {
     let storeKitWrapper: StoreKitWrapperInterface?
     let storeKitMapper: StoreKitMapperInterface
     
-    init(storeKitOldWrapper: StoreKitOldWrapperInterface?, storeKitWrapper: StoreKitWrapperInterface?, storeKitMapper: StoreKitMapperInterface) {
+    init(storeKitOldWrapper: StoreKitOldWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
         self.storeKitOldWrapper = storeKitOldWrapper
+        self.storeKitWrapper = nil
+        self.storeKitMapper = storeKitMapper
+    }
+    
+    init(storeKitWrapper: StoreKitWrapperInterface?, storeKitMapper: StoreKitMapperInterface) {
+        self.storeKitOldWrapper = nil
         self.storeKitWrapper = storeKitWrapper
         self.storeKitMapper = storeKitMapper
     }
