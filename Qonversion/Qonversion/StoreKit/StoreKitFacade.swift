@@ -14,8 +14,14 @@ class StoreKitFacade: StoreKitFacadeInterface {
     let storeKitWrapper: StoreKitWrapperInterface?
     let storeKitMapper: StoreKitMapperInterface
     
-    init(storeKitOldWrapper: StoreKitOldWrapperInterface?, storeKitWrapper: StoreKitWrapperInterface?, storeKitMapper: StoreKitMapperInterface) {
+    init(storeKitOldWrapper: StoreKitOldWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
         self.storeKitOldWrapper = storeKitOldWrapper
+        self.storeKitWrapper = nil
+        self.storeKitMapper = storeKitMapper
+    }
+    
+    init(storeKitWrapper: StoreKitWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
+        self.storeKitOldWrapper = nil
         self.storeKitWrapper = storeKitWrapper
         self.storeKitMapper = storeKitMapper
     }
@@ -29,7 +35,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         return []
     }
     
-    func restore() async throws -> [String] {
+    func restore() async throws -> [Qonversion.Transaction] {
         if #available(iOS 15.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
@@ -37,10 +43,10 @@ class StoreKitFacade: StoreKitFacadeInterface {
 
             #warning("Fetch all products and map response here")
             let res = try await historicalData()
-            return [""]
+            return []
         } else {
             let res = try await historicalData()
-            return [""]
+            return []
         }
     }
     

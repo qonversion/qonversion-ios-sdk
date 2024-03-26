@@ -18,7 +18,7 @@ struct Device {
     let language: String?
     let timezone: String?
     let advertisingId: String?
-    let vendorID: String?
+    let vendorId: String?
     let installDate: TimeInterval
 
     init(
@@ -31,7 +31,7 @@ struct Device {
         language: String?,
         timezone: String,
         advertisingId: String?,
-        vendorID: String?,
+        vendorId: String?,
         installDate: TimeInterval
     ) {
         self.manufacturer = manufacturer
@@ -43,7 +43,7 @@ struct Device {
         self.language = language
         self.timezone = timezone
         self.advertisingId = advertisingId
-        self.vendorID = vendorID
+        self.vendorId = vendorId
         self.installDate = installDate
     }
 }

@@ -17,13 +17,13 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
         self.delegate = delegate
     }
     
-    func products(for ids:[String]) async throws -> [Product] {
-        let products: [Product] = try await Product.products(for: ids)
+    func products(for ids:[String]) async throws -> [StoreKit.Product] {
+        let products: [StoreKit.Product] = try await Product.products(for: ids)
         
         return products
     }
     
-    func currentEntitlements() async -> [Transaction] {
+    func currentEntitlements() async -> [StoreKit.Transaction] {
         return await fetchTransactions(for: Transaction.currentEntitlements)
     }
     
@@ -31,41 +31,42 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
         return try await AppStore.sync()
     }
     
-    func fetchAll() async -> [Transaction] {
-        return await fetchTransactions(for: Transaction.all)
+    func fetchAll() async -> [StoreKit.Transaction] {
+        return await fetchTransactions(for: StoreKit.Transaction.all)
     }
     
-    func fetchUnfinished() async -> [Transaction] {
-        return await fetchTransactions(for: Transaction.unfinished)
+    func fetchUnfinished() async -> [StoreKit.Transaction] {
+        return await fetchTransactions(for: StoreKit.Transaction.unfinished)
     }
     
-    func finish(transaction: Transaction) async {
+    func finish(transaction: StoreKit.Transaction) async {
         await transaction.finish()
     }
     
-    func purchase(product: Product) async throws -> Transaction {
+    func purchase(product: Product) async throws -> StoreKit.Transaction {
         let result: Product.PurchaseResult = try await product.purchase()
         
         switch result {
         case .success(let verificationResult):
             switch verificationResult {
             case .verified(let transaction):
+                transaction.reason == .renewal
                 return transaction
             case .unverified(let transaction, let verificationError):
-                #warning("throw error here using verification error")
+#warning("throw error here using verification error")
                 throw QonversionError(type: .critical)
             }
         case .userCancelled:
-            #warning("update error here")
+#warning("update error here")
             throw QonversionError(type: .critical)
         @unknown default:
-            #warning("update error here")
+#warning("update error here")
             throw QonversionError(type: .critical)
         }
     }
     
-    func subscribe() async -> [Transaction] {
-        return await fetchTransactions(for: Transaction.updates)
+    func subscribe() async -> [StoreKit.Transaction] {
+        return await fetchTransactions(for: StoreKit.Transaction.updates)
     }
     
     @available(iOS 16.4, *)
@@ -77,24 +78,25 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
         }
     }
     
-        
+    
     @available(iOS 16.0, *)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
         try await AppStore.presentOfferCodeRedeemSheet(in: scene)
     }
     
-    private func fetchTransactions(for type: Transaction.Transactions) async -> [Transaction] {
-      var transasctions: [Transaction] = []
-      for await transaction in type {
-        switch transaction {
-        case .verified(let verifiedTransaction):
-          transasctions.append(verifiedTransaction)
-        default:
-          break
+    private func fetchTransactions(for type: StoreKit.Transaction.Transactions) async -> [StoreKit.Transaction] {
+        var transasctions: [StoreKit.Transaction] = []
+        for await transaction in type {
+            switch transaction {
+            case .verified(let verifiedTransaction):
+                transasctions.append(verifiedTransaction)
+            default:
+                break
+            }
         }
-      }
-      
-      return transasctions
+        
+        return transasctions
     }
     
 }
+
