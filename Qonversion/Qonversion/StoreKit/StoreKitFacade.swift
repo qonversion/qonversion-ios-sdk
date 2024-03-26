@@ -20,7 +20,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         self.storeKitMapper = storeKitMapper
     }
     
-    init(storeKitWrapper: StoreKitWrapperInterface?, storeKitMapper: StoreKitMapperInterface) {
+    init(storeKitWrapper: StoreKitWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
         self.storeKitOldWrapper = nil
         self.storeKitWrapper = storeKitWrapper
         self.storeKitMapper = storeKitMapper
