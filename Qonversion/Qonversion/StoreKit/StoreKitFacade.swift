@@ -35,7 +35,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         return []
     }
     
-    func restore() async throws -> [Qonversion.Transaction] {
+    func restore() async throws -> [String] {
         if #available(iOS 15.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             

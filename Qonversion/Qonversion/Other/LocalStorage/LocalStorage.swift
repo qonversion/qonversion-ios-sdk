@@ -15,68 +15,68 @@ final class LocalStorage: LocalStorageInterface {
         self.userDefaults = userDefaults
     }
     
-    func object(forKey defaultName: String) -> Any? {
-        return self.userDefaults.object(forKey: defaultName)
+    func object(forKey key: String) -> Any? {
+        return self.userDefaults.object(forKey: key)
     }
 
-    func set(_ value: Any?, forKey defaultName: String) {
-        userDefaults.set(value, forKey: defaultName)
+    func set(_ value: Any?, forKey key: String) {
+        userDefaults.set(value, forKey: key)
     }
     
-    func removeObject(forKey defaultName: String) {
-        userDefaults.removeObject(forKey: defaultName)
+    func removeObject(forKey key: String) {
+        userDefaults.removeObject(forKey: key)
     }
 
-    func string(forKey defaultName: String) -> String? {
-        userDefaults.string(forKey: defaultName)
+    func string(forKey key: String) -> String? {
+        userDefaults.string(forKey: key)
     }
 
-    func array(forKey defaultName: String) -> [Any]? {
-        return userDefaults.array(forKey: defaultName)
+    func array(forKey key: String) -> [Any]? {
+        return userDefaults.array(forKey: key)
     }
 
-    func dictionary(forKey defaultName: String) -> [String : Any]? {
-        return userDefaults.dictionary(forKey: defaultName)
+    func dictionary(forKey key: String) -> [String : Any]? {
+        return userDefaults.dictionary(forKey: key)
     }
 
-    func data(forKey defaultName: String) -> Data? {
-        return userDefaults.data(forKey: defaultName)
+    func data(forKey key: String) -> Data? {
+        return userDefaults.data(forKey: key)
     }
 
-    func integer(forKey defaultName: String) -> Int {
-        return userDefaults.integer(forKey: defaultName)
+    func integer(forKey key: String) -> Int {
+        return userDefaults.integer(forKey: key)
     }
 
-    func float(forKey defaultName: String) -> Float {
-        return userDefaults.float(forKey: defaultName)
+    func float(forKey key: String) -> Float {
+        return userDefaults.float(forKey: key)
     }
 
-    func double(forKey defaultName: String) -> Double {
-        return userDefaults.double(forKey: defaultName)
+    func double(forKey key: String) -> Double {
+        return userDefaults.double(forKey: key)
     }
 
-    func bool(forKey defaultName: String) -> Bool {
-        return userDefaults.bool(forKey: defaultName)
+    func bool(forKey key: String) -> Bool {
+        return userDefaults.bool(forKey: key)
     }
 
-    func url(forKey defaultName: String) -> URL? {
-        return userDefaults.url(forKey: defaultName)
+    func url(forKey key: String) -> URL? {
+        return userDefaults.url(forKey: key)
     }
 
-    func set(integer: Int, forKey defaultName: String) {
-        userDefaults.set(integer, forKey: defaultName)
+    func set(integer: Int, forKey key: String) {
+        userDefaults.set(integer, forKey: key)
     }
 
-    func set(float: Float, forKey defaultName: String) {
-        userDefaults.set(float, forKey: defaultName)
+    func set(float: Float, forKey key: String) {
+        userDefaults.set(float, forKey: key)
     }
 
-    func set(double: Double, forKey defaultName: String) {
-        userDefaults.set(double, forKey: defaultName)
+    func set(double: Double, forKey key: String) {
+        userDefaults.set(double, forKey: key)
     }
 
-    func set(bool: Bool, forKey defaultName: String) {
-        userDefaults.set(bool, forKey: defaultName)
+    func set(bool: Bool, forKey key: String) {
+        userDefaults.set(bool, forKey: key)
     }
     
 }
