@@ -38,7 +38,7 @@ class RequestProcessor: RequestProcessorInterface {
         requestsStorage.clean()
     }
     
-    func process<T>(request: Request, responseType: T.Type) async throws -> T? where T : Decodable {
+    func process<T>(request: Request, responseType: T.Type) async throws -> T where T : Decodable {
         if let error = criticalError {
             throw error
         }
