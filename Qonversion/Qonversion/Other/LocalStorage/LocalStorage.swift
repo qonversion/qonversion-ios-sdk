@@ -67,7 +67,6 @@ final class LocalStorage: LocalStorageInterface {
         userDefaults.set(integer, forKey: defaultName)
     }
 
-    
     func set(float: Float, forKey defaultName: String) {
         userDefaults.set(float, forKey: defaultName)
     }
