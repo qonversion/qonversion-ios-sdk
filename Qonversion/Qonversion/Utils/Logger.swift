@@ -9,20 +9,11 @@ import Foundation
 import OSLog
 
 enum LogLevel {
-    // Use this level to capture information that may be useful during development or while troubleshooting a specific problem.
-    case debug
-    
-    // Use this level to capture information that may be helpful, but not essential, for troubleshooting errors.
-    case info
-    
-    // Use this level to capture information about things that might result in a failure.
-    case `default`
-    
-    // Use this log level to report process-level errors.
+    case critical
     case error
-    
-    // Use this level only to capture system-level or multiprocess information when reporting system errors.
-    case fault
+    case warning
+    case debug
+    case verbose
 }
 
 final class LoggerWrapper {
@@ -31,38 +22,59 @@ final class LoggerWrapper {
     var logger: Logger? { _logger as? Logger }
     let _logger: Any?
     
-    @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
-    init(logger: Logger?) {
-        self._logger = logger
-    }
+    let logLevel: LogLevel
     
-    func debug(_ message: String) {
-        if #available(iOS 14.0, *) {
-            logger?.debug(<#T##message: OSLogMessage##OSLogMessage#>)
-        }
+    @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
+    init(logger: Logger?, logLevel: LogLevel) {
+        self._logger = logger
+        self.logLevel = logLevel
     }
     
     func info(_ message: String) {
-        if #available(iOS 14.0, *) {
-            logger?.info(OSLogMessage)
-        }
+        guard logLevel == .verbose else { return }
+        
+        log(message, level: .verbose)
     }
     
-    func log(_ message: String) {
-        if #available(iOS 14.0, *) {
-            logger?.log(<#T##message: OSLogMessage##OSLogMessage#>)
-        }
+    func debug(_ message: String) {
+        guard logLevel == .verbose || logLevel == .debug else { return }
+        
+        log(message, level: .debug)
+    }
+    
+    func warning(_ message: String) {
+        guard logLevel == .verbose || logLevel == .debug || logLevel == .warning else { return }
+        
+        log(message, level: .warning)
     }
     
     func error(_ message: String) {
-        if #available(iOS 14.0, *) {
-            logger?.error(<#T##message: OSLogMessage##OSLogMessage#>)
-        }
+        guard logLevel == .verbose || logLevel == .debug || logLevel == .warning || logLevel == .error else { return }
+        
+        log(message, level: .error)
     }
     
-    func fault(_ message: String) {
-        if #available(iOS 14.0, *) {
-            logger?.fault(<#T##message: OSLogMessage##OSLogMessage#>)
+    func critical(_ message: String) {
+        guard logLevel == .critical else { return }
+        
+        log(message, level: .critical)
+    }
+    
+    func log(_ message: String, level: LogLevel) {
+        if #available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *), let logger {
+            var osLevel: OSLogType = .info
+            switch level {
+            case .verbose:
+                osLevel = .info
+            case .debug:
+                osLevel = .debug
+            case .warning, .error:
+                osLevel = .error
+            case .critical:
+                osLevel = .info
+            }
+            
+            logger.log(level: osLevel, "\(message)")
         }
     }
     
