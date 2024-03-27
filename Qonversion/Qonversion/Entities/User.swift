@@ -5,6 +5,8 @@
 //  Created by Suren Sarkisyan on 10.03.2024.
 //
 
+import Foundation
+
 struct User: Decodable {
     
     enum Environment: String, Decodable {

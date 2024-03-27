@@ -15,4 +15,6 @@ protocol UserServiceInterface {
     
     func userId() -> String
     
+    func generateUserId() -> String
+    
 }

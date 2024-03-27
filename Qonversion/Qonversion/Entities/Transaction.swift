@@ -65,30 +65,24 @@ public struct Transaction {
             static func from(transaction: StoreKit.Transaction?) -> Qonversion.Transaction.Offer.OfferType? {
                 guard let transaction: StoreKit.Transaction = transaction else { return nil }
                
-                if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *),
-                    let type: StoreKit.Transaction.OfferType = transaction.offer?.type {
-                    switch type {
-                    case .introductory:
-                        return Qonversion.Transaction.Offer.OfferType.introductory
-                    case .promotional:
-                        return Qonversion.Transaction.Offer.OfferType.promotional
-                    case .code:
-                        return Qonversion.Transaction.Offer.OfferType.code
-                    default:
-                        return nil
-                    }
+                let type: StoreKit.Transaction.OfferType?
+                if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
+                    type = transaction.offer?.type
                 } else {
-                    guard let type: StoreKit.Transaction.OfferType = transaction.offerType else { return nil }
-                    switch type {
-                    case .introductory:
-                        return Qonversion.Transaction.Offer.OfferType.introductory
-                    case .promotional:
-                        return Qonversion.Transaction.Offer.OfferType.promotional
-                    case .code:
-                        return Qonversion.Transaction.Offer.OfferType.code
-                    default:
-                        return nil
-                    }
+                    type = transaction.offerType
+                }
+                
+                guard let type: StoreKit.Transaction.OfferType = type else { return nil }
+                
+                switch type {
+                case .introductory:
+                    return Qonversion.Transaction.Offer.OfferType.introductory
+                case .promotional:
+                    return Qonversion.Transaction.Offer.OfferType.promotional
+                case .code:
+                    return Qonversion.Transaction.Offer.OfferType.code
+                default:
+                    return nil
                 }
             }
         }
@@ -124,8 +118,9 @@ public struct Transaction {
         }
         
         @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
-        var storeOffer: StoreKit.Transaction.Offer? { _offer as? StoreKit.Transaction.Offer }
+        var originalOffer: StoreKit.Transaction.Offer? { _offer as? StoreKit.Transaction.Offer }
         
+        // Workaround to make originalOffer variable available for specific OS versions
         let _offer: Any?
         
         @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
@@ -154,17 +149,17 @@ public struct Transaction {
 
     public let id: String?
 
-    public let originalID: String?
+    public let originalId: String?
 
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    public var webOrderLineItemID: String? { storeKitTransaction?.webOrderLineItemID }
+    public var webOrderLineItemId: String? { storeKitTransaction?.webOrderLineItemID }
 
-    public let productID: String
+    public let productId: String
 
-    public let subscriptionGroupID: String?
+    public let subscriptionGroupId: String?
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    public var appBundleID: String? { storeKitTransaction?.appBundleID }
+    public var appBundleId: String? { storeKitTransaction?.appBundleID }
 
     public let purchaseDate: Date?
 
@@ -178,6 +173,7 @@ public struct Transaction {
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     public var isUpgraded: Bool? { storeKitTransaction?.isUpgraded }
 
+    // Workaround to make offer variable available for specific OS versions
     private let _offer: Qonversion.Transaction.Offer?
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
@@ -230,25 +226,28 @@ public struct Transaction {
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     public var storeKitTransaction: StoreKit.Transaction? { _storeKitTransaction as? StoreKit.Transaction }
     
-    public var skPaymentTransaction: SKPaymentTransaction?
+    public let skPaymentTransaction: SKPaymentTransaction?
     
     init(transaction: SKPaymentTransaction, product: SKProduct) {
         self.jsonRepresentation = nil
         self.id = transaction.transactionIdentifier
-        self.originalID = transaction.original?.transactionIdentifier
-        self.productID = transaction.payment.productIdentifier
-        self.subscriptionGroupID = product.subscriptionGroupIdentifier
+        self.originalId = transaction.original?.transactionIdentifier
+        self.productId = transaction.payment.productIdentifier
+        self.subscriptionGroupId = product.subscriptionGroupIdentifier
         self.purchaseDate = transaction.transactionDate
         self.originalPurchaseDate = transaction.original?.transactionDate
         self.purchasedQuantity = transaction.payment.quantity
         self.storefront = Qonversion.Storefront(countryCode: SKPaymentQueue.default().storefront?.countryCode, id: SKPaymentQueue.default().storefront?.identifier)
         self.price = product.price as Decimal
         
+        let currencyCode: String?
         if #available(macOS 13, iOS 16, tvOS 16, watchOS 9, *) {
-            self.currency = Qonversion.Transaction.Currency(identifier: product.priceLocale.currency?.identifier, symbol: product.priceLocale.currencySymbol)
+            currencyCode = product.priceLocale.currency?.identifier
         } else {
-            self.currency = Qonversion.Transaction.Currency(identifier: product.priceLocale.currencyCode, symbol: product.priceLocale.currencySymbol)
+            currencyCode = product.priceLocale.currencyCode
         }
+        
+        self.currency = Qonversion.Transaction.Currency(identifier: currencyCode, symbol: product.priceLocale.currencySymbol)
         
         self._offer = nil
         self._storeKitTransaction = nil
@@ -259,9 +258,9 @@ public struct Transaction {
     init(transaction: StoreKit.Transaction) {
         self.jsonRepresentation = transaction.jsonRepresentation
         self.id = String(transaction.id)
-        self.originalID = String(transaction.originalID)
-        self.productID = transaction.productID
-        self.subscriptionGroupID = transaction.subscriptionGroupID
+        self.originalId = String(transaction.originalID)
+        self.productId = transaction.productID
+        self.subscriptionGroupId = transaction.subscriptionGroupID
         self.purchaseDate = transaction.purchaseDate
         self.originalPurchaseDate = transaction.originalPurchaseDate
         self.purchasedQuantity = transaction.purchasedQuantity
@@ -285,14 +284,6 @@ public struct Transaction {
             self._offer = nil
         }
         self._storeKitTransaction = transaction
-    }
-}
-
-@available(macOS 13, iOS 16, tvOS 16, watchOS 9, *)
-extension Locale.Currency {
-    func currencySymbol() -> String? {
-        let locale: Locale? = Locale.availableIdentifiers.map { Locale(identifier: $0) }.first { $0.currencyCode == identifier }
-        
-        return locale?.currencySymbol
+        self.skPaymentTransaction = nil
     }
 }

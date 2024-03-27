@@ -5,6 +5,8 @@
 //  Created by Suren Sarkisyan on 06.02.2024.
 //
 
+import Foundation
+
 class RequestProcessor: RequestProcessorInterface {
     let baseURL: String
     let networkProvider: NetworkProviderInterface

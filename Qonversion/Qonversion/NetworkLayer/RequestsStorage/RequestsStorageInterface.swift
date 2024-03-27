@@ -5,6 +5,8 @@
 //  Created by Suren Sarkisyan on 08.02.2024.
 //
 
+import Foundation
+
 protocol RequestsStorageInterface {
     
     func store(requests: [URLRequest])
