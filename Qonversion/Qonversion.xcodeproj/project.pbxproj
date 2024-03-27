@@ -65,6 +65,7 @@
 		707C06FC2BB41C1B00E2597D /* Qonversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06C12BB41C1B00E2597D /* Qonversion.swift */; };
 		707C06FD2BB41C1B00E2597D /* StorageConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06C22BB41C1B00E2597D /* StorageConstants.swift */; };
 		707C06FE2BB41C1B00E2597D /* TemporaryFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06C32BB41C1B00E2597D /* TemporaryFactory.swift */; };
+		707C07002BB47D7500E2597D /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06FF2BB47D7500E2597D /* MiscAssembly.swift */; };
 		70D876CF2B8634230059AA2B /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70D876CE2B8634230059AA2B /* StoreKit.framework */; };
 		70D877122B8F4E5E0059AA2B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877112B8F4E5E0059AA2B /* AppDelegate.swift */; };
 		70D877142B8F4E5E0059AA2B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877132B8F4E5E0059AA2B /* SceneDelegate.swift */; };
@@ -162,6 +163,7 @@
 		707C06C12BB41C1B00E2597D /* Qonversion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Qonversion.swift; sourceTree = "<group>"; };
 		707C06C22BB41C1B00E2597D /* StorageConstants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageConstants.swift; sourceTree = "<group>"; };
 		707C06C32BB41C1B00E2597D /* TemporaryFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TemporaryFactory.swift; sourceTree = "<group>"; };
+		707C06FF2BB47D7500E2597D /* MiscAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiscAssembly.swift; sourceTree = "<group>"; };
 		70D876CE2B8634230059AA2B /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/iOSSupport/System/Library/Frameworks/StoreKit.framework; sourceTree = DEVELOPER_DIR; };
 		70D8770F2B8F4E5E0059AA2B /* Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		70D877112B8F4E5E0059AA2B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -222,6 +224,7 @@
 			isa = PBXGroup;
 			children = (
 				707C06762BB41C1B00E2597D /* QonversionAssembly.swift */,
+				707C06FF2BB47D7500E2597D /* MiscAssembly.swift */,
 				707C06772BB41C1B00E2597D /* ServicesAssembly.swift */,
 			);
 			path = Assemblies;
@@ -613,6 +616,7 @@
 				707C06F32BB41C1B00E2597D /* UserPropertiesStorage.swift in Sources */,
 				707C06D02BB41C1B00E2597D /* HeadersBuilder.swift in Sources */,
 				707C06E42BB41C1B00E2597D /* StoreKitFacade.swift in Sources */,
+				707C07002BB47D7500E2597D /* MiscAssembly.swift in Sources */,
 				707C06E92BB41C1B00E2597D /* StoreKitOldWrapperDelegate.swift in Sources */,
 				707C06EA2BB41C1B00E2597D /* StoreKitOldWrapperInterface.swift in Sources */,
 				707C06E82BB41C1B00E2597D /* StoreKitOldWrapper.swift in Sources */,
