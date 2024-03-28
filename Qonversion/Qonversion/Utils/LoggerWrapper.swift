@@ -42,19 +42,19 @@ final class LoggerWrapper {
     }
     
     func debug(_ message: String) {
-        guard logLevel.rawValue < LogLevel.warning.rawValue else { return }
+        guard logLevel.rawValue <= LogLevel.debug.rawValue else { return }
         
         log(message, level: .debug)
     }
     
     func warning(_ message: String) {
-        guard logLevel.rawValue < LogLevel.error.rawValue else { return }
+        guard logLevel.rawValue <= LogLevel.warning.rawValue else { return }
         
         log(message, level: .warning)
     }
     
     func error(_ message: String) {
-        guard logLevel.rawValue < LogLevel.critical.rawValue else { return }
+        guard logLevel.rawValue <= LogLevel.error.rawValue else { return }
         
         log(message, level: .error)
     }
