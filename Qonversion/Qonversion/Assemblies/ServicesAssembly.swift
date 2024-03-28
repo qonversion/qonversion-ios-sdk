@@ -17,6 +17,8 @@ final class ServicesAssembly {
     private let userDefaults: UserDefaults
     private let miscAssembly: MiscAssembly
     
+    var deviceInfoCollectorInstance: DeviceInfoCollector?
+    
     init(apiKey: String, userDefaults: UserDefaults, miscAssembly: MiscAssembly) {
         self.apiKey = apiKey
         self.userDefaults = userDefaults
@@ -47,7 +49,14 @@ final class ServicesAssembly {
     }
     
     func deviceInfoCollector() -> DeviceInfoCollectorInterface {
-        return DeviceInfoCollector()
+        if let deviceInfoCollectorInstance {
+            return deviceInfoCollectorInstance
+        }
+        
+        let deviceInfoCollector = DeviceInfoCollector()
+        deviceInfoCollectorInstance = deviceInfoCollector
+        
+        return deviceInfoCollector
     }
     
     func networkProvider() -> NetworkProviderInterface {
