@@ -37,13 +37,39 @@ static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configurati
     
     QONRemoteConfig *config = [weakSelf.mapper mapRemoteConfig:dict];
     
-    if (config.payload.count == 0 && config.source == nil) {
+    if (config.source == nil) {
       NSError *error = [QONErrors errorWithCode:QONErrorRemoteConfigurationNotAvailable message:kNoRemoteConfigurationErrorMessage];
       completion(nil, error);
       return;
     }
     
     completion(config, error);
+  }];
+}
+
+- (void)loadRemoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
+  __block __weak QONRemoteConfigService *weakSelf = self;
+  [self.apiClient loadRemoteConfigList:^(NSArray * _Nullable arr, NSError * _Nullable error) {
+    if (error) {
+      completion(nil, error);
+      return;
+    }
+    
+    QONRemoteConfigList *configList = [weakSelf.mapper mapRemoteConfigList:arr];
+    completion(configList, error);
+  }];
+}
+
+- (void)loadRemoteConfigList:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
+  __block __weak QONRemoteConfigService *weakSelf = self;
+  [self.apiClient loadRemoteConfigListForContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:^(NSArray * _Nullable arr, NSError * _Nullable error) {
+    if (error) {
+      completion(nil, error);
+      return;
+    }
+    
+    QONRemoteConfigList *configList = [weakSelf.mapper mapRemoteConfigList:arr];
+    completion(configList, error);
   }];
 }
 

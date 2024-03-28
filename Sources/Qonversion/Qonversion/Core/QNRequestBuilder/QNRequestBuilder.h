@@ -23,7 +23,9 @@ typedef NS_ENUM(NSInteger, QONRequestType) {
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters;
 - (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body;
 - (NSURLRequest *)makeIntroTrialEligibilityRequestWithData:(NSDictionary *)parameters;
-- (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId contextKey:(NSString *)contextKey;
+- (NSURLRequest *)makeRemoteConfigRequestForUserId:(NSString *)userId contextKey:(NSString *)contextKey;
+- (NSURLRequest *)makeRemoteConfigListRequestForUserId:(NSString *)userId contextKeys:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey;
+- (NSURLRequest *)makeRemoteConfigListRequestForUserId:(NSString *)userId;
 - (NSURLRequest *)makeSdkLogsRequestWithBody:(NSDictionary *)body;
 - (NSURLRequest *)makeAttachUserToExperimentRequest:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID;
 - (NSURLRequest *)makeDetachUserFromExperimentRequest:(NSString *)experimentId userID:(NSString *)userID;

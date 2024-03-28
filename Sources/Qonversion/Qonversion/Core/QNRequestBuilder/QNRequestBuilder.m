@@ -81,17 +81,34 @@
   return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kProductsEndpoint type:QONRequestTypePost];
 }
 
-- (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId contextKey:(NSString *)contextKey {
-  NSURLRequest *request = [self makeGetRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigEndpoint];
-  
-  NSMutableURLRequest *mutableRequest = [request mutableCopy];
-  NSString *updatedURLString = [mutableRequest.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@", userId]];
+- (NSURLRequest *)makeRemoteConfigRequestForUserId:(NSString *)userId contextKey:(NSString *)contextKey {
+  NSMutableURLRequest *request = [[self makeGetRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigEndpoint] mutableCopy];
+  NSString *updatedURLString = [request.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@", userId]];
   if (contextKey) {
     updatedURLString = [updatedURLString stringByAppendingString:[NSString stringWithFormat:@"&context_key=%@", contextKey]];
   }
-  [mutableRequest setURL:[NSURL URLWithString:updatedURLString]];
+  [request setURL:[NSURL URLWithString:updatedURLString]];
   
-  return [mutableRequest copy];
+  return [request copy];
+}
+
+- (NSURLRequest *)makeRemoteConfigListRequestForUserId:(NSString *)userId contextKeys:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey {
+  NSMutableURLRequest *request = [[self makeGetRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigListEndpoint] mutableCopy];
+  NSString *updatedURLString = [request.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@&with_empty_context_key=%@", userId, includeEmptyContextKey ? @"true" : @"false"]];
+  for (NSString *contextKey in contextKeys) {
+    updatedURLString = [updatedURLString stringByAppendingString:[NSString stringWithFormat:@"&context_key=%@", contextKey]];
+  }
+  [request setURL:[NSURL URLWithString:updatedURLString]];
+  
+  return [request copy];
+}
+
+- (NSURLRequest *)makeRemoteConfigListRequestForUserId:(NSString *)userId {
+  NSMutableURLRequest *request = [[self makeGetRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigListEndpoint] mutableCopy];
+  NSString *updatedURLString = [request.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@&all_context_keys=true", userId]];
+  [request setURL:[NSURL URLWithString:updatedURLString]];
+  
+  return [request copy];
 }
 
 - (NSURLRequest *)makeAttachUserToExperimentRequest:(NSString *)experimentId groupId:(NSString *)groupId userID:(NSString *)userID {

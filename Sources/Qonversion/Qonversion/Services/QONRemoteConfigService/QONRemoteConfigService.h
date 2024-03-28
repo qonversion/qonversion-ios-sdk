@@ -20,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) QONRemoteConfigMapper *mapper;
 
 - (void)loadRemoteConfig:(NSString * _Nullable)contextKey completion:(QONRemoteConfigCompletionHandler)completion;
+- (void)loadRemoteConfigList:(QONRemoteConfigListCompletionHandler)completion;
+- (void)loadRemoteConfigList:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion;
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion;
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion;
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfiguration completion:(QONRemoteConfigurationAttachCompletionHandler)completion;

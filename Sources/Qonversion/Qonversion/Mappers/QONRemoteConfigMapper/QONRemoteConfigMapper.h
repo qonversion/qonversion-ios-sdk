@@ -8,13 +8,15 @@
 
 #import <Foundation/Foundation.h>
 
-@class QONRemoteConfig;
+@class QONRemoteConfig, QONRemoteConfigList;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QONRemoteConfigMapper : NSObject
 
 - (QONRemoteConfig * _Nullable)mapRemoteConfig:(NSDictionary *)remoteConfigData;
+
+- (QONRemoteConfigList * _Nullable)mapRemoteConfigList:(NSArray *)remoteConfigListData;
 
 @end
 

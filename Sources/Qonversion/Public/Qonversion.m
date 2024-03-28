@@ -203,6 +203,14 @@ static bool _isInitialized = NO;
   [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigWithContextKey:contextKey completion:completion];
 }
 
+- (void)remoteConfigList:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
+}
+
+- (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
+  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigList:completion];
+}
+
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
   [[[Qonversion sharedInstance] remoteConfigManager] attachUserToExperiment:experimentId groupId:groupId completion:completion];
 }

@@ -379,9 +379,41 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       return;
     }
 
-    NSURLRequest *request = [self.requestBuilder remoteConfigRequestForUserId:self.userID contextKey:contextKey];
+    NSURLRequest *request = [self.requestBuilder makeRemoteConfigRequestForUserId:self.userID contextKey:contextKey];
 
     return [self processDictRequest:request completion:completion];
+  }];
+}
+
+- (void)loadRemoteConfigList:(QNAPIClientArrayCompletionHandler)completion {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeRemoteConfigList
+                                 hash:[self.userID hash]
+                           completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    NSURLRequest *request = [self.requestBuilder makeRemoteConfigListRequestForUserId:self.userID];
+
+    return [self processArrayRequest:request completion:completion];
+  }];
+}
+
+- (void)loadRemoteConfigListForContextKeys:(NSArray<NSString *> *)contextKeys
+                    includeEmptyContextKey:(BOOL)includeEmptyContextKey
+                                completion:(QNAPIClientArrayCompletionHandler)completion {
+  [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeRemoteConfigList
+                               params:@{@"contextKeys": contextKeys, @"userId": self.userID}
+                           completion:^(NSError *rateLimitError) {
+    if (rateLimitError != nil) {
+      completion(nil, rateLimitError);
+      return;
+    }
+
+    NSURLRequest *request = [self.requestBuilder makeRemoteConfigListRequestForUserId:self.userID contextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey];
+
+    return [self processArrayRequest:request completion:completion];
   }];
 }
 

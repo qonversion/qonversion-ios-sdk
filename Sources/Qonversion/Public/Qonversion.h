@@ -11,6 +11,7 @@
 #import "QONExperimentGroup.h"
 #import "QONExperiment.h"
 #import "QONRemoteConfig.h"
+#import "QONRemoteConfigList.h"
 #import "QONUser.h"
 #import "QONErrors.h"
 #import "QONStoreKitSugare.h"
@@ -207,11 +208,28 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
 /**
  Returns Qonversion remote config object by context key.
  Use this function to get the remote config with specific payload and experiment info.
- @param contextKey context key for the requested remote config.
+ @param contextKey context key to load remote config for.
  @param completion completion block that includes information about the remote config.
  */
 - (void)remoteConfig:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion
 NS_SWIFT_NAME(remoteConfig(contextKey:completion:));
+
+/**
+ Returns Qonversion remote config objects by a list of context keys.
+ Use this function to get the remote configs with specific payload and experiment info.
+ @param contextKeys list of context keys to load remote configs for.
+ @param includeEmptyContextKey - set to true if you want to include remote config with empty context key to the result
+ @param completion completion block that includes information about the loaded remote configs.
+ */
+- (void)remoteConfigList:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion
+NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
+
+/**
+ Returns Qonversion remote config objects for all existing context key (including empty one).
+ Use this function to get the remote configs with specific payload and experiment info.
+ @param completion completion block that includes information about the loaded remote configs.
+ */
+- (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion;
 
 /**
  This function should be used for the test purposes only.
