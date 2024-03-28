@@ -66,6 +66,7 @@
 		707C06FD2BB41C1B00E2597D /* StorageConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06C22BB41C1B00E2597D /* StorageConstants.swift */; };
 		707C06FE2BB41C1B00E2597D /* TemporaryFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06C32BB41C1B00E2597D /* TemporaryFactory.swift */; };
 		707C07002BB47D7500E2597D /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06FF2BB47D7500E2597D /* MiscAssembly.swift */; };
+		707C07022BB5B59800E2597D /* LoggerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C07012BB5B59800E2597D /* LoggerWrapper.swift */; };
 		70D876CF2B8634230059AA2B /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70D876CE2B8634230059AA2B /* StoreKit.framework */; };
 		70D877122B8F4E5E0059AA2B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877112B8F4E5E0059AA2B /* AppDelegate.swift */; };
 		70D877142B8F4E5E0059AA2B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877132B8F4E5E0059AA2B /* SceneDelegate.swift */; };
@@ -164,6 +165,7 @@
 		707C06C22BB41C1B00E2597D /* StorageConstants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageConstants.swift; sourceTree = "<group>"; };
 		707C06C32BB41C1B00E2597D /* TemporaryFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TemporaryFactory.swift; sourceTree = "<group>"; };
 		707C06FF2BB47D7500E2597D /* MiscAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiscAssembly.swift; sourceTree = "<group>"; };
+		707C07012BB5B59800E2597D /* LoggerWrapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoggerWrapper.swift; sourceTree = "<group>"; };
 		70D876CE2B8634230059AA2B /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/iOSSupport/System/Library/Frameworks/StoreKit.framework; sourceTree = DEVELOPER_DIR; };
 		70D8770F2B8F4E5E0059AA2B /* Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		70D877112B8F4E5E0059AA2B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -417,6 +419,7 @@
 		707C06BD2BB41C1B00E2597D /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				707C07012BB5B59800E2597D /* LoggerWrapper.swift */,
 				707C06BA2BB41C1B00E2597D /* ConcurrencyExtensions.swift */,
 				707C06BB2BB41C1B00E2597D /* IncrementalDelayCalculator.swift */,
 				707C06BC2BB41C1B00E2597D /* Utils.swift */,
@@ -645,6 +648,7 @@
 				707C06CF2BB41C1B00E2597D /* Header.swift in Sources */,
 				707C06DA2BB41C1B00E2597D /* RequestProcessor.swift in Sources */,
 				707C06CE2BB41C1B00E2597D /* QonversionErrorType.swift in Sources */,
+				707C07022BB5B59800E2597D /* LoggerWrapper.swift in Sources */,
 				707C06FC2BB41C1B00E2597D /* Qonversion.swift in Sources */,
 				707C06D82BB41C1B00E2597D /* Request.swift in Sources */,
 				707C06E72BB41C1B00E2597D /* StoreKitMapperInterface.swift in Sources */,
