@@ -79,7 +79,7 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   }
   
   NSMutableArray *remoteConfigs = [NSMutableArray new];
-  for (id remoteConfigData in remoteConfigListData) {
+  for (NSDictionary *remoteConfigData in remoteConfigListData) {
     if ([remoteConfigData isKindOfClass:[NSDictionary class]]) {
       QONRemoteConfig *config = [self mapRemoteConfig:remoteConfigData];
       if (config != nil && config.source != nil) {

@@ -16,8 +16,8 @@ NS_SWIFT_NAME(Qonversion.RemoteConfig)
 
 @property (nonatomic, copy) NSArray<QONRemoteConfig *> *remoteConfigs;
 
-- (QONRemoteConfig *)remoteConfigForContextKey:(NSString *)key;
-- (QONRemoteConfig *)remoteConfigForEmptyContextKey;
+- (QONRemoteConfig *_Nullable)remoteConfigForContextKey:(NSString *)key;
+- (QONRemoteConfig *_Nullable)remoteConfigForEmptyContextKey;
 
 @end
 

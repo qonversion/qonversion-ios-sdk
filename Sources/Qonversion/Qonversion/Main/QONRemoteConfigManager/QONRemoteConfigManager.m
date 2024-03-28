@@ -108,8 +108,8 @@ static NSString *const kEmptyContextKey = @"";
   }
 
   if (configs.count == allKeys.count) {
-    QONRemoteConfigList *res = [[QONRemoteConfigList alloc] initWithRemoteConfigs:configs];
-    return completion(res, nil);
+    QONRemoteConfigList *remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:configs];
+    return completion(remoteConfigList, nil);
   }
 
   QONRemoteConfigListCompletionHandler completionWrapper = [self remoteConfigListCompletionWrapper:completion];
