@@ -19,23 +19,23 @@ public final class Qonversion {
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
     }
     
-    func collectAppleSearchAdsAttribution() {
+    public func collectAppleSearchAdsAttribution() {
         // collectAppleSearchAdsAttribution
     }
     
-    func setUserProperty(_ userProperty: String, key: UserPropertyKey) {
+    public func setUserProperty(_ userProperty: String, key: UserPropertyKey) {
         guard let userPropertiesManager else { return }
         
         userPropertiesManager.setUserProperty(key: key, value: userProperty)
     }
     
-    func setCustomUserProperty(_ userProperty: String, key: String) {
+    public func setCustomUserProperty(_ userProperty: String, key: String) {
         guard let userPropertiesManager else { return }
         
         userPropertiesManager.setCustomUserProperty(key: key, value: userProperty)
     }
     
-    func userProperties() async throws -> UserProperties {
+    public func userProperties() async throws -> UserProperties {
         guard let userPropertiesManager else { throw QonversionError.initializationError() }
         
         return try await userPropertiesManager.userProperties()

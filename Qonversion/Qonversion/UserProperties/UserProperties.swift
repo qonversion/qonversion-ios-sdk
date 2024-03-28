@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct UserProperties {
+public struct UserProperties {
     
     let properties: [UserProperty]
     let definedProperties: [UserProperty]

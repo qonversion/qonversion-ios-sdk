@@ -11,7 +11,7 @@ import Foundation
  Qonversion Defined User Property keys
  We defined some common case properties and provided API for adding them
  */
-enum UserPropertyKey: String {
+public enum UserPropertyKey: String {
     case email = "_q_email"
     case name = "_q_name"
     case appsFlyerUserId = "_q_appsflyer_user_id"
