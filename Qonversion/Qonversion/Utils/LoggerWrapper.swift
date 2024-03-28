@@ -36,36 +36,28 @@ final class LoggerWrapper {
     }
     
     func info(_ message: String) {
-        guard logLevel == .verbose else { return }
-        
         log(message, level: .verbose)
     }
     
     func debug(_ message: String) {
-        guard logLevel.rawValue <= LogLevel.debug.rawValue else { return }
-        
         log(message, level: .debug)
     }
     
     func warning(_ message: String) {
-        guard logLevel.rawValue <= LogLevel.warning.rawValue else { return }
-        
         log(message, level: .warning)
     }
     
     func error(_ message: String) {
-        guard logLevel.rawValue <= LogLevel.error.rawValue else { return }
-        
         log(message, level: .error)
     }
     
     func critical(_ message: String) {
-        guard logLevel.rawValue <= LogLevel.critical.rawValue else { return }
-        
         log(message, level: .critical)
     }
     
     func log(_ message: String, level: LogLevel) {
+        guard logLevel.rawValue <= level.rawValue else { return }
+        
         if #available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *), let logger {
             var osLevel: OSLogType = .info
             switch level {
