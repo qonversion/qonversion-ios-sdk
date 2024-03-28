@@ -5,6 +5,8 @@
 //  Created by Suren Sarkisyan on 08.02.2024.
 //
 
+import Foundation
+
 class RequestsStorage: RequestsStorageInterface {
     
     let userDefaults: UserDefaults

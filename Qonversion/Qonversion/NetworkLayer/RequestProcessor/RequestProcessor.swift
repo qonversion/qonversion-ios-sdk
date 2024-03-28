@@ -5,18 +5,20 @@
 //  Created by Suren Sarkisyan on 06.02.2024.
 //
 
+import Foundation
+
 class RequestProcessor: RequestProcessorInterface {
     let baseURL: String
-    let networkProvider: NetworkProvider
+    let networkProvider: NetworkProviderInterface
     let headersBuilder: HeadersBuilderInterface
     let errorHandler: NetworkErrorHandlerInterface
     let decoder: ResponseDecoderInterface
     let retriableRequestsList: [Request]
     let requestsStorage: RequestsStorageInterface
-    let rateLimiter: RateLimiter
+    let rateLimiter: RateLimiterInterface
     var criticalError: QonversionError?
 
-    init(baseURL: String, networkProvider: NetworkProvider, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiter) {
+    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder

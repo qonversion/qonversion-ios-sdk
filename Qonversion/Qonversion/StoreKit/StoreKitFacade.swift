@@ -26,16 +26,16 @@ class StoreKitFacade: StoreKitFacadeInterface {
         self.storeKitMapper = storeKitMapper
     }
     
-    func currentEntitlements() async -> [String] {
+    func currentEntitlements() async -> [Qonversion.Transaction] {
         guard #available(iOS 15.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
         
-        let transactions: [Transaction] = await storeKitWrapper.currentEntitlements()
+        let transactions: [StoreKit.Transaction] = await storeKitWrapper.currentEntitlements()
         #warning("Map response here")
         
         return []
     }
     
-    func restore() async throws -> [String] {
+    func restore() async throws -> [Qonversion.Transaction] {
         if #available(iOS 15.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
@@ -50,13 +50,13 @@ class StoreKitFacade: StoreKitFacadeInterface {
         }
     }
     
-    func historicalData() async throws -> [String] {
+    func historicalData() async throws -> [Qonversion.Transaction] {
         if #available(iOS 15.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             let products = try await storeKitWrapper.fetchAll()
             #warning("Map response here")
-            return [products.description]
+            return []
         } else {
             guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
@@ -67,7 +67,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
                         continuation.resume(throwing: QonversionError(type: .critical))
                     } else {
                         #warning("Map response here")
-                        continuation.resume(returning: [""])
+                        continuation.resume(returning: [])
                     }
                 }
             }
@@ -95,13 +95,13 @@ class StoreKitFacade: StoreKitFacadeInterface {
     }
     
     @available(iOS 15.0, *)
-    func finish(transaction: Transaction) async {
+    func finish(transaction: StoreKit.Transaction) async {
         guard let storeKitWrapper = storeKitWrapper else { return }
         
         await transaction.finish()
     }
     
-    func subscribe() async -> [String] {
+    func subscribe() async -> [Qonversion.Transaction] {
         return []
     }
     

@@ -7,11 +7,19 @@
 
 import Foundation
 
-final class InternalConfig {
+protocol UserIdProvider {
+    func getUserId() -> String
+}
+
+final class InternalConfig: UserIdProvider {
     
     var userId: String
     
     init(userId: String) {
         self.userId = userId
+    }
+    
+    func getUserId() -> String {
+        return userId
     }
 }

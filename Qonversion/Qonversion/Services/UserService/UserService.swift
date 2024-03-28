@@ -22,20 +22,15 @@ final class UserService: UserServiceInterface {
         self.requestProcessor = requestProcessor
         self.userDefaults = userDefaults
         self.internalConfig = internalConfig
-    }
-    
-    func userId() -> String {
-        guard let userId: String = userDefaults.string(forKey: Constants.userIdKey.rawValue) else {
-            return generateUserId()
-        }
         
-        return userId
+        prepareUserId()
     }
     
     func generateUserId() -> String {
         let uuidString: String = UUID().uuidString.replacingOccurrences(of: "-", with: "")
         let userId: String = Constants.userIdPrefix.rawValue + uuidString.lowercased()
         userDefaults.set(userId, forKey: Constants.userIdKey.rawValue)
+        internalConfig.userId = userId
         
         return userId
     }
@@ -61,6 +56,17 @@ final class UserService: UserServiceInterface {
         } catch {
             throw QonversionError(type: .userLoadingFailed, message: nil, error: error)
         }
+    }
+    
+}
+
+// MARK: - Private
+
+extension UserService {
+    
+    private func prepareUserId() {
+        let userId: String = userDefaults.string(forKey: Constants.userIdKey.rawValue) ?? generateUserId()
+        internalConfig.userId = userId
     }
     
 }

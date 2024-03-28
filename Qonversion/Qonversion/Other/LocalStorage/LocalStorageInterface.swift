@@ -5,6 +5,8 @@
 //  Created by Suren Sarkisyan on 11.03.2024.
 //
 
+import Foundation
+
 protocol LocalStorageInterface {
     
     func object(forKey key: String) -> Any?
