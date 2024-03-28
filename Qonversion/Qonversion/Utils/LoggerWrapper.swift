@@ -22,17 +22,17 @@ final class LoggerWrapper {
     var logger: Logger? { _logger as? Logger }
     let _logger: Any?
     
-    let logLevel: LogLevel?
+    let logLevel: LogLevel
     
     @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
-    init(logger: Logger?, logLevel: LogLevel?) {
+    init(logger: Logger?, logLevel: LogLevel) {
         self._logger = logger
         self.logLevel = logLevel
     }
     
     init() {
         self._logger = nil
-        self.logLevel = nil
+        self.logLevel = .verbose
     }
     
     func info(_ message: String) {
@@ -42,25 +42,26 @@ final class LoggerWrapper {
     }
     
     func debug(_ message: String) {
-        guard let level: LogLevel = logLevel, level.rawValue < LogLevel.warning.rawValue else { return }
+        guard logLevel.rawValue < LogLevel.warning.rawValue else { return }
         
         log(message, level: .debug)
     }
     
     func warning(_ message: String) {
-        guard let level: LogLevel = logLevel, level.rawValue < LogLevel.error.rawValue else { return }
+        guard logLevel.rawValue < LogLevel.error.rawValue else { return }
         
         log(message, level: .warning)
     }
     
     func error(_ message: String) {
-        guard let level: LogLevel = logLevel, level.rawValue < LogLevel.critical.rawValue else { return }
+        guard logLevel.rawValue < LogLevel.critical.rawValue else { return }
         
         log(message, level: .error)
     }
     
     func critical(_ message: String) {
-        guard let level: LogLevel = logLevel, level.rawValue <= LogLevel.critical.rawValue else { return }
+        guard logLevel.rawValue <= LogLevel.critical.rawValue else { return }
+        
         log(message, level: .critical)
     }
     
