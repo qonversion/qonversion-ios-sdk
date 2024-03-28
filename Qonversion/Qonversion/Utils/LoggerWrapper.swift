@@ -76,7 +76,7 @@ final class LoggerWrapper {
             case .warning, .error:
                 osLevel = .error
             case .critical:
-                osLevel = .info
+                osLevel = .fault
             }
             
             logger.log(level: osLevel, "\(message)")
