@@ -17,4 +17,8 @@ struct QonversionError: Error {
         self.error = error
         self.additionalInfo = additionalInfo
     }
+    
+    static func initializationError() -> QonversionError {
+        return QonversionError(type: .sdkInitializationFailed)
+    }
 }
