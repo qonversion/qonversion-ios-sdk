@@ -36,7 +36,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     
     func userProperties() async throws -> UserProperties {
         let request = Request.getProperties(userId: internalConfig.userId)
-        let properties: [UserProperty]? = try await requestProcessor.process(request: request, responseType: [UserProperty].self)
+        let properties: [UserProperty]? = try? await requestProcessor.process(request: request, responseType: [UserProperty].self)
         let resultProperties: [UserProperty] = properties ?? []
         let result = UserProperties(resultProperties)
         return result

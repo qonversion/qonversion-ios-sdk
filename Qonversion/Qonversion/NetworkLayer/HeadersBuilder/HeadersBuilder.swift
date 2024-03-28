@@ -11,15 +11,17 @@ class HeadersBuilder: HeadersBuilderInterface {
     
     let apiKey: String
     let sdkVersion: String
-    let device: Device
+    let deviceInfoCollector: DeviceInfoCollectorInterface
     
-    init(apiKey: String, sdkVersion: String, device: Device) {
+    init(apiKey: String, sdkVersion: String, deviceInfoCollector: DeviceInfoCollectorInterface) {
         self.apiKey = apiKey
         self.sdkVersion = sdkVersion
-        self.device = device
+        self.deviceInfoCollector = deviceInfoCollector
     }
     
     func addHeaders(to request: inout URLRequest) {
+        let device = deviceInfoCollector.deviceInfo()
+        
         request.addValue("application/json; charset=utf-8", forHTTPHeaderField: Header.contentType.rawValue)
         request.addValue("Bearer " + apiKey, forHTTPHeaderField: Header.authorization.rawValue)
         request.addValue(device.appVersion ?? "", forHTTPHeaderField: Header.appVersion.rawValue)

@@ -5,6 +5,8 @@
 //  Created by Suren Sarkisyan on 07.02.2024.
 //
 
+import Foundation
+
 class NetworkErrorHandler: NetworkErrorHandlerInterface {
     
     let criticalErrorCodes: [ResponseCode]
