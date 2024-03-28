@@ -7,16 +7,6 @@
 
 import Foundation
 
-public struct Configuration {
-    let apiKey: String
-    let userDefaults: UserDefaults?
-    
-    public init(apiKey: String, userDefaults: UserDefaults?) {
-        self.apiKey = apiKey
-        self.userDefaults = userDefaults
-    }
-}
-
 public final class Qonversion {
     public static let shared = Qonversion()
     
@@ -28,4 +18,27 @@ public final class Qonversion {
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
     }
+    
+    public func collectAppleSearchAdsAttribution() {
+        // collectAppleSearchAdsAttribution
+    }
+    
+    public func setUserProperty(_ userProperty: String, key: UserPropertyKey) {
+        guard let userPropertiesManager else { return }
+        
+        userPropertiesManager.setUserProperty(key: key, value: userProperty)
+    }
+    
+    public func setCustomUserProperty(_ userProperty: String, key: String) {
+        guard let userPropertiesManager else { return }
+        
+        userPropertiesManager.setCustomUserProperty(key: key, value: userProperty)
+    }
+    
+    public func userProperties() async throws -> UserProperties {
+        guard let userPropertiesManager else { throw QonversionError.initializationError() }
+        
+        return try await userPropertiesManager.userProperties()
+    }
+    
 }

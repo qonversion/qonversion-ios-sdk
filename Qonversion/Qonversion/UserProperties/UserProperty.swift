@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct UserProperty : Decodable, Encodable, Equatable, Hashable {
+public struct UserProperty : Decodable, Encodable, Equatable, Hashable {
 
     let key: String
     let value: String
