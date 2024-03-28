@@ -13,8 +13,10 @@ final class QonversionAssembly {
     private let miscAssembly: MiscAssembly
     
     required init(apiKey: String, userDefaults: UserDefaults?) {
-        self.servicesAssembly = ServicesAssembly(apiKey: apiKey, userDefaults: userDefaults)
-        self.miscAssembly = MiscAssembly()
+        let userDefaults = userDefaults ?? UserDefaults.standard
+        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults)
+        self.servicesAssembly = ServicesAssembly(apiKey: apiKey, userDefaults: userDefaults, miscAssembly: miscAssembly)
+        self.miscAssembly.servicesAssembly = self.servicesAssembly
     }
     
     func userPropertiesManager() -> UserPropertiesManagerInterface {

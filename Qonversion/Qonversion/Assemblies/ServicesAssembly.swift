@@ -7,28 +7,20 @@
 
 import Foundation
 
-fileprivate enum SDKLevelConstants: String {
-    case version = "1.0"
-}
-
-fileprivate enum IntConstants: UInt {
-    case maxRequestsPerSecond = 5
-}
-
 fileprivate enum StringConstants: String {
     case baseURL = "https://api.qonversion.io/"
-    case storagePrefix = "io.qonversion.sdk.storage."
-    case requestsStorageKey = "requests"
 }
 
 final class ServicesAssembly {
     
     private let apiKey: String
     private let userDefaults: UserDefaults
+    private let miscAssembly: MiscAssembly
     
-    init(apiKey: String, userDefaults: UserDefaults?) {
+    init(apiKey: String, userDefaults: UserDefaults, miscAssembly: MiscAssembly) {
         self.apiKey = apiKey
-        self.userDefaults = userDefaults ?? UserDefaults.standard
+        self.userDefaults = userDefaults
+        self.miscAssembly = miscAssembly
     }
     
     func userService() -> UserServiceInterface {
@@ -38,59 +30,13 @@ final class ServicesAssembly {
         return userService
     }
     
-    func requestsStorage() -> RequestsStorageInterface {
-        let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: StringConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue)
-        
-        return requestsStorage
-    }
-    
-    func rateLimiter() -> RateLimiterInterface {
-        let rateLimiter = RateLimiter(maxRequestsPerSecond: IntConstants.maxRequestsPerSecond.rawValue)
-        
-        return rateLimiter
-    }
-    
-    func jsonDecoder() -> JSONDecoder {
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.dateDecodingStrategy = .secondsSince1970
-        
-        return jsonDecoder
-    }
-    
-    func responseDecoder() -> ResponseDecoderInterface {
-        let jsonDecoder = jsonDecoder()
-        
-        let responseDecoder = ResponseDecoder(decoder: jsonDecoder)
-        
-        return responseDecoder
-    }
-    
-    func errorHandler() -> NetworkErrorHandlerInterface {
-        let criticalErrorCodes: [ResponseCode] = [
-            ResponseCode.unauthorized,
-            ResponseCode.paymentRequired,
-            ResponseCode.forbidden
-        ]
-        
-        let networkErrorHandler = NetworkErrorHandler(criticalErrorCodes: criticalErrorCodes)
-        
-        return networkErrorHandler
-    }
-    
-    func headersBuilder() -> HeadersBuilderInterface {
-        let deviceInfoCollector = deviceInfoCollector()
-        let headersBuilder = HeadersBuilder(apiKey: apiKey, sdkVersion: SDKLevelConstants.version.rawValue, deviceInfoCollector: deviceInfoCollector)
-        
-        return headersBuilder
-    }
-    
     func requestProcessor() -> RequestProcessorInterface {
         let networkProvider: NetworkProviderInterface = networkProvider()
-        let headersBuilder: HeadersBuilderInterface = headersBuilder()
-        let errorHandler: NetworkErrorHandlerInterface = errorHandler()
-        let decoder: ResponseDecoderInterface = responseDecoder()
-        let requestsStorage: RequestsStorageInterface = requestsStorage()
-        let rateLimiter: RateLimiterInterface = rateLimiter()
+        let headersBuilder: HeadersBuilderInterface = miscAssembly.headersBuilder()
+        let errorHandler: NetworkErrorHandlerInterface = miscAssembly.errorHandler()
+        let decoder: ResponseDecoderInterface = miscAssembly.responseDecoder()
+        let requestsStorage: RequestsStorageInterface = miscAssembly.requestsStorage()
+        let rateLimiter: RateLimiterInterface = miscAssembly.rateLimiter()
         
         #warning("Update retriable requests list")
         let retriableRequestsList: [Request] = []
