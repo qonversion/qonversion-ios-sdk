@@ -9,11 +9,12 @@
 #import "QONRemoteConfigManager.h"
 #import "QONRemoteConfigService.h"
 #import "QONRemoteConfig.h"
+#import "QONRemoteConfigList+protected.h"
 #import "QONExperiment.h"
 #import "QNProductCenterManager.h"
 #import "QONRemoteConfigLoadingState.h"
 
-static NSString *const kDefaultLoadingStateKey = @"";
+static NSString *const kEmptyContextKey = @"";
 
 @interface QONRemoteConfigManager ()
 
@@ -62,7 +63,7 @@ static NSString *const kDefaultLoadingStateKey = @"";
   QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
   if (loadingState == nil) {
     loadingState = [QONRemoteConfigLoadingState new];
-    self.loadingStates[contextKey ?: kDefaultLoadingStateKey] = loadingState;
+    self.loadingStates[contextKey ?: kEmptyContextKey] = loadingState;
   }
 
   if (!isUserStable || loadingState.isInProgress) {
@@ -91,23 +92,52 @@ static NSString *const kDefaultLoadingStateKey = @"";
   }];
 }
 
+- (void)obtainRemoteConfigListWithContextKeys:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
+  NSMutableArray *allKeys = [contextKeys mutableCopy];
+  if (includeEmptyContextKey) {
+    [allKeys addObject:kEmptyContextKey];
+  }
+  NSMutableArray<QONRemoteConfig *> *configs = [NSMutableArray new];
+  for (NSString *contextKey in allKeys) {
+    QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
+    if (loadingState && loadingState.loadedConfig) {
+      [configs addObject:loadingState.loadedConfig];
+    } else {
+      break;
+    }
+  }
+
+  if (configs.count == allKeys.count) {
+    QONRemoteConfigList *res = [[QONRemoteConfigList alloc] initWithRemoteConfigs:configs];
+    return completion(res, nil);
+  }
+
+  QONRemoteConfigListCompletionHandler completionWrapper = [self remoteConfigListCompletionWrapper:completion];
+  [self.remoteConfigService loadRemoteConfigList:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completionWrapper];
+}
+
+- (void)obtainRemoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
+  QONRemoteConfigListCompletionHandler completionWrapper = [self remoteConfigListCompletionWrapper:completion];
+  [self.remoteConfigService loadRemoteConfigList:completionWrapper];
+}
+
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
-  self.loadingStates[kDefaultLoadingStateKey] = nil;
+  self.loadingStates[kEmptyContextKey] = nil;
   [self.remoteConfigService attachUserToExperiment:experimentId groupId:groupId completion:completion];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
-  self.loadingStates[kDefaultLoadingStateKey] = nil;
+  self.loadingStates[kEmptyContextKey] = nil;
   [self.remoteConfigService detachUserFromExperiment:experimentId completion:completion];
 }
 
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  self.loadingStates[kDefaultLoadingStateKey] = nil;
+  self.loadingStates[kEmptyContextKey] = nil;
   [self.remoteConfigService attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  self.loadingStates[kDefaultLoadingStateKey] = nil;
+  self.loadingStates[kEmptyContextKey] = nil;
   [self.remoteConfigService detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
@@ -124,8 +154,30 @@ static NSString *const kDefaultLoadingStateKey = @"";
 }
 
 - (QONRemoteConfigLoadingState *)loadingStateForContextKey:(NSString *)contextKey {
-  NSString *key = contextKey ?: kDefaultLoadingStateKey;
+  NSString *key = contextKey ?: kEmptyContextKey;
   return self.loadingStates[key];
+}
+
+- (QONRemoteConfigListCompletionHandler)remoteConfigListCompletionWrapper:(QONRemoteConfigListCompletionHandler)completion {
+  NSMutableDictionary<NSString *, QONRemoteConfigLoadingState *> *localLoadingStates = self.loadingStates;
+
+  return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
+    if (error) {
+      completion(nil, error);
+      return;
+    }
+    
+    if (remoteConfigList) {
+      for (QONRemoteConfig *remoteConfig in remoteConfigList.remoteConfigs) {
+        NSString *contextKey = remoteConfig.source.contextKey ?: kEmptyContextKey;
+        QONRemoteConfigLoadingState *loadingState = localLoadingStates[contextKey] ?: [QONRemoteConfigLoadingState new];
+        loadingState.loadedConfig = remoteConfig;
+        localLoadingStates[contextKey] = loadingState;
+      }
+    }
+
+    completion(remoteConfigList, nil);
+  };
 }
 
 @end

@@ -26,6 +26,7 @@ extern NSString *const kSdkLogsEndpoint;
 extern NSString *const kSdkLogsBaseURL;
 extern NSString *const kStoredRequestsKey;
 extern NSString *const kRemoteConfigEndpoint;
+extern NSString *const kRemoteConfigListEndpoint;
 
 extern NSString *const kEventEndpoint;
 

@@ -81,7 +81,7 @@
   return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kProductsEndpoint type:QONRequestTypePost];
 }
 
-- (NSURLRequest *)remoteConfigRequestForUserId:(NSString *)userId contextKey:(NSString *)contextKey {
+- (NSURLRequest *)makeRemoteConfigRequestForUserId:(NSString *)userId contextKey:(NSString *)contextKey {
   NSURLRequest *request = [self makeGetRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigEndpoint];
   
   NSMutableURLRequest *mutableRequest = [request mutableCopy];
@@ -89,6 +89,29 @@
   if (contextKey) {
     updatedURLString = [updatedURLString stringByAppendingString:[NSString stringWithFormat:@"&context_key=%@", contextKey]];
   }
+  [mutableRequest setURL:[NSURL URLWithString:updatedURLString]];
+  
+  return [mutableRequest copy];
+}
+
+- (NSURLRequest *)makeRemoteConfigListRequestForUserId:(NSString *)userId contextKeys:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey {
+  NSURLRequest *request = [self makeGetRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigListEndpoint];
+  
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
+  NSString *updatedURLString = [mutableRequest.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@&with_empty_context_key=%@", userId, includeEmptyContextKey ? @"true" : @"false"]];
+  for (NSString *contextKey in contextKeys) {
+    updatedURLString = [updatedURLString stringByAppendingString:[NSString stringWithFormat:@"&context_key=%@", contextKey]];
+  }
+  [mutableRequest setURL:[NSURL URLWithString:updatedURLString]];
+  
+  return [mutableRequest copy];
+}
+
+- (NSURLRequest *)makeRemoteConfigListRequestForUserId:(NSString *)userId {
+  NSURLRequest *request = [self makeGetRequestWithBaseURL:self.baseURL endpoint:kRemoteConfigListEndpoint];
+  
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
+  NSString *updatedURLString = [mutableRequest.URL.absoluteString stringByAppendingString:[NSString stringWithFormat:@"?user_id=%@&all_context_keys=true", userId]];
   [mutableRequest setURL:[NSURL URLWithString:updatedURLString]];
   
   return [mutableRequest copy];
