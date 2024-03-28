@@ -39,7 +39,7 @@
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		4CADC5602759181A004FDC10 /* AuthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CADC55F2759181A004FDC10 /* AuthViewController.swift */; };
 		6A121DAC2BB445AE0073B330 /* QONRemoteConfigList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */; };
-		6A121DAE2BB446740073B330 /* QONRemoteConfigList.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */; };
+		6A121DAE2BB446740073B330 /* QONRemoteConfigList.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6A21BF4C2AB201A7005BDA7C /* QONRateLimiter.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A21BF4B2AB201A7005BDA7C /* QONRateLimiter.h */; };
 		6A21BF4E2AB20483005BDA7C /* QONRateLimiter.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF4D2AB20483005BDA7C /* QONRateLimiter.m */; };
 		6A21BF532AB2059F005BDA7C /* QONRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A21BF522AB2059F005BDA7C /* QONRequest.h */; };
@@ -1603,6 +1603,7 @@
 				6A21BF4C2AB201A7005BDA7C /* QONRateLimiter.h in Headers */,
 				70B917672B34284200BF0689 /* QONTransaction+Protected.h in Headers */,
 				895732B426DD03A3009507A6 /* QONAutomationsService.h in Headers */,
+				6A121DAE2BB446740073B330 /* QONRemoteConfigList.h in Headers */,
 				895732CA26DD03A3009507A6 /* QNUtils.h in Headers */,
 				8957328126DD03A3009507A6 /* QONEntitlement.h in Headers */,
 				8957330526DD03A3009507A6 /* QNIdentityServiceInterface.h in Headers */,
@@ -1617,7 +1618,6 @@
 				895732A826DD03A3009507A6 /* QONAutomationsMapper.h in Headers */,
 				70E99384291BC60A006E0A64 /* QONEnvironment.h in Headers */,
 				8957330226DD03A3009507A6 /* QNUserInfoService.h in Headers */,
-				6A121DAE2BB446740073B330 /* QONRemoteConfigList.h in Headers */,
 				8957329D26DD03A3009507A6 /* QONActionResult.h in Headers */,
 				895732B626DD03A3009507A6 /* QONAutomationsScreenProcessor.h in Headers */,
 				895732AB26DD03A3009507A6 /* QONAutomationsEventsMapper.h in Headers */,
