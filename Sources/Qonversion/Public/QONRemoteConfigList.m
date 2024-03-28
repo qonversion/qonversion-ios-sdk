@@ -21,16 +21,20 @@
 }
 
 - (QONRemoteConfig *)remoteConfigForContextKey:(NSString *)key {
-    for (QONRemoteConfig *config in self.remoteConfigs) {
-        if ((key == nil && config.source.contextKey == nil) || [config.source.contextKey isEqualToString:key]) {
-            return config;
-        }
-    }
-    return nil;
+  return [self findRemoteConfig:key];
 }
 
 - (QONRemoteConfig *)remoteConfigForEmptyContextKey {
-    return [self remoteConfigForContextKey:nil];
+  return [self findRemoteConfig:nil];
+}
+
+- (QONRemoteConfig *)findRemoteConfig:(NSString *_Nullable)key {
+  for (QONRemoteConfig *config in self.remoteConfigs) {
+    if ((key == nil && config.source.contextKey == nil) || [config.source.contextKey isEqualToString:key]) {
+      return config;
+    }
+  }
+  return nil;
 }
 
 @end
