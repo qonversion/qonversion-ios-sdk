@@ -11,6 +11,7 @@
 #import "QONExperiment+Protected.h"
 #import "QONExperimentGroup+Protected.h"
 #import "QONRemoteConfig+Protected.h"
+#import "QONRemoteConfigList+Protected.h"
 #import "QONRemoteConfigurationSource+Protected.h"
 
 NSString *const kControlGroupType = @"control";
@@ -70,6 +71,24 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   QONExperiment *experiment = [self mapExperiment:experimentData];
   
   return [[QONRemoteConfig alloc] initWithPayload:payload experiment:experiment source:remoteConfigurationSource];
+}
+
+- (QONRemoteConfigList * _Nullable)mapRemoteConfigList:(NSArray *)remoteConfigListData {
+  if (![remoteConfigListData isKindOfClass:[NSArray class]]) {
+    return nil;
+  }
+  
+  NSMutableArray *remoteConfigs = [NSMutableArray new];
+  for (NSDictionary *remoteConfigData in remoteConfigListData) {
+    if ([remoteConfigData isKindOfClass:[NSDictionary class]]) {
+      QONRemoteConfig *config = [self mapRemoteConfig:remoteConfigData];
+      if (config != nil && config.source != nil) {
+        [remoteConfigs addObject:config];
+      }
+    }
+  }
+
+  return [[QONRemoteConfigList alloc] initWithRemoteConfigs:remoteConfigs];
 }
 
 - (QONExperiment *)mapExperiment:(NSDictionary *)experimentData {

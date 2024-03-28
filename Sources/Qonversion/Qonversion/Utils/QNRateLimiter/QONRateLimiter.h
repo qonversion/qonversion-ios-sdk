@@ -16,16 +16,17 @@ typedef void (^QONRateLimiterCompletionHandler)(NSError * _Nullable rateLimitErr
 typedef NS_ENUM(NSInteger, QONRateLimitedRequestType) {
   QONRateLimitedRequestTypeInit = 0,
   QONRateLimitedRequestTypeRemoteConfig = 1,
-  QONRateLimitedRequestTypeAttachUserToExperiment = 2,
-  QONRateLimitedRequestTypeDetachUserFromExperiment = 3,
-  QONRateLimitedRequestTypePurchase = 4,
-  QONRateLimitedRequestTypeUserInfo = 5,
-  QONRateLimitedRequestTypeAttribution = 6,
-  QONRateLimitedRequestTypeGetProperties = 7,
-  QONRateLimitedRequestTypeEligibilityForProducts = 8,
-  QONRateLimitedRequestTypeIdentify = 9,
-  QONRateLimitedRequestTypeAttachUserToRemoteConfiguration = 10,
-  QONRateLimitedRequestTypeDetachUserFromRemoteConfiguration = 11,
+  QONRateLimitedRequestTypeRemoteConfigList = 2,
+  QONRateLimitedRequestTypeAttachUserToExperiment = 3,
+  QONRateLimitedRequestTypeDetachUserFromExperiment = 4,
+  QONRateLimitedRequestTypePurchase = 5,
+  QONRateLimitedRequestTypeUserInfo = 6,
+  QONRateLimitedRequestTypeAttribution = 7,
+  QONRateLimitedRequestTypeGetProperties = 8,
+  QONRateLimitedRequestTypeEligibilityForProducts = 9,
+  QONRateLimitedRequestTypeIdentify = 10,
+  QONRateLimitedRequestTypeAttachUserToRemoteConfiguration = 11,
+  QONRateLimitedRequestTypeDetachUserFromRemoteConfiguration = 12,
 };
 
 @interface QONRateLimiter : NSObject

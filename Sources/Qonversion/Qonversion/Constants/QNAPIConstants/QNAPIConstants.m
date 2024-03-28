@@ -17,6 +17,7 @@ NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 NSString * const kProductsEndpoint = @"v1/products/get";
 NSString * const kPropertiesEndpoint = @"v3/users/%@/properties";
 NSString * const kRemoteConfigEndpoint = @"v3/remote-config";
+NSString * const kRemoteConfigListEndpoint = @"v3/remote-configs";
 
 NSString * const kAttachUserToExperimentEndpointFormat = @"v3/experiments/%@/users/%@";
 NSString * const kAttachUserToRemoteConfigurationEndpointFormat = @"v3/remote-configurations/%@/users/%@";

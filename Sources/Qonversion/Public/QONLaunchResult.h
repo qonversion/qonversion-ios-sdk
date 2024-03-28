@@ -2,7 +2,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class QONEntitlement, QONProduct, QONOfferings, QONIntroEligibility, QONUser, QONRemoteConfig, QONUserProperties;
+@class QONEntitlement, QONProduct, QONOfferings, QONIntroEligibility, QONUser, QONRemoteConfig, QONRemoteConfigList, QONUserProperties;
 
 typedef NS_ENUM(NSInteger, QONAttributionProvider) {
   QONAttributionProviderAppsFlyer = 0,
@@ -61,6 +61,8 @@ typedef void (^QONProductsCompletionHandler)(NSDictionary<NSString *, QONProduct
 typedef void (^QONEligibilityCompletionHandler)(NSDictionary<NSString *, QONIntroEligibility *> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.EligibilityCompletionHandler);
 
 typedef void (^QONRemoteConfigCompletionHandler)(QONRemoteConfig *_Nullable remoteConfig, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.RemoteConfigCompletionHandler);
+
+typedef void (^QONRemoteConfigListCompletionHandler)(QONRemoteConfigList *_Nullable remoteConfigList, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.RemoteConfigCompletionHandler);
 
 typedef void (^QONExperimentAttachCompletionHandler)(BOOL success, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.ExperimentAttachCompletionHandler);
 
