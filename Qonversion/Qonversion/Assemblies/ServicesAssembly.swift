@@ -25,7 +25,7 @@ final class ServicesAssembly {
     
     func userService() -> UserServiceInterface {
         let requestProcessor = requestProcessor()
-        let userService = UserService(requestProcessor: requestProcessor, userDefaults: userDefaults, internalConfig: InternalConfig(userId: ""))
+        let userService = UserService(requestProcessor: requestProcessor, userDefaults: userDefaults, internalConfig: miscAssembly.internalConfig)
         
         return userService
     }

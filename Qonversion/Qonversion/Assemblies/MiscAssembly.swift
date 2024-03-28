@@ -22,14 +22,20 @@ fileprivate enum StringConstants: String {
 
 final class MiscAssembly {
     
-    let userDefaults: UserDefaults
     let apiKey: String
+    let userDefaults: UserDefaults
     
     var servicesAssembly: ServicesAssembly!
+    var internalConfig: InternalConfig
     
-    init(apiKey: String, userDefaults: UserDefaults) {
+    init(apiKey: String, userDefaults: UserDefaults, internalConfig: InternalConfig) {
         self.apiKey = apiKey
         self.userDefaults = userDefaults
+        self.internalConfig = internalConfig
+    }
+    
+    func userIdProvider() -> UserIdProvider {
+        return internalConfig
     }
     
     func delayCalculator() -> IncrementalDelayCalculator {
