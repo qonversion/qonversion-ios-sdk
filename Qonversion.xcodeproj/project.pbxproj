@@ -57,8 +57,6 @@
 		701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922712B10981200724926 /* QONSubscriptionPeriod.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */ = {isa = PBXBuildFile; fileRef = 701922722B10981200724926 /* QONSubscriptionPeriod.m */; };
 		701922762B10AB3300724926 /* QONSubscriptionPeriod+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922752B10AB3300724926 /* QONSubscriptionPeriod+Protected.h */; };
-		701922812B10DF2200724926 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
-		701922822B10DF2200724926 /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		702394912923EBF3003126D5 /* QONNotificationsService.h in Headers */ = {isa = PBXBuildFile; fileRef = 7023948F2923EBF3003126D5 /* QONNotificationsService.h */; };
 		702394922923EBF3003126D5 /* QONNotificationsService.m in Sources */ = {isa = PBXBuildFile; fileRef = 702394902923EBF3003126D5 /* QONNotificationsService.m */; };
 		70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70283DF629F66FAC00D138BC /* PurchasesMapper.swift */; };
@@ -67,6 +65,7 @@
 		707734F42A9F607700CFF742 /* QONRemoteConfigurationSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		707734F52A9F607700CFF742 /* QONRemoteConfigurationSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */; };
 		707734F72A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */; };
+		707C07092BB6FBE200E2597D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 707C07082BB6FBE200E2597D /* PrivacyInfo.xcprivacy */; };
 		70893C9A2B3EC136002C6B82 /* expected_entitlements.json in Resources */ = {isa = PBXBuildFile; fileRef = 70893C992B3EC136002C6B82 /* expected_entitlements.json */; };
 		7094501A29CD994200F55E68 /* QONRemoteConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = 7094501829CD994200F55E68 /* QONRemoteConfig.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7094501B29CD994200F55E68 /* QONRemoteConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 7094501929CD994200F55E68 /* QONRemoteConfig.m */; };
@@ -271,28 +270,7 @@
 			remoteGlobalIDString = 454EF63B24E5CC580070581E;
 			remoteInfo = Sample;
 		};
-		701922832B10DF2200724926 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 459DAB60243E329F0011ECF3 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 459DAB68243E329F0011ECF3;
-			remoteInfo = Qonversion;
-		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		701922852B10DF2200724926 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				701922822B10DF2200724926 /* Qonversion.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13844A737C5779AEEAD10EB9 /* Pods-Sample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.debug.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.debug.xcconfig"; sourceTree = "<group>"; };
@@ -376,6 +354,7 @@
 		707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigurationSource.h; sourceTree = "<group>"; };
 		707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigurationSource.m; sourceTree = "<group>"; };
 		707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigurationSource+Protected.h"; sourceTree = "<group>"; };
+		707C07082BB6FBE200E2597D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		70893C992B3EC136002C6B82 /* expected_entitlements.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = expected_entitlements.json; sourceTree = "<group>"; };
 		7094501829CD994200F55E68 /* QONRemoteConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfig.h; sourceTree = "<group>"; };
 		7094501929CD994200F55E68 /* QONRemoteConfig.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfig.m; sourceTree = "<group>"; };
@@ -563,7 +542,6 @@
 			files = (
 				45754AE725814C7500FCA376 /* iAd.framework in Frameworks */,
 				891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */,
-				701922812B10DF2200724926 /* Qonversion.framework in Frameworks */,
 				70D9CBDF2B03BF07003F1878 /* StoreKit.framework in Frameworks */,
 				A2649CD29A7FDF280A2EC27C /* Pods_Sample.framework in Frameworks */,
 			);
@@ -645,6 +623,7 @@
 		459DAB5F243E329F0011ECF3 = {
 			isa = PBXGroup;
 			children = (
+				707C07082BB6FBE200E2597D /* PrivacyInfo.xcprivacy */,
 				4531CBC724578D300022C422 /* Podfile */,
 				459DAB84243E32C40011ECF3 /* Deployment */,
 				459DABD3243E33C20011ECF3 /* Framework */,
@@ -1705,12 +1684,10 @@
 				454EF63924E5CC580070581E /* Frameworks */,
 				454EF63A24E5CC580070581E /* Resources */,
 				4CB079286CCC86BD200EEDB0 /* [CP] Embed Pods Frameworks */,
-				701922852B10DF2200724926 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				701922842B10DF2200724926 /* PBXTargetDependency */,
 			);
 			name = Sample;
 			productName = Sample;
@@ -1844,6 +1821,7 @@
 				4531CBC824578D300022C422 /* Podfile in Resources */,
 				459DAB9A243E333C0011ECF3 /* README.md in Resources */,
 				459DABA6243E33470011ECF3 /* Appfile in Resources */,
+				707C07092BB6FBE200E2597D /* PrivacyInfo.xcprivacy in Resources */,
 				459DABA5243E33470011ECF3 /* report.junit in Resources */,
 				459DAB9C243E333C0011ECF3 /* Qonversion.podspec in Resources */,
 				459DABA7243E33470011ECF3 /* Fastfile in Resources */,
@@ -2113,11 +2091,6 @@
 			isa = PBXTargetDependency;
 			target = 454EF63B24E5CC580070581E /* Sample */;
 			targetProxy = 6A8A604C29DAD5CB008EC7D8 /* PBXContainerItemProxy */;
-		};
-		701922842B10DF2200724926 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 459DAB68243E329F0011ECF3 /* Qonversion */;
-			targetProxy = 701922832B10DF2200724926 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

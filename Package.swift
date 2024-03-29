@@ -81,11 +81,17 @@ let package = Package(
                 name: "Qonversion",
                 path: "Sources",
                 exclude: ["Swift"],
+                resources: [
+                    .copy("../Sources/PrivacyInfo.xcprivacy")
+                ],
                 publicHeadersPath: "Qonversion/Public",
                 cSettings: sources.map { .headerSearchPath($0) }),
               .target(
                 name: "QonversionSwift",
                 dependencies: ["Qonversion"],
                 path: "Sources",
-                exclude: ["Qonversion"])]
+                exclude: ["Qonversion"],
+                resources: [
+                    .copy("../Sources/PrivacyInfo.xcprivacy")
+                ])]
 )
