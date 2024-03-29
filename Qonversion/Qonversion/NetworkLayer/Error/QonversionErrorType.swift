@@ -24,7 +24,7 @@ enum QonversionErrorType {
         case .internal:
             return "Internal error occurred"
         case .sdkInitializationError:
-            return "SDK is not initialized. Initialize SDK before calling other functions. Use Qonversion.initialize()"
+            return "SDK is not initialized. Initialize SDK before calling other functions using  Qonversion.initialize()"
         default:
             return "Unknown error occurred"
         }
