@@ -11,7 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_SWIFT_NAME(Qonversion.RemoteConfig)
+NS_SWIFT_NAME(Qonversion.RemoteConfigList)
 @interface QONRemoteConfigList : NSObject
 
 @property (nonatomic, copy) NSArray<QONRemoteConfig *> *remoteConfigs;
