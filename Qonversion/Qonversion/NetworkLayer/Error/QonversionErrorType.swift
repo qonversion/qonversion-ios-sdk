@@ -8,6 +8,7 @@
 enum QonversionErrorType {
     case unknown
     case `internal`
+    case sdkInitializationError
     case invalidRequest
     case invalidResponse
     case authorizationFailed
@@ -22,6 +23,8 @@ enum QonversionErrorType {
         switch self {
         case .internal:
             return "Internal error occurred"
+        case .sdkInitializationError:
+            return "SDK is not initialized. Initialize SDK before calling other functions using  Qonversion.initialize()"
         default:
             return "Unknown error occurred"
         }
