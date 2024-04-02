@@ -219,7 +219,8 @@
   NSString *platformVersion = [QNDevice current].osVersion;
   NSString *platform = [QNDevice current].osName;
   NSString *source = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSource] ?: @"iOS";
-  NSString *sourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: self.version;
+  NSString *version = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion] ?: self.version;
+  NSString *sourceVersion = version ?: @"";
   
   [request addValue:platform forHTTPHeaderField:@"Platform"];
   [request addValue:platformVersion forHTTPHeaderField:@"Platform-Version"];
