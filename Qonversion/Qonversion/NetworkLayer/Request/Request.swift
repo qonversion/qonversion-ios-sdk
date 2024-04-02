@@ -11,12 +11,13 @@ typealias RequestBodyDict = [String: AnyHashable]
 typealias RequestBodyArray = [AnyHashable]
 
 enum Request : Hashable {
-    // All requests are just examples and should be overridden
     case getUser(id: String, endpoint: String = "v3/users/", type: RequestType = .get)
     case createUser(id: String, endpoint: String = "v3/users/", body: RequestBodyDict, type: RequestType = .post)
     case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .post)
     case getProperties(userId: String, endpoint: String = "v3/users/%@/properties", type: RequestType = .get)
     case sendProperties(userId: String, endpoint: String = "v3/users/%@/properties", body: RequestBodyArray, type: RequestType = .post)
+    case createDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .post)
+    case updateDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .put)
 
     func convertToURLRequest(_ baseUrl: String) -> URLRequest? {
         func defaultRequest(urlString: String, body: Any?, type: RequestType) -> URLRequest? {
@@ -48,6 +49,12 @@ enum Request : Hashable {
         case let .sendProperties(userId, endpoint, body, type):
             let urlString = String(format: endpoint, arguments: [userId])
             return defaultRequest(urlString: urlString, body: body, type: type)
+            
+        case let .createDevice(userId, endpoint, body, type):
+            return defaultRequest(urlString: endpoint + userId, body: body, type: type)
+            
+        case let .updateDevice(userId, endpoint, body, type):
+            return defaultRequest(urlString: endpoint + userId, body: body, type: type)
         }
     }
 
@@ -76,6 +83,18 @@ enum Request : Hashable {
             hasher.combine(type)
         case let .sendProperties(userId, endpoint, body, type):
             hasher.combine("sendProperties")
+            hasher.combine(userId)
+            hasher.combine(endpoint)
+            hasher.combine(body)
+            hasher.combine(type)
+        case let .createDevice(userId, endpoint, body, type):
+            hasher.combine("createDevice")
+            hasher.combine(userId)
+            hasher.combine(endpoint)
+            hasher.combine(body)
+            hasher.combine(type)
+        case let .updateDevice(userId, endpoint, body, type):
+            hasher.combine("updateDevice")
             hasher.combine(userId)
             hasher.combine(endpoint)
             hasher.combine(body)

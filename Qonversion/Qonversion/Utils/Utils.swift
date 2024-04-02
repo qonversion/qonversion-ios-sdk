@@ -7,12 +7,15 @@
 
 import Foundation
 
+typealias Codable = Decodable & Encodable
+
 enum InternalConstants: String {
-  case appVersionBundleKey = "CFBundleShortVersionString"
+    case storagePrefix = "io.qonversion.sdk.storage."
+    case appVersionBundleKey = "CFBundleShortVersionString"
 }
 
 extension Bundle {
-  static var appVersion: String? { main.infoDictionary?[InternalConstants.appVersionBundleKey.rawValue] as? String }
+    static var appVersion: String? { main.infoDictionary?[InternalConstants.appVersionBundleKey.rawValue] as? String }
 }
 
 extension String {

@@ -8,7 +8,8 @@
 
 import Foundation
 
-struct Device {
+struct Device: Comparable, Codable {
+    
     let manufacturer: String
     let osName: String
     let osVersion: String
@@ -45,5 +46,21 @@ struct Device {
         self.advertisingId = advertisingId
         self.vendorId = vendorId
         self.installDate = installDate
+    }
+    
+    static func < (lhs: Device, rhs: Device) -> Bool {
+        let isEqual: Bool = lhs.manufacturer == rhs.manufacturer
+        && lhs.osName == rhs.osName
+        && lhs.osVersion == rhs.osVersion
+        && lhs.model == rhs.model
+        && lhs.appVersion == rhs.appVersion
+        && lhs.country == rhs.country
+        && lhs.language == rhs.language
+        && lhs.timezone == rhs.timezone
+        && lhs.advertisingId == rhs.advertisingId
+        && lhs.vendorId == rhs.vendorId
+        && lhs.installDate == rhs.installDate
+        
+        return isEqual
     }
 }
