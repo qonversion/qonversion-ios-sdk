@@ -13,12 +13,14 @@
 #import "QONExperiment.h"
 #import "QNProductCenterManager.h"
 #import "QONRemoteConfigLoadingState.h"
+#import "QONRemoteConfigListRequestData.h"
 
 static NSString *const kEmptyContextKey = @"";
 
 @interface QONRemoteConfigManager ()
 
 @property (nonatomic, strong) NSMutableDictionary<NSString *, QONRemoteConfigLoadingState *> *loadingStates;
+@property (nonatomic, strong) NSMutableArray<QONRemoteConfigListRequestData *> *listRequests;
 
 @end
 
@@ -30,6 +32,7 @@ static NSString *const kEmptyContextKey = @"";
   if (self) {
     _remoteConfigService = [QONRemoteConfigService new];
     _loadingStates = [NSMutableDictionary new];
+    _listRequests = [NSMutableArray new];
   }
   
   return self;
@@ -41,6 +44,17 @@ static NSString *const kEmptyContextKey = @"";
     if (loadingState && loadingState.completions.count > 0) {
       [self obtainRemoteConfigWithContextKey:contextKey
                                   completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {}];
+    }
+  }
+
+  NSArray<QONRemoteConfigListRequestData *> *requestsToSend = [self.listRequests copy];
+  [self.listRequests removeAllObjects];
+
+  for (QONRemoteConfigListRequestData *listRequest in requestsToSend) {
+    if (listRequest.contextKeys) {
+      [self obtainRemoteConfigListWithContextKeys:listRequest.contextKeys includeEmptyContextKey:listRequest.includeEmptyContextKey completion:listRequest.completion];
+    } else {
+      [self obtainRemoteConfigList:listRequest.completion];
     }
   }
 }
@@ -59,13 +73,13 @@ static NSString *const kEmptyContextKey = @"";
 }
 
 - (void)obtainRemoteConfigWithContextKey:(NSString * _Nullable)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
-  BOOL isUserStable = [self.productCenterManager isUserStable];
   QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
   if (loadingState == nil) {
     loadingState = [QONRemoteConfigLoadingState new];
     self.loadingStates[contextKey ?: kEmptyContextKey] = loadingState;
   }
 
+  BOOL isUserStable = [self.productCenterManager isUserStable];
   if (!isUserStable || loadingState.isInProgress) {
     [loadingState.completions addObject:completion];
     
@@ -112,11 +126,27 @@ static NSString *const kEmptyContextKey = @"";
     return completion(remoteConfigList, nil);
   }
 
+  BOOL isUserStable = [self.productCenterManager isUserStable];
+  if (!isUserStable) {
+    QONRemoteConfigListRequestData *requestData = [[QONRemoteConfigListRequestData alloc] initWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
+    [self.listRequests addObject:requestData];
+    
+    return;
+  }
+  
   QONRemoteConfigListCompletionHandler completionWrapper = [self remoteConfigListCompletionWrapper:completion];
   [self.remoteConfigService loadRemoteConfigList:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completionWrapper];
 }
 
 - (void)obtainRemoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
+  BOOL isUserStable = [self.productCenterManager isUserStable];
+  if (!isUserStable) {
+    QONRemoteConfigListRequestData *requestData = [[QONRemoteConfigListRequestData alloc] initWithCompletion:completion];
+    [self.listRequests addObject:requestData];
+    
+    return;
+  }
+  
   QONRemoteConfigListCompletionHandler completionWrapper = [self remoteConfigListCompletionWrapper:completion];
   [self.remoteConfigService loadRemoteConfigList:completionWrapper];
 }
