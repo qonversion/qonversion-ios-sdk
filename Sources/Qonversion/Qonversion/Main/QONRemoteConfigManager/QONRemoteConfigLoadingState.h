@@ -8,12 +8,11 @@
 
 #import <Foundation/Foundation.h>
 #import "QONLaunchResult.h"
-#import "QONExperiment.h"
 
 @interface QONRemoteConfigLoadingState : NSObject
 
-@property (nonatomic, strong, nullable) QONRemoteConfig * loadedConfig;
-@property (nonatomic, strong, nonnull) NSMutableArray<QONRemoteConfigCompletionHandler> * completions;
+@property (nonatomic, strong, nullable) QONRemoteConfig *loadedConfig;
+@property (nonatomic, strong, nonnull) NSMutableArray<QONRemoteConfigCompletionHandler> *completions;
 @property (nonatomic, assign) BOOL isInProgress;
 
 @end
