@@ -9,14 +9,18 @@
 #import <Foundation/Foundation.h>
 #import "QONLaunchResult.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface QONRemoteConfigListRequestData : NSObject
 
-@property (nonatomic, strong, nullable) NSArray<NSString *> *contextKeys;
+@property (nonatomic, copy, nullable) NSArray<NSString *> *contextKeys;
 @property (nonatomic, assign) BOOL includeEmptyContextKey;
-@property (nonatomic, strong, nonnull) QONRemoteConfigListCompletionHandler completion;
+@property (nonatomic, copy, nonnull) QONRemoteConfigListCompletionHandler completion;
 
 - (instancetype)initWithCompletion:(QONRemoteConfigListCompletionHandler)completion;
 
 - (instancetype)initWithContextKeys:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion;
 
 @end
+
+NS_ASSUME_NONNULL_END
