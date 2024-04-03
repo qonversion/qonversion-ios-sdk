@@ -21,11 +21,13 @@ final class DeviceService: DeviceServiceInterface {
     private let requestProcessor: RequestProcessorInterface
     private let localStorage: LocalStorage
     private let userIdProvider: UserIdProvider
+    private let encoder: JSONEncoder
     
-    init(requestProcessor: RequestProcessorInterface, localStorage: LocalStorage, userIdProvider: UserIdProvider) {
+    init(requestProcessor: RequestProcessorInterface, localStorage: LocalStorage, userIdProvider: UserIdProvider, encoder: JSONEncoder) {
         self.requestProcessor = requestProcessor
         self.localStorage = localStorage
         self.userIdProvider = userIdProvider
+        self.encoder = encoder
     }
     
     func save(device: Device) {
@@ -57,7 +59,7 @@ extension DeviceService {
     }
     
     private func serialize(device: Device) -> RequestBodyDict? {
-        guard let data: Data = try? JSONEncoder().encode(device) else { return nil }
+        guard let data: Data = try? encoder.encode(device) else { return nil }
 
         let body: RequestBodyDict? = try? JSONSerialization.jsonObject(with: data, options: []) as? RequestBodyDict
         
@@ -70,12 +72,15 @@ extension DeviceService {
         }
         
         let request: Request
+        let errorType: QonversionErrorType
         
         switch requestType {
         case .create:
             request = Request.createDevice(userId: userIdProvider.getUserId(), body: body)
+            errorType = .deviceCreationFailed
         case .update:
             request = Request.updateDevice(userId: userIdProvider.getUserId(), body: body)
+            errorType = .deviceUpdateFailed
         }
         
         do {
@@ -83,7 +88,7 @@ extension DeviceService {
             
             return device
         } catch {
-            throw QonversionError(type: .deviceCreationFailed, message: nil, error: error)
+            throw QonversionError(type: errorType, message: nil, error: error)
         }
     }
     

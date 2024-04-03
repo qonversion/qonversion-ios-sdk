@@ -9,9 +9,9 @@ import Foundation
 
 final class DeviceManager: DeviceManagerInterface {
     
-    let deviceInfoCollector: DeviceInfoCollectorInterface
-    let deviceService: DeviceServiceInterface
-    let logger: LoggerWrapper
+    private let deviceInfoCollector: DeviceInfoCollectorInterface
+    private let deviceService: DeviceServiceInterface
+    private let logger: LoggerWrapper
     
     init(deviceInfoCollector: DeviceInfoCollectorInterface, deviceService: DeviceServiceInterface, logger: LoggerWrapper) {
         self.deviceInfoCollector = deviceInfoCollector
@@ -25,24 +25,12 @@ final class DeviceManager: DeviceManagerInterface {
         let currentDevice: Device? = deviceService.currentDevice()
         
         if currentDevice == nil {
-            do {
-                let device: Device = try await deviceService.create(device: deviceInfo)
-                deviceService.save(device: device)
-                logger.info(LoggerInfoMessages.deviceCreated.rawValue)
-            } catch {
-                logger.warning(error.localizedDescription)
-            }
+            return await update(deviceInfo: deviceInfo)
         }
         
         guard deviceInfo != currentDevice else { return }
         
-        do {
-            let device: Device = try await deviceService.update(device: deviceInfo)
-            deviceService.save(device: device)
-            logger.info(LoggerInfoMessages.deviceUpdated.rawValue)
-        } catch {
-            logger.warning(error.localizedDescription)
-        }
+        return await update(deviceInfo: deviceInfo)
     }
     
     func collectAdvertisingId() {
@@ -54,11 +42,37 @@ final class DeviceManager: DeviceManagerInterface {
         }
         
         guard currentDevice?.advertisingId != advertisingId else {
-            return logger.info(LoggerInfoMessages.advertisingAlreadyCollected.rawValue)
+            return logger.info(LoggerInfoMessages.advertisingIdAlreadyCollected.rawValue)
         }
         
         Task {
             await collectDeviceInfo()
+        }
+    }
+    
+}
+
+// MARK: - Private
+
+extension DeviceManager {
+    
+    private func update(deviceInfo: Device) async {
+        do {
+            let device: Device = try await deviceService.create(device: deviceInfo)
+            deviceService.save(device: device)
+            return logger.info(LoggerInfoMessages.deviceCreated.rawValue)
+        } catch {
+            return logger.warning(error.localizedDescription)
+        }
+    }
+    
+    private func create(deviceInfo: Device) async {
+        do {
+            let device: Device = try await deviceService.update(device: deviceInfo)
+            deviceService.save(device: device)
+            return logger.info(LoggerInfoMessages.deviceUpdated.rawValue)
+        } catch {
+            return logger.warning(error.localizedDescription)
         }
     }
     

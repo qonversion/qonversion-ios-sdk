@@ -9,4 +9,8 @@ import Foundation
 
 protocol DeviceManagerInterface {
     
+    func collectDeviceInfo() async
+    
+    func collectAdvertisingId()
+    
 }

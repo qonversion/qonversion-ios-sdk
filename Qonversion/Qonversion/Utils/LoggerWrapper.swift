@@ -12,7 +12,7 @@ enum LoggerInfoMessages: String {
     case deviceCreated = "Device created"
     case deviceUpdated = "Device updated"
     case advertisingIdUnavailable = "Can not collect advertising ID"
-    case advertisingAlreadyCollected = "Advertising ID already collected"
+    case advertisingIdAlreadyCollected = "Advertising ID already collected"
 }
 
 enum LogLevel: Int {

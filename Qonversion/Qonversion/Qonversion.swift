@@ -11,7 +11,7 @@ public final class Qonversion {
     public static let shared = Qonversion()
     
     private var userPropertiesManager: UserPropertiesManagerInterface?
-    private var deviceManager: DeviceManager?
+    private var deviceManager: DeviceManagerInterface?
     
     private init() { }
     

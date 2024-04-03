@@ -34,7 +34,8 @@ final class ServicesAssembly {
     func deviceService() -> DeviceServiceInterface {
         let requestProcessor = requestProcessor()
         let localStorage = miscAssembly.localStorage()
-        let deviceService = DeviceService(requestProcessor: requestProcessor, localStorage: localStorage, userIdProvider: miscAssembly.internalConfig)
+        let encoder = miscAssembly.encoder()
+        let deviceService = DeviceService(requestProcessor: requestProcessor, localStorage: localStorage, userIdProvider: miscAssembly.internalConfig, encoder: encoder)
         
         return deviceService
     }

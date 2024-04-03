@@ -50,6 +50,10 @@ final class MiscAssembly {
         return UserPropertiesStorage()
     }
     
+    func encoder() -> JSONEncoder {
+        return JSONEncoder()
+    }
+    
     func requestsStorage() -> RequestsStorageInterface {
         let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue)
         
