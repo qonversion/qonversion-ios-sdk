@@ -25,7 +25,7 @@ final class DeviceManager: DeviceManagerInterface {
         let currentDevice: Device? = deviceService.currentDevice()
         
         if currentDevice == nil {
-            return await update(deviceInfo: deviceInfo)
+            return await create(deviceInfo: deviceInfo)
         }
         
         guard deviceInfo != currentDevice else { return }
