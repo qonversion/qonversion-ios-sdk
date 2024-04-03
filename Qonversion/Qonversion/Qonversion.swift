@@ -11,16 +11,22 @@ public final class Qonversion {
     public static let shared = Qonversion()
     
     private var userPropertiesManager: UserPropertiesManagerInterface?
+    private var deviceManager: DeviceManagerInterface?
     
     private init() { }
     
     public static func initialize(with configuration: Configuration) {
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
+        Qonversion.shared.deviceManager = assembly.deviceManager()
     }
     
     public func collectAppleSearchAdsAttribution() {
         // collectAppleSearchAdsAttribution
+    }
+    
+    public func collectAdvertisingId() {
+        deviceManager?.collectAdvertisingId()
     }
     
     public func setUserProperty(_ userProperty: String, key: UserPropertyKey) {

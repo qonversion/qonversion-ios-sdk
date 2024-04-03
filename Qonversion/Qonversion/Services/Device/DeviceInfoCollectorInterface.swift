@@ -8,5 +8,9 @@
 import Foundation
 
 protocol DeviceInfoCollectorInterface {
+    
     func deviceInfo() -> Device
+    
+    func advertisingId() -> String?
+    
 }

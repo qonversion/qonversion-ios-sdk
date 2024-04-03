@@ -14,22 +14,30 @@ fileprivate enum StringConstants: String {
 final class ServicesAssembly {
     
     private let apiKey: String
-    private let userDefaults: UserDefaults
     private let miscAssembly: MiscAssembly
     
-    var deviceInfoCollectorInstance: DeviceInfoCollector?
+    private var deviceInfoCollectorInstance: DeviceInfoCollector?
     
-    init(apiKey: String, userDefaults: UserDefaults, miscAssembly: MiscAssembly) {
+    init(apiKey: String, miscAssembly: MiscAssembly) {
         self.apiKey = apiKey
-        self.userDefaults = userDefaults
         self.miscAssembly = miscAssembly
     }
     
     func userService() -> UserServiceInterface {
         let requestProcessor = requestProcessor()
-        let userService = UserService(requestProcessor: requestProcessor, userDefaults: userDefaults, internalConfig: miscAssembly.internalConfig)
+        let localStorage = miscAssembly.localStorage()
+        let userService = UserService(requestProcessor: requestProcessor, localStorage: localStorage, internalConfig: miscAssembly.internalConfig)
         
         return userService
+    }
+    
+    func deviceService() -> DeviceServiceInterface {
+        let requestProcessor = requestProcessor()
+        let localStorage = miscAssembly.localStorage()
+        let encoder = miscAssembly.encoder()
+        let deviceService = DeviceService(requestProcessor: requestProcessor, localStorage: localStorage, userIdProvider: miscAssembly.internalConfig, encoder: encoder)
+        
+        return deviceService
     }
     
     func requestProcessor() -> RequestProcessorInterface {

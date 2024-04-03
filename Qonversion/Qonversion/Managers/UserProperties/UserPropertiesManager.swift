@@ -16,7 +16,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     private let requestProcessor: RequestProcessorInterface
     private let propertiesStorage: PropertiesStorage
     private let delayCalculator: IncrementalDelayCalculator
-    private let internalConfig: InternalConfig
+    private let userIdProvider: UserIdProvider
 
     private var sendingTask: Task<Void, Error>? = nil
     private var sendPropertiesRetryDelay: Int = Constants.sendPropertiesMinDelaySec.rawValue
@@ -26,16 +26,16 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         requestProcessor: RequestProcessorInterface,
         propertiesStorage: PropertiesStorage,
         delayCalculator: IncrementalDelayCalculator,
-        internalConfig: InternalConfig
+        userIdProvider: UserIdProvider
     ) {
         self.requestProcessor = requestProcessor
         self.propertiesStorage = propertiesStorage
         self.delayCalculator = delayCalculator
-        self.internalConfig = internalConfig
+        self.userIdProvider = userIdProvider
     }
     
     func userProperties() async throws -> UserProperties {
-        let request = Request.getProperties(userId: internalConfig.userId)
+        let request = Request.getProperties(userId: userIdProvider.getUserId())
         let properties: [UserProperty]? = try? await requestProcessor.process(request: request, responseType: [UserProperty].self)
         let resultProperties: [UserProperty] = properties ?? []
         let result = UserProperties(resultProperties)
@@ -77,7 +77,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
             let data = try JSONEncoder().encode(property)
             return try JSONSerialization.jsonObject(with: data, options: []) as? RequestBodyDict
         }
-        let request = Request.sendProperties(userId: internalConfig.userId, body: body)
+        let request = Request.sendProperties(userId: userIdProvider.getUserId(), body: body)
         do {
             let result: SendUserPropertiesResult? = try await requestProcessor.process(request: request, responseType: SendUserPropertiesResult.self)
             result?.propertyErrors.forEach({ propertyError in

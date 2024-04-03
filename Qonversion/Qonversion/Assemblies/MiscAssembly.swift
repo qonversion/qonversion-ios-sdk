@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 fileprivate enum SDKLevelConstants: String {
     case version = "1.0"
@@ -16,7 +17,6 @@ fileprivate enum IntConstants: UInt {
 }
 
 fileprivate enum StringConstants: String {
-    case storagePrefix = "io.qonversion.sdk.storage."
     case requestsStorageKey = "requests"
 }
 
@@ -34,6 +34,10 @@ final class MiscAssembly {
         self.internalConfig = internalConfig
     }
     
+    func localStorage() -> LocalStorage {
+        return LocalStorage(userDefaults: userDefaults)
+    }
+    
     func userIdProvider() -> UserIdProvider {
         return internalConfig
     }
@@ -46,10 +50,24 @@ final class MiscAssembly {
         return UserPropertiesStorage()
     }
     
+    func encoder() -> JSONEncoder {
+        return JSONEncoder()
+    }
+    
     func requestsStorage() -> RequestsStorageInterface {
-        let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: StringConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue)
+        let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue)
         
         return requestsStorage
+    }
+    
+    func loggerWrapper() -> LoggerWrapper {
+        if #available(iOS 14.0, *) {
+            let logger = Logger(subsystem: "io.qonversion.sdk", category: "Internal")
+            
+            return LoggerWrapper(logger: logger, logLevel: .verbose)
+        } else {
+            return LoggerWrapper()
+        }
     }
     
     func rateLimiter() -> RateLimiterInterface {

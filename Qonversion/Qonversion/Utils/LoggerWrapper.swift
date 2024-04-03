@@ -8,6 +8,13 @@
 import Foundation
 import OSLog
 
+enum LoggerInfoMessages: String {
+    case deviceCreated = "Device created"
+    case deviceUpdated = "Device updated"
+    case advertisingIdUnavailable = "Can not collect advertising ID"
+    case advertisingIdAlreadyCollected = "Advertising ID already collected"
+}
+
 enum LogLevel: Int {
     case critical = 4
     case error = 3
@@ -55,7 +62,13 @@ final class LoggerWrapper {
         log(message, level: .critical)
     }
     
-    func log(_ message: String, level: LogLevel) {
+}
+
+// MARK: - Private
+
+extension LoggerWrapper {
+    
+    private func log(_ message: String, level: LogLevel) {
         guard logLevel.rawValue <= level.rawValue else { return }
         
         if #available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *), let logger {

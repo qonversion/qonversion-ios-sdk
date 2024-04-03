@@ -69,6 +69,21 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         lastPreparedDevice = deviceInfo
         return deviceInfo
     }
+    
+    func advertisingId() -> String? {
+        var result: String? = nil
+
+        #if canImport(AdSupport)
+        let advertisingId: UUID = ASIdentifierManager.shared().advertisingIdentifier
+        result = advertisingId.uuidString
+
+        if result == "00000000-0000-0000-0000-000000000000" {
+            result = nil
+        }
+        #endif
+
+        return result
+    }
 
     private func osVersion() -> String {
         var osVersion: String? = nil
@@ -120,21 +135,6 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         } else {
             Locale.current.languageCode
         }
-    }
-
-    private func advertisingId() -> String? {
-        var result: String? = nil
-
-        #if canImport(AdSupport)
-        let advertisingId: UUID = ASIdentifierManager.shared().advertisingIdentifier
-        result = advertisingId.uuidString
-
-        if result == "00000000-0000-0000-0000-000000000000" {
-            result = ""
-        }
-        #endif
-
-        return result
     }
 
     private func vendorId() -> String? {

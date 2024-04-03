@@ -15,12 +15,12 @@ fileprivate enum Constants: String {
 final class UserService: UserServiceInterface {
     
     private let requestProcessor: RequestProcessorInterface
-    private let userDefaults: UserDefaults
+    private let localStorage: LocalStorage
     private let internalConfig: InternalConfig
     
-    init(requestProcessor: RequestProcessorInterface, userDefaults: UserDefaults, internalConfig: InternalConfig) {
+    init(requestProcessor: RequestProcessorInterface, localStorage: LocalStorage, internalConfig: InternalConfig) {
         self.requestProcessor = requestProcessor
-        self.userDefaults = userDefaults
+        self.localStorage = localStorage
         self.internalConfig = internalConfig
         
         prepareUserId()
@@ -29,7 +29,7 @@ final class UserService: UserServiceInterface {
     func generateUserId() -> String {
         let uuidString: String = UUID().uuidString.replacingOccurrences(of: "-", with: "")
         let userId: String = Constants.userIdPrefix.rawValue + uuidString.lowercased()
-        userDefaults.set(userId, forKey: Constants.userIdKey.rawValue)
+        localStorage.set(userId, forKey: Constants.userIdKey.rawValue)
         internalConfig.userId = userId
         
         return userId
@@ -65,7 +65,7 @@ final class UserService: UserServiceInterface {
 extension UserService {
     
     private func prepareUserId() {
-        let userId: String = userDefaults.string(forKey: Constants.userIdKey.rawValue) ?? generateUserId()
+        let userId: String = localStorage.string(forKey: Constants.userIdKey.rawValue) ?? generateUserId()
         internalConfig.userId = userId
     }
     
