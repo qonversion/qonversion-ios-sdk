@@ -18,4 +18,7 @@ protocol UserPropertiesManagerInterface {
     func sendProperties() async throws
     
     func clearDelayedProperties()
+    
+    func collectAppleSearchAdsAttribution()
+    
 }
