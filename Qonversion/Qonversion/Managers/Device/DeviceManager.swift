@@ -56,7 +56,7 @@ final class DeviceManager: DeviceManagerInterface {
 
 extension DeviceManager {
     
-    private func update(deviceInfo: Device) async {
+    private func create(deviceInfo: Device) async {
         do {
             let device: Device = try await deviceService.create(device: deviceInfo)
             deviceService.save(device: device)
@@ -66,7 +66,7 @@ extension DeviceManager {
         }
     }
     
-    private func create(deviceInfo: Device) async {
+    private func update(deviceInfo: Device) async {
         do {
             let device: Device = try await deviceService.update(device: deviceInfo)
             deviceService.save(device: device)
