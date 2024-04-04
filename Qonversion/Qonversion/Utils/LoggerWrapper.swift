@@ -9,10 +9,14 @@ import Foundation
 import OSLog
 
 enum LoggerInfoMessages: String {
-    case deviceCreated = "Device created"
-    case deviceUpdated = "Device updated"
-    case advertisingIdUnavailable = "Can not collect advertising ID"
-    case advertisingIdAlreadyCollected = "Advertising ID already collected"
+    case deviceCreated = "Device created."
+    case deviceUpdated = "Device updated."
+    case advertisingIdUnavailable = "Can not collect advertising ID."
+    case advertisingIdAlreadyCollected = "Advertising ID already collected."
+    case failedToCollectAppleSearchAdsAttribution = "Failed to fetch Apple Search Ads token."
+    case unableToCollectAppleSearchAdsAttribution = "Unable to fetch Apple Search Ads token. AdServices available for iOS 14.3 and above."
+    case appleSearchAdsAttributionRequestFailed = "Apple Search Ads request failed."
+    case appleSearchAdsAttributionRequestSucceeded = "Apple Search Ads request finished successfully."
 }
 
 enum LogLevel: Int {

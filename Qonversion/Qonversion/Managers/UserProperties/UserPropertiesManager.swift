@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(AdServices)
+import AdServices
+#endif
 
 fileprivate enum Constants: Int {
     case sendPropertiesMinDelaySec = 5
@@ -17,6 +20,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     private let propertiesStorage: PropertiesStorage
     private let delayCalculator: IncrementalDelayCalculator
     private let userIdProvider: UserIdProvider
+    private let logger: LoggerWrapper
 
     private var sendingTask: Task<Void, Error>? = nil
     private var sendPropertiesRetryDelay: Int = Constants.sendPropertiesMinDelaySec.rawValue
@@ -26,12 +30,28 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         requestProcessor: RequestProcessorInterface,
         propertiesStorage: PropertiesStorage,
         delayCalculator: IncrementalDelayCalculator,
-        userIdProvider: UserIdProvider
+        userIdProvider: UserIdProvider,
+        logger: LoggerWrapper
     ) {
         self.requestProcessor = requestProcessor
         self.propertiesStorage = propertiesStorage
         self.delayCalculator = delayCalculator
         self.userIdProvider = userIdProvider
+        self.logger = logger
+    }
+    
+    func collectAppleSearchAdsAttribution() {
+        if #available(iOS 14.3, *) {
+            do {
+                let token: String = try AAAttribution.attributionToken()
+                
+                processRequest(with: token)
+            } catch {
+                logger.error("\(LoggerInfoMessages.failedToCollectAppleSearchAdsAttribution.rawValue) \(error)")
+            }
+        } else {
+            logger.warning(LoggerInfoMessages.unableToCollectAppleSearchAdsAttribution.rawValue)
+        }
     }
     
     func userProperties() async throws -> UserProperties {
@@ -97,6 +117,24 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         propertiesStorage.clear()
     }
 
+}
+
+// MARK: - Private
+
+extension UserPropertiesManager {
+
+    func processRequest(with token: String) {
+        Task {
+            do {
+                let request = Request.appleSearchAds(userId: userIdProvider.getUserId(), body: ["token": token])
+                let _ = try await requestProcessor.process(request: request, responseType: String.self)
+                logger.info(LoggerInfoMessages.appleSearchAdsAttributionRequestSuccess.rawValue)
+            } catch {
+                logger.error("\(LoggerInfoMessages.appleSearchAdsAttributionRequestFail.rawValue) \(error)")
+            }
+        }
+    }
+    
     private func scheduleSendingProperties(withDelay delaySec: Int) {
         // Cancel for the case, when the previous task was scheduled via "setProperty" call, but then retry for another request occurred.
         sendingTask?.cancel()
@@ -117,4 +155,5 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         sendPropertiesRetryDelay = delayCalculator.countDelay(minDelay: Constants.sendPropertiesMinDelaySec.rawValue, retriesCount: sendPropertiesRetryCount)
         scheduleSendingProperties(withDelay: sendPropertiesRetryDelay)
     }
+    
 }

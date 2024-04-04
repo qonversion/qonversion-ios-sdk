@@ -23,7 +23,8 @@ final class QonversionAssembly {
         let requestProcessor: RequestProcessorInterface = servicesAssembly.requestProcessor()
         let delayCalculator: IncrementalDelayCalculator = miscAssembly.delayCalculator()
         let propertiesStorage: PropertiesStorage = miscAssembly.userPropertiesStorage()
-        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig)
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, logger: logger)
         
         return userPropertiesManager
     }

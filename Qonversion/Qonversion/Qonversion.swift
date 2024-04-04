@@ -22,7 +22,7 @@ public final class Qonversion {
     }
     
     public func collectAppleSearchAdsAttribution() {
-        // collectAppleSearchAdsAttribution
+        userPropertiesManager.collectAppleSearchAdsAttribution()
     }
     
     public func collectAdvertisingId() {
