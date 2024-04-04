@@ -15,8 +15,8 @@ enum LoggerInfoMessages: String {
     case advertisingIdAlreadyCollected = "Advertising ID already collected."
     case failedToCollectAppleSearchAdsAttribution = "Failed to fetch Apple Search Ads token."
     case unableToCollectAppleSearchAdsAttribution = "Unable to fetch Apple Search Ads token. AdServices available for iOS 14.3 and above."
-    case appleSearchAdsAttributionRequestFail = "Apple Search Ads request failed."
-    case appleSearchAdsAttributionRequestSuccess = "Apple Search Ads request finished successfully."
+    case appleSearchAdsAttributionRequestFailed = "Apple Search Ads request failed."
+    case appleSearchAdsAttributionRequestSucceeded = "Apple Search Ads request finished successfully."
 }
 
 enum LogLevel: Int {
