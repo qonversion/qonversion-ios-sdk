@@ -20,7 +20,8 @@ Pod::Spec.new do |s|
   s.watchos.deployment_target = '6.2'
   s.ios.frameworks            = ['UIKit', 'WebKit']
   s.requires_arc              = true
-  
+  s.resource_bundles          = {'Qonversion' => ['Sources/PrivacyInfo.xcprivacy']}
+    
   s.default_subspecs = 'Main'
   
   s.subspec 'Main' do |ss|
