@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
   idfa_exclude_files = ['Sources/Qonversion/IDFA']
   s.name         = 'Qonversion'
   s.swift_version = '5.5'
-  s.version      = '5.8.3'
+  s.version      = '5.8.4'
   s.summary      = 'qonversion.io'
   s.description  = <<-DESC
   Deep Analytics for iOS Subscriptions
@@ -20,7 +20,8 @@ Pod::Spec.new do |s|
   s.watchos.deployment_target = '6.2'
   s.ios.frameworks            = ['UIKit', 'WebKit']
   s.requires_arc              = true
-  
+  s.resource_bundles          = {'Qonversion' => ['Sources/PrivacyInfo.xcprivacy']}
+    
   s.default_subspecs = 'Main'
   
   s.subspec 'Main' do |ss|

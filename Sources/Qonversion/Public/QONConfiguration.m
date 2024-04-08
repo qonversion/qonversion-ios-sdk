@@ -9,7 +9,7 @@
 #import "QONConfiguration.h"
 #import "QNAPIConstants.h"
 
-static NSString *const kSDKVersion = @"5.8.3";
+static NSString *const kSDKVersion = @"5.8.4";
 
 @interface QONConfiguration ()
 
@@ -81,6 +81,7 @@ static NSString *const kSDKVersion = @"5.8.3";
 
 - (id)copyWithZone:(NSZone *)zone {
   QONConfiguration *copyConfig = [[QONConfiguration allocWithZone:zone] initWithProjectKey:_projectKey launchMode:_launchMode];
+  [copyConfig setVersion:_version];
   [copyConfig setEnvironment:_environment];
   [copyConfig setEntitlementsCacheLifetime:_entitlementsCacheLifetime];
   [copyConfig setEntitlementsUpdateListener:_entitlementsUpdateListener];
