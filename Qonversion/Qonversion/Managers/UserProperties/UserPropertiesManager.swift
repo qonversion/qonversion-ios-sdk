@@ -128,9 +128,9 @@ extension UserPropertiesManager {
             do {
                 let request = Request.appleSearchAds(userId: userIdProvider.getUserId(), body: ["token": token])
                 let _ = try await requestProcessor.process(request: request, responseType: String.self)
-                logger.info(LoggerInfoMessages.appleSearchAdsAttributionRequestSuccess.rawValue)
+                logger.info(LoggerInfoMessages.appleSearchAdsAttributionRequestSucceeded.rawValue)
             } catch {
-                logger.error("\(LoggerInfoMessages.appleSearchAdsAttributionRequestFail.rawValue) \(error)")
+                logger.error("\(LoggerInfoMessages.appleSearchAdsAttributionRequestFailed.rawValue) \(error)")
             }
         }
     }
