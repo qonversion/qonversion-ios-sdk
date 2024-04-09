@@ -26,7 +26,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         self.storeKitMapper = storeKitMapper
     }
     
-    func currentEntitlements() async -> [Transaction] {
+    func currentEntitlements() async -> [Qonversion.Transaction] {
         guard #available(iOS 15.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
         
         let transactions: [StoreKit.Transaction] = await storeKitWrapper.currentEntitlements()
@@ -35,7 +35,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         return []
     }
     
-    func restore() async throws -> [Transaction] {
+    func restore() async throws -> [Qonversion.Transaction] {
         if #available(iOS 15.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
@@ -50,7 +50,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         }
     }
     
-    func historicalData() async throws -> [Transaction] {
+    func historicalData() async throws -> [Qonversion.Transaction] {
         if #available(iOS 15.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
@@ -101,7 +101,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         await transaction.finish()
     }
     
-    func subscribe() async -> [Transaction] {
+    func subscribe() async -> [Qonversion.Transaction] {
         return []
     }
     
