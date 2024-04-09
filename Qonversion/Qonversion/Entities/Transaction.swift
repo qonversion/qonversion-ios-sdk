@@ -191,7 +191,7 @@ extension Qonversion {
         public var environment: Qonversion.Transaction.Environment? { Qonversion.Transaction.Environment(rawValue: storeKitTransaction?.environment.rawValue ?? "") }
         
         @available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, *)
-        public var reason: Transaction.Reason {
+        public var reason: Qonversion.Transaction.Reason {
             guard let storeKitTransaction = storeKitTransaction,
                   let reason = Qonversion.Transaction.Reason(rawValue: storeKitTransaction.reason.rawValue)
             else { return Qonversion.Transaction.Reason.purchase }
