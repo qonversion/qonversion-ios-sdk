@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6A840DD42BBFEFFD00E5E8E3 /* ExceptionServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840DD32BBFEFFD00E5E8E3 /* ExceptionServiceInterface.swift */; };
+		6A840DD62BBFF00600E5E8E3 /* ExceptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840DD52BBFF00600E5E8E3 /* ExceptionService.swift */; };
+		6A840DD82BC3DF7600E5E8E3 /* EmptyApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840DD72BC3DF7600E5E8E3 /* EmptyApiResponse.swift */; };
+		6A840DDB2BC430C300E5E8E3 /* ExceptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840DDA2BC430C300E5E8E3 /* ExceptionManager.swift */; };
+		6A840DDD2BC430C900E5E8E3 /* ExceptionManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840DDC2BC430C900E5E8E3 /* ExceptionManagerInterface.swift */; };
 		707C06C52BB41C1B00E2597D /* QonversionAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06762BB41C1B00E2597D /* QonversionAssembly.swift */; };
 		707C06C62BB41C1B00E2597D /* ServicesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06772BB41C1B00E2597D /* ServicesAssembly.swift */; };
 		707C06C72BB41C1B00E2597D /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707C06792BB41C1B00E2597D /* Device.swift */; };
@@ -109,6 +114,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6A840DD32BBFEFFD00E5E8E3 /* ExceptionServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExceptionServiceInterface.swift; sourceTree = "<group>"; };
+		6A840DD52BBFF00600E5E8E3 /* ExceptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExceptionService.swift; sourceTree = "<group>"; };
+		6A840DD72BC3DF7600E5E8E3 /* EmptyApiResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyApiResponse.swift; sourceTree = "<group>"; };
+		6A840DDA2BC430C300E5E8E3 /* ExceptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExceptionManager.swift; sourceTree = "<group>"; };
+		6A840DDC2BC430C900E5E8E3 /* ExceptionManagerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExceptionManagerInterface.swift; sourceTree = "<group>"; };
 		6ABCBDF42B8CE268003DB107 /* PropertiesStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesStorage.swift; sourceTree = "<group>"; };
 		6ABCBDF62B8CE298003DB107 /* UserPropertiesStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPropertiesStorage.swift; sourceTree = "<group>"; };
 		6ABCBDF82B8DD7A2003DB107 /* SendUserPropertiesResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendUserPropertiesResult.swift; sourceTree = "<group>"; };
@@ -217,6 +227,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6A840DD02BBFEF5E00E5E8E3 /* ExceptionService */ = {
+			isa = PBXGroup;
+			children = (
+				6A840DD32BBFEFFD00E5E8E3 /* ExceptionServiceInterface.swift */,
+				6A840DD52BBFF00600E5E8E3 /* ExceptionService.swift */,
+			);
+			path = ExceptionService;
+			sourceTree = "<group>";
+		};
+		6A840DD92BC430B500E5E8E3 /* Exception */ = {
+			isa = PBXGroup;
+			children = (
+				6A840DDA2BC430C300E5E8E3 /* ExceptionManager.swift */,
+				6A840DDC2BC430C900E5E8E3 /* ExceptionManagerInterface.swift */,
+			);
+			path = Exception;
+			sourceTree = "<group>";
+		};
 		6ABCBE0F2B91C86D003DB107 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
@@ -264,6 +292,7 @@
 				707C06792BB41C1B00E2597D /* Device.swift */,
 				707C067D2BB41C1B00E2597D /* Transaction.swift */,
 				707C067E2BB41C1B00E2597D /* User.swift */,
+				6A840DD72BC3DF7600E5E8E3 /* EmptyApiResponse.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
@@ -397,6 +426,7 @@
 		707C06A52BB41C1B00E2597D /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				6A840DD02BBFEF5E00E5E8E3 /* ExceptionService */,
 				707C067C2BB41C1B00E2597D /* Device */,
 				707C06A42BB41C1B00E2597D /* UserService */,
 			);
@@ -476,6 +506,7 @@
 		70B1D9062BBC10A4009017EC /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				6A840DD92BC430B500E5E8E3 /* Exception */,
 				70B1D90A2BBC10B6009017EC /* Device */,
 				70B1D9052BBC10A4009017EC /* UserProperties */,
 			);
@@ -665,10 +696,12 @@
 				707C06E42BB41C1B00E2597D /* StoreKitFacade.swift in Sources */,
 				70B1D90E2BBC10CB009017EC /* DeviceManagerInterface.swift in Sources */,
 				707C07002BB47D7500E2597D /* MiscAssembly.swift in Sources */,
+				6A840DD82BC3DF7600E5E8E3 /* EmptyApiResponse.swift in Sources */,
 				707C06E92BB41C1B00E2597D /* StoreKitOldWrapperDelegate.swift in Sources */,
 				707C06EA2BB41C1B00E2597D /* StoreKitOldWrapperInterface.swift in Sources */,
 				707C06E82BB41C1B00E2597D /* StoreKitOldWrapper.swift in Sources */,
 				70B1D9072BBC10A4009017EC /* SendUserPropertiesResult.swift in Sources */,
+				6A840DD42BBFEFFD00E5E8E3 /* ExceptionServiceInterface.swift in Sources */,
 				707C06F92BB41C1B00E2597D /* InternalConfig.swift in Sources */,
 				707C06FE2BB41C1B00E2597D /* TemporaryFactory.swift in Sources */,
 				707C06D42BB41C1B00E2597D /* NetworkProvider.swift in Sources */,
@@ -679,6 +712,7 @@
 				707C06CA2BB41C1B00E2597D /* Transaction.swift in Sources */,
 				707C06CB2BB41C1B00E2597D /* User.swift in Sources */,
 				707C06ED2BB41C1B00E2597D /* StoreKitWrapperInterface.swift in Sources */,
+				6A840DDD2BC430C900E5E8E3 /* ExceptionManagerInterface.swift in Sources */,
 				707C06C92BB41C1B00E2597D /* DeviceInfoCollectorInterface.swift in Sources */,
 				707C06F52BB41C1B00E2597D /* UserPropertyKey.swift in Sources */,
 				707C06D22BB41C1B00E2597D /* NetworkErrorHandler.swift in Sources */,
@@ -704,6 +738,7 @@
 				707C06D72BB41C1B00E2597D /* RateLimiterInterface.swift in Sources */,
 				707C06C62BB41C1B00E2597D /* ServicesAssembly.swift in Sources */,
 				707C06C82BB41C1B00E2597D /* DeviceInfoCollector.swift in Sources */,
+				6A840DD62BBFF00600E5E8E3 /* ExceptionService.swift in Sources */,
 				707C06D12BB41C1B00E2597D /* HeadersBuilderInterface.swift in Sources */,
 				707C06DC2BB41C1B00E2597D /* RequestsStorage.swift in Sources */,
 				707C06E02BB41C1B00E2597D /* LocalStorage.swift in Sources */,
@@ -720,6 +755,7 @@
 				707C06CD2BB41C1B00E2597D /* QonversionError.swift in Sources */,
 				707C06D32BB41C1B00E2597D /* NetworkErrorHandlerInterface.swift in Sources */,
 				707C07062BB5C76300E2597D /* Configuration.swift in Sources */,
+				6A840DDB2BC430C300E5E8E3 /* ExceptionManager.swift in Sources */,
 				707C06C72BB41C1B00E2597D /* Device.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

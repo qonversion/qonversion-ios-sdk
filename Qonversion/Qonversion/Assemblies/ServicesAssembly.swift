@@ -9,6 +9,7 @@ import Foundation
 
 fileprivate enum StringConstants: String {
     case baseURL = "https://api.qonversion.io/"
+    case sdkLogsBaseURL = "https://sdk-logs.qonversion.io/"
 }
 
 final class ServicesAssembly {
@@ -40,6 +41,15 @@ final class ServicesAssembly {
         return deviceService
     }
     
+    func exceptionService() -> ExceptionServiceInterface {
+        let requestProcessor = sdkLogsRequestProcessor()
+        let localStorage = miscAssembly.localStorage()
+        let logger = miscAssembly.loggerWrapper()
+        let exceptionService = ExceptionService(requestProcessor: requestProcessor, localStorage: localStorage, logger: logger)
+        
+        return exceptionService
+    }
+    
     func requestProcessor() -> RequestProcessorInterface {
         let networkProvider: NetworkProviderInterface = networkProvider()
         let headersBuilder: HeadersBuilderInterface = miscAssembly.headersBuilder()
@@ -52,6 +62,22 @@ final class ServicesAssembly {
         let retriableRequestsList: [Request] = []
         
         let processor = RequestProcessor(baseURL: StringConstants.baseURL.rawValue, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
+        
+        return processor
+    }
+    
+    func sdkLogsRequestProcessor() -> RequestProcessorInterface {
+        let networkProvider: NetworkProviderInterface = networkProvider()
+        let headersBuilder: HeadersBuilderInterface = miscAssembly.headersBuilder()
+        let errorHandler: NetworkErrorHandlerInterface = miscAssembly.errorHandler()
+        let decoder: ResponseDecoderInterface = miscAssembly.responseDecoder()
+        let requestsStorage: RequestsStorageInterface = miscAssembly.requestsStorage()
+        let rateLimiter: RateLimiterInterface = miscAssembly.rateLimiter()
+        
+        #warning("Update retriable requests list")
+        let retriableRequestsList: [Request] = []
+        
+        let processor = RequestProcessor(baseURL: StringConstants.sdkLogsBaseURL.rawValue, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
         
         return processor
     }

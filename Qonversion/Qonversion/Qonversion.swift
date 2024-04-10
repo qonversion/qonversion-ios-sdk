@@ -12,6 +12,7 @@ public final class Qonversion {
     
     private var userPropertiesManager: UserPropertiesManagerInterface?
     private var deviceManager: DeviceManagerInterface?
+    private var exceptionManager: ExceptionManagerInterface?
     
     private init() { }
     
@@ -19,10 +20,11 @@ public final class Qonversion {
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
+        Qonversion.shared.exceptionManager = assembly.exceptionManager()
     }
     
     public func collectAppleSearchAdsAttribution() {
-        userPropertiesManager.collectAppleSearchAdsAttribution()
+        userPropertiesManager?.collectAppleSearchAdsAttribution()
     }
     
     public func collectAdvertisingId() {

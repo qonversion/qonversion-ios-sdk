@@ -19,6 +19,7 @@ enum Request : Hashable {
     case createDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .post)
     case updateDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .put)
     case appleSearchAds(userId: String, endpoint: String = "v3/appleads/", body: RequestBodyDict, type: RequestType = .post)
+    case sendCrashLogs(endpoint: String = "sdk.log", body: RequestBodyDict, type: RequestType = .post)
 
     func convertToURLRequest(_ baseUrl: String) -> URLRequest? {
         func defaultRequest(urlString: String, body: Any?, type: RequestType) -> URLRequest? {
@@ -56,8 +57,12 @@ enum Request : Hashable {
             
         case let .updateDevice(userId, endpoint, body, type):
             return defaultRequest(urlString: endpoint + userId, body: body, type: type)
+
         case let .appleSearchAds(userId, endpoint, body, type):
             return defaultRequest(urlString: endpoint + userId, body: body, type: type)
+        
+        case let .sendCrashLogs(endpoint, body, type):
+            return defaultRequest(urlString: endpoint, body: body, type: type)
         }
     }
 
@@ -105,6 +110,11 @@ enum Request : Hashable {
         case let .appleSearchAds(userId, endpoint, body, type):
             hasher.combine("appleSearchAds")
             hasher.combine(userId)
+            hasher.combine(endpoint)
+            hasher.combine(body)
+            hasher.combine(type)
+        case let .sendCrashLogs(endpoint, body, type):
+            hasher.combine("sendCrashLogs")
             hasher.combine(endpoint)
             hasher.combine(body)
             hasher.combine(type)

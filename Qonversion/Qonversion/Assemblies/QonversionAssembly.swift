@@ -38,4 +38,15 @@ final class QonversionAssembly {
         return deviceManager
     }
     
+    func exceptionManager() -> ExceptionManagerInterface {
+        guard let manager = ExceptionManager.shared else {
+            let exceptionService = servicesAssembly.exceptionService()
+            let logger = miscAssembly.loggerWrapper()
+            
+            return ExceptionManager(exceptionService: exceptionService, logger: logger)
+        }
+        
+        return manager
+    }
+    
 }
