@@ -35,11 +35,11 @@ final class UserService: UserServiceInterface {
         return userId
     }
     
-    func createUser() async throws -> User {
+    func createUser() async throws -> Qonversion.User {
         let userId: String = generateUserId()
         do {
             let request = Request.createUser(id: userId, body: ["environment": "sandbox"])
-            let user: User = try await requestProcessor.process(request: request, responseType: User.self)
+            let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self)
             
             return user
         } catch {
@@ -47,10 +47,10 @@ final class UserService: UserServiceInterface {
         }
     }
     
-    func user() async throws -> User {
+    func user() async throws -> Qonversion.User {
         let request = Request.getUser(id: internalConfig.userId)
         do {
-            let user: User = try await requestProcessor.process(request: request, responseType: User.self)
+            let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self)
             
             return user
         } catch {

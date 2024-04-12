@@ -54,15 +54,15 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         }
     }
     
-    func userProperties() async throws -> UserProperties {
+    func userProperties() async throws -> Qonversion.UserProperties {
         let request = Request.getProperties(userId: userIdProvider.getUserId())
-        let properties: [UserProperty]? = try? await requestProcessor.process(request: request, responseType: [UserProperty].self)
-        let resultProperties: [UserProperty] = properties ?? []
-        let result = UserProperties(resultProperties)
+        let properties: [Qonversion.UserProperty]? = try? await requestProcessor.process(request: request, responseType: [Qonversion.UserProperty].self)
+        let resultProperties: [Qonversion.UserProperty] = properties ?? []
+        let result = Qonversion.UserProperties(resultProperties)
         return result
     }
 
-    func setUserProperty(key: UserPropertyKey, value: String) {
+    func setUserProperty(key: Qonversion.UserPropertyKey, value: String) {
         guard key != .custom else {
             return print("Can not set user property with the key `.custom`. " +
                     "To set custom user property, use the `setCustomUserProperty` method.")
@@ -74,7 +74,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     func setCustomUserProperty(key: String, value: String) {
         guard !value.isEmpty else { return }
 
-        let userProperty = UserProperty(key: key, value: value)
+        let userProperty = Qonversion.UserProperty(key: key, value: value)
         propertiesStorage.save(userProperty)
         
         guard sendingTask == nil else { return }
@@ -88,7 +88,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
             sendingTask = nil
         }
 
-        let properties: [UserProperty] = propertiesStorage.all()
+        let properties: [Qonversion.UserProperty] = propertiesStorage.all()
 
         guard !properties.isEmpty else { return }
         

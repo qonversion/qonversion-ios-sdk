@@ -9,9 +9,9 @@ import Foundation
 
 protocol UserServiceInterface {
     
-    func user() async throws -> User
+    func user() async throws -> Qonversion.User
     
-    func createUser() async throws -> User
+    func createUser() async throws -> Qonversion.User
     
     func generateUserId() -> String
     

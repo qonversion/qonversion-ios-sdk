@@ -9,7 +9,7 @@ import Foundation
 
 struct SendUserPropertiesResult: Decodable {
     
-    let savedProperties: [UserProperty]
+    let savedProperties: [Qonversion.UserProperty]
     let propertyErrors: [UserPropertyError]
     
     struct UserPropertyError: Decodable {

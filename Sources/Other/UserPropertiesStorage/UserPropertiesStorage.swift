@@ -9,13 +9,13 @@ import Foundation
 
 final class UserPropertiesStorage: PropertiesStorage {
 
-    private var userProperties: [UserProperty] = []
+    private var userProperties: [Qonversion.UserProperty] = []
 
-    func save(_ userProperty: UserProperty) {
+    func save(_ userProperty: Qonversion.UserProperty) {
         userProperties.append(userProperty)
     }
 
-    func clear(properties: [UserProperty]) {
+    func clear(properties: [Qonversion.UserProperty]) {
         userProperties.removeAll(where: { properties.contains($0) })
     }
 
@@ -23,7 +23,7 @@ final class UserPropertiesStorage: PropertiesStorage {
         userProperties = []
     }
 
-    func all() -> [UserProperty] {
+    func all() -> [Qonversion.UserProperty] {
         return Array(userProperties)
     }
 }

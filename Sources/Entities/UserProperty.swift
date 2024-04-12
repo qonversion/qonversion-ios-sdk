@@ -7,9 +7,14 @@
 
 import Foundation
 
-public struct UserProperty : Decodable, Encodable, Equatable, Hashable {
-
-    let key: String
-    let value: String
-    var definedKey: UserPropertyKey { UserPropertyKey(rawValue: key) ?? .custom }
+extension Qonversion {
+    
+    public struct UserProperty : Decodable, Encodable, Equatable, Hashable {
+        
+        let key: String
+        let value: String
+        var definedKey: UserPropertyKey { UserPropertyKey(rawValue: key) ?? .custom }
+        
+    }
+    
 }
