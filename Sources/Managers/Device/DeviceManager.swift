@@ -22,7 +22,7 @@ final class DeviceManager: DeviceManagerInterface {
     func collectDeviceInfo() async {
         let deviceInfo = deviceInfoCollector.deviceInfo()
 
-        let currentDevice: Device? = deviceService.currentDevice()
+        let currentDevice: Qonversion.Device? = deviceService.currentDevice()
         
         if currentDevice == nil {
             return await create(deviceInfo: deviceInfo)
@@ -34,7 +34,7 @@ final class DeviceManager: DeviceManagerInterface {
     }
     
     func collectAdvertisingId() {
-        let currentDevice: Device? = deviceService.currentDevice()
+        let currentDevice: Qonversion.Device? = deviceService.currentDevice()
         let advertisingId: String? = deviceInfoCollector.advertisingId()
         
         guard let advertisingId else {
@@ -56,9 +56,9 @@ final class DeviceManager: DeviceManagerInterface {
 
 extension DeviceManager {
     
-    private func create(deviceInfo: Device) async {
+    private func create(deviceInfo: Qonversion.Device) async {
         do {
-            let device: Device = try await deviceService.create(device: deviceInfo)
+            let device: Qonversion.Device = try await deviceService.create(device: deviceInfo)
             deviceService.save(device: device)
             return logger.info(LoggerInfoMessages.deviceCreated.rawValue)
         } catch {
@@ -66,9 +66,9 @@ extension DeviceManager {
         }
     }
     
-    private func update(deviceInfo: Device) async {
+    private func update(deviceInfo: Qonversion.Device) async {
         do {
-            let device: Device = try await deviceService.update(device: deviceInfo)
+            let device: Qonversion.Device = try await deviceService.update(device: deviceInfo)
             deviceService.save(device: device)
             return logger.info(LoggerInfoMessages.deviceUpdated.rawValue)
         } catch {

@@ -9,11 +9,12 @@ import Foundation
 
 protocol PropertiesStorage {
 
-    func save(_ userProperty: UserProperty)
+    func save(_ userProperty: Qonversion.UserProperty)
 
-    func clear(properties: [UserProperty])
+    func clear(properties: [Qonversion.UserProperty])
 
     func clear()
 
-    func all() -> [UserProperty]
+    func all() -> [Qonversion.UserProperty]
+    
 }

@@ -9,9 +9,9 @@ import Foundation
 
 protocol UserPropertiesManagerInterface {
   
-    func userProperties() async throws -> UserProperties
+    func userProperties() async throws -> Qonversion.UserProperties
     
-    func setUserProperty(key: UserPropertyKey, value: String)
+    func setUserProperty(key: Qonversion.UserPropertyKey, value: String)
 
     func setCustomUserProperty(key: String, value: String)
     

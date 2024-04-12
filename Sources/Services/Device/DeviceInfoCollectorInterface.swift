@@ -9,7 +9,7 @@ import Foundation
 
 protocol DeviceInfoCollectorInterface {
     
-    func deviceInfo() -> Device
+    func deviceInfo() -> Qonversion.Device
     
     func advertisingId() -> String?
     
