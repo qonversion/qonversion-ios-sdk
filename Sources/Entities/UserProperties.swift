@@ -9,14 +9,31 @@ import Foundation
 
 extension Qonversion {
     
+    /// Struct contains all information about the current user properties
     public struct UserProperties {
         
-        let properties: [UserProperty]
-        let definedProperties: [UserProperty]
-        let customProperties: [UserProperty]
-        let flatPropertiesMap: [String: String]
-        let flatDefinedPropertiesMap: [UserPropertyKey: String]
-        let flatCustomPropertiesMap: [String: String]
+        /// List of all user properties.
+        public let properties: [UserProperty]
+        
+        /// List of user properties, set for the Qonversion defined keys.
+        /// This is a subset of all ``Qonversion/UserProperties/properties`` list.
+        public let definedProperties: [UserProperty]
+        
+        /// List of user properties, set for custom keys.
+        /// This is a subset of all ``Qonversion/UserProperties/properties`` list.
+        public let customProperties: [UserProperty]
+        
+        /// Map of all user properties.
+        /// This is a flattened version of the ``Qonversion/UserProperties/properties`` list as a key-value map.
+        public let flatPropertiesMap: [String: String]
+        
+        /// Map of user properties, set for the Qonversion defined keys.
+        /// This is a flattened version of the `Qonversion/UserProperties/definedProperties` list as a key-value map, where keys are values from ``Qonversion/UserPropertyKey``.
+        public let flatDefinedPropertiesMap: [UserPropertyKey: String]
+        
+        /// Map of user properties, set for custom keys.
+        /// This is a flattened version of the ``Qonversion/UserProperties/customProperties`` list as a key-value map.
+        public let flatCustomPropertiesMap: [String: String]
 
         init(_ properties: [UserProperty]) {
             self.properties = properties
@@ -46,11 +63,19 @@ extension Qonversion {
             flatCustomPropertiesMap = customPropertiesMap
         }
         
-        func property(for key: String) -> UserProperty? {
+        /// Function returns property for custom key
+        /// - Parameters:
+        ///  - key: key for property
+        /// - Returns: property for custom key
+        public func property(for key: String) -> UserProperty? {
             return properties.first { $0.key == key }
         }
         
-        func definedProperty(for key: UserPropertyKey) -> UserProperty? {
+        /// Function returns property for defined key
+        /// - Parameters:
+        ///  - key: key for property
+        /// - Returns: property for defined key
+        public func definedProperty(for key: UserPropertyKey) -> UserProperty? {
             return definedProperties.first { $0.definedKey == key }
         }
         

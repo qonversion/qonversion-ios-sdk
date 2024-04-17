@@ -83,6 +83,8 @@
 		70D8771E2B8F4E5F0059AA2B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 70D8771C2B8F4E5F0059AA2B /* LaunchScreen.storyboard */; };
 		70D877232B8F5B370059AA2B /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70F163A22B6D0D3D00033BEF /* Qonversion.framework */; };
 		70D877242B8F5B370059AA2B /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 70F163A22B6D0D3D00033BEF /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		70EA734C2BD025F500B0DFDA /* Currency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA734B2BD025F500B0DFDA /* Currency.swift */; };
+		70EA734E2BD0261300B0DFDA /* Storefront.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA734D2BD0261300B0DFDA /* Storefront.swift */; };
 		7169ED74E32501B128C51E9D /* Pods_Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3058D2FCF5492D5398F1D64F /* Pods_Qonversion.framework */; };
 		D265F4B90C3180117593732E /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A982E3A335EC2527556D692D /* Pods_Sample.framework */; };
 /* End PBXBuildFile section */
@@ -206,6 +208,8 @@
 		70D877842BA0E4540059AA2B /* Transaction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Transaction.swift; sourceTree = "<group>"; };
 		70D877872BA19B080059AA2B /* QonversionAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QonversionAssembly.swift; sourceTree = "<group>"; };
 		70D877892BA19B100059AA2B /* ServicesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicesAssembly.swift; sourceTree = "<group>"; };
+		70EA734B2BD025F500B0DFDA /* Currency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Currency.swift; sourceTree = "<group>"; };
+		70EA734D2BD0261300B0DFDA /* Storefront.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Storefront.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A982E3A335EC2527556D692D /* Pods_Sample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -264,6 +268,8 @@
 			children = (
 				70CD929F2BC6E22B0039D65C /* Device.swift */,
 				70CD92A02BC6E22B0039D65C /* Transaction.swift */,
+				70EA734D2BD0261300B0DFDA /* Storefront.swift */,
+				70EA734B2BD025F500B0DFDA /* Currency.swift */,
 				70CD92A12BC6E22B0039D65C /* User.swift */,
 				70CD92A22BC6E22B0039D65C /* UserProperties.swift */,
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
@@ -745,7 +751,9 @@
 				70CD93372BC6E22B0039D65C /* StorageConstants.swift in Sources */,
 				70CD931E2BC6E22B0039D65C /* DeviceService.swift in Sources */,
 				70CD932C2BC6E22B0039D65C /* ConcurrencyExtensions.swift in Sources */,
+				70EA734C2BD025F500B0DFDA /* Currency.swift in Sources */,
 				70CD92FD2BC6E22B0039D65C /* UserProperty.swift in Sources */,
+				70EA734E2BD0261300B0DFDA /* Storefront.swift in Sources */,
 				70CD92FE2BC6E22B0039D65C /* UserPropertyKey.swift in Sources */,
 				70CD931D2BC6E22B0039D65C /* DeviceInfoCollectorInterface.swift in Sources */,
 				70CD930C2BC6E22B0039D65C /* NetworkProvider.swift in Sources */,

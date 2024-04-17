@@ -34,10 +34,10 @@ private let OsName = "iOS"
 
 final class DeviceInfoCollector: DeviceInfoCollectorInterface {
 
-    var lastPreparedDevice: Qonversion.Device? = nil
+    var lastPreparedDevice: Device? = nil
 
-    func deviceInfo() -> Qonversion.Device {
-        if let savedDevice: Qonversion.Device = lastPreparedDevice {
+    func deviceInfo() -> Device {
+        if let savedDevice: Device = lastPreparedDevice {
             return savedDevice
         }
 
@@ -52,7 +52,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         let advertisingId: String? = advertisingId()
         let vendorId: String? = vendorId()
 
-        let deviceInfo = Qonversion.Device(
+        let deviceInfo = Device(
             manufacturer: manufacturer,
             osName: OsName,
             osVersion: osVersion,

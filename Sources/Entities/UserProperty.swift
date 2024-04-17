@@ -9,11 +9,17 @@ import Foundation
 
 extension Qonversion {
     
+    /// User property info
     public struct UserProperty : Decodable, Encodable, Equatable, Hashable {
         
-        let key: String
-        let value: String
-        var definedKey: UserPropertyKey { UserPropertyKey(rawValue: key) ?? .custom }
+        /// Raw property key
+        public let key: String
+        
+        /// Property value
+        public let value: String
+        
+        /// Qonversion defined property key. ``Qonversion/Qonversion/UserPropertyKey`` for non-Qonversion properties.
+        public var definedKey: UserPropertyKey { UserPropertyKey(rawValue: key) ?? .custom }
         
     }
     

@@ -7,17 +7,34 @@
 
 import Foundation
 
-public struct Configuration {
-    let apiKey: String
-    let launchMode: LaunchMode
-    var userDefaults: UserDefaults? = nil
+extension Qonversion {
     
-    public init(apiKey: String, launchMode: LaunchMode) {
-        self.apiKey = apiKey
-        self.launchMode = launchMode
+    /// Struct  used to set the SDK main and additional configurations.
+    public struct Configuration {
+        
+        /// Your project key from Qonversion Dashboard to setup the SDK
+        public let apiKey: String
+        
+        /// Launch mode of the Qonversion SDK.
+        public let launchMode: LaunchMode
+        
+        var userDefaults: UserDefaults? = nil
+        
+        /// Initializer of Configuration.
+        /// 
+        /// Launch with ``Qonversion/LaunchMode/analytics`` mode to use Qonversion with your existing in-app subscription flow to get comprehensive subscription analytics and user engagement tools, and send the data to the leading marketing, analytics, and engagement platforms.
+        /// - Important: Using ``Qonversion/LaunchMode/analytics`` you should process purchases by yourself. Qonversion SDK will only track revenue, but not finish transactions.
+        /// - Parameters:
+        ///   - apiKey: Your project key from Qonversion Dashboard to setup the SDK
+        ///   - launchMode:launch mode of the Qonversion SDK.
+        public init(apiKey: String, launchMode: LaunchMode) {
+            self.apiKey = apiKey
+            self.launchMode = launchMode
+        }
+        
+        mutating func setCustomUserDefaults(_ userDefaults: UserDefaults) {
+            self.userDefaults = userDefaults
+        }
     }
     
-    mutating func setCustomUserDefaults(_ userDefaults: UserDefaults) {
-        self.userDefaults = userDefaults
-    }
 }
