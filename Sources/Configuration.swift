@@ -32,6 +32,9 @@ extension Qonversion {
             self.launchMode = launchMode
         }
         
+        /// Set user defaults with suite name to share it between your app and shared extension.
+        /// - Parameters:
+        ///  - userDefaults: the user defaults with suite name
         mutating func setCustomUserDefaults(_ userDefaults: UserDefaults) {
             self.userDefaults = userDefaults
         }

@@ -12,7 +12,9 @@ extension Qonversion {
     /// Enum that used to set the SDK launch mode.
     public enum LaunchMode {
         
-        /// Analytics launch mode
+        /// Analytics launch mode.
+        /// 
+        /// Subscription management support coming soon.
         case analytics
         
     }
