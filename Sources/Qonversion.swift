@@ -18,9 +18,9 @@ public final class Qonversion {
     
     // MARK: - Public
     
-    /// Use this variable to get a current initialized instance of the Qonversion SDK.
+    /// Use this variable to get the current initialized instance of the Qonversion SDK.
     /// Please, use the variable only after initializing the SDK.
-    /// - Returns: a current initialized instance of the ``Qonversion`` SDK
+    /// - Returns: the current initialized instance of the ``Qonversion`` SDK
     public static let shared = Qonversion()
     
     /// An entry point to use Qonversion SDK. Call to initialize Qonversion SDK with required and extra configs.
@@ -35,20 +35,20 @@ public final class Qonversion {
         return Qonversion.shared
     }
     
-    /// Collecting Apple Search Ads Attribution data
+    /// Collects Apple Search Ads Attribution data
     /// Available only for iOS 14.3+
     /// See details in the [Apple official documentation](https://developer.apple.com/documentation/iad/setting-up-apple-search-ads-attribution)
     public func collectAppleSearchAdsAttribution() {
         userPropertiesManager?.collectAppleSearchAdsAttribution()
     }
     
-    /// Collectiing advertising ID
+    /// Collects advertising ID
     /// On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion if tracking is allowed and IDFA is available.
     public func collectAdvertisingId() {
         deviceManager?.collectAdvertisingId()
     }
     
-    /// Sets Qonversion reserved user properties, like email or appsFlyer user ID.
+    /// Sets Qonversion defined user properties, like email or appsFlyer user ID.
     /// - Note that using ``Qonversion/Qonversion/UserPropertyKey/custom`` here will do nothing.
     /// - To set custom user property, use ``Qonversion/Qonversion/setCustomUserProperty(_:key:)``  instead.
     /// - Parameters:

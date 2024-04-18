@@ -9,7 +9,7 @@ import Foundation
 
 extension Qonversion {
     
-    /// Struct  used to set the SDK main and additional configurations.
+    /// Struct used to set the SDK main and additional configurations.
     public struct Configuration {
         
         /// Your project key from Qonversion Dashboard to setup the SDK

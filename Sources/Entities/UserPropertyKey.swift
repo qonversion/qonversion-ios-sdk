@@ -11,7 +11,7 @@ extension Qonversion {
     
     /// Qonversion Defined User Property keys.
     ///
-    /// We defined some common case properties and provided API for adding them
+    /// We've defined some common case properties and provided API for adding them
     public enum UserPropertyKey: String {
         
         /// Email
@@ -57,7 +57,7 @@ extension Qonversion {
         case appMetricaUserProfileId = "_q_appmetrica_user_profile_id"
         
         /// Value for custom user property
-        /// - Important: Do not pass this value directly. Use ``Qonversion/Qonversion/setCustomUserProperty(_:key:)`` insted.
+        /// - Important: Do not pass this value directly. Use ``Qonversion/Qonversion/setCustomUserProperty(_:key:)`` instead.
         case custom = ""
         
     }

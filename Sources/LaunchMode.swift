@@ -9,7 +9,7 @@ import Foundation
 
 extension Qonversion {
     
-    /// Enum that used to set the SDK launch mode.
+    /// Enum that describes the SDK launch mode.
     public enum LaunchMode {
         
         /// Analytics launch mode.
