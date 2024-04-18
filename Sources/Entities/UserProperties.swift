@@ -63,18 +63,18 @@ extension Qonversion {
             flatCustomPropertiesMap = customPropertiesMap
         }
         
-        /// Function returns property for custom key
+        /// Function returns the property for a custom key
         /// - Parameters:
-        ///  - key: key for property
-        /// - Returns: property for custom key
+        ///  - key: a key for the property
+        /// - Returns: the property for a custom key
         public func property(for key: String) -> UserProperty? {
             return properties.first { $0.key == key }
         }
         
-        /// Function returns property for defined key
+        /// Function returns the property for a defined key
         /// - Parameters:
-        ///  - key: key for property
-        /// - Returns: property for defined key
+        ///  - key: a key for the property
+        /// - Returns: the property for a defined key
         public func definedProperty(for key: UserPropertyKey) -> UserProperty? {
             return definedProperties.first { $0.definedKey == key }
         }
