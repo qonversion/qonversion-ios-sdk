@@ -16,19 +16,19 @@ extension Qonversion {
         public let properties: [UserProperty]
         
         /// List of user properties, set for the Qonversion defined keys.
-        /// This is a subset of all ``Qonversion/UserProperties/properties`` list.
+        /// This is a subset of all ``Qonversion/Qonversion/UserProperties/properties`` list.
         public let definedProperties: [UserProperty]
         
         /// List of user properties, set for custom keys.
-        /// This is a subset of all ``Qonversion/UserProperties/properties`` list.
+        /// This is a subset of all ``Qonversion/Qonversion/UserProperties/properties`` list.
         public let customProperties: [UserProperty]
         
         /// Map of all user properties.
-        /// This is a flattened version of the ``Qonversion/UserProperties/properties`` list as a key-value map.
+        /// This is a flattened version of the ``Qonversion/Qonversion/UserProperties/properties`` list as a key-value map.
         public let flatPropertiesMap: [String: String]
         
         /// Map of user properties, set for the Qonversion defined keys.
-        /// This is a flattened version of the `Qonversion/UserProperties/definedProperties` list as a key-value map, where keys are values from ``Qonversion/UserPropertyKey``.
+        /// This is a flattened version of the ``Qonversion/Qonversion/UserProperties/definedProperties`` list as a key-value map, where keys are values from ``Qonversion/Qonversion/UserPropertyKey``.
         public let flatDefinedPropertiesMap: [UserPropertyKey: String]
         
         /// Map of user properties, set for custom keys.
