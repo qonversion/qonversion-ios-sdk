@@ -85,6 +85,9 @@
 		70D877242B8F5B370059AA2B /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 70F163A22B6D0D3D00033BEF /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		70EA734C2BD025F500B0DFDA /* Currency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA734B2BD025F500B0DFDA /* Currency.swift */; };
 		70EA734E2BD0261300B0DFDA /* Storefront.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA734D2BD0261300B0DFDA /* Storefront.swift */; };
+		70EA73512BD12C7B00B0DFDA /* ProductsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73502BD12C7B00B0DFDA /* ProductsServiceInterface.swift */; };
+		70EA73532BD12C8000B0DFDA /* ProductsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73522BD12C8000B0DFDA /* ProductsService.swift */; };
+		70EA73552BD12CA500B0DFDA /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73542BD12CA500B0DFDA /* Product.swift */; };
 		7169ED74E32501B128C51E9D /* Pods_Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3058D2FCF5492D5398F1D64F /* Pods_Qonversion.framework */; };
 		D265F4B90C3180117593732E /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A982E3A335EC2527556D692D /* Pods_Sample.framework */; };
 /* End PBXBuildFile section */
@@ -210,6 +213,9 @@
 		70D877892BA19B100059AA2B /* ServicesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicesAssembly.swift; sourceTree = "<group>"; };
 		70EA734B2BD025F500B0DFDA /* Currency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Currency.swift; sourceTree = "<group>"; };
 		70EA734D2BD0261300B0DFDA /* Storefront.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Storefront.swift; sourceTree = "<group>"; };
+		70EA73502BD12C7B00B0DFDA /* ProductsServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsServiceInterface.swift; sourceTree = "<group>"; };
+		70EA73522BD12C8000B0DFDA /* ProductsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsService.swift; sourceTree = "<group>"; };
+		70EA73542BD12CA500B0DFDA /* Product.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A982E3A335EC2527556D692D /* Pods_Sample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -274,6 +280,7 @@
 				70CD92A22BC6E22B0039D65C /* UserProperties.swift */,
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
 				70CD92A42BC6E22B0039D65C /* UserPropertyKey.swift */,
+				70EA73542BD12CA500B0DFDA /* Product.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
@@ -455,6 +462,7 @@
 		70CD92DB2BC6E22B0039D65C /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				70EA734F2BD12C7300B0DFDA /* ProductsService */,
 				70CD92D72BC6E22B0039D65C /* Device */,
 				70CD92DA2BC6E22B0039D65C /* UserService */,
 			);
@@ -535,6 +543,15 @@
 				70D8771F2B8F4E5F0059AA2B /* Info.plist */,
 			);
 			path = Sample;
+			sourceTree = "<group>";
+		};
+		70EA734F2BD12C7300B0DFDA /* ProductsService */ = {
+			isa = PBXGroup;
+			children = (
+				70EA73502BD12C7B00B0DFDA /* ProductsServiceInterface.swift */,
+				70EA73522BD12C8000B0DFDA /* ProductsService.swift */,
+			);
+			path = ProductsService;
 			sourceTree = "<group>";
 		};
 		70F163982B6D0D3D00033BEF = {
@@ -750,6 +767,7 @@
 				70CD93082BC6E22B0039D65C /* HeadersBuilder.swift in Sources */,
 				70CD93372BC6E22B0039D65C /* StorageConstants.swift in Sources */,
 				70CD931E2BC6E22B0039D65C /* DeviceService.swift in Sources */,
+				70EA73532BD12C8000B0DFDA /* ProductsService.swift in Sources */,
 				70CD932C2BC6E22B0039D65C /* ConcurrencyExtensions.swift in Sources */,
 				70EA734C2BD025F500B0DFDA /* Currency.swift in Sources */,
 				70CD92FD2BC6E22B0039D65C /* UserProperty.swift in Sources */,
@@ -771,11 +789,13 @@
 				70CD93032BC6E22B0039D65C /* UserPropertiesManagerInterface.swift in Sources */,
 				70CD93252BC6E22B0039D65C /* StoreKitMapperInterface.swift in Sources */,
 				70CD93202BC6E22B0039D65C /* UserService.swift in Sources */,
+				70EA73552BD12CA500B0DFDA /* Product.swift in Sources */,
 				70CD93232BC6E22B0039D65C /* StoreKitFacadeInterface.swift in Sources */,
 				70CD93192BC6E22B0039D65C /* LocalStorageInterface.swift in Sources */,
 				70CD932A2BC6E22B0039D65C /* StoreKitWrapperDelegate.swift in Sources */,
 				70CD93072BC6E22B0039D65C /* Header.swift in Sources */,
 				70CD93122BC6E22B0039D65C /* RequestProcessor.swift in Sources */,
+				70EA73512BD12C7B00B0DFDA /* ProductsServiceInterface.swift in Sources */,
 				70CD93062BC6E22B0039D65C /* QonversionErrorType.swift in Sources */,
 				70CD932D2BC6E22B0039D65C /* IncrementalDelayCalculator.swift in Sources */,
 				70CD93102BC6E22B0039D65C /* Request.swift in Sources */,
