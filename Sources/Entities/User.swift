@@ -9,7 +9,7 @@ import Foundation
 
 extension Qonversion {
     
-    struct User: Decodable {
+    public struct User: Decodable {
         
         enum Environment: String, Decodable {
             case sandbox
@@ -22,11 +22,15 @@ extension Qonversion {
             case environment
         }
         
-        let id: String
-        let creationDate: Date
+        /// Qonversion User ID
+        public let id: String
+        
+        // Date when user was created
+        public let creationDate: Date
+        
         let environment: User.Environment
         
-        init(from decoder: Decoder) throws {
+        public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             creationDate = try container.decode(Date.self, forKey: .creationDate)
             environment = try container.decode(User.Environment.self, forKey: .environment)

@@ -9,12 +9,12 @@ import Foundation
 
 protocol DeviceServiceInterface {
     
-    func save(device: Qonversion.Device)
+    func save(device: Device)
     
-    func currentDevice() -> Qonversion.Device?
+    func currentDevice() -> Device?
     
-    func create(device: Qonversion.Device) async throws -> Qonversion.Device
+    func create(device: Device) async throws -> Device
     
-    func update(device: Qonversion.Device) async throws -> Qonversion.Device
+    func update(device: Device) async throws -> Device
     
 }

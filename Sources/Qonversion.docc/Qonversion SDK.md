@@ -1,4 +1,4 @@
-# ``Qonversion/Qonversion``
+# ``Qonversion``
 
 In-App Subscriptions Built for Growth.
 Empowering the best Apps to drive purchases, effectively handle customer data, and maximize revenue across iOS, Android, and web platforms
@@ -9,7 +9,7 @@ Empowering the best Apps to drive purchases, effectively handle customer data, a
 
 ## Overview
 
-Looks good!
+``Qonversion`` is an entry point to use Qonversion SDK.
 
 ## Topics
 

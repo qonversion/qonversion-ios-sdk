@@ -7,6 +7,16 @@
 
 import Foundation
 
-public enum LaunchMode {
-    case analytics
+extension Qonversion {
+    
+    /// Enum that describes the SDK launch mode.
+    public enum LaunchMode {
+        
+        /// Analytics launch mode.
+        /// 
+        /// Subscription management support coming soon.
+        case analytics
+        
+    }
+    
 }
