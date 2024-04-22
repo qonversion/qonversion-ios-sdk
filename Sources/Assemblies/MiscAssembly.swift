@@ -97,8 +97,10 @@ final class MiscAssembly {
             ResponseCode.paymentRequired,
             ResponseCode.forbidden
         ]
-        
-        let networkErrorHandler = NetworkErrorHandler(criticalErrorCodes: criticalErrorCodes)
+
+        let responseDecoder: ResponseDecoderInterface = responseDecoder()
+
+        let networkErrorHandler = NetworkErrorHandler(criticalErrorCodes: criticalErrorCodes, decoder: responseDecoder)
         
         return networkErrorHandler
     }

@@ -19,11 +19,11 @@ private enum DeviceRequestType {
 final class DeviceService: DeviceServiceInterface {
     
     private let requestProcessor: RequestProcessorInterface
-    private let localStorage: LocalStorage
+    private let localStorage: LocalStorageInterface
     private let userIdProvider: UserIdProvider
     private let encoder: JSONEncoder
     
-    init(requestProcessor: RequestProcessorInterface, localStorage: LocalStorage, userIdProvider: UserIdProvider, encoder: JSONEncoder) {
+    init(requestProcessor: RequestProcessorInterface, localStorage: LocalStorageInterface, userIdProvider: UserIdProvider, encoder: JSONEncoder) {
         self.requestProcessor = requestProcessor
         self.localStorage = localStorage
         self.userIdProvider = userIdProvider

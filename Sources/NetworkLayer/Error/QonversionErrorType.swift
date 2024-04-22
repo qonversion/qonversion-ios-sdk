@@ -20,22 +20,40 @@ enum QonversionErrorType {
     case deviceCreationFailed
     case deviceUpdateFailed
     case unableToSerializeDevice
-    
+    case loadingRemoteConfigFailed
+    case loadingRemoteConfigListFailed
+    case attachingUserToRemoteConfigFailed
+    case detachingUserFromRemoteConfigFailed
+    case attachingUserToExperimentFailed
+    case detachingUserFromExperimentFailed
+
     func message() -> String {
         // handle other errors here
         switch self {
         case .internal:
-            return "Internal error occurred"
+            return "Internal error occurred."
         case .sdkInitializationError:
-            return "SDK is not initialized. Initialize SDK before calling other functions using  Qonversion.initialize()"
+            return "SDK is not initialized. Initialize SDK before calling other functions using  Qonversion.initialize()."
         case .unableToSerializeDevice:
             return "Device serialization failed. Unable to send request."
         case .deviceCreationFailed:
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:
             return "Device update request failed. Unable to update the device."
+        case .loadingRemoteConfigFailed:
+            return "Failed to load remote config."
+        case .loadingRemoteConfigListFailed:
+            return "Failed to load remote config list."
+        case .attachingUserToRemoteConfigFailed:
+            return "Failed to attach user to the remote config."
+        case .detachingUserFromRemoteConfigFailed:
+            return "Failed to detach user from the remote config."
+        case .attachingUserToExperimentFailed:
+            return "Failed to attach user to the experiment."
+        case .detachingUserFromExperimentFailed:
+            return "Failed to detach user from the experiment."
         default:
-            return "Unknown error occurred"
+            return "Unknown error occurred."
         }
     }
 }

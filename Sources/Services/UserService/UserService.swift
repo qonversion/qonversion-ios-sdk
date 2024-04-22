@@ -15,10 +15,10 @@ fileprivate enum Constants: String {
 final class UserService: UserServiceInterface {
     
     private let requestProcessor: RequestProcessorInterface
-    private let localStorage: LocalStorage
+    private let localStorage: LocalStorageInterface
     private let internalConfig: InternalConfig
     
-    init(requestProcessor: RequestProcessorInterface, localStorage: LocalStorage, internalConfig: InternalConfig) {
+    init(requestProcessor: RequestProcessorInterface, localStorage: LocalStorageInterface, internalConfig: InternalConfig) {
         self.requestProcessor = requestProcessor
         self.localStorage = localStorage
         self.internalConfig = internalConfig

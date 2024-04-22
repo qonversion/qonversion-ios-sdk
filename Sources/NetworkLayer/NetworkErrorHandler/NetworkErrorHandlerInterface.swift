@@ -9,6 +9,6 @@ import Foundation
 
 protocol NetworkErrorHandlerInterface {
     
-    func extractError(from response: URLResponse) -> QonversionError?
+    func extractError(from response: URLResponse, body: Data) -> QonversionError?
     
 }
