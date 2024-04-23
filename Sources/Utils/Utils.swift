@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import StoreKit
 
 typealias Codable = Decodable & Encodable
 
@@ -33,4 +34,16 @@ extension Locale.Currency {
         
         return locale?.currencySymbol
     }
+}
+
+extension SKProduct {
+    
+    func displayPrice() -> String? {
+        let formatter = NumberFormatter()
+        formatter.formatterBehavior = .behavior10_4
+        formatter.locale = priceLocale
+        
+        return formatter.string(for: price)
+    }
+    
 }

@@ -88,6 +88,8 @@
 		70EA73512BD12C7B00B0DFDA /* ProductsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73502BD12C7B00B0DFDA /* ProductsServiceInterface.swift */; };
 		70EA73532BD12C8000B0DFDA /* ProductsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73522BD12C8000B0DFDA /* ProductsService.swift */; };
 		70EA73552BD12CA500B0DFDA /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73542BD12CA500B0DFDA /* Product.swift */; };
+		70EA735D2BD6B66300B0DFDA /* ProductsManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA735C2BD6B66300B0DFDA /* ProductsManagerInterface.swift */; };
+		70EA735F2BD6B68000B0DFDA /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */; };
 		7169ED74E32501B128C51E9D /* Pods_Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3058D2FCF5492D5398F1D64F /* Pods_Qonversion.framework */; };
 		D265F4B90C3180117593732E /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A982E3A335EC2527556D692D /* Pods_Sample.framework */; };
 /* End PBXBuildFile section */
@@ -216,6 +218,8 @@
 		70EA73502BD12C7B00B0DFDA /* ProductsServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsServiceInterface.swift; sourceTree = "<group>"; };
 		70EA73522BD12C8000B0DFDA /* ProductsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsService.swift; sourceTree = "<group>"; };
 		70EA73542BD12CA500B0DFDA /* Product.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
+		70EA735C2BD6B66300B0DFDA /* ProductsManagerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsManagerInterface.swift; sourceTree = "<group>"; };
+		70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsManager.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A982E3A335EC2527556D692D /* Pods_Sample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -307,6 +311,7 @@
 		70CD92AD2BC6E22B0039D65C /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				70EA735B2BD6B63300B0DFDA /* ProductsManager */,
 				70CD92A82BC6E22B0039D65C /* Device */,
 				70CD92AC2BC6E22B0039D65C /* UserProperties */,
 			);
@@ -554,6 +559,15 @@
 			path = ProductsService;
 			sourceTree = "<group>";
 		};
+		70EA735B2BD6B63300B0DFDA /* ProductsManager */ = {
+			isa = PBXGroup;
+			children = (
+				70EA735C2BD6B66300B0DFDA /* ProductsManagerInterface.swift */,
+				70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */,
+			);
+			path = ProductsManager;
+			sourceTree = "<group>";
+		};
 		70F163982B6D0D3D00033BEF = {
 			isa = PBXGroup;
 			children = (
@@ -769,6 +783,7 @@
 				70CD931E2BC6E22B0039D65C /* DeviceService.swift in Sources */,
 				70EA73532BD12C8000B0DFDA /* ProductsService.swift in Sources */,
 				70CD932C2BC6E22B0039D65C /* ConcurrencyExtensions.swift in Sources */,
+				70EA735F2BD6B68000B0DFDA /* ProductsManager.swift in Sources */,
 				70EA734C2BD025F500B0DFDA /* Currency.swift in Sources */,
 				70CD92FD2BC6E22B0039D65C /* UserProperty.swift in Sources */,
 				70EA734E2BD0261300B0DFDA /* Storefront.swift in Sources */,
@@ -792,6 +807,7 @@
 				70EA73552BD12CA500B0DFDA /* Product.swift in Sources */,
 				70CD93232BC6E22B0039D65C /* StoreKitFacadeInterface.swift in Sources */,
 				70CD93192BC6E22B0039D65C /* LocalStorageInterface.swift in Sources */,
+				70EA735D2BD6B66300B0DFDA /* ProductsManagerInterface.swift in Sources */,
 				70CD932A2BC6E22B0039D65C /* StoreKitWrapperDelegate.swift in Sources */,
 				70CD93072BC6E22B0039D65C /* Header.swift in Sources */,
 				70CD93122BC6E22B0039D65C /* RequestProcessor.swift in Sources */,

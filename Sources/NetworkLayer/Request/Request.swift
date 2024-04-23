@@ -19,6 +19,7 @@ enum Request : Hashable {
     case createDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .post)
     case updateDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .put)
     case appleSearchAds(userId: String, endpoint: String = "v3/appleads/", body: RequestBodyDict, type: RequestType = .post)
+    case getProducts(userId: String, endpoint: String = "v3/products/", type: RequestType = .get)
 
     func convertToURLRequest(_ baseUrl: String) -> URLRequest? {
         func defaultRequest(urlString: String, body: Any?, type: RequestType) -> URLRequest? {
@@ -58,6 +59,8 @@ enum Request : Hashable {
             return defaultRequest(urlString: endpoint + userId, body: body, type: type)
         case let .appleSearchAds(userId, endpoint, body, type):
             return defaultRequest(urlString: endpoint + userId, body: body, type: type)
+        case let .getProducts(userId, endpoint, type):
+            return defaultRequest(urlString: endpoint + userId, body: nil, type: type)
         }
     }
 
@@ -107,6 +110,11 @@ enum Request : Hashable {
             hasher.combine(userId)
             hasher.combine(endpoint)
             hasher.combine(body)
+            hasher.combine(type)
+        case let .getProducts(userId, endpoint, type):
+            hasher.combine("getProducts")
+            hasher.combine(userId)
+            hasher.combine(endpoint)
             hasher.combine(type)
         }
     }

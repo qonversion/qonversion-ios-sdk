@@ -13,6 +13,116 @@ extension Qonversion {
     /// StoreKit [Transaction](https://developer.apple.com/documentation/storekit/transaction) wrapper.
     public struct Transaction {
         
+        /// The raw JSON representation of the transaction information.
+        public var jsonRepresentation: Data?
+
+        /// The unique identifier for the transaction.
+        public let id: String?
+
+        /// The original transaction identifier of a purchase.
+        public let originalId: String?
+
+        /// A unique ID that identifies subscription purchase events across devices, including subscription renewals.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var webOrderLineItemId: String? { storeKitTransaction?.webOrderLineItemID }
+
+        /// The product identifier of the in-app purchase.
+        public let productId: String
+
+        /// The identifier of the subscription group that the subscription belongs to.
+        public let subscriptionGroupId: String?
+        
+        /// The bundle identifier for the app.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var appBundleId: String? { storeKitTransaction?.appBundleID }
+
+        /// The date that the App Store charged the user’s account for a purchased or restored product, or for a subscription purchase or renewal after a lapse.
+        public let purchaseDate: Date?
+
+        /// The date of purchase for the original transaction.
+        public let originalPurchaseDate: Date?
+
+        /// The date the subscription expires or renews.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var expirationDate: Date? { storeKitTransaction?.expirationDate }
+
+        /// The number of consumable products purchased.
+        public let purchasedQuantity: Int
+
+        /// A Boolean that indicates whether the user upgraded to another subscription.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var isUpgraded: Bool? { storeKitTransaction?.isUpgraded }
+        
+        /// The subscription offer that applies to the transaction, including its offer type, payment mode, and ID.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var offer: Qonversion.Transaction.Offer? { _offer }
+        
+        /// The reason that the App Store refunded the transaction or revoked it from Family Sharing.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var revocationReason: Qonversion.Transaction.RevocationReason? { Qonversion.Transaction.RevocationReason.from(revocataionReason: storeKitTransaction?.revocationReason) }
+        
+        /// The date that the App Store refunded the transaction or revoked it from Family Sharing.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var revocationDate: Date? { storeKitTransaction?.revocationDate }
+        
+        /// A UUID that associates the transaction with a user on your own service.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var appAccountToken: UUID? { storeKitTransaction?.appAccountToken }
+        
+        /// The Apple server environment that generates and signs the transaction.
+        @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, visionOS 1.0, *)
+        public var environment: Qonversion.Transaction.Environment? { Qonversion.Transaction.Environment(rawValue: storeKitTransaction?.environment.rawValue ?? "") }
+        
+        /// A cause of a purchase transaction, indicating whether it’s a customer’s purchase or an auto-renewable subscription renewal that the system initiates.
+        @available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, *)
+        public var reason: Qonversion.Transaction.Reason {
+            guard let storeKitTransaction = storeKitTransaction,
+                  let reason = Qonversion.Transaction.Reason(rawValue: storeKitTransaction.reason.rawValue)
+            else { return Qonversion.Transaction.Reason.purchase }
+            
+            return reason
+        }
+        
+        /// The decimal representation of the cost of the product, in local currency.
+        public let price: Decimal?
+        
+        /// Transaction currency info.
+        public let currency: Qonversion.Currency?
+        
+        /// Transaction storefront info.
+        public let storefront: Qonversion.Storefront?
+        
+        /// The device verification value to use to verify whether the renewal information belongs to the device.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var deviceVerification: Data? { storeKitTransaction?.deviceVerification }
+        
+        /// The UUID to use to compute the device verification value.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var deviceVerificationNonce: UUID? { storeKitTransaction?.deviceVerificationNonce }
+        
+        /// The date that the App Store signed the JWS renewal information.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var signedDate: Date? { storeKitTransaction?.signedDate }
+        
+        /// A value that indicates whether the transaction was purchased by the user, or is made available to them through Family Sharing.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var ownershipType: Qonversion.Transaction.OwnershipType {
+            guard let storeKitTransaction = storeKitTransaction,
+                  let ownershipType = Qonversion.Transaction.OwnershipType(rawValue: storeKitTransaction.ownershipType.rawValue)
+            else { return Qonversion.Transaction.OwnershipType.purchased }
+            
+            return ownershipType
+        }
+        
+        /// Original StoreKit 2 Transaction.
+        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+        public var storeKitTransaction: StoreKit.Transaction? { _storeKitTransaction as? StoreKit.Transaction }
+        
+        /// Original old StoreKit Transaction
+        public let skPaymentTransaction: SKPaymentTransaction?
+        
+        // MARK: - Nested structures and enums
+        
         /// Enum describes possible reasons of transaction's revocation.
         /// This enum is a wrapper of StoreKit Transaction's [RevocationReason](https://developer.apple.com/documentation/storekit/transaction/revocationreason)
         public enum RevocationReason {
@@ -180,114 +290,6 @@ extension Qonversion {
             case renewal
             
         }
-        
-        /// The raw JSON representation of the transaction information.
-        public var jsonRepresentation: Data?
-
-        /// The unique identifier for the transaction.
-        public let id: String?
-
-        /// The original transaction identifier of a purchase.
-        public let originalId: String?
-
-        /// A unique ID that identifies subscription purchase events across devices, including subscription renewals.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var webOrderLineItemId: String? { storeKitTransaction?.webOrderLineItemID }
-
-        /// The product identifier of the in-app purchase.
-        public let productId: String
-
-        /// The identifier of the subscription group that the subscription belongs to.
-        public let subscriptionGroupId: String?
-        
-        /// The bundle identifier for the app.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var appBundleId: String? { storeKitTransaction?.appBundleID }
-
-        /// The date that the App Store charged the user’s account for a purchased or restored product, or for a subscription purchase or renewal after a lapse.
-        public let purchaseDate: Date?
-
-        /// The date of purchase for the original transaction.
-        public let originalPurchaseDate: Date?
-
-        /// The date the subscription expires or renews.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var expirationDate: Date? { storeKitTransaction?.expirationDate }
-
-        /// The number of consumable products purchased.
-        public let purchasedQuantity: Int
-
-        /// A Boolean that indicates whether the user upgraded to another subscription.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var isUpgraded: Bool? { storeKitTransaction?.isUpgraded }
-        
-        /// The subscription offer that applies to the transaction, including its offer type, payment mode, and ID.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var offer: Qonversion.Transaction.Offer? { _offer }
-        
-        /// The reason that the App Store refunded the transaction or revoked it from Family Sharing.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var revocationReason: Qonversion.Transaction.RevocationReason? { Qonversion.Transaction.RevocationReason.from(revocataionReason: storeKitTransaction?.revocationReason) }
-        
-        /// The date that the App Store refunded the transaction or revoked it from Family Sharing.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var revocationDate: Date? { storeKitTransaction?.revocationDate }
-        
-        /// A UUID that associates the transaction with a user on your own service.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var appAccountToken: UUID? { storeKitTransaction?.appAccountToken }
-        
-        /// The Apple server environment that generates and signs the transaction.
-        @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, visionOS 1.0, *)
-        public var environment: Qonversion.Transaction.Environment? { Qonversion.Transaction.Environment(rawValue: storeKitTransaction?.environment.rawValue ?? "") }
-        
-        /// A cause of a purchase transaction, indicating whether it’s a customer’s purchase or an auto-renewable subscription renewal that the system initiates.
-        @available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, *)
-        public var reason: Qonversion.Transaction.Reason {
-            guard let storeKitTransaction = storeKitTransaction,
-                  let reason = Qonversion.Transaction.Reason(rawValue: storeKitTransaction.reason.rawValue)
-            else { return Qonversion.Transaction.Reason.purchase }
-            
-            return reason
-        }
-        
-        /// The decimal representation of the cost of the product, in local currency.
-        public let price: Decimal?
-        
-        /// Transaction currency info.
-        public let currency: Qonversion.Currency?
-        
-        /// Transaction storefront info.
-        public let storefront: Qonversion.Storefront?
-        
-        /// The device verification value to use to verify whether the renewal information belongs to the device.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var deviceVerification: Data? { storeKitTransaction?.deviceVerification }
-        
-        /// The UUID to use to compute the device verification value.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var deviceVerificationNonce: UUID? { storeKitTransaction?.deviceVerificationNonce }
-        
-        /// The date that the App Store signed the JWS renewal information.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var signedDate: Date? { storeKitTransaction?.signedDate }
-        
-        /// A value that indicates whether the transaction was purchased by the user, or is made available to them through Family Sharing.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var ownershipType: Qonversion.Transaction.OwnershipType {
-            guard let storeKitTransaction = storeKitTransaction,
-                  let ownershipType = Qonversion.Transaction.OwnershipType(rawValue: storeKitTransaction.ownershipType.rawValue)
-            else { return Qonversion.Transaction.OwnershipType.purchased }
-            
-            return ownershipType
-        }
-        
-        /// Original StoreKit 2 Transaction.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        public var storeKitTransaction: StoreKit.Transaction? { _storeKitTransaction as? StoreKit.Transaction }
-        
-        /// Original old StoreKit Transaction
-        public let skPaymentTransaction: SKPaymentTransaction?
         
         // MARK: - Private
         

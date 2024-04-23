@@ -9,6 +9,7 @@ import StoreKit
 
 protocol StoreKitFacadeInterface {
     #warning("replace all return types")
+    @discardableResult
     func products(for ids:[String]) async throws -> [String]
     
     func currentEntitlements() async -> [Qonversion.Transaction]
@@ -17,7 +18,7 @@ protocol StoreKitFacadeInterface {
     
     func finish(transaction: SKPaymentTransaction)
     
-    @available(iOS 15.0, *)
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     func finish(transaction: StoreKit.Transaction) async
     
     func subscribe() async -> [Qonversion.Transaction]
@@ -27,5 +28,7 @@ protocol StoreKitFacadeInterface {
     
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet()
+    
+    func enrich(products: [Qonversion.Product]) async throws -> [Qonversion.Product]
     
 }

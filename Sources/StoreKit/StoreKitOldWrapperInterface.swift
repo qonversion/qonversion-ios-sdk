@@ -16,7 +16,7 @@ protocol StoreKitOldWrapperInterface {
     
     func restore(with completion: @escaping StoreKitOldTransactionsCompletion)
     
-    @available(iOS 14.0, *)
+    @available(iOS 14.0, visionOS 1.0, *)
     func presentCodeRedemptionSheet()
     
     func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion)

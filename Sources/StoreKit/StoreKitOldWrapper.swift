@@ -47,7 +47,7 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
         paymentQueue.restoreCompletedTransactions()
     }
     
-    @available(iOS 14.0, *)
+    @available(iOS 14.0, visionOS 1.0, *)
     func presentCodeRedemptionSheet() {
         paymentQueue.presentCodeRedemptionSheet()
     }
