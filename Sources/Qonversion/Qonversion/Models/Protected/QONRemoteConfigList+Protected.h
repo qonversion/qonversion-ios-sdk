@@ -1,5 +1,5 @@
 //
-//  QONRemoteConfigList+protected.h
+//  QONRemoteConfigList+Protected.h
 //  Qonversion
 //
 //  Created by Kamo Spertsyan on 27.03.2024.

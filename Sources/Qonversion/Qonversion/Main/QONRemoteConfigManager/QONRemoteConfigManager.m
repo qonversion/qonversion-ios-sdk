@@ -9,7 +9,7 @@
 #import "QONRemoteConfigManager.h"
 #import "QONRemoteConfigService.h"
 #import "QONRemoteConfig.h"
-#import "QONRemoteConfigList+protected.h"
+#import "QONRemoteConfigList+Protected.h"
 #import "QONExperiment.h"
 #import "QNProductCenterManager.h"
 #import "QONRemoteConfigLoadingState.h"
