@@ -31,6 +31,53 @@ final class ServicesAssembly {
         return userService
     }
     
+    func productsService() -> ProductsServiceInterface {
+        let requestProcessor = requestProcessor()
+        let productsService = ProductsService(requestProcessor: requestProcessor, internalConfig: miscAssembly.internalConfig)
+        
+        return productsService
+    }
+    
+    func storeKitMapper() -> StoreKitMapperInterface {
+        let mapper = StoreKitMapper()
+        
+        return mapper
+    }
+    
+    func storeKitFacade() -> StoreKitFacade {
+        let mapper: StoreKitMapperInterface = storeKitMapper()
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) {
+            let wrapper: StoreKitWrapper = storeKitWrapper()
+            
+            let storeKitFacade = StoreKitFacade(storeKitWrapper: wrapper, storeKitMapper: mapper)
+            
+            wrapper.delegate = storeKitFacade
+            
+            return storeKitFacade
+        } else {
+            let wrapper: StoreKitOldWrapper = storeKitOldWrapper()
+            
+            let storeKitFacade = StoreKitFacade(storeKitOldWrapper: wrapper, storeKitMapper: mapper)
+            wrapper.delegate = storeKitFacade
+            
+            return storeKitFacade
+        }
+        
+    }
+    
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    func storeKitWrapper() -> StoreKitWrapper {
+        let storeKitWrapper = StoreKitWrapper()
+        
+        return storeKitWrapper
+    }
+    
+    func storeKitOldWrapper() -> StoreKitOldWrapperInterface {
+        let storeKitOldWrapper = StoreKitOldWrapper(paymentQueue: miscAssembly.paymentQueue())
+        
+        return storeKitOldWrapper
+    }
+    
     func deviceService() -> DeviceServiceInterface {
         let requestProcessor = requestProcessor()
         let localStorage = miscAssembly.localStorage()

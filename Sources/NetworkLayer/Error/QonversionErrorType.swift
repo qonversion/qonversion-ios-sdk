@@ -21,6 +21,7 @@ enum QonversionErrorType {
     case deviceUpdateFailed
     case unableToSerializeDevice
     case productsLoadingFailed
+    case storeProductsLoadingFailed
     
     func message() -> String {
         // handle other errors here
@@ -37,6 +38,8 @@ enum QonversionErrorType {
             return "Device update request failed. Unable to update the device."
         case .productsLoadingFailed:
             return "Products loading request failed."
+        case .storeProductsLoadingFailed:
+            return "Store products loading failed."
         default:
             return "Unknown error occurred"
         }

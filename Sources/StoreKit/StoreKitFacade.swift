@@ -13,6 +13,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
     let storeKitOldWrapper: StoreKitOldWrapperInterface?
     let storeKitWrapper: StoreKitWrapperInterface?
     let storeKitMapper: StoreKitMapperInterface
+    var delegate: StoreKitFacadeDelegate?
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     var loadedProducts: [String: StoreKit.Product]? { _loadedProducts as? [String: StoreKit.Product] }
@@ -149,8 +150,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         return []
     }
     
-    @discardableResult
-    func products(for ids: [String]) async throws -> [String] {
+    func products(for ids: [String]) async throws -> [StoreProductWrapper] {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
@@ -159,8 +159,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
                 _loadedProducts[$0.id] = $0
             }
             
-            #warning("Map response here")
-            return [products.description]
+            return products.map { StoreProductWrapper(_product: $0, oldProduct: nil) }
         } else {
             guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
@@ -169,18 +168,59 @@ class StoreKitFacade: StoreKitFacadeInterface {
                     guard let self else { return }
                     
                     if let error {
-                        #warning("Handle error here")
-                        continuation.resume(throwing: QonversionError(type: .critical))
+                        continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed, error: error))
                     } else {
-                        #warning("Map response here")
-                        response?.products.forEach {
+                        guard let response else {
+                            return continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed))
+                        }
+                        
+                        response.products.forEach {
                             self.loadedOldProducts[$0.productIdentifier] = $0
                         }
-                        continuation.resume(returning: [""])
+                        
+                        let products: [StoreProductWrapper] = response.products.map { StoreProductWrapper(_product: nil, oldProduct: $0) }
+                        continuation.resume(returning: products)
                     }
                 })
             }
         }
+    }
+    
+}
+
+// MARK: - StoreKitWrapperDelegate
+
+extension StoreKitFacade: StoreKitWrapperDelegate {
+    
+    @available(iOS 16.4, macOS 14.4, *)
+    func promoPurchaseIntent(product: Product) {
+        delegate?.promoPurchaseIntent(product: product)
+    }
+    
+}
+
+// MARK: - StoreKitOldWrapperDelegate
+
+extension StoreKitFacade: StoreKitOldWrapperDelegate {
+    
+    func handle(productsResponse: SKProductsResponse) {
+        
+    }
+    
+    func handle(restoreTransactionsError: any Error) {
+        
+    }
+    
+    func shouldAdd(storePayment: SKPayment, for product: SKProduct) -> Bool {
+        return true
+    }
+    
+    func handle(productsRequestError: any Error) {
+        
+    }
+    
+    func updated(transactions: [SKPaymentTransaction]) {
+        
     }
     
 }

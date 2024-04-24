@@ -30,10 +30,23 @@ final class ProductsManager: ProductsManagerInterface {
         
         let products: [Qonversion.Product] = try await productsService.products()
         
-        let productIds: [String] = products.map { $0.storeId }
-        
         do {
-            try await storeKitFacade.products(for: productIds)
+            let productIds: [String] = products.map { $0.storeId }
+            let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
+            
+            var resultProducts: [Qonversion.Product] = []
+            
+            for var product in products {
+                guard let storeProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
+                
+                if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeProduct = storeProductWrapper.product {
+                    product.enrich(storeProduct: storeProduct)
+                } else if let storeProduct = storeProductWrapper.oldProduct {
+                    product.enrich(skProduct: storeProduct)
+                }
+                
+                resultProducts.append(product)
+            }
             
             let enrichedProducts: [Qonversion.Product] = try await storeKitFacade.enrich(products: products)
             
@@ -48,5 +61,17 @@ final class ProductsManager: ProductsManagerInterface {
         
         return products
     }
+    
+}
+
+// MARK: - StoreKitFacadeDelegate
+
+extension ProductsManager: StoreKitFacadeDelegate {
+    
+    @available(iOS 16.4, macOS 14.4, *)
+    func promoPurchaseIntent(product: Product) {
+        
+    }
+    
     
 }
