@@ -30,14 +30,24 @@ final class ProductsManager: ProductsManagerInterface {
             return loadedOfferings
         }
         
-        let offerings: Qonversion.Offerings = try await productsService.offerings()
+        var offerings: Qonversion.Offerings = try await productsService.offerings()
         
         do {
             let productIds: [String] = offerings.availableOfferings.flatMap { $0.products.map { $0.storeId } }
             
-            try await storeKitFacade.products(for: productIds)
+            let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
             
-            // enrich products here
+            var enrichedOfferings: [Qonversion.Offering] = []
+            for var offering in offerings.availableOfferings {
+                let resultProducts: [Qonversion.Product] = enrich(products: offering.products, with: storeProducts)
+                offering.enrich(products: resultProducts)
+                
+                enrichedOfferings.append(offering)
+            }
+            
+            offerings.enrich(offerings: enrichedOfferings)
+            
+            loadedOfferings = offerings
             
             return offerings
         } catch {
@@ -60,25 +70,11 @@ final class ProductsManager: ProductsManagerInterface {
             let productIds: [String] = products.map { $0.storeId }
             let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
             
-            var resultProducts: [Qonversion.Product] = []
+            let resultProducts: [Qonversion.Product] = enrich(products: products, with: storeProducts)
             
-            for var product in products {
-                guard let storeProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
-                
-                if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeProduct = storeProductWrapper.product {
-                    product.enrich(storeProduct: storeProduct)
-                } else if let storeProduct = storeProductWrapper.oldProduct {
-                    product.enrich(skProduct: storeProduct)
-                }
-                
-                resultProducts.append(product)
-            }
+            loadedProducts = resultProducts
             
-            let enrichedProducts: [Qonversion.Product] = try await storeKitFacade.enrich(products: products)
-            
-            loadedProducts = enrichedProducts
-            
-            return enrichedProducts
+            return resultProducts
         } catch {
             logger.error(error.localizedDescription)
         }
@@ -86,6 +82,26 @@ final class ProductsManager: ProductsManagerInterface {
         loadedProducts = products
         
         return products
+    }
+    
+    // MARK: - Private
+    
+    private func enrich(products: [Qonversion.Product], with storeProducts: [StoreProductWrapper]) -> [Qonversion.Product] {
+        var resultProducts: [Qonversion.Product] = []
+        
+        for var product in products {
+            guard let storeProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
+            
+            if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeProduct = storeProductWrapper.product {
+                product.enrich(storeProduct: storeProduct)
+            } else if let storeProduct = storeProductWrapper.oldProduct {
+                product.enrich(skProduct: storeProduct)
+            }
+            
+            resultProducts.append(product)
+        }
+        
+        return resultProducts
     }
     
 }
