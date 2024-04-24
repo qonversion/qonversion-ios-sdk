@@ -17,16 +17,30 @@ extension Qonversion {
 
             /// Possible assignment types of the remote configuration
             public enum AssignmentType: String, Decodable {
+                
+                /// Unknown assignment type
                 case unknown // todo use as default
+                
+                /// Automatically assignment type
                 case auto
+                
+                /// Manual assignment type
                 case manual
             }
 
             /// Possible source types of the remote configuration
             public enum SourceType: String, Decodable {
+                
+                /// Unknown source type
                 case unknown // todo use as default
+                
+                /// Experiment control group source type
                 case experimentControlGroup = "experiment_control_group"
+                
+                /// Experiment treatment group source type
                 case experimentTreatmentGroup = "experiment_treatment_group"
+                
+                /// Remote configuration source type
                 case remoteConfiguration = "remote_configuration"
             }
 

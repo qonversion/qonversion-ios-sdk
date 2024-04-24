@@ -17,8 +17,14 @@ extension Qonversion {
 
             /// Possible types of the experiment group
             public enum GroupType: String, Decodable {
+                
+                /// Unknown experiment group type
                 case unknown
+                
+                /// Control experiment group
                 case control
+                
+                /// Tratment experiment group
                 case treatment
             }
 
