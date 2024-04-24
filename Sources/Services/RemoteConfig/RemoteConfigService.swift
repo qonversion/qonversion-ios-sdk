@@ -60,12 +60,10 @@ final class RemoteConfigService: RemoteConfigServiceInterface {
         }
     }
 
-    func attachUserToRemoteConfig(remoteConfigId: String) async throws -> Bool {
+    func attachUserToRemoteConfig(id: String) async throws {
         do {
-            let request: Request = Request.attachUserToRemoteConfig(userId: userIdProvider.getUserId(), remoteConfigId: remoteConfigId)
+            let request: Request = Request.attachUserToRemoteConfig(userId: userIdProvider.getUserId(), remoteConfigId: id)
             try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
-
-            return true
         } catch {
             let qonversionError = QonversionError(type: .attachingUserToRemoteConfigFailed, message: nil, error: error)
             logger.warning(qonversionError.message)
@@ -73,12 +71,10 @@ final class RemoteConfigService: RemoteConfigServiceInterface {
         }
     }
 
-    func detachUserFromRemoteConfig(remoteConfigId: String) async throws -> Bool {
+    func detachUserFromRemoteConfig(id: String) async throws {
         do {
-            let request: Request = Request.detachUserFromRemoteConfig(userId: userIdProvider.getUserId(), remoteConfigId: remoteConfigId)
+            let request: Request = Request.detachUserFromRemoteConfig(userId: userIdProvider.getUserId(), remoteConfigId: id)
             try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
-
-            return true
         } catch {
             let qonversionError = QonversionError(type: .detachingUserFromRemoteConfigFailed, message: nil, error: error)
             logger.warning(qonversionError.message)
@@ -86,12 +82,10 @@ final class RemoteConfigService: RemoteConfigServiceInterface {
         }
     }
 
-    func attachUserToExperiment(experimentId: String, groupId: String) async throws -> Bool {
+    func attachUserToExperiment(id: String, groupId: String) async throws {
         do {
-            let request: Request = Request.attachUserToExperiment(userId: userIdProvider.getUserId(), experimentId: experimentId, groupId: groupId)
+            let request: Request = Request.attachUserToExperiment(userId: userIdProvider.getUserId(), experimentId: id, groupId: groupId)
             try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
-
-            return true
         } catch {
             let qonversionError = QonversionError(type: .attachingUserToExperimentFailed, message: nil, error: error)
             logger.warning(qonversionError.message)
@@ -99,12 +93,10 @@ final class RemoteConfigService: RemoteConfigServiceInterface {
         }
     }
 
-    func detachUserFromExperiment(experimentId: String) async throws -> Bool {
+    func detachUserFromExperiment(id: String) async throws {
         do {
-            let request: Request = Request.detachUserFromExperiment(userId: userIdProvider.getUserId(), experimentId: experimentId)
+            let request: Request = Request.detachUserFromExperiment(userId: userIdProvider.getUserId(), experimentId: id)
             try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
-
-            return true
         } catch {
             let qonversionError = QonversionError(type: .detachingUserFromExperimentFailed, message: nil, error: error)
             logger.warning(qonversionError.message)

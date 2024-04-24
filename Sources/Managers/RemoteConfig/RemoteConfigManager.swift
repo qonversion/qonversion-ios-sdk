@@ -51,36 +51,20 @@ final class RemoteConfigManager: RemoteConfigManagerInterface {
         return remoteConfigList
     }
 
-    func attachUserToRemoteConfig(remoteConfigId: String) async -> Bool {
-        do {
-            return try await remoteConfigService.attachUserToRemoteConfig(remoteConfigId: remoteConfigId)
-        } catch {
-            return false
-        }
+    func attachUserToRemoteConfig(id: String) async throws {
+        try await remoteConfigService.attachUserToRemoteConfig(id: id)
     }
 
-    func detachUserFromRemoteConfig(remoteConfigId: String) async -> Bool {
-        do {
-            return try await remoteConfigService.detachUserFromRemoteConfig(remoteConfigId: remoteConfigId)
-        } catch {
-            return false
-        }
+    func detachUserFromRemoteConfig(id: String) async throws {
+        try await remoteConfigService.detachUserFromRemoteConfig(id: id)
     }
 
-    func attachUserToExperiment(experimentId: String, groupId: String) async -> Bool {
-        do {
-            return try await remoteConfigService.attachUserToExperiment(experimentId: experimentId, groupId: groupId)
-        } catch {
-            return false
-        }
+    func attachUserToExperiment(id: String, groupId: String) async throws {
+        try await remoteConfigService.attachUserToExperiment(id: id, groupId: groupId)
     }
 
-    func detachUserFromExperiment(experimentId: String) async -> Bool {
-        do {
-            return try await remoteConfigService.detachUserFromExperiment(experimentId: experimentId)
-        } catch {
-            return false
-        }
+    func detachUserFromExperiment(id: String) async throws {
+        try await remoteConfigService.detachUserFromExperiment(id: id)
     }
     
     // MARK: - Private

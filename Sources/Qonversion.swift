@@ -76,7 +76,8 @@ public final class Qonversion {
     /// This method returns all the properties, set for the current Qonversion user.
     /// All set properties are sent to the server with delay, so if you call
     /// this function right after setting some property, it may not be included in the result.
-    ///  - Returns: ``Qonversion/Qonversion/UserProperties`` that contains all the properties, set for the current Qonversion user.
+    /// - Returns: ``Qonversion/Qonversion/UserProperties`` that contains all the properties, set for the current Qonversion user.
+    /// - Throws: Possible error during the properties request or Qonversion initialization error if the method is called before initialization.
     public func userProperties() async throws -> UserProperties {
         guard let userPropertiesManager else { throw QonversionError.initializationError() }
         
@@ -88,6 +89,7 @@ public final class Qonversion {
     /// - Parameters:
     ///   - contextKey: Context key to get remote config for
     /// - Returns: ``Qonversion/Qonversion/RemoteConfig`` for the specified context key or default one if no key provided.
+    /// - Throws: Possible error during the remote config request or Qonversion initialization error if the method is called before initialization.
     public func remoteConfig(contextKey: String? = nil) async throws -> Qonversion.RemoteConfig {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
 
@@ -97,6 +99,7 @@ public final class Qonversion {
     /// Returns Qonversion remote config objects for all existing context key (including empty one).
     /// Use this function to get the remote configs with specific payload and experiment info.
     /// - Returns: ``Qonversion/Qonversion/RemoteConfigList`` with all the remote configs for the current user.
+    /// - Throws: Possible error during the remote config request or Qonversion initialization error if the method is called before initialization.
     public func remoteConfigList() async throws -> Qonversion.RemoteConfigList {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
 
@@ -109,6 +112,7 @@ public final class Qonversion {
     ///   - contextKeys:list of context keys to get remote configs for.
     ///   - includeEmptyContextKey: set to true if you want to include remote config with empty context key to the result.
     /// - Returns: ``Qonversion/Qonversion/RemoteConfigList`` with the requested remote configs for the current user.
+    /// - Throws: Possible error during the remote config list request or Qonversion initialization error if the method is called before initialization.
     public func remoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
 
@@ -118,45 +122,45 @@ public final class Qonversion {
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
     /// Use this function to attach the user to the remote configuration.
     /// - Parameters:
-    ///   - remoteConfigurationId: identifier of the remote configuration.
-    /// - Returns: true if attached successfully, false otherwise.
-    public func attachUserToRemoteConfiguration(remoteConfigurationId: String) async throws -> Bool {
+    ///   - id: identifier of the remote configuration.
+    /// - Throws: Possible error during the attaching process or Qonversion initialization error if the method is called before initialization.
+    public func attachUserToRemoteConfiguration(id: String) async throws {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
 
-        return await remoteConfigManager.attachUserToRemoteConfig(remoteConfigId: remoteConfigurationId)
+        try await remoteConfigManager.attachUserToRemoteConfig(id: id)
     }
 
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
     /// Use this function to detach the user from the remote configuration.
     /// - Parameters:
-    ///   - remoteConfigurationId: identifier of the remote configuration.
-    /// - Returns: true if detached successfully, false otherwise.
-    public func detachUserFromRemoteConfiguration(remoteConfigurationId: String) async throws -> Bool {
+    ///   - id: identifier of the remote configuration.
+    /// - Throws: Possible error during the detaching process or Qonversion initialization error if the method is called before initialization.
+    public func detachUserFromRemoteConfiguration(id: String) async throws {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
 
-        return await remoteConfigManager.detachUserFromRemoteConfig(remoteConfigId: remoteConfigurationId)
+        try await remoteConfigManager.detachUserFromRemoteConfig(id: id)
     }
 
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
     /// Use this function to attach the user to the experiment.
     /// - Parameters:
-    ///   - experimentId: identifier of the experiment
+    ///   - id: identifier of the experiment
     ///   - groupId: identifier of the experiment group
-    /// - Returns: true if attached successfully, false otherwise.
-    public func attachUserToExperiment(experimentId: String, groupId: String) async throws -> Bool {
+    /// - Throws: Possible error during the attaching process or Qonversion initialization error if the method is called before initialization.
+    public func attachUserToExperiment(id: String, groupId: String) async throws {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
 
-        return await remoteConfigManager.attachUserToExperiment(experimentId: experimentId, groupId: groupId)
+        try await remoteConfigManager.attachUserToExperiment(id: id, groupId: groupId)
     }
 
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
     /// Use this function to detach the user to the experiment.
     /// - Parameters:
-    ///   - experimentId: identifier of the experiment 
-    /// - Returns: true if detached successfully, false otherwise.
-    public func detachUserFromExperiment(experimentId: String) async throws -> Bool {
+    ///   - id: identifier of the experiment
+    /// - Throws: Possible error during the detaching process or Qonversion initialization error if the method is called before initialization.
+    public func detachUserFromExperiment(id: String) async throws {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
 
-        return await remoteConfigManager.detachUserFromExperiment(experimentId: experimentId)
+        try await remoteConfigManager.detachUserFromExperiment(id: id)
     }
 }

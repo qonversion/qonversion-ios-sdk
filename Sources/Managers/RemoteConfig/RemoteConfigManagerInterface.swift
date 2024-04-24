@@ -15,11 +15,11 @@ protocol RemoteConfigManagerInterface {
 
     func loadRemoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList
 
-    func attachUserToRemoteConfig(remoteConfigId: String) async -> Bool
+    func attachUserToRemoteConfig(id: String) async throws
 
-    func detachUserFromRemoteConfig(remoteConfigId: String) async -> Bool
+    func detachUserFromRemoteConfig(id: String) async throws
 
-    func attachUserToExperiment(experimentId: String, groupId: String) async -> Bool
+    func attachUserToExperiment(id: String, groupId: String) async throws
 
-    func detachUserFromExperiment(experimentId: String) async -> Bool
+    func detachUserFromExperiment(id: String) async throws
 }
