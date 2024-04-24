@@ -349,7 +349,7 @@
 		4CADC55F2759181A004FDC10 /* AuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewController.swift; sourceTree = "<group>"; };
 		6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigList.m; sourceTree = "<group>"; };
 		6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigList.h; sourceTree = "<group>"; };
-		6A121DAF2BB44D7B0073B330 /* QONRemoteConfigList+protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigList+protected.h"; sourceTree = "<group>"; };
+		6A121DAF2BB44D7B0073B330 /* QONRemoteConfigList+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigList+Protected.h"; sourceTree = "<group>"; };
 		6A121DB02BBB10370073B330 /* QONRemoteConfigListRequestData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigListRequestData.h; sourceTree = "<group>"; };
 		6A121DB22BBB10AA0073B330 /* QONRemoteConfigListRequestData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigListRequestData.m; sourceTree = "<group>"; };
 		6A21BF4B2AB201A7005BDA7C /* QONRateLimiter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRateLimiter.h; sourceTree = "<group>"; };
@@ -1351,7 +1351,7 @@
 			children = (
 				700EC171291277130032E205 /* QONExperimentGroup+Protected.h */,
 				7097C6BD2A38BFC800565DE4 /* QONRemoteConfig+Protected.h */,
-				6A121DAF2BB44D7B0073B330 /* QONRemoteConfigList+protected.h */,
+				6A121DAF2BB44D7B0073B330 /* QONRemoteConfigList+Protected.h */,
 				707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */,
 				702DBDEB2A3216C900D590D0 /* QONExperiment+Protected.h */,
 				8957324226DD03A3009507A6 /* QONUser+Protected.h */,
