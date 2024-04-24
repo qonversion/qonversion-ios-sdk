@@ -9,14 +9,16 @@ import Foundation
 
 extension Qonversion {
 
-    public class Experiment: Decodable {
-        // Experiment identifier
+    /// Experiment, created via Qonversion Dashboard
+    public struct Experiment: Decodable {
+        
+        /// Experiment identifier
         public let identifier: String
 
-        // Experiment name
+        /// Experiment name
         public let name: String
 
-        // Experiment group info
+        /// Experiment group info
         public let group: Group
 
         init(identifier: String, name: String, group: Group) {

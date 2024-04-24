@@ -16,5 +16,4 @@ protocol DeviceServiceInterface {
     func create(device: Device) async throws -> Device
     
     func update(device: Device) async throws -> Device
-    
 }

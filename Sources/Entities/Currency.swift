@@ -25,7 +25,5 @@ extension Qonversion {
             self.identifier = identifier
             self.symbol = symbol
         }
-        
     }
-    
 }

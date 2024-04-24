@@ -10,21 +10,23 @@ import Foundation
 
 extension Qonversion.Experiment {
 
-    public class Group: Decodable {
+    /// Information about the experiment group
+    public struct Group: Decodable {
 
+        /// Possible types of the experiment group
         public enum GroupType: String, Decodable {
             case unknown
             case control
             case treatment
         }
 
-        // Experiment group name
+        /// Experiment group name
         public let name: String
 
-        // Experiment group identifier
+        /// Experiment group identifier
         public let identifier: String
 
-        // Experiment group type
+        /// Experiment group type
         public let type: GroupType
 
         init(name: String, identifier: String, type: GroupType) {

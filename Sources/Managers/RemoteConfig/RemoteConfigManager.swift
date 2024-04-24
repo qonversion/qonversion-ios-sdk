@@ -11,7 +11,7 @@ fileprivate enum Constants: String {
     case emptyContextKey = ""
 }
 
-class RemoteConfigManager: RemoteConfigManagerInterface {
+final class RemoteConfigManager: RemoteConfigManagerInterface {
 
     private let remoteConfigService: RemoteConfigServiceInterface
     private let logger: LoggerWrapper
@@ -23,30 +23,30 @@ class RemoteConfigManager: RemoteConfigManagerInterface {
     }
 
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
-        let finalKey = contextKey ?? Constants.emptyContextKey.rawValue
-        if let cachedConfig = loadedConfigs[finalKey] {
+        let finalKey: String = contextKey ?? Constants.emptyContextKey.rawValue
+        if let cachedConfig: Qonversion.RemoteConfig = loadedConfigs[finalKey] {
             return cachedConfig
         }
 
-        let remoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
+        let remoteConfig: Qonversion.RemoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
         loadedConfigs[finalKey] = remoteConfig
 
         return remoteConfig
     }
 
     func loadRemoteConfigList() async throws -> Qonversion.RemoteConfigList {
-        let remoteConfigList = try await remoteConfigService.loadRemoteConfigList()
+        let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList()
         handleLoadedRemoteConfigList(remoteConfigList)
         return remoteConfigList
     }
 
     func loadRemoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList {
-        let cachedConfigs = contextKeys.map { contextKey in self.loadedConfigs[contextKey] }.compactMap { $0 }
+        let cachedConfigs = contextKeys.compactMap { self.loadedConfigs[$0] }
         if (cachedConfigs.count == contextKeys.count) {
             return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
         }
 
-        let remoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
+        let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
         handleLoadedRemoteConfigList(remoteConfigList)
         return remoteConfigList
     }
@@ -82,10 +82,12 @@ class RemoteConfigManager: RemoteConfigManagerInterface {
             return false
         }
     }
+    
+    // MARK: - Private
 
     private func handleLoadedRemoteConfigList(_ remoteConfigList: Qonversion.RemoteConfigList) {
-        for remoteConfig in remoteConfigList.remoteConfigs {
-            let contextKey = remoteConfig.source.contextKey ?? Constants.emptyContextKey.rawValue
+        remoteConfigList.remoteConfigs.forEach { remoteConfig in
+            let contextKey: String = remoteConfig.source.contextKey ?? Constants.emptyContextKey.rawValue
             loadedConfigs[contextKey] = remoteConfig
         }
     }

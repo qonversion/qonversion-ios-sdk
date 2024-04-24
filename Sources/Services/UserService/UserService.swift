@@ -57,7 +57,6 @@ final class UserService: UserServiceInterface {
             throw QonversionError(type: .userLoadingFailed, message: nil, error: error)
         }
     }
-    
 }
 
 // MARK: - Private
@@ -68,5 +67,4 @@ extension UserService {
         let userId: String = localStorage.string(forKey: Constants.userIdKey.rawValue) ?? generateUserId()
         internalConfig.userId = userId
     }
-    
 }

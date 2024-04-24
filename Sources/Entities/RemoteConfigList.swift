@@ -9,28 +9,39 @@ import Foundation
 
 extension Qonversion {
 
-    public class RemoteConfigList: Decodable {
-        let remoteConfigs: [RemoteConfig]
+    /// List of remote configurations. It's a wrapper containing several useful functions in addition to requested remote configurations..
+    public struct RemoteConfigList: Decodable {
+        
+        /// Reuqested remote configurations
+        public let remoteConfigs: [RemoteConfig]
 
         init(remoteConfigs: [RemoteConfig]) {
             self.remoteConfigs = remoteConfigs
         }
 
-        func remoteConfig(forContextKey key: String) -> RemoteConfig? {
-            return findRemoteConfig(forContextKey: key)
+        /// Searches for remote configuration with the specific context key.
+        /// - Parameters:
+        ///   - contextKey: context key to search remote configuration for.
+        /// - Returns: remote configuration with the specified context key or nil if no matching configuration found.
+        public func remoteConfig(for contextKey: String) -> RemoteConfig? {
+            return findRemoteConfig(for: contextKey)
         }
 
-        func remoteConfigForEmptyContextKey() -> RemoteConfig? {
-            return findRemoteConfig(forContextKey: nil)
+        /// Searches for remote configuration with empty context key.
+        /// - Returns: remote configuration with empty context key or nil if no matching configuration found.
+        public func remoteConfigForEmptyContextKey() -> RemoteConfig? {
+            return findRemoteConfig(for: nil)
         }
+    }
+}
 
-        private func findRemoteConfig(forContextKey key: String?) -> RemoteConfig? {
-            for config in remoteConfigs {
-                if (key == nil && config.source.contextKey == nil) || config.source.contextKey == key {
-                    return config
-                }
-            }
-            return nil
+// MARK: - Private
+
+extension Qonversion.RemoteConfigList {
+    
+    private func findRemoteConfig(for contextKey: String?) -> Qonversion.RemoteConfig? {
+        return remoteConfigs.first { config in
+            return (contextKey == nil && config.source.contextKey == nil) || config.source.contextKey == contextKey
         }
     }
 }

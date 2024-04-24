@@ -36,7 +36,5 @@ extension Qonversion {
             environment = try container.decode(User.Environment.self, forKey: .environment)
             id = try container.decode(String.self, forKey: .id)
         }
-        
     }
-    
 }

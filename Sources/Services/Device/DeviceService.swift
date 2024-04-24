@@ -91,5 +91,4 @@ extension DeviceService {
             throw QonversionError(type: errorType, message: nil, error: error)
         }
     }
-    
 }

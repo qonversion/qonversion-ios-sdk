@@ -9,14 +9,16 @@ import Foundation
 
 extension Qonversion {
 
-    public class RemoteConfig: Decodable {
-        // Remote config payload
+    /// Remote configuration, created via Qonversion Dashboard
+    public struct RemoteConfig: Decodable {
+
+        /// Remote config payload
         public let payload: [String: Any]?
 
-        // Experiment info
+        /// Experiment info
         public let experiment: Experiment?
 
-        // Remote configuration source
+        /// Remote configuration source
         public let source: Source
 
         init(payload: [String: String]?, experiment: Experiment?, source: Source) {
@@ -25,15 +27,9 @@ extension Qonversion {
             self.source = source
         }
 
-        private enum CodingKeys: String, CodingKey {
-            case payload
-            case experiment
-            case source
-        }
-
-        required public init(from decoder: any Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            if let payloadContainer = try? container.nestedContainer(keyedBy: JSONCodingKeys.self, forKey: .payload) {
+        public init(from decoder: any Decoder) throws {
+            let container: KeyedDecodingContainer = try decoder.container(keyedBy: CodingKeys.self)
+            if let payloadContainer: KeyedDecodingContainer = try? container.nestedContainer(keyedBy: JSONCodingKeys.self, forKey: .payload) {
                 payload = decode(fromObject: payloadContainer)
             } else {
                 payload = nil
@@ -41,6 +37,14 @@ extension Qonversion {
 
             experiment = try container.decode(Experiment?.self, forKey: .experiment)
             source = try container.decode(Source.self, forKey: .source)
+        }
+        
+        // MARK: - Private
+        
+        private enum CodingKeys: String, CodingKey {
+            case payload
+            case experiment
+            case source
         }
     }
 }

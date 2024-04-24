@@ -12,5 +12,4 @@ import StoreKit
 protocol StoreKitWrapperDelegate {
     
     func promoPurchaseIntent(product: Product)
-    
 }

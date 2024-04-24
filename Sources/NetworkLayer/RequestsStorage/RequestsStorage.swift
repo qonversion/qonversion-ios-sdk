@@ -37,5 +37,4 @@ class RequestsStorage: RequestsStorageInterface {
     func clean() {
         userDefaults.removeObject(forKey: storeKey)
     }
-    
 }

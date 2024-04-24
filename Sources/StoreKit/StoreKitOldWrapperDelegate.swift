@@ -14,5 +14,4 @@ protocol StoreKitOldWrapperDelegate {
     func shouldAdd(storePayment: SKPayment, for product: SKProduct) -> Bool
     func handle(productsRequestError: Error)
     func updated(transactions: [SKPaymentTransaction])
-    
 }
