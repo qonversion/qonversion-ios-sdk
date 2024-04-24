@@ -6,5 +6,6 @@
 //
 
 protocol RequestProcessorInterface {
+    @discardableResult
     func process<T>(request: Request, responseType: T.Type) async throws -> T where T : Decodable
 }

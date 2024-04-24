@@ -6,14 +6,21 @@
 //
 
 struct QonversionError: Error {
-    let type: QonversionErrorType
-    let message: String?
-    let error: Error?
-    let additionalInfo: [String: Any]?
-    
+    public let type: QonversionErrorType
+    public let message: String
+    public let error: Error?
+    public let additionalInfo: [String: Any]?
+
     init(type: QonversionErrorType, message: String? = nil, error: Error? = nil, additionalInfo: [String : Any]? = nil) {
+        var errorMessage = message ?? type.message()
+        if let qonversionError = error as? QonversionError {
+            errorMessage += "\n" + qonversionError.message
+        } else if let error = error {
+            errorMessage += "\n" + error.localizedDescription
+        }
+
         self.type = type
-        self.message = message ?? type.message()
+        self.message = errorMessage
         self.error = error
         self.additionalInfo = additionalInfo
     }

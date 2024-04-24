@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6A840DF92BD6ADAD00E5E8E3 /* Experiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840DF82BD6ADAD00E5E8E3 /* Experiment.swift */; };
+		6A840DFD2BD6ADD700E5E8E3 /* RemoteConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840DFC2BD6ADD700E5E8E3 /* RemoteConfig.swift */; };
+		6A840DFF2BD6ADEA00E5E8E3 /* RemoteConfigList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840DFE2BD6ADEA00E5E8E3 /* RemoteConfigList.swift */; };
+		6A840E042BD6AE4300E5E8E3 /* RemoteConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840E032BD6AE4300E5E8E3 /* RemoteConfigManager.swift */; };
+		6A840E062BD6AE5700E5E8E3 /* RemoteConfigManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840E052BD6AE5700E5E8E3 /* RemoteConfigManagerInterface.swift */; };
+		6A840E092BD6AE7C00E5E8E3 /* EmptyApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840E082BD6AE7C00E5E8E3 /* EmptyApiResponse.swift */; };
+		6A840E0B2BD6AEE500E5E8E3 /* ApiError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840E0A2BD6AEE500E5E8E3 /* ApiError.swift */; };
+		6A840E0E2BD6B2F600E5E8E3 /* RemoteConfigService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840E0D2BD6B2F600E5E8E3 /* RemoteConfigService.swift */; };
+		6A840E102BD6B30B00E5E8E3 /* RemoteConfigServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A840E0F2BD6B30B00E5E8E3 /* RemoteConfigServiceInterface.swift */; };
 		70CD92F62BC6E22B0039D65C /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929B2BC6E22B0039D65C /* MiscAssembly.swift */; };
 		70CD92F72BC6E22B0039D65C /* QonversionAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929C2BC6E22B0039D65C /* QonversionAssembly.swift */; };
 		70CD92F82BC6E22B0039D65C /* ServicesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929D2BC6E22B0039D65C /* ServicesAssembly.swift */; };
@@ -118,6 +127,15 @@
 		3058D2FCF5492D5398F1D64F /* Pods_Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3FA7AB0E97181908CD697307 /* Pods-Qonversion.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Qonversion.debug.xcconfig"; path = "Target Support Files/Pods-Qonversion/Pods-Qonversion.debug.xcconfig"; sourceTree = "<group>"; };
 		6135839C542ECC6E27ACB243 /* Pods-Sample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.debug.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.debug.xcconfig"; sourceTree = "<group>"; };
+		6A840DF82BD6ADAD00E5E8E3 /* Experiment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Experiment.swift; sourceTree = "<group>"; };
+		6A840DFC2BD6ADD700E5E8E3 /* RemoteConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfig.swift; sourceTree = "<group>"; };
+		6A840DFE2BD6ADEA00E5E8E3 /* RemoteConfigList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigList.swift; sourceTree = "<group>"; };
+		6A840E032BD6AE4300E5E8E3 /* RemoteConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigManager.swift; sourceTree = "<group>"; };
+		6A840E052BD6AE5700E5E8E3 /* RemoteConfigManagerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigManagerInterface.swift; sourceTree = "<group>"; };
+		6A840E082BD6AE7C00E5E8E3 /* EmptyApiResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyApiResponse.swift; sourceTree = "<group>"; };
+		6A840E0A2BD6AEE500E5E8E3 /* ApiError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiError.swift; sourceTree = "<group>"; };
+		6A840E0D2BD6B2F600E5E8E3 /* RemoteConfigService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigService.swift; sourceTree = "<group>"; };
+		6A840E0F2BD6B30B00E5E8E3 /* RemoteConfigServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigServiceInterface.swift; sourceTree = "<group>"; };
 		6ABCBDF42B8CE268003DB107 /* PropertiesStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesStorage.swift; sourceTree = "<group>"; };
 		6ABCBDF62B8CE298003DB107 /* UserPropertiesStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPropertiesStorage.swift; sourceTree = "<group>"; };
 		6ABCBDF82B8DD7A2003DB107 /* SendUserPropertiesResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendUserPropertiesResult.swift; sourceTree = "<group>"; };
@@ -236,6 +254,33 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6A840E022BD6AE2E00E5E8E3 /* RemoteConfig */ = {
+			isa = PBXGroup;
+			children = (
+				6A840E032BD6AE4300E5E8E3 /* RemoteConfigManager.swift */,
+				6A840E052BD6AE5700E5E8E3 /* RemoteConfigManagerInterface.swift */,
+			);
+			path = RemoteConfig;
+			sourceTree = "<group>";
+		};
+		6A840E072BD6AE7100E5E8E3 /* Entities */ = {
+			isa = PBXGroup;
+			children = (
+				6A840E082BD6AE7C00E5E8E3 /* EmptyApiResponse.swift */,
+				6A840E0A2BD6AEE500E5E8E3 /* ApiError.swift */,
+			);
+			path = Entities;
+			sourceTree = "<group>";
+		};
+		6A840E0C2BD6B2ED00E5E8E3 /* RemoteConfig */ = {
+			isa = PBXGroup;
+			children = (
+				6A840E0D2BD6B2F600E5E8E3 /* RemoteConfigService.swift */,
+				6A840E0F2BD6B30B00E5E8E3 /* RemoteConfigServiceInterface.swift */,
+			);
+			path = RemoteConfig;
+			sourceTree = "<group>";
+		};
 		6ABCBE0F2B91C86D003DB107 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
@@ -274,6 +319,9 @@
 				70CD92A22BC6E22B0039D65C /* UserProperties.swift */,
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
 				70CD92A42BC6E22B0039D65C /* UserPropertyKey.swift */,
+				6A840DF82BD6ADAD00E5E8E3 /* Experiment.swift */,
+				6A840DFC2BD6ADD700E5E8E3 /* RemoteConfig.swift */,
+				6A840DFE2BD6ADEA00E5E8E3 /* RemoteConfigList.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
@@ -300,6 +348,7 @@
 		70CD92AD2BC6E22B0039D65C /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				6A840E022BD6AE2E00E5E8E3 /* RemoteConfig */,
 				70CD92A82BC6E22B0039D65C /* Device */,
 				70CD92AC2BC6E22B0039D65C /* UserProperties */,
 			);
@@ -392,6 +441,7 @@
 		70CD92CB2BC6E22B0039D65C /* NetworkLayer */ = {
 			isa = PBXGroup;
 			children = (
+				6A840E072BD6AE7100E5E8E3 /* Entities */,
 				70CD92B12BC6E22B0039D65C /* Error */,
 				70CD92B52BC6E22B0039D65C /* HeadersBuilder */,
 				70CD92B82BC6E22B0039D65C /* NetworkErrorHandler */,
@@ -455,6 +505,7 @@
 		70CD92DB2BC6E22B0039D65C /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				6A840E0C2BD6B2ED00E5E8E3 /* RemoteConfig */,
 				70CD92D72BC6E22B0039D65C /* Device */,
 				70CD92DA2BC6E22B0039D65C /* UserService */,
 			);
@@ -748,7 +799,9 @@
 				70CD92FC2BC6E22B0039D65C /* UserProperties.swift in Sources */,
 				70CD93172BC6E22B0039D65C /* ResponseDecoderInterface.swift in Sources */,
 				70CD93082BC6E22B0039D65C /* HeadersBuilder.swift in Sources */,
+				6A840E062BD6AE5700E5E8E3 /* RemoteConfigManagerInterface.swift in Sources */,
 				70CD93372BC6E22B0039D65C /* StorageConstants.swift in Sources */,
+				6A840E102BD6B30B00E5E8E3 /* RemoteConfigServiceInterface.swift in Sources */,
 				70CD931E2BC6E22B0039D65C /* DeviceService.swift in Sources */,
 				70CD932C2BC6E22B0039D65C /* ConcurrencyExtensions.swift in Sources */,
 				70EA734C2BD025F500B0DFDA /* Currency.swift in Sources */,
@@ -757,6 +810,7 @@
 				70CD92FE2BC6E22B0039D65C /* UserPropertyKey.swift in Sources */,
 				70CD931D2BC6E22B0039D65C /* DeviceInfoCollectorInterface.swift in Sources */,
 				70CD930C2BC6E22B0039D65C /* NetworkProvider.swift in Sources */,
+				6A840DF92BD6ADAD00E5E8E3 /* Experiment.swift in Sources */,
 				70CD92FF2BC6E22B0039D65C /* DeviceManager.swift in Sources */,
 				70CD93312BC6E22B0039D65C /* InternalConfig.swift in Sources */,
 				70CD930E2BC6E22B0039D65C /* RateLimiter.swift in Sources */,
@@ -770,6 +824,7 @@
 				70CD92F82BC6E22B0039D65C /* ServicesAssembly.swift in Sources */,
 				70CD93032BC6E22B0039D65C /* UserPropertiesManagerInterface.swift in Sources */,
 				70CD93252BC6E22B0039D65C /* StoreKitMapperInterface.swift in Sources */,
+				6A840E042BD6AE4300E5E8E3 /* RemoteConfigManager.swift in Sources */,
 				70CD93202BC6E22B0039D65C /* UserService.swift in Sources */,
 				70CD93232BC6E22B0039D65C /* StoreKitFacadeInterface.swift in Sources */,
 				70CD93192BC6E22B0039D65C /* LocalStorageInterface.swift in Sources */,
@@ -781,10 +836,12 @@
 				70CD93102BC6E22B0039D65C /* Request.swift in Sources */,
 				70CD930D2BC6E22B0039D65C /* NetworkProviderInterface.swift in Sources */,
 				70CD93042BC6E22B0039D65C /* ErrorConstants.swift in Sources */,
+				6A840DFF2BD6ADEA00E5E8E3 /* RemoteConfigList.swift in Sources */,
 				70CD931B2BC6E22B0039D65C /* UserPropertiesStorage.swift in Sources */,
 				70CD930F2BC6E22B0039D65C /* RateLimiterInterface.swift in Sources */,
 				70CD931F2BC6E22B0039D65C /* DeviceServiceInterface.swift in Sources */,
 				70CD93362BC6E22B0039D65C /* Qonversion.swift in Sources */,
+				6A840DFD2BD6ADD700E5E8E3 /* RemoteConfig.swift in Sources */,
 				70CD93342BC6E22B0039D65C /* Qonversion.docc in Sources */,
 				70CD92FB2BC6E22B0039D65C /* User.swift in Sources */,
 				70CD93302BC6E22B0039D65C /* Configuration.swift in Sources */,
@@ -800,12 +857,15 @@
 				70CD932B2BC6E22B0039D65C /* StoreKitWrapperInterface.swift in Sources */,
 				70CD93162BC6E22B0039D65C /* ResponseDecoder.swift in Sources */,
 				70CD93262BC6E22B0039D65C /* StoreKitOldWrapper.swift in Sources */,
+				6A840E0E2BD6B2F600E5E8E3 /* RemoteConfigService.swift in Sources */,
+				6A840E092BD6AE7C00E5E8E3 /* EmptyApiResponse.swift in Sources */,
 				70CD93242BC6E22B0039D65C /* StoreKitMapper.swift in Sources */,
 				70CD931C2BC6E22B0039D65C /* DeviceInfoCollector.swift in Sources */,
 				70CD93112BC6E22B0039D65C /* RequestType.swift in Sources */,
 				70CD92F92BC6E22B0039D65C /* Device.swift in Sources */,
 				70CD93152BC6E22B0039D65C /* RequestsStorageInterface.swift in Sources */,
 				70CD93292BC6E22B0039D65C /* StoreKitWrapper.swift in Sources */,
+				6A840E0B2BD6AEE500E5E8E3 /* ApiError.swift in Sources */,
 				70CD93132BC6E22B0039D65C /* RequestProcessorInterface.swift in Sources */,
 				70CD93382BC6E22B0039D65C /* TemporaryFactory.swift in Sources */,
 				70CD93052BC6E22B0039D65C /* QonversionError.swift in Sources */,

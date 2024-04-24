@@ -39,5 +39,4 @@ protocol StoreKitWrapperInterface {
     @available(watchOS, unavailable)
     @available(tvOS, unavailable)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws
-    
 }

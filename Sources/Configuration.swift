@@ -13,10 +13,10 @@ extension Qonversion {
     public struct Configuration {
         
         /// Your project key from Qonversion Dashboard to setup the SDK
-        public let apiKey: String
+        let apiKey: String
         
         /// Launch mode of the Qonversion SDK.
-        public let launchMode: LaunchMode
+        let launchMode: LaunchMode
         
         var userDefaults: UserDefaults? = nil
         
@@ -39,5 +39,4 @@ extension Qonversion {
             self.userDefaults = userDefaults
         }
     }
-    
 }

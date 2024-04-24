@@ -25,5 +25,4 @@ extension Qonversion {
             self.id = id
         }
     }
-    
 }

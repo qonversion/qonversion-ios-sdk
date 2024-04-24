@@ -24,20 +24,28 @@ final class ServicesAssembly {
     }
     
     func userService() -> UserServiceInterface {
-        let requestProcessor = requestProcessor()
-        let localStorage = miscAssembly.localStorage()
+        let requestProcessor: RequestProcessorInterface = requestProcessor()
+        let localStorage: LocalStorageInterface = miscAssembly.localStorage()
         let userService = UserService(requestProcessor: requestProcessor, localStorage: localStorage, internalConfig: miscAssembly.internalConfig)
         
         return userService
     }
     
     func deviceService() -> DeviceServiceInterface {
-        let requestProcessor = requestProcessor()
-        let localStorage = miscAssembly.localStorage()
-        let encoder = miscAssembly.encoder()
+        let requestProcessor: RequestProcessorInterface = requestProcessor()
+        let localStorage: LocalStorageInterface = miscAssembly.localStorage()
+        let encoder: JSONEncoder = miscAssembly.encoder()
         let deviceService = DeviceService(requestProcessor: requestProcessor, localStorage: localStorage, userIdProvider: miscAssembly.internalConfig, encoder: encoder)
         
         return deviceService
+    }
+    
+    func remoteConfigService() -> RemoteConfigServiceInterface {
+        let requestProcessor: RequestProcessorInterface = requestProcessor()
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let remoteConfigService = RemoteConfigService(requestProcessor: requestProcessor, userIdProvider: miscAssembly.internalConfig, logger: logger)
+
+        return remoteConfigService
     }
     
     func requestProcessor() -> RequestProcessorInterface {
@@ -77,5 +85,4 @@ final class ServicesAssembly {
     func urlSession() -> URLSession {
         return URLSession.shared
     }
-    
 }

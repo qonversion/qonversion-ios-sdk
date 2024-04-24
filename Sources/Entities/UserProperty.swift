@@ -20,7 +20,5 @@ extension Qonversion {
         
         /// Qonversion defined property key. ``Qonversion/Qonversion/UserPropertyKey`` for non-Qonversion properties.
         public var definedKey: UserPropertyKey { UserPropertyKey(rawValue: key) ?? .custom }
-        
     }
-    
 }
