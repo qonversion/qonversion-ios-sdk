@@ -17,6 +17,18 @@ final class ProductsService: ProductsServiceInterface {
         self.internalConfig = internalConfig
     }
     
+    func offerings() async throws -> Qonversion.Offerings {
+        let request = Request.getOfferings(userId: internalConfig.userId)
+        do {
+            let offeringsList: [Qonversion.Offering] = try await requestProcessor.process(request: request, responseType: [Qonversion.Offering].self)
+            let offerings: Qonversion.Offerings = Qonversion.Offerings(offerings: offeringsList)
+            
+            return offerings
+        } catch {
+            throw QonversionError(type: .productsLoadingFailed, message: nil, error: error)
+        }
+    }
+    
     func products() async throws -> [Qonversion.Product] {
         let request = Request.getProducts(userId: internalConfig.userId)
         do {

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import StoreKit
 
 final class ProductsManager: ProductsManagerInterface {
     
@@ -15,12 +16,37 @@ final class ProductsManager: ProductsManagerInterface {
     private let logger: LoggerWrapper
     
     var loadedProducts: [Qonversion.Product] = []
+    var loadedOfferings: Qonversion.Offerings?
     
     init(productsService: ProductsServiceInterface, storeKitFacade: StoreKitFacadeInterface, localStorage: LocalStorageInterface, logger: LoggerWrapper) {
         self.productsService = productsService
         self.storeKitFacade = storeKitFacade
         self.localStorage = localStorage
         self.logger = logger
+    }
+    
+    func offerings() async throws -> Qonversion.Offerings {
+        if let loadedOfferings {
+            return loadedOfferings
+        }
+        
+        let offerings: Qonversion.Offerings = try await productsService.offerings()
+        
+        do {
+            let productIds: [String] = offerings.availableOfferings.flatMap { $0.products.map { $0.storeId } }
+            
+            try await storeKitFacade.products(for: productIds)
+            
+            // enrich products here
+            
+            return offerings
+        } catch {
+            logger.error(error.localizedDescription)
+        }
+        
+        loadedOfferings = offerings
+        
+        return offerings
     }
     
     func products() async throws -> [Qonversion.Product] {

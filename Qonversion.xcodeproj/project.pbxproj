@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		70B4E9722BD955E900EE808C /* Offerings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9712BD955E900EE808C /* Offerings.swift */; };
 		70CD92F62BC6E22B0039D65C /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929B2BC6E22B0039D65C /* MiscAssembly.swift */; };
 		70CD92F72BC6E22B0039D65C /* QonversionAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929C2BC6E22B0039D65C /* QonversionAssembly.swift */; };
 		70CD92F82BC6E22B0039D65C /* ServicesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929D2BC6E22B0039D65C /* ServicesAssembly.swift */; };
@@ -127,6 +128,7 @@
 		6ABCBDF62B8CE298003DB107 /* UserPropertiesStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPropertiesStorage.swift; sourceTree = "<group>"; };
 		6ABCBDF82B8DD7A2003DB107 /* SendUserPropertiesResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendUserPropertiesResult.swift; sourceTree = "<group>"; };
 		701A06AF0F488249669E14C2 /* Pods-Qonversion.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Qonversion.release.xcconfig"; path = "Target Support Files/Pods-Qonversion/Pods-Qonversion.release.xcconfig"; sourceTree = "<group>"; };
+		70B4E9712BD955E900EE808C /* Offerings.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Offerings.swift; sourceTree = "<group>"; };
 		70CD929B2BC6E22B0039D65C /* MiscAssembly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MiscAssembly.swift; sourceTree = "<group>"; };
 		70CD929C2BC6E22B0039D65C /* QonversionAssembly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QonversionAssembly.swift; sourceTree = "<group>"; };
 		70CD929D2BC6E22B0039D65C /* ServicesAssembly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ServicesAssembly.swift; sourceTree = "<group>"; };
@@ -276,6 +278,7 @@
 		70CD92A52BC6E22B0039D65C /* Entities */ = {
 			isa = PBXGroup;
 			children = (
+				70B4E9712BD955E900EE808C /* Offerings.swift */,
 				70CD929F2BC6E22B0039D65C /* Device.swift */,
 				70CD92A02BC6E22B0039D65C /* Transaction.swift */,
 				70EA734D2BD0261300B0DFDA /* Storefront.swift */,
@@ -788,6 +791,7 @@
 				70EA734E2BD0261300B0DFDA /* Storefront.swift in Sources */,
 				70CD92FE2BC6E22B0039D65C /* UserPropertyKey.swift in Sources */,
 				70CD931D2BC6E22B0039D65C /* DeviceInfoCollectorInterface.swift in Sources */,
+				70B4E9722BD955E900EE808C /* Offerings.swift in Sources */,
 				70CD930C2BC6E22B0039D65C /* NetworkProvider.swift in Sources */,
 				70CD92FF2BC6E22B0039D65C /* DeviceManager.swift in Sources */,
 				70CD93312BC6E22B0039D65C /* InternalConfig.swift in Sources */,
