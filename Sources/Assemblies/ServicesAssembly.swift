@@ -72,7 +72,7 @@ final class ServicesAssembly {
         return storeKitWrapper
     }
     
-    func storeKitOldWrapper() -> StoreKitOldWrapperInterface {
+    func storeKitOldWrapper() -> StoreKitOldWrapper {
         let storeKitOldWrapper = StoreKitOldWrapper(paymentQueue: miscAssembly.paymentQueue())
         
         return storeKitOldWrapper
