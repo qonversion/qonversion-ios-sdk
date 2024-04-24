@@ -8,14 +8,10 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
 final class StoreKitWrapper: StoreKitWrapperInterface {
     
-    let delegate: StoreKitWrapperDelegate?
-    
-    init(delegate: StoreKitWrapperDelegate? = nil) {
-        self.delegate = delegate
-    }
+    var delegate: StoreKitWrapperDelegate?
     
     func products(for ids:[String]) async throws -> [StoreKit.Product] {
         let products: [StoreKit.Product] = try await Product.products(for: ids)

@@ -20,7 +20,7 @@ public final class Qonversion {
     
     /// Use this variable to get the current initialized instance of the Qonversion SDK.
     /// Please, use the variable only after initializing the SDK.
-    /// - Returns: the current initialized instance of the ``Qonversion`` SDK
+    /// - Returns: the current initialized instance of the ``Qonversion/Qonversion`` SDK
     public static let shared = Qonversion()
     
     /// An entry point to use Qonversion SDK. Call to initialize Qonversion SDK with required and extra configs.

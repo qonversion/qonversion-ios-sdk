@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		70B4E9722BD955E900EE808C /* Offerings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9712BD955E900EE808C /* Offerings.swift */; };
+		70B4E96E2BD92B9C00EE808C /* StoreKitFacadeDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E96D2BD92B9C00EE808C /* StoreKitFacadeDelegate.swift */; };
+		70B4E9702BD940F700EE808C /* StoreProductWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E96F2BD940F700EE808C /* StoreProductWrapper.swift */; };
 		70CD92F62BC6E22B0039D65C /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929B2BC6E22B0039D65C /* MiscAssembly.swift */; };
 		70CD92F72BC6E22B0039D65C /* QonversionAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929C2BC6E22B0039D65C /* QonversionAssembly.swift */; };
 		70CD92F82BC6E22B0039D65C /* ServicesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929D2BC6E22B0039D65C /* ServicesAssembly.swift */; };
@@ -87,6 +89,8 @@
 		70EA734C2BD025F500B0DFDA /* Currency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA734B2BD025F500B0DFDA /* Currency.swift */; };
 		70EA734E2BD0261300B0DFDA /* Storefront.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA734D2BD0261300B0DFDA /* Storefront.swift */; };
 		70EA73552BD12CA500B0DFDA /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73542BD12CA500B0DFDA /* Product.swift */; };
+		70EA735D2BD6B66300B0DFDA /* ProductsManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA735C2BD6B66300B0DFDA /* ProductsManagerInterface.swift */; };
+		70EA735F2BD6B68000B0DFDA /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */; };
 		70EA73632BD7DA1900B0DFDA /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73602BD7DA1900B0DFDA /* ProductsManager.swift */; };
 		70EA73642BD7DA1900B0DFDA /* ProductsManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73612BD7DA1900B0DFDA /* ProductsManagerInterface.swift */; };
 		70EA73682BD7DA2700B0DFDA /* ProductsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73652BD7DA2700B0DFDA /* ProductsService.swift */; };
@@ -129,6 +133,8 @@
 		6ABCBDF82B8DD7A2003DB107 /* SendUserPropertiesResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendUserPropertiesResult.swift; sourceTree = "<group>"; };
 		701A06AF0F488249669E14C2 /* Pods-Qonversion.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Qonversion.release.xcconfig"; path = "Target Support Files/Pods-Qonversion/Pods-Qonversion.release.xcconfig"; sourceTree = "<group>"; };
 		70B4E9712BD955E900EE808C /* Offerings.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Offerings.swift; sourceTree = "<group>"; };
+		70B4E96D2BD92B9C00EE808C /* StoreKitFacadeDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitFacadeDelegate.swift; sourceTree = "<group>"; };
+		70B4E96F2BD940F700EE808C /* StoreProductWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreProductWrapper.swift; sourceTree = "<group>"; };
 		70CD929B2BC6E22B0039D65C /* MiscAssembly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MiscAssembly.swift; sourceTree = "<group>"; };
 		70CD929C2BC6E22B0039D65C /* QonversionAssembly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QonversionAssembly.swift; sourceTree = "<group>"; };
 		70CD929D2BC6E22B0039D65C /* ServicesAssembly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ServicesAssembly.swift; sourceTree = "<group>"; };
@@ -218,6 +224,8 @@
 		70EA734B2BD025F500B0DFDA /* Currency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Currency.swift; sourceTree = "<group>"; };
 		70EA734D2BD0261300B0DFDA /* Storefront.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Storefront.swift; sourceTree = "<group>"; };
 		70EA73542BD12CA500B0DFDA /* Product.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
+		70EA735C2BD6B66300B0DFDA /* ProductsManagerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsManagerInterface.swift; sourceTree = "<group>"; };
+		70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsManager.swift; sourceTree = "<group>"; };
 		70EA73602BD7DA1900B0DFDA /* ProductsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsManager.swift; sourceTree = "<group>"; };
 		70EA73612BD7DA1900B0DFDA /* ProductsManagerInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsManagerInterface.swift; sourceTree = "<group>"; };
 		70EA73652BD7DA2700B0DFDA /* ProductsService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsService.swift; sourceTree = "<group>"; };
@@ -288,6 +296,8 @@
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
 				70CD92A42BC6E22B0039D65C /* UserPropertyKey.swift */,
 				70EA73542BD12CA500B0DFDA /* Product.swift */,
+				70EA736A2BD7E32400B0DFDA /* Offerings.swift */,
+				70B4E96F2BD940F700EE808C /* StoreProductWrapper.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
@@ -482,6 +492,7 @@
 			children = (
 				70CD92DC2BC6E22B0039D65C /* StoreKitFacade.swift */,
 				70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */,
+				70B4E96D2BD92B9C00EE808C /* StoreKitFacadeDelegate.swift */,
 				70CD92DE2BC6E22B0039D65C /* StoreKitMapper.swift */,
 				70CD92DF2BC6E22B0039D65C /* StoreKitMapperInterface.swift */,
 				70CD92E02BC6E22B0039D65C /* StoreKitOldWrapper.swift */,
@@ -802,6 +813,7 @@
 				70CD92F62BC6E22B0039D65C /* MiscAssembly.swift in Sources */,
 				70CD93022BC6E22B0039D65C /* UserPropertiesManager.swift in Sources */,
 				70CD93012BC6E22B0039D65C /* SendUserPropertiesResult.swift in Sources */,
+				70B4E96E2BD92B9C00EE808C /* StoreKitFacadeDelegate.swift in Sources */,
 				70CD930A2BC6E22B0039D65C /* NetworkErrorHandler.swift in Sources */,
 				70CD92F82BC6E22B0039D65C /* ServicesAssembly.swift in Sources */,
 				70CD93032BC6E22B0039D65C /* UserPropertiesManagerInterface.swift in Sources */,
@@ -822,6 +834,7 @@
 				70CD930F2BC6E22B0039D65C /* RateLimiterInterface.swift in Sources */,
 				70CD931F2BC6E22B0039D65C /* DeviceServiceInterface.swift in Sources */,
 				70CD93362BC6E22B0039D65C /* Qonversion.swift in Sources */,
+				70B4E9702BD940F700EE808C /* StoreProductWrapper.swift in Sources */,
 				70CD93342BC6E22B0039D65C /* Qonversion.docc in Sources */,
 				70CD92FB2BC6E22B0039D65C /* User.swift in Sources */,
 				70EA73642BD7DA1900B0DFDA /* ProductsManagerInterface.swift in Sources */,

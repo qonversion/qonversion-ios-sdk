@@ -188,7 +188,6 @@ extension Qonversion {
 
             /// The number of units that the period represents.
             public let value: Int
-            
         }
         
         /// Information about a subscription offer configured in App Store Connect.
@@ -216,7 +215,6 @@ extension Qonversion {
                         return nil
                     }
                 }
-                
             }
             
             public enum PaymentMode {
@@ -275,10 +273,10 @@ extension Qonversion {
 
             /// How the user is charged for this offer.
             public let paymentMode: Qonversion.Product.SubscriptionOffer.PaymentMode
-            
         }
         
         public struct SubscriptionInfo {
+            
             /// An optional introductory offer that will automatically be applied if the user is eligible.
             public let introductoryOffer: Qonversion.Product.SubscriptionOffer?
 
@@ -323,7 +321,6 @@ extension Qonversion {
                     return nil
                 }
             }
-            
         }
         
         // MARK: - Private

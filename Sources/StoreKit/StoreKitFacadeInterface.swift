@@ -9,8 +9,7 @@ import StoreKit
 
 protocol StoreKitFacadeInterface {
     #warning("replace all return types")
-    @discardableResult
-    func products(for ids:[String]) async throws -> [String]
+    func products(for ids:[String]) async throws -> [StoreProductWrapper]
     
     func currentEntitlements() async -> [Qonversion.Transaction]
     
