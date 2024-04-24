@@ -28,6 +28,7 @@ public final class Qonversion {
     /// The function is the best way to set additional configs you need to use Qonversion SDK.
     /// - Parameter configuration: a config that contains key SDK settings.
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
+    @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
@@ -106,7 +107,7 @@ public final class Qonversion {
     /// Use this function to get the remote configs with specific payload and experiment info.
     /// - Parameters:
     ///   - contextKeys:list of context keys to get remote configs for.
-    ///   - includeEmptyContextKey:- set to true if you want to include remote config with empty context key to the result
+    ///   - includeEmptyContextKey: set to true if you want to include remote config with empty context key to the result.
     /// - Returns: ``Qonversion/Qonversion/RemoteConfigList`` with the requested remote configs for the current user.
     public func remoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
@@ -117,7 +118,7 @@ public final class Qonversion {
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
     /// Use this function to attach the user to the remote configuration.
     /// - Parameters:
-    ///   - remoteConfigurationId: identifier of the remote configuration
+    ///   - remoteConfigurationId: identifier of the remote configuration.
     /// - Returns: true if attached successfully, false otherwise.
     public func attachUserToRemoteConfiguration(remoteConfigurationId: String) async throws -> Bool {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
@@ -128,7 +129,7 @@ public final class Qonversion {
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
     /// Use this function to detach the user from the remote configuration.
     /// - Parameters:
-    ///   - remoteConfigurationId: identifier of the remote configuration
+    ///   - remoteConfigurationId: identifier of the remote configuration.
     /// - Returns: true if detached successfully, false otherwise.
     public func detachUserFromRemoteConfiguration(remoteConfigurationId: String) async throws -> Bool {
         guard let remoteConfigManager else { throw QonversionError.initializationError() }
