@@ -10,12 +10,6 @@ import Foundation
 /// An entry point to use Qonversion SDK.
 public final class Qonversion {
     
-    // MARK: - Private
-    private var userPropertiesManager: UserPropertiesManagerInterface?
-    private var deviceManager: DeviceManagerInterface?
-    
-    private init() { }
-    
     // MARK: - Public
     
     /// Use this variable to get the current initialized instance of the Qonversion SDK.
@@ -27,10 +21,12 @@ public final class Qonversion {
     /// The function is the best way to set additional configs you need to use Qonversion SDK.
     /// - Parameter configuration: a config that contains key SDK settings.
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
+    @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
+        Qonversion.shared.productsManager = assembly.productsManager()
         
         return Qonversion.shared
     }
@@ -80,4 +76,10 @@ public final class Qonversion {
         return try await userPropertiesManager.userProperties()
     }
     
+    // MARK: - Private
+    private var userPropertiesManager: UserPropertiesManagerInterface?
+    private var deviceManager: DeviceManagerInterface?
+    private var productsManager: ProductsManagerInterface?
+    
+    private init() { }
 }
