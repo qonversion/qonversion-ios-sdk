@@ -14,5 +14,4 @@ protocol UserServiceInterface {
     func createUser() async throws -> Qonversion.User
     
     func generateUserId() -> String
-    
 }

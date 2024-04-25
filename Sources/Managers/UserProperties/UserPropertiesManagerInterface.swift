@@ -20,5 +20,4 @@ protocol UserPropertiesManagerInterface {
     func clearDelayedProperties()
     
     func collectAppleSearchAdsAttribution()
-    
 }

@@ -50,4 +50,11 @@ final class QonversionAssembly {
         return productsManager
     }
     
+    func remoteConfigManager() -> RemoteConfigManagerInterface {
+        let remoteConfigService = servicesAssembly.remoteConfigService()
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let remoteConfigManager = RemoteConfigManager(remoteConfigService: remoteConfigService, logger: logger)
+
+        return remoteConfigManager
+    }
 }

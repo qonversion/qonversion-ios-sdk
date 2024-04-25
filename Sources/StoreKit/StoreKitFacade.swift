@@ -185,7 +185,6 @@ class StoreKitFacade: StoreKitFacadeInterface {
             }
         }
     }
-    
 }
 
 // MARK: - StoreKitWrapperDelegate

@@ -10,5 +10,4 @@ import Foundation
 protocol RateLimiterInterface {
     
     func validateRateLimit(for request: Request) -> QonversionError?
-    
 }

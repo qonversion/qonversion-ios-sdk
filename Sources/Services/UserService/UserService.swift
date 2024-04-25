@@ -15,10 +15,10 @@ fileprivate enum Constants: String {
 final class UserService: UserServiceInterface {
     
     private let requestProcessor: RequestProcessorInterface
-    private let localStorage: LocalStorage
+    private let localStorage: LocalStorageInterface
     private let internalConfig: InternalConfig
     
-    init(requestProcessor: RequestProcessorInterface, localStorage: LocalStorage, internalConfig: InternalConfig) {
+    init(requestProcessor: RequestProcessorInterface, localStorage: LocalStorageInterface, internalConfig: InternalConfig) {
         self.requestProcessor = requestProcessor
         self.localStorage = localStorage
         self.internalConfig = internalConfig
@@ -57,7 +57,6 @@ final class UserService: UserServiceInterface {
             throw QonversionError(type: .userLoadingFailed, message: nil, error: error)
         }
     }
-    
 }
 
 // MARK: - Private
@@ -68,5 +67,4 @@ extension UserService {
         let userId: String = localStorage.string(forKey: Constants.userIdKey.rawValue) ?? generateUserId()
         internalConfig.userId = userId
     }
-    
 }

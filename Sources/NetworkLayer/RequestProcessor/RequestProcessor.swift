@@ -56,10 +56,12 @@ class RequestProcessor: RequestProcessorInterface {
 
         let responseBody: Data
         let error: QonversionError?
+        let responseCode: Int
         do {
             let (data, urlResponse) = try await networkProvider.send(request: urlRequest)
-            error = errorHandler.extractError(from: urlResponse)
+            error = errorHandler.extractError(from: urlResponse, body: data)
             responseBody = data
+            responseCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
         } catch {
             throw QonversionError(type: .invalidResponse, error: error)
         }
@@ -71,7 +73,11 @@ class RequestProcessor: RequestProcessorInterface {
 
             throw error!
         }
-
+        
+        if responseCode == ResponseCode.noContent.rawValue && T.self is EmptyApiResponse.Type {
+            return EmptyApiResponse() as! T
+        }
+        
         do {
             let result: T = try decoder.decode(responseType, from: responseBody)
 

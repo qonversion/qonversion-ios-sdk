@@ -27,7 +27,4 @@ protocol StoreKitFacadeInterface {
     
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet()
-    
-    func enrich(products: [Qonversion.Product]) async throws -> [Qonversion.Product]
-    
 }

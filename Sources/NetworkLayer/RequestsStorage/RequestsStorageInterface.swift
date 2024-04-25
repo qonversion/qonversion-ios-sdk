@@ -16,5 +16,4 @@ protocol RequestsStorageInterface {
     func fetchRequests() -> [URLRequest]
     
     func clean()
-    
 }

@@ -59,7 +59,5 @@ extension Qonversion {
         /// Value for custom user property
         /// - Important: Do not pass this value directly. Use ``Qonversion/Qonversion/setCustomUserProperty(_:key:)`` instead.
         case custom = ""
-        
     }
-    
 }

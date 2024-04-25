@@ -357,5 +357,4 @@ extension Qonversion {
             self.skPaymentTransaction = nil
         }
     }
-    
 }

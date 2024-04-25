@@ -22,5 +22,4 @@ protocol StoreKitOldWrapperInterface {
     func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion)
     
     func finish(transaction: SKPaymentTransaction)
-    
 }

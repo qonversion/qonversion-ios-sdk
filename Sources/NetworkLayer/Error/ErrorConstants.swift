@@ -13,6 +13,7 @@ enum ErrorConstants: String {
 
 enum ResponseCode: Int {
     case successMin = 200
+    case noContent = 204
     case successMax = 299
     case unauthorized = 401
     case paymentRequired = 402

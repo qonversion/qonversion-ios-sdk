@@ -49,11 +49,9 @@ final class ProductsManager: ProductsManagerInterface {
                 resultProducts.append(product)
             }
             
-            let enrichedProducts: [Qonversion.Product] = try await storeKitFacade.enrich(products: products)
+            loadedProducts = resultProducts
             
-            loadedProducts = enrichedProducts
-            
-            return enrichedProducts
+            return resultProducts
         } catch {
             logger.error(error.localizedDescription)
         }
