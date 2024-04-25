@@ -325,6 +325,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)purchase:(NSString *)productID offeringID:(NSString *)offeringID completion:(QONPurchaseCompletionHandler)completion {
+  if (self.launchMode == QONLaunchModeAnalytics) {
+    QONVERSION_LOG(@"⚠️ Making purchases via Qonversion in the Analytics mode can lead to an inconsistent state in the store. Consider switching to the Subscription management mode.");
+  }
+  
   @synchronized (self) {
     NSArray *storeProducts = [self.storeKitService getLoadedProducts];
     
