@@ -157,6 +157,8 @@ enum Request : Hashable {
         case let .getProducts(userId, endpoint, type):
             hasher.combine("getProducts")
             hasher.combine(userId)
+            hasher.combine(endpoint)
+            hasher.combine(type)
         case let .remoteConfig(userId, contextKey, endpoint, type):
             hasher.combine("remoteConfig")
             hasher.combine(userId)

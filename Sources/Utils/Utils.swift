@@ -41,7 +41,6 @@ extension SKProduct {
     func displayPrice() -> String? {
         return format(price: price, priceLcale: priceLocale)
     }
-    
 }
 
 extension SKProductDiscount {
@@ -49,7 +48,6 @@ extension SKProductDiscount {
     func displayPrice() -> String? {
         return format(price: price, priceLcale: priceLocale)
     }
-    
 }
 
 private func format(price: NSDecimalNumber, priceLcale: Locale) -> String? {
