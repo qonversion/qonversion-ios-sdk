@@ -158,7 +158,6 @@ extension StoreKitFacade: StoreKitWrapperDelegate {
     func promoPurchaseIntent(product: Product) {
         delegate?.promoPurchaseIntent(product: product)
     }
-    
 }
 
 // MARK: - StoreKitOldWrapperDelegate
@@ -184,5 +183,4 @@ extension StoreKitFacade: StoreKitOldWrapperDelegate {
     func updated(transactions: [SKPaymentTransaction]) {
         
     }
-    
 }
