@@ -177,6 +177,43 @@ extension Qonversion {
         /// The subscription offers that apply to a transaction.
         public struct Offer {
             
+            /// A string that identifies the subscription offer that applies to the transaction.
+            public let id: String?
+            
+            /// The type of subscription offer that applies to the transaction.
+            public let type: Transaction.Offer.OfferType?
+            
+            /// The payment modes for subscription offers that apply to a transaction.
+            @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
+            public var paymentMode: Qonversion.Transaction.Offer.PaymentMode? {
+                guard let offer = _offer as? StoreKit.Transaction.Offer else { return nil }
+                return Qonversion.Transaction.Offer.PaymentMode.from(paymentMode: offer.paymentMode)
+            }
+            
+            /// Original object of StoreKit Transaction [Offer](https://developer.apple.com/documentation/storekit/transaction/offer)
+            @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
+            public var originalOffer: StoreKit.Transaction.Offer? { _offer as? StoreKit.Transaction.Offer }
+            
+            // Workaround to make originalOffer variable available for specific OS versions
+            let _offer: Any?
+            
+            @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+            init?(with transaction: StoreKit.Transaction) {
+                self.type = Qonversion.Transaction.Offer.OfferType.from(transaction: transaction)
+                
+                if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
+                    guard let offer = transaction.offer else { return nil }
+                    
+                    self._offer = offer
+                    self.id = offer.id
+                } else {
+                    self.id = transaction.offerID
+                    self._offer = nil
+                }
+            }
+            
+            // MARK: Nested stucts & enums
+            
             /// The types of offers for auto-renewable subscriptions.
             public enum OfferType: String {
                 
@@ -242,42 +279,6 @@ extension Qonversion {
                     }
                 }
             }
-            
-            /// A string that identifies the subscription offer that applies to the transaction.
-            public let id: String?
-            
-            /// The type of subscription offer that applies to the transaction.
-            public let type: Transaction.Offer.OfferType?
-            
-            /// The payment modes for subscription offers that apply to a transaction.
-            @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
-            public var paymentMode: Qonversion.Transaction.Offer.PaymentMode? {
-                guard let offer = _offer as? StoreKit.Transaction.Offer else { return nil }
-                return Qonversion.Transaction.Offer.PaymentMode.from(paymentMode: offer.paymentMode)
-            }
-            
-            /// Original object of StoreKit Transaction [Offer](https://developer.apple.com/documentation/storekit/transaction/offer)
-            @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
-            public var originalOffer: StoreKit.Transaction.Offer? { _offer as? StoreKit.Transaction.Offer }
-            
-            // Workaround to make originalOffer variable available for specific OS versions
-            let _offer: Any?
-            
-            @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-            init?(with transaction: StoreKit.Transaction) {
-                self.type = Qonversion.Transaction.Offer.OfferType.from(transaction: transaction)
-                
-                if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
-                    guard let offer = transaction.offer else { return nil }
-                    
-                    self._offer = offer
-                    self.id = offer.id
-                } else {
-                    self.id = transaction.offerID
-                    self._offer = nil
-                }
-            }
-            
         }
         
         /// A cause of a purchase transaction, indicating whether it’s a customer’s purchase or an auto-renewable subscription renewal that the system initiates.
