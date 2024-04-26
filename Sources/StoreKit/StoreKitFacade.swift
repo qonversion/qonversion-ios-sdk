@@ -34,43 +34,6 @@ class StoreKitFacade: StoreKitFacadeInterface {
         self.storeKitMapper = storeKitMapper
     }
     
-    func enrich(products: [Qonversion.Product]) async throws -> [Qonversion.Product] {
-        let productIds: [String] = products.map { $0.storeId }
-        
-        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper {
-            let storeProducts = self.loadedProducts ?? [:]
-            let unavaliableProductIds: [String] = productIds.filter { !storeProducts.keys.contains($0) }
-            
-            var enrichedProducts: [Qonversion.Product] = []
-            for var product in products {
-                if let storeProduct = storeProducts[product.storeId] {
-                    product.enrich(storeProduct: storeProduct)
-                    enrichedProducts.append(product)
-                }
-            }
-            
-            return enrichedProducts
-        } else if let storeKitOldWrapper {
-            let unavaliableProductIds: [String] = productIds.filter { !loadedOldProducts.keys.contains($0) }
-            var enrichedProducts: [Qonversion.Product] = []
-            
-            if !unavaliableProductIds.isEmpty {
-                try await self.products(for: unavaliableProductIds)
-            }
-            
-            for var product in products {
-                if let storeProduct = loadedOldProducts[product.storeId] {
-                    product.enrich(skProduct: storeProduct)
-                    enrichedProducts.append(product)
-                }
-            }
-            
-            return enrichedProducts
-        }
-        
-        return products
-    }
-    
     func currentEntitlements() async -> [Qonversion.Transaction] {
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
         
