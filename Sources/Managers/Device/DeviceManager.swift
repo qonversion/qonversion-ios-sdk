@@ -75,5 +75,4 @@ extension DeviceManager {
             return logger.warning(error.localizedDescription)
         }
     }
-    
 }

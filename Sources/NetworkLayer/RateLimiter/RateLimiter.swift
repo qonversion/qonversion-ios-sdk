@@ -65,5 +65,4 @@ extension RateLimiter {
 
         requests[hash] = filteredRequestTimestamps
     }
-    
 }

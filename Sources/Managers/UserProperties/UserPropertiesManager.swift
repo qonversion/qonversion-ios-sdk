@@ -155,5 +155,4 @@ extension UserPropertiesManager {
         sendPropertiesRetryDelay = delayCalculator.countDelay(minDelay: Constants.sendPropertiesMinDelaySec.rawValue, retriesCount: sendPropertiesRetryCount)
         scheduleSendingProperties(withDelay: sendPropertiesRetryDelay)
     }
-    
 }

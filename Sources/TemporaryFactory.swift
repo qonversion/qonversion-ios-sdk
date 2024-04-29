@@ -60,5 +60,4 @@ final public class TemporaryFactory: StoreKitWrapperDelegate, StoreKitOldWrapper
             }
         }
     }
-    
 }

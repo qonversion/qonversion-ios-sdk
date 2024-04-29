@@ -78,7 +78,5 @@ extension Qonversion {
         public func definedProperty(for key: UserPropertyKey) -> UserProperty? {
             return definedProperties.first { $0.definedKey == key }
         }
-        
     }
-    
 }

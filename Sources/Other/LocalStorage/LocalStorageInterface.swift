@@ -40,5 +40,4 @@ protocol LocalStorageInterface {
     func set(double: Double, forKey key: String)
 
     func set(bool: Bool, forKey key: String)
-    
 }

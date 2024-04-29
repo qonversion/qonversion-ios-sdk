@@ -12,5 +12,4 @@ protocol DeviceManagerInterface {
     func collectDeviceInfo() async
     
     func collectAdvertisingId()
-    
 }

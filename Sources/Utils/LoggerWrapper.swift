@@ -91,5 +91,4 @@ extension LoggerWrapper {
             logger.log(level: osLevel, "\(message)")
         }
     }
-    
 }

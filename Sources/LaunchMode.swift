@@ -16,7 +16,5 @@ extension Qonversion {
         /// 
         /// Subscription management support coming soon.
         case analytics
-        
     }
-    
 }

@@ -16,5 +16,4 @@ protocol PropertiesStorage {
     func clear()
 
     func all() -> [Qonversion.UserProperty]
-    
 }

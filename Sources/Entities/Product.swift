@@ -15,10 +15,10 @@ extension Qonversion {
         /// The unique Qonversion product identifier.
         public let qonversionId: String
         
-        /// The unique AppStore product identifier.
+        /// The AppStore product identifier.
         public let storeId: String
         
-        /// The unique Qonversion offering identifier if product linked to an offering or nil.
+        /// The Qonversion offering identifier if product linked to an offering or nil.
         public let offeringId: String?
         
         /// The localized display name of the product, if it exists.
@@ -70,6 +70,8 @@ extension Qonversion {
         public var jsonRepresentation: Data? { storeProduct?.jsonRepresentation }
         
         /// Whether the product is available for family sharing.
+        /// From iOS 14.0, macOS 11.0, watchOS 7.0, visionOS 1.0 available for the old StoreKit 1 products
+        /// From iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0 available for the new StoreKit 2 products
         @available(iOS 14.0, macOS 11.0, watchOS 7.0, visionOS 1.0, *)
         public var isFamilyShareable: Bool? {
             if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let product = storeProduct {
@@ -94,7 +96,7 @@ extension Qonversion {
         @backDeployed(before: iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, macCatalyst 16.0)
         public var priceFormatStyle: Decimal.FormatStyle.Currency? { storeProduct?.priceFormatStyle }
         
-        /// The original StoreKit product.
+        /// The original StoreKit 1 product.
         ///
         /// For StoreKit 2 product use ``Qonversion/Qonversion/Product/storeProduct`` .
         public var skProduct: SKProduct?
@@ -136,6 +138,12 @@ extension Qonversion {
         @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, visionOS 1.0, *)
         public var subscriptionPeriodUnitFormatStyle: StoreKit.Product.SubscriptionPeriod.Unit.FormatStyle? { storeProduct?.subscriptionPeriodUnitFormatStyle }
         
+        /// Properties and functionality specific to auto-renewable subscriptions.
+        ///
+        /// This is never `nil` if `type` is `.autoRenewable`, and always `nil` for all other product
+        /// types.
+        public var subscription: Qonversion.Product.SubscriptionInfo?
+        
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             qonversionId = try container.decode(String.self, forKey: .qonversionId)
@@ -144,12 +152,41 @@ extension Qonversion {
             skProduct = nil
         }
         
+        init(qonversionId: String, storeId: String, offeringId: String?) {
+            self.qonversionId = qonversionId
+            self.storeId = storeId
+            self.offeringId = offeringId
+        }
+        
         // MARK: - Nested structures and enums
         
-        /// A unit of time.
+        /// Subscription period details..
         public struct SubscriptionPeriod {
             
+            /// The unit of time that this period represents.
+            public let unit: Qonversion.Product.SubscriptionPeriod.Unit
+
+            /// The number of units that the period represents.
+            public let value: Int
+            
+            @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+            init(originalPeriod: StoreKit.Product.SubscriptionPeriod) {
+                value = originalPeriod.value
+                unit = Qonversion.Product.SubscriptionPeriod.Unit.from(unit: originalPeriod.unit)
+            }
+            
+            init(subscriptionPeriod: SKProductSubscriptionPeriod) {
+                value = subscriptionPeriod.numberOfUnits
+                unit = Qonversion.Product.SubscriptionPeriod.Unit.from(unit: subscriptionPeriod.unit)
+            }
+            
+            // MARK: Nested structs & enums
+            
+            /// Unit type of a subscription period.
             public enum Unit {
+                
+                /// For rare cases when the subscription period unit can't be determined.
+                case unknown
                 
                 /// A subscription period unit of a day.
                 case day
@@ -164,8 +201,8 @@ extension Qonversion {
                 case year
                 
                 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-                static func from(unit: StoreKit.Product.SubscriptionPeriod.Unit?) -> Qonversion.Product.SubscriptionPeriod.Unit? {
-                    guard let unit: StoreKit.Product.SubscriptionPeriod.Unit = unit else { return nil }
+                static func from(unit: StoreKit.Product.SubscriptionPeriod.Unit?) -> Qonversion.Product.SubscriptionPeriod.Unit {
+                    guard let unit: StoreKit.Product.SubscriptionPeriod.Unit = unit else { return .unknown }
 
                     switch unit {
                     case .day:
@@ -177,74 +214,30 @@ extension Qonversion {
                     case .year:
                         return .year
                     default:
-                        return nil
+                        return .unknown
+                    }
+                }
+                
+                static func from(unit: SKProduct.PeriodUnit) -> Qonversion.Product.SubscriptionPeriod.Unit {
+                    switch unit {
+                    case .day:
+                        return .day
+                    case .week:
+                        return .week
+                    case .month:
+                        return .month
+                    case .year:
+                        return .year
+                    default:
+                        return .unknown
                     }
                 }
                 
             }
-            
-            /// The unit of time that this period represents.
-            public let unit: Qonversion.Product.SubscriptionPeriod.Unit
-
-            /// The number of units that the period represents.
-            public let value: Int
         }
         
         /// Information about a subscription offer configured in App Store Connect.
         public struct SubscriptionOffer {
-            
-            /// The type of the subscription offer.
-            public enum OfferType {
-                
-                /// An introductory offer for a subscription.
-                case  introductory
-                
-                /// A promotional offer.
-                case promotional
-                
-                @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-                static func from(offerType: StoreKit.Product.SubscriptionOffer.OfferType?) -> Qonversion.Product.SubscriptionOffer.OfferType? {
-                    guard let offerType: StoreKit.Product.SubscriptionOffer.OfferType = offerType else { return nil }
-
-                    switch offerType {
-                    case .introductory:
-                        return .introductory
-                    case .promotional:
-                        return .promotional
-                    default:
-                        return nil
-                    }
-                }
-            }
-            
-            public enum PaymentMode {
-                
-                /// A payment mode of a product discount that indicates the discount applies over a single billing period or multiple billing periods.
-                case payAsYouGo
-
-                /// A payment mode of a product discount that indicates the system applies the discount up front.
-                case payUpFront
-
-                /// A payment mode of a product discount that indicates a free trial offer.
-                case freeTrial
-                
-                @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-                static func from(paymentMode: StoreKit.Product.SubscriptionOffer.PaymentMode?) -> Qonversion.Product.SubscriptionOffer.PaymentMode? {
-                    guard let mode: StoreKit.Product.SubscriptionOffer.PaymentMode = paymentMode else { return nil }
-
-                    switch mode {
-                    case .payUpFront:
-                        return .payUpFront
-                    case .payAsYouGo:
-                        return .payAsYouGo
-                    case .freeTrial:
-                        return .freeTrial
-                    default:
-                        return nil
-                    }
-                }
-                
-            }
             
             /// The promotional offer identifier.
             ///
@@ -273,8 +266,121 @@ extension Qonversion {
 
             /// How the user is charged for this offer.
             public let paymentMode: Qonversion.Product.SubscriptionOffer.PaymentMode
+            
+            @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+            init?(originalOffer: StoreKit.Product.SubscriptionOffer?) {
+                guard let originalOffer else { return nil }
+                id = originalOffer.id
+                type = Qonversion.Product.SubscriptionOffer.OfferType.from(offerType: originalOffer.type)
+                price = originalOffer.price
+                displayPrice = originalOffer.displayPrice
+                period = Qonversion.Product.SubscriptionPeriod(originalPeriod: originalOffer.period)
+                periodCount = originalOffer.periodCount
+                paymentMode = Qonversion.Product.SubscriptionOffer.PaymentMode.from(paymentMode: originalOffer.paymentMode)
+            }
+            
+            init?(introductoryPrice: SKProductDiscount?) {
+                guard let introductoryPrice else { return nil }
+                
+                id = introductoryPrice.identifier
+                type = Qonversion.Product.SubscriptionOffer.OfferType.from(introductoryPrice: introductoryPrice)
+                price = introductoryPrice.price as Decimal
+                displayPrice = introductoryPrice.displayPrice() ?? ""
+                period = Qonversion.Product.SubscriptionPeriod(subscriptionPeriod: introductoryPrice.subscriptionPeriod)
+                periodCount = introductoryPrice.subscriptionPeriod.numberOfUnits
+                paymentMode = Qonversion.Product.SubscriptionOffer.PaymentMode.from(oldPaymentMode: introductoryPrice.paymentMode)
+            }
+            
+            // MARK: Nested structs & enums
+            
+            /// The type of the subscription offer.
+            public enum OfferType {
+                
+                /// In case the offer type can't be determined.
+                case unknown
+                
+                /// An introductory offer for a subscription.
+                case introductory
+                
+                /// A promotional offer.
+                case promotional
+                
+                /// Available only for StoreKit 1 SKProductDiscount
+                case subscription
+                
+                @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+                static func from(offerType: StoreKit.Product.SubscriptionOffer.OfferType?) -> Qonversion.Product.SubscriptionOffer.OfferType {
+                    guard let offerType else { return .unknown }
+                    switch offerType {
+                    case .introductory:
+                        return .introductory
+                    case .promotional:
+                        return .promotional
+                    default:
+                        return .unknown
+                    }
+                }
+                
+                static func from(introductoryPrice: SKProductDiscount) -> Qonversion.Product.SubscriptionOffer.OfferType {
+                    switch introductoryPrice.type {
+                    case .introductory:
+                        return .introductory
+                    case .subscription:
+                        return .subscription
+                    default:
+                        return .unknown
+                    }
+                }
+            }
+            
+            /// Payment mode for a product
+            public enum PaymentMode {
+                
+                /// For rare cases when the payment mode can't be determined.
+                case unknown
+                
+                /// A payment mode of a product discount that indicates the discount applies over a single billing period or multiple billing periods.
+                case payAsYouGo
+
+                /// A payment mode of a product discount that indicates the system applies the discount up front.
+                case payUpFront
+
+                /// A payment mode of a product discount that indicates a free trial offer.
+                case freeTrial
+                
+                @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+                static func from(paymentMode: StoreKit.Product.SubscriptionOffer.PaymentMode?) -> Qonversion.Product.SubscriptionOffer.PaymentMode {
+                    guard let mode: StoreKit.Product.SubscriptionOffer.PaymentMode = paymentMode else { return .unknown }
+
+                    switch mode {
+                    case .payUpFront:
+                        return .payUpFront
+                    case .payAsYouGo:
+                        return .payAsYouGo
+                    case .freeTrial:
+                        return .freeTrial
+                    default:
+                        return .unknown
+                    }
+                }
+                
+                static func from(oldPaymentMode: SKProductDiscount.PaymentMode) -> Qonversion.Product.SubscriptionOffer.PaymentMode {
+                    switch oldPaymentMode {
+                    case .payUpFront:
+                        return .payUpFront
+                    case .payAsYouGo:
+                        return .payAsYouGo
+                    case .freeTrial:
+                        return .freeTrial
+                    default:
+                        return .unknown
+                    }
+                }
+                
+            }
         }
         
+        /// Information about an auto-renewable subscription, such as its status, period, subscription group, and subscription offer details.
         public struct SubscriptionInfo {
             
             /// An optional introductory offer that will automatically be applied if the user is eligible.
@@ -284,12 +390,36 @@ extension Qonversion {
             public let promotionalOffers: [Qonversion.Product.SubscriptionOffer]
 
             /// The group identifier for this subscription.
-            public let subscriptionGroupID: String
+            public let subscriptionGroupId: String
 
             /// The duration that this subscription lasts before auto-renewing.
-            public let subscriptionPeriod: Product.SubscriptionPeriod
+            public let subscriptionPeriod: Qonversion.Product.SubscriptionPeriod
+            
+            @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+            init?(originalSubscription: StoreKit.Product.SubscriptionInfo?) {
+                guard let originalSubscription else { return nil }
+                
+                introductoryOffer = Qonversion.Product.SubscriptionOffer(originalOffer: originalSubscription.introductoryOffer)
+                promotionalOffers = originalSubscription.promotionalOffers.compactMap {
+                    Qonversion.Product.SubscriptionOffer(originalOffer: $0)
+                }
+                subscriptionGroupID = originalSubscription.subscriptionGroupID
+                subscriptionPeriod = Qonversion.Product.SubscriptionPeriod(originalPeriod: originalSubscription.subscriptionPeriod)
+            }
+            
+            init?(oldProduct: SKProduct?) {
+                guard let oldProduct, let subscriptionGroupId = oldProduct.subscriptionGroupIdentifier, let skSubscriptionPeriod = oldProduct.subscriptionPeriod else { return nil }
+                
+                subscriptionGroupID = subscriptionGroupId
+                introductoryOffer = Qonversion.Product.SubscriptionOffer(introductoryPrice: oldProduct.introductoryPrice)
+                subscriptionPeriod = Qonversion.Product.SubscriptionPeriod(subscriptionPeriod: skSubscriptionPeriod)
+                promotionalOffers = oldProduct.discounts.compactMap {
+                    Qonversion.Product.SubscriptionOffer(introductoryPrice: $0)
+                }
+            }
         }
         
+        /// The types of in-app purchases.
         public enum ProductType {
             
             /// A consumable in-app purchase.
@@ -331,10 +461,12 @@ extension Qonversion {
         @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         mutating func enrich(storeProduct: StoreKit.Product) {
             self._storeProduct = storeProduct
+            self.subscription = Qonversion.Product.SubscriptionInfo(originalSubscription: storeProduct.subscription)
         }
         
         mutating func enrich(skProduct: SKProduct) {
             self.skProduct = skProduct
+            self.subscription = Qonversion.Product.SubscriptionInfo(oldProduct: skProduct)
         }
         
         private enum CodingKeys: String, CodingKey {
@@ -342,7 +474,5 @@ extension Qonversion {
             case storeId
             case offeringId
         }
-        
     }
-    
 }

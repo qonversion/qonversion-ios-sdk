@@ -78,5 +78,4 @@ final class LocalStorage: LocalStorageInterface {
     func set(bool: Bool, forKey key: String) {
         userDefaults.set(bool, forKey: key)
     }
-    
 }
