@@ -15,10 +15,10 @@ extension Qonversion {
         /// The unique Qonversion product identifier.
         public let qonversionId: String
         
-        /// The unique AppStore product identifier.
+        /// The AppStore product identifier.
         public let storeId: String
         
-        /// The unique Qonversion offering identifier if product linked to an offering or nil.
+        /// The Qonversion offering identifier if product linked to an offering or nil.
         public let offeringId: String?
         
         /// The localized display name of the product, if it exists.
@@ -96,7 +96,7 @@ extension Qonversion {
         @backDeployed(before: iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, macCatalyst 16.0)
         public var priceFormatStyle: Decimal.FormatStyle.Currency? { storeProduct?.priceFormatStyle }
         
-        /// The original StoreKit product.
+        /// The original StoreKit 1 product.
         ///
         /// For StoreKit 2 product use ``Qonversion/Qonversion/Product/storeProduct`` .
         public var skProduct: SKProduct?
@@ -185,7 +185,7 @@ extension Qonversion {
             /// Unit type of a subscription period.
             public enum Unit {
                 
-                /// For the rare case when the subscription period unit can't be determined.
+                /// For rare cases when the subscription period unit can't be determined.
                 case unknown
                 
                 /// A subscription period unit of a day.
@@ -300,7 +300,7 @@ extension Qonversion {
                 case unknown
                 
                 /// An introductory offer for a subscription.
-                case  introductory
+                case introductory
                 
                 /// A promotional offer.
                 case promotional
@@ -310,7 +310,7 @@ extension Qonversion {
                 
                 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
                 static func from(offerType: StoreKit.Product.SubscriptionOffer.OfferType?) -> Qonversion.Product.SubscriptionOffer.OfferType {
-                    guard let offerType: StoreKit.Product.SubscriptionOffer.OfferType = offerType else { return .unknown }
+                    guard let offerType else { return .unknown }
                     switch offerType {
                     case .introductory:
                         return .introductory
@@ -336,7 +336,7 @@ extension Qonversion {
             /// Payment mode for a product
             public enum PaymentMode {
                 
-                /// For the rare case when the payment mode can't be determined.
+                /// For rare cases when the payment mode can't be determined.
                 case unknown
                 
                 /// A payment mode of a product discount that indicates the discount applies over a single billing period or multiple billing periods.
@@ -390,7 +390,7 @@ extension Qonversion {
             public let promotionalOffers: [Qonversion.Product.SubscriptionOffer]
 
             /// The group identifier for this subscription.
-            public let subscriptionGroupID: String
+            public let subscriptionGroupId: String
 
             /// The duration that this subscription lasts before auto-renewing.
             public let subscriptionPeriod: Qonversion.Product.SubscriptionPeriod
