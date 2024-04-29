@@ -10,18 +10,11 @@ import Foundation
 /// An entry point to use Qonversion SDK.
 public final class Qonversion {
     
-    // MARK: - Private
-    private var userPropertiesManager: UserPropertiesManagerInterface?
-    private var deviceManager: DeviceManagerInterface?
-    private var remoteConfigManager: RemoteConfigManagerInterface?
-    
-    private init() { }
-    
     // MARK: - Public
     
     /// Use this variable to get the current initialized instance of the Qonversion SDK.
     /// Please, use the variable only after initializing the SDK.
-    /// - Returns: the current initialized instance of the ``Qonversion`` SDK
+    /// - Returns: the current initialized instance of the ``Qonversion/Qonversion`` SDK
     public static let shared = Qonversion()
     
     /// An entry point to use Qonversion SDK. Call to initialize Qonversion SDK with required and extra configs.
@@ -33,6 +26,7 @@ public final class Qonversion {
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
+        Qonversion.shared.productsManager = assembly.productsManager()
         Qonversion.shared.remoteConfigManager = assembly.remoteConfigManager()
 
         return Qonversion.shared
@@ -163,4 +157,12 @@ public final class Qonversion {
 
         try await remoteConfigManager.detachUserFromExperiment(id: id)
     }
+
+    // MARK: - Private
+    private var userPropertiesManager: UserPropertiesManagerInterface?
+    private var deviceManager: DeviceManagerInterface?
+    private var productsManager: ProductsManagerInterface?
+    private var remoteConfigManager: RemoteConfigManagerInterface?
+    
+    private init() { }
 }

@@ -38,6 +38,18 @@ final class QonversionAssembly {
         return deviceManager
     }
     
+    func productsManager() -> ProductsManagerInterface {
+        let productsService: ProductsServiceInterface = servicesAssembly.productsService()
+        let storeKitFacade: StoreKitFacade = servicesAssembly.storeKitFacade()
+        let localStorage: LocalStorageInterface = miscAssembly.localStorage()
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let productsManager = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, logger: logger)
+        
+        storeKitFacade.delegate = productsManager
+        
+        return productsManager
+    }
+    
     func remoteConfigManager() -> RemoteConfigManagerInterface {
         let remoteConfigService = servicesAssembly.remoteConfigService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()

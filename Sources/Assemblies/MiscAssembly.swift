@@ -7,6 +7,7 @@
 
 import Foundation
 import OSLog
+import StoreKit
 
 fileprivate enum SDKLevelConstants: String {
     case version = "1.0"
@@ -110,5 +111,9 @@ final class MiscAssembly {
         let headersBuilder = HeadersBuilder(apiKey: apiKey, sdkVersion: SDKLevelConstants.version.rawValue, deviceInfoCollector: deviceInfoCollector)
         
         return headersBuilder
+    }
+    
+    func paymentQueue() -> SKPaymentQueue {
+        return SKPaymentQueue.default()
     }
 }

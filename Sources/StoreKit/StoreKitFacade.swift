@@ -13,6 +13,14 @@ class StoreKitFacade: StoreKitFacadeInterface {
     let storeKitOldWrapper: StoreKitOldWrapperInterface?
     let storeKitWrapper: StoreKitWrapperInterface?
     let storeKitMapper: StoreKitMapperInterface
+    var delegate: StoreKitFacadeDelegate?
+    
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    var loadedProducts: [String: StoreKit.Product]? { _loadedProducts as? [String: StoreKit.Product] }
+    
+    var _loadedProducts: [String: Any] = [:]
+    
+    var loadedOldProducts: [String: SKProduct] = [:]
     
     init(storeKitOldWrapper: StoreKitOldWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
         self.storeKitOldWrapper = storeKitOldWrapper
@@ -27,7 +35,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
     }
     
     func currentEntitlements() async -> [Qonversion.Transaction] {
-        guard #available(iOS 15.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
+        guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
         
         let transactions: [StoreKit.Transaction] = await storeKitWrapper.currentEntitlements()
         #warning("Map response here")
@@ -94,7 +102,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         storeKitWrapper.finish(transaction: transaction)
     }
     
-    @available(iOS 15.0, *)
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     func finish(transaction: StoreKit.Transaction) async {
         guard let storeKitWrapper = storeKitWrapper else { return }
         
@@ -105,27 +113,74 @@ class StoreKitFacade: StoreKitFacadeInterface {
         return []
     }
     
-    func products(for ids: [String]) async throws -> [String] {
-        if #available(iOS 15.0, *) {
+    func products(for ids: [String]) async throws -> [StoreProductWrapper] {
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             let products = try await storeKitWrapper.products(for: ids)
-            #warning("Map response here")
-            return [products.description]
+            products.forEach {
+                _loadedProducts[$0.id] = $0
+            }
+            
+            return products.map { StoreProductWrapper(_product: $0, oldProduct: nil) }
         } else {
             guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             return try await withCheckedThrowingContinuation { continuation in
-                storeKitWrapper.products(for: ids, completion: { response, error in
+                storeKitWrapper.products(for: ids, completion: { [weak self] response, error in
+                    guard let self else { return }
+                    
                     if let error {
-                        #warning("Handle error here")
-                        continuation.resume(throwing: QonversionError(type: .critical))
+                        continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed, error: error))
                     } else {
-                        #warning("Map response here")
-                        continuation.resume(returning: [""])
+                        guard let response else {
+                            return continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed))
+                        }
+                        
+                        response.products.forEach {
+                            self.loadedOldProducts[$0.productIdentifier] = $0
+                        }
+                        
+                        let products: [StoreProductWrapper] = response.products.map { StoreProductWrapper(_product: nil, oldProduct: $0) }
+                        continuation.resume(returning: products)
                     }
                 })
             }
         }
+    }
+}
+
+// MARK: - StoreKitWrapperDelegate
+
+extension StoreKitFacade: StoreKitWrapperDelegate {
+    
+    @available(iOS 16.4, macOS 14.4, *)
+    func promoPurchaseIntent(product: Product) {
+        delegate?.promoPurchaseIntent(product: product)
+    }
+}
+
+// MARK: - StoreKitOldWrapperDelegate
+
+extension StoreKitFacade: StoreKitOldWrapperDelegate {
+    
+    func handle(productsResponse: SKProductsResponse) {
+        
+    }
+    
+    func handle(restoreTransactionsError: any Error) {
+        
+    }
+    
+    func shouldAdd(storePayment: SKPayment, for product: SKProduct) -> Bool {
+        return true
+    }
+    
+    func handle(productsRequestError: any Error) {
+        
+    }
+    
+    func updated(transactions: [SKPaymentTransaction]) {
+        
     }
 }

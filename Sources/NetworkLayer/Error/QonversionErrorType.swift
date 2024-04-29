@@ -20,6 +20,8 @@ enum QonversionErrorType {
     case deviceCreationFailed
     case deviceUpdateFailed
     case unableToSerializeDevice
+    case productsLoadingFailed
+    case storeProductsLoadingFailed
     case loadingRemoteConfigFailed
     case loadingRemoteConfigListFailed
     case attachingUserToRemoteConfigFailed
@@ -40,6 +42,10 @@ enum QonversionErrorType {
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:
             return "Device update request failed. Unable to update the device."
+        case .productsLoadingFailed:
+            return "Products loading request failed."
+        case .storeProductsLoadingFailed:
+            return "Store products loading failed."
         case .loadingRemoteConfigFailed:
             return "Failed to load remote config."
         case .loadingRemoteConfigListFailed:

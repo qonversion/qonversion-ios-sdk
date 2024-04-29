@@ -44,7 +44,7 @@ final public class TemporaryFactory: StoreKitWrapperDelegate, StoreKitOldWrapper
     
     public init() {
         if #available(iOS 15.0, *) {
-            self.facade = StoreKitFacade(storeKitOldWrapper: StoreKitOldWrapper(delegate: self, paymentQueue: SKPaymentQueue.default()), storeKitMapper: StoreKitMapper())
+            self.facade = StoreKitFacade(storeKitOldWrapper: StoreKitOldWrapper(paymentQueue: SKPaymentQueue.default()), storeKitMapper: StoreKitMapper())
         } else {
             // Fallback on earlier versions
         }

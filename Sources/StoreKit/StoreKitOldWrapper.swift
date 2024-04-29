@@ -10,16 +10,15 @@ import StoreKit
 
 class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     
-    let delegate: StoreKitOldWrapperDelegate
     let paymentQueue: SKPaymentQueue
     
+    var delegate: StoreKitOldWrapperDelegate?
     var productsRequest: SKProductsRequest?
     var productsCompletions: [SKProductsRequest: StoreKitOldProductsCompletion] = [:]
     var purchaseCompletions: [SKPayment: StoreKitOldTransactionsCompletion] = [:]
     var restoreCompletions: [StoreKitOldTransactionsCompletion] = []
     
-    init(delegate: StoreKitOldWrapperDelegate, paymentQueue: SKPaymentQueue) {
-        self.delegate = delegate
+    init(paymentQueue: SKPaymentQueue) {
         self.paymentQueue = paymentQueue
         
         super.init()
@@ -47,7 +46,7 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
         paymentQueue.restoreCompletedTransactions()
     }
     
-    @available(iOS 14.0, *)
+    @available(iOS 14.0, visionOS 1.0, *)
     func presentCodeRedemptionSheet() {
         paymentQueue.presentCodeRedemptionSheet()
     }
@@ -78,20 +77,21 @@ extension StoreKitOldWrapper: SKPaymentTransactionObserver {
         firePurchaseCompletions(with: transactions)
         
         if purchaseCompletions.isEmpty {
-            delegate.updated(transactions: transactions)
+            delegate?.updated(transactions: transactions)
         }
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
         guard restoreCompletions.count > 0 else {
-            return delegate.handle(restoreTransactionsError: error)
+            delegate?.handle(restoreTransactionsError: error)
+            return
         }
         
         fireRestoreCompletions(with: [], error: error)
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
-        return delegate.shouldAdd(storePayment: payment, for: product)
+        return delegate?.shouldAdd(storePayment: payment, for: product) ?? true
     }
     
 }
@@ -102,7 +102,8 @@ extension StoreKitOldWrapper: SKProductsRequestDelegate {
    
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
         guard let completion: StoreKitOldProductsCompletion = productsCompletions[request] else {
-            return delegate.handle(productsResponse: response)
+            delegate?.handle(productsResponse: response)
+            return
         }
         
         completion(response, nil)
@@ -111,7 +112,7 @@ extension StoreKitOldWrapper: SKProductsRequestDelegate {
     func request(_ request: SKRequest, didFailWithError error: Error) {
         guard request is SKProductsRequest else { return }
         
-        delegate.handle(productsRequestError: error)
+        delegate?.handle(productsRequestError: error)
     }
     
 }

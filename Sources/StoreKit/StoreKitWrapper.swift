@@ -8,14 +8,10 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
 final class StoreKitWrapper: StoreKitWrapperInterface {
     
-    let delegate: StoreKitWrapperDelegate?
-    
-    init(delegate: StoreKitWrapperDelegate? = nil) {
-        self.delegate = delegate
-    }
+    var delegate: StoreKitWrapperDelegate?
     
     func products(for ids:[String]) async throws -> [StoreKit.Product] {
         let products: [StoreKit.Product] = try await Product.products(for: ids)
@@ -68,7 +64,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
         return await fetchTransactions(for: StoreKit.Transaction.updates)
     }
     
-    @available(iOS 16.4, *)
+    @available(iOS 16.4, macOS 14.4, *)
     func subscribeToPromoPurchases() {
         Task.detached {
             for await purchaseIntent in PurchaseIntent.intents {
@@ -78,7 +74,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
     }
     
     
-    @available(iOS 16.0, *)
+    @available(iOS 16.0, visionOS 1.0, *)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
         try await AppStore.presentOfferCodeRedeemSheet(in: scene)
     }
