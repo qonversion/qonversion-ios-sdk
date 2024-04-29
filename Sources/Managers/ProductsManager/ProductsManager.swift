@@ -8,6 +8,10 @@
 import Foundation
 import StoreKit
 
+fileprivate enum Constants: String {
+    case productsKey = "qonversion.keys.products"
+}
+
 final class ProductsManager: ProductsManagerInterface {
     
     let productsService: ProductsServiceInterface
@@ -33,13 +37,10 @@ final class ProductsManager: ProductsManagerInterface {
         var offerings: Qonversion.Offerings = try await productsService.offerings()
         
         do {
-            let productIds: [String] = offerings.availableOfferings.flatMap { $0.products.map { $0.storeId } }
-            
-            let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
-            
             var enrichedOfferings: [Qonversion.Offering] = []
             for var offering in offerings.availableOfferings {
-                let resultProducts: [Qonversion.Product] = enrich(products: offering.products, with: storeProducts)
+                #warning("This logic should be updated for a new product requirements")
+                let resultProducts: [Qonversion.Product] = try await enrich(products: offering.products)
                 offering.enrich(products: resultProducts)
                 
                 enrichedOfferings.append(offering)
@@ -67,28 +68,31 @@ final class ProductsManager: ProductsManagerInterface {
         let products: [Qonversion.Product] = try await productsService.products()
         
         do {
-            let productIds: [String] = products.map { $0.storeId }
-            let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
+            let resultProducts: [Qonversion.Product] = try await enrich(products: products)
             
-            var resultProducts: [Qonversion.Product] = []
-            
-            for var product in products {
-                guard let storeProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
-                
-                if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeProduct = storeProductWrapper.product {
-                    product.enrich(storeProduct: storeProduct)
-                } else if let storeProduct = storeProductWrapper.oldProduct {
-                    product.enrich(skProduct: storeProduct)
-                }
-                
-                resultProducts.append(product)
-            }
+            localStorage.set(resultProducts, forKey: Constants.productsKey.rawValue)
             
             loadedProducts = resultProducts
             
             return resultProducts
         } catch {
-            logger.error(error.localizedDescription)
+            switch error {
+            case let productsLoadingError as QonversionError:
+                if productsLoadingError.type == .productsLoadingFailed {
+                    guard let products = localStorage.object(forKey: Constants.productsKey.rawValue) as? [Qonversion.Product] else {
+                        logger.error(productsLoadingError.message)
+                        throw productsLoadingError
+                    }
+                    
+                    let resultProducts: [Qonversion.Product] = try await enrich(products: products)
+                    
+                    return resultProducts
+                } else {
+                    fallthrough
+                }
+            default:
+                throw error
+            }
         }
         
         loadedProducts = products
@@ -98,7 +102,10 @@ final class ProductsManager: ProductsManagerInterface {
     
     // MARK: - Private
     
-    private func enrich(products: [Qonversion.Product], with storeProducts: [StoreProductWrapper]) -> [Qonversion.Product] {
+    private func enrich(products: [Qonversion.Product]) async throws -> [Qonversion.Product] {
+        let productIds: [String] = products.map { $0.storeId }
+        let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
+        
         var resultProducts: [Qonversion.Product] = []
         
         for var product in products {
