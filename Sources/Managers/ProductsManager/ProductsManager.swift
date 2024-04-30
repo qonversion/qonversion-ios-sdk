@@ -76,6 +76,7 @@ final class ProductsManager: ProductsManagerInterface {
             
             return resultProducts
         } catch {
+            loadedProducts = products
             switch error {
             case let productsLoadingError as QonversionError:
                 if productsLoadingError.type == .productsLoadingFailed {
@@ -94,10 +95,6 @@ final class ProductsManager: ProductsManagerInterface {
                 throw error
             }
         }
-        
-        loadedProducts = products
-        
-        return products
     }
     
     // MARK: - Private
