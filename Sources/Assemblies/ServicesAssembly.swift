@@ -38,6 +38,14 @@ final class ServicesAssembly {
         return productsService
     }
     
+    func entitlementsService() -> EntitlementsServiceInterface {
+        let requestProcessor = requestProcessor()
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let entitlementsService = EntitlementsService(requestProcessor: requestProcessor, internalConfig: miscAssembly.internalConfig, logger: logger)
+        
+        return entitlementsService
+    }
+    
     func storeKitMapper() -> StoreKitMapperInterface {
         let mapper = StoreKitMapper()
         

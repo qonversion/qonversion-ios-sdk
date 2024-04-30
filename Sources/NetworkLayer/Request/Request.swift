@@ -20,6 +20,7 @@ enum Request : Hashable {
     case updateDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .put)
     case appleSearchAds(userId: String, endpoint: String = "v3/appleads/", body: RequestBodyDict, type: RequestType = .post)
     case getProducts(userId: String, endpoint: String = "v3/products/", type: RequestType = .get)
+    case getEntitlements(userId: String, endpoint: String = "v3/entitlements/", type: RequestType = .get)
     case getOfferings(userId: String, endpoint: String = "v3/offerings/", type: RequestType = .get)
     case remoteConfig(userId: String, contextKey: String?, endpoint: String = "v3/remote-config", type: RequestType = .get)
     case remoteConfigList(userId: String, contextKeys: [String], includeEmptyContextKey: Bool, endpoint: String = "v3/remote-configs", type: RequestType = .get)
@@ -70,6 +71,9 @@ enum Request : Hashable {
             return defaultRequest(urlString: endpoint + userId, body: body, type: type)
         
         case let .getProducts(userId, endpoint, type):
+            return defaultRequest(urlString: endpoint + userId, body: nil, type: type)
+            
+        case let .getEntitlements(userId, endpoint, type):
             return defaultRequest(urlString: endpoint + userId, body: nil, type: type)
         
         case let .getOfferings(userId, endpoint, type):
@@ -160,6 +164,11 @@ enum Request : Hashable {
             hasher.combine(type)
         case let .getProducts(userId, endpoint, type):
             hasher.combine("getProducts")
+            hasher.combine(userId)
+            hasher.combine(endpoint)
+            hasher.combine(type)
+        case let .getEntitlements(userId, endpoint, type):
+            hasher.combine("getEntitlements")
             hasher.combine(userId)
             hasher.combine(endpoint)
             hasher.combine(type)

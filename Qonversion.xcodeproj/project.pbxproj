@@ -19,10 +19,16 @@
 		70B4E9722BD955E900EE808C /* Offerings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9712BD955E900EE808C /* Offerings.swift */; };
 		70B4E9762BDAA7C300EE808C /* RemoteConfigService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9732BDAA7C300EE808C /* RemoteConfigService.swift */; };
 		70B4E9772BDAA7C300EE808C /* RemoteConfigServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9742BDAA7C300EE808C /* RemoteConfigServiceInterface.swift */; };
+		70B4E97A2BDBD59E00EE808C /* PurchasesManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9792BDBD59E00EE808C /* PurchasesManagerInterface.swift */; };
+		70B4E97C2BDBD72100EE808C /* PurchasesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E97B2BDBD72100EE808C /* PurchasesManager.swift */; };
+		70B4E97E2BDBDA4600EE808C /* Entitlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E97D2BDBDA4600EE808C /* Entitlement.swift */; };
 		70B4E9822BDF981E00EE808C /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E97F2BDF981E00EE808C /* ProductsManager.swift */; };
 		70B4E9832BDF981E00EE808C /* ProductsManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9802BDF981E00EE808C /* ProductsManagerInterface.swift */; };
 		70B4E9872BDF986C00EE808C /* ProductsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9842BDF986C00EE808C /* ProductsService.swift */; };
 		70B4E9882BDF986C00EE808C /* ProductsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9852BDF986C00EE808C /* ProductsServiceInterface.swift */; };
+		70B4E98A2BE14DAA00EE808C /* TransactionInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E9892BE14DAA00EE808C /* TransactionInfo.swift */; };
+		70B4E98D2BE150CF00EE808C /* EntitlementsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E98C2BE150CF00EE808C /* EntitlementsServiceInterface.swift */; };
+		70B4E98F2BE150ED00EE808C /* EntitlementsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4E98E2BE150ED00EE808C /* EntitlementsService.swift */; };
 		70CD92F62BC6E22B0039D65C /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929B2BC6E22B0039D65C /* MiscAssembly.swift */; };
 		70CD92F72BC6E22B0039D65C /* QonversionAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929C2BC6E22B0039D65C /* QonversionAssembly.swift */; };
 		70CD92F82BC6E22B0039D65C /* ServicesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD929D2BC6E22B0039D65C /* ServicesAssembly.swift */; };
@@ -151,10 +157,16 @@
 		70B4E9712BD955E900EE808C /* Offerings.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Offerings.swift; sourceTree = "<group>"; };
 		70B4E9732BDAA7C300EE808C /* RemoteConfigService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteConfigService.swift; sourceTree = "<group>"; };
 		70B4E9742BDAA7C300EE808C /* RemoteConfigServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteConfigServiceInterface.swift; sourceTree = "<group>"; };
+		70B4E9792BDBD59E00EE808C /* PurchasesManagerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesManagerInterface.swift; sourceTree = "<group>"; };
+		70B4E97B2BDBD72100EE808C /* PurchasesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesManager.swift; sourceTree = "<group>"; };
+		70B4E97D2BDBDA4600EE808C /* Entitlement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entitlement.swift; sourceTree = "<group>"; };
 		70B4E97F2BDF981E00EE808C /* ProductsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsManager.swift; sourceTree = "<group>"; };
 		70B4E9802BDF981E00EE808C /* ProductsManagerInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsManagerInterface.swift; sourceTree = "<group>"; };
 		70B4E9842BDF986C00EE808C /* ProductsService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsService.swift; sourceTree = "<group>"; };
 		70B4E9852BDF986C00EE808C /* ProductsServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsServiceInterface.swift; sourceTree = "<group>"; };
+		70B4E9892BE14DAA00EE808C /* TransactionInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionInfo.swift; sourceTree = "<group>"; };
+		70B4E98C2BE150CF00EE808C /* EntitlementsServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementsServiceInterface.swift; sourceTree = "<group>"; };
+		70B4E98E2BE150ED00EE808C /* EntitlementsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementsService.swift; sourceTree = "<group>"; };
 		70CD929B2BC6E22B0039D65C /* MiscAssembly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MiscAssembly.swift; sourceTree = "<group>"; };
 		70CD929C2BC6E22B0039D65C /* QonversionAssembly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QonversionAssembly.swift; sourceTree = "<group>"; };
 		70CD929D2BC6E22B0039D65C /* ServicesAssembly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ServicesAssembly.swift; sourceTree = "<group>"; };
@@ -314,6 +326,15 @@
 			path = RemoteConfigService;
 			sourceTree = "<group>";
 		};
+		70B4E9782BDBD59100EE808C /* PurchasesManager */ = {
+			isa = PBXGroup;
+			children = (
+				70B4E9792BDBD59E00EE808C /* PurchasesManagerInterface.swift */,
+				70B4E97B2BDBD72100EE808C /* PurchasesManager.swift */,
+			);
+			path = PurchasesManager;
+			sourceTree = "<group>";
+		};
 		70B4E9812BDF981E00EE808C /* ProductsManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -330,6 +351,15 @@
 				70B4E9852BDF986C00EE808C /* ProductsServiceInterface.swift */,
 			);
 			path = ProductsService;
+			sourceTree = "<group>";
+		};
+		70B4E98B2BE150C400EE808C /* EntitlementsService */ = {
+			isa = PBXGroup;
+			children = (
+				70B4E98C2BE150CF00EE808C /* EntitlementsServiceInterface.swift */,
+				70B4E98E2BE150ED00EE808C /* EntitlementsService.swift */,
+			);
+			path = EntitlementsService;
 			sourceTree = "<group>";
 		};
 		70CD929E2BC6E22B0039D65C /* Assemblies */ = {
@@ -359,6 +389,8 @@
 				6A840DF82BD6ADAD00E5E8E3 /* Experiment.swift */,
 				6A840DFC2BD6ADD700E5E8E3 /* RemoteConfig.swift */,
 				6A840DFE2BD6ADEA00E5E8E3 /* RemoteConfigList.swift */,
+				70B4E97D2BDBDA4600EE808C /* Entitlement.swift */,
+				70B4E9892BE14DAA00EE808C /* TransactionInfo.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
@@ -386,6 +418,7 @@
 			isa = PBXGroup;
 			children = (
 				70B4E9812BDF981E00EE808C /* ProductsManager */,
+				70B4E9782BDBD59100EE808C /* PurchasesManager */,
 				6A840E022BD6AE2E00E5E8E3 /* RemoteConfig */,
 				70CD92A82BC6E22B0039D65C /* Device */,
 				70CD92AC2BC6E22B0039D65C /* UserProperties */,
@@ -543,6 +576,7 @@
 		70CD92DB2BC6E22B0039D65C /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				70B4E98B2BE150C400EE808C /* EntitlementsService */,
 				70B4E9862BDF986C00EE808C /* ProductsService */,
 				70B4E9752BDAA7C300EE808C /* RemoteConfigService */,
 				70CD92D72BC6E22B0039D65C /* Device */,
@@ -838,6 +872,7 @@
 			files = (
 				70CD92FC2BC6E22B0039D65C /* UserProperties.swift in Sources */,
 				70CD93172BC6E22B0039D65C /* ResponseDecoderInterface.swift in Sources */,
+				70B4E98A2BE14DAA00EE808C /* TransactionInfo.swift in Sources */,
 				70CD93082BC6E22B0039D65C /* HeadersBuilder.swift in Sources */,
 				6A840E062BD6AE5700E5E8E3 /* RemoteConfigManagerInterface.swift in Sources */,
 				70CD93372BC6E22B0039D65C /* StorageConstants.swift in Sources */,
@@ -884,13 +919,17 @@
 				70CD930F2BC6E22B0039D65C /* RateLimiterInterface.swift in Sources */,
 				70CD931F2BC6E22B0039D65C /* DeviceServiceInterface.swift in Sources */,
 				70CD93362BC6E22B0039D65C /* Qonversion.swift in Sources */,
+				70B4E98F2BE150ED00EE808C /* EntitlementsService.swift in Sources */,
 				70B4E9702BD940F700EE808C /* StoreProductWrapper.swift in Sources */,
 				70B4E9832BDF981E00EE808C /* ProductsManagerInterface.swift in Sources */,
 				6A840DFD2BD6ADD700E5E8E3 /* RemoteConfig.swift in Sources */,
+				70B4E97E2BDBDA4600EE808C /* Entitlement.swift in Sources */,
 				70CD93342BC6E22B0039D65C /* Qonversion.docc in Sources */,
 				70CD92FB2BC6E22B0039D65C /* User.swift in Sources */,
 				70CD93302BC6E22B0039D65C /* Configuration.swift in Sources */,
 				70CD932E2BC6E22B0039D65C /* LoggerWrapper.swift in Sources */,
+				70B4E97A2BDBD59E00EE808C /* PurchasesManagerInterface.swift in Sources */,
+				70B4E97C2BDBD72100EE808C /* PurchasesManager.swift in Sources */,
 				70CD932F2BC6E22B0039D65C /* Utils.swift in Sources */,
 				70CD93322BC6E22B0039D65C /* LaunchMode.swift in Sources */,
 				70CD92F72BC6E22B0039D65C /* QonversionAssembly.swift in Sources */,
@@ -919,6 +958,7 @@
 				70CD93052BC6E22B0039D65C /* QonversionError.swift in Sources */,
 				70CD93222BC6E22B0039D65C /* StoreKitFacade.swift in Sources */,
 				70CD930B2BC6E22B0039D65C /* NetworkErrorHandlerInterface.swift in Sources */,
+				70B4E98D2BE150CF00EE808C /* EntitlementsServiceInterface.swift in Sources */,
 				70CD92FA2BC6E22B0039D65C /* Transaction.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

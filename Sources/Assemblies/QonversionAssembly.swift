@@ -50,6 +50,15 @@ final class QonversionAssembly {
         return productsManager
     }
     
+    func purchasesManager() -> PurchasesManagerInterface {
+        let entitlementsService: EntitlementsServiceInterface = servicesAssembly.entitlementsService()
+        let localStorage: LocalStorageInterface = miscAssembly.localStorage()
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let purchasesManager = PurchasesManager(entitlementsService: entitlementsService, localStorage: localStorage, logger: logger)
+        
+        return purchasesManager
+    }
+    
     func remoteConfigManager() -> RemoteConfigManagerInterface {
         let remoteConfigService = servicesAssembly.remoteConfigService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()

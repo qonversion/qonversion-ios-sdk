@@ -149,7 +149,7 @@ extension Qonversion {
         
         /// Transaction ownership type.
         /// StoreKit [OwnershipType](https://developer.apple.com/documentation/storekit/transaction/ownershiptype) wrapper
-        public enum OwnershipType: String {
+        public enum OwnershipType: String, Decodable {
             
             /// The current user is the purchaser of the transaction.
             case purchased
@@ -161,7 +161,7 @@ extension Qonversion {
         
         /// Transaction environment type.
         /// App Store [Environment](https://developer.apple.com/documentation/storekit/appstore/environment) wrapper.
-        public enum Environment: String {
+        public enum Environment: String, Decodable {
             
             /// A value that indicates the production server environment.
             case production
