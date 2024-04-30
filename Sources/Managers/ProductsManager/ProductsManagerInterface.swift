@@ -11,4 +11,6 @@ protocol ProductsManagerInterface {
     
     func products() async throws -> [Qonversion.Product]
     
+    func offerings() async throws -> Qonversion.Offerings
+    
 }
