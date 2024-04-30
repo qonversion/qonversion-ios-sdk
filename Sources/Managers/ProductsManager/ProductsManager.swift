@@ -65,9 +65,9 @@ final class ProductsManager: ProductsManagerInterface {
             return loadedProducts
         }
         
-        let products: [Qonversion.Product] = try await productsService.products()
-        
         do {
+            let products: [Qonversion.Product] = try await productsService.products()
+            
             let resultProducts: [Qonversion.Product] = try await enrich(products: products)
             
             localStorage.set(resultProducts, forKey: Constants.productsKey.rawValue)
@@ -76,7 +76,6 @@ final class ProductsManager: ProductsManagerInterface {
             
             return resultProducts
         } catch {
-            loadedProducts = products
             switch error {
             case let productsLoadingError as QonversionError:
                 if productsLoadingError.type == .productsLoadingFailed {
