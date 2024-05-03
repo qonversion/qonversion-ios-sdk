@@ -40,7 +40,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @property (nonatomic, copy) NSArray<SKPaymentTransaction *> *restoredTransactions;
 
-@property (nonatomic, strong) NSMutableDictionary <NSString *, QONPurchaseCompletionHandler> *purchasingBlocks;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, QONPurchaseCompletionHandler> *purchasingBlocks;
 @property (nonatomic, strong) NSMutableArray<QNRestoreCompletionHandler> *restorePurchasesBlocks;
 @property (nonatomic, strong) NSMutableArray<QONEntitlementsCompletionHandler> *entitlementsBlocks;
 @property (nonatomic, strong) NSMutableArray<QONProductsCompletionHandler> *productsBlocks;
@@ -62,6 +62,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, assign) BOOL identityInProgress;
 @property (nonatomic, assign) BOOL unhandledLogoutAvailable;
 @property (nonatomic, copy) NSString *pendingIdentityUserID;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSMutableArray<QONUserInfoCompletionHandler> *> *pendingIdentityBlocks;
 
 @end
 
@@ -97,6 +98,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _productsBlocks = [NSMutableArray new];
     _offeringsBlocks = [NSMutableArray new];
     _userInfoBlocks = [NSMutableArray new];
+    _pendingIdentityBlocks = [NSMutableDictionary new];
   }
   
   return self;
@@ -198,15 +200,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }];
 }
 
-- (void)identify:(NSString *)userID {
+- (void)identify:(NSString *)identityId completion:(nullable QONUserInfoCompletionHandler)completion {
   self.unhandledLogoutAvailable = NO;
   
-  NSString *currentIdentityID = [self.userInfoService obtainCustomIdentityUserID];
-  if ([currentIdentityID isEqualToString:userID]) {
+  NSString *currentIdentityId = [self.userInfoService obtainCustomIdentityUserID];
+  if ([currentIdentityId isEqualToString:identityId]) {
+    if (completion) {
+      [self userInfo:completion];
+    }
     return;
   }
   
-  self.pendingIdentityUserID = userID;
+  [self addIdentityCompletion:identityId completion:completion];
+  self.pendingIdentityUserID = identityId;
   if (!self.launchingFinished || self.restoreInProgress) {
     return;
   }
@@ -221,39 +227,47 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         [weakSelf executeEntitlementsBlocksWithError:error];
         [weakSelf.remoteConfigManager userChangingRequestFailedWithError:error];
       } else {
-        [weakSelf processIdentity:userID];
+        [weakSelf processIdentity:identityId];
       }
     }];
   } else {
-    [self processIdentity:userID];
+    [self processIdentity:identityId];
   }
 }
 
-- (void)processIdentity:(NSString *)userID {
+- (void)processIdentity:(NSString *)identityId {
   NSString *currentUserID = [self.userInfoService obtainUserID];
   
   __block __weak QNProductCenterManager *weakSelf = self;
-  [self.identityManager identify:userID completion:^(NSString *result, NSError * _Nullable error) {
+  [self.identityManager identify:identityId completion:^(NSString *result, NSError * _Nullable error) {
     weakSelf.identityInProgress = NO;
     
     if (error) {
       [weakSelf executeEntitlementsBlocksWithError:error];
       [weakSelf.remoteConfigManager userChangingRequestFailedWithError:error];
+      [weakSelf fireIdentityError:error identityId:identityId];
       return;
     }
     
     weakSelf.pendingIdentityUserID = nil;
     
-    [weakSelf.userInfoService storeCustomIdentityUserID:userID];
+    [weakSelf.userInfoService storeCustomIdentityUserID:identityId];
     
     if ([currentUserID isEqualToString:result]) {
       [weakSelf handlePendingRequests:nil];
+      [weakSelf fireIdentitySuccess:identityId];
     } else {
       [[QNAPIClient shared] setUserID:result];
       [weakSelf.remoteConfigManager userHasBeenChanged];
-      
+
       [weakSelf resetActualPermissionsCache];
-      [weakSelf launchWithCompletion:nil];
+      [weakSelf launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+        if (error) {
+          [weakSelf fireIdentityError:error identityId:identityId];
+        } else {
+          [weakSelf fireIdentitySuccess:identityId];
+        }
+      }];
     }
   }];
 }
@@ -288,7 +302,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   
   [self actualizeUserInfo];
-  completion(self.user, self.launchError);
+  run_block_on_main(completion, self.user, self.launchError);
 }
 
 - (void)presentCodeRedemptionSheet {
@@ -1189,7 +1203,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 
   if (self.pendingIdentityUserID) {
-    [self identify:self.pendingIdentityUserID];
+    [self identify:self.pendingIdentityUserID completion:nil];
   } else if (self.unhandledLogoutAvailable) {
     [self handleLogout];
   } else {
@@ -1197,5 +1211,44 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [self executeEntitlementsBlocksWithError:lastError];
   }
 }
+
+- (void)addIdentityCompletion:(NSString *)identityId completion:(nullable QONUserInfoCompletionHandler)completion {
+    if (!completion) {
+        return;
+    }
+
+    NSMutableArray *completions = self.pendingIdentityBlocks[identityId];
+    if (!completions) {
+      completions = [NSMutableArray array];
+        self.pendingIdentityBlocks[identityId] = completions;
+    }
+    [completions addObject:completion];
+}
+
+- (void)fireIdentitySuccess:(NSString *)identityId {
+    NSMutableArray *completions = self.pendingIdentityBlocks[identityId];
+    if (!completions) {
+        return;
+    }
+    self.pendingIdentityBlocks[identityId] = [NSMutableArray array];
+
+    [self userInfo:^(QONUser * _Nullable user, NSError * _Nullable error) {
+        for (QONUserInfoCompletionHandler completion in completions) {
+          run_block_on_main(completion, user, error);
+        }
+    }];
+}
+
+- (void)fireIdentityError:(NSError * _Nullable)error identityId:(NSString *)identityId {
+    NSMutableArray *completions = self.pendingIdentityBlocks[identityId];
+    if (!completions) {
+        return;
+    }
+    self.pendingIdentityBlocks[identityId] = [NSMutableArray array];
+    for (QONUserInfoCompletionHandler completion in completions) {
+      run_block_on_main(completion, nil, error);
+    }
+}
+
 
 @end

@@ -68,6 +68,14 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
 - (void)identify:(NSString *)userID;
 
 /**
+ Call this function to link a user to his unique ID in your system and share purchase data.
+ 
+ @param userID - unique user ID in your system
+ @param completion - completion block that will be called when response is received
+ */
+- (void)identify:(NSString *)userID completion:(QONUserInfoCompletionHandler)completion;
+
+/**
  Call this function to unlink a user from his unique ID in your system and his purchase data.
  */
 - (void)logout;
