@@ -1219,7 +1219,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
     NSMutableArray *completions = self.pendingIdentityBlocks[identityId];
     if (!completions) {
-      completions = [NSMutableArray array];
+        completions = [NSMutableArray new];
         self.pendingIdentityBlocks[identityId] = completions;
     }
     [completions addObject:completion];
@@ -1230,11 +1230,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     if (!completions) {
         return;
     }
-    self.pendingIdentityBlocks[identityId] = [NSMutableArray array];
+    self.pendingIdentityBlocks[identityId] = nil;
 
     [self userInfo:^(QONUser * _Nullable user, NSError * _Nullable error) {
         for (QONUserInfoCompletionHandler completion in completions) {
-          run_block_on_main(completion, user, error);
+            run_block_on_main(completion, user, error);
         }
     }];
 }
@@ -1244,9 +1244,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     if (!completions) {
         return;
     }
-    self.pendingIdentityBlocks[identityId] = [NSMutableArray array];
+    self.pendingIdentityBlocks[identityId] = nil;
     for (QONUserInfoCompletionHandler completion in completions) {
-      run_block_on_main(completion, nil, error);
+        run_block_on_main(completion, nil, error);
     }
 }
 
