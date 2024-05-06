@@ -114,27 +114,31 @@ static bool _isInitialized = NO;
 }
 
 - (void)identify:(NSString *)userID {
-  [[Qonversion sharedInstance].productCenterManager identify:userID];
+  [self.productCenterManager identify:userID completion:nil];
+}
+
+- (void)identify:(NSString *)userID completion:(QONUserInfoCompletionHandler)completion {
+  [self.productCenterManager identify:userID completion:completion];
 }
 
 - (void)logout {
-  [[Qonversion sharedInstance].productCenterManager logout];
+  [self.productCenterManager logout];
 }
 
 - (void)presentCodeRedemptionSheet {
-  [[Qonversion sharedInstance].productCenterManager presentCodeRedemptionSheet];
+  [self.productCenterManager presentCodeRedemptionSheet];
 }
 
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)delegate {
-  [[Qonversion sharedInstance].productCenterManager setPurchasesDelegate:delegate];
+  [self.productCenterManager setPurchasesDelegate:delegate];
 }
 
 - (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate {
-  [[Qonversion sharedInstance].productCenterManager setPromoPurchasesDelegate:delegate];
+  [self.productCenterManager setPromoPurchasesDelegate:delegate];
 }
 
 - (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider {
-  [[Qonversion sharedInstance].attributionManager addAttributionData:data fromProvider:provider];
+  [self.attributionManager addAttributionData:data fromProvider:provider];
 }
 
 - (void)setUserProperty:(QONUserPropertyKey)key value:(NSString *)value {
@@ -152,87 +156,87 @@ static bool _isInitialized = NO;
 }
 
 - (void)setCustomUserProperty:(NSString *)property value:(NSString *)value {
-  [[Qonversion sharedInstance].propertiesManager setUserProperty:property value:value];
+  [self.propertiesManager setUserProperty:property value:value];
 }
 
 - (void)userProperties:(QONUserPropertiesCompletionHandler)completion {
-  [[Qonversion sharedInstance].propertiesManager getUserProperties:completion];
+  [self.propertiesManager getUserProperties:completion];
 }
 
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion {
-  [[Qonversion sharedInstance].productCenterManager checkEntitlements:completion];
+  [self.productCenterManager checkEntitlements:completion];
 }
 
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
-  [[Qonversion sharedInstance].productCenterManager purchaseProduct:product completion:completion];
+  [self.productCenterManager purchaseProduct:product completion:completion];
 }
 
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion {
-  [[Qonversion sharedInstance].productCenterManager purchase:productID completion:completion];
+  [self.productCenterManager purchase:productID completion:completion];
 }
 
 - (void)restore:(QNRestoreCompletionHandler)completion {
-  [[Qonversion sharedInstance].productCenterManager restore:completion];
+  [self.productCenterManager restore:completion];
 }
 
 - (void)products:(QONProductsCompletionHandler)completion {
-  return [[Qonversion sharedInstance].productCenterManager products:completion];
+  return [self.productCenterManager products:completion];
 }
 
 - (void)checkTrialIntroEligibility:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion {
-  [[Qonversion sharedInstance].productCenterManager checkTrialIntroEligibilityForProductIds:productIds completion:completion];
+  [self.productCenterManager checkTrialIntroEligibilityForProductIds:productIds completion:completion];
 }
 
 - (void)offerings:(QONOfferingsCompletionHandler)completion {
-  return [[Qonversion sharedInstance].productCenterManager offerings:completion];
+  return [self.productCenterManager offerings:completion];
 }
 
 - (void)collectAppleSearchAdsAttribution {
-  [[Qonversion sharedInstance].attributionManager addAppleSearchAttributionData];
+  [self.attributionManager addAppleSearchAttributionData];
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
-  [[[Qonversion sharedInstance] productCenterManager] userInfo:completion];
+  [[self productCenterManager] userInfo:completion];
 }
 
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigWithContextKey:nil completion:completion];
+  [[self remoteConfigManager] obtainRemoteConfigWithContextKey:nil completion:completion];
 }
 
 - (void)remoteConfig:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigWithContextKey:contextKey completion:completion];
+  [[self remoteConfigManager] obtainRemoteConfigWithContextKey:contextKey completion:completion];
 }
 
 - (void)remoteConfigList:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
+  [[self remoteConfigManager] obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
 }
 
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] obtainRemoteConfigList:completion];
+  [[self remoteConfigManager] obtainRemoteConfigList:completion];
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] attachUserToExperiment:experimentId groupId:groupId completion:completion];
+  [[self remoteConfigManager] attachUserToExperiment:experimentId groupId:groupId completion:completion];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] detachUserFromExperiment:experimentId completion:completion];
+  [[self remoteConfigManager] detachUserFromExperiment:experimentId completion:completion];
 }
 
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
+  [[self remoteConfigManager] attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  [[[Qonversion sharedInstance] remoteConfigManager] detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
+  [[self remoteConfigManager] detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
-  [[Qonversion sharedInstance] handlePurchases:purchasesInfo completion:nil];
+  [self handlePurchases:purchasesInfo completion:nil];
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(nullable QONDefaultCompletionHandler)completion {
-  [[[Qonversion sharedInstance] productCenterManager] handlePurchases:purchasesInfo completion:completion];
+  [[self productCenterManager] handlePurchases:purchasesInfo completion:completion];
 }
 
 // MARK: - Private
@@ -264,7 +268,7 @@ static bool _isInitialized = NO;
 
 - (void)collectAdvertisingId {
   NSString *idfa = [QNDevice current].advertiserID;
-  [[Qonversion sharedInstance] setUserProperty:QONUserPropertyKeyAdvertisingID value:idfa];
+  [self setUserProperty:QONUserPropertyKeyAdvertisingID value:idfa];
 }
 
 @end
