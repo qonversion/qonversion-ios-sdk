@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithUserInfoService:(id<QNUserInfoServiceInterface>)userInfoService identityManager:(id<QNIdentityManagerInterface>)identityManager localStorage:(id<QNLocalStorage>)localStorage;
 
 - (BOOL)isUserStable;
-- (void)identify:(NSString *)userID;
+- (void)identify:(NSString *)userID completion:(nullable QONUserInfoCompletionHandler)completion;
 - (void)logout;
 - (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate;
 - (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate;
