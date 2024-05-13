@@ -29,7 +29,7 @@ final class UserService: UserServiceInterface {
     func generateUserId() -> String {
         let uuidString: String = UUID().uuidString.replacingOccurrences(of: "-", with: "")
         let userId: String = Constants.userIdPrefix.rawValue + uuidString.lowercased()
-        localStorage.set(userId, forKey: Constants.userIdKey.rawValue)
+        localStorage.set(string: userId, forKey: Constants.userIdKey.rawValue)
         internalConfig.userId = userId
         
         return userId

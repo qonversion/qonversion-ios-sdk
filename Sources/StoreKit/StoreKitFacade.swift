@@ -38,9 +38,9 @@ class StoreKitFacade: StoreKitFacadeInterface {
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
         
         let transactions: [StoreKit.Transaction] = await storeKitWrapper.currentEntitlements()
-        #warning("Map response here")
+        let qonversionTransactions: [Qonversion.Transaction] = transactions.map { Qonversion.Transaction(transaction: $0) }
         
-        return []
+        return qonversionTransactions
     }
     
     func restore() async throws -> [Qonversion.Transaction] {

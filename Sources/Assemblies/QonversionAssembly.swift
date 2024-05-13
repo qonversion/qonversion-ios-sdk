@@ -14,7 +14,7 @@ final class QonversionAssembly {
     
     required init(apiKey: String, userDefaults: UserDefaults?) {
         let userDefaults = userDefaults ?? UserDefaults.standard
-        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: ""))
+        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "testUidForPurchase1714014382505"))
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
     }
@@ -52,9 +52,10 @@ final class QonversionAssembly {
     
     func purchasesManager() -> PurchasesManagerInterface {
         let entitlementsService: EntitlementsServiceInterface = servicesAssembly.entitlementsService()
+        let storeKitFacade: StoreKitFacadeInterface = servicesAssembly.storeKitFacade()
         let localStorage: LocalStorageInterface = miscAssembly.localStorage()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
-        let purchasesManager = PurchasesManager(entitlementsService: entitlementsService, localStorage: localStorage, logger: logger)
+        let purchasesManager = PurchasesManager(entitlementsService: entitlementsService, storeKitFacade: storeKitFacade, localStorage: localStorage, logger: logger)
         
         return purchasesManager
     }

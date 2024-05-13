@@ -20,9 +20,9 @@ final class DeviceManager: DeviceManagerInterface {
     }
     
     func collectDeviceInfo() async {
-        let deviceInfo = deviceInfoCollector.deviceInfo()
+        let deviceInfo: Device = deviceInfoCollector.deviceInfo()
 
-        let currentDevice: Device? = deviceService.currentDevice()
+        let currentDevice: Device? = currentDevice()
         
         if currentDevice == nil {
             return await create(deviceInfo: deviceInfo)
@@ -34,7 +34,7 @@ final class DeviceManager: DeviceManagerInterface {
     }
     
     func collectAdvertisingId() {
-        let currentDevice: Device? = deviceService.currentDevice()
+        let currentDevice: Device? = currentDevice()
         let advertisingId: String? = deviceInfoCollector.advertisingId()
         
         guard let advertisingId else {
@@ -59,20 +59,30 @@ extension DeviceManager {
     private func create(deviceInfo: Device) async {
         do {
             let device: Device = try await deviceService.create(device: deviceInfo)
-            deviceService.save(device: device)
+            try deviceService.save(device: device)
             return logger.info(LoggerInfoMessages.deviceCreated.rawValue)
         } catch {
-            return logger.warning(error.localizedDescription)
+            logger.warning("Failed to create device: " + error.message)
         }
     }
     
     private func update(deviceInfo: Device) async {
         do {
             let device: Device = try await deviceService.update(device: deviceInfo)
-            deviceService.save(device: device)
+            try deviceService.save(device: device)
             return logger.info(LoggerInfoMessages.deviceUpdated.rawValue)
         } catch {
-            return logger.warning(error.localizedDescription)
+            logger.warning("Failed to update device: " + error.message)
         }
+    }
+    
+    private func currentDevice() -> Device? {
+        var currentDevice: Device? = nil
+        do {
+            currentDevice = try deviceService.currentDevice()
+        } catch {
+            logger.error("Failed to load current device from storage: " + error.message)
+        }
+        return currentDevice
     }
 }

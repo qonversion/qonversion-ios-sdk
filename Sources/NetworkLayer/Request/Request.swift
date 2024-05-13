@@ -13,14 +13,13 @@ typealias RequestBodyArray = [AnyHashable]
 enum Request : Hashable {
     case getUser(id: String, endpoint: String = "v3/users/", type: RequestType = .get)
     case createUser(id: String, endpoint: String = "v3/users/", body: RequestBodyDict, type: RequestType = .post)
-    case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .post)
     case getProperties(userId: String, endpoint: String = "v3/users/%@/properties", type: RequestType = .get)
     case sendProperties(userId: String, endpoint: String = "v3/users/%@/properties", body: RequestBodyArray, type: RequestType = .post)
     case createDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .post)
     case updateDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .put)
     case appleSearchAds(userId: String, endpoint: String = "v3/appleads/", body: RequestBodyDict, type: RequestType = .post)
     case getProducts(userId: String, endpoint: String = "v3/products/", type: RequestType = .get)
-    case getEntitlements(userId: String, endpoint: String = "v3/entitlements/", type: RequestType = .get)
+    case getEntitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .get)
     case getOfferings(userId: String, endpoint: String = "v3/offerings/", type: RequestType = .get)
     case remoteConfig(userId: String, contextKey: String?, endpoint: String = "v3/remote-config", type: RequestType = .get)
     case remoteConfigList(userId: String, contextKeys: [String], includeEmptyContextKey: Bool, endpoint: String = "v3/remote-configs", type: RequestType = .get)
@@ -49,10 +48,6 @@ enum Request : Hashable {
         case let .createUser(id, endpoint, body, type):
             return defaultRequest(urlString: endpoint + id, body: body, type: type)
 
-        case let .entitlements(userId, endpoint, type):
-            let urlString = String(format: endpoint, arguments: [userId])
-            return defaultRequest(urlString: urlString, body: nil, type: type)
-
         case let .getProperties(userId, endpoint, type):
             let urlString = String(format: endpoint, arguments: [userId])
             return defaultRequest(urlString: urlString, body: nil, type: type)
@@ -74,7 +69,8 @@ enum Request : Hashable {
             return defaultRequest(urlString: endpoint + userId, body: nil, type: type)
             
         case let .getEntitlements(userId, endpoint, type):
-            return defaultRequest(urlString: endpoint + userId, body: nil, type: type)
+            let urlString = String(format: endpoint, arguments: [userId])
+            return defaultRequest(urlString: urlString, body: nil, type: type)
         
         case let .getOfferings(userId, endpoint, type):
             return defaultRequest(urlString: endpoint + userId, body: nil, type: type)
@@ -127,11 +123,6 @@ enum Request : Hashable {
             hasher.combine(id)
             hasher.combine(endpoint)
             hasher.combine(body)
-            hasher.combine(type)
-        case let .entitlements(userId, endpoint, type):
-            hasher.combine("entitlements")
-            hasher.combine(userId)
-            hasher.combine(endpoint)
             hasher.combine(type)
         case let .getProperties(userId, endpoint, type):
             hasher.combine("getProperties")

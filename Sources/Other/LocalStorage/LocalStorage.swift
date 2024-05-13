@@ -9,18 +9,42 @@ import Foundation
 
 final class LocalStorage: LocalStorageInterface {
     
-    let userDefaults: UserDefaults
+    private let userDefaults: UserDefaults
+    private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
     
-    init(userDefaults: UserDefaults) {
+    init(userDefaults: UserDefaults, encoder: JSONEncoder, decoder: JSONDecoder) {
         self.userDefaults = userDefaults
+        self.encoder = encoder
+        self.decoder = decoder
     }
     
-    func object(forKey key: String) -> Any? {
-        return self.userDefaults.object(forKey: key)
+    func object<T>(forKey key: String, dataType: T.Type) throws -> T? where T : Decodable {
+        guard let data = userDefaults.data(forKey: key) else {
+            return nil
+        }
+        
+        do {
+            let result: T = try decoder.decode(dataType, from: data)
+
+            return result
+        } catch {
+            throw QonversionError(type: .storageDeserializationFailed, error: error)
+        }
     }
 
-    func set(_ value: Any?, forKey key: String) {
-        userDefaults.set(value, forKey: key)
+    func set(_ value: Encodable?, forKey key: String) throws {
+        guard let value else {
+            return userDefaults.set(value, forKey: key)
+        }
+
+        var data: Data? = nil
+        do {
+            data = try encoder.encode(value)
+        } catch {
+            throw QonversionError(type: QonversionErrorType.storageSerializationFailed, error: error)
+        }
+        userDefaults.set(data, forKey: key)
     }
     
     func removeObject(forKey key: String) {
@@ -62,7 +86,11 @@ final class LocalStorage: LocalStorageInterface {
     func url(forKey key: String) -> URL? {
         return userDefaults.url(forKey: key)
     }
-
+    
+    func set(string: String, forKey key: String) {
+        userDefaults.set(string, forKey: key)
+    }
+    
     func set(integer: Int, forKey key: String) {
         userDefaults.set(integer, forKey: key)
     }
