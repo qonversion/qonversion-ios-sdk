@@ -30,12 +30,12 @@ final class DeviceService: DeviceServiceInterface {
         self.encoder = encoder
     }
     
-    func save(device: Device) {
-        localStorage.set(device, forKey: deviceKey())
+    func save(device: Device) throws {
+        try localStorage.set(device, forKey: deviceKey())
     }
-    
-    func currentDevice() -> Device? {
-        guard let device = localStorage.object(forKey: deviceKey()) as? Device else { return nil }
+
+    func currentDevice() throws -> Device? {
+        guard let device = try localStorage.object(forKey: deviceKey(), dataType: Device.self) else { return nil }
         
         return device
     }

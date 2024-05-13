@@ -9,7 +9,7 @@ import Foundation
 
 extension Qonversion {
 
-    public struct Entitlement: Decodable {
+    public struct Entitlement: Codable {
         
         /// Qonversion entitlement identifier.
         let id: String
@@ -60,33 +60,62 @@ extension Qonversion {
         /// Array of the transactions that unlocked current entitlement.
         let transactions: [Qonversion.TransactionInfo]
         
+        init(id: String, productId: String, active: Bool, renewState: Qonversion.Entitlement.RenewState, source: Qonversion.Entitlement.Source, startedDate: Date, expirationDate: Date?, renewsCount: Int, trialStartDate: Date?, firstPurchaseDate: Date?, lastPurchaseDate: Date?, lastActivatedOfferCode: String?, grantType: Qonversion.Entitlement.GrantType, autoRenewDisableDate: Date?, transactions: [Qonversion.TransactionInfo]) {
+            self.id = id
+            self.productId = productId
+            self.active = active
+            self.renewState = renewState
+            self.source = source
+            self.startedDate = startedDate
+            self.expirationDate = expirationDate
+            self.renewsCount = renewsCount
+            self.trialStartDate = trialStartDate
+            self.firstPurchaseDate = firstPurchaseDate
+            self.lastPurchaseDate = lastPurchaseDate
+            self.lastActivatedOfferCode = lastActivatedOfferCode
+            self.grantType = grantType
+            self.autoRenewDisableDate = autoRenewDisableDate
+            self.transactions = transactions
+        }
+        
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             id = try container.decode(String.self, forKey: .id)
-            productId = try container.decode(String.self, forKey: .productId)
+//            productId = try container.decode(String.self, forKey: .productId)
             active = try container.decode(Bool.self, forKey: .active)
-            renewState = try container.decode(RenewState.self, forKey: .renewState)
+//            renewState = try container.decode(RenewState.self, forKey: .renewState)
             source = try container.decode(Source.self, forKey: .source)
             startedDate = try container.decode(Date.self, forKey: .startedDate)
             expirationDate = try container.decode(Date.self, forKey: .expirationDate)
-            renewsCount = try container.decode(Int.self, forKey: .renewsCount)
-            trialStartDate = try container.decode(Date.self, forKey: .trialStartDate)
-            firstPurchaseDate = try container.decode(Date.self, forKey: .firstPurchaseDate)
-            lastPurchaseDate = try container.decode(Date.self, forKey: .lastPurchaseDate)
-            lastActivatedOfferCode = try container.decode(String.self, forKey: .lastActivatedOfferCode)
-            grantType = try container.decode(GrantType.self, forKey: .grantType)
-            autoRenewDisableDate = try container.decode(Date.self, forKey: .autoRenewDisableDate)
-            transactions = try container.decode([TransactionInfo].self, forKey: .transactions)            
+//            renewsCount = try container.decode(Int.self, forKey: .renewsCount)
+//            trialStartDate = try container.decode(Date.self, forKey: .trialStartDate)
+//            firstPurchaseDate = try container.decode(Date.self, forKey: .firstPurchaseDate)
+//            lastPurchaseDate = try container.decode(Date.self, forKey: .lastPurchaseDate)
+//            lastActivatedOfferCode = try container.decode(String.self, forKey: .lastActivatedOfferCode)
+//            grantType = try container.decode(GrantType.self, forKey: .grantType)
+//            autoRenewDisableDate = try container.decode(Date.self, forKey: .autoRenewDisableDate)
+//            transactions = try container.decode([TransactionInfo].self, forKey: .transactions)
+            productId = ""
+            renewState = Qonversion.Entitlement.RenewState.unknown
+            renewsCount = 0
+            trialStartDate = nil
+            firstPurchaseDate = nil
+            lastPurchaseDate = nil
+            lastActivatedOfferCode = nil
+            grantType = Qonversion.Entitlement.GrantType.purchase
+            autoRenewDisableDate = nil
+            transactions = []
         }
+        
         
         // MARK: - Nested structs & enums
         
-        public enum RenewState: Decodable {
+        public enum RenewState: String, Codable {
             #warning("Update here after product requirements discuss")
             case unknown
         }
         
-        public enum Source: Decodable {
+        public enum Source: String, Codable {
             
             /// Unknown source
             case unknown
@@ -105,7 +134,7 @@ extension Qonversion {
         }
         
         /// Grant type for the entitlement.
-        public enum GrantType: Decodable {
+        public enum GrantType: String, Codable {
             
             /// Entitlement was granted via purchase.
             case purchase
@@ -123,7 +152,7 @@ extension Qonversion {
         // MARK: - Private
         
         private enum CodingKeys: String, CodingKey {
-            case id, productId, active, renewState, source, startedDate, expirationDate, renewsCount, trialStartDate, firstPurchaseDate, lastPurchaseDate, lastActivatedOfferCode, grantType, autoRenewDisableDate, transactions
+            case id, /*productId,*/ active, /*renewState,*/ source, startedDate = "started", expirationDate = "expires"/*, renewsCount, trialStartDate, firstPurchaseDate, lastPurchaseDate, lastActivatedOfferCode, grantType, autoRenewDisableDate, transactions*/
         }
     }
 }

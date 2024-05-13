@@ -27,9 +27,22 @@ public final class Qonversion {
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
         Qonversion.shared.productsManager = assembly.productsManager()
+        Qonversion.shared.purchasesManager = assembly.purchasesManager()
         Qonversion.shared.remoteConfigManager = assembly.remoteConfigManager()
 
         return Qonversion.shared
+    }
+    
+    public func products() async throws -> [Qonversion.Product] {
+        guard let productsManager else { throw QonversionError.initializationError() }
+        
+        return try await productsManager.products()
+    }
+    
+    public func entitlements() async throws -> [Qonversion.Entitlement] {
+        guard let purchasesManager else { throw QonversionError.initializationError() }
+        
+        return try await purchasesManager.entitlements()
     }
     
     /// Collects Apple Search Ads Attribution data
@@ -162,6 +175,7 @@ public final class Qonversion {
     private var userPropertiesManager: UserPropertiesManagerInterface?
     private var deviceManager: DeviceManagerInterface?
     private var productsManager: ProductsManagerInterface?
+    private var purchasesManager: PurchasesManagerInterface?
     private var remoteConfigManager: RemoteConfigManagerInterface?
     
     private init() { }

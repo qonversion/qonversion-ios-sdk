@@ -10,7 +10,7 @@ import StoreKit
 
 extension Qonversion {
     
-    public struct Product: Decodable {
+    public struct Product: Codable {
         
         /// The unique Qonversion product identifier.
         public let qonversionId: String

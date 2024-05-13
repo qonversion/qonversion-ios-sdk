@@ -9,9 +9,9 @@ import Foundation
 
 protocol LocalStorageInterface {
     
-    func object(forKey key: String) -> Any?
+    func object<T>(forKey key: String, dataType: T.Type) throws -> T? where T : Decodable
 
-    func set(_ value: Any?, forKey key: String)
+    func set(_ value: Encodable?, forKey key: String) throws
     
     func removeObject(forKey key: String)
 
@@ -32,6 +32,8 @@ protocol LocalStorageInterface {
     func bool(forKey key: String) -> Bool
 
     func url(forKey key: String) -> URL?
+
+    func set(string: String, forKey key: String)
 
     func set(integer: Int, forKey key: String)
     

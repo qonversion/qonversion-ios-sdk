@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Qonversion
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -14,6 +15,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        let config = Qonversion.Configuration(apiKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2", launchMode: Qonversion.LaunchMode.analytics)
+        Qonversion.initialize(with: config)
+        
+        Task.init {
+            let res = try! await Qonversion.shared.entitlements()
+            print(res)
+        }
+        
         return true
     }
 

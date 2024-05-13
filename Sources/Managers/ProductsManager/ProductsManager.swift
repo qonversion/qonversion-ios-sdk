@@ -70,7 +70,7 @@ final class ProductsManager: ProductsManagerInterface {
             
             let resultProducts: [Qonversion.Product] = try await enrich(products: products)
             
-            localStorage.set(resultProducts, forKey: Constants.productsKey.rawValue)
+            try localStorage.set(resultProducts, forKey: Constants.productsKey.rawValue)
             
             loadedProducts = resultProducts
             
@@ -78,17 +78,24 @@ final class ProductsManager: ProductsManagerInterface {
         } catch {
             switch error {
             case let productsLoadingError as QonversionError:
-                if productsLoadingError.type == .productsLoadingFailed {
-                    guard let products = localStorage.object(forKey: Constants.productsKey.rawValue) as? [Qonversion.Product] else {
+                if productsLoadingError.type != .productsLoadingFailed {
+                    fallthrough
+                }
+                
+                let errorMessage = "Products loading failed with error: " + productsLoadingError.message
+                do {
+                    guard let products = try localStorage.object(forKey: Constants.productsKey.rawValue, dataType: [Qonversion.Product].self) else {
                         logger.error(productsLoadingError.message)
                         throw productsLoadingError
                     }
                     
                     let resultProducts: [Qonversion.Product] = try await enrich(products: products)
                     
+                    logger.warning(errorMessage + ". Returning cached products.")
                     return resultProducts
-                } else {
-                    fallthrough
+                } catch {
+                    logger.error(errorMessage + ". Loading cached products also failed with error: " + error.message)
+                    throw productsLoadingError
                 }
             default:
                 throw error

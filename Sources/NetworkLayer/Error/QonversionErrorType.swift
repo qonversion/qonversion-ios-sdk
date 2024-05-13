@@ -30,6 +30,8 @@ enum QonversionErrorType {
     case detachingUserFromRemoteConfigFailed
     case attachingUserToExperimentFailed
     case detachingUserFromExperimentFailed
+    case storageSerializationFailed
+    case storageDeserializationFailed
 
     func message() -> String {
         // handle other errors here
@@ -64,6 +66,10 @@ enum QonversionErrorType {
             return "Failed to attach user to the experiment."
         case .detachingUserFromExperimentFailed:
             return "Failed to detach user from the experiment."
+        case .storageSerializationFailed:
+            return "Failed to serialize data to save to the storage"
+        case .storageDeserializationFailed:
+            return "Failed to deserialize data from the storage"
         default:
             return "Unknown error occurred."
         }

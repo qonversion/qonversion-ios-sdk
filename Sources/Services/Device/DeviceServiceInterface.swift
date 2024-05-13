@@ -9,9 +9,9 @@ import Foundation
 
 protocol DeviceServiceInterface {
     
-    func save(device: Device)
+    func save(device: Device) throws
     
-    func currentDevice() -> Device?
+    func currentDevice() throws -> Device?
     
     func create(device: Device) async throws -> Device
     

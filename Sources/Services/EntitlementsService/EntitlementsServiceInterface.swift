@@ -10,4 +10,8 @@ import Foundation
 protocol EntitlementsServiceInterface {
     
     func entitlements() async throws -> [Qonversion.Entitlement]
+
+    func entitlementForTransaction(_ transaction: Qonversion.Transaction) -> Qonversion.Entitlement
+    
+    func mergeEntitlements(_ existingEntitlements: [Qonversion.Entitlement], _ newEntitlements: [Qonversion.Entitlement]) -> [Qonversion.Entitlement]
 }
