@@ -5,7 +5,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^QONUserPropertiesEmptyCompletionHandler)() NS_SWIFT_NAME(Qonversion.UserPropertiesEmptyCompletionHandler);
+typedef void (^QONUserPropertiesEmptyCompletionHandler)(void) NS_SWIFT_NAME(Qonversion.UserPropertiesEmptyCompletionHandler);
 
 @interface QNUserPropertiesManager : NSObject
 

@@ -151,7 +151,6 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
                         completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       weakSelf.updatingCurrently = NO;
       self.inMemoryStorage.storageDictionary = [properties copy];
-      NSLog(@"PROPS");
       
       NSArray *completions = [weakSelf.completionBlocks copy];
       for (QONUserPropertiesEmptyCompletionHandler storedCompletion in completions) {
