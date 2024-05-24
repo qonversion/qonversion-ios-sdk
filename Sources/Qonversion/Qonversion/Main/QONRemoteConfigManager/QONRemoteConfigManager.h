@@ -10,7 +10,7 @@
 #import "QONLaunchResult.h"
 #import "QONExperiment.h"
 
-@class QONRemoteConfigService, QNProductCenterManager;
+@class QONRemoteConfigService, QNProductCenterManager, QNUserPropertiesManager;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) QONRemoteConfigService *remoteConfigService;
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
+@property (nonatomic, strong) QNUserPropertiesManager *userPropertiesManager;
 
 - (void)userChangingRequestFailedWithError:(NSError *)error;
 - (void)handlePendingRequests;

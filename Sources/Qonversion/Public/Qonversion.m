@@ -258,7 +258,7 @@ static bool _isInitialized = NO;
     
     _productCenterManager.remoteConfigManager = _remoteConfigManager;
     _remoteConfigManager.productCenterManager = _productCenterManager;
-    
+    _remoteConfigManager.userPropertiesManager = _propertiesManager;
     
     _debugMode = NO;
   }
