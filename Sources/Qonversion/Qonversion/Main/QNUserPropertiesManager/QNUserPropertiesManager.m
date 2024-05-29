@@ -145,12 +145,13 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       self->_updatingCurrently = NO;
       return;
     }
+    
+    // This logic avoids a few force requests with the same data. Here, I want to temporarily clear stored properties and then set them back when the request is processed. The logic that clears processed property is at the next steps
     self.inMemoryStorage.storageDictionary = @{};
     __block __weak QNUserPropertiesManager *weakSelf = self;
     [self.apiClient sendProperties:properties
                         completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       weakSelf.updatingCurrently = NO;
-      self.inMemoryStorage.storageDictionary = [properties copy];
       
       NSArray *completions = [weakSelf.completionBlocks copy];
       for (QONUserPropertiesEmptyCompletionHandler storedCompletion in completions) {
@@ -160,6 +161,13 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       [weakSelf.completionBlocks removeAllObjects];
       
       if (error) {
+        NSMutableDictionary *allProperties = [self.inMemoryStorage.storageDictionary mutableCopy];
+        for (NSString *key in properties.allKeys) {
+          if (!allProperties[key]) {
+            allProperties[key] = properties[key];
+          }
+        }
+        
         if ([error.domain isEqualToString:QonversionApiErrorDomain] && error.code == QONAPIErrorInvalidClientUID) {
           [weakSelf.productCenterManager launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
             [weakSelf retryProperties];
@@ -170,7 +178,6 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       } else {
         weakSelf.retryDelay = kQPropertiesSendingPeriodInSeconds;
         weakSelf.retriesCounter = 0;
-        [weakSelf clearProperties:properties];
       }
     }];
   }];
@@ -193,18 +200,6 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
   self.retryDelay = [self countDelay];
   
   [self sendPropertiesWithDelay:self.retryDelay];
-}
-
-- (void)clearProperties:(NSDictionary *)properties {
-  [self runOnBackgroundQueue:^{
-    if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
-      return;
-    }
-    
-    for (NSString *key in properties.allKeys) {
-      [self->_inMemoryStorage removeObjectForKey:key];
-    }
-  }];
 }
 
 - (BOOL)runOnBackgroundQueue:(void (^)(void))block {
