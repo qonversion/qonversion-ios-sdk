@@ -23,20 +23,6 @@
   return self;
 }
 
-- (void)addAttributionData:(NSDictionary *)data fromProvider:(NSInteger)provider {
-  double delayInSeconds = 5.0;
-  dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-
-  dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-    
-    [self.client attributionRequest:provider data:data completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-      if (dict && [dict respondsToSelector:@selector(valueForKey:)]) {
-        QONVERSION_LOG(@"Attribution Request Log Response:\n%@", dict);
-      }
-    }];
-  });
-}
-
 - (void)addAppleSearchAttributionData {
   double delayInSeconds = 5.0;
   dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
