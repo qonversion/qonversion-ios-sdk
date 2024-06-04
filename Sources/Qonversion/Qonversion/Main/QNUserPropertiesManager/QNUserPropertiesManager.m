@@ -146,7 +146,6 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       return;
     }
     
-    // This logic avoids a few force requests with the same data. Here, I want to temporarily clear stored properties and then set them back when the request is processed. The logic that clears processed property is at the next steps
     self.inMemoryStorage.storageDictionary = @{};
     __block __weak QNUserPropertiesManager *weakSelf = self;
     [self.apiClient sendProperties:properties
@@ -161,12 +160,15 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       [weakSelf.completionBlocks removeAllObjects];
       
       if (error) {
+        // copy of an existing array to prevent erasing properties set while the current request is in progress
         NSMutableDictionary *allProperties = [self.inMemoryStorage.storageDictionary mutableCopy];
         for (NSString *key in properties.allKeys) {
           if (!allProperties[key]) {
             allProperties[key] = properties[key];
           }
         }
+        
+        self.inMemoryStorage.storageDictionary = [allProperties copy];
         
         if ([error.domain isEqualToString:QonversionApiErrorDomain] && error.code == QONAPIErrorInvalidClientUID) {
           [weakSelf.productCenterManager launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
