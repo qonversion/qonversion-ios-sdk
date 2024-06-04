@@ -14,6 +14,7 @@
 #import "QNProductCenterManager.h"
 #import "QONRemoteConfigLoadingState.h"
 #import "QONRemoteConfigListRequestData.h"
+#import "QNUserPropertiesManager.h"
 
 static NSString *const kEmptyContextKey = @"";
 
@@ -91,18 +92,22 @@ static NSString *const kEmptyContextKey = @"";
   }
   
   loadingState.isInProgress = YES;
+  
   __block __weak QONRemoteConfigManager *weakSelf = self;
-  [self.remoteConfigService loadRemoteConfig:contextKey completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
-    loadingState.isInProgress = NO;
-    if (error) {
-      [weakSelf executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
-      completion(nil, error);
-      return;
-    }
-    
-    loadingState.loadedConfig = remoteConfig;
-    [weakSelf executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
-    completion(remoteConfig, nil);
+  
+  [self.userPropertiesManager forceSendProperties:^{
+    [weakSelf.remoteConfigService loadRemoteConfig:contextKey completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+      loadingState.isInProgress = NO;
+      if (error) {
+        [weakSelf executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
+        completion(nil, error);
+        return;
+      }
+      
+      loadingState.loadedConfig = remoteConfig;
+      [weakSelf executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
+      completion(remoteConfig, nil);
+    }];
   }];
 }
 
@@ -134,8 +139,12 @@ static NSString *const kEmptyContextKey = @"";
     return;
   }
   
-  QONRemoteConfigListCompletionHandler completionWrapper = [self remoteConfigListCompletionWrapper:completion];
-  [self.remoteConfigService loadRemoteConfigList:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completionWrapper];
+  __block __weak QONRemoteConfigManager *weakSelf = self;
+  
+  [self.userPropertiesManager forceSendProperties:^{
+    QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion];
+    [weakSelf.remoteConfigService loadRemoteConfigList:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completionWrapper];
+  }];
 }
 
 - (void)obtainRemoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
@@ -147,8 +156,12 @@ static NSString *const kEmptyContextKey = @"";
     return;
   }
   
-  QONRemoteConfigListCompletionHandler completionWrapper = [self remoteConfigListCompletionWrapper:completion];
-  [self.remoteConfigService loadRemoteConfigList:completionWrapper];
+  __block __weak QONRemoteConfigManager *weakSelf = self;
+  
+  [self.userPropertiesManager forceSendProperties:^{
+    QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion];
+    [weakSelf.remoteConfigService loadRemoteConfigList:completionWrapper];
+  }];
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {

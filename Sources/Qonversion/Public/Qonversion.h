@@ -128,7 +128,7 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  @param data Dictionary received by the provider
  @param provider Attribution provider
  */
-- (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider;
+- (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider DEPRECATED_MSG_ATTRIBUTE("This function shouldn't be called anymore. All attribution logic continues to work as usual.");
 
 /**
  Check user entitlements

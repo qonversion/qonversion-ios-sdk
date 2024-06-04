@@ -138,7 +138,7 @@ static bool _isInitialized = NO;
 }
 
 - (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider {
-  [self.attributionManager addAttributionData:data fromProvider:provider];
+  // This function logic is deprecated and is not needed anymore
 }
 
 - (void)setUserProperty:(QONUserPropertyKey)key value:(NSString *)value {
@@ -258,7 +258,7 @@ static bool _isInitialized = NO;
     
     _productCenterManager.remoteConfigManager = _remoteConfigManager;
     _remoteConfigManager.productCenterManager = _productCenterManager;
-    
+    _remoteConfigManager.userPropertiesManager = _propertiesManager;
     
     _debugMode = NO;
   }

@@ -26,6 +26,8 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 
 @property (nonatomic) QNInMemoryStorage *inMemoryStorage;
 
+@property (nonatomic, strong) NSMutableArray<QONUserPropertiesEmptyCompletionHandler> *completionBlocks;
+
 @property (nonatomic, assign, readwrite) BOOL sendingScheduled;
 @property (nonatomic, assign, readwrite) BOOL updatingCurrently;
 @property (nonatomic, assign, readwrite) NSUInteger retryDelay;
@@ -46,7 +48,9 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
     [_backgroundQueue setSuspended:NO];
     _apiClient = [QNAPIClient shared];
     _mapper = [QONUserPropertiesMapper new];
-
+    
+    _completionBlocks = [NSMutableArray new];
+    
     _backgroundQueue.name = kBackgroundQueueName;
     _device = QNDevice.current;
     _retryDelay = kQPropertiesSendingPeriodInSeconds;
@@ -61,10 +65,8 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 
 - (void)setUserProperty:(NSString *)property value:(NSString *)value {
   if ([QNProperties checkProperty:property] && [QNProperties checkValue:value]) {
-    [self runOnBackgroundQueue:^{
-      [self->_inMemoryStorage storeObject:value forKey:property];
-      [self sendPropertiesWithDelay:self.retryDelay];
-    }];
+    [self.inMemoryStorage storeObject:value forKey:property];
+    [self sendPropertiesWithDelay:self.retryDelay];
   }
 }
 
@@ -86,6 +88,17 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
   [self sendPropertiesInBackground];
 }
 
+- (void)forceSendProperties:(QONUserPropertiesEmptyCompletionHandler)completion {
+  if (self.inMemoryStorage.storageDictionary.count == 0) {
+    completion();
+    return;
+  }
+  
+  [self.completionBlocks addObject:completion];
+  
+  [self sendProperties:YES];
+}
+
 - (void)sendPropertiesWithDelay:(NSUInteger)delay {
   if (!_sendingScheduled) {
     _sendingScheduled = YES;
@@ -104,13 +117,17 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 }
 
 - (void)sendProperties {
+  [self sendProperties:NO];
+}
+
+- (void)sendProperties:(BOOL)force {
   if ([QNUtils isEmptyString:_apiClient.apiKey]) {
     QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
     return;
   }
   
   @synchronized (self) {
-    if (_updatingCurrently) {
+    if (_updatingCurrently && !force) {
       return;
     }
     _updatingCurrently = YES;
@@ -129,12 +146,30 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       return;
     }
     
+    self.inMemoryStorage.storageDictionary = @{};
     __block __weak QNUserPropertiesManager *weakSelf = self;
     [self.apiClient sendProperties:properties
-                      completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+                        completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       weakSelf.updatingCurrently = NO;
       
+      NSArray *completions = [weakSelf.completionBlocks copy];
+      for (QONUserPropertiesEmptyCompletionHandler storedCompletion in completions) {
+        storedCompletion();
+      }
+      
+      [weakSelf.completionBlocks removeAllObjects];
+      
       if (error) {
+        // copy of an existing array to prevent erasing properties set while the current request is in progress
+        NSMutableDictionary *allProperties = [self.inMemoryStorage.storageDictionary mutableCopy];
+        for (NSString *key in properties.allKeys) {
+          if (!allProperties[key]) {
+            allProperties[key] = properties[key];
+          }
+        }
+        
+        self.inMemoryStorage.storageDictionary = [allProperties copy];
+        
         if ([error.domain isEqualToString:QonversionApiErrorDomain] && error.code == QONAPIErrorInvalidClientUID) {
           [weakSelf.productCenterManager launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
             [weakSelf retryProperties];
@@ -145,7 +180,6 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       } else {
         weakSelf.retryDelay = kQPropertiesSendingPeriodInSeconds;
         weakSelf.retriesCounter = 0;
-        [weakSelf clearProperties:properties];
       }
     }];
   }];
@@ -153,12 +187,12 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 
 - (void)getUserProperties:(QONUserPropertiesCompletionHandler)completion {
   [self.apiClient getProperties:^(NSArray * _Nullable array, NSError * _Nullable error) {
-      if (error) {
-        completion(nil, error);
-      } else {
-        QONUserProperties *properties = [self.mapper mapUserProperties:array];
-        completion(properties, nil);
-      }
+    if (error) {
+      completion(nil, error);
+    } else {
+      QONUserProperties *properties = [self.mapper mapUserProperties:array];
+      completion(properties, nil);
+    }
   }];
 }
 
@@ -168,18 +202,6 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
   self.retryDelay = [self countDelay];
   
   [self sendPropertiesWithDelay:self.retryDelay];
-}
-
-- (void)clearProperties:(NSDictionary *)properties {
-  [self runOnBackgroundQueue:^{
-    if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
-      return;
-    }
-    
-    for (NSString *key in properties.allKeys) {
-      [self->_inMemoryStorage removeObjectForKey:key];
-    }
-  }];
 }
 
 - (BOOL)runOnBackgroundQueue:(void (^)(void))block {
