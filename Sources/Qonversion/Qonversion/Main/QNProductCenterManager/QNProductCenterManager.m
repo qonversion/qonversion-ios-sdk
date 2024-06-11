@@ -19,6 +19,8 @@
 #import "QNInternalConstants.h"
 #import "QONUser+Protected.h"
 #import "QONStoreKit2PurchaseModel.h"
+#import "QONFallbacksService.h"
+#import "QONFallbackObject.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomations.h"
@@ -37,6 +39,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) id<QNLocalStorage> persistentStorage;
 @property (nonatomic, strong) id<QNIdentityManagerInterface> identityManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
+@property (nonatomic, strong) QONFallbacksService *fallbacksService;
+@property (nonatomic, strong) QONFallbackObject *fallbackData;
 
 @property (nonatomic, copy) NSArray<SKPaymentTransaction *> *restoredTransactions;
 
@@ -68,7 +72,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @implementation QNProductCenterManager
 
-- (instancetype)initWithUserInfoService:(id<QNUserInfoServiceInterface>)userInfoService identityManager:(id<QNIdentityManagerInterface>)identityManager localStorage:(id<QNLocalStorage>)localStorage {
+- (instancetype)initWithUserInfoService:(id<QNUserInfoServiceInterface>)userInfoService identityManager:(id<QNIdentityManagerInterface>)identityManager localStorage:(id<QNLocalStorage>)localStorage fallbacksService:(QONFallbacksService *)fallbacksService {
   self = super.init;
   if (self) {
     _launchingFinished = NO;
@@ -76,6 +80,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _launchError = nil;
     _launchResult = nil;
     _cacheLifetime = QONEntitlementsCacheLifetimeMonth;
+    _fallbacksService = fallbacksService;
 
 #if TARGET_OS_IOS
     [QONAutomations sharedInstance];
@@ -152,6 +157,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   if (self.launchError) {
     QONLaunchResult *cachedResult = [self cachedLaunchResult];
     products = cachedResult ? cachedResult.products : products;
+    
+    if (products.allValues.count == 0) {
+      self.fallbackData = self.fallbackData ?: [self.fallbacksService obtainFallbackData];
+      products = self.fallbackData.products;
+    }
   }
   
   return products;
@@ -163,6 +173,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   if (self.launchError) {
     QONLaunchResult *cachedResult = [self cachedLaunchResult];
     offerings = cachedResult ? cachedResult.offerings : offerings;
+    
+    if (!offerings) {
+      self.fallbackData = self.fallbackData ?: [self.fallbacksService obtainFallbackData];
+      offerings = self.fallbackData.offerings;
+    }
   }
   
   return offerings;
@@ -349,8 +364,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     if (self.launchError) {
       __block __weak QNProductCenterManager *weakSelf = self;
       [self launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
-        QONLaunchResult *cachedResult = [weakSelf cachedLaunchResult];
-        if (error && !cachedResult) {
+        NSDictionary<NSString *, QONProduct *> *products = [weakSelf getActualProducts];
+        if (error && products.count == 0) {
           run_block_on_main(completion, @{}, error, NO);
           return;
         }
@@ -602,9 +617,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     if (self.launchError) {
       // check if the cache is actual, set the products, and reset the error
-      QONLaunchResult *cachedResult = [self cachedLaunchResult];
-      products = cachedResult ? cachedResult.products.allValues : products;
-      resultError = cachedResult ? nil : self.launchError;
+      NSDictionary<NSString *, QONProduct *> *actualProducts = [self getActualProducts];
+      products = actualProducts.allValues.count > 0 ? actualProducts.allValues : products;
+      resultError = actualProducts.count > 0 ? nil : self.launchError;
     }
     
     NSDictionary *resultProducts = [self enrichProductsWithStoreProducts:products];
@@ -1103,8 +1118,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 
   NSMutableDictionary<NSString *, QONProduct *> *qonversionProductsMap = [NSMutableDictionary new];
-  QONLaunchResult *launchResult = self.launchError ? [self cachedLaunchResult] : self.launchResult;
-  for (QONProduct *value in launchResult.products.allValues) {
+  NSDictionary<NSString *, QONProduct *> *qonversionProducts = self.launchError ? [self getActualProducts] : self.launchResult.products;
+  for (QONProduct *value in qonversionProducts.allValues) {
     if (value.storeID.length > 0) {
       qonversionProductsMap[value.storeID] = value;
     }
@@ -1161,6 +1176,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   NSMutableDictionary<NSString *, QONEntitlement *> *resultEntitlements = [NSMutableDictionary new];
 
   QONProduct *qonversionProduct = productsMap[transaction.payment.productIdentifier];
+  
+  if (self.productsEntitlementsRelation.count == 0) {
+    QONFallbackObject *fallbackData = [self.fallbacksService obtainFallbackData];
+    self.productsEntitlementsRelation = fallbackData.productsEntitlementsRelation;
+  }
 
   NSArray<NSString *> *entitlementsIds = self.productsEntitlementsRelation[qonversionProduct.qonversionID];
   for (NSString *entitlementId in entitlementsIds) {
@@ -1184,6 +1204,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   entitlement.productID = qonversionProduct.qonversionID;
   entitlement.startedDate = transaction.transactionDate;
   entitlement.expirationDate = expirationDate;
+  entitlement.transactions = @[];
 
   return entitlement;
 }

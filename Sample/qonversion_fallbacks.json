@@ -1,0 +1,86 @@
+{
+  "timestamp": 1586369519,
+  "products": [
+    {
+      "duration": 4,
+      "id": "annual",
+      "store_id": "io.qonversion.subs.annual",
+      "type": 0
+    },
+    {
+      "duration": 1,
+      "id": "subs_plus_trial",
+      "store_id": "io.qonversion.subs.monthly.plus.trial",
+      "type": 0
+    },
+    {
+      "duration": 0,
+      "id": "weekly",
+      "store_id": "io.qonversion.weekly",
+      "type": 1
+    }
+  ],
+  "offerings": [
+    {
+      "id": "main",
+      "products": [
+        {
+          "duration": 0,
+          "id": "weekly",
+          "store_id": "io.qonversion.weekly",
+          "type": 1
+        },
+        {
+          "duration": 4,
+          "id": "annual",
+          "store_id": "io.qonversion.subs.annual",
+          "type": 0
+        },
+        {
+          "duration": "<null>",
+          "id": "consumable",
+          "store_id": "io.qonversion.consumable",
+          "type": 2
+        }
+      ],
+      "tag": 1
+    },
+    {
+      "id": "discounted_offer",
+      "products": [],
+      "tag": 0
+    }
+  ],
+  "products_permissions": {
+    "annual": [
+      "standart",
+      "sample"
+    ],
+    "annual": [
+      "standart"
+    ],
+    "subs_plus_trial": [
+      "standart"
+    ],
+    "weekly": [
+      "plus"
+    ]
+  },
+  "remote_config": {
+    "experiment": "<null>",
+    "payload": {
+        "CTA": "Start you trial",
+        "CTA_color": "red",
+        "main_image": 111,
+        "product_id": 123123123123123,
+        "show_close_button": 1
+    },
+    "source": {
+        "assignment_type": "auto",
+        "context_key": "",
+        "name": "Default settings",
+        "type": "remote_configuration",
+        "uid": "12feb1dd-8096-47bc-a5a1-443fd2828ecc"
+    }
+  }
+}

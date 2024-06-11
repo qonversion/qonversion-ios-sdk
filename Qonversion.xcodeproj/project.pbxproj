@@ -55,6 +55,14 @@
 		6A95DEA529E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA429E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m */; };
 		6ABCBE182B99A79E003DB107 /* QONRemoteConfigLoadingState.h in Headers */ = {isa = PBXBuildFile; fileRef = 6ABCBE162B99A79E003DB107 /* QONRemoteConfigLoadingState.h */; };
 		6ABCBE192B99A79E003DB107 /* QONRemoteConfigLoadingState.m in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBE172B99A79E003DB107 /* QONRemoteConfigLoadingState.m */; };
+		700635FB2C11C37B00BB9F9C /* QONFallbacksService.h in Headers */ = {isa = PBXBuildFile; fileRef = 700635F92C11C37B00BB9F9C /* QONFallbacksService.h */; };
+		700635FC2C11C37B00BB9F9C /* QONFallbacksService.m in Sources */ = {isa = PBXBuildFile; fileRef = 700635FA2C11C37B00BB9F9C /* QONFallbacksService.m */; };
+		700636062C11CEF700BB9F9C /* QONFallbackObject.h in Headers */ = {isa = PBXBuildFile; fileRef = 700636042C11CEF700BB9F9C /* QONFallbackObject.h */; };
+		700636072C11CEF700BB9F9C /* QONFallbackObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 700636052C11CEF700BB9F9C /* QONFallbackObject.m */; };
+		7006360B2C11EE8400BB9F9C /* QONFallbacksMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 700636082C11EE8400BB9F9C /* QONFallbacksMapper.h */; };
+		7006360C2C11EE8400BB9F9C /* QONFallbacksMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 700636092C11EE8400BB9F9C /* QONFallbacksMapper.m */; };
+		700636142C12125900BB9F9C /* NSError+Sugare.h in Headers */ = {isa = PBXBuildFile; fileRef = 700636122C12125900BB9F9C /* NSError+Sugare.h */; };
+		700636152C12125900BB9F9C /* NSError+Sugare.m in Sources */ = {isa = PBXBuildFile; fileRef = 700636132C12125900BB9F9C /* NSError+Sugare.m */; };
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
 		701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922712B10981200724926 /* QONSubscriptionPeriod.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */ = {isa = PBXBuildFile; fileRef = 701922722B10981200724926 /* QONSubscriptionPeriod.m */; };
@@ -64,6 +72,7 @@
 		70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70283DF629F66FAC00D138BC /* PurchasesMapper.swift */; };
 		702BF8B629531A68000B6C3E /* QONScreenCustomizationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 702BF8B529531A68000B6C3E /* QONScreenCustomizationDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		702DBDEC2A3216C900D590D0 /* QONExperiment+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 702DBDEB2A3216C900D590D0 /* QONExperiment+Protected.h */; };
+		703666202C17512200B0C503 /* qonversion_fallbacks.json in Resources */ = {isa = PBXBuildFile; fileRef = 7036661F2C17512200B0C503 /* qonversion_fallbacks.json */; };
 		707734F42A9F607700CFF742 /* QONRemoteConfigurationSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		707734F52A9F607700CFF742 /* QONRemoteConfigurationSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */; };
 		707734F72A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */; };
@@ -368,6 +377,14 @@
 		6A95DEA429E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+IntegrationTestsHelpers.m"; sourceTree = "<group>"; };
 		6ABCBE162B99A79E003DB107 /* QONRemoteConfigLoadingState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigLoadingState.h; sourceTree = "<group>"; };
 		6ABCBE172B99A79E003DB107 /* QONRemoteConfigLoadingState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigLoadingState.m; sourceTree = "<group>"; };
+		700635F92C11C37B00BB9F9C /* QONFallbacksService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONFallbacksService.h; sourceTree = "<group>"; };
+		700635FA2C11C37B00BB9F9C /* QONFallbacksService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONFallbacksService.m; sourceTree = "<group>"; };
+		700636042C11CEF700BB9F9C /* QONFallbackObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONFallbackObject.h; sourceTree = "<group>"; };
+		700636052C11CEF700BB9F9C /* QONFallbackObject.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONFallbackObject.m; sourceTree = "<group>"; };
+		700636082C11EE8400BB9F9C /* QONFallbacksMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONFallbacksMapper.h; sourceTree = "<group>"; };
+		700636092C11EE8400BB9F9C /* QONFallbacksMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONFallbacksMapper.m; sourceTree = "<group>"; };
+		700636122C12125900BB9F9C /* NSError+Sugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+Sugare.h"; sourceTree = "<group>"; };
+		700636132C12125900BB9F9C /* NSError+Sugare.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+Sugare.m"; sourceTree = "<group>"; };
 		700EC171291277130032E205 /* QONExperimentGroup+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONExperimentGroup+Protected.h"; sourceTree = "<group>"; };
 		701922712B10981200724926 /* QONSubscriptionPeriod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONSubscriptionPeriod.h; sourceTree = "<group>"; };
 		701922722B10981200724926 /* QONSubscriptionPeriod.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONSubscriptionPeriod.m; sourceTree = "<group>"; };
@@ -377,6 +394,7 @@
 		70283DF629F66FAC00D138BC /* PurchasesMapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
 		702BF8B529531A68000B6C3E /* QONScreenCustomizationDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONScreenCustomizationDelegate.h; sourceTree = "<group>"; };
 		702DBDEB2A3216C900D590D0 /* QONExperiment+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONExperiment+Protected.h"; sourceTree = "<group>"; };
+		7036661F2C17512200B0C503 /* qonversion_fallbacks.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = qonversion_fallbacks.json; sourceTree = "<group>"; };
 		7052136F29F1807A00164AAF /* PurchasesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
 		707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigurationSource.h; sourceTree = "<group>"; };
 		707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigurationSource.m; sourceTree = "<group>"; };
@@ -623,6 +641,7 @@
 		454EF63D24E5CC580070581E /* Sample */ = {
 			isa = PBXGroup;
 			children = (
+				7036661F2C17512200B0C503 /* qonversion_fallbacks.json */,
 				456215C8257D6AF800548A3D /* Sample.entitlements */,
 				454EF63E24E5CC580070581E /* AppDelegate.swift */,
 				454EF64224E5CC590070581E /* ViewController.swift */,
@@ -693,7 +712,6 @@
 			children = (
 				891DEA7E2703AF1D0079B439 /* Mappers */,
 				89673C2D26F49B6A008D209A /* Managers */,
-				89A1931D2604B8C800C3FCD9 /* Core */,
 				89A192A32604973200C3FCD9 /* Services */,
 				456ECD35249BB67600D2BC40 /* Network */,
 				454BE219247C2EF7001FE771 /* Storage */,
@@ -856,6 +874,42 @@
 				6A95DEA329E40F2100350BD6 /* XCTestCase+IntegrationTestsHelpers.h */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		700635F82C11C36200BB9F9C /* QONFallbacksService */ = {
+			isa = PBXGroup;
+			children = (
+				700635F92C11C37B00BB9F9C /* QONFallbacksService.h */,
+				700635FA2C11C37B00BB9F9C /* QONFallbacksService.m */,
+			);
+			path = QONFallbacksService;
+			sourceTree = "<group>";
+		};
+		700635FD2C11C3EA00BB9F9C /* QONFallbackObject */ = {
+			isa = PBXGroup;
+			children = (
+				700636042C11CEF700BB9F9C /* QONFallbackObject.h */,
+				700636052C11CEF700BB9F9C /* QONFallbackObject.m */,
+			);
+			path = QONFallbackObject;
+			sourceTree = "<group>";
+		};
+		7006360A2C11EE8400BB9F9C /* QONFallbacksMapper */ = {
+			isa = PBXGroup;
+			children = (
+				700636082C11EE8400BB9F9C /* QONFallbacksMapper.h */,
+				700636092C11EE8400BB9F9C /* QONFallbacksMapper.m */,
+			);
+			path = QONFallbacksMapper;
+			sourceTree = "<group>";
+		};
+		7006360D2C1211F000BB9F9C /* NSError+Sugare */ = {
+			isa = PBXGroup;
+			children = (
+				700636122C12125900BB9F9C /* NSError+Sugare.h */,
+				700636132C12125900BB9F9C /* NSError+Sugare.m */,
+			);
+			path = "NSError+Sugare";
 			sourceTree = "<group>";
 		};
 		7023948E2923EBE8003126D5 /* QONNotificationsService */ = {
@@ -1283,6 +1337,7 @@
 		8957322526DD03A3009507A6 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				7006360D2C1211F000BB9F9C /* NSError+Sugare */,
 				6A21BF4A2AB2018C005BDA7C /* QNRateLimiter */,
 				8957322626DD03A3009507A6 /* QNUtils */,
 				8957322926DD03A3009507A6 /* QNDevice */,
@@ -1331,6 +1386,7 @@
 		8957323226DD03A3009507A6 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				700635FD2C11C3EA00BB9F9C /* QONFallbackObject */,
 				8957323726DD03A3009507A6 /* QNMapperObject */,
 				8957323F26DD03A3009507A6 /* Protected */,
 			);
@@ -1387,6 +1443,7 @@
 		8957325126DD03A3009507A6 /* Mappers */ = {
 			isa = PBXGroup;
 			children = (
+				7006360A2C11EE8400BB9F9C /* QONFallbacksMapper */,
 				7098564A2A370F190023DFAB /* QONRemoteConfigMapper */,
 				8957325226DD03A3009507A6 /* QNUserInfoMapper */,
 				8957325626DD03A3009507A6 /* QNErrorsMapper */,
@@ -1476,6 +1533,7 @@
 		8957326A26DD03A3009507A6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				700635F82C11C36200BB9F9C /* QONFallbacksService */,
 				70D05A9029C9FF2C00EA5DDF /* QONRemoteConfigService */,
 				8957326B26DD03A3009507A6 /* QNStoreKitService */,
 				8957326E26DD03A3009507A6 /* QNAPIClient */,
@@ -1548,13 +1606,6 @@
 				89673C2826F35D29008D209A /* QNIdentityServiceTests.m */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		89A1931D2604B8C800C3FCD9 /* Core */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Core;
 			sourceTree = "<group>";
 		};
 		A18393DDB513BB32EFB466E9 /* QONExceptionManager */ = {
@@ -1640,6 +1691,7 @@
 				70D0E2BB291AA21C004E8DE8 /* QONLaunchMode.h in Headers */,
 				895732D026DD03A3009507A6 /* QNUserInfo.h in Headers */,
 				895732B126DD03A3009507A6 /* QONAutomationsFlowAssembly.h in Headers */,
+				700636142C12125900BB9F9C /* NSError+Sugare.h in Headers */,
 				6A21BF532AB2059F005BDA7C /* QONRequest.h in Headers */,
 				8957329026DD03A3009507A6 /* QONEntitlementsUpdateListener.h in Headers */,
 				8957329326DD03A3009507A6 /* QONExperimentGroup.h in Headers */,
@@ -1671,10 +1723,13 @@
 				7097C6BE2A38BFC800565DE4 /* QONRemoteConfig+Protected.h in Headers */,
 				895732DF26DD03A3009507A6 /* QONUser+Protected.h in Headers */,
 				70ED951029FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h in Headers */,
+				7006360B2C11EE8400BB9F9C /* QONFallbacksMapper.h in Headers */,
 				8957329126DD03A3009507A6 /* QONAutomations.h in Headers */,
 				895732ED26DD03A3009507A6 /* QNUserInfoMapper.h in Headers */,
 				701922762B10AB3300724926 /* QONSubscriptionPeriod+Protected.h in Headers */,
+				700635FB2C11C37B00BB9F9C /* QONFallbacksService.h in Headers */,
 				70ADE70F2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h in Headers */,
+				700636062C11CEF700BB9F9C /* QONFallbackObject.h in Headers */,
 				8957327C26DD03A3009507A6 /* QONAutomationsDelegate.h in Headers */,
 				8957330126DD03A3009507A6 /* QNUserInfoServiceInterface.h in Headers */,
 				895732C926DD03A3009507A6 /* QNInternalConstants.h in Headers */,
@@ -1843,6 +1898,7 @@
 				454EF64B24E5CC5A0070581E /* LaunchScreen.storyboard in Resources */,
 				894278822759334D00A8A6EC /* GoogleService-Info.plist in Resources */,
 				454EF64824E5CC5A0070581E /* Assets.xcassets in Resources */,
+				703666202C17512200B0C503 /* qonversion_fallbacks.json in Resources */,
 				454EF64624E5CC590070581E /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2017,8 +2073,10 @@
 				895732CB26DD03A3009507A6 /* QNUtils.m in Sources */,
 				70ADE7102951CC7200CB4D2E /* QONScreenPresentationConfiguration.m in Sources */,
 				707734F52A9F607700CFF742 /* QONRemoteConfigurationSource.m in Sources */,
+				7006360C2C11EE8400BB9F9C /* QONFallbacksMapper.m in Sources */,
 				6A21BF4E2AB20483005BDA7C /* QONRateLimiter.m in Sources */,
 				895732A626DD03A3009507A6 /* QONAutomationsScreen.m in Sources */,
+				700636072C11CEF700BB9F9C /* QONFallbackObject.m in Sources */,
 				70ED951129FAAF31005F5D00 /* QONStoreKit2PurchaseModel.m in Sources */,
 				70EC019D29EEE94300E686E2 /* StoreKit2Service.swift in Sources */,
 				701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */,
@@ -2040,6 +2098,8 @@
 				895732FC26DD03A3009507A6 /* QNStoreKitService.m in Sources */,
 				895732FA26DD03A3009507A6 /* QNIdentityManager.m in Sources */,
 				8957330026DD03A3009507A6 /* QNUserInfoService.m in Sources */,
+				700636152C12125900BB9F9C /* NSError+Sugare.m in Sources */,
+				700635FC2C11C37B00BB9F9C /* QONFallbacksService.m in Sources */,
 				7098564E2A370F270023DFAB /* QONRemoteConfigMapper.m in Sources */,
 				895732AC26DD03A3009507A6 /* QONAutomationsFlowCoordinator.m in Sources */,
 				8957328326DD03A3009507A6 /* QONExperimentGroup.m in Sources */,

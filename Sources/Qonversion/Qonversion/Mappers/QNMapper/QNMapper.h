@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@class QNMapperObject, QONLaunchResult, QONEntitlement, QONIntroEligibility, QONUser;
+@class QNMapperObject, QONLaunchResult, QONEntitlement, QONIntroEligibility, QONUser, QONFallbackObject, QONOfferings;
 
 @interface QNMapper : NSObject
 
@@ -15,5 +15,13 @@
 + (NSDictionary<NSString *, QONIntroEligibility *> * _Nonnull)mapProductsEligibility:(NSDictionary * _Nullable)dict;
 
 + (NSInteger)mapInteger:(NSObject * _Nullable)object orReturn:(NSInteger)defaultValue;
+
+- (QONOfferings * _Nonnull)mapOfferings:(NSDictionary *)data;
+
+- (NSDictionary <NSString *, QONProduct *> *)mapProducts:(NSDictionary *)data;
+
+- (NSDictionary * _Nullable)mapProductsEntitlementsRelationships:(NSDictionary * _Nullable)dict;
+
+- (QONFallbackObject  * _Nullable)mapFallback:(NSDictionary *)data;
 
 @end

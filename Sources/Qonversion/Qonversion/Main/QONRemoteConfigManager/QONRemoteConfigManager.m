@@ -15,6 +15,9 @@
 #import "QONRemoteConfigLoadingState.h"
 #import "QONRemoteConfigListRequestData.h"
 #import "QNUserPropertiesManager.h"
+#import "QONFallbacksService.h"
+#import "NSError+Sugare.h"
+#import "QONFallbackObject.h"
 
 static NSString *const kEmptyContextKey = @"";
 
@@ -22,6 +25,7 @@ static NSString *const kEmptyContextKey = @"";
 
 @property (nonatomic, strong) NSMutableDictionary<NSString *, QONRemoteConfigLoadingState *> *loadingStates;
 @property (nonatomic, strong) NSMutableArray<QONRemoteConfigListRequestData *> *listRequests;
+@property (nonatomic, strong) QONFallbackObject *fallbackData;
 
 @end
 
@@ -34,6 +38,7 @@ static NSString *const kEmptyContextKey = @"";
     _remoteConfigService = [QONRemoteConfigService new];
     _loadingStates = [NSMutableDictionary new];
     _listRequests = [NSMutableArray new];
+    _fallbacksService = [QONFallbacksService new];
   }
   
   return self;
@@ -99,16 +104,34 @@ static NSString *const kEmptyContextKey = @"";
     [weakSelf.remoteConfigService loadRemoteConfig:contextKey completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
       loadingState.isInProgress = NO;
       if (error) {
-        [weakSelf executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
-        completion(nil, error);
-        return;
+        if (error.shouldFireFallback) {
+          weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbacksService obtainFallbackData];
+          if (weakSelf.fallbackData.remoteConfig) {
+            [weakSelf fireRemoteConfig:weakSelf.fallbackData.remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
+          } else {
+            [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error completion:completion];
+            return;
+          }
+        } else {
+          [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error completion:completion];
+          return;
+        }
       }
       
-      loadingState.loadedConfig = remoteConfig;
-      [weakSelf executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
-      completion(remoteConfig, nil);
+      [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
     }];
   }];
+}
+
+- (void)fireRemoteConfig:(QONRemoteConfig *)remoteConfig contextKey:(NSString *)contextKey loadingState:(QONRemoteConfigLoadingState *)loadingState error:(NSError *)error completion:(QONRemoteConfigCompletionHandler)completion {
+  if (error) {
+    [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
+    completion(nil, error);
+  } else {
+    loadingState.loadedConfig = remoteConfig;
+    [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
+    completion(remoteConfig, nil);
+  }
 }
 
 - (void)obtainRemoteConfigListWithContextKeys:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
