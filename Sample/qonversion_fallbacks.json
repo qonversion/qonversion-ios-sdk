@@ -66,7 +66,7 @@
       "plus"
     ]
   },
-  "remote_configs": [
+  "remote_config_list": [
     {
       "experiment": "<null>",
       "payload": {
