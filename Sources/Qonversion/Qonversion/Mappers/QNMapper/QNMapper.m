@@ -100,7 +100,7 @@
   return [products copy];
 }
 
-- (NSDictionary <NSString *, QONProduct *> *)mapProducts:(NSDictionary *)data {
+- (NSDictionary <NSString *, QONProduct *> * _Nonnull)mapProducts:(NSDictionary * _Nullable)data {
   NSArray *rawProducts = data[@"products"];
   return [QNMapper fillProducts:rawProducts];
 }
@@ -303,7 +303,7 @@
   return offerings;
 }
 
-- (QONOfferings * _Nonnull)mapOfferings:(NSDictionary *)data {
+- (QONOfferings * _Nonnull)mapOfferings:(NSDictionary * _Nullable)data {
   NSArray *rawOfferings = data[@"offerings"];
   return [QNMapper fillOfferingsObject:rawOfferings];
 }

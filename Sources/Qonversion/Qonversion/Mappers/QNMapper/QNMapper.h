@@ -16,12 +16,12 @@
 
 + (NSInteger)mapInteger:(NSObject * _Nullable)object orReturn:(NSInteger)defaultValue;
 
-- (QONOfferings * _Nonnull)mapOfferings:(NSDictionary *)data;
+- (QONOfferings * _Nonnull)mapOfferings:(NSDictionary * _Nullable)data;
 
-- (NSDictionary <NSString *, QONProduct *> *)mapProducts:(NSDictionary *)data;
+- (NSDictionary <NSString *, QONProduct *> * _Nonnull)mapProducts:(NSDictionary * _Nullable)data;
 
 - (NSDictionary * _Nullable)mapProductsEntitlementsRelationships:(NSDictionary * _Nullable)dict;
 
-- (QONFallbackObject  * _Nullable)mapFallback:(NSDictionary *)data;
+- (QONFallbackObject  * _Nullable)mapFallback:(NSDictionary * _Nullable)data;
 
 @end
