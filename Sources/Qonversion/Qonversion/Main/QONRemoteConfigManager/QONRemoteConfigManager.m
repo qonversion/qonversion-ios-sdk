@@ -106,7 +106,13 @@ static NSString *const kEmptyContextKey = @"";
       if (error) {
         if (error.shouldFireFallback) {
           weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbacksService obtainFallbackData];
-          QONRemoteConfig *remoteConfig = [weakSelf.fallbackData.remoteConfigList remoteConfigForEmptyContextKey];
+          QONRemoteConfig *remoteConfig;
+          if (contextKey.length == 0) {
+            remoteConfig = [weakSelf.fallbackData.remoteConfigList remoteConfigForEmptyContextKey];
+          } else {
+            remoteConfig = [weakSelf.fallbackData.remoteConfigList remoteConfigForContextKey:contextKey];
+          }
+
           if (remoteConfig) {
             [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
           } else {

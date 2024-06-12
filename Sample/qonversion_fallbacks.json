@@ -100,6 +100,23 @@
         "type": "remote_configuration",
         "uid": "12feb1dd-8096-47bc-a5a1-443fd2828ecc"
       }
+    },
+    {
+      "experiment": "<null>",
+      "payload": {
+        "CTA": "One more test",
+        "CTA_color": "yellow",
+        "main_image": 1111,
+        "product_id": 2332,
+        "show_close_button": 1
+      },
+      "source": {
+        "assignment_type": "auto",
+        "context_key": "one_more_test",
+        "name": "Default settings",
+        "type": "remote_configuration",
+        "uid": "12feb1dd-8096-47bc-a5a1-443fd2828ecc"
+      }
     }
   ]
 }
