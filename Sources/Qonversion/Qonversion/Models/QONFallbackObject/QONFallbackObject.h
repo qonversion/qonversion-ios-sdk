@@ -20,8 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, nullable) NSDictionary<NSString *, NSArray *> *productsEntitlementsRelation;
 
-@property (nonatomic, strong, nullable) QONRemoteConfig *remoteConfig;
-
 @property (nonatomic, strong, nullable) QONRemoteConfigList *remoteConfigList;
 
 @end

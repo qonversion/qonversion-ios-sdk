@@ -66,21 +66,40 @@
       "plus"
     ]
   },
-  "remote_config": {
-    "experiment": "<null>",
-    "payload": {
+  "remote_configs": [
+    {
+      "experiment": "<null>",
+      "payload": {
         "CTA": "Start you trial",
         "CTA_color": "red",
         "main_image": 111,
         "product_id": 123123123123123,
         "show_close_button": 1
-    },
-    "source": {
+      },
+      "source": {
         "assignment_type": "auto",
         "context_key": "",
         "name": "Default settings",
         "type": "remote_configuration",
         "uid": "12feb1dd-8096-47bc-a5a1-443fd2828ecc"
+      }
+    },
+    {
+      "experiment": "<null>",
+      "payload": {
+        "CTA": "New test",
+        "CTA_color": "blue",
+        "main_image": 1111,
+        "product_id": 2332,
+        "show_close_button": 1
+      },
+      "source": {
+        "assignment_type": "auto",
+        "context_key": "new_test",
+        "name": "Default settings",
+        "type": "remote_configuration",
+        "uid": "12feb1dd-8096-47bc-a5a1-443fd2828ecc"
+      }
     }
-  }
+  ]
 }

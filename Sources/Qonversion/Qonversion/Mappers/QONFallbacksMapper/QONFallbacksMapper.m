@@ -41,9 +41,6 @@
   fallback.offerings = [self.mapper mapOfferings:data];
   fallback.productsEntitlementsRelation = [self.mapper mapProductsEntitlementsRelationships:data];
   
-  NSDictionary *rawRemoteConfig = data[@"remote_config"];
-  fallback.remoteConfig = [self.remoteConfigMapper mapRemoteConfig:rawRemoteConfig];
-  
   NSDictionary *rawRemoteConfigList = data[@"remote_config_list"];
   fallback.remoteConfigList = [self.remoteConfigMapper mapRemoteConfigList:rawRemoteConfigList];
   

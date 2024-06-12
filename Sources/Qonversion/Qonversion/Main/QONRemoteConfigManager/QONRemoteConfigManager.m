@@ -106,8 +106,9 @@ static NSString *const kEmptyContextKey = @"";
       if (error) {
         if (error.shouldFireFallback) {
           weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbacksService obtainFallbackData];
-          if (weakSelf.fallbackData.remoteConfig) {
-            [weakSelf fireRemoteConfig:weakSelf.fallbackData.remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
+          QONRemoteConfig *remoteConfig = [weakSelf.fallbackData.remoteConfigList remoteConfigForEmptyContextKey];
+          if (remoteConfig) {
+            [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
           } else {
             [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error completion:completion];
             return;
@@ -165,7 +166,7 @@ static NSString *const kEmptyContextKey = @"";
   __block __weak QONRemoteConfigManager *weakSelf = self;
   
   [self.userPropertiesManager forceSendProperties:^{
-    QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion];
+    QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion contextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey];
     [weakSelf.remoteConfigService loadRemoteConfigList:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completionWrapper];
   }];
 }
@@ -182,7 +183,7 @@ static NSString *const kEmptyContextKey = @"";
   __block __weak QONRemoteConfigManager *weakSelf = self;
   
   [self.userPropertiesManager forceSendProperties:^{
-    QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion];
+    QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion contextKeys:@[] includeEmptyContextKey:YES];
     [weakSelf.remoteConfigService loadRemoteConfigList:completionWrapper];
   }];
 }
@@ -224,13 +225,25 @@ static NSString *const kEmptyContextKey = @"";
   return self.loadingStates[key];
 }
 
-- (QONRemoteConfigListCompletionHandler)remoteConfigListCompletionWrapper:(QONRemoteConfigListCompletionHandler)completion {
+- (QONRemoteConfigListCompletionHandler)remoteConfigListCompletionWrapper:(QONRemoteConfigListCompletionHandler)completion contextKeys:(NSArray *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey {
   NSMutableDictionary<NSString *, QONRemoteConfigLoadingState *> *localLoadingStates = self.loadingStates;
 
+  __block __weak QONRemoteConfigManager *weakSelf = self;
+  
   return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
     if (error) {
-      completion(nil, error);
-      return;
+      weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbacksService obtainFallbackData];
+      if (weakSelf.fallbackData.remoteConfigList) {
+        if (contextKeys.count == 0) {
+          remoteConfigList = weakSelf.fallbackData.remoteConfigList;
+        } else {
+          NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList];
+          remoteConfigList.remoteConfigs = remoteConfigs;
+        }
+      } else {
+        completion(nil, error);
+        return;
+      }
     }
     
     if (remoteConfigList) {
@@ -244,6 +257,17 @@ static NSString *const kEmptyContextKey = @"";
 
     completion(remoteConfigList, nil);
   };
+}
+
+- (NSArray<QONRemoteConfig *> *_Nullable)remoteConfigsForContextKeys:(NSArray *)contextKeys remoteConfigList:(QONRemoteConfigList *)remoteConfigList {
+  NSMutableArray *remoteConfigs = [NSMutableArray new];
+  for (QONRemoteConfig *remoteConfig in remoteConfigList.remoteConfigs) {
+    if ([contextKeys containsObject:remoteConfig.source.contextKey]) {
+      [remoteConfigs addObject:remoteConfig];
+    }
+  }
+  
+  return [remoteConfigs mutableCopy];
 }
 
 @end

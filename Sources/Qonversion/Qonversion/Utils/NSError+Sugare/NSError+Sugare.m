@@ -7,12 +7,16 @@
 //
 
 #import "NSError+Sugare.h"
+#import "QNInternalConstants.h"
 
 @implementation NSError (Sugare)
 
 - (BOOL)shouldFireFallback {
-  // TODO: update logic here
-  return YES;
+  if (self.code == NSURLErrorNotConnectedToInternet || (self.code >= kInternalServerErrorFirstCode && self.code <= kInternalServerErrorLastCode)) {
+    return YES;
+  } else {
+    return NO;
+  }
 }
 
 @end
