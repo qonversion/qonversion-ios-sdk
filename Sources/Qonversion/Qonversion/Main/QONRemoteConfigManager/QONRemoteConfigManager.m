@@ -189,7 +189,7 @@ static NSString *const kEmptyContextKey = @"";
   __block __weak QONRemoteConfigManager *weakSelf = self;
   
   [self.userPropertiesManager forceSendProperties:^{
-    QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion contextKeys:@[] includeEmptyContextKey:YES];
+    QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion contextKeys:nil includeEmptyContextKey:YES];
     [weakSelf.remoteConfigService loadRemoteConfigList:completionWrapper];
   }];
 }
@@ -239,11 +239,10 @@ static NSString *const kEmptyContextKey = @"";
   return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
     if (error) {
       weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbacksService obtainFallbackData];
-      if (weakSelf.fallbackData.remoteConfigList) {
-        if (contextKeys.count == 0) {
-          remoteConfigList = weakSelf.fallbackData.remoteConfigList;
-        } else {
-          NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList];
+      remoteConfigList = weakSelf.fallbackData.remoteConfigList;
+      if (remoteConfigList) {
+        if (contextKeys) {
+          NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList includeEmptyContextKey:includeEmptyContextKey];
           remoteConfigList.remoteConfigs = remoteConfigs;
         }
       } else {
@@ -265,10 +264,15 @@ static NSString *const kEmptyContextKey = @"";
   };
 }
 
-- (NSArray<QONRemoteConfig *> *_Nullable)remoteConfigsForContextKeys:(NSArray *)contextKeys remoteConfigList:(QONRemoteConfigList *)remoteConfigList {
+- (NSArray<QONRemoteConfig *> *_Nullable)remoteConfigsForContextKeys:(NSArray *)contextKeys remoteConfigList:(QONRemoteConfigList *)remoteConfigList includeEmptyContextKey:(BOOL)includeEmptyContextKey {
+  if (contextKeys.count == 0 && !includeEmptyContextKey) {
+    return @[];
+  }
+  
   NSMutableArray *remoteConfigs = [NSMutableArray new];
   for (QONRemoteConfig *remoteConfig in remoteConfigList.remoteConfigs) {
-    if ([contextKeys containsObject:remoteConfig.source.contextKey]) {
+    BOOL shouldAddCurrentRemoteConfigWithEmptyContextKey = includeEmptyContextKey && remoteConfig.source.contextKey.length == 0;
+    if (shouldAddCurrentRemoteConfigWithEmptyContextKey || [contextKeys containsObject:remoteConfig.source.contextKey]) {
       [remoteConfigs addObject:remoteConfig];
     }
   }
