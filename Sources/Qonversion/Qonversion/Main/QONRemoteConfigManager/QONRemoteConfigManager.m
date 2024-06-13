@@ -238,12 +238,13 @@ static NSString *const kEmptyContextKey = @"";
   
   return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
     if (error) {
-      weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbacksService obtainFallbackData];
-      remoteConfigList = weakSelf.fallbackData.remoteConfigList;
-      if (remoteConfigList) {
+      weakSelf.fallbackData = [weakSelf.fallbacksService obtainFallbackData];
+      if (weakSelf.fallbackData.remoteConfigList) {
         if (contextKeys) {
           NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList includeEmptyContextKey:includeEmptyContextKey];
-          remoteConfigList.remoteConfigs = remoteConfigs;
+          remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:remoteConfigs];
+        } else {
+          remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:weakSelf.fallbackData.remoteConfigList.remoteConfigs];
         }
       } else {
         completion(nil, error);
