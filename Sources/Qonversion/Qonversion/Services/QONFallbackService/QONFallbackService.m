@@ -1,29 +1,29 @@
 //
-//  QONFallbacksService.m
+//  QONFallbackService.m
 //  Qonversion
 //
 //  Created by Suren Sarkisyan on 06.06.2024.
 //  Copyright © 2024 Qonversion Inc. All rights reserved.
 //
 
-#import "QONFallbacksService.h"
+#import "QONFallbackService.h"
 #import "QONFallbackObject.h"
-#import "QONFallbacksMapper.h"
+#import "QONFallbackMapper.h"
 
 NSString *const kFallbacksFileName = @"qonversion_fallbacks.json";
 
-@interface QONFallbacksService ()
+@interface QONFallbackService ()
 
-@property (nonatomic, strong) QONFallbacksMapper *mapper;
+@property (nonatomic, strong) QONFallbackMapper *mapper;
 
 @end
 
-@implementation QONFallbacksService
+@implementation QONFallbackService
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _mapper = [QONFallbacksMapper new];
+    _mapper = [QONFallbackMapper new];
   }
   return self;
 }

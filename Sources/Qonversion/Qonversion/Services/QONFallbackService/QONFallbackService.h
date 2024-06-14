@@ -1,5 +1,5 @@
 //
-//  QONFallbacksMapper.h
+//  QONFallbackService.h
 //  Qonversion
 //
 //  Created by Suren Sarkisyan on 06.06.2024.
@@ -8,13 +8,13 @@
 
 #import <Foundation/Foundation.h>
 
-@class QONFallbackObject, QNMapper, QONRemoteConfigMapper;
+@class QONFallbackObject, QONFallbackMapper;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QONFallbacksMapper : NSObject
+@interface QONFallbackService : NSObject
 
-- (QONFallbackObject  * _Nullable)mapFallback:(NSDictionary *)data;
+- (QONFallbackObject * _Nullable)obtainFallbackData;
 
 @end
 

@@ -15,7 +15,7 @@
 #import "QONRemoteConfigLoadingState.h"
 #import "QONRemoteConfigListRequestData.h"
 #import "QNUserPropertiesManager.h"
-#import "QONFallbacksService.h"
+#import "QONFallbackService.h"
 #import "NSError+Sugare.h"
 #import "QONFallbackObject.h"
 
@@ -38,7 +38,7 @@ static NSString *const kEmptyContextKey = @"";
     _remoteConfigService = [QONRemoteConfigService new];
     _loadingStates = [NSMutableDictionary new];
     _listRequests = [NSMutableArray new];
-    _fallbacksService = [QONFallbacksService new];
+    _fallbackService = [QONFallbackService new];
   }
   
   return self;
@@ -105,7 +105,7 @@ static NSString *const kEmptyContextKey = @"";
       loadingState.isInProgress = NO;
       if (error) {
         if (error.shouldFireFallback) {
-          weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbacksService obtainFallbackData];
+          weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbackService obtainFallbackData];
           QONRemoteConfig *remoteConfig;
           if (contextKey.length == 0) {
             remoteConfig = [weakSelf.fallbackData.remoteConfigList remoteConfigForEmptyContextKey];
@@ -238,7 +238,7 @@ static NSString *const kEmptyContextKey = @"";
   
   return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
     if (error) {
-      weakSelf.fallbackData = [weakSelf.fallbacksService obtainFallbackData];
+      weakSelf.fallbackData = [weakSelf.fallbackService obtainFallbackData];
       if (weakSelf.fallbackData.remoteConfigList) {
         if (contextKeys) {
           NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList includeEmptyContextKey:includeEmptyContextKey];

@@ -1,24 +1,24 @@
 //
-//  QONFallbacksMapper.m
+//  QONFallbackMapper.m
 //  Qonversion
 //
 //  Created by Suren Sarkisyan on 06.06.2024.
 //  Copyright © 2024 Qonversion Inc. All rights reserved.
 //
 
-#import "QONFallbacksMapper.h"
+#import "QONFallbackMapper.h"
 #import "QONFallbackObject.h"
 #import "QNMapper.h"
 #import "QONRemoteConfigMapper.h"
 
-@interface QONFallbacksMapper ()
+@interface QONFallbackMapper ()
 
 @property (nonatomic, strong) QNMapper *mapper;
 @property (nonatomic, strong) QONRemoteConfigMapper *remoteConfigMapper;
 
 @end
 
-@implementation QONFallbacksMapper
+@implementation QONFallbackMapper
 
 - (instancetype)init
 {

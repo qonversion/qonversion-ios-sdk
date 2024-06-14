@@ -14,7 +14,7 @@
 #import "QONRemoteConfigManager.h"
 #import "QONExceptionManager.h"
 #import "QONUserProperty.h"
-#import "QONFallbacksService.h"
+#import "QONFallbackService.h"
 
 static id shared = nil;
 
@@ -250,8 +250,8 @@ static bool _isInitialized = NO;
     _userInfoService = [servicesAssembly userInfoService];
     _localStorage = [servicesAssembly localStorage];
     id<QNIdentityManagerInterface> identityManager = [servicesAssembly identityManager];
-    QONFallbacksService *fallbacksService = [QONFallbacksService new];
-    _productCenterManager = [[QNProductCenterManager alloc] initWithUserInfoService:_userInfoService identityManager:identityManager localStorage:_localStorage fallbacksService:fallbacksService];
+    QONFallbackService *fallbackService = [QONFallbackService new];
+    _productCenterManager = [[QNProductCenterManager alloc] initWithUserInfoService:_userInfoService identityManager:identityManager localStorage:_localStorage fallbackService:fallbackService];
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
     _remoteConfigManager = [QONRemoteConfigManager new];

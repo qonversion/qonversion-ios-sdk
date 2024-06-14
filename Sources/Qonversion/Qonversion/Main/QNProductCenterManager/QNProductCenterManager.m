@@ -19,7 +19,7 @@
 #import "QNInternalConstants.h"
 #import "QONUser+Protected.h"
 #import "QONStoreKit2PurchaseModel.h"
-#import "QONFallbacksService.h"
+#import "QONFallbackService.h"
 #import "QONFallbackObject.h"
 
 #if TARGET_OS_IOS
@@ -39,7 +39,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) id<QNLocalStorage> persistentStorage;
 @property (nonatomic, strong) id<QNIdentityManagerInterface> identityManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
-@property (nonatomic, strong) QONFallbacksService *fallbacksService;
+@property (nonatomic, strong) QONFallbackService *fallbackService;
 @property (nonatomic, strong) QONFallbackObject *fallbackData;
 
 @property (nonatomic, copy) NSArray<SKPaymentTransaction *> *restoredTransactions;
@@ -72,7 +72,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @implementation QNProductCenterManager
 
-- (instancetype)initWithUserInfoService:(id<QNUserInfoServiceInterface>)userInfoService identityManager:(id<QNIdentityManagerInterface>)identityManager localStorage:(id<QNLocalStorage>)localStorage fallbacksService:(QONFallbacksService *)fallbacksService {
+- (instancetype)initWithUserInfoService:(id<QNUserInfoServiceInterface>)userInfoService identityManager:(id<QNIdentityManagerInterface>)identityManager localStorage:(id<QNLocalStorage>)localStorage fallbackService:(QONFallbackService *)fallbackService {
   self = super.init;
   if (self) {
     _launchingFinished = NO;
@@ -80,7 +80,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _launchError = nil;
     _launchResult = nil;
     _cacheLifetime = QONEntitlementsCacheLifetimeMonth;
-    _fallbacksService = fallbacksService;
+    _fallbackService = fallbackService;
 
 #if TARGET_OS_IOS
     [QONAutomations sharedInstance];
@@ -159,7 +159,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     products = cachedResult ? cachedResult.products : products;
     
     if (products.allValues.count == 0) {
-      self.fallbackData = self.fallbackData ?: [self.fallbacksService obtainFallbackData];
+      self.fallbackData = self.fallbackData ?: [self.fallbackService obtainFallbackData];
       products = self.fallbackData.products;
     }
   }
@@ -175,7 +175,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     offerings = cachedResult ? cachedResult.offerings : offerings;
     
     if (!offerings) {
-      self.fallbackData = self.fallbackData ?: [self.fallbacksService obtainFallbackData];
+      self.fallbackData = self.fallbackData ?: [self.fallbackService obtainFallbackData];
       offerings = self.fallbackData.offerings;
     }
   }
@@ -1178,7 +1178,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   QONProduct *qonversionProduct = productsMap[transaction.payment.productIdentifier];
   
   if (self.productsEntitlementsRelation.count == 0) {
-    QONFallbackObject *fallbackData = [self.fallbacksService obtainFallbackData];
+    QONFallbackObject *fallbackData = [self.fallbackService obtainFallbackData];
     self.productsEntitlementsRelation = fallbackData.productsEntitlementsRelation;
   }
 
