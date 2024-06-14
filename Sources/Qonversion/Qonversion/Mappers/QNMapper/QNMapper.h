@@ -20,8 +20,6 @@
 
 - (NSDictionary <NSString *, QONProduct *> * _Nonnull)mapProducts:(NSDictionary * _Nullable)data;
 
-- (NSDictionary * _Nullable)mapProductsEntitlementsRelationships:(NSDictionary * _Nullable)dict;
-
-- (QONFallbackObject  * _Nullable)mapFallback:(NSDictionary * _Nullable)data;
+- (NSDictionary * _Nullable)mapProductsEntitlementsRelations:(NSDictionary * _Nullable)dict;
 
 @end

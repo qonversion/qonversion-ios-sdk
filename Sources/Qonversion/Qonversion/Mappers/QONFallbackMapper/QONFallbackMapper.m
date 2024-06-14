@@ -30,7 +30,7 @@
   return self;
 }
 
-- (QONFallbackObject  * _Nullable)mapFallback:(NSDictionary *)data {
+- (QONFallbackObject * _Nullable)mapFallback:(NSDictionary *)data {
   if (![data isKindOfClass:[NSDictionary class]]) {
     return nil;
   }
@@ -39,7 +39,7 @@
   
   fallback.products = [self.mapper mapProducts:data];
   fallback.offerings = [self.mapper mapOfferings:data];
-  fallback.productsEntitlementsRelation = [self.mapper mapProductsEntitlementsRelationships:data];
+  fallback.productsEntitlementsRelation = [self.mapper mapProductsEntitlementsRelations:data];
   
   NSArray *rawRemoteConfigList = data[@"remote_config_list"];
   fallback.remoteConfigList = [self.remoteConfigMapper mapRemoteConfigList:rawRemoteConfigList];

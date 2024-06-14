@@ -54,7 +54,7 @@
   }
 }
 
-- (NSDictionary * _Nullable)mapProductsEntitlementsRelationships:(NSDictionary * _Nullable)dict {
+- (NSDictionary * _Nullable)mapProductsEntitlementsRelations:(NSDictionary * _Nullable)dict {
   return [QNMapper mapProductsEntitlementsRelation:dict];
 }
 
@@ -382,16 +382,6 @@
   } else {
     return numberObject.integerValue;
   }
-}
-
-- (QONFallbackObject  * _Nullable)mapFallback:(NSDictionary *)data {
-  if (![data isKindOfClass:[NSDictionary class]]) {
-    return nil;
-  }
-  
-  QONFallbackObject *fallback = [QONFallbackObject new];
-  
-  return fallback;
 }
 
 @end

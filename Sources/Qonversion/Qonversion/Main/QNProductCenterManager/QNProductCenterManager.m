@@ -1178,8 +1178,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   QONProduct *qonversionProduct = productsMap[transaction.payment.productIdentifier];
   
   if (self.productsEntitlementsRelation.count == 0) {
-    QONFallbackObject *fallbackData = [self.fallbackService obtainFallbackData];
-    self.productsEntitlementsRelation = fallbackData.productsEntitlementsRelation;
+    self.fallbackData = self.fallbackData ?: [self.fallbackService obtainFallbackData];
+    self.productsEntitlementsRelation = self.fallbackData.productsEntitlementsRelation;
   }
 
   NSArray<NSString *> *entitlementsIds = self.productsEntitlementsRelation[qonversionProduct.qonversionID];

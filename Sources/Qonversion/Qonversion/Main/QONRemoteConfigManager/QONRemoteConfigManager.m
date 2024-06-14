@@ -238,7 +238,7 @@ static NSString *const kEmptyContextKey = @"";
   
   return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
     if (error) {
-      weakSelf.fallbackData = [weakSelf.fallbackService obtainFallbackData];
+      weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbackService obtainFallbackData];
       if (weakSelf.fallbackData.remoteConfigList) {
         if (contextKeys) {
           NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList includeEmptyContextKey:includeEmptyContextKey];
@@ -278,7 +278,7 @@ static NSString *const kEmptyContextKey = @"";
     }
   }
   
-  return [remoteConfigs mutableCopy];
+  return [remoteConfigs copy];
 }
 
 @end
