@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QONFallbackMapper : NSObject
 
-- (QONFallbackObject * _Nullable)mapFallback:(NSDictionary *)data;
+- (QONFallbackObject * _Nullable)mapFallbackData:(NSDictionary *)data;
 
 @end
 

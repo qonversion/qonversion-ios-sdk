@@ -105,7 +105,7 @@ static NSString *const kEmptyContextKey = @"";
       loadingState.isInProgress = NO;
       if (error) {
         if (error.shouldFireFallback) {
-          weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbackService obtainFallbackData];
+          weakSelf.fallbackData = [weakSelf getActualFallbackData];
           QONRemoteConfig *remoteConfig;
           if (contextKey.length == 0) {
             remoteConfig = [weakSelf.fallbackData.remoteConfigList remoteConfigForEmptyContextKey];
@@ -117,15 +117,13 @@ static NSString *const kEmptyContextKey = @"";
             [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
           } else {
             [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error completion:completion];
-            return;
           }
         } else {
           [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error completion:completion];
-          return;
         }
+      } else {
+        [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
       }
-      
-      [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
     }];
   }];
 }
@@ -238,7 +236,7 @@ static NSString *const kEmptyContextKey = @"";
   
   return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
     if (error) {
-      weakSelf.fallbackData = weakSelf.fallbackData ?: [weakSelf.fallbackService obtainFallbackData];
+      weakSelf.fallbackData = [weakSelf getActualFallbackData];
       if (weakSelf.fallbackData.remoteConfigList) {
         if (contextKeys) {
           NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList includeEmptyContextKey:includeEmptyContextKey];
@@ -279,6 +277,12 @@ static NSString *const kEmptyContextKey = @"";
   }
   
   return [remoteConfigs copy];
+}
+
+- (QONFallbackObject *)getActualFallbackData {
+  self.fallbackData = self.fallbackData ?: [self.fallbackService obtainFallbackData];
+  
+  return self.fallbackData;
 }
 
 @end

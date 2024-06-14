@@ -39,7 +39,7 @@ NSString *const kFallbacksFileName = @"qonversion_fallbacks.json";
   
   NSDictionary *resultMap = [NSJSONSerialization JSONObjectWithData:fileData options:kNilOptions error:nil];
   
-  QONFallbackObject *resultObject = [self.mapper mapFallback:resultMap];
+  QONFallbackObject *resultObject = [self.mapper mapFallbackData:resultMap];
   
   return resultObject;
 }

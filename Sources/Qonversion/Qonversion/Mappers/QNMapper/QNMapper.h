@@ -16,9 +16,9 @@
 
 + (NSInteger)mapInteger:(NSObject * _Nullable)object orReturn:(NSInteger)defaultValue;
 
-- (QONOfferings * _Nonnull)mapOfferings:(NSDictionary * _Nullable)data;
+- (QONOfferings * _Nonnull)mapFallbackOfferings:(NSDictionary * _Nullable)data;
 
-- (NSDictionary <NSString *, QONProduct *> * _Nonnull)mapProducts:(NSDictionary * _Nullable)data;
+- (NSDictionary <NSString *, QONProduct *> * _Nonnull)mapFallbackProducts:(NSDictionary * _Nullable)data;
 
 - (NSDictionary * _Nullable)mapProductsEntitlementsRelations:(NSDictionary * _Nullable)dict;
 
