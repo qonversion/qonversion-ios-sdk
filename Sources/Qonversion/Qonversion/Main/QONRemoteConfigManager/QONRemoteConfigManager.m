@@ -105,7 +105,7 @@ static NSString *const kEmptyContextKey = @"";
       loadingState.isInProgress = NO;
       if (error) {
         if (error.shouldFireFallback) {
-          weakSelf.fallbackData = [weakSelf getActualFallbackData];
+          [weakSelf actualizeFallbackData];
           QONRemoteConfig *remoteConfig;
           if (contextKey.length == 0) {
             remoteConfig = [weakSelf.fallbackData.remoteConfigList remoteConfigForEmptyContextKey];
@@ -236,7 +236,7 @@ static NSString *const kEmptyContextKey = @"";
   
   return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
     if (error) {
-      weakSelf.fallbackData = [weakSelf getActualFallbackData];
+      [weakSelf actualizeFallbackData];
       if (weakSelf.fallbackData.remoteConfigList) {
         if (contextKeys) {
           NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList includeEmptyContextKey:includeEmptyContextKey];
@@ -279,10 +279,8 @@ static NSString *const kEmptyContextKey = @"";
   return [remoteConfigs copy];
 }
 
-- (QONFallbackObject *)getActualFallbackData {
+- (void)actualizeFallbackData {
   self.fallbackData = self.fallbackData ?: [self.fallbackService obtainFallbackData];
-  
-  return self.fallbackData;
 }
 
 @end

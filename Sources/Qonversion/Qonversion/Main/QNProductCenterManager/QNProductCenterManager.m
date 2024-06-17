@@ -159,7 +159,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     products = cachedResult ? cachedResult.products : products;
     
     if (products.allValues.count == 0) {
-      self.fallbackData = [self getActualFallbackData];
+      [self actualizeFallbackData];
       products = self.fallbackData.products;
     }
   }
@@ -167,10 +167,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return products;
 }
 
-- (QONFallbackObject *)getActualFallbackData {
+- (void)actualizeFallbackData {
   self.fallbackData = self.fallbackData ?: [self.fallbackService obtainFallbackData];
-  
-  return self.fallbackData;
 }
 
 - (QONOfferings * _Nullable)getActualOfferings {
@@ -181,7 +179,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     offerings = cachedResult ? cachedResult.offerings : offerings;
     
     if (!offerings) {
-      self.fallbackData = [self getActualFallbackData];
+      [self actualizeFallbackData];
       offerings = self.fallbackData.offerings;
     }
   }
@@ -1184,7 +1182,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   QONProduct *qonversionProduct = productsMap[transaction.payment.productIdentifier];
   
   if (self.productsEntitlementsRelation.count == 0) {
-    self.fallbackData = [self getActualFallbackData];
+    [self actualizeFallbackData];
     self.productsEntitlementsRelation = self.fallbackData.productsEntitlementsRelation;
   }
 
