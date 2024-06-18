@@ -1,5 +1,4 @@
 {
-  "timestamp": 1586369519,
   "products": [
     {
       "duration": 4,
@@ -37,7 +36,7 @@
           "type": 0
         },
         {
-          "duration": "<null>",
+          "duration": null,
           "id": "consumable",
           "store_id": "io.qonversion.consumable",
           "type": 2
@@ -68,12 +67,12 @@
   },
   "remote_config_list": [
     {
-      "experiment": "<null>",
+      "experiment": null,
       "payload": {
         "CTA": "Start you trial",
         "CTA_color": "red",
-        "main_image": 111,
-        "product_id": 123123123123123,
+        "main_image": "111",
+        "product_id": "123123123123123",
         "show_close_button": 1
       },
       "source": {
@@ -85,12 +84,12 @@
       }
     },
     {
-      "experiment": "<null>",
+      "experiment": null,
       "payload": {
         "CTA": "New test",
         "CTA_color": "blue",
-        "main_image": 1111,
-        "product_id": 2332,
+        "main_image": "1111",
+        "product_id": "2332",
         "show_close_button": 1
       },
       "source": {
@@ -102,12 +101,12 @@
       }
     },
     {
-      "experiment": "<null>",
+      "experiment": null,
       "payload": {
         "CTA": "One more test",
         "CTA_color": "yellow",
-        "main_image": 1111,
-        "product_id": 2332,
+        "main_image": "1111",
+        "product_id": "2332",
         "show_close_button": 1
       },
       "source": {
