@@ -803,7 +803,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product error:(NSError *)error {
   QONPurchaseCompletionHandler _purchasingBlock = _purchasingBlocks[product.productIdentifier];
   if (_purchasingBlock) {
-    run_block_on_main(_purchasingBlock, @{}, error, error.code == QONErrorCancelled);
+    run_block_on_main(_purchasingBlock, @{}, error, error.code == QONErrorPurchaseCanceled);
     @synchronized (self) {
       [_purchasingBlocks removeObjectForKey:product.productIdentifier];
     }

@@ -11,7 +11,7 @@
       return @"Request failed.";
     case QONAPIErrorFailedReceiveData:
       return @"Could not receive data";
-    case QONAPIErrorFailedParseResponse:
+    case QONAPIErrorResponseParsingFailed:
       return @"Could not parse response";
     default: return @"Request failed.";
   }
@@ -55,7 +55,7 @@
   NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
   userInfo[NSLocalizedDescriptionKey] = @"The transaction is deferred";
   
-  return [self errorWithQonversionErrorCode:QONErrorStorePaymentDeferred userInfo:[userInfo copy]];
+  return [self errorWithQonversionErrorCode:QONErrorStorePurchasePending userInfo:[userInfo copy]];
 }
 
 + (NSError *)errorFromTransactionError:(NSError *)error {
@@ -64,15 +64,10 @@
   userInfo[NSLocalizedDescriptionKey] = error.localizedDescription ?: @"";
   
   if ([[error domain] isEqualToString:NSURLErrorDomain]) {
-    switch (error.code) {
-      case NSURLErrorNotConnectedToInternet:
-        errorCode = QONErrorConnectionFailed; break;
-      default:
-        errorCode = QONErrorInternetConnectionFailed; break;
-    }
+    errorCode = QONErrorNetworkConnectionFailed;
   }
   
-  if (error && [[error domain] isEqualToString:SKErrorDomain]) {
+  if ([[error domain] isEqualToString:SKErrorDomain]) {
     SKErrorCode skErrorCode = error.code;
     
       switch (skErrorCode) {
@@ -81,7 +76,7 @@
         case SKErrorClientInvalid:
           errorCode = QONErrorClientInvalid; break;
         case SKErrorPaymentCancelled:
-          errorCode = QONErrorCancelled; break;
+          errorCode = QONErrorPurchaseCanceled; break;
         case SKErrorPaymentNotAllowed:
           errorCode = QONErrorPaymentNotAllowed; break;
         case SKErrorPaymentInvalid:
@@ -92,7 +87,7 @@
         case 6: // SKErrorCloudServicePermissionDenied
           errorCode = QONErrorCloudServicePermissionDenied; break;
         case 7: // SKErrorCloudServiceNetworkConnectionFailed
-          errorCode = QONErrorConnectionFailed; break;
+          errorCode = QONErrorCloudServiceNetworkConnectionFailed; break;
         case 8: // SKErrorCloudServiceRevoked
           errorCode = QONErrorCloudServiceRevoked; break;
         case 9: // SKErrorPrivacyAcknowledgementRequired
@@ -115,13 +110,8 @@
   userInfo[NSLocalizedDescriptionKey] = error.localizedDescription ?: @"";
   
   if ([[error domain] isEqualToString:NSURLErrorDomain]) {
-    switch (error.code) {
-      case NSURLErrorNotConnectedToInternet:
-        errorCode = QONErrorConnectionFailed; break;
-      default:
-        errorCode = QONErrorInternetConnectionFailed; break;
-    }
-    
+    errorCode = QONErrorNetworkConnectionFailed;
+
     userInfo[NSHelpAnchorErrorKey] = [self helpAnchorForErrorCode:errorCode];
   } else {
     return error;
@@ -139,11 +129,11 @@
   NSString *result = @"";
   
   switch (errorCode) {
-    case QONErrorCancelled:
-      result = @"User cancelled the request"; break;
+    case QONErrorPurchaseCanceled:
+      result = @"User canceled the request"; break;
     
     case QONErrorProductNotFound:
-      result = @"Requested product not found. See more info about this error in documentation https://documentation.qonversion.io/docs/troubleshooting#1-product-not-found-error"; break;
+      result = @"The requested product not found. See more info about this error in the documentation https://documentation.qonversion.io/docs/troubleshooting#product-not-found-error"; break;
     
     case QONErrorClientInvalid:
       result = @"Client is not allowed to issue the request"; break;
@@ -153,19 +143,13 @@
       
     case QONErrorPaymentNotAllowed:
       result = @"This device is not allowed to make the payment"; break;
-      
-    case QONErrorStoreFailed:
-      result = @"Apple Store didn't process the request"; break;
-      
+
     case QONErrorStoreProductNotAvailable:
       result = @"Product is not available in the current storefront or Products on Qonversion Dashboard configured with wrong store product identifier"; break;
       
     case QONErrorCloudServicePermissionDenied:
       result = @"User has not allowed access to cloud service information"; break;
-      
-    case QONErrorCloudServiceNetworkConnectionFailed:
-      result = @"The device could not connect to the network"; break;
-      
+
     case QONErrorCloudServiceRevoked:
       result = @"User has revoked permission to use this cloud service"; break;
       
@@ -175,18 +159,9 @@
     case QONErrorUnauthorizedRequestData:
       result = @"App is attempting to use SKPayment's requestData property, but does not have the appropriate entitlement"; break;
      
-    case QONErrorIncorrectSharedSecret:
-      result = @"Provided shared secret is incorrect, validation unavailable. See more info in documentation https://documentation.qonversion.io/docs/app-specific-shared-secret"; break;
-      
-    case QONErrorConnectionFailed:
-      result = @"Failed to connect to Qonversion Backend"; break;
-      
-    case QONErrorInternetConnectionFailed:
-      result = @"Other URL Session errors of NSURLErrorDomain enum"; break;
-      
-    case QONErrorDataFailed:
-      result = @"Network data error"; break;
-      
+    case QONErrorNetworkConnectionFailed:
+      result = @"There was a network issue. Please make sure that the Internet connection is available on the device"; break;
+
     case QONErrorInternalError:
       result = @"Internal error occurred"; break;
       

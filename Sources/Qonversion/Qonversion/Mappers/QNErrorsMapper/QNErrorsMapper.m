@@ -50,7 +50,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   NSDictionary *errorDict = result[@"error"];
   NSString *errorMessage = errorDict[@"message"] ?: kDefaultErrorMessage;
   
-  NSError *error = [QONErrors errorWithCode:QONAPIErrorInternalError message:errorMessage failureReason:nil];
+  NSError *error = [QONErrors errorWithCode:QONAPIErrorBackendError message:errorMessage failureReason:nil];
   
   return error;
 }
@@ -66,7 +66,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   NSNumber *codeNumber = data[@"code"];
   
   if (!codeNumber) {
-    return [QONErrors errorWithCode:QONAPIErrorInternalError message:kDefaultErrorMessage failureReason:nil];
+    return [QONErrors errorWithCode:QONAPIErrorBackendError message:kDefaultErrorMessage failureReason:nil];
   }
   
   QONAPIError errorType = [self errorTypeFromCode:codeNumber];
@@ -88,7 +88,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
 }
 
 - (QONAPIError)errorTypeFromCode:(NSNumber *)errorCode {
-  QONAPIError type = QONAPIErrorInternalError;
+  QONAPIError type = QONAPIErrorBackendError;
   
   switch (errorCode.integerValue) {
     case 10000:
@@ -102,7 +102,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
     case 20300:
     case 20303:
     case 20200:
-      type = QONAPIErrorInternalError;
+      type = QONAPIErrorBackendError;
       break;
       
     case 10002:
