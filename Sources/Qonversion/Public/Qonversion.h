@@ -31,7 +31,6 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const QonversionErrorDomain = @"com.qonversion.io";
-static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
 
 @interface Qonversion : NSObject
 

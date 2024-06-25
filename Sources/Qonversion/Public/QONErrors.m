@@ -5,13 +5,13 @@
 
 @implementation QONErrors
 
-+ (NSString *)messageForError:(QONAPIError)error {
++ (NSString *)messageForError:(QONError)error {
   switch (error) {
-    case QONAPIErrorIncorrectRequest:
+    case QONErrorIncorrectRequest:
       return @"Request failed.";
-    case QONAPIErrorFailedReceiveData:
+    case QONErrorFailedToReceiveData:
       return @"Could not receive data";
-    case QONAPIErrorResponseParsingFailed:
+    case QONErrorResponseParsingFailed:
       return @"Could not parse response";
     default: return @"Request failed.";
   }
@@ -19,7 +19,7 @@
   return @"";
 }
 
-+ (NSError *)errorWithCode:(QONAPIError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason {
++ (NSError *)errorWithCode:(QONError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason {
   NSMutableDictionary *info = [NSMutableDictionary new];
   info[NSLocalizedDescriptionKey] = NSLocalizedString(message, nil);
   
@@ -27,7 +27,7 @@
     info[NSDebugDescriptionErrorKey] = NSLocalizedString(failureReason, nil);
   }
   
-  NSError *error = [NSError errorWithDomain:QonversionApiErrorDomain code:errorCode userInfo:[info copy]];
+  NSError *error = [NSError errorWithDomain:QonversionErrorDomain code:errorCode userInfo:[info copy]];
   
   return error;
 }
@@ -45,7 +45,7 @@
   return [self errorWithQonversionErrorCode:errorCode userInfo:nil];
 }
 
-+ (NSError *)errorWithCode:(QONAPIError)errorCode {
++ (NSError *)errorWithCode:(QONError)errorCode {
   NSDictionary *info = @{NSLocalizedDescriptionKey: NSLocalizedString([self messageForError:errorCode], nil)};
   
   return [self errorWithQonversionErrorCode:QONErrorInternalError userInfo:info];

@@ -23,9 +23,9 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   self = [super init];
   
   if (self) {
-    _errorsMap = @{@(QONAPIErrorProjectConfigError) : @"The project is not configured or configured incorrectly in the Qonversion Dashboard.",
-                   @(QONAPIErrorInvalidStoreCredentials) : @"Please check provided Store keys in the Qonversion Dashboard.",
-                   @(QONAPIErrorReceiptValidation) : @"Provided receipt can't be validated. Please check the details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
+    _errorsMap = @{@(QONErrorProjectConfigError) : @"The project is not configured or configured incorrectly in the Qonversion Dashboard.",
+                   @(QONErrorInvalidStoreCredentials) : @"Please check provided Store keys in the Qonversion Dashboard.",
+                   @(QONErrorReceiptValidation) : @"Provided receipt can't be validated. Please check the details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
     };
   }
   
@@ -50,7 +50,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   NSDictionary *errorDict = result[@"error"];
   NSString *errorMessage = errorDict[@"message"] ?: kDefaultErrorMessage;
   
-  NSError *error = [QONErrors errorWithCode:QONAPIErrorBackendError message:errorMessage failureReason:nil];
+  NSError *error = [QONErrors errorWithCode:QONErrorBackendError message:errorMessage failureReason:nil];
   
   return error;
 }
@@ -66,10 +66,10 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   NSNumber *codeNumber = data[@"code"];
   
   if (!codeNumber) {
-    return [QONErrors errorWithCode:QONAPIErrorBackendError message:kDefaultErrorMessage failureReason:nil];
+    return [QONErrors errorWithCode:QONErrorBackendError message:kDefaultErrorMessage failureReason:nil];
   }
   
-  QONAPIError errorType = [self errorTypeFromCode:codeNumber];
+  QONError errorType = [self errorTypeFromCode:codeNumber];
   NSString *apiErrorMessage = data[@"message"];
   NSString *failureReason = [self messageForErrorType:errorType];
   NSString *additionalMessage = [NSString stringWithFormat:@"Internal error code: %li.", (long)codeNumber.integerValue];
@@ -83,12 +83,12 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
   return error;
 }
 
-- (NSString *)messageForErrorType:(QONAPIError)errorType {
+- (NSString *)messageForErrorType:(QONError)errorType {
   return self.errorsMap[@(errorType)];
 }
 
-- (QONAPIError)errorTypeFromCode:(NSNumber *)errorCode {
-  QONAPIError type = QONAPIErrorBackendError;
+- (QONError)errorTypeFromCode:(NSNumber *)errorCode {
+  QONError type = QONErrorBackendError;
   
   switch (errorCode.integerValue) {
     case 10000:
@@ -102,52 +102,52 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
     case 20300:
     case 20303:
     case 20200:
-      type = QONAPIErrorBackendError;
+      type = QONErrorBackendError;
       break;
       
     case 10002:
     case 10003:
-      type = QONAPIErrorInvalidCredentials;
+      type = QONErrorInvalidCredentials;
       break;
       
     case 10004:
     case 10005:
     case 20014:
-      type = QONAPIErrorInvalidClientUID;
+      type = QONErrorInvalidClientUID;
       break;
       
     case 10006:
-      type = QONAPIErrorUnknownClientPlatform;
+      type = QONErrorUnknownClientPlatform;
       break;
       
     case 10008:
-      type = QONAPIErrorFraudPurchase;
+      type = QONErrorFraudPurchase;
       break;
       
     case 20005:
-      type = QONAPIErrorFeatureNotSupported;
+      type = QONErrorFeatureNotSupported;
       break;
       
     case 20006:
     case 20007:
     case 20109:
     case 20199:
-      type = QONAPIErrorAppleStoreError;
+      type = QONErrorAppleStoreError;
       break;
       
     case 20008:
     case 20010:
-      type = QONAPIErrorPurchaseInvalid;
+      type = QONErrorPurchaseInvalid;
       break;
       
     case 20011:
     case 20012:
     case 20013:
-      type = QONAPIErrorProjectConfigError;
+      type = QONErrorProjectConfigError;
       break;
       
     case 20104:
-      type = QONAPIErrorInvalidStoreCredentials;
+      type = QONErrorInvalidStoreCredentials;
       break;
       
     case 20102:
@@ -158,7 +158,7 @@ static NSString *const kDefaultErrorMessage = @"Internal error occurred";
     case 20107:
     case 20108:
     case 21099:
-      type = QONAPIErrorReceiptValidation;
+      type = QONErrorReceiptValidation;
       break;
       
     default:

@@ -54,62 +54,59 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONError) {
   
   // No remote configuration for the current user
   QONErrorRemoteConfigurationNotAvailable = 19,
+
+  // Could not receive data from API
+  QONErrorFailedToReceiveData = 20,
+
+  // Could not parse response
+  QONErrorResponseParsingFailed = 21,
+  
+  // Request failed
+  QONErrorIncorrectRequest = 22,
+  
+  // Internal backend error
+  QONErrorBackendError = 23,
+
+  // Invalid credentials in request
+  QONErrorInvalidCredentials = 25,
+  
+  // Invalid client uid received
+  QONErrorInvalidClientUID = 26,
+  
+  // An unknown client platform error
+  QONErrorUnknownClientPlatform = 27,
+  
+  // Fraud purchase detected
+  QONErrorFraudPurchase = 28,
+  
+  // Requested feature not supported
+  QONErrorFeatureNotSupported = 29,
+  
+  // Apple Store error received
+  QONErrorAppleStoreError = 30,
+  
+  // Invalid purchase error
+  QONErrorPurchaseInvalid = 31,
+  
+  // Project config error. Update project settings on the Qonversion Dashboard
+  QONErrorProjectConfigError = 32,
+  
+  // Invalid Apple Store credentials error
+  QONErrorInvalidStoreCredentials = 33,
+  
+  // Receipt validation error
+  QONErrorReceiptValidation = 34,
+
+  // Rate limit exceeded
+  QONErrorRateLimitExceeded = 35,
   
 } NS_SWIFT_NAME(Qonversion.Error);
 
-
-typedef NS_ERROR_ENUM(QONErrorDomain, QONAPIError) {
-  // Could not receive data
-  QONAPIErrorFailedReceiveData = 0,
-  
-  // Could not parse response
-  QONAPIErrorResponseParsingFailed = 1,
-  
-  // Request failed
-  QONAPIErrorIncorrectRequest = 2,
-  
-  // Internal backend error
-  QONAPIErrorBackendError = 3,
-
-  // Invalid credentials in request
-  QONAPIErrorInvalidCredentials = 5,
-  
-  // Invalid client uid received
-  QONAPIErrorInvalidClientUID = 6,
-  
-  // An unknown client platform error
-  QONAPIErrorUnknownClientPlatform = 7,
-  
-  // Fraud purchase detected
-  QONAPIErrorFraudPurchase = 8,
-  
-  // Requested feature not supported
-  QONAPIErrorFeatureNotSupported = 9,
-  
-  // Apple Store error received
-  QONAPIErrorAppleStoreError = 10,
-  
-  // Invalid purchase error
-  QONAPIErrorPurchaseInvalid = 11,
-  
-  // Project config error. Update project settings on the Qonversion Dashboard
-  QONAPIErrorProjectConfigError  = 12,
-  
-  // Invalid Apple Store credentials error
-  QONAPIErrorInvalidStoreCredentials  = 13,
-  
-  // Receipt validation error
-  QONAPIErrorReceiptValidation = 14,
-
-  // Rate limit exceeded
-  QONAPIErrorRateLimitExceeded = 15,
-} NS_SWIFT_NAME(Qonversion.APIError);
-
 @interface QONErrors: NSObject
 
++ (NSError *)errorWithCode:(QONError)errorCode;
 + (NSError *)errorWithCode:(QONError)errorCode message:(NSString *)message;
-+ (NSError *)errorWithCode:(QONAPIError)errorCode;
-+ (NSError *)errorWithCode:(QONAPIError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason;
++ (NSError *)errorWithCode:(QONError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason;
 + (NSError *)errorWithQONErrorCode:(QONError)errorCode;
 + (NSError *)errorFromURLDomainError:(NSError *)error;
 + (NSError *)errorFromTransactionError:(NSError *)error;

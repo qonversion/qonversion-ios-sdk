@@ -170,7 +170,7 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
         
         self.inMemoryStorage.storageDictionary = [allProperties copy];
         
-        if ([error.domain isEqualToString:QonversionApiErrorDomain] && error.code == QONAPIErrorInvalidClientUID) {
+        if ([error.domain isEqualToString:QonversionErrorDomain] && error.code == QONErrorInvalidClientUID) {
           [weakSelf.productCenterManager launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
             [weakSelf retryProperties];
           }];
