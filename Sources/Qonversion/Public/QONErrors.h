@@ -50,7 +50,7 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONError) {
   QONErrorInternalError = 17,
   
   // The payment was deferred
-  QONErrorStorePurchasePending = 18,
+  QONErrorPurchasePending = 18,
   
   // No remote configuration for the current user
   QONErrorRemoteConfigurationNotAvailable = 19,
@@ -95,10 +95,10 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONError) {
   QONErrorInvalidStoreCredentials = 33,
   
   // Receipt validation error
-  QONErrorReceiptValidation = 34,
+  QONErrorReceiptValidationError = 34,
 
   // Rate limit exceeded
-  QONErrorRateLimitExceeded = 35,
+  QONErrorApiRateLimitExceeded = 35,
   
 } NS_SWIFT_NAME(Qonversion.Error);
 

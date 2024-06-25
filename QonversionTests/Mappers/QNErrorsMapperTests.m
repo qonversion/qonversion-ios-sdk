@@ -34,7 +34,7 @@
   
   self.errorsMap = @{@(QONErrorProjectConfigError) : @"The project is not configured or configured incorrectly in the Qonversion Dashboard.",
                      @(QONErrorInvalidStoreCredentials) : @"Please check provided Store keys in the Qonversion Dashboard.",
-                     @(QONErrorReceiptValidation) : @"Provided receipt can't be validated. Please check the details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
+                     @(QONErrorReceiptValidationError) : @"Provided receipt can't be validated. Please check the details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
   };
   
   self.errorsCodesMap = @{

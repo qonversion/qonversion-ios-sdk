@@ -55,7 +55,7 @@
   NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
   userInfo[NSLocalizedDescriptionKey] = @"The transaction is deferred";
   
-  return [self errorWithQonversionErrorCode:QONErrorStorePurchasePending userInfo:[userInfo copy]];
+  return [self errorWithQonversionErrorCode:QONErrorPurchasePending userInfo:[userInfo copy]];
 }
 
 + (NSError *)errorFromTransactionError:(NSError *)error {
