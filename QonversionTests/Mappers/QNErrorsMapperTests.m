@@ -14,8 +14,8 @@
 
 @interface QNErrorsMapper ()
 
-- (NSString *)messageForErrorType:(QONError)errorType;
-- (QONError)errorTypeFromCode:(NSNumber *)errorCode;
+- (NSString *)messageForErrorType:(QONErrorCode)errorType;
+- (QONErrorCode)errorTypeFromCode:(NSNumber *)errorCode;
 
 @end
 
@@ -32,9 +32,9 @@
 - (void)setUp {
   [super setUp];
   
-  self.errorsMap = @{@(QONErrorProjectConfigError) : @"The project is not configured or configured incorrectly in the Qonversion Dashboard.",
-                     @(QONErrorInvalidStoreCredentials) : @"Please check provided Store keys in the Qonversion Dashboard.",
-                     @(QONErrorReceiptValidationError) : @"Provided receipt can't be validated. Please check the details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
+  self.errorsMap = @{@(QONErrorCodeProjectConfigError) : @"The project is not configured or configured incorrectly in the Qonversion Dashboard.",
+                     @(QONErrorCodeInvalidStoreCredentials) : @"Please check provided Store keys in the Qonversion Dashboard.",
+                     @(QONErrorCodeReceiptValidationError) : @"Provided receipt can't be validated. Please check the details here: https://documentation.qonversion.io/docs/troubleshooting#receipt-validation-error"
   };
   
   self.errorsCodesMap = @{

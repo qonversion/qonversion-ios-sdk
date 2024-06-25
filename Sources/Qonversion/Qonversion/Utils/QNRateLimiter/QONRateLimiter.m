@@ -45,7 +45,7 @@
   }
 
   if ([self isRateLimitExceeded:requestType hash:hash]) {
-    completion([QONErrors errorWithCode:QONErrorApiRateLimitExceeded]);
+    completion([QONErrors errorWithQONErrorCode:QONErrorCodeApiRateLimitExceeded]);
   } else {
     [self saveRequest:requestType hash:hash];
     completion(nil);

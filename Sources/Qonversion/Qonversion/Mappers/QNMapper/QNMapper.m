@@ -339,7 +339,7 @@
   QNMapperObject *object = [QNMapperObject new];
   
   if (!dict || ![dict isKindOfClass:NSDictionary.class]) {
-    [object setError:[QONErrors errorWithCode:QONErrorFailedToReceiveData]];
+    [object setError:[QONErrors internalErrorWithCode:QONErrorCodeFailedToReceiveData]];
     return object;
   }
   
@@ -350,7 +350,7 @@
     [object setData:resultData];
     return object;
   } else {
-    [object setError:[QONErrors errorWithCode:QONErrorIncorrectRequest]];
+    [object setError:[QONErrors internalErrorWithCode:QONErrorCodeIncorrectRequest]];
     return object;
   }
 }
