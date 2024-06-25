@@ -38,43 +38,43 @@
   };
   
   self.errorsCodesMap = @{
-    @10000 : @3,
-    @10001 : @3,
-    @10007 : @3,
-    @10009 : @3,
-    @20000 : @3,
-    @20009 : @3,
-    @20015 : @3,
-    @20099 : @3,
-    @20300 : @3,
-    @20303 : @3,
-    @20200 : @3,
-    @10002 : @5,
-    @10003 : @5,
-    @10004: @6,
-    @10005: @6,
-    @20014: @6,
-    @10006: @7,
-    @10008: @8,
-    @20005: @9,
-    @20006: @10,
-    @20007: @10,
-    @20109: @10,
-    @20199: @10,
-    @20008: @11,
-    @20010: @11,
-    @20011: @12,
-    @20012: @12,
-    @20013: @12,
-    @20104: @13,
-    @20102: @14,
-    @20103: @14,
-    @20105: @14,
-    @20110: @14,
-    @20100: @14,
-    @20107: @14,
-    @20108: @14,
-    @21099: @14
+    @10000 : @23,
+    @10001 : @23,
+    @10007 : @23,
+    @10009 : @23,
+    @20000 : @23,
+    @20009 : @23,
+    @20015 : @23,
+    @20099 : @23,
+    @20300 : @23,
+    @20303 : @23,
+    @20200 : @23,
+    @10002 : @25,
+    @10003 : @25,
+    @10004: @26,
+    @10005: @26,
+    @20014: @26,
+    @10006: @27,
+    @10008: @28,
+    @20005: @29,
+    @20006: @30,
+    @20007: @30,
+    @20109: @30,
+    @20199: @30,
+    @20008: @31,
+    @20010: @31,
+    @20011: @32,
+    @20012: @32,
+    @20013: @32,
+    @20104: @33,
+    @20102: @34,
+    @20103: @34,
+    @20105: @34,
+    @20110: @34,
+    @20100: @34,
+    @20107: @34,
+    @20108: @34,
+    @21099: @34
   };
   
   self.mapper = [QNErrorsMapper new];
@@ -139,13 +139,13 @@
   NSError *error = [self.mapper errorFromRequestResult:result];
   
   // then
-  XCTAssertEqual(error.code, 3);
+  XCTAssertEqual(error.code, 23);
   XCTAssertEqualObjects(error.localizedDescription, @"Internal error occurred");
 }
 
 - (void)testErrorFromRequestResult_fromDataField {
   // given
-  NSUInteger resultAPIErrorType = 12;
+  NSUInteger resultAPIErrorType = 32;
   NSString *errorMessage = @"someMessage";
   NSNumber *code = @20012;
   NSString *failureReason = self.errorsMap[@(resultAPIErrorType)];
@@ -166,7 +166,7 @@
 
 - (void)testErrorFromRequestResult_fromDataFieldNoFailureReason {
   // given
-  NSUInteger resultAPIErrorType = 11;
+  NSUInteger resultAPIErrorType = 31;
   NSString *errorMessage = @"someMessage";
   NSNumber *code = @20008;
   NSString *additionalMessage = [NSString stringWithFormat:@"Internal error code: %li.", (long)code.integerValue];
@@ -193,7 +193,7 @@
   NSError *error = [self.mapper errorFromRequestResult:result];
   
   // then
-  XCTAssertEqual(error.code, 3);
+  XCTAssertEqual(error.code, 23);
   XCTAssertEqualObjects(error.localizedDescription, errorMessage);
 }
 
@@ -205,7 +205,7 @@
   NSError *error = [self.mapper errorFromRequestResult:result];
   
   // then
-  XCTAssertEqual(error.code, 3);
+  XCTAssertEqual(error.code, 23);
   XCTAssertEqualObjects(error.localizedDescription, @"Internal error occurred");
 }
 
@@ -260,7 +260,7 @@
   NSUInteger type = [self.mapper errorTypeFromCode:@(randomValue)];
   
   // then
-  XCTAssertEqual(type, 3);
+  XCTAssertEqual(type, 23);
 }
 
 @end
