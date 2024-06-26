@@ -133,7 +133,12 @@
   NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
   
   if (!receiptData) {
-    return nil;
+    NSURL *url = [NSBundle mainBundle].appStoreReceiptURL;
+    receiptData = [NSData dataWithContentsOfURL:url];
+    
+    if (!receiptData) {
+      return nil;
+    }
   }
   
   return [receiptData base64EncodedStringWithOptions:0];
