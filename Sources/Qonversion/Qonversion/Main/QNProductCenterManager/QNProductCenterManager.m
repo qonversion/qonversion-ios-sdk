@@ -400,7 +400,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   if (!product) {
     QONVERSION_LOG(@"❌ product with id: %@ not found", productID);
-    run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorProductNotFound], NO);
+    run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorCodeProductNotFound], NO);
     return;
   }
   
@@ -420,7 +420,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   
   QONVERSION_LOG(@"❌ Store product with id: %@ not found", product.storeID);
-  run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorProductNotFound], NO);
+  run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorCodeProductNotFound], NO);
 }
 
 - (void)restore:(QNRestoreCompletionHandler)completion {
@@ -677,7 +677,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       QONProduct *product = result[identifier];
       if (!product) {
         QONVERSION_LOG(@"❌ product with id: %@ not found", identifier);
-        run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorProductNotFound]);
+        run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorCodeProductNotFound]);
         return;
       }
     }
@@ -803,7 +803,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product error:(NSError *)error {
   QONPurchaseCompletionHandler _purchasingBlock = _purchasingBlocks[product.productIdentifier];
   if (_purchasingBlock) {
-    run_block_on_main(_purchasingBlock, @{}, error, error.code == QONErrorCancelled);
+    run_block_on_main(_purchasingBlock, @{}, error, error.code == QONErrorCodePurchaseCanceled);
     @synchronized (self) {
       [_purchasingBlocks removeObjectForKey:product.productIdentifier];
     }

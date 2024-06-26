@@ -7,127 +7,107 @@ extern NSErrorDomain const QONErrorDomain NS_SWIFT_NAME(Qonversion.ErrorDomain);
  For more detailed error description for debug you can use NSError property .helpAnchor
  */
 
-typedef NS_ERROR_ENUM(QONErrorDomain, QONError) {
-  QONErrorUnknown = 0,
+typedef NS_ERROR_ENUM(QONErrorDomain, QONErrorCode) {
+  QONErrorCodeUnknown = 0,
   
-  // user cancelled the request, etc.
-  QONErrorCancelled = 1,
+  // user cancelled the purchase request, etc.
+  QONErrorCodePurchaseCanceled = 1,
   
   // the product has not been added in Qonversion Dashboard
-  // see more https://qonversion.io/docs/create-products
-  QONErrorProductNotFound = 2,
+  QONErrorCodeProductNotFound = 2,
   
   // client is not allowed to issue the request, etc
-  QONErrorClientInvalid = 3,
+  QONErrorCodeClientInvalid = 3,
   
   // purchase identifier was invalid, etc.
-  QONErrorPaymentInvalid = 4,
+  QONErrorCodePaymentInvalid = 4,
   
   // this device is not allowed to make the payment
-  QONErrorPaymentNotAllowed = 5,
-  
-  // Apple Store didn't process the request
-  
-  QONErrorStoreFailed = 6,
+  QONErrorCodePaymentNotAllowed = 5,
   
   // product is not available in the current storefront
-  QONErrorStoreProductNotAvailable = 7,
+  QONErrorCodeStoreProductNotAvailable = 7,
   
   // user has not allowed access to cloud service information
-  QONErrorCloudServicePermissionDenied = 8,
+  QONErrorCodeCloudServicePermissionDenied = 8,
   
   // the device could not connect to the network
-  QONErrorCloudServiceNetworkConnectionFailed = 9,
+  QONErrorCodeCloudServiceNetworkConnectionFailed = 9,
   
   // user has revoked permission to use this cloud service
-  QONErrorCloudServiceRevoked = 10,
+  QONErrorCodeCloudServiceRevoked = 10,
   
   // user needs to acknowledge Apple's privacy policy
-  QONErrorPrivacyAcknowledgementRequired = 11,
+  QONErrorCodePrivacyAcknowledgementRequired = 11,
   
   // app is attempting to use SKPayment's requestData property, but does not have the appropriate entitlement
-  QONErrorUnauthorizedRequestData = 12,
-  
-  // provided shared secret is incorrect, validation unavailable
-  QONErrorIncorrectSharedSecret = 13,
-  
+  QONErrorCodeUnauthorizedRequestData = 12,
+
   // failed to connect to Qonversion Backend
-  QONErrorConnectionFailed = 14,
-  
-  // Other URL Session errors
-  QONErrorInternetConnectionFailed = 15,
-  
-  // Network data error
-  QONErrorDataFailed = 16,
-  
+  QONErrorCodeNetworkConnectionFailed = 14,
+
   // Internal error occurred
-  QONErrorInternalError = 17,
+  QONErrorCodeInternalError = 17,
   
-  // The paymet was deferred
-  QONErrorStorePaymentDeferred = 18,
+  // The payment was deferred
+  QONErrorCodePurchasePending = 18,
   
   // No remote configuration for the current user
-  QONErrorRemoteConfigurationNotAvailable = 19,
-  
-} NS_SWIFT_NAME(Qonversion.Error);
+  QONErrorCodeRemoteConfigurationNotAvailable = 19,
 
+  // Could not receive data from API
+  QONErrorCodeFailedToReceiveData = 20,
 
-typedef NS_ERROR_ENUM(QONErrorDomain, QONAPIError) {
-  // Could not receive data
-  QONAPIErrorFailedReceiveData = 0,
-  
   // Could not parse response
-  QONAPIErrorFailedParseResponse = 1,
+  QONErrorCodeResponseParsingFailed = 21,
   
   // Request failed
-  QONAPIErrorIncorrectRequest = 2,
+  QONErrorCodeIncorrectRequest = 22,
   
   // Internal backend error
-  QONAPIErrorInternalError = 3,
-  
-  // An unknown error occurred
-  QONAPIErrorUnknown = 4,
-  
+  QONErrorCodeBackendError = 23,
+
   // Invalid credentials in request
-  QONAPIErrorInvalidCredentials = 5,
+  QONErrorCodeInvalidCredentials = 25,
   
   // Invalid client uid received
-  QONAPIErrorInvalidClientUID = 6,
+  QONErrorCodeInvalidClientUID = 26,
   
-  // An unknonw client platform error
-  QONAPIErrorUnknownClientPlatform = 7,
+  // An unknown client platform error
+  QONErrorCodeUnknownClientPlatform = 27,
   
   // Fraud purchase detected
-  QONAPIErrorFraudPurchase = 8,
+  QONErrorCodeFraudPurchase = 28,
   
   // Requested feature not supported
-  QONAPIErrorFeatureNotSupported = 9,
+  QONErrorCodeFeatureNotSupported = 29,
   
   // Apple Store error received
-  QONAPIErrorAppleStoreError = 10,
+  QONErrorCodeAppleStoreError = 30,
   
   // Invalid purchase error
-  QONAPIErrorPurchaseInvalid = 11,
+  QONErrorCodePurchaseInvalid = 31,
   
   // Project config error. Update project settings on the Qonversion Dashboard
-  QONAPIErrorProjectConfigError  = 12,
+  QONErrorCodeProjectConfigError = 32,
   
   // Invalid Apple Store credentials error
-  QONAPIErrorInvalidStoreCredentials  = 13,
+  QONErrorCodeInvalidStoreCredentials = 33,
   
   // Receipt validation error
-  QONAPIErrorReceiptValidation = 14,
+  QONErrorCodeReceiptValidationError = 34,
 
   // Rate limit exceeded
-  QONAPIErrorRateLimitExceeded = 15,
-} NS_SWIFT_NAME(Qonversion.APIError);
+  QONErrorCodeApiRateLimitExceeded = 35,
+  
+} NS_SWIFT_NAME(Qonversion.ErrorCode);
 
 @interface QONErrors: NSObject
 
-+ (NSError *)errorWithCode:(QONError)errorCode message:(NSString *)message;
-+ (NSError *)errorWithCode:(QONAPIError)errorCode;
-+ (NSError *)errorWithCode:(QONAPIError)errorCode message:(NSString *)message failureReason:(NSString *)failureReason;
-+ (NSError *)errorWithQONErrorCode:(QONError)errorCode;
++ (NSError *)internalErrorWithCode:(QONErrorCode)errorCode;
++ (NSError *)errorWithCode:(QONErrorCode)errorCode message:(NSString *)message;
++ (NSError *)errorWithCode:(QONErrorCode)errorCode message:(NSString *)message failureReason:(NSString *)failureReason;
++ (NSError *)errorWithQONErrorCode:(QONErrorCode)errorCode;
 + (NSError *)errorFromURLDomainError:(NSError *)error;
 + (NSError *)errorFromTransactionError:(NSError *)error;
 + (NSError *)deferredTransactionError;

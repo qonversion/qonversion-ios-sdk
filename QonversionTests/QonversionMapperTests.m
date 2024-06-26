@@ -76,7 +76,7 @@
   XCTAssertNil(brokenResult.data);
   XCTAssertNotNil(brokenResult.error);
   
-  XCTAssertEqual(brokenResult.error.code, QONErrorInternalError);
+  XCTAssertEqual(brokenResult.error.code, QONErrorCodeInternalError);
 }
 
 - (void)testThatMapperParseIntegerFromAnyObject {
