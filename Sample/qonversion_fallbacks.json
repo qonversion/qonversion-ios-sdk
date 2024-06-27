@@ -62,32 +62,22 @@
    "products": []
   }
  ],
- "products_permissions": [
-  {
+ "products_permissions": {
    "weekly": [
     "plus"
-   ]
-  },
-  {
-   "consumable": []
-  },
-  {
+   ],
+   "consumable": [],
    "subs_plus_trial": [
     "standart"
-   ]
-  },
-  {
+   ],
    "annual": [
     "standart",
     "sample"
-   ]
-  },
-  {
+   ],
    "in_app": [
     "Premium Movies"
    ]
-  }
- ],
+  },
  "remote_config_list": [
   {
    "experiment": null,
