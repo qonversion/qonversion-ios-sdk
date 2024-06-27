@@ -172,6 +172,10 @@ static bool _isInitialized = NO;
   [self.productCenterManager purchaseProduct:product completion:completion];
 }
 
+- (void)purchaseProduct:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
+  [self.productCenterManager purchaseProduct:product promotionalOffer:promotionalOffer completion:completion];
+}
+
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion {
   [self.productCenterManager purchase:productID completion:completion];
 }
@@ -197,39 +201,39 @@ static bool _isInitialized = NO;
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
-  [[self productCenterManager] userInfo:completion];
+  [self.productCenterManager userInfo:completion];
 }
 
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigWithContextKey:nil completion:completion];
+  [self.remoteConfigManager obtainRemoteConfigWithContextKey:nil completion:completion];
 }
 
 - (void)remoteConfig:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigWithContextKey:contextKey completion:completion];
+  [self.remoteConfigManager obtainRemoteConfigWithContextKey:contextKey completion:completion];
 }
 
 - (void)remoteConfigList:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
+  [self.remoteConfigManager obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
 }
 
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigList:completion];
+  [self.remoteConfigManager obtainRemoteConfigList:completion];
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
-  [[self remoteConfigManager] attachUserToExperiment:experimentId groupId:groupId completion:completion];
+  [self.remoteConfigManager attachUserToExperiment:experimentId groupId:groupId completion:completion];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
-  [[self remoteConfigManager] detachUserFromExperiment:experimentId completion:completion];
+  [self.remoteConfigManager detachUserFromExperiment:experimentId completion:completion];
 }
 
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  [[self remoteConfigManager] attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
+  [self.remoteConfigManager attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  [[self remoteConfigManager] detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
+  [self.remoteConfigManager detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
@@ -237,7 +241,11 @@ static bool _isInitialized = NO;
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(nullable QONDefaultCompletionHandler)completion {
-  [[self productCenterManager] handlePurchases:purchasesInfo completion:completion];
+  [self.productCenterManager handlePurchases:purchasesInfo completion:completion];
+}
+
+- (void)getPromotionalOfferForProduct:(QONProduct *)product discount:(SKProductDiscount *)discount completion:(QONPromotionalOfferCompletionHandler)completion {
+  [self.productCenterManager getPromotionalOfferForProduct:product discount:discount completion:completion];
 }
 
 // MARK: - Private

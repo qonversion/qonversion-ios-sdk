@@ -21,6 +21,8 @@
 #import "QONStoreKit2PurchaseModel.h"
 #import "QONFallbackService.h"
 #import "QONFallbackObject.h"
+#import "QONPromotionalOffer.h"
+#import <StoreKit/StoreKit.h>
 
 #if TARGET_OS_IOS
 #import "QONAutomations.h"
@@ -345,19 +347,20 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
-  if (product.offeringID.length > 0) {
-    QONOffering *offering = [self.launchResult.offerings offeringForIdentifier:product.offeringID];
-    [self purchase:product.qonversionID offeringID:offering.identifier completion:completion];
-  } else {
-    [self purchase:product.qonversionID offeringID:nil completion:completion];
-  }
+  QONOffering *offering = [self.launchResult.offerings offeringForIdentifier:product.offeringID];
+  [self purchase:product.qonversionID offeringID:offering.identifier promotionalOffer:nil completion:completion];
+}
+
+- (void)purchaseProduct:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
+  QONOffering *offering = [self.launchResult.offerings offeringForIdentifier:product.offeringID];
+  [self purchase:product.qonversionID offeringID:offering.identifier promotionalOffer:promotionalOffer completion:completion];
 }
 
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion {
-  [self purchase:productID offeringID:nil completion:completion];
+  [self purchase:productID offeringID:nil promotionalOffer:nil completion:completion];
 }
 
-- (void)purchase:(NSString *)productID offeringID:(NSString *)offeringID completion:(QONPurchaseCompletionHandler)completion {
+- (void)purchase:(NSString *)productID offeringID:(NSString *)offeringID promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
   if (self.launchMode == QONLaunchModeAnalytics) {
     QONVERSION_LOG(@"⚠️ Making purchases via Qonversion in the Analytics mode can lead to an inconsistent state in the store. Consider switching to the Subscription management mode.");
   }
@@ -375,35 +378,35 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         }
         
         if (weakSelf.productsLoading) {
-          [weakSelf prepareDelayedPurchase:productID offeringID:offeringID completion:completion];
+          [weakSelf prepareDelayedPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
         } else {
-          [weakSelf processPurchase:productID offeringID:offeringID completion:completion];
+          [weakSelf processPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
         }
       }];
     } else if (!self.productsLoading && storeProducts.count == 0) {
-      [self prepareDelayedPurchase:productID offeringID:offeringID completion:completion];
+      [self prepareDelayedPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
       
       [self loadProducts];
     } else {
-      [self processPurchase:productID offeringID:offeringID completion:completion];
+      [self processPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
     }
   }
 }
 
-- (void)prepareDelayedPurchase:(NSString *)productID offeringID:offeringID completion:(QONPurchaseCompletionHandler)completion {
+- (void)prepareDelayedPurchase:(NSString *)productID offeringID:offeringID promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
   QONProductsCompletionHandler productsCompletion = ^(NSDictionary<NSString *, QONProduct *> *result, NSError  *_Nullable error) {
     if (error) {
       run_block_on_main(completion, @{}, error, NO);
       return;
     }
     
-    [self processPurchase:productID offeringID:offeringID completion:completion];
+    [self processPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
   };
   
   [self.productsBlocks addObject:productsCompletion];
 }
 
-- (void)processPurchase:(NSString *)productID offeringID:(NSString *)offeringID completion:(QONPurchaseCompletionHandler)completion {
+- (void)processPurchase:(NSString *)productID offeringID:(NSString *)offeringID promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
   QONProduct *product;
   if (offeringID.length > 0) {
     QONOffering *offering = [self.launchResult.offerings offeringForIdentifier:offeringID];
@@ -423,16 +426,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
   
-  [self processProductPurchase:product completion:completion];
+  [self processProductPurchase:product promotionalOffer:promotionalOffer completion:completion];
 }
 
-- (void)processProductPurchase:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
+- (void)processProductPurchase:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
   if (self.purchasingBlocks[product.storeID]) {
     QONVERSION_LOG(@"Purchasing in process");
     return;
   }
   
-  if (product && [_storeKitService purchase:product.storeID]) {
+  if (product && [_storeKitService purchase:product.storeID promotionalOffer:promotionalOffer]) {
     self.purchasingBlocks[product.storeID] = completion;
     
     return;
@@ -994,6 +997,32 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 
   [self handlePendingRequests:error];
+}
+
+- (void)getPromotionalOfferForProduct:(QONProduct *)product
+                             discount:(SKProductDiscount *)discount
+                           completion:(QONPromotionalOfferCompletionHandler)completion {
+  __block __weak QNProductCenterManager *weakSelf = self;
+  [self.storeKitService receipt:^(NSString * receipt) {
+    NSString *identityId = [weakSelf.userInfoService obtainCustomIdentityUserID];
+    
+    [self.apiClient getPromotionalOfferForProduct:product discount:discount identityId:identityId receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      if (error) {
+        run_block_on_main(completion, nil, error);
+        return;
+      } else {
+        NSError *mappingError;
+        QONPromotionalOffer *promoOffer = [QNMapper mapPromoOffer:dict productDiscount:discount mappingError:&mappingError];
+        if (!promoOffer) {
+          run_block_on_main(completion, nil, error);
+          return;
+        } else {
+          run_block_on_main(completion, promoOffer, nil);
+          return;
+        }
+      }
+    }];
+  }];
 }
 
 - (void)handleProducts:(NSArray<SKProduct *> *)products {

@@ -81,6 +81,20 @@ NS_ASSUME_NONNULL_BEGIN
   return result;
 }
 
+- (NSDictionary *)promotionalOfferInfoForProduct:(QONProduct *)product
+                                        discount:(SKProductDiscount *)productDiscount
+                                      identityId:(NSString *)identityId
+                                         receipt:(nullable NSString *)receipt {
+  NSMutableDictionary *result = [NSMutableDictionary new];
+  
+  result[@"productIdentifier"] = product.storeID;
+  result[@"discountIdentifier"] = productDiscount.identifier;
+  result[@"idetntityId"] = identityId;
+  result[@"receipt"] = receipt;
+  
+  return [result copy];
+}
+
 - (NSDictionary *)purchaseInfo:(QONStoreKit2PurchaseModel *)purchaseModel
                        receipt:(nullable NSString *)receipt {
   NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];

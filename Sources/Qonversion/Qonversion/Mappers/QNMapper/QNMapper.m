@@ -17,7 +17,10 @@
 #import "QONExperimentGroup+Protected.h"
 #import "QONUser+Protected.h"
 #import "QONTransaction+Protected.h"
+#import "QONPromotionalOffer+Protected.h"
 #import "QONFallbackObject.h"
+
+#import <StoreKit/StoreKit.h>
 
 @implementation QNMapper
 
@@ -56,6 +59,40 @@
 
 - (NSDictionary * _Nullable)mapProductsEntitlementsRelations:(NSDictionary * _Nullable)dict {
   return [QNMapper mapProductsEntitlementsRelation:dict];
+}
+
++ (NSError *)promoOfferMappingError {
+  return [QONErrors errorWithCode:QONErrorInternalError message:@"Failed to map promotional offer"];
+}
+
++ (QONPromotionalOffer *)mapPromoOffer:(NSDictionary *)rawData productDiscount:(SKProductDiscount *)productDiscount mappingError:(NSError **)error {
+  if (![rawData isKindOfClass:[NSDictionary class]]) {
+    *error = [self promoOfferMappingError];
+    
+    return nil;
+  }
+  
+  NSString *identifier = rawData[@"identifier"];
+  NSString *keyIdentifier = rawData[@"keyIdentifier"];
+  NSString *uuidString = rawData[@"uuid"];
+  NSUUID *nonce = [[NSUUID alloc] initWithUUIDString:uuidString];
+  NSString *signature = rawData[@"signature"];
+  NSTimeInterval timestamp = [self mapInteger:rawData[@"timestamp"] orReturn:0];
+  timestamp = timestamp != 0 ? timestamp : [NSDate date].timeIntervalSince1970;
+  
+  NSNumber *timestampNumber = [NSNumber numberWithDouble:timestamp];
+  
+  if (identifier.length == 0 || keyIdentifier.length == 0 || uuidString.length == 0 || signature.length == 0) {
+    *error = [self promoOfferMappingError];
+    
+    return nil;
+  }
+  
+  SKPaymentDiscount *paymentDiscount = [[SKPaymentDiscount alloc] initWithIdentifier:identifier keyIdentifier:keyIdentifier nonce:nonce signature:signature timestamp:timestampNumber];
+  
+  QONPromotionalOffer *offer = [[QONPromotionalOffer alloc] initWithProductDiscount:productDiscount paymentDiscount:paymentDiscount];
+  
+  return offer;
 }
 
 + (QONUser *)fillUser:(NSDictionary * _Nullable)dict {

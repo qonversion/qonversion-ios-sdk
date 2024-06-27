@@ -1,6 +1,7 @@
 #import "QNStoreKitService.h"
 #import "QNUtils.h"
 #import "QNUserInfo.h"
+#import "QONPromotionalOffer.h"
 
 @interface QNStoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -51,11 +52,11 @@
   return self;
 }
 
-- (SKProduct *)purchase:(NSString *)productID {
+- (SKProduct *)purchase:(NSString *)productID promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer {
   SKProduct *skProduct = self->_products[productID];
   
   if (skProduct) {
-    [self purchaseProduct:skProduct];
+    [self purchaseProduct:skProduct promotionalOffer:promotionalOffer];
     
     return skProduct;
   } else {
@@ -64,12 +65,20 @@
 }
 
 - (void)purchaseProduct:(SKProduct *)product {
+  [self purchase:product promotionalOffer:nil];
+}
+
+- (void)purchaseProduct:(SKProduct *)product promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer {
   @synchronized (self) {
     self->_purchasingCurrently = product.productIdentifier;
   }
   
-  SKPayment *payment = [SKPayment paymentWithProduct:product];
-  [[SKPaymentQueue defaultQueue] addPayment:payment];
+  SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:product];
+  if (promotionalOffer) {
+    payment.paymentDiscount = promotionalOffer.paymentDiscount;
+  }
+  
+  [[SKPaymentQueue defaultQueue] addPayment:[payment copy]];
 }
 
 - (void)presentCodeRedemptionSheet {

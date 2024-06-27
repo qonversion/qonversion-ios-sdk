@@ -4,7 +4,7 @@
 #import "QONLaunchMode.h"
 #import "QONRemoteConfigManager.h"
 
-@class QONLaunchResult, QONStoreKit2PurchaseModel, QONFallbackService;
+@class QONLaunchResult, QONStoreKit2PurchaseModel, QONFallbackService, QONPromotionalOffer, SKProductDiscount;
 @protocol QONPromoPurchasesDelegate, QONEntitlementsUpdateListener, QNUserInfoServiceInterface, QNIdentityManagerInterface, QNLocalStorage;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion;
+- (void)purchaseProduct:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion;
 - (void)restore:(QNRestoreCompletionHandler)completion;
 
 - (void)products:(QONProductsCompletionHandler)completion;
@@ -40,6 +41,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(QONDefaultCompletionHandler)completion;
 
 - (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
+- (void)getPromotionalOfferForProduct:(QONProduct *)product
+                             discount:(SKProductDiscount *)discount 
+                           completion:(QONPromotionalOfferCompletionHandler)completion;
 
 @end
 

@@ -370,6 +370,18 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   [self processRequestWithoutResponse:mutableRequest completion:completion];
 }
 
+- (void)getPromotionalOfferForProduct:(QONProduct *)product
+                             discount:(SKProductDiscount *)discount
+                           identityId:(NSString *)identityId
+                              receipt:(nullable NSString *)receipt
+                           completion:(QNAPIClientDictCompletionHandler)completion {
+  NSDictionary *body = [self.requestSerializer promotionalOfferInfoForProduct:product discount:discount identityId:identityId receipt:receipt];
+  
+  NSURLRequest *request = [self.requestBuilder makeGetPromotionalOfferRequestWithBody:body];
+  
+  [self processDictRequest:request completion:completion];
+}
+
 - (void)loadRemoteConfig:(NSString * _Nullable)contextKey completion:(QNAPIClientDictCompletionHandler)completion {
   [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeRemoteConfig
                                  hash:[self.userID hash]
