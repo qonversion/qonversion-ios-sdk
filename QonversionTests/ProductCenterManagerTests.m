@@ -9,6 +9,7 @@
 #import "QNUserInfoService.h"
 #import "QNIdentityManager.h"
 #import "QNLocalStorage.h"
+#import "QONFallbackService.h"
 #import "Helpers/XCTestCase+TestJSON.h"
 
 @interface QNProductCenterManager (Private)
@@ -46,7 +47,8 @@
   id mockUserInfoService = OCMClassMock([QNUserInfoService class]);
   id mockIdentityManager = OCMClassMock([QNIdentityManager class]);
   id mockLocalStorage = OCMProtocolMock(@protocol(QNLocalStorage));
-  _manager = [[QNProductCenterManager alloc] initWithUserInfoService:mockUserInfoService identityManager:mockIdentityManager localStorage:mockLocalStorage];
+  id mockFallbackService = OCMClassMock([QONFallbackService class]);
+  _manager = [[QNProductCenterManager alloc] initWithUserInfoService:mockUserInfoService identityManager:mockIdentityManager localStorage:mockLocalStorage fallbackService:mockFallbackService];
   [_manager setApiClient:_mockClient];
 }
 

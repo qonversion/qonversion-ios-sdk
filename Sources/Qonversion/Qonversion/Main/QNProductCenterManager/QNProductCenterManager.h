@@ -4,7 +4,7 @@
 #import "QONLaunchMode.h"
 #import "QONRemoteConfigManager.h"
 
-@class QONLaunchResult, QONStoreKit2PurchaseModel;
+@class QONLaunchResult, QONStoreKit2PurchaseModel, QONFallbackService;
 @protocol QONPromoPurchasesDelegate, QONEntitlementsUpdateListener, QNUserInfoServiceInterface, QNIdentityManagerInterface, QNLocalStorage;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) QONLaunchMode launchMode;
 @property (nonatomic, strong) QONRemoteConfigManager *remoteConfigManager;
 
-- (instancetype)initWithUserInfoService:(id<QNUserInfoServiceInterface>)userInfoService identityManager:(id<QNIdentityManagerInterface>)identityManager localStorage:(id<QNLocalStorage>)localStorage;
+- (instancetype)initWithUserInfoService:(id<QNUserInfoServiceInterface>)userInfoService identityManager:(id<QNIdentityManagerInterface>)identityManager localStorage:(id<QNLocalStorage>)localStorage fallbackService:(QONFallbackService *)fallbackService;
 
 - (BOOL)isUserStable;
 - (void)identify:(NSString *)userID completion:(nullable QONUserInfoCompletionHandler)completion;

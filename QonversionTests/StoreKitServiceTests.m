@@ -98,7 +98,7 @@
     NSArray *resultArray = resultTransactions[key];
     XCTAssertEqual(expectedArray.count, resultArray.count);
     
-    for (NSUInteger i; i < expectedArray.count; i++) {
+    for (NSUInteger i = 0; i < expectedArray.count; i++) {
       NSArray *expectedTransaction = expectedArray[i];
       NSArray *resultTransaction = resultArray[i];
       XCTAssertEqual(expectedTransaction, resultTransaction);

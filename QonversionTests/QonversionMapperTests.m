@@ -8,6 +8,7 @@
 #import "QNMapperObject.h"
 #import "QONEntitlement.h"
 #import "QONLaunchResult.h"
+#import "QONProduct.h"
 
 @interface QNMapperTests : XCTestCase
 @property (nonatomic, strong) NSDictionary *userInitSuccess;

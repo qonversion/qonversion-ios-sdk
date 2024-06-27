@@ -17,6 +17,7 @@
 #import "QONExperimentGroup+Protected.h"
 #import "QONUser+Protected.h"
 #import "QONTransaction+Protected.h"
+#import "QONFallbackObject.h"
 
 @implementation QNMapper
 
@@ -51,6 +52,10 @@
   } else {
     return nil;
   }
+}
+
+- (NSDictionary * _Nullable)mapProductsEntitlementsRelations:(NSDictionary * _Nullable)dict {
+  return [QNMapper mapProductsEntitlementsRelation:dict];
 }
 
 + (QONUser *)fillUser:(NSDictionary * _Nullable)dict {
@@ -93,6 +98,11 @@
   }
   
   return [products copy];
+}
+
+- (NSDictionary <NSString *, QONProduct *> * _Nonnull)mapFallbackProducts:(NSDictionary * _Nullable)data {
+  NSArray *rawProducts = data[@"products"];
+  return [QNMapper fillProducts:rawProducts];
 }
 
 + (NSArray <QONProduct *> *)fillProductsToArray:(NSArray *)data {
@@ -291,6 +301,11 @@
   QONOfferings *offerings = [[QONOfferings alloc] initWithMainOffering:main availableOfferings:[availableOfferings copy]];
   
   return offerings;
+}
+
+- (QONOfferings * _Nonnull)mapFallbackOfferings:(NSDictionary * _Nullable)data {
+  NSArray *rawOfferings = data[@"offerings"];
+  return [QNMapper fillOfferingsObject:rawOfferings];
 }
 
 + (NSArray<QONOfferings *> * _Nonnull)fillOfferings:(NSArray *)data {
