@@ -115,7 +115,7 @@
 
 
 + (NSDictionary<NSString *, QONIntroEligibility *> * _Nonnull)mapProductsEligibility:(NSDictionary * _Nullable)dict {
-  NSDictionary *introEligibilityStatuses = @{@"non_intro_or_trial_product": @(QONIntroEligibilityStatusNonIntroProduct),
+  NSDictionary *introEligibilityStatuses = @{@"non_intro_or_trial_product": @(QONIntroEligibilityStatusNonIntroOrTrialProduct),
                                              @"intro_or_trial_eligible": @(QONIntroEligibilityStatusEligible),
                                              @"intro_or_trial_ineligible": @(QONIntroEligibilityStatusIneligible)};
   
