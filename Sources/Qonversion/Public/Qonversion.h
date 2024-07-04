@@ -293,7 +293,7 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
 
 /**
  Call this function to check if fallback file is accessible.
- @return flag that indicates if fallbacke file is accessible or not.
+ @return flag that indicates if fallback file is accessible or not.
  */
 - (BOOL)isFallbackFileAccessible;
 
