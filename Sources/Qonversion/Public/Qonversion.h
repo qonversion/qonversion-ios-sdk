@@ -291,6 +291,12 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
  */
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(nullable QONDefaultCompletionHandler)completion;
 
+/**
+ Call this function to check if fallback file is accessible.
+ @return flag that indicates if fallbacke file is accessible or not.
+ */
+- (BOOL)isFallbackFileAccessible;
+
 @end
 
 NS_ASSUME_NONNULL_END

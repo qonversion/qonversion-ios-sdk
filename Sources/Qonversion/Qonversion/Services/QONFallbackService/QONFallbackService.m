@@ -10,7 +10,7 @@
 #import "QONFallbackObject.h"
 #import "QONFallbackMapper.h"
 
-NSString *const kFallbacksFileName = @"qonversion_fallbacks.json";
+NSString *const kFallbacksFileName = @"qonversion_ios_fallbacks.json";
 
 @interface QONFallbackService ()
 
