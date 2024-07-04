@@ -10,13 +10,14 @@
 #import "QONLaunchResult.h"
 #import "QONExperiment.h"
 
-@class QONRemoteConfigService, QNProductCenterManager, QNUserPropertiesManager;
+@class QONRemoteConfigService, QNProductCenterManager, QNUserPropertiesManager, QONFallbackService;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface QONRemoteConfigManager : NSObject
 
 @property (nonatomic, strong) QONRemoteConfigService *remoteConfigService;
+@property (nonatomic, strong) QONFallbackService *fallbackService;
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 @property (nonatomic, strong) QNUserPropertiesManager *userPropertiesManager;
 
