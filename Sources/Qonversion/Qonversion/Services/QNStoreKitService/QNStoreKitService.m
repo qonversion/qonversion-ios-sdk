@@ -52,11 +52,11 @@
   return self;
 }
 
-- (SKProduct *)purchase:(NSString *)productID promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer {
+- (SKProduct *)purchase:(NSString *)productID promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer quantity:(NSUInteger)quantity {
   SKProduct *skProduct = self->_products[productID];
   
   if (skProduct) {
-    [self purchaseProduct:skProduct promotionalOffer:promotionalOffer];
+    [self purchaseProduct:skProduct promotionalOffer:promotionalOffer quantity:quantity];
     
     return skProduct;
   } else {
@@ -64,11 +64,7 @@
   }
 }
 
-- (void)purchaseProduct:(SKProduct *)product {
-  [self purchase:product promotionalOffer:nil];
-}
-
-- (void)purchaseProduct:(SKProduct *)product promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer {
+- (void)purchaseProduct:(SKProduct *)product promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer quantity:(NSUInteger)quantity {
   @synchronized (self) {
     self->_purchasingCurrently = product.productIdentifier;
   }
@@ -76,6 +72,10 @@
   SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:product];
   if (promotionalOffer) {
     payment.paymentDiscount = promotionalOffer.paymentDiscount;
+  }
+  
+  if (quantity > 1) {
+    payment.quantity = quantity;
   }
   
   [[SKPaymentQueue defaultQueue] addPayment:[payment copy]];

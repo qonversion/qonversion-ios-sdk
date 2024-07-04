@@ -169,6 +169,10 @@ static bool _isInitialized = NO;
 }
 
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
+  [self purchaseProduct:product quantity:1 completion:completion];
+}
+
+- (void)purchaseProduct:(QONProduct *)product quantity:(NSUInteger)quantity completion:(QONPurchaseCompletionHandler)completion {
   [self.productCenterManager purchaseProduct:product completion:completion];
 }
 

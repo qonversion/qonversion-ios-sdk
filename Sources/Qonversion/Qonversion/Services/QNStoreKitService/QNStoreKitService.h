@@ -15,8 +15,8 @@ typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSStrin
 - (instancetype)initWithDelegate:(id <QNStoreKitServiceDelegate>)delegate;
 
 - (void)loadProducts:(NSSet <NSString *> *)products;
-- (nullable SKProduct *)purchase:(NSString *)productID promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer;
-- (void)purchaseProduct:(SKProduct *)product promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer;
+- (SKProduct *)purchase:(NSString *)productID promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer quantity:(NSUInteger)quantity;
+- (void)purchaseProduct:(SKProduct *)product promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer quantity:(NSUInteger)quantity;
 - (void)purchaseProduct:(SKProduct *)product;
 - (void)presentCodeRedemptionSheet;
 - (void)restore;

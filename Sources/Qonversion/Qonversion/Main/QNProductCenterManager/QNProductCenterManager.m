@@ -346,21 +346,25 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self launchWithCompletion:nil];
 }
 
-- (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
+- (void)purchaseProduct:(QONProduct *)product quantity:(NSUInteger)quantity completion:(QONPurchaseCompletionHandler)completion {
   QONOffering *offering = [self.launchResult.offerings offeringForIdentifier:product.offeringID];
-  [self purchase:product.qonversionID offeringID:offering.identifier promotionalOffer:nil completion:completion];
+  [self purchase:product.qonversionID offeringID:offering.identifier promotionalOffer:nil quantity:quantity completion:completion];
+}
+
+- (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
+  [self purchaseProduct:product quantity:1 completion:completion];
 }
 
 - (void)purchaseProduct:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
   QONOffering *offering = [self.launchResult.offerings offeringForIdentifier:product.offeringID];
-  [self purchase:product.qonversionID offeringID:offering.identifier promotionalOffer:promotionalOffer completion:completion];
+  [self purchase:product.qonversionID offeringID:offering.identifier promotionalOffer:promotionalOffer quantity:1 completion:completion];
 }
 
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion {
-  [self purchase:productID offeringID:nil promotionalOffer:nil completion:completion];
+  [self purchase:productID offeringID:nil promotionalOffer:nil quantity:1 completion:completion];
 }
 
-- (void)purchase:(NSString *)productID offeringID:(NSString *)offeringID promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
+- (void)purchase:(NSString *)productID offeringID:(NSString *)offeringID promotionalOffer:(QONPromotionalOffer *)promotionalOffer quantity:(NSUInteger)quantity completion:(QONPurchaseCompletionHandler)completion {
   if (self.launchMode == QONLaunchModeAnalytics) {
     QONVERSION_LOG(@"⚠️ Making purchases via Qonversion in the Analytics mode can lead to an inconsistent state in the store. Consider switching to the Subscription management mode.");
   }
@@ -378,35 +382,35 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         }
         
         if (weakSelf.productsLoading) {
-          [weakSelf prepareDelayedPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
+          [weakSelf prepareDelayedPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer quantity:quantity completion:completion];
         } else {
-          [weakSelf processPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
+          [weakSelf processPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer quantity:quantity completion:completion];
         }
       }];
     } else if (!self.productsLoading && storeProducts.count == 0) {
-      [self prepareDelayedPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
+      [self prepareDelayedPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer quantity:quantity completion:completion];
       
       [self loadProducts];
     } else {
-      [self processPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
+      [self processPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer quantity:quantity completion:completion];
     }
   }
 }
 
-- (void)prepareDelayedPurchase:(NSString *)productID offeringID:offeringID promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
+- (void)prepareDelayedPurchase:(NSString *)productID offeringID:offeringID promotionalOffer:(QONPromotionalOffer *)promotionalOffer quantity:(NSUInteger)quantity completion:(QONPurchaseCompletionHandler)completion {
   QONProductsCompletionHandler productsCompletion = ^(NSDictionary<NSString *, QONProduct *> *result, NSError  *_Nullable error) {
     if (error) {
       run_block_on_main(completion, @{}, error, NO);
       return;
     }
     
-    [self processPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer completion:completion];
+    [self processPurchase:productID offeringID:offeringID promotionalOffer:promotionalOffer quantity:quantity completion:completion];
   };
   
   [self.productsBlocks addObject:productsCompletion];
 }
 
-- (void)processPurchase:(NSString *)productID offeringID:(NSString *)offeringID promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
+- (void)processPurchase:(NSString *)productID offeringID:(NSString *)offeringID promotionalOffer:(QONPromotionalOffer *)promotionalOffer quantity:(NSUInteger)quantity completion:(QONPurchaseCompletionHandler)completion {
   QONProduct *product;
   if (offeringID.length > 0) {
     QONOffering *offering = [self.launchResult.offerings offeringForIdentifier:offeringID];
@@ -426,16 +430,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
   
-  [self processProductPurchase:product promotionalOffer:promotionalOffer completion:completion];
+  [self processProductPurchase:product promotionalOffer:promotionalOffer quantity:quantity completion:completion];
 }
 
-- (void)processProductPurchase:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
+- (void)processProductPurchase:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer quantity:(NSUInteger)quantity completion:(QONPurchaseCompletionHandler)completion {
   if (self.purchasingBlocks[product.storeID]) {
     QONVERSION_LOG(@"Purchasing in process");
     return;
   }
   
-  if (product && [_storeKitService purchase:product.storeID promotionalOffer:promotionalOffer]) {
+  if (product && [_storeKitService purchase:product.storeID promotionalOffer:promotionalOffer quantity:quantity]) {
     self.purchasingBlocks[product.storeID] = completion;
     
     return;
