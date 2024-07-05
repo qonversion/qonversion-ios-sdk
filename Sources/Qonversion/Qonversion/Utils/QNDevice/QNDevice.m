@@ -323,6 +323,22 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
 }
 
 + (NSString*)getPlatformString {
+#if TARGET_OS_MACCATALYST
+  io_service_t service = IOServiceGetMatchingService(kIOMainPortDefault,
+                                                     IOServiceMatching("IOPlatformExpertDevice"));
+  CFStringRef model = IORegistryEntryCreateCFProperty(service,
+                                                      CFSTR("model"),
+                                                      kCFAllocatorDefault,
+                                                      0);
+
+  NSString *modelIdentifier = [[NSString alloc] initWithData:(__bridge NSData *)model
+                                                    encoding:NSUTF8StringEncoding];
+
+  CFRelease(model);
+  IOObjectRelease(service);
+  
+  return modelIdentifier;
+#else
 #if UI_DEVICE
   const char *sysctl_name = "hw.machine";
 #else
@@ -335,6 +351,7 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
   NSString *platform = [NSString stringWithUTF8String:machine];
   free(machine);
   return platform;
+#endif
 }
 
 + (NSString*)getDeviceModel {
