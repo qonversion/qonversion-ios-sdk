@@ -38,7 +38,20 @@ NSString *const kFallbacksFileName = @"qonversion_ios_fallbacks.json";
   NSData *fileData = [NSData dataWithContentsOfFile:pathToFile];
   
   if (!fileData) {
-    return nil;
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsPath = paths.firstObject;
+    
+    if (documentsPath) {
+      NSString *filePath = [documentsPath stringByAppendingPathComponent:kFallbacksFileName];
+      
+      if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+        fileData = [NSData dataWithContentsOfFile:filePath];
+      } else {
+        return nil;
+      }
+    } else {
+      return nil;
+    }
   }
   
   NSDictionary *resultMap = [NSJSONSerialization JSONObjectWithData:fileData options:kNilOptions error:nil];
