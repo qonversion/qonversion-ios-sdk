@@ -10,7 +10,7 @@
 #import "QONFallbackObject.h"
 #import "QONFallbackMapper.h"
 
-NSString *const kFallbacksFileName = @"qonversion_fallbacks.json";
+NSString *const kFallbacksFileName = @"qonversion_ios_fallbacks.json";
 
 @interface QONFallbackService ()
 
@@ -36,6 +36,23 @@ NSString *const kFallbacksFileName = @"qonversion_fallbacks.json";
   NSString *pathToFile = [bundle pathForResource:fileName ofType:fileExtension];
   
   NSData *fileData = [NSData dataWithContentsOfFile:pathToFile];
+  
+  if (!fileData) {
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsPath = paths.firstObject;
+    
+    if (documentsPath) {
+      NSString *filePath = [documentsPath stringByAppendingPathComponent:kFallbacksFileName];
+      
+      if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+        fileData = [NSData dataWithContentsOfFile:filePath];
+      } else {
+        return nil;
+      }
+    } else {
+      return nil;
+    }
+  }
   
   NSDictionary *resultMap = [NSJSONSerialization JSONObjectWithData:fileData options:kNilOptions error:nil];
   

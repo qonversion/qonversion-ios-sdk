@@ -1,0 +1,159 @@
+{
+ "products": [
+  {
+   "id": "weekly",
+   "duration": 0,
+   "store_id": "io.qonversion.weekly",
+   "type": 1
+  },
+  {
+   "id": "consumable",
+   "duration": null,
+   "store_id": "io.qonversion.consumable",
+   "type": 2
+  },
+  {
+   "id": "subs_plus_trial",
+   "duration": 1,
+   "store_id": "io.qonversion.subs.monthly.plus.trial",
+   "type": 0
+  },
+  {
+   "id": "annual",
+   "duration": 4,
+   "store_id": "io.qonversion.subs.annual",
+   "type": 0
+  },
+  {
+   "id": "in_app",
+   "duration": null,
+   "store_id": "io.qonversion.nonconsumable",
+   "type": 2
+  }
+ ],
+ "offerings": [
+  {
+   "id": "main",
+   "tag": 1,
+   "products": [
+    {
+     "id": "weekly",
+     "duration": 0,
+     "store_id": "io.qonversion.weekly",
+     "type": 1
+    },
+    {
+     "id": "annual",
+     "duration": 4,
+     "store_id": "io.qonversion.subs.annual",
+     "type": 0
+    },
+    {
+     "id": "consumable",
+     "duration": null,
+     "store_id": "io.qonversion.consumable",
+     "type": 2
+    }
+   ]
+  },
+  {
+   "id": "discounted_offer",
+   "tag": 0,
+   "products": []
+  }
+ ],
+ "products_permissions": {
+   "weekly": [
+    "plus"
+   ],
+   "consumable": [],
+   "subs_plus_trial": [
+    "standart"
+   ],
+   "annual": [
+    "standart",
+    "sample"
+   ],
+   "in_app": [
+    "Premium Movies"
+   ]
+  },
+ "remote_config_list": [
+  {
+   "experiment": null,
+   "payload": {
+    "CTA": "Start Trial",
+    "CTA_color": "#307BF6",
+    "main_image": "[IMAGE_URL]",
+    "product_id": "prod_7d_trial_5.99",
+    "show_close_button": true
+   },
+   "source": {
+    "assignment_type": "auto",
+    "context_key": "main_paywall",
+    "name": "default paywall",
+    "type": "remote_configuration",
+    "uid": "0dcb1bd9-9bc3-4668-84aa-4540d1042c5d"
+   }
+  },
+  {
+   "experiment": null,
+   "payload": {
+    "CTA": "Start you trial",
+    "CTA_color": "red",
+    "main_image": "111",
+    "product_id": "123123123123123",
+    "show_close_button": true
+   },
+   "source": {
+    "assignment_type": "auto",
+    "context_key": "",
+    "name": "Default settings",
+    "type": "remote_configuration",
+    "uid": "12feb1dd-8096-47bc-a5a1-443fd2828ecc"
+   }
+  },
+  {
+   "experiment": null,
+   "payload": {
+    "test_key": "test_value"
+   },
+   "source": {
+    "assignment_type": "auto",
+    "context_key": "test_context_key",
+    "name": "Test with context key1",
+    "type": "remote_configuration",
+    "uid": "c5077ec4-acf4-41ea-8b43-05114be5d7ce"
+   }
+  },
+  {
+   "experiment": null,
+   "payload": {
+    "test_key_2": "test_value_2"
+   },
+   "source": {
+    "assignment_type": "auto",
+    "context_key": "test_context_key_2",
+    "name": "Test with context key2 - copy",
+    "type": "remote_configuration",
+    "uid": "1c000f2a-2f4b-4736-b5dd-75b13bf73deb"
+   }
+  },
+  {
+   "experiment": null,
+   "payload": {
+    "bool": true,
+    "json": {
+     "key": "value"
+    }
+   },
+   "source": {
+    "assignment_type": "auto",
+    "context_key": "swift_key ",
+    "name": "Swift",
+    "type": "remote_configuration",
+    "uid": "9f85d738-56d8-4f6c-b54a-c08658be2cb4"
+   }
+  }
+ ]
+}

@@ -27,7 +27,7 @@ static id shared = nil;
 @property (nonatomic, strong) QONExceptionManager *exceptionManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
-
+@property (nonatomic, strong) QONFallbackService *fallbackService;
 @property (nonatomic, assign) BOOL debugMode;
 @property (nonatomic, assign) QONLaunchMode launchMode;
 
@@ -252,6 +252,12 @@ static bool _isInitialized = NO;
   [self.productCenterManager getPromotionalOfferForProduct:product discount:discount completion:completion];
 }
 
+- (BOOL)isFallbackFileAccessible {
+  QONFallbackObject *fallbackData = [self.fallbackService obtainFallbackData];
+  
+  return fallbackData != nil;
+}
+
 // MARK: - Private
 
 - (instancetype)initWithCustomUserDefaults:(NSUserDefaults *)userDefaults {
@@ -264,6 +270,7 @@ static bool _isInitialized = NO;
     id<QNIdentityManagerInterface> identityManager = [servicesAssembly identityManager];
     QONFallbackService *fallbackService = [QONFallbackService new];
     _productCenterManager = [[QNProductCenterManager alloc] initWithUserInfoService:_userInfoService identityManager:identityManager localStorage:_localStorage fallbackService:fallbackService];
+    _fallbackService = fallbackService;
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
     _remoteConfigManager = [QONRemoteConfigManager new];
