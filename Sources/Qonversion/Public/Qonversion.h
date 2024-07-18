@@ -141,12 +141,18 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  Make a purchase and validate that through server-to-server using Qonversion's Backend
  
  @param product Product create in Qonversion Dash
+ @param completion Completion block that includes entitlements dictionary and error
  */
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
 
+/**
+ Make a purchase and validate that through server-to-server using Qonversion's Backend
+ 
+ @param product Product create in Qonversion Dash
+ @param quantity Quantity of product to purchase. Use for consumable in-app purchases.
+ @param completion Completion block that includes entitlements dictionary and error
+ */
 - (void)purchaseProduct:(QONProduct *)product quantity:(NSUInteger)quantity completion:(QONPurchaseCompletionHandler)completion;
-
-- (void)purchaseProduct:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0));
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -192,9 +198,6 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  @param completion Completion block that includes information about the offerings user and error
  */
 - (void)offerings:(QONOfferingsCompletionHandler)completion;
-
-NS_SWIFT_NAME(getPromotionalOfferForProduct(product: discount: completion:));
-- (void)getPromotionalOfferForProduct:(QONProduct *)product discount:(SKProductDiscount *)discount completion:(QONPromotionalOfferCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0));
 
 /**
  Information about the current Qonversion user

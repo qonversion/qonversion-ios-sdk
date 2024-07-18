@@ -176,7 +176,7 @@ static bool _isInitialized = NO;
   [self.productCenterManager purchaseProduct:product quantity:quantity completion:completion];
 }
 
-- (void)purchaseProduct:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
+- (void)purchaseProduct:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0)) {
   [self.productCenterManager purchaseProduct:product promotionalOffer:promotionalOffer completion:completion];
 }
 
@@ -248,7 +248,8 @@ static bool _isInitialized = NO;
   [self.productCenterManager handlePurchases:purchasesInfo completion:completion];
 }
 
-- (void)getPromotionalOfferForProduct:(QONProduct *)product discount:(SKProductDiscount *)discount completion:(QONPromotionalOfferCompletionHandler)completion {
+NS_SWIFT_NAME(getPromotionalOfferForProduct(product: discount: completion:));
+- (void)getPromotionalOfferForProduct:(QONProduct *)product discount:(SKProductDiscount *)discount completion:(QONPromotionalOfferCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0)) {
   [self.productCenterManager getPromotionalOfferForProduct:product discount:discount completion:completion];
 }
 
