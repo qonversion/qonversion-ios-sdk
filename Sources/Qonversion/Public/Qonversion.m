@@ -173,7 +173,7 @@ static bool _isInitialized = NO;
 }
 
 - (void)purchaseProduct:(QONProduct *)product quantity:(NSUInteger)quantity completion:(QONPurchaseCompletionHandler)completion {
-  [self.productCenterManager purchaseProduct:product completion:completion];
+  [self.productCenterManager purchaseProduct:product quantity:quantity completion:completion];
 }
 
 - (void)purchaseProduct:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion {
