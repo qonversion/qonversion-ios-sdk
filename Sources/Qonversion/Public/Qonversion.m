@@ -169,19 +169,15 @@ static bool _isInitialized = NO;
 }
 
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
-  [self purchaseProduct:product quantity:1 completion:completion];
+  [self purchaseProduct:product options:nil completion:completion];
 }
 
-- (void)purchaseProduct:(QONProduct *)product quantity:(NSUInteger)quantity completion:(QONPurchaseCompletionHandler)completion {
-  [self.productCenterManager purchaseProduct:product quantity:quantity completion:completion];
-}
-
-- (void)purchaseProduct:(QONProduct *)product promotionalOffer:(QONPromotionalOffer *)promotionalOffer completion:(QONPurchaseCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0)) {
-  [self.productCenterManager purchaseProduct:product promotionalOffer:promotionalOffer completion:completion];
+- (void)purchaseProduct:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion {
+  [self.productCenterManager purchase:product options:options completion:completion];
 }
 
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion {
-  [self.productCenterManager purchase:productID completion:completion];
+  [self.productCenterManager purchase:productID purchaseOptions:nil completion:completion];
 }
 
 - (void)restore:(QNRestoreCompletionHandler)completion {

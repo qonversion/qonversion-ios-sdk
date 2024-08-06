@@ -6,6 +6,7 @@
 #import "QONExperiment.h"
 #import "QONExperimentGroup.h"
 #import "QONStoreKit2PurchaseModel.h"
+#import "QONPurchaseOptions.h"
 
 @interface QNRequestSerializer ()
 
@@ -35,7 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction
-                       receipt:(nullable NSString *)receipt {
+                       receipt:(nullable NSString *)receipt
+               purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions {
 
   NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
@@ -69,6 +71,10 @@ NS_ASSUME_NONNULL_BEGIN
       
       result[@"introductory_offer"] = introOffer;
     }
+  }
+  
+  if (purchaseOptions.contextKeys.count > 0) {
+    purchaseDict[@"context_keys"] = purchaseOptions.contextKeys;
   }
   
   if (@available(iOS 13.0, macos 10.15, tvOS 13.0, *)) {

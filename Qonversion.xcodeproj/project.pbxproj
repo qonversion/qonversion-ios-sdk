@@ -63,6 +63,8 @@
 		701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922712B10981200724926 /* QONSubscriptionPeriod.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */ = {isa = PBXBuildFile; fileRef = 701922722B10981200724926 /* QONSubscriptionPeriod.m */; };
 		701922762B10AB3300724926 /* QONSubscriptionPeriod+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922752B10AB3300724926 /* QONSubscriptionPeriod+Protected.h */; };
+		701BAC102C524626009B16FB /* QONPurchaseOptions.m in Sources */ = {isa = PBXBuildFile; fileRef = 701BAC0F2C524626009B16FB /* QONPurchaseOptions.m */; };
+		701BAC112C524626009B16FB /* QONPurchaseOptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 701BAC0E2C524626009B16FB /* QONPurchaseOptions.h */; };
 		702394912923EBF3003126D5 /* QONNotificationsService.h in Headers */ = {isa = PBXBuildFile; fileRef = 7023948F2923EBF3003126D5 /* QONNotificationsService.h */; };
 		702394922923EBF3003126D5 /* QONNotificationsService.m in Sources */ = {isa = PBXBuildFile; fileRef = 702394902923EBF3003126D5 /* QONNotificationsService.m */; };
 		70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70283DF629F66FAC00D138BC /* PurchasesMapper.swift */; };
@@ -72,6 +74,7 @@
 		7042E7832C1C5DB700C5AECF /* QONFallbackService.m in Sources */ = {isa = PBXBuildFile; fileRef = 7042E7802C1C5DB700C5AECF /* QONFallbackService.m */; };
 		7042E7872C1C5DDE00C5AECF /* QONFallbackMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 7042E7842C1C5DDE00C5AECF /* QONFallbackMapper.h */; };
 		7042E7882C1C5DDE00C5AECF /* QONFallbackMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7042E7852C1C5DDE00C5AECF /* QONFallbackMapper.m */; };
+		70454FFF2C5FD4FA00B03017 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70454FFE2C5FD4FA00B03017 /* Extensions.swift */; };
 		707734F42A9F607700CFF742 /* QONRemoteConfigurationSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		707734F52A9F607700CFF742 /* QONRemoteConfigurationSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */; };
 		707734F72A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */; };
@@ -388,6 +391,8 @@
 		701922712B10981200724926 /* QONSubscriptionPeriod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONSubscriptionPeriod.h; sourceTree = "<group>"; };
 		701922722B10981200724926 /* QONSubscriptionPeriod.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONSubscriptionPeriod.m; sourceTree = "<group>"; };
 		701922752B10AB3300724926 /* QONSubscriptionPeriod+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONSubscriptionPeriod+Protected.h"; sourceTree = "<group>"; };
+		701BAC0E2C524626009B16FB /* QONPurchaseOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONPurchaseOptions.h; sourceTree = "<group>"; };
+		701BAC0F2C524626009B16FB /* QONPurchaseOptions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONPurchaseOptions.m; sourceTree = "<group>"; };
 		7023948F2923EBF3003126D5 /* QONNotificationsService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONNotificationsService.h; sourceTree = "<group>"; };
 		702394902923EBF3003126D5 /* QONNotificationsService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONNotificationsService.m; sourceTree = "<group>"; };
 		70283DF629F66FAC00D138BC /* PurchasesMapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
@@ -397,6 +402,7 @@
 		7042E7802C1C5DB700C5AECF /* QONFallbackService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONFallbackService.m; sourceTree = "<group>"; };
 		7042E7842C1C5DDE00C5AECF /* QONFallbackMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONFallbackMapper.h; sourceTree = "<group>"; };
 		7042E7852C1C5DDE00C5AECF /* QONFallbackMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONFallbackMapper.m; sourceTree = "<group>"; };
+		70454FFE2C5FD4FA00B03017 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		7052136F29F1807A00164AAF /* PurchasesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
 		707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigurationSource.h; sourceTree = "<group>"; };
 		707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigurationSource.m; sourceTree = "<group>"; };
@@ -915,6 +921,7 @@
 				70ED967029FAC8D3005F5D00 /* QonversionSwift.swift */,
 				70EC019C29EEE94300E686E2 /* StoreKit2Service.swift */,
 				70283DF629F66FAC00D138BC /* PurchasesMapper.swift */,
+				70454FFE2C5FD4FA00B03017 /* Extensions.swift */,
 			);
 			name = Swift;
 			path = Sources/Swift;
@@ -1052,6 +1059,8 @@
 				895731D526DD03A2009507A6 /* QONStoreKitSugare.m */,
 				895731D626DD03A2009507A6 /* QONAutomationsEventType.h */,
 				895731D726DD03A2009507A6 /* Qonversion.h */,
+				701BAC0E2C524626009B16FB /* QONPurchaseOptions.h */,
+				701BAC0F2C524626009B16FB /* QONPurchaseOptions.m */,
 				895731D826DD03A2009507A6 /* QONErrors.m */,
 				895731D926DD03A2009507A6 /* QONAutomationsEvent.m */,
 				895731DA26DD03A2009507A6 /* QONOffering.m */,
@@ -1758,6 +1767,7 @@
 				895732C726DD03A3009507A6 /* QNAPIConstants.h in Headers */,
 				8957327E26DD03A3009507A6 /* QONIntroEligibility.h in Headers */,
 				8957328226DD03A3009507A6 /* QONLaunchResult.h in Headers */,
+				701BAC112C524626009B16FB /* QONPurchaseOptions.h in Headers */,
 				895732C526DD03A3009507A6 /* QNRequestBuilder.h in Headers */,
 				A1839332BA452C481BDC499C /* QONExceptionManager.h in Headers */,
 				7042E7872C1C5DDE00C5AECF /* QONFallbackMapper.h in Headers */,
@@ -2107,6 +2117,7 @@
 				6A121DB32BBB10AA0073B330 /* QONRemoteConfigListRequestData.m in Sources */,
 				895732A426DD03A3009507A6 /* QONUserActionPoint.m in Sources */,
 				8957330A26DE5532009507A6 /* QNKeyedArchiver.m in Sources */,
+				70454FFF2C5FD4FA00B03017 /* Extensions.swift in Sources */,
 				895732FC26DD03A3009507A6 /* QNStoreKitService.m in Sources */,
 				895732FA26DD03A3009507A6 /* QNIdentityManager.m in Sources */,
 				8957330026DD03A3009507A6 /* QNUserInfoService.m in Sources */,
@@ -2127,6 +2138,7 @@
 				702394922923EBF3003126D5 /* QONNotificationsService.m in Sources */,
 				8957328A26DD03A3009507A6 /* QONActionResult.m in Sources */,
 				70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */,
+				701BAC102C524626009B16FB /* QONPurchaseOptions.m in Sources */,
 				8957328F26DD03A3009507A6 /* QONUser.m in Sources */,
 				895732B926DD03A3009507A6 /* QNUserDefaultsStorage.m in Sources */,
 				A1839D7723FB8E18EC0294C9 /* QONExceptionManager.m in Sources */,

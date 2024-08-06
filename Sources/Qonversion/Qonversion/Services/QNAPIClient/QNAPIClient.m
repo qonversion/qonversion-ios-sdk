@@ -12,6 +12,7 @@
 #import "QONRateLimiter.h"
 #import "QNLocalStorage.h"
 #import "Qonversion.h"
+#import "QONPurchaseOptions.h"
 
 NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
@@ -171,8 +172,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
+                      purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions
                            completion:(QNAPIClientDictCompletionHandler)completion {
-  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt];
+  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseOptions:purchaseOptions];
   return [self purchaseRequestWith:body completion:completion];
 }
 

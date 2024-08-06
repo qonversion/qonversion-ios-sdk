@@ -2,7 +2,7 @@
 #import "QONLaunchResult.h"
 
 @protocol QNLocalStorage;
-@class SKProduct, SKProductDiscount, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel;
+@class SKProduct, SKProductDiscount, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel, QONPurchaseOptions;
 
 typedef void (^QNAPIClientEmptyCompletionHandler)(NSError * _Nullable error);
 typedef void (^QNAPIClientDictCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
+                      purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions
                            completion:(QNAPIClientDictCompletionHandler)completion;
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *) body
                            completion:(QNAPIClientDictCompletionHandler)completion;

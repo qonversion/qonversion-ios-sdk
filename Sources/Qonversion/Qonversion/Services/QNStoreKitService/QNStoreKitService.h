@@ -5,7 +5,7 @@ NS_ASSUME_NONNULL_BEGIN
 typedef void(^QNStoreKitServiceReceiptFetchCompletionHandler)(void);
 typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSString *);
 
-@class QONPromotionalOffer;
+@class QONPromotionalOffer, QONPurchaseOptions;
 @protocol QNStoreKitServiceDelegate;
 
 @interface QNStoreKitService : NSObject
@@ -15,8 +15,7 @@ typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSStrin
 - (instancetype)initWithDelegate:(id <QNStoreKitServiceDelegate>)delegate;
 
 - (void)loadProducts:(NSSet <NSString *> *)products;
-- (SKProduct *)purchase:(NSString *)productID promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer quantity:(NSUInteger)quantity;
-- (void)purchaseProduct:(SKProduct *)product promotionalOffer:(QONPromotionalOffer *_Nullable)promotionalOffer quantity:(NSUInteger)quantity;
+- (SKProduct *)purchase:(NSString *)productID options:(QONPurchaseOptions * _Nullable)options;
 - (void)purchaseProduct:(SKProduct *)product;
 - (void)presentCodeRedemptionSheet;
 - (void)restore;
