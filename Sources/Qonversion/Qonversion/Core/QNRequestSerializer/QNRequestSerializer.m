@@ -94,7 +94,7 @@ NS_ASSUME_NONNULL_BEGIN
   NSMutableDictionary *result = [NSMutableDictionary new];
   
   result[@"productIdentifier"] = product.storeID;
-  if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, visionOS 1.0, *)) {
+  if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, tvOS 12.2, visionOS 1.0, *)) {
     result[@"discountIdentifier"] = productDiscount.identifier;
   }
   result[@"idetntityId"] = identityId;
