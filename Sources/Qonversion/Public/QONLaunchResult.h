@@ -76,6 +76,6 @@ typedef void (^QONUserPropertiesCompletionHandler)(QONUserProperties *_Nullable 
 
 typedef void (^QONDefaultCompletionHandler)(BOOL success, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.DefaultCompletionHandler);
 
-typedef void (^QONPromotionalOfferCompletionHandler)(QONPromotionalOffer *promotionalOffer, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PromotionalOfferCompletionHandler);
+typedef void (^QONPromotionalOfferCompletionHandler)(QONPromotionalOffer * _Nullable promotionalOffer, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PromotionalOfferCompletionHandler);
 
 NS_ASSUME_NONNULL_END

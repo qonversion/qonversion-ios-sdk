@@ -65,7 +65,7 @@
   return [QONErrors errorWithCode:QONErrorDataMappingError message:@"Failed to map promotional offer"];
 }
 
-+ (QONPromotionalOffer *)mapPromoOffer:(NSDictionary *)rawData productDiscount:(SKProductDiscount *)productDiscount mappingError:(NSError **)error {
++ (QONPromotionalOffer * _Nullable)mapPromoOffer:(NSDictionary * _Nullable)rawData productDiscount:(SKProductDiscount * _Nonnull)productDiscount mappingError:(NSError ** _Nullable)error {
   if (![rawData isKindOfClass:[NSDictionary class]]) {
     *error = [self promoOfferMappingError];
     

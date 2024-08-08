@@ -62,7 +62,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSError *launchError;
 @property (nonatomic, strong) QONUser *user;
 
-@property (nonatomic, strong) NSMutableDictionary<NSString *, QONPurchaseOptions *> *processingPurchaseOptions;
+@property (nonatomic, strong) NSDictionary<NSString *, QONPurchaseOptions *> *processingPurchaseOptions;
 
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoading;
@@ -132,7 +132,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.persistentStorage storeObject:self.processingPurchaseOptions forKey:kKeyQUserDefaultsPurchaseOptions];
 }
 
-- (NSDictionary<NSString *, NSArray<QONPurchaseOptions *> *> *)actualPurchaseOptions {
+- (NSDictionary<NSString *, QONPurchaseOptions *> *)actualPurchaseOptions {
   if (_processingPurchaseOptions) {
     return self.processingPurchaseOptions;
   }
@@ -140,7 +140,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   self.processingPurchaseOptions = [_persistentStorage loadObjectForKey:kKeyQUserDefaultsPurchaseOptions];
   
   if (!self.processingPurchaseOptions) {
-    self.processingPurchaseOptions = [NSMutableDictionary new];
+    self.processingPurchaseOptions = @{};
   }
   
   return self.processingPurchaseOptions;

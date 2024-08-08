@@ -27,8 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)launchWithCompletion:(nullable QONLaunchCompletionHandler)completion;
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
-- (void)purchase:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion;
-- (void)purchase:(NSString *)productID purchaseOptions:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion;
+- (void)purchase:(QONProduct * _Nonnull)product options:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;
+- (void)purchase:(NSString * _Nonnull)productID purchaseOptions:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;
 - (void)restore:(QNRestoreCompletionHandler)completion;
 
 - (void)products:(QONProductsCompletionHandler)completion;
@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 - (void)getPromotionalOfferForProduct:(QONProduct *)product
                              discount:(SKProductDiscount *)discount 
-                           completion:(QONPromotionalOfferCompletionHandler)completion;
+                           completion:(QONPromotionalOfferCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0));
 
 @end
 

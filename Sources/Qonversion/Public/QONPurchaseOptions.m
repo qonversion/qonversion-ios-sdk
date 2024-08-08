@@ -35,7 +35,7 @@
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
-  [coder encodeInt:_quantity forKey:NSStringFromSelector(@selector(quantity))];
+  [coder encodeInteger:_quantity forKey:NSStringFromSelector(@selector(quantity))];
   [coder encodeObject:_contextKeys forKey:NSStringFromSelector(@selector(contextKeys))];
 }
 

@@ -67,7 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
                              discount:(SKProductDiscount *)discount
                            identityId:(NSString *)identityId
                               receipt:(nullable NSString *)receipt
-                           completion:(QNAPIClientDictCompletionHandler)completion;
+                           completion:(QNAPIClientDictCompletionHandler)completion API_AVAILABLE(ios(11.2), macos(10.13.2), visionos(1.0));
 
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                          receipt:(nullable NSString *)receipt

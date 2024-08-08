@@ -22,6 +22,6 @@
 
 - (NSDictionary * _Nullable)mapProductsEntitlementsRelations:(NSDictionary * _Nullable)dict;
 
-+ (QONPromotionalOffer *)mapPromoOffer:(NSDictionary *)rawData productDiscount:(SKProductDiscount *)productDiscount mappingError:(NSError **)error;
++ (QONPromotionalOffer * _Nullable)mapPromoOffer:(NSDictionary * _Nullable)rawData productDiscount:(SKProductDiscount * _Nonnull)productDiscount mappingError:(NSError * _Nullable * _Nullable)error API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0));
 
 @end

@@ -64,7 +64,7 @@
 		701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */ = {isa = PBXBuildFile; fileRef = 701922722B10981200724926 /* QONSubscriptionPeriod.m */; };
 		701922762B10AB3300724926 /* QONSubscriptionPeriod+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922752B10AB3300724926 /* QONSubscriptionPeriod+Protected.h */; };
 		701BAC102C524626009B16FB /* QONPurchaseOptions.m in Sources */ = {isa = PBXBuildFile; fileRef = 701BAC0F2C524626009B16FB /* QONPurchaseOptions.m */; };
-		701BAC112C524626009B16FB /* QONPurchaseOptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 701BAC0E2C524626009B16FB /* QONPurchaseOptions.h */; };
+		701BAC112C524626009B16FB /* QONPurchaseOptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 701BAC0E2C524626009B16FB /* QONPurchaseOptions.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		702394912923EBF3003126D5 /* QONNotificationsService.h in Headers */ = {isa = PBXBuildFile; fileRef = 7023948F2923EBF3003126D5 /* QONNotificationsService.h */; };
 		702394922923EBF3003126D5 /* QONNotificationsService.m in Sources */ = {isa = PBXBuildFile; fileRef = 702394902923EBF3003126D5 /* QONNotificationsService.m */; };
 		70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70283DF629F66FAC00D138BC /* PurchasesMapper.swift */; };
