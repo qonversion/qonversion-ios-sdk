@@ -69,6 +69,9 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONError) {
   // No remote configuration for the current user
   QONErrorRemoteConfigurationNotAvailable = 19,
   
+  // Mapping error
+  QONErrorDataMappingError = 20,
+  
 } NS_SWIFT_NAME(Qonversion.Error);
 
 

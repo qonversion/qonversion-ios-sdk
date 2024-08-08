@@ -1033,12 +1033,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         NSError *mappingError;
         QONPromotionalOffer *promoOffer = [QNMapper mapPromoOffer:dict productDiscount:discount mappingError:&mappingError];
         if (!promoOffer) {
-          run_block_on_main(completion, nil, error);
-          return;
-        } else {
-          run_block_on_main(completion, promoOffer, nil);
+          run_block_on_main(completion, nil, mappingError);
           return;
         }
+        
+        run_block_on_main(completion, promoOffer, nil);
+        return;
       }
     }];
   }];
