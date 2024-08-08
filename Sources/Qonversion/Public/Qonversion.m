@@ -169,11 +169,15 @@ static bool _isInitialized = NO;
 }
 
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
-  [self.productCenterManager purchaseProduct:product completion:completion];
+  [self.productCenterManager purchase:product options:nil completion:completion];
+}
+
+- (void)purchaseProduct:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion {
+  [self.productCenterManager purchase:product options:options completion:completion];
 }
 
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion {
-  [self.productCenterManager purchase:productID completion:completion];
+  [self.productCenterManager purchase:productID purchaseOptions:nil completion:completion];
 }
 
 - (void)restore:(QNRestoreCompletionHandler)completion {
@@ -197,39 +201,39 @@ static bool _isInitialized = NO;
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
-  [[self productCenterManager] userInfo:completion];
+  [self.productCenterManager userInfo:completion];
 }
 
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigWithContextKey:nil completion:completion];
+  [self.remoteConfigManager obtainRemoteConfigWithContextKey:nil completion:completion];
 }
 
 - (void)remoteConfig:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigWithContextKey:contextKey completion:completion];
+  [self.remoteConfigManager obtainRemoteConfigWithContextKey:contextKey completion:completion];
 }
 
 - (void)remoteConfigList:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
+  [self.remoteConfigManager obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
 }
 
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigList:completion];
+  [self.remoteConfigManager obtainRemoteConfigList:completion];
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
-  [[self remoteConfigManager] attachUserToExperiment:experimentId groupId:groupId completion:completion];
+  [self.remoteConfigManager attachUserToExperiment:experimentId groupId:groupId completion:completion];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
-  [[self remoteConfigManager] detachUserFromExperiment:experimentId completion:completion];
+  [self.remoteConfigManager detachUserFromExperiment:experimentId completion:completion];
 }
 
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  [[self remoteConfigManager] attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
+  [self.remoteConfigManager attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  [[self remoteConfigManager] detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
+  [self.remoteConfigManager detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
@@ -237,9 +241,16 @@ static bool _isInitialized = NO;
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(nullable QONDefaultCompletionHandler)completion {
-  [[self productCenterManager] handlePurchases:purchasesInfo completion:completion];
+  [self.productCenterManager handlePurchases:purchasesInfo completion:completion];
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-declarations"
+NS_SWIFT_NAME(getPromotionalOfferForProduct(product: discount: completion:));
+- (void)getPromotionalOfferForProduct:(QONProduct * _Nonnull)product discount:(SKProductDiscount * _Nonnull)discount completion:(nonnull QONPromotionalOfferCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0)) {
+  [self.productCenterManager getPromotionalOfferForProduct:product discount:discount completion:completion];
+}
+#pragma GCC diagnostic pop
 - (BOOL)isFallbackFileAccessible {
   QONFallbackObject *fallbackData = [self.fallbackService obtainFallbackData];
   

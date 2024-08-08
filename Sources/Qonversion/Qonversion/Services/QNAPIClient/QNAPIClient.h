@@ -2,7 +2,7 @@
 #import "QONLaunchResult.h"
 
 @protocol QNLocalStorage;
-@class SKProduct, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel;
+@class SKProduct, SKProductDiscount, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel, QONPurchaseOptions;
 
 typedef void (^QNAPIClientEmptyCompletionHandler)(NSError * _Nullable error);
 typedef void (^QNAPIClientDictCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
+                      purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions
                            completion:(QNAPIClientDictCompletionHandler)completion;
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *) body
                            completion:(QNAPIClientDictCompletionHandler)completion;
@@ -62,6 +63,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion;
+- (void)getPromotionalOfferForProduct:(QONProduct *)product
+                             discount:(SKProductDiscount *)discount
+                           identityId:(NSString *)identityId
+                              receipt:(nullable NSString *)receipt
+                           completion:(QNAPIClientDictCompletionHandler)completion API_AVAILABLE(ios(11.2), macos(10.13.2), visionos(1.0));
+
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                          receipt:(nullable NSString *)receipt
                       completion:(QNAPIClientDictCompletionHandler)completion;

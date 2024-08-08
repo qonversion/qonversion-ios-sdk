@@ -58,6 +58,10 @@
   return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kPurchaseEndpoint type:QONRequestTypePost];
 }
 
+- (NSURLRequest *)makeGetPromotionalOfferRequestWithBody:(NSDictionary *)body {
+  return [self makeRequestWithDictBody:body baseURL:self.baseURL endpoint:kGetPromoOfferDetailsEndpoint type:QONRequestTypePost];
+}
+
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter {
   NSString *endpoint = [NSString stringWithFormat:kActionPointsEndpointFormat, parameter];
   return [self makeGetRequestWithBaseURL:self.baseURL endpoint:endpoint];

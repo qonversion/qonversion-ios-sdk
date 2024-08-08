@@ -31,5 +31,6 @@ typedef NS_ENUM(NSInteger, QONRequestType) {
 - (NSURLRequest *)makeDetachUserFromExperimentRequest:(NSString *)experimentId userID:(NSString *)userID;
 - (NSURLRequest *)makeAttachUserToRemoteConfigurationRequest:(NSString *)remoteConfigurationId userID:(NSString *)userID;
 - (NSURLRequest *)makeDetachUserFromRemoteConfigurationRequest:(NSString *)remoteConfigurationId userID:(NSString *)userID;
+- (NSURLRequest *)makeGetPromotionalOfferRequestWithBody:(NSDictionary *)body;
 
 @end

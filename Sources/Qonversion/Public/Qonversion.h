@@ -21,6 +21,7 @@
 #import "QONUserProperties.h"
 #import "QONUserProperty.h"
 #import "QONSubscriptionPeriod.h"
+#import "QONPurchaseOptions.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
@@ -140,8 +141,18 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  Make a purchase and validate that through server-to-server using Qonversion's Backend
  
  @param product Product create in Qonversion Dash
+ @param completion Completion block that includes entitlements dictionary and error
  */
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
+
+/**
+ Make a purchase and validate that through server-to-server using Qonversion's Backend
+ 
+ @param product Product created in Qonversion Dash
+ @param options Purchase process additional options: quantity / context keys / etc.
+ @param completion Completion block that includes entitlements dictionary and error
+ */
+- (void)purchaseProduct:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
