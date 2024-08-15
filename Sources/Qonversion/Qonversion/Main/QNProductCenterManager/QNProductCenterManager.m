@@ -62,7 +62,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) NSError *launchError;
 @property (nonatomic, strong) QONUser *user;
 
-@property (nonatomic, strong) NSDictionary<NSString *, QONPurchaseOptions *> *processingPurchaseOptions;
+@property (nonatomic, copy) NSDictionary<NSString *, QONPurchaseOptions *> *processingPurchaseOptions;
 
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoading;
@@ -124,12 +124,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)removePurchaseOptionsForStoreProductId:(NSString *)productId {
-  NSMutableDictionary<NSString *, QONPurchaseOptions *> *actualPurchaseOptions = [[self actualPurchaseOptions] mutableCopy];
-  actualPurchaseOptions[productId] = nil;
-  
-  self.processingPurchaseOptions = [actualPurchaseOptions copy];
-  
-  [self.persistentStorage storeObject:self.processingPurchaseOptions forKey:kKeyQUserDefaultsPurchaseOptions];
+  [self updatePurchaseOptions:nil storeProductId:productId];
 }
 
 - (NSDictionary<NSString *, QONPurchaseOptions *> *)actualPurchaseOptions {
@@ -1038,7 +1033,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         }
         
         run_block_on_main(completion, promoOffer, nil);
-        return;
       }
     }];
   }];
