@@ -14,7 +14,11 @@
   return [self initWithQuantity:quantity contextKeys:nil];
 }
 
-- (instancetype)initWithQuantity:(NSInteger)quantity contextKeys:(NSArray * _Nullable)contextKeys {
+- (instancetype)initWithContextKeys:(NSArray<NSString *> * _Nullable)contextKeys {
+  return [self initWithQuantity:1 contextKeys:contextKeys];
+}
+
+- (instancetype)initWithQuantity:(NSInteger)quantity contextKeys:(NSArray<NSString *>  * _Nullable)contextKeys {
   self = [super init];
   
   if (self) {
