@@ -6,6 +6,7 @@
 #import "QONExperiment.h"
 #import "QONExperimentGroup.h"
 #import "QONStoreKit2PurchaseModel.h"
+#import "QONPurchaseOptions.h"
 
 @interface QNRequestSerializer ()
 
@@ -35,7 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction
-                       receipt:(nullable NSString *)receipt {
+                       receipt:(nullable NSString *)receipt
+               purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions {
 
   NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
@@ -71,6 +73,10 @@ NS_ASSUME_NONNULL_BEGIN
     }
   }
   
+  if (purchaseOptions.contextKeys.count > 0) {
+    purchaseDict[@"context_keys"] = purchaseOptions.contextKeys;
+  }
+  
   if (@available(iOS 13.0, macos 10.15, tvOS 13.0, *)) {
     NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
     purchaseDict[@"country"] = countryCode;
@@ -79,6 +85,22 @@ NS_ASSUME_NONNULL_BEGIN
   result[@"purchase"] = purchaseDict;
   
   return result;
+}
+
+- (NSDictionary *)promotionalOfferInfoForProduct:(QONProduct *)product
+                                        discount:(SKProductDiscount *)productDiscount
+                                      identityId:(NSString *)identityId
+                                         receipt:(nullable NSString *)receipt {
+  NSMutableDictionary *result = [NSMutableDictionary new];
+  
+  result[@"productIdentifier"] = product.storeID;
+  if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, tvOS 12.2, visionOS 1.0, *)) {
+    result[@"discountIdentifier"] = productDiscount.identifier;
+  }
+  result[@"idetntityId"] = identityId;
+  result[@"receipt"] = receipt;
+  
+  return [result copy];
 }
 
 - (NSDictionary *)purchaseInfo:(QONStoreKit2PurchaseModel *)purchaseModel

@@ -12,6 +12,7 @@
 #import "QONRateLimiter.h"
 #import "QNLocalStorage.h"
 #import "Qonversion.h"
+#import "QONPurchaseOptions.h"
 
 NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
@@ -171,8 +172,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
+                      purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions
                            completion:(QNAPIClientDictCompletionHandler)completion {
-  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt];
+  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseOptions:purchaseOptions];
   return [self purchaseRequestWith:body completion:completion];
 }
 
@@ -368,6 +370,18 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   }];
 
   [self processRequestWithoutResponse:mutableRequest completion:completion];
+}
+
+- (void)getPromotionalOfferForProduct:(QONProduct *)product
+                             discount:(SKProductDiscount *)discount
+                           identityId:(NSString *)identityId
+                              receipt:(nullable NSString *)receipt
+                           completion:(QNAPIClientDictCompletionHandler)completion {
+  NSDictionary *body = [self.requestSerializer promotionalOfferInfoForProduct:product discount:discount identityId:identityId receipt:receipt];
+  
+  NSURLRequest *request = [self.requestBuilder makeGetPromotionalOfferRequestWithBody:body];
+  
+  [self processDictRequest:request completion:completion];
 }
 
 - (void)loadRemoteConfig:(NSString * _Nullable)contextKey completion:(QNAPIClientDictCompletionHandler)completion {
