@@ -14,6 +14,8 @@ NSString * const kSdkLogsBaseURL = @"https://sdk-logs.qonversion.io/";
 NSString * const kInitEndpoint = @"v1/user/init";
 NSString * const kSendPushTokenEndpoint = @"v1/user/push-token";
 NSString * const kPurchaseEndpoint = @"v1/user/purchase";
+// TODO: Update endpoint
+NSString * const kGetPromoOfferDetailsEndpoint = @"update_promo_offer_endpoint_here";
 NSString * const kProductsEndpoint = @"v1/products/get";
 NSString * const kPropertiesEndpoint = @"v3/users/%@/properties";
 NSString * const kRemoteConfigEndpoint = @"v3/remote-config";
