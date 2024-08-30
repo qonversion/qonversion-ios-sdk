@@ -22,6 +22,7 @@
 #import "QONUserProperty.h"
 #import "QONSubscriptionPeriod.h"
 #import "QONPurchaseOptions.h"
+#import "QONPromotionalOffer.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
