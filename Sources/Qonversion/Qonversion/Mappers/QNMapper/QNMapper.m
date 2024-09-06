@@ -408,13 +408,13 @@
 }
 
 + (NSInteger)mapInteger:(NSObject *)object orReturn:(NSInteger)defaultValue {
-  if (object == nil) {
+  if (!object) {
     return defaultValue;
   }
   
   NSNumber *numberObject = (NSNumber *)object;
   
-  if ([numberObject isEqual:[NSNull null]]) {
+  if ([numberObject isEqual:[NSNull null]] || ![numberObject respondsToSelector:@selector(integerValue)]) {
     return defaultValue;
   } else {
     return numberObject.integerValue;
