@@ -49,6 +49,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @property (nonatomic, strong) NSMutableDictionary<NSString *, QONPurchaseCompletionHandler> *purchasingBlocks;
 @property (nonatomic, strong) NSMutableArray<QNRestoreCompletionHandler> *restorePurchasesBlocks;
+@property (nonatomic, strong) NSMutableArray<QNRestoreCompletionHandler> *receiptRestoreBlocks;
 @property (nonatomic, strong) NSMutableArray<QONEntitlementsCompletionHandler> *entitlementsBlocks;
 @property (nonatomic, strong) NSMutableArray<QONProductsCompletionHandler> *productsBlocks;
 @property (nonatomic, strong) NSMutableArray<QONOfferingsCompletionHandler> *offeringsBlocks;
@@ -67,6 +68,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoading;
 @property (nonatomic, assign) BOOL restoreInProgress;
+@property (nonatomic, assign) BOOL receiptRestoreInProgress;
 @property (nonatomic, assign) BOOL awaitingRestoreResult;
 @property (nonatomic, assign) BOOL identityInProgress;
 @property (nonatomic, assign) BOOL unhandledLogoutAvailable;
@@ -104,6 +106,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     _purchasingBlocks = [NSMutableDictionary new];
     _restorePurchasesBlocks = [NSMutableArray new];
+    _receiptRestoreBlocks = [NSMutableArray new];
     _entitlementsBlocks = [NSMutableArray new];
     _productsBlocks = [NSMutableArray new];
     _offeringsBlocks = [NSMutableArray new];
@@ -453,6 +456,30 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   QONVERSION_LOG(@"❌ Store product with id: %@ not found", product.storeID);
   run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorProductNotFound], NO);
+}
+
+- (void)receiptRestore:(QNRestoreCompletionHandler)completion {
+  if (self.receiptRestoreInProgress && completion) {
+    [self.receiptRestoreBlocks addObject:completion];
+    return;
+  }
+  
+  self.receiptRestoreInProgress = YES;
+  
+  __block __weak QNProductCenterManager *weakSelf = self;
+  [self.storeKitService receipt:^(NSString * _Nonnull receipt) {
+    [weakSelf launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      @synchronized (weakSelf) {
+        weakSelf.receiptRestoreInProgress = NO;
+        NSArray<QONEntitlementsCompletionHandler> *completions = [self.receiptRestoreBlocks copy];
+        [weakSelf.receiptRestoreBlocks removeAllObjects];
+        
+        for (QONEntitlementsCompletionHandler block in completions) {
+          run_block_on_main(block, result.entitlements, error);
+        }
+      }
+    }];
+  }];
 }
 
 - (void)restore:(QNRestoreCompletionHandler)completion {
