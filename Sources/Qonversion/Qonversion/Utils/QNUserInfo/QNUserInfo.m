@@ -73,7 +73,8 @@
 }
 
 + (nullable NSString *)appStoreReceipt {
-  NSURL *receiptURL = QNUserInfo.bundle.appStoreReceiptURL;
+  NSURL *tempReceiptURL = QNUserInfo.bundle.appStoreReceiptURL;
+  NSURL *receiptURL = tempReceiptURL ?: [NSBundle mainBundle].appStoreReceiptURL;
   
   if (!receiptURL) {
     return @"";
@@ -95,8 +96,15 @@
 }
 
 + (nullable NSBundle *)bundle {
-  NSPredicate *predicate = [NSPredicate predicateWithFormat:@"appStoreReceiptURL != nil"];
-  return [NSBundle.allBundles filteredArrayUsingPredicate:predicate].firstObject;
+  NSArray *allBundles = [[NSBundle allBundles] copy];
+  
+  for (NSBundle *bundle in allBundles) {
+    if (bundle.appStoreReceiptURL != nil) {
+      return bundle;
+    }
+  }
+  
+  return nil;
 }
 
 @end
