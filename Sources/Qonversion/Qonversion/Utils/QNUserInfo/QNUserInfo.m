@@ -97,15 +97,14 @@
 
 + (nullable NSBundle *)bundle {
   NSArray *allBundles = [[NSBundle allBundles] copy];
-  NSMutableArray *filteredBundles = [NSMutableArray new];
   
   for (NSBundle *bundle in allBundles) {
     if (bundle.appStoreReceiptURL != nil) {
-      [filteredBundles addObject:bundle];
+      return bundle;
     }
   }
   
-  return filteredBundles.firstObject;
+  return nil;
 }
 
 @end
