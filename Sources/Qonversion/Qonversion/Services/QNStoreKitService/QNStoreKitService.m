@@ -427,6 +427,7 @@
 
 - (void)finishReceiptFetchRequest:(SKRequest *)request {
   @synchronized(self) {
+    [self.receiptRefreshRequest cancel];
     self.receiptRefreshRequest = nil;
     NSArray<QNStoreKitServiceReceiptFetchCompletionHandler> *handlers = [self.receiptRefreshCompletionHandlers copy];
     [self.receiptRefreshCompletionHandlers removeAllObjects];
