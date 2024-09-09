@@ -181,7 +181,7 @@ static bool _isInitialized = NO;
 }
 
 - (void)restore:(QNRestoreCompletionHandler)completion {
-  [self.productCenterManager receiptRestore:completion];
+  [self.productCenterManager restoreReceipt:completion];
 }
 
 - (void)products:(QONProductsCompletionHandler)completion {

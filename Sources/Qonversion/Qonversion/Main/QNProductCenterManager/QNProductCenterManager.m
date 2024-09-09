@@ -458,9 +458,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorProductNotFound], NO);
 }
 
-- (void)receiptRestore:(QNRestoreCompletionHandler)completion {
-  if (self.receiptRestoreInProgress && completion) {
+- (void)restoreReceipt:(QNRestoreCompletionHandler)completion {
+  if (completion) {
     [self.receiptRestoreBlocks addObject:completion];
+  }
+  
+  if (self.receiptRestoreInProgress) {
     return;
   }
   
@@ -482,7 +485,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }];
 }
 
-- (void)restore:(QNRestoreCompletionHandler)completion {
+- (void)restoreTransactions:(QNRestoreCompletionHandler)completion {
   if (completion != nil) {
     [self.restorePurchasesBlocks addObject:completion];
   }

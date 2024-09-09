@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
 - (void)purchase:(QONProduct * _Nonnull)product options:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;
 - (void)purchase:(NSString * _Nonnull)productID purchaseOptions:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;
-- (void)restore:(QNRestoreCompletionHandler)completion;
+- (void)restoreTransactions:(QNRestoreCompletionHandler)completion;
 
 - (void)products:(QONProductsCompletionHandler)completion;
 - (void)checkTrialIntroEligibilityForProductIds:(NSArray<NSString *> *)productIds completion:(QONEligibilityCompletionHandler)completion;
@@ -38,7 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)userInfo:(QONUserInfoCompletionHandler)completion;
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(QONDefaultCompletionHandler)completion;
-- (void)receiptRestore:(QNRestoreCompletionHandler)completion;
+- (void)restoreReceipt:(QNRestoreCompletionHandler)completion;
 - (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 - (void)getPromotionalOfferForProduct:(QONProduct *)product
                              discount:(SKProductDiscount *)discount 
