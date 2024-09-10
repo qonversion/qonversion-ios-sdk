@@ -27,6 +27,10 @@ class AuthViewController: UIViewController {
     }
   }
   
+  @IBAction func didTapSkipAuth(_ sender: Any) {
+    showMainScreen()
+  }
+  
   @IBAction func didTouchSignInButton(_ sender: Any) {
     let conf = GIDConfiguration(clientID: "11599271839-qalspkpqrihnkl1e12be731tgmre5uop.apps.googleusercontent.com")
     GIDSignIn.sharedInstance.signIn(with: conf, presenting: self) { [weak self] user, error in
