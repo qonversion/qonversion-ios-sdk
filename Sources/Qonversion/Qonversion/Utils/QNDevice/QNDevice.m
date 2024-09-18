@@ -15,12 +15,9 @@
 #import <sys/types.h>
 
 static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
-static NSString * const kPushTokenKey = @"pushToken";
-static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
 
 @interface QNDevice ()
 
-@property (readwrite, copy, nonatomic) NSString *pushNotificationsToken;
 @property (strong, nonatomic) id<QNLocalStorage> persistentStorage;
 @property (assign, nonatomic) BOOL idfaProhibited;
 
@@ -47,9 +44,7 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
     QNUserDefaultsStorage *storage = [QNUserDefaultsStorage new];
     storage.userDefaults = [[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName];
     _persistentStorage = storage;
-    
-    NSString *token = [_persistentStorage loadObjectForKey:kPushTokenKey];
-    _pushNotificationsToken = [token isKindOfClass:[NSString class]] ? token : nil;
+
     _idfaProhibited = NO;
   }
   
@@ -161,19 +156,6 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
                                                                             value: [[NSLocale preferredLanguages] objectAtIndex:0]];
   }
   return _language;
-}
-
-- (void)setPushNotificationsToken:(NSString *)token {
-  _pushNotificationsToken = token;
-  [self.persistentStorage storeObject:token forKey:kPushTokenKey];
-}
-
-- (BOOL)isPushTokenProcessed {
-  return [self.persistentStorage loadBoolforKey:kPushTokenProcessedKey];
-}
-
-- (void)setPushTokenProcessed:(BOOL)processed {
-  [self.persistentStorage storeBool:processed forKey:kPushTokenProcessedKey];
 }
 
 - (NSString *)advertiserID {

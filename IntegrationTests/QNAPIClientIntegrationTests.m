@@ -529,26 +529,6 @@
   [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
-- (void)testSendPushToken {
-  // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Send push token call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_sendPushToken"];
-  QNAPIClient *client = [self getClient:uid];
-
-  // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
-    XCTAssertNil(createUserError);
-
-    [client sendPushToken:^(BOOL success) {
-      XCTAssertFalse(success); // no push token on emulator
-      [completionExpectation fulfill];
-    }];
-  }];
-
-  // then
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
-}
-
 - (void)testScreens {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Screens call"];
