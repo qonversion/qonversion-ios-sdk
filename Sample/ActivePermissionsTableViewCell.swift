@@ -16,7 +16,7 @@ class ActivePermissionsTableViewCell: UITableViewCell {
   @IBOutlet weak var renewStateLabel: UILabel!
   
   func setup(with permission: Qonversion.Entitlement) {
-    permissionIdLabel.text = "Permission id: \(permission.entitlementID)"
+    permissionIdLabel.text = "Permission id: \(permission.entitlementID). isActive: \(permission.isActive)"
     productIdLabel.text = "Product id: \(permission.productID)"
     var renewState = ""
     switch permission.renewState {

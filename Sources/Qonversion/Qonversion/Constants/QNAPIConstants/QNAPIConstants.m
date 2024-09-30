@@ -12,7 +12,6 @@ NSString * const kAPIBase = @"https://api.qonversion.io/";
 NSString * const kSdkLogsBaseURL = @"https://sdk-logs.qonversion.io/";
 
 NSString * const kInitEndpoint = @"v1/user/init";
-NSString * const kSendPushTokenEndpoint = @"v1/user/push-token";
 NSString * const kPurchaseEndpoint = @"v1/user/purchase";
 // TODO: Update endpoint
 NSString * const kGetPromoOfferDetailsEndpoint = @"update_promo_offer_endpoint_here";
