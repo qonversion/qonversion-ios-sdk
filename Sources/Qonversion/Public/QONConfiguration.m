@@ -9,7 +9,7 @@
 #import "QONConfiguration.h"
 #import "QNAPIConstants.h"
 
-static NSString *const kSDKVersion = @"5.12.2";
+static NSString *const kSDKVersion = @"5.12.3";
 
 @interface QONConfiguration ()
 
