@@ -25,10 +25,6 @@
   _baseURL = url;
 }
 
-- (NSURLRequest *)makeSendPushTokenRequestWith:(NSDictionary *)parameters {
-  return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kSendPushTokenEndpoint type:QONRequestTypePost];
-}
-
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters {
   return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kInitEndpoint type:QONRequestTypePost];
 }

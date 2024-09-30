@@ -119,17 +119,6 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 // MARK: - Public
 
-- (void)sendPushToken:(void (^)(BOOL success))completion {
-  NSDictionary *data = [self.requestSerializer pushTokenData];
-  data = [self enrichPushTokenData:data];
-  NSURLRequest *request = [self.requestBuilder makeSendPushTokenRequestWith:data];
-  
-  [self processDictRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    BOOL isSuccess = error == nil;
-    completion(isSuccess);
-  }];
-}
-
 - (void)launchRequest:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *launchData = [self.requestSerializer launchData];
 
@@ -492,14 +481,6 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 // MARK: - Private
-
-- (NSDictionary *)enrichPushTokenData:(NSDictionary *)data {
-  NSMutableDictionary *mutableData = [data mutableCopy];
-  mutableData[@"access_token"] = _apiKey;
-  mutableData[@"q_uid"] = _userID;
-  
-  return [mutableData copy];
-}
 
 - (NSString *)obtainApiKey {
   return self.debug ? [NSString stringWithFormat:@"test_%@", self.apiKey] : self.apiKey;

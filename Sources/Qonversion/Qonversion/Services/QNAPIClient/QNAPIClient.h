@@ -25,7 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setSDKVersion:(NSString *)version;
 - (void)setBaseURL:(NSString *)url;
 - (void)launchRequest:(QNAPIClientDictCompletionHandler)completion;
-- (void)sendPushToken:(void (^)(BOOL success))completion;
 
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
