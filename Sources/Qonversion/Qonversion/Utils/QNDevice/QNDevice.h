@@ -23,6 +23,6 @@
 
 @property (readonly, copy, nonatomic) NSString *installDate;
 
-- (void)adjustUserIDWithCompletion:(void(^)(NSString * _Nullable userId))completion;
+- (void)adjustUserIDWithCompletion:(void(^)(NSString *userId))completion;
 
 @end

@@ -258,7 +258,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
   return nil;
 }
 
-- (void)adjustUserIDWithCompletion:(void(^)(NSString * _Nullable userId))completion {
+- (void)adjustUserIDWithCompletion:(void(^)(NSString *userId))completion {
   Class Adjust = NSClassFromString(@"Adjust");
   if (Adjust) {
     SEL adid = NSSelectorFromString(@"adid");
