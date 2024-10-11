@@ -272,7 +272,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
       
       completion(adidString);
     } else if ([Adjust respondsToSelector:adidWithCompletion]) {
-      [Adjust performSelector:adidWithCompletion withObject:completion];
+      id (*imp1)(id, SEL, id) = (id (*)(id, SEL, id))[Adjust methodForSelector:adidWithCompletion];
+      if (imp1) {
+        imp1(Adjust, adidWithCompletion, completion);
+      }
     }
   }
 }
