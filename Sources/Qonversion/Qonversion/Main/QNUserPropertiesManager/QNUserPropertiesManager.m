@@ -223,10 +223,11 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 }
 
 - (void)collectIntegrationsDataInBackground {
-  NSString *adjustUserID = _device.adjustUserID;
-  if (![QNUtils isEmptyString:adjustUserID]) {
-    [self setUserProperty:@"_q_adjust_adid" value:adjustUserID];
-  }
+  [_device adjustUserIDWithCompletion:^(NSString * _Nullable userId) {
+    if (![QNUtils isEmptyString:userId]) {
+      [self setUserProperty:@"_q_adjust_adid" value:userId];
+    }
+  }];
   
   NSString *fbAnonID = _device.fbAnonID;
   if (![QNUtils isEmptyString:fbAnonID]) {
