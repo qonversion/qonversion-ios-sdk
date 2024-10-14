@@ -258,20 +258,26 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
   return nil;
 }
 
-- (nullable NSString *)adjustUserID {
+- (void)adjustUserIDWithCompletion:(void(^)(NSString *userId))completion {
   Class Adjust = NSClassFromString(@"Adjust");
-  SEL adid = NSSelectorFromString(@"adid");
-  if (Adjust && adid) {
-    id (*imp1)(id, SEL) = (id (*)(id, SEL))[Adjust methodForSelector:adid];
-    NSString *adidString = nil;
-    if (imp1) {
-      adidString = imp1(Adjust, adid);
+  if (Adjust) {
+    SEL adid = NSSelectorFromString(@"adid");
+    SEL adidWithCompletion = NSSelectorFromString(@"adidWithCompletionHandler:");
+    if ([Adjust respondsToSelector:adid]) {
+      id (*imp1)(id, SEL) = (id (*)(id, SEL))[Adjust methodForSelector:adid];
+      NSString *adidString = nil;
+      if (imp1) {
+        adidString = imp1(Adjust, adid);
+      }
+      
+      completion(adidString);
+    } else if ([Adjust respondsToSelector:adidWithCompletion]) {
+      id (*imp1)(id, SEL, id) = (id (*)(id, SEL, id))[Adjust methodForSelector:adidWithCompletion];
+      if (imp1) {
+        imp1(Adjust, adidWithCompletion, completion);
+      }
     }
-    
-    return adidString;
   }
-  
-  return nil;
 }
 
 - (NSString *)vendorID {
