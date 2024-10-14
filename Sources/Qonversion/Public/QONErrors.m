@@ -58,6 +58,13 @@
   return [self errorWithQonversionErrorCode:QONErrorStorePaymentDeferred userInfo:[userInfo copy]];
 }
 
++ (NSError *)emptyOfferingsError {
+  NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
+  userInfo[NSLocalizedDescriptionKey] = @"Offerings are not available";
+  
+  return [self errorWithQonversionErrorCode:QONErrorOfferingsNotAvailable userInfo:[userInfo copy]];
+}
+
 + (NSError *)errorFromTransactionError:(NSError *)error {
   QONError errorCode = QONErrorUnknown;
   NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
