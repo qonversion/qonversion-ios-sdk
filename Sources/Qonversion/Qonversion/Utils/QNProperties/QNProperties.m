@@ -49,6 +49,9 @@
     case QONUserPropertyKeyAppMetricaUserProfileId:
       key = @"_q_appmetrica_user_profile_id";
       break;
+    case QONUserPropertyKeyTenjinAnalyticsInstallationId:
+      key = @"_q_tenjin_aiid";
+      break;
     case QONUserPropertyKeyCustom:
       key = nil;
       break;
@@ -73,6 +76,7 @@
           @"_q_pushwoosh_hwid": @(QONUserPropertyKeyPushWooshHwId),
           @"_q_appmetrica_device_id": @(QONUserPropertyKeyAppMetricaDeviceId),
           @"_q_appmetrica_user_profile_id": @(QONUserPropertyKeyAppMetricaUserProfileId),
+          @"_q_tenjin_aiid": @(QONUserPropertyKeyTenjinAnalyticsInstallationId),
   };
 
   return propertiesMap[key] ? propertiesMap[key].integerValue : QONUserPropertyKeyCustom;
