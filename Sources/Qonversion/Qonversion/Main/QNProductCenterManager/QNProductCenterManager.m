@@ -616,6 +616,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     QONOfferings *offerings = [self enrichOfferingsWithStoreProducts];
     resultError = offerings ? nil : resultError;
     
+    if (!offerings && !resultError) {
+      resultError = [QONErrors emptyOfferingsError];
+    }
+    
     for (QONOfferingsCompletionHandler block in blocks) {
       run_block_on_main(block, offerings, resultError);
     }

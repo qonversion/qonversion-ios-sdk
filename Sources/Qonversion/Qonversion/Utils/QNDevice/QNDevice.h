@@ -19,9 +19,10 @@
 @property (readonly, copy, nonatomic) NSString *vendorID;
 
 @property (readonly, copy, nonatomic) NSString *afUserID;
-@property (readonly, copy, nonatomic) NSString *adjustUserID;
 @property (readonly, copy, nonatomic) NSString *fbAnonID;
 
 @property (readonly, copy, nonatomic) NSString *installDate;
+
+- (void)adjustUserIDWithCompletion:(void(^)(NSString *userId))completion;
 
 @end
