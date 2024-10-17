@@ -26,10 +26,10 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 
 @property (nonatomic) QNInMemoryStorage *inMemoryStorage;
 
-@property (nonatomic, strong) NSMutableArray<QONUserPropertiesEmptyCompletionHandler> *completionBlocks;
+@property (atomic, strong) NSMutableArray<QONUserPropertiesEmptyCompletionHandler> *completionBlocks;
 
-@property (nonatomic, assign, readwrite) BOOL sendingScheduled;
-@property (nonatomic, assign, readwrite) BOOL updatingCurrently;
+@property (atomic, assign, readwrite) BOOL sendingScheduled;
+@property (atomic, assign, readwrite) BOOL updatingCurrently;
 @property (nonatomic, assign, readwrite) NSUInteger retryDelay;
 @property (nonatomic, assign, readwrite) NSUInteger retriesCounter;
 
@@ -94,25 +94,31 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
     return;
   }
   
-  [self.completionBlocks addObject:completion];
+  @synchronized (self) {
+    [self.completionBlocks addObject:completion];
+  }
   
   [self sendProperties:YES];
 }
 
 - (void)sendPropertiesWithDelay:(NSUInteger)delay {
-  if (!_sendingScheduled) {
-    _sendingScheduled = YES;
-    __block __weak QNUserPropertiesManager *weakSelf = self;
-    [_backgroundQueue addOperationWithBlock:^{
-      dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf performSelector:@selector(sendPropertiesInBackground) withObject:nil afterDelay:delay];
-      });
-    }];
+  @synchronized (self) {
+    if (!_sendingScheduled) {
+      _sendingScheduled = YES;
+      __block __weak QNUserPropertiesManager *weakSelf = self;
+      [_backgroundQueue addOperationWithBlock:^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+          [weakSelf performSelector:@selector(sendPropertiesInBackground) withObject:nil afterDelay:delay];
+        });
+      }];
+    }
   }
 }
 
 - (void)sendPropertiesInBackground {
-  _sendingScheduled = NO;
+  @synchronized (self) {
+    _sendingScheduled = NO;
+  }
   [self sendProperties];
 }
 
@@ -137,12 +143,16 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
     NSDictionary *properties = [self->_inMemoryStorage.storageDictionary copy];
     
     if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
-      self->_updatingCurrently = NO;
+      @synchronized (self) {
+        self->_updatingCurrently = NO;
+      }
       return;
     }
     
     if (properties.count == 0) {
-      self->_updatingCurrently = NO;
+      @synchronized (self) {
+        self->_updatingCurrently = NO;
+      }
       return;
     }
     
@@ -150,14 +160,18 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
     __block __weak QNUserPropertiesManager *weakSelf = self;
     [self.apiClient sendProperties:properties
                         completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-      weakSelf.updatingCurrently = NO;
       
-      NSArray *completions = [weakSelf.completionBlocks copy];
+      NSArray *completions = @[];
+      @synchronized (self) {
+        weakSelf.updatingCurrently = NO;
+        
+        completions = [weakSelf.completionBlocks copy];
+        [weakSelf.completionBlocks removeAllObjects];
+      }
+
       for (QONUserPropertiesEmptyCompletionHandler storedCompletion in completions) {
         storedCompletion();
       }
-      
-      [weakSelf.completionBlocks removeAllObjects];
       
       if (error) {
         // copy of an existing array to prevent erasing properties set while the current request is in progress
