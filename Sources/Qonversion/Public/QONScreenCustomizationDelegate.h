@@ -8,6 +8,8 @@
 
 #import "QONScreenPresentationConfiguration.h"
 
+@class UIView;
+
 /**
  The delegate is responsible for customizing screens representation
  */
@@ -22,5 +24,13 @@ NS_SWIFT_NAME(Qonversion.ScreenCustomizationDelegate)
  */
 - (QONScreenPresentationConfiguration * _Nonnull)presentationConfigurationForScreen:(NSString * _Nonnull)screenId
 NS_SWIFT_NAME(presentationConfigurationForScreen(_:));;
+
+/**
+ View for popover presentation style for iPad. A new popover will be presented from this view
+ Used only for Qonversion.ScreenPresentationStyle == .popover for iPad.
+ You can omit implementing this delegate function if you do not support iPad or do not use popover presentation style.
+ */
+- (UIView * _Nullable)viewForPopoverPresentation
+NS_SWIFT_NAME(viewForPopoverPresentation());
 
 @end

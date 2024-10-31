@@ -136,11 +136,32 @@
       if (configuration.presentationStyle == QONScreenPresentationStylePush) {
         [presentationViewController.navigationController pushViewController:viewController animated:configuration.animated];
       } else {
-        QONAutomationsNavigationController *navigationController = [[QONAutomationsNavigationController alloc] initWithRootViewController:viewController];
-        navigationController.navigationBarHidden = YES;
         UIModalPresentationStyle style = configuration.presentationStyle == QONScreenPresentationStylePopover ? UIModalPresentationPopover : UIModalPresentationFullScreen;
-        navigationController.modalPresentationStyle = style;
-        [presentationViewController presentViewController:navigationController animated:configuration.animated completion:nil];
+        
+        if (style == UIModalPresentationPopover) {
+          viewController.modalPresentationStyle = style;
+          
+          UIView *sourceView = nil;
+          if ([weakSelf.screenCustomizationDelegate respondsToSelector:@selector(viewForPopoverPresentation)]) {
+            sourceView = [weakSelf.screenCustomizationDelegate viewForPopoverPresentation];
+          }
+          
+          if (sourceView) {
+            viewController.popoverPresentationController.sourceRect = sourceView.bounds;
+            viewController.popoverPresentationController.sourceView = sourceView;
+          } else {
+            viewController.popoverPresentationController.permittedArrowDirections = 0;
+            viewController.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMidX(presentationViewController.view.bounds), CGRectGetMidY(presentationViewController.view.bounds),0,0);
+            viewController.popoverPresentationController.sourceView = presentationViewController.view;
+          }
+          
+          [presentationViewController presentViewController:viewController animated:configuration.animated completion:nil];
+        } else {
+          QONAutomationsNavigationController *navigationController = [[QONAutomationsNavigationController alloc] initWithRootViewController:viewController];
+          navigationController.navigationBarHidden = YES;
+          navigationController.modalPresentationStyle = style;
+          [presentationViewController presentViewController:navigationController animated:configuration.animated completion:nil];
+        }
       }
       
       run_block_on_main(completion, true, nil);
