@@ -25,7 +25,7 @@ NS_SWIFT_NAME(Qonversion.PurchaseOptions)
 @property (nonatomic, copy, nullable) NSArray<NSString *> *contextKeys;
 
 // Promo offer details. Use to make a purchase with a promo offer.
-@property (nonatomic, strong, nullable) QONPromotionalOffer *promoOffer API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0));
+@property (nonatomic, strong, nullable) QONPromotionalOffer *promoOffer API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0));
 
 /**
  Initialize purchase options with quantity.
@@ -56,14 +56,14 @@ NS_SWIFT_NAME(Qonversion.PurchaseOptions)
  @param promoOffer promo offer details.
  @return QONPurchaseOptions instance
  */
-- (instancetype)initWithQuantity:(NSInteger)quantity contextKeys:(NSArray<NSString *> * _Nullable)contextKeys promoOffer:(QONPromotionalOffer * _Nullable)promoOffer API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0)) NS_SWIFT_UNAVAILABLE("Use swift style initializer instead.");
+- (instancetype)initWithQuantity:(NSInteger)quantity contextKeys:(NSArray<NSString *> * _Nullable)contextKeys promoOffer:(QONPromotionalOffer * _Nullable)promoOffer API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0)) NS_SWIFT_UNAVAILABLE("Use swift style initializer instead.");
 
 /**
  Initialize purchase options with promo offer details.
  @param promoOffer promo offer details.
  @return QONPurchaseOptions instance
  */
-- (instancetype)initWithPromoOffer:(QONPromotionalOffer * _Nullable)promoOffer API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0)) NS_SWIFT_UNAVAILABLE("Use swift style initializer instead.");
+- (instancetype)initWithPromoOffer:(QONPromotionalOffer * _Nullable)promoOffer API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0)) NS_SWIFT_UNAVAILABLE("Use swift style initializer instead.");
 
 @end
 

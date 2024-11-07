@@ -65,6 +65,30 @@ NS_ASSUME_NONNULL_BEGIN
     }
   }
   
+  if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, visionOS 1.0, tvOS 12.2, *)) {
+    NSString *offerId = transaction.payment.paymentDiscount.identifier;
+    if (offerId.length > 0) {
+      NSMutableDictionary *promoOffer = [[NSMutableDictionary alloc] init];
+      SKProductDiscount *purchasedDiscount = nil;
+      for (SKProductDiscount *discount in product.discounts) {
+        if ([discount.identifier isEqualToString:offerId]) {
+          purchasedDiscount = discount;
+        }
+      }
+      
+      if (purchasedDiscount) {
+        promoOffer[@"id"] = offerId;
+        promoOffer[@"value"] = purchasedDiscount.price.stringValue;
+        promoOffer[@"number_of_periods"] = @(purchasedDiscount.numberOfPeriods).stringValue;
+        promoOffer[@"period_number_of_units"] = @(purchasedDiscount.subscriptionPeriod.numberOfUnits).stringValue;
+        promoOffer[@"period_unit"] = @(purchasedDiscount.subscriptionPeriod.unit).stringValue;
+        promoOffer[@"payment_mode"] = @(purchasedDiscount.paymentMode).stringValue;
+
+        result[@"promo_offer"] = [promoOffer copy];
+      }
+    }
+  }
+  
   if (purchaseOptions.contextKeys.count > 0) {
     purchaseDict[@"context_keys"] = purchaseOptions.contextKeys;
   }
@@ -117,6 +141,16 @@ NS_ASSUME_NONNULL_BEGIN
   introOffer[@"payment_mode"] = purchaseModel.introductoryPaymentMode;
   
   result[@"introductory_offer"] = introOffer.count > 0 ? introOffer : nil;
+  
+  NSMutableDictionary *promoOffer = [[NSMutableDictionary alloc] init];
+  promoOffer[@"id"] = purchaseModel.promoOfferId;
+  promoOffer[@"value"] = purchaseModel.promoOfferPrice;
+  promoOffer[@"number_of_periods"] = purchaseModel.promoOfferNumberOfPeriods;
+  promoOffer[@"period_number_of_units"] = purchaseModel.promoOfferPeriodNumberOfUnits;
+  promoOffer[@"period_unit"] = purchaseModel.promoOfferPeriodUnit;
+  promoOffer[@"payment_mode"] = purchaseModel.promoOfferPaymentMode;
+
+  result[@"promo_offer"] = [promoOffer copy];
   
   purchaseDict[@"country"] = purchaseModel.storefrontCountryCode;
   

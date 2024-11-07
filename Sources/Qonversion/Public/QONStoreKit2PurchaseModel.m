@@ -10,4 +10,30 @@
 
 @implementation QONStoreKit2PurchaseModel
 
+- (NSString *)description {
+  NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+  
+  [description appendFormat:@"productId=%@,\n", self.productId];
+  [description appendFormat:@"price=%@,\n", self.price];
+  [description appendFormat:@"currency=%@,\n", self.currency];
+  [description appendFormat:@"transactionId=%@,\n", self.transactionId];
+  [description appendFormat:@"originalTransactionId=%@,\n", self.originalTransactionId];
+  [description appendFormat:@"subscriptionPeriodUnit=%@,\n", self.subscriptionPeriodUnit];
+  [description appendFormat:@"subscriptionPeriodNumberOfUnits=%@,\n", self.subscriptionPeriodNumberOfUnits];
+  [description appendFormat:@"introductoryPrice=%@,\n", self.introductoryPrice];
+  [description appendFormat:@"introductoryNumberOfPeriods=%@,\n", self.introductoryNumberOfPeriods];
+  [description appendFormat:@"introductoryPeriodUnit=%@,\n", self.introductoryPeriodUnit];
+  [description appendFormat:@"introductoryPeriodNumberOfUnits=%@,\n", self.introductoryPeriodNumberOfUnits];
+  [description appendFormat:@"introductoryPaymentMode=%@,\n", self.introductoryPaymentMode];
+  [description appendFormat:@"storefrontCountryCode=%@,\n", self.storefrontCountryCode];
+  [description appendFormat:@"promoOfferPrice=%@,\n", self.promoOfferPrice];
+  [description appendFormat:@"promoOfferNumberOfPeriods=%@,\n", self.promoOfferNumberOfPeriods];
+  [description appendFormat:@"promoOfferPeriodUnit=%@,\n", self.promoOfferPeriodUnit];
+  [description appendFormat:@"promoOfferPeriodNumberOfUnits=%@,\n", self.promoOfferPeriodNumberOfUnits];
+  [description appendFormat:@"promoOfferPaymentMode=%@,\n", self.promoOfferPaymentMode];
+  [description appendString:@">"];
+  
+  return [description copy];
+}
+
 @end

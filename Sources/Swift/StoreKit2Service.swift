@@ -12,17 +12,17 @@ import StoreKit
 
 protocol StoreKit2ServiceInterface {
   
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
   func syncTransactions() async throws
   
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
   func handleTransaction(_ transaction: Transaction) async throws
   
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
   func handleTransactions(_ transactions: [Transaction]) async throws
 }
 
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
 public class StoreKit2Service: StoreKit2ServiceInterface {
   
   let mapper = PurchasesMapper()
@@ -112,10 +112,18 @@ public class StoreKit2Service: StoreKit2ServiceInterface {
       var previousHandledProductId = ""
       
       for transaction in transactions {
-        // here we detect another product purchase
-        if previousHandledProductId != transaction.productID {
-          result.append(transaction)
-          previousHandledProductId = transaction.productID
+        if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
+          // here we detect another product purchase or offer available
+          if transaction.offer != nil || previousHandledProductId != transaction.productID {
+            result.append(transaction)
+            previousHandledProductId = transaction.productID
+          }
+        } else {
+          // here we detect another product purchase
+          if previousHandledProductId != transaction.productID {
+            result.append(transaction)
+            previousHandledProductId = transaction.productID
+          }
         }
       }
     }

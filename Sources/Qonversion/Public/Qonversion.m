@@ -244,13 +244,10 @@ static bool _isInitialized = NO;
   [self.productCenterManager handlePurchases:purchasesInfo completion:completion];
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-declarations"
-NS_SWIFT_NAME(getPromotionalOfferForProduct(product: discount: completion:));
-- (void)getPromotionalOfferForProduct:(QONProduct * _Nonnull)product discount:(SKProductDiscount * _Nonnull)discount completion:(nonnull QONPromotionalOfferCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0)) {
+- (void)getPromotionalOfferForProduct:(QONProduct * _Nonnull)product discount:(SKProductDiscount * _Nonnull)discount completion:(nonnull QONPromotionalOfferCompletionHandler)completion {
   [self.productCenterManager getPromotionalOfferForProduct:product discount:discount completion:completion];
 }
-#pragma GCC diagnostic pop
+
 - (BOOL)isFallbackFileAccessible {
   QONFallbackObject *fallbackData = [self.fallbackService obtainFallbackData];
   

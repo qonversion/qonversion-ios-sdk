@@ -80,9 +80,11 @@
     payment.quantity = options.quantity;
   }
   
-  if (options.promoOffer) {
-    payment.paymentDiscount = options.promoOffer.paymentDiscount;
-    payment.applicationUsername = identityId;
+  if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, visionOS 1.0, tvOS 12.2, *)) {
+    if (options.promoOffer) {
+      payment.paymentDiscount = options.promoOffer.paymentDiscount;
+      payment.applicationUsername = identityId;
+    }
   }
   
   [[SKPaymentQueue defaultQueue] addPayment:[payment copy]];
@@ -250,7 +252,12 @@
       
       for (SKPaymentTransaction *transaction in groupedTransactions) {
         BOOL isTheSameProductId = [previousHandledProductId isEqualToString:transaction.payment.productIdentifier];
-        if (!isTheSameProductId) {
+        if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, visionOS 1.0, tvOS 12.2, *)) {
+          if (!isTheSameProductId || transaction.payment.paymentDiscount) {
+            [resultTransactions addObject:transaction];
+            previousHandledProductId = transaction.payment.productIdentifier;
+          }
+        } else if (!isTheSameProductId) {
           [resultTransactions addObject:transaction];
           previousHandledProductId = transaction.payment.productIdentifier;
         }

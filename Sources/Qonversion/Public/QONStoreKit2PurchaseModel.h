@@ -25,6 +25,12 @@ NS_SWIFT_NAME(Qonversion.StoreKit2PurchaseModel)
 @property (nonatomic, copy, nullable) NSString *introductoryPeriodUnit;
 @property (nonatomic, copy, nullable) NSString *introductoryPeriodNumberOfUnits;
 @property (nonatomic, copy, nullable) NSString *introductoryPaymentMode;
+@property (nonatomic, copy, nullable) NSString *promoOfferId;
+@property (nonatomic, copy, nullable) NSString *promoOfferPrice;
+@property (nonatomic, copy, nullable) NSString *promoOfferNumberOfPeriods;
+@property (nonatomic, copy, nullable) NSString *promoOfferPeriodUnit;
+@property (nonatomic, copy, nullable) NSString *promoOfferPeriodNumberOfUnits;
+@property (nonatomic, copy, nullable) NSString *promoOfferPaymentMode;
 @property (nonatomic, copy, nullable) NSString *storefrontCountryCode;
 
 @end
