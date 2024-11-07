@@ -16,7 +16,7 @@ extension Qonversion.PurchaseOptions {
     self.contextKeys = contextKeys
   }
   
-  @available(iOS 12.2, *)
+  @available(iOS 12.2, macOS 10.14.4, watchOS 6.2, visionOS 1.0, *)
   public convenience init(quantity: Int = 1, contextKeys: [String]? = nil, promoOffer: Qonversion.PromotionalOffer? = nil) {
     self.init()
     self.quantity = quantity

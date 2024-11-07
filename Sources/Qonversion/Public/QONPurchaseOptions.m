@@ -19,7 +19,14 @@
 }
 
 - (instancetype)initWithQuantity:(NSInteger)quantity contextKeys:(NSArray<NSString *>  * _Nullable)contextKeys {
-  return [self initWithQuantity:quantity contextKeys:contextKeys promoOffer:nil];
+  self = [super init];
+  
+  if (self) {
+    _quantity = quantity;
+    _contextKeys = contextKeys;
+  }
+  
+  return self;
 }
 
 - (instancetype)initWithQuantity:(NSInteger)quantity contextKeys:(NSArray<NSString *>  * _Nullable)contextKeys promoOffer:(QONPromotionalOffer * _Nullable)promoOffer {
