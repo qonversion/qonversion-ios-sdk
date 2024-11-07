@@ -80,17 +80,13 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSDictionary *)promotionalOfferInfoForProduct:(QONProduct *)product
-                                        discount:(SKProductDiscount *)productDiscount
                                       identityId:(NSString *)identityId
                                          receipt:(nullable NSString *)receipt {
   NSMutableDictionary *result = [NSMutableDictionary new];
   
-  result[@"productIdentifier"] = product.storeID;
-  if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, tvOS 12.2, visionOS 1.0, *)) {
-    result[@"discountIdentifier"] = productDiscount.identifier;
-  }
-  result[@"idetntityId"] = identityId;
-  result[@"receipt"] = receipt;
+  result[@"product"] = product.storeID;
+  result[@"app_account_token"] = identityId;
+  result[@"app_bundle_id"] = [NSBundle mainBundle].bundleIdentifier;
   
   return [result copy];
 }

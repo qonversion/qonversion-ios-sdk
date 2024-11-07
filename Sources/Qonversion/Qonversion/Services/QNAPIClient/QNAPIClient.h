@@ -64,6 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (void)getPromotionalOfferForProduct:(QONProduct *)product
                              discount:(SKProductDiscount *)discount
+                               userId:(NSString *)userId
                            identityId:(NSString *)identityId
                               receipt:(nullable NSString *)receipt
                            completion:(QNAPIClientDictCompletionHandler)completion API_AVAILABLE(ios(11.2), macos(10.13.2), visionos(1.0));

@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
                               transactionDate:(NSDate *)transactionDate
                                expirationDate:(NSDate *)expirationDate
                     transactionRevocationDate:(NSDate *)transactionRevocationDate
+                                 promoOfferId:(NSString *)promoOfferId
                                   environment:(QONTransactionEnvironment)environment
                                 ownershipType:(QONTransactionOwnershipType)ownershipType
                                          type:(QONTransactionType)type;

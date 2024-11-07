@@ -53,12 +53,12 @@
   return self;
 }
 
-- (SKProduct *)purchase:(NSString *)productID options:(QONPurchaseOptions * _Nullable)options {
+- (SKProduct *)purchase:(NSString *)productID options:(QONPurchaseOptions * _Nullable)options identityId:(NSString *)identityId {
   SKProduct *skProduct = self->_products[productID];
   
   if (skProduct) {
     // TODO: get promo offer from purchase options
-    [self purchaseProduct:skProduct options:options];
+    [self purchaseProduct:skProduct options:options identityId:identityId];
     
     return skProduct;
   } else {
@@ -67,10 +67,10 @@
 }
 
 - (void)purchaseProduct:(SKProduct *)product {
-  [self purchaseProduct:product options:nil];
+  [self purchaseProduct:product options:nil identityId:nil];
 }
 
-- (void)purchaseProduct:(SKProduct *)product options:(QONPurchaseOptions * _Nullable)options {
+- (void)purchaseProduct:(SKProduct *)product options:(QONPurchaseOptions * _Nullable)options identityId:(NSString *)identityId {
   @synchronized (self) {
     self->_purchasingCurrently = product.productIdentifier;
   }
@@ -79,6 +79,11 @@
   
   if (options.quantity > 1) {
     payment.quantity = options.quantity;
+  }
+  
+  if (options.promoOffer) {
+    payment.paymentDiscount = options.promoOffer.paymentDiscount;
+    payment.applicationUsername = identityId;
   }
   
   [[SKPaymentQueue defaultQueue] addPayment:[payment copy]];

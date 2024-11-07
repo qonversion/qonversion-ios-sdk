@@ -16,6 +16,7 @@
                               transactionDate:(NSDate *)transactionDate
                                expirationDate:(NSDate *)expirationDate
                     transactionRevocationDate:(NSDate *)transactionRevocationDate
+                                 promoOfferId:(NSString *)promoOfferId
                                   environment:(QONTransactionEnvironment)environment
                                 ownershipType:(QONTransactionOwnershipType)ownershipType
                                          type:(QONTransactionType)type {
@@ -28,6 +29,7 @@
     _transactionDate = transactionDate;
     _expirationDate = expirationDate;
     _transactionRevocationDate = transactionRevocationDate;
+    _promoOfferId = promoOfferId;
     _environment = environment;
     _ownershipType = ownershipType;
     _type = type;
@@ -45,6 +47,7 @@
     _transactionDate = [coder decodeObjectForKey:NSStringFromSelector(@selector(transactionDate))];
     _expirationDate = [coder decodeObjectForKey:NSStringFromSelector(@selector(expirationDate))];
     _transactionRevocationDate = [coder decodeObjectForKey:NSStringFromSelector(@selector(transactionRevocationDate))];
+    _promoOfferId = [coder decodeObjectForKey:NSStringFromSelector(@selector(promoOfferId))];
     _environment = [coder decodeIntegerForKey:NSStringFromSelector(@selector(environment))];
     _ownershipType = [coder decodeIntegerForKey:NSStringFromSelector(@selector(ownershipType))];
     _type = [coder decodeIntegerForKey:NSStringFromSelector(@selector(type))];
@@ -59,6 +62,7 @@
   [coder encodeObject:_transactionDate forKey:NSStringFromSelector(@selector(transactionDate))];
   [coder encodeObject:_expirationDate forKey:NSStringFromSelector(@selector(expirationDate))];
   [coder encodeObject:_transactionRevocationDate forKey:NSStringFromSelector(@selector(transactionRevocationDate))];
+  [coder encodeObject:_promoOfferId forKey:NSStringFromSelector(@selector(promoOfferId))];
   [coder encodeInteger:_environment forKey:NSStringFromSelector(@selector(environment))];
   [coder encodeInteger:_ownershipType forKey:NSStringFromSelector(@selector(ownershipType))];
   [coder encodeInteger:_type forKey:NSStringFromSelector(@selector(type))];
@@ -72,6 +76,7 @@
   [description appendFormat:@"transactionDate=%@,\n", self.transactionDate];
   [description appendFormat:@"expirationDate=%@,\n", self.expirationDate];
   [description appendFormat:@"transactionRevocationDate=%@,\n", self.transactionRevocationDate];
+  [description appendFormat:@"promoOfferId=%@,\n", self.promoOfferId];
   [description appendFormat:@"environment=%@ (enum value = %li),\n", [self prettyEnvironment], (long) self.environment];
   [description appendFormat:@"ownershipType=%@ (enum value = %li),\n", [self prettyOwnershipType], (long) self.ownershipType];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
