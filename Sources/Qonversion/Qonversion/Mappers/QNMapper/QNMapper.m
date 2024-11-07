@@ -74,15 +74,15 @@
   
   NSString *identifier = productDiscount.identifier;
   NSString *keyIdentifier = rawData[@"key_identifier"];
-  NSString *uuidString = rawData[@"nonce"];
-  NSUUID *nonce = [[NSUUID alloc] initWithUUIDString:uuidString];
+  NSString *nonceString = rawData[@"nonce"];
+  NSUUID *nonce = [[NSUUID alloc] initWithUUIDString:nonceString];
   NSString *signature = rawData[@"signature"];
   NSTimeInterval timestamp = [self mapInteger:rawData[@"timestamp"] orReturn:0];
   timestamp = timestamp != 0 ? timestamp : [NSDate date].timeIntervalSince1970;
   
   NSNumber *timestampNumber = [NSNumber numberWithDouble:timestamp];
   
-  if (identifier.length == 0 || keyIdentifier.length == 0 || uuidString.length == 0 || signature.length == 0) {
+  if (identifier.length == 0 || keyIdentifier.length == 0 || nonceString.length == 0 || signature.length == 0) {
     *error = [self promoOfferMappingError];
     
     return nil;

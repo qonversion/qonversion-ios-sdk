@@ -57,7 +57,6 @@
   SKProduct *skProduct = self->_products[productID];
   
   if (skProduct) {
-    // TODO: get promo offer from purchase options
     [self purchaseProduct:skProduct options:options identityId:identityId];
     
     return skProduct;
