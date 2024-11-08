@@ -25,12 +25,13 @@
   [description appendFormat:@"introductoryPeriodUnit=%@,\n", self.introductoryPeriodUnit];
   [description appendFormat:@"introductoryPeriodNumberOfUnits=%@,\n", self.introductoryPeriodNumberOfUnits];
   [description appendFormat:@"introductoryPaymentMode=%@,\n", self.introductoryPaymentMode];
-  [description appendFormat:@"storefrontCountryCode=%@,\n", self.storefrontCountryCode];
+  [description appendFormat:@"promoOfferId=%@,\n", self.promoOfferId];
   [description appendFormat:@"promoOfferPrice=%@,\n", self.promoOfferPrice];
   [description appendFormat:@"promoOfferNumberOfPeriods=%@,\n", self.promoOfferNumberOfPeriods];
   [description appendFormat:@"promoOfferPeriodUnit=%@,\n", self.promoOfferPeriodUnit];
   [description appendFormat:@"promoOfferPeriodNumberOfUnits=%@,\n", self.promoOfferPeriodNumberOfUnits];
   [description appendFormat:@"promoOfferPaymentMode=%@,\n", self.promoOfferPaymentMode];
+  [description appendFormat:@"storefrontCountryCode=%@,\n", self.storefrontCountryCode];
   [description appendString:@">"];
   
   return [description copy];
