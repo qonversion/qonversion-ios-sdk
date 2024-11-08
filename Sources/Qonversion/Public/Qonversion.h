@@ -133,6 +133,18 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
 - (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider DEPRECATED_MSG_ATTRIBUTE("This function shouldn't be called anymore. All attribution logic continues to work as usual.");
 
 /**
+ Retrieve the promotional offer for the product if it exists.
+ Make sure to call this function before displaying product details to the user.
+ The generated signature for the promotional offer is valid for a single transaction.
+ If the purchase fails, you need to call this function again to obtain a new promotional offer signature.
+ Use this signature to complete the purchase through the purchase function, along with the purchase options object.
+ @param product - product you want to purchase.
+ @param discount - discount to create promotional offer signature.
+ @param completion - completion block that will be called when response is received.
+ */
+- (void)getPromotionalOfferForProduct:(QONProduct * _Nonnull)product discount:(SKProductDiscount * _Nonnull)discount completion:(nonnull QONPromotionalOfferCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0));
+
+/**
  Check user entitlements
  @param completion Completion block that includes entitlements dictionary and error
  */

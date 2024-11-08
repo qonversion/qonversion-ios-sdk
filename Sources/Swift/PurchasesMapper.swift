@@ -10,7 +10,7 @@ import Foundation
 import StoreKit
 @_exported import Qonversion
 
-@available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
+@available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, visionOS 1.0, *)
 final class PurchasesMapper {
   func map(transactions: [Transaction], with products:[Product]) async -> [Qonversion.StoreKit2PurchaseModel] {
     var result: [Qonversion.StoreKit2PurchaseModel] = []
@@ -50,10 +50,23 @@ final class PurchasesMapper {
         purchaseInfo.introductoryPeriodUnit = convert(periodUnit: introductoryOffer.period.unit)
         purchaseInfo.introductoryPeriodNumberOfUnits = String(introductoryOffer.period.value)
         purchaseInfo.introductoryPaymentMode = convert(paymentMode: introductoryOffer.paymentMode)
-        purchaseInfo.storefrontCountryCode = await Storefront.current?.countryCode
       }
     }
     
+    if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
+      if let offer: Transaction.Offer = transaction.offer, offer.type == .promotional, let offerId = offer.id, let promoOffer: Product.SubscriptionOffer = product.subscription?.promotionalOffers.first(where: {$0.id == offerId}) {
+        purchaseInfo.promoOfferId = offerId
+        purchaseInfo.promoOfferPrice = "\(promoOffer.price)"
+        purchaseInfo.promoOfferNumberOfPeriods = String(promoOffer.periodCount)
+        purchaseInfo.promoOfferPeriodUnit = convert(periodUnit: promoOffer.period.unit)
+        purchaseInfo.promoOfferPeriodNumberOfUnits = String(promoOffer.period.value)
+        purchaseInfo.promoOfferPaymentMode = convert(paymentMode: promoOffer.paymentMode)
+        
+      }
+    }
+    
+    purchaseInfo.storefrontCountryCode = await Storefront.current?.countryCode
+
     return purchaseInfo
   }
   
