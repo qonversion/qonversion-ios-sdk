@@ -64,6 +64,11 @@ NS_SWIFT_NAME(Qonversion.Transaction)
 @property (nonatomic, strong, nullable) NSDate *transactionRevocationDate;
 
 /**
+ The identifier for the promotional offer if this transaction was made using it.
+ */
+@property (nonatomic, copy, nullable) NSString *promoOfferId;
+
+/**
  Environment of the transaction.
  */
 @property (nonatomic, assign) QONTransactionEnvironment environment;

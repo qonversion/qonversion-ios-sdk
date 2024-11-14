@@ -19,7 +19,6 @@ NS_ASSUME_NONNULL_BEGIN
                        receipt:(nullable NSString *)receipt;
 
 - (NSDictionary *)promotionalOfferInfoForProduct:(QONProduct *)product
-                                        discount:(SKProductDiscount *)productDiscount
                                       identityId:(NSString *)identityId
                                          receipt:(nullable NSString *)receipt API_AVAILABLE(ios(11.2), macos(10.13.2), visionos(1.0));
 

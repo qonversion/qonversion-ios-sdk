@@ -446,8 +446,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     QONVERSION_LOG(@"Purchasing in process");
     return;
   }
-  
-  if (product && [_storeKitService purchase:product.storeID options:options]) {
+  NSString *identityId = [self.userInfoService obtainCustomIdentityUserID];
+  if (product && [_storeKitService purchase:product.storeID options:options identityId:identityId]) {
     [self updatePurchaseOptions:options storeProductId:product.storeID];
     self.purchasingBlocks[product.storeID] = completion;
     
@@ -1053,8 +1053,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.storeKitService receipt:^(NSString * receipt) {
     NSString *identityId = [weakSelf.userInfoService obtainCustomIdentityUserID];
+    NSString *userId = [weakSelf.userInfoService obtainUserID];
     
-    [self.apiClient getPromotionalOfferForProduct:product discount:discount identityId:identityId receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    [self.apiClient getPromotionalOfferForProduct:product discount:discount userId:userId identityId:identityId receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       if (error) {
         run_block_on_main(completion, nil, error);
         return;

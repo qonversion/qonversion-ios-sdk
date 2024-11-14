@@ -29,6 +29,22 @@
   return self;
 }
 
+- (instancetype)initWithQuantity:(NSInteger)quantity contextKeys:(NSArray<NSString *>  * _Nullable)contextKeys promoOffer:(QONPromotionalOffer * _Nullable)promoOffer {
+  self = [super init];
+  
+  if (self) {
+    _quantity = quantity;
+    _contextKeys = contextKeys;
+    _promoOffer = promoOffer;
+  }
+  
+  return self;
+}
+
+- (instancetype)initWithPromoOffer:(QONPromotionalOffer *)promoOffer {
+  return [self initWithQuantity:1 contextKeys:nil promoOffer:promoOffer];
+}
+
 - (instancetype)initWithCoder:(NSCoder *)coder {
   self = [super init];
   if (self) {

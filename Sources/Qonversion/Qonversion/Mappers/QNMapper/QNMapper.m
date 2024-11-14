@@ -72,17 +72,17 @@
     return nil;
   }
   
-  NSString *identifier = rawData[@"identifier"];
-  NSString *keyIdentifier = rawData[@"keyIdentifier"];
-  NSString *uuidString = rawData[@"uuid"];
-  NSUUID *nonce = [[NSUUID alloc] initWithUUIDString:uuidString];
+  NSString *identifier = productDiscount.identifier;
+  NSString *keyIdentifier = rawData[@"key_identifier"];
+  NSString *nonceString = rawData[@"nonce"];
+  NSUUID *nonce = [[NSUUID alloc] initWithUUIDString:nonceString];
   NSString *signature = rawData[@"signature"];
   NSTimeInterval timestamp = [self mapInteger:rawData[@"timestamp"] orReturn:0];
   timestamp = timestamp != 0 ? timestamp : [NSDate date].timeIntervalSince1970;
   
   NSNumber *timestampNumber = [NSNumber numberWithDouble:timestamp];
   
-  if (identifier.length == 0 || keyIdentifier.length == 0 || uuidString.length == 0 || signature.length == 0) {
+  if (identifier.length == 0 || keyIdentifier.length == 0 || nonceString.length == 0 || signature.length == 0) {
     *error = [self promoOfferMappingError];
     
     return nil;
@@ -276,6 +276,7 @@
   NSString *originalTransactionId = rawTransaction[@"original_transaction_id"];
   NSString *transactionId = rawTransaction[@"transaction_id"];
   NSString *offerCode = rawTransaction[@"offer_code"];
+  NSString *promoOfferId = rawTransaction[@"promo_offer_id"];
     
   NSDate *transactionDate = [self mapDateFromSource:rawTransaction key:@"transaction_timestamp"];
   NSDate *expirationDate = [self mapDateFromSource:rawTransaction key:@"expiration_timestamp"];
@@ -293,7 +294,7 @@
   NSNumber *transactionTypeNumber = transactionTypes[typeRaw];
   QONTransactionType transactionType = transactionTypes ? transactionTypeNumber.integerValue : QONTransactionTypeUnknown;
   
-  QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate environment:environment ownershipType:ownershipType type:transactionType];
+  QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate promoOfferId:promoOfferId environment:environment ownershipType:ownershipType type:transactionType];
   
   return transaction;
 }

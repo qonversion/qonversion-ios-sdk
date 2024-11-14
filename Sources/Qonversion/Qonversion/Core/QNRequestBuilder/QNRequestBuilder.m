@@ -54,8 +54,8 @@
   return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kPurchaseEndpoint type:QONRequestTypePost];
 }
 
-- (NSURLRequest *)makeGetPromotionalOfferRequestWithBody:(NSDictionary *)body {
-  return [self makeRequestWithDictBody:body baseURL:self.baseURL endpoint:kGetPromoOfferDetailsEndpoint type:QONRequestTypePost];
+- (NSURLRequest *)makePostPromotionalOfferRequestWithBody:(NSDictionary *)body userId:(NSString *)userId offerId:(NSString *)offerId {
+  return [self makeRequestWithDictBody:body baseURL:self.baseURL endpoint:[NSString stringWithFormat:kPostPromoOfferDetailsEndpoint, userId, offerId] type:QONRequestTypePost];
 }
 
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter {

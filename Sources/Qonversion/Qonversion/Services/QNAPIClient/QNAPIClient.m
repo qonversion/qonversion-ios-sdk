@@ -363,12 +363,13 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 - (void)getPromotionalOfferForProduct:(QONProduct *)product
                              discount:(SKProductDiscount *)discount
+                               userId:(NSString *)userId
                            identityId:(NSString *)identityId
                               receipt:(nullable NSString *)receipt
                            completion:(QNAPIClientDictCompletionHandler)completion {
-  NSDictionary *body = [self.requestSerializer promotionalOfferInfoForProduct:product discount:discount identityId:identityId receipt:receipt];
+  NSDictionary *body = [self.requestSerializer promotionalOfferInfoForProduct:product identityId:identityId receipt:receipt];
   
-  NSURLRequest *request = [self.requestBuilder makeGetPromotionalOfferRequestWithBody:body];
+  NSURLRequest *request = [self.requestBuilder makePostPromotionalOfferRequestWithBody:body userId:userId offerId: discount.identifier];
   
   [self processDictRequest:request completion:completion];
 }

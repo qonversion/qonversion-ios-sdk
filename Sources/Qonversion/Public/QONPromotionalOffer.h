@@ -12,7 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 NS_SWIFT_NAME(Qonversion.PromotionalOffer)
-API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), visionos(1.0))
+API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0))
 @interface QONPromotionalOffer : NSObject
 
 @property (nonatomic, strong) SKProductDiscount *productDiscount;
