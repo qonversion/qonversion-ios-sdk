@@ -10,8 +10,18 @@ import UIKit
 import Qonversion
 import GoogleSignIn
 import FirebaseAuth
+import NoCodes
+//import SuperwallKit
 
 class ViewController: UIViewController {
+//  func paywall(_ paywall: SuperwallKit.PaywallViewController, didFinishWith result: SuperwallKit.PaywallResult, shouldDismiss: Bool) {
+//    
+//  }
+//  
+//  func paywall(_ paywall: SuperwallKit.PaywallViewController, loadingStateDidChange loadingState: SuperwallKit.PaywallLoadingState) {
+//    
+//  }
+  
   
   let firstPurchaseButtonProduct = "weekly"
   let secondPurchaseButtonProduct = "in_app"
@@ -26,6 +36,39 @@ class ViewController: UIViewController {
   
   var permissions: [String: Qonversion.Entitlement] = [:]
   var products: [String: Qonversion.Product] = [:]
+  
+  private func presentPaywall() async {
+    NoCodes.initialize(with: NoCodes.Configuration(apiKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2"))
+    do {
+      try await NoCodes.shared.showNoCode(with: "qUY7JXgF")
+    } catch {
+      
+    }
+//      do {
+//        // 1
+//          let paywallVc = try await Superwall.shared.getPaywall(
+//          forEvent: "campaign_trigger",
+//          delegate: self
+//        )
+//           self.present(paywallVc, animated: true)
+//      } catch let skippedReason as PaywallSkippedReason {
+//        // 2
+//        switch skippedReason {
+//         case .holdout,
+//         .noRuleMatch,
+//         .eventNotFound,
+//         .userIsSubscribed:
+//           break
+//         } 
+//      } catch {
+//        // 3
+//        print(error)
+//      }
+    }
+
+    private func launchFeature() {
+      // Insert code to launch a feature that's behind your paywall.
+    }
   
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -120,6 +163,10 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapMainProductSubscriptionButton(_ sender: Any) {
+//    Task {
+//      await presentPaywall()
+//    }
+//    return;
     if let product = self.products[firstPurchaseButtonProduct] {
       activityIndicator.startAnimating()
       Qonversion.shared().purchase(product.qonversionID) { [weak self] (result, error, flag) in
@@ -141,6 +188,15 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapInAppPurchaseButton(_ sender: Any) {
+    guard let scene = UIApplication.shared.windows.first?.windowScene else { return }
+    Task {
+      if #available(iOS 15.0, *) {
+        try await Transaction.beginRefundRequest(for: 2000000844698867, in: scene)
+      } else {
+        // Fallback on earlier versions
+      }
+    }
+    return;
     if let product = self.products[secondPurchaseButtonProduct] {
       activityIndicator.startAnimating()
       Qonversion.shared().purchaseProduct(product) { [weak self] (result, error, flag) in

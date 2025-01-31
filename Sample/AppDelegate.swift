@@ -9,6 +9,7 @@
 import UIKit
 import Qonversion
 import Firebase
+//import SuperwallKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -26,6 +27,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     Qonversion.shared().collectAdvertisingId()
     registerForNotifications()
     QonversionSwift.shared.syncStoreKit2Purchases()
+    
+//    Superwall.configure(apiKey: "pk_910bf94cb5112a96544eaf63db60792f8f535c0aa3672864")
     
     return true
   }

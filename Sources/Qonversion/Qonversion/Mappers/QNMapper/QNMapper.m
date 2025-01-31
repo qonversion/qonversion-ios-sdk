@@ -367,6 +367,9 @@
 + (QONOfferingTag)mapOfferingTag:(NSDictionary *)offeringData {
   QONOfferingTag tag;
   NSNumber *tagNumber = offeringData[@"tag"];
+  if ([tagNumber isKindOfClass:[NSNull class]]) {
+    return QONOfferingTagNone;
+  }
   if (tagNumber) {
     switch (tagNumber.integerValue) {
       case 0:
