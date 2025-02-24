@@ -49,6 +49,7 @@
     @"duration": @1,
     @"id": @"test_monthly",
     @"store_id": @"apple_monthly",
+    @"base_plan_id": [NSNull null],
     @"type": @1,
   };
   
@@ -56,6 +57,7 @@
     @"duration": @4,
     @"id": @"test_annual",
     @"store_id": @"apple_annual",
+    @"base_plan_id": [NSNull null],
     @"type": @0,
   };
   
@@ -63,10 +65,11 @@
     @"duration": [NSNull null],
     @"id": @"test_inapp",
     @"store_id": @"apple_inapp",
+    @"base_plan_id": [NSNull null],
     @"type": @2,
   };
   
-  self.expectedProducts = @[self.monthlyProduct, self.annualProduct, self.inappProduct];
+  self.expectedProducts = @[self.inappProduct, self.monthlyProduct, self.annualProduct];
   
   self.expectedOffering = @{
     @"id": @"main",
