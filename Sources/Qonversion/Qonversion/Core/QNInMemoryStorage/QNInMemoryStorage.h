@@ -4,6 +4,6 @@
 
 + (instancetype)sharedInstance;
 
-@property (nonatomic, strong) NSDictionary *storageDictionary;
+@property (atomic, copy) NSDictionary *storageDictionary;
 
 @end
