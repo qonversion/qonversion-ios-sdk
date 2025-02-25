@@ -17,17 +17,19 @@
   return sharedInstance;
 }
 
-- (NSDictionary *)storageDictionary {
-  if (_storageDictionary == nil) {
+- (instancetype)init
+{
+  self = [super init];
+  if (self) {
     _storageDictionary = [NSDictionary new];
   }
-  return _storageDictionary;
+  return self;
 }
 
 - (void)storeObject:(id)object forKey:(NSString *)key {
   NSMutableDictionary *tempDictionary = [self.storageDictionary mutableCopy];
   [tempDictionary setValue:object forKey:key];
-  self.storageDictionary = tempDictionary;
+  self.storageDictionary = [tempDictionary copy];
 }
 
 - (id)loadObjectForKey:(NSString *)key {
@@ -46,7 +48,7 @@
 - (void)removeObjectForKey:(NSString *)key {
   NSMutableDictionary *tempDictionary = [self.storageDictionary mutableCopy];
   [tempDictionary removeObjectForKey:key];
-  self.storageDictionary = tempDictionary;
+  self.storageDictionary = [tempDictionary copy];
 }
 
 @end

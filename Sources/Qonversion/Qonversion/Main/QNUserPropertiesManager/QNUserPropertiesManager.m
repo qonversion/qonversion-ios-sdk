@@ -142,14 +142,7 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
   [self runOnBackgroundQueue:^{
     NSDictionary *properties = [self.inMemoryStorage.storageDictionary copy];
     
-    if (!properties || ![properties respondsToSelector:@selector(valueForKey:)]) {
-      @synchronized (self) {
-        self.updatingCurrently = NO;
-      }
-      return;
-    }
-    
-    if (properties.count == 0) {
+    if (!properties || ![properties respondsToSelector:@selector(valueForKey:)] || properties.count == 0) {
       @synchronized (self) {
         self.updatingCurrently = NO;
       }
