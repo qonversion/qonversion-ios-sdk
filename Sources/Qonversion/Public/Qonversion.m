@@ -98,7 +98,7 @@ static bool _isInitialized = NO;
   
   [Qonversion sharedInstance].propertiesManager.productCenterManager = [Qonversion sharedInstance].productCenterManager;
 }
-
+QonversionTests/Network/QRequestBuilderTests.m
 - (void)syncHistoricalData {
   BOOL isHistoricalDataSynced = [self.localStorage loadBoolforKey:kHistoricalDataSynced];
   if (isHistoricalDataSynced) {

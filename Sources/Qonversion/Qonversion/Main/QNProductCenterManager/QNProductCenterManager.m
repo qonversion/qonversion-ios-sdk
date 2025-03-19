@@ -34,16 +34,6 @@ static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
 
-static NSString * const kRequestTriggerInit = @"Init";
-static NSString * const kRequestTriggerPurchase = @"Purchase";
-static NSString * const kRequestTriggerProducts = @"Products";
-static NSString * const kRequestTriggerRestore = @"Restore";
-static NSString * const kRequestTriggerIdentify = @"Identify";
-static NSString * const kRequestTriggerLogout = @"Logout";
-static NSString * const kRequestTriggerActualizePermissions = @"ActualizePermissions";
-static NSString * const kRequestTriggerSyncHistoricalData = @"SyncHistoricalData";
-static NSString * const kRequestTriggerHandleStoreKit2Transactions = @"HandleStoreKit2Transactions";
-
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
 
 @property (nonatomic, weak) id<QONEntitlementsUpdateListener> purchasesDelegate;
