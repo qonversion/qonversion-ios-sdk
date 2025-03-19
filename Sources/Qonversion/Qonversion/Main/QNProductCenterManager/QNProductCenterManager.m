@@ -924,7 +924,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     NSDictionary *allPurchaseOptions = [weakSelf actualPurchaseOptions];
     QONPurchaseOptions *purchaseOptions = allPurchaseOptions[product.productIdentifier];
 
-    QONRequestTrigger * requestTrigger = QONRequestTriggerPurchase;
+    QONRequestTrigger requestTrigger = QONRequestTriggerPurchase;
     if (transaction.transactionState == SKPaymentTransactionStateRestored) {
       requestTrigger = QONRequestTriggerSyncHistoricalData;
     }

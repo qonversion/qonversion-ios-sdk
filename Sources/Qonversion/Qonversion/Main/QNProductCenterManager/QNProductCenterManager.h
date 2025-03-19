@@ -40,7 +40,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(QONDefaultCompletionHandler)completion;
 - (void)restoreReceipt:(QNRestoreCompletionHandler)completion;
-- (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
+- (void)launch:(QONRequestTrigger)requestTrigger
+    completion:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
 - (void)getPromotionalOfferForProduct:(QONProduct *)product
                              discount:(SKProductDiscount *)discount 
                            completion:(QONPromotionalOfferCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0));
