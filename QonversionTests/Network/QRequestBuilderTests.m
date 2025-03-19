@@ -43,7 +43,7 @@
 }
 
 - (void)testThatPurchaseRequestBuilderSetCorrectURL {
-  NSURLRequest *request = [_requestBuilder makePurchaseRequestWith:@{}];
+  NSURLRequest *request = [_requestBuilder makePurchaseRequestWith:@{} requestTrigger:@"Purchase"];
   XCTAssertNotNil(request);
   
   XCTAssertNotNil(request.URL);

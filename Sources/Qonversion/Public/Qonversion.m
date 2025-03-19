@@ -94,7 +94,7 @@ static bool _isInitialized = NO;
   [[QNAPIClient shared] setDebug:[Qonversion sharedInstance].debugMode];
   
   [Qonversion sharedInstance].productCenterManager.launchMode = [Qonversion sharedInstance].launchMode;
-  [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
+  [[Qonversion sharedInstance].productCenterManager launchWithTrigger:QONRequestTriggerInit completion:completion];
   
   [Qonversion sharedInstance].propertiesManager.productCenterManager = [Qonversion sharedInstance].productCenterManager;
 }

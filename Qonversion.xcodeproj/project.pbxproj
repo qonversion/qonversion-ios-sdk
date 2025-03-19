@@ -46,6 +46,7 @@
 		6A21BF4E2AB20483005BDA7C /* QONRateLimiter.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF4D2AB20483005BDA7C /* QONRateLimiter.m */; };
 		6A21BF532AB2059F005BDA7C /* QONRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A21BF522AB2059F005BDA7C /* QONRequest.h */; };
 		6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF542AB205AC005BDA7C /* QONRequest.m */; };
+		6A4108552D8AAE4A002F902A /* QONRequestTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A4108522D8AAE4A002F902A /* QONRequestTrigger.h */; };
 		6A8A604329DAD363008EC7D8 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		6A8A604929DAD36E008EC7D8 /* QNAPIClientIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */; };
 		6A95DE9929E007A600350BD6 /* init_request_main_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 6A95DE9829E007A600350BD6 /* init_request_main_data.json */; };
@@ -369,6 +370,7 @@
 		6A21BF4D2AB20483005BDA7C /* QONRateLimiter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRateLimiter.m; sourceTree = "<group>"; };
 		6A21BF522AB2059F005BDA7C /* QONRequest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRequest.h; sourceTree = "<group>"; };
 		6A21BF542AB205AC005BDA7C /* QONRequest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRequest.m; sourceTree = "<group>"; };
+		6A4108522D8AAE4A002F902A /* QONRequestTrigger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRequestTrigger.h; sourceTree = "<group>"; };
 		6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIClientIntegrationTests.m; sourceTree = "<group>"; };
 		6A8A603F29DAD363008EC7D8 /* IntegrationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A95DE9829E007A600350BD6 /* init_request_main_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = init_request_main_data.json; sourceTree = "<group>"; };
@@ -842,6 +844,14 @@
 				6A21BF542AB205AC005BDA7C /* QONRequest.m */,
 			);
 			path = QNRateLimiter;
+			sourceTree = "<group>";
+		};
+		6A4108542D8AAE4A002F902A /* QONRequestTrigger */ = {
+			isa = PBXGroup;
+			children = (
+				6A4108522D8AAE4A002F902A /* QONRequestTrigger.h */,
+			);
+			path = QONRequestTrigger;
 			sourceTree = "<group>";
 		};
 		6A8A604029DAD363008EC7D8 /* IntegrationTests */ = {
@@ -1340,6 +1350,7 @@
 		8957322526DD03A3009507A6 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				6A4108542D8AAE4A002F902A /* QONRequestTrigger */,
 				7006360D2C1211F000BB9F9C /* NSError+Sugare */,
 				6A21BF4A2AB2018C005BDA7C /* QNRateLimiter */,
 				8957322626DD03A3009507A6 /* QNUtils */,
@@ -1755,6 +1766,7 @@
 				701BAC112C524626009B16FB /* QONPurchaseOptions.h in Headers */,
 				895732C526DD03A3009507A6 /* QNRequestBuilder.h in Headers */,
 				A1839332BA452C481BDC499C /* QONExceptionManager.h in Headers */,
+				6A4108552D8AAE4A002F902A /* QONRequestTrigger.h in Headers */,
 				7042E7872C1C5DDE00C5AECF /* QONFallbackMapper.h in Headers */,
 				A1839F56181BFBE72A0DD0DF /* QONUserProperty.h in Headers */,
 				A18397AF5F2CFB8C9E51769B /* QONUserProperties.h in Headers */,

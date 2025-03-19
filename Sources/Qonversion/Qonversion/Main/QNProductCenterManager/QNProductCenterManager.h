@@ -3,6 +3,7 @@
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONLaunchMode.h"
 #import "QONRemoteConfigManager.h"
+#import "QONRequestTrigger.h"
 
 @class QONLaunchResult, QONStoreKit2PurchaseModel, QONFallbackService, QONPromotionalOffer, QONPurchaseOptions, SKProductDiscount;
 @protocol QONPromoPurchasesDelegate, QONEntitlementsUpdateListener, QNUserInfoServiceInterface, QNIdentityManagerInterface, QNLocalStorage;
@@ -25,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)presentCodeRedemptionSheet;
 
-- (void)launchWithCompletion:(nullable QONLaunchCompletionHandler)completion;
+- (void)launchWithTrigger:(QONRequestTrigger)requestTrigger completion:(nullable QONLaunchCompletionHandler)completion;
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
 - (void)purchase:(QONProduct * _Nonnull)product options:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;
 - (void)purchase:(NSString * _Nonnull)productID purchaseOptions:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;

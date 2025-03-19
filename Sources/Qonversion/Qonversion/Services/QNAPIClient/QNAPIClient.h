@@ -1,5 +1,6 @@
 #import "Foundation/Foundation.h"
 #import "QONLaunchResult.h"
+#import "QONRequestTrigger.h"
 
 @protocol QNLocalStorage;
 @class SKProduct, SKProductDiscount, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel, QONPurchaseOptions;
@@ -24,14 +25,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setSDKVersion:(NSString *)version;
 - (void)setBaseURL:(NSString *)url;
-- (void)launchRequest:(QNAPIClientDictCompletionHandler)completion;
+- (void)launchRequest:(QONRequestTrigger)requestTrigger
+           completion:(QNAPIClientDictCompletionHandler)completion;
 
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
                       purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions
+                       requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion;
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *) body
+                       requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion;
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
@@ -71,6 +75,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                          receipt:(nullable NSString *)receipt
+                  requestTrigger:(QONRequestTrigger)requestTrigger
                       completion:(QNAPIClientDictCompletionHandler)completion;
 - (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientEmptyCompletionHandler)completion;
 

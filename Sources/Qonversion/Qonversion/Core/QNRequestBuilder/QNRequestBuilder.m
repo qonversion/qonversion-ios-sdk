@@ -25,8 +25,13 @@
   _baseURL = url;
 }
 
-- (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters {
-  return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kInitEndpoint type:QONRequestTypePost];
+- (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters
+                       requestTrigger:(QONRequestTrigger)requestTrigger {
+  NSURLRequest * request = [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kInitEndpoint type:QONRequestTypePost];
+  NSMutableURLRequest * mutableRequest = [request mutableCopy];
+  NSString *triggerValue = [self convertRequestTrigger:requestTrigger];
+  [mutableRequest addValue:triggerValue forHTTPHeaderField:@"Trigger"];
+  return [mutableRequest copy];
 }
 
 - (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey {
@@ -50,8 +55,13 @@
   return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kAttributionEndpoint type:QONRequestTypePost];
 }
 
-- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters {
-  return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kPurchaseEndpoint type:QONRequestTypePost];
+- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters
+                           requestTrigger:(QONRequestTrigger)requestTrigger {
+  NSURLRequest * request = [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kPurchaseEndpoint type:QONRequestTypePost];
+  NSMutableURLRequest * mutableRequest = [request mutableCopy];
+  NSString *triggerValue = [self convertRequestTrigger:requestTrigger];
+  [mutableRequest addValue:triggerValue forHTTPHeaderField:@"Trigger"];
+  return [mutableRequest copy];
 }
 
 - (NSURLRequest *)makePostPromotionalOfferRequestWithBody:(NSDictionary *)body userId:(NSString *)userId offerId:(NSString *)offerId {
@@ -226,6 +236,33 @@
   [request addValue:platformVersion forHTTPHeaderField:@"Platform-Version"];
   [request addValue:source forHTTPHeaderField:@"Source"];
   [request addValue:sourceVersion forHTTPHeaderField:@"Source-Version"];
+}
+
+- (NSString *)convertRequestTrigger:(QONRequestTrigger)trigger {
+  switch (trigger) {
+      case QONRequestTriggerInit:
+          return @"Init";
+      case QONRequestTriggerPurchase:
+          return @"Purchase";
+      case QONRequestTriggerProducts:
+          return @"Products";
+      case QONRequestTriggerRestore:
+          return @"Restore";
+      case QONRequestTriggerSyncHistoricalData:
+          return @"SyncHistoricalData";
+      case QONRequestTriggerActualizePermissions:
+          return @"ActualizePermissions";
+      case QONRequestTriggerIdentify:
+          return @"Identify";
+      case QONRequestTriggerLogout:
+          return @"Logout";
+      case QONRequestTriggerUserProperties:
+          return @"UserProperties";
+      case QONRequestTriggerHandleStoreKit2Transactions:
+          return @"HandleStoreKit2Transactions";
+      default:
+          return @"Unknown";
+  }
 }
 
 @end
