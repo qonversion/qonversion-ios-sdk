@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 #import "QNRequestBuilder.h"
 #import "QNAPIConstants.h"
+#import "QONRequestTrigger.h"
 
 @interface QNRequestBuilderTests : XCTestCase
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
@@ -35,7 +36,7 @@
 }
 
 - (void)testThatInitRequestBuilderSetCorrectURL {
-  NSURLRequest *request = [_requestBuilder makeInitRequestWith:@{}];
+  NSURLRequest *request = [_requestBuilder makeInitRequestWith:@{} requestTrigger:QONRequestTriggerInit];
   XCTAssertNotNil(request);
   
   XCTAssertNotNil(request.URL);
@@ -43,7 +44,7 @@
 }
 
 - (void)testThatPurchaseRequestBuilderSetCorrectURL {
-  NSURLRequest *request = [_requestBuilder makePurchaseRequestWith:@{}];
+  NSURLRequest *request = [_requestBuilder makePurchaseRequestWith:@{} requestTrigger:QONRequestTriggerPurchase];
   XCTAssertNotNil(request);
   
   XCTAssertNotNil(request.URL);
