@@ -27,8 +27,8 @@
 
 - (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters
                        requestTrigger:(QONRequestTrigger)requestTrigger {
-  NSURLRequest * request = [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kInitEndpoint type:QONRequestTypePost];
-  NSMutableURLRequest * mutableRequest = [request mutableCopy];
+  NSURLRequest *request = [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kInitEndpoint type:QONRequestTypePost];
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
   NSString *triggerValue = [self convertRequestTrigger:requestTrigger];
   [mutableRequest addValue:triggerValue forHTTPHeaderField:@"Trigger"];
   return [mutableRequest copy];
@@ -57,8 +57,8 @@
 
 - (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters
                            requestTrigger:(QONRequestTrigger)requestTrigger {
-  NSURLRequest * request = [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kPurchaseEndpoint type:QONRequestTypePost];
-  NSMutableURLRequest * mutableRequest = [request mutableCopy];
+  NSURLRequest *request = [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kPurchaseEndpoint type:QONRequestTypePost];
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
   NSString *triggerValue = [self convertRequestTrigger:requestTrigger];
   [mutableRequest addValue:triggerValue forHTTPHeaderField:@"Trigger"];
   return [mutableRequest copy];

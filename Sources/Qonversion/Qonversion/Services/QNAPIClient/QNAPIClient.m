@@ -551,7 +551,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
                  completion:(QNAPIClientCommonCompletionHandler)completion {
   __block NSInteger doneTryCount = tryCount;
 
-  NSMutableURLRequest * mutableRequest = [request mutableCopy];
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
   NSString *attempt = [NSString stringWithFormat:@"%ld", (long)tryCount + 1];
   [mutableRequest addValue:attempt forHTTPHeaderField:@"Attempt"];
   request = [mutableRequest copy];
