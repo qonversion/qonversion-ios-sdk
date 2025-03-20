@@ -11,6 +11,7 @@
 #import "QNLocalStorage.h"
 #import "QONFallbackService.h"
 #import "Helpers/XCTestCase+TestJSON.h"
+#import "QONRequestTrigger.h"
 
 @interface QNProductCenterManager (Private)
 
@@ -59,9 +60,9 @@
 - (void)testThatProductCenterGetLaunchModel {
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   
-  OCMStub([_mockClient launchRequest:([OCMArg invokeBlockWithArgs:[self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON], [NSNull null], nil])]);
+  OCMStub([_mockClient launchRequest:QONRequestTriggerInit completion:([OCMArg invokeBlockWithArgs:[self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON], [NSNull null], nil])]);
   
-  [_manager launch:^(QONLaunchResult * _Nullable result, NSError * _Nullable error) {
+  [_manager launch:QONRequestTriggerInit completion:^(QONLaunchResult * _Nullable result, NSError * _Nullable error) {
     XCTAssertNotNil(result);
     XCTAssertNil(error);
     XCTAssertEqual(result.entitlements.count, 2);

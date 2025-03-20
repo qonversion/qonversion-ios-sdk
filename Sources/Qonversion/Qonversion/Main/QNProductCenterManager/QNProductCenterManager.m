@@ -24,6 +24,7 @@
 #import "QONPromotionalOffer.h"
 #import "QONPurchaseOptions.h"
 #import <StoreKit/StoreKit.h>
+#import "QONRequestTrigger.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomations.h"
@@ -226,10 +227,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return self.launchingFinished && !self.identityInProgress && self.pendingIdentityUserID.length == 0 && !self.unhandledLogoutAvailable;
 }
 
-- (void)launchWithCompletion:(nullable QONLaunchCompletionHandler)completion {
+- (void)launchWithTrigger:(QONRequestTrigger)requestTrigger completion:(nullable QONLaunchCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
   
-  [self launch:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+  [self launch:requestTrigger completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
     [weakSelf storeLaunchResultIfNeeded:result];
     
     weakSelf.launchResult = result;
@@ -275,7 +276,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   if (self.launchError) {
     __block __weak QNProductCenterManager *weakSelf = self;
 
-    [weakSelf launch:^(QONLaunchResult * _Nullable result, NSError * _Nullable error) {
+    [weakSelf launch:QONRequestTriggerIdentify completion:^(QONLaunchResult * _Nullable result, NSError * _Nullable error) {
       if (error) {
         weakSelf.identityInProgress = NO;
         [weakSelf executeEntitlementsBlocksWithError:error];
@@ -315,7 +316,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [weakSelf.remoteConfigManager userHasBeenChanged];
 
       [weakSelf resetActualPermissionsCache];
-      [weakSelf launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      [weakSelf launchWithTrigger:QONRequestTriggerIdentify completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
         if (error) {
           [weakSelf fireIdentityError:error identityId:identityId];
         } else {
@@ -376,7 +377,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)handleLogout {
   self.unhandledLogoutAvailable = NO;
-  [self launchWithCompletion:nil];
+  [self launchWithTrigger:QONRequestTriggerLogout completion:nil];
 }
 
 - (void)purchase:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion {
@@ -393,7 +394,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     
     if (self.launchError) {
       __block __weak QNProductCenterManager *weakSelf = self;
-      [self launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      [self launchWithTrigger:QONRequestTriggerPurchase completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
         NSDictionary<NSString *, QONProduct *> *products = [weakSelf getActualProducts];
         if (error && products.count == 0) {
           run_block_on_main(completion, @{}, error, NO);
@@ -471,7 +472,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.storeKitService receipt:^(NSString * _Nonnull receipt) {
-    [weakSelf launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+    [weakSelf launchWithTrigger:QONRequestTriggerRestore completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
       @synchronized (weakSelf) {
         weakSelf.receiptRestoreInProgress = NO;
         NSArray<QONEntitlementsCompletionHandler> *completions = [self.receiptRestoreBlocks copy];
@@ -503,7 +504,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 - (void)actualizeEntitlements:(QONEntitlementsCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
 
-  [self launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+  [self launchWithTrigger:QONRequestTriggerActualizePermissions completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
       weakSelf.unhandledLogoutAvailable = NO;
       NSDictionary<NSString *, QONEntitlement *> *entitlements = result.entitlements;
       NSError *resultError = error;
@@ -728,7 +729,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       return;
     }
     
-    [self retryLaunchFlowWithCompletion:^{
+    [self retryLaunchFlowWithTrigger:QONRequestTriggerProducts completion:^{
       [self executeProductsBlocks];
     }];
   }
@@ -774,10 +775,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }];
 }
 
-- (void)retryLaunchFlowWithCompletion:(void(^)(void))completion {
+- (void)retryLaunchFlowWithTrigger:(QONRequestTrigger)requestTrigger completion:(void(^)(void))completion {
   if (self.launchError) {
     __block __weak QNProductCenterManager *weakSelf = self;
-    [self launchWithCompletion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+    [self launchWithTrigger:requestTrigger completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
       if (weakSelf.productsLoading) {
         return;
       } else {
@@ -826,10 +827,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return products[productID];
 }
 
-- (void)launch:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+- (void)launch:(QONRequestTrigger)requestTrigger
+    completion:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion {
   _launchingFinished = NO;
   __block __weak QNProductCenterManager *weakSelf = self;
-  [self.apiClient launchRequest:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+  [self.apiClient launchRequest:requestTrigger completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     @synchronized (weakSelf) {
       weakSelf.launchingFinished = YES;
       NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:self];
@@ -881,7 +883,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   __block QONDefaultCompletionHandler resultCompletion = [completion copy];
   [self.storeKitService receipt:^(NSString * receipt) {
     for (QONStoreKit2PurchaseModel *purchaseModel in purchasesInfo) {
-      __block NSURLRequest *request = [self.apiClient handlePurchase:purchaseModel receipt:receipt completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      __block NSURLRequest *request = [self.apiClient handlePurchase:purchaseModel
+                                                             receipt:receipt
+                                                      requestTrigger:QONRequestTriggerHandleStoreKit2Transactions
+                                                          completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
         BOOL success = error == nil;
         if (error && [QNUtils shouldPurchaseRequestBeRetried:error]) {
           [weakSelf.apiClient storeRequestForRetry:request transactionId:purchaseModel.transactionId];
@@ -918,7 +923,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.storeKitService receipt:^(NSString * receipt) {
     NSDictionary *allPurchaseOptions = [weakSelf actualPurchaseOptions];
     QONPurchaseOptions *purchaseOptions = allPurchaseOptions[product.productIdentifier];
-    __block NSURLRequest *request = [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt purchaseOptions:purchaseOptions completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+
+    QONRequestTrigger requestTrigger = QONRequestTriggerPurchase;
+    if (transaction.transactionState == SKPaymentTransactionStateRestored) {
+      requestTrigger = QONRequestTriggerSyncHistoricalData;
+    }
+
+    __block NSURLRequest *request = [weakSelf.apiClient purchaseRequestWith:product transaction:transaction receipt:receipt purchaseOptions:purchaseOptions requestTrigger:requestTrigger completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       QONPurchaseCompletionHandler _purchasingBlock = weakSelf.purchasingBlocks[product.productIdentifier];
       @synchronized (weakSelf) {
         [weakSelf.purchasingBlocks removeObjectForKey:product.productIdentifier];
@@ -967,7 +978,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         run_block_on_main(_purchasingBlock, launchResult.entitlements, error, NO);
       } else {
         if (transaction.transactionState == SKPaymentTransactionStateRestored) {
-          //
+          // One successful restored purchase result from API is enough to assume that the receipt is successfully handled by the backend
           if (!resultError) {
             [weakSelf handleRestoreResult:launchResult.entitlements error:nil];
           }
@@ -1011,7 +1022,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   NSArray *restoredTransactionsCopy = [self.restoredTransactions copy];
   self.restoredTransactions = nil;
   __block __weak QNProductCenterManager *weakSelf = self;
-  [self launch:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+  [self launch:QONRequestTriggerSyncHistoricalData completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
     if (error) {
       if ([weakSelf shouldCalculateEntitlementsForError:error]) {
         NSArray<SKProduct *> *storeProducts = [weakSelf.storeKitService getLoadedProducts];

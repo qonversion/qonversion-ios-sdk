@@ -2,6 +2,7 @@
 #import <OCMock/OCMock.h>
 #import "QNTestConstants.h"
 #import "QNAPIClient.h"
+#import "QNRequestSerializer.h"
 
 #import "Helpers/XCTestCase+TestJSON.h"
 
@@ -18,6 +19,7 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
 
 @property (nonatomic) id mockSession;
 @property (nonatomic) id request;
+@property (nonatomic) id mockRequestSerializer;
 
 @property (nonatomic) QNAPIClient *client;
 @end
@@ -25,11 +27,15 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
 @implementation APIClientTests
 
 - (void)setUp {
+  [super setUp];
+  
   _mockSession = OCMClassMock([NSURLSession class]);
+  _mockRequestSerializer = OCMClassMock([QNRequestSerializer class]);
   _request = OCMClassMock([NSURLRequest class]);
   
   _client = [[QNAPIClient alloc] init];
   
+  [_client setRequestSerializer:_mockRequestSerializer];
   [_client setSession:_mockSession];
   [_client setApiKey:kTestAPIKey];
   [_client setSDKVersion:@"10.11.12"];
@@ -41,6 +47,11 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   _request = nil;
   _mockSession = nil;
   _client = nil;
+  _mockRequestSerializer = nil;
+  
+  [_mockSession stopMocking];
+  [_request stopMocking];
+  [_mockRequestSerializer stopMocking];
 }
 
 - (void)testThatEnrichingAddWaitingFields {
@@ -54,13 +65,14 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
 }
 
 - (void)testThatClientSendsRequest {
-  [_client dataTaskWithRequest:_request completion:nil];
-  
+  OCMStub([self.mockRequestSerializer addTryCountToHeader:OCMOCK_ANY request:self.request]).andReturn(self.request);
+  [_client dataTaskWithRequest:self.request completion:nil];
   OCMVerify([self.mockSession dataTaskWithRequest:self.request
                                 completionHandler:OCMOCK_ANY]);
 }
 
 - (void)testThatClientCallsCompletionHandler {
+  OCMStub([self.mockRequestSerializer addTryCountToHeader:OCMOCK_ANY request:self.request]).andReturn(self.request);
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   OCMStub([_mockSession dataTaskWithRequest:self.request completionHandler:[OCMArg invokeBlock]]);
   
@@ -72,6 +84,7 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
 }
 
 - (void)testThatClientParseNullData {
+  OCMStub([self.mockRequestSerializer addTryCountToHeader:OCMOCK_ANY request:self.request]).andReturn(self.request);
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   
   NSError *networkError = [NSError errorWithDomain:NSURLErrorDomain code:404 userInfo:nil];
@@ -90,6 +103,7 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
 }
 
 - (void)testThatClientParseCorrectData {
+  OCMStub([self.mockRequestSerializer addTryCountToHeader:OCMOCK_ANY request:self.request]).andReturn(self.request);
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   
   OCMStub([_mockSession dataTaskWithRequest:self.request
@@ -105,6 +119,7 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
 }
 
 - (void)testThatClientDetectBrokenData {
+  OCMStub([self.mockRequestSerializer addTryCountToHeader:OCMOCK_ANY request:self.request]).andReturn(self.request);
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
   NSData *brokenJson = [self fileDataFromContentsOfFile:keyQNBrokenJSON];
   

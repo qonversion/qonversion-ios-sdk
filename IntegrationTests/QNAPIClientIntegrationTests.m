@@ -14,6 +14,7 @@
 #import "QNIntegrationTestConstants.h"
 #import "XCTestCase+IntegrationTestJSON.h"
 #import "XCTestCase+IntegrationTestsHelpers.h"
+#import "QONRequestTrigger.h"
 
 @interface QNAPIClientIntegrationTests : XCTestCase
 
@@ -115,7 +116,7 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
     XCTAssertNotNil(res);
     XCTAssertNil(error);
     XCTAssertTrue(res[@"success"]);
@@ -138,7 +139,7 @@
   QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
     [self assertAccessDeniedError:res error:error];
     [completionExpectation fulfill];
   }];
@@ -154,10 +155,10 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
-    [client purchaseRequestWith:self.purchaseData completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [client purchaseRequestWith:self.purchaseData requestTrigger:QONRequestTriggerPurchase completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
       XCTAssertNotNil(res);
       XCTAssertNil(error);
       XCTAssertTrue(res[@"success"]);
@@ -181,7 +182,7 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client purchaseRequestWith:self.purchaseData completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+  [client purchaseRequestWith:self.purchaseData requestTrigger:QONRequestTriggerPurchase completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
     XCTAssertNotNil(res);
     XCTAssertNil(error);
     XCTAssertTrue(res[@"success"]);
@@ -204,7 +205,7 @@
   QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
   
   // when
-  [client purchaseRequestWith:self.purchaseData completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+  [client purchaseRequestWith:self.purchaseData requestTrigger:QONRequestTriggerPurchase completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
     [self assertAccessDeniedError:res error:error];
     [completionExpectation fulfill];
   }];
@@ -232,7 +233,7 @@
   };
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client attributionRequest:QONAttributionProviderAdjust data:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -291,7 +292,7 @@
   ];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
       XCTAssertNil(createUserError);
 
       [client sendProperties:data completion:^(NSDictionary *_Nullable res, NSError *_Nullable error) {
@@ -351,7 +352,7 @@
   ];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
       XCTAssertNil(createUserError);
 
       [client sendProperties:data completion:^(NSDictionary *_Nullable sendPropertiesRes, NSError *_Nullable sendPropertiesError) {
@@ -440,7 +441,7 @@
   };
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client checkTrialIntroEligibilityParamsForData:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -496,7 +497,7 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client createIdentityForUserID:identityId anonUserID:uid completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -536,7 +537,7 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client automationWithID:self.noCodeScreenId completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -581,7 +582,7 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client trackScreenShownWithID:self.noCodeScreenId completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {

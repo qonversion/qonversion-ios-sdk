@@ -1,8 +1,9 @@
 #import "Foundation/Foundation.h"
 #import "QONLaunchResult.h"
+#import "QONRequestTrigger.h"
 
 @protocol QNLocalStorage;
-@class SKProduct, SKProductDiscount, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel, QONPurchaseOptions;
+@class SKProduct, SKProductDiscount, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel, QONPurchaseOptions, QNRequestSerializer;
 
 typedef void (^QNAPIClientEmptyCompletionHandler)(NSError * _Nullable error);
 typedef void (^QNAPIClientDictCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
@@ -21,17 +22,21 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *apiKey;
 @property (nonatomic, assign) BOOL debug;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
+@property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 
 - (void)setSDKVersion:(NSString *)version;
 - (void)setBaseURL:(NSString *)url;
-- (void)launchRequest:(QNAPIClientDictCompletionHandler)completion;
+- (void)launchRequest:(QONRequestTrigger)requestTrigger
+           completion:(QNAPIClientDictCompletionHandler)completion;
 
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
                       purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions
+                       requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion;
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *) body
+                       requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion;
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
@@ -71,6 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                          receipt:(nullable NSString *)receipt
+                  requestTrigger:(QONRequestTrigger)requestTrigger
                       completion:(QNAPIClientDictCompletionHandler)completion;
 - (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientEmptyCompletionHandler)completion;
 

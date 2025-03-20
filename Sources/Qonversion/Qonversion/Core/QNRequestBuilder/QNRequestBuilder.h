@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import "QONRequestTrigger.h"
 
 typedef NS_ENUM(NSInteger, QONRequestType) {
   QONRequestTypeGet = 0,
@@ -11,12 +12,13 @@ typedef NS_ENUM(NSInteger, QONRequestType) {
 - (void)setApiKey:(NSString *)apiKey;
 - (void)setBaseURL:(NSString *)url;
 - (void)setSDKVersion:(NSString *)version;
-- (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makeInitRequestWith:(NSDictionary *)parameters
+                       requestTrigger:(QONRequestTrigger)requestTrigger;
 - (NSURLRequest *)makeUserInfoRequestWithID:(NSString *)userID apiKey:(NSString *)apiKey;
 - (NSURLRequest *)makeSendPropertiesRequestForUserId:(NSString *)userId parameters:(NSArray *)parameters;
 - (NSURLRequest *)makeGetPropertiesRequestForUserId:(NSString *)userId;
 - (NSURLRequest *)makeAttributionRequestWith:(NSDictionary *)parameters;
-- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters;
+- (NSURLRequest *)makePurchaseRequestWith:(NSDictionary *)parameters requestTrigger:(QONRequestTrigger)requestTrigger;
 - (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter;
 - (NSURLRequest *)makeScreensRequestWith:(NSString *)parameters;
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters;
