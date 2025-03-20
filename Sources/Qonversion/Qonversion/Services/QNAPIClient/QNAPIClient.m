@@ -18,7 +18,6 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 @interface QNAPIClient()
 
-@property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, strong) QNErrorsMapper *errorsMapper;
 @property (nonatomic, strong) QONRateLimiter *rateLimiter;
@@ -551,10 +550,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
                  completion:(QNAPIClientCommonCompletionHandler)completion {
   __block NSInteger doneTryCount = tryCount;
 
-  NSMutableURLRequest *mutableRequest = [request mutableCopy];
-  NSString *attempt = [NSString stringWithFormat:@"%ld", (long)tryCount + 1];
-  [mutableRequest addValue:attempt forHTTPHeaderField:@"Attempt"];
-  request = [mutableRequest copy];
+  request = [self.requestSerializer addTryCountToHeader:@(tryCount) request:request];
   
   __block __weak QNAPIClient *weakSelf = self;
   [[self.session dataTaskWithRequest:request completionHandler:^(id _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {

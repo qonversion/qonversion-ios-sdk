@@ -180,6 +180,15 @@ NS_ASSUME_NONNULL_BEGIN
   return [result copy];
 }
 
+- (NSURLRequest *)addTryCountToHeader:(NSNumber *)tryCount request:(NSURLRequest *)request {
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
+  NSString *attempt = [NSString stringWithFormat:@"%ld", (long)tryCount.integerValue + 1];
+  [mutableRequest addValue:attempt forHTTPHeaderField:@"Attempt"];
+  request = [mutableRequest copy];
+  
+  return request;
+}
+
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider {
   NSMutableDictionary *deviceData = [self.mainData mutableCopy];
   // remove unused field for attribution request

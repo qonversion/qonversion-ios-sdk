@@ -3,7 +3,7 @@
 #import "QONRequestTrigger.h"
 
 @protocol QNLocalStorage;
-@class SKProduct, SKProductDiscount, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel, QONPurchaseOptions;
+@class SKProduct, SKProductDiscount, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel, QONPurchaseOptions, QNRequestSerializer;
 
 typedef void (^QNAPIClientEmptyCompletionHandler)(NSError * _Nullable error);
 typedef void (^QNAPIClientDictCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *apiKey;
 @property (nonatomic, assign) BOOL debug;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
+@property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 
 - (void)setSDKVersion:(NSString *)version;
 - (void)setBaseURL:(NSString *)url;
