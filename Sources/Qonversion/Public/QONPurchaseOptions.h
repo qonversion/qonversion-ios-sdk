@@ -27,6 +27,9 @@ NS_SWIFT_NAME(Qonversion.PurchaseOptions)
 // Promo offer details. Use to make a purchase with a promo offer.
 @property (nonatomic, strong, nullable) QONPromotionalOffer *promoOffer API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0));
 
+// Screen UID associated with a purchase. Use this field to track which screen initiated the purchase.
+@property (nonatomic, copy, nullable) NSString *screenUid;
+
 /**
  Initialize purchase options with quantity.
  @param quantity quantity of product purchasing. Use for consumable in-app products.
@@ -64,6 +67,31 @@ NS_SWIFT_NAME(Qonversion.PurchaseOptions)
  @return QONPurchaseOptions instance
  */
 - (instancetype)initWithPromoOffer:(QONPromotionalOffer * _Nullable)promoOffer API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0)) NS_SWIFT_UNAVAILABLE("Use swift style initializer instead.");
+
+/**
+ Initialize purchase options with screen UID.
+ @param screenUid screen UID associated with a purchase. Use this field to track which screen initiated the purchase.
+ @return QONPurchaseOptions instance
+ */
+- (instancetype)initWithScreenUid:(NSString * _Nullable)screenUid NS_SWIFT_UNAVAILABLE("Use swift style initializer instead.");
+
+/**
+ Initialize purchase options with context keys and screen UID.
+ @param contextKeys context keys associated with a purchase. Use this field to associate a purchase with a concrete remote config.
+ @param screenUid screen UID associated with a purchase. Use this field to track which screen initiated the purchase.
+ @return QONPurchaseOptions instance
+ */
+- (instancetype)initWithContextKeys:(NSArray<NSString *> * _Nullable)contextKeys screenUid:(NSString * _Nullable)screenUid NS_SWIFT_UNAVAILABLE("Use swift style initializer instead.");
+
+/**
+ Initialize purchase options with quantity, context keys, screen UID, and promo offer details.
+ @param quantity quantity of product purchasing. Use for consumable in-app products.
+ @param contextKeys context keys associated with a purchase. Use this field to associate a purchase with a concrete remote config.
+ @param screenUid screen UID associated with a purchase. Use this field to track which screen initiated the purchase.
+ @param promoOffer promo offer details.
+ @return QONPurchaseOptions instance
+ */
+- (instancetype)initWithQuantity:(NSInteger)quantity contextKeys:(NSArray<NSString *> * _Nullable)contextKeys screenUid:(NSString * _Nullable)screenUid promoOffer:(QONPromotionalOffer * _Nullable)promoOffer API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0)) NS_SWIFT_UNAVAILABLE("Use swift style initializer instead.");
 
 @end
 
