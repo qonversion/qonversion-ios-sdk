@@ -24,6 +24,7 @@
   if (self) {
     _quantity = quantity;
     _contextKeys = contextKeys;
+    _screenUid = nil;
   }
   
   return self;
@@ -36,6 +37,7 @@
     _quantity = quantity;
     _contextKeys = contextKeys;
     _promoOffer = promoOffer;
+    _screenUid = nil;
   }
   
   return self;
@@ -45,11 +47,49 @@
   return [self initWithQuantity:1 contextKeys:nil promoOffer:promoOffer];
 }
 
+- (instancetype)initWithScreenUid:(NSString * _Nullable)screenUid {
+  self = [super init];
+  
+  if (self) {
+    _quantity = 1;
+    _contextKeys = nil;
+    _screenUid = screenUid;
+  }
+  
+  return self;
+}
+
+- (instancetype)initWithContextKeys:(NSArray<NSString *> * _Nullable)contextKeys screenUid:(NSString * _Nullable)screenUid {
+  self = [super init];
+  
+  if (self) {
+    _quantity = 1;
+    _contextKeys = contextKeys;
+    _screenUid = screenUid;
+  }
+  
+  return self;
+}
+
+- (instancetype)initWithQuantity:(NSInteger)quantity contextKeys:(NSArray<NSString *> * _Nullable)contextKeys screenUid:(NSString * _Nullable)screenUid promoOffer:(QONPromotionalOffer * _Nullable)promoOffer {
+  self = [super init];
+  
+  if (self) {
+    _quantity = quantity;
+    _contextKeys = contextKeys;
+    _screenUid = screenUid;
+    _promoOffer = promoOffer;
+  }
+  
+  return self;
+}
+
 - (instancetype)initWithCoder:(NSCoder *)coder {
   self = [super init];
   if (self) {
     _quantity = [coder decodeIntForKey:NSStringFromSelector(@selector(quantity))];
     _contextKeys = [coder decodeObjectForKey:NSStringFromSelector(@selector(contextKeys))];
+    _screenUid = [coder decodeObjectForKey:NSStringFromSelector(@selector(screenUid))];
   }
   return self;
 }
@@ -57,6 +97,7 @@
 - (void)encodeWithCoder:(NSCoder *)coder {
   [coder encodeInteger:_quantity forKey:NSStringFromSelector(@selector(quantity))];
   [coder encodeObject:_contextKeys forKey:NSStringFromSelector(@selector(contextKeys))];
+  [coder encodeObject:_screenUid forKey:NSStringFromSelector(@selector(screenUid))];
 }
 
 @end
