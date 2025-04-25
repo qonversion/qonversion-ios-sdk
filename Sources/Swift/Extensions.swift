@@ -10,18 +10,20 @@ import Foundation
 
 extension Qonversion.PurchaseOptions {
   
-  public convenience init(quantity: Int = 1, contextKeys: [String]? = nil) {
+  public convenience init(quantity: Int = 1, contextKeys: [String]? = nil, screenUid: String? = nil) {
     self.init()
     self.quantity = quantity
     self.contextKeys = contextKeys
+    self.screenUid = screenUid
   }
   
   @available(iOS 12.2, macOS 10.14.4, watchOS 6.2, visionOS 1.0, tvOS 12.2, *)
-  public convenience init(quantity: Int = 1, contextKeys: [String]? = nil, promoOffer: Qonversion.PromotionalOffer? = nil) {
+  public convenience init(quantity: Int = 1, contextKeys: [String]? = nil, promoOffer: Qonversion.PromotionalOffer? = nil, screenUid: String? = nil) {
     self.init()
     self.quantity = quantity
     self.contextKeys = contextKeys
     self.promoOffer = promoOffer
+    self.screenUid = screenUid
   }
   
 }

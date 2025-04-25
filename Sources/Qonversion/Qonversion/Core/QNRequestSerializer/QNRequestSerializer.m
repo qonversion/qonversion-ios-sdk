@@ -92,6 +92,10 @@ NS_ASSUME_NONNULL_BEGIN
   if (purchaseOptions.contextKeys.count > 0) {
     purchaseDict[@"context_keys"] = purchaseOptions.contextKeys;
   }
+
+  if (purchaseOptions.screenUid) {
+    purchaseDict[@"screen_uid"] = purchaseOptions.screenUid;
+  }
   
   if (@available(iOS 13.0, macos 10.15, tvOS 13.0, *)) {
     NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
