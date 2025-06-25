@@ -90,12 +90,16 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 
 - (void)forceSendProperties:(QONUserPropertiesEmptyCompletionHandler)completion {
   if (self.inMemoryStorage.storageDictionary.count == 0) {
-    completion();
+    if (completion) {
+      completion();
+    }
     return;
   }
   
   @synchronized (self) {
-    [self.completionBlocks addObject:completion];
+    if (completion) {
+      [self.completionBlocks addObject:completion];
+    }
   }
   
   [self sendProperties:YES];
@@ -163,7 +167,9 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       }
 
       for (QONUserPropertiesEmptyCompletionHandler storedCompletion in completions) {
-        storedCompletion();
+        if (storedCompletion) {
+          storedCompletion();
+        }
       }
       
       if (error) {
