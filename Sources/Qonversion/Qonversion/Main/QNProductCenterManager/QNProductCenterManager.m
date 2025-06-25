@@ -937,12 +937,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       
       [weakSelf removePurchaseOptionsForStoreProductId:product.productIdentifier];
       
-      if (error && [QNUtils shouldPurchaseRequestBeRetried:error]) {
-        [weakSelf.apiClient storeRequestForRetry:request transactionId:transaction.transactionIdentifier];
-      } else {
-        [weakSelf.apiClient removeStoredRequestForTransactionId:transaction.transactionIdentifier];
+      if (transaction.transactionIdentifier != nil) {
+        if (error && [QNUtils shouldPurchaseRequestBeRetried:error]) {
+          [weakSelf.apiClient storeRequestForRetry:request transactionId:transaction.transactionIdentifier];
+        } else {
+          [weakSelf.apiClient removeStoredRequestForTransactionId:transaction.transactionIdentifier];
+        }
       }
-     
+
       if (error && _purchasingBlock) {
         [weakSelf handlePurchaseResult:@{} error:error cancelled:NO transaction:transaction product:product completion:_purchasingBlock];
         return;
