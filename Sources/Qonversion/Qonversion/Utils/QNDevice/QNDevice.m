@@ -10,6 +10,13 @@
 #import <net/if_dl.h>
 #endif
 
+#if TARGET_OS_WATCH
+#import <WatchKit/WatchKit.h>
+#endif
+
+#if TARGET_OS_VISION
+#import <RealityKit/RealityKit.h>
+#endif
 
 #import <sys/sysctl.h>
 #import <sys/types.h>
@@ -76,6 +83,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
   if (!_osVersion) {
   #if UI_DEVICE
     _osVersion = [[UIDevice currentDevice] systemVersion];
+  #elif TARGET_OS_WATCH
+    _osVersion = [self getWatchOSVersion];
+  #elif TARGET_OS_VISION
+    _osVersion = [self getVisionOSVersion];
   #else
     NSOperatingSystemVersion systemVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
     _osVersion = [NSString stringWithFormat:@"%ld.%ld.%ld",
@@ -86,6 +97,26 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
   }
   return _osVersion;
 }
+
+#if TARGET_OS_WATCH
+- (NSString*)getWatchOSVersion {
+  NSOperatingSystemVersion systemVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+  return [NSString stringWithFormat:@"%ld.%ld.%ld",
+          (long)systemVersion.majorVersion,
+          (long)systemVersion.minorVersion,
+          (long)systemVersion.patchVersion];
+}
+#endif
+
+#if TARGET_OS_VISION
+- (NSString*)getVisionOSVersion {
+  NSOperatingSystemVersion systemVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+  return [NSString stringWithFormat:@"%ld.%ld.%ld",
+          (long)systemVersion.majorVersion,
+          (long)systemVersion.minorVersion,
+          (long)systemVersion.patchVersion];
+}
+#endif
 
 - (NSString *)manufacturer {
   return @"Apple";
@@ -100,6 +131,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
 
 - (nullable NSString *)installDate {
   if (!_installDate) {
+#if TARGET_OS_WATCH
+    _installDate = [self getWatchInstallDate];
+#elif TARGET_OS_VISION
+    _installDate = [self getVisionInstallDate];
+#else
     NSURL *docsURL = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
     if (docsURL) {
       NSDictionary *docsAttributes = [NSFileManager.defaultManager attributesOfItemAtPath:docsURL.path error:nil];
@@ -108,13 +144,49 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
         _installDate = [NSString stringWithFormat:@"%ld", (long)round(date.timeIntervalSince1970)];
       }
     }
+#endif
   }
   
   return _installDate;
 }
 
+#if TARGET_OS_WATCH
+- (NSString*)getWatchInstallDate {
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  NSString *installDate = [defaults stringForKey:kKeyQInstallDate];
+  
+  if (!installDate) {
+    NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970];
+    installDate = [NSString stringWithFormat:@"%ld", (long)timestamp];
+    [defaults setObject:installDate forKey:kKeyQInstallDate];
+    [defaults synchronize];
+  }
+  
+  return installDate;
+}
+#endif
+
+#if TARGET_OS_VISION
+- (NSString*)getVisionInstallDate {
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  NSString *installDate = [defaults stringForKey:kKeyQInstallDate];
+  
+  if (!installDate) {
+    NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970];
+    installDate = [NSString stringWithFormat:@"%ld", (long)timestamp];
+    [defaults setObject:installDate forKey:kKeyQInstallDate];
+    [defaults synchronize];
+  }
+  
+  return installDate;
+}
+#endif
+
 - (NSString *)carrier {
   if (!_carrier) {
+#if TARGET_OS_WATCH
+    _carrier = @"Unknown";
+#else
     Class CTTelephonyNetworkInfo = NSClassFromString(@"CTTelephonyNetworkInfo");
     SEL subscriberCellularProvider = NSSelectorFromString(@"subscriberCellularProvider");
     SEL carrierName = NSSelectorFromString(@"carrierName");
@@ -134,6 +206,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
     if (!_carrier) {
       _carrier = @"Unknown";
     }
+#endif
   }
   return _carrier;
 }
@@ -160,17 +233,28 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
 
 - (NSString *)advertiserID {
   if (!_advertiserID && !self.idfaProhibited) {
+#if TARGET_OS_WATCH
+    self.idfaProhibited = YES;
+    _advertiserID = nil;
+#else
     SEL selector = NSSelectorFromString(@"obtainAdvertisingID");
     if ([[QNDevice current] respondsToSelector:selector]) {
       _advertiserID = ((NSString * (*)(id, SEL))[[QNDevice current] methodForSelector:selector])([QNDevice current], selector);
     } else {
       self.idfaProhibited = YES;
     }
+#endif
   }
   
   return _advertiserID;
 }
 
+#if TARGET_OS_WATCH || TARGET_OS_VISION
+- (nullable NSString *)afUserID { return nil; }
+- (nullable NSString *)af5UserID { return nil; }
+- (nullable NSString *)af6UserID { return nil; }
+- (void)adjustUserIDWithCompletion:(void(^)(NSString *userId))completion { if (completion) { completion(nil); } }
+#else
 - (nullable NSString *)afUserID {
   return [self af5UserID] ?: [self af6UserID];
 }
@@ -279,6 +363,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
     }
   }
 }
+#endif
 
 - (NSString *)vendorID {
   if (!_vendorID) {
@@ -297,6 +382,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
       identifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
   #elif TARGET_OS_OSX
       identifier = [self getMacAddress];
+  #elif TARGET_OS_WATCH
+      identifier = [self getWatchVendorID];
+  #elif TARGET_OS_VISION
+      identifier = [self getVisionVendorID];
   #else
     identifier = @"";
   #endif
@@ -309,6 +398,20 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
     return identifier;
   }
 }
+
+#if TARGET_OS_WATCH
++ (NSString*)getWatchVendorID {
+  NSUUID *uuid = [NSUUID UUID];
+  return [uuid UUIDString];
+}
+#endif
+
+#if TARGET_OS_VISION
++ (NSString*)getVisionVendorID {
+  NSUUID *uuid = [NSUUID UUID];
+  return [uuid UUIDString];
+}
+#endif
 
 + (NSString*)getPlatformString {
 #if TARGET_OS_MACCATALYST
@@ -328,6 +431,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
   return modelIdentifier;
 #else
 #if UI_DEVICE
+  const char *sysctl_name = "hw.machine";
+#elif TARGET_OS_WATCH
   const char *sysctl_name = "hw.machine";
 #else
   const char *sysctl_name = "hw.model";

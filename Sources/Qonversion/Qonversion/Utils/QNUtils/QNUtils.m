@@ -119,7 +119,7 @@
   return [[QNUtils authErrorsCodes] containsObject:@(error.code)];
 }
 
-+ (BOOL)shouldPurchaseRequestBeRetried:(NSError *)error {
++ (BOOL) shouldPurchaseRequestBeRetried:(NSError *)error {
   if (!error) {
     return NO;
   }

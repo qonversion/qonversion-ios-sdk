@@ -14,8 +14,9 @@
     [overallDict setValue:installDate forKey:@"install_date"];
   }
   
-  if ([QNUserInfo appStoreReceipt]) {
-    [overallDict setValue:[QNUserInfo appStoreReceipt] forKey:@"receipt"];
+  NSString *receipt = [QNUserInfo appStoreReceipt];
+  if (receipt) {
+    [overallDict setValue:receipt forKey:@"receipt"];
   }
   
   NSMutableDictionary *deviceDict = [NSMutableDictionary new];
@@ -72,39 +73,30 @@
   return overallDict;
 }
 
-+ (nullable NSString *)appStoreReceipt {
-  NSURL *tempReceiptURL = QNUserInfo.bundle.appStoreReceiptURL;
-  NSURL *receiptURL = tempReceiptURL ?: [NSBundle mainBundle].appStoreReceiptURL;
-  
++ (NSString *)appStoreReceipt {
+  NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
   if (!receiptURL) {
-    return @"";
+    return nil;
   }
   
-  NSString *receipt = [[NSData dataWithContentsOfURL:receiptURL] base64EncodedStringWithOptions:0];
+  NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
+  if (!receiptData) {
+    return nil;
+  }
   
-  return receipt ?: @"";
+  return [receiptData base64EncodedStringWithOptions:0];
 }
 
 + (BOOL)isDebug {
-  NSURL *receiptURL = QNUserInfo.bundle.appStoreReceiptURL;
-  
-  if (!receiptURL) {
+  #ifdef DEBUG
+    return YES;
+  #else
     return NO;
-  }
-  
-  return ([receiptURL.path rangeOfString:@"sandboxReceipt"].location != NSNotFound);
+  #endif
 }
 
-+ (nullable NSBundle *)bundle {
-  NSArray *allBundles = [[NSBundle allBundles] copy];
-  
-  for (NSBundle *bundle in allBundles) {
-    if (bundle.appStoreReceiptURL != nil) {
-      return bundle;
-    }
-  }
-  
-  return nil;
++ (NSBundle *)bundle {
+  return [NSBundle mainBundle];
 }
 
 @end
