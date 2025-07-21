@@ -1264,7 +1264,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   return resultEntitlements;
 }
 
-- (NSDictionary<NSString *, QONEntitlement *> *) createEntitlementsForProductsMap:(NSDictionary *)productsMap
+- (NSDictionary<NSString *, QONEntitlement *> *)createEntitlementsForProductsMap:(NSDictionary *)productsMap
                                                                      transaction:(SKPaymentTransaction *)transaction
                                                                   expirationDate:(NSDate *)expirationDate {
   NSMutableDictionary<NSString *, QONEntitlement *> *resultEntitlements = [NSMutableDictionary new];
