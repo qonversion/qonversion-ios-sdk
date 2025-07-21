@@ -73,30 +73,39 @@
   return overallDict;
 }
 
-+ (NSString *)appStoreReceipt {
-  NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
++ (nullable NSString *)appStoreReceipt {
+  NSURL *tempReceiptURL = QNUserInfo.bundle.appStoreReceiptURL;
+  NSURL *receiptURL = tempReceiptURL ?: [NSBundle mainBundle].appStoreReceiptURL;
+  
   if (!receiptURL) {
-    return nil;
+    return @"";
   }
   
-  NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
-  if (!receiptData) {
-    return nil;
-  }
+  NSString *receipt = [[NSData dataWithContentsOfURL:receiptURL] base64EncodedStringWithOptions:0];
   
-  return [receiptData base64EncodedStringWithOptions:0];
+  return receipt ?: @"";
 }
 
 + (BOOL)isDebug {
-  #ifdef DEBUG
-    return YES;
-  #else
+  NSURL *receiptURL = QNUserInfo.bundle.appStoreReceiptURL;
+  
+  if (!receiptURL) {
     return NO;
-  #endif
+  }
+  
+  return ([receiptURL.path rangeOfString:@"sandboxReceipt"].location != NSNotFound);
 }
 
-+ (NSBundle *)bundle {
-  return [NSBundle mainBundle];
++ (nullable NSBundle *)bundle {
+  NSArray *allBundles = [[NSBundle allBundles] copy];
+  
+  for (NSBundle *bundle in allBundles) {
+    if (bundle.appStoreReceiptURL != nil) {
+      return bundle;
+    }
+  }
+  
+  return nil;
 }
 
 @end
