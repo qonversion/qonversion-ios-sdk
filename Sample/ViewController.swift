@@ -14,7 +14,7 @@ import FirebaseAuth
 class ViewController: UIViewController {
   
   let firstPurchaseButtonProduct = "weekly"
-  let secondPurchaseButtonProduct = "consumable"
+  let secondPurchaseButtonProduct = "in_app"
   
   @IBOutlet weak var mainProductSubscriptionButton: UIButton!
   @IBOutlet weak var inAppPurchaseButton: UIButton!
@@ -151,7 +151,6 @@ class ViewController: UIViewController {
         if let error = error {
           return self.showAlert(with: "Error", message: error.localizedDescription)
         }
-//        2000000961493576
         if !result.isEmpty {
           self.inAppPurchaseButton.setTitle("Successfully purchased", for: .normal)
           self.inAppPurchaseButton.backgroundColor = .systemGreen
