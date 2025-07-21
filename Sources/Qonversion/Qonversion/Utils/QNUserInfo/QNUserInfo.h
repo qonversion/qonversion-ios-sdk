@@ -2,13 +2,11 @@
 
 @interface QNUserInfo : NSObject
 
-+ (NSDictionary *)overallData;
-+ (NSString *)appStoreReceipt;
-+ (NSBundle *)bundle;
++ (nullable NSBundle *)bundle;
++ (nonnull NSDictionary *)overallData;
+
 + (BOOL)isDebug;
 
-#if TARGET_OS_WATCH
-+ (NSString *)getWatchAppStoreReceipt;
-#endif
++ (nullable NSString *)appStoreReceipt;
 
 @end
