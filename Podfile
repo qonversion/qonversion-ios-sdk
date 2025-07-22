@@ -15,5 +15,5 @@ target 'Sample' do
 end
 
 target 'Watch Sample Watch App' do
-  #pod 'Qonversion', :path => './'
+  pod 'Qonversion', :path => './'
 end

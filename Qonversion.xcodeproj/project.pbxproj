@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -615,7 +615,11 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		70EE742B2E2E928000260875 /* Watch Sample Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Watch Sample Watch App"; sourceTree = "<group>"; };
+		70EE742B2E2E928000260875 /* Watch Sample Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Watch Sample Watch App";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1956,7 +1960,6 @@
 				};
 			};
 			buildConfigurationList = 459DAB63243E329F0011ECF3 /* Build configuration list for PBXProject "Qonversion" */;
-			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -1964,6 +1967,7 @@
 				Base,
 			);
 			mainGroup = 459DAB5F243E329F0011ECF3;
+			preferredProjectObjectVersion = 77;
 			productRefGroup = 459DAB6A243E329F0011ECF3 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
