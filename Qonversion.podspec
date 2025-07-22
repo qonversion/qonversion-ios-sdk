@@ -24,6 +24,12 @@ Pod::Spec.new do |s|
   s.visionos.frameworks       = ['RealityKit']
   s.requires_arc              = true
   s.resource_bundles          = {'Qonversion' => ['Sources/PrivacyInfo.xcprivacy']}
+  
+  s.pod_target_xcconfig = {
+    'SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=xrsimulator*]' => '$(inherited) VISION_OS',
+    'SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=xros*]' => '$(inherited) VISION_OS',
+    'DEFINES_MODULE' => 'YES',
+  }
     
   s.default_subspecs = 'Main'
   
