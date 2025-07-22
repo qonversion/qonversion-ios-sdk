@@ -14,8 +14,9 @@
     [overallDict setValue:installDate forKey:@"install_date"];
   }
   
-  if ([QNUserInfo appStoreReceipt]) {
-    [overallDict setValue:[QNUserInfo appStoreReceipt] forKey:@"receipt"];
+  NSString *receipt = [QNUserInfo appStoreReceipt];
+  if (receipt) {
+    [overallDict setValue:receipt forKey:@"receipt"];
   }
   
   NSMutableDictionary *deviceDict = [NSMutableDictionary new];

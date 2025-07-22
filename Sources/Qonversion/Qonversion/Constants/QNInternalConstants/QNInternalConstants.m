@@ -14,6 +14,7 @@ NSString *const keyQSource = @"com.qonversion.keys.source";
 NSString *const keyQSourceVersion = @"com.qonversion.keys.sourceVersion";
 
 NSString *const kHistoricalDataSynced = @"isHistoricalDataSynced";
+NSString *const kKeyQInstallDate = @"com.qonversion.keys.installDate";
 
 #if TARGET_OS_OSX
     NSString *const kQNPlatform = @"macOS";
@@ -27,6 +28,9 @@ NSString *const kHistoricalDataSynced = @"isHistoricalDataSynced";
 #elif TARGET_OS_WATCH
     NSString *const kQNPlatform = @"watchOS";
     NSString *const kQNOSName = @"watchOS";
+#elif TARGET_OS_VISION
+    NSString *const kQNPlatform = @"visionOS";
+    NSString *const kQNOSName = @"visionos";
 #else // iOS, simulator, etc.
     NSString *const kQNPlatform = @"iOS";
     NSString *const kQNOSName = @"ios";

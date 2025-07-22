@@ -236,22 +236,21 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 }
 
 - (void)collectIntegrationsDataInBackground {
+#if !(TARGET_OS_WATCH || TARGET_OS_VISION)
   [self.device adjustUserIDWithCompletion:^(NSString * _Nullable userId) {
     if (![QNUtils isEmptyString:userId]) {
       [self setUserProperty:@"_q_adjust_adid" value:userId];
     }
   }];
-  
-  NSString *fbAnonID = self.device.fbAnonID;
-  if (![QNUtils isEmptyString:fbAnonID]) {
-    [self setUserProperty:@"_q_fb_anon_id" value:fbAnonID];
-  }
-  
   NSString *afUserID = self.device.afUserID;
   if (![QNUtils isEmptyString:afUserID]) {
     [self setUserProperty:@"_q_appsflyer_user_id" value:afUserID];
   }
-  
+#endif
+  NSString *fbAnonID = self.device.fbAnonID;
+  if (![QNUtils isEmptyString:fbAnonID]) {
+    [self setUserProperty:@"_q_fb_anon_id" value:fbAnonID];
+  }
   [self sendPropertiesInBackground];
 }
 

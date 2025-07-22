@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -75,7 +75,7 @@ let sources: [String] = ["Qonversion/Automations/Constants",
 let package = Package(
     name: "Qonversion",
     platforms: [
-        .iOS(.v9), .watchOS("6.2"), .macOS(.v10_12), .tvOS(.v9)
+        .iOS(.v9), .watchOS("6.2"), .macOS(.v10_12), .tvOS(.v9), .visionOS(.v1)
     ],
     products: [
         .library(

@@ -91,7 +91,7 @@
 }
 
 - (void)presentCodeRedemptionSheet {
-#if TARGET_OS_IOS
+#if TARGET_OS_IOS || TARGET_OS_VISION
   if (@available(iOS 14.0, *)) {
     [[SKPaymentQueue defaultQueue] presentCodeRedemptionSheet];
   }
@@ -170,7 +170,7 @@
   }
 }
 
-#if (TARGET_OS_IOS && !TARGET_OS_MACCATALYST) || TARGET_OS_TV
+#if (TARGET_OS_IOS && !TARGET_OS_MACCATALYST) || TARGET_OS_TV || TARGET_OS_VISION
 - (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product {
   return [self.delegate paymentQueue:queue shouldAddStorePayment:payment forProduct:product];
 }

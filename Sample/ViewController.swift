@@ -151,7 +151,6 @@ class ViewController: UIViewController {
         if let error = error {
           return self.showAlert(with: "Error", message: error.localizedDescription)
         }
-        
         if !result.isEmpty {
           self.inAppPurchaseButton.setTitle("Successfully purchased", for: .normal)
           self.inAppPurchaseButton.backgroundColor = .systemGreen

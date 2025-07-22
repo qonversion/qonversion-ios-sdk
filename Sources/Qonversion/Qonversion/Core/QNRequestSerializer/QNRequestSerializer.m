@@ -220,10 +220,12 @@ NS_ASSUME_NONNULL_BEGIN
   }
   
   NSString *_uid = nil;
+#if !(TARGET_OS_WATCH || TARGET_OS_VISION)
   NSString *af_uid = QNDevice.current.afUserID;
   if (af_uid && provider == QONAttributionProviderAppsFlyer) {
     _uid = af_uid;
   }
+#endif
   
   [providerData setValue:data forKey:@"d"];
   
