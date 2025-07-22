@@ -106,7 +106,9 @@ def runTests(suite)
   )
 
   run_tests(
+    workspace: "./#{PROJECT_NAME}.xcworkspace",
     scheme: PROJECT_SCHEME,
-    only_testing: suite
+    only_testing: suite,
+    xcargs: "-allowProvisioningUpdates -allowProvisioningDeviceRegistration"
   )
 end
