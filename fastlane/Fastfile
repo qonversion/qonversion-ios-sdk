@@ -2,6 +2,7 @@
 PROJECT_NAME = "Qonversion"
 PROJECT_SCHEME = "Qonversion"
 XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
+XCODE_WORKSPACE = "./#{PROJECT_NAME}.xcworkspace"
 
 lane :tests do
   runTests("QonversionTests")
@@ -106,6 +107,7 @@ def runTests(suite)
   )
 
   run_tests(
+    workspace: XCODE_WORKSPACE,
     scheme: PROJECT_SCHEME,
     only_testing: suite,
     xcargs: "-allowProvisioningUpdates -allowProvisioningDeviceRegistration"

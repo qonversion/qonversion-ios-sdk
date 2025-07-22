@@ -15,5 +15,6 @@ target 'Sample' do
 end
 
 target 'Watch Sample Watch App' do
+  platform :watchos, '9.0'
   pod 'Qonversion', :path => './'
 end
