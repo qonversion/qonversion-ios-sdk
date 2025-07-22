@@ -14,10 +14,6 @@
 #import <WatchKit/WatchKit.h>
 #endif
 
-#if TARGET_OS_VISION
-#import <RealityKit/RealityKit.h>
-#endif
-
 #import <sys/sysctl.h>
 #import <sys/types.h>
 
