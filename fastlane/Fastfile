@@ -108,10 +108,6 @@ def runTests(suite)
   run_tests(
     scheme: PROJECT_SCHEME,
     only_testing: suite,
-    code_signing_identity: "",
-    export_options: {
-      method: "development",
-      signingStyle: "automatic"
-    }
+    xcargs: "-allowProvisioningUpdates -allowProvisioningDeviceRegistration"
   )
 end
