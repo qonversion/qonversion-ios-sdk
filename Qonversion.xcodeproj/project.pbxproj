@@ -2680,7 +2680,8 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = MTVL2X9L7N;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 5ZBNSPDUJ2;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 5ZBNSPDUJ2;
 				INFOPLIST_FILE = QonversionTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2712,6 +2713,8 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 5ZBNSPDUJ2;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 5ZBNSPDUJ2;
 				INFOPLIST_FILE = QonversionTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
