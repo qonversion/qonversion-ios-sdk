@@ -11,13 +11,13 @@
 
 #if TARGET_OS_OSX
 #define DID_ENTER_BACKGROUND_NOTIFICATION_NAME NSApplicationDidResignActiveNotification
-#elif TARGET_OS_IOS || TARGET_OS_TV
+#elif TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
 #define DID_ENTER_BACKGROUND_NOTIFICATION_NAME UIApplicationDidEnterBackgroundNotification
 #elif TARGET_OS_WATCH
 #define DID_ENTER_BACKGROUND_NOTIFICATION_NAME NSExtensionHostDidEnterBackgroundNotification
 #endif
 
-#if TARGET_OS_IOS || TARGET_OS_TV
+#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
 #define UI_DEVICE 1
 #else
 #define UI_DEVICE 0

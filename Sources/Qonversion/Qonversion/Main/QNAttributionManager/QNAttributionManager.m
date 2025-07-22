@@ -32,7 +32,7 @@
 }
 
 - (void)fetchAppleSearchAttributionData {
-#if TARGET_OS_IOS
+#if TARGET_OS_IOS || TARGET_OS_VISION
   NSString *token;
   NSTimeInterval requestTimestamp = [NSDate date].timeIntervalSince1970;
   
