@@ -14,6 +14,9 @@ jobs:
       cancel-in-progress: true
     
     steps:
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
       - uses: actions/checkout@v2
       - name: Set Outager url
         run: |
