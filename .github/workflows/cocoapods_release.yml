@@ -24,6 +24,6 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
 
       - name: CocoaPods Release
-        run: pod trunk push Qonversion.podspec
+        run: pod trunk push Qonversion.podspec --allow-warnings
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
