@@ -113,7 +113,7 @@
 		70ED951029FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 70ED950E29FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70ED951129FAAF31005F5D00 /* QONStoreKit2PurchaseModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 70ED950F29FAAF31005F5D00 /* QONStoreKit2PurchaseModel.m */; };
 		70ED967129FAC8D3005F5D00 /* QonversionSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70ED967029FAC8D3005F5D00 /* QonversionSwift.swift */; };
-		70EE74342E2E928100260875 /* Watch Sample Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 70EE742A2E2E928000260875 /* Watch Sample Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		70EE74342E2E928100260875 /* Watch Sample Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 70EE742A2E2E928000260875 /* Watch Sample Watch App.app */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		70F07B1B28AD085600A45D41 /* QONEntitlementsCacheLifetime.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F07B1A28AD085600A45D41 /* QONEntitlementsCacheLifetime.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		71D1AE03BA37F1D7CA063728 /* Pods_QonversionTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */; };
 		891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */; };
@@ -2351,6 +2351,7 @@
 		};
 		70EE74332E2E928100260875 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			platformFilter = ios;
 			target = 70EE74292E2E928000260875 /* Watch Sample Watch App */;
 			targetProxy = 70EE74322E2E928100260875 /* PBXContainerItemProxy */;
 		};
