@@ -1,6 +1,6 @@
 
 PROJECT_NAME = "Qonversion"
-PROJECT_SCHEME = "Qonversion"
+PROJECT_SCHEME = "Sample"
 XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
 
 lane :tests do
