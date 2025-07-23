@@ -2574,6 +2574,15 @@
 		459DAB7E243E329F0011ECF3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ARCHS[sdk=appletvos*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=appletvsimulator*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=iphoneos*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=iphonesimulator*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=macosx*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=watchos*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=watchsimulator*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=xros*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=xrsimulator*]" = "$(ARCHS_STANDARD)";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -2602,25 +2611,29 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator macosx watchos watchsimulator xros xrsimulator";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=xros*]" = "$(inherited) VISION_OS";
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=xrsimulator*]" = "$(inherited) VISION_OS";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4,7";
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				WATCHOS_DEPLOYMENT_TARGET = 6.2;
-				"ARCHS[sdk=iphoneos*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=iphonesimulator*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=watchos*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=watchsimulator*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=macosx*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=appletvos*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=appletvsimulator*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=xros*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=xrsimulator*]" = "$(ARCHS_STANDARD)";
+				XROS_DEPLOYMENT_TARGET = 1.0;
 			};
 			name = Debug;
 		};
 		459DAB7F243E329F0011ECF3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ARCHS[sdk=appletvos*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=appletvsimulator*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=iphoneos*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=iphonesimulator*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=macosx*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=watchos*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=watchsimulator*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=xros*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=xrsimulator*]" = "$(ARCHS_STANDARD)";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
@@ -2647,19 +2660,13 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator macosx watchos watchsimulator xros xrsimulator";
 				SUPPORTS_MACCATALYST = YES;
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=xros*]" = "$(inherited) VISION_OS";
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=xrsimulator*]" = "$(inherited) VISION_OS";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4,7";
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				WATCHOS_DEPLOYMENT_TARGET = 6.2;
-				"ARCHS[sdk=iphoneos*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=iphonesimulator*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=watchos*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=watchsimulator*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=macosx*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=appletvos*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=appletvsimulator*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=xros*]" = "$(ARCHS_STANDARD)";
-				"ARCHS[sdk=xrsimulator*]" = "$(ARCHS_STANDARD)";
+				XROS_DEPLOYMENT_TARGET = 1.0;
 			};
 			name = Release;
 		};
@@ -2673,7 +2680,8 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = MTVL2X9L7N;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 5ZBNSPDUJ2;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 5ZBNSPDUJ2;
 				INFOPLIST_FILE = QonversionTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2705,6 +2713,8 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 5ZBNSPDUJ2;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 5ZBNSPDUJ2;
 				INFOPLIST_FILE = QonversionTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
