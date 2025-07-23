@@ -100,6 +100,10 @@ def update_file(path, regex, result_value)
 end
 
 def runTests(suite)
+  # Увеличиваем таймауты для xcodebuild
+  ENV['FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT'] = '10'
+  ENV['FASTLANE_XCODEBUILD_SETTINGS_RETRIES'] = '6'
+  
   cocoapods(
     repo_update: false,
     podfile: "./Podfile"
