@@ -74,6 +74,52 @@
 		7042E7872C1C5DDE00C5AECF /* QONFallbackMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 7042E7842C1C5DDE00C5AECF /* QONFallbackMapper.h */; };
 		7042E7882C1C5DDE00C5AECF /* QONFallbackMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7042E7852C1C5DDE00C5AECF /* QONFallbackMapper.m */; };
 		70454FFF2C5FD4FA00B03017 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70454FFE2C5FD4FA00B03017 /* Extensions.swift */; };
+		705D4D482E3C5AEB00F327C7 /* NoCodesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D382E3C5AEB00F327C7 /* NoCodesService.swift */; };
+		705D4D492E3C5AEB00F327C7 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D3E2E3C5AEB00F327C7 /* Configuration.swift */; };
+		705D4D4A2E3C5AEB00F327C7 /* HeadersBuilderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D212E3C5AEB00F327C7 /* HeadersBuilderInterface.swift */; };
+		705D4D4B2E3C5AEB00F327C7 /* DeviceInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D0D2E3C5AEB00F327C7 /* DeviceInfoCollector.swift */; };
+		705D4D4C2E3C5AEB00F327C7 /* HeadersBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D202E3C5AEB00F327C7 /* HeadersBuilder.swift */; };
+		705D4D4D2E3C5AEB00F327C7 /* RequestType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D2D2E3C5AEB00F327C7 /* RequestType.swift */; };
+		705D4D4E2E3C5AEB00F327C7 /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D082E3C5AEB00F327C7 /* MiscAssembly.swift */; };
+		705D4D4F2E3C5AEB00F327C7 /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D112E3C5AEB00F327C7 /* Device.swift */; };
+		705D4D502E3C5AEB00F327C7 /* NoCodesMapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D182E3C5AEB00F327C7 /* NoCodesMapperInterface.swift */; };
+		705D4D512E3C5AEB00F327C7 /* NoCodesErrorType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D132E3C5AEB00F327C7 /* NoCodesErrorType.swift */; };
+		705D4D522E3C5AEB00F327C7 /* NoCodesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D452E3C5AEB00F327C7 /* NoCodesViewController.swift */; };
+		705D4D532E3C5AEB00F327C7 /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D2C2E3C5AEB00F327C7 /* Request.swift */; };
+		705D4D542E3C5AEB00F327C7 /* NoCodesNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D442E3C5AEB00F327C7 /* NoCodesNavigationController.swift */; };
+		705D4D552E3C5AEB00F327C7 /* RateLimiterInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D2A2E3C5AEB00F327C7 /* RateLimiterInterface.swift */; };
+		705D4D562E3C5AEB00F327C7 /* Screen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D152E3C5AEB00F327C7 /* Screen.swift */; };
+		705D4D572E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D0A2E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift */; };
+		705D4D582E3C5AEB00F327C7 /* NoCodes.docc in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D412E3C5AEB00F327C7 /* NoCodes.docc */; };
+		705D4D592E3C5AEB00F327C7 /* NetworkProviderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D272E3C5AEB00F327C7 /* NetworkProviderInterface.swift */; };
+		705D4D5A2E3C5AEB00F327C7 /* NoCodesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D092E3C5AEB00F327C7 /* NoCodesAssembly.swift */; };
+		705D4D5B2E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D242E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift */; };
+		705D4D5C2E3C5AEB00F327C7 /* Header.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D1F2E3C5AEB00F327C7 /* Header.swift */; };
+		705D4D5D2E3C5AEB00F327C7 /* NetworkProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D262E3C5AEB00F327C7 /* NetworkProvider.swift */; };
+		705D4D5E2E3C5AEB00F327C7 /* RequestProcessorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D302E3C5AEB00F327C7 /* RequestProcessorInterface.swift */; };
+		705D4D5F2E3C5AEB00F327C7 /* ResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D322E3C5AEB00F327C7 /* ResponseDecoder.swift */; };
+		705D4D602E3C5AEB00F327C7 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D3C2E3C5AEB00F327C7 /* Utils.swift */; };
+		705D4D612E3C5AEB00F327C7 /* FallbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D362E3C5AEB00F327C7 /* FallbackService.swift */; };
+		705D4D622E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D0E2E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift */; };
+		705D4D632E3C5AEB00F327C7 /* RateLimiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D292E3C5AEB00F327C7 /* RateLimiter.swift */; };
+		705D4D642E3C5AEB00F327C7 /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D462E3C5AEB00F327C7 /* SkeletonView.swift */; };
+		705D4D652E3C5AEB00F327C7 /* ErrorConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D1D2E3C5AEB00F327C7 /* ErrorConstants.swift */; };
+		705D4D662E3C5AEB00F327C7 /* ResponseDecoderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D332E3C5AEB00F327C7 /* ResponseDecoderInterface.swift */; };
+		705D4D672E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D432E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift */; };
+		705D4D682E3C5AEB00F327C7 /* EmptyApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D1B2E3C5AEB00F327C7 /* EmptyApiResponse.swift */; };
+		705D4D692E3C5AEB00F327C7 /* ApiError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D1A2E3C5AEB00F327C7 /* ApiError.swift */; };
+		705D4D6A2E3C5AEB00F327C7 /* RequestProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D2F2E3C5AEB00F327C7 /* RequestProcessor.swift */; };
+		705D4D6B2E3C5AEB00F327C7 /* NoCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D422E3C5AEB00F327C7 /* NoCodes.swift */; };
+		705D4D6C2E3C5AEB00F327C7 /* Delegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D3F2E3C5AEB00F327C7 /* Delegate.swift */; };
+		705D4D6D2E3C5AEB00F327C7 /* Action.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D102E3C5AEB00F327C7 /* Action.swift */; };
+		705D4D6E2E3C5AEB00F327C7 /* PresentationConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D142E3C5AEB00F327C7 /* PresentationConfiguration.swift */; };
+		705D4D6F2E3C5AEB00F327C7 /* NetworkErrorHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D232E3C5AEB00F327C7 /* NetworkErrorHandler.swift */; };
+		705D4D702E3C5AEB00F327C7 /* FallbackServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D372E3C5AEB00F327C7 /* FallbackServiceInterface.swift */; };
+		705D4D712E3C5AEB00F327C7 /* LoggerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D3B2E3C5AEB00F327C7 /* LoggerWrapper.swift */; };
+		705D4D722E3C5AEB00F327C7 /* NoCodesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D172E3C5AEB00F327C7 /* NoCodesMapper.swift */; };
+		705D4D732E3C5AEB00F327C7 /* NoCodesServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D392E3C5AEB00F327C7 /* NoCodesServiceInterface.swift */; };
+		705D4D742E3C5AEB00F327C7 /* ServicesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D0B2E3C5AEB00F327C7 /* ServicesAssembly.swift */; };
+		705D4D752E3C5AEB00F327C7 /* NoCodesError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D122E3C5AEB00F327C7 /* NoCodesError.swift */; };
 		707734F42A9F607700CFF742 /* QONRemoteConfigurationSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		707734F52A9F607700CFF742 /* QONRemoteConfigurationSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */; };
 		707734F72A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */; };
@@ -105,8 +151,6 @@
 		70D0E2B9291A9BE3004E8DE8 /* QONConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 70D0E2B7291A9BE3004E8DE8 /* QONConfiguration.m */; };
 		70D0E2BB291AA21C004E8DE8 /* QONLaunchMode.h in Headers */ = {isa = PBXBuildFile; fileRef = 70D0E2BA291AA21C004E8DE8 /* QONLaunchMode.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70D8BAFC2BB70CE800859723 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 70D8BAFB2BB70CE800859723 /* PrivacyInfo.xcprivacy */; };
-		70D8BAFD2BB70CFF00859723 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
-		70D8BAFE2BB70CFF00859723 /* Qonversion.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		70D9CBDF2B03BF07003F1878 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70D9CBDE2B03BF07003F1878 /* StoreKit.framework */; };
 		70E99384291BC60A006E0A64 /* QONEnvironment.h in Headers */ = {isa = PBXBuildFile; fileRef = 70E99383291BC60A006E0A64 /* QONEnvironment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70EC019D29EEE94300E686E2 /* StoreKit2Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EC019C29EEE94300E686E2 /* StoreKit2Service.swift */; };
@@ -290,13 +334,6 @@
 			remoteGlobalIDString = 454EF63B24E5CC580070581E;
 			remoteInfo = Sample;
 		};
-		70D8BAFF2BB70CFF00859723 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 459DAB60243E329F0011ECF3 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 459DAB68243E329F0011ECF3;
-			remoteInfo = Qonversion;
-		};
 		70EE74322E2E928100260875 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 459DAB60243E329F0011ECF3 /* Project object */;
@@ -307,17 +344,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		70D8BB012BB70CFF00859723 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				70D8BAFE2BB70CFF00859723 /* Qonversion.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		70EE74352E2E928100260875 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -339,7 +365,7 @@
 		4502E457257FDF90006FC750 /* OCMock.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OCMock.framework; path = "../../../../Volumes/OCMock 3.7.1/iOS framework/OCMock.framework"; sourceTree = "<group>"; };
 		45239D6E2517CEB00085D0A8 /* QonversionFramework.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionFramework.h; sourceTree = "<group>"; };
 		4531CBC5245789D40022C422 /* QDeviceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QDeviceTests.m; sourceTree = "<group>"; };
-		4531CBC724578D300022C422 /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		4531CBC724578D300022C422 /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; };
 		4531CBC92457F6E00022C422 /* QNUserInfoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserInfoTests.m; sourceTree = "<group>"; };
 		454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QInMemoryStorageTests.m; sourceTree = "<group>"; };
 		454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QonversionPropertiesTests.m; sourceTree = "<group>"; };
@@ -423,6 +449,52 @@
 		7042E7852C1C5DDE00C5AECF /* QONFallbackMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONFallbackMapper.m; sourceTree = "<group>"; };
 		70454FFE2C5FD4FA00B03017 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		7052136F29F1807A00164AAF /* PurchasesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
+		705D4D082E3C5AEB00F327C7 /* MiscAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiscAssembly.swift; sourceTree = "<group>"; };
+		705D4D092E3C5AEB00F327C7 /* NoCodesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesAssembly.swift; sourceTree = "<group>"; };
+		705D4D0A2E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesViewsAssembly.swift; sourceTree = "<group>"; };
+		705D4D0B2E3C5AEB00F327C7 /* ServicesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicesAssembly.swift; sourceTree = "<group>"; };
+		705D4D0D2E3C5AEB00F327C7 /* DeviceInfoCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollector.swift; sourceTree = "<group>"; };
+		705D4D0E2E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollectorInterface.swift; sourceTree = "<group>"; };
+		705D4D102E3C5AEB00F327C7 /* Action.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Action.swift; sourceTree = "<group>"; };
+		705D4D112E3C5AEB00F327C7 /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
+		705D4D122E3C5AEB00F327C7 /* NoCodesError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesError.swift; sourceTree = "<group>"; };
+		705D4D132E3C5AEB00F327C7 /* NoCodesErrorType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesErrorType.swift; sourceTree = "<group>"; };
+		705D4D142E3C5AEB00F327C7 /* PresentationConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationConfiguration.swift; sourceTree = "<group>"; };
+		705D4D152E3C5AEB00F327C7 /* Screen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screen.swift; sourceTree = "<group>"; };
+		705D4D172E3C5AEB00F327C7 /* NoCodesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesMapper.swift; sourceTree = "<group>"; };
+		705D4D182E3C5AEB00F327C7 /* NoCodesMapperInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesMapperInterface.swift; sourceTree = "<group>"; };
+		705D4D1A2E3C5AEB00F327C7 /* ApiError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiError.swift; sourceTree = "<group>"; };
+		705D4D1B2E3C5AEB00F327C7 /* EmptyApiResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyApiResponse.swift; sourceTree = "<group>"; };
+		705D4D1D2E3C5AEB00F327C7 /* ErrorConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorConstants.swift; sourceTree = "<group>"; };
+		705D4D1F2E3C5AEB00F327C7 /* Header.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Header.swift; sourceTree = "<group>"; };
+		705D4D202E3C5AEB00F327C7 /* HeadersBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadersBuilder.swift; sourceTree = "<group>"; };
+		705D4D212E3C5AEB00F327C7 /* HeadersBuilderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadersBuilderInterface.swift; sourceTree = "<group>"; };
+		705D4D232E3C5AEB00F327C7 /* NetworkErrorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkErrorHandler.swift; sourceTree = "<group>"; };
+		705D4D242E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkErrorHandlerInterface.swift; sourceTree = "<group>"; };
+		705D4D262E3C5AEB00F327C7 /* NetworkProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkProvider.swift; sourceTree = "<group>"; };
+		705D4D272E3C5AEB00F327C7 /* NetworkProviderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkProviderInterface.swift; sourceTree = "<group>"; };
+		705D4D292E3C5AEB00F327C7 /* RateLimiter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimiter.swift; sourceTree = "<group>"; };
+		705D4D2A2E3C5AEB00F327C7 /* RateLimiterInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimiterInterface.swift; sourceTree = "<group>"; };
+		705D4D2C2E3C5AEB00F327C7 /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
+		705D4D2D2E3C5AEB00F327C7 /* RequestType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestType.swift; sourceTree = "<group>"; };
+		705D4D2F2E3C5AEB00F327C7 /* RequestProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestProcessor.swift; sourceTree = "<group>"; };
+		705D4D302E3C5AEB00F327C7 /* RequestProcessorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestProcessorInterface.swift; sourceTree = "<group>"; };
+		705D4D322E3C5AEB00F327C7 /* ResponseDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseDecoder.swift; sourceTree = "<group>"; };
+		705D4D332E3C5AEB00F327C7 /* ResponseDecoderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseDecoderInterface.swift; sourceTree = "<group>"; };
+		705D4D362E3C5AEB00F327C7 /* FallbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackService.swift; sourceTree = "<group>"; };
+		705D4D372E3C5AEB00F327C7 /* FallbackServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackServiceInterface.swift; sourceTree = "<group>"; };
+		705D4D382E3C5AEB00F327C7 /* NoCodesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesService.swift; sourceTree = "<group>"; };
+		705D4D392E3C5AEB00F327C7 /* NoCodesServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesServiceInterface.swift; sourceTree = "<group>"; };
+		705D4D3B2E3C5AEB00F327C7 /* LoggerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerWrapper.swift; sourceTree = "<group>"; };
+		705D4D3C2E3C5AEB00F327C7 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		705D4D3E2E3C5AEB00F327C7 /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
+		705D4D3F2E3C5AEB00F327C7 /* Delegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Delegate.swift; sourceTree = "<group>"; };
+		705D4D412E3C5AEB00F327C7 /* NoCodes.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = NoCodes.docc; sourceTree = "<group>"; };
+		705D4D422E3C5AEB00F327C7 /* NoCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodes.swift; sourceTree = "<group>"; };
+		705D4D432E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesFlowCoordinator.swift; sourceTree = "<group>"; };
+		705D4D442E3C5AEB00F327C7 /* NoCodesNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesNavigationController.swift; sourceTree = "<group>"; };
+		705D4D452E3C5AEB00F327C7 /* NoCodesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesViewController.swift; sourceTree = "<group>"; };
+		705D4D462E3C5AEB00F327C7 /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
 		707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigurationSource.h; sourceTree = "<group>"; };
 		707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigurationSource.m; sourceTree = "<group>"; };
 		707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigurationSource+Protected.h"; sourceTree = "<group>"; };
@@ -629,7 +701,6 @@
 			files = (
 				45754AE725814C7500FCA376 /* iAd.framework in Frameworks */,
 				891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */,
-				70D8BAFD2BB70CFF00859723 /* Qonversion.framework in Frameworks */,
 				70D9CBDF2B03BF07003F1878 /* StoreKit.framework in Frameworks */,
 				A2649CD29A7FDF280A2EC27C /* Pods_Sample.framework in Frameworks */,
 			);
@@ -755,6 +826,7 @@
 			isa = PBXGroup;
 			children = (
 				70D8BAFB2BB70CE800859723 /* PrivacyInfo.xcprivacy */,
+				705D4D472E3C5AEB00F327C7 /* NoCodes */,
 				70283DF529F66FAC00D138BC /* Swift */,
 				895731B426DD03A2009507A6 /* Qonversion */,
 			);
@@ -992,6 +1064,187 @@
 				7052136F29F1807A00164AAF /* PurchasesMapper.swift */,
 			);
 			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		705D4D0C2E3C5AEB00F327C7 /* Assemblies */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D082E3C5AEB00F327C7 /* MiscAssembly.swift */,
+				705D4D092E3C5AEB00F327C7 /* NoCodesAssembly.swift */,
+				705D4D0A2E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift */,
+				705D4D0B2E3C5AEB00F327C7 /* ServicesAssembly.swift */,
+			);
+			path = Assemblies;
+			sourceTree = "<group>";
+		};
+		705D4D0F2E3C5AEB00F327C7 /* Device */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D0D2E3C5AEB00F327C7 /* DeviceInfoCollector.swift */,
+				705D4D0E2E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift */,
+			);
+			path = Device;
+			sourceTree = "<group>";
+		};
+		705D4D162E3C5AEB00F327C7 /* Entities */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D102E3C5AEB00F327C7 /* Action.swift */,
+				705D4D112E3C5AEB00F327C7 /* Device.swift */,
+				705D4D122E3C5AEB00F327C7 /* NoCodesError.swift */,
+				705D4D132E3C5AEB00F327C7 /* NoCodesErrorType.swift */,
+				705D4D142E3C5AEB00F327C7 /* PresentationConfiguration.swift */,
+				705D4D152E3C5AEB00F327C7 /* Screen.swift */,
+			);
+			path = Entities;
+			sourceTree = "<group>";
+		};
+		705D4D192E3C5AEB00F327C7 /* Mappers */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D172E3C5AEB00F327C7 /* NoCodesMapper.swift */,
+				705D4D182E3C5AEB00F327C7 /* NoCodesMapperInterface.swift */,
+			);
+			path = Mappers;
+			sourceTree = "<group>";
+		};
+		705D4D1C2E3C5AEB00F327C7 /* Entities */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D1A2E3C5AEB00F327C7 /* ApiError.swift */,
+				705D4D1B2E3C5AEB00F327C7 /* EmptyApiResponse.swift */,
+			);
+			path = Entities;
+			sourceTree = "<group>";
+		};
+		705D4D1E2E3C5AEB00F327C7 /* Error */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D1D2E3C5AEB00F327C7 /* ErrorConstants.swift */,
+			);
+			path = Error;
+			sourceTree = "<group>";
+		};
+		705D4D222E3C5AEB00F327C7 /* HeadersBuilder */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D1F2E3C5AEB00F327C7 /* Header.swift */,
+				705D4D202E3C5AEB00F327C7 /* HeadersBuilder.swift */,
+				705D4D212E3C5AEB00F327C7 /* HeadersBuilderInterface.swift */,
+			);
+			path = HeadersBuilder;
+			sourceTree = "<group>";
+		};
+		705D4D252E3C5AEB00F327C7 /* NetworkErrorHandler */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D232E3C5AEB00F327C7 /* NetworkErrorHandler.swift */,
+				705D4D242E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift */,
+			);
+			path = NetworkErrorHandler;
+			sourceTree = "<group>";
+		};
+		705D4D282E3C5AEB00F327C7 /* NetworkProvider */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D262E3C5AEB00F327C7 /* NetworkProvider.swift */,
+				705D4D272E3C5AEB00F327C7 /* NetworkProviderInterface.swift */,
+			);
+			path = NetworkProvider;
+			sourceTree = "<group>";
+		};
+		705D4D2B2E3C5AEB00F327C7 /* RateLimiter */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D292E3C5AEB00F327C7 /* RateLimiter.swift */,
+				705D4D2A2E3C5AEB00F327C7 /* RateLimiterInterface.swift */,
+			);
+			path = RateLimiter;
+			sourceTree = "<group>";
+		};
+		705D4D2E2E3C5AEB00F327C7 /* Request */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D2C2E3C5AEB00F327C7 /* Request.swift */,
+				705D4D2D2E3C5AEB00F327C7 /* RequestType.swift */,
+			);
+			path = Request;
+			sourceTree = "<group>";
+		};
+		705D4D312E3C5AEB00F327C7 /* RequestProcessor */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D2F2E3C5AEB00F327C7 /* RequestProcessor.swift */,
+				705D4D302E3C5AEB00F327C7 /* RequestProcessorInterface.swift */,
+			);
+			path = RequestProcessor;
+			sourceTree = "<group>";
+		};
+		705D4D342E3C5AEB00F327C7 /* ResponseDecoder */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D322E3C5AEB00F327C7 /* ResponseDecoder.swift */,
+				705D4D332E3C5AEB00F327C7 /* ResponseDecoderInterface.swift */,
+			);
+			path = ResponseDecoder;
+			sourceTree = "<group>";
+		};
+		705D4D352E3C5AEB00F327C7 /* NetworkLayer */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D1C2E3C5AEB00F327C7 /* Entities */,
+				705D4D1E2E3C5AEB00F327C7 /* Error */,
+				705D4D222E3C5AEB00F327C7 /* HeadersBuilder */,
+				705D4D252E3C5AEB00F327C7 /* NetworkErrorHandler */,
+				705D4D282E3C5AEB00F327C7 /* NetworkProvider */,
+				705D4D2B2E3C5AEB00F327C7 /* RateLimiter */,
+				705D4D2E2E3C5AEB00F327C7 /* Request */,
+				705D4D312E3C5AEB00F327C7 /* RequestProcessor */,
+				705D4D342E3C5AEB00F327C7 /* ResponseDecoder */,
+			);
+			path = NetworkLayer;
+			sourceTree = "<group>";
+		};
+		705D4D3A2E3C5AEB00F327C7 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D362E3C5AEB00F327C7 /* FallbackService.swift */,
+				705D4D372E3C5AEB00F327C7 /* FallbackServiceInterface.swift */,
+				705D4D382E3C5AEB00F327C7 /* NoCodesService.swift */,
+				705D4D392E3C5AEB00F327C7 /* NoCodesServiceInterface.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		705D4D3D2E3C5AEB00F327C7 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D3B2E3C5AEB00F327C7 /* LoggerWrapper.swift */,
+				705D4D3C2E3C5AEB00F327C7 /* Utils.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		705D4D472E3C5AEB00F327C7 /* NoCodes */ = {
+			isa = PBXGroup;
+			children = (
+				705D4D0C2E3C5AEB00F327C7 /* Assemblies */,
+				705D4D0F2E3C5AEB00F327C7 /* Device */,
+				705D4D162E3C5AEB00F327C7 /* Entities */,
+				705D4D192E3C5AEB00F327C7 /* Mappers */,
+				705D4D352E3C5AEB00F327C7 /* NetworkLayer */,
+				705D4D3A2E3C5AEB00F327C7 /* Services */,
+				705D4D3D2E3C5AEB00F327C7 /* Utils */,
+				705D4D3E2E3C5AEB00F327C7 /* Configuration.swift */,
+				705D4D3F2E3C5AEB00F327C7 /* Delegate.swift */,
+				705D4D412E3C5AEB00F327C7 /* NoCodes.docc */,
+				705D4D422E3C5AEB00F327C7 /* NoCodes.swift */,
+				705D4D432E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift */,
+				705D4D442E3C5AEB00F327C7 /* NoCodesNavigationController.swift */,
+				705D4D452E3C5AEB00F327C7 /* NoCodesViewController.swift */,
+				705D4D462E3C5AEB00F327C7 /* SkeletonView.swift */,
+			);
+			path = NoCodes;
 			sourceTree = "<group>";
 		};
 		7098564A2A370F190023DFAB /* QONRemoteConfigMapper */ = {
@@ -1833,13 +2086,11 @@
 				454EF63924E5CC580070581E /* Frameworks */,
 				454EF63A24E5CC580070581E /* Resources */,
 				4CB079286CCC86BD200EEDB0 /* [CP] Embed Pods Frameworks */,
-				70D8BB012BB70CFF00859723 /* Embed Frameworks */,
 				70EE74352E2E928100260875 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				70D8BB002BB70CFF00859723 /* PBXTargetDependency */,
 				70EE74332E2E928100260875 /* PBXTargetDependency */,
 			);
 			name = Sample;
@@ -2228,6 +2479,52 @@
 				700636072C11CEF700BB9F9C /* QONFallbackObject.m in Sources */,
 				70ED951129FAAF31005F5D00 /* QONStoreKit2PurchaseModel.m in Sources */,
 				70EC019D29EEE94300E686E2 /* StoreKit2Service.swift in Sources */,
+				705D4D482E3C5AEB00F327C7 /* NoCodesService.swift in Sources */,
+				705D4D492E3C5AEB00F327C7 /* Configuration.swift in Sources */,
+				705D4D4A2E3C5AEB00F327C7 /* HeadersBuilderInterface.swift in Sources */,
+				705D4D4B2E3C5AEB00F327C7 /* DeviceInfoCollector.swift in Sources */,
+				705D4D4C2E3C5AEB00F327C7 /* HeadersBuilder.swift in Sources */,
+				705D4D4D2E3C5AEB00F327C7 /* RequestType.swift in Sources */,
+				705D4D4E2E3C5AEB00F327C7 /* MiscAssembly.swift in Sources */,
+				705D4D4F2E3C5AEB00F327C7 /* Device.swift in Sources */,
+				705D4D502E3C5AEB00F327C7 /* NoCodesMapperInterface.swift in Sources */,
+				705D4D512E3C5AEB00F327C7 /* NoCodesErrorType.swift in Sources */,
+				705D4D522E3C5AEB00F327C7 /* NoCodesViewController.swift in Sources */,
+				705D4D532E3C5AEB00F327C7 /* Request.swift in Sources */,
+				705D4D542E3C5AEB00F327C7 /* NoCodesNavigationController.swift in Sources */,
+				705D4D552E3C5AEB00F327C7 /* RateLimiterInterface.swift in Sources */,
+				705D4D562E3C5AEB00F327C7 /* Screen.swift in Sources */,
+				705D4D572E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift in Sources */,
+				705D4D582E3C5AEB00F327C7 /* NoCodes.docc in Sources */,
+				705D4D592E3C5AEB00F327C7 /* NetworkProviderInterface.swift in Sources */,
+				705D4D5A2E3C5AEB00F327C7 /* NoCodesAssembly.swift in Sources */,
+				705D4D5B2E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift in Sources */,
+				705D4D5C2E3C5AEB00F327C7 /* Header.swift in Sources */,
+				705D4D5D2E3C5AEB00F327C7 /* NetworkProvider.swift in Sources */,
+				705D4D5E2E3C5AEB00F327C7 /* RequestProcessorInterface.swift in Sources */,
+				705D4D5F2E3C5AEB00F327C7 /* ResponseDecoder.swift in Sources */,
+				705D4D602E3C5AEB00F327C7 /* Utils.swift in Sources */,
+				705D4D612E3C5AEB00F327C7 /* FallbackService.swift in Sources */,
+				705D4D622E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift in Sources */,
+				705D4D632E3C5AEB00F327C7 /* RateLimiter.swift in Sources */,
+				705D4D642E3C5AEB00F327C7 /* SkeletonView.swift in Sources */,
+				705D4D652E3C5AEB00F327C7 /* ErrorConstants.swift in Sources */,
+				705D4D662E3C5AEB00F327C7 /* ResponseDecoderInterface.swift in Sources */,
+				705D4D672E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift in Sources */,
+				705D4D682E3C5AEB00F327C7 /* EmptyApiResponse.swift in Sources */,
+				705D4D692E3C5AEB00F327C7 /* ApiError.swift in Sources */,
+				705D4D6A2E3C5AEB00F327C7 /* RequestProcessor.swift in Sources */,
+				705D4D6B2E3C5AEB00F327C7 /* NoCodes.swift in Sources */,
+				705D4D6C2E3C5AEB00F327C7 /* Delegate.swift in Sources */,
+				705D4D6D2E3C5AEB00F327C7 /* Action.swift in Sources */,
+				705D4D6E2E3C5AEB00F327C7 /* PresentationConfiguration.swift in Sources */,
+				705D4D6F2E3C5AEB00F327C7 /* NetworkErrorHandler.swift in Sources */,
+				705D4D702E3C5AEB00F327C7 /* FallbackServiceInterface.swift in Sources */,
+				705D4D712E3C5AEB00F327C7 /* LoggerWrapper.swift in Sources */,
+				705D4D722E3C5AEB00F327C7 /* NoCodesMapper.swift in Sources */,
+				705D4D732E3C5AEB00F327C7 /* NoCodesServiceInterface.swift in Sources */,
+				705D4D742E3C5AEB00F327C7 /* ServicesAssembly.swift in Sources */,
+				705D4D752E3C5AEB00F327C7 /* NoCodesError.swift in Sources */,
 				701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */,
 				895732A926DD03A3009507A6 /* QONAutomationsMapper.m in Sources */,
 				895732F226DD03A3009507A6 /* QNMapper.m in Sources */,
@@ -2344,11 +2641,6 @@
 			target = 454EF63B24E5CC580070581E /* Sample */;
 			targetProxy = 6A8A604C29DAD5CB008EC7D8 /* PBXContainerItemProxy */;
 		};
-		70D8BB002BB70CFF00859723 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 459DAB68243E329F0011ECF3 /* Qonversion */;
-			targetProxy = 70D8BAFF2BB70CFF00859723 /* PBXContainerItemProxy */;
-		};
 		70EE74332E2E928100260875 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			platformFilter = ios;
@@ -2397,7 +2689,7 @@
 					"\"${PODS_ROOT}/Headers/Public/OCMock\"",
 				);
 				INFOPLIST_FILE = Sample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2436,7 +2728,7 @@
 					"\"${PODS_ROOT}/Headers/Public/OCMock\"",
 				);
 				INFOPLIST_FILE = Sample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2597,7 +2889,7 @@
 				GCC_WARN_PEDANTIC = NO;
 				INFOPLIST_FILE = Framework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2646,7 +2938,7 @@
 				GCC_WARN_PEDANTIC = NO;
 				INFOPLIST_FILE = Framework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

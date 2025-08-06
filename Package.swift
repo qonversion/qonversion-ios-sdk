@@ -75,17 +75,17 @@ let sources: [String] = ["Qonversion/Automations/Constants",
 let package = Package(
     name: "Qonversion",
     platforms: [
-        .iOS(.v9), .watchOS("6.2"), .macOS(.v10_12), .tvOS(.v9), .visionOS(.v1)
+        .iOS(.v13), .watchOS("6.2"), .macOS(.v10_13), .tvOS(.v12), .visionOS(.v1)
     ],
     products: [
         .library(
             name: "Qonversion",
-            targets: ["Qonversion", "QonversionSwift"])
+            targets: ["Qonversion", "QonversionSwift", "NoCodes"])
     ],
     targets: [.target(
                 name: "Qonversion",
                 path: "Sources",
-                exclude: ["Swift"],
+                exclude: ["Swift", "NoCodes"],
                 resources: [
                     .copy("../Sources/PrivacyInfo.xcprivacy")
                 ],
@@ -95,8 +95,18 @@ let package = Package(
                 name: "QonversionSwift",
                 dependencies: ["Qonversion"],
                 path: "Sources",
-                exclude: ["Qonversion"],
+                exclude: ["Qonversion", "NoCodes"],
                 resources: [
                     .copy("../Sources/PrivacyInfo.xcprivacy")
+                ]),
+              .target(
+                name: "NoCodes",
+                dependencies: ["Qonversion"],
+                path: "Sources/NoCodes",
+                resources: [
+                    .copy("../PrivacyInfo.xcprivacy")
+                ],
+                swiftSettings: [
+                    .define("SWIFT_PACKAGE")
                 ])]
 )
