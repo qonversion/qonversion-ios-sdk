@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  excluded_files = ['Sources/Qonversion/Automations', 'Sources/Qonversion/Public/QONAutomations*.{h,m}', 'Sources/Qonversion/Public/QONActionResult.{h,m}', 'Sources/Qonversion/Public/QONScreen*.{h,m}', 'Sources/NoCodes/**/*.swift']
+  excluded_files = ['Sources/NoCodes/**/*.swift']
   idfa_exclude_files = ['Sources/Qonversion/IDFA']
   s.name         = 'Qonversion'
   s.swift_version = '5.5'
