@@ -3,26 +3,7 @@
 
 import PackageDescription
 
-let sources: [String] = ["Qonversion/Automations/Constants",
-                         "Qonversion/Automations/Main",
-                         "Qonversion/Automations/Main/QONAutomationsActionsHandler",
-                         "Qonversion/Automations/Main/QONAutomationsFlowAssembly",
-                         "Qonversion/Automations/Main/QONAutomationsFlowCoordinator",
-                         "Qonversion/Automations/Mappers",
-                         "Qonversion/Automations/Mappers/QONAutomationsEventsMapper",
-                         "Qonversion/Automations/Mappers/QONAutomationsMapper",
-                         "Qonversion/Automations/Models",
-                         "Qonversion/Automations/Models/QONAutomationsScreen",
-                         "Qonversion/Automations/Models/QONMacrosProcess",
-                         "Qonversion/Automations/Models/QONUserActionPoint",
-                         "Qonversion/Automations/Services",
-                         "Qonversion/Automations/Services/QONAutomationsScreenProcessor",
-                         "Qonversion/Automations/Services/QONAutomationsService",
-                         "Qonversion/Automations/Views",
-                         "Qonversion/Automations/Views/QONAutomationsNavigationController",
-                         "Qonversion/Automations/Views/QONAutomationsViewController",
-                         "Qonversion/Automations/Services/QONNotificationsService",
-                         "Qonversion/IDFA",
+let sources: [String] = ["Qonversion/IDFA",
                          "Qonversion/Public",
                          "Qonversion/Qonversion/Assemblies",
                          "Qonversion/Qonversion/Assemblies/QNServicesAssembly",
@@ -75,17 +56,17 @@ let sources: [String] = ["Qonversion/Automations/Constants",
 let package = Package(
     name: "Qonversion",
     platforms: [
-        .iOS(.v9), .watchOS("6.2"), .macOS(.v10_12), .tvOS(.v9), .visionOS(.v1)
+        .iOS(.v13), .watchOS("6.2"), .macOS(.v10_13), .tvOS(.v12), .visionOS(.v1)
     ],
     products: [
         .library(
             name: "Qonversion",
-            targets: ["Qonversion", "QonversionSwift"])
+            targets: ["Qonversion", "QonversionSwift", "NoCodes"])
     ],
     targets: [.target(
                 name: "Qonversion",
                 path: "Sources",
-                exclude: ["Swift"],
+                exclude: ["Swift", "NoCodes"],
                 resources: [
                     .copy("../Sources/PrivacyInfo.xcprivacy")
                 ],
@@ -95,8 +76,18 @@ let package = Package(
                 name: "QonversionSwift",
                 dependencies: ["Qonversion"],
                 path: "Sources",
-                exclude: ["Qonversion"],
+                exclude: ["Qonversion", "NoCodes"],
                 resources: [
                     .copy("../Sources/PrivacyInfo.xcprivacy")
+                ]),
+              .target(
+                name: "NoCodes",
+                dependencies: ["Qonversion"],
+                path: "Sources/NoCodes",
+                resources: [
+                    .copy("../PrivacyInfo.xcprivacy")
+                ],
+                swiftSettings: [
+                    .define("SWIFT_PACKAGE")
                 ])]
 )

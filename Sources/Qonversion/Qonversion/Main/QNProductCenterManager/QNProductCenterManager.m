@@ -26,9 +26,7 @@
 #import <StoreKit/StoreKit.h>
 #import "QONRequestTrigger.h"
 
-#if TARGET_OS_IOS
-#import "QONAutomations.h"
-#endif
+
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
@@ -90,9 +88,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _cacheLifetime = QONEntitlementsCacheLifetimeMonth;
     _fallbackService = fallbackService;
 
-#if TARGET_OS_IOS
-    [QONAutomations sharedInstance];
-#endif
+
     [self supportMigrationFromOldVersions];
     
     _userInfoService = userInfoService;
