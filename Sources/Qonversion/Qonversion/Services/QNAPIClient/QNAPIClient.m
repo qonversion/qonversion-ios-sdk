@@ -12,12 +12,12 @@
 #import "QONRateLimiter.h"
 #import "QNLocalStorage.h"
 #import "Qonversion.h"
+#import "QONPurchaseOptions.h"
 
 NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 @interface QNAPIClient()
 
-@property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 @property (nonatomic, strong) QNRequestBuilder *requestBuilder;
 @property (nonatomic, strong) QNErrorsMapper *errorsMapper;
 @property (nonatomic, strong) QONRateLimiter *rateLimiter;
@@ -118,18 +118,8 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 // MARK: - Public
 
-- (void)sendPushToken:(void (^)(BOOL success))completion {
-  NSDictionary *data = [self.requestSerializer pushTokenData];
-  data = [self enrichPushTokenData:data];
-  NSURLRequest *request = [self.requestBuilder makeSendPushTokenRequestWith:data];
-  
-  [self processDictRequest:request completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    BOOL isSuccess = error == nil;
-    completion(isSuccess);
-  }];
-}
-
-- (void)launchRequest:(QNAPIClientDictCompletionHandler)completion {
+- (void)launchRequest:(QONRequestTrigger)requestTrigger
+           completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *launchData = [self.requestSerializer launchData];
 
   [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeInit
@@ -141,18 +131,19 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     }
 
     NSDictionary *enrichedData = [self enrichParameters:launchData];
-    NSURLRequest *request = [self.requestBuilder makeInitRequestWith:enrichedData];
+    NSURLRequest *request = [self.requestBuilder makeInitRequestWith:enrichedData requestTrigger:requestTrigger];
     [self processDictRequest:request completion:completion];
   }];
 }
 
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                receipt:(nullable NSString *)receipt
+        requestTrigger:(QONRequestTrigger)requestTrigger
             completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *body = [self.requestSerializer purchaseInfo:purchaseInfo receipt:receipt];
   NSDictionary *resultData = [self enrichParameters:body];
   
-  NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
+  NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData requestTrigger:requestTrigger];
 
   [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypePurchase
                                params:body
@@ -171,16 +162,19 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
+                      purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions
+                       requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion {
-  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt];
-  return [self purchaseRequestWith:body completion:completion];
+  NSDictionary *body = [self.requestSerializer purchaseData:product transaction:transaction receipt:receipt purchaseOptions:purchaseOptions];
+  return [self purchaseRequestWith:body requestTrigger:requestTrigger completion:completion];
 }
 
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *)body
+                       requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion {
   NSDictionary *resultData = [self enrichParameters:body];
 
-  NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData];
+  NSURLRequest *request = [self.requestBuilder makePurchaseRequestWith:resultData requestTrigger:requestTrigger];
 
   [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypePurchase
                                params:body
@@ -370,6 +364,19 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   [self processRequestWithoutResponse:mutableRequest completion:completion];
 }
 
+- (void)getPromotionalOfferForProduct:(QONProduct *)product
+                             discount:(SKProductDiscount *)discount
+                               userId:(NSString *)userId
+                           identityId:(NSString *)identityId
+                              receipt:(nullable NSString *)receipt
+                           completion:(QNAPIClientDictCompletionHandler)completion {
+  NSDictionary *body = [self.requestSerializer promotionalOfferInfoForProduct:product identityId:identityId receipt:receipt];
+  
+  NSURLRequest *request = [self.requestBuilder makePostPromotionalOfferRequestWithBody:body userId:userId offerId: discount.identifier];
+  
+  [self processDictRequest:request completion:completion];
+}
+
 - (void)loadRemoteConfig:(NSString * _Nullable)contextKey completion:(QNAPIClientDictCompletionHandler)completion {
   [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeRemoteConfig
                                  hash:[self.userID hash]
@@ -479,14 +486,6 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
 // MARK: - Private
 
-- (NSDictionary *)enrichPushTokenData:(NSDictionary *)data {
-  NSMutableDictionary *mutableData = [data mutableCopy];
-  mutableData[@"access_token"] = _apiKey;
-  mutableData[@"q_uid"] = _userID;
-  
-  return [mutableData copy];
-}
-
 - (NSString *)obtainApiKey {
   return self.debug ? [NSString stringWithFormat:@"test_%@", self.apiKey] : self.apiKey;
 }
@@ -550,6 +549,8 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
               parseResponse:(BOOL)parseResponse
                  completion:(QNAPIClientCommonCompletionHandler)completion {
   __block NSInteger doneTryCount = tryCount;
+
+  request = [self.requestSerializer addTryCountToHeader:@(tryCount) request:request];
   
   __block __weak QNAPIClient *weakSelf = self;
   [[self.session dataTaskWithRequest:request completionHandler:^(id _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {

@@ -57,14 +57,14 @@ NS_SWIFT_NAME(setScreenCustomizationDelegate(_:));
  Set push token to Qonversion to enable Qonversion push notifications
  @param token - token data
  */
-- (void)setNotificationsToken:(nonnull NSData *)token API_AVAILABLE(ios(9.0));
+- (void)setNotificationsToken:(nonnull NSData *)token API_AVAILABLE(ios(9.0)) DEPRECATED_MSG_ATTRIBUTE("Consider removing this method calls as they aren't needed anymore");
 
 /**
  Returns true when a push notification was received from Qonversion.
  Otherwise returns false, so you need to handle a notification yourself
  @param userInfo - notification user info
  */
-- (BOOL)handleNotification:(nonnull NSDictionary *)userInfo API_AVAILABLE(ios(9.0));
+- (BOOL)handleNotification:(nonnull NSDictionary *)userInfo API_AVAILABLE(ios(9.0)) DEPRECATED_MSG_ATTRIBUTE("Consider removing this method calls. Qonversion is not working with push notifications anymore");
 
 /**
  Get parsed custom payload, which you added to the notification in the dashboard

@@ -10,7 +10,7 @@
 
 #if TARGET_OS_IOS
 
-@class QONAutomationsViewController, QONAutomationsService, QONAutomationsActionsHandler, QONAutomationsScreen, QONAutomationsEventsMapper, QONNotificationsService;
+@class QONAutomationsViewController, QONAutomationsService, QONAutomationsActionsHandler, QONAutomationsScreen, QONAutomationsEventsMapper;
 @protocol QONAutomationsViewControllerDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -21,7 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (QONAutomationsService *)automationsService;
 - (QONAutomationsActionsHandler *)actionsHandler;
 - (QONAutomationsEventsMapper *)eventsMapper;
-- (QONNotificationsService *)notificationsService;
 
 @end
 

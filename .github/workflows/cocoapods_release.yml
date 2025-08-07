@@ -17,13 +17,13 @@ jobs:
     steps:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.3.0'
+          xcode-version: '16.2'
       - name: Check out code
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.inputs.branch }}
 
       - name: CocoaPods Release
-        run: pod trunk push Qonversion.podspec
+        run: pod trunk push Qonversion.podspec --allow-warnings
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}

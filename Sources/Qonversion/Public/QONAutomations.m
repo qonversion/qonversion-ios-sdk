@@ -48,9 +48,7 @@
   [[QONAutomationsFlowCoordinator sharedInstance] showAutomationWithID:screenID completion:completion];
 }
 
-- (void)setNotificationsToken:(nonnull NSData *)token {
-  [[QONAutomationsFlowCoordinator sharedInstance] sendPushToken:token];
-}
+- (void)setNotificationsToken:(nonnull NSData *)token {}
 
 - (BOOL)handleNotification:(nonnull NSDictionary *)userInfo {
   return [[QONAutomationsFlowCoordinator sharedInstance] handlePushNotification:userInfo];

@@ -54,10 +54,18 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONErrorCode) {
   
   // No remote configuration for the current user
   QONErrorCodeRemoteConfigurationNotAvailable = 19,
+  
+  // No offerings for the current user
+  QONErrorOfferingsNotAvailable = 20,
+  
+  
+} NS_SWIFT_NAME(Qonversion.Error);
 
-  // Could not receive data from API
-  QONErrorCodeFailedToReceiveData = 20,
 
+typedef NS_ERROR_ENUM(QONErrorDomain, QONAPIError) {
+  // Could not receive data
+  QONAPIErrorFailedReceiveData = 0,
+  
   // Could not parse response
   QONErrorCodeResponseParsingFailed = 21,
   
@@ -111,6 +119,7 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONErrorCode) {
 + (NSError *)errorFromURLDomainError:(NSError *)error;
 + (NSError *)errorFromTransactionError:(NSError *)error;
 + (NSError *)deferredTransactionError;
++ (NSError *)emptyOfferingsError;
 
 @end
 

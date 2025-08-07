@@ -1,8 +1,9 @@
 #import "Foundation/Foundation.h"
 #import "QONLaunchResult.h"
+#import "QONRequestTrigger.h"
 
 @protocol QNLocalStorage;
-@class SKProduct, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel;
+@class SKProduct, SKProductDiscount, SKPaymentTransaction, QONOffering, QONProduct, QONStoreKit2PurchaseModel, QONPurchaseOptions, QNRequestSerializer;
 
 typedef void (^QNAPIClientEmptyCompletionHandler)(NSError * _Nullable error);
 typedef void (^QNAPIClientDictCompletionHandler)(NSDictionary * _Nullable dict, NSError * _Nullable error);
@@ -21,17 +22,21 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *apiKey;
 @property (nonatomic, assign) BOOL debug;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
+@property (nonatomic, strong) QNRequestSerializer *requestSerializer;
 
 - (void)setSDKVersion:(NSString *)version;
 - (void)setBaseURL:(NSString *)url;
-- (void)launchRequest:(QNAPIClientDictCompletionHandler)completion;
-- (void)sendPushToken:(void (^)(BOOL success))completion;
+- (void)launchRequest:(QONRequestTrigger)requestTrigger
+           completion:(QNAPIClientDictCompletionHandler)completion;
 
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
+                      purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions
+                       requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion;
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *) body
+                       requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion;
 
 - (void)checkTrialIntroEligibilityParamsForProducts:(NSArray<QONProduct *> *)products
@@ -62,8 +67,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion;
+- (void)getPromotionalOfferForProduct:(QONProduct *)product
+                             discount:(SKProductDiscount *)discount
+                               userId:(NSString *)userId
+                           identityId:(NSString *)identityId
+                              receipt:(nullable NSString *)receipt
+                           completion:(QNAPIClientDictCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0));
+
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                          receipt:(nullable NSString *)receipt
+                  requestTrigger:(QONRequestTrigger)requestTrigger
                       completion:(QNAPIClientDictCompletionHandler)completion;
 - (void)sendCrashReport:(NSDictionary *)data completion:(QNAPIClientEmptyCompletionHandler)completion;
 

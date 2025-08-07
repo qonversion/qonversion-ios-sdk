@@ -24,5 +24,7 @@
 #import <Qonversion/QONScreenCustomizationDelegate.h>
 #import <Qonversion/QONScreenPresentationConfiguration.h>
 #import <Qonversion/QONActionResult.h>
+#import <Qonversion/QONPurchaseOptions.h>
+#import <Qonversion/QONPromotionalOffer.h>
 
 #import <Qonversion/QONUser.h>

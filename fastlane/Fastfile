@@ -1,6 +1,6 @@
 
 PROJECT_NAME = "Qonversion"
-PROJECT_SCHEME = "Qonversion"
+PROJECT_SCHEME = "Sample"
 XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
 
 lane :tests do
@@ -100,13 +100,20 @@ def update_file(path, regex, result_value)
 end
 
 def runTests(suite)
+  # Увеличиваем таймауты для xcodebuild
+  ENV['FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT'] = '10'
+  ENV['FASTLANE_XCODEBUILD_SETTINGS_RETRIES'] = '6'
+  
   cocoapods(
     repo_update: false,
     podfile: "./Podfile"
   )
 
   run_tests(
+    workspace: "./#{PROJECT_NAME}.xcworkspace",
     scheme: PROJECT_SCHEME,
-    only_testing: suite
+    only_testing: suite,
+    destination: "platform=iOS Simulator,OS=18.1,name=iPhone 16",
+    xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration"
   )
 end

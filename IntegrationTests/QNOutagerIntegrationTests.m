@@ -13,6 +13,7 @@
 #import "QNIntegrationTestConstants.h"
 #import "XCTestCase+IntegrationTestJSON.h"
 #import "XCTestCase+IntegrationTestsHelpers.h"
+#import "QONRequestTrigger.h"
 
 
 @interface QNOutagerIntegrationTests : XCTestCase
@@ -49,6 +50,7 @@
     @"duration": @1,
     @"id": @"test_monthly",
     @"store_id": @"apple_monthly",
+    @"base_plan_id": [NSNull null],
     @"type": @1,
   };
   
@@ -56,6 +58,7 @@
     @"duration": @4,
     @"id": @"test_annual",
     @"store_id": @"apple_annual",
+    @"base_plan_id": [NSNull null],
     @"type": @0,
   };
   
@@ -63,10 +66,11 @@
     @"duration": [NSNull null],
     @"id": @"test_inapp",
     @"store_id": @"apple_inapp",
+    @"base_plan_id": [NSNull null],
     @"type": @2,
   };
   
-  self.expectedProducts = @[self.monthlyProduct, self.annualProduct, self.inappProduct];
+  self.expectedProducts = @[self.inappProduct, self.monthlyProduct, self.annualProduct];
   
   self.expectedOffering = @{
     @"id": @"main",
@@ -110,7 +114,7 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
     XCTAssertNotNil(res);
     XCTAssertNil(error);
     XCTAssertTrue(res[@"success"]);
@@ -141,10 +145,10 @@
   } mutableCopy];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
-    [client purchaseRequestWith:self.purchaseData completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    [client purchaseRequestWith:self.purchaseData requestTrigger:QONRequestTriggerPurchase completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
       XCTAssertNotNil(res);
       XCTAssertNil(error);
       XCTAssertTrue(res[@"success"]);
@@ -196,7 +200,7 @@
   };
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client attributionRequest:QONAttributionProviderAdjust data:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -234,7 +238,7 @@
   ];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
       [client sendProperties:data completion:^(NSDictionary *_Nullable res, NSError *_Nullable error) {
@@ -292,7 +296,7 @@
   ];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client checkTrialIntroEligibilityParamsForData:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -313,7 +317,7 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client createIdentityForUserID:identityId anonUserID:uid completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -329,26 +333,6 @@
   [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
-- (void)testSendPushToken {
-  // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Send push token call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_sendPushToken"];
-  QNAPIClient *client = [self getClient:uid];
-
-  // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
-    XCTAssertNil(createUserError);
-
-    [client sendPushToken:^(BOOL success) {
-      XCTAssertFalse(success);
-      [completionExpectation fulfill];
-    }];
-  }];
-
-  // then
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
-}
-
 - (void)testScreens {
   // given
   XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Screens call"];
@@ -356,7 +340,7 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client automationWithID:self.noCodeScreenId completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -376,7 +360,7 @@
   QNAPIClient *client = [self getClient:uid];
 
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client trackScreenShownWithID:self.noCodeScreenId completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
@@ -396,7 +380,7 @@
   QNAPIClient *client = [self getClient:uid];
   
   // when
-  [client launchRequest:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
+  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
     XCTAssertNil(createUserError);
 
     [client userActionPointsWithCompletion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {

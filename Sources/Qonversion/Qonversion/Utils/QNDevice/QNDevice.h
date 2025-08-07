@@ -19,15 +19,10 @@
 @property (readonly, copy, nonatomic) NSString *vendorID;
 
 @property (readonly, copy, nonatomic) NSString *afUserID;
-@property (readonly, copy, nonatomic) NSString *adjustUserID;
 @property (readonly, copy, nonatomic) NSString *fbAnonID;
 
 @property (readonly, copy, nonatomic) NSString *installDate;
-@property (readonly, copy, nonatomic) NSString *pushNotificationsToken;
 
-- (BOOL)isPushTokenProcessed;
-- (void)setPushTokenProcessed:(BOOL)processed;
-
-- (void)setPushNotificationsToken:(NSString *)token;
+- (void)adjustUserIDWithCompletion:(void(^)(NSString *userId))completion;
 
 @end

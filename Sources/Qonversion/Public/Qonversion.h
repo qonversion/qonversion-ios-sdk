@@ -21,6 +21,8 @@
 #import "QONUserProperties.h"
 #import "QONUserProperty.h"
 #import "QONSubscriptionPeriod.h"
+#import "QONPurchaseOptions.h"
+#import "QONPromotionalOffer.h"
 
 #if TARGET_OS_IOS
 #import "QONAutomationsDelegate.h"
@@ -130,6 +132,18 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
 - (void)attribution:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider DEPRECATED_MSG_ATTRIBUTE("This function shouldn't be called anymore. All attribution logic continues to work as usual.");
 
 /**
+ Retrieve the promotional offer for the product if it exists.
+ Make sure to call this function before displaying product details to the user.
+ The generated signature for the promotional offer is valid for a single transaction.
+ If the purchase fails, you need to call this function again to obtain a new promotional offer signature.
+ Use this signature to complete the purchase through the purchase function, along with the purchase options object.
+ @param product - product you want to purchase.
+ @param discount - discount to create promotional offer signature.
+ @param completion - completion block that will be called when response is received.
+ */
+- (void)getPromotionalOfferForProduct:(QONProduct * _Nonnull)product discount:(SKProductDiscount * _Nonnull)discount completion:(nonnull QONPromotionalOfferCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0));
+
+/**
  Check user entitlements
  @param completion Completion block that includes entitlements dictionary and error
  */
@@ -139,8 +153,18 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
  Make a purchase and validate that through server-to-server using Qonversion's Backend
  
  @param product Product create in Qonversion Dash
+ @param completion Completion block that includes entitlements dictionary and error
  */
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
+
+/**
+ Make a purchase and validate that through server-to-server using Qonversion's Backend
+ 
+ @param product Product created in Qonversion Dash
+ @param options Purchase process additional options: quantity / context keys / etc.
+ @param completion Completion block that includes entitlements dictionary and error
+ */
+- (void)purchaseProduct:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion;
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -289,6 +313,12 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
  @param completion completion block that includes information about the result of the action. Success flag or error.
  */
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(nullable QONDefaultCompletionHandler)completion;
+
+/**
+ Call this function to check if the fallback file is accessible.
+ @return flag that indicates whether Qonversion was able to read data from the fallback file or not.
+ */
+- (BOOL)isFallbackFileAccessible;
 
 @end
 

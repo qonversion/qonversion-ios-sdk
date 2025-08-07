@@ -17,6 +17,10 @@
 #import "QONExperimentGroup+Protected.h"
 #import "QONUser+Protected.h"
 #import "QONTransaction+Protected.h"
+#import "QONPromotionalOffer+Protected.h"
+#import "QONFallbackObject.h"
+
+#import <StoreKit/StoreKit.h>
 
 @implementation QNMapper
 
@@ -51,6 +55,44 @@
   } else {
     return nil;
   }
+}
+
+- (NSDictionary * _Nullable)mapProductsEntitlementsRelations:(NSDictionary * _Nullable)dict {
+  return [QNMapper mapProductsEntitlementsRelation:dict];
+}
+
++ (NSError *)promoOfferMappingError {
+  return [QONErrors errorWithCode:QONAPIErrorFailedParseResponse message:@"Failed to map promotional offer" failureReason:nil];
+}
+
++ (QONPromotionalOffer * _Nullable)mapPromoOffer:(NSDictionary * _Nullable)rawData productDiscount:(SKProductDiscount * _Nonnull)productDiscount mappingError:(NSError ** _Nullable)error {
+  if (![rawData isKindOfClass:[NSDictionary class]]) {
+    *error = [self promoOfferMappingError];
+    
+    return nil;
+  }
+  
+  NSString *identifier = productDiscount.identifier;
+  NSString *keyIdentifier = rawData[@"key_identifier"];
+  NSString *nonceString = rawData[@"nonce"];
+  NSUUID *nonce = [[NSUUID alloc] initWithUUIDString:nonceString];
+  NSString *signature = rawData[@"signature"];
+  NSTimeInterval timestamp = [self mapInteger:rawData[@"timestamp"] orReturn:0];
+  timestamp = timestamp != 0 ? timestamp : [NSDate date].timeIntervalSince1970;
+  
+  NSNumber *timestampNumber = [NSNumber numberWithDouble:timestamp];
+  
+  if (identifier.length == 0 || keyIdentifier.length == 0 || nonceString.length == 0 || signature.length == 0) {
+    *error = [self promoOfferMappingError];
+    
+    return nil;
+  }
+  
+  SKPaymentDiscount *paymentDiscount = [[SKPaymentDiscount alloc] initWithIdentifier:identifier keyIdentifier:keyIdentifier nonce:nonce signature:signature timestamp:timestampNumber];
+  
+  QONPromotionalOffer *offer = [[QONPromotionalOffer alloc] initWithProductDiscount:productDiscount paymentDiscount:paymentDiscount];
+  
+  return offer;
 }
 
 + (QONUser *)fillUser:(NSDictionary * _Nullable)dict {
@@ -93,6 +135,11 @@
   }
   
   return [products copy];
+}
+
+- (NSDictionary <NSString *, QONProduct *> * _Nonnull)mapFallbackProducts:(NSDictionary * _Nullable)data {
+  NSArray *rawProducts = data[@"products"];
+  return [QNMapper fillProducts:rawProducts];
 }
 
 + (NSArray <QONProduct *> *)fillProductsToArray:(NSArray *)data {
@@ -229,6 +276,7 @@
   NSString *originalTransactionId = rawTransaction[@"original_transaction_id"];
   NSString *transactionId = rawTransaction[@"transaction_id"];
   NSString *offerCode = rawTransaction[@"offer_code"];
+  NSString *promoOfferId = rawTransaction[@"promo_offer_id"];
     
   NSDate *transactionDate = [self mapDateFromSource:rawTransaction key:@"transaction_timestamp"];
   NSDate *expirationDate = [self mapDateFromSource:rawTransaction key:@"expiration_timestamp"];
@@ -246,7 +294,7 @@
   NSNumber *transactionTypeNumber = transactionTypes[typeRaw];
   QONTransactionType transactionType = transactionTypes ? transactionTypeNumber.integerValue : QONTransactionTypeUnknown;
   
-  QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate environment:environment ownershipType:ownershipType type:transactionType];
+  QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate promoOfferId:promoOfferId environment:environment ownershipType:ownershipType type:transactionType];
   
   return transaction;
 }
@@ -291,6 +339,11 @@
   QONOfferings *offerings = [[QONOfferings alloc] initWithMainOffering:main availableOfferings:[availableOfferings copy]];
   
   return offerings;
+}
+
+- (QONOfferings * _Nonnull)mapFallbackOfferings:(NSDictionary * _Nullable)data {
+  NSArray *rawOfferings = data[@"offerings"];
+  return [QNMapper fillOfferingsObject:rawOfferings];
 }
 
 + (NSArray<QONOfferings *> * _Nonnull)fillOfferings:(NSArray *)data {
@@ -356,13 +409,13 @@
 }
 
 + (NSInteger)mapInteger:(NSObject *)object orReturn:(NSInteger)defaultValue {
-  if (object == nil) {
+  if (!object) {
     return defaultValue;
   }
   
   NSNumber *numberObject = (NSNumber *)object;
   
-  if ([numberObject isEqual:[NSNull null]]) {
+  if ([numberObject isEqual:[NSNull null]] || ![numberObject respondsToSelector:@selector(integerValue)]) {
     return defaultValue;
   } else {
     return numberObject.integerValue;

@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -49,28 +49,33 @@ let sources: [String] = ["Qonversion/Automations/Constants",
                          "Qonversion/Qonversion/Mappers/QNUserInfoMapper",
                          "Qonversion/Qonversion/Mappers/QONRemoteConfigMapper",
                          "Qonversion/Qonversion/Mappers/QONUserPropertiesMapper",
+                         "Qonversion/Qonversion/Mappers/QONFallbackMapper",
                          "Qonversion/Qonversion/Models",
                          "Qonversion/Qonversion/Models/Protected",
                          "Qonversion/Qonversion/Models/QONStoreKit2PurchaseModel",
+                         "Qonversion/Qonversion/Models/QONFallbackObject",
                          "Qonversion/Qonversion/Models/QNMapperObject",
                          "Qonversion/Qonversion/Services",
                          "Qonversion/Qonversion/Services/QNAPIClient",
                          "Qonversion/Qonversion/Services/QNIdentityService",
                          "Qonversion/Qonversion/Services/QNStoreKitService",
+                         "Qonversion/Qonversion/Services/QONFallbackService",
                          "Qonversion/Qonversion/Services/QNUserInfoService",
                          "Qonversion/Qonversion/Services/QONRemoteConfigService",
                          "Qonversion/Qonversion/Services/QONExceptionManager",
                          "Qonversion/Qonversion/Utils",
                          "Qonversion/Qonversion/Utils/QNDevice",
                          "Qonversion/Qonversion/Utils/QNProperties",
+                         "Qonversion/Qonversion/Utils/QONRequestTrigger",
                          "Qonversion/Qonversion/Utils/QNRateLimiter",
                          "Qonversion/Qonversion/Utils/QNUserInfo",
+                         "Qonversion/Qonversion/Utils/NSError+Sugare",
                          "Qonversion/Qonversion/Utils/QNUtils"]
 
 let package = Package(
     name: "Qonversion",
     platforms: [
-        .iOS(.v9), .watchOS("6.2"), .macOS(.v10_12), .tvOS(.v9)
+        .iOS(.v9), .watchOS("6.2"), .macOS(.v10_12), .tvOS(.v9), .visionOS(.v1)
     ],
     products: [
         .library(

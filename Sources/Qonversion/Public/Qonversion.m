@@ -14,6 +14,7 @@
 #import "QONRemoteConfigManager.h"
 #import "QONExceptionManager.h"
 #import "QONUserProperty.h"
+#import "QONFallbackService.h"
 
 static id shared = nil;
 
@@ -26,7 +27,7 @@ static id shared = nil;
 @property (nonatomic, strong) QONExceptionManager *exceptionManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
-
+@property (nonatomic, strong) QONFallbackService *fallbackService;
 @property (nonatomic, assign) BOOL debugMode;
 @property (nonatomic, assign) QONLaunchMode launchMode;
 
@@ -93,7 +94,7 @@ static bool _isInitialized = NO;
   [[QNAPIClient shared] setDebug:[Qonversion sharedInstance].debugMode];
   
   [Qonversion sharedInstance].productCenterManager.launchMode = [Qonversion sharedInstance].launchMode;
-  [[Qonversion sharedInstance].productCenterManager launchWithCompletion:completion];
+  [[Qonversion sharedInstance].productCenterManager launchWithTrigger:QONRequestTriggerInit completion:completion];
   
   [Qonversion sharedInstance].propertiesManager.productCenterManager = [Qonversion sharedInstance].productCenterManager;
 }
@@ -104,7 +105,7 @@ static bool _isInitialized = NO;
     return;
   }
   
-  [[Qonversion sharedInstance] restore:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+  [[Qonversion sharedInstance].productCenterManager restoreTransactions:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     if (error) {
       QONVERSION_LOG(@"❌ Historical data sync failed: %@", error.localizedDescription);
     } else {
@@ -168,15 +169,19 @@ static bool _isInitialized = NO;
 }
 
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
-  [self.productCenterManager purchaseProduct:product completion:completion];
+  [self.productCenterManager purchase:product options:nil completion:completion];
+}
+
+- (void)purchaseProduct:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion {
+  [self.productCenterManager purchase:product options:options completion:completion];
 }
 
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion {
-  [self.productCenterManager purchase:productID completion:completion];
+  [self.productCenterManager purchase:productID purchaseOptions:nil completion:completion];
 }
 
 - (void)restore:(QNRestoreCompletionHandler)completion {
-  [self.productCenterManager restore:completion];
+  [self.productCenterManager restoreReceipt:completion];
 }
 
 - (void)products:(QONProductsCompletionHandler)completion {
@@ -196,39 +201,39 @@ static bool _isInitialized = NO;
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
-  [[self productCenterManager] userInfo:completion];
+  [self.productCenterManager userInfo:completion];
 }
 
 - (void)remoteConfig:(QONRemoteConfigCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigWithContextKey:nil completion:completion];
+  [self.remoteConfigManager obtainRemoteConfigWithContextKey:nil completion:completion];
 }
 
 - (void)remoteConfig:(NSString *)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigWithContextKey:contextKey completion:completion];
+  [self.remoteConfigManager obtainRemoteConfigWithContextKey:contextKey completion:completion];
 }
 
 - (void)remoteConfigList:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
+  [self.remoteConfigManager obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
 }
 
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
-  [[self remoteConfigManager] obtainRemoteConfigList:completion];
+  [self.remoteConfigManager obtainRemoteConfigList:completion];
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
-  [[self remoteConfigManager] attachUserToExperiment:experimentId groupId:groupId completion:completion];
+  [self.remoteConfigManager attachUserToExperiment:experimentId groupId:groupId completion:completion];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
-  [[self remoteConfigManager] detachUserFromExperiment:experimentId completion:completion];
+  [self.remoteConfigManager detachUserFromExperiment:experimentId completion:completion];
 }
 
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  [[self remoteConfigManager] attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
+  [self.remoteConfigManager attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  [[self remoteConfigManager] detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
+  [self.remoteConfigManager detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo {
@@ -236,7 +241,17 @@ static bool _isInitialized = NO;
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(nullable QONDefaultCompletionHandler)completion {
-  [[self productCenterManager] handlePurchases:purchasesInfo completion:completion];
+  [self.productCenterManager handlePurchases:purchasesInfo completion:completion];
+}
+
+- (void)getPromotionalOfferForProduct:(QONProduct * _Nonnull)product discount:(SKProductDiscount * _Nonnull)discount completion:(nonnull QONPromotionalOfferCompletionHandler)completion {
+  [self.productCenterManager getPromotionalOfferForProduct:product discount:discount completion:completion];
+}
+
+- (BOOL)isFallbackFileAccessible {
+  QONFallbackObject *fallbackData = [self.fallbackService obtainFallbackData];
+  
+  return fallbackData != nil;
 }
 
 // MARK: - Private
@@ -249,8 +264,9 @@ static bool _isInitialized = NO;
     _userInfoService = [servicesAssembly userInfoService];
     _localStorage = [servicesAssembly localStorage];
     id<QNIdentityManagerInterface> identityManager = [servicesAssembly identityManager];
-    
-    _productCenterManager = [[QNProductCenterManager alloc] initWithUserInfoService:_userInfoService identityManager:identityManager localStorage:_localStorage];
+    QONFallbackService *fallbackService = [QONFallbackService new];
+    _productCenterManager = [[QNProductCenterManager alloc] initWithUserInfoService:_userInfoService identityManager:identityManager localStorage:_localStorage fallbackService:fallbackService];
+    _fallbackService = fallbackService;
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
     _remoteConfigManager = [QONRemoteConfigManager new];

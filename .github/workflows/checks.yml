@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.3.0'
+          xcode-version: '16.2'
       - uses: actions/checkout@v2
       - name: Validation
         run: |
@@ -20,6 +20,9 @@ jobs:
     runs-on: macos-latest
     
     steps:
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
       - uses: actions/checkout@v2
       - name: SPM validation
         run: |
@@ -29,6 +32,9 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
       - uses: actions/checkout@v2
       - name: Tests
         run: |

@@ -24,7 +24,6 @@
 #import "QONAutomationsEventsMapper.h"
 #import "QNInternalConstants.h"
 #import "QNDevice.h"
-#import "QONNotificationsService.h"
 #import "QONScreenCustomizationDelegate.h"
 #import "QONAutomationsNavigationController.h"
 
@@ -35,7 +34,6 @@
 @property (nonatomic, strong) QONAutomationsFlowAssembly *assembly;
 @property (nonatomic, strong) QONAutomationsService *automationsService;
 @property (nonatomic, strong) QONAutomationsEventsMapper *eventsMapper;
-@property (nonatomic, strong) QONNotificationsService *notificationsService;
 @property (nonatomic, assign) BOOL isSDKLaunched;
 
 @end
@@ -59,7 +57,6 @@
     _assembly = [QONAutomationsFlowAssembly new];
     _automationsService = [_assembly automationsService];
     _eventsMapper = [_assembly eventsMapper];
-    _notificationsService = [_assembly notificationsService];
   }
   
   return self;
@@ -67,8 +64,6 @@
 
 - (void)didFinishLaunch {
   self.isSDKLaunched = YES;
-  
-  [self processPushTokenRequest];
 }
 
 - (void)setAutomationsDelegate:(id<QONAutomationsDelegate>)automationsDelegate {
@@ -118,33 +113,6 @@
   }];
 }
 
-- (void)sendPushToken:(NSData *)pushTokenData {
-  NSString *tokenString = [QNUtils convertHexData:pushTokenData];
-  NSString *oldToken = [QNDevice current].pushNotificationsToken;
-  if ([tokenString isEqualToString:oldToken] || tokenString.length == 0) {
-    return;
-  }
-  
-  [[QNDevice current] setPushNotificationsToken:tokenString];
-  [[QNDevice current] setPushTokenProcessed:NO];
-  
-  if (!self.isSDKLaunched) {
-    return;
-  }
-  
-  [self processPushTokenRequest];
-}
-
-- (void)processPushTokenRequest {
-  NSString *pushToken = [[QNDevice current] pushNotificationsToken];
-  BOOL isPushTokenProcessed = [[QNDevice current] isPushTokenProcessed];
-  if (!pushToken || isPushTokenProcessed) {
-    return;
-  }
-  
-  [self.notificationsService sendPushToken];
-}
-
 - (void)showAutomationWithID:(NSString *)automationID completion:(nullable QONShowScreenCompletionHandler)completion {
   __block __weak QONAutomationsFlowCoordinator *weakSelf = self;
   [self.automationsService automationWithID:automationID completion:^(QONAutomationsScreen *screen, NSError * _Nullable error) {
@@ -168,11 +136,32 @@
       if (configuration.presentationStyle == QONScreenPresentationStylePush) {
         [presentationViewController.navigationController pushViewController:viewController animated:configuration.animated];
       } else {
-        QONAutomationsNavigationController *navigationController = [[QONAutomationsNavigationController alloc] initWithRootViewController:viewController];
-        navigationController.navigationBarHidden = YES;
         UIModalPresentationStyle style = configuration.presentationStyle == QONScreenPresentationStylePopover ? UIModalPresentationPopover : UIModalPresentationFullScreen;
-        navigationController.modalPresentationStyle = style;
-        [presentationViewController presentViewController:navigationController animated:configuration.animated completion:nil];
+        
+        if (style == UIModalPresentationPopover) {
+          viewController.modalPresentationStyle = style;
+          
+          UIView *sourceView = nil;
+          if ([weakSelf.screenCustomizationDelegate respondsToSelector:@selector(viewForPopoverPresentation)]) {
+            sourceView = [weakSelf.screenCustomizationDelegate viewForPopoverPresentation];
+          }
+          
+          if (sourceView) {
+            viewController.popoverPresentationController.sourceRect = sourceView.bounds;
+            viewController.popoverPresentationController.sourceView = sourceView;
+          } else {
+            viewController.popoverPresentationController.permittedArrowDirections = 0;
+            viewController.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMidX(presentationViewController.view.bounds), CGRectGetMidY(presentationViewController.view.bounds),0,0);
+            viewController.popoverPresentationController.sourceView = presentationViewController.view;
+          }
+          
+          [presentationViewController presentViewController:viewController animated:configuration.animated completion:nil];
+        } else {
+          QONAutomationsNavigationController *navigationController = [[QONAutomationsNavigationController alloc] initWithRootViewController:viewController];
+          navigationController.navigationBarHidden = YES;
+          navigationController.modalPresentationStyle = style;
+          [presentationViewController presentViewController:navigationController animated:configuration.animated completion:nil];
+        }
       }
       
       run_block_on_main(completion, true, nil);

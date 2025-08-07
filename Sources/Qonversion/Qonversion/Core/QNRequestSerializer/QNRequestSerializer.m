@@ -6,6 +6,7 @@
 #import "QONExperiment.h"
 #import "QONExperimentGroup.h"
 #import "QONStoreKit2PurchaseModel.h"
+#import "QONPurchaseOptions.h"
 
 @interface QNRequestSerializer ()
 
@@ -25,17 +26,10 @@ NS_ASSUME_NONNULL_BEGIN
   return QNUserInfo.overallData;
 }
 
-- (NSDictionary *)pushTokenData {
-  NSMutableDictionary *data = [NSMutableDictionary new];
-  data[@"push_token"] = [[QNDevice current] pushNotificationsToken];
-  data[@"device_id"] = [[QNDevice current] vendorID];
-       
-  return [data copy];
-}
-
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction
-                       receipt:(nullable NSString *)receipt {
+                       receipt:(nullable NSString *)receipt
+               purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions {
 
   NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithDictionary:self.mainData];
   NSMutableDictionary *purchaseDict = [[NSMutableDictionary alloc] init];
@@ -71,6 +65,38 @@ NS_ASSUME_NONNULL_BEGIN
     }
   }
   
+  if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, visionOS 1.0, tvOS 12.2, *)) {
+    NSString *offerId = transaction.payment.paymentDiscount.identifier;
+    if (offerId.length > 0) {
+      NSMutableDictionary *promoOffer = [[NSMutableDictionary alloc] init];
+      SKProductDiscount *purchasedDiscount = nil;
+      for (SKProductDiscount *discount in product.discounts) {
+        if ([discount.identifier isEqualToString:offerId]) {
+          purchasedDiscount = discount;
+        }
+      }
+      
+      if (purchasedDiscount) {
+        promoOffer[@"id"] = offerId;
+        promoOffer[@"value"] = purchasedDiscount.price.stringValue;
+        promoOffer[@"number_of_periods"] = @(purchasedDiscount.numberOfPeriods).stringValue;
+        promoOffer[@"period_number_of_units"] = @(purchasedDiscount.subscriptionPeriod.numberOfUnits).stringValue;
+        promoOffer[@"period_unit"] = @(purchasedDiscount.subscriptionPeriod.unit).stringValue;
+        promoOffer[@"payment_mode"] = @(purchasedDiscount.paymentMode).stringValue;
+
+        result[@"promo_offer"] = [promoOffer copy];
+      }
+    }
+  }
+  
+  if (purchaseOptions.contextKeys.count > 0) {
+    purchaseDict[@"context_keys"] = purchaseOptions.contextKeys;
+  }
+
+  if (purchaseOptions.screenUid) {
+    purchaseDict[@"screen_uid"] = purchaseOptions.screenUid;
+  }
+  
   if (@available(iOS 13.0, macos 10.15, tvOS 13.0, *)) {
     NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
     purchaseDict[@"country"] = countryCode;
@@ -79,6 +105,18 @@ NS_ASSUME_NONNULL_BEGIN
   result[@"purchase"] = purchaseDict;
   
   return result;
+}
+
+- (NSDictionary *)promotionalOfferInfoForProduct:(QONProduct *)product
+                                      identityId:(NSString *)identityId
+                                         receipt:(nullable NSString *)receipt {
+  NSMutableDictionary *result = [NSMutableDictionary new];
+  
+  result[@"product"] = product.storeID;
+  result[@"app_account_token"] = identityId;
+  result[@"app_bundle_id"] = [NSBundle mainBundle].bundleIdentifier;
+  
+  return [result copy];
 }
 
 - (NSDictionary *)purchaseInfo:(QONStoreKit2PurchaseModel *)purchaseModel
@@ -108,6 +146,16 @@ NS_ASSUME_NONNULL_BEGIN
   
   result[@"introductory_offer"] = introOffer.count > 0 ? introOffer : nil;
   
+  NSMutableDictionary *promoOffer = [[NSMutableDictionary alloc] init];
+  promoOffer[@"id"] = purchaseModel.promoOfferId;
+  promoOffer[@"value"] = purchaseModel.promoOfferPrice;
+  promoOffer[@"number_of_periods"] = purchaseModel.promoOfferNumberOfPeriods;
+  promoOffer[@"period_number_of_units"] = purchaseModel.promoOfferPeriodNumberOfUnits;
+  promoOffer[@"period_unit"] = purchaseModel.promoOfferPeriodUnit;
+  promoOffer[@"payment_mode"] = purchaseModel.promoOfferPaymentMode;
+
+  result[@"promo_offer"] = [promoOffer copy];
+  
   purchaseDict[@"country"] = purchaseModel.storefrontCountryCode;
   
   result[@"purchase"] = purchaseDict;
@@ -134,6 +182,15 @@ NS_ASSUME_NONNULL_BEGIN
   result[@"products_local_data"] = productsLocalData;
   
   return [result copy];
+}
+
+- (NSURLRequest *)addTryCountToHeader:(NSNumber *)tryCount request:(NSURLRequest *)request {
+  NSMutableURLRequest *mutableRequest = [request mutableCopy];
+  NSString *attempt = [NSString stringWithFormat:@"%ld", (long)tryCount.integerValue + 1];
+  [mutableRequest addValue:attempt forHTTPHeaderField:@"Attempt"];
+  request = [mutableRequest copy];
+  
+  return request;
 }
 
 - (NSDictionary *)attributionDataWithDict:(NSDictionary *)data fromProvider:(QONAttributionProvider)provider {
@@ -163,10 +220,12 @@ NS_ASSUME_NONNULL_BEGIN
   }
   
   NSString *_uid = nil;
+#if !(TARGET_OS_WATCH || TARGET_OS_VISION)
   NSString *af_uid = QNDevice.current.afUserID;
   if (af_uid && provider == QONAttributionProviderAppsFlyer) {
     _uid = af_uid;
   }
+#endif
   
   [providerData setValue:data forKey:@"d"];
   

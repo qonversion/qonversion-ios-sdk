@@ -13,6 +13,9 @@ import FirebaseAuth
 
 class ViewController: UIViewController {
   
+  let firstPurchaseButtonProduct = "weekly"
+  let secondPurchaseButtonProduct = "in_app"
+  
   @IBOutlet weak var mainProductSubscriptionButton: UIButton!
   @IBOutlet weak var inAppPurchaseButton: UIButton!
   @IBOutlet weak var offeringsButton: UIButton!
@@ -80,21 +83,21 @@ class ViewController: UIViewController {
       
       self.products = result
       
-      if let inAppPurchase = result["consumable"] {
-        let permission: Qonversion.Entitlement? = self.permissions["standart"]
-        let isActive = permission?.isActive ?? false
-        let title: String = isActive ? "Successfully purchased" : "Buy for \(inAppPurchase.prettyPrice)"
-        self.inAppPurchaseButton.setTitle(title, for: .normal)
-        self.inAppPurchaseButton.backgroundColor = isActive ? .systemGreen : self.inAppPurchaseButton.backgroundColor
-        self.checkActivePermissionsButton.isHidden = isActive ? true : false
-      }
-      
-      if let mainSubscription = result["subs_plus_trial"] {
+      if let mainSubscription = result[firstPurchaseButtonProduct] {
         let permission: Qonversion.Entitlement? = self.permissions["plus"]
         let isActive = permission?.isActive ?? false
         let title: String = isActive ? "Successfully purchased" : "Subscribe for \(mainSubscription.prettyPrice) / \(mainSubscription.prettyDuration)"
         self.mainProductSubscriptionButton.setTitle(title, for: .normal)
         self.mainProductSubscriptionButton.backgroundColor = isActive ? .systemGreen : self.mainProductSubscriptionButton.backgroundColor
+        self.checkActivePermissionsButton.isHidden = isActive ? true : false
+      }
+      
+      if let inAppPurchase = result[secondPurchaseButtonProduct] {
+        let permission: Qonversion.Entitlement? = self.permissions["standart"]
+        let isActive = permission?.isActive ?? false
+        let title: String = isActive ? "Successfully purchased" : "Buy for \(inAppPurchase.prettyPrice)"
+        self.inAppPurchaseButton.setTitle(title, for: .normal)
+        self.inAppPurchaseButton.backgroundColor = isActive ? .systemGreen : self.inAppPurchaseButton.backgroundColor
         self.checkActivePermissionsButton.isHidden = isActive ? true : false
       }
     }
@@ -117,7 +120,7 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapMainProductSubscriptionButton(_ sender: Any) {
-    if let product = self.products["subs_plus_trial"] {
+    if let product = self.products[firstPurchaseButtonProduct] {
       activityIndicator.startAnimating()
       Qonversion.shared().purchase(product.qonversionID) { [weak self] (result, error, flag) in
         guard let self = self else { return }
@@ -138,7 +141,7 @@ class ViewController: UIViewController {
   }
   
   @IBAction func didTapInAppPurchaseButton(_ sender: Any) {
-    if let product = self.products["consumable"] {
+    if let product = self.products[secondPurchaseButtonProduct] {
       activityIndicator.startAnimating()
       Qonversion.shared().purchaseProduct(product) { [weak self] (result, error, flag) in
         guard let self = self else { return }
@@ -148,7 +151,6 @@ class ViewController: UIViewController {
         if let error = error {
           return self.showAlert(with: "Error", message: error.localizedDescription)
         }
-        
         if !result.isEmpty {
           self.inAppPurchaseButton.setTitle("Successfully purchased", for: .normal)
           self.inAppPurchaseButton.backgroundColor = .systemGreen

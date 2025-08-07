@@ -10,17 +10,17 @@
 #import <net/if_dl.h>
 #endif
 
+#if TARGET_OS_WATCH
+#import <WatchKit/WatchKit.h>
+#endif
 
 #import <sys/sysctl.h>
 #import <sys/types.h>
 
 static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
-static NSString * const kPushTokenKey = @"pushToken";
-static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
 
 @interface QNDevice ()
 
-@property (readwrite, copy, nonatomic) NSString *pushNotificationsToken;
 @property (strong, nonatomic) id<QNLocalStorage> persistentStorage;
 @property (assign, nonatomic) BOOL idfaProhibited;
 
@@ -47,9 +47,7 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
     QNUserDefaultsStorage *storage = [QNUserDefaultsStorage new];
     storage.userDefaults = [[NSUserDefaults alloc] initWithSuiteName:kUserDefaultsSuiteName];
     _persistentStorage = storage;
-    
-    NSString *token = [_persistentStorage loadObjectForKey:kPushTokenKey];
-    _pushNotificationsToken = [token isKindOfClass:[NSString class]] ? token : nil;
+
     _idfaProhibited = NO;
   }
   
@@ -79,8 +77,10 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
 
 - (NSString *)osVersion {
   if (!_osVersion) {
-  #if UI_DEVICE
+  #if UI_DEVICE || TARGET_OS_VISION
     _osVersion = [[UIDevice currentDevice] systemVersion];
+  #elif TARGET_OS_WATCH
+    _osVersion = [self getWatchOSVersion];
   #else
     NSOperatingSystemVersion systemVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
     _osVersion = [NSString stringWithFormat:@"%ld.%ld.%ld",
@@ -91,6 +91,18 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
   }
   return _osVersion;
 }
+
+#if TARGET_OS_WATCH
+- (NSString*)getWatchOSVersion {
+  NSOperatingSystemVersion systemVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+  return [NSString stringWithFormat:@"%ld.%ld.%ld",
+          (long)systemVersion.majorVersion,
+          (long)systemVersion.minorVersion,
+          (long)systemVersion.patchVersion];
+}
+#endif
+
+
 
 - (NSString *)manufacturer {
   return @"Apple";
@@ -105,6 +117,9 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
 
 - (nullable NSString *)installDate {
   if (!_installDate) {
+#if TARGET_OS_WATCH || TARGET_OS_VISION
+    _installDate = [self getWatchInstallDate];
+#else
     NSURL *docsURL = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
     if (docsURL) {
       NSDictionary *docsAttributes = [NSFileManager.defaultManager attributesOfItemAtPath:docsURL.path error:nil];
@@ -113,13 +128,48 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
         _installDate = [NSString stringWithFormat:@"%ld", (long)round(date.timeIntervalSince1970)];
       }
     }
+#endif
   }
   
   return _installDate;
 }
 
+#if TARGET_OS_WATCH || TARGET_OS_VISION
+- (NSString*)getWatchInstallDate {
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  NSString *installDate = [defaults stringForKey:kKeyQInstallDate];
+  
+  if (!installDate) {
+    NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970];
+    installDate = [NSString stringWithFormat:@"%ld", (long)timestamp];
+    [defaults setObject:installDate forKey:kKeyQInstallDate];
+  }
+  
+  return installDate;
+}
+#endif
+
+#if TARGET_OS_WATCH
++ (NSString*)getWatchVendorID {
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  NSString *vendorID = [defaults stringForKey:@"qonversion.vendor.id"];
+  
+  if ([WKInterfaceDevice class] && !vendorID) {
+    vendorID = [[WKInterfaceDevice currentDevice] identifierForVendor].UUIDString;
+    [defaults setObject:vendorID forKey:@"qonversion.vendor.id"];
+  }
+  
+  return vendorID;
+}
+#endif
+
+
+
 - (NSString *)carrier {
   if (!_carrier) {
+#if TARGET_OS_WATCH || TARGET_OS_VISION
+    _carrier = @"Unknown";
+#else
     Class CTTelephonyNetworkInfo = NSClassFromString(@"CTTelephonyNetworkInfo");
     SEL subscriberCellularProvider = NSSelectorFromString(@"subscriberCellularProvider");
     SEL carrierName = NSSelectorFromString(@"carrierName");
@@ -139,6 +189,7 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
     if (!_carrier) {
       _carrier = @"Unknown";
     }
+#endif
   }
   return _carrier;
 }
@@ -163,32 +214,30 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
   return _language;
 }
 
-- (void)setPushNotificationsToken:(NSString *)token {
-  _pushNotificationsToken = token;
-  [self.persistentStorage storeObject:token forKey:kPushTokenKey];
-}
-
-- (BOOL)isPushTokenProcessed {
-  return [self.persistentStorage loadBoolforKey:kPushTokenProcessedKey];
-}
-
-- (void)setPushTokenProcessed:(BOOL)processed {
-  [self.persistentStorage storeBool:processed forKey:kPushTokenProcessedKey];
-}
-
 - (NSString *)advertiserID {
   if (!_advertiserID && !self.idfaProhibited) {
+#if TARGET_OS_WATCH || TARGET_OS_VISION
+    self.idfaProhibited = YES;
+    _advertiserID = nil;
+#else
     SEL selector = NSSelectorFromString(@"obtainAdvertisingID");
     if ([[QNDevice current] respondsToSelector:selector]) {
       _advertiserID = ((NSString * (*)(id, SEL))[[QNDevice current] methodForSelector:selector])([QNDevice current], selector);
     } else {
       self.idfaProhibited = YES;
     }
+#endif
   }
   
   return _advertiserID;
 }
 
+#if TARGET_OS_WATCH || TARGET_OS_VISION
+- (nullable NSString *)afUserID { return nil; }
+- (nullable NSString *)af5UserID { return nil; }
+- (nullable NSString *)af6UserID { return nil; }
+- (void)adjustUserIDWithCompletion:(void(^)(NSString *userId))completion { if (completion) { completion(nil); } }
+#else
 - (nullable NSString *)afUserID {
   return [self af5UserID] ?: [self af6UserID];
 }
@@ -276,21 +325,28 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
   return nil;
 }
 
-- (nullable NSString *)adjustUserID {
+- (void)adjustUserIDWithCompletion:(void(^)(NSString *userId))completion {
   Class Adjust = NSClassFromString(@"Adjust");
-  SEL adid = NSSelectorFromString(@"adid");
-  if (Adjust && adid) {
-    id (*imp1)(id, SEL) = (id (*)(id, SEL))[Adjust methodForSelector:adid];
-    NSString *adidString = nil;
-    if (imp1) {
-      adidString = imp1(Adjust, adid);
+  if (Adjust) {
+    SEL adid = NSSelectorFromString(@"adid");
+    SEL adidWithCompletion = NSSelectorFromString(@"adidWithCompletionHandler:");
+    if ([Adjust respondsToSelector:adid]) {
+      id (*imp1)(id, SEL) = (id (*)(id, SEL))[Adjust methodForSelector:adid];
+      NSString *adidString = nil;
+      if (imp1) {
+        adidString = imp1(Adjust, adid);
+      }
+      
+      completion(adidString);
+    } else if ([Adjust respondsToSelector:adidWithCompletion]) {
+      id (*imp1)(id, SEL, id) = (id (*)(id, SEL, id))[Adjust methodForSelector:adidWithCompletion];
+      if (imp1) {
+        imp1(Adjust, adidWithCompletion, completion);
+      }
     }
-    
-    return adidString;
   }
-  
-  return nil;
 }
+#endif
 
 - (NSString *)vendorID {
   if (!_vendorID) {
@@ -305,10 +361,12 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
 
 + (NSString*)getVendorID:(int) maxAttempts {
   NSString *identifier = nil;
-  #if UI_DEVICE
+  #if UI_DEVICE || TARGET_OS_VISION
       identifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
   #elif TARGET_OS_OSX
       identifier = [self getMacAddress];
+  #elif TARGET_OS_WATCH
+      identifier = [self getWatchVendorID];
   #else
     identifier = @"";
   #endif
@@ -323,7 +381,23 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
 }
 
 + (NSString*)getPlatformString {
-#if UI_DEVICE
+#if TARGET_OS_MACCATALYST
+  io_service_t service = IOServiceGetMatchingService(kIOMainPortDefault,
+                                                     IOServiceMatching("IOPlatformExpertDevice"));
+  CFStringRef model = IORegistryEntryCreateCFProperty(service,
+                                                      CFSTR("model"),
+                                                      kCFAllocatorDefault,
+                                                      0);
+
+  NSString *modelIdentifier = [[NSString alloc] initWithData:(__bridge NSData *)model
+                                                    encoding:NSUTF8StringEncoding];
+
+  CFRelease(model);
+  IOObjectRelease(service);
+  
+  return modelIdentifier;
+#else
+#if UI_DEVICE || TARGET_OS_WATCH || TARGET_OS_VISION
   const char *sysctl_name = "hw.machine";
 #else
   const char *sysctl_name = "hw.model";
@@ -335,6 +409,7 @@ static NSString * const kPushTokenProcessedKey = @"pushTokenProcessed";
   NSString *platform = [NSString stringWithUTF8String:machine];
   free(machine);
   return platform;
+#endif
 }
 
 + (NSString*)getDeviceModel {

@@ -20,6 +20,20 @@
                ReferencedContainer = "container:Qonversion.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "459DAB68243E329F0011ECF3"
+               BuildableName = "Qonversion.framework"
+               BlueprintName = "Qonversion"
+               ReferencedContainer = "container:Qonversion.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -28,6 +42,26 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "459DAB71243E329F0011ECF3"
+               BuildableName = "QonversionTests.xctest"
+               BlueprintName = "QonversionTests"
+               ReferencedContainer = "container:Qonversion.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "6A8A603E29DAD363008EC7D8"
+               BuildableName = "IntegrationTests.xctest"
+               BlueprintName = "IntegrationTests"
+               ReferencedContainer = "container:Qonversion.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

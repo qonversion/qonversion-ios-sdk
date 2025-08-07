@@ -8,17 +8,13 @@ target 'QonversionTests' do
   pod 'OCMock'
 end
 
-
 target 'Sample' do
-platform :ios, 12.0
-pod 'Firebase/Auth', '8.9.0'
-pod 'GoogleSignIn', '6.0.2'
-#pod 'Qonversion', :path => './'
+  platform :ios, 12.0
+  pod 'Firebase/Auth', '8.9.0'
+  pod 'GoogleSignIn', '6.0.2'
 end
 
-
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    puts target.name
-  end
+target 'Watch Sample Watch App' do
+  platform :watchos, '9.0'
+  pod 'Qonversion', :path => './'
 end

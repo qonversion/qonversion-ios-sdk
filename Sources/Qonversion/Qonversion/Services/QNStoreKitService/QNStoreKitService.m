@@ -1,6 +1,8 @@
 #import "QNStoreKitService.h"
 #import "QNUtils.h"
 #import "QNUserInfo.h"
+#import "QONPromotionalOffer.h"
+#import "QONPurchaseOptions.h"
 
 @interface QNStoreKitService() <SKPaymentTransactionObserver, SKProductsRequestDelegate>
 
@@ -51,11 +53,11 @@
   return self;
 }
 
-- (SKProduct *)purchase:(NSString *)productID {
+- (SKProduct *)purchase:(NSString *)productID options:(QONPurchaseOptions * _Nullable)options identityId:(NSString *)identityId {
   SKProduct *skProduct = self->_products[productID];
   
   if (skProduct) {
-    [self purchaseProduct:skProduct];
+    [self purchaseProduct:skProduct options:options identityId:identityId];
     
     return skProduct;
   } else {
@@ -64,16 +66,32 @@
 }
 
 - (void)purchaseProduct:(SKProduct *)product {
+  [self purchaseProduct:product options:nil identityId:nil];
+}
+
+- (void)purchaseProduct:(SKProduct *)product options:(QONPurchaseOptions * _Nullable)options identityId:(NSString *)identityId {
   @synchronized (self) {
     self->_purchasingCurrently = product.productIdentifier;
   }
   
-  SKPayment *payment = [SKPayment paymentWithProduct:product];
-  [[SKPaymentQueue defaultQueue] addPayment:payment];
+  SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:product];
+  
+  if (options.quantity > 1) {
+    payment.quantity = options.quantity;
+  }
+  
+  if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, visionOS 1.0, tvOS 12.2, *)) {
+    if (options.promoOffer) {
+      payment.paymentDiscount = options.promoOffer.paymentDiscount;
+      payment.applicationUsername = identityId;
+    }
+  }
+  
+  [[SKPaymentQueue defaultQueue] addPayment:[payment copy]];
 }
 
 - (void)presentCodeRedemptionSheet {
-#if TARGET_OS_IOS
+#if TARGET_OS_IOS || TARGET_OS_VISION
   if (@available(iOS 14.0, *)) {
     [[SKPaymentQueue defaultQueue] presentCodeRedemptionSheet];
   }
@@ -133,7 +151,12 @@
   NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
   
   if (!receiptData) {
-    return nil;
+    NSURL *url = [NSBundle mainBundle].appStoreReceiptURL;
+    receiptData = [NSData dataWithContentsOfURL:url];
+    
+    if (!receiptData) {
+      return nil;
+    }
   }
   
   return [receiptData base64EncodedStringWithOptions:0];
@@ -147,7 +170,7 @@
   }
 }
 
-#if (TARGET_OS_IOS && !TARGET_OS_MACCATALYST) || TARGET_OS_TV
+#if (TARGET_OS_IOS && !TARGET_OS_MACCATALYST) || TARGET_OS_TV || TARGET_OS_VISION
 - (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product {
   return [self.delegate paymentQueue:queue shouldAddStorePayment:payment forProduct:product];
 }
@@ -229,7 +252,12 @@
       
       for (SKPaymentTransaction *transaction in groupedTransactions) {
         BOOL isTheSameProductId = [previousHandledProductId isEqualToString:transaction.payment.productIdentifier];
-        if (!isTheSameProductId) {
+        if (@available(iOS 12.2, macOS 10.14.4, watchOS 6.2, visionOS 1.0, tvOS 12.2, *)) {
+          if (!isTheSameProductId || transaction.payment.paymentDiscount) {
+            [resultTransactions addObject:transaction];
+            previousHandledProductId = transaction.payment.productIdentifier;
+          }
+        } else if (!isTheSameProductId) {
           [resultTransactions addObject:transaction];
           previousHandledProductId = transaction.payment.productIdentifier;
         }
@@ -410,6 +438,7 @@
 
 - (void)finishReceiptFetchRequest:(SKRequest *)request {
   @synchronized(self) {
+    [self.receiptRefreshRequest cancel];
     self.receiptRefreshRequest = nil;
     NSArray<QNStoreKitServiceReceiptFetchCompletionHandler> *handlers = [self.receiptRefreshCompletionHandlers copy];
     [self.receiptRefreshCompletionHandlers removeAllObjects];

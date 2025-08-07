@@ -27,6 +27,7 @@ typedef NS_ENUM(NSInteger, QONUserPropertyKey) {
     QONUserPropertyKeyPushWooshHwId,
     QONUserPropertyKeyAppMetricaDeviceId,
     QONUserPropertyKeyAppMetricaUserProfileId,
+    QONUserPropertyKeyTenjinAnalyticsInstallationId,
     QONUserPropertyKeyCustom,
 } NS_SWIFT_NAME(Qonversion.UserPropertyKey);
 
