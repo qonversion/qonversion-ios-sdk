@@ -162,7 +162,7 @@
 
 
 + (NSDictionary<NSString *, QONIntroEligibility *> * _Nonnull)mapProductsEligibility:(NSDictionary * _Nullable)dict {
-  NSDictionary *introEligibilityStatuses = @{@"non_intro_or_trial_product": @(QONIntroEligibilityStatusNonIntroProduct),
+  NSDictionary *introEligibilityStatuses = @{@"non_intro_or_trial_product": @(QONIntroEligibilityStatusNonIntroOrTrialProduct),
                                              @"intro_or_trial_eligible": @(QONIntroEligibilityStatusEligible),
                                              @"intro_or_trial_ineligible": @(QONIntroEligibilityStatusIneligible)};
   
@@ -392,7 +392,7 @@
   QNMapperObject *object = [QNMapperObject new];
   
   if (!dict || ![dict isKindOfClass:NSDictionary.class]) {
-    [object setError:[QONErrors errorWithCode:QONAPIErrorFailedReceiveData]];
+    [object setError:[QONErrors internalErrorWithCode:QONErrorCodeFailedToReceiveData]];
     return object;
   }
   
@@ -403,7 +403,7 @@
     [object setData:resultData];
     return object;
   } else {
-    [object setError:[QONErrors errorWithCode:QONAPIErrorIncorrectRequest]];
+    [object setError:[QONErrors internalErrorWithCode:QONErrorCodeIncorrectRequest]];
     return object;
   }
 }

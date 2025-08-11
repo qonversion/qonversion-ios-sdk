@@ -115,7 +115,7 @@
   NSString *userID = @"random_user_id";
   NSString *anonUserID = @"anon_user_id";
   NSString *identityID = @"";
-  NSError *expectedError = [QONErrors errorWithQONErrorCode:QONErrorInternalError]; // just a random error
+  NSError *expectedError = [QONErrors errorWithQONErrorCode:QONErrorCodeInternalError]; // just a random error
   
   __block NSString *resultString;
   __block NSError *resultError;

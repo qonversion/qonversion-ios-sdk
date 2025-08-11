@@ -10,7 +10,7 @@
 
 typedef NS_ENUM(NSInteger, QONIntroEligibilityStatus) {
   QONIntroEligibilityStatusUnknown = 0,
-  QONIntroEligibilityStatusNonIntroProduct,
+  QONIntroEligibilityStatusNonIntroOrTrialProduct,
   QONIntroEligibilityStatusIneligible,
   QONIntroEligibilityStatusEligible
 } NS_SWIFT_NAME(Qonversion.IntroEligibilityStatus);
