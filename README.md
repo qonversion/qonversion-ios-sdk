@@ -121,14 +121,14 @@ Convinced? Let's go!
 ### CocoaPods
 
 ```ruby
-# Qonversion SDK (includes NoCodes functionality)
+# Qonversion SDK (includes No-Codes functionality)
 pod 'Qonversion'
 ```
 
 ### Swift Package Manager
 
 ```swift
-// Qonversion SDK (includes NoCodes functionality)
+// Qonversion SDK (includes No-Codes functionality)
 .package(url: "https://github.com/qonversion/qonversion-ios-sdk.git", from: "5.15.0")
 ```
 
@@ -141,7 +141,7 @@ import NoCodes
 // Initialize Qonversion SDK
 Qonversion.shared().configure(with: "your_project_key")
 
-// Use NoCodes functionality
+// Use No-Codes functionality
 NoCodes.shared.showScreen(withContextKey: "welcome")
 ```
 

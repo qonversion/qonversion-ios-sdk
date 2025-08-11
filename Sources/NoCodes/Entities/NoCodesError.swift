@@ -10,7 +10,7 @@ import Foundation
 
 #if os(iOS)
 
-/// NoCodesError type from NoCodes module
+/// NoCodesError type from No-Codes module
 public struct NoCodesError: Error {
   public let type: NoCodesErrorType
   public let message: String

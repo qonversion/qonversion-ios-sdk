@@ -13,37 +13,37 @@ import UIKit
 
 #if os(iOS)
 
-/// Delegate protocol from NoCodes module
+/// Delegate protocol from No-Codes module
 public protocol NoCodesDelegate {
   /// Return a source ViewController for navigation
   func controllerForNavigation() -> UIViewController?
   
-  /// Called when NoCodes screen is shown
+  /// Called when No-Codes screen is shown
   /// - Parameters:
   ///   - id: Screen identifier
   func noCodesHasShownScreen(id: String)
   
-  /// Called when NoCodes flow starts executing an action
+  /// Called when No-Codes flow starts executing an action
   /// - Parameters:
   ///   - action: ``NoCodesAction``
   func noCodesStartsExecuting(action: NoCodesAction)
   
-  /// Called when NoCodes flow fails to execute an action
+  /// Called when No-Codes flow fails to execute an action
   /// - Parameters:
   ///   - action: ``NoCodesAction``
   ///   - error: error details
   func noCodesFailedToExecute(action: NoCodesAction, error: Error?)
   
-  /// Called when NoCodes flow finishes executing an action
+  /// Called when No-Codes flow finishes executing an action
   /// - Parameters:
   ///   - action: ``NoCodesAction``
   /// For example, if the user made a purchase then action.type == .purchase
   func noCodesFinishedExecuting(action: NoCodesAction)
   
-  /// Called when NoCodes flow is finished and the NoCodes screen is closed
+  /// Called when No-Codes flow is finished and the No-Codes screen is closed
   func noCodesFinished()
   
-  /// Called when NoCodes screen loading failed
+  /// Called when No-Codes screen loading failed
   /// Don't forget to close the screen using `NoCodes.shared.close()`
   /// - Parameters:
   ///   - error: error details
