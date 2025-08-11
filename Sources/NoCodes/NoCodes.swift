@@ -14,13 +14,13 @@ public final class NoCodes {
   
   // MARK: - Public
   
-  /// Use this variable to get the current initialized instance of the Qonversion NoCodes SDK.
+  /// Use this variable to get the current initialized instance of the Qonversion No-Codes SDK.
   /// Please, use the variable only after initializing the SDK.
   /// - Returns: the current initialized instance of the ``NoCodes/NoCodes`` SDK
   public static let shared = NoCodes()
   private var flowCoordinator: NoCodesFlowCoordinator? = nil
   
-  /// Use this function to initialize the NoCodes SDK.
+  /// Use this function to initialize the No-Codes SDK.
   /// - Parameters:
   ///   - configuration: ``NoCodesConfiguration`` data for the SDK configuration.
   /// - Returns: ``NoCodes`` instance of the SDK.
@@ -32,7 +32,7 @@ public final class NoCodes {
     return NoCodes.shared
   }
   
-  /// Use this function to set the delegate that will report what is happening inside NoCodes, what actions are being executed/failed, and so on.
+  /// Use this function to set the delegate that will report what is happening inside No-Codes, what actions are being executed/failed, and so on.
   /// - Parameters:
   ///   - delegate: ``NoCodesDelegate`` object.
   public func set(delegate: NoCodesDelegate) {
@@ -41,8 +41,8 @@ public final class NoCodes {
   
   /// Use this function to set the screen customization delegate.
   /// - Parameters:
-  ///   - delegate: screen customization ``ScreenCustomizationDelegate`` object.
-  public func set(screenCustomizationDelegate: ScreenCustomizationDelegate) {
+  ///   - delegate: screen customization ``NoCodesScreenCustomizationDelegate`` object.
+  public func set(screenCustomizationDelegate: NoCodesScreenCustomizationDelegate) {
     flowCoordinator?.set(screenCustomizationDelegate: screenCustomizationDelegate)
   }
   
@@ -63,7 +63,7 @@ public final class NoCodes {
     flowCoordinator?.showScreen(with: id)
   }
   
-  /// Use this function to close all ``NoCodes`` screens.
+  /// Use this function to close all ``No-Codes`` screens.
   public func close() {
     flowCoordinator?.close()
   }

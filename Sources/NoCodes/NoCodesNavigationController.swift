@@ -1,6 +1,6 @@
 //
 //  NoCodesNavigationController.swift
-//  QonversionNoCodes
+//  NoCodes
 //
 //  Created by Suren Sarkisyan on 23.12.2024.
 //  Copyright © 2024 Qonversion Inc. All rights reserved.

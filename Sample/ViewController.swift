@@ -11,12 +11,10 @@ import Qonversion
 import GoogleSignIn
 import FirebaseAuth
 
-class ViewController: UIViewController, NoCodesDelegate, ScreenCustomizationDelegate {
+class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizationDelegate {
   func noCodesFailedToExecute(action: NoCodesAction, error: (any Error)?) {
     
   }
-  
-  
   
   func noCodesFinishedExecuting(action: NoCodesAction) {
     
@@ -247,13 +245,5 @@ extension Qonversion.Product {
     @unknown default:
       return ""
     }
-  }
-}
-
-
-
-extension ViewController: Qonversion.ScreenCustomizationDelegate {
-  func presentationConfigurationForScreen(_ screenId: String) -> Qonversion.ScreenPresentationConfiguration {
-    return Qonversion.ScreenPresentationConfiguration(presentationStyle: .push, animated: true)
   }
 }

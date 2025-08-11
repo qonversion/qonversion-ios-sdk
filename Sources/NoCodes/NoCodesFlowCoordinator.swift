@@ -14,13 +14,13 @@ import UIKit
 final class NoCodesFlowCoordinator {
   
   private var delegate: NoCodesDelegate?
-  private var screenCustomizationDelegate: ScreenCustomizationDelegate?
+  private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   private let noCodesService: NoCodesServiceInterface
   private let viewsAssembly: ViewsAssembly
   private var currentVC: NoCodesViewController?
   private var logger: LoggerWrapper!
   
-  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: ScreenCustomizationDelegate?, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper) {
+  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper) {
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
     self.noCodesService = noCodesService
@@ -32,7 +32,7 @@ final class NoCodesFlowCoordinator {
     self.delegate = delegate
   }
   
-  func set(screenCustomizationDelegate: ScreenCustomizationDelegate) {
+  func set(screenCustomizationDelegate: NoCodesScreenCustomizationDelegate) {
     self.screenCustomizationDelegate = screenCustomizationDelegate
   }
   

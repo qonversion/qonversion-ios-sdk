@@ -10,7 +10,7 @@ import Foundation
 
 #if os(iOS)
 
-/// Configuration struct from NoCodes module
+/// Configuration struct from No-Codes module
 public struct NoCodesConfiguration {
   /// Your project key from Qonversion Dashboard to setup the SDK
   let projectKey: String
@@ -19,7 +19,7 @@ public struct NoCodesConfiguration {
   let delegate: NoCodesDelegate?
   
   /// Screen customization delegate
-  let screenCustomizationDelegate: ScreenCustomizationDelegate?
+  let screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   
   /// Optional custom fallback file name. If not provided, defaults to "nocodes_fallbacks.json"
   let fallbackFileName: String?
@@ -29,9 +29,9 @@ public struct NoCodesConfiguration {
   /// - Parameters:
   ///   - projectKey: Your project key from Qonversion Dashboard to setup the SDK
   ///   - delegate: delegate object.
-  ///   - screenCustomizationDelegate: ``ScreenCustomizationDelegate`` screen customization delegate object.
+  ///   - screenCustomizationDelegate: ``NoCodesScreenCustomizationDelegate`` screen customization delegate object.
   ///   - fallbackFileName: Optional custom fallback file name. If not provided, defaults to "nocodes_fallbacks.json"
-  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: ScreenCustomizationDelegate? = nil, fallbackFileName: String? = nil) {
+  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, fallbackFileName: String? = nil) {
     self.projectKey = projectKey
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate

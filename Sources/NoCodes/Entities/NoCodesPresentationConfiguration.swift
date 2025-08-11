@@ -10,20 +10,20 @@ import Foundation
 
 #if os(iOS)
 
-/// PresentationStyle enum from NoCodes module
-public enum PresentationStyle {
+/// NoCodesPresentationStyle enum from No-Codes module
+public enum NoCodesPresentationStyle {
   case popover
   case push
   case fullScreen
 }
 
-/// PresentationConfiguration type from NoCodes module
+/// PresentationConfiguration type from No-Codes module
 public struct NoCodesPresentationConfiguration {
   let animated: Bool
-  let presentationStyle: PresentationStyle
+  let presentationStyle: NoCodesPresentationStyle
   let statusBarHidden: Bool
   
-  public init(animated: Bool, presentationStyle: PresentationStyle, statusBarHidden: Bool = false) {
+  public init(animated: Bool, presentationStyle: NoCodesPresentationStyle, statusBarHidden: Bool = false) {
     self.animated = animated
     self.presentationStyle = presentationStyle
     self.statusBarHidden = statusBarHidden

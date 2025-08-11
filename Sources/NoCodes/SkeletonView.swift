@@ -1,6 +1,6 @@
 //
 //  SkeletonView.swift
-//  QonversionNoCodes
+//  NoCodes
 //
 //  Created by Suren Sarkisyan on 03.04.2025.
 //  Copyright © 2025 Qonversion Inc. All rights reserved.

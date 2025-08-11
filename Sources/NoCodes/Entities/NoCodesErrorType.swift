@@ -10,7 +10,7 @@ import Foundation
 
 #if os(iOS)
 
-/// NoCodesErrorType from NoCodes module
+/// NoCodesErrorType from No-Codes module
 public enum NoCodesErrorType {
   case unknown
   case `internal`

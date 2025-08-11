@@ -67,63 +67,62 @@
 		701BAC102C524626009B16FB /* QONPurchaseOptions.m in Sources */ = {isa = PBXBuildFile; fileRef = 701BAC0F2C524626009B16FB /* QONPurchaseOptions.m */; };
 		701BAC112C524626009B16FB /* QONPurchaseOptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 701BAC0E2C524626009B16FB /* QONPurchaseOptions.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70283DF629F66FAC00D138BC /* PurchasesMapper.swift */; };
-		702BF8B629531A68000B6C3E /* QONScreenCustomizationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 702BF8B529531A68000B6C3E /* QONScreenCustomizationDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		702DBDEC2A3216C900D590D0 /* QONExperiment+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 702DBDEB2A3216C900D590D0 /* QONExperiment+Protected.h */; };
 		7042E7822C1C5DB700C5AECF /* QONFallbackService.h in Headers */ = {isa = PBXBuildFile; fileRef = 7042E77F2C1C5DB700C5AECF /* QONFallbackService.h */; };
 		7042E7832C1C5DB700C5AECF /* QONFallbackService.m in Sources */ = {isa = PBXBuildFile; fileRef = 7042E7802C1C5DB700C5AECF /* QONFallbackService.m */; };
 		7042E7872C1C5DDE00C5AECF /* QONFallbackMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 7042E7842C1C5DDE00C5AECF /* QONFallbackMapper.h */; };
 		7042E7882C1C5DDE00C5AECF /* QONFallbackMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7042E7852C1C5DDE00C5AECF /* QONFallbackMapper.m */; };
 		70454FFF2C5FD4FA00B03017 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70454FFE2C5FD4FA00B03017 /* Extensions.swift */; };
-		705D4D482E3C5AEB00F327C7 /* NoCodesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D382E3C5AEB00F327C7 /* NoCodesService.swift */; };
-		705D4D492E3C5AEB00F327C7 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D3E2E3C5AEB00F327C7 /* Configuration.swift */; };
-		705D4D4A2E3C5AEB00F327C7 /* HeadersBuilderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D212E3C5AEB00F327C7 /* HeadersBuilderInterface.swift */; };
-		705D4D4B2E3C5AEB00F327C7 /* DeviceInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D0D2E3C5AEB00F327C7 /* DeviceInfoCollector.swift */; };
-		705D4D4C2E3C5AEB00F327C7 /* HeadersBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D202E3C5AEB00F327C7 /* HeadersBuilder.swift */; };
-		705D4D4D2E3C5AEB00F327C7 /* RequestType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D2D2E3C5AEB00F327C7 /* RequestType.swift */; };
-		705D4D4E2E3C5AEB00F327C7 /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D082E3C5AEB00F327C7 /* MiscAssembly.swift */; };
-		705D4D4F2E3C5AEB00F327C7 /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D112E3C5AEB00F327C7 /* Device.swift */; };
-		705D4D502E3C5AEB00F327C7 /* NoCodesMapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D182E3C5AEB00F327C7 /* NoCodesMapperInterface.swift */; };
-		705D4D512E3C5AEB00F327C7 /* NoCodesErrorType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D132E3C5AEB00F327C7 /* NoCodesErrorType.swift */; };
-		705D4D522E3C5AEB00F327C7 /* NoCodesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D452E3C5AEB00F327C7 /* NoCodesViewController.swift */; };
-		705D4D532E3C5AEB00F327C7 /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D2C2E3C5AEB00F327C7 /* Request.swift */; };
-		705D4D542E3C5AEB00F327C7 /* NoCodesNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D442E3C5AEB00F327C7 /* NoCodesNavigationController.swift */; };
-		705D4D552E3C5AEB00F327C7 /* RateLimiterInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D2A2E3C5AEB00F327C7 /* RateLimiterInterface.swift */; };
-		705D4D562E3C5AEB00F327C7 /* Screen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D152E3C5AEB00F327C7 /* Screen.swift */; };
-		705D4D572E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D0A2E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift */; };
-		705D4D582E3C5AEB00F327C7 /* NoCodes.docc in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D412E3C5AEB00F327C7 /* NoCodes.docc */; };
-		705D4D592E3C5AEB00F327C7 /* NetworkProviderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D272E3C5AEB00F327C7 /* NetworkProviderInterface.swift */; };
-		705D4D5A2E3C5AEB00F327C7 /* NoCodesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D092E3C5AEB00F327C7 /* NoCodesAssembly.swift */; };
-		705D4D5B2E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D242E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift */; };
-		705D4D5C2E3C5AEB00F327C7 /* Header.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D1F2E3C5AEB00F327C7 /* Header.swift */; };
-		705D4D5D2E3C5AEB00F327C7 /* NetworkProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D262E3C5AEB00F327C7 /* NetworkProvider.swift */; };
-		705D4D5E2E3C5AEB00F327C7 /* RequestProcessorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D302E3C5AEB00F327C7 /* RequestProcessorInterface.swift */; };
-		705D4D5F2E3C5AEB00F327C7 /* ResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D322E3C5AEB00F327C7 /* ResponseDecoder.swift */; };
-		705D4D602E3C5AEB00F327C7 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D3C2E3C5AEB00F327C7 /* Utils.swift */; };
-		705D4D612E3C5AEB00F327C7 /* FallbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D362E3C5AEB00F327C7 /* FallbackService.swift */; };
-		705D4D622E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D0E2E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift */; };
-		705D4D632E3C5AEB00F327C7 /* RateLimiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D292E3C5AEB00F327C7 /* RateLimiter.swift */; };
-		705D4D642E3C5AEB00F327C7 /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D462E3C5AEB00F327C7 /* SkeletonView.swift */; };
-		705D4D652E3C5AEB00F327C7 /* ErrorConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D1D2E3C5AEB00F327C7 /* ErrorConstants.swift */; };
-		705D4D662E3C5AEB00F327C7 /* ResponseDecoderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D332E3C5AEB00F327C7 /* ResponseDecoderInterface.swift */; };
-		705D4D672E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D432E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift */; };
-		705D4D682E3C5AEB00F327C7 /* EmptyApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D1B2E3C5AEB00F327C7 /* EmptyApiResponse.swift */; };
-		705D4D692E3C5AEB00F327C7 /* ApiError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D1A2E3C5AEB00F327C7 /* ApiError.swift */; };
-		705D4D6A2E3C5AEB00F327C7 /* RequestProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D2F2E3C5AEB00F327C7 /* RequestProcessor.swift */; };
-		705D4D6B2E3C5AEB00F327C7 /* NoCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D422E3C5AEB00F327C7 /* NoCodes.swift */; };
-		705D4D6C2E3C5AEB00F327C7 /* Delegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D3F2E3C5AEB00F327C7 /* Delegate.swift */; };
-		705D4D6D2E3C5AEB00F327C7 /* Action.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D102E3C5AEB00F327C7 /* Action.swift */; };
-		705D4D6E2E3C5AEB00F327C7 /* PresentationConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D142E3C5AEB00F327C7 /* PresentationConfiguration.swift */; };
-		705D4D6F2E3C5AEB00F327C7 /* NetworkErrorHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D232E3C5AEB00F327C7 /* NetworkErrorHandler.swift */; };
-		705D4D702E3C5AEB00F327C7 /* FallbackServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D372E3C5AEB00F327C7 /* FallbackServiceInterface.swift */; };
-		705D4D712E3C5AEB00F327C7 /* LoggerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D3B2E3C5AEB00F327C7 /* LoggerWrapper.swift */; };
-		705D4D722E3C5AEB00F327C7 /* NoCodesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D172E3C5AEB00F327C7 /* NoCodesMapper.swift */; };
-		705D4D732E3C5AEB00F327C7 /* NoCodesServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D392E3C5AEB00F327C7 /* NoCodesServiceInterface.swift */; };
-		705D4D742E3C5AEB00F327C7 /* ServicesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D0B2E3C5AEB00F327C7 /* ServicesAssembly.swift */; };
-		705D4D752E3C5AEB00F327C7 /* NoCodesError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705D4D122E3C5AEB00F327C7 /* NoCodesError.swift */; };
 		707734F42A9F607700CFF742 /* QONRemoteConfigurationSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		707734F52A9F607700CFF742 /* QONRemoteConfigurationSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */; };
 		707734F72A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */; };
 		70893C9A2B3EC136002C6B82 /* expected_entitlements.json in Resources */ = {isa = PBXBuildFile; fileRef = 70893C992B3EC136002C6B82 /* expected_entitlements.json */; };
+		708C1A0D2E4A21BC00252C6E /* NoCodesMapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19DE2E4A21BC00252C6E /* NoCodesMapperInterface.swift */; };
+		708C1A0E2E4A21BC00252C6E /* NoCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A062E4A21BC00252C6E /* NoCodes.swift */; };
+		708C1A0F2E4A21BC00252C6E /* NetworkProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19EC2E4A21BC00252C6E /* NetworkProvider.swift */; };
+		708C1A102E4A21BC00252C6E /* ApiError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E02E4A21BC00252C6E /* ApiError.swift */; };
+		708C1A112E4A21BC00252C6E /* FallbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19FC2E4A21BC00252C6E /* FallbackService.swift */; };
+		708C1A122E4A21BC00252C6E /* NoCodesViewsAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D02E4A21BC00252C6E /* NoCodesViewsAssembly.swift */; };
+		708C1A132E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D42E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift */; };
+		708C1A142E4A21BC00252C6E /* NoCodesError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D82E4A21BC00252C6E /* NoCodesError.swift */; };
+		708C1A152E4A21BC00252C6E /* HeadersBuilderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E72E4A21BC00252C6E /* HeadersBuilderInterface.swift */; };
+		708C1A162E4A21BC00252C6E /* NoCodesNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A092E4A21BC00252C6E /* NoCodesNavigationController.swift */; };
+		708C1A172E4A21BC00252C6E /* NoCodesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19FE2E4A21BC00252C6E /* NoCodesService.swift */; };
+		708C1A182E4A21BC00252C6E /* NetworkErrorHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E92E4A21BC00252C6E /* NetworkErrorHandler.swift */; };
+		708C1A192E4A21BC00252C6E /* NoCodesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19CF2E4A21BC00252C6E /* NoCodesAssembly.swift */; };
+		708C1A1A2E4A21BC00252C6E /* RequestProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19F52E4A21BC00252C6E /* RequestProcessor.swift */; };
+		708C1A1B2E4A21BC00252C6E /* RateLimiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19EF2E4A21BC00252C6E /* RateLimiter.swift */; };
+		708C1A1C2E4A21BC00252C6E /* ErrorConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E32E4A21BC00252C6E /* ErrorConstants.swift */; };
+		708C1A1D2E4A21BC00252C6E /* NoCodesErrorType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D92E4A21BC00252C6E /* NoCodesErrorType.swift */; };
+		708C1A1E2E4A21BC00252C6E /* NoCodesFlowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A082E4A21BC00252C6E /* NoCodesFlowCoordinator.swift */; };
+		708C1A1F2E4A21BC00252C6E /* ResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19F82E4A21BC00252C6E /* ResponseDecoder.swift */; };
+		708C1A202E4A21BC00252C6E /* NoCodesAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D72E4A21BC00252C6E /* NoCodesAction.swift */; };
+		708C1A212E4A21BC00252C6E /* ResponseDecoderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19F92E4A21BC00252C6E /* ResponseDecoderInterface.swift */; };
+		708C1A222E4A21BC00252C6E /* NetworkProviderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19ED2E4A21BC00252C6E /* NetworkProviderInterface.swift */; };
+		708C1A232E4A21BC00252C6E /* NoCodesScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19DB2E4A21BC00252C6E /* NoCodesScreen.swift */; };
+		708C1A242E4A21BC00252C6E /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19F22E4A21BC00252C6E /* Request.swift */; };
+		708C1A252E4A21BC00252C6E /* RateLimiterInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19F02E4A21BC00252C6E /* RateLimiterInterface.swift */; };
+		708C1A262E4A21BC00252C6E /* NoCodesConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A072E4A21BC00252C6E /* NoCodesConfiguration.swift */; };
+		708C1A272E4A21BC00252C6E /* RequestType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19F32E4A21BC00252C6E /* RequestType.swift */; };
+		708C1A282E4A21BC00252C6E /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A022E4A21BC00252C6E /* Utils.swift */; };
+		708C1A292E4A21BC00252C6E /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A0B2E4A21BC00252C6E /* SkeletonView.swift */; };
+		708C1A2A2E4A21BC00252C6E /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19CE2E4A21BC00252C6E /* MiscAssembly.swift */; };
+		708C1A2B2E4A21BC00252C6E /* Delegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A042E4A21BC00252C6E /* Delegate.swift */; };
+		708C1A2C2E4A21BC00252C6E /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D62E4A21BC00252C6E /* Device.swift */; };
+		708C1A2D2E4A21BC00252C6E /* NoCodesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A0A2E4A21BC00252C6E /* NoCodesViewController.swift */; };
+		708C1A2E2E4A21BC00252C6E /* NoCodesServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19FF2E4A21BC00252C6E /* NoCodesServiceInterface.swift */; };
+		708C1A2F2E4A21BC00252C6E /* Header.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E52E4A21BC00252C6E /* Header.swift */; };
+		708C1A302E4A21BC00252C6E /* LoggerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A012E4A21BC00252C6E /* LoggerWrapper.swift */; };
+		708C1A312E4A21BC00252C6E /* FallbackServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19FD2E4A21BC00252C6E /* FallbackServiceInterface.swift */; };
+		708C1A322E4A21BC00252C6E /* HeadersBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E62E4A21BC00252C6E /* HeadersBuilder.swift */; };
+		708C1A332E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19DA2E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift */; };
+		708C1A342E4A21BC00252C6E /* NoCodesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19DD2E4A21BC00252C6E /* NoCodesMapper.swift */; };
+		708C1A352E4A21BC00252C6E /* EmptyApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E12E4A21BC00252C6E /* EmptyApiResponse.swift */; };
+		708C1A362E4A21BC00252C6E /* NoCodes.docc in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A052E4A21BC00252C6E /* NoCodes.docc */; };
+		708C1A372E4A21BC00252C6E /* RequestProcessorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19F62E4A21BC00252C6E /* RequestProcessorInterface.swift */; };
+		708C1A382E4A21BC00252C6E /* DeviceInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D32E4A21BC00252C6E /* DeviceInfoCollector.swift */; };
+		708C1A392E4A21BC00252C6E /* ServicesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D12E4A21BC00252C6E /* ServicesAssembly.swift */; };
+		708C1A3A2E4A21BC00252C6E /* NetworkErrorHandlerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19EA2E4A21BC00252C6E /* NetworkErrorHandlerInterface.swift */; };
 		7094501A29CD994200F55E68 /* QONRemoteConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = 7094501829CD994200F55E68 /* QONRemoteConfig.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7094501B29CD994200F55E68 /* QONRemoteConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 7094501929CD994200F55E68 /* QONRemoteConfig.m */; };
 		7097C6BE2A38BFC800565DE4 /* QONRemoteConfig+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 7097C6BD2A38BFC800565DE4 /* QONRemoteConfig+Protected.h */; };
@@ -131,13 +130,9 @@
 		7098564E2A370F270023DFAB /* QONRemoteConfigMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7098564C2A370F270023DFAB /* QONRemoteConfigMapper.m */; };
 		70A26ADE2A31BC44008CE4A7 /* QONExperiment.h in Headers */ = {isa = PBXBuildFile; fileRef = 70A26ADC2A31BC44008CE4A7 /* QONExperiment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70A26ADF2A31BC44008CE4A7 /* QONExperiment.m in Sources */ = {isa = PBXBuildFile; fileRef = 70A26ADD2A31BC44008CE4A7 /* QONExperiment.m */; };
-		70ADE70F2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = 70ADE70D2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		70ADE7102951CC7200CB4D2E /* QONScreenPresentationConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 70ADE70E2951CC7200CB4D2E /* QONScreenPresentationConfiguration.m */; };
 		70B917642B3314BD00BF0689 /* QONTransaction.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B917622B3314BD00BF0689 /* QONTransaction.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70B917652B3314BD00BF0689 /* QONTransaction.m in Sources */ = {isa = PBXBuildFile; fileRef = 70B917632B3314BD00BF0689 /* QONTransaction.m */; };
 		70B917672B34284200BF0689 /* QONTransaction+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B917662B34284200BF0689 /* QONTransaction+Protected.h */; };
-		70B9A9F1297AB8A700BD30FD /* QONAutomationsNavigationController.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B9A9EF297AB8A700BD30FD /* QONAutomationsNavigationController.h */; };
-		70B9A9F2297AB8A700BD30FD /* QONAutomationsNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 70B9A9F0297AB8A700BD30FD /* QONAutomationsNavigationController.m */; };
 		70BAB0642B58306E00D19A6A /* expected_entitlements.json in Resources */ = {isa = PBXBuildFile; fileRef = 70893C992B3EC136002C6B82 /* expected_entitlements.json */; };
 		70CB7CDD2C246DF200241FF1 /* QONPromotionalOffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70CB7CDE2C246DF200241FF1 /* QONPromotionalOffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */; };
@@ -166,62 +161,29 @@
 		8957327926DD03A3009507A6 /* QNDevice+Advertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B626DD03A2009507A6 /* QNDevice+Advertising.h */; };
 		8957327A26DD03A3009507A6 /* QNDevice+Advertising.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731B726DD03A2009507A6 /* QNDevice+Advertising.m */; };
 		8957327B26DD03A3009507A6 /* QONUser.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B926DD03A2009507A6 /* QONUser.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		8957327C26DD03A3009507A6 /* QONAutomationsDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731BA26DD03A2009507A6 /* QONAutomationsDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957327D26DD03A3009507A6 /* QONOfferings.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731BB26DD03A2009507A6 /* QONOfferings.m */; };
 		8957327E26DD03A3009507A6 /* QONIntroEligibility.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731BC26DD03A2009507A6 /* QONIntroEligibility.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957328026DD03A3009507A6 /* QONStoreKitSugare.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731BE26DD03A2009507A6 /* QONStoreKitSugare.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957328126DD03A3009507A6 /* QONEntitlement.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731BF26DD03A2009507A6 /* QONEntitlement.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957328226DD03A3009507A6 /* QONLaunchResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731C026DD03A2009507A6 /* QONLaunchResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957328326DD03A3009507A6 /* QONExperimentGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731C126DD03A2009507A6 /* QONExperimentGroup.m */; };
-		8957328526DD03A3009507A6 /* QONAutomations.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731C326DD03A2009507A6 /* QONAutomations.m */; };
-		8957328626DD03A3009507A6 /* QONAutomationsEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731C426DD03A2009507A6 /* QONAutomationsEvent.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957328726DD03A3009507A6 /* QONErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731C526DD03A2009507A6 /* QONErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957328826DD03A3009507A6 /* Qonversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731C626DD03A2009507A6 /* Qonversion.m */; };
 		8957328926DD03A3009507A6 /* QONProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731C726DD03A2009507A6 /* QONProduct.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		8957328A26DD03A3009507A6 /* QONActionResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731C826DD03A2009507A6 /* QONActionResult.m */; };
 		8957328B26DD03A3009507A6 /* QONOffering.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731C926DD03A2009507A6 /* QONOffering.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957328C26DD03A3009507A6 /* QONPromoPurchasesDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731CA26DD03A2009507A6 /* QONPromoPurchasesDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957328D26DD03A3009507A6 /* QONOfferings.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731CB26DD03A2009507A6 /* QONOfferings.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957328E26DD03A3009507A6 /* QONIntroEligibility.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731CC26DD03A2009507A6 /* QONIntroEligibility.m */; };
 		8957328F26DD03A3009507A6 /* QONUser.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731CD26DD03A2009507A6 /* QONUser.m */; };
 		8957329026DD03A3009507A6 /* QONEntitlementsUpdateListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731CE26DD03A2009507A6 /* QONEntitlementsUpdateListener.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		8957329126DD03A3009507A6 /* QONAutomations.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731CF26DD03A2009507A6 /* QONAutomations.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957329326DD03A3009507A6 /* QONExperimentGroup.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731D126DD03A2009507A6 /* QONExperimentGroup.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957329426DD03A3009507A6 /* QONEntitlement.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731D226DD03A2009507A6 /* QONEntitlement.m */; };
 		8957329526DD03A3009507A6 /* QONLaunchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731D326DD03A2009507A6 /* QONLaunchResult.m */; };
 		8957329726DD03A3009507A6 /* QONStoreKitSugare.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731D526DD03A2009507A6 /* QONStoreKitSugare.m */; };
-		8957329826DD03A3009507A6 /* QONAutomationsEventType.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731D626DD03A2009507A6 /* QONAutomationsEventType.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957329926DD03A3009507A6 /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731D726DD03A2009507A6 /* Qonversion.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957329A26DD03A3009507A6 /* QONErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731D826DD03A2009507A6 /* QONErrors.m */; };
-		8957329B26DD03A3009507A6 /* QONAutomationsEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731D926DD03A2009507A6 /* QONAutomationsEvent.m */; };
 		8957329C26DD03A3009507A6 /* QONOffering.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731DA26DD03A2009507A6 /* QONOffering.m */; };
-		8957329D26DD03A3009507A6 /* QONActionResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731DB26DD03A2009507A6 /* QONActionResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957329E26DD03A3009507A6 /* QONProduct.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731DC26DD03A2009507A6 /* QONProduct.m */; };
-		8957329F26DD03A3009507A6 /* QONAutomationsConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731DF26DD03A2009507A6 /* QONAutomationsConstants.h */; };
-		895732A026DD03A3009507A6 /* QONAutomationsConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731E026DD03A2009507A6 /* QONAutomationsConstants.m */; };
-		895732A126DD03A3009507A6 /* QONMacrosProcess.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731E326DD03A2009507A6 /* QONMacrosProcess.h */; };
-		895732A226DD03A3009507A6 /* QONMacrosProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731E426DD03A2009507A6 /* QONMacrosProcess.m */; };
-		895732A326DD03A3009507A6 /* QONAutomationsEvent+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731E526DD03A2009507A6 /* QONAutomationsEvent+Protected.h */; };
-		895732A426DD03A3009507A6 /* QONUserActionPoint.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731E726DD03A2009507A6 /* QONUserActionPoint.m */; };
-		895732A526DD03A3009507A6 /* QONUserActionPoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731E826DD03A2009507A6 /* QONUserActionPoint.h */; };
-		895732A626DD03A3009507A6 /* QONAutomationsScreen.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731EA26DD03A2009507A6 /* QONAutomationsScreen.m */; };
-		895732A726DD03A3009507A6 /* QONAutomationsScreen.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731EB26DD03A2009507A6 /* QONAutomationsScreen.h */; };
-		895732A826DD03A3009507A6 /* QONAutomationsMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731EE26DD03A3009507A6 /* QONAutomationsMapper.h */; };
-		895732A926DD03A3009507A6 /* QONAutomationsMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731EF26DD03A3009507A6 /* QONAutomationsMapper.m */; };
-		895732AA26DD03A3009507A6 /* QONAutomationsEventsMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731F126DD03A3009507A6 /* QONAutomationsEventsMapper.m */; };
-		895732AB26DD03A3009507A6 /* QONAutomationsEventsMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731F226DD03A3009507A6 /* QONAutomationsEventsMapper.h */; };
-		895732AC26DD03A3009507A6 /* QONAutomationsFlowCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731F526DD03A3009507A6 /* QONAutomationsFlowCoordinator.m */; };
-		895732AD26DD03A3009507A6 /* QONAutomationsFlowCoordinator.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731F626DD03A3009507A6 /* QONAutomationsFlowCoordinator.h */; };
-		895732AE26DD03A3009507A6 /* QONAutomationsActionsHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731F826DD03A3009507A6 /* QONAutomationsActionsHandler.m */; };
-		895732AF26DD03A3009507A6 /* QONAutomationsActionsHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731F926DD03A3009507A6 /* QONAutomationsActionsHandler.h */; };
-		895732B026DD03A3009507A6 /* QONAutomationsFlowAssembly.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731FB26DD03A3009507A6 /* QONAutomationsFlowAssembly.m */; };
-		895732B126DD03A3009507A6 /* QONAutomationsFlowAssembly.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731FC26DD03A3009507A6 /* QONAutomationsFlowAssembly.h */; };
-		895732B226DD03A3009507A6 /* QONAutomationsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731FF26DD03A3009507A6 /* QONAutomationsViewController.h */; };
-		895732B326DD03A3009507A6 /* QONAutomationsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8957320026DD03A3009507A6 /* QONAutomationsViewController.m */; };
-		895732B426DD03A3009507A6 /* QONAutomationsService.h in Headers */ = {isa = PBXBuildFile; fileRef = 8957320326DD03A3009507A6 /* QONAutomationsService.h */; };
-		895732B526DD03A3009507A6 /* QONAutomationsService.m in Sources */ = {isa = PBXBuildFile; fileRef = 8957320426DD03A3009507A6 /* QONAutomationsService.m */; };
-		895732B626DD03A3009507A6 /* QONAutomationsScreenProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 8957320626DD03A3009507A6 /* QONAutomationsScreenProcessor.h */; };
-		895732B726DD03A3009507A6 /* QONAutomationsScreenProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = 8957320726DD03A3009507A6 /* QONAutomationsScreenProcessor.m */; };
 		895732B826DD03A3009507A6 /* QNUserDefaultsStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 8957320B26DD03A3009507A6 /* QNUserDefaultsStorage.h */; };
 		895732B926DD03A3009507A6 /* QNUserDefaultsStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 8957320C26DD03A3009507A6 /* QNUserDefaultsStorage.m */; };
 		895732BD26DD03A3009507A6 /* QNRequestSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 8957321226DD03A3009507A6 /* QNRequestSerializer.m */; };
@@ -283,7 +245,6 @@
 		89673C2926F35D29008D209A /* QNIdentityServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2826F35D29008D209A /* QNIdentityServiceTests.m */; };
 		89673C2C26F37DC2008D209A /* XCTestCase+Helpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2B26F37DC2008D209A /* XCTestCase+Helpers.m */; };
 		89673C2F26F49BAA008D209A /* QNIdentityManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2E26F49BA9008D209A /* QNIdentityManagerTests.m */; };
-		89817AAB26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89817AAA26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8989721F26612BB600A24927 /* OfferingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8989721E26612BB500A24927 /* OfferingsViewController.swift */; };
 		898972212661333300A24927 /* OfferingsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898972202661333300A24927 /* OfferingsTableViewCell.swift */; };
@@ -449,56 +410,56 @@
 		7042E7852C1C5DDE00C5AECF /* QONFallbackMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONFallbackMapper.m; sourceTree = "<group>"; };
 		70454FFE2C5FD4FA00B03017 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		7052136F29F1807A00164AAF /* PurchasesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
-		705D4D082E3C5AEB00F327C7 /* MiscAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiscAssembly.swift; sourceTree = "<group>"; };
-		705D4D092E3C5AEB00F327C7 /* NoCodesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesAssembly.swift; sourceTree = "<group>"; };
-		705D4D0A2E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesViewsAssembly.swift; sourceTree = "<group>"; };
-		705D4D0B2E3C5AEB00F327C7 /* ServicesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicesAssembly.swift; sourceTree = "<group>"; };
-		705D4D0D2E3C5AEB00F327C7 /* DeviceInfoCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollector.swift; sourceTree = "<group>"; };
-		705D4D0E2E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollectorInterface.swift; sourceTree = "<group>"; };
-		705D4D102E3C5AEB00F327C7 /* Action.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Action.swift; sourceTree = "<group>"; };
-		705D4D112E3C5AEB00F327C7 /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
-		705D4D122E3C5AEB00F327C7 /* NoCodesError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesError.swift; sourceTree = "<group>"; };
-		705D4D132E3C5AEB00F327C7 /* NoCodesErrorType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesErrorType.swift; sourceTree = "<group>"; };
-		705D4D142E3C5AEB00F327C7 /* PresentationConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationConfiguration.swift; sourceTree = "<group>"; };
-		705D4D152E3C5AEB00F327C7 /* Screen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screen.swift; sourceTree = "<group>"; };
-		705D4D172E3C5AEB00F327C7 /* NoCodesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesMapper.swift; sourceTree = "<group>"; };
-		705D4D182E3C5AEB00F327C7 /* NoCodesMapperInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesMapperInterface.swift; sourceTree = "<group>"; };
-		705D4D1A2E3C5AEB00F327C7 /* ApiError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiError.swift; sourceTree = "<group>"; };
-		705D4D1B2E3C5AEB00F327C7 /* EmptyApiResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyApiResponse.swift; sourceTree = "<group>"; };
-		705D4D1D2E3C5AEB00F327C7 /* ErrorConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorConstants.swift; sourceTree = "<group>"; };
-		705D4D1F2E3C5AEB00F327C7 /* Header.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Header.swift; sourceTree = "<group>"; };
-		705D4D202E3C5AEB00F327C7 /* HeadersBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadersBuilder.swift; sourceTree = "<group>"; };
-		705D4D212E3C5AEB00F327C7 /* HeadersBuilderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadersBuilderInterface.swift; sourceTree = "<group>"; };
-		705D4D232E3C5AEB00F327C7 /* NetworkErrorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkErrorHandler.swift; sourceTree = "<group>"; };
-		705D4D242E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkErrorHandlerInterface.swift; sourceTree = "<group>"; };
-		705D4D262E3C5AEB00F327C7 /* NetworkProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkProvider.swift; sourceTree = "<group>"; };
-		705D4D272E3C5AEB00F327C7 /* NetworkProviderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkProviderInterface.swift; sourceTree = "<group>"; };
-		705D4D292E3C5AEB00F327C7 /* RateLimiter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimiter.swift; sourceTree = "<group>"; };
-		705D4D2A2E3C5AEB00F327C7 /* RateLimiterInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimiterInterface.swift; sourceTree = "<group>"; };
-		705D4D2C2E3C5AEB00F327C7 /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
-		705D4D2D2E3C5AEB00F327C7 /* RequestType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestType.swift; sourceTree = "<group>"; };
-		705D4D2F2E3C5AEB00F327C7 /* RequestProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestProcessor.swift; sourceTree = "<group>"; };
-		705D4D302E3C5AEB00F327C7 /* RequestProcessorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestProcessorInterface.swift; sourceTree = "<group>"; };
-		705D4D322E3C5AEB00F327C7 /* ResponseDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseDecoder.swift; sourceTree = "<group>"; };
-		705D4D332E3C5AEB00F327C7 /* ResponseDecoderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseDecoderInterface.swift; sourceTree = "<group>"; };
-		705D4D362E3C5AEB00F327C7 /* FallbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackService.swift; sourceTree = "<group>"; };
-		705D4D372E3C5AEB00F327C7 /* FallbackServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackServiceInterface.swift; sourceTree = "<group>"; };
-		705D4D382E3C5AEB00F327C7 /* NoCodesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesService.swift; sourceTree = "<group>"; };
-		705D4D392E3C5AEB00F327C7 /* NoCodesServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesServiceInterface.swift; sourceTree = "<group>"; };
-		705D4D3B2E3C5AEB00F327C7 /* LoggerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerWrapper.swift; sourceTree = "<group>"; };
-		705D4D3C2E3C5AEB00F327C7 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
-		705D4D3E2E3C5AEB00F327C7 /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
-		705D4D3F2E3C5AEB00F327C7 /* Delegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Delegate.swift; sourceTree = "<group>"; };
-		705D4D412E3C5AEB00F327C7 /* NoCodes.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = NoCodes.docc; sourceTree = "<group>"; };
-		705D4D422E3C5AEB00F327C7 /* NoCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodes.swift; sourceTree = "<group>"; };
-		705D4D432E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesFlowCoordinator.swift; sourceTree = "<group>"; };
-		705D4D442E3C5AEB00F327C7 /* NoCodesNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesNavigationController.swift; sourceTree = "<group>"; };
-		705D4D452E3C5AEB00F327C7 /* NoCodesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesViewController.swift; sourceTree = "<group>"; };
-		705D4D462E3C5AEB00F327C7 /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
 		707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigurationSource.h; sourceTree = "<group>"; };
 		707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigurationSource.m; sourceTree = "<group>"; };
 		707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigurationSource+Protected.h"; sourceTree = "<group>"; };
 		70893C992B3EC136002C6B82 /* expected_entitlements.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = expected_entitlements.json; sourceTree = "<group>"; };
+		708C19CE2E4A21BC00252C6E /* MiscAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiscAssembly.swift; sourceTree = "<group>"; };
+		708C19CF2E4A21BC00252C6E /* NoCodesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesAssembly.swift; sourceTree = "<group>"; };
+		708C19D02E4A21BC00252C6E /* NoCodesViewsAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesViewsAssembly.swift; sourceTree = "<group>"; };
+		708C19D12E4A21BC00252C6E /* ServicesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicesAssembly.swift; sourceTree = "<group>"; };
+		708C19D32E4A21BC00252C6E /* DeviceInfoCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollector.swift; sourceTree = "<group>"; };
+		708C19D42E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollectorInterface.swift; sourceTree = "<group>"; };
+		708C19D62E4A21BC00252C6E /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
+		708C19D72E4A21BC00252C6E /* NoCodesAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesAction.swift; sourceTree = "<group>"; };
+		708C19D82E4A21BC00252C6E /* NoCodesError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesError.swift; sourceTree = "<group>"; };
+		708C19D92E4A21BC00252C6E /* NoCodesErrorType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesErrorType.swift; sourceTree = "<group>"; };
+		708C19DA2E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesPresentationConfiguration.swift; sourceTree = "<group>"; };
+		708C19DB2E4A21BC00252C6E /* NoCodesScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesScreen.swift; sourceTree = "<group>"; };
+		708C19DD2E4A21BC00252C6E /* NoCodesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesMapper.swift; sourceTree = "<group>"; };
+		708C19DE2E4A21BC00252C6E /* NoCodesMapperInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesMapperInterface.swift; sourceTree = "<group>"; };
+		708C19E02E4A21BC00252C6E /* ApiError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiError.swift; sourceTree = "<group>"; };
+		708C19E12E4A21BC00252C6E /* EmptyApiResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyApiResponse.swift; sourceTree = "<group>"; };
+		708C19E32E4A21BC00252C6E /* ErrorConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorConstants.swift; sourceTree = "<group>"; };
+		708C19E52E4A21BC00252C6E /* Header.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Header.swift; sourceTree = "<group>"; };
+		708C19E62E4A21BC00252C6E /* HeadersBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadersBuilder.swift; sourceTree = "<group>"; };
+		708C19E72E4A21BC00252C6E /* HeadersBuilderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadersBuilderInterface.swift; sourceTree = "<group>"; };
+		708C19E92E4A21BC00252C6E /* NetworkErrorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkErrorHandler.swift; sourceTree = "<group>"; };
+		708C19EA2E4A21BC00252C6E /* NetworkErrorHandlerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkErrorHandlerInterface.swift; sourceTree = "<group>"; };
+		708C19EC2E4A21BC00252C6E /* NetworkProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkProvider.swift; sourceTree = "<group>"; };
+		708C19ED2E4A21BC00252C6E /* NetworkProviderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkProviderInterface.swift; sourceTree = "<group>"; };
+		708C19EF2E4A21BC00252C6E /* RateLimiter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimiter.swift; sourceTree = "<group>"; };
+		708C19F02E4A21BC00252C6E /* RateLimiterInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimiterInterface.swift; sourceTree = "<group>"; };
+		708C19F22E4A21BC00252C6E /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
+		708C19F32E4A21BC00252C6E /* RequestType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestType.swift; sourceTree = "<group>"; };
+		708C19F52E4A21BC00252C6E /* RequestProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestProcessor.swift; sourceTree = "<group>"; };
+		708C19F62E4A21BC00252C6E /* RequestProcessorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestProcessorInterface.swift; sourceTree = "<group>"; };
+		708C19F82E4A21BC00252C6E /* ResponseDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseDecoder.swift; sourceTree = "<group>"; };
+		708C19F92E4A21BC00252C6E /* ResponseDecoderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseDecoderInterface.swift; sourceTree = "<group>"; };
+		708C19FC2E4A21BC00252C6E /* FallbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackService.swift; sourceTree = "<group>"; };
+		708C19FD2E4A21BC00252C6E /* FallbackServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackServiceInterface.swift; sourceTree = "<group>"; };
+		708C19FE2E4A21BC00252C6E /* NoCodesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesService.swift; sourceTree = "<group>"; };
+		708C19FF2E4A21BC00252C6E /* NoCodesServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesServiceInterface.swift; sourceTree = "<group>"; };
+		708C1A012E4A21BC00252C6E /* LoggerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerWrapper.swift; sourceTree = "<group>"; };
+		708C1A022E4A21BC00252C6E /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		708C1A042E4A21BC00252C6E /* Delegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Delegate.swift; sourceTree = "<group>"; };
+		708C1A052E4A21BC00252C6E /* NoCodes.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = NoCodes.docc; sourceTree = "<group>"; };
+		708C1A062E4A21BC00252C6E /* NoCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodes.swift; sourceTree = "<group>"; };
+		708C1A072E4A21BC00252C6E /* NoCodesConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesConfiguration.swift; sourceTree = "<group>"; };
+		708C1A082E4A21BC00252C6E /* NoCodesFlowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesFlowCoordinator.swift; sourceTree = "<group>"; };
+		708C1A092E4A21BC00252C6E /* NoCodesNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesNavigationController.swift; sourceTree = "<group>"; };
+		708C1A0A2E4A21BC00252C6E /* NoCodesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesViewController.swift; sourceTree = "<group>"; };
+		708C1A0B2E4A21BC00252C6E /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
 		7094501829CD994200F55E68 /* QONRemoteConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfig.h; sourceTree = "<group>"; };
 		7094501929CD994200F55E68 /* QONRemoteConfig.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfig.m; sourceTree = "<group>"; };
 		7097C6BD2A38BFC800565DE4 /* QONRemoteConfig+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfig+Protected.h"; sourceTree = "<group>"; };
@@ -661,7 +622,6 @@
 		89673C2E26F49BA9008D209A /* QNIdentityManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNIdentityManagerTests.m; sourceTree = "<group>"; };
 		89713B4625C1B95700A2448E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		89713B4A25C1BA1F00A2448E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
-		89817AAA26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsEventsMapperTests.m; sourceTree = "<group>"; };
 		8989721E26612BB500A24927 /* OfferingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferingsViewController.swift; sourceTree = "<group>"; };
 		898972202661333300A24927 /* OfferingsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferingsTableViewCell.swift; sourceTree = "<group>"; };
 		89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserInfoServiceTests.m; sourceTree = "<group>"; };
@@ -689,6 +649,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		70EE742B2E2E928000260875 /* Watch Sample Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = "Watch Sample Watch App";
 			sourceTree = "<group>";
 		};
@@ -825,8 +787,8 @@
 		459DAB6B243E329F0011ECF3 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				708C1A0C2E4A21BC00252C6E /* NoCodes */,
 				70D8BAFB2BB70CE800859723 /* PrivacyInfo.xcprivacy */,
-				705D4D472E3C5AEB00F327C7 /* NoCodes */,
 				70283DF529F66FAC00D138BC /* Swift */,
 				895731B426DD03A2009507A6 /* Qonversion */,
 			);
@@ -854,7 +816,6 @@
 				45FFA2DC24BE1015007EFB8F /* QNTestConstants.h */,
 				45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */,
 				45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */,
-				89817AAA26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m */,
 			);
 			path = QonversionTests;
 			sourceTree = "<group>";
@@ -1066,183 +1027,183 @@
 			name = "Recovered References";
 			sourceTree = "<group>";
 		};
-		705D4D0C2E3C5AEB00F327C7 /* Assemblies */ = {
+		708C19D22E4A21BC00252C6E /* Assemblies */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D082E3C5AEB00F327C7 /* MiscAssembly.swift */,
-				705D4D092E3C5AEB00F327C7 /* NoCodesAssembly.swift */,
-				705D4D0A2E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift */,
-				705D4D0B2E3C5AEB00F327C7 /* ServicesAssembly.swift */,
+				708C19CE2E4A21BC00252C6E /* MiscAssembly.swift */,
+				708C19CF2E4A21BC00252C6E /* NoCodesAssembly.swift */,
+				708C19D02E4A21BC00252C6E /* NoCodesViewsAssembly.swift */,
+				708C19D12E4A21BC00252C6E /* ServicesAssembly.swift */,
 			);
 			path = Assemblies;
 			sourceTree = "<group>";
 		};
-		705D4D0F2E3C5AEB00F327C7 /* Device */ = {
+		708C19D52E4A21BC00252C6E /* Device */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D0D2E3C5AEB00F327C7 /* DeviceInfoCollector.swift */,
-				705D4D0E2E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift */,
+				708C19D32E4A21BC00252C6E /* DeviceInfoCollector.swift */,
+				708C19D42E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift */,
 			);
 			path = Device;
 			sourceTree = "<group>";
 		};
-		705D4D162E3C5AEB00F327C7 /* Entities */ = {
+		708C19DC2E4A21BC00252C6E /* Entities */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D102E3C5AEB00F327C7 /* Action.swift */,
-				705D4D112E3C5AEB00F327C7 /* Device.swift */,
-				705D4D122E3C5AEB00F327C7 /* NoCodesError.swift */,
-				705D4D132E3C5AEB00F327C7 /* NoCodesErrorType.swift */,
-				705D4D142E3C5AEB00F327C7 /* PresentationConfiguration.swift */,
-				705D4D152E3C5AEB00F327C7 /* Screen.swift */,
+				708C19D62E4A21BC00252C6E /* Device.swift */,
+				708C19D72E4A21BC00252C6E /* NoCodesAction.swift */,
+				708C19D82E4A21BC00252C6E /* NoCodesError.swift */,
+				708C19D92E4A21BC00252C6E /* NoCodesErrorType.swift */,
+				708C19DA2E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift */,
+				708C19DB2E4A21BC00252C6E /* NoCodesScreen.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
 		};
-		705D4D192E3C5AEB00F327C7 /* Mappers */ = {
+		708C19DF2E4A21BC00252C6E /* Mappers */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D172E3C5AEB00F327C7 /* NoCodesMapper.swift */,
-				705D4D182E3C5AEB00F327C7 /* NoCodesMapperInterface.swift */,
+				708C19DD2E4A21BC00252C6E /* NoCodesMapper.swift */,
+				708C19DE2E4A21BC00252C6E /* NoCodesMapperInterface.swift */,
 			);
 			path = Mappers;
 			sourceTree = "<group>";
 		};
-		705D4D1C2E3C5AEB00F327C7 /* Entities */ = {
+		708C19E22E4A21BC00252C6E /* Entities */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D1A2E3C5AEB00F327C7 /* ApiError.swift */,
-				705D4D1B2E3C5AEB00F327C7 /* EmptyApiResponse.swift */,
+				708C19E02E4A21BC00252C6E /* ApiError.swift */,
+				708C19E12E4A21BC00252C6E /* EmptyApiResponse.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
 		};
-		705D4D1E2E3C5AEB00F327C7 /* Error */ = {
+		708C19E42E4A21BC00252C6E /* Error */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D1D2E3C5AEB00F327C7 /* ErrorConstants.swift */,
+				708C19E32E4A21BC00252C6E /* ErrorConstants.swift */,
 			);
 			path = Error;
 			sourceTree = "<group>";
 		};
-		705D4D222E3C5AEB00F327C7 /* HeadersBuilder */ = {
+		708C19E82E4A21BC00252C6E /* HeadersBuilder */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D1F2E3C5AEB00F327C7 /* Header.swift */,
-				705D4D202E3C5AEB00F327C7 /* HeadersBuilder.swift */,
-				705D4D212E3C5AEB00F327C7 /* HeadersBuilderInterface.swift */,
+				708C19E52E4A21BC00252C6E /* Header.swift */,
+				708C19E62E4A21BC00252C6E /* HeadersBuilder.swift */,
+				708C19E72E4A21BC00252C6E /* HeadersBuilderInterface.swift */,
 			);
 			path = HeadersBuilder;
 			sourceTree = "<group>";
 		};
-		705D4D252E3C5AEB00F327C7 /* NetworkErrorHandler */ = {
+		708C19EB2E4A21BC00252C6E /* NetworkErrorHandler */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D232E3C5AEB00F327C7 /* NetworkErrorHandler.swift */,
-				705D4D242E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift */,
+				708C19E92E4A21BC00252C6E /* NetworkErrorHandler.swift */,
+				708C19EA2E4A21BC00252C6E /* NetworkErrorHandlerInterface.swift */,
 			);
 			path = NetworkErrorHandler;
 			sourceTree = "<group>";
 		};
-		705D4D282E3C5AEB00F327C7 /* NetworkProvider */ = {
+		708C19EE2E4A21BC00252C6E /* NetworkProvider */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D262E3C5AEB00F327C7 /* NetworkProvider.swift */,
-				705D4D272E3C5AEB00F327C7 /* NetworkProviderInterface.swift */,
+				708C19EC2E4A21BC00252C6E /* NetworkProvider.swift */,
+				708C19ED2E4A21BC00252C6E /* NetworkProviderInterface.swift */,
 			);
 			path = NetworkProvider;
 			sourceTree = "<group>";
 		};
-		705D4D2B2E3C5AEB00F327C7 /* RateLimiter */ = {
+		708C19F12E4A21BC00252C6E /* RateLimiter */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D292E3C5AEB00F327C7 /* RateLimiter.swift */,
-				705D4D2A2E3C5AEB00F327C7 /* RateLimiterInterface.swift */,
+				708C19EF2E4A21BC00252C6E /* RateLimiter.swift */,
+				708C19F02E4A21BC00252C6E /* RateLimiterInterface.swift */,
 			);
 			path = RateLimiter;
 			sourceTree = "<group>";
 		};
-		705D4D2E2E3C5AEB00F327C7 /* Request */ = {
+		708C19F42E4A21BC00252C6E /* Request */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D2C2E3C5AEB00F327C7 /* Request.swift */,
-				705D4D2D2E3C5AEB00F327C7 /* RequestType.swift */,
+				708C19F22E4A21BC00252C6E /* Request.swift */,
+				708C19F32E4A21BC00252C6E /* RequestType.swift */,
 			);
 			path = Request;
 			sourceTree = "<group>";
 		};
-		705D4D312E3C5AEB00F327C7 /* RequestProcessor */ = {
+		708C19F72E4A21BC00252C6E /* RequestProcessor */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D2F2E3C5AEB00F327C7 /* RequestProcessor.swift */,
-				705D4D302E3C5AEB00F327C7 /* RequestProcessorInterface.swift */,
+				708C19F52E4A21BC00252C6E /* RequestProcessor.swift */,
+				708C19F62E4A21BC00252C6E /* RequestProcessorInterface.swift */,
 			);
 			path = RequestProcessor;
 			sourceTree = "<group>";
 		};
-		705D4D342E3C5AEB00F327C7 /* ResponseDecoder */ = {
+		708C19FA2E4A21BC00252C6E /* ResponseDecoder */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D322E3C5AEB00F327C7 /* ResponseDecoder.swift */,
-				705D4D332E3C5AEB00F327C7 /* ResponseDecoderInterface.swift */,
+				708C19F82E4A21BC00252C6E /* ResponseDecoder.swift */,
+				708C19F92E4A21BC00252C6E /* ResponseDecoderInterface.swift */,
 			);
 			path = ResponseDecoder;
 			sourceTree = "<group>";
 		};
-		705D4D352E3C5AEB00F327C7 /* NetworkLayer */ = {
+		708C19FB2E4A21BC00252C6E /* NetworkLayer */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D1C2E3C5AEB00F327C7 /* Entities */,
-				705D4D1E2E3C5AEB00F327C7 /* Error */,
-				705D4D222E3C5AEB00F327C7 /* HeadersBuilder */,
-				705D4D252E3C5AEB00F327C7 /* NetworkErrorHandler */,
-				705D4D282E3C5AEB00F327C7 /* NetworkProvider */,
-				705D4D2B2E3C5AEB00F327C7 /* RateLimiter */,
-				705D4D2E2E3C5AEB00F327C7 /* Request */,
-				705D4D312E3C5AEB00F327C7 /* RequestProcessor */,
-				705D4D342E3C5AEB00F327C7 /* ResponseDecoder */,
+				708C19E22E4A21BC00252C6E /* Entities */,
+				708C19E42E4A21BC00252C6E /* Error */,
+				708C19E82E4A21BC00252C6E /* HeadersBuilder */,
+				708C19EB2E4A21BC00252C6E /* NetworkErrorHandler */,
+				708C19EE2E4A21BC00252C6E /* NetworkProvider */,
+				708C19F12E4A21BC00252C6E /* RateLimiter */,
+				708C19F42E4A21BC00252C6E /* Request */,
+				708C19F72E4A21BC00252C6E /* RequestProcessor */,
+				708C19FA2E4A21BC00252C6E /* ResponseDecoder */,
 			);
 			path = NetworkLayer;
 			sourceTree = "<group>";
 		};
-		705D4D3A2E3C5AEB00F327C7 /* Services */ = {
+		708C1A002E4A21BC00252C6E /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D362E3C5AEB00F327C7 /* FallbackService.swift */,
-				705D4D372E3C5AEB00F327C7 /* FallbackServiceInterface.swift */,
-				705D4D382E3C5AEB00F327C7 /* NoCodesService.swift */,
-				705D4D392E3C5AEB00F327C7 /* NoCodesServiceInterface.swift */,
+				708C19FC2E4A21BC00252C6E /* FallbackService.swift */,
+				708C19FD2E4A21BC00252C6E /* FallbackServiceInterface.swift */,
+				708C19FE2E4A21BC00252C6E /* NoCodesService.swift */,
+				708C19FF2E4A21BC00252C6E /* NoCodesServiceInterface.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
 		};
-		705D4D3D2E3C5AEB00F327C7 /* Utils */ = {
+		708C1A032E4A21BC00252C6E /* Utils */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D3B2E3C5AEB00F327C7 /* LoggerWrapper.swift */,
-				705D4D3C2E3C5AEB00F327C7 /* Utils.swift */,
+				708C1A012E4A21BC00252C6E /* LoggerWrapper.swift */,
+				708C1A022E4A21BC00252C6E /* Utils.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
 		};
-		705D4D472E3C5AEB00F327C7 /* NoCodes */ = {
+		708C1A0C2E4A21BC00252C6E /* NoCodes */ = {
 			isa = PBXGroup;
 			children = (
-				705D4D0C2E3C5AEB00F327C7 /* Assemblies */,
-				705D4D0F2E3C5AEB00F327C7 /* Device */,
-				705D4D162E3C5AEB00F327C7 /* Entities */,
-				705D4D192E3C5AEB00F327C7 /* Mappers */,
-				705D4D352E3C5AEB00F327C7 /* NetworkLayer */,
-				705D4D3A2E3C5AEB00F327C7 /* Services */,
-				705D4D3D2E3C5AEB00F327C7 /* Utils */,
-				705D4D3E2E3C5AEB00F327C7 /* Configuration.swift */,
-				705D4D3F2E3C5AEB00F327C7 /* Delegate.swift */,
-				705D4D412E3C5AEB00F327C7 /* NoCodes.docc */,
-				705D4D422E3C5AEB00F327C7 /* NoCodes.swift */,
-				705D4D432E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift */,
-				705D4D442E3C5AEB00F327C7 /* NoCodesNavigationController.swift */,
-				705D4D452E3C5AEB00F327C7 /* NoCodesViewController.swift */,
-				705D4D462E3C5AEB00F327C7 /* SkeletonView.swift */,
+				708C19D22E4A21BC00252C6E /* Assemblies */,
+				708C19D52E4A21BC00252C6E /* Device */,
+				708C19DC2E4A21BC00252C6E /* Entities */,
+				708C19DF2E4A21BC00252C6E /* Mappers */,
+				708C19FB2E4A21BC00252C6E /* NetworkLayer */,
+				708C1A002E4A21BC00252C6E /* Services */,
+				708C1A032E4A21BC00252C6E /* Utils */,
+				708C1A042E4A21BC00252C6E /* Delegate.swift */,
+				708C1A052E4A21BC00252C6E /* NoCodes.docc */,
+				708C1A062E4A21BC00252C6E /* NoCodes.swift */,
+				708C1A072E4A21BC00252C6E /* NoCodesConfiguration.swift */,
+				708C1A082E4A21BC00252C6E /* NoCodesFlowCoordinator.swift */,
+				708C1A092E4A21BC00252C6E /* NoCodesNavigationController.swift */,
+				708C1A0A2E4A21BC00252C6E /* NoCodesViewController.swift */,
+				708C1A0B2E4A21BC00252C6E /* SkeletonView.swift */,
 			);
 			path = NoCodes;
 			sourceTree = "<group>";
@@ -1964,52 +1925,36 @@
 			buildActionMask = 2147483647;
 			files = (
 				895732F026DD03A3009507A6 /* QNErrorsMapper.h in Headers */,
-				70B9A9F1297AB8A700BD30FD /* QONAutomationsNavigationController.h in Headers */,
 				895732E026DD03A3009507A6 /* QONOfferings+Protected.h in Headers */,
 				895732FD26DD03A3009507A6 /* QNStoreKitService.h in Headers */,
 				895732E626DD03A3009507A6 /* QONLaunchResult+Protected.h in Headers */,
 				70D05A8E29C9FC1600EA5DDF /* QONRemoteConfigManager.h in Headers */,
-				8957329F26DD03A3009507A6 /* QONAutomationsConstants.h in Headers */,
-				895732AD26DD03A3009507A6 /* QONAutomationsFlowCoordinator.h in Headers */,
-				8957328626DD03A3009507A6 /* QONAutomationsEvent.h in Headers */,
-				8957329826DD03A3009507A6 /* QONAutomationsEventType.h in Headers */,
 				6A21BF4C2AB201A7005BDA7C /* QONRateLimiter.h in Headers */,
 				70B917672B34284200BF0689 /* QONTransaction+Protected.h in Headers */,
-				895732B426DD03A3009507A6 /* QONAutomationsService.h in Headers */,
 				6A121DAE2BB446740073B330 /* QONRemoteConfigList.h in Headers */,
 				895732CA26DD03A3009507A6 /* QNUtils.h in Headers */,
 				8957328126DD03A3009507A6 /* QONEntitlement.h in Headers */,
 				8957330526DD03A3009507A6 /* QNIdentityServiceInterface.h in Headers */,
 				895732FE26DD03A3009507A6 /* QNAPIClient.h in Headers */,
-				702BF8B629531A68000B6C3E /* QONScreenCustomizationDelegate.h in Headers */,
 				8957330926DE5531009507A6 /* QNKeyedArchiver.h in Headers */,
 				70D05A9329C9FF3C00EA5DDF /* QONRemoteConfigService.h in Headers */,
 				8957329926DD03A3009507A6 /* Qonversion.h in Headers */,
-				895732A726DD03A3009507A6 /* QONAutomationsScreen.h in Headers */,
-				895732A526DD03A3009507A6 /* QONUserActionPoint.h in Headers */,
 				895732E426DD03A3009507A6 /* QONIntroEligibility+Protected.h in Headers */,
-				895732A826DD03A3009507A6 /* QONAutomationsMapper.h in Headers */,
 				70E99384291BC60A006E0A64 /* QONEnvironment.h in Headers */,
 				8957330226DD03A3009507A6 /* QNUserInfoService.h in Headers */,
-				8957329D26DD03A3009507A6 /* QONActionResult.h in Headers */,
 				70CB7CE12C247A8A00241FF1 /* QONPromotionalOffer+Protected.h in Headers */,
-				895732B626DD03A3009507A6 /* QONAutomationsScreenProcessor.h in Headers */,
-				895732AB26DD03A3009507A6 /* QONAutomationsEventsMapper.h in Headers */,
 				70D0E2B8291A9BE3004E8DE8 /* QONConfiguration.h in Headers */,
 				895732EB26DD03A3009507A6 /* QNServicesAssembly.h in Headers */,
 				895732E226DD03A3009507A6 /* QONOffering+Protected.h in Headers */,
-				895732B226DD03A3009507A6 /* QONAutomationsViewController.h in Headers */,
 				6ABCBE182B99A79E003DB107 /* QONRemoteConfigLoadingState.h in Headers */,
 				895732CC26DD03A3009507A6 /* QNDevice.h in Headers */,
 				8957328726DD03A3009507A6 /* QONErrors.h in Headers */,
 				70D0E2BB291AA21C004E8DE8 /* QONLaunchMode.h in Headers */,
 				895732D026DD03A3009507A6 /* QNUserInfo.h in Headers */,
-				895732B126DD03A3009507A6 /* QONAutomationsFlowAssembly.h in Headers */,
 				700636142C12125900BB9F9C /* NSError+Sugare.h in Headers */,
 				6A21BF532AB2059F005BDA7C /* QONRequest.h in Headers */,
 				8957329026DD03A3009507A6 /* QONEntitlementsUpdateListener.h in Headers */,
 				8957329326DD03A3009507A6 /* QONExperimentGroup.h in Headers */,
-				895732A126DD03A3009507A6 /* QONMacrosProcess.h in Headers */,
 				7098564D2A370F270023DFAB /* QONRemoteConfigMapper.h in Headers */,
 				6A121DB12BBB10370073B330 /* QONRemoteConfigListRequestData.h in Headers */,
 				7094501A29CD994200F55E68 /* QONRemoteConfig.h in Headers */,
@@ -2019,7 +1964,6 @@
 				895732F626DD03A3009507A6 /* QNAttributionManager.h in Headers */,
 				895732FB26DD03A3009507A6 /* QNIdentityManager.h in Headers */,
 				895732C226DD03A3009507A6 /* QNInMemoryStorage.h in Headers */,
-				895732A326DD03A3009507A6 /* QONAutomationsEvent+Protected.h in Headers */,
 				701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */,
 				895732C126DD03A3009507A6 /* QNLocalStorage.h in Headers */,
 				707734F72A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h in Headers */,
@@ -2036,15 +1980,11 @@
 				7097C6BE2A38BFC800565DE4 /* QONRemoteConfig+Protected.h in Headers */,
 				895732DF26DD03A3009507A6 /* QONUser+Protected.h in Headers */,
 				70ED951029FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h in Headers */,
-				8957329126DD03A3009507A6 /* QONAutomations.h in Headers */,
 				895732ED26DD03A3009507A6 /* QNUserInfoMapper.h in Headers */,
 				701922762B10AB3300724926 /* QONSubscriptionPeriod+Protected.h in Headers */,
-				70ADE70F2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h in Headers */,
 				700636062C11CEF700BB9F9C /* QONFallbackObject.h in Headers */,
-				8957327C26DD03A3009507A6 /* QONAutomationsDelegate.h in Headers */,
 				8957330126DD03A3009507A6 /* QNUserInfoServiceInterface.h in Headers */,
 				895732C926DD03A3009507A6 /* QNInternalConstants.h in Headers */,
-				895732AF26DD03A3009507A6 /* QONAutomationsActionsHandler.h in Headers */,
 				70B917642B3314BD00BF0689 /* QONTransaction.h in Headers */,
 				8957328926DD03A3009507A6 /* QONProduct.h in Headers */,
 				702DBDEC2A3216C900D590D0 /* QONExperiment+Protected.h in Headers */,
@@ -2300,13 +2240,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2321,13 +2257,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2364,13 +2296,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2443,7 +2371,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				895732C326DD03A3009507A6 /* QNInMemoryStorage.m in Sources */,
-				8957329B26DD03A3009507A6 /* QONAutomationsEvent.m in Sources */,
 				8957330326DD03A3009507A6 /* QNIdentityService.m in Sources */,
 				895732C826DD03A3009507A6 /* QNInternalConstants.m in Sources */,
 				8957327D26DD03A3009507A6 /* QONOfferings.m in Sources */,
@@ -2458,75 +2385,20 @@
 				70D05A8F29C9FC1600EA5DDF /* QONRemoteConfigManager.m in Sources */,
 				895732C426DD03A3009507A6 /* QNRequestBuilder.m in Sources */,
 				8957329726DD03A3009507A6 /* QONStoreKitSugare.m in Sources */,
-				895732A226DD03A3009507A6 /* QONMacrosProcess.m in Sources */,
 				8957329E26DD03A3009507A6 /* QONProduct.m in Sources */,
 				6A121DAC2BB445AE0073B330 /* QONRemoteConfigList.m in Sources */,
 				6ABCBE192B99A79E003DB107 /* QONRemoteConfigLoadingState.m in Sources */,
-				895732A026DD03A3009507A6 /* QONAutomationsConstants.m in Sources */,
 				7094501B29CD994200F55E68 /* QONRemoteConfig.m in Sources */,
 				895732F826DD03A3009507A6 /* QNProductCenterManager.m in Sources */,
 				895732FF26DD03A3009507A6 /* QNAPIClient.m in Sources */,
-				895732B026DD03A3009507A6 /* QONAutomationsFlowAssembly.m in Sources */,
-				895732AE26DD03A3009507A6 /* QONAutomationsActionsHandler.m in Sources */,
 				895732D126DD03A3009507A6 /* QNUserInfo.m in Sources */,
-				895732AA26DD03A3009507A6 /* QONAutomationsEventsMapper.m in Sources */,
-				70B9A9F2297AB8A700BD30FD /* QONAutomationsNavigationController.m in Sources */,
 				895732CB26DD03A3009507A6 /* QNUtils.m in Sources */,
-				70ADE7102951CC7200CB4D2E /* QONScreenPresentationConfiguration.m in Sources */,
 				707734F52A9F607700CFF742 /* QONRemoteConfigurationSource.m in Sources */,
 				6A21BF4E2AB20483005BDA7C /* QONRateLimiter.m in Sources */,
-				895732A626DD03A3009507A6 /* QONAutomationsScreen.m in Sources */,
 				700636072C11CEF700BB9F9C /* QONFallbackObject.m in Sources */,
 				70ED951129FAAF31005F5D00 /* QONStoreKit2PurchaseModel.m in Sources */,
 				70EC019D29EEE94300E686E2 /* StoreKit2Service.swift in Sources */,
-				705D4D482E3C5AEB00F327C7 /* NoCodesService.swift in Sources */,
-				705D4D492E3C5AEB00F327C7 /* Configuration.swift in Sources */,
-				705D4D4A2E3C5AEB00F327C7 /* HeadersBuilderInterface.swift in Sources */,
-				705D4D4B2E3C5AEB00F327C7 /* DeviceInfoCollector.swift in Sources */,
-				705D4D4C2E3C5AEB00F327C7 /* HeadersBuilder.swift in Sources */,
-				705D4D4D2E3C5AEB00F327C7 /* RequestType.swift in Sources */,
-				705D4D4E2E3C5AEB00F327C7 /* MiscAssembly.swift in Sources */,
-				705D4D4F2E3C5AEB00F327C7 /* Device.swift in Sources */,
-				705D4D502E3C5AEB00F327C7 /* NoCodesMapperInterface.swift in Sources */,
-				705D4D512E3C5AEB00F327C7 /* NoCodesErrorType.swift in Sources */,
-				705D4D522E3C5AEB00F327C7 /* NoCodesViewController.swift in Sources */,
-				705D4D532E3C5AEB00F327C7 /* Request.swift in Sources */,
-				705D4D542E3C5AEB00F327C7 /* NoCodesNavigationController.swift in Sources */,
-				705D4D552E3C5AEB00F327C7 /* RateLimiterInterface.swift in Sources */,
-				705D4D562E3C5AEB00F327C7 /* Screen.swift in Sources */,
-				705D4D572E3C5AEB00F327C7 /* NoCodesViewsAssembly.swift in Sources */,
-				705D4D582E3C5AEB00F327C7 /* NoCodes.docc in Sources */,
-				705D4D592E3C5AEB00F327C7 /* NetworkProviderInterface.swift in Sources */,
-				705D4D5A2E3C5AEB00F327C7 /* NoCodesAssembly.swift in Sources */,
-				705D4D5B2E3C5AEB00F327C7 /* NetworkErrorHandlerInterface.swift in Sources */,
-				705D4D5C2E3C5AEB00F327C7 /* Header.swift in Sources */,
-				705D4D5D2E3C5AEB00F327C7 /* NetworkProvider.swift in Sources */,
-				705D4D5E2E3C5AEB00F327C7 /* RequestProcessorInterface.swift in Sources */,
-				705D4D5F2E3C5AEB00F327C7 /* ResponseDecoder.swift in Sources */,
-				705D4D602E3C5AEB00F327C7 /* Utils.swift in Sources */,
-				705D4D612E3C5AEB00F327C7 /* FallbackService.swift in Sources */,
-				705D4D622E3C5AEB00F327C7 /* DeviceInfoCollectorInterface.swift in Sources */,
-				705D4D632E3C5AEB00F327C7 /* RateLimiter.swift in Sources */,
-				705D4D642E3C5AEB00F327C7 /* SkeletonView.swift in Sources */,
-				705D4D652E3C5AEB00F327C7 /* ErrorConstants.swift in Sources */,
-				705D4D662E3C5AEB00F327C7 /* ResponseDecoderInterface.swift in Sources */,
-				705D4D672E3C5AEB00F327C7 /* NoCodesFlowCoordinator.swift in Sources */,
-				705D4D682E3C5AEB00F327C7 /* EmptyApiResponse.swift in Sources */,
-				705D4D692E3C5AEB00F327C7 /* ApiError.swift in Sources */,
-				705D4D6A2E3C5AEB00F327C7 /* RequestProcessor.swift in Sources */,
-				705D4D6B2E3C5AEB00F327C7 /* NoCodes.swift in Sources */,
-				705D4D6C2E3C5AEB00F327C7 /* Delegate.swift in Sources */,
-				705D4D6D2E3C5AEB00F327C7 /* Action.swift in Sources */,
-				705D4D6E2E3C5AEB00F327C7 /* PresentationConfiguration.swift in Sources */,
-				705D4D6F2E3C5AEB00F327C7 /* NetworkErrorHandler.swift in Sources */,
-				705D4D702E3C5AEB00F327C7 /* FallbackServiceInterface.swift in Sources */,
-				705D4D712E3C5AEB00F327C7 /* LoggerWrapper.swift in Sources */,
-				705D4D722E3C5AEB00F327C7 /* NoCodesMapper.swift in Sources */,
-				705D4D732E3C5AEB00F327C7 /* NoCodesServiceInterface.swift in Sources */,
-				705D4D742E3C5AEB00F327C7 /* ServicesAssembly.swift in Sources */,
-				705D4D752E3C5AEB00F327C7 /* NoCodesError.swift in Sources */,
 				701922742B10981200724926 /* QONSubscriptionPeriod.m in Sources */,
-				895732A926DD03A3009507A6 /* QONAutomationsMapper.m in Sources */,
 				895732F226DD03A3009507A6 /* QNMapper.m in Sources */,
 				70D0E2B9291A9BE3004E8DE8 /* QONConfiguration.m in Sources */,
 				8957329C26DD03A3009507A6 /* QONOffering.m in Sources */,
@@ -2534,13 +2406,57 @@
 				8957329426DD03A3009507A6 /* QONEntitlement.m in Sources */,
 				8957329526DD03A3009507A6 /* QONLaunchResult.m in Sources */,
 				70D05A9429C9FF3C00EA5DDF /* QONRemoteConfigService.m in Sources */,
-				895732B726DD03A3009507A6 /* QONAutomationsScreenProcessor.m in Sources */,
 				895732BD26DD03A3009507A6 /* QNRequestSerializer.m in Sources */,
 				895732F526DD03A3009507A6 /* QNAttributionManager.m in Sources */,
 				895732EF26DD03A3009507A6 /* QNErrorsMapper.m in Sources */,
 				7042E7882C1C5DDE00C5AECF /* QONFallbackMapper.m in Sources */,
+				708C1A0D2E4A21BC00252C6E /* NoCodesMapperInterface.swift in Sources */,
+				708C1A0E2E4A21BC00252C6E /* NoCodes.swift in Sources */,
+				708C1A0F2E4A21BC00252C6E /* NetworkProvider.swift in Sources */,
+				708C1A102E4A21BC00252C6E /* ApiError.swift in Sources */,
+				708C1A112E4A21BC00252C6E /* FallbackService.swift in Sources */,
+				708C1A122E4A21BC00252C6E /* NoCodesViewsAssembly.swift in Sources */,
+				708C1A132E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift in Sources */,
+				708C1A142E4A21BC00252C6E /* NoCodesError.swift in Sources */,
+				708C1A152E4A21BC00252C6E /* HeadersBuilderInterface.swift in Sources */,
+				708C1A162E4A21BC00252C6E /* NoCodesNavigationController.swift in Sources */,
+				708C1A172E4A21BC00252C6E /* NoCodesService.swift in Sources */,
+				708C1A182E4A21BC00252C6E /* NetworkErrorHandler.swift in Sources */,
+				708C1A192E4A21BC00252C6E /* NoCodesAssembly.swift in Sources */,
+				708C1A1A2E4A21BC00252C6E /* RequestProcessor.swift in Sources */,
+				708C1A1B2E4A21BC00252C6E /* RateLimiter.swift in Sources */,
+				708C1A1C2E4A21BC00252C6E /* ErrorConstants.swift in Sources */,
+				708C1A1D2E4A21BC00252C6E /* NoCodesErrorType.swift in Sources */,
+				708C1A1E2E4A21BC00252C6E /* NoCodesFlowCoordinator.swift in Sources */,
+				708C1A1F2E4A21BC00252C6E /* ResponseDecoder.swift in Sources */,
+				708C1A202E4A21BC00252C6E /* NoCodesAction.swift in Sources */,
+				708C1A212E4A21BC00252C6E /* ResponseDecoderInterface.swift in Sources */,
+				708C1A222E4A21BC00252C6E /* NetworkProviderInterface.swift in Sources */,
+				708C1A232E4A21BC00252C6E /* NoCodesScreen.swift in Sources */,
+				708C1A242E4A21BC00252C6E /* Request.swift in Sources */,
+				708C1A252E4A21BC00252C6E /* RateLimiterInterface.swift in Sources */,
+				708C1A262E4A21BC00252C6E /* NoCodesConfiguration.swift in Sources */,
+				708C1A272E4A21BC00252C6E /* RequestType.swift in Sources */,
+				708C1A282E4A21BC00252C6E /* Utils.swift in Sources */,
+				708C1A292E4A21BC00252C6E /* SkeletonView.swift in Sources */,
+				708C1A2A2E4A21BC00252C6E /* MiscAssembly.swift in Sources */,
+				708C1A2B2E4A21BC00252C6E /* Delegate.swift in Sources */,
+				708C1A2C2E4A21BC00252C6E /* Device.swift in Sources */,
+				708C1A2D2E4A21BC00252C6E /* NoCodesViewController.swift in Sources */,
+				708C1A2E2E4A21BC00252C6E /* NoCodesServiceInterface.swift in Sources */,
+				708C1A2F2E4A21BC00252C6E /* Header.swift in Sources */,
+				708C1A302E4A21BC00252C6E /* LoggerWrapper.swift in Sources */,
+				708C1A312E4A21BC00252C6E /* FallbackServiceInterface.swift in Sources */,
+				708C1A322E4A21BC00252C6E /* HeadersBuilder.swift in Sources */,
+				708C1A332E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift in Sources */,
+				708C1A342E4A21BC00252C6E /* NoCodesMapper.swift in Sources */,
+				708C1A352E4A21BC00252C6E /* EmptyApiResponse.swift in Sources */,
+				708C1A362E4A21BC00252C6E /* NoCodes.docc in Sources */,
+				708C1A372E4A21BC00252C6E /* RequestProcessorInterface.swift in Sources */,
+				708C1A382E4A21BC00252C6E /* DeviceInfoCollector.swift in Sources */,
+				708C1A392E4A21BC00252C6E /* ServicesAssembly.swift in Sources */,
+				708C1A3A2E4A21BC00252C6E /* NetworkErrorHandlerInterface.swift in Sources */,
 				6A121DB32BBB10AA0073B330 /* QONRemoteConfigListRequestData.m in Sources */,
-				895732A426DD03A3009507A6 /* QONUserActionPoint.m in Sources */,
 				8957330A26DE5532009507A6 /* QNKeyedArchiver.m in Sources */,
 				70454FFF2C5FD4FA00B03017 /* Extensions.swift in Sources */,
 				895732FC26DD03A3009507A6 /* QNStoreKitService.m in Sources */,
@@ -2548,19 +2464,14 @@
 				8957330026DD03A3009507A6 /* QNUserInfoService.m in Sources */,
 				700636152C12125900BB9F9C /* NSError+Sugare.m in Sources */,
 				7098564E2A370F270023DFAB /* QONRemoteConfigMapper.m in Sources */,
-				895732AC26DD03A3009507A6 /* QONAutomationsFlowCoordinator.m in Sources */,
 				8957328326DD03A3009507A6 /* QONExperimentGroup.m in Sources */,
 				895732EA26DD03A3009507A6 /* QNServicesAssembly.m in Sources */,
-				8957328526DD03A3009507A6 /* QONAutomations.m in Sources */,
 				895732D726DD03A3009507A6 /* QNMapperObject.m in Sources */,
 				70ED967129FAC8D3005F5D00 /* QonversionSwift.swift in Sources */,
 				895732CD26DD03A3009507A6 /* QNDevice.m in Sources */,
 				8957328826DD03A3009507A6 /* Qonversion.m in Sources */,
 				8957328E26DD03A3009507A6 /* QONIntroEligibility.m in Sources */,
-				895732B326DD03A3009507A6 /* QONAutomationsViewController.m in Sources */,
 				895732EC26DD03A3009507A6 /* QNUserInfoMapper.m in Sources */,
-				895732B526DD03A3009507A6 /* QONAutomationsService.m in Sources */,
-				8957328A26DD03A3009507A6 /* QONActionResult.m in Sources */,
 				70283DF729F66FAC00D138BC /* PurchasesMapper.swift in Sources */,
 				701BAC102C524626009B16FB /* QONPurchaseOptions.m in Sources */,
 				8957328F26DD03A3009507A6 /* QONUser.m in Sources */,
@@ -2584,7 +2495,6 @@
 				89673C2926F35D29008D209A /* QNIdentityServiceTests.m in Sources */,
 				89A192A52604974800C3FCD9 /* QNUserInfoServiceTests.m in Sources */,
 				454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */,
-				89817AAB26AEE8AE006BEDD1 /* QONAutomationsEventsMapperTests.m in Sources */,
 				45FFA2DB24BE06C3007EFB8F /* APIClientTests.m in Sources */,
 				4587136C24AB963100F4B418 /* QRequestSerializerTests.m in Sources */,
 				454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */,

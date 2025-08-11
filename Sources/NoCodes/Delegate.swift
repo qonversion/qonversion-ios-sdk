@@ -50,8 +50,8 @@ public protocol NoCodesDelegate {
   func noCodesFailedToLoadScreen(error: Error?)
 }
 
-/// ScreenCustomizationDelegate protocol from NoCodes module
-public protocol ScreenCustomizationDelegate {
+/// NoCodesScreenCustomizationDelegate protocol from No-Codes module
+public protocol NoCodesScreenCustomizationDelegate {
   /// The function should return the screen presentation configuration used to present the first screen in the chain.
   func presentationConfigurationForScreen(contextKey: String) -> NoCodesPresentationConfiguration
   
@@ -97,7 +97,7 @@ public extension NoCodesDelegate {
   }
 }
 
-public extension ScreenCustomizationDelegate {
+public extension NoCodesScreenCustomizationDelegate {
   func presentationConfigurationForScreen(id: String) -> NoCodesPresentationConfiguration {
     return NoCodesPresentationConfiguration.defaultConfiguration()
   }

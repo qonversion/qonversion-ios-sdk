@@ -21,7 +21,7 @@ public enum NoCodesActionType {
   /// Deeplink action that opens if Application can open specified deeplink
   case deeplink
   
-  /// Navigation to another NoCodes screen
+  /// Navigation to another No-Codes screen
   case navigation
   
   /// Purchase the product
@@ -33,7 +33,7 @@ public enum NoCodesActionType {
   /// Close current screen
   case close
   
-  /// Close all NoCodes screens
+  /// Close all No-Codes screens
   case closeAll
   
   /// Internal action for store products loading
@@ -43,7 +43,7 @@ public enum NoCodesActionType {
   case showScreen
 }
 
-/// Action performed in the NoCodes
+/// Action performed in the No-Codes
 public struct NoCodesAction {
   /// Type of the action
   public let type: NoCodesActionType
