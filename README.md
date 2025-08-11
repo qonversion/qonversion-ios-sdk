@@ -5,7 +5,7 @@
 Qonversion - In-app subscription monetization: implement subscriptions and grow your app’s revenue with A/B experiments 
 
 * In-app subscription management SDK
-* No-Code Builder SDK for creating paywalls without writing code
+* No-Code Builder SDK for creating paywalls and onboarding in just a couple of lines of code
 * API and webhooks to make your subscription data available where you need it
 * Seamless Stripe integration to enable cross-platform access management
 * Subscribers CRM with user-level transactions
@@ -71,7 +71,7 @@ See more details [here](https://documentation.qonversion.io/docs/paywall-experim
 
 ## No-Code Builder
 
-Create, customize, and launch high-converting paywalls and onboarding flows — without writing a single line of code!
+Create, customize, and launch high-converting paywalls and onboarding flows — in just a couple of lines of code!
 
 The **Qonversion No-Code Builder SDK** is the fastest way to design and implement paywalls and onboarding flows in your app. Skip the development time with a **drag-and-drop editor, built-in A/B testing, and real-time analytics**.
 
@@ -129,7 +129,7 @@ pod 'Qonversion'
 
 ```swift
 // Qonversion SDK (includes No-Codes functionality)
-.package(url: "https://github.com/qonversion/qonversion-ios-sdk.git", from: "5.15.0")
+.package(url: "https://github.com/qonversion/qonversion-ios-sdk.git", from: "6.0.0")
 ```
 
 ### Usage
@@ -139,9 +139,12 @@ import Qonversion
 import NoCodes
 
 // Initialize Qonversion SDK
-Qonversion.shared().configure(with: "your_project_key")
+let config = Qonversion.Configuration(projectKey: "your_project_key", launchMode: .subscriptionManagement)
+Qonversion.initWithConfig(config)
 
 // Use No-Codes functionality
+let configuration = NoCodesConfiguration(projectKey: "your_project_key")
+NoCodes.initialize(with: configuration)
 NoCodes.shared.showScreen(withContextKey: "welcome")
 ```
 

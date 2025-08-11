@@ -13,11 +13,13 @@ import FirebaseAuth
 
 class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizationDelegate {
   func noCodesFailedToExecute(action: NoCodesAction, error: (any Error)?) {
-    
+    if let error {
+      print(error)
+    }
   }
   
   func noCodesFinishedExecuting(action: NoCodesAction) {
-    
+    print(action)
   }
   
   
@@ -49,9 +51,7 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
     logoutButton.layer.borderWidth = 1.0
     logoutButton.layer.borderColor = logoutButton.backgroundColor?.cgColor
     logoutButton.layer.borderColor = mainProductSubscriptionButton.backgroundColor?.cgColor
-    let con = NoCodesConfiguration(projectKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
-    NoCodes.initialize(with: con)
-    NoCodes.shared.showScreen(withContextKey: "kamo_test")
+    
     offeringsButton.layer.cornerRadius = 20.0
     Qonversion.shared().checkEntitlements { [weak self] (permissions, error) in
       guard let self = self else { return }
