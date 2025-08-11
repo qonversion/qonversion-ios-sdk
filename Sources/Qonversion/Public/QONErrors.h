@@ -54,17 +54,9 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONErrorCode) {
   
   // No remote configuration for the current user
   QONErrorCodeRemoteConfigurationNotAvailable = 19,
-  
-  // No offerings for the current user
-  QONErrorOfferingsNotAvailable = 20,
-  
-  
-} NS_SWIFT_NAME(Qonversion.Error);
 
-
-typedef NS_ERROR_ENUM(QONErrorDomain, QONAPIError) {
   // Could not receive data
-  QONAPIErrorFailedReceiveData = 0,
+  QONErrorCodeFailedToReceiveData = 20,
   
   // Could not parse response
   QONErrorCodeResponseParsingFailed = 21,
@@ -107,6 +99,9 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONAPIError) {
 
   // Rate limit exceeded
   QONErrorCodeApiRateLimitExceeded = 35,
+  
+  // No offerings for the current user
+  QONErrorCodeOfferingsNotAvailable = 36,
   
 } NS_SWIFT_NAME(Qonversion.ErrorCode);
 

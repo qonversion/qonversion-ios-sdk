@@ -62,7 +62,7 @@
   NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
   userInfo[NSLocalizedDescriptionKey] = @"Offerings are not available";
   
-  return [self errorWithQonversionErrorCode:QONErrorOfferingsNotAvailable userInfo:[userInfo copy]];
+  return [self errorWithQonversionErrorCode:QONErrorCodeOfferingsNotAvailable userInfo:[userInfo copy]];
 }
 
 + (NSError *)errorFromTransactionError:(NSError *)error {
