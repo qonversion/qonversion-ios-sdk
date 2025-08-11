@@ -13,10 +13,17 @@ typealias Codable = Decodable & Encodable
 enum InternalConstants: String {
     case storagePrefix = "io.qonversion.sdk.storage."
     case appVersionBundleKey = "CFBundleShortVersionString"
+    case sourceKey = "com.qonversion.keys.source"
 }
 
 extension Bundle {
     static var appVersion: String? { main.infoDictionary?[InternalConstants.appVersionBundleKey.rawValue] as? String }
+}
+
+extension UserDefaults {
+    static var source: String {
+        return standard.string(forKey: InternalConstants.sourceKey.rawValue) ?? "iOS"
+    }
 }
 
 // The below decoding implementations are taken from https://adamrackis.dev/blog/swift-codable-any

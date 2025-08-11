@@ -29,7 +29,7 @@ class HeadersBuilder: HeadersBuilderInterface {
         request.addValue(device.appVersion ?? "", forHTTPHeaderField: Header.appVersion.rawValue)
         request.addValue(device.country ?? "", forHTTPHeaderField: Header.country.rawValue)
         request.addValue(device.language ?? "", forHTTPHeaderField: Header.userLocale.rawValue)
-        request.addValue("iOS", forHTTPHeaderField: Header.source.rawValue)
+        request.addValue(UserDefaults.source, forHTTPHeaderField: Header.source.rawValue)
         request.addValue(sdkVersion, forHTTPHeaderField: Header.sourceVersion.rawValue)
         request.addValue(device.osName, forHTTPHeaderField: Header.platform.rawValue)
         request.addValue(device.osVersion, forHTTPHeaderField: Header.platformVersion.rawValue)
