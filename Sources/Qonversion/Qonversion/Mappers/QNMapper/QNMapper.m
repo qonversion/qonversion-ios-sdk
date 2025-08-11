@@ -62,7 +62,7 @@
 }
 
 + (NSError *)promoOfferMappingError {
-  return [QONErrors errorWithCode:QONAPIErrorFailedParseResponse message:@"Failed to map promotional offer" failureReason:nil];
+  return [QONErrors errorWithCode:QONErrorCodeResponseParsingFailed message:@"Failed to map promotional offer" failureReason:nil];
 }
 
 + (QONPromotionalOffer * _Nullable)mapPromoOffer:(NSDictionary * _Nullable)rawData productDiscount:(SKProductDiscount * _Nonnull)productDiscount mappingError:(NSError ** _Nullable)error {
