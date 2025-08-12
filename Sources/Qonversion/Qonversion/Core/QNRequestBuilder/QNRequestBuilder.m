@@ -19,6 +19,11 @@
 
 - (void)setSDKVersion:(NSString *)version {
   _version = version;
+  
+  NSString *existingSourceVersion = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSourceVersion];
+  if (!existingSourceVersion && version) {
+    [[NSUserDefaults standardUserDefaults] setObject:version forKey:keyQSourceVersion];
+  }
 }
 
 - (void)setBaseURL:(NSString *)url {

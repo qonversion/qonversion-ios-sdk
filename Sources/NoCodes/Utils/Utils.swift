@@ -14,6 +14,7 @@ enum InternalConstants: String {
     case storagePrefix = "io.qonversion.sdk.storage."
     case appVersionBundleKey = "CFBundleShortVersionString"
     case sourceKey = "com.qonversion.keys.source"
+    case sourceVersionKey = "com.qonversion.keys.sourceVersion"
 }
 
 extension Bundle {
@@ -23,6 +24,10 @@ extension Bundle {
 extension UserDefaults {
     static var source: String {
         return standard.string(forKey: InternalConstants.sourceKey.rawValue) ?? "iOS"
+    }
+    
+    static var sourceVersion: String? {
+        return standard.string(forKey: InternalConstants.sourceVersionKey.rawValue)
     }
 }
 

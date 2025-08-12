@@ -12,12 +12,10 @@ import Foundation
 class HeadersBuilder: HeadersBuilderInterface {
     
     let projectKey: String
-    let sdkVersion: String
     let deviceInfoCollector: DeviceInfoCollectorInterface
     
-    init(projectKey: String, sdkVersion: String, deviceInfoCollector: DeviceInfoCollectorInterface) {
+    init(projectKey: String, deviceInfoCollector: DeviceInfoCollectorInterface) {
         self.projectKey = projectKey
-        self.sdkVersion = sdkVersion
         self.deviceInfoCollector = deviceInfoCollector
     }
     
@@ -30,7 +28,10 @@ class HeadersBuilder: HeadersBuilderInterface {
         request.addValue(device.country ?? "", forHTTPHeaderField: Header.country.rawValue)
         request.addValue(device.language ?? "", forHTTPHeaderField: Header.userLocale.rawValue)
         request.addValue(UserDefaults.source, forHTTPHeaderField: Header.source.rawValue)
-        request.addValue(sdkVersion, forHTTPHeaderField: Header.sourceVersion.rawValue)
+        
+        if let sourceVersion = UserDefaults.sourceVersion {
+            request.addValue(sourceVersion, forHTTPHeaderField: Header.sourceVersion.rawValue)
+        }
         request.addValue(device.osName, forHTTPHeaderField: Header.platform.rawValue)
         request.addValue(device.osVersion, forHTTPHeaderField: Header.platformVersion.rawValue)
     }

@@ -12,9 +12,7 @@ import StoreKit
 
 #if os(iOS)
 
-fileprivate enum SDKLevelConstants: String {
-  case version = "0.1.3"
-}
+
 
 fileprivate enum IntConstants: UInt {
   case maxRequestsPerSecond = 5
@@ -80,7 +78,7 @@ final class MiscAssembly {
   
   func headersBuilder() -> HeadersBuilderInterface {
     let deviceInfoCollector = servicesAssembly.deviceInfoCollector()
-    let headersBuilder = HeadersBuilder(projectKey: projectKey, sdkVersion: SDKLevelConstants.version.rawValue, deviceInfoCollector: deviceInfoCollector)
+    let headersBuilder = HeadersBuilder(projectKey: projectKey, deviceInfoCollector: deviceInfoCollector)
     
     return headersBuilder
   }
