@@ -19,11 +19,6 @@
 #import <Qonversion/QONUserProperties.h>
 #import <Qonversion/QONStoreKit2PurchaseModel.h>
 
-#import <Qonversion/QONAutomations.h>
-#import <Qonversion/QONAutomationsDelegate.h>
-#import <Qonversion/QONScreenCustomizationDelegate.h>
-#import <Qonversion/QONScreenPresentationConfiguration.h>
-#import <Qonversion/QONActionResult.h>
 #import <Qonversion/QONPurchaseOptions.h>
 #import <Qonversion/QONPromotionalOffer.h>
 
