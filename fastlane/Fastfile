@@ -109,7 +109,7 @@ def runTests(suite, scheme = PROJECT_SCHEME)
     podfile: "./Podfile"
   )
 
-  destination = "platform=iOS Simulator"
+  destination = "platform=iOS"
 
   run_tests(
     workspace: "./#{PROJECT_NAME}.xcworkspace",
