@@ -28,11 +28,37 @@ end
 
 lane :set_outager_url do |options|
   url = options[:url]
-
+  
+  UI.message "🔗 Setting Outager URL: #{url}"
+  
   path = Dir['../**/QNOutagerIntegrationTests.m'].first
+  UI.message "📁 Found file: #{path}"
+  
   regex = /\<paste outager link here\>/
-
+  
+  # Read file content before modification
+  original_content = File.read(path)
+  UI.message "📝 File size before modification: #{original_content.length} characters"
+  
+  # Update the file
   update_file(path, regex, url)
+  
+  # Read file content after modification
+  updated_content = File.read(path)
+  UI.message "📝 File size after modification: #{updated_content.length} characters"
+  
+  # Check if replacement was successful
+  if updated_content.include?(url)
+    UI.success "✅ Outager URL successfully set: #{url}"
+    UI.message "📊 Statistics:"
+    UI.message "   - File: #{path}"
+    UI.message "   - URL: #{url}"
+    UI.message "   - Replacements: #{original_content.scan(regex).count} occurrences"
+  else
+    UI.error "❌ Error: URL not found in file after replacement"
+    UI.message "   - Expected URL: #{url}"
+    UI.message "   - File: #{path}"
+  end
 end
 
 lane :bump do |options|
@@ -101,7 +127,7 @@ def update_file(path, regex, result_value)
 end
 
 def runTests(suite, scheme = PROJECT_SCHEME)
-  ENV['FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT'] = '10'
+  ENV['FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT'] = '20'
   ENV['FASTLANE_XCODEBUILD_SETTINGS_RETRIES'] = '6'
   
   cocoapods(
