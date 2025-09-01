@@ -185,6 +185,12 @@
 - (NSURLRequest *)makeRequestWithURL:(NSURL *)url data:(NSData *)data type:(NSString *)type {
   NSMutableURLRequest *request = [self baseRequestWithURL:url type:type];
   request.HTTPBody = data;
+  
+  // Add Content-Length header for POST and DELETE requests with body
+  if (data && ([type isEqualToString:@"POST"] || [type isEqualToString:@"DELETE"])) {
+    [request addValue:[NSString stringWithFormat:@"%lu", (unsigned long)data.length] forHTTPHeaderField:@"Content-Length"];
+  }
+  
   return [request copy];
 }
 
