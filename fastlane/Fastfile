@@ -27,11 +27,38 @@ end
 
 lane :set_outager_url do |options|
   url = options[:url]
+  UI.message("Setting outager URL: #{url}")
 
   path = Dir['../**/QNOutagerIntegrationTests.m'].first
+  UI.message("Target file: #{path}")
+  
+  # Check file size before update
+  file_size_before = File.size(path)
+  UI.message("File size before update: #{file_size_before} bytes")
+  
   regex = /\<paste outager link here\>/
+  
+  # Count occurrences before replacement
+  file_content = File.read(path)
+  occurrences_before = file_content.scan(regex).length
+  UI.message("Found #{occurrences_before} placeholder(s) to replace")
 
   update_file(path, regex, url)
+  
+  # Check file size after update
+  file_size_after = File.size(path)
+  UI.message("File size after update: #{file_size_after} bytes")
+  
+  # Verify replacement
+  updated_content = File.read(path)
+  occurrences_after = updated_content.scan(regex).length
+  replacements_made = occurrences_before - occurrences_after
+  
+  if replacements_made > 0
+    UI.success("Successfully replaced #{replacements_made} placeholder(s) with URL: #{url}")
+  else
+    UI.error("No replacements were made. Check if placeholder exists in file.")
+  end
 end
 
 lane :bump do |options|
