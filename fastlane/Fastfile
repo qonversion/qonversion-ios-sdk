@@ -2,7 +2,6 @@
 PROJECT_NAME = "Qonversion"
 PROJECT_SCHEME = "Sample"
 PROJECT_SCHEME_IOS = "Sample-iOS"
-XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
 
 lane :tests do
   runTests("QonversionTests")
@@ -135,13 +134,14 @@ def runTests(suite, scheme = PROJECT_SCHEME)
     podfile: "./Podfile"
   )
 
-  destination = "platform=iOS"
-
+  # Let xcodebuild choose the appropriate destination automatically
+  # This avoids issues with specific platform requirements
   run_tests(
     workspace: "./#{PROJECT_NAME}.xcworkspace",
     scheme: scheme,
     only_testing: suite,
-    destination: destination,
-    xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration SDKROOT=iphoneos"
+    xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration"
   )
 end
+
+
