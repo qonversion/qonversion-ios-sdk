@@ -109,11 +109,13 @@ def runTests(suite, scheme = PROJECT_SCHEME)
     podfile: "./Podfile"
   )
 
+  destination = "platform=iOS Simulator"
+
   run_tests(
     workspace: "./#{PROJECT_NAME}.xcworkspace",
     scheme: scheme,
     only_testing: suite,
-    destination: "platform=iOS Simulator,OS=18.4,name=iPhone 16 Pro",
+    destination: destination,
     xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration SDKROOT=iphoneos"
   )
 end
