@@ -1836,13 +1836,11 @@
 				454EF63A24E5CC580070581E /* Resources */,
 				4CB079286CCC86BD200EEDB0 /* [CP] Embed Pods Frameworks */,
 				70D8BB012BB70CFF00859723 /* Embed Frameworks */,
-				70EE74352E2E928100260875 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				70D8BB002BB70CFF00859723 /* PBXTargetDependency */,
-				70EE74332E2E928100260875 /* PBXTargetDependency */,
 			);
 			name = Sample;
 			productName = Sample;
@@ -2385,9 +2383,10 @@
 					"$(inherited)",
 					"\"${PODS_ROOT}/Headers/Public\"",
 					"\"${PODS_ROOT}/Headers/Public/OCMock\"",
+					"\"$(SRCROOT)/Sources\"",
 				);
 				INFOPLIST_FILE = Sample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2425,9 +2424,10 @@
 					"$(inherited)",
 					"\"${PODS_ROOT}/Headers/Public\"",
 					"\"${PODS_ROOT}/Headers/Public/OCMock\"",
+					"\"$(SRCROOT)/Sources\"",
 				);
 				INFOPLIST_FILE = Sample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

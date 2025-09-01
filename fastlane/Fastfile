@@ -1,6 +1,7 @@
 
 PROJECT_NAME = "Qonversion"
 PROJECT_SCHEME = "Sample"
+PROJECT_SCHEME_IOS = "Sample-iOS"
 XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
 
 lane :tests do
@@ -8,7 +9,7 @@ lane :tests do
 end
 
 lane :integration_tests do
-  runTests("IntegrationTests")
+  runTests("IntegrationTests", PROJECT_SCHEME_IOS)
 end
 
 lane :patch do
@@ -99,8 +100,7 @@ def update_file(path, regex, result_value)
   File.open(path, 'w') { |line| line.puts new_content }
 end
 
-def runTests(suite)
-  # Увеличиваем таймауты для xcodebuild
+def runTests(suite, scheme = PROJECT_SCHEME)
   ENV['FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT'] = '10'
   ENV['FASTLANE_XCODEBUILD_SETTINGS_RETRIES'] = '6'
   
@@ -111,9 +111,9 @@ def runTests(suite)
 
   run_tests(
     workspace: "./#{PROJECT_NAME}.xcworkspace",
-    scheme: PROJECT_SCHEME,
+    scheme: scheme,
     only_testing: suite,
     destination: "platform=iOS Simulator,OS=18.4,name=iPhone 16 Pro",
-    xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration"
+    xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration SDKROOT=iphoneos"
   )
 end
