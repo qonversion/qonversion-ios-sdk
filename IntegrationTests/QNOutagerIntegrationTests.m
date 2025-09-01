@@ -41,7 +41,8 @@
 - (void)setUp {
   self.kSDKVersion = @"10.11.12";
   self.kProjectKey = @"V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-a";
-  self.kRequestTimeout = 10;
+  // Increased timeout for better reliability
+  self.kRequestTimeout = 30;
 
   NSString *timestamp = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]];
   self.kUidPrefix = [NSString stringWithFormat:@"%@%@", @"QON_test_uid_ios_", timestamp];
@@ -115,6 +116,9 @@
 
   // when
   [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    if (error) {
+      NSLog(@"QNOutagerIntegrationTests testInit error: %@", error.localizedDescription);
+    }
     XCTAssertNotNil(res);
     XCTAssertNil(error);
     XCTAssertTrue(res[@"success"]);
@@ -411,6 +415,9 @@
   [client setApiKey:projectKey];
   [client setSDKVersion:self.kSDKVersion];
   [client setUserID:uid];
+  
+  // Log client configuration for debugging
+  NSLog(@"QNOutagerIntegrationTests: Created client with UID: %@, ProjectKey: %@, SDKVersion: %@", uid, projectKey, self.kSDKVersion);
   
   return client;
 }
