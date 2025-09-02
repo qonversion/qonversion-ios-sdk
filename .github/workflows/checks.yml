@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Validation
         run: |
-          pod lib lint
+          pod lib lint --verbose
   
   spm:
     runs-on: macos-latest
