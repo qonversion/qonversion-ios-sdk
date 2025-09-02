@@ -41,8 +41,7 @@
 - (void)setUp {
   self.kSDKVersion = @"10.11.12";
   self.kProjectKey = @"V4pK6FQo3PiDPj_2vYO1qZpNBbFXNP-a";
-  // Increased timeout for better reliability
-  self.kRequestTimeout = 30;
+  self.kRequestTimeout = 10;
 
   NSString *timestamp = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]];
   self.kUidPrefix = [NSString stringWithFormat:@"%@%@", @"QON_test_uid_ios_", timestamp];
