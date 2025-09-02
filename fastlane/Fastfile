@@ -109,11 +109,17 @@ def runTests(suite)
     podfile: "./Podfile"
   )
 
-  run_tests(
+  # Use specific destination only for integration tests
+  test_params = {
     workspace: "./#{PROJECT_NAME}.xcworkspace",
     scheme: PROJECT_SCHEME,
     only_testing: suite,
-    destination: "platform=iOS Simulator,OS=18.4,name=iPhone 16 Pro",
     xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration"
-  )
+  }
+  
+  if suite == "IntegrationTests"
+    test_params[:destination] = "platform=iOS Simulator"
+  end
+
+  run_tests(test_params)
 end
