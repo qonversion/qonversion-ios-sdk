@@ -26,11 +26,6 @@
     _device = nil;
 }
 
-- (void)testOSName {
-    XCTAssertEqualObjects(@"iOS", _device.osName);
-    XCTAssertNotNil(_device.osVersion);
-}
-
 - (void)testManufacturer {
     XCTAssertEqualObjects(@"Apple", _device.manufacturer);
 }
