@@ -118,7 +118,7 @@ def runTests(suite)
   }
   
   if suite == "IntegrationTests"
-    test_params[:destination] = "platform=iOS Simulator"
+    test_params[:destination] = "platform=iOS Simulator,OS=18.1,name=iPhone 16 Pro"
   end
 
   run_tests(test_params)
