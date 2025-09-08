@@ -73,6 +73,7 @@
 		7042E7872C1C5DDE00C5AECF /* QONFallbackMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 7042E7842C1C5DDE00C5AECF /* QONFallbackMapper.h */; };
 		7042E7882C1C5DDE00C5AECF /* QONFallbackMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7042E7852C1C5DDE00C5AECF /* QONFallbackMapper.m */; };
 		70454FFF2C5FD4FA00B03017 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70454FFE2C5FD4FA00B03017 /* Extensions.swift */; };
+		706AC1FA2E68CE0D00ADA6CB /* nocodes_fallbacks.json in Resources */ = {isa = PBXBuildFile; fileRef = 706AC1F92E68CE0D00ADA6CB /* nocodes_fallbacks.json */; };
 		707734F42A9F607700CFF742 /* QONRemoteConfigurationSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		707734F52A9F607700CFF742 /* QONRemoteConfigurationSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */; };
 		707734F72A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */; };
@@ -410,6 +411,7 @@
 		7042E7852C1C5DDE00C5AECF /* QONFallbackMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONFallbackMapper.m; sourceTree = "<group>"; };
 		70454FFE2C5FD4FA00B03017 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		7052136F29F1807A00164AAF /* PurchasesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesMapper.swift; sourceTree = "<group>"; };
+		706AC1F92E68CE0D00ADA6CB /* nocodes_fallbacks.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = nocodes_fallbacks.json; sourceTree = "<group>"; };
 		707734F22A9F607700CFF742 /* QONRemoteConfigurationSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigurationSource.h; sourceTree = "<group>"; };
 		707734F32A9F607700CFF742 /* QONRemoteConfigurationSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigurationSource.m; sourceTree = "<group>"; };
 		707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigurationSource+Protected.h"; sourceTree = "<group>"; };
@@ -649,8 +651,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		70EE742B2E2E928000260875 /* Watch Sample Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "Watch Sample Watch App";
 			sourceTree = "<group>";
 		};
@@ -726,6 +726,7 @@
 		454EF63D24E5CC580070581E /* Sample */ = {
 			isa = PBXGroup;
 			children = (
+				706AC1F92E68CE0D00ADA6CB /* nocodes_fallbacks.json */,
 				70CB7CE32C2DB37900241FF1 /* qonversion_ios_fallbacks.json */,
 				456215C8257D6AF800548A3D /* Sample.entitlements */,
 				454EF63E24E5CC580070581E /* AppDelegate.swift */,
@@ -2180,6 +2181,7 @@
 				454EF64B24E5CC5A0070581E /* LaunchScreen.storyboard in Resources */,
 				894278822759334D00A8A6EC /* GoogleService-Info.plist in Resources */,
 				454EF64824E5CC5A0070581E /* Assets.xcassets in Resources */,
+				706AC1FA2E68CE0D00ADA6CB /* nocodes_fallbacks.json in Resources */,
 				70CB7CE42C2DB37A00241FF1 /* qonversion_ios_fallbacks.json in Resources */,
 				454EF64624E5CC590070581E /* Main.storyboard in Resources */,
 			);
@@ -2240,9 +2242,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2257,9 +2263,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2296,9 +2306,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
