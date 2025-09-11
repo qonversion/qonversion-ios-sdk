@@ -13,6 +13,7 @@ typealias RequestBodyArray = [AnyHashable]
 enum Request : Hashable {
     case getScreen(id: String, endpoint: String = "v3/screens/", type: RequestType = .get)
     case getScreenByContextKey(contextKey: String, endpoint: String = "v3/contexts/%@/screens", type: RequestType = .get)
+    case getPreloadScreens(endpoint: String = "v3/screens/preload", type: RequestType = .get)
     
     func convertToURLRequest(_ baseUrl: String) -> URLRequest? {
         func defaultRequest(urlString: String, body: Any?, type: RequestType) -> URLRequest? {
@@ -32,6 +33,8 @@ enum Request : Hashable {
         case let .getScreenByContextKey(contextKey, endpoint, type):
             let urlString = String(format: endpoint, arguments: [contextKey])
             return defaultRequest(urlString: urlString, body: nil, type: type)
+        case let .getPreloadScreens(endpoint, type):
+            return defaultRequest(urlString: endpoint, body: nil, type: type)
         }
     }
 
@@ -45,6 +48,10 @@ enum Request : Hashable {
         case let .getScreenByContextKey(contextKey, endpoint, type):
             hasher.combine("getScreenByContextKey")
             hasher.combine(contextKey)
+            hasher.combine(endpoint)
+            hasher.combine(type)
+        case let .getPreloadScreens(endpoint, type):
+            hasher.combine("getPreloadScreens")
             hasher.combine(endpoint)
             hasher.combine(type)
         }
