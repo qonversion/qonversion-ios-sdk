@@ -22,6 +22,7 @@
 #import "QONUserProperty.h"
 #import "QONSubscriptionPeriod.h"
 #import "QONPurchaseOptions.h"
+#import "QONPurchaseResult.h"
 #import "QONPromotionalOffer.h"
 
 #if TARGET_OS_IOS
@@ -173,6 +174,17 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  @param productID Product identifier create in Qonversion Dash, pay attention that you should use qonversion id instead Apple Product ID
  */
 - (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion;
+
+// MARK: - New Purchase Method with PurchaseResult
+
+/**
+ Make a purchase and validate that through server-to-server using Qonversion's Backend
+ 
+ @param product Product created in Qonversion Dash
+ @param options Purchase process additional options: quantity / context keys / etc.
+ @param completion Completion block that includes QONPurchaseResult with entitlements, error, transaction and cancellation status
+ */
+- (void)purchaseProductWithResult:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(void(^)(QONPurchaseResult *result))completion;
 
 /**
  Restore user entitlements based on purchases

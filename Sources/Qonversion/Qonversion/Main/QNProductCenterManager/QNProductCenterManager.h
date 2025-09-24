@@ -5,10 +5,15 @@
 #import "QONRemoteConfigManager.h"
 #import "QONRequestTrigger.h"
 
-@class QONLaunchResult, QONStoreKit2PurchaseModel, QONFallbackService, QONPromotionalOffer, QONPurchaseOptions, SKProductDiscount;
+@class QONLaunchResult, QONStoreKit2PurchaseModel, QONFallbackService, QONPromotionalOffer, QONPurchaseOptions, QONPurchaseResult, SKProductDiscount;
 @protocol QONPromoPurchasesDelegate, QONEntitlementsUpdateListener, QNUserInfoServiceInterface, QNIdentityManagerInterface, QNLocalStorage;
 
 NS_ASSUME_NONNULL_BEGIN
+
+typedef NS_ENUM(NSInteger, QONPurchaseCompletionType) {
+    QONPurchaseCompletionTypeLegacy = 0,
+    QONPurchaseCompletionTypeResult = 1
+};
 
 @interface QNProductCenterManager : NSObject
 
@@ -30,6 +35,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
 - (void)purchase:(QONProduct * _Nonnull)product options:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;
 - (void)purchase:(NSString * _Nonnull)productID purchaseOptions:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;
+
+- (void)purchaseWithResult:(QONProduct * _Nonnull)product options:(QONPurchaseOptions * _Nullable)options completion:(void(^)(QONPurchaseResult *result))completion;
+
 - (void)restoreTransactions:(QNRestoreCompletionHandler)completion;
 
 - (void)products:(QONProductsCompletionHandler)completion;
