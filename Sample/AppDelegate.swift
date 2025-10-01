@@ -12,7 +12,7 @@ import Firebase
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
+  
   var window: UIWindow?
   
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -26,12 +26,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     Qonversion.shared().collectAdvertisingId()
     QonversionSwift.shared.syncStoreKit2Purchases()
     
-    let configuration = NoCodesConfiguration(projectKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
+    // Load custom settings from UserDefaults
+    let customProjectKey = UserDefaults.standard.string(forKey: "customProjectKey")
+    let customProxyURL = UserDefaults.standard.string(forKey: "customProxyURL")
+    
+    // Ensure proxyURL is not empty
+    let safeProxyURL = customProxyURL?.isEmpty == false ? customProxyURL : nil
+    
+    let configuration = NoCodesConfiguration(
+      projectKey: customProjectKey ?? "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2",
+      proxyURL: safeProxyURL
+    )
     NoCodes.initialize(with: configuration)
     
     return true
+    
   }
-  
 }
 
 extension AppDelegate: Qonversion.PromoPurchasesDelegate {

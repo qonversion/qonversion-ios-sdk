@@ -22,9 +22,43 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
     print(action)
   }
   
+  func noCodesFailedToLoadScreen(error: Error?) {
+    if let error {
+      print("NoCodes failed to load screen: \(error)")
+    }
+    NoCodes.shared.close()
+  }
   
+  let projectKey = "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2"
   let firstPurchaseButtonProduct = "weekly"
   let secondPurchaseButtonProduct = "in_app"
+  
+  private var lastEnteredContextKey: String? {
+    get {
+      UserDefaults.standard.string(forKey: "lastEnteredContextKey")
+    }
+    set {
+      UserDefaults.standard.set(newValue, forKey: "lastEnteredContextKey")
+    }
+  }
+  
+  private var customProjectKey: String? {
+    get {
+      UserDefaults.standard.string(forKey: "customProjectKey")
+    }
+    set {
+      UserDefaults.standard.set(newValue, forKey: "customProjectKey")
+    }
+  }
+  
+  private var customProxyURL: String? {
+    get {
+      UserDefaults.standard.string(forKey: "customProxyURL")
+    }
+    set {
+      UserDefaults.standard.set(newValue, forKey: "customProxyURL")
+    }
+  }
   
   @IBOutlet weak var mainProductSubscriptionButton: UIButton!
   @IBOutlet weak var inAppPurchaseButton: UIButton!
@@ -33,12 +67,20 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
   @IBOutlet weak var subscriptionTitleLabel: UILabel!
   @IBOutlet weak var checkActivePermissionsButton: UIButton!
   @IBOutlet weak var logoutButton: UIButton!
+  @IBOutlet weak var logoImageView: UIImageView!
   
   var permissions: [String: Qonversion.Entitlement] = [:]
   var products: [String: Qonversion.Product] = [:]
   
   override func viewDidLoad() {
     super.viewDidLoad()
+    
+    // Setup logo tap gesture
+    setupLogoTapGesture()
+    
+    // Setup NoCodes delegates
+    NoCodes.shared.set(screenCustomizationDelegate: self)
+    NoCodes.shared.set(delegate: self)
     
     navigationController?.isNavigationBarHidden = true
     
@@ -53,6 +95,7 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
     logoutButton.layer.borderColor = mainProductSubscriptionButton.backgroundColor?.cgColor
     
     offeringsButton.layer.cornerRadius = 20.0
+    
     Qonversion.shared().checkEntitlements { [weak self] (permissions, error) in
       guard let self = self else { return }
 
@@ -77,6 +120,68 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
     Qonversion.shared().offerings { offerings, error in
       
     }
+  }
+  
+  private func setupLogoTapGesture() {
+    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleLogoTap))
+    tapGesture.numberOfTapsRequired = 5
+    logoImageView.isUserInteractionEnabled = true
+    logoImageView.addGestureRecognizer(tapGesture)
+  }
+  
+  @objc private func handleLogoTap() {
+    showConfigurationPopup()
+  }
+  
+  private func showConfigurationPopup() {
+    let alertController = UIAlertController(title: "Configuration", message: "Enter custom settings", preferredStyle: .alert)
+    
+    // Project Key field
+    alertController.addTextField { [weak self] textField in
+      textField.placeholder = "Project Key"
+      textField.text = self?.customProjectKey ?? self?.projectKey
+      textField.clearButtonMode = .always
+    }
+    
+    // Proxy URL field
+    alertController.addTextField { [weak self] textField in
+      textField.placeholder = "Proxy URL (optional)"
+      textField.text = self?.customProxyURL
+      textField.clearButtonMode = .always
+    }
+    
+    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+    let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+      guard let self = self else { return }
+      
+      let projectKeyField = alertController.textFields?[0]
+      let proxyURLField = alertController.textFields?[1]
+      
+      let newProjectKey = projectKeyField?.text?.trimmingCharacters(in: .whitespacesAndNewlines)
+      let newProxyURL = proxyURLField?.text?.trimmingCharacters(in: .whitespacesAndNewlines)
+      
+      // Validate project key
+      guard let projectKey = newProjectKey, !projectKey.isEmpty else {
+        self.showAlert(with: "Error", message: "Project Key cannot be empty")
+        return
+      }
+      
+      // Save settings
+      self.customProjectKey = projectKey
+      
+      // Only update proxyURL if it's not empty, otherwise keep current value
+      if let proxyURL = newProxyURL, !proxyURL.isEmpty {
+        self.customProxyURL = proxyURL
+      }
+      // If proxyURL is empty, we don't change self.customProxyURL (keep current value)
+      
+      self.showAlert(with: "Success", message: "Configuration saved. Please restart the app to apply changes.")
+    }
+    
+    alertController.addAction(cancelAction)
+    alertController.addAction(saveAction)
+    
+    present(alertController, animated: true)
   }
   
   func checkProducts() {
@@ -221,6 +326,28 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
     } catch {
       // handle error
     }
+  }
+  
+  @IBAction func didTapShowPaywallButton(_ sender: Any) {
+    let alertController = UIAlertController(title: "Enter context key", message: nil, preferredStyle: .alert)
+    
+    alertController.addTextField { [weak self] textField in
+      textField.placeholder = "Context key"
+      textField.text = self?.lastEnteredContextKey
+      textField.clearButtonMode = .always
+    }
+    
+    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+    let showAction = UIAlertAction(title: "Show No-Code Screen", style: .default) { [weak self] _ in
+      guard let contextKey = alertController.textFields?.first?.text, !contextKey.isEmpty else { return }
+      self?.lastEnteredContextKey = contextKey
+      NoCodes.shared.showScreen(withContextKey: contextKey)
+    }
+    
+    alertController.addAction(cancelAction)
+    alertController.addAction(showAction)
+    
+    present(alertController, animated: true)
   }
   
 }
