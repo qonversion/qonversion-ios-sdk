@@ -27,11 +27,14 @@ final class ServicesAssembly {
   
   private let miscAssembly: MiscAssembly
   private var deviceInfoCollectorInstance: DeviceInfoCollector?
+  private var requestProcessorInstance: RequestProcessorInterface?
   private let fallbackFileName: String?
+  private var proxyURL: String?
   
-  init(miscAssembly: MiscAssembly, fallbackFileName: String? = nil) {
+  init(miscAssembly: MiscAssembly, fallbackFileName: String? = nil, proxyURL: String? = nil) {
     self.miscAssembly = miscAssembly
     self.fallbackFileName = fallbackFileName
+    self.proxyURL = proxyURL
   }
   
   func noCodesService() -> NoCodesServiceInterface {
@@ -48,6 +51,10 @@ final class ServicesAssembly {
   }
   
   func requestProcessor() -> RequestProcessorInterface {
+    if let requestProcessorInstance {
+      return requestProcessorInstance
+    }
+    
     let networkProvider: NetworkProviderInterface = networkProvider()
     let headersBuilder: HeadersBuilderInterface = miscAssembly.headersBuilder()
     let errorHandler: NetworkErrorHandlerInterface = miscAssembly.errorHandler()
@@ -56,8 +63,10 @@ final class ServicesAssembly {
     
     let retriableRequestsList: [Request] = []
     
-    let processor = RequestProcessor(baseURL: StringConstants.baseURL.rawValue, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, rateLimiter: rateLimiter)
+    let baseURL = getBaseURL()
+    let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, rateLimiter: rateLimiter)
     
+    requestProcessorInstance = processor
     return processor
   }
   
@@ -88,6 +97,26 @@ final class ServicesAssembly {
   
   private func getFallbackFileName() -> String {
     return fallbackFileName ?? FallbackConstants.defaultFileName
+  }
+  
+  private func getBaseURL() -> String {
+    guard let proxyURL = proxyURL else {
+      return StringConstants.baseURL.rawValue
+    }
+    
+    var normalizedURL = proxyURL
+    
+    // Add https:// prefix if not present
+    if !normalizedURL.hasPrefix("http://") && !normalizedURL.hasPrefix("https://") {
+      normalizedURL = "https://" + normalizedURL
+    }
+    
+    // Add trailing slash if not present
+    if !normalizedURL.hasSuffix("/") {
+      normalizedURL = normalizedURL + "/"
+    }
+    
+    return normalizedURL
   }
   
 }

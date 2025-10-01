@@ -10,7 +10,7 @@ import Foundation
 #if os(iOS)
 
 class RequestProcessor: RequestProcessorInterface {
-  let baseURL: String
+  var baseURL: String
   let networkProvider: NetworkProviderInterface
   let headersBuilder: HeadersBuilderInterface
   let errorHandler: NetworkErrorHandlerInterface
@@ -74,6 +74,10 @@ class RequestProcessor: RequestProcessorInterface {
     } catch {
       throw NoCodesError(type: .invalidResponse, error: error)
     }
+  }
+  
+  func setBaseURL(_ url: String) {
+    self.baseURL = url
   }
 }
 
