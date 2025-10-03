@@ -180,6 +180,12 @@ static bool _isInitialized = NO;
   [self.productCenterManager purchase:productID purchaseOptions:nil completion:completion];
 }
 
+// MARK: - New Purchase Method with PurchaseResult
+
+- (void)purchaseProductWithResult:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(void(^)(QONPurchaseResult *result))completion {
+  [self.productCenterManager purchaseWithResult:product options:options completion:completion];
+}
+
 - (void)restore:(QNRestoreCompletionHandler)completion {
   [self.productCenterManager restoreReceipt:completion];
 }
