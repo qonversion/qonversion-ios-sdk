@@ -13,7 +13,7 @@ typealias RequestBodyArray = [AnyHashable]
 enum Request : Hashable {
     case getScreen(id: String, endpoint: String = "v3/screens/", type: RequestType = .get)
     case getScreenByContextKey(contextKey: String, endpoint: String = "v3/contexts/%@/screens", type: RequestType = .get)
-    case getPreloadScreens(endpoint: String = "v3/screens/preload", type: RequestType = .get)
+    case getPreloadScreens(endpoint: String = "v3/screens?preload=true", type: RequestType = .get)
     
     func convertToURLRequest(_ baseUrl: String) -> URLRequest? {
         func defaultRequest(urlString: String, body: Any?, type: RequestType) -> URLRequest? {
