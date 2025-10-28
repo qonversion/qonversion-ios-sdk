@@ -156,7 +156,7 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
       let retriableRequestsList: [Request] = []
       
       // Use Outager URL instead of default API URL
-      let processor = RequestProcessor(baseURL: "https://outager-dev.qonversion.workers.dev/", networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, rateLimiter: rateLimiter)
+      let processor = RequestProcessor(baseURL: "<paste outager link here>", networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, rateLimiter: rateLimiter)
       
       // Create NoCodesService with custom processor
       return NoCodesService(requestProcessor: processor, fallbackService: servicesAssembly.fallbackService())
