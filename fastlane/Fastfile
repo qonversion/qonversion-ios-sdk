@@ -118,7 +118,7 @@ def runTests(suite)
   }
   
   # Set destination for all iOS tests to run on simulator
-  test_params[:destination] = "platform=iOS Simulator,OS=18.1,name=iPhone 16 Pro"
+  test_params[:destination] = "platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro"
 
   run_tests(test_params)
 end
