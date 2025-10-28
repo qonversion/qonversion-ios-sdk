@@ -60,8 +60,13 @@ class NoCodesService: NoCodesServiceInterface {
     
     do {
       let request = Request.getScreenByContextKey(contextKey: contextKey)
-      let screen: NoCodesScreen = try await requestProcessor.process(request: request, responseType: NoCodesScreen.self)
+      let screens: [NoCodesScreen] = try await requestProcessor.process(request: request, responseType: [NoCodesScreen].self)
       
+      if (screens.isEmpty) {
+        throw NoCodesError(type: .screenNotFound)
+      }
+
+      let screen = screens[0]
       // Save to cache
       cacheScreen(screen)
       
@@ -125,7 +130,7 @@ class NoCodesService: NoCodesServiceInterface {
       switch noCodesError.type {
       case .invalidRequest, .invalidResponse, .internal, .critical:
         return true
-      case .screenLoadingFailed, .productsLoadingFailed, .productNotFound, .authorizationFailed, .rateLimitExceeded, .sdkInitializationError:
+      case .screenLoadingFailed, .screenNotFound, .productsLoadingFailed, .productNotFound, .authorizationFailed, .rateLimitExceeded, .sdkInitializationError:
         return false
       case .unknown:
         return true
