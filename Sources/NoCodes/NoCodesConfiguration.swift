@@ -13,16 +13,19 @@ import Foundation
 /// Configuration struct from No-Codes module
 public struct NoCodesConfiguration {
   /// Your project key from Qonversion Dashboard to setup the SDK
-  let projectKey: String
+  public let projectKey: String
   
   /// Delegate
-  let delegate: NoCodesDelegate?
+  public var delegate: NoCodesDelegate?
   
   /// Screen customization delegate
-  let screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
+  public var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   
   /// Optional custom fallback file name. If not provided, defaults to "nocodes_fallbacks.json"
-  let fallbackFileName: String?
+  public var fallbackFileName: String?
+  
+  /// Optional proxy URL for API requests. If not provided, uses default API endpoint
+  public var proxyURL: String?
   
   /// Initializer of NoCodes Configuration.
   ///
@@ -31,12 +34,15 @@ public struct NoCodesConfiguration {
   ///   - delegate: delegate object.
   ///   - screenCustomizationDelegate: ``NoCodesScreenCustomizationDelegate`` screen customization delegate object.
   ///   - fallbackFileName: Optional custom fallback file name. If not provided, defaults to "nocodes_fallbacks.json"
-  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, fallbackFileName: String? = nil) {
+  ///   - proxyURL: Optional proxy URL for API requests. If not provided, uses default API endpoint
+  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, fallbackFileName: String? = nil, proxyURL: String? = nil) {
     self.projectKey = projectKey
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
     self.fallbackFileName = fallbackFileName
+    self.proxyURL = proxyURL
   }
+  
 }
 
 #endif 

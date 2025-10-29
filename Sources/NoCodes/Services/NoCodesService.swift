@@ -12,13 +12,15 @@ import Foundation
 
 class NoCodesService: NoCodesServiceInterface {
   
+  private static let cacheQueueLabel = "io.qonversion.nocodes.cache"
+  
   private let requestProcessor: RequestProcessorInterface
   private let fallbackService: FallbackServiceInterface?
   
   // Local screen cache
   private var screensById: [String: NoCodesScreen] = [:]
   private var screensByContextKey: [String: NoCodesScreen] = [:]
-  private let cacheQueue = DispatchQueue(label: "com.qonversion.nocodes.cache", attributes: .concurrent)
+  private let cacheQueue = DispatchQueue(label: cacheQueueLabel, attributes: .concurrent)
   
   init(requestProcessor: RequestProcessorInterface, fallbackService: FallbackServiceInterface? = nil) {
     self.requestProcessor = requestProcessor
