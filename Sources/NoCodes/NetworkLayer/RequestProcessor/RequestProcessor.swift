@@ -10,7 +10,7 @@ import Foundation
 #if os(iOS)
 
 class RequestProcessor: RequestProcessorInterface {
-  let baseURL: String
+  var baseURL: String
   let networkProvider: NetworkProviderInterface
   let headersBuilder: HeadersBuilderInterface
   let errorHandler: NetworkErrorHandlerInterface
@@ -75,6 +75,7 @@ class RequestProcessor: RequestProcessorInterface {
       throw NoCodesError(type: .invalidResponse, error: error)
     }
   }
+  
 }
 
 #endif

@@ -20,7 +20,7 @@ final class NoCodesAssembly {
   required init(configuration: NoCodesConfiguration) {
     self.configuration = configuration
     miscAssembly = MiscAssembly(projectKey: configuration.projectKey)
-    servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly, fallbackFileName: configuration.fallbackFileName)
+    servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly, fallbackFileName: configuration.fallbackFileName, proxyURL: configuration.proxyURL)
     miscAssembly.servicesAssembly = servicesAssembly
   }
   
