@@ -7,10 +7,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary *)launchData;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (NSDictionary *)purchaseData:(SKProduct *)product
                    transaction:(SKPaymentTransaction *)transaction
                        receipt:(nullable NSString *)receipt
                purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions;
+#pragma clang diagnostic pop
 
 - (NSDictionary *)introTrialEligibilityDataForProducts:(NSArray<QONProduct *> *)products;
 
