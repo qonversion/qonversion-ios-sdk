@@ -14,6 +14,8 @@ typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSStrin
 
 - (instancetype)initWithDelegate:(id <QNStoreKitServiceDelegate>)delegate;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (void)loadProducts:(NSSet <NSString *> *)products;
 - (SKProduct *)purchase:(NSString *)productID options:(QONPurchaseOptions * _Nullable)options identityId:(NSString *)identityId;
 - (void)purchaseProduct:(SKProduct *)product;
@@ -22,6 +24,7 @@ typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSStrin
 - (nullable SKProduct *)productAt:(NSString *)productID;
 - (void)finishTransaction:(SKPaymentTransaction *)transaction;
 - (NSArray<SKProduct *> *)getLoadedProducts;
+#pragma clang diagnostic pop
 
 - (void)receipt:(QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)completion;
 
@@ -30,16 +33,25 @@ typedef void(^QNStoreKitServiceReceiptFetchWithReceiptCompletionHandler)(NSStrin
 @protocol QNStoreKitServiceDelegate <NSObject>
 
 @optional
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
 - (void)handleDeferredTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
 - (void)handlePurchasedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product;
+#pragma clang diagnostic pop
 - (void)handleRestoreCompletedTransactionsFinished;
 - (void)handleRestoreCompletedTransactionsFailed:(NSError *)error;
 - (void)handleProductsRequestFailed:(NSError *)error;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (void)handleProducts:(NSArray<SKProduct *> *)products;
+#pragma clang diagnostic pop
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product;
 - (void)handleRestoredTransactions:(NSArray<SKPaymentTransaction *> *)transactions;
 - (void)handleExcessTransactions:(NSArray<SKPaymentTransaction *> *)transactions;
+#pragma clang diagnostic pop
 
 @end
 

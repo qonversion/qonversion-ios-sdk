@@ -29,12 +29,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchRequest:(QONRequestTrigger)requestTrigger
            completion:(QNAPIClientDictCompletionHandler)completion;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (NSURLRequest *)purchaseRequestWith:(SKProduct *)product
                           transaction:(SKPaymentTransaction *)transaction
                               receipt:(nullable NSString *)receipt
                       purchaseOptions:(nullable QONPurchaseOptions *)purchaseOptions
                        requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion;
+#pragma clang diagnostic pop
 - (NSURLRequest *)purchaseRequestWith:(NSDictionary *) body
                        requestTrigger:(QONRequestTrigger)requestTrigger
                            completion:(QNAPIClientDictCompletionHandler)completion;
@@ -67,12 +70,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion;
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QNAPIClientEmptyCompletionHandler)completion;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (void)getPromotionalOfferForProduct:(QONProduct *)product
                              discount:(SKProductDiscount *)discount
                                userId:(NSString *)userId
                            identityId:(NSString *)identityId
                               receipt:(nullable NSString *)receipt
                            completion:(QNAPIClientDictCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0));
+#pragma clang diagnostic pop
 
 - (NSURLRequest *)handlePurchase:(QONStoreKit2PurchaseModel *)purchaseInfo
                          receipt:(nullable NSString *)receipt

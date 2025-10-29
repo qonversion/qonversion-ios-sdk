@@ -29,6 +29,8 @@ public final class NoCodes {
     let assembly: NoCodesAssembly = NoCodesAssembly(configuration: configuration)
     NoCodes.shared.flowCoordinator = assembly.flowCoordinator()
     
+    NoCodes.shared.flowCoordinator?.preloadScreens()
+    
     return NoCodes.shared
   }
   

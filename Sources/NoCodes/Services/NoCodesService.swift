@@ -12,8 +12,15 @@ import Foundation
 
 class NoCodesService: NoCodesServiceInterface {
   
+  private static let cacheQueueLabel = "io.qonversion.nocodes.cache"
+  
   private let requestProcessor: RequestProcessorInterface
   private let fallbackService: FallbackServiceInterface?
+  
+  // Local screen cache
+  private var screensById: [String: NoCodesScreen] = [:]
+  private var screensByContextKey: [String: NoCodesScreen] = [:]
+  private let cacheQueue = DispatchQueue(label: cacheQueueLabel, attributes: .concurrent)
   
   init(requestProcessor: RequestProcessorInterface, fallbackService: FallbackServiceInterface? = nil) {
     self.requestProcessor = requestProcessor
@@ -21,9 +28,17 @@ class NoCodesService: NoCodesServiceInterface {
   }
   
   func loadScreen(with id: String) async throws -> NoCodesScreen {
+    // First check cache
+    if let cachedScreen = getCachedScreen(id: id) {
+      return cachedScreen
+    }
+    
     do {
       let request = Request.getScreen(id: id)
       let screen: NoCodesScreen = try await requestProcessor.process(request: request, responseType: NoCodesScreen.self)
+      
+      // Save to cache
+      cacheScreen(screen)
       
       return screen
     } catch {
@@ -31,6 +46,7 @@ class NoCodesService: NoCodesServiceInterface {
       if let fallbackService = fallbackService,
          (isNetworkError(error) || isServerError(error)) {
         if let fallbackScreen = fallbackService.loadScreen(with: id) {
+          // Don't cache fallback screens
           return fallbackScreen
         }
       }
@@ -39,19 +55,69 @@ class NoCodesService: NoCodesServiceInterface {
   }
   
   func loadScreen(withContextKey contextKey: String) async throws -> NoCodesScreen {
+    // First check cache
+    if let cachedScreen = getCachedScreen(contextKey: contextKey) {
+      return cachedScreen
+    }
+    
     do {
       let request = Request.getScreenByContextKey(contextKey: contextKey)
       let screen: NoCodesScreen = try await requestProcessor.process(request: request, responseType: NoCodesScreen.self)
+      
+      // Save to cache
+      cacheScreen(screen)
+      
       return screen
     } catch {
       // Try fallback if available and error is network-related or server error
       if let fallbackService = fallbackService,
          (isNetworkError(error) || isServerError(error)) {
         if let fallbackScreen = fallbackService.loadScreen(withContextKey: contextKey) {
+          // Don't cache fallback screens
           return fallbackScreen
         }
       }
       throw NoCodesError(type: .screenLoadingFailed, message: nil, error: error)
+    }
+  }
+  
+  func preloadScreens() async throws -> [NoCodesScreen] {
+    let request = Request.getPreloadScreens()
+    let screens: [NoCodesScreen] = try await requestProcessor.process(request: request, responseType: [NoCodesScreen].self)
+    
+    // Cache preloaded screens
+    cacheScreens(screens)
+    
+    return screens
+  }
+  
+  // MARK: - Private Cache Methods
+  
+  private func getCachedScreen(id: String) -> NoCodesScreen? {
+    return cacheQueue.sync {
+      return screensById[id]
+    }
+  }
+  
+  private func getCachedScreen(contextKey: String) -> NoCodesScreen? {
+    return cacheQueue.sync {
+      return screensByContextKey[contextKey]
+    }
+  }
+  
+  private func cacheScreen(_ screen: NoCodesScreen) {
+    cacheQueue.async(flags: .barrier) {
+      self.screensById[screen.id] = screen
+      self.screensByContextKey[screen.contextKey] = screen
+    }
+  }
+  
+  private func cacheScreens(_ screens: [NoCodesScreen]) {
+    cacheQueue.async(flags: .barrier) {
+      screens.forEach { screen in
+        self.screensById[screen.id] = screen
+        self.screensByContextKey[screen.contextKey] = screen
+      }
     }
   }
   

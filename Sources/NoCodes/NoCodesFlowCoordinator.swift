@@ -36,6 +36,17 @@ final class NoCodesFlowCoordinator {
     self.screenCustomizationDelegate = screenCustomizationDelegate
   }
   
+  func preloadScreens() {
+    Task {
+      do {
+        let _ = try await noCodesService.preloadScreens()
+        logger.info("Successfully preloaded screens")
+      } catch {
+        logger.error("Failed to preload screens: \(error.localizedDescription)")
+      }
+    }
+  }
+  
   func close() {
     currentVC?.close()
   }

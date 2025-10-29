@@ -27,6 +27,7 @@ final class ServicesAssembly {
   
   private let miscAssembly: MiscAssembly
   private var deviceInfoCollectorInstance: DeviceInfoCollector?
+  private var noCodesServiceInstance: NoCodesServiceInterface?
   private let fallbackFileName: String?
   
   init(miscAssembly: MiscAssembly, fallbackFileName: String? = nil) {
@@ -35,7 +36,14 @@ final class ServicesAssembly {
   }
   
   func noCodesService() -> NoCodesServiceInterface {
-    return NoCodesService(requestProcessor: requestProcessor(), fallbackService: fallbackService())
+    if let noCodesServiceInstance {
+      return noCodesServiceInstance
+    }
+    
+    let service = NoCodesService(requestProcessor: requestProcessor(), fallbackService: fallbackService())
+    noCodesServiceInstance = service
+    
+    return service
   }
   
   func fallbackService() -> FallbackServiceInterface? {
