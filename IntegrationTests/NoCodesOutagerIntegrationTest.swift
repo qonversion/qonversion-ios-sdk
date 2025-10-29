@@ -39,6 +39,7 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     // then
     XCTAssertNotNil(screen, "Screen should not be null")
     XCTAssertEqual(screen.contextKey, VALID_CONTEXT_KEY, "Context key should match")
+    XCTAssertNotNil(screen.html, "Screen content should exist")
     XCTAssertEqual(screen.id, ID_FOR_SCREEN_BY_CONTEXT_KEY, "Screen ID should match")
   }
   
@@ -52,6 +53,7 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     // then
     XCTAssertNotNil(screen, "Screen should not be null")
     XCTAssertEqual(screen.id, VALID_SCREEN_ID, "Screen ID should match")
+    XCTAssertNotNil(screen.html, "Screen content should exist")
     XCTAssertEqual(screen.contextKey, CONTEXT_KEY_FOR_SCREEN_BY_ID, "Context key should match")
   }
   
@@ -69,11 +71,13 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     // Check first screen (order may vary)
     let firstScreen = screens.first { $0.id == ID_FOR_SCREEN_BY_CONTEXT_KEY }
     XCTAssertNotNil(firstScreen, "First screen should exist")
+    XCTAssertNotNil(firstScreen?.html, "Screen content should exist")
     XCTAssertEqual(firstScreen?.contextKey, VALID_CONTEXT_KEY, "Context key for first screen should match")
     
     // Check second screen
     let secondScreen = screens.first { $0.id == VALID_SCREEN_ID }
     XCTAssertNotNil(secondScreen, "Second screen should exist")
+    XCTAssertNotNil(secondScreen?.html, "Screen content should exist")
     XCTAssertEqual(secondScreen?.contextKey, CONTEXT_KEY_FOR_SCREEN_BY_ID, "Context key for second screen should match")
   }
   

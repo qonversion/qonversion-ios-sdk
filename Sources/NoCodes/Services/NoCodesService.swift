@@ -68,7 +68,7 @@ class NoCodesService: NoCodesServiceInterface {
         throw NoCodesError(type: .screenNotFound)
       }
 
-      let screen = screens[0]
+      let screen = screens.first!
       // Save to cache
       cacheScreen(screen)
       
