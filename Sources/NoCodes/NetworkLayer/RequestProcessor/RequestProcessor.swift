@@ -76,9 +76,6 @@ class RequestProcessor: RequestProcessorInterface {
     }
   }
   
-  func setBaseURL(_ url: String) {
-    self.baseURL = url
-  }
 }
 
 #endif

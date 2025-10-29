@@ -14,7 +14,7 @@ final class NoCodesAssembly {
   
   let configuration: NoCodesConfiguration
   private let miscAssembly: MiscAssembly
-  let servicesAssembly: ServicesAssembly
+  private let servicesAssembly: ServicesAssembly
   private var flowCoordinatorInstance: NoCodesFlowCoordinator?
   
   required init(configuration: NoCodesConfiguration) {
@@ -30,7 +30,7 @@ final class NoCodesAssembly {
     }
     
     let noCodesService: NoCodesServiceInterface = servicesAssembly.noCodesService()
-    let coordinator = NoCodesFlowCoordinator(delegate: configuration.delegate, screenCustomizationDelegate: configuration.screenCustomizationDelegate, noCodesService: noCodesService, viewsAssembly: viewsAssembly(), servicesAssembly: servicesAssembly, logger: miscAssembly.loggerWrapper())
+    let coordinator = NoCodesFlowCoordinator(delegate: configuration.delegate, screenCustomizationDelegate: configuration.screenCustomizationDelegate, noCodesService: noCodesService, viewsAssembly: viewsAssembly(), logger: miscAssembly.loggerWrapper())
     flowCoordinatorInstance = coordinator
     
     return coordinator

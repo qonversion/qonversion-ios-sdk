@@ -17,16 +17,14 @@ final class NoCodesFlowCoordinator {
   private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   private let noCodesService: NoCodesServiceInterface
   private let viewsAssembly: ViewsAssembly
-  private let servicesAssembly: ServicesAssembly
   private var currentVC: NoCodesViewController?
   private var logger: LoggerWrapper!
   
-  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, servicesAssembly: ServicesAssembly, logger: LoggerWrapper) {
+  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper) {
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
     self.noCodesService = noCodesService
     self.viewsAssembly = viewsAssembly
-    self.servicesAssembly = servicesAssembly
     self.logger = logger
   }
   
