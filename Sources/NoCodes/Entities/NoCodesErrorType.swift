@@ -22,6 +22,7 @@ public enum NoCodesErrorType {
   case authorizationFailed
   case critical
   case rateLimitExceeded
+  case screenNotFound
   case screenLoadingFailed
   
   public func message() -> String {
@@ -32,8 +33,12 @@ public enum NoCodesErrorType {
       return "SDK is not initialized. Initialize SDK before calling other functions"
     case .screenLoadingFailed:
       return "Failed to load screen."
+    case .productNotFound:
+      return "The product not found."
     case .productsLoadingFailed:
       return "Failed to load products."
+    case .screenNotFound:
+      return "No-Code screen not found."
     default:
       return "Unknown error occurred."
     }

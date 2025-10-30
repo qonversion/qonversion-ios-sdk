@@ -26,6 +26,8 @@ class NetworkErrorHandler: NetworkErrorHandlerInterface {
             return configureError(for: httpResponse, body: body, type: .internal)
         } else if criticalErrorCodes.map({ $0.rawValue }).contains(httpResponse.statusCode) {
             return configureError(for: httpResponse, body: body, type: .critical)
+        } else if httpResponse.statusCode == ResponseCode.notFound.rawValue {
+            return configureError(for: httpResponse, body: body, type: .screenNotFound)
         } else if !(ResponseCode.successMin.rawValue...ResponseCode.successMax.rawValue).contains(httpResponse.statusCode) {
             return configureError(for: httpResponse, body: body, type: .unknown)
         }

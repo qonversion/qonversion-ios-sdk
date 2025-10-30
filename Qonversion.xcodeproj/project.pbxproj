@@ -47,6 +47,8 @@
 		6A21BF532AB2059F005BDA7C /* QONRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A21BF522AB2059F005BDA7C /* QONRequest.h */; };
 		6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF542AB205AC005BDA7C /* QONRequest.m */; };
 		6A4108552D8AAE4A002F902A /* QONRequestTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A4108522D8AAE4A002F902A /* QONRequestTrigger.h */; };
+		6A7AB1D32EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7AB1D22EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift */; };
+		6A7AB1D42EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7AB1D12EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift */; };
 		6A8A604329DAD363008EC7D8 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		6A8A604929DAD36E008EC7D8 /* QNAPIClientIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */; };
 		6A95DE9929E007A600350BD6 /* init_request_main_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 6A95DE9829E007A600350BD6 /* init_request_main_data.json */; };
@@ -380,6 +382,9 @@
 		6A21BF522AB2059F005BDA7C /* QONRequest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRequest.h; sourceTree = "<group>"; };
 		6A21BF542AB205AC005BDA7C /* QONRequest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRequest.m; sourceTree = "<group>"; };
 		6A4108522D8AAE4A002F902A /* QONRequestTrigger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRequestTrigger.h; sourceTree = "<group>"; };
+		6A7AB1D12EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesIntegrationTest.swift; sourceTree = "<group>"; };
+		6A7AB1D22EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesOutagerIntegrationTest.swift; sourceTree = "<group>"; };
+		6A7AB1D52EA8D14000A3D9C3 /* IntegrationTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IntegrationTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIClientIntegrationTests.m; sourceTree = "<group>"; };
 		6A8A603F29DAD363008EC7D8 /* IntegrationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A95DE9829E007A600350BD6 /* init_request_main_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = init_request_main_data.json; sourceTree = "<group>"; };
@@ -651,8 +656,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		70EE742B2E2E928000260875 /* Watch Sample Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "Watch Sample Watch App";
 			sourceTree = "<group>";
 		};
@@ -937,12 +940,15 @@
 		6A8A604029DAD363008EC7D8 /* IntegrationTests */ = {
 			isa = PBXGroup;
 			children = (
+				6A7AB1D12EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift */,
+				6A7AB1D22EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift */,
 				6A95DE9A29E0083D00350BD6 /* Helpers */,
 				6A95DE9229E0071300350BD6 /* Resources */,
 				6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */,
 				6A95DEA129E40E9900350BD6 /* QNOutagerIntegrationTests.m */,
 				6A95DE9E29E0119C00350BD6 /* QNIntegrationTestConstants.h */,
 				6A95DE9F29E011A700350BD6 /* QNIntegrationTestConstants.m */,
+				6A7AB1D52EA8D14000A3D9C3 /* IntegrationTests-Bridging-Header.h */,
 			);
 			path = IntegrationTests;
 			sourceTree = "<group>";
@@ -2146,6 +2152,7 @@
 					};
 					6A8A603E29DAD363008EC7D8 = {
 						CreatedOnToolsVersion = 14.2;
+						LastSwiftMigration = 2600;
 						TestTargetID = 454EF63B24E5CC580070581E;
 					};
 					70EE74292E2E928000260875 = {
@@ -2244,9 +2251,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2261,9 +2272,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2300,9 +2315,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2521,6 +2540,8 @@
 				6A95DEA529E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m in Sources */,
 				6A95DE9C29E009E000350BD6 /* XCTestCase+IntegrationTestJSON.m in Sources */,
 				6A8A604929DAD36E008EC7D8 /* QNAPIClientIntegrationTests.m in Sources */,
+				6A7AB1D32EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift in Sources */,
+				6A7AB1D42EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift in Sources */,
 				6A95DEA229E40E9900350BD6 /* QNOutagerIntegrationTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2939,18 +2960,22 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.IntegrationTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "IntegrationTests/IntegrationTests-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sample";
 			};
@@ -2961,16 +2986,19 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.qonversion.sample.IntegrationTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "IntegrationTests/IntegrationTests-Bridging-Header.h";
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sample";
 			};

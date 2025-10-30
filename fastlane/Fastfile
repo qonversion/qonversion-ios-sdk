@@ -28,10 +28,12 @@ end
 lane :set_outager_url do |options|
   url = options[:url]
 
-  path = Dir['../**/QNOutagerIntegrationTests.m'].first
+  path1 = Dir['../**/QNOutagerIntegrationTests.m'].first
+  path2 = Dir['../**/NoCodesOutagerIntegrationTest.swift'].first
   regex = /\<paste outager link here\>/
 
-  update_file(path, regex, url)
+  update_file(path1, regex, url)
+  update_file(path2, regex, url)
 end
 
 lane :bump do |options|
