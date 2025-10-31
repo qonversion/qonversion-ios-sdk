@@ -64,11 +64,10 @@ class NoCodesService: NoCodesServiceInterface {
       let request = Request.getScreenByContextKey(contextKey: contextKey)
       let screens: [NoCodesScreen] = try await requestProcessor.process(request: request, responseType: [NoCodesScreen].self)
       
-      if (screens.isEmpty) {
+      guard let screen = screens.first else {
         throw NoCodesError(type: .screenNotFound)
       }
 
-      let screen = screens.first!
       // Save to cache
       cacheScreen(screen)
       
