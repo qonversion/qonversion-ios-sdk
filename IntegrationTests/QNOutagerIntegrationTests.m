@@ -115,6 +115,9 @@
 
   // when
   [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
+    if (error) {
+      NSLog(@"QNOutagerIntegrationTests testInit error: %@", error.localizedDescription);
+    }
     XCTAssertNotNil(res);
     XCTAssertNil(error);
     XCTAssertTrue(res[@"success"]);
@@ -411,6 +414,9 @@
   [client setApiKey:projectKey];
   [client setSDKVersion:self.kSDKVersion];
   [client setUserID:uid];
+  
+  // Log client configuration for debugging
+  NSLog(@"QNOutagerIntegrationTests: Created client with UID: %@, ProjectKey: %@, SDKVersion: %@", uid, projectKey, self.kSDKVersion);
   
   return client;
 }
