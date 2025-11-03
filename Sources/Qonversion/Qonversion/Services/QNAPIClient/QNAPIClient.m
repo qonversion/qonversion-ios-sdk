@@ -89,7 +89,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       if (error != nil || [data isKindOfClass:[NSDictionary class]]) {
         completion(data, error);
       } else {
-        completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+        completion(nil, [QONErrors internalErrorWithCode:QONErrorCodeResponseParsingFailed]);
       }
   }];
 }
@@ -99,7 +99,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       if (error != nil || [data isKindOfClass:[NSArray class]]) {
         completion(data, error);
       } else {
-        completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+        completion(nil, [QONErrors internalErrorWithCode:QONErrorCodeResponseParsingFailed]);
       }
   }];
 }
@@ -591,7 +591,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     }
     
     if ((!data || ![data isKindOfClass:NSData.class])) {
-      completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedReceiveData]);
+      completion(nil, [QONErrors internalErrorWithCode:QONErrorCodeFailedToReceiveData]);
       return;
     }
 
@@ -604,7 +604,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     }
 
     if ((jsonError.code || !dict)) {
-      completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+      completion(nil, [QONErrors internalErrorWithCode:QONErrorCodeResponseParsingFailed]);
       return;
     }
 

@@ -15,8 +15,11 @@ NS_SWIFT_NAME(Qonversion.PromotionalOffer)
 API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0))
 @interface QONPromotionalOffer : NSObject
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 @property (nonatomic, strong) SKProductDiscount *productDiscount;
 @property (nonatomic, strong) SKPaymentDiscount *paymentDiscount;
+#pragma clang diagnostic pop
 
 @end
 

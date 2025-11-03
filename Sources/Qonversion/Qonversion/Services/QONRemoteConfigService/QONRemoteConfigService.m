@@ -38,7 +38,7 @@ static NSString *const kNoRemoteConfigurationErrorMessage = @"Remote configurati
     QONRemoteConfig *config = [weakSelf.mapper mapRemoteConfig:dict];
     
     if (config.source == nil) {
-      NSError *error = [QONErrors errorWithCode:QONErrorRemoteConfigurationNotAvailable message:kNoRemoteConfigurationErrorMessage];
+      NSError *error = [QONErrors errorWithCode:QONErrorCodeRemoteConfigurationNotAvailable message:kNoRemoteConfigurationErrorMessage];
       completion(nil, error);
       return;
     }

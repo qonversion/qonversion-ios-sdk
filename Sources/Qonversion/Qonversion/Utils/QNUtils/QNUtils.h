@@ -58,7 +58,10 @@ dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 + (BOOL)isEmptyString:(NSString *)string;
 + (NSDate *)dateFromTimestamp:(NSNumber *)timestamp;
 + (BOOL)isPermissionsOutdatedForDefaultState:(BOOL)defaultState cacheDataTimeInterval:(NSTimeInterval)cacheDataTimeInterval cacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 + (NSDate *)calculateExpirationDateForPeriod:(SKProductSubscriptionPeriod *)period fromDate:(NSDate *)transactionDate API_AVAILABLE(ios(11.2), watchos(6.2), macosx(10.13.2), tvos(11.2));
+#pragma clang diagnostic pop
 + (NSDate *)calculateExpirationDateForProduct:(QONProduct *)product fromDate:(NSDate *)transactionDate;
 + (BOOL)isConnectionError:(NSError *)error;
 + (BOOL)shouldPurchaseRequestBeRetried:(NSError *)error;

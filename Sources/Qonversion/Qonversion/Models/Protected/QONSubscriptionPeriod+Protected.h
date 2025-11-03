@@ -12,7 +12,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QONSubscriptionPeriod ()
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (instancetype)initWithStoreSubscriptionPeriod:(SKProductSubscriptionPeriod *)subscriptionPeriod;
+#pragma clang diagnostic pop
 
 @end
 

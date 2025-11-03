@@ -25,7 +25,7 @@
 }
 
 - (void)testThatBuilderSetCorrectRequestSettings {
-  NSURL *url = [[NSURL alloc] initWithString:@"https://api.qonversion.io/"];
+  NSURL *url = [[NSURL alloc] initWithString:@"https://api2.qonversion.io/"];
   NSURLRequest *request = [_requestBuilder baseRequestWithURL:url type:@"POST"];
   
   XCTAssertEqualObjects(request.HTTPMethod, @"POST");
@@ -40,7 +40,7 @@
   XCTAssertNotNil(request);
   
   XCTAssertNotNil(request.URL);
-  XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/v1/user/init");
+  XCTAssertEqualObjects(request.URL.absoluteString, @"https://api2.qonversion.io/v1/user/init");
 }
 
 - (void)testThatPurchaseRequestBuilderSetCorrectURL {
@@ -48,7 +48,7 @@
   XCTAssertNotNil(request);
   
   XCTAssertNotNil(request.URL);
-  XCTAssertEqualObjects(request.URL.absoluteString, @"https://api.qonversion.io/v1/user/purchase");
+  XCTAssertEqualObjects(request.URL.absoluteString, @"https://api2.qonversion.io/v1/user/purchase");
 }
 
 @end
