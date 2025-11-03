@@ -24,40 +24,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     Qonversion.initWithConfig(config)
     Qonversion.shared().setPromoPurchasesDelegate(self)
     Qonversion.shared().collectAdvertisingId()
-    registerForNotifications()
     QonversionSwift.shared.syncStoreKit2Purchases()
     
+    let configuration = NoCodesConfiguration(projectKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
+    NoCodes.initialize(with: configuration)
+    
     return true
-  }
-  
-  func registerForNotifications() {
-      UNUserNotificationCenter.current().delegate = self
-      UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { (_, _) in }
-      UIApplication.shared.registerForRemoteNotifications()
-  }
-  
-}
-
-extension AppDelegate: UNUserNotificationCenterDelegate {
-  
-  func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-      print("error: \(error)")
-  }
-
-  func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-    Qonversion.Automations.shared().setNotificationsToken(deviceToken)
-  }
-
-  func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-    let isPushHandled: Bool = Qonversion.Automations.shared().handleNotification(response.notification.request.content.userInfo)
-    if !isPushHandled {
-      // Qonversion can not handle this push.
-    }
-    completionHandler()
-  }
-  
-  func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-    completionHandler([.alert, .badge, .sound])
   }
   
 }

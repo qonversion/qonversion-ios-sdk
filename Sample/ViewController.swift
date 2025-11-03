@@ -11,7 +11,17 @@ import Qonversion
 import GoogleSignIn
 import FirebaseAuth
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizationDelegate {
+  func noCodesFailedToExecute(action: NoCodesAction, error: (any Error)?) {
+    if let error {
+      print(error)
+    }
+  }
+  
+  func noCodesFinishedExecuting(action: NoCodesAction) {
+    print(action)
+  }
+  
   
   let firstPurchaseButtonProduct = "weekly"
   let secondPurchaseButtonProduct = "in_app"
@@ -32,9 +42,6 @@ class ViewController: UIViewController {
     
     navigationController?.isNavigationBarHidden = true
     
-    Qonversion.Automations.shared().setDelegate(self)
-    Qonversion.Automations.shared().setScreenCustomizationDelegate(self)
-    
     subscriptionTitleLabel.text = ""
     mainProductSubscriptionButton.layer.cornerRadius = 20.0
     inAppPurchaseButton.layer.cornerRadius = 20.0
@@ -46,7 +53,6 @@ class ViewController: UIViewController {
     logoutButton.layer.borderColor = mainProductSubscriptionButton.backgroundColor?.cgColor
     
     offeringsButton.layer.cornerRadius = 20.0
-    
     Qonversion.shared().checkEntitlements { [weak self] (permissions, error) in
       guard let self = self else { return }
 
@@ -239,17 +245,5 @@ extension Qonversion.Product {
     @unknown default:
       return ""
     }
-  }
-}
-
-extension ViewController: Qonversion.AutomationsDelegate {
-  func controllerForNavigation() -> UIViewController {
-    return self
-  }
-}
-
-extension ViewController: Qonversion.ScreenCustomizationDelegate {
-  func presentationConfigurationForScreen(_ screenId: String) -> Qonversion.ScreenPresentationConfiguration {
-    return Qonversion.ScreenPresentationConfiguration(presentationStyle: .push, animated: true)
   }
 }

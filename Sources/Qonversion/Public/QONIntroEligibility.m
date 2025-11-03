@@ -33,8 +33,8 @@
   NSString *result;
   
   switch (self.status) {
-    case QONIntroEligibilityStatusNonIntroProduct:
-      result = @"non intro product"; break;
+    case QONIntroEligibilityStatusNonIntroOrTrialProduct:
+      result = @"non intro or trial product"; break;
       
     case QONIntroEligibilityStatusIneligible:
       result = @"intro ineligible"; break;

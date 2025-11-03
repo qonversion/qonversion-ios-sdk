@@ -24,16 +24,9 @@
 #import "QONPurchaseOptions.h"
 #import "QONPromotionalOffer.h"
 
-#if TARGET_OS_IOS
-#import "QONAutomationsDelegate.h"
-#import "QONAutomations.h"
-#import "QONScreenCustomizationDelegate.h"
-#endif
-
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const QonversionErrorDomain = @"com.qonversion.io";
-static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
 
 @interface Qonversion : NSObject
 
@@ -142,7 +135,10 @@ static NSString *const QonversionApiErrorDomain = @"com.qonversion.io.api";
  @param discount - discount to create promotional offer signature.
  @param completion - completion block that will be called when response is received.
  */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (void)getPromotionalOfferForProduct:(QONProduct * _Nonnull)product discount:(SKProductDiscount * _Nonnull)discount completion:(nonnull QONPromotionalOfferCompletionHandler)completion API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0));
+#pragma clang diagnostic pop
 
 /**
  Check user entitlements
