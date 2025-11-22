@@ -34,6 +34,14 @@ public struct NoCodesError: Error {
   static func initializationError() -> NoCodesError {
     return NoCodesError(type: .sdkInitializationError)
   }
+  
+  static func fromClientError(_ error: Error?) -> NoCodesError {
+    let errorMessage = error?.localizedDescription ?? (error.map { String(describing: $0) }) ?? "Unknown error"
+    return NoCodesError(
+      type: .clientError,
+      message: errorMessage
+    )
+  }
 }
 
 #endif 

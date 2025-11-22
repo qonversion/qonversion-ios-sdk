@@ -24,6 +24,7 @@ public enum NoCodesErrorType {
   case rateLimitExceeded
   case screenNotFound
   case screenLoadingFailed
+  case clientError
   
   public func message() -> String {
     switch self {
@@ -39,6 +40,8 @@ public enum NoCodesErrorType {
       return "Failed to load products."
     case .screenNotFound:
       return "No-Code screen not found."
+    case .clientError:
+      return "An error occurred in the client code"
     default:
       return "Unknown error occurred."
     }

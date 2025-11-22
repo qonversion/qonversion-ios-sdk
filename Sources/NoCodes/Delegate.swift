@@ -9,6 +9,7 @@
 import Foundation
 #if os(iOS)
 import UIKit
+@_exported import Qonversion
 #endif
 
 #if os(iOS)
@@ -63,6 +64,24 @@ public protocol NoCodesScreenCustomizationDelegate {
   /// Used only for screenPresentationStyle == .popover for iPad.
   /// You can omit implementing this delegate function if you do not support iPad or do not use popover presentation style.
   func viewForPopoverPresentation() -> UIView?
+}
+
+/// PurchaseHandlerDelegate protocol from No-Codes module
+/// The delegate is responsible for handling custom purchase and restore operations.
+/// If this delegate is provided, it will be used instead of the default Qonversion SDK purchase flow.
+public protocol PurchaseHandlerDelegate {
+  /// Handle purchase for the given product
+  /// - Parameters:
+  ///   - product: The product to purchase
+  ///   - onSuccess: Callback to be called when purchase succeeds
+  ///   - onError: Callback to be called when purchase fails with an error
+  func purchase(product: Qonversion.Product, onSuccess: @escaping () -> Void, onError: @escaping (Error?) -> Void)
+  
+  /// Handle restore purchases
+  /// - Parameters:
+  ///   - onSuccess: Callback to be called when restore succeeds
+  ///   - onError: Callback to be called when restore fails with an error
+  func restore(onSuccess: @escaping () -> Void, onError: @escaping (Error?) -> Void)
 }
 
 // MARK: - Default Implementations

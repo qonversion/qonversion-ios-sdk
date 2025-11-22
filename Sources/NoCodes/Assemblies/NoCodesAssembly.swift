@@ -30,7 +30,7 @@ final class NoCodesAssembly {
     }
     
     let noCodesService: NoCodesServiceInterface = servicesAssembly.noCodesService()
-    let coordinator = NoCodesFlowCoordinator(delegate: configuration.delegate, screenCustomizationDelegate: configuration.screenCustomizationDelegate, noCodesService: noCodesService, viewsAssembly: viewsAssembly(), logger: miscAssembly.loggerWrapper())
+    let coordinator = NoCodesFlowCoordinator(delegate: configuration.delegate, screenCustomizationDelegate: configuration.screenCustomizationDelegate, purchaseHandlerDelegate: configuration.purchaseHandlerDelegate, noCodesService: noCodesService, viewsAssembly: viewsAssembly(), logger: miscAssembly.loggerWrapper())
     flowCoordinatorInstance = coordinator
     
     return coordinator

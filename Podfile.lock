@@ -65,9 +65,9 @@ PODS:
   - nanopb/encode (2.30908.0)
   - OCMock (3.9.4)
   - PromisesObjC (2.4.0)
-  - Qonversion (5.14.0):
-    - Qonversion/Main (= 5.14.0)
-  - Qonversion/Main (5.14.0)
+  - Qonversion (6.0.0):
+    - Qonversion/Main (= 6.0.0)
+  - Qonversion/Main (6.0.0)
 
 DEPENDENCIES:
   - Firebase/Auth (= 8.9.0)
@@ -109,7 +109,7 @@ SPEC CHECKSUMS:
   nanopb: a0ba3315591a9ae0a16a309ee504766e90db0c96
   OCMock: 589f2c84dacb1f5aaf6e4cec1f292551fe748e74
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  Qonversion: f2b1ae22027d2fa4173c9d2acfd436a28e9c1e2f
+  Qonversion: 694b88c4bfc06d827c189908e73ea955a1ddde6c
 
 PODFILE CHECKSUM: 71e0c2cef296bed614ec511a95881126b624f209
 
