@@ -15,14 +15,16 @@ final class NoCodesFlowCoordinator {
   
   private var delegate: NoCodesDelegate?
   private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
+  private var purchaseHandlerDelegate: PurchaseHandlerDelegate?
   private let noCodesService: NoCodesServiceInterface
   private let viewsAssembly: ViewsAssembly
   private var currentVC: NoCodesViewController?
   private var logger: LoggerWrapper!
   
-  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper) {
+  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, purchaseHandlerDelegate: PurchaseHandlerDelegate?, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper) {
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
+    self.purchaseHandlerDelegate = purchaseHandlerDelegate
     self.noCodesService = noCodesService
     self.viewsAssembly = viewsAssembly
     self.logger = logger
@@ -34,6 +36,10 @@ final class NoCodesFlowCoordinator {
   
   func set(screenCustomizationDelegate: NoCodesScreenCustomizationDelegate) {
     self.screenCustomizationDelegate = screenCustomizationDelegate
+  }
+  
+  func set(purchaseHandlerDelegate: PurchaseHandlerDelegate) {
+    self.purchaseHandlerDelegate = purchaseHandlerDelegate
   }
   
   func preloadScreens() {
@@ -55,7 +61,7 @@ final class NoCodesFlowCoordinator {
   func showScreen(with id: String) {
     let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(id: id) ?? NoCodesPresentationConfiguration.defaultConfiguration()
     
-    let viewController: NoCodesViewController = viewsAssembly.viewController(with: id, delegate: self, presentationConfiguration: presentationConfiguration)
+    let viewController: NoCodesViewController = viewsAssembly.viewController(with: id, delegate: self, purchaseHandlerDelegate: purchaseHandlerDelegate, presentationConfiguration: presentationConfiguration)
     currentVC = viewController
     
     showScreen(viewController, presentationConfiguration)
@@ -65,7 +71,7 @@ final class NoCodesFlowCoordinator {
   func showScreen(withContextKey contextKey: String) {
     let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(contextKey: contextKey) ?? NoCodesPresentationConfiguration.defaultConfiguration()
     
-    let viewController: NoCodesViewController = viewsAssembly.viewController(withContextKey: contextKey, delegate: self, presentationConfiguration: presentationConfiguration)
+    let viewController: NoCodesViewController = viewsAssembly.viewController(withContextKey: contextKey, delegate: self, purchaseHandlerDelegate: purchaseHandlerDelegate, presentationConfiguration: presentationConfiguration)
     currentVC = viewController
     
     showScreen(viewController, presentationConfiguration)

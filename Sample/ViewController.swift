@@ -12,16 +12,6 @@ import GoogleSignIn
 import FirebaseAuth
 
 class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizationDelegate {
-  func noCodesFailedToExecute(action: NoCodesAction, error: (any Error)?) {
-    if let error {
-      print(error)
-    }
-  }
-  
-  func noCodesFinishedExecuting(action: NoCodesAction) {
-    print(action)
-  }
-  
   
   let firstPurchaseButtonProduct = "weekly"
   let secondPurchaseButtonProduct = "in_app"
@@ -53,6 +43,9 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
     logoutButton.layer.borderColor = mainProductSubscriptionButton.backgroundColor?.cgColor
     
     offeringsButton.layer.cornerRadius = 20.0
+
+    NoCodes.shared.set(delegate: self)
+    
     Qonversion.shared().checkEntitlements { [weak self] (permissions, error) in
       guard let self = self else { return }
 
@@ -125,6 +118,18 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
     self.navigationController?.pushViewController(activePermissionsViewController, animated: true)
   }
   
+  func noCodesStartsExecuting(action: NoCodesAction) {
+    print("noCodesStartedExecuting: \(action)")
+  }
+
+  func noCodesFailedToExecute(action: NoCodesAction, error: (any Error)?) {
+    print("noCodesFailedToExecute: \(action) \(error?.localizedDescription ?? "Unknown error")")
+  }
+  
+  func noCodesFinishedExecuting(action: NoCodesAction) {
+    print("noCodesFinishedExecuting: \(action)")
+  }
+
   @IBAction func didTapMainProductSubscriptionButton(_ sender: Any) {
     if let product = self.products[firstPurchaseButtonProduct] {
       activityIndicator.startAnimating()

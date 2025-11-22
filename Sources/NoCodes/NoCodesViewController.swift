@@ -52,8 +52,9 @@ final class NoCodesViewController: UIViewController {
   private var logger: LoggerWrapper!
   private var skeletonView: SkeletonView!
   private var presentationConfiguration: NoCodesPresentationConfiguration!
+  private var purchaseHandlerDelegate: PurchaseHandlerDelegate?
   
-  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration) {
+  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseHandlerDelegate: PurchaseHandlerDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration) {
     self.screenId = screenId
     self.contextKey = contextKey
     self.noCodesMapper = noCodesMapper
@@ -62,6 +63,7 @@ final class NoCodesViewController: UIViewController {
     self.delegate = delegate
     self.logger = logger
     self.presentationConfiguration = presentationConfiguration
+    self.purchaseHandlerDelegate = purchaseHandlerDelegate
     
     super.init(nibName: nil, bundle: nil)
     
@@ -286,15 +288,33 @@ extension NoCodesViewController {
           throw NoCodesError(type: .productNotFound, message: "Product with id \(productId) not found")
         }
 
-        let options = Qonversion.PurchaseOptions()
-        options.screenUid = screenId
+        // Check if custom purchase handler delegate is provided
+        if let purchaseHandlerDelegate = purchaseHandlerDelegate {
+          // Use custom purchase handler
+          purchaseHandlerDelegate.purchase(
+            product: product,
+            onSuccess: { [weak self] in
+              self?.activityIndicator.stopAnimating()
+              self?.finishAndClose(action: purchaseAction)
+            },
+            onError: { [weak self] error in
+              self?.activityIndicator.stopAnimating()
+              let noCodesError = NoCodesError.fromClientError(error)
+              self?.logger.error(noCodesError.localizedDescription)
+              self?.delegate.noCodesFailedToExecute(action: purchaseAction, error: noCodesError)
+            }
+          )
+        } else {
+          let options = Qonversion.PurchaseOptions()
+          options.screenUid = screenId
 
-        try await Qonversion.shared().purchaseProduct(product, options: options)
-        activityIndicator.stopAnimating()
-        finishAndClose(action: purchaseAction)
+          try await Qonversion.shared().purchaseProduct(product, options: options)
+          activityIndicator.stopAnimating()
+          finishAndClose(action: purchaseAction)
+        }
       } catch {
-        logger.error(error.localizedDescription)
         activityIndicator.stopAnimating()
+        logger.error(error.localizedDescription)
         delegate.noCodesFailedToExecute(action: purchaseAction, error: error)
       }
     }
@@ -302,15 +322,34 @@ extension NoCodesViewController {
   
   private func handle(restoreAction: NoCodesAction) {
     activityIndicator.startAnimating()
-    Task {
-      do {
-        let _ = try await Qonversion.shared().restore()
-        finishAndClose(action: restoreAction)
-        activityIndicator.stopAnimating()
-      } catch {
-        logger.error(error.localizedDescription)
-        activityIndicator.stopAnimating()
-        delegate.noCodesFailedToExecute(action: restoreAction, error: error)
+    
+    // Check if custom purchase handler delegate is provided
+    if let purchaseHandlerDelegate = purchaseHandlerDelegate {
+      // Use custom restore handler
+      purchaseHandlerDelegate.restore(
+        onSuccess: { [weak self] in
+          self?.activityIndicator.stopAnimating()
+          self?.finishAndClose(action: restoreAction)
+        },
+        onError: { [weak self] error in
+          self?.activityIndicator.stopAnimating()
+          let noCodesError = NoCodesError.fromClientError(error)
+          self?.logger.error(noCodesError.localizedDescription)
+          self?.delegate.noCodesFailedToExecute(action: restoreAction, error: noCodesError)
+        }
+      )
+    } else {
+      // Use default Qonversion SDK restore flow
+      Task {
+        do {
+          let _ = try await Qonversion.shared().restore()
+          finishAndClose(action: restoreAction)
+          activityIndicator.stopAnimating()
+        } catch {
+          logger.error(error.localizedDescription)
+          activityIndicator.stopAnimating()
+          delegate.noCodesFailedToExecute(action: restoreAction, error: error)
+        }
       }
     }
   }
@@ -318,7 +357,7 @@ extension NoCodesViewController {
   private func handle(navigationAction: NoCodesAction) {
     guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else { return }
     
-    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, presentationConfiguration: presentationConfiguration)
+    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseHandlerDelegate: purchaseHandlerDelegate, presentationConfiguration: presentationConfiguration)
     navigationController?.pushViewController(viewController, animated: true)
     delegate.noCodesFinishedExecuting(action: navigationAction)
   }

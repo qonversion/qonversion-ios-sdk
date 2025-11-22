@@ -20,12 +20,12 @@ final class ViewsAssembly {
     self.servicesAssembly = servicesAssembly
   }
   
-  func viewController(with screenId: String, delegate: NoCodesViewControllerDelegate, presentationConfiguration: NoCodesPresentationConfiguration) -> NoCodesViewController {
-      return NoCodesViewController(screenId: screenId, contextKey: nil, delegate: delegate, noCodesMapper: miscAssembly.noCodesMapper(), noCodesService: servicesAssembly.noCodesService(), viewsAssembly: self, logger: miscAssembly.loggerWrapper(), presentationConfiguration: presentationConfiguration)
+  func viewController(with screenId: String, delegate: NoCodesViewControllerDelegate, purchaseHandlerDelegate: PurchaseHandlerDelegate?, presentationConfiguration: NoCodesPresentationConfiguration) -> NoCodesViewController {
+      return NoCodesViewController(screenId: screenId, contextKey: nil, delegate: delegate, purchaseHandlerDelegate: purchaseHandlerDelegate, noCodesMapper: miscAssembly.noCodesMapper(), noCodesService: servicesAssembly.noCodesService(), viewsAssembly: self, logger: miscAssembly.loggerWrapper(), presentationConfiguration: presentationConfiguration)
   }
   
-  func viewController(withContextKey contextKey: String, delegate: NoCodesViewControllerDelegate, presentationConfiguration: NoCodesPresentationConfiguration) -> NoCodesViewController {
-      return NoCodesViewController(screenId: nil, contextKey: contextKey, delegate: delegate, noCodesMapper: miscAssembly.noCodesMapper(), noCodesService: servicesAssembly.noCodesService(), viewsAssembly: self, logger: miscAssembly.loggerWrapper(), presentationConfiguration: presentationConfiguration)
+  func viewController(withContextKey contextKey: String, delegate: NoCodesViewControllerDelegate, purchaseHandlerDelegate: PurchaseHandlerDelegate?, presentationConfiguration: NoCodesPresentationConfiguration) -> NoCodesViewController {
+      return NoCodesViewController(screenId: nil, contextKey: contextKey, delegate: delegate, purchaseHandlerDelegate: purchaseHandlerDelegate, noCodesMapper: miscAssembly.noCodesMapper(), noCodesService: servicesAssembly.noCodesService(), viewsAssembly: self, logger: miscAssembly.loggerWrapper(), presentationConfiguration: presentationConfiguration)
   }
 }
 
