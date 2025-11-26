@@ -288,7 +288,7 @@ extension NoCodesViewController {
           throw NoCodesError(type: .productNotFound, message: "Product with id \(productId) not found")
         }
         
-        if let purchaseDelegate = purchaseDelegate {
+        if let purchaseDelegate {
           do {
             try await purchaseDelegate.purchase(product: product)
             activityIndicator.stopAnimating()
