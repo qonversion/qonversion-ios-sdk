@@ -66,22 +66,17 @@ public protocol NoCodesScreenCustomizationDelegate {
   func viewForPopoverPresentation() -> UIView?
 }
 
-/// PurchaseHandlerDelegate protocol from No-Codes module
-/// The delegate is responsible for handling custom purchase and restore operations.
-/// If this delegate is provided, it will be used instead of the default Qonversion SDK purchase flow.
-public protocol PurchaseHandlerDelegate {
-  /// Handle purchase for the given product
-  /// - Parameters:
-  ///   - product: The product to purchase
-  ///   - onSuccess: Callback to be called when purchase succeeds
-  ///   - onError: Callback to be called when purchase fails with an error
-  func purchase(product: Qonversion.Product, onSuccess: @escaping () -> Void, onError: @escaping (Error?) -> Void)
+/// Delegate responsible for custom purchase and restore handling.
+/// When this delegate is provided, it replaces the default Qonversion SDK purchase flow.
+public protocol NoCodesPurchaseDelegate {
+  /// Handle purchase for the given product using Swift concurrency.
+  /// - Parameter product: Product to purchase.
+  /// - Returns: Completes successfully when purchase finishes, otherwise throws an error.
+  func purchase(product: Qonversion.Product) async throws
   
-  /// Handle restore purchases
-  /// - Parameters:
-  ///   - onSuccess: Callback to be called when restore succeeds
-  ///   - onError: Callback to be called when restore fails with an error
-  func restore(onSuccess: @escaping () -> Void, onError: @escaping (Error?) -> Void)
+  /// Handle restore flow using Swift concurrency.
+  /// - Returns: Completes successfully when restore finishes, otherwise throws an error.
+  func restore() async throws
 }
 
 // MARK: - Default Implementations
