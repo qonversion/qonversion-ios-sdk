@@ -48,6 +48,16 @@ public final class NoCodes {
     flowCoordinator?.set(screenCustomizationDelegate: screenCustomizationDelegate)
   }
   
+  /// Use this function to set the purchase delegate.
+  /// This delegate should be used if you want to handle purchases and restore operations on your end.
+  /// If this delegate is provided, it will be used instead of the default Qonversion SDK purchase flow.
+  /// You can also provide it during the initialization via ``NoCodesConfiguration/purchaseDelegate``.
+  /// - Parameters:
+  ///   - delegate: ``NoCodesPurchaseDelegate`` object responsible for handling purchases and restore operations.
+  public func set(purchaseDelegate: NoCodesPurchaseDelegate) {
+    flowCoordinator?.set(purchaseDelegate: purchaseDelegate)
+  }
+  
   /// Use this function to display the screen.
   /// - Parameters:
   ///   - id: the context key of the screen.

@@ -52,8 +52,9 @@ final class NoCodesViewController: UIViewController {
   private var logger: LoggerWrapper!
   private var skeletonView: SkeletonView!
   private var presentationConfiguration: NoCodesPresentationConfiguration!
+  private var purchaseDelegate: NoCodesPurchaseDelegate?
   
-  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration) {
+  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration) {
     self.screenId = screenId
     self.contextKey = contextKey
     self.noCodesMapper = noCodesMapper
@@ -62,6 +63,7 @@ final class NoCodesViewController: UIViewController {
     self.delegate = delegate
     self.logger = logger
     self.presentationConfiguration = presentationConfiguration
+    self.purchaseDelegate = purchaseDelegate
     
     super.init(nibName: nil, bundle: nil)
     
@@ -285,16 +287,29 @@ extension NoCodesViewController {
         guard let product = products[productId] else {
           throw NoCodesError(type: .productNotFound, message: "Product with id \(productId) not found")
         }
-
-        let options = Qonversion.PurchaseOptions()
-        options.screenUid = screenId
-
-        try await Qonversion.shared().purchaseProduct(product, options: options)
-        activityIndicator.stopAnimating()
-        finishAndClose(action: purchaseAction)
+        
+        if let purchaseDelegate {
+          do {
+            try await purchaseDelegate.purchase(product: product)
+            activityIndicator.stopAnimating()
+            finishAndClose(action: purchaseAction)
+          } catch {
+            activityIndicator.stopAnimating()
+            let noCodesError = NoCodesError.fromClientError(error)
+            logger.error(noCodesError.message)
+            delegate.noCodesFailedToExecute(action: purchaseAction, error: noCodesError)
+          }
+        } else {
+          let options = Qonversion.PurchaseOptions()
+          options.screenUid = screenId
+          
+          try await Qonversion.shared().purchaseProduct(product, options: options)
+          activityIndicator.stopAnimating()
+          finishAndClose(action: purchaseAction)
+        }
       } catch {
-        logger.error(error.localizedDescription)
         activityIndicator.stopAnimating()
+        logger.error(error.localizedDescription)
         delegate.noCodesFailedToExecute(action: purchaseAction, error: error)
       }
     }
@@ -302,15 +317,21 @@ extension NoCodesViewController {
   
   private func handle(restoreAction: NoCodesAction) {
     activityIndicator.startAnimating()
+    
     Task {
       do {
-        let _ = try await Qonversion.shared().restore()
-        finishAndClose(action: restoreAction)
+        if let purchaseDelegate = purchaseDelegate {
+          try await purchaseDelegate.restore()
+        } else {
+          try await Qonversion.shared().restore()
+        }
         activityIndicator.stopAnimating()
+        finishAndClose(action: restoreAction)
       } catch {
         logger.error(error.localizedDescription)
         activityIndicator.stopAnimating()
-        delegate.noCodesFailedToExecute(action: restoreAction, error: error)
+        let errorToReport = purchaseDelegate == nil ? error : NoCodesError.fromClientError(error)
+        delegate.noCodesFailedToExecute(action: restoreAction, error: errorToReport)
       }
     }
   }
@@ -318,7 +339,7 @@ extension NoCodesViewController {
   private func handle(navigationAction: NoCodesAction) {
     guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else { return }
     
-    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, presentationConfiguration: presentationConfiguration)
+    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration)
     navigationController?.pushViewController(viewController, animated: true)
     delegate.noCodesFinishedExecuting(action: navigationAction)
   }
