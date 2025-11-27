@@ -131,7 +131,7 @@ class NoCodesService: NoCodesServiceInterface {
       switch noCodesError.type {
       case .invalidRequest, .invalidResponse, .internal, .critical:
         return true
-      case .screenLoadingFailed, .screenNotFound, .productsLoadingFailed, .productNotFound, .authorizationFailed, .rateLimitExceeded, .sdkInitializationError:
+      case .screenLoadingFailed, .screenNotFound, .productsLoadingFailed, .productNotFound, .authorizationFailed, .rateLimitExceeded, .sdkInitializationError, .clientError:
         return false
       case .unknown:
         return true
