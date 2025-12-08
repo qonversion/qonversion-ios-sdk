@@ -49,10 +49,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)sendProperties:(NSDictionary *)properties completion:(QNAPIClientDictCompletionHandler)completion;
 - (void)getProperties:(QNAPIClientArrayCompletionHandler)completion;
-- (void)userActionPointsWithCompletion:(QNAPIClientDictCompletionHandler)completion;
-- (void)automationWithID:(NSString *)automationID completion:(QNAPIClientDictCompletionHandler)completion;
-- (void)trackScreenShownWithID:(NSString *)automationID;
-- (void)trackScreenShownWithID:(NSString *)automationID completion:(QNAPIClientDictCompletionHandler)completion;
 - (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientDictCompletionHandler)completion;
 
 - (void)createIdentityForUserID:(NSString *)userID anonUserID:(NSString *)anonUserID completion:(QNAPIClientDictCompletionHandler)completion;
