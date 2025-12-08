@@ -93,7 +93,10 @@ NS_SWIFT_NAME(Qonversion.Product)
 /**
   Associated StoreKit Product
  */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 @property (nonatomic, copy, nullable) SKProduct *skProduct;
+#pragma clang diagnostic pop
 
 /**
   Localized price

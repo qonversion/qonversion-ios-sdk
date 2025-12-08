@@ -28,10 +28,12 @@ end
 lane :set_outager_url do |options|
   url = options[:url]
 
-  path = Dir['../**/QNOutagerIntegrationTests.m'].first
+  path1 = Dir['../**/QNOutagerIntegrationTests.m'].first
+  path2 = Dir['../**/NoCodesOutagerIntegrationTest.swift'].first
   regex = /\<paste outager link here\>/
 
-  update_file(path, regex, url)
+  update_file(path1, regex, url)
+  update_file(path2, regex, url)
 end
 
 lane :bump do |options|
@@ -109,7 +111,7 @@ def runTests(suite)
     podfile: "./Podfile"
   )
 
-  # Use specific destination only for integration tests
+  # Setup test parameters
   test_params = {
     workspace: "./#{PROJECT_NAME}.xcworkspace",
     scheme: PROJECT_SCHEME,
@@ -117,9 +119,8 @@ def runTests(suite)
     xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration"
   }
   
-  if suite == "IntegrationTests"
-    test_params[:destination] = "platform=iOS Simulator,OS=18.1,name=iPhone 16 Pro"
-  end
+  # Set destination for all iOS tests to run on simulator
+  test_params[:destination] = "platform=iOS Simulator,OS=26.0.1,name=iPhone 16 Pro"
 
   run_tests(test_params)
 end

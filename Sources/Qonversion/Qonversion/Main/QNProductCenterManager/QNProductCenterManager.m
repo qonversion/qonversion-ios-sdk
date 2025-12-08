@@ -27,9 +27,7 @@
 #import <StoreKit/StoreKit.h>
 #import "QONRequestTrigger.h"
 
-#if TARGET_OS_IOS
-#import "QONAutomations.h"
-#endif
+
 
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
@@ -92,9 +90,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _cacheLifetime = QONEntitlementsCacheLifetimeMonth;
     _fallbackService = fallbackService;
 
-#if TARGET_OS_IOS
-    [QONAutomations sharedInstance];
-#endif
+
     [self supportMigrationFromOldVersions];
     
     _userInfoService = userInfoService;
@@ -519,7 +515,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
   
   QONVERSION_LOG(@"❌ Store product with id: %@ not found", product.storeID);
-  NSError *error = [QONErrors errorWithQONErrorCode:QONErrorProductNotFound];
+  NSError *error = [QONErrors errorWithQONErrorCode:QONErrorCodeProductNotFound];
   [self handlePurchaseError:error completion:completion type:type];
 }
 
@@ -822,7 +818,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       QONProduct *product = result[identifier];
       if (!product) {
         QONVERSION_LOG(@"❌ product with id: %@ not found", identifier);
-        run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorProductNotFound]);
+        run_block_on_main(completion, @{}, [QONErrors errorWithQONErrorCode:QONErrorCodeProductNotFound]);
         return;
       }
     }

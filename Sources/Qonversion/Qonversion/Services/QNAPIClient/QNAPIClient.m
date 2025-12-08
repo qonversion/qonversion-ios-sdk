@@ -89,7 +89,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       if (error != nil || [data isKindOfClass:[NSDictionary class]]) {
         completion(data, error);
       } else {
-        completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+        completion(nil, [QONErrors internalErrorWithCode:QONErrorCodeResponseParsingFailed]);
       }
   }];
 }
@@ -99,7 +99,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
       if (error != nil || [data isKindOfClass:[NSArray class]]) {
         completion(data, error);
       } else {
-        completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+        completion(nil, [QONErrors internalErrorWithCode:QONErrorCodeResponseParsingFailed]);
       }
   }];
 }
@@ -243,18 +243,6 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   }];
 }
 
-- (void)userActionPointsWithCompletion:(QNAPIClientDictCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeUserActionPointsRequestWith:self.userID];
-  
-  return [self processDictRequest:request completion:completion];
-}
-
-- (void)automationWithID:(NSString *)automationID completion:(QNAPIClientDictCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID];
-  
-  return [self processDictRequest:request completion:completion];
-}
-
 - (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientDictCompletionHandler)completion {
   [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeUserInfo
                                  hash:[userID hash]
@@ -284,18 +272,6 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
     return [self processDictRequest:request completion:completion];
   }];
-}
-
-- (void)trackScreenShownWithID:(NSString *)automationID {
-  return [self trackScreenShownWithID:automationID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {}];
-}
-
-- (void)trackScreenShownWithID:(NSString *)automationID
-                    completion:(QNAPIClientDictCompletionHandler)completion {
-  NSDictionary *body = @{@"user": self.userID};
-  NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body];
-  
-  return [self processDictRequest:request completion:completion];
 }
 
 - (void)attributionRequest:(QONAttributionProvider)provider
@@ -591,7 +567,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     }
     
     if ((!data || ![data isKindOfClass:NSData.class])) {
-      completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedReceiveData]);
+      completion(nil, [QONErrors internalErrorWithCode:QONErrorCodeFailedToReceiveData]);
       return;
     }
 
@@ -604,7 +580,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     }
 
     if ((jsonError.code || !dict)) {
-      completion(nil, [QONErrors errorWithCode:QONAPIErrorFailedParseResponse]);
+      completion(nil, [QONErrors internalErrorWithCode:QONErrorCodeResponseParsingFailed]);
       return;
     }
 
