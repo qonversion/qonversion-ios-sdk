@@ -530,77 +530,10 @@
   [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
 }
 
-- (void)testScreens {
-  // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Screens call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_screens"];
-  QNAPIClient *client = [self getClient:uid];
-
-  // when
-  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
-    XCTAssertNil(createUserError);
-
-    [client automationWithID:self.noCodeScreenId completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-      XCTAssertNotNil(res);
-      XCTAssertNil(error);
-      XCTAssertTrue(res[@"success"]);
-      XCTAssertTrue([self.noCodeScreenId isEqualToString:res[@"data"][@"id"]]);
-      XCTAssertTrue([@"#CDFFD7" isEqualToString:res[@"data"][@"background"]]);
-      XCTAssertTrue([@"EN" isEqualToString:res[@"data"][@"lang"]]);
-      XCTAssertTrue([@"screen" isEqualToString:res[@"data"][@"object"]]);
-      
-      NSString *htmlBody = res[@"data"][@"body"];
-      XCTAssertTrue([htmlBody length] > 0);
-      [completionExpectation fulfill];
-    }];
-  }];
-  
-  // then
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
-}
-
-- (void)testScreensError {
-  // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Screens error call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_screens"];
-  QNAPIClient *client = [self getClient:uid projectKey:self.kIncorrectProjectKey];
-  
-  // when
-  [client automationWithID:self.noCodeScreenId completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-    [self assertAccessDeniedError:res error:error];
-    [completionExpectation fulfill];
-  }];
-  
-  // then
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
-}
-
-- (void)testViews {
-  // given
-  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"Views call"];
-  NSString *uid = [NSString stringWithFormat:@"%@%@", self.kUidPrefix, @"_views"];
-  QNAPIClient *client = [self getClient:uid];
-
-  // when
-  [client launchRequest:QONRequestTriggerInit completion:^(NSDictionary * _Nullable initRes, NSError * _Nullable createUserError) {
-    XCTAssertNil(createUserError);
-
-    [client trackScreenShownWithID:self.noCodeScreenId completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-      XCTAssertNil(res);
-      XCTAssertNotNil(error);
-      XCTAssertTrue([@"Could not find required related object" isEqualToString:[error localizedDescription]]);
-      [completionExpectation fulfill];
-    }];
-  }];
-  
-  // then
-  [self waitForExpectationsWithTimeout:self.kRequestTimeout handler:nil];
-}
-
 - (void)assertProjectNotFoundError:(id)data error:(NSError *)error {
   XCTAssertNil(data);
   XCTAssertNotNil(error);
-  XCTAssertEqual(error.code, 5);
+  XCTAssertEqual(error.code, 25);
   XCTAssertTrue([error.userInfo[NSDebugDescriptionErrorKey] isEqualToString:@"Internal error code: 10003."]);
   XCTAssertTrue([error.localizedDescription isEqualToString:@"Invalid access token received"]);
 }

@@ -243,18 +243,6 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   }];
 }
 
-- (void)userActionPointsWithCompletion:(QNAPIClientDictCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeUserActionPointsRequestWith:self.userID];
-  
-  return [self processDictRequest:request completion:completion];
-}
-
-- (void)automationWithID:(NSString *)automationID completion:(QNAPIClientDictCompletionHandler)completion {
-  NSURLRequest *request = [self.requestBuilder makeScreensRequestWith:automationID];
-  
-  return [self processDictRequest:request completion:completion];
-}
-
 - (void)userInfoRequestWithID:(NSString *)userID completion:(QNAPIClientDictCompletionHandler)completion {
   [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeUserInfo
                                  hash:[userID hash]
@@ -284,18 +272,6 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
     return [self processDictRequest:request completion:completion];
   }];
-}
-
-- (void)trackScreenShownWithID:(NSString *)automationID {
-  return [self trackScreenShownWithID:automationID completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {}];
-}
-
-- (void)trackScreenShownWithID:(NSString *)automationID
-                    completion:(QNAPIClientDictCompletionHandler)completion {
-  NSDictionary *body = @{@"user": self.userID};
-  NSURLRequest *request = [self.requestBuilder makeScreenShownRequestWith:automationID body:body];
-  
-  return [self processDictRequest:request completion:completion];
 }
 
 - (void)attributionRequest:(QONAttributionProvider)provider
