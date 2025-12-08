@@ -73,21 +73,6 @@
   return [self makeRequestWithDictBody:body baseURL:self.baseURL endpoint:[NSString stringWithFormat:kPostPromoOfferDetailsEndpoint, userId, offerId] type:QONRequestTypePost];
 }
 
-- (NSURLRequest *)makeUserActionPointsRequestWith:(NSString *)parameter {
-  NSString *endpoint = [NSString stringWithFormat:kActionPointsEndpointFormat, parameter];
-  return [self makeGetRequestWithBaseURL:self.baseURL endpoint:endpoint];
-}
-
-- (NSURLRequest *)makeScreensRequestWith:(NSString *)parameters {
-  NSString *endpoint = [NSString stringWithFormat:@"%@%@", kScreensEndpoint, parameters];
-  return [self makeGetRequestWithBaseURL:self.baseURL endpoint:endpoint];
-}
-
-- (NSURLRequest *)makeScreenShownRequestWith:(NSString *)parameter body:(NSDictionary *)body {
-  NSString *endpoint = [NSString stringWithFormat:kScreenShowEndpointFormat, parameter];
-  return [self makeRequestWithDictBody:body baseURL:self.baseURL endpoint:endpoint type:QONRequestTypePost];
-}
-
 - (NSURLRequest *)makeCreateIdentityRequestWith:(NSDictionary *)parameters {
   return [self makeRequestWithDictBody:parameters baseURL:self.baseURL endpoint:kIdentityEndpoint type:QONRequestTypePost];
 }
