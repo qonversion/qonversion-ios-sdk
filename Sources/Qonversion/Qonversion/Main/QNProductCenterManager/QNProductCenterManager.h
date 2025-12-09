@@ -10,11 +10,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSInteger, QONPurchaseCompletionType) {
-    QONPurchaseCompletionTypeLegacy = 0,
-    QONPurchaseCompletionTypeResult = 1
-};
-
 @interface QNProductCenterManager : NSObject
 
 @property (nonatomic, assign) QONLaunchMode launchMode;
@@ -36,7 +31,7 @@ typedef NS_ENUM(NSInteger, QONPurchaseCompletionType) {
 - (void)purchase:(QONProduct * _Nonnull)product options:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;
 - (void)purchase:(NSString * _Nonnull)productID purchaseOptions:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseCompletionHandler)completion;
 
-- (void)purchaseWithResult:(QONProduct * _Nonnull)product options:(QONPurchaseOptions * _Nullable)options completion:(void(^)(QONPurchaseResult *result))completion;
+- (void)purchaseWithResult:(QONProduct * _Nonnull)product options:(QONPurchaseOptions * _Nullable)options completion:(nonnull QONPurchaseResultCompletionHandler)completion;
 
 - (void)restoreTransactions:(QNRestoreCompletionHandler)completion;
 

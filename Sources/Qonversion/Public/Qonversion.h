@@ -148,12 +148,36 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion;
 
 /**
+ Purchase a product and validate it through server-to-server using Qonversion's Backend.
+ This is the new recommended method that returns a single QONPurchaseResult object containing
+ all relevant information about the purchase outcome.
+ 
+ @param product Product created in Qonversion Dash
+ @param options Purchase process additional options: quantity / context keys / etc. Can be nil.
+ @param completion Completion block that includes QONPurchaseResult with entitlements, error, transaction and cancellation status
+ @see QONPurchaseResult for details about the result object
+ */
+- (void)purchaseWithResult:(QONProduct *)product options:(nullable QONPurchaseOptions *)options completion:(nonnull QONPurchaseResultCompletionHandler)completion NS_SWIFT_NAME(purchase(_:options:completion:));
+
+/**
+ Purchase a product and validate it through server-to-server using Qonversion's Backend.
+ This is the new recommended method that returns a single QONPurchaseResult object containing
+ all relevant information about the purchase outcome.
+ 
+ @param product Product created in Qonversion Dash
+ @param completion Completion block that includes QONPurchaseResult with entitlements, error, transaction and cancellation status
+ @see QONPurchaseResult for details about the result object
+ */
+- (void)purchaseWithResult:(QONProduct *)product completion:(nonnull QONPurchaseResultCompletionHandler)completion NS_SWIFT_NAME(purchase(_:completion:));
+
+/**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
  
  @param product Product create in Qonversion Dash
  @param completion Completion block that includes entitlements dictionary and error
+ @deprecated Use purchaseWithResult:completion: instead (or purchase(_:completion:) in Swift)
  */
-- (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion;
+- (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion DEPRECATED_MSG_ATTRIBUTE("Use purchaseWithResult:completion: instead (or purchase(_:completion:) in Swift)");
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
@@ -161,26 +185,17 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
  @param product Product created in Qonversion Dash
  @param options Purchase process additional options: quantity / context keys / etc.
  @param completion Completion block that includes entitlements dictionary and error
+ @deprecated Use purchaseWithResult:options:completion: instead (or purchase(_:options:completion:) in Swift)
  */
-- (void)purchaseProduct:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion;
+- (void)purchaseProduct:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(QONPurchaseCompletionHandler)completion DEPRECATED_MSG_ATTRIBUTE("Use purchaseWithResult:options:completion: instead (or purchase(_:options:completion:) in Swift)");
 
 /**
  Make a purchase and validate that through server-to-server using Qonversion's Backend
  
  @param productID Product identifier create in Qonversion Dash, pay attention that you should use qonversion id instead Apple Product ID
+ @deprecated Use purchaseWithResult:completion: instead (or purchase(_:completion:) in Swift). First get the product using products:completion: method.
  */
-- (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion;
-
-// MARK: - New Purchase Method with PurchaseResult
-
-/**
- Make a purchase and validate that through server-to-server using Qonversion's Backend
- 
- @param product Product created in Qonversion Dash
- @param options Purchase process additional options: quantity / context keys / etc.
- @param completion Completion block that includes QONPurchaseResult with entitlements, error, transaction and cancellation status
- */
-- (void)purchaseProductWithResult:(QONProduct *)product options:(QONPurchaseOptions *)options completion:(void(^)(QONPurchaseResult *result))completion;
+- (void)purchase:(NSString *)productID completion:(QONPurchaseCompletionHandler)completion DEPRECATED_MSG_ATTRIBUTE("Use purchaseWithResult:completion: instead (or purchase(_:completion:) in Swift). First get the product using products:completion: method.");
 
 /**
  Restore user entitlements based on purchases

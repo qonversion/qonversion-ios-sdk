@@ -2,7 +2,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class QONEntitlement, QONProduct, QONOfferings, QONIntroEligibility, QONUser, QONRemoteConfig, QONRemoteConfigList, QONUserProperties, QONPromotionalOffer;
+@class QONEntitlement, QONProduct, QONOfferings, QONIntroEligibility, QONUser, QONRemoteConfig, QONRemoteConfigList, QONUserProperties, QONPromotionalOffer, QONPurchaseResult;
 
 typedef NS_ENUM(NSInteger, QONAttributionProvider) {
   QONAttributionProviderAppsFlyer = 0,
@@ -53,6 +53,8 @@ typedef void (^QONLaunchCompletionHandler)(QONLaunchResult *result, NSError  *_N
 typedef void (^QONEntitlementsCompletionHandler)(NSDictionary<NSString *, QONEntitlement*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.EntitlementsCompletionHandler);
 
 typedef void (^QONPurchaseCompletionHandler)(NSDictionary<NSString *, QONEntitlement*> *result, NSError  *_Nullable error, BOOL cancelled) NS_SWIFT_NAME(Qonversion.PurchaseCompletionHandler);
+typedef void (^QONPurchaseResultCompletionHandler)(QONPurchaseResult *result) NS_SWIFT_NAME(Qonversion.PurchaseResultCompletionHandler);
+
 typedef void (^QONPromoPurchaseCompletionHandler)(QONPurchaseCompletionHandler) NS_SWIFT_NAME(Qonversion.PromoPurchaseCompletionHandler);
 typedef void (^QNRestoreCompletionHandler)(NSDictionary<NSString *, QONEntitlement*> *result, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.RestoreCompletionHandler);
 

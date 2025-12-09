@@ -133,20 +133,24 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
   @IBAction func didTapMainProductSubscriptionButton(_ sender: Any) {
     if let product = self.products[firstPurchaseButtonProduct] {
       activityIndicator.startAnimating()
-      Qonversion.shared().purchase(product.qonversionID) { [weak self] (result, error, flag) in
+      Qonversion.shared().purchase(product) { [weak self] result in
         guard let self = self else { return }
         
         self.activityIndicator.stopAnimating()
         
-        if let error = error {
-          return self.showAlert(with: "Error", message: error.localizedDescription)
+        if result.isSuccessful {
+          if let entitlements = result.entitlements, !entitlements.isEmpty {
+            self.mainProductSubscriptionButton.setTitle("Successfully purchased", for: .normal)
+            self.mainProductSubscriptionButton.backgroundColor = .systemGreen
+          }
+        } else if result.isCanceledByUser {
+          // User canceled the purchase - no action needed
+        } else if result.isPending {
+          self.showAlert(with: "Purchase Pending", message: "Your purchase is being processed. Please wait.")
+        } else if result.isError {
+          let errorMessage = result.error?.localizedDescription ?? "Unknown error occurred"
+          self.showAlert(with: "Error", message: errorMessage)
         }
-        
-        if !result.isEmpty {
-          self.mainProductSubscriptionButton.setTitle("Successfully purchased", for: .normal)
-          self.mainProductSubscriptionButton.backgroundColor = .systemGreen
-        }
-        
       }
     }
   }
@@ -154,17 +158,23 @@ class ViewController: UIViewController, NoCodesDelegate, NoCodesScreenCustomizat
   @IBAction func didTapInAppPurchaseButton(_ sender: Any) {
     if let product = self.products[secondPurchaseButtonProduct] {
       activityIndicator.startAnimating()
-      Qonversion.shared().purchaseProduct(product) { [weak self] (result, error, flag) in
+      Qonversion.shared().purchase(product) { [weak self] result in
         guard let self = self else { return }
         
         self.activityIndicator.stopAnimating()
         
-        if let error = error {
-          return self.showAlert(with: "Error", message: error.localizedDescription)
-        }
-        if !result.isEmpty {
-          self.inAppPurchaseButton.setTitle("Successfully purchased", for: .normal)
-          self.inAppPurchaseButton.backgroundColor = .systemGreen
+        if result.isSuccessful {
+          if let entitlements = result.entitlements, !entitlements.isEmpty {
+            self.inAppPurchaseButton.setTitle("Successfully purchased", for: .normal)
+            self.inAppPurchaseButton.backgroundColor = .systemGreen
+          }
+        } else if result.isCanceledByUser {
+          // User canceled the purchase - no action needed
+        } else if result.isPending {
+          self.showAlert(with: "Purchase Pending", message: "Your purchase is being processed. Please wait.")
+        } else if result.isError {
+          let errorMessage = result.error?.localizedDescription ?? "Unknown error occurred"
+          self.showAlert(with: "Error", message: errorMessage)
         }
       }
     }
