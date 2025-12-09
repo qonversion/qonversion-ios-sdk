@@ -51,7 +51,7 @@ NS_SWIFT_NAME(Qonversion.PurchaseResult)
 @property (nonatomic, assign, readonly) QONPurchaseResultStatus status;
 
 /**
- * Dictionary of entitlements that were granted as a result of the purchase.
+ * Dictionary of entitlements current user has after the purchase.
  * Key is entitlement identifier, value is QONEntitlement object.
  */
 @property (nonatomic, copy, readonly, nullable) NSDictionary<NSString *, QONEntitlement *> *entitlements;
