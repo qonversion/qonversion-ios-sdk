@@ -168,6 +168,14 @@ static bool _isInitialized = NO;
   [self.productCenterManager checkEntitlements:completion];
 }
 
+- (void)purchaseWithResult:(QONProduct *)product options:(nullable QONPurchaseOptions *)options completion:(nonnull QONPurchaseResultCompletionHandler)completion {
+  [self.productCenterManager purchaseWithResult:product options:options completion:completion];
+}
+
+- (void)purchaseWithResult:(QONProduct *)product completion:(nonnull QONPurchaseResultCompletionHandler)completion {
+  [self.productCenterManager purchaseWithResult:product options:nil completion:completion];
+}
+
 - (void)purchaseProduct:(QONProduct *)product completion:(QONPurchaseCompletionHandler)completion {
   [self.productCenterManager purchase:product options:nil completion:completion];
 }

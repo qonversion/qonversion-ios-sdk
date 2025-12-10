@@ -20,6 +20,7 @@
 #import <Qonversion/QONStoreKit2PurchaseModel.h>
 
 #import <Qonversion/QONPurchaseOptions.h>
+#import <Qonversion/QONPurchaseResult.h>
 #import <Qonversion/QONPromotionalOffer.h>
 
 #import <Qonversion/QONUser.h>
