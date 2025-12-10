@@ -303,7 +303,7 @@ extension NoCodesViewController {
           let options = Qonversion.PurchaseOptions()
           options.screenUid = screenId
           
-          try await Qonversion.shared().purchaseProduct(product, options: options)
+          await Qonversion.shared().purchase(product, options: options)
           activityIndicator.stopAnimating()
           finishAndClose(action: purchaseAction)
         }
