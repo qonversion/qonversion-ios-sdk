@@ -60,7 +60,10 @@ NS_SWIFT_NAME(Qonversion.PurchaseResult)
  * StoreKit transaction associated with the purchase.
  * Can be nil if the purchase failed before reaching StoreKit.
  */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 @property (nonatomic, strong, readonly, nullable) SKPaymentTransaction *transaction;
+#pragma clang diagnostic pop
 
 /**
  * Error that occurred during the purchase process, if any.

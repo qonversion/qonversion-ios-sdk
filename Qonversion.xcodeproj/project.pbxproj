@@ -63,7 +63,7 @@
 		700636142C12125900BB9F9C /* NSError+Sugare.h in Headers */ = {isa = PBXBuildFile; fileRef = 700636122C12125900BB9F9C /* NSError+Sugare.h */; };
 		700636152C12125900BB9F9C /* NSError+Sugare.m in Sources */ = {isa = PBXBuildFile; fileRef = 700636132C12125900BB9F9C /* NSError+Sugare.m */; };
 		700B9D4D2E742CBB0031B056 /* QONPurchaseResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 700B9D4C2E742CBB0031B056 /* QONPurchaseResult.m */; };
-		700B9D4E2E742CBB0031B056 /* QONPurchaseResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 700B9D4B2E742CBB0031B056 /* QONPurchaseResult.h */; };
+		700B9D4E2E742CBB0031B056 /* QONPurchaseResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 700B9D4B2E742CBB0031B056 /* QONPurchaseResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		700B9D502E742E5D0031B056 /* QONPurchaseResult+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700B9D4F2E742E5D0031B056 /* QONPurchaseResult+Protected.h */; };
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
 		701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922712B10981200724926 /* QONSubscriptionPeriod.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -662,8 +662,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		70EE742B2E2E928000260875 /* Watch Sample Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "Watch Sample Watch App";
 			sourceTree = "<group>";
 		};
@@ -2264,9 +2262,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2281,9 +2283,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2320,9 +2326,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

@@ -21,11 +21,14 @@ NS_ASSUME_NONNULL_BEGIN
  * @param source Source of this purchase result
  * @return QONPurchaseResult instance
  */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (instancetype)initWithStatus:(QONPurchaseResultStatus)status
                   entitlements:(nullable NSDictionary<NSString *, QONEntitlement *> *)entitlements
                    transaction:(nullable SKPaymentTransaction *)transaction
                          error:(nullable NSError *)error
                         source:(QONPurchaseResultSource)source;
+#pragma clang diagnostic pop
 
 // MARK: - Static Factory Methods
 
@@ -35,8 +38,11 @@ NS_ASSUME_NONNULL_BEGIN
  * @param transaction StoreKit transaction
  * @return QONPurchaseResult instance with Success status and Api source
  */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 + (instancetype)successWithEntitlements:(NSDictionary<NSString *, QONEntitlement *> *)entitlements
                             transaction:(SKPaymentTransaction *)transaction;
+#pragma clang diagnostic pop
 
 /**
  * Create a successful purchase result from fallback system
@@ -44,8 +50,11 @@ NS_ASSUME_NONNULL_BEGIN
  * @param transaction StoreKit transaction
  * @return QONPurchaseResult instance with Success status and Local source
  */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 + (instancetype)successFromFallbackWithEntitlements:(NSDictionary<NSString *, QONEntitlement *> *)entitlements
                                         transaction:(SKPaymentTransaction *)transaction;
+#pragma clang diagnostic pop
 
 /**
  * Create a user canceled purchase result
@@ -69,4 +78,3 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
-
