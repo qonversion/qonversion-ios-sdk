@@ -56,7 +56,7 @@ let sources: [String] = ["Qonversion/IDFA",
 let package = Package(
     name: "Qonversion",
     platforms: [
-        .iOS(.v13), .watchOS("6.2"), .macOS(.v10_13), .tvOS(.v12), .visionOS(.v1)
+        .iOS(.v13), .watchOS("6.2"), .macOS(.v10_15), .tvOS(.v12), .visionOS(.v1)
     ],
     products: [
         .library(
