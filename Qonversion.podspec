@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
   idfa_exclude_files = ['Sources/Qonversion/IDFA']
   s.name         = 'Qonversion'
   s.swift_version = '5.5'
-  s.version      = '6.2.0'
+  s.version      = '6.2.1'
   s.summary      = 'qonversion.io'
   s.description  = <<-DESC
   Deep Analytics for iOS Subscriptions
@@ -17,8 +17,8 @@ Pod::Spec.new do |s|
   s.source                    = { :git => 'https://github.com/qonversion/qonversion-ios-sdk.git', :tag => s.version.to_s }
   s.framework                 = 'StoreKit'
   s.ios.deployment_target     = '13.0'
-  s.osx.deployment_target     = '10.12'
-  s.tvos.deployment_target    = '9.0'
+  s.osx.deployment_target     = '10.15'
+  s.tvos.deployment_target    = '12.0'
   s.watchos.deployment_target = '6.2'
   s.visionos.deployment_target = '1.0'
   s.ios.frameworks            = ['UIKit', 'WebKit']
