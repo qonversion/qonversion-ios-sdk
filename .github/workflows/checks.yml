@@ -12,6 +12,18 @@ jobs:
         with:
           xcode-version: '26.0.1'
       - uses: actions/checkout@v2
+      
+      - name: Cache CocoaPods
+        uses: actions/cache@v3
+        with:
+          path: |
+            Pods
+            ~/Library/Caches/CocoaPods
+            ~/.cocoapods/repos
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+      
       - name: Validation
         run: |
           pod lib lint --verbose
@@ -36,6 +48,18 @@ jobs:
         with:
           xcode-version: '26.0.1'
       - uses: actions/checkout@v2
+      
+      - name: Cache CocoaPods
+        uses: actions/cache@v3
+        with:
+          path: |
+            Pods
+            ~/Library/Caches/CocoaPods
+            ~/.cocoapods/repos
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+      
       - name: Tests
         run: |
           fastlane tests
