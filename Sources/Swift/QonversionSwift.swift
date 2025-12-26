@@ -19,7 +19,6 @@ public class QonversionSwift {
     }
   }
   
-  /// Contact us before you start using this function.
   /// Call this function to sync purchases if you are using StoreKit2.
   public func syncStoreKit2Purchases() {
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) {
@@ -29,7 +28,6 @@ public class QonversionSwift {
     }
   }
   
-  /// Contact us before you start using this function.
   /// Call this function to sync purchases if you are using StoreKit2.
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
   public func syncStoreKit2Transactions() async {
