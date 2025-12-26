@@ -396,15 +396,12 @@
   data[@"products_local_data"] = @[
     @{
       @"store_id": @"apple_annual",
-      @"subscription_group_identifier": @20679497,
     },
     @{
       @"store_id": @"apple_inapp",
-      @"subscription_group_identifier": @20679497,
     },
     @{
       @"store_id": @"apple_monthly",
-      @"subscription_group_identifier": @20679497,
     }
   ];
   
@@ -420,7 +417,7 @@
         },
       },
       @{
-        @"intro_eligibility_status": @"intro_or_trial_eligible",
+        @"intro_eligibility_status": @"unknown",
         @"product": @{
           @"duration": @4,
           @"id": @"test_annual",
@@ -467,21 +464,18 @@
   data[@"products_local_data"] = @[
     @{
       @"store_id": @"apple_annual",
-      @"subscription_group_identifier": @20679497,
     },
     @{
       @"store_id": @"apple_inapp",
-      @"subscription_group_identifier": @20679497,
     },
     @{
       @"store_id": @"apple_monthly",
-      @"subscription_group_identifier": @20679497,
     }
   ];
 
   // when
   [client checkTrialIntroEligibilityParamsForData:data completion:^(NSDictionary * _Nullable res, NSError * _Nullable error) {
-    [self assertProjectNotFoundError:res error:error];
+    [self assertAccessDeniedError:res error:error];
     [completionExpectation fulfill];
   }];
   

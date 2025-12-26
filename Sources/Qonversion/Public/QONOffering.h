@@ -15,9 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 typedef NS_ENUM(NSInteger, QONOfferingTag) {
   QONOfferingTagUnknown = -1,
   QONOfferingTagNone = 0,
-  /**
-   Provides access to content on a recurring basis with a free introductory offer
-   */
   QONOfferingTagMain = 1
 } NS_SWIFT_NAME(Qonversion.OfferingTag);
 
