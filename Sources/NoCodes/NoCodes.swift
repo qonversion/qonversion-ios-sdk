@@ -80,6 +80,22 @@ public final class NoCodes {
     flowCoordinator?.close()
   }
   
+  /// Set a custom locale for No-Code screens localization.
+  /// If set, this locale will take priority over the system default locale when determining
+  /// which localization to show on No-Code screens.
+  /// The locale should be in standard format (e.g., "en", "en-US", "de", "de-DE").
+  ///
+  /// You may set locale both after No-Codes SDK initialization with this method
+  /// and during initialization via ``NoCodesConfiguration/locale``.
+  ///
+  /// Pass nil to reset to system default locale.
+  ///
+  /// - Parameters:
+  ///   - locale: the custom locale code, or nil to use system default.
+  public func setLocale(_ locale: String?) {
+    flowCoordinator?.setLocale(locale)
+  }
+  
 }
 
 #endif
