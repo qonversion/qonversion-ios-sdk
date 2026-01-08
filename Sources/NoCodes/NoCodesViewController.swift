@@ -53,8 +53,9 @@ final class NoCodesViewController: UIViewController {
   private var skeletonView: SkeletonView!
   private var presentationConfiguration: NoCodesPresentationConfiguration!
   private var purchaseDelegate: NoCodesPurchaseDelegate?
+  private var customLocale: String?
   
-  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration) {
+  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil) {
     self.screenId = screenId
     self.contextKey = contextKey
     self.noCodesMapper = noCodesMapper
@@ -64,6 +65,7 @@ final class NoCodesViewController: UIViewController {
     self.logger = logger
     self.presentationConfiguration = presentationConfiguration
     self.purchaseDelegate = purchaseDelegate
+    self.customLocale = customLocale
     
     super.init(nibName: nil, bundle: nil)
     
@@ -126,11 +128,32 @@ final class NoCodesViewController: UIViewController {
         self.contextKey = screen.contextKey
         delegate.noCodesHasShownScreen(id: screen.id)
         
-        webView.loadHTMLString(screen.html, baseURL: nil)
+        let htmlToLoad = injectCustomLocale(into: screen.html)
+        webView.loadHTMLString(htmlToLoad, baseURL: nil)
       } catch {
         delegate.noCodesFailedToLoadScreen(error: nil)
         logger.error(LoggerInfoMessages.screenLoadingFailed.rawValue)
       }
+    }
+  }
+  
+  /// Injects a script tag with the custom locale into the HTML's head section.
+  /// This allows the JavaScript localization script to use the client-specified locale.
+  private func injectCustomLocale(into html: String) -> String {
+    guard let customLocale = customLocale else {
+      return html
+    }
+    
+    let localeScript = "<script>window.noCodesCustomLocale = \"\(customLocale)\";</script>"
+    
+    // Try to inject after <head> tag
+    if let headRange = html.range(of: "<head>", options: .caseInsensitive) {
+      var modifiedHtml = html
+      modifiedHtml.insert(contentsOf: localeScript, at: headRange.upperBound)
+      return modifiedHtml
+    } else {
+      // Fallback: prepend to HTML
+      return localeScript + html
     }
   }
   
@@ -339,7 +362,7 @@ extension NoCodesViewController {
   private func handle(navigationAction: NoCodesAction) {
     guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else { return }
     
-    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration)
+    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale)
     navigationController?.pushViewController(viewController, animated: true)
     delegate.noCodesFinishedExecuting(action: navigationAction)
   }
