@@ -28,12 +28,13 @@ end
 lane :set_outager_url do |options|
   url = options[:url]
 
-  path1 = Dir['../**/QNOutagerIntegrationTests.m'].first
+  # Swift integration tests
+  path1 = Dir['../**/OutagerIntegrationTests.swift'].first
   path2 = Dir['../**/NoCodesOutagerIntegrationTest.swift'].first
   regex = /\<paste outager link here\>/
 
-  update_file(path1, regex, url)
-  update_file(path2, regex, url)
+  update_file(path1, regex, url) if path1
+  update_file(path2, regex, url) if path2
 end
 
 lane :bump do |options|
@@ -51,8 +52,9 @@ lane :bump do |options|
     version_number: new_version
   )
 
-  file_path = Dir['../**/QONConfiguration.m'].first
-  update_file(file_path, /NSString \*const kSDKVersion = @".*";/, "NSString *const kSDKVersion = @\"#{new_version}\";")
+  # Update SDK version in Constants.swift
+  file_path = Dir['../**/Constants.swift'].first
+  update_file(file_path, /static let sdkVersion = ".*"/, "static let sdkVersion = \"#{new_version}\"")
 end
 
 def get_tag

@@ -6,9 +6,12 @@
 //  Copyright © 2025 Qonversion Inc. All rights reserved.
 //
 
+#if os(iOS)
+
 import Foundation
 import XCTest
 @testable import Qonversion
+@testable import NoCodes
 
 class NoCodesOutagerIntegrationTest: XCTestCase {
   
@@ -167,3 +170,5 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     }
   }
 }
+
+#endif

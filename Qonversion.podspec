@@ -1,9 +1,7 @@
 Pod::Spec.new do |s|
-  excluded_files = ['Sources/NoCodes/**/*.swift']
-  idfa_exclude_files = ['Sources/Qonversion/IDFA']
   s.name         = 'Qonversion'
-  s.swift_version = '5.5'
-  s.version      = '6.3.0'
+  s.swift_version = '5.9'
+  s.version      = '7.0.0'
   s.summary      = 'qonversion.io'
   s.description  = <<-DESC
   Deep Analytics for iOS Subscriptions
@@ -16,10 +14,10 @@ Pod::Spec.new do |s|
   s.author                    = { 'Qonversion Inc.' => 'hi@qonversion.io' }
   s.source                    = { :git => 'https://github.com/qonversion/qonversion-ios-sdk.git', :tag => s.version.to_s }
   s.framework                 = 'StoreKit'
-  s.ios.deployment_target     = '13.0'
-  s.osx.deployment_target     = '10.15'
-  s.tvos.deployment_target    = '12.0'
-  s.watchos.deployment_target = '6.2'
+  s.ios.deployment_target     = '15.0'
+  s.osx.deployment_target     = '12.0'
+  s.tvos.deployment_target    = '15.0'
+  s.watchos.deployment_target = '8.0'
   s.visionos.deployment_target = '1.0'
   s.ios.frameworks            = ['UIKit', 'WebKit']
   s.watchos.frameworks        = ['WatchKit']
@@ -32,25 +30,25 @@ Pod::Spec.new do |s|
     'SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=xros*]' => '$(inherited) VISION_OS',
     'DEFINES_MODULE' => 'YES',
   }
+  
+  excluded_files = ['Sources/NoCodes/**/*.swift']
     
   s.default_subspecs = 'Main'
   
   s.subspec 'Main' do |ss|
-    ss.source_files              = ['Sources/Qonversion/**/*.{h,m}', 'Sources/Swift/**/*.swift', 'Sources/NoCodes/**/*.swift']
+    ss.source_files              = ['Sources/Qonversion/**/*.swift', 'Sources/NoCodes/**/*.swift']
     ss.osx.exclude_files         = excluded_files
     ss.tvos.exclude_files        = excluded_files
     ss.watchos.exclude_files     = excluded_files
     ss.visionos.exclude_files    = excluded_files
   end
 
-  s.subspec 'NoIdfa' do |sss|
-    sss.source_files              = ['Sources/Qonversion/**/*.{h,m}', 'Sources/Swift/**/*.swift']
-    sss.osx.exclude_files         = excluded_files + idfa_exclude_files
-    sss.tvos.exclude_files        = excluded_files + idfa_exclude_files
-    sss.watchos.exclude_files     = excluded_files + idfa_exclude_files
-    sss.visionos.exclude_files    = excluded_files + idfa_exclude_files
-    sss.ios.exclude_files         = idfa_exclude_files
+  s.subspec 'Core' do |sss|
+    sss.source_files              = ['Sources/Qonversion/**/*.swift']
+    sss.osx.exclude_files         = excluded_files
+    sss.tvos.exclude_files        = excluded_files
+    sss.watchos.exclude_files     = excluded_files
+    sss.visionos.exclude_files    = excluded_files
   end
-
 
 end

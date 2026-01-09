@@ -6,9 +6,12 @@
 //  Copyright © 2025 Qonversion Inc. All rights reserved.
 //
 
+#if os(iOS)
+
 import Foundation
 import XCTest
 @testable import Qonversion
+@testable import NoCodes
 
 class NoCodesIntegrationTest: XCTestCase {
   
@@ -201,3 +204,5 @@ class NoCodesIntegrationTest: XCTestCase {
     return servicesAssembly.noCodesService()
   }
 }
+
+#endif
