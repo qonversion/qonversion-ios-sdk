@@ -25,7 +25,7 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
   private let CONTEXT_KEY_FOR_SCREEN_BY_ID = "another_test_context_key"
   private let NON_EXISTENT_SCREEN_ID = "non_existent_screen_id"
   
-  private let REQUEST_TIMEOUT: TimeInterval = 10.0
+  private let REQUEST_TIMEOUT: TimeInterval = 30.0
   
   // MARK: - Test Methods
   
@@ -34,7 +34,9 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     let noCodesService = getNoCodesService()
     
     // when
-    let screen = try await noCodesService.loadScreen(withContextKey: VALID_CONTEXT_KEY)
+    let screen = try await withTimeout(seconds: REQUEST_TIMEOUT) {
+      try await noCodesService.loadScreen(withContextKey: self.VALID_CONTEXT_KEY)
+    }
     
     // then
     XCTAssertNotNil(screen, "Screen should not be null")
@@ -48,7 +50,9 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     let noCodesService = getNoCodesService()
     
     // when
-    let screen = try await noCodesService.loadScreen(with: VALID_SCREEN_ID)
+    let screen = try await withTimeout(seconds: REQUEST_TIMEOUT) {
+      try await noCodesService.loadScreen(with: self.VALID_SCREEN_ID)
+    }
     
     // then
     XCTAssertNotNil(screen, "Screen should not be null")
@@ -62,7 +66,9 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     let noCodesService = getNoCodesService()
     
     // when
-    let screens = try await noCodesService.preloadScreens()
+    let screens = try await withTimeout(seconds: REQUEST_TIMEOUT) {
+      try await noCodesService.preloadScreens()
+    }
     
     // then
     XCTAssertNotNil(screens, "Screens list should not be null")
@@ -86,10 +92,9 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     let noCodesService = getNoCodesService()
     
     // when
-    do {
-      _ = try await noCodesService.loadScreen(withContextKey: NON_EXISTENT_CONTEXT_KEY)
-      XCTFail("Should fail with non-existent context key")
-    } catch {
+    await expectError(timeout: REQUEST_TIMEOUT) {
+      _ = try await noCodesService.loadScreen(withContextKey: self.NON_EXISTENT_CONTEXT_KEY)
+    } errorHandler: { error in
       // then
       XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
       XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
@@ -101,10 +106,9 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     let noCodesService = getNoCodesService()
     
     // when
-    do {
+    await expectError(timeout: REQUEST_TIMEOUT) {
       _ = try await noCodesService.loadScreen(withContextKey: "")
-      XCTFail("Should fail with empty context key")
-    } catch {
+    } errorHandler: { error in
       // then
       XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
       XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
@@ -116,10 +120,9 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     let noCodesService = getNoCodesService()
     
     // when
-    do {
-      _ = try await noCodesService.loadScreen(with: NON_EXISTENT_SCREEN_ID)
-      XCTFail("Should fail with non-existent screen ID")
-    } catch {
+    await expectError(timeout: REQUEST_TIMEOUT) {
+      _ = try await noCodesService.loadScreen(with: self.NON_EXISTENT_SCREEN_ID)
+    } errorHandler: { error in
       // then
       XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
       XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")

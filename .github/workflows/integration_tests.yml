@@ -7,7 +7,8 @@ on:
 
 jobs:
   tests:
-    runs-on: macos-latest
+    runs-on: macos-15
+    timeout-minutes: 30
     
     concurrency:
       group: ios_integration_tests
@@ -30,6 +31,34 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pods-
       
+      - name: Boot and warmup iOS Simulator
+        run: |
+          # List available simulators
+          xcrun simctl list devices available
+          
+          # Get the UDID of iPhone 16 Pro with iOS 26.0
+          SIMULATOR_UDID=$(xcrun simctl list devices available | grep "iPhone 16 Pro" | grep -v "Max" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+          
+          if [ -z "$SIMULATOR_UDID" ]; then
+            echo "No iPhone 16 Pro simulator found, creating one..."
+            SIMULATOR_UDID=$(xcrun simctl create "iPhone 16 Pro" "iPhone 16 Pro" "iOS26.0")
+          fi
+          
+          echo "Using simulator: $SIMULATOR_UDID"
+          
+          # Boot the simulator
+          xcrun simctl boot "$SIMULATOR_UDID" || true
+          
+          # Wait for simulator to be ready
+          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+          
+          # Additional warmup - open and close Settings app to ensure simulator is fully initialized
+          xcrun simctl launch "$SIMULATOR_UDID" com.apple.Preferences || true
+          sleep 3
+          xcrun simctl terminate "$SIMULATOR_UDID" com.apple.Preferences || true
+          
+          echo "Simulator is ready"
+      
       - name: Set Outager url
         run: |
           fastlane set_outager_url url:${{ secrets.OUTAGER_URL }}
@@ -37,3 +66,6 @@ jobs:
       - name: Tests
         run: |
           fastlane integration_tests
+        env:
+          # Increase xcodebuild timeout
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: '120'
