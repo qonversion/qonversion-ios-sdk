@@ -18,66 +18,60 @@ struct AsyncTestTimeoutError: Error, LocalizedError {
   }
 }
 
-/// Extension providing timeout functionality for async tests
-extension XCTestCase {
-  
-  /// Executes an async operation with a timeout.
-  /// If the operation doesn't complete within the specified timeout, an error is thrown.
-  ///
-  /// - Parameters:
-  ///   - timeout: Maximum time to wait for the operation to complete (in seconds)
-  ///   - operation: The async operation to execute
-  /// - Returns: The result of the operation
-  /// - Throws: `AsyncTestTimeoutError` if the operation times out, or any error thrown by the operation
-  func withTimeout<T>(
-    seconds timeout: TimeInterval,
-    operation: @escaping () async throws -> T
-  ) async throws -> T {
-    try await withThrowingTaskGroup(of: T.self) { group in
-      // Add the main operation task
-      group.addTask {
-        try await operation()
-      }
-      
-      // Add a timeout task
-      group.addTask {
-        try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
-        throw AsyncTestTimeoutError(timeout: timeout)
-      }
-      
-      // Wait for the first task to complete
-      guard let result = try await group.next() else {
-        throw AsyncTestTimeoutError(timeout: timeout)
-      }
-      
-      // Cancel remaining tasks
-      group.cancelAll()
-      
-      return result
+/// Executes an async operation with a timeout.
+/// Uses Task.sleep for timeout and cancels the operation if it exceeds the limit.
+///
+/// - Parameters:
+///   - timeout: Maximum time to wait for the operation to complete (in seconds)
+///   - operation: The async operation to execute
+/// - Returns: The result of the operation
+/// - Throws: `AsyncTestTimeoutError` if the operation times out, or any error thrown by the operation
+func withTimeout<T>(
+  seconds timeout: TimeInterval,
+  operation: @escaping () async throws -> T
+) async throws -> T {
+  return try await withThrowingTaskGroup(of: T.self) { group in
+    // Add the main operation
+    group.addTask {
+      try await operation()
     }
+    
+    // Add a timeout task
+    group.addTask {
+      try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+      throw AsyncTestTimeoutError(timeout: timeout)
+    }
+    
+    // Wait for the first task to complete
+    guard let result = try await group.next() else {
+      throw AsyncTestTimeoutError(timeout: timeout)
+    }
+    
+    // Cancel remaining tasks
+    group.cancelAll()
+    
+    return result
   }
-  
-  /// Executes an async operation that is expected to throw an error, with a timeout.
-  /// If the operation doesn't throw or times out, the test fails.
-  ///
-  /// - Parameters:
-  ///   - timeout: Maximum time to wait for the operation to complete (in seconds)
-  ///   - operation: The async operation to execute
-  ///   - errorHandler: Closure to validate the thrown error
-  func expectError(
-    timeout: TimeInterval,
-    from operation: @escaping () async throws -> Void,
-    errorHandler: (Error) -> Void
-  ) async {
-    do {
-      try await withTimeout(seconds: timeout) {
-        try await operation()
-      }
-      XCTFail("Expected operation to throw an error, but it succeeded")
-    } catch is AsyncTestTimeoutError {
-      XCTFail("Operation timed out after \(timeout) seconds")
-    } catch {
-      errorHandler(error)
+}
+
+/// Executes an async operation that is expected to throw an error.
+/// If the operation doesn't throw, the test fails.
+///
+/// - Parameters:
+///   - timeout: Maximum time to wait for the operation to complete (in seconds)
+///   - operation: The async operation to execute
+/// - Returns: The error that was thrown, or nil if the operation succeeded (and XCTFail was called)
+func expectError(
+  timeout: TimeInterval,
+  from operation: @escaping () async throws -> Void
+) async -> Error? {
+  do {
+    try await withTimeout(seconds: timeout) {
+      try await operation()
     }
+    XCTFail("Expected operation to throw an error, but it succeeded")
+    return nil
+  } catch {
+    return error
   }
 }

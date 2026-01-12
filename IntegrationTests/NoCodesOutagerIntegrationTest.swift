@@ -10,6 +10,7 @@ import Foundation
 import XCTest
 @testable import Qonversion
 
+@MainActor
 class NoCodesOutagerIntegrationTest: XCTestCase {
   
   // MARK: - Constants
@@ -92,13 +93,14 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     let noCodesService = getNoCodesService()
     
     // when
-    await expectError(timeout: REQUEST_TIMEOUT) {
+    let error = await expectError(timeout: REQUEST_TIMEOUT) {
       _ = try await noCodesService.loadScreen(withContextKey: self.NON_EXISTENT_CONTEXT_KEY)
-    } errorHandler: { error in
-      // then
-      XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
-      XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
     }
+    
+    // then
+    XCTAssertNotNil(error, "Error should be thrown")
+    XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
+    XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
   }
   
   func testGetScreenWithEmptyContextKey() async {
@@ -106,13 +108,14 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     let noCodesService = getNoCodesService()
     
     // when
-    await expectError(timeout: REQUEST_TIMEOUT) {
+    let error = await expectError(timeout: REQUEST_TIMEOUT) {
       _ = try await noCodesService.loadScreen(withContextKey: "")
-    } errorHandler: { error in
-      // then
-      XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
-      XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
     }
+    
+    // then
+    XCTAssertNotNil(error, "Error should be thrown")
+    XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
+    XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
   }
   
   func testGetScreenWithNonExistentId() async {
@@ -120,13 +123,14 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
     let noCodesService = getNoCodesService()
     
     // when
-    await expectError(timeout: REQUEST_TIMEOUT) {
+    let error = await expectError(timeout: REQUEST_TIMEOUT) {
       _ = try await noCodesService.loadScreen(with: self.NON_EXISTENT_SCREEN_ID)
-    } errorHandler: { error in
-      // then
-      XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
-      XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
     }
+    
+    // then
+    XCTAssertNotNil(error, "Error should be thrown")
+    XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
+    XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
   }
   
   // MARK: - Helper Methods
