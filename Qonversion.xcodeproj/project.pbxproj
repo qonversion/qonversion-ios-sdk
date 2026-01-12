@@ -498,8 +498,6 @@
 		70B917622B3314BD00BF0689 /* QONTransaction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONTransaction.h; sourceTree = "<group>"; };
 		70B917632B3314BD00BF0689 /* QONTransaction.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONTransaction.m; sourceTree = "<group>"; };
 		70B917662B34284200BF0689 /* QONTransaction+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONTransaction+Protected.h"; sourceTree = "<group>"; };
-		70B9A9EF297AB8A700BD30FD /* QONAutomationsNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONAutomationsNavigationController.h; sourceTree = "<group>"; };
-		70B9A9F0297AB8A700BD30FD /* QONAutomationsNavigationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsNavigationController.m; sourceTree = "<group>"; };
 		70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONPromotionalOffer.h; sourceTree = "<group>"; };
 		70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONPromotionalOffer.m; sourceTree = "<group>"; };
 		70CB7CDF2C247A8A00241FF1 /* QONPromotionalOffer+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONPromotionalOffer+Protected.h"; sourceTree = "<group>"; };
@@ -558,31 +556,6 @@
 		895731DA26DD03A2009507A6 /* QONOffering.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONOffering.m; sourceTree = "<group>"; };
 		895731DB26DD03A2009507A6 /* QONActionResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONActionResult.h; sourceTree = "<group>"; };
 		895731DC26DD03A2009507A6 /* QONProduct.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONProduct.m; sourceTree = "<group>"; };
-		895731DF26DD03A2009507A6 /* QONAutomationsConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsConstants.h; sourceTree = "<group>"; };
-		895731E026DD03A2009507A6 /* QONAutomationsConstants.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsConstants.m; sourceTree = "<group>"; };
-		895731E326DD03A2009507A6 /* QONMacrosProcess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONMacrosProcess.h; sourceTree = "<group>"; };
-		895731E426DD03A2009507A6 /* QONMacrosProcess.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONMacrosProcess.m; sourceTree = "<group>"; };
-		895731E526DD03A2009507A6 /* QONAutomationsEvent+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONAutomationsEvent+Protected.h"; sourceTree = "<group>"; };
-		895731E726DD03A2009507A6 /* QONUserActionPoint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONUserActionPoint.m; sourceTree = "<group>"; };
-		895731E826DD03A2009507A6 /* QONUserActionPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUserActionPoint.h; sourceTree = "<group>"; };
-		895731EA26DD03A2009507A6 /* QONAutomationsScreen.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsScreen.m; sourceTree = "<group>"; };
-		895731EB26DD03A2009507A6 /* QONAutomationsScreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsScreen.h; sourceTree = "<group>"; };
-		895731EE26DD03A3009507A6 /* QONAutomationsMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsMapper.h; sourceTree = "<group>"; };
-		895731EF26DD03A3009507A6 /* QONAutomationsMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsMapper.m; sourceTree = "<group>"; };
-		895731F126DD03A3009507A6 /* QONAutomationsEventsMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsEventsMapper.m; sourceTree = "<group>"; };
-		895731F226DD03A3009507A6 /* QONAutomationsEventsMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsEventsMapper.h; sourceTree = "<group>"; };
-		895731F526DD03A3009507A6 /* QONAutomationsFlowCoordinator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsFlowCoordinator.m; sourceTree = "<group>"; };
-		895731F626DD03A3009507A6 /* QONAutomationsFlowCoordinator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsFlowCoordinator.h; sourceTree = "<group>"; };
-		895731F826DD03A3009507A6 /* QONAutomationsActionsHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsActionsHandler.m; sourceTree = "<group>"; };
-		895731F926DD03A3009507A6 /* QONAutomationsActionsHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsActionsHandler.h; sourceTree = "<group>"; };
-		895731FB26DD03A3009507A6 /* QONAutomationsFlowAssembly.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsFlowAssembly.m; sourceTree = "<group>"; };
-		895731FC26DD03A3009507A6 /* QONAutomationsFlowAssembly.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsFlowAssembly.h; sourceTree = "<group>"; };
-		895731FF26DD03A3009507A6 /* QONAutomationsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsViewController.h; sourceTree = "<group>"; };
-		8957320026DD03A3009507A6 /* QONAutomationsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsViewController.m; sourceTree = "<group>"; };
-		8957320326DD03A3009507A6 /* QONAutomationsService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsService.h; sourceTree = "<group>"; };
-		8957320426DD03A3009507A6 /* QONAutomationsService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsService.m; sourceTree = "<group>"; };
-		8957320626DD03A3009507A6 /* QONAutomationsScreenProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsScreenProcessor.h; sourceTree = "<group>"; };
-		8957320726DD03A3009507A6 /* QONAutomationsScreenProcessor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONAutomationsScreenProcessor.m; sourceTree = "<group>"; };
 		8957320B26DD03A3009507A6 /* QNUserDefaultsStorage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNUserDefaultsStorage.h; sourceTree = "<group>"; };
 		8957320C26DD03A3009507A6 /* QNUserDefaultsStorage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNUserDefaultsStorage.m; sourceTree = "<group>"; };
 		8957321226DD03A3009507A6 /* QNRequestSerializer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNRequestSerializer.m; sourceTree = "<group>"; };
@@ -1252,15 +1225,6 @@
 			path = QONRemoteConfigMapper;
 			sourceTree = "<group>";
 		};
-		70B9A9EE297AB86400BD30FD /* QONAutomationsNavigationController */ = {
-			isa = PBXGroup;
-			children = (
-				70B9A9EF297AB8A700BD30FD /* QONAutomationsNavigationController.h */,
-				70B9A9F0297AB8A700BD30FD /* QONAutomationsNavigationController.m */,
-			);
-			path = QONAutomationsNavigationController;
-			sourceTree = "<group>";
-		};
 		70D05A8B29C9FC0400EA5DDF /* QONRemoteConfigManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -1296,7 +1260,6 @@
 			children = (
 				895731B526DD03A2009507A6 /* IDFA */,
 				895731B826DD03A2009507A6 /* Public */,
-				895731DD26DD03A2009507A6 /* Automations */,
 				8957320826DD03A3009507A6 /* Qonversion */,
 			);
 			path = Qonversion;
@@ -1380,175 +1343,6 @@
 				70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */,
 			);
 			path = Public;
-			sourceTree = "<group>";
-		};
-		895731DD26DD03A2009507A6 /* Automations */ = {
-			isa = PBXGroup;
-			children = (
-				895731DE26DD03A2009507A6 /* Constants */,
-				895731E126DD03A2009507A6 /* Models */,
-				895731EC26DD03A3009507A6 /* Mappers */,
-				895731F326DD03A3009507A6 /* Main */,
-				895731FD26DD03A3009507A6 /* Views */,
-				8957320126DD03A3009507A6 /* Services */,
-			);
-			path = Automations;
-			sourceTree = "<group>";
-		};
-		895731DE26DD03A2009507A6 /* Constants */ = {
-			isa = PBXGroup;
-			children = (
-				895731DF26DD03A2009507A6 /* QONAutomationsConstants.h */,
-				895731E026DD03A2009507A6 /* QONAutomationsConstants.m */,
-			);
-			path = Constants;
-			sourceTree = "<group>";
-		};
-		895731E126DD03A2009507A6 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				895731E226DD03A2009507A6 /* QONMacrosProcess */,
-				895731E526DD03A2009507A6 /* QONAutomationsEvent+Protected.h */,
-				895731E626DD03A2009507A6 /* QONUserActionPoint */,
-				895731E926DD03A2009507A6 /* QONAutomationsScreen */,
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
-		895731E226DD03A2009507A6 /* QONMacrosProcess */ = {
-			isa = PBXGroup;
-			children = (
-				895731E326DD03A2009507A6 /* QONMacrosProcess.h */,
-				895731E426DD03A2009507A6 /* QONMacrosProcess.m */,
-			);
-			path = QONMacrosProcess;
-			sourceTree = "<group>";
-		};
-		895731E626DD03A2009507A6 /* QONUserActionPoint */ = {
-			isa = PBXGroup;
-			children = (
-				895731E726DD03A2009507A6 /* QONUserActionPoint.m */,
-				895731E826DD03A2009507A6 /* QONUserActionPoint.h */,
-			);
-			path = QONUserActionPoint;
-			sourceTree = "<group>";
-		};
-		895731E926DD03A2009507A6 /* QONAutomationsScreen */ = {
-			isa = PBXGroup;
-			children = (
-				895731EA26DD03A2009507A6 /* QONAutomationsScreen.m */,
-				895731EB26DD03A2009507A6 /* QONAutomationsScreen.h */,
-			);
-			path = QONAutomationsScreen;
-			sourceTree = "<group>";
-		};
-		895731EC26DD03A3009507A6 /* Mappers */ = {
-			isa = PBXGroup;
-			children = (
-				895731ED26DD03A3009507A6 /* QONAutomationsMapper */,
-				895731F026DD03A3009507A6 /* QONAutomationsEventsMapper */,
-			);
-			path = Mappers;
-			sourceTree = "<group>";
-		};
-		895731ED26DD03A3009507A6 /* QONAutomationsMapper */ = {
-			isa = PBXGroup;
-			children = (
-				895731EE26DD03A3009507A6 /* QONAutomationsMapper.h */,
-				895731EF26DD03A3009507A6 /* QONAutomationsMapper.m */,
-			);
-			path = QONAutomationsMapper;
-			sourceTree = "<group>";
-		};
-		895731F026DD03A3009507A6 /* QONAutomationsEventsMapper */ = {
-			isa = PBXGroup;
-			children = (
-				895731F126DD03A3009507A6 /* QONAutomationsEventsMapper.m */,
-				895731F226DD03A3009507A6 /* QONAutomationsEventsMapper.h */,
-			);
-			path = QONAutomationsEventsMapper;
-			sourceTree = "<group>";
-		};
-		895731F326DD03A3009507A6 /* Main */ = {
-			isa = PBXGroup;
-			children = (
-				895731F426DD03A3009507A6 /* QONAutomationsFlowCoordinator */,
-				895731F726DD03A3009507A6 /* QONAutomationsActionsHandler */,
-				895731FA26DD03A3009507A6 /* QONAutomationsFlowAssembly */,
-			);
-			path = Main;
-			sourceTree = "<group>";
-		};
-		895731F426DD03A3009507A6 /* QONAutomationsFlowCoordinator */ = {
-			isa = PBXGroup;
-			children = (
-				895731F526DD03A3009507A6 /* QONAutomationsFlowCoordinator.m */,
-				895731F626DD03A3009507A6 /* QONAutomationsFlowCoordinator.h */,
-			);
-			path = QONAutomationsFlowCoordinator;
-			sourceTree = "<group>";
-		};
-		895731F726DD03A3009507A6 /* QONAutomationsActionsHandler */ = {
-			isa = PBXGroup;
-			children = (
-				895731F826DD03A3009507A6 /* QONAutomationsActionsHandler.m */,
-				895731F926DD03A3009507A6 /* QONAutomationsActionsHandler.h */,
-			);
-			path = QONAutomationsActionsHandler;
-			sourceTree = "<group>";
-		};
-		895731FA26DD03A3009507A6 /* QONAutomationsFlowAssembly */ = {
-			isa = PBXGroup;
-			children = (
-				895731FB26DD03A3009507A6 /* QONAutomationsFlowAssembly.m */,
-				895731FC26DD03A3009507A6 /* QONAutomationsFlowAssembly.h */,
-			);
-			path = QONAutomationsFlowAssembly;
-			sourceTree = "<group>";
-		};
-		895731FD26DD03A3009507A6 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				70B9A9EE297AB86400BD30FD /* QONAutomationsNavigationController */,
-				895731FE26DD03A3009507A6 /* QONAutomationsViewController */,
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
-		895731FE26DD03A3009507A6 /* QONAutomationsViewController */ = {
-			isa = PBXGroup;
-			children = (
-				895731FF26DD03A3009507A6 /* QONAutomationsViewController.h */,
-				8957320026DD03A3009507A6 /* QONAutomationsViewController.m */,
-			);
-			path = QONAutomationsViewController;
-			sourceTree = "<group>";
-		};
-		8957320126DD03A3009507A6 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				8957320226DD03A3009507A6 /* QONAutomationsService */,
-				8957320526DD03A3009507A6 /* QONAutomationsScreenProcessor */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		8957320226DD03A3009507A6 /* QONAutomationsService */ = {
-			isa = PBXGroup;
-			children = (
-				8957320326DD03A3009507A6 /* QONAutomationsService.h */,
-				8957320426DD03A3009507A6 /* QONAutomationsService.m */,
-			);
-			path = QONAutomationsService;
-			sourceTree = "<group>";
-		};
-		8957320526DD03A3009507A6 /* QONAutomationsScreenProcessor */ = {
-			isa = PBXGroup;
-			children = (
-				8957320626DD03A3009507A6 /* QONAutomationsScreenProcessor.h */,
-				8957320726DD03A3009507A6 /* QONAutomationsScreenProcessor.m */,
-			);
-			path = QONAutomationsScreenProcessor;
 			sourceTree = "<group>";
 		};
 		8957320826DD03A3009507A6 /* Qonversion */ = {
@@ -2619,7 +2413,6 @@
 			targetProxy = 70EE74322E2E928100260875 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
 
 /* Begin XCBuildConfiguration section */
 		454EF64D24E5CC5A0070581E /* Debug */ = {
