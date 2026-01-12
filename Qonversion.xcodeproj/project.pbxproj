@@ -58,6 +58,7 @@
 		6A52DFEF2F115B610001D536 /* OtherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFDC2F115B610001D536 /* OtherView.swift */; };
 		6A7AB1D32EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7AB1D22EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift */; };
 		6A7AB1D42EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7AB1D12EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift */; };
+		6A7AB1D62EA8D15000A3D9C3 /* AsyncTestHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7AB1D72EA8D15000A3D9C3 /* AsyncTestHelpers.swift */; };
 		6A8A604329DAD363008EC7D8 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
 		6A8A604929DAD36E008EC7D8 /* QNAPIClientIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */; };
 		6A95DE9929E007A600350BD6 /* init_request_main_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 6A95DE9829E007A600350BD6 /* init_request_main_data.json */; };
@@ -401,6 +402,7 @@
 		6A7AB1D12EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesIntegrationTest.swift; sourceTree = "<group>"; };
 		6A7AB1D22EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesOutagerIntegrationTest.swift; sourceTree = "<group>"; };
 		6A7AB1D52EA8D14000A3D9C3 /* IntegrationTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IntegrationTests-Bridging-Header.h"; sourceTree = "<group>"; };
+		6A7AB1D72EA8D15000A3D9C3 /* AsyncTestHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncTestHelpers.swift; sourceTree = "<group>"; };
 		6A8A603929D48B1A008EC7D8 /* QNAPIClientIntegrationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNAPIClientIntegrationTests.m; sourceTree = "<group>"; };
 		6A8A603F29DAD363008EC7D8 /* IntegrationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A95DE9829E007A600350BD6 /* init_request_main_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = init_request_main_data.json; sourceTree = "<group>"; };
@@ -971,6 +973,7 @@
 		6A95DE9A29E0083D00350BD6 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				6A7AB1D72EA8D15000A3D9C3 /* AsyncTestHelpers.swift */,
 				6A95DE9B29E009E000350BD6 /* XCTestCase+IntegrationTestJSON.m */,
 				6A95DE9D29E009E900350BD6 /* XCTestCase+IntegrationTestJSON.h */,
 				6A95DEA429E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m */,
@@ -2372,6 +2375,7 @@
 				6A8A604929DAD36E008EC7D8 /* QNAPIClientIntegrationTests.m in Sources */,
 				6A7AB1D32EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift in Sources */,
 				6A7AB1D42EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift in Sources */,
+				6A7AB1D62EA8D15000A3D9C3 /* AsyncTestHelpers.swift in Sources */,
 				6A95DEA229E40E9900350BD6 /* QNOutagerIntegrationTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
