@@ -326,9 +326,16 @@ extension NoCodesViewController {
           let options = Qonversion.PurchaseOptions()
           options.screenUid = screenId
           
-          await Qonversion.shared().purchase(product, options: options)
+          let result = await Qonversion.shared().purchase(product, options: options)
           activityIndicator.stopAnimating()
-          finishAndClose(action: purchaseAction)
+          
+          if result.isSuccessful {
+            finishAndClose(action: purchaseAction)
+          } else {
+            let error = result.error
+            logger.error(error?.localizedDescription ?? "Purchase failed")
+            delegate.noCodesFailedToExecute(action: purchaseAction, error: error)
+          }
         }
       } catch {
         activityIndicator.stopAnimating()
