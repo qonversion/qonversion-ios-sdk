@@ -7,20 +7,37 @@
 
 import SwiftUI
 
+private let clickTimeout: TimeInterval = 0.5
+private let requiredClicks = 5
+
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
+    
+    // Configuration dialog state
+    @State private var showConfigurationDialog = false
+    @State private var projectKeyInput = ""
+    @State private var useCustomUrl = false
+    @State private var customUrlInput = ""
+    @State private var showRestartAlert = false
+    
+    // Click tracking state
+    @State private var clickCount = 0
+    @State private var lastClickTime: Date = .distantPast
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Logo
+                    // Logo - tap 5 times to show configuration dialog
                     Image("qonversion_icon")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 100)
                         .clipShape(Circle())
                         .padding(.top, 20)
+                        .onTapGesture {
+                            handleIconTap()
+                        }
                     
                     Text("Qonversion SDK Demo")
                         .font(.title)
@@ -111,7 +128,70 @@ struct HomeView: View {
             } message: {
                 Text(appState.successMessage ?? "")
             }
+            .sheet(isPresented: $showConfigurationDialog) {
+                ConfigurationDialogView(
+                    projectKeyInput: $projectKeyInput,
+                    useCustomUrl: $useCustomUrl,
+                    customUrlInput: $customUrlInput,
+                    onApply: applyConfiguration,
+                    onReset: resetConfiguration,
+                    onCancel: { showConfigurationDialog = false }
+                )
+            }
+            .alert("Restart Required", isPresented: $showRestartAlert) {
+                Button("Close App") {
+                    exit(0)
+                }
+            } message: {
+                Text("The app will be closed. Please reopen it to apply the new configuration.")
+            }
         }
+    }
+    
+    // MARK: - Icon Tap Handling
+    private func handleIconTap() {
+        let currentTime = Date()
+        if currentTime.timeIntervalSince(lastClickTime) > clickTimeout {
+            resetClickCount()
+        }
+        
+        clickCount += 1
+        lastClickTime = currentTime
+        
+        if clickCount >= requiredClicks {
+            showConfigurationDialogWithCurrentValues()
+            resetClickCount()
+        }
+    }
+    
+    private func resetClickCount() {
+        clickCount = 0
+        lastClickTime = .distantPast
+    }
+    
+    private func showConfigurationDialogWithCurrentValues() {
+        projectKeyInput = ConfigurationManager.getProjectKey()
+        if let apiUrl = ConfigurationManager.getApiUrl() {
+            useCustomUrl = true
+            customUrlInput = apiUrl
+        } else {
+            useCustomUrl = false
+            customUrlInput = ""
+        }
+        showConfigurationDialog = true
+    }
+    
+    private func applyConfiguration() {
+        let apiUrl = useCustomUrl ? customUrlInput : nil
+        ConfigurationManager.storeConfiguration(projectKey: projectKeyInput, apiUrl: apiUrl)
+        showConfigurationDialog = false
+        showRestartAlert = true
+    }
+    
+    private func resetConfiguration() {
+        ConfigurationManager.resetConfiguration()
+        showConfigurationDialog = false
+        showRestartAlert = true
     }
 }
 
@@ -195,6 +275,68 @@ struct LoadingOverlay: View {
 }
 
 import Qonversion
+
+// MARK: - Configuration Dialog View
+struct ConfigurationDialogView: View {
+    @Binding var projectKeyInput: String
+    @Binding var useCustomUrl: Bool
+    @Binding var customUrlInput: String
+    
+    let onApply: () -> Void
+    let onReset: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Project Key")) {
+                    TextField("Enter Project Key", text: $projectKeyInput)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                }
+                
+                Section(header: Text("API Endpoint")) {
+                    Picker("Endpoint", selection: $useCustomUrl) {
+                        Text("Production (default)").tag(false)
+                        Text("Custom URL").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    if useCustomUrl {
+                        TextField("Enter Custom URL", text: $customUrlInput)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .keyboardType(.URL)
+                    }
+                }
+                
+                Section(footer: Text("The app will be closed after applying changes. Please reopen it manually.")) {
+                    EmptyView()
+                }
+            }
+            .navigationTitle("Configuration")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onCancel()
+                    }
+                }
+                ToolbarItem(placement: .destructiveAction) {
+                    Button("Reset") {
+                        onReset()
+                    }
+                    .foregroundColor(.red)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Apply") {
+                        onApply()
+                    }
+                }
+            }
+        }
+    }
+}
 
 #Preview {
     HomeView()

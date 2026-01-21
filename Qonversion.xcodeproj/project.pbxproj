@@ -43,6 +43,7 @@
 		6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF542AB205AC005BDA7C /* QONRequest.m */; };
 		6A4108552D8AAE4A002F902A /* QONRequestTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A4108522D8AAE4A002F902A /* QONRequestTrigger.h */; };
 		6A52DFE22F115B610001D536 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFD32F115B610001D536 /* AppState.swift */; };
+		6A52DFF12F115B620001D536 /* ConfigurationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFF02F115B620001D536 /* ConfigurationManager.swift */; };
 		6A52DFE32F115B610001D536 /* EntitlementDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFD62F115B610001D536 /* EntitlementDetailView.swift */; };
 		6A52DFE42F115B610001D536 /* RemoteConfigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFDF2F115B610001D536 /* RemoteConfigsView.swift */; };
 		6A52DFE52F115B610001D536 /* NoCodesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFDA2F115B610001D536 /* NoCodesView.swift */; };
@@ -385,6 +386,7 @@
 		6A21BF542AB205AC005BDA7C /* QONRequest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRequest.m; sourceTree = "<group>"; };
 		6A4108522D8AAE4A002F902A /* QONRequestTrigger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRequestTrigger.h; sourceTree = "<group>"; };
 		6A52DFD32F115B610001D536 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		6A52DFF02F115B620001D536 /* ConfigurationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationManager.swift; sourceTree = "<group>"; };
 		6A52DFD42F115B610001D536 /* SampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleApp.swift; sourceTree = "<group>"; };
 		6A52DFD52F115B610001D536 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		6A52DFD62F115B610001D536 /* EntitlementDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementDetailView.swift; sourceTree = "<group>"; };
@@ -719,6 +721,7 @@
 			isa = PBXGroup;
 			children = (
 				6A52DFD32F115B610001D536 /* AppState.swift */,
+				6A52DFF02F115B620001D536 /* ConfigurationManager.swift */,
 				6A52DFD42F115B610001D536 /* SampleApp.swift */,
 				6A52DFE12F115B610001D536 /* Views */,
 				706AC1F92E68CE0D00ADA6CB /* nocodes_fallbacks.json */,
@@ -2202,6 +2205,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6A52DFE22F115B610001D536 /* AppState.swift in Sources */,
+				6A52DFF12F115B620001D536 /* ConfigurationManager.swift in Sources */,
 				6A52DFE32F115B610001D536 /* EntitlementDetailView.swift in Sources */,
 				6A52DFE42F115B610001D536 /* RemoteConfigsView.swift in Sources */,
 				6A52DFE52F115B610001D536 /* NoCodesView.swift in Sources */,
