@@ -43,7 +43,6 @@
 		6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A21BF542AB205AC005BDA7C /* QONRequest.m */; };
 		6A4108552D8AAE4A002F902A /* QONRequestTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A4108522D8AAE4A002F902A /* QONRequestTrigger.h */; };
 		6A52DFE22F115B610001D536 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFD32F115B610001D536 /* AppState.swift */; };
-		6A52DFF12F115B620001D536 /* ConfigurationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFF02F115B620001D536 /* ConfigurationManager.swift */; };
 		6A52DFE32F115B610001D536 /* EntitlementDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFD62F115B610001D536 /* EntitlementDetailView.swift */; };
 		6A52DFE42F115B610001D536 /* RemoteConfigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFDF2F115B610001D536 /* RemoteConfigsView.swift */; };
 		6A52DFE52F115B610001D536 /* NoCodesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFDA2F115B610001D536 /* NoCodesView.swift */; };
@@ -57,6 +56,7 @@
 		6A52DFED2F115B610001D536 /* SampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFD42F115B610001D536 /* SampleApp.swift */; };
 		6A52DFEE2F115B610001D536 /* EntitlementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFD72F115B610001D536 /* EntitlementsView.swift */; };
 		6A52DFEF2F115B610001D536 /* OtherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFDC2F115B610001D536 /* OtherView.swift */; };
+		6A52DFF12F115B620001D536 /* ConfigurationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFF02F115B620001D536 /* ConfigurationManager.swift */; };
 		6A7AB1D32EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7AB1D22EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift */; };
 		6A7AB1D42EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7AB1D12EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift */; };
 		6A8A604329DAD363008EC7D8 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
@@ -386,7 +386,6 @@
 		6A21BF542AB205AC005BDA7C /* QONRequest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRequest.m; sourceTree = "<group>"; };
 		6A4108522D8AAE4A002F902A /* QONRequestTrigger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRequestTrigger.h; sourceTree = "<group>"; };
 		6A52DFD32F115B610001D536 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
-		6A52DFF02F115B620001D536 /* ConfigurationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationManager.swift; sourceTree = "<group>"; };
 		6A52DFD42F115B610001D536 /* SampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleApp.swift; sourceTree = "<group>"; };
 		6A52DFD52F115B610001D536 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		6A52DFD62F115B610001D536 /* EntitlementDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementDetailView.swift; sourceTree = "<group>"; };
@@ -400,6 +399,7 @@
 		6A52DFDE2F115B610001D536 /* ProductsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsView.swift; sourceTree = "<group>"; };
 		6A52DFDF2F115B610001D536 /* RemoteConfigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigsView.swift; sourceTree = "<group>"; };
 		6A52DFE02F115B610001D536 /* UserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserView.swift; sourceTree = "<group>"; };
+		6A52DFF02F115B620001D536 /* ConfigurationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationManager.swift; sourceTree = "<group>"; };
 		6A7AB1D12EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesIntegrationTest.swift; sourceTree = "<group>"; };
 		6A7AB1D22EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesOutagerIntegrationTest.swift; sourceTree = "<group>"; };
 		6A7AB1D52EA8D14000A3D9C3 /* IntegrationTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IntegrationTests-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -645,6 +645,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		70EE742B2E2E928000260875 /* Watch Sample Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = "Watch Sample Watch App";
 			sourceTree = "<group>";
 		};
@@ -2076,13 +2078,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2097,13 +2095,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2140,13 +2134,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2530,7 +2520,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -2591,7 +2581,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -2678,6 +2668,7 @@
 				"ARCHS[sdk=xros*]" = "$(ARCHS_STANDARD)";
 				"ARCHS[sdk=xrsimulator*]" = "$(ARCHS_STANDARD)";
 				CLANG_ENABLE_MODULES = YES;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = "arm64 arm64e";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -2776,7 +2767,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -2801,7 +2792,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -2827,7 +2818,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = "$(inherited)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -2866,7 +2857,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = "$(inherited)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
