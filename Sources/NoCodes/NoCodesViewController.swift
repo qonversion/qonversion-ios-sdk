@@ -54,8 +54,9 @@ final class NoCodesViewController: UIViewController {
   private var presentationConfiguration: NoCodesPresentationConfiguration!
   private var purchaseDelegate: NoCodesPurchaseDelegate?
   private var customLocale: String?
+  private var theme: NoCodesTheme!
   
-  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil) {
+  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.screenId = screenId
     self.contextKey = contextKey
     self.noCodesMapper = noCodesMapper
@@ -66,10 +67,12 @@ final class NoCodesViewController: UIViewController {
     self.presentationConfiguration = presentationConfiguration
     self.purchaseDelegate = purchaseDelegate
     self.customLocale = customLocale
+    self.theme = theme
     
     super.init(nibName: nil, bundle: nil)
     
-    skeletonView = SkeletonView(frame: view.frame, interfaceStyle: traitCollection.userInterfaceStyle)
+    let interfaceStyle = resolveInterfaceStyle()
+    skeletonView = SkeletonView(frame: view.frame, interfaceStyle: interfaceStyle)
     addSkeleton()
   }
   
@@ -128,12 +131,26 @@ final class NoCodesViewController: UIViewController {
         self.contextKey = screen.contextKey
         delegate.noCodesHasShownScreen(id: screen.id)
         
-        let htmlToLoad = injectCustomLocale(into: screen.html)
+        var htmlToLoad = injectCustomLocale(into: screen.html)
+        htmlToLoad = injectTheme(into: htmlToLoad)
         webView.loadHTMLString(htmlToLoad, baseURL: nil)
       } catch {
         delegate.noCodesFailedToLoadScreen(error: nil)
         logger.error(LoggerInfoMessages.screenLoadingFailed.rawValue)
       }
+    }
+  }
+  
+  /// Resolves the interface style based on theme setting.
+  /// Returns the appropriate UIUserInterfaceStyle for skeleton and other UI elements.
+  private func resolveInterfaceStyle() -> UIUserInterfaceStyle {
+    switch theme! {
+    case .auto:
+      return traitCollection.userInterfaceStyle
+    case .light:
+      return .light
+    case .dark:
+      return .dark
     }
   }
   
@@ -154,6 +171,22 @@ final class NoCodesViewController: UIViewController {
     } else {
       // Fallback: prepend to HTML
       return localeScript + html
+    }
+  }
+  
+  /// Injects a script tag with the theme setting into the HTML's head section.
+  /// This allows the JavaScript to use the specified theme mode.
+  private func injectTheme(into html: String) -> String {
+    let themeScript = "<script>window.noCodesTheme = \"\(theme.rawValue)\";</script>"
+    
+    // Try to inject after <head> tag
+    if let headRange = html.range(of: "<head>", options: .caseInsensitive) {
+      var modifiedHtml = html
+      modifiedHtml.insert(contentsOf: themeScript, at: headRange.upperBound)
+      return modifiedHtml
+    } else {
+      // Fallback: prepend to HTML
+      return themeScript + html
     }
   }
   
@@ -369,7 +402,7 @@ extension NoCodesViewController {
   private func handle(navigationAction: NoCodesAction) {
     guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else { return }
     
-    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale)
+    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
     navigationController?.pushViewController(viewController, animated: true)
     delegate.noCodesFinishedExecuting(action: navigationAction)
   }
