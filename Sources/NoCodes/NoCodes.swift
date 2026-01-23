@@ -96,6 +96,19 @@ public final class NoCodes {
     flowCoordinator?.setLocale(locale)
   }
   
+  /// Set the theme mode for No-Code screens.
+  /// Controls how screens adapt to light/dark themes.
+  ///
+  /// You may set the theme both after No-Codes SDK initialization with this method
+  /// and during initialization via ``NoCodesConfiguration/theme``.
+  ///
+  /// - Parameters:
+  ///   - theme: the desired theme mode. Use `.auto` to follow device settings,
+  ///            `.light` to force light theme, or `.dark` to force dark theme.
+  public func setTheme(_ theme: NoCodesTheme) {
+    flowCoordinator?.setTheme(theme)
+  }
+  
 }
 
 #endif
