@@ -49,7 +49,11 @@ final class NoCodesFlowCoordinator {
   }
   
   func preloadScreens() {
-    Task {
+    // Use Task.detached to ensure preloading runs on a background thread
+    // and doesn't block the main thread even if called from main
+    let noCodesService = self.noCodesService
+    let logger = self.logger!
+    Task.detached(priority: .utility) {
       do {
         let _ = try await noCodesService.preloadScreens()
         logger.info("Successfully preloaded screens")

@@ -98,6 +98,8 @@
 		708C1A0F2E4A21BC00252C6E /* NetworkProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19EC2E4A21BC00252C6E /* NetworkProvider.swift */; };
 		708C1A102E4A21BC00252C6E /* ApiError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E02E4A21BC00252C6E /* ApiError.swift */; };
 		708C1A112E4A21BC00252C6E /* FallbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19FC2E4A21BC00252C6E /* FallbackService.swift */; };
+		AABB11242E4A21BC00IMGPRE /* ImagePreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */; };
+		AABB11252E4A21BC00IMGPRE /* ImagePreloaderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */; };
 		708C1A122E4A21BC00252C6E /* NoCodesViewsAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D02E4A21BC00252C6E /* NoCodesViewsAssembly.swift */; };
 		708C1A132E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D42E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift */; };
 		708C1A142E4A21BC00252C6E /* NoCodesError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D82E4A21BC00252C6E /* NoCodesError.swift */; };
@@ -476,6 +478,8 @@
 		708C19F92E4A21BC00252C6E /* ResponseDecoderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseDecoderInterface.swift; sourceTree = "<group>"; };
 		708C19FC2E4A21BC00252C6E /* FallbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackService.swift; sourceTree = "<group>"; };
 		708C19FD2E4A21BC00252C6E /* FallbackServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackServiceInterface.swift; sourceTree = "<group>"; };
+		AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloader.swift; sourceTree = "<group>"; };
+		AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloaderInterface.swift; sourceTree = "<group>"; };
 		708C19FE2E4A21BC00252C6E /* NoCodesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesService.swift; sourceTree = "<group>"; };
 		708C19FF2E4A21BC00252C6E /* NoCodesServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesServiceInterface.swift; sourceTree = "<group>"; };
 		708C1A012E4A21BC00252C6E /* LoggerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerWrapper.swift; sourceTree = "<group>"; };
@@ -1184,6 +1188,8 @@
 			children = (
 				708C19FC2E4A21BC00252C6E /* FallbackService.swift */,
 				708C19FD2E4A21BC00252C6E /* FallbackServiceInterface.swift */,
+				AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */,
+				AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */,
 				708C19FE2E4A21BC00252C6E /* NoCodesService.swift */,
 				708C19FF2E4A21BC00252C6E /* NoCodesServiceInterface.swift */,
 			);
@@ -2262,6 +2268,8 @@
 				708C1A0F2E4A21BC00252C6E /* NetworkProvider.swift in Sources */,
 				708C1A102E4A21BC00252C6E /* ApiError.swift in Sources */,
 				708C1A112E4A21BC00252C6E /* FallbackService.swift in Sources */,
+				AABB11242E4A21BC00IMGPRE /* ImagePreloader.swift in Sources */,
+				AABB11252E4A21BC00IMGPRE /* ImagePreloaderInterface.swift in Sources */,
 				708C1A122E4A21BC00252C6E /* NoCodesViewsAssembly.swift in Sources */,
 				708C1A132E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift in Sources */,
 				708C1A142E4A21BC00252C6E /* NoCodesError.swift in Sources */,

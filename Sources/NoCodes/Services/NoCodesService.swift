@@ -16,19 +16,25 @@ class NoCodesService: NoCodesServiceInterface {
   
   private let requestProcessor: RequestProcessorInterface
   private let fallbackService: FallbackServiceInterface?
+  private let imagePreloader: ImagePreloaderInterface?
   
   // Local screen cache
   private var screensById: [String: NoCodesScreen] = [:]
   private var screensByContextKey: [String: NoCodesScreen] = [:]
   private let cacheQueue = DispatchQueue(label: cacheQueueLabel, attributes: .concurrent)
   
-  init(requestProcessor: RequestProcessorInterface, fallbackService: FallbackServiceInterface? = nil) {
+  init(
+    requestProcessor: RequestProcessorInterface,
+    fallbackService: FallbackServiceInterface? = nil,
+    imagePreloader: ImagePreloaderInterface? = nil
+  ) {
     self.requestProcessor = requestProcessor
     self.fallbackService = fallbackService
+    self.imagePreloader = imagePreloader
   }
   
   func loadScreen(with id: String) async throws -> NoCodesScreen {
-    // First check cache
+    // First check cache (already has preloaded images if preloaded)
     if let cachedScreen = getCachedScreen(id: id) {
       return cachedScreen
     }
@@ -37,7 +43,7 @@ class NoCodesService: NoCodesServiceInterface {
       let request = Request.getScreen(id: id)
       let screen: NoCodesScreen = try await requestProcessor.process(request: request, responseType: NoCodesScreen.self)
       
-      // Save to cache
+      // Save to cache (no image preloading for on-demand loads)
       cacheScreen(screen)
       
       return screen
@@ -46,7 +52,7 @@ class NoCodesService: NoCodesServiceInterface {
       if let fallbackService = fallbackService,
          (isNetworkError(error) || isServerError(error)) {
         if let fallbackScreen = fallbackService.loadScreen(with: id) {
-          // Don't cache fallback screens
+          // Return fallback directly (no image preloading for fallback)
           return fallbackScreen
         }
       }
@@ -55,7 +61,7 @@ class NoCodesService: NoCodesServiceInterface {
   }
   
   func loadScreen(withContextKey contextKey: String) async throws -> NoCodesScreen {
-    // First check cache
+    // First check cache (already has preloaded images if preloaded)
     if let cachedScreen = getCachedScreen(contextKey: contextKey) {
       return cachedScreen
     }
@@ -68,7 +74,7 @@ class NoCodesService: NoCodesServiceInterface {
         throw NoCodesError(type: .screenNotFound)
       }
 
-      // Save to cache
+      // Save to cache (no image preloading for on-demand loads)
       cacheScreen(screen)
       
       return screen
@@ -77,7 +83,7 @@ class NoCodesService: NoCodesServiceInterface {
       if let fallbackService = fallbackService,
          (isNetworkError(error) || isServerError(error)) {
         if let fallbackScreen = fallbackService.loadScreen(withContextKey: contextKey) {
-          // Don't cache fallback screens
+          // Return fallback directly (no image preloading for fallback)
           return fallbackScreen
         }
       }
@@ -89,10 +95,41 @@ class NoCodesService: NoCodesServiceInterface {
     let request = Request.getPreloadScreens()
     let screens: [NoCodesScreen] = try await requestProcessor.process(request: request, responseType: [NoCodesScreen].self)
     
-    // Cache preloaded screens
-    cacheScreens(screens)
+    // Preload images and replace URLs with base64 data URIs
+    let processedScreens = await preloadImagesForScreens(screens)
     
-    return screens
+    // Cache preloaded screens with embedded images
+    cacheScreens(processedScreens)
+    
+    return processedScreens
+  }
+  
+  // MARK: - Image Preloading
+  
+  /// Preloads images for multiple screens concurrently.
+  /// Only used during preloadScreens() - on-demand loads skip image preloading.
+  private func preloadImagesForScreens(_ screens: [NoCodesScreen]) async -> [NoCodesScreen] {
+    guard let imagePreloader = imagePreloader else {
+      return screens
+    }
+    
+    return await withTaskGroup(of: (Int, NoCodesScreen).self) { group in
+      for (index, screen) in screens.enumerated() {
+        group.addTask {
+          let processedHtml = await imagePreloader.preloadImages(in: screen.html)
+          let processedScreen = screen.withHtml(processedHtml)
+          return (index, processedScreen)
+        }
+      }
+      
+      var results = [(Int, NoCodesScreen)]()
+      for await result in group {
+        results.append(result)
+      }
+      
+      // Sort by original index to maintain order
+      return results.sorted { $0.0 < $1.0 }.map { $0.1 }
+    }
   }
   
   // MARK: - Private Cache Methods

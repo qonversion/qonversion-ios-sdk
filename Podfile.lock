@@ -9,7 +9,7 @@ DEPENDENCIES:
   - Qonversion (from `./`)
 
 SPEC REPOS:
-  https://github.com/CocoaPods/Specs.git:
+  trunk:
     - OCMock
 
 EXTERNAL SOURCES:
