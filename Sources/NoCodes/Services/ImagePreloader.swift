@@ -13,7 +13,6 @@ import Foundation
 final class ImagePreloader: ImagePreloaderInterface {
   
   private let urlSession: URLSession
-  private let logger: LoggerWrapper
   
   /// Maximum time to wait for all images to load
   private let timeout: TimeInterval
@@ -23,12 +22,10 @@ final class ImagePreloader: ImagePreloaderInterface {
   
   init(
     urlSession: URLSession = .shared,
-    logger: LoggerWrapper,
     timeout: TimeInterval = 10.0,
     maxConcurrentDownloads: Int = 5
   ) {
     self.urlSession = urlSession
-    self.logger = logger
     self.timeout = timeout
     self.maxConcurrentDownloads = maxConcurrentDownloads
   }
@@ -39,19 +36,14 @@ final class ImagePreloader: ImagePreloaderInterface {
     let imageUrls = extractImageUrls(from: html)
     
     guard !imageUrls.isEmpty else {
-      logger.info("No external images found in HTML")
       return html
     }
-    
-    logger.info("Found \(imageUrls.count) images to preload")
     
     // Download images with timeout
     let replacements = await downloadImagesWithTimeout(urls: imageUrls)
     
     // Replace URLs with base64 data URIs
     let modifiedHtml = replaceUrls(in: html, with: replacements)
-    
-    logger.info("Successfully preloaded \(replacements.count) of \(imageUrls.count) images")
     
     return modifiedHtml
   }
@@ -142,7 +134,6 @@ final class ImagePreloader: ImagePreloaderInterface {
   /// Downloads a single image and converts it to base64 data URI.
   private func downloadAndConvert(url urlString: String) async -> (String, String?) {
     guard let url = URL(string: urlString) else {
-      logger.warning("Invalid URL: \(urlString)")
       return (urlString, nil)
     }
     
@@ -151,7 +142,6 @@ final class ImagePreloader: ImagePreloaderInterface {
       
       guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode) else {
-        logger.warning("Failed to download image: \(urlString)")
         return (urlString, nil)
       }
       
@@ -161,7 +151,6 @@ final class ImagePreloader: ImagePreloaderInterface {
       
       return (urlString, dataUri)
     } catch {
-      logger.warning("Error downloading image \(urlString): \(error.localizedDescription)")
       return (urlString, nil)
     }
   }
