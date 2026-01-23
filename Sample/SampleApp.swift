@@ -25,12 +25,20 @@ struct SampleApp: App {
     }
     
     private func initializeQonversion() {
+        let projectKey = ConfigurationManager.getProjectKey()
+        let apiUrl = ConfigurationManager.getApiUrl()
+        
         let config = Qonversion.Configuration(
-            projectKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2",
+            projectKey: projectKey,
             launchMode: .subscriptionManagement
         )
         config.setEnvironment(.sandbox)
         config.setEntitlementsCacheLifetime(.year)
+        
+        if let apiUrl = apiUrl {
+            config.setProxyURL(apiUrl)
+        }
+        
         Qonversion.initWithConfig(config)
         Qonversion.shared().setPromoPurchasesDelegate(PromoPurchasesHandler.shared)
         Qonversion.shared().collectAdvertisingId()
@@ -38,7 +46,13 @@ struct SampleApp: App {
     }
     
     private func initializeNoCodes() {
-        let configuration = NoCodesConfiguration(projectKey: "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2")
+        let projectKey = ConfigurationManager.getProjectKey()
+        let apiUrl = ConfigurationManager.getApiUrl()
+        
+        var configuration = NoCodesConfiguration(projectKey: projectKey)
+        if let apiUrl = apiUrl {
+            configuration.proxyURL = apiUrl
+        }
         NoCodes.initialize(with: configuration)
     }
 }

@@ -35,6 +35,11 @@ public struct NoCodesConfiguration {
   /// The locale should be in standard format (e.g., "en", "en-US", "de", "de-DE").
   public var locale: String?
   
+  /// Theme mode for No-Code screens.
+  /// Controls how screens adapt to light/dark themes.
+  /// Defaults to `.auto` which follows device settings.
+  public var theme: NoCodesTheme
+  
   /// Initializer of NoCodes Configuration.
   ///
   /// - Parameters:
@@ -45,7 +50,8 @@ public struct NoCodesConfiguration {
   ///   - fallbackFileName: Optional custom fallback file name. If not provided, defaults to "nocodes_fallbacks.json"
   ///   - proxyURL: Optional proxy URL for API requests. If not provided, uses default API endpoint
   ///   - locale: Optional custom locale for No-Code screens localization. If not provided, uses system default
-  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, purchaseDelegate: NoCodesPurchaseDelegate? = nil, fallbackFileName: String? = nil, proxyURL: String? = nil, locale: String? = nil) {
+  ///   - theme: Theme mode for No-Code screens. Defaults to `.auto` which follows device settings
+  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, purchaseDelegate: NoCodesPurchaseDelegate? = nil, fallbackFileName: String? = nil, proxyURL: String? = nil, locale: String? = nil, theme: NoCodesTheme = .auto) {
     self.projectKey = projectKey
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
@@ -53,6 +59,7 @@ public struct NoCodesConfiguration {
     self.fallbackFileName = fallbackFileName
     self.proxyURL = proxyURL
     self.locale = locale
+    self.theme = theme
   }
   
 }

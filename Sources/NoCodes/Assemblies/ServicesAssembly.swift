@@ -43,10 +43,18 @@ final class ServicesAssembly {
       return noCodesServiceInstance
     }
     
-    let service = NoCodesService(requestProcessor: requestProcessor(), fallbackService: fallbackService())
+    let service = NoCodesService(
+      requestProcessor: requestProcessor(),
+      fallbackService: fallbackService(),
+      imagePreloader: imagePreloader()
+    )
     noCodesServiceInstance = service
     
     return service
+  }
+  
+  func imagePreloader() -> ImagePreloaderInterface {
+    return ImagePreloader(urlSession: urlSession())
   }
   
   func fallbackService() -> FallbackServiceInterface? {

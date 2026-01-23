@@ -56,6 +56,7 @@
 		6A52DFED2F115B610001D536 /* SampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFD42F115B610001D536 /* SampleApp.swift */; };
 		6A52DFEE2F115B610001D536 /* EntitlementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFD72F115B610001D536 /* EntitlementsView.swift */; };
 		6A52DFEF2F115B610001D536 /* OtherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFDC2F115B610001D536 /* OtherView.swift */; };
+		6A52DFF12F115B620001D536 /* ConfigurationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A52DFF02F115B620001D536 /* ConfigurationManager.swift */; };
 		6A7AB1D32EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7AB1D22EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift */; };
 		6A7AB1D42EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7AB1D12EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift */; };
 		6A8A604329DAD363008EC7D8 /* Qonversion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459DAB69243E329F0011ECF3 /* Qonversion.framework */; };
@@ -97,6 +98,8 @@
 		708C1A0F2E4A21BC00252C6E /* NetworkProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19EC2E4A21BC00252C6E /* NetworkProvider.swift */; };
 		708C1A102E4A21BC00252C6E /* ApiError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E02E4A21BC00252C6E /* ApiError.swift */; };
 		708C1A112E4A21BC00252C6E /* FallbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19FC2E4A21BC00252C6E /* FallbackService.swift */; };
+		AABB11242E4A21BC00IMGPRE /* ImagePreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */; };
+		AABB11252E4A21BC00IMGPRE /* ImagePreloaderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */; };
 		708C1A122E4A21BC00252C6E /* NoCodesViewsAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D02E4A21BC00252C6E /* NoCodesViewsAssembly.swift */; };
 		708C1A132E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D42E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift */; };
 		708C1A142E4A21BC00252C6E /* NoCodesError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19D82E4A21BC00252C6E /* NoCodesError.swift */; };
@@ -130,6 +133,7 @@
 		708C1A302E4A21BC00252C6E /* LoggerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C1A012E4A21BC00252C6E /* LoggerWrapper.swift */; };
 		708C1A312E4A21BC00252C6E /* FallbackServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19FD2E4A21BC00252C6E /* FallbackServiceInterface.swift */; };
 		708C1A322E4A21BC00252C6E /* HeadersBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E62E4A21BC00252C6E /* HeadersBuilder.swift */; };
+		708C1A330E4A21BC00NCTHME /* NoCodesTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19DA0E4A21BC00NCTHME /* NoCodesTheme.swift */; };
 		708C1A332E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19DA2E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift */; };
 		708C1A342E4A21BC00252C6E /* NoCodesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19DD2E4A21BC00252C6E /* NoCodesMapper.swift */; };
 		708C1A352E4A21BC00252C6E /* EmptyApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C19E12E4A21BC00252C6E /* EmptyApiResponse.swift */; };
@@ -398,6 +402,7 @@
 		6A52DFDE2F115B610001D536 /* ProductsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsView.swift; sourceTree = "<group>"; };
 		6A52DFDF2F115B610001D536 /* RemoteConfigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigsView.swift; sourceTree = "<group>"; };
 		6A52DFE02F115B610001D536 /* UserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserView.swift; sourceTree = "<group>"; };
+		6A52DFF02F115B620001D536 /* ConfigurationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationManager.swift; sourceTree = "<group>"; };
 		6A7AB1D12EA8D13200A3D9C3 /* NoCodesIntegrationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesIntegrationTest.swift; sourceTree = "<group>"; };
 		6A7AB1D22EA8D13200A3D9C3 /* NoCodesOutagerIntegrationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesOutagerIntegrationTest.swift; sourceTree = "<group>"; };
 		6A7AB1D52EA8D14000A3D9C3 /* IntegrationTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IntegrationTests-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -450,6 +455,7 @@
 		708C19D72E4A21BC00252C6E /* NoCodesAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesAction.swift; sourceTree = "<group>"; };
 		708C19D82E4A21BC00252C6E /* NoCodesError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesError.swift; sourceTree = "<group>"; };
 		708C19D92E4A21BC00252C6E /* NoCodesErrorType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesErrorType.swift; sourceTree = "<group>"; };
+		708C19DA0E4A21BC00NCTHME /* NoCodesTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesTheme.swift; sourceTree = "<group>"; };
 		708C19DA2E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesPresentationConfiguration.swift; sourceTree = "<group>"; };
 		708C19DB2E4A21BC00252C6E /* NoCodesScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesScreen.swift; sourceTree = "<group>"; };
 		708C19DD2E4A21BC00252C6E /* NoCodesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesMapper.swift; sourceTree = "<group>"; };
@@ -474,6 +480,8 @@
 		708C19F92E4A21BC00252C6E /* ResponseDecoderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseDecoderInterface.swift; sourceTree = "<group>"; };
 		708C19FC2E4A21BC00252C6E /* FallbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackService.swift; sourceTree = "<group>"; };
 		708C19FD2E4A21BC00252C6E /* FallbackServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackServiceInterface.swift; sourceTree = "<group>"; };
+		AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloader.swift; sourceTree = "<group>"; };
+		AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloaderInterface.swift; sourceTree = "<group>"; };
 		708C19FE2E4A21BC00252C6E /* NoCodesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesService.swift; sourceTree = "<group>"; };
 		708C19FF2E4A21BC00252C6E /* NoCodesServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesServiceInterface.swift; sourceTree = "<group>"; };
 		708C1A012E4A21BC00252C6E /* LoggerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerWrapper.swift; sourceTree = "<group>"; };
@@ -643,6 +651,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		70EE742B2E2E928000260875 /* Watch Sample Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = "Watch Sample Watch App";
 			sourceTree = "<group>";
 		};
@@ -719,6 +729,7 @@
 			isa = PBXGroup;
 			children = (
 				6A52DFD32F115B610001D536 /* AppState.swift */,
+				6A52DFF02F115B620001D536 /* ConfigurationManager.swift */,
 				6A52DFD42F115B610001D536 /* SampleApp.swift */,
 				6A52DFE12F115B610001D536 /* Views */,
 				706AC1F92E68CE0D00ADA6CB /* nocodes_fallbacks.json */,
@@ -1064,6 +1075,7 @@
 				708C19D92E4A21BC00252C6E /* NoCodesErrorType.swift */,
 				708C19DA2E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift */,
 				708C19DB2E4A21BC00252C6E /* NoCodesScreen.swift */,
+				708C19DA0E4A21BC00NCTHME /* NoCodesTheme.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
@@ -1179,6 +1191,8 @@
 			children = (
 				708C19FC2E4A21BC00252C6E /* FallbackService.swift */,
 				708C19FD2E4A21BC00252C6E /* FallbackServiceInterface.swift */,
+				AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */,
+				AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */,
 				708C19FE2E4A21BC00252C6E /* NoCodesService.swift */,
 				708C19FF2E4A21BC00252C6E /* NoCodesServiceInterface.swift */,
 			);
@@ -2073,13 +2087,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-QonversionTests/Pods-QonversionTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2094,13 +2104,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2137,13 +2143,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2202,6 +2204,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6A52DFE22F115B610001D536 /* AppState.swift in Sources */,
+				6A52DFF12F115B620001D536 /* ConfigurationManager.swift in Sources */,
 				6A52DFE32F115B610001D536 /* EntitlementDetailView.swift in Sources */,
 				6A52DFE42F115B610001D536 /* RemoteConfigsView.swift in Sources */,
 				6A52DFE52F115B610001D536 /* NoCodesView.swift in Sources */,
@@ -2268,6 +2271,8 @@
 				708C1A0F2E4A21BC00252C6E /* NetworkProvider.swift in Sources */,
 				708C1A102E4A21BC00252C6E /* ApiError.swift in Sources */,
 				708C1A112E4A21BC00252C6E /* FallbackService.swift in Sources */,
+				AABB11242E4A21BC00IMGPRE /* ImagePreloader.swift in Sources */,
+				AABB11252E4A21BC00IMGPRE /* ImagePreloaderInterface.swift in Sources */,
 				708C1A122E4A21BC00252C6E /* NoCodesViewsAssembly.swift in Sources */,
 				708C1A132E4A21BC00252C6E /* DeviceInfoCollectorInterface.swift in Sources */,
 				708C1A142E4A21BC00252C6E /* NoCodesError.swift in Sources */,
@@ -2301,6 +2306,7 @@
 				708C1A302E4A21BC00252C6E /* LoggerWrapper.swift in Sources */,
 				708C1A312E4A21BC00252C6E /* FallbackServiceInterface.swift in Sources */,
 				708C1A322E4A21BC00252C6E /* HeadersBuilder.swift in Sources */,
+				708C1A330E4A21BC00NCTHME /* NoCodesTheme.swift in Sources */,
 				708C1A332E4A21BC00252C6E /* NoCodesPresentationConfiguration.swift in Sources */,
 				708C1A342E4A21BC00252C6E /* NoCodesMapper.swift in Sources */,
 				708C1A352E4A21BC00252C6E /* EmptyApiResponse.swift in Sources */,
@@ -2526,7 +2532,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -2587,7 +2593,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -2674,6 +2680,7 @@
 				"ARCHS[sdk=xros*]" = "$(ARCHS_STANDARD)";
 				"ARCHS[sdk=xrsimulator*]" = "$(ARCHS_STANDARD)";
 				CLANG_ENABLE_MODULES = YES;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = "arm64 arm64e";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -2772,7 +2779,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -2797,7 +2804,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -2823,7 +2830,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = "$(inherited)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -2862,7 +2869,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = "$(inherited)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
