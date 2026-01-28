@@ -348,12 +348,12 @@ extension NoCodesViewController {
           do {
             try await purchaseDelegate.purchase(product: product)
             activityIndicator.stopAnimating()
-            handleActionSuccess(action: purchaseAction)
+            await sendSuccessEvent(action: purchaseAction)
           } catch {
             activityIndicator.stopAnimating()
             let noCodesError = NoCodesError.fromClientError(error)
             logger.error(noCodesError.message)
-            handleActionFailure(action: purchaseAction, error: noCodesError)
+            await sendFailureEvent(action: purchaseAction, error: noCodesError)
           }
         } else {
           let options = Qonversion.PurchaseOptions()
@@ -363,17 +363,17 @@ extension NoCodesViewController {
           activityIndicator.stopAnimating()
           
           if result.isSuccessful {
-            handleActionSuccess(action: purchaseAction)
+            await sendSuccessEvent(action: purchaseAction)
           } else {
             let error = result.error
             logger.error(error?.localizedDescription ?? "Purchase failed")
-            handleActionFailure(action: purchaseAction, error: error)
+            await sendFailureEvent(action: purchaseAction, error: error)
           }
         }
       } catch {
         activityIndicator.stopAnimating()
         logger.error(error.localizedDescription)
-        handleActionFailure(action: purchaseAction, error: error)
+        await sendFailureEvent(action: purchaseAction, error: error)
       }
     }
   }
@@ -389,85 +389,28 @@ extension NoCodesViewController {
           try await Qonversion.shared().restore()
         }
         activityIndicator.stopAnimating()
-        handleActionSuccess(action: restoreAction)
+        await sendSuccessEvent(action: restoreAction)
       } catch {
         logger.error(error.localizedDescription)
         activityIndicator.stopAnimating()
         let errorToReport = purchaseDelegate == nil ? error : NoCodesError.fromClientError(error)
-        handleActionFailure(action: restoreAction, error: errorToReport)
+        await sendFailureEvent(action: restoreAction, error: errorToReport)
       }
     }
   }
   
-  // MARK: - Success/Failure Action Handling
+  // MARK: - Success/Failure Event Sending
   
-  private func handleActionSuccess(action: NoCodesAction) {
+  /// Sends successEvent to WebView. WebView will handle executing the configured success action.
+  private func sendSuccessEvent(action: NoCodesAction) async {
     delegate.noCodesFinishedExecuting(action: action)
-    
-    if let successAction = action.successAction {
-      // New behavior: execute the configured success action
-      executeSuccessFailureAction(successAction)
-    } else {
-      // Backward compatibility: close all screens (default behavior)
-      close(action: action)
-    }
+    await send(event: "successEvent", data: "{}")
   }
   
-  private func handleActionFailure(action: NoCodesAction, error: Error?) {
+  /// Sends failureEvent to WebView. WebView will handle executing the configured failure action.
+  private func sendFailureEvent(action: NoCodesAction, error: Error?) async {
     delegate.noCodesFailedToExecute(action: action, error: error)
-    
-    if let failureAction = action.failureAction {
-      // New behavior: execute the configured failure action
-      executeSuccessFailureAction(failureAction)
-    }
-    // Backward compatibility: no action on failure (stay on screen)
-  }
-  
-  private func executeSuccessFailureAction(_ action: NoCodesSuccessFailureAction) {
-    switch action.type {
-    case .none:
-      // Do nothing, stay on screen
-      break
-      
-    case .close:
-      handle(closeAction: NoCodesAction(type: .close))
-      
-    case .closeAll:
-      close(action: nil)
-      
-    case .navigation:
-      if let screenId = action.value {
-        let viewController = viewsAssembly.viewController(
-          with: screenId,
-          delegate: delegate,
-          purchaseDelegate: purchaseDelegate,
-          presentationConfiguration: presentationConfiguration,
-          customLocale: customLocale,
-          theme: theme
-        )
-        navigationController?.pushViewController(viewController, animated: true)
-      }
-      
-    case .url:
-      if let urlString = action.value, let url = URL(string: urlString) {
-        let safariVC = SFSafariViewController(url: url)
-        navigationController?.present(safariVC, animated: true)
-      }
-      
-    case .deeplink:
-      if let deeplinkString = action.value, let url = URL(string: deeplinkString) {
-        if UIApplication.shared.canOpenURL(url) {
-          UIApplication.shared.open(url)
-        }
-      }
-      
-    case .goToPage:
-      if let pageId = action.value {
-        Task {
-          await send(event: "goToPage", data: "\"\(pageId)\"")
-        }
-      }
-    }
+    await send(event: "failureEvent", data: "{}")
   }
   
   private func handle(navigationAction: NoCodesAction) {
