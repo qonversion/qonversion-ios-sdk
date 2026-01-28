@@ -13,6 +13,17 @@ import StoreKit
 #if os(iOS)
 
 final class NoCodesMapper: NoCodesMapperInterface {
+  
+  private let successFailureActionTypes: [String: NoCodesSuccessFailureActionType] = [
+    "none": .none,
+    "close": .close,
+    "closeAll": .closeAll,
+    "navigation": .navigation,
+    "url": .url,
+    "deeplink": .deeplink,
+    "goToPage": .goToPage
+  ]
+  
   func map(rawAction: [String: Any]) -> NoCodesAction {
     let types: [String: NoCodesActionType] = [
       "url": .url,
@@ -23,7 +34,8 @@ final class NoCodesMapper: NoCodesMapperInterface {
       "close": .close,
       "closeAll": .closeAll,
       "getProducts": .loadProducts,
-      "showScreen": .showScreen
+      "showScreen": .showScreen,
+      "goToPage": .goToPage
     ]
     
     let data: [String: Any] = rawAction["data"] as? [String: Any] ?? [:]
@@ -31,7 +43,43 @@ final class NoCodesMapper: NoCodesMapperInterface {
     let type: NoCodesActionType = types[rawActionType] ?? .unknown
     let parameters: [String: Any] = data["parameters"] as? [String: Any] ?? [:]
     
-    return NoCodesAction(type:type, parameters:parameters)
+    // Parse success/failure actions for purchase and restore actions
+    var successAction: NoCodesSuccessFailureAction? = nil
+    var failureAction: NoCodesSuccessFailureAction? = nil
+    
+    if type == .purchase || type == .restore {
+      successAction = mapSuccessFailureAction(
+        from: data,
+        typeKey: "successAction",
+        valueKey: "successActionValue"
+      )
+      failureAction = mapSuccessFailureAction(
+        from: data,
+        typeKey: "failureAction",
+        valueKey: "failureActionValue"
+      )
+    }
+    
+    return NoCodesAction(
+      type: type,
+      parameters: parameters,
+      successAction: successAction,
+      failureAction: failureAction
+    )
+  }
+  
+  private func mapSuccessFailureAction(
+    from data: [String: Any],
+    typeKey: String,
+    valueKey: String
+  ) -> NoCodesSuccessFailureAction? {
+    guard let rawType = data[typeKey] as? String,
+          let actionType = successFailureActionTypes[rawType] else {
+      return nil
+    }
+    
+    let value = data[valueKey] as? String
+    return NoCodesSuccessFailureAction(type: actionType, value: value)
   }
   
   func map(introPriceType: SKProductDiscount.`Type`) -> String {
