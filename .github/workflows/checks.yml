@@ -24,6 +24,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pods-
       
+      - name: Install iOS Simulator
+        run: |
+          sudo xcodebuild -downloadPlatform iOS
+          
       - name: Validation
         run: |
           pod lib lint --verbose --platforms=ios,macos --skip-tests
