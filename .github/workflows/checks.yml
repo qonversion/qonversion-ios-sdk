@@ -64,6 +64,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pods-
       
+      - name: Install iOS Simulator
+        run: |
+          sudo xcodebuild -downloadPlatform iOS
+          
       - name: Tests
         run: |
           fastlane tests
