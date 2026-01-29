@@ -119,8 +119,5 @@ def runTests(suite)
     xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration"
   }
   
-  # Set destination for all iOS tests to run on simulator
-  test_params[:destination] = "platform=iOS Simulator,OS=26.0.1,name=iPhone 16 Pro"
-
   run_tests(test_params)
 end

@@ -45,5 +45,10 @@
 	</array>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>We use this to provide personalized ads and measure ad performance.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

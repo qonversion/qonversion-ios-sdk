@@ -348,12 +348,12 @@ extension NoCodesViewController {
           do {
             try await purchaseDelegate.purchase(product: product)
             activityIndicator.stopAnimating()
-            finishAndClose(action: purchaseAction)
+            await sendSuccessEvent(action: purchaseAction)
           } catch {
             activityIndicator.stopAnimating()
             let noCodesError = NoCodesError.fromClientError(error)
             logger.error(noCodesError.message)
-            delegate.noCodesFailedToExecute(action: purchaseAction, error: noCodesError)
+            await sendFailureEvent(action: purchaseAction, error: noCodesError)
           }
         } else {
           let options = Qonversion.PurchaseOptions()
@@ -363,17 +363,17 @@ extension NoCodesViewController {
           activityIndicator.stopAnimating()
           
           if result.isSuccessful {
-            finishAndClose(action: purchaseAction)
+            await sendSuccessEvent(action: purchaseAction)
           } else {
             let error = result.error
             logger.error(error?.localizedDescription ?? "Purchase failed")
-            delegate.noCodesFailedToExecute(action: purchaseAction, error: error)
+            await sendFailureEvent(action: purchaseAction, error: error)
           }
         }
       } catch {
         activityIndicator.stopAnimating()
         logger.error(error.localizedDescription)
-        delegate.noCodesFailedToExecute(action: purchaseAction, error: error)
+        await sendFailureEvent(action: purchaseAction, error: error)
       }
     }
   }
@@ -389,14 +389,28 @@ extension NoCodesViewController {
           try await Qonversion.shared().restore()
         }
         activityIndicator.stopAnimating()
-        finishAndClose(action: restoreAction)
+        await sendSuccessEvent(action: restoreAction)
       } catch {
         logger.error(error.localizedDescription)
         activityIndicator.stopAnimating()
         let errorToReport = purchaseDelegate == nil ? error : NoCodesError.fromClientError(error)
-        delegate.noCodesFailedToExecute(action: restoreAction, error: errorToReport)
+        await sendFailureEvent(action: restoreAction, error: errorToReport)
       }
     }
+  }
+  
+  // MARK: - Success/Failure Event Sending
+  
+  /// Sends successEvent to WebView. WebView will handle executing the configured success action.
+  private func sendSuccessEvent(action: NoCodesAction) async {
+    delegate.noCodesFinishedExecuting(action: action)
+    await send(event: "successEvent", data: "{}")
+  }
+  
+  /// Sends failureEvent to WebView. WebView will handle executing the configured failure action.
+  private func sendFailureEvent(action: NoCodesAction, error: Error?) async {
+    delegate.noCodesFailedToExecute(action: action, error: error)
+    await send(event: "failureEvent", data: "{}")
   }
   
   private func handle(navigationAction: NoCodesAction) {
