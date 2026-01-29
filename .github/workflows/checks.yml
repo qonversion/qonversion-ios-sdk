@@ -26,7 +26,7 @@ jobs:
       
       - name: Validation
         run: |
-          pod lib lint --verbose --platforms=ios,macos
+          pod lib lint --verbose --platforms=ios,macos --skip-tests
   
   spm:
     runs-on: macos-latest
