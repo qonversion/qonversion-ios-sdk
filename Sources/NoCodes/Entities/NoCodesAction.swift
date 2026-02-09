@@ -41,6 +41,9 @@ public enum NoCodesActionType {
   
   /// Internal action that indicates that the screen is ready to be shown
   case showScreen
+
+  /// Redeem promo code action that opens the App Store offer code redemption sheet
+  case redeemPromoCode
 }
 
 /// Action performed in the No-Codes

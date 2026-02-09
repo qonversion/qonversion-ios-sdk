@@ -245,6 +245,8 @@ extension NoCodesViewController: WKScriptMessageHandler {
       handle(purchaseAction: action)
     case .restore:
       handle(restoreAction: action)
+    case .redeemPromoCode:
+      handle(redeemPromoCodeAction: action)
     default: break
     }
   }
@@ -399,6 +401,15 @@ extension NoCodesViewController {
     }
   }
   
+  private func handle(redeemPromoCodeAction: NoCodesAction) {
+    if #available(iOS 14.0, *) {
+      Qonversion.shared().presentCodeRedemptionSheet()
+      delegate.noCodesFinishedExecuting(action: redeemPromoCodeAction)
+    } else {
+      delegate.noCodesFailedToExecute(action: redeemPromoCodeAction, error: nil)
+    }
+  }
+
   // MARK: - Success/Failure Event Sending
   
   /// Sends successEvent to WebView. WebView will handle executing the configured success action.
