@@ -56,6 +56,7 @@ final class NoCodesViewController: UIViewController {
   private var purchaseDelegate: NoCodesPurchaseDelegate?
   private var customLocale: String?
   private var theme: NoCodesTheme!
+  private var didTrackScreenShown = false
 
   init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.screenId = screenId
@@ -132,7 +133,8 @@ final class NoCodesViewController: UIViewController {
         self.screenId = screen.id
         self.contextKey = screen.contextKey
         delegate.noCodesHasShownScreen(id: screen.id)
-        
+        trackScreenShownIfNeeded()
+
         var htmlToLoad = injectCustomLocale(into: screen.html)
         htmlToLoad = injectTheme(into: htmlToLoad)
         webView.loadHTMLString(htmlToLoad, baseURL: nil)
@@ -142,7 +144,7 @@ final class NoCodesViewController: UIViewController {
       }
     }
   }
-  
+
   /// Resolves the interface style based on theme setting.
   /// Returns the appropriate UIUserInterfaceStyle for skeleton and other UI elements.
   private func resolveInterfaceStyle() -> UIUserInterfaceStyle {
@@ -191,7 +193,20 @@ final class NoCodesViewController: UIViewController {
       return themeScript + html
     }
   }
-  
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    trackScreenShownIfNeeded()
+  }
+
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+
+    guard let screenId = screenId else { return }
+    let event = ScreenEvent(type: .screenClosed, screenUid: screenId)
+    screenEventsService.track(event: event)
+  }
+
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     
@@ -256,7 +271,14 @@ extension NoCodesViewController: WKScriptMessageHandler {
 }
 
 extension NoCodesViewController {
-  
+
+  private func trackScreenShownIfNeeded() {
+    guard !didTrackScreenShown, let screenId = screenId else { return }
+    didTrackScreenShown = true
+    let event = ScreenEvent(type: .screenShown, screenUid: screenId)
+    screenEventsService.track(event: event)
+  }
+
   private var isModalPresentation: Bool {
     if let navigationController = navigationController, navigationController.viewControllers.count > 1 {
       return false
