@@ -17,17 +17,19 @@ final class NoCodesFlowCoordinator {
   private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   private var purchaseDelegate: NoCodesPurchaseDelegate?
   private let noCodesService: NoCodesServiceInterface
+  private let screenEventsService: ScreenEventsServiceInterface
   private let viewsAssembly: ViewsAssembly
   private var currentVC: NoCodesViewController?
   private var logger: LoggerWrapper!
   private var customLocale: String?
   private var theme: NoCodesTheme
-  
-  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
+
+  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
     self.purchaseDelegate = purchaseDelegate
     self.noCodesService = noCodesService
+    self.screenEventsService = screenEventsService
     self.viewsAssembly = viewsAssembly
     self.logger = logger
     self.customLocale = customLocale
@@ -149,6 +151,7 @@ extension NoCodesFlowCoordinator: NoCodesViewControllerDelegate {
   }
   
   func noCodesFinished() {
+    screenEventsService.flush()
     delegate?.noCodesFinished()
   }
   
