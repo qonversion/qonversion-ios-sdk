@@ -44,6 +44,9 @@ public enum NoCodesActionType {
 
   /// Redeem promo code action that opens the App Store offer code redemption sheet
   case redeemPromoCode
+
+  /// Internal action for page navigation within a multi-page screen
+  case pageView
 }
 
 /// Action performed in the No-Codes

@@ -20,6 +20,7 @@ enum Constants: String {
   case screenId
   case productId
   case setProducts
+  case pageIndex
 }
 
 protocol NoCodesViewControllerDelegate {
