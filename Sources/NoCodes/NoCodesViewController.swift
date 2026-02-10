@@ -273,6 +273,8 @@ extension NoCodesViewController: WKScriptMessageHandler {
       handle(restoreAction: action)
     case .redeemPromoCode:
       handle(redeemPromoCodeAction: action)
+    case .pageView:
+      handle(pageViewAction: action)
     default: break
     }
   }
@@ -466,12 +468,20 @@ extension NoCodesViewController {
   
   private func handle(navigationAction: NoCodesAction) {
     guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else { return }
-    
+
     let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
     navigationController?.pushViewController(viewController, animated: true)
     delegate.noCodesFinishedExecuting(action: navigationAction)
   }
-  
+
+  private func handle(pageViewAction: NoCodesAction) {
+    guard let screenId = screenId,
+          let pageIndex = pageViewAction.parameters?[Constants.pageIndex.rawValue] as? Int else { return }
+
+    let event = ScreenEvent(type: .pageView, screenUid: screenId, pageIndex: pageIndex)
+    screenEventsService.track(event: event)
+  }
+
   private func finishAndClose(action: NoCodesAction) {
     delegate.noCodesFinishedExecuting(action: action)
     close(action: action)
