@@ -56,7 +56,11 @@ final class ServicesAssembly {
   func imagePreloader() -> ImagePreloaderInterface {
     return ImagePreloader(urlSession: urlSession())
   }
-  
+
+  func screenEventsService() -> ScreenEventsServiceInterface {
+    return ScreenEventsService(requestProcessor: requestProcessor(), logger: miscAssembly.loggerWrapper())
+  }
+
   func fallbackService() -> FallbackServiceInterface? {
     return FallbackService(
       logger: miscAssembly.loggerWrapper(),
