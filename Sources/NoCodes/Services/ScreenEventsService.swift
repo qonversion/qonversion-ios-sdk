@@ -1,0 +1,77 @@
+//
+//  ScreenEventsService.swift
+//  NoCodes
+//
+//  Created by Claude on 10.02.2026.
+//  Copyright (c) 2026 Qonversion Inc. All rights reserved.
+//
+
+import Foundation
+import Qonversion
+
+final class ScreenEventsService: ScreenEventsServiceInterface {
+
+  private let requestProcessor: RequestProcessorInterface
+  private let logger: LoggerWrapper
+
+  /// Thread-safe buffer for accumulated events.
+  private let queue = DispatchQueue(label: "io.qonversion.nocodes.screenevents", attributes: .concurrent)
+  private var buffer: [ScreenEvent] = []
+
+  /// Maximum number of events to accumulate before auto-flushing.
+  private static let batchSize = 10
+
+  init(requestProcessor: RequestProcessorInterface, logger: LoggerWrapper) {
+    self.requestProcessor = requestProcessor
+    self.logger = logger
+  }
+
+  func track(event: ScreenEvent) {
+    var shouldFlush = false
+    queue.sync(flags: .barrier) {
+      buffer.append(event)
+      shouldFlush = buffer.count >= Self.batchSize
+    }
+    logger.debug("Tracked screen event: \(event.type.rawValue) for screen \(event.screenUid)")
+    if shouldFlush {
+      flush()
+    }
+  }
+
+  func flush() {
+    let eventsToSend: [ScreenEvent] = queue.sync(flags: .barrier) {
+      let copy = buffer
+      buffer.removeAll()
+      return copy
+    }
+
+    guard !eventsToSend.isEmpty else { return }
+
+    logger.debug("Flushing \(eventsToSend.count) screen events")
+
+    Task {
+      do {
+        let userInfo = try await Qonversion.shared().userInfo()
+        let uid = userInfo.qonversionId
+
+        let eventDicts: [[String: AnyHashable]] = eventsToSend.map { event in
+          [
+            "type": event.type.rawValue,
+            "screen_uid": event.screenUid,
+            "happened_at": event.happenedAt
+          ]
+        }
+
+        let request = Request.sendScreenEvents(uid: uid, body: eventDicts)
+        try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
+        logger.debug("Successfully sent \(eventsToSend.count) screen events")
+      } catch {
+        logger.error("Failed to send screen events: \(error.localizedDescription)")
+        // Re-buffer events on failure so they can be retried on next flush
+        queue.sync(flags: .barrier) {
+          buffer.insert(contentsOf: eventsToSend, at: 0)
+        }
+      }
+    }
+  }
+}
