@@ -203,8 +203,16 @@ final class NoCodesViewController: UIViewController {
     super.viewDidDisappear(animated)
 
     guard let screenId = screenId else { return }
-    let event = ScreenEvent(type: .screenClosed, screenUid: screenId)
-    screenEventsService.track(event: event)
+
+    if isBeingDismissed || isMovingFromParent {
+      // Permanently leaving: track screen_closed
+      let event = ScreenEvent(type: .screenClosed, screenUid: screenId)
+      screenEventsService.track(event: event)
+    } else {
+      // Temporarily hidden (e.g. a new screen was pushed on top):
+      // reset the flag so screen_shown fires again when this view re-appears
+      didTrackScreenShown = false
+    }
   }
 
   override func viewDidLayoutSubviews() {
