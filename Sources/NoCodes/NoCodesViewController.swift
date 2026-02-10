@@ -371,6 +371,13 @@ extension NoCodesViewController {
   
   private func handle(purchaseAction: NoCodesAction) {
     guard let productId: String = purchaseAction.parameters?[Constants.productId.rawValue] as? String else { return }
+
+    // Track CTA tap event
+    if let screenId = screenId {
+      let event = ScreenEvent(type: .ctaTap, screenUid: screenId)
+      screenEventsService.track(event: event)
+    }
+
     activityIndicator.startAnimating()
     Task {
       do {
