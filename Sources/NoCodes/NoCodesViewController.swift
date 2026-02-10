@@ -378,6 +378,7 @@ extension NoCodesViewController {
     if let screenId = screenId {
       let event = ScreenEvent(type: .ctaTap, screenUid: screenId)
       screenEventsService.track(event: event)
+      logger.debug(LoggerInfoMessages.ctaTapTracked.rawValue)
     }
 
     activityIndicator.startAnimating()
@@ -480,6 +481,7 @@ extension NoCodesViewController {
 
     let event = ScreenEvent(type: .pageView, screenUid: screenId, pageIndex: pageIndex)
     screenEventsService.track(event: event)
+    logger.debug(LoggerInfoMessages.pageViewTracked.rawValue)
   }
 
   private func finishAndClose(action: NoCodesAction) {
