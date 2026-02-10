@@ -58,12 +58,10 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
         let userInfo = try await Qonversion.shared().userInfo()
         let uid = userInfo.qonversionId
 
-        let eventDicts: [[String: AnyHashable]] = eventsToSend.map { event in
-          [
-            "type": event.type.rawValue,
-            "screen_uid": event.screenUid,
-            "happened_at": event.happenedAt
-          ]
+        let encoder = JSONEncoder()
+        let eventsData = try encoder.encode(eventsToSend)
+        guard let eventDicts = try JSONSerialization.jsonObject(with: eventsData) as? [[String: AnyHashable]] else {
+          throw NSError(domain: "io.qonversion.nocodes", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize screen events"])
         }
 
         let request = Request.sendScreenEvents(uid: uid, body: eventDicts)
