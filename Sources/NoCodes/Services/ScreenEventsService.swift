@@ -21,6 +21,10 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
   /// Maximum number of events to accumulate before auto-flushing.
   private static let batchSize = 10
 
+  /// Maximum number of events to keep in the retry buffer.
+  /// Oldest events are dropped when this limit is exceeded.
+  private static let maxBufferSize = 100
+
   init(requestProcessor: RequestProcessorInterface, logger: LoggerWrapper) {
     self.requestProcessor = requestProcessor
     self.logger = logger
@@ -70,6 +74,10 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
         // Re-buffer events on failure so they can be retried on next flush
         queue.sync(flags: .barrier) {
           buffer.insert(contentsOf: eventsToSend, at: 0)
+          // Drop oldest events if buffer exceeds max size
+          if buffer.count > Self.maxBufferSize {
+            buffer = Array(buffer.suffix(Self.maxBufferSize))
+          }
         }
       }
     }
