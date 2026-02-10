@@ -68,9 +68,9 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
 
         let request = Request.sendScreenEvents(uid: uid, body: eventDicts)
         try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
-        logger.debug("Successfully sent \(eventsToSend.count) screen events")
+        logger.debug(LoggerInfoMessages.screenEventFlushed.rawValue)
       } catch {
-        logger.error("Failed to send screen events: \(error.localizedDescription)")
+        logger.error(LoggerInfoMessages.screenEventTrackingFailed.rawValue)
         // Re-buffer events on failure so they can be retried on next flush
         queue.sync(flags: .barrier) {
           buffer.insert(contentsOf: eventsToSend, at: 0)
