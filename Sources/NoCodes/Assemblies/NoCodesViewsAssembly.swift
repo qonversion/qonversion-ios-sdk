@@ -19,13 +19,13 @@ final class ViewsAssembly {
     self.miscAssembly = miscAssembly
     self.servicesAssembly = servicesAssembly
   }
-  
+
   func viewController(with screenId: String, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) -> NoCodesViewController {
-      return NoCodesViewController(screenId: screenId, contextKey: nil, delegate: delegate, purchaseDelegate: purchaseDelegate, noCodesMapper: miscAssembly.noCodesMapper(), noCodesService: servicesAssembly.noCodesService(), viewsAssembly: self, logger: miscAssembly.loggerWrapper(), presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
+      return NoCodesViewController(screenId: screenId, contextKey: nil, delegate: delegate, purchaseDelegate: purchaseDelegate, noCodesMapper: miscAssembly.noCodesMapper(), noCodesService: servicesAssembly.noCodesService(), screenEventsService: servicesAssembly.screenEventsService(), viewsAssembly: self, logger: miscAssembly.loggerWrapper(), presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
   }
-  
+
   func viewController(withContextKey contextKey: String, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) -> NoCodesViewController {
-      return NoCodesViewController(screenId: nil, contextKey: contextKey, delegate: delegate, purchaseDelegate: purchaseDelegate, noCodesMapper: miscAssembly.noCodesMapper(), noCodesService: servicesAssembly.noCodesService(), viewsAssembly: self, logger: miscAssembly.loggerWrapper(), presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
+      return NoCodesViewController(screenId: nil, contextKey: contextKey, delegate: delegate, purchaseDelegate: purchaseDelegate, noCodesMapper: miscAssembly.noCodesMapper(), noCodesService: servicesAssembly.noCodesService(), screenEventsService: servicesAssembly.screenEventsService(), viewsAssembly: self, logger: miscAssembly.loggerWrapper(), presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
   }
 }
 

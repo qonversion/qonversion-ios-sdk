@@ -46,6 +46,7 @@ final class NoCodesViewController: UIViewController {
   private var contextKey: String?
   private var screen: NoCodesScreen?
   private var noCodesService: NoCodesServiceInterface!
+  private var screenEventsService: ScreenEventsServiceInterface!
   private var noCodesMapper: NoCodesMapperInterface!
   private var viewsAssembly: ViewsAssembly!
   private var delegate: NoCodesViewControllerDelegate!
@@ -55,12 +56,13 @@ final class NoCodesViewController: UIViewController {
   private var purchaseDelegate: NoCodesPurchaseDelegate?
   private var customLocale: String?
   private var theme: NoCodesTheme!
-  
-  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
+
+  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.screenId = screenId
     self.contextKey = contextKey
     self.noCodesMapper = noCodesMapper
     self.noCodesService = noCodesService
+    self.screenEventsService = screenEventsService
     self.viewsAssembly = viewsAssembly
     self.delegate = delegate
     self.logger = logger
