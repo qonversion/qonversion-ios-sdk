@@ -2337,6 +2337,10 @@
 				708C1A382E4A21BC00252C6E /* DeviceInfoCollector.swift in Sources */,
 				708C1A392E4A21BC00252C6E /* ServicesAssembly.swift in Sources */,
 				708C1A3A2E4A21BC00252C6E /* NetworkErrorHandlerInterface.swift in Sources */,
+				F5890274B1E90C6993376869 /* ScreenEventType.swift in Sources */,
+				218480F803075431AD24186B /* ScreenEvent.swift in Sources */,
+				3521C548C169154D45835C38 /* ScreenEventsServiceInterface.swift in Sources */,
+				48FCBE392ED00F2022C0823A /* ScreenEventsService.swift in Sources */,
 				6A121DB32BBB10AA0073B330 /* QONRemoteConfigListRequestData.m in Sources */,
 				8957330A26DE5532009507A6 /* QNKeyedArchiver.m in Sources */,
 				70454FFF2C5FD4FA00B03017 /* Extensions.swift in Sources */,
@@ -2454,10 +2458,6 @@
 				7090EDFA2D52539A001E9864 /* Header.swift in Sources */,
 				7090EDFC2D52539A001E9864 /* NetworkProviderInterface.swift in Sources */,
 				7090EDFD2D52539A001E9864 /* RateLimiter.swift in Sources */,
-				F5890274B1E90C6993376869 /* ScreenEventType.swift in Sources */,
-				218480F803075431AD24186B /* ScreenEvent.swift in Sources */,
-				3521C548C169154D45835C38 /* ScreenEventsServiceInterface.swift in Sources */,
-				48FCBE392ED00F2022C0823A /* ScreenEventsService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
