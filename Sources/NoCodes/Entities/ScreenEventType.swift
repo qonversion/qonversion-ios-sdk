@@ -8,9 +8,13 @@
 
 import Foundation
 
+#if os(iOS)
+
 enum ScreenEventType: String, Encodable {
   case screenShown = "screen_shown"
   case screenClosed = "screen_closed"
   case ctaTap = "screen_cta_tap"
   case pageView = "screen_page_view"
 }
+
+#endif

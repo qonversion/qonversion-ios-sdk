@@ -8,6 +8,8 @@
 
 import Foundation
 
+#if os(iOS)
+
 protocol ScreenEventsServiceInterface {
 
   /// Record a screen event. The event is buffered locally and sent in a batch later.
@@ -16,3 +18,5 @@ protocol ScreenEventsServiceInterface {
   /// Flush all buffered events to the backend immediately.
   func flush()
 }
+
+#endif

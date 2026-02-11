@@ -8,6 +8,8 @@
 
 import Foundation
 
+#if os(iOS)
+
 struct ScreenEvent: Encodable {
   let type: ScreenEventType
   let screenUid: String
@@ -38,3 +40,5 @@ struct ScreenEvent: Encodable {
     try container.encode(happenedAt, forKey: .happenedAt)
   }
 }
+
+#endif

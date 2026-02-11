@@ -7,7 +7,8 @@
 //
 
 import Foundation
-import Qonversion
+
+#if os(iOS)
 
 final class ScreenEventsService: ScreenEventsServiceInterface {
 
@@ -81,3 +82,5 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
     }
   }
 }
+
+#endif
