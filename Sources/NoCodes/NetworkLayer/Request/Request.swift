@@ -14,6 +14,7 @@ enum Request : Hashable {
     case getScreen(id: String, endpoint: String = "v3/screens/", type: RequestType = .get)
     case getScreenByContextKey(contextKey: String, endpoint: String = "v3/contexts/%@/screens", type: RequestType = .get)
     case getPreloadScreens(endpoint: String = "v3/screens?preload=true", type: RequestType = .get)
+    case sendScreenEvents(uid: String, body: [[String: AnyHashable]], endpoint: String = "v3/users/%@/screen-events", type: RequestType = .post)
     
     func convertToURLRequest(_ baseUrl: String) -> URLRequest? {
         func defaultRequest(urlString: String, body: Any?, type: RequestType) -> URLRequest? {
@@ -35,6 +36,9 @@ enum Request : Hashable {
             return defaultRequest(urlString: urlString, body: nil, type: type)
         case let .getPreloadScreens(endpoint, type):
             return defaultRequest(urlString: endpoint, body: nil, type: type)
+        case let .sendScreenEvents(uid, body, endpoint, type):
+            let urlString = String(format: endpoint, arguments: [uid])
+            return defaultRequest(urlString: urlString, body: ["events": body], type: type)
         }
     }
 
@@ -52,6 +56,11 @@ enum Request : Hashable {
             hasher.combine(type)
         case let .getPreloadScreens(endpoint, type):
             hasher.combine("getPreloadScreens")
+            hasher.combine(endpoint)
+            hasher.combine(type)
+        case let .sendScreenEvents(uid, _, endpoint, type):
+            hasher.combine("sendScreenEvents")
+            hasher.combine(uid)
             hasher.combine(endpoint)
             hasher.combine(type)
         }
