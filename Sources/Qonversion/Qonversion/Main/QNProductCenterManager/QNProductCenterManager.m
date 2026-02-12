@@ -521,6 +521,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.storeKitService receipt:^(NSString * _Nonnull receipt) {
     [weakSelf launchWithTrigger:QONRequestTriggerRestore completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      if (!error) {
+        [weakSelf handleUserSwitchIfNeededWithResult:result];
+      }
+
       @synchronized (weakSelf) {
         weakSelf.receiptRestoreInProgress = NO;
         NSArray<QONEntitlementsCompletionHandler> *completions = [self.receiptRestoreBlocks copy];
@@ -1097,6 +1101,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         [weakSelf executeRestoreBlocksWithResult:@{} error:error];
       }
     } else if (result) {
+      [weakSelf handleUserSwitchIfNeededWithResult:result];
       [weakSelf storeLaunchResultIfNeeded:result];
       weakSelf.launchResult = result;
       [weakSelf executeRestoreBlocksWithResult:result.entitlements error:error];
@@ -1243,6 +1248,24 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   self.entitlements = nil;
   [self.persistentStorage removeObjectForKey:kKeyQUserDefaultsPermissions];
   [self.persistentStorage removeObjectForKey:kKeyQUserDefaultsPermissionsTimestamp];
+}
+
+- (void)handleUserSwitchIfNeededWithResult:(QONLaunchResult *)result {
+  if (!result || result.uid.length == 0) {
+    return;
+  }
+
+  NSString *currentUserID = [self.userInfoService obtainUserID];
+  if ([currentUserID isEqualToString:result.uid]) {
+    return;
+  }
+
+  QONVERSION_LOG(@"🔄 Restore: user switch detected from %@ to %@", currentUserID, result.uid);
+
+  [self.userInfoService storeIdentity:result.uid];
+  [[QNAPIClient shared] setUserID:result.uid];
+  [self.remoteConfigManager userHasBeenChanged];
+  [self resetActualPermissionsCache];
 }
 
 // MARK: - Move to separate file
