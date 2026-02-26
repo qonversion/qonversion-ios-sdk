@@ -57,6 +57,7 @@ final class NoCodesViewController: UIViewController {
   private var customLocale: String?
   private var theme: NoCodesTheme!
   private var didTrackScreenShown = false
+  private var didTrackScreenClosed = false
 
   init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.screenId = screenId
@@ -206,12 +207,21 @@ final class NoCodesViewController: UIViewController {
 
     if isBeingDismissed || isMovingFromParent {
       // Permanently leaving: track screen_closed
-      let event = ScreenEvent(type: .screenClosed, screenUid: screenId)
-      screenEventsService.track(event: event)
+      trackScreenClosedIfNeeded(screenId: screenId)
     } else {
       // Temporarily hidden (e.g. a new screen was pushed on top):
       // reset the flag so screen_shown fires again when this view re-appears
       didTrackScreenShown = false
+    }
+  }
+
+  deinit {
+    // Fallback: if the entire flow was dismissed (e.g. parent nav controller dismissed),
+    // viewDidDisappear may not detect it via isBeingDismissed. Track screen_closed here
+    // if it wasn't already tracked.
+    if let screenId = screenId, !didTrackScreenClosed {
+      let event = ScreenEvent(type: .screenClosed, screenUid: screenId)
+      screenEventsService?.track(event: event)
     }
   }
 
@@ -286,6 +296,13 @@ extension NoCodesViewController {
     guard !didTrackScreenShown, let screenId = screenId else { return }
     didTrackScreenShown = true
     let event = ScreenEvent(type: .screenShown, screenUid: screenId)
+    screenEventsService.track(event: event)
+  }
+
+  private func trackScreenClosedIfNeeded(screenId: String) {
+    guard !didTrackScreenClosed else { return }
+    didTrackScreenClosed = true
+    let event = ScreenEvent(type: .screenClosed, screenUid: screenId)
     screenEventsService.track(event: event)
   }
 

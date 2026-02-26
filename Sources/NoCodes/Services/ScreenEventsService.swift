@@ -19,6 +19,12 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
   private let queue = DispatchQueue(label: "io.qonversion.nocodes.screenevents", attributes: .concurrent)
   private var buffer: [ScreenEvent] = []
 
+  /// Guard against concurrent flush operations.
+  private var isFlushing = false
+
+  /// Cached user ID to avoid resolving on every flush.
+  private var cachedUserId: String?
+
   /// Maximum number of events to accumulate before auto-flushing.
   private static let batchSize = 10
 
@@ -45,6 +51,8 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
 
   func flush() {
     let eventsToSend: [ScreenEvent] = queue.sync(flags: .barrier) {
+      guard !isFlushing else { return [] }
+      isFlushing = true
       let copy = buffer
       buffer.removeAll()
       return copy
@@ -56,8 +64,14 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
 
     Task {
       do {
-        let userInfo = try await Qonversion.shared().userInfo()
-        let uid = userInfo.qonversionId
+        let uid: String
+        if let cached = queue.sync(execute: { cachedUserId }) {
+          uid = cached
+        } else {
+          let userInfo = try await Qonversion.shared().userInfo()
+          uid = userInfo.qonversionId
+          queue.sync(flags: .barrier) { cachedUserId = uid }
+        }
 
         let encoder = JSONEncoder()
         let eventsData = try encoder.encode(eventsToSend)
@@ -68,6 +82,7 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
         let request = Request.sendScreenEvents(uid: uid, body: eventDicts)
         try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
         logger.debug(LoggerInfoMessages.screenEventFlushed.rawValue)
+        queue.sync(flags: .barrier) { isFlushing = false }
       } catch {
         logger.error(LoggerInfoMessages.screenEventTrackingFailed.rawValue)
         // Re-buffer events on failure so they can be retried on next flush
@@ -77,6 +92,7 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
           if buffer.count > Self.maxBufferSize {
             buffer = Array(buffer.suffix(Self.maxBufferSize))
           }
+          isFlushing = false
         }
       }
     }
