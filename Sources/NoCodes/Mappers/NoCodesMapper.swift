@@ -25,7 +25,7 @@ final class NoCodesMapper: NoCodesMapperInterface {
       "getProducts": .loadProducts,
       "showScreen": .showScreen,
       "redeemPromoCode": .redeemPromoCode,
-      "pageView": .pageView
+      "screenAnalytics": .screenAnalytics
     ]
     
     let data: [String: Any] = rawAction["data"] as? [String: Any] ?? [:]

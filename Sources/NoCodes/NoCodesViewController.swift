@@ -20,7 +20,6 @@ enum Constants: String {
   case screenId
   case productId
   case setProducts
-  case pageIndex
 }
 
 protocol NoCodesViewControllerDelegate {
@@ -250,7 +249,7 @@ extension NoCodesViewController: WKScriptMessageHandler {
       return removeSkeleton()
     }
     
-    if action.type != .loadProducts {
+    if action.type != .loadProducts && action.type != .screenAnalytics {
       delegate.noCodesStartsExecuting(action: action)
     }
     
@@ -273,8 +272,8 @@ extension NoCodesViewController: WKScriptMessageHandler {
       handle(restoreAction: action)
     case .redeemPromoCode:
       handle(redeemPromoCodeAction: action)
-    case .pageView:
-      handle(pageViewAction: action)
+    case .screenAnalytics:
+      handle(screenAnalyticsAction: action)
     default: break
     }
   }
@@ -374,13 +373,6 @@ extension NoCodesViewController {
   private func handle(purchaseAction: NoCodesAction) {
     guard let productId: String = purchaseAction.parameters?[Constants.productId.rawValue] as? String else { return }
 
-    // Track CTA tap event
-    if let screenId = screenId {
-      let event = ScreenEvent(type: .ctaTap, screenUid: screenId)
-      screenEventsService.track(event: event)
-      logger.debug(LoggerInfoMessages.ctaTapTracked.rawValue)
-    }
-
     activityIndicator.startAnimating()
     Task {
       do {
@@ -475,13 +467,27 @@ extension NoCodesViewController {
     delegate.noCodesFinishedExecuting(action: navigationAction)
   }
 
-  private func handle(pageViewAction: NoCodesAction) {
+  /// Handles screen analytics events forwarded from the JS layer.
+  /// JS sends: { type: 'screen_cta_tap' | 'screen_page_view', happened_at: Int, page_index?: Int }
+  private func handle(screenAnalyticsAction: NoCodesAction) {
     guard let screenId = screenId,
-          let pageIndex = pageViewAction.parameters?[Constants.pageIndex.rawValue] as? Int else { return }
+          let params = screenAnalyticsAction.parameters,
+          let eventTypeString = params["type"] as? String else { return }
 
-    let event = ScreenEvent(type: .pageView, screenUid: screenId, pageIndex: pageIndex)
+    let eventType: ScreenEventType
+    switch eventTypeString {
+    case "screen_cta_tap":
+      eventType = .ctaTap
+    case "screen_page_view":
+      eventType = .pageView
+    default:
+      logger.warning("Unknown screen analytics event type: \(eventTypeString)")
+      return
+    }
+
+    let pageIndex = params["page_index"] as? Int
+    let event = ScreenEvent(type: eventType, screenUid: screenId, pageIndex: pageIndex)
     screenEventsService.track(event: event)
-    logger.debug(LoggerInfoMessages.pageViewTracked.rawValue)
   }
 
   private func finishAndClose(action: NoCodesAction) {
