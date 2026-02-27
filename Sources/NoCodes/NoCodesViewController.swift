@@ -220,7 +220,11 @@ final class NoCodesViewController: UIViewController {
     // viewDidDisappear may not detect it via isBeingDismissed. Track screen_closed here
     // if it wasn't already tracked.
     if let screenId = screenId, !didTrackScreenClosed {
-      let event = ScreenEvent(type: .screenClosed, screenUid: screenId)
+      let event = ScreenEvent(data: [
+        "type": ScreenEventType.screenClosed.rawValue,
+        "screen_uid": screenId,
+        "happened_at": Int(Date().timeIntervalSince1970)
+      ])
       screenEventsService?.track(event: event)
     }
   }
@@ -494,15 +498,19 @@ extension NoCodesViewController {
 
   /// Handles screen analytics events forwarded from the JS layer.
   /// JS sends: { type: 'screen_cta_tap' | 'screen_page_view', happened_at: Int, page_index?: Int }
+  /// SDK enriches with screen_uid (JS doesn't know it).
   private func handle(screenAnalyticsAction: NoCodesAction) {
-    guard let params = screenAnalyticsAction.parameters else { return }
+    guard let params = screenAnalyticsAction.parameters,
+          let screenId = screenId else { return }
 
     guard params["type"] != nil else {
       logger.warning("screenAnalytics action missing 'type' parameter")
       return
     }
 
-    let event = ScreenEvent(data: params)
+    var eventData = params
+    eventData["screen_uid"] = screenId
+    let event = ScreenEvent(data: eventData)
     screenEventsService.track(event: event)
   }
 
