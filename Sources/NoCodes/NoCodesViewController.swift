@@ -295,14 +295,22 @@ extension NoCodesViewController {
   private func trackScreenShownIfNeeded() {
     guard !didTrackScreenShown, let screenId = screenId else { return }
     didTrackScreenShown = true
-    let event = ScreenEvent(type: .screenShown, screenUid: screenId)
+    let event = ScreenEvent(data: [
+      "type": ScreenEventType.screenShown.rawValue,
+      "screen_uid": screenId,
+      "happened_at": Int(Date().timeIntervalSince1970)
+    ])
     screenEventsService.track(event: event)
   }
 
   private func trackScreenClosedIfNeeded(screenId: String) {
     guard !didTrackScreenClosed else { return }
     didTrackScreenClosed = true
-    let event = ScreenEvent(type: .screenClosed, screenUid: screenId)
+    let event = ScreenEvent(data: [
+      "type": ScreenEventType.screenClosed.rawValue,
+      "screen_uid": screenId,
+      "happened_at": Int(Date().timeIntervalSince1970)
+    ])
     screenEventsService.track(event: event)
   }
 
@@ -487,23 +495,14 @@ extension NoCodesViewController {
   /// Handles screen analytics events forwarded from the JS layer.
   /// JS sends: { type: 'screen_cta_tap' | 'screen_page_view', happened_at: Int, page_index?: Int }
   private func handle(screenAnalyticsAction: NoCodesAction) {
-    guard let screenId = screenId,
-          let params = screenAnalyticsAction.parameters,
-          let eventTypeString = params["type"] as? String else { return }
+    guard let params = screenAnalyticsAction.parameters else { return }
 
-    let eventType: ScreenEventType
-    switch eventTypeString {
-    case "screen_cta_tap":
-      eventType = .ctaTap
-    case "screen_page_view":
-      eventType = .pageView
-    default:
-      logger.warning("Unknown screen analytics event type: \(eventTypeString)")
+    guard params["type"] != nil else {
+      logger.warning("screenAnalytics action missing 'type' parameter")
       return
     }
 
-    let pageIndex = params["page_index"] as? Int
-    let event = ScreenEvent(type: eventType, screenUid: screenId, pageIndex: pageIndex)
+    let event = ScreenEvent(data: params)
     screenEventsService.track(event: event)
   }
 

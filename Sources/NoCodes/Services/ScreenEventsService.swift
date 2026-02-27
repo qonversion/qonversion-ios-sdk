@@ -43,7 +43,7 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
       buffer.append(event)
       shouldFlush = buffer.count >= Self.batchSize
     }
-    logger.debug("Tracked screen event: \(event.type.rawValue) for screen \(event.screenUid)")
+    logger.debug("Tracked screen event: \(event.data["type"] ?? "unknown")")
     if shouldFlush {
       flush()
     }
@@ -73,12 +73,7 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
           queue.sync(flags: .barrier) { cachedUserId = uid }
         }
 
-        let encoder = JSONEncoder()
-        let eventsData = try encoder.encode(eventsToSend)
-        guard let eventDicts = try JSONSerialization.jsonObject(with: eventsData) as? [[String: AnyHashable]] else {
-          throw NSError(domain: "io.qonversion.nocodes", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize screen events"])
-        }
-
+        let eventDicts = eventsToSend.map { $0.toMap() }
         let request = Request.sendScreenEvents(uid: uid, body: eventDicts)
         try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
         logger.debug(LoggerInfoMessages.screenEventFlushed.rawValue)

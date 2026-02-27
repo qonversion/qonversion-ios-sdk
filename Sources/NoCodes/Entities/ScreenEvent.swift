@@ -10,34 +10,17 @@ import Foundation
 
 #if os(iOS)
 
-struct ScreenEvent: Encodable {
-  let type: ScreenEventType
-  let screenUid: String
-  let pageIndex: Int?
-  let happenedAt: Int
+struct ScreenEvent {
+  let data: [String: Any]
 
-  init(type: ScreenEventType, screenUid: String, pageIndex: Int? = nil) {
-    self.type = type
-    self.screenUid = screenUid
-    self.pageIndex = pageIndex
-    self.happenedAt = Int(Date().timeIntervalSince1970)
-  }
-
-  private enum CodingKeys: String, CodingKey {
-    case type
-    case screenUid = "screen_uid"
-    case pageIndex = "page_index"
-    case happenedAt = "happened_at"
-  }
-
-  func encode(to encoder: Encoder) throws {
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(type, forKey: .type)
-    try container.encode(screenUid, forKey: .screenUid)
-    if let pageIndex {
-      try container.encode(pageIndex, forKey: .pageIndex)
+  func toMap() -> [String: AnyHashable] {
+    var result: [String: AnyHashable] = [:]
+    for (key, value) in data {
+      if let hashable = value as? AnyHashable {
+        result[key] = hashable
+      }
     }
-    try container.encode(happenedAt, forKey: .happenedAt)
+    return result
   }
 }
 
