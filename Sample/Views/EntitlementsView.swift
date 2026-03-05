@@ -126,6 +126,15 @@ class EntitlementsListenerHandler: NSObject, Qonversion.EntitlementsUpdateListen
             appState?.entitlements = entitlements
         }
     }
+
+    func didReceiveUpdatedEntitlements(_ entitlements: [String: Qonversion.Entitlement], purchaseResult: Qonversion.PurchaseResult?) {
+        Task { @MainActor in
+            appState?.entitlements = entitlements
+            if let purchaseResult, purchaseResult.isSuccessful, entitlements.isEmpty {
+                appState?.successMessage = "Consumable purchase completed in background"
+            }
+        }
+    }
 }
 
 // MARK: - Action Button

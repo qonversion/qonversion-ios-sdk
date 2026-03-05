@@ -33,6 +33,7 @@
 		45FFA2E024BE1549007EFB8F /* broken_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2DF24BE1548007EFB8F /* broken_data.json */; };
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		AA0001012D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */; };
+		AA0002012D5B0A0000000001 /* EntitlementsUpdateListenerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0002002D5B0A0000000001 /* EntitlementsUpdateListenerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		6A121DAC2BB445AE0073B330 /* QONRemoteConfigList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */; };
 		6A121DAE2BB446740073B330 /* QONRemoteConfigList.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -379,6 +380,7 @@
 		45FFA2DF24BE1548007EFB8F /* broken_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = broken_data.json; sourceTree = "<group>"; };
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerRestoreUserSwitchTests.m; sourceTree = "<group>"; };
+		AA0002002D5B0A0000000001 /* EntitlementsUpdateListenerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EntitlementsUpdateListenerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
 		6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigList.m; sourceTree = "<group>"; };
 		6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigList.h; sourceTree = "<group>"; };
@@ -816,6 +818,7 @@
 				45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */,
 				45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */,
 				AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */,
+				AA0002002D5B0A0000000001 /* EntitlementsUpdateListenerTests.m */,
 			);
 			path = QonversionTests;
 			sourceTree = "<group>";
@@ -2355,6 +2358,7 @@
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
 				45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */,
 				AA0001012D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m in Sources */,
+				AA0002012D5B0A0000000001 /* EntitlementsUpdateListenerTests.m in Sources */,
 				89673C2926F35D29008D209A /* QNIdentityServiceTests.m in Sources */,
 				89A192A52604974800C3FCD9 /* QNUserInfoServiceTests.m in Sources */,
 				454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */,
