@@ -497,8 +497,9 @@ extension NoCodesViewController {
   }
 
   /// Handles screen analytics events forwarded from the JS layer.
-  /// JS sends: { type: 'screen_cta_tap' | 'screen_page_view', happened_at: Int, page_index?: Int }
-  /// SDK enriches with screen_uid (JS doesn't know it).
+  /// Pass-through design: JS events are forwarded as-is without type validation
+  /// against ScreenEventType. The SDK only injects screen_uid (which JS doesn't know)
+  /// and forwards the event to the backend. Event types are defined by JS, not the SDK.
   private func handle(screenAnalyticsAction: NoCodesAction) {
     guard let params = screenAnalyticsAction.parameters,
           let screenId = screenId else { return }

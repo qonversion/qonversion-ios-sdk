@@ -10,11 +10,12 @@ import Foundation
 
 #if os(iOS)
 
+/// SDK-originated screen lifecycle events only.
+/// JS-originated events (e.g. screen_cta_tap, screen_page_view) are passed through
+/// without validation against this enum — see `handle(screenAnalyticsAction:)`.
 enum ScreenEventType: String, Encodable {
   case screenShown = "screen_shown"
   case screenClosed = "screen_closed"
-  case ctaTap = "screen_cta_tap"
-  case pageView = "screen_page_view"
 }
 
 #endif
