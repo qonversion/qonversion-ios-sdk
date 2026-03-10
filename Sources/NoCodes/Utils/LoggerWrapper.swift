@@ -13,6 +13,8 @@ enum LoggerInfoMessages: String {
   case screenLoadingFailed = "Failed to load the screen"
   case deeplingHandlingFailed = "Failed to handle the deeplink"
   case urlHandlingFailed = "Failed to handle the URL"
+  case screenEventTrackingFailed = "Failed to send screen events"
+  case screenEventFlushed = "Screen events flushed successfully"
 }
 
 enum LogLevel: Int {

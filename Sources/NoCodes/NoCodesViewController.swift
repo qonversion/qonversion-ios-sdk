@@ -46,6 +46,7 @@ final class NoCodesViewController: UIViewController {
   private var contextKey: String?
   private var screen: NoCodesScreen?
   private var noCodesService: NoCodesServiceInterface!
+  private var screenEventsService: ScreenEventsServiceInterface!
   private var noCodesMapper: NoCodesMapperInterface!
   private var viewsAssembly: ViewsAssembly!
   private var delegate: NoCodesViewControllerDelegate!
@@ -55,12 +56,15 @@ final class NoCodesViewController: UIViewController {
   private var purchaseDelegate: NoCodesPurchaseDelegate?
   private var customLocale: String?
   private var theme: NoCodesTheme!
-  
-  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
+  private var didTrackScreenShown = false
+  private var didTrackScreenClosed = false
+
+  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.screenId = screenId
     self.contextKey = contextKey
     self.noCodesMapper = noCodesMapper
     self.noCodesService = noCodesService
+    self.screenEventsService = screenEventsService
     self.viewsAssembly = viewsAssembly
     self.delegate = delegate
     self.logger = logger
@@ -130,7 +134,8 @@ final class NoCodesViewController: UIViewController {
         self.screenId = screen.id
         self.contextKey = screen.contextKey
         delegate.noCodesHasShownScreen(id: screen.id)
-        
+        trackScreenShownIfNeeded()
+
         var htmlToLoad = injectCustomLocale(into: screen.html)
         htmlToLoad = injectTheme(into: htmlToLoad)
         webView.loadHTMLString(htmlToLoad, baseURL: nil)
@@ -140,7 +145,7 @@ final class NoCodesViewController: UIViewController {
       }
     }
   }
-  
+
   /// Resolves the interface style based on theme setting.
   /// Returns the appropriate UIUserInterfaceStyle for skeleton and other UI elements.
   private func resolveInterfaceStyle() -> UIUserInterfaceStyle {
@@ -189,7 +194,41 @@ final class NoCodesViewController: UIViewController {
       return themeScript + html
     }
   }
-  
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    trackScreenShownIfNeeded()
+  }
+
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+
+    guard let screenId = screenId else { return }
+
+    if isBeingDismissed || isMovingFromParent {
+      // Permanently leaving: track screen_closed
+      trackScreenClosedIfNeeded(screenId: screenId)
+    } else {
+      // Temporarily hidden (e.g. a new screen was pushed on top):
+      // reset the flag so screen_shown fires again when this view re-appears
+      didTrackScreenShown = false
+    }
+  }
+
+  deinit {
+    // Fallback: if the entire flow was dismissed (e.g. parent nav controller dismissed),
+    // viewDidDisappear may not detect it via isBeingDismissed. Track screen_closed here
+    // if it wasn't already tracked.
+    if let screenId = screenId, !didTrackScreenClosed {
+      let event = ScreenEvent(data: [
+        "type": ScreenEventType.screenClosed.rawValue,
+        "screen_uid": screenId,
+        "happened_at": Int(Date().timeIntervalSince1970)
+      ])
+      screenEventsService?.track(event: event)
+    }
+  }
+
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     
@@ -224,7 +263,7 @@ extension NoCodesViewController: WKScriptMessageHandler {
       return removeSkeleton()
     }
     
-    if action.type != .loadProducts {
+    if action.type != .loadProducts && action.type != .screenAnalytics {
       delegate.noCodesStartsExecuting(action: action)
     }
     
@@ -247,6 +286,8 @@ extension NoCodesViewController: WKScriptMessageHandler {
       handle(restoreAction: action)
     case .redeemPromoCode:
       handle(redeemPromoCodeAction: action)
+    case .screenAnalytics:
+      handle(screenAnalyticsAction: action)
     default: break
     }
   }
@@ -254,7 +295,29 @@ extension NoCodesViewController: WKScriptMessageHandler {
 }
 
 extension NoCodesViewController {
-  
+
+  private func trackScreenShownIfNeeded() {
+    guard !didTrackScreenShown, let screenId = screenId else { return }
+    didTrackScreenShown = true
+    let event = ScreenEvent(data: [
+      "type": ScreenEventType.screenShown.rawValue,
+      "screen_uid": screenId,
+      "happened_at": Int(Date().timeIntervalSince1970)
+    ])
+    screenEventsService.track(event: event)
+  }
+
+  private func trackScreenClosedIfNeeded(screenId: String) {
+    guard !didTrackScreenClosed else { return }
+    didTrackScreenClosed = true
+    let event = ScreenEvent(data: [
+      "type": ScreenEventType.screenClosed.rawValue,
+      "screen_uid": screenId,
+      "happened_at": Int(Date().timeIntervalSince1970)
+    ])
+    screenEventsService.track(event: event)
+  }
+
   private var isModalPresentation: Bool {
     if let navigationController = navigationController, navigationController.viewControllers.count > 1 {
       return false
@@ -338,6 +401,7 @@ extension NoCodesViewController {
   
   private func handle(purchaseAction: NoCodesAction) {
     guard let productId: String = purchaseAction.parameters?[Constants.productId.rawValue] as? String else { return }
+
     activityIndicator.startAnimating()
     Task {
       do {
@@ -426,12 +490,31 @@ extension NoCodesViewController {
   
   private func handle(navigationAction: NoCodesAction) {
     guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else { return }
-    
+
     let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
     navigationController?.pushViewController(viewController, animated: true)
     delegate.noCodesFinishedExecuting(action: navigationAction)
   }
-  
+
+  /// Handles screen analytics events forwarded from the JS layer.
+  /// Pass-through design: JS events are forwarded as-is without type validation
+  /// against ScreenEventType. The SDK only injects screen_uid (which JS doesn't know)
+  /// and forwards the event to the backend. Event types are defined by JS, not the SDK.
+  private func handle(screenAnalyticsAction: NoCodesAction) {
+    guard let params = screenAnalyticsAction.parameters,
+          let screenId = screenId else { return }
+
+    guard params["type"] != nil else {
+      logger.warning("screenAnalytics action missing 'type' parameter")
+      return
+    }
+
+    var eventData = params
+    eventData["screen_uid"] = screenId
+    let event = ScreenEvent(data: eventData)
+    screenEventsService.track(event: event)
+  }
+
   private func finishAndClose(action: NoCodesAction) {
     delegate.noCodesFinishedExecuting(action: action)
     close(action: action)

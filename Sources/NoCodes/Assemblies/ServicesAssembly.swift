@@ -29,6 +29,7 @@ final class ServicesAssembly {
   private var deviceInfoCollectorInstance: DeviceInfoCollector?
   private var requestProcessorInstance: RequestProcessorInterface?
   private var noCodesServiceInstance: NoCodesServiceInterface?
+  private var screenEventsServiceInstance: ScreenEventsServiceInterface?
   private let fallbackFileName: String?
   private var proxyURL: String?
   
@@ -56,7 +57,18 @@ final class ServicesAssembly {
   func imagePreloader() -> ImagePreloaderInterface {
     return ImagePreloader(urlSession: urlSession())
   }
-  
+
+  func screenEventsService() -> ScreenEventsServiceInterface {
+    if let screenEventsServiceInstance {
+      return screenEventsServiceInstance
+    }
+
+    let service = ScreenEventsService(requestProcessor: requestProcessor(), logger: miscAssembly.loggerWrapper())
+    screenEventsServiceInstance = service
+
+    return service
+  }
+
   func fallbackService() -> FallbackServiceInterface? {
     return FallbackService(
       logger: miscAssembly.loggerWrapper(),
