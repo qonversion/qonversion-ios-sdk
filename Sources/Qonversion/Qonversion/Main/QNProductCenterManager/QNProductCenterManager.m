@@ -1052,18 +1052,30 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           }
         } else {
           NSDictionary<NSString *, QONEntitlement *> *resultEntitlements = launchResult.entitlements;
+          QONPurchaseResult *listenerPurchaseResult;
           if (resultError) {
             if ([weakSelf shouldCalculateEntitlementsForError:resultError]) {
               resultEntitlements = [weakSelf calculateEntitlementsForTransactions:@[transaction] products:@[product]];
-              [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
+              listenerPurchaseResult = [QONPurchaseResult successFromFallbackWithEntitlements:resultEntitlements transaction:transaction];
+              [weakSelf notifyEntitlementsUpdateListener:resultEntitlements purchaseResult:listenerPurchaseResult];
             }
           } else {
-            [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
+            listenerPurchaseResult = [QONPurchaseResult successWithEntitlements:resultEntitlements transaction:transaction];
+            [weakSelf notifyEntitlementsUpdateListener:resultEntitlements purchaseResult:listenerPurchaseResult];
           }
         }
       }
     }];
   }];
+}
+
+- (void)notifyEntitlementsUpdateListener:(NSDictionary<NSString *, QONEntitlement *> *)entitlements
+                          purchaseResult:(QONPurchaseResult *)purchaseResult {
+  if ([self.purchasesDelegate respondsToSelector:@selector(didReceiveUpdatedEntitlements:purchaseResult:)]) {
+    [self.purchasesDelegate didReceiveUpdatedEntitlements:entitlements purchaseResult:purchaseResult];
+  } else {
+    [self.purchasesDelegate didReceiveUpdatedEntitlements:entitlements];
+  }
 }
 
 - (BOOL)shouldCalculateEntitlementsForError:(NSError *)error {
