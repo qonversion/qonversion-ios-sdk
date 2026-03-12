@@ -226,6 +226,7 @@ final class NoCodesViewController: UIViewController {
         "happened_at": Int(Date().timeIntervalSince1970)
       ])
       screenEventsService?.track(event: event)
+      screenEventsService?.flush()
     }
   }
 
@@ -316,6 +317,7 @@ extension NoCodesViewController {
       "happened_at": Int(Date().timeIntervalSince1970)
     ])
     screenEventsService.track(event: event)
+    screenEventsService.flush()
   }
 
   private var isModalPresentation: Bool {

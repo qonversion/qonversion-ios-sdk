@@ -63,7 +63,7 @@ class RequestProcessor: RequestProcessorInterface {
       throw error!
     }
     
-    if responseCode == ResponseCode.noContent.rawValue && T.self is EmptyApiResponse.Type {
+    if T.self is EmptyApiResponse.Type && (ResponseCode.successMin.rawValue...ResponseCode.successMax.rawValue).contains(responseCode) && responseBody.isEmpty {
       return EmptyApiResponse() as! T
     }
     
