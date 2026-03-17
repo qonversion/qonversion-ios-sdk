@@ -208,12 +208,12 @@ final class NoCodesViewController: UIViewController {
   
   func addSkeleton() {
     view.addSubview(skeletonView)
-    skeletonView.startAnimation()
+    skeletonView.startAnimating()
   }
   
   func removeSkeleton() {
     skeletonView.removeFromSuperview()
-    skeletonView.stopAnimation()
+    skeletonView.stopAnimating()
   }
 
   override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
