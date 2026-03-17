@@ -51,7 +51,7 @@ final class NoCodesViewController: UIViewController {
   private var viewsAssembly: ViewsAssembly!
   private var delegate: NoCodesViewControllerDelegate!
   private var logger: LoggerWrapper!
-  private var skeletonView: SkeletonView!
+  private var loadingView: NoCodesLoadingView!
   private var presentationConfiguration: NoCodesPresentationConfiguration!
   private var purchaseDelegate: NoCodesPurchaseDelegate?
   private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
@@ -81,9 +81,13 @@ final class NoCodesViewController: UIViewController {
 
     super.init(nibName: nil, bundle: nil)
 
-    let interfaceStyle = contextBuilder.resolveInterfaceStyle(theme: theme, traitCollection: traitCollection)
-    skeletonView = SkeletonView(frame: view.frame, interfaceStyle: interfaceStyle)
-    addSkeleton()
+    if let customLoadingView = screenCustomizationDelegate?.noCodesCustomLoadingView() {
+      loadingView = customLoadingView
+    } else {
+      let interfaceStyle = contextBuilder.resolveInterfaceStyle(theme: theme, traitCollection: traitCollection)
+      loadingView = SkeletonView(frame: view.frame, interfaceStyle: interfaceStyle)
+    }
+    addLoadingView()
   }
   
   required init?(coder: NSCoder) {
@@ -208,14 +212,16 @@ final class NoCodesViewController: UIViewController {
     close(action: nil)
   }
   
-  func addSkeleton() {
-    view.addSubview(skeletonView)
-    skeletonView.startAnimating()
+  func addLoadingView() {
+    loadingView.frame = view.frame
+    loadingView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    view.addSubview(loadingView)
+    loadingView.startAnimating()
   }
-  
-  func removeSkeleton() {
-    skeletonView.removeFromSuperview()
-    skeletonView.stopAnimating()
+
+  func removeLoadingView() {
+    loadingView.removeFromSuperview()
+    loadingView.stopAnimating()
   }
 
   override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -243,7 +249,7 @@ extension NoCodesViewController: WKScriptMessageHandler {
     let action: NoCodesAction = noCodesMapper.map(rawAction: body)
     
     if action.type == .showScreen {
-      return removeSkeleton()
+      return removeLoadingView()
     }
     
     if action.type != .loadProducts && action.type != .screenAnalytics {
