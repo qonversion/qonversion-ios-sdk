@@ -86,6 +86,14 @@ final class MiscAssembly {
   func noCodesMapper() -> NoCodesMapperInterface {
     return NoCodesMapper()
   }
+
+  func contextBuilder() -> NoCodesContextBuilderInterface {
+    return NoCodesContextBuilder()
+  }
+
+  func htmlInjector() -> NoCodesHTMLInjectorInterface {
+    return NoCodesHTMLInjector()
+  }
 }
 
 #endif

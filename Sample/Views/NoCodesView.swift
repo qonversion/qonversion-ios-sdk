@@ -11,7 +11,7 @@ import Qonversion
 struct NoCodesView: View {
     @EnvironmentObject var appState: AppState
     
-    @State private var contextKey = "kamo_test"
+    @State private var contextKey = "cont_test"
     @State private var selectedPresentationStyle: NoCodesPresentationStyleOption = .fullScreen
     @State private var animated = true
     @State private var listenerSet = false

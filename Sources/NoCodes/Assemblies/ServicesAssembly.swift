@@ -11,7 +11,7 @@ import Foundation
 #if os(iOS)
 
 fileprivate enum StringConstants: String {
-  case baseURL = "https://api2.qonversion.io/"
+  case baseURL = "https://main.api-gateway.stage.qmoons.me/"
 }
 
 fileprivate enum ServicesConstants {

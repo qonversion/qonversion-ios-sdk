@@ -12,7 +12,7 @@ enum ConfigurationManager {
     private static let projectKeyKey = "project_key"
     private static let apiUrlKey = "api_url"
     
-    static let defaultProjectKey = "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2"
+    static let defaultProjectKey = "zpNSvpNoNEp3ty6RnaB6z0Iqr43ny9ID"
     
     private static var userDefaults: UserDefaults {
         UserDefaults.standard

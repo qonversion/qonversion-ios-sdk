@@ -8,7 +8,7 @@
 
 #import "QNAPIConstants.h"
 
-NSString * const kAPIBase = @"https://api2.qonversion.io/";
+NSString * const kAPIBase = @"https://main.api-gateway.stage.qmoons.me/";
 NSString * const kSdkLogsBaseURL = @"https://sdk-logs.qonversion.io/";
 
 NSString * const kInitEndpoint = @"v1/user/init";
