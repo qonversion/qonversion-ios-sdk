@@ -6,7 +6,7 @@
 #import "QNIdentityManager.h"
 #import "QNLocalStorage.h"
 #import "QONFallbackService.h"
-#import "QONDeferredPurchaseListener.h"
+#import "QONDeferredPurchasesListener.h"
 #import "QONEntitlementsUpdateListener.h"
 #import "QONEntitlement.h"
 #import "QONPurchaseResult.h"
@@ -16,7 +16,7 @@
 @interface QNProductCenterManager (DeferredTestPrivate)
 
 @property (nonatomic, weak) id<QONEntitlementsUpdateListener> purchasesDelegate;
-@property (nonatomic, weak) id<QONDeferredPurchaseListener> deferredPurchaseListener;
+@property (nonatomic, weak) id<QONDeferredPurchasesListener> deferredPurchasesListener;
 
 @end
 
@@ -37,7 +37,7 @@
   id mockFallbackService = OCMClassMock([QONFallbackService class]);
   _manager = [[QNProductCenterManager alloc] initWithUserInfoService:mockUserInfoService identityManager:mockIdentityManager localStorage:mockLocalStorage fallbackService:mockFallbackService];
 
-  _mockDeferredListener = OCMProtocolMock(@protocol(QONDeferredPurchaseListener));
+  _mockDeferredListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
   _mockEntitlementsListener = OCMProtocolMock(@protocol(QONEntitlementsUpdateListener));
 }
 
@@ -51,33 +51,33 @@
 
 - (void)testSetDeferredPurchaseListenerStoresListener {
   // When
-  [_manager setDeferredPurchaseListener:_mockDeferredListener];
+  [_manager setDeferredPurchasesListener:_mockDeferredListener];
 
   // Then
-  XCTAssertEqual(_manager.deferredPurchaseListener, _mockDeferredListener);
+  XCTAssertEqual(_manager.deferredPurchasesListener, _mockDeferredListener);
 }
 
 - (void)testSetDeferredPurchaseListenerToNilClearsListener {
   // Given
-  [_manager setDeferredPurchaseListener:_mockDeferredListener];
+  [_manager setDeferredPurchasesListener:_mockDeferredListener];
 
   // When
-  [_manager setDeferredPurchaseListener:nil];
+  [_manager setDeferredPurchasesListener:nil];
 
   // Then
-  XCTAssertNil(_manager.deferredPurchaseListener);
+  XCTAssertNil(_manager.deferredPurchasesListener);
 }
 
 - (void)testSetDeferredPurchaseListenerReplacesExisting {
   // Given
-  id anotherListener = OCMProtocolMock(@protocol(QONDeferredPurchaseListener));
-  [_manager setDeferredPurchaseListener:_mockDeferredListener];
+  id anotherListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
+  [_manager setDeferredPurchasesListener:_mockDeferredListener];
 
   // When
-  [_manager setDeferredPurchaseListener:anotherListener];
+  [_manager setDeferredPurchasesListener:anotherListener];
 
   // Then
-  XCTAssertEqual(_manager.deferredPurchaseListener, anotherListener);
+  XCTAssertEqual(_manager.deferredPurchasesListener, anotherListener);
 }
 
 #pragma mark - Coexistence Tests
@@ -85,11 +85,11 @@
 - (void)testBothListenersCanBeSetIndependently {
   // When
   [_manager setPurchasesDelegate:_mockEntitlementsListener];
-  [_manager setDeferredPurchaseListener:_mockDeferredListener];
+  [_manager setDeferredPurchasesListener:_mockDeferredListener];
 
   // Then
   XCTAssertEqual(_manager.purchasesDelegate, _mockEntitlementsListener);
-  XCTAssertEqual(_manager.deferredPurchaseListener, _mockDeferredListener);
+  XCTAssertEqual(_manager.deferredPurchasesListener, _mockDeferredListener);
 }
 
 - (void)testSettingDeferredListenerDoesNotAffectEntitlementsListener {
@@ -97,7 +97,7 @@
   [_manager setPurchasesDelegate:_mockEntitlementsListener];
 
   // When
-  [_manager setDeferredPurchaseListener:_mockDeferredListener];
+  [_manager setDeferredPurchasesListener:_mockDeferredListener];
 
   // Then
   XCTAssertEqual(_manager.purchasesDelegate, _mockEntitlementsListener);
@@ -105,13 +105,13 @@
 
 - (void)testSettingEntitlementsListenerDoesNotAffectDeferredListener {
   // Given
-  [_manager setDeferredPurchaseListener:_mockDeferredListener];
+  [_manager setDeferredPurchasesListener:_mockDeferredListener];
 
   // When
   [_manager setPurchasesDelegate:_mockEntitlementsListener];
 
   // Then
-  XCTAssertEqual(_manager.deferredPurchaseListener, _mockDeferredListener);
+  XCTAssertEqual(_manager.deferredPurchasesListener, _mockDeferredListener);
 }
 
 @end

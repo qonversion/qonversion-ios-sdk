@@ -8,7 +8,9 @@
 #import "QONProduct.h"
 #import "QONErrors.h"
 #import "QONEntitlementsUpdateListener.h"
-#import "QONDeferredPurchaseListener.h"
+#import "QONDeferredPurchasesListener.h"
+#import "QONDeferredTransaction.h"
+#import "QONDeferredTransaction+Protected.h"
 #import "QONPromoPurchasesDelegate.h"
 #import "QONOfferings.h"
 #import "QONOffering.h"
@@ -37,7 +39,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
 
 @property (nonatomic, weak) id<QONEntitlementsUpdateListener> purchasesDelegate;
-@property (nonatomic, weak) id<QONDeferredPurchaseListener> deferredPurchaseListener;
+@property (nonatomic, weak) id<QONDeferredPurchasesListener> deferredPurchasesListener;
 @property (nonatomic, weak) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
 
 @property (nonatomic, strong) QNStoreKitService *storeKitService;
@@ -349,8 +351,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   _purchasesDelegate = delegate;
 }
 
-- (void)setDeferredPurchaseListener:(id<QONDeferredPurchaseListener>)listener {
-  _deferredPurchaseListener = listener;
+- (void)setDeferredPurchasesListener:(id<QONDeferredPurchasesListener>)listener {
+  _deferredPurchasesListener = listener;
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
@@ -1058,19 +1060,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           }
         } else {
           NSDictionary<NSString *, QONEntitlement *> *resultEntitlements = launchResult.entitlements;
-          QONPurchaseResult *deferredPurchaseResult = nil;
+          BOOL shouldNotify = NO;
           if (resultError) {
             if ([weakSelf shouldCalculateEntitlementsForError:resultError]) {
               resultEntitlements = [weakSelf calculateEntitlementsForTransactions:@[transaction] products:@[product]];
-              [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
-              deferredPurchaseResult = [QONPurchaseResult successFromFallbackWithEntitlements:resultEntitlements transaction:transaction];
+              shouldNotify = YES;
             }
           } else {
-            [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
-            deferredPurchaseResult = [QONPurchaseResult successWithEntitlements:resultEntitlements transaction:transaction];
+            shouldNotify = YES;
           }
-          if (deferredPurchaseResult) {
-            [weakSelf.deferredPurchaseListener didCompleteDeferredPurchaseWithEntitlements:resultEntitlements purchaseResult:deferredPurchaseResult];
+          if (shouldNotify) {
+            // Notify deprecated EntitlementsUpdateListener (backward compat)
+            [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
+            // Notify new DeferredPurchasesListener with full transaction details
+            QONDeferredTransaction *deferredTransaction = [QONDeferredTransaction transactionWithSKPaymentTransaction:transaction skProduct:product type:QONDeferredTransactionTypeUnknown];
+            [weakSelf.deferredPurchasesListener deferredPurchaseCompleted:deferredTransaction];
           }
         }
       }

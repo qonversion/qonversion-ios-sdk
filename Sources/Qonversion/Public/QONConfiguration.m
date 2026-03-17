@@ -63,8 +63,8 @@ static NSString *const kSDKVersion = @"6.7.0";
   _entitlementsUpdateListener = entitlementsUpdateListener;
 }
 
-- (void)setDeferredPurchaseListener:(id<QONDeferredPurchaseListener>)listener {
-  _deferredPurchaseListener = listener;
+- (void)setDeferredPurchasesListener:(id<QONDeferredPurchasesListener>)listener {
+  _deferredPurchasesListener = listener;
 }
 
 - (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate {
@@ -89,7 +89,7 @@ static NSString *const kSDKVersion = @"6.7.0";
   [copyConfig setEnvironment:_environment];
   [copyConfig setEntitlementsCacheLifetime:_entitlementsCacheLifetime];
   [copyConfig setEntitlementsUpdateListener:_entitlementsUpdateListener];
-  [copyConfig setDeferredPurchaseListener:_deferredPurchaseListener];
+  [copyConfig setDeferredPurchasesListener:_deferredPurchasesListener];
   [copyConfig setCustomUserDefaults:_customUserDefaults];
   [copyConfig setProxyURL:_baseURL];
   

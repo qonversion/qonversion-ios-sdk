@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		176D395BD9D9A09A56F417D7 /* QONDeferredPurchaseListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 61B460B7A476E7C352C3B615 /* QONDeferredPurchaseListener.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		218480F803075431AD24186B /* ScreenEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2865A58C95F0B475399053F2 /* ScreenEvent.swift */; };
 		3521C548C169154D45835C38 /* ScreenEventsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */; };
 		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
@@ -37,6 +37,7 @@
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		48FCBE392ED00F2022C0823A /* ScreenEventsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E55D02AA51A75DD7987D4987 /* ScreenEventsService.swift */; };
+		4F4C1926ADCE81CB4F5E5284 /* QONDeferredTransaction.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FD1EB3888CE18AE08B55807 /* QONDeferredTransaction.m */; };
 		6A121DAC2BB445AE0073B330 /* QONRemoteConfigList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */; };
 		6A121DAE2BB446740073B330 /* QONRemoteConfigList.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6A121DB12BBB10370073B330 /* QONRemoteConfigListRequestData.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A121DB02BBB10370073B330 /* QONRemoteConfigListRequestData.h */; };
@@ -152,7 +153,6 @@
 		70A26ADE2A31BC44008CE4A7 /* QONExperiment.h in Headers */ = {isa = PBXBuildFile; fileRef = 70A26ADC2A31BC44008CE4A7 /* QONExperiment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70A26ADF2A31BC44008CE4A7 /* QONExperiment.m in Sources */ = {isa = PBXBuildFile; fileRef = 70A26ADD2A31BC44008CE4A7 /* QONExperiment.m */; };
 		70B917642B3314BD00BF0689 /* QONTransaction.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B917622B3314BD00BF0689 /* QONTransaction.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		70B917652B3314BD00BF0689 /* QONTransaction.m in Sources */ = {isa = PBXBuildFile; fileRef = 70B917632B3314BD00BF0689 /* QONTransaction.m */; };
 		70B917672B34284200BF0689 /* QONTransaction+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B917662B34284200BF0689 /* QONTransaction+Protected.h */; };
 		70BAB0642B58306E00D19A6A /* expected_entitlements.json in Resources */ = {isa = PBXBuildFile; fileRef = 70893C992B3EC136002C6B82 /* expected_entitlements.json */; };
 		70CB7CDD2C246DF200241FF1 /* QONPromotionalOffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -177,6 +177,7 @@
 		71D1AE03BA37F1D7CA063728 /* Pods_QonversionTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */; };
 		891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */; };
 		891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 891ECE0927734B8900DF6A56 /* AdServices.framework */; };
+		892B79AA3DFD0BE3603620AC /* QONTransaction+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 14F9EFD19134A70AC7557932 /* QONTransaction+Protected.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		8957327926DD03A3009507A6 /* QNDevice+Advertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B626DD03A2009507A6 /* QNDevice+Advertising.h */; };
 		8957327A26DD03A3009507A6 /* QNDevice+Advertising.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731B726DD03A2009507A6 /* QNDevice+Advertising.m */; };
 		8957327B26DD03A3009507A6 /* QONUser.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B926DD03A2009507A6 /* QONUser.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -267,6 +268,8 @@
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		89A192A52604974800C3FCD9 /* QNUserInfoServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */; };
 		89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */; };
+		954C21A3DF0071EC9C767F0E /* QONTransaction.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C3A84492202AB820D964710 /* QONTransaction.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9AEB405F268F02DD7BE418A0 /* QONDeferredTransaction+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = C08D43BACCC6C77ADE3CC48E /* QONDeferredTransaction+Protected.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		A1839332BA452C481BDC499C /* QONExceptionManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839DA452F152E40ED4EB8C /* QONExceptionManager.h */; };
 		A18393481F6CF124F055056C /* QONUserProperty.m in Sources */ = {isa = PBXBuildFile; fileRef = A1839E84DBCF12F2CDC1930D /* QONUserProperty.m */; };
 		A183968F7BFAE4D93F96D32D /* QONUserProperties+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = A18396B586B0A77331A3A346 /* QONUserProperties+Protected.h */; };
@@ -283,6 +286,8 @@
 		AABB11252E4A21BC00IMGPRE /* ImagePreloaderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */; };
 		ABE59AEA41D2601711B1BB1B /* DeferredPurchaseListenerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = D0516E52AE4CD42A3873E680 /* DeferredPurchaseListenerTests.m */; };
 		AD49DFBFBCD15CEC5A281EC2 /* Pods_Watch_Sample_Watch_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 13AE8FF0EE961E63D0E594AB /* Pods_Watch_Sample_Watch_App.framework */; };
+		AE433FD75C1018C282E80DDC /* QONDeferredTransaction.h in Headers */ = {isa = PBXBuildFile; fileRef = 8C9C86D91A0608B6EC717F7A /* QONDeferredTransaction.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		D168550EA3E11E386B577AC0 /* QONTransaction.m in Sources */ = {isa = PBXBuildFile; fileRef = E2476B8741A9BF503032C77D /* QONTransaction.m */; };
 		F5890274B1E90C6993376869 /* ScreenEventType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34DFDAAB92C9BA2A3321007A /* ScreenEventType.swift */; };
 /* End PBXBuildFile section */
 
@@ -331,8 +336,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0FD1EB3888CE18AE08B55807 /* QONDeferredTransaction.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONDeferredTransaction.m; sourceTree = "<group>"; };
 		13844A737C5779AEEAD10EB9 /* Pods-Sample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.debug.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.debug.xcconfig"; sourceTree = "<group>"; };
 		13AE8FF0EE961E63D0E594AB /* Pods_Watch_Sample_Watch_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Watch_Sample_Watch_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		14F9EFD19134A70AC7557932 /* QONTransaction+Protected.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "QONTransaction+Protected.h"; sourceTree = "<group>"; };
 		2865A58C95F0B475399053F2 /* ScreenEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEvent.swift; sourceTree = "<group>"; };
 		34DFDAAB92C9BA2A3321007A /* ScreenEventType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventType.swift; sourceTree = "<group>"; };
 		420D8FEF3C704502C737C449 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -378,7 +385,7 @@
 		45FFA2DF24BE1548007EFB8F /* broken_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = broken_data.json; sourceTree = "<group>"; };
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
-		61B460B7A476E7C352C3B615 /* QONDeferredPurchaseListener.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONDeferredPurchaseListener.h; sourceTree = "<group>"; };
+		61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONDeferredPurchasesListener.h; sourceTree = "<group>"; };
 		6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigList.m; sourceTree = "<group>"; };
 		6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigList.h; sourceTree = "<group>"; };
 		6A121DAF2BB44D7B0073B330 /* QONRemoteConfigList+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigList+Protected.h"; sourceTree = "<group>"; };
@@ -503,7 +510,6 @@
 		70ADE70D2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONScreenPresentationConfiguration.h; sourceTree = "<group>"; };
 		70ADE70E2951CC7200CB4D2E /* QONScreenPresentationConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONScreenPresentationConfiguration.m; sourceTree = "<group>"; };
 		70B917622B3314BD00BF0689 /* QONTransaction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONTransaction.h; sourceTree = "<group>"; };
-		70B917632B3314BD00BF0689 /* QONTransaction.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONTransaction.m; sourceTree = "<group>"; };
 		70B917662B34284200BF0689 /* QONTransaction+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONTransaction+Protected.h"; sourceTree = "<group>"; };
 		70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONPromotionalOffer.h; sourceTree = "<group>"; };
 		70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONPromotionalOffer.m; sourceTree = "<group>"; };
@@ -630,6 +636,8 @@
 		89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserInfoServiceTests.m; sourceTree = "<group>"; };
 		89A193242604B99C00C3FCD9 /* XCTestCase+Unmock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+Unmock.h"; sourceTree = "<group>"; };
 		89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+Unmock.m"; sourceTree = "<group>"; };
+		8C9C86D91A0608B6EC717F7A /* QONDeferredTransaction.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONDeferredTransaction.h; sourceTree = "<group>"; };
+		9C3A84492202AB820D964710 /* QONTransaction.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONTransaction.h; sourceTree = "<group>"; };
 		A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONExceptionManager.m; sourceTree = "<group>"; };
 		A1839295D44BE8B55C48FB2C /* QONUserPropertiesMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUserPropertiesMapper.h; sourceTree = "<group>"; };
 		A18396B586B0A77331A3A346 /* QONUserProperties+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONUserProperties+Protected.h"; sourceTree = "<group>"; };
@@ -646,9 +654,11 @@
 		AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloaderInterface.swift; sourceTree = "<group>"; };
 		B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QonversionTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7C9BCDD34EDDDD2D70E232A /* Pods-Watch Sample Watch App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.debug.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.debug.xcconfig"; sourceTree = "<group>"; };
+		C08D43BACCC6C77ADE3CC48E /* QONDeferredTransaction+Protected.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "QONDeferredTransaction+Protected.h"; sourceTree = "<group>"; };
 		C49A7C36E2D376FDC85E470B /* Pods-Sample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.release.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.release.xcconfig"; sourceTree = "<group>"; };
 		CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventsServiceInterface.swift; sourceTree = "<group>"; };
 		D0516E52AE4CD42A3873E680 /* DeferredPurchaseListenerTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = DeferredPurchaseListenerTests.m; sourceTree = "<group>"; };
+		E2476B8741A9BF503032C77D /* QONTransaction.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONTransaction.m; sourceTree = "<group>"; };
 		E55D02AA51A75DD7987D4987 /* ScreenEventsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventsService.swift; sourceTree = "<group>"; };
 		E902AE0A2A73461C22DE146A /* Pods_Sample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -1315,7 +1325,6 @@
 				895731BE26DD03A2009507A6 /* QONStoreKitSugare.h */,
 				895731BF26DD03A2009507A6 /* QONEntitlement.h */,
 				70B917622B3314BD00BF0689 /* QONTransaction.h */,
-				70B917632B3314BD00BF0689 /* QONTransaction.m */,
 				895731C026DD03A2009507A6 /* QONLaunchResult.h */,
 				895731C126DD03A2009507A6 /* QONExperimentGroup.m */,
 				895731C326DD03A2009507A6 /* QONAutomations.m */,
@@ -1366,7 +1375,11 @@
 				700B9D4C2E742CBB0031B056 /* QONPurchaseResult.m */,
 				70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */,
 				70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */,
-				61B460B7A476E7C352C3B615 /* QONDeferredPurchaseListener.h */,
+				61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */,
+				9C3A84492202AB820D964710 /* QONTransaction.h */,
+				8C9C86D91A0608B6EC717F7A /* QONDeferredTransaction.h */,
+				0FD1EB3888CE18AE08B55807 /* QONDeferredTransaction.m */,
+				E2476B8741A9BF503032C77D /* QONTransaction.m */,
 			);
 			path = Public;
 			sourceTree = "<group>";
@@ -1550,6 +1563,8 @@
 				8957324926DD03A3009507A6 /* QONLaunchResult+Protected.h */,
 				A1839F615CCAF96B67D8A9F2 /* QONUserProperty+Protected.h */,
 				A18396B586B0A77331A3A346 /* QONUserProperties+Protected.h */,
+				14F9EFD19134A70AC7557932 /* QONTransaction+Protected.h */,
+				C08D43BACCC6C77ADE3CC48E /* QONDeferredTransaction+Protected.h */,
 			);
 			path = Protected;
 			sourceTree = "<group>";
@@ -1871,7 +1886,11 @@
 				A18396F8EAB1D96E22ECA3B5 /* QONUserPropertiesMapper.h in Headers */,
 				A1839CFAA659B77B7DDDD910 /* QONUserProperty+Protected.h in Headers */,
 				A183968F7BFAE4D93F96D32D /* QONUserProperties+Protected.h in Headers */,
-				176D395BD9D9A09A56F417D7 /* QONDeferredPurchaseListener.h in Headers */,
+				176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */,
+				954C21A3DF0071EC9C767F0E /* QONTransaction.h in Headers */,
+				892B79AA3DFD0BE3603620AC /* QONTransaction+Protected.h in Headers */,
+				AE433FD75C1018C282E80DDC /* QONDeferredTransaction.h in Headers */,
+				9AEB405F268F02DD7BE418A0 /* QONDeferredTransaction+Protected.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2248,7 +2267,6 @@
 				70CB7CDE2C246DF200241FF1 /* QONPromotionalOffer.m in Sources */,
 				895732C626DD03A3009507A6 /* QNAPIConstants.m in Sources */,
 				6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */,
-				70B917652B3314BD00BF0689 /* QONTransaction.m in Sources */,
 				70D05A8F29C9FC1600EA5DDF /* QONRemoteConfigManager.m in Sources */,
 				895732C426DD03A3009507A6 /* QNRequestBuilder.m in Sources */,
 				8957329726DD03A3009507A6 /* QONStoreKitSugare.m in Sources */,
@@ -2356,6 +2374,8 @@
 				A183981A2075084AD1E3D0AB /* QONUserProperties.m in Sources */,
 				7042E7832C1C5DB700C5AECF /* QONFallbackService.m in Sources */,
 				A1839D70E9E06E327527B4B9 /* QONUserPropertiesMapper.m in Sources */,
+				4F4C1926ADCE81CB4F5E5284 /* QONDeferredTransaction.m in Sources */,
+				D168550EA3E11E386B577AC0 /* QONTransaction.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
