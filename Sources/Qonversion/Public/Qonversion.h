@@ -8,6 +8,7 @@
 #import "QONIntroEligibility.h"
 #import "QONPromoPurchasesDelegate.h"
 #import "QONEntitlementsUpdateListener.h"
+#import "QONDeferredPurchaseListener.h"
 #import "QONExperimentGroup.h"
 #import "QONExperiment.h"
 #import "QONRemoteConfig.h"
@@ -82,6 +83,14 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
  @param listener - listener for handling deferred purchases
  */
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)listener;
+
+/**
+ Set this listener to be notified when a deferred purchase completes.
+ Deferred purchases happen when transactions require additional steps (SCA, Ask to Buy, etc.).
+ The listener provides transaction-level details, including for consumable products without entitlements.
+ @param listener - listener for handling deferred purchase completions
+ */
+- (void)setDeferredPurchaseListener:(id<QONDeferredPurchaseListener>)listener;
 
 /**
  Set this delegate to handle AppStore promo purchases

@@ -8,6 +8,7 @@
 #import "QONProduct.h"
 #import "QONErrors.h"
 #import "QONEntitlementsUpdateListener.h"
+#import "QONDeferredPurchaseListener.h"
 #import "QONPromoPurchasesDelegate.h"
 #import "QONOfferings.h"
 #import "QONOffering.h"
@@ -36,6 +37,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
 
 @property (nonatomic, weak) id<QONEntitlementsUpdateListener> purchasesDelegate;
+@property (nonatomic, weak) id<QONDeferredPurchaseListener> deferredPurchaseListener;
 @property (nonatomic, weak) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
 
 @property (nonatomic, strong) QNStoreKitService *storeKitService;
@@ -345,6 +347,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate {
   _purchasesDelegate = delegate;
+}
+
+- (void)setDeferredPurchaseListener:(id<QONDeferredPurchaseListener>)listener {
+  _deferredPurchaseListener = listener;
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
@@ -1052,13 +1058,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           }
         } else {
           NSDictionary<NSString *, QONEntitlement *> *resultEntitlements = launchResult.entitlements;
+          QONPurchaseResult *deferredPurchaseResult = nil;
           if (resultError) {
             if ([weakSelf shouldCalculateEntitlementsForError:resultError]) {
               resultEntitlements = [weakSelf calculateEntitlementsForTransactions:@[transaction] products:@[product]];
               [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
+              deferredPurchaseResult = [QONPurchaseResult successFromFallbackWithEntitlements:resultEntitlements transaction:transaction];
             }
           } else {
             [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
+            deferredPurchaseResult = [QONPurchaseResult successWithEntitlements:resultEntitlements transaction:transaction];
+          }
+          if (deferredPurchaseResult) {
+            [weakSelf.deferredPurchaseListener didCompleteDeferredPurchaseWithEntitlements:resultEntitlements purchaseResult:deferredPurchaseResult];
           }
         }
       }

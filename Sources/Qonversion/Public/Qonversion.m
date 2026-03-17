@@ -58,6 +58,7 @@ static bool _isInitialized = NO;
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
   [[Qonversion sharedInstance] setEntitlementsUpdateListener:configCopy.entitlementsUpdateListener];
+  [[Qonversion sharedInstance] setDeferredPurchaseListener:configCopy.deferredPurchaseListener];
   [[Qonversion sharedInstance] setPromoPurchasesDelegate:configCopy.promoPurchasesDelegate];
   
   [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
@@ -132,6 +133,10 @@ static bool _isInitialized = NO;
 
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)delegate {
   [self.productCenterManager setPurchasesDelegate:delegate];
+}
+
+- (void)setDeferredPurchaseListener:(id<QONDeferredPurchaseListener>)listener {
+  [self.productCenterManager setDeferredPurchaseListener:listener];
 }
 
 - (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate {

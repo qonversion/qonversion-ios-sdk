@@ -10,6 +10,7 @@
 #import "QONLaunchMode.h"
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONEntitlementsUpdateListener.h"
+#import "QONDeferredPurchaseListener.h"
 #import "QONEnvironment.h"
 #import "QONPromoPurchasesDelegate.h"
 
@@ -57,6 +58,12 @@ NS_SWIFT_NAME(Qonversion.Configuration)
  Listener to handle entitlements update. For example, when pending purchases like SCA, Ask to buy, etc., happened.
  */
 @property (nonatomic, weak, readonly) id<QONEntitlementsUpdateListener> entitlementsUpdateListener;
+
+/**
+ Listener to be notified when a deferred purchase completes.
+ Provides transaction-level details, including for consumable products without entitlements.
+ */
+@property (nonatomic, weak, readonly) id<QONDeferredPurchaseListener> deferredPurchaseListener;
 
 /**
  Delegate to handle App Store Promo purchases.
@@ -108,6 +115,13 @@ NS_SWIFT_NAME(Qonversion.Configuration)
  @param entitlementsUpdateListener - listener for handling entitlements update
  */
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)entitlementsUpdateListener;
+
+/**
+ Set this listener to be notified when a deferred purchase completes.
+ Provides transaction-level details, including for consumable products without entitlements.
+ @param listener - listener for handling deferred purchase completions
+ */
+- (void)setDeferredPurchaseListener:(id<QONDeferredPurchaseListener>)listener;
 
 /**
  Set this delegate to handle AppStore promo purchases
