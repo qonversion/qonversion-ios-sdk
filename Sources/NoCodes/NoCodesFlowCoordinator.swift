@@ -79,7 +79,7 @@ final class NoCodesFlowCoordinator {
   func showScreen(with id: String) {
     let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(id: id) ?? NoCodesPresentationConfiguration.defaultConfiguration()
     
-    let viewController: NoCodesViewController = viewsAssembly.viewController(with: id, delegate: self, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
+    let viewController: NoCodesViewController = viewsAssembly.viewController(with: id, delegate: self, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
     currentVC = viewController
     
     showScreen(viewController, presentationConfiguration)
@@ -89,7 +89,7 @@ final class NoCodesFlowCoordinator {
   func showScreen(withContextKey contextKey: String) {
     let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(contextKey: contextKey) ?? NoCodesPresentationConfiguration.defaultConfiguration()
     
-    let viewController: NoCodesViewController = viewsAssembly.viewController(withContextKey: contextKey, delegate: self, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
+    let viewController: NoCodesViewController = viewsAssembly.viewController(withContextKey: contextKey, delegate: self, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
     currentVC = viewController
     
     showScreen(viewController, presentationConfiguration)
