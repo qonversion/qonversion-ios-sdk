@@ -12,70 +12,15 @@ import Foundation
 import UIKit
 
 protocol NoCodesContextBuilderInterface {
-  func buildContextScript(theme: NoCodesTheme, traitCollection: UITraitCollection) -> String
   func resolveInterfaceStyle(theme: NoCodesTheme, traitCollection: UITraitCollection) -> UIUserInterfaceStyle
+  func buildContextJSON(theme: NoCodesTheme, traitCollection: UITraitCollection, activeEntitlementIds: [String], productsContext: [String: Any]) -> String?
+  func resolveIsFirstLaunch() -> Bool
+  func calculateDaysSinceInstall() -> Int
 }
 
 final class NoCodesContextBuilder: NoCodesContextBuilderInterface {
 
   private static let alreadyLaunchedKey = "io.qonversion.nocodes.alreadyLaunchedBefore"
-
-  func buildContextScript(theme: NoCodesTheme, traitCollection: UITraitCollection) -> String {
-    var deviceFields: [String: String] = [:]
-
-    deviceFields["platform"] = "iOS"
-    deviceFields["osVersion"] = UIDevice.current.systemVersion
-
-    if #available(iOS 16, *) {
-      if let lang = Locale.current.language.languageCode?.identifier {
-        deviceFields["language"] = lang
-      }
-    } else {
-      if let lang = Locale.current.languageCode {
-        deviceFields["language"] = lang
-      }
-    }
-
-    let localeId = Locale.current.identifier
-    if !localeId.isEmpty {
-      deviceFields["locale"] = localeId
-    }
-
-    if let appVersion = Bundle.appVersion {
-      deviceFields["appVersion"] = appVersion
-    }
-
-    if #available(iOS 16, *) {
-      if let region = Locale.current.region?.identifier {
-        deviceFields["country"] = region
-      }
-    } else {
-      if let region = Locale.current.regionCode {
-        deviceFields["country"] = region
-      }
-    }
-
-    let resolvedStyle = resolveInterfaceStyle(theme: theme, traitCollection: traitCollection)
-    switch resolvedStyle {
-    case .dark:
-      deviceFields["theme"] = "dark"
-    case .light, .unspecified:
-      deviceFields["theme"] = "light"
-    @unknown default:
-      deviceFields["theme"] = "light"
-    }
-
-    let fieldsJS = deviceFields.map { key, value in
-      "\(key): \"\(value)\""
-    }.joined(separator: ", ")
-
-    let daysSinceInstall = calculateDaysSinceInstall()
-    let isFirstLaunch = resolveIsFirstLaunch(daysSinceInstall: daysSinceInstall)
-
-    let userFieldsJS = "isFirstLaunch: \(isFirstLaunch), daysSinceInstall: \(daysSinceInstall)"
-
-    return "window.noCodesContext = { device: { \(fieldsJS) }, user: { \(userFieldsJS) } };"
-  }
 
   func resolveInterfaceStyle(theme: NoCodesTheme, traitCollection: UITraitCollection) -> UIUserInterfaceStyle {
     switch theme {
@@ -88,9 +33,63 @@ final class NoCodesContextBuilder: NoCodesContextBuilderInterface {
     }
   }
 
-  // MARK: - Private
+  func buildContextJSON(theme: NoCodesTheme, traitCollection: UITraitCollection, activeEntitlementIds: [String], productsContext: [String: Any]) -> String? {
+    var device: [String: String] = [:]
+    device["platform"] = "iOS"
+    device["osVersion"] = UIDevice.current.systemVersion
 
-  private func resolveIsFirstLaunch(daysSinceInstall: Int) -> Bool {
+    if #available(iOS 16, *) {
+      if let lang = Locale.current.language.languageCode?.identifier {
+        device["language"] = lang
+      }
+    } else {
+      if let lang = Locale.current.languageCode {
+        device["language"] = lang
+      }
+    }
+
+    device["locale"] = Locale.current.identifier
+
+    if let appVersion = Bundle.appVersion {
+      device["appVersion"] = appVersion
+    }
+
+    let resolvedStyle = resolveInterfaceStyle(theme: theme, traitCollection: traitCollection)
+    switch resolvedStyle {
+    case .dark: device["theme"] = "dark"
+    default: device["theme"] = "light"
+    }
+
+    if #available(iOS 16, *) {
+      if let region = Locale.current.region?.identifier {
+        device["country"] = region
+      }
+    } else {
+      if let region = Locale.current.regionCode {
+        device["country"] = region
+      }
+    }
+
+    var user: [String: Any] = [:]
+    user["isFirstLaunch"] = resolveIsFirstLaunch() ? "true" : "false"
+    user["daysSinceInstall"] = calculateDaysSinceInstall()
+    user["hasAnyEntitlement"] = activeEntitlementIds.isEmpty ? "false" : "true"
+    user["entitlements"] = activeEntitlementIds
+
+    var contextData: [String: Any] = ["device": device, "user": user]
+    if !productsContext.isEmpty {
+      contextData["products"] = productsContext
+    }
+
+    let wrapper: [String: Any] = ["data": contextData]
+    guard let jsonData = try? JSONSerialization.data(withJSONObject: wrapper),
+          let jsString = String(data: jsonData, encoding: .utf8) else { return nil }
+
+    return jsString
+  }
+
+  func resolveIsFirstLaunch() -> Bool {
+    let daysSinceInstall = calculateDaysSinceInstall()
     if UserDefaults.standard.bool(forKey: Self.alreadyLaunchedKey) {
       return false
     }
@@ -99,7 +98,7 @@ final class NoCodesContextBuilder: NoCodesContextBuilderInterface {
     return daysSinceInstall == 0
   }
 
-  private func calculateDaysSinceInstall() -> Int {
+  func calculateDaysSinceInstall() -> Int {
     guard let docsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
           let attrs = try? FileManager.default.attributesOfItem(atPath: docsURL.path),
           let creationDate = attrs[.creationDate] as? Date else {

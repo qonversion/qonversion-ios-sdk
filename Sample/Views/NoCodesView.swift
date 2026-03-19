@@ -11,7 +11,7 @@ import Qonversion
 struct NoCodesView: View {
     @EnvironmentObject var appState: AppState
     
-    @State private var contextKey = "cont_test"
+    @State private var contextKey = "con_test"
     @State private var selectedPresentationStyle: NoCodesPresentationStyleOption = .fullScreen
     @State private var animated = true
     @State private var listenerSet = false
@@ -276,6 +276,12 @@ class NoCodesListenerHandler: NoCodesDelegate {
             return "Load Products"
         case .showScreen:
             return "Show Screen"
+        case .redeemPromoCode:
+            return "Redeem Promo Code"
+        case .screenAnalytics:
+            return "Screen Analytics"
+        case .getContext:
+            return "Get Context"
         case .unknown:
             return "Unknown"
         @unknown default:

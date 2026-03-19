@@ -47,6 +47,9 @@ public enum NoCodesActionType {
 
   /// Internal action for JS-originated screen analytics events (CTA taps, page views)
   case screenAnalytics
+
+  /// Internal action for loading context data (device info, user info, entitlements)
+  case getContext
 }
 
 /// Action performed in the No-Codes
