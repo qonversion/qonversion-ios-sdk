@@ -36,7 +36,7 @@ struct SkeletonViewConstants {
   static let lightModeColor: UIColor = .white
 }
 
-class SkeletonView: UIView {
+class SkeletonView: UIView, NoCodesLoadingView {
   
   private var botView: UIView
   private var animationLayers: [CALayer] = []
@@ -167,13 +167,13 @@ class SkeletonView: UIView {
     fatalError("init(coder:) has not been implemented")
   }
   
-  func startAnimation() {
+  func startAnimating() {
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
       self.animationLayers.forEach { self.addAnimation(layer: $0) }
     })
   }
   
-  func stopAnimation() {
+  func stopAnimating() {
     animationLayers.forEach { $0.removeAllAnimations() }
   }
   

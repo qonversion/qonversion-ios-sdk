@@ -9,40 +9,45 @@ import Foundation
 
 #if os(iOS)
 
-class NetworkProvider: NetworkProviderInterface {
-  let session: URLSession
-  
-  init(session: URLSession) {
-    self.session = session
-  }
-  
-  convenience init(timeout: TimeInterval?) {
+class NetworkProvider: NSObject, NetworkProviderInterface, URLSessionDelegate {
+  private(set) var session: URLSession!
+
+  init(timeout: TimeInterval?) {
+    super.init()
     let config = URLSessionConfiguration.default
-    timeout.map {
-      config.timeoutIntervalForRequest = $0
-      config.timeoutIntervalForResource = $0
+    if let timeout = timeout {
+      config.timeoutIntervalForRequest = timeout
+      config.timeoutIntervalForResource = timeout
     }
-    let session = URLSession(configuration: config)
-    self.init(session: session)
+    session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
   }
-  
+
+  override init() {
+    super.init()
+    session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+  }
+
   func send(request: URLRequest) async throws -> (Data, URLResponse) {
-    if #available(macOS 12.0, *) {
-      return try await session.data(for: request)
-    } else {
-      // Fallback for older macOS versions
-      return try await withCheckedThrowingContinuation { continuation in
-        let task = session.dataTask(with: request) { data, response, error in
-          if let error = error {
-            continuation.resume(throwing: error)
-          } else if let data = data, let response = response {
-            continuation.resume(returning: (data, response))
-          } else {
-            continuation.resume(throwing: NSError(domain: "NetworkProvider", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"]))
-          }
+    return try await withCheckedThrowingContinuation { continuation in
+      session.dataTask(with: request) { data, response, error in
+        if let error = error {
+          continuation.resume(throwing: error)
+        } else if let data = data, let response = response {
+          continuation.resume(returning: (data, response))
+        } else {
+          continuation.resume(throwing: NSError(domain: "NetworkProvider", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"]))
         }
-        task.resume()
-      }
+      }.resume()
+    }
+  }
+
+  // MARK: - Temporary SSL bypass for staging. Remove before release.
+  func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+    if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+       let serverTrust = challenge.protectionSpace.serverTrust {
+      completionHandler(.useCredential, URLCredential(trust: serverTrust))
+    } else {
+      completionHandler(.performDefaultHandling, nil)
     }
   }
 }
