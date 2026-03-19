@@ -20,6 +20,7 @@ enum Constants: String {
   case screenId
   case productId
   case setProducts
+  case setContext
 }
 
 protocol NoCodesViewControllerDelegate {
@@ -51,15 +52,18 @@ final class NoCodesViewController: UIViewController {
   private var viewsAssembly: ViewsAssembly!
   private var delegate: NoCodesViewControllerDelegate!
   private var logger: LoggerWrapper!
-  private var skeletonView: SkeletonView!
+  private var loadingView: NoCodesLoadingView!
   private var presentationConfiguration: NoCodesPresentationConfiguration!
   private var purchaseDelegate: NoCodesPurchaseDelegate?
+  private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   private var customLocale: String?
   private var theme: NoCodesTheme!
   private var didTrackScreenShown = false
   private var didTrackScreenClosed = false
+  private var contextBuilder: NoCodesContextBuilderInterface!
+  private var htmlInjector: NoCodesHTMLInjectorInterface!
 
-  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
+  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, contextBuilder: NoCodesContextBuilderInterface, htmlInjector: NoCodesHTMLInjectorInterface, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.screenId = screenId
     self.contextKey = contextKey
     self.noCodesMapper = noCodesMapper
@@ -70,14 +74,21 @@ final class NoCodesViewController: UIViewController {
     self.logger = logger
     self.presentationConfiguration = presentationConfiguration
     self.purchaseDelegate = purchaseDelegate
+    self.screenCustomizationDelegate = screenCustomizationDelegate
     self.customLocale = customLocale
     self.theme = theme
-    
+    self.contextBuilder = contextBuilder
+    self.htmlInjector = htmlInjector
+
     super.init(nibName: nil, bundle: nil)
-    
-    let interfaceStyle = resolveInterfaceStyle()
-    skeletonView = SkeletonView(frame: view.frame, interfaceStyle: interfaceStyle)
-    addSkeleton()
+
+    if let customLoadingView = screenCustomizationDelegate?.noCodesCustomLoadingView() {
+      loadingView = customLoadingView
+    } else {
+      let interfaceStyle = contextBuilder.resolveInterfaceStyle(theme: theme, traitCollection: traitCollection)
+      loadingView = SkeletonView(frame: view.frame, interfaceStyle: interfaceStyle)
+    }
+    addLoadingView()
   }
   
   required init?(coder: NSCoder) {
@@ -93,6 +104,7 @@ final class NoCodesViewController: UIViewController {
     
     let userContentController = WKUserContentController()
     userContentController.add(self, name: "noCodesMessageHandler")
+
     let configuration = WKWebViewConfiguration()
     configuration.userContentController = userContentController
     
@@ -136,62 +148,14 @@ final class NoCodesViewController: UIViewController {
         delegate.noCodesHasShownScreen(id: screen.id)
         trackScreenShownIfNeeded()
 
-        var htmlToLoad = injectCustomLocale(into: screen.html)
-        htmlToLoad = injectTheme(into: htmlToLoad)
+        var htmlToLoad = htmlInjector.injectCustomLocale(into: screen.html, locale: customLocale)
+        htmlToLoad = htmlInjector.injectTheme(into: htmlToLoad, theme: theme)
+
         webView.loadHTMLString(htmlToLoad, baseURL: nil)
       } catch {
         delegate.noCodesFailedToLoadScreen(error: nil)
         logger.error(LoggerInfoMessages.screenLoadingFailed.rawValue)
       }
-    }
-  }
-
-  /// Resolves the interface style based on theme setting.
-  /// Returns the appropriate UIUserInterfaceStyle for skeleton and other UI elements.
-  private func resolveInterfaceStyle() -> UIUserInterfaceStyle {
-    switch theme! {
-    case .auto:
-      return traitCollection.userInterfaceStyle
-    case .light:
-      return .light
-    case .dark:
-      return .dark
-    }
-  }
-  
-  /// Injects a script tag with the custom locale into the HTML's head section.
-  /// This allows the JavaScript localization script to use the client-specified locale.
-  private func injectCustomLocale(into html: String) -> String {
-    guard let customLocale = customLocale else {
-      return html
-    }
-    
-    let localeScript = "<script>window.noCodesCustomLocale = \"\(customLocale)\";</script>"
-    
-    // Try to inject after <head> tag
-    if let headRange = html.range(of: "<head>", options: .caseInsensitive) {
-      var modifiedHtml = html
-      modifiedHtml.insert(contentsOf: localeScript, at: headRange.upperBound)
-      return modifiedHtml
-    } else {
-      // Fallback: prepend to HTML
-      return localeScript + html
-    }
-  }
-  
-  /// Injects a script tag with the theme setting into the HTML's head section.
-  /// This allows the JavaScript to use the specified theme mode.
-  private func injectTheme(into html: String) -> String {
-    let themeScript = "<script>window.noCodesTheme = \"\(theme.rawValue)\";</script>"
-    
-    // Try to inject after <head> tag
-    if let headRange = html.range(of: "<head>", options: .caseInsensitive) {
-      var modifiedHtml = html
-      modifiedHtml.insert(contentsOf: themeScript, at: headRange.upperBound)
-      return modifiedHtml
-    } else {
-      // Fallback: prepend to HTML
-      return themeScript + html
     }
   }
 
@@ -240,30 +204,47 @@ final class NoCodesViewController: UIViewController {
     close(action: nil)
   }
   
-  func addSkeleton() {
-    view.addSubview(skeletonView)
-    skeletonView.startAnimation()
+  func addLoadingView() {
+    loadingView.frame = view.frame
+    loadingView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    view.addSubview(loadingView)
+    loadingView.startAnimating()
   }
-  
-  func removeSkeleton() {
-    skeletonView.removeFromSuperview()
-    skeletonView.stopAnimation()
+
+  func removeLoadingView() {
+    loadingView.removeFromSuperview()
+    loadingView.stopAnimating()
   }
-  
+
+  override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+    super.traitCollectionDidChange(previousTraitCollection)
+
+    guard previousTraitCollection?.userInterfaceStyle != traitCollection.userInterfaceStyle else { return }
+
+    let newTheme = traitCollection.userInterfaceStyle == .dark ? "dark" : "light"
+    let js = """
+    window.noCodesContext = window.noCodesContext || {};
+    window.noCodesContext.device = window.noCodesContext.device || {};
+    window.noCodesContext.device.theme = "\(newTheme)";
+    window.dispatchEvent(new Event("noCodesContextUpdate"));
+    """
+    webView?.evaluateJavaScript(js, completionHandler: nil)
+  }
+
 }
 
 extension NoCodesViewController: WKScriptMessageHandler {
   
   func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
     guard let body = message.body as? [String: Any] else { return }
-    
+
     let action: NoCodesAction = noCodesMapper.map(rawAction: body)
     
     if action.type == .showScreen {
-      return removeSkeleton()
+      return removeLoadingView()
     }
     
-    if action.type != .loadProducts && action.type != .screenAnalytics {
+    if action.type != .loadProducts && action.type != .screenAnalytics && action.type != .getContext {
       delegate.noCodesStartsExecuting(action: action)
     }
     
@@ -288,6 +269,8 @@ extension NoCodesViewController: WKScriptMessageHandler {
       handle(redeemPromoCodeAction: action)
     case .screenAnalytics:
       handle(screenAnalyticsAction: action)
+    case .getContext:
+      handle(getContextAction: action)
     default: break
     }
   }
@@ -316,6 +299,111 @@ extension NoCodesViewController {
       "happened_at": Int(Date().timeIntervalSince1970)
     ])
     screenEventsService.track(event: event)
+  }
+
+  private func handle(getContextAction: NoCodesAction) {
+    Task {
+      let variables = getContextAction.parameters?["variables"] as? [String] ?? []
+      let requestedProductIds = extractProductIds(from: variables)
+
+      async let entitlementsResult = loadActiveEntitlementIds()
+      async let productsResult = loadProductsContext(productIds: requestedProductIds)
+
+      let activeEntitlementIds = await entitlementsResult
+      let productsContext = await productsResult
+
+      guard let jsString = contextBuilder.buildContextJSON(theme: theme, traitCollection: traitCollection, activeEntitlementIds: activeEntitlementIds, productsContext: productsContext) else { return }
+
+      await send(event: Constants.setContext.rawValue, data: jsString)
+    }
+  }
+
+  private func extractProductIds(from variables: [String]) -> [String] {
+    var ids: Set<String> = []
+    for variable in variables {
+      let parts = variable.split(separator: ".")
+      guard parts.count == 3, parts[0] == "products" else { continue }
+      let id = String(parts[1])
+      if id != "hasAnyIntro" && id != "selected" {
+        ids.insert(id)
+      }
+    }
+    return Array(ids)
+  }
+
+  private func loadActiveEntitlementIds() async -> [String] {
+    do {
+      let entitlements = try await Qonversion.shared().checkEntitlements()
+      return entitlements.filter { $0.value.isActive }.map { $0.key }
+    } catch {
+      logger.error("Failed to load entitlements for context: \(error.localizedDescription)")
+      return []
+    }
+  }
+
+  private func loadProductsContext(productIds: [String]) async -> [String: Any] {
+    guard !productIds.isEmpty else { return [:] }
+
+    do {
+      let products = try await Qonversion.shared().products()
+      var context: [String: Any] = [:]
+      var hasAnyIntro = false
+
+      for id in productIds {
+        guard let product = products[id] else { continue }
+        let hasIntro = product.skProduct?.introductoryPrice != nil
+        if hasIntro { hasAnyIntro = true }
+
+        var introType = ""
+        if let introPrice = product.skProduct?.introductoryPrice {
+          switch introPrice.paymentMode {
+          case .freeTrial: introType = "free_trial"
+          case .payUpFront: introType = "pay_up_front"
+          case .payAsYouGo: introType = "pay_as_you_go"
+          @unknown default: break
+          }
+        }
+
+        context[id] = [
+          "hasIntro": hasIntro ? "true" : "false",
+          "introType": introType
+        ]
+      }
+
+      context["hasAnyIntro"] = hasAnyIntro ? "true" : "false"
+      return context
+    } catch {
+      logger.error("Failed to load products for context: \(error.localizedDescription)")
+      return [:]
+    }
+  }
+
+  private func injectProductsContext(products: [String: Qonversion.Product]) async {
+    var productEntries: [String] = []
+    var hasAnyIntro = false
+
+    for (id, product) in products {
+      let hasIntro = product.skProduct?.introductoryPrice != nil
+      if hasIntro { hasAnyIntro = true }
+
+      var introType = "null"
+      if let introPrice = product.skProduct?.introductoryPrice {
+        introType = "\"\(noCodesMapper.map(introPricePaymentType: introPrice.paymentMode))\""
+      }
+
+      productEntries.append("\"\(id)\": { hasIntro: \(hasIntro), introType: \(introType) }")
+    }
+
+    let productsJS = "{ " + productEntries.joined(separator: ", ") + " }"
+    let js = """
+    window.noCodesContext = window.noCodesContext || {};
+    window.noCodesContext.products = \(productsJS);
+    window.noCodesContext.products.hasAnyIntro = \(hasAnyIntro);
+    window.dispatchEvent(new Event("noCodesContextUpdate"));
+    """
+    await MainActor.run {
+      webView?.evaluateJavaScript(js, completionHandler: nil)
+    }
   }
 
   private var isModalPresentation: Bool {
@@ -368,9 +456,10 @@ extension NoCodesViewController {
         return delegate.noCodesFailedToLoadScreen(error: NoCodesError(type: .productsLoadingFailed))
       }
       await send(event: Constants.setProducts.rawValue, data: jsString)
+      await injectProductsContext(products: filteredProducts)
     }
   }
-  
+
   private func handle(urlAction: NoCodesAction) {
     guard let urlString: String = urlAction.parameters?[Constants.url.rawValue] as? String,
           let url = URL(string: urlString) else {
@@ -491,7 +580,7 @@ extension NoCodesViewController {
   private func handle(navigationAction: NoCodesAction) {
     guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else { return }
 
-    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
+    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
     navigationController?.pushViewController(viewController, animated: true)
     delegate.noCodesFinishedExecuting(action: navigationAction)
   }

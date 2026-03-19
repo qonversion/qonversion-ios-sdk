@@ -64,6 +64,10 @@ public protocol NoCodesScreenCustomizationDelegate {
   /// Used only for screenPresentationStyle == .popover for iPad.
   /// You can omit implementing this delegate function if you do not support iPad or do not use popover presentation style.
   func viewForPopoverPresentation() -> UIView?
+
+  /// Returns a custom loading view to display while the NoCodes screen is loading.
+  /// If nil is returned, the default skeleton loading view will be used.
+  func noCodesCustomLoadingView() -> NoCodesLoadingView?
 }
 
 /// Delegate responsible for custom purchase and restore handling.
@@ -121,6 +125,10 @@ public extension NoCodesScreenCustomizationDelegate {
   }
   
   func viewForPopoverPresentation() -> UIView? {
+    return nil
+  }
+
+  func noCodesCustomLoadingView() -> NoCodesLoadingView? {
     return nil
   }
 }
