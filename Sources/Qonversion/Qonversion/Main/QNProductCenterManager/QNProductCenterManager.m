@@ -561,8 +561,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       NSDictionary<NSString *, QONEntitlement *> *entitlements = result.entitlements;
       NSError *resultError = error;
       if (error && !weakSelf.pendingIdentityUserID) {
-        entitlements = [weakSelf getActualEntitlementsForDefaultState:NO];
-        resultError = entitlements ? nil : error;
+        // Preserve backend entitlements when available (e.g. Stripe subscriptions).
+        // Only fall back to cache when backend returned no entitlements.
+        if (!entitlements || entitlements.count == 0) {
+          entitlements = [weakSelf getActualEntitlementsForDefaultState:NO];
+        }
+        resultError = (entitlements && entitlements.count > 0) ? nil : error;
       }
 
       run_block_on_main(completion, entitlements, resultError);
@@ -894,22 +898,32 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     }
 
     if (error) {
-      completion([[QONLaunchResult alloc] init], error);
+      // Try to parse entitlements from the response even when error is present.
+      // This handles cases like Stripe users on iOS where the backend returns
+      // valid entitlements (200 OK) but StoreKit throws an error due to empty Apple receipt.
+      QONLaunchResult *launchResult = [[QONLaunchResult alloc] init];
+      if (dict) {
+        QNMapperObject *mappedResult = [QNMapper mapperObjectFrom:dict];
+        if (!mappedResult.error && mappedResult.data) {
+          launchResult = [QNMapper fillLaunchResult:mappedResult.data];
+        }
+      }
+      completion(launchResult, error);
       return;
     }
-    
+
     QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
     if (result.error) {
       completion([[QONLaunchResult alloc] init], result.error);
       return;
     }
-    
+
     QONUser *user = [QNMapper fillUser:result.data];
     weakSelf.user = user;
-    
+
     weakSelf.productsEntitlementsRelation = [QNMapper mapProductsEntitlementsRelation:result.data];
     [weakSelf.persistentStorage storeObject:weakSelf.productsEntitlementsRelation forKey:kKeyQUserDefaultsProductsPermissionsRelation];
-    
+
     QONLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
     completion(launchResult, nil);
     
