@@ -1071,7 +1071,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           }
           if (shouldNotify) {
             // Notify deprecated EntitlementsUpdateListener (backward compat)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
             [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
+#pragma clang diagnostic pop
             // Notify new DeferredPurchasesListener with full transaction details
             QONDeferredTransaction *deferredTransaction = [QONDeferredTransaction transactionWithSKPaymentTransaction:transaction skProduct:product type:QONDeferredTransactionTypeUnknown];
             [weakSelf.deferredPurchasesListener deferredPurchaseCompleted:deferredTransaction];
