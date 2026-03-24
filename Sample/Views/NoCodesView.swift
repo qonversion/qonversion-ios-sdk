@@ -276,6 +276,12 @@ class NoCodesListenerHandler: NoCodesDelegate {
             return "Load Products"
         case .showScreen:
             return "Show Screen"
+        case .redeemPromoCode:
+            return "Redeem Promo Code"
+        case .screenAnalytics:
+            return "Screen Analytics"
+        case .getContext:
+            return "Get Context"
         case .unknown:
             return "Unknown"
         @unknown default:
