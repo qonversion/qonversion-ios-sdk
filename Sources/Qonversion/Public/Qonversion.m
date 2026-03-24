@@ -57,7 +57,10 @@ static bool _isInitialized = NO;
   [[QNAPIClient shared] setBaseURL:configCopy.baseURL];
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   [[Qonversion sharedInstance] setEntitlementsUpdateListener:configCopy.entitlementsUpdateListener];
+#pragma clang diagnostic pop
   [[Qonversion sharedInstance] setDeferredPurchasesListener:configCopy.deferredPurchasesListener];
   [[Qonversion sharedInstance] setPromoPurchasesDelegate:configCopy.promoPurchasesDelegate];
   

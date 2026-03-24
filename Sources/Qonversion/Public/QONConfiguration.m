@@ -88,7 +88,10 @@ static NSString *const kSDKVersion = @"6.7.0";
   [copyConfig setVersion:_version];
   [copyConfig setEnvironment:_environment];
   [copyConfig setEntitlementsCacheLifetime:_entitlementsCacheLifetime];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   [copyConfig setEntitlementsUpdateListener:_entitlementsUpdateListener];
+#pragma clang diagnostic pop
   [copyConfig setDeferredPurchasesListener:_deferredPurchasesListener];
   [copyConfig setCustomUserDefaults:_customUserDefaults];
   [copyConfig setProxyURL:_baseURL];
