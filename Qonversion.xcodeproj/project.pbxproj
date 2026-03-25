@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		202B79E6100384DE55BACD10 /* QONEntitlementsUpdateListenerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		0A17440D00C09DABC1E2B1D3 /* QONEntitlementsUpdateListenerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */; };
 		15EE5F2E2F6CBF096CB24CBA /* NoCodesLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */; };
@@ -343,6 +344,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONDeferredPurchasesListener.h; sourceTree = "<group>"; };
 		C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONEntitlementsUpdateListenerAdapter.h; sourceTree = "<group>"; };
 		0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONEntitlementsUpdateListenerAdapter.m; sourceTree = "<group>"; };
 		02B82604A89181D262616958 /* NoCodesContextBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesContextBuilder.swift; sourceTree = "<group>"; };
@@ -1347,6 +1349,7 @@
 				895731CC26DD03A2009507A6 /* QONIntroEligibility.m */,
 				895731CD26DD03A2009507A6 /* QONUser.m */,
 				895731CE26DD03A2009507A6 /* QONEntitlementsUpdateListener.h */,
+				61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */,
 				895731CF26DD03A2009507A6 /* QONAutomations.h */,
 				895731D126DD03A2009507A6 /* QONExperimentGroup.h */,
 				895731D226DD03A2009507A6 /* QONEntitlement.m */,
@@ -1832,6 +1835,7 @@
 				700B9D502E742E5D0031B056 /* QONPurchaseResult+Protected.h in Headers */,
 				6A21BF532AB2059F005BDA7C /* QONRequest.h in Headers */,
 				8957329026DD03A3009507A6 /* QONEntitlementsUpdateListener.h in Headers */,
+				176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */,
 				8957329326DD03A3009507A6 /* QONExperimentGroup.h in Headers */,
 				7098564D2A370F270023DFAB /* QONRemoteConfigMapper.h in Headers */,
 				6A121DB12BBB10370073B330 /* QONRemoteConfigListRequestData.h in Headers */,
