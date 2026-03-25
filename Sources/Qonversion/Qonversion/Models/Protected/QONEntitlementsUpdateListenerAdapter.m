@@ -22,6 +22,11 @@
   return self;
 }
 
+// Contract: deferredPurchaseCompleted: is only called with successful PurchaseResult
+// (never error state). All call sites in QNProductCenterManager construct the result
+// via successWithEntitlements: and guard with shouldNotify checks.
+// This means the adapter always forwards valid entitlements to the legacy listener,
+// preserving the original EntitlementsUpdateListener contract.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (void)deferredPurchaseCompleted:(QONPurchaseResult *)purchaseResult {
