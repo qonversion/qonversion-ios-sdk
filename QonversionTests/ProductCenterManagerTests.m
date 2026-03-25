@@ -30,7 +30,10 @@
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoaded;
 
+@property (nonatomic, copy) NSString *pendingIdentityUserID;
+
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)result;
+- (void)actualizeEntitlements:(QONEntitlementsCompletionHandler)completion;
 
 @end
 
@@ -91,17 +94,89 @@
   // Given
   _manager.launchingFinished = YES;
   XCTestExpectation *expectation = [self expectationWithDescription:@""];
-  
+
   // When
   [_manager checkEntitlements:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
     XCTAssertEqual(result, [NSDictionary new]);
     XCTAssertNil(error);
     XCTAssertEqual([NSThread mainThread], [NSThread currentThread]);
-    
+
     [expectation fulfill];
   }];
-  
+
   // Then
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+}
+
+// MARK: - SUP3-30: actualizeEntitlements must preserve backend entitlements on error
+
+- (void)testActualizeEntitlements_backendReturnsEntitlementsWithError_preservesEntitlements {
+  // Given: Backend returns entitlements (Stripe) AND error (empty Apple receipt)
+  // This simulates a Stripe user on iOS where backend returns valid entitlements
+  // but StoreKit throws SKError.paymentInvalid due to missing Apple receipt.
+  XCTestExpectation *expectation = [self expectationWithDescription:@"entitlements preserved"];
+
+  NSError *skError = [NSError errorWithDomain:@"SKErrorDomain"
+                                         code:4 // SKErrorPaymentInvalid
+                                     userInfo:@{NSLocalizedDescriptionKey: @"Purchase identifier was invalid"}];
+
+  OCMStub([_mockClient launchRequest:QONRequestTriggerActualizePermissions
+                          completion:([OCMArg invokeBlockWithArgs:[self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON], skError, nil])]);
+
+  // When
+  [_manager actualizeEntitlements:^(NSDictionary<NSString *, QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+    // Then: Backend entitlements should be returned, error should be nil
+    XCTAssertNotNil(result, @"Backend entitlements should not be discarded");
+    XCTAssertGreaterThan(result.count, 0, @"Should have at least one entitlement from backend");
+    XCTAssertNil(error, @"Error should be nil when backend returned valid entitlements");
+
+    [expectation fulfill];
+  }];
+
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+}
+
+- (void)testActualizeEntitlements_backendReturnsNoEntitlementsWithError_returnsError {
+  // Given: Backend returns empty entitlements AND error
+  XCTestExpectation *expectation = [self expectationWithDescription:@"error returned"];
+
+  NSError *skError = [NSError errorWithDomain:@"SKErrorDomain"
+                                         code:4
+                                     userInfo:nil];
+
+  // init_failed_state.json has no permissions/entitlements
+  OCMStub([_mockClient launchRequest:QONRequestTriggerActualizePermissions
+                          completion:([OCMArg invokeBlockWithArgs:[self JSONObjectFromContentsOfFile:keyQNInitFailedJSON], skError, nil])]);
+
+  // When
+  [_manager actualizeEntitlements:^(NSDictionary<NSString *, QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+    // Then: Error should be returned since no entitlements available
+    XCTAssertNotNil(error, @"Error should be returned when no entitlements available");
+    XCTAssertEqual(error.code, 4, @"Error code should be preserved");
+
+    [expectation fulfill];
+  }];
+
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+}
+
+- (void)testActualizeEntitlements_backendReturnsEntitlementsNoError_returnsEntitlements {
+  // Given: Normal case - backend returns entitlements without error
+  XCTestExpectation *expectation = [self expectationWithDescription:@"normal case"];
+
+  OCMStub([_mockClient launchRequest:QONRequestTriggerActualizePermissions
+                          completion:([OCMArg invokeBlockWithArgs:[self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON], [NSNull null], nil])]);
+
+  // When
+  [_manager actualizeEntitlements:^(NSDictionary<NSString *, QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
+    // Then
+    XCTAssertNotNil(result);
+    XCTAssertEqual(result.count, 2);
+    XCTAssertNil(error);
+
+    [expectation fulfill];
+  }];
+
   [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
 }
 
