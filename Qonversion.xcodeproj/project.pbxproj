@@ -8,10 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */
-		202B79E6100384DE55BACD10 /* QONEntitlementsUpdateListenerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */; settings = {ATTRIBUTES = (Project, ); }; };
-		0A17440D00C09DABC1E2B1D3 /* QONEntitlementsUpdateListenerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */; }; = {isa = PBXBuildFile; fileRef = 61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */
-		C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONEntitlementsUpdateListenerAdapter.h; sourceTree = "<group>"; };
-		0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONEntitlementsUpdateListenerAdapter.m; sourceTree = "<group>"; };; settings = {ATTRIBUTES = (Public, ); }; };
 		218480F803075431AD24186B /* ScreenEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2865A58C95F0B475399053F2 /* ScreenEvent.swift */; };
 		3521C548C169154D45835C38 /* ScreenEventsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */; };
 		15EE5F2E2F6CBF096CB24CBA /* NoCodesLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */; };
@@ -1911,8 +1907,6 @@
 				A1839CFAA659B77B7DDDD910 /* QONUserProperty+Protected.h in Headers */,
 				A183968F7BFAE4D93F96D32D /* QONUserProperties+Protected.h in Headers */,
 				176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */
-		202B79E6100384DE55BACD10 /* QONEntitlementsUpdateListenerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */; settings = {ATTRIBUTES = (Project, ); }; };
-		0A17440D00C09DABC1E2B1D3 /* QONEntitlementsUpdateListenerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */; };,
 				954C21A3DF0071EC9C767F0E /* QONTransaction.h in Headers */,
 				892B79AA3DFD0BE3603620AC /* QONTransaction+Protected.h in Headers */,
 			);
