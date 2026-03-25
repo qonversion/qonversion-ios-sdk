@@ -5,7 +5,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class QONDeferredTransaction;
+@class QONPurchaseResult;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -15,10 +15,10 @@ NS_SWIFT_NAME(Qonversion.DeferredPurchasesListener)
 /**
  Called when a deferred purchase completes.
  For example, when pending purchases like SCA, Ask to Buy, etc., are approved and finalized.
- Provides full transaction details, including for consumable products without entitlements.
- @param transaction - transaction details for the completed deferred purchase.
+ Provides the purchase result with entitlements.
+ @param purchaseResult - the result of the completed deferred purchase, containing entitlements.
  */
-- (void)deferredPurchaseCompleted:(QONDeferredTransaction * _Nonnull)transaction;
+- (void)deferredPurchaseCompleted:(QONPurchaseResult * _Nonnull)purchaseResult;
 
 @end
 

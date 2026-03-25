@@ -8,6 +8,7 @@
 #import "QONFallbackService.h"
 #import "QONDeferredPurchasesListener.h"
 #import "QONEntitlementsUpdateListener.h"
+#import "QONEntitlementsUpdateListenerAdapter.h"
 #import "QONEntitlement.h"
 #import "QONPurchaseResult.h"
 #import "QONPurchaseResult+Protected.h"
@@ -15,16 +16,14 @@
 
 @interface QNProductCenterManager (DeferredTestPrivate)
 
-@property (nonatomic, weak) id<QONEntitlementsUpdateListener> purchasesDelegate;
-@property (nonatomic, weak) id<QONDeferredPurchasesListener> deferredPurchasesListener;
+@property (nonatomic, strong) id<QONDeferredPurchasesListener> deferredPurchasesListener;
+@property (nonatomic, strong) QONEntitlementsUpdateListenerAdapter *listenerAdapter;
 
 @end
 
 @interface DeferredPurchaseListenerTests : XCTestCase
 
 @property (nonatomic) QNProductCenterManager *manager;
-@property (nonatomic) id mockDeferredListener;
-@property (nonatomic) id mockEntitlementsListener;
 
 @end
 
@@ -36,82 +35,97 @@
   id mockLocalStorage = OCMProtocolMock(@protocol(QNLocalStorage));
   id mockFallbackService = OCMClassMock([QONFallbackService class]);
   _manager = [[QNProductCenterManager alloc] initWithUserInfoService:mockUserInfoService identityManager:mockIdentityManager localStorage:mockLocalStorage fallbackService:mockFallbackService];
-
-  _mockDeferredListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
-  _mockEntitlementsListener = OCMProtocolMock(@protocol(QONEntitlementsUpdateListener));
 }
 
 - (void)tearDown {
   _manager = nil;
-  _mockDeferredListener = nil;
-  _mockEntitlementsListener = nil;
 }
 
 #pragma mark - Setter Tests
 
 - (void)testSetDeferredPurchaseListenerStoresListener {
-  // When
-  [_manager setDeferredPurchasesListener:_mockDeferredListener];
+  id mockListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
 
-  // Then
-  XCTAssertEqual(_manager.deferredPurchasesListener, _mockDeferredListener);
+  [_manager setDeferredPurchasesListener:mockListener];
+
+  XCTAssertEqual(_manager.deferredPurchasesListener, mockListener);
 }
 
 - (void)testSetDeferredPurchaseListenerToNilClearsListener {
-  // Given
-  [_manager setDeferredPurchasesListener:_mockDeferredListener];
+  id mockListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
+  [_manager setDeferredPurchasesListener:mockListener];
 
-  // When
   [_manager setDeferredPurchasesListener:nil];
 
-  // Then
   XCTAssertNil(_manager.deferredPurchasesListener);
 }
 
 - (void)testSetDeferredPurchaseListenerReplacesExisting {
-  // Given
-  id anotherListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
-  [_manager setDeferredPurchasesListener:_mockDeferredListener];
+  id firstListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
+  id secondListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
+  [_manager setDeferredPurchasesListener:firstListener];
 
-  // When
-  [_manager setDeferredPurchasesListener:anotherListener];
+  [_manager setDeferredPurchasesListener:secondListener];
 
-  // Then
-  XCTAssertEqual(_manager.deferredPurchasesListener, anotherListener);
+  XCTAssertEqual(_manager.deferredPurchasesListener, secondListener);
 }
 
-#pragma mark - Coexistence Tests
+#pragma mark - Adapter Pattern Tests
 
-- (void)testBothListenersCanBeSetIndependently {
-  // When
-  [_manager setPurchasesDelegate:_mockEntitlementsListener];
-  [_manager setDeferredPurchasesListener:_mockDeferredListener];
+- (void)testSetPurchasesDelegateWrapsInAdapter {
+  // When legacy setPurchasesDelegate is called, it should create an adapter
+  // and set it as the deferredPurchasesListener.
+  id mockLegacyListener = OCMProtocolMock(@protocol(QONEntitlementsUpdateListener));
 
-  // Then
-  XCTAssertEqual(_manager.purchasesDelegate, _mockEntitlementsListener);
-  XCTAssertEqual(_manager.deferredPurchasesListener, _mockDeferredListener);
+  [_manager setPurchasesDelegate:mockLegacyListener];
+
+  XCTAssertNotNil(_manager.deferredPurchasesListener);
+  XCTAssertNotNil(_manager.listenerAdapter);
+  XCTAssertTrue([_manager.deferredPurchasesListener conformsToProtocol:@protocol(QONDeferredPurchasesListener)]);
 }
 
-- (void)testSettingDeferredListenerDoesNotAffectEntitlementsListener {
-  // Given
-  [_manager setPurchasesDelegate:_mockEntitlementsListener];
+- (void)testSetPurchasesDelegateToNilClearsBoth {
+  id mockLegacyListener = OCMProtocolMock(@protocol(QONEntitlementsUpdateListener));
+  [_manager setPurchasesDelegate:mockLegacyListener];
 
-  // When
-  [_manager setDeferredPurchasesListener:_mockDeferredListener];
+  [_manager setPurchasesDelegate:nil];
 
-  // Then
-  XCTAssertEqual(_manager.purchasesDelegate, _mockEntitlementsListener);
+  XCTAssertNil(_manager.deferredPurchasesListener);
+  XCTAssertNil(_manager.listenerAdapter);
 }
 
-- (void)testSettingEntitlementsListenerDoesNotAffectDeferredListener {
-  // Given
-  [_manager setDeferredPurchasesListener:_mockDeferredListener];
+- (void)testSetDeferredListenerClearsAdapter {
+  // Setting the new listener directly should clear any adapter from legacy listener.
+  id mockLegacyListener = OCMProtocolMock(@protocol(QONEntitlementsUpdateListener));
+  [_manager setPurchasesDelegate:mockLegacyListener];
+  XCTAssertNotNil(_manager.listenerAdapter);
 
-  // When
-  [_manager setPurchasesDelegate:_mockEntitlementsListener];
+  id mockDeferredListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
+  [_manager setDeferredPurchasesListener:mockDeferredListener];
 
-  // Then
-  XCTAssertEqual(_manager.deferredPurchasesListener, _mockDeferredListener);
+  XCTAssertNil(_manager.listenerAdapter);
+  XCTAssertEqual(_manager.deferredPurchasesListener, mockDeferredListener);
+}
+
+#pragma mark - Adapter Forwarding Tests
+
+- (void)testAdapterForwardsEntitlementsFromPurchaseResult {
+  // The adapter should extract entitlements from QONPurchaseResult
+  // and forward them to the wrapped legacy listener.
+  id mockLegacyListener = OCMProtocolMock(@protocol(QONEntitlementsUpdateListener));
+  QONEntitlementsUpdateListenerAdapter *adapter = [[QONEntitlementsUpdateListenerAdapter alloc] initWithLegacyListener:mockLegacyListener];
+
+  NSDictionary *entitlements = @{@"premium": OCMClassMock([QONEntitlement class])};
+  QONPurchaseResult *purchaseResult = [QONPurchaseResult successWithEntitlements:entitlements transaction:nil];
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  OCMExpect([mockLegacyListener didReceiveUpdatedEntitlements:entitlements]);
+#pragma clang diagnostic pop
+
+  [adapter deferredPurchaseCompleted:purchaseResult];
+
+  OCMVerifyAll(mockLegacyListener);
 }
 
 @end

@@ -9,8 +9,7 @@
 #import "QONErrors.h"
 #import "QONEntitlementsUpdateListener.h"
 #import "QONDeferredPurchasesListener.h"
-#import "QONDeferredTransaction.h"
-#import "QONDeferredTransaction+Protected.h"
+#import "QONEntitlementsUpdateListenerAdapter.h"
 #import "QONPromoPurchasesDelegate.h"
 #import "QONOfferings.h"
 #import "QONOffering.h"
@@ -38,8 +37,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
 
-@property (nonatomic, weak) id<QONEntitlementsUpdateListener> purchasesDelegate;
-@property (nonatomic, weak) id<QONDeferredPurchasesListener> deferredPurchasesListener;
+// Single listener: adapter pattern wraps legacy EntitlementsUpdateListener
+// Strong ref for adapter (we own it), weak ref when set directly
+@property (nonatomic, strong) id<QONDeferredPurchasesListener> deferredPurchasesListener;
+@property (nonatomic, strong) QONEntitlementsUpdateListenerAdapter *listenerAdapter;
 @property (nonatomic, weak) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
 
 @property (nonatomic, strong) QNStoreKitService *storeKitService;
@@ -348,10 +349,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate {
-  _purchasesDelegate = delegate;
+  // Adapter pattern: wrap the legacy listener so the manager works
+  // with a single listener type (QONDeferredPurchasesListener only).
+  if (delegate) {
+    _listenerAdapter = [[QONEntitlementsUpdateListenerAdapter alloc] initWithLegacyListener:delegate];
+    _deferredPurchasesListener = _listenerAdapter;
+  } else {
+    _listenerAdapter = nil;
+    _deferredPurchasesListener = nil;
+  }
 }
 
 - (void)setDeferredPurchasesListener:(id<QONDeferredPurchasesListener>)listener {
+  _listenerAdapter = nil;
   _deferredPurchasesListener = listener;
 }
 
@@ -1070,14 +1080,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
             shouldNotify = YES;
           }
           if (shouldNotify) {
-            // Notify deprecated EntitlementsUpdateListener (backward compat)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
-#pragma clang diagnostic pop
-            // Notify new DeferredPurchasesListener with full transaction details
-            QONDeferredTransaction *deferredTransaction = [QONDeferredTransaction transactionWithSKPaymentTransaction:transaction skProduct:product type:QONDeferredTransactionTypeUnknown];
-            [weakSelf.deferredPurchasesListener deferredPurchaseCompleted:deferredTransaction];
+            // Single listener: adapter pattern handles legacy EntitlementsUpdateListener
+            QONPurchaseResult *deferredResult = [QONPurchaseResult successWithEntitlements:resultEntitlements transaction:transaction];
+            [weakSelf.deferredPurchasesListener deferredPurchaseCompleted:deferredResult];
           }
         }
       }
