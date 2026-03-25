@@ -7,9 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */
-		218480F803075431AD24186B /* ScreenEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2865A58C95F0B475399053F2 /* ScreenEvent.swift */; };
-		3521C548C169154D45835C38 /* ScreenEventsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */; };
+		202B79E6100384DE55BACD10 /* QONEntitlementsUpdateListenerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */; settings = {ATTRIBUTES = (Project, ); }; };
+		0A17440D00C09DABC1E2B1D3 /* QONEntitlementsUpdateListenerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */; };
 		15EE5F2E2F6CBF096CB24CBA /* NoCodesLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */; };
 		207A91DAC28DE776D419F8DC /* NoCodesHTMLInjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59914571FB7D583A6205C7A /* NoCodesHTMLInjector.swift */; };
 		218480F803075431AD24186B /* ScreenEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2865A58C95F0B475399053F2 /* ScreenEvent.swift */; };
@@ -159,6 +158,7 @@
 		70A26ADE2A31BC44008CE4A7 /* QONExperiment.h in Headers */ = {isa = PBXBuildFile; fileRef = 70A26ADC2A31BC44008CE4A7 /* QONExperiment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70A26ADF2A31BC44008CE4A7 /* QONExperiment.m in Sources */ = {isa = PBXBuildFile; fileRef = 70A26ADD2A31BC44008CE4A7 /* QONExperiment.m */; };
 		70B917642B3314BD00BF0689 /* QONTransaction.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B917622B3314BD00BF0689 /* QONTransaction.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		70B917652B3314BD00BF0689 /* QONTransaction.m in Sources */ = {isa = PBXBuildFile; fileRef = 70B917632B3314BD00BF0689 /* QONTransaction.m */; };
 		70B917672B34284200BF0689 /* QONTransaction+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 70B917662B34284200BF0689 /* QONTransaction+Protected.h */; };
 		70BAB0642B58306E00D19A6A /* expected_entitlements.json in Resources */ = {isa = PBXBuildFile; fileRef = 70893C992B3EC136002C6B82 /* expected_entitlements.json */; };
 		70CB7CDD2C246DF200241FF1 /* QONPromotionalOffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -179,10 +179,10 @@
 		70ED951029FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 70ED950E29FAAF31005F5D00 /* QONStoreKit2PurchaseModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70ED951129FAAF31005F5D00 /* QONStoreKit2PurchaseModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 70ED950F29FAAF31005F5D00 /* QONStoreKit2PurchaseModel.m */; };
 		70ED967129FAC8D3005F5D00 /* QonversionSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70ED967029FAC8D3005F5D00 /* QonversionSwift.swift */; };
+		70EE74342E2E928100260875 /* Watch Sample Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 70EE742A2E2E928000260875 /* Watch Sample Watch App.app */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		70F07B1B28AD085600A45D41 /* QONEntitlementsCacheLifetime.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F07B1A28AD085600A45D41 /* QONEntitlementsCacheLifetime.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */; };
 		891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 891ECE0927734B8900DF6A56 /* AdServices.framework */; };
-		892B79AA3DFD0BE3603620AC /* QONTransaction+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 14F9EFD19134A70AC7557932 /* QONTransaction+Protected.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		8957327926DD03A3009507A6 /* QNDevice+Advertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B626DD03A2009507A6 /* QNDevice+Advertising.h */; };
 		8957327A26DD03A3009507A6 /* QNDevice+Advertising.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731B726DD03A2009507A6 /* QNDevice+Advertising.m */; };
 		8957327B26DD03A3009507A6 /* QONUser.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B926DD03A2009507A6 /* QONUser.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -273,7 +273,6 @@
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		89A192A52604974800C3FCD9 /* QNUserInfoServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */; };
 		89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */; };
-		954C21A3DF0071EC9C767F0E /* QONTransaction.h in Headers */ = {isa = PBXBuildFile; fileRef = 9C3A84492202AB820D964710 /* QONTransaction.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		99E72B3BA3F5AAD334651E5F /* Pods_QonversionTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35E933FB622433DEC9555DD4 /* Pods_QonversionTests.framework */; };
 		A1839332BA452C481BDC499C /* QONExceptionManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839DA452F152E40ED4EB8C /* QONExceptionManager.h */; };
 		A18393481F6CF124F055056C /* QONUserProperty.m in Sources */ = {isa = PBXBuildFile; fileRef = A1839E84DBCF12F2CDC1930D /* QONUserProperty.m */; };
@@ -285,13 +284,6 @@
 		A1839D70E9E06E327527B4B9 /* QONUserPropertiesMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = A183991B1D59C14ED8BBBC87 /* QONUserPropertiesMapper.m */; };
 		A1839D7723FB8E18EC0294C9 /* QONExceptionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */; };
 		A1839F56181BFBE72A0DD0DF /* QONUserProperty.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839793226FD80F320A246F /* QONUserProperty.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		A2649CD29A7FDF280A2EC27C /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E902AE0A2A73461C22DE146A /* Pods_Sample.framework */; };
-		AA0001012D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */; };
-		AABB11242E4A21BC00IMGPRE /* ImagePreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */; };
-		AABB11252E4A21BC00IMGPRE /* ImagePreloaderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */; };
-		ABE59AEA41D2601711B1BB1B /* DeferredPurchaseListenerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = D0516E52AE4CD42A3873E680 /* DeferredPurchaseListenerTests.m */; };
-		AD49DFBFBCD15CEC5A281EC2 /* Pods_Watch_Sample_Watch_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 13AE8FF0EE961E63D0E594AB /* Pods_Watch_Sample_Watch_App.framework */; };
-		D168550EA3E11E386B577AC0 /* QONTransaction.m in Sources */ = {isa = PBXBuildFile; fileRef = E2476B8741A9BF503032C77D /* QONTransaction.m */; };
 		AA0001012D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */; };
 		AABB11242E4A21BC00IMGPRE /* ImagePreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */; };
 		AABB11252E4A21BC00IMGPRE /* ImagePreloaderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */; };
@@ -327,6 +319,13 @@
 			remoteGlobalIDString = 454EF63B24E5CC580070581E;
 			remoteInfo = Sample;
 		};
+		70EE74322E2E928100260875 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 459DAB60243E329F0011ECF3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 70EE74292E2E928000260875;
+			remoteInfo = "Watch Sample Watch App";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -336,6 +335,7 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
+				70EE74342E2E928100260875 /* Watch Sample Watch App.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -343,12 +343,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		13844A737C5779AEEAD10EB9 /* Pods-Sample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.debug.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.debug.xcconfig"; sourceTree = "<group>"; };
-		13AE8FF0EE961E63D0E594AB /* Pods_Watch_Sample_Watch_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Watch_Sample_Watch_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		14F9EFD19134A70AC7557932 /* QONTransaction+Protected.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "QONTransaction+Protected.h"; sourceTree = "<group>"; };
-		2865A58C95F0B475399053F2 /* ScreenEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEvent.swift; sourceTree = "<group>"; };
-		34DFDAAB92C9BA2A3321007A /* ScreenEventType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventType.swift; sourceTree = "<group>"; };
-		420D8FEF3C704502C737C449 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
+		C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONEntitlementsUpdateListenerAdapter.h; sourceTree = "<group>"; };
+		0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONEntitlementsUpdateListenerAdapter.m; sourceTree = "<group>"; };
 		02B82604A89181D262616958 /* NoCodesContextBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesContextBuilder.swift; sourceTree = "<group>"; };
 		1037791CABEE4F1611A8561E /* Pods-Watch Sample Watch App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.release.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.release.xcconfig"; sourceTree = "<group>"; };
 		2865A58C95F0B475399053F2 /* ScreenEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEvent.swift; sourceTree = "<group>"; };
@@ -396,7 +392,6 @@
 		45FFA2DF24BE1548007EFB8F /* broken_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = broken_data.json; sourceTree = "<group>"; };
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
-		61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONDeferredPurchasesListener.h; sourceTree = "<group>"; };
 		5C42E3A6D0397F5923D676DC /* Pods_Sample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigList.m; sourceTree = "<group>"; };
 		6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigList.h; sourceTree = "<group>"; };
@@ -522,6 +517,7 @@
 		70ADE70D2951CC7200CB4D2E /* QONScreenPresentationConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONScreenPresentationConfiguration.h; sourceTree = "<group>"; };
 		70ADE70E2951CC7200CB4D2E /* QONScreenPresentationConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONScreenPresentationConfiguration.m; sourceTree = "<group>"; };
 		70B917622B3314BD00BF0689 /* QONTransaction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONTransaction.h; sourceTree = "<group>"; };
+		70B917632B3314BD00BF0689 /* QONTransaction.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONTransaction.m; sourceTree = "<group>"; };
 		70B917662B34284200BF0689 /* QONTransaction+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONTransaction+Protected.h"; sourceTree = "<group>"; };
 		70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONPromotionalOffer.h; sourceTree = "<group>"; };
 		70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONPromotionalOffer.m; sourceTree = "<group>"; };
@@ -647,7 +643,6 @@
 		89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserInfoServiceTests.m; sourceTree = "<group>"; };
 		89A193242604B99C00C3FCD9 /* XCTestCase+Unmock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+Unmock.h"; sourceTree = "<group>"; };
 		89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+Unmock.m"; sourceTree = "<group>"; };
-		9C3A84492202AB820D964710 /* QONTransaction.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONTransaction.h; sourceTree = "<group>"; };
 		A06309DBEC210AB940C3045D /* Pods-Watch Sample Watch App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.debug.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.debug.xcconfig"; sourceTree = "<group>"; };
 		A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONExceptionManager.m; sourceTree = "<group>"; };
 		A1839295D44BE8B55C48FB2C /* QONUserPropertiesMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUserPropertiesMapper.h; sourceTree = "<group>"; };
@@ -659,13 +654,6 @@
 		A1839DCD5FA33E85193A2684 /* QONUserProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUserProperties.h; sourceTree = "<group>"; };
 		A1839E84DBCF12F2CDC1930D /* QONUserProperty.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONUserProperty.m; sourceTree = "<group>"; };
 		A1839F615CCAF96B67D8A9F2 /* QONUserProperty+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONUserProperty+Protected.h"; sourceTree = "<group>"; };
-		A4D01F9F11D02C4E478E68EC /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
-		AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerRestoreUserSwitchTests.m; sourceTree = "<group>"; };
-		AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloader.swift; sourceTree = "<group>"; };
-		AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloaderInterface.swift; sourceTree = "<group>"; };
-		B1A31ADE42696EFF41853760 /* Pods_QonversionTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QonversionTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		B7C9BCDD34EDDDD2D70E232A /* Pods-Watch Sample Watch App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.debug.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.debug.xcconfig"; sourceTree = "<group>"; };
-		C49A7C36E2D376FDC85E470B /* Pods-Sample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.release.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.release.xcconfig"; sourceTree = "<group>"; };
 		AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerRestoreUserSwitchTests.m; sourceTree = "<group>"; };
 		AA8940BE5A87EDF644EC7E13 /* Pods_Watch_Sample_Watch_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Watch_Sample_Watch_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloader.swift; sourceTree = "<group>"; };
@@ -674,10 +662,7 @@
 		BFD0AC628A0DDF7425142814 /* Pods-Sample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.release.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.release.xcconfig"; sourceTree = "<group>"; };
 		C40E96908815EA44B0705E9D /* Pods-Sample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.debug.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.debug.xcconfig"; sourceTree = "<group>"; };
 		CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventsServiceInterface.swift; sourceTree = "<group>"; };
-		D0516E52AE4CD42A3873E680 /* DeferredPurchaseListenerTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = DeferredPurchaseListenerTests.m; sourceTree = "<group>"; };
-		E2476B8741A9BF503032C77D /* QONTransaction.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONTransaction.m; sourceTree = "<group>"; };
 		E55D02AA51A75DD7987D4987 /* ScreenEventsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventsService.swift; sourceTree = "<group>"; };
-		E902AE0A2A73461C22DE146A /* Pods_Sample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesLoadingView.swift; sourceTree = "<group>"; };
 		F538F251781497F893949833 /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
 		F59914571FB7D583A6205C7A /* NoCodesHTMLInjector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesHTMLInjector.swift; sourceTree = "<group>"; };
@@ -849,7 +834,6 @@
 				45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */,
 				45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */,
 				AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */,
-				D0516E52AE4CD42A3873E680 /* DeferredPurchaseListenerTests.m */,
 			);
 			path = QonversionTests;
 			sourceTree = "<group>";
@@ -1348,6 +1332,7 @@
 				895731BE26DD03A2009507A6 /* QONStoreKitSugare.h */,
 				895731BF26DD03A2009507A6 /* QONEntitlement.h */,
 				70B917622B3314BD00BF0689 /* QONTransaction.h */,
+				70B917632B3314BD00BF0689 /* QONTransaction.m */,
 				895731C026DD03A2009507A6 /* QONLaunchResult.h */,
 				895731C126DD03A2009507A6 /* QONExperimentGroup.m */,
 				895731C326DD03A2009507A6 /* QONAutomations.m */,
@@ -1398,9 +1383,6 @@
 				700B9D4C2E742CBB0031B056 /* QONPurchaseResult.m */,
 				70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */,
 				70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */,
-				61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */,
-				9C3A84492202AB820D964710 /* QONTransaction.h */,
-				E2476B8741A9BF503032C77D /* QONTransaction.m */,
 			);
 			path = Public;
 			sourceTree = "<group>";
@@ -1584,7 +1566,8 @@
 				8957324926DD03A3009507A6 /* QONLaunchResult+Protected.h */,
 				A1839F615CCAF96B67D8A9F2 /* QONUserProperty+Protected.h */,
 				A18396B586B0A77331A3A346 /* QONUserProperties+Protected.h */,
-				14F9EFD19134A70AC7557932 /* QONTransaction+Protected.h */,
+				C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */,
+				0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */,
 			);
 			path = Protected;
 			sourceTree = "<group>";
@@ -1906,9 +1889,6 @@
 				A18396F8EAB1D96E22ECA3B5 /* QONUserPropertiesMapper.h in Headers */,
 				A1839CFAA659B77B7DDDD910 /* QONUserProperty+Protected.h in Headers */,
 				A183968F7BFAE4D93F96D32D /* QONUserProperties+Protected.h in Headers */,
-				176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */
-				954C21A3DF0071EC9C767F0E /* QONTransaction.h in Headers */,
-				892B79AA3DFD0BE3603620AC /* QONTransaction+Protected.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1929,6 +1909,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				70EE74332E2E928100260875 /* PBXTargetDependency */,
 			);
 			name = Sample;
 			productName = Sample;
@@ -2285,6 +2266,7 @@
 				70CB7CDE2C246DF200241FF1 /* QONPromotionalOffer.m in Sources */,
 				895732C626DD03A3009507A6 /* QNAPIConstants.m in Sources */,
 				6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */,
+				70B917652B3314BD00BF0689 /* QONTransaction.m in Sources */,
 				70D05A8F29C9FC1600EA5DDF /* QONRemoteConfigManager.m in Sources */,
 				895732C426DD03A3009507A6 /* QNRequestBuilder.m in Sources */,
 				8957329726DD03A3009507A6 /* QONStoreKitSugare.m in Sources */,
@@ -2393,7 +2375,6 @@
 				A183981A2075084AD1E3D0AB /* QONUserProperties.m in Sources */,
 				7042E7832C1C5DB700C5AECF /* QONFallbackService.m in Sources */,
 				A1839D70E9E06E327527B4B9 /* QONUserPropertiesMapper.m in Sources */,
-				D168550EA3E11E386B577AC0 /* QONTransaction.m in Sources */,
 				15EE5F2E2F6CBF096CB24CBA /* NoCodesLoadingView.swift in Sources */,
 				405978D53C69C2F10939A4D4 /* NoCodesContextBuilder.swift in Sources */,
 				207A91DAC28DE776D419F8DC /* NoCodesHTMLInjector.swift in Sources */,
@@ -2423,7 +2404,6 @@
 				456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */,
 				89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
-				ABE59AEA41D2601711B1BB1B /* DeferredPurchaseListenerTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2470,6 +2450,12 @@
 			isa = PBXTargetDependency;
 			target = 454EF63B24E5CC580070581E /* Sample */;
 			targetProxy = 6A8A604C29DAD5CB008EC7D8 /* PBXContainerItemProxy */;
+		};
+		70EE74332E2E928100260875 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = 70EE74292E2E928000260875 /* Watch Sample Watch App */;
+			targetProxy = 70EE74322E2E928100260875 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
