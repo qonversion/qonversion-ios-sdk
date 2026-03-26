@@ -40,6 +40,37 @@ jobs:
         run: |
           swift build
   
+  common-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Verify API base URL
+        run: |
+          EXPECTED_URL="https://api2.qonversion.io/"
+
+          MAIN_URL=$(grep 'kAPIBase = @"' Sources/Qonversion/Qonversion/Constants/QNAPIConstants/QNAPIConstants.m | sed 's/.*@"//;s/".*//')
+          NOCODES_URL=$(grep 'baseURL = "' Sources/NoCodes/Assemblies/ServicesAssembly.swift | sed 's/.*= "//;s/".*//')
+
+          FAILED=0
+
+          if [ "$MAIN_URL" != "$EXPECTED_URL" ]; then
+            echo "::error::Main API URL mismatch: expected '$EXPECTED_URL', got '$MAIN_URL'"
+            FAILED=1
+          fi
+
+          if [ "$NOCODES_URL" != "$EXPECTED_URL" ]; then
+            echo "::error::NoCodes API URL mismatch: expected '$EXPECTED_URL', got '$NOCODES_URL'"
+            FAILED=1
+          fi
+
+          if [ "$FAILED" -eq 1 ]; then
+            exit 1
+          fi
+
+          echo "API URLs verified: $EXPECTED_URL"
+
   tests:
     runs-on: macos-latest
 
