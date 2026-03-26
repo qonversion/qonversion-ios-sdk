@@ -116,8 +116,9 @@ def runTests(suite)
     workspace: "./#{PROJECT_NAME}.xcworkspace",
     scheme: PROJECT_SCHEME,
     only_testing: suite,
+    destination: "platform=iOS Simulator,name=iPhone 16 Pro",
     xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration"
   }
-  
+
   run_tests(test_params)
 end
