@@ -37,10 +37,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
 
-// Single listener: adapter pattern wraps legacy EntitlementsUpdateListener
-// Strong ref for adapter (we own it), weak ref when set directly
 @property (nonatomic, strong) id<QONDeferredPurchasesListener> deferredPurchasesListener;
-@property (nonatomic, strong) QONEntitlementsUpdateListenerAdapter *listenerAdapter;
 @property (nonatomic, weak) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
 
 @property (nonatomic, strong) QNStoreKitService *storeKitService;
@@ -349,19 +346,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate {
-  // Adapter pattern: wrap the legacy listener so the manager works
-  // with a single listener type (QONDeferredPurchasesListener only).
   if (delegate) {
-    _listenerAdapter = [[QONEntitlementsUpdateListenerAdapter alloc] initWithLegacyListener:delegate];
-    _deferredPurchasesListener = _listenerAdapter;
+    QONEntitlementsUpdateListenerAdapter *adapter = [[QONEntitlementsUpdateListenerAdapter alloc] initWithLegacyListener:delegate];
+    _deferredPurchasesListener = adapter;
   } else {
-    _listenerAdapter = nil;
     _deferredPurchasesListener = nil;
   }
 }
 
 - (void)setDeferredPurchasesListener:(id<QONDeferredPurchasesListener>)listener {
-  _listenerAdapter = nil;
   _deferredPurchasesListener = listener;
 }
 

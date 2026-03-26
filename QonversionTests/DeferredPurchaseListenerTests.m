@@ -17,7 +17,6 @@
 @interface QNProductCenterManager (DeferredTestPrivate)
 
 @property (nonatomic, strong) id<QONDeferredPurchasesListener> deferredPurchasesListener;
-@property (nonatomic, strong) QONEntitlementsUpdateListenerAdapter *listenerAdapter;
 
 @end
 
@@ -73,37 +72,31 @@
 #pragma mark - Adapter Pattern Tests
 
 - (void)testSetPurchasesDelegateWrapsInAdapter {
-  // When legacy setPurchasesDelegate is called, it should create an adapter
-  // and set it as the deferredPurchasesListener.
   id mockLegacyListener = OCMProtocolMock(@protocol(QONEntitlementsUpdateListener));
 
   [_manager setPurchasesDelegate:mockLegacyListener];
 
   XCTAssertNotNil(_manager.deferredPurchasesListener);
-  XCTAssertNotNil(_manager.listenerAdapter);
-  XCTAssertTrue([_manager.deferredPurchasesListener conformsToProtocol:@protocol(QONDeferredPurchasesListener)]);
+  XCTAssertTrue([_manager.deferredPurchasesListener isKindOfClass:[QONEntitlementsUpdateListenerAdapter class]]);
 }
 
-- (void)testSetPurchasesDelegateToNilClearsBoth {
+- (void)testSetPurchasesDelegateToNilClearsListener {
   id mockLegacyListener = OCMProtocolMock(@protocol(QONEntitlementsUpdateListener));
   [_manager setPurchasesDelegate:mockLegacyListener];
 
   [_manager setPurchasesDelegate:nil];
 
   XCTAssertNil(_manager.deferredPurchasesListener);
-  XCTAssertNil(_manager.listenerAdapter);
 }
 
-- (void)testSetDeferredListenerClearsAdapter {
-  // Setting the new listener directly should clear any adapter from legacy listener.
+- (void)testSetDeferredListenerReplacesAdapter {
   id mockLegacyListener = OCMProtocolMock(@protocol(QONEntitlementsUpdateListener));
   [_manager setPurchasesDelegate:mockLegacyListener];
-  XCTAssertNotNil(_manager.listenerAdapter);
+  XCTAssertTrue([_manager.deferredPurchasesListener isKindOfClass:[QONEntitlementsUpdateListenerAdapter class]]);
 
   id mockDeferredListener = OCMProtocolMock(@protocol(QONDeferredPurchasesListener));
   [_manager setDeferredPurchasesListener:mockDeferredListener];
 
-  XCTAssertNil(_manager.listenerAdapter);
   XCTAssertEqual(_manager.deferredPurchasesListener, mockDeferredListener);
 }
 
