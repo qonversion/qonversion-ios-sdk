@@ -8,6 +8,8 @@
 #import "QONProduct.h"
 #import "QONErrors.h"
 #import "QONEntitlementsUpdateListener.h"
+#import "QONDeferredPurchasesListener.h"
+#import "QONEntitlementsUpdateListenerAdapter.h"
 #import "QONPromoPurchasesDelegate.h"
 #import "QONOfferings.h"
 #import "QONOffering.h"
@@ -35,7 +37,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
 
-@property (nonatomic, weak) id<QONEntitlementsUpdateListener> purchasesDelegate;
+@property (nonatomic, strong) id<QONDeferredPurchasesListener> deferredPurchasesListener;
 @property (nonatomic, weak) id<QONPromoPurchasesDelegate> promoPurchasesDelegate;
 
 @property (nonatomic, strong) QNStoreKitService *storeKitService;
@@ -344,7 +346,16 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate {
-  _purchasesDelegate = delegate;
+  if (delegate) {
+    QONEntitlementsUpdateListenerAdapter *adapter = [[QONEntitlementsUpdateListenerAdapter alloc] initWithLegacyListener:delegate];
+    _deferredPurchasesListener = adapter;
+  } else {
+    _deferredPurchasesListener = nil;
+  }
+}
+
+- (void)setDeferredPurchasesListener:(id<QONDeferredPurchasesListener>)listener {
+  _deferredPurchasesListener = listener;
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
@@ -1066,13 +1077,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           }
         } else {
           NSDictionary<NSString *, QONEntitlement *> *resultEntitlements = launchResult.entitlements;
+          BOOL shouldNotify = NO;
           if (resultError) {
             if ([weakSelf shouldCalculateEntitlementsForError:resultError]) {
               resultEntitlements = [weakSelf calculateEntitlementsForTransactions:@[transaction] products:@[product]];
-              [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
+              shouldNotify = YES;
             }
           } else {
-            [weakSelf.purchasesDelegate didReceiveUpdatedEntitlements:resultEntitlements];
+            shouldNotify = YES;
+          }
+          if (shouldNotify) {
+            // Single listener: adapter pattern handles legacy EntitlementsUpdateListener
+            QONPurchaseResult *deferredResult = [QONPurchaseResult successWithEntitlements:resultEntitlements transaction:transaction];
+            [weakSelf.deferredPurchasesListener deferredPurchaseCompleted:deferredResult];
           }
         }
       }

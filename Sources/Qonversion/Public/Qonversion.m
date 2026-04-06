@@ -57,7 +57,11 @@ static bool _isInitialized = NO;
   [[QNAPIClient shared] setBaseURL:configCopy.baseURL];
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   [[Qonversion sharedInstance] setEntitlementsUpdateListener:configCopy.entitlementsUpdateListener];
+#pragma clang diagnostic pop
+  [[Qonversion sharedInstance] setDeferredPurchasesListener:configCopy.deferredPurchasesListener];
   [[Qonversion sharedInstance] setPromoPurchasesDelegate:configCopy.promoPurchasesDelegate];
   
   [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
@@ -132,6 +136,10 @@ static bool _isInitialized = NO;
 
 - (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)delegate {
   [self.productCenterManager setPurchasesDelegate:delegate];
+}
+
+- (void)setDeferredPurchasesListener:(id<QONDeferredPurchasesListener>)listener {
+  [self.productCenterManager setDeferredPurchasesListener:listener];
 }
 
 - (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate {
