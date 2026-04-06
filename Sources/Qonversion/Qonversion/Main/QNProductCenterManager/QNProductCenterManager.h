@@ -6,7 +6,7 @@
 #import "QONRequestTrigger.h"
 
 @class QONLaunchResult, QONStoreKit2PurchaseModel, QONFallbackService, QONPromotionalOffer, QONPurchaseOptions, QONPurchaseResult, SKProductDiscount;
-@protocol QONPromoPurchasesDelegate, QONEntitlementsUpdateListener, QNUserInfoServiceInterface, QNIdentityManagerInterface, QNLocalStorage;
+@protocol QONPromoPurchasesDelegate, QONEntitlementsUpdateListener, QONDeferredPurchasesListener, QNUserInfoServiceInterface, QNIdentityManagerInterface, QNLocalStorage;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)identify:(NSString *)userID completion:(nullable QONUserInfoCompletionHandler)completion;
 - (void)logout;
 - (void)setPurchasesDelegate:(id<QONEntitlementsUpdateListener>)delegate;
+- (void)setDeferredPurchasesListener:(id<QONDeferredPurchasesListener>)listener;
 - (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate;
 - (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime;
 

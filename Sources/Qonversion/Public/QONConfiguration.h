@@ -10,6 +10,7 @@
 #import "QONLaunchMode.h"
 #import "QONEntitlementsCacheLifetime.h"
 #import "QONEntitlementsUpdateListener.h"
+#import "QONDeferredPurchasesListener.h"
 #import "QONEnvironment.h"
 #import "QONPromoPurchasesDelegate.h"
 
@@ -54,9 +55,16 @@ NS_SWIFT_NAME(Qonversion.Configuration)
 @property (nonatomic, copy, readonly) NSString *baseURL;
 
 /**
+ @deprecated Use deferredPurchasesListener instead.
  Listener to handle entitlements update. For example, when pending purchases like SCA, Ask to buy, etc., happened.
  */
-@property (nonatomic, weak, readonly) id<QONEntitlementsUpdateListener> entitlementsUpdateListener;
+@property (nonatomic, weak, readonly) id<QONEntitlementsUpdateListener> entitlementsUpdateListener __attribute__((deprecated("Use deferredPurchasesListener instead")));
+
+/**
+ Listener to be notified when a deferred purchase completes.
+ Provides transaction-level details, including for consumable products without entitlements.
+ */
+@property (nonatomic, weak, readonly) id<QONDeferredPurchasesListener> deferredPurchasesListener;
 
 /**
  Delegate to handle App Store Promo purchases.
@@ -104,10 +112,18 @@ NS_SWIFT_NAME(Qonversion.Configuration)
 - (void)setEntitlementsCacheLifetime:(QONEntitlementsCacheLifetime)cacheLifetime;
 
 /**
+ @deprecated Use setDeferredPurchasesListener: instead.
  Set this listener to handle entitlements update. For example, when pending purchases like SCA, Ask to buy, etc., happened.
  @param entitlementsUpdateListener - listener for handling entitlements update
  */
-- (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)entitlementsUpdateListener;
+- (void)setEntitlementsUpdateListener:(id<QONEntitlementsUpdateListener>)entitlementsUpdateListener __attribute__((deprecated("Use setDeferredPurchasesListener: instead")));
+
+/**
+ Set this listener to be notified when a deferred purchase completes.
+ Provides transaction-level details, including for consumable products without entitlements.
+ @param listener - listener for handling deferred purchase completions
+ */
+- (void)setDeferredPurchasesListener:(id<QONDeferredPurchasesListener>)listener;
 
 /**
  Set this delegate to handle AppStore promo purchases
