@@ -38,12 +38,18 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
   }
 
   func track(event: ScreenEvent) {
+    var data = event.data
+    if data["event_uid"] == nil {
+      data["event_uid"] = UUID().uuidString
+    }
+    let enrichedEvent = ScreenEvent(data: data)
+
     var shouldFlush = false
     queue.sync(flags: .barrier) {
-      buffer.append(event)
+      buffer.append(enrichedEvent)
       shouldFlush = buffer.count >= Self.batchSize
     }
-    logger.debug("Tracked screen event: \(event.data["type"] ?? "unknown")")
+    logger.debug("Tracked screen event: \(enrichedEvent.data["type"] ?? "unknown")")
     if shouldFlush {
       flush()
     }
@@ -51,7 +57,7 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
 
   func flush() {
     let eventsToSend: [ScreenEvent] = queue.sync(flags: .barrier) {
-      guard !isFlushing else { return [] }
+      guard !isFlushing, !buffer.isEmpty else { return [] }
       isFlushing = true
       let copy = buffer
       buffer.removeAll()
@@ -80,12 +86,22 @@ final class ScreenEventsService: ScreenEventsServiceInterface {
         queue.sync(flags: .barrier) { isFlushing = false }
       } catch {
         logger.error(LoggerInfoMessages.screenEventTrackingFailed.rawValue)
-        // Re-buffer events on failure so they can be retried on next flush
+        // Only rebuffer on transient errors (5xx / network). Don't retry 4xx (permanent).
+        let isTransient: Bool
+        if let noCodesError = error as? NoCodesError {
+          // .internal = 5xx server error → transient, worth retrying
+          isTransient = (noCodesError.type == .internal)
+        } else {
+          // Network error, timeout, etc. → transient
+          isTransient = true
+        }
+
         queue.sync(flags: .barrier) {
-          buffer.insert(contentsOf: eventsToSend, at: 0)
-          // Drop oldest events if buffer exceeds max size
-          if buffer.count > Self.maxBufferSize {
-            buffer = Array(buffer.suffix(Self.maxBufferSize))
+          if isTransient {
+            buffer.insert(contentsOf: eventsToSend, at: 0)
+            if buffer.count > Self.maxBufferSize {
+              buffer = Array(buffer.suffix(Self.maxBufferSize))
+            }
           }
           isFlushing = false
         }
