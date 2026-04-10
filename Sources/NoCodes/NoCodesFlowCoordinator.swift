@@ -10,12 +10,14 @@ import Foundation
 
 #if os(iOS)
 import UIKit
+import Qonversion
 
 final class NoCodesFlowCoordinator {
   
   private var delegate: NoCodesDelegate?
   private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   private var purchaseDelegate: NoCodesPurchaseDelegate?
+  private weak var customVariablesDelegate: NoCodesCustomVariablesDelegate?
   private let noCodesService: NoCodesServiceInterface
   private let screenEventsService: ScreenEventsServiceInterface
   private let viewsAssembly: ViewsAssembly
@@ -24,10 +26,11 @@ final class NoCodesFlowCoordinator {
   private var customLocale: String?
   private var theme: NoCodesTheme
 
-  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, purchaseDelegate: NoCodesPurchaseDelegate?, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
+  init(delegate: NoCodesDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, purchaseDelegate: NoCodesPurchaseDelegate?, customVariablesDelegate: NoCodesCustomVariablesDelegate?, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
     self.purchaseDelegate = purchaseDelegate
+    self.customVariablesDelegate = customVariablesDelegate
     self.noCodesService = noCodesService
     self.screenEventsService = screenEventsService
     self.viewsAssembly = viewsAssembly
@@ -46,6 +49,10 @@ final class NoCodesFlowCoordinator {
   
   func set(purchaseDelegate: NoCodesPurchaseDelegate) {
     self.purchaseDelegate = purchaseDelegate
+  }
+
+  func set(customVariablesDelegate: NoCodesCustomVariablesDelegate) {
+    self.customVariablesDelegate = customVariablesDelegate
   }
   
   func setLocale(_ locale: String?) {
@@ -77,22 +84,34 @@ final class NoCodesFlowCoordinator {
   
   @MainActor
   func showScreen(with id: String) {
-    let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(id: id) ?? NoCodesPresentationConfiguration.defaultConfiguration()
-    
-    let viewController: NoCodesViewController = viewsAssembly.viewController(with: id, delegate: self, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
-    currentVC = viewController
-    
-    showScreen(viewController, presentationConfiguration)
+    Task { @MainActor in
+      await withCheckedContinuation { continuation in
+        Qonversion.shared().forceSendProperties { continuation.resume() }
+      }
+
+      let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(id: id) ?? NoCodesPresentationConfiguration.defaultConfiguration()
+
+      let viewController: NoCodesViewController = viewsAssembly.viewController(with: id, delegate: self, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, customVariablesDelegate: customVariablesDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
+      currentVC = viewController
+
+      showScreen(viewController, presentationConfiguration)
+    }
   }
   
   @MainActor
   func showScreen(withContextKey contextKey: String) {
-    let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(contextKey: contextKey) ?? NoCodesPresentationConfiguration.defaultConfiguration()
-    
-    let viewController: NoCodesViewController = viewsAssembly.viewController(withContextKey: contextKey, delegate: self, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
-    currentVC = viewController
-    
-    showScreen(viewController, presentationConfiguration)
+    Task { @MainActor in
+      await withCheckedContinuation { continuation in
+        Qonversion.shared().forceSendProperties { continuation.resume() }
+      }
+
+      let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(contextKey: contextKey) ?? NoCodesPresentationConfiguration.defaultConfiguration()
+
+      let viewController: NoCodesViewController = viewsAssembly.viewController(withContextKey: contextKey, delegate: self, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, customVariablesDelegate: customVariablesDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
+      currentVC = viewController
+
+      showScreen(viewController, presentationConfiguration)
+    }
   }
   
   private func showScreen(_ viewController: NoCodesViewController, _ presentationConfiguration: NoCodesPresentationConfiguration) {
