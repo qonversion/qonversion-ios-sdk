@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		202B79E6100384DE55BACD10 /* QONEntitlementsUpdateListenerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */; settings = {ATTRIBUTES = (Project, ); }; };
+		0A17440D00C09DABC1E2B1D3 /* QONEntitlementsUpdateListenerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */; };
 		15EE5F2E2F6CBF096CB24CBA /* NoCodesLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */; };
 		207A91DAC28DE776D419F8DC /* NoCodesHTMLInjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59914571FB7D583A6205C7A /* NoCodesHTMLInjector.swift */; };
 		218480F803075431AD24186B /* ScreenEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2865A58C95F0B475399053F2 /* ScreenEvent.swift */; };
@@ -341,6 +344,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONDeferredPurchasesListener.h; sourceTree = "<group>"; };
+		C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONEntitlementsUpdateListenerAdapter.h; sourceTree = "<group>"; };
+		0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONEntitlementsUpdateListenerAdapter.m; sourceTree = "<group>"; };
 		02B82604A89181D262616958 /* NoCodesContextBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesContextBuilder.swift; sourceTree = "<group>"; };
 		1037791CABEE4F1611A8561E /* Pods-Watch Sample Watch App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.release.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.release.xcconfig"; sourceTree = "<group>"; };
 		2865A58C95F0B475399053F2 /* ScreenEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEvent.swift; sourceTree = "<group>"; };
@@ -1343,6 +1349,7 @@
 				895731CC26DD03A2009507A6 /* QONIntroEligibility.m */,
 				895731CD26DD03A2009507A6 /* QONUser.m */,
 				895731CE26DD03A2009507A6 /* QONEntitlementsUpdateListener.h */,
+				61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */,
 				895731CF26DD03A2009507A6 /* QONAutomations.h */,
 				895731D126DD03A2009507A6 /* QONExperimentGroup.h */,
 				895731D226DD03A2009507A6 /* QONEntitlement.m */,
@@ -1562,6 +1569,8 @@
 				8957324926DD03A3009507A6 /* QONLaunchResult+Protected.h */,
 				A1839F615CCAF96B67D8A9F2 /* QONUserProperty+Protected.h */,
 				A18396B586B0A77331A3A346 /* QONUserProperties+Protected.h */,
+				C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */,
+				0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */,
 			);
 			path = Protected;
 			sourceTree = "<group>";
@@ -1826,6 +1835,7 @@
 				700B9D502E742E5D0031B056 /* QONPurchaseResult+Protected.h in Headers */,
 				6A21BF532AB2059F005BDA7C /* QONRequest.h in Headers */,
 				8957329026DD03A3009507A6 /* QONEntitlementsUpdateListener.h in Headers */,
+				176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */,
 				8957329326DD03A3009507A6 /* QONExperimentGroup.h in Headers */,
 				7098564D2A370F270023DFAB /* QONRemoteConfigMapper.h in Headers */,
 				6A121DB12BBB10370073B330 /* QONRemoteConfigListRequestData.h in Headers */,
@@ -2341,6 +2351,7 @@
 				708C1A3A2E4A21BC00252C6E /* NetworkErrorHandlerInterface.swift in Sources */,
 				F5890274B1E90C6993376869 /* ScreenEventType.swift in Sources */,
 				218480F803075431AD24186B /* ScreenEvent.swift in Sources */,
+				0A17440D00C09DABC1E2B1D3 /* QONEntitlementsUpdateListenerAdapter.m in Sources */,
 				3521C548C169154D45835C38 /* ScreenEventsServiceInterface.swift in Sources */,
 				48FCBE392ED00F2022C0823A /* ScreenEventsService.swift in Sources */,
 				6A121DB32BBB10AA0073B330 /* QONRemoteConfigListRequestData.m in Sources */,

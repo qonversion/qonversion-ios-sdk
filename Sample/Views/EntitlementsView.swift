@@ -22,8 +22,8 @@ struct EntitlementsView: View {
                             Task { await appState.loadEntitlements() }
                         }
                         
-                        ActionButton(title: "Set Entitlements Listener", color: .purple) {
-                            setEntitlementsListener()
+                        ActionButton(title: "Set Deferred Purchases Listener", color: .purple) {
+                            setDeferredPurchasesListener()
                         }
                         
                         ActionButton(title: "Restore Purchases", color: .green) {
@@ -45,7 +45,7 @@ struct EntitlementsView: View {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
-                            Text("Entitlements listener is active")
+                            Text("Deferred purchases listener is active")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -108,22 +108,29 @@ struct EntitlementsView: View {
         }
     }
     
-    private func setEntitlementsListener() {
-        Qonversion.shared().setEntitlementsUpdateListener(EntitlementsListenerHandler.shared)
-        EntitlementsListenerHandler.shared.appState = appState
+    private func setDeferredPurchasesListener() {
+        Qonversion.shared().setDeferredPurchasesListener(DeferredPurchasesListenerHandler.shared)
+        DeferredPurchasesListenerHandler.shared.appState = appState
         listenerSet = true
-        appState.successMessage = "Entitlements listener set successfully!"
+        appState.successMessage = "Deferred purchases listener set successfully!"
     }
 }
 
-// MARK: - Entitlements Listener Handler
-class EntitlementsListenerHandler: NSObject, Qonversion.EntitlementsUpdateListener {
-    static let shared = EntitlementsListenerHandler()
+// MARK: - Deferred Purchases Listener Handler
+class DeferredPurchasesListenerHandler: NSObject, Qonversion.DeferredPurchasesListener {
+    static let shared = DeferredPurchasesListenerHandler()
     weak var appState: AppState?
-    
-    func didReceiveUpdatedEntitlements(_ entitlements: [String: Qonversion.Entitlement]) {
+
+    func deferredPurchaseCompleted(_ purchaseResult: Qonversion.PurchaseResult) {
         Task { @MainActor in
-            appState?.entitlements = entitlements
+            if purchaseResult.isSuccessful, let entitlements = purchaseResult.entitlements {
+                for (key, value) in entitlements {
+                    appState?.entitlements[key] = value
+                }
+                appState?.successMessage = "Deferred purchase completed successfully!"
+            } else if purchaseResult.isError {
+                appState?.errorMessage = purchaseResult.error?.localizedDescription ?? "Deferred purchase failed"
+            }
         }
     }
 }

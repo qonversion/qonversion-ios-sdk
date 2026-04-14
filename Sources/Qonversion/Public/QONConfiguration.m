@@ -9,7 +9,7 @@
 #import "QONConfiguration.h"
 #import "QNAPIConstants.h"
 
-static NSString *const kSDKVersion = @"6.9.0";
+static NSString *const kSDKVersion = @"6.10.0";
 
 @interface QONConfiguration ()
 
@@ -63,6 +63,10 @@ static NSString *const kSDKVersion = @"6.9.0";
   _entitlementsUpdateListener = entitlementsUpdateListener;
 }
 
+- (void)setDeferredPurchasesListener:(id<QONDeferredPurchasesListener>)listener {
+  _deferredPurchasesListener = listener;
+}
+
 - (void)setPromoPurchasesDelegate:(id<QONPromoPurchasesDelegate>)delegate {
   _promoPurchasesDelegate = delegate;
 }
@@ -84,7 +88,11 @@ static NSString *const kSDKVersion = @"6.9.0";
   [copyConfig setVersion:_version];
   [copyConfig setEnvironment:_environment];
   [copyConfig setEntitlementsCacheLifetime:_entitlementsCacheLifetime];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   [copyConfig setEntitlementsUpdateListener:_entitlementsUpdateListener];
+#pragma clang diagnostic pop
+  [copyConfig setDeferredPurchasesListener:_deferredPurchasesListener];
   [copyConfig setCustomUserDefaults:_customUserDefaults];
   [copyConfig setProxyURL:_baseURL];
   

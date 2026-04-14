@@ -12,6 +12,11 @@
 NS_SWIFT_NAME(Qonversion.EntitlementsUpdateListener)
 @protocol QONEntitlementsUpdateListener <NSObject>
 
-- (void)didReceiveUpdatedEntitlements:(NSDictionary<NSString *, QONEntitlement *>  * _Nonnull)entitlements;
+/**
+ Use QONDeferredPurchasesListener instead.
+ DeferredPurchasesListener provides full transaction details including product ID,
+ transaction ID, and value - critical for consumable products without entitlements.
+ */
+- (void)didReceiveUpdatedEntitlements:(NSDictionary<NSString *, QONEntitlement *>  * _Nonnull)entitlements __attribute__((deprecated("Use QONDeferredPurchasesListener instead")));
 
 @end
