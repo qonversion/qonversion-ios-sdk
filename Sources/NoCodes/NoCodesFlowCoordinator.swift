@@ -10,7 +10,6 @@ import Foundation
 
 #if os(iOS)
 import UIKit
-import Qonversion
 
 final class NoCodesFlowCoordinator {
   
