@@ -338,7 +338,7 @@ extension NoCodesViewController {
           }
         }
       }
-      return props.flatPropertiesMap as? [String: String] ?? [:]
+      return props.flatPropertiesMap
     } catch {
       logger.error("Failed to load user properties: \(error.localizedDescription)")
       return [:]
