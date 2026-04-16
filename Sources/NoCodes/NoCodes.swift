@@ -48,6 +48,15 @@ public final class NoCodes {
     flowCoordinator?.set(screenCustomizationDelegate: screenCustomizationDelegate)
   }
   
+  /// Use this function to set the custom variables delegate.
+  /// This delegate will be called each time a screen is about to be displayed
+  /// to get custom variables that will be injected into the screen's JavaScript context.
+  /// - Parameters:
+  ///   - delegate: ``NoCodesCustomVariablesDelegate`` object.
+  public func set(customVariablesDelegate: NoCodesCustomVariablesDelegate) {
+    flowCoordinator?.set(customVariablesDelegate: customVariablesDelegate)
+  }
+
   /// Use this function to set the purchase delegate.
   /// This delegate should be used if you want to handle purchases and restore operations on your end.
   /// If this delegate is provided, it will be used instead of the default Qonversion SDK purchase flow.

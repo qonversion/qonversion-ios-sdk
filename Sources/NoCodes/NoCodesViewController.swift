@@ -56,6 +56,7 @@ final class NoCodesViewController: UIViewController {
   private var presentationConfiguration: NoCodesPresentationConfiguration!
   private var purchaseDelegate: NoCodesPurchaseDelegate?
   private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
+  private weak var customVariablesDelegate: NoCodesCustomVariablesDelegate?
   private var customLocale: String?
   private var theme: NoCodesTheme!
   private var didTrackScreenShown = false
@@ -63,7 +64,7 @@ final class NoCodesViewController: UIViewController {
   private var contextBuilder: NoCodesContextBuilderInterface!
   private var htmlInjector: NoCodesHTMLInjectorInterface!
 
-  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, contextBuilder: NoCodesContextBuilderInterface, htmlInjector: NoCodesHTMLInjectorInterface, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
+  init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, customVariablesDelegate: NoCodesCustomVariablesDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, contextBuilder: NoCodesContextBuilderInterface, htmlInjector: NoCodesHTMLInjectorInterface, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.screenId = screenId
     self.contextKey = contextKey
     self.noCodesMapper = noCodesMapper
@@ -75,6 +76,7 @@ final class NoCodesViewController: UIViewController {
     self.presentationConfiguration = presentationConfiguration
     self.purchaseDelegate = purchaseDelegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
+    self.customVariablesDelegate = customVariablesDelegate
     self.customLocale = customLocale
     self.theme = theme
     self.contextBuilder = contextBuilder
@@ -241,7 +243,10 @@ extension NoCodesViewController: WKScriptMessageHandler {
     let action: NoCodesAction = noCodesMapper.map(rawAction: body)
     
     if action.type == .showScreen {
-      return removeLoadingView()
+      injectCustomVariables { [weak self] in
+        self?.removeLoadingView()
+      }
+      return
     }
     
     if action.type != .loadProducts && action.type != .screenAnalytics && action.type != .getContext {
@@ -301,6 +306,45 @@ extension NoCodesViewController {
     screenEventsService.track(event: event)
   }
 
+  private func injectCustomVariables(completion: @escaping () -> Void) {
+    let key = contextKey ?? ""
+    guard let variables = customVariablesDelegate?.customVariables(for: key),
+          !variables.isEmpty else {
+      completion()
+      return
+    }
+
+    let setVariableCalls = variables.map { (name, value) -> String in
+      let escapedName = name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+      let escapedValue = value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+      return "window.noCodesSetVariable?.(\"\(escapedName)\", \"\(escapedValue)\");"
+    }.joined(separator: "\n")
+
+    webView?.evaluateJavaScript(setVariableCalls) { _, _ in
+      completion()
+    }
+  }
+
+  private func loadUserProperties() async -> [String: String] {
+    do {
+      let props = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Qonversion.UserProperties, Error>) in
+        Qonversion.shared().userProperties { userProperties, error in
+          if let error {
+            continuation.resume(throwing: error)
+          } else if let userProperties {
+            continuation.resume(returning: userProperties)
+          } else {
+            continuation.resume(throwing: NoCodesError(type: .screenLoadingFailed, message: "No user properties returned"))
+          }
+        }
+      }
+      return props.flatPropertiesMap
+    } catch {
+      logger.error("Failed to load user properties: \(error.localizedDescription)")
+      return [:]
+    }
+  }
+
   private func handle(getContextAction: NoCodesAction) {
     Task {
       let variables = getContextAction.parameters?["variables"] as? [String] ?? []
@@ -308,11 +352,13 @@ extension NoCodesViewController {
 
       async let entitlementsResult = loadActiveEntitlementIds()
       async let productsResult = loadProductsContext(productIds: requestedProductIds)
+      async let userPropsResult = loadUserProperties()
 
       let activeEntitlementIds = await entitlementsResult
       let productsContext = await productsResult
+      let userProperties = await userPropsResult
 
-      guard let jsString = contextBuilder.buildContextJSON(theme: theme, traitCollection: traitCollection, activeEntitlementIds: activeEntitlementIds, productsContext: productsContext) else { return }
+      guard let jsString = contextBuilder.buildContextJSON(theme: theme, traitCollection: traitCollection, activeEntitlementIds: activeEntitlementIds, productsContext: productsContext, userProperties: userProperties) else { return }
 
       await send(event: Constants.setContext.rawValue, data: jsString)
     }
@@ -441,14 +487,14 @@ extension NoCodesViewController {
         logger.error(LoggerInfoMessages.productsLoadingFailed.rawValue)
         return delegate.noCodesFailedToLoadScreen(error: NoCodesError(type: .productsLoadingFailed))
       }
-      
+
       let filteredProducts: [String: Qonversion.Product] = products.filter { productIds.contains($0.key) }
       guard !filteredProducts.isEmpty else {
         return delegate.noCodesFailedToLoadScreen(error: NoCodesError(type: .productsLoadingFailed))
       }
-      
+
       let productsInfo: [String: Any] = noCodesMapper.map(products: filteredProducts)
-      
+
       guard let data = try? JSONSerialization.data(withJSONObject: productsInfo, options: []),
             let jsString = String(data: data, encoding: .utf8)
       else {
@@ -580,7 +626,7 @@ extension NoCodesViewController {
   private func handle(navigationAction: NoCodesAction) {
     guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else { return }
 
-    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
+    let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, customVariablesDelegate: customVariablesDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
     navigationController?.pushViewController(viewController, animated: true)
     delegate.noCodesFinishedExecuting(action: navigationAction)
   }

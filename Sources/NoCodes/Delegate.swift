@@ -70,6 +70,17 @@ public protocol NoCodesScreenCustomizationDelegate {
   func noCodesCustomLoadingView() -> NoCodesLoadingView?
 }
 
+/// Delegate responsible for providing custom variables for No-Codes screens.
+/// Custom variables are injected into the screen's JavaScript context
+/// and can be used to influence content displayed on the screen.
+public protocol NoCodesCustomVariablesDelegate: AnyObject {
+  /// Provide custom variables for a specific screen identified by context key.
+  /// Called each time a screen is about to be displayed.
+  /// - Parameter contextKey: the context key of the screen being loaded.
+  /// - Returns: a dictionary of custom variables to inject into the screen.
+  func customVariables(for contextKey: String) -> [String: String]
+}
+
 /// Delegate responsible for custom purchase and restore handling.
 /// When this delegate is provided, it replaces the default Qonversion SDK purchase flow.
 public protocol NoCodesPurchaseDelegate {

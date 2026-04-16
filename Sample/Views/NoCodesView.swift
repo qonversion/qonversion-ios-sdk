@@ -16,6 +16,9 @@ struct NoCodesView: View {
     @State private var animated = true
     @State private var listenerSet = false
     @State private var customizationDelegateSet = false
+    @State private var customVariableName = ""
+    @State private var customVariableValue = ""
+    @State private var customVariablesDelegateSet = false
     
     var body: some View {
         ScrollView {
@@ -92,6 +95,54 @@ struct NoCodesView: View {
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
                 
+                // Custom Variables Section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Custom Variables")
+                        .font(.headline)
+
+                    TextField("Variable Name", text: $customVariableName)
+                        .textFieldStyle(.roundedBorder)
+                    TextField("Variable Value", text: $customVariableValue)
+                        .textFieldStyle(.roundedBorder)
+
+                    ActionButton(title: "Add Variable", color: .orange) {
+                        guard !customVariableName.isEmpty else { return }
+                        NoCodesCustomVariablesHandler.shared.variables[customVariableName] = customVariableValue
+                        appState.successMessage = "Variable '\(customVariableName)' = '\(customVariableValue)' added"
+                        customVariableName = ""
+                        customVariableValue = ""
+                    }
+
+                    ActionButton(title: "Set Custom Variables Delegate", color: .orange) {
+                        NoCodes.shared.set(customVariablesDelegate: NoCodesCustomVariablesHandler.shared)
+                        customVariablesDelegateSet = true
+                        appState.successMessage = "Custom variables delegate set!"
+                    }
+
+                    if customVariablesDelegateSet {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Custom variables delegate active (\(NoCodesCustomVariablesHandler.shared.variables.count) vars)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    if !NoCodesCustomVariablesHandler.shared.variables.isEmpty {
+                        ForEach(Array(NoCodesCustomVariablesHandler.shared.variables.keys.sorted()), id: \.self) { key in
+                            HStack {
+                                Text("\(key) = \(NoCodesCustomVariablesHandler.shared.variables[key] ?? "")")
+                                    .font(.caption)
+                                Spacer()
+                            }
+                        }
+                    }
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+
                 // Close Button
                 ActionButton(title: "Close No-Code Screen", color: .red) {
                     NoCodes.shared.close()
@@ -287,6 +338,17 @@ class NoCodesListenerHandler: NoCodesDelegate {
         @unknown default:
             return "Unknown"
         }
+    }
+}
+
+// MARK: - NoCodes Custom Variables Handler
+class NoCodesCustomVariablesHandler: NoCodesCustomVariablesDelegate {
+    static let shared = NoCodesCustomVariablesHandler()
+    var variables: [String: String] = [:]
+
+    func customVariables(for contextKey: String) -> [String: String] {
+        print("Custom variables requested for context key: \(contextKey), returning: \(variables)")
+        return variables
     }
 }
 
