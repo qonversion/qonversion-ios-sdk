@@ -130,6 +130,14 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
 - (void)userProperties:(QONUserPropertiesCompletionHandler)completion;
 
 /**
+ Force-flushes any pending user property updates to the server immediately.
+ Use this when you need to ensure all previously set properties have been sent
+ before performing an operation that depends on them.
+ @param completion - Completion block that will be called when the flush is complete
+ */
+- (void)forceSendProperties:(QONEmptyCompletionHandler)completion;
+
+/**
  Send your attribution data
  @param data Dictionary received by the provider
  @param provider Attribution provider

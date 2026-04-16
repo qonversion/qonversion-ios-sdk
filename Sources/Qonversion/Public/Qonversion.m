@@ -172,6 +172,10 @@ static bool _isInitialized = NO;
   [self.propertiesManager getUserProperties:completion];
 }
 
+- (void)forceSendProperties:(void (^)(void))completion {
+  [self.propertiesManager forceSendProperties:completion];
+}
+
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)completion {
   [self.productCenterManager checkEntitlements:completion];
 }

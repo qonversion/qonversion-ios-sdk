@@ -13,9 +13,15 @@ import UIKit
 
 protocol NoCodesContextBuilderInterface {
   func resolveInterfaceStyle(theme: NoCodesTheme, traitCollection: UITraitCollection) -> UIUserInterfaceStyle
-  func buildContextJSON(theme: NoCodesTheme, traitCollection: UITraitCollection, activeEntitlementIds: [String], productsContext: [String: Any]) -> String?
+  func buildContextJSON(theme: NoCodesTheme, traitCollection: UITraitCollection, activeEntitlementIds: [String], productsContext: [String: Any], userProperties: [String: String]) -> String?
   func resolveIsFirstLaunch() -> Bool
   func calculateDaysSinceInstall() -> Int
+}
+
+extension NoCodesContextBuilderInterface {
+  func buildContextJSON(theme: NoCodesTheme, traitCollection: UITraitCollection, activeEntitlementIds: [String], productsContext: [String: Any]) -> String? {
+    return buildContextJSON(theme: theme, traitCollection: traitCollection, activeEntitlementIds: activeEntitlementIds, productsContext: productsContext, userProperties: [:])
+  }
 }
 
 final class NoCodesContextBuilder: NoCodesContextBuilderInterface {
@@ -33,7 +39,7 @@ final class NoCodesContextBuilder: NoCodesContextBuilderInterface {
     }
   }
 
-  func buildContextJSON(theme: NoCodesTheme, traitCollection: UITraitCollection, activeEntitlementIds: [String], productsContext: [String: Any]) -> String? {
+  func buildContextJSON(theme: NoCodesTheme, traitCollection: UITraitCollection, activeEntitlementIds: [String], productsContext: [String: Any], userProperties: [String: String] = [:]) -> String? {
     var device: [String: String] = [:]
     device["platform"] = "iOS"
     device["osVersion"] = UIDevice.current.systemVersion
@@ -75,6 +81,9 @@ final class NoCodesContextBuilder: NoCodesContextBuilderInterface {
     user["daysSinceInstall"] = calculateDaysSinceInstall()
     user["hasAnyEntitlement"] = activeEntitlementIds.isEmpty ? "false" : "true"
     user["entitlements"] = activeEntitlementIds
+    if !userProperties.isEmpty {
+      user["properties"] = userProperties
+    }
 
     var contextData: [String: Any] = ["device": device, "user": user]
     if !productsContext.isEmpty {

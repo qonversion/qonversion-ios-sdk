@@ -1,8 +1,8 @@
 PODS:
   - OCMock (3.9.4)
-  - Qonversion (6.8.0):
-    - Qonversion/Main (= 6.8.0)
-  - Qonversion/Main (6.8.0)
+  - Qonversion (6.9.0):
+    - Qonversion/Main (= 6.9.0)
+  - Qonversion/Main (6.9.0)
 
 DEPENDENCIES:
   - OCMock
@@ -18,7 +18,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   OCMock: 589f2c84dacb1f5aaf6e4cec1f292551fe748e74
-  Qonversion: dc8d5a02ec83a4bfe1f2a73f08d9c00ebb254063
+  Qonversion: bcd154ecd6c0f323971dbddbb71d2e9257b171d1
 
 PODFILE CHECKSUM: 039889b49d515621e653ab1d97888c4c2744c482
 

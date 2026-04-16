@@ -80,4 +80,6 @@ typedef void (^QONDefaultCompletionHandler)(BOOL success, NSError  *_Nullable er
 
 typedef void (^QONPromotionalOfferCompletionHandler)(QONPromotionalOffer * _Nullable promotionalOffer, NSError  *_Nullable error) NS_SWIFT_NAME(Qonversion.PromotionalOfferCompletionHandler);
 
+typedef void (^QONEmptyCompletionHandler)(void) NS_SWIFT_NAME(Qonversion.EmptyCompletionHandler);
+
 NS_ASSUME_NONNULL_END

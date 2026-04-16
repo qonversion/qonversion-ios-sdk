@@ -23,6 +23,10 @@ public struct NoCodesConfiguration {
   
   /// Purchase delegate. If provided, it will be used instead of the default Qonversion SDK purchase flow.
   public var purchaseDelegate: NoCodesPurchaseDelegate?
+
+  /// Custom variables delegate. If provided, it will be called each time a screen is about to be displayed
+  /// to get custom variables for the screen.
+  public weak var customVariablesDelegate: NoCodesCustomVariablesDelegate?
   
   /// Optional custom fallback file name. If not provided, defaults to "nocodes_fallbacks.json"
   public var fallbackFileName: String?
@@ -51,11 +55,12 @@ public struct NoCodesConfiguration {
   ///   - proxyURL: Optional proxy URL for API requests. If not provided, uses default API endpoint
   ///   - locale: Optional custom locale for No-Code screens localization. If not provided, uses system default
   ///   - theme: Theme mode for No-Code screens. Defaults to `.auto` which follows device settings
-  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, purchaseDelegate: NoCodesPurchaseDelegate? = nil, fallbackFileName: String? = nil, proxyURL: String? = nil, locale: String? = nil, theme: NoCodesTheme = .auto) {
+  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, purchaseDelegate: NoCodesPurchaseDelegate? = nil, customVariablesDelegate: NoCodesCustomVariablesDelegate? = nil, fallbackFileName: String? = nil, proxyURL: String? = nil, locale: String? = nil, theme: NoCodesTheme = .auto) {
     self.projectKey = projectKey
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
     self.purchaseDelegate = purchaseDelegate
+    self.customVariablesDelegate = customVariablesDelegate
     self.fallbackFileName = fallbackFileName
     self.proxyURL = proxyURL
     self.locale = locale
