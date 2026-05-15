@@ -105,9 +105,11 @@ final class PurchasesMapper {
     return nil
   }
 
+  // Apple has not published the JSON encoding of Transaction.CommitmentInfo.expirationDate
+  // in jsonRepresentation. We handle ms-number and ISO-8601 string defensively. Once Xcode
+  // supports iOS 26.4, swap to typed Transaction.commitmentInfo?.expirationDate and delete
+  // this fallback.
   private func parseDate(from value: Any?) -> Date? {
-    // Transaction.jsonRepresentation typically encodes dates as Unix timestamps in milliseconds,
-    // but ISO 8601 strings have been observed in some payloads. Try both before giving up.
     if let millis = value as? NSNumber {
       return Date(timeIntervalSince1970: millis.doubleValue / 1000.0)
     }

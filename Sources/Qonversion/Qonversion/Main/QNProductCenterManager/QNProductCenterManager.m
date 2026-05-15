@@ -625,18 +625,21 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
   if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
-    NSDictionary<NSString *, QONTransactionCommitmentInfo *> *snapshot;
+    // One-shot consume: each transactionId is applied at most once and then removed
+    // from the cache. Entries that never match a returned QONTransaction (e.g. server
+    // omits the txn from the response) persist until process exit; this is acceptable
+    // given typical SK2 batch sizes of 1-12 transactions per session.
     @synchronized (self.commitmentInfoByTransactionId) {
       if (self.commitmentInfoByTransactionId.count == 0) {
         return;
       }
-      snapshot = [self.commitmentInfoByTransactionId copy];
-    }
-    for (QONEntitlement *entitlement in entitlements.allValues) {
-      for (QONTransaction *transaction in entitlement.transactions) {
-        QONTransactionCommitmentInfo *info = snapshot[transaction.transactionId];
-        if (info) {
-          transaction.commitmentInfo = info;
+      for (QONEntitlement *entitlement in entitlements.allValues) {
+        for (QONTransaction *transaction in entitlement.transactions) {
+          QONTransactionCommitmentInfo *info = self.commitmentInfoByTransactionId[transaction.transactionId];
+          if (info) {
+            transaction.commitmentInfo = info;
+            [self.commitmentInfoByTransactionId removeObjectForKey:transaction.transactionId];
+          }
         }
       }
     }
