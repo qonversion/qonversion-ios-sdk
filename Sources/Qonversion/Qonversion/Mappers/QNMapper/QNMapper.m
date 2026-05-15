@@ -9,7 +9,6 @@
 #import "QONIntroEligibility.h"
 #import "QONExperimentGroup.h"
 #import "QONTransaction.h"
-#import "QONTransactionCommitmentInfo.h"
 
 #import "QONLaunchResult+Protected.h"
 #import "QONOfferings+Protected.h"
@@ -295,43 +294,9 @@
   NSNumber *transactionTypeNumber = transactionTypes[typeRaw];
   QONTransactionType transactionType = transactionTypes ? transactionTypeNumber.integerValue : QONTransactionTypeUnknown;
   
-  QONTransactionCommitmentInfo *commitmentInfo = nil;
-  if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
-    commitmentInfo = [self mapCommitmentInfo:rawTransaction[@"commitment_info"]];
-  }
-
-  QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate promoOfferId:promoOfferId environment:environment ownershipType:ownershipType type:transactionType commitmentInfo:commitmentInfo];
+  QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate promoOfferId:promoOfferId environment:environment ownershipType:ownershipType type:transactionType];
 
   return transaction;
-}
-
-+ (QONTransactionCommitmentInfo *)mapCommitmentInfo:(NSDictionary *)rawCommitmentInfo API_AVAILABLE(ios(26.4), macosx(26.4), watchos(26.4), tvos(26.4), visionos(26.4)) {
-  if (![rawCommitmentInfo isKindOfClass:[NSDictionary class]]) {
-    return nil;
-  }
-
-  NSNumber *billingPeriodNumberRaw = rawCommitmentInfo[@"billingPeriodNumber"];
-  NSNumber *totalBillingPeriodsRaw = rawCommitmentInfo[@"totalBillingPeriods"];
-  NSNumber *priceRaw = rawCommitmentInfo[@"price"];
-  NSString *expirationDateRaw = rawCommitmentInfo[@"expirationDate"];
-
-  if (!billingPeriodNumberRaw || !totalBillingPeriodsRaw || !priceRaw || !expirationDateRaw) {
-    return nil;
-  }
-
-  NSDecimalNumber *price = [NSDecimalNumber decimalNumberWithString:[priceRaw stringValue]];
-
-  // expirationDate in Transaction.jsonRepresentation is an ISO 8601 string
-  NSISO8601DateFormatter *formatter = [[NSISO8601DateFormatter alloc] init];
-  NSDate *expirationDate = [formatter dateFromString:expirationDateRaw];
-  if (!expirationDate) {
-    return nil;
-  }
-
-  return [[QONTransactionCommitmentInfo alloc] initWithBillingPeriodNumber:billingPeriodNumberRaw.unsignedIntegerValue
-                                                       totalBillingPeriods:totalBillingPeriodsRaw.unsignedIntegerValue
-                                                     pricePerBillingPeriod:price
-                                         currentBillingPeriodExpirationDate:expirationDate];
 }
 
 + (NSDate *)mapDateFromSource:(NSDictionary *)source key:(NSString *)key {

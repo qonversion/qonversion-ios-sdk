@@ -83,13 +83,9 @@ final class PurchasesMapper {
           let raw = jsonDict["commitmentInfo"] as? [String: Any],
           let billingPeriodNumber = raw["billingPeriodNumber"] as? UInt64,
           let totalBillingPeriods = raw["totalBillingPeriods"] as? UInt64,
-          let priceValue = raw["price"],
-          let expirationDateString = raw["expirationDate"] as? String
+          let priceDecimal = decimalNumber(from: raw["price"]),
+          let expirationDate = parseDate(from: raw["expirationDate"])
     else { return nil }
-
-    let priceDecimal = NSDecimalNumber(string: "\(priceValue)")
-    let formatter = ISO8601DateFormatter()
-    guard let expirationDate = formatter.date(from: expirationDateString) else { return nil }
 
     return Qonversion.TransactionCommitmentInfo(
       billingPeriodNumber: UInt(billingPeriodNumber),
@@ -97,6 +93,34 @@ final class PurchasesMapper {
       pricePerBillingPeriod: priceDecimal,
       currentBillingPeriodExpirationDate: expirationDate
     )
+  }
+
+  private func decimalNumber(from value: Any?) -> NSDecimalNumber? {
+    if let number = value as? NSNumber {
+      return NSDecimalNumber(decimal: number.decimalValue)
+    }
+    if let string = value as? String, let decimal = Decimal(string: string) {
+      return NSDecimalNumber(decimal: decimal)
+    }
+    return nil
+  }
+
+  private func parseDate(from value: Any?) -> Date? {
+    // Transaction.jsonRepresentation typically encodes dates as Unix timestamps in milliseconds,
+    // but ISO 8601 strings have been observed in some payloads. Try both before giving up.
+    if let millis = value as? NSNumber {
+      return Date(timeIntervalSince1970: millis.doubleValue / 1000.0)
+    }
+    if let string = value as? String {
+      let isoFormatter = ISO8601DateFormatter()
+      if let date = isoFormatter.date(from: string) {
+        return date
+      }
+      if let millis = Double(string) {
+        return Date(timeIntervalSince1970: millis / 1000.0)
+      }
+    }
+    return nil
   }
   
   private func convert(paymentMode: Product.SubscriptionOffer.PaymentMode) -> String {

@@ -20,30 +20,6 @@
                                   environment:(QONTransactionEnvironment)environment
                                 ownershipType:(QONTransactionOwnershipType)ownershipType
                                          type:(QONTransactionType)type {
-  return [self initWithOriginalTransactionId:originalTransactionId
-                               transactionId:transactionId
-                                   offerCode:offerCode
-                             transactionDate:transactionDate
-                              expirationDate:expirationDate
-                   transactionRevocationDate:transactionRevocationDate
-                                promoOfferId:promoOfferId
-                                 environment:environment
-                               ownershipType:ownershipType
-                                        type:type
-                              commitmentInfo:nil];
-}
-
-- (instancetype)initWithOriginalTransactionId:(NSString *)originalTransactionId
-                                transactionId:(NSString *)transactionId
-                                    offerCode:(NSString *)offerCode
-                              transactionDate:(NSDate *)transactionDate
-                               expirationDate:(NSDate *)expirationDate
-                    transactionRevocationDate:(NSDate *)transactionRevocationDate
-                                 promoOfferId:(NSString *)promoOfferId
-                                  environment:(QONTransactionEnvironment)environment
-                                ownershipType:(QONTransactionOwnershipType)ownershipType
-                                         type:(QONTransactionType)type
-                               commitmentInfo:(nullable QONTransactionCommitmentInfo *)commitmentInfo {
   self = [super init];
 
   if (self) {
@@ -57,9 +33,6 @@
     _environment = environment;
     _ownershipType = ownershipType;
     _type = type;
-    if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
-      _commitmentInfo = commitmentInfo;
-    }
   }
 
   return self;
@@ -113,9 +86,12 @@
   [description appendFormat:@"environment=%@ (enum value = %li),\n", [self prettyEnvironment], (long) self.environment];
   [description appendFormat:@"ownershipType=%@ (enum value = %li),\n", [self prettyOwnershipType], (long) self.ownershipType];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
-  
+  if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+    [description appendFormat:@"commitmentInfo=%@,\n", self.commitmentInfo];
+  }
+
   [description appendString:@">"];
-  
+
   return [description copy];
 }
 
