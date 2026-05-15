@@ -67,7 +67,36 @@ final class PurchasesMapper {
     
     purchaseInfo.storefrontCountryCode = await Storefront.current?.countryCode
 
+    if #available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *) {
+      // Transitional: parse Transaction.CommitmentInfo from jsonRepresentation.
+      // Swap for direct typed access (transaction.commitmentInfo?.billingPeriodNumber)
+      // once Xcode ships with the iOS 26.4 SDK.
+      purchaseInfo.commitmentInfo = parseCommitmentInfo(from: transaction)
+    }
+
     return purchaseInfo
+  }
+
+  @available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)
+  private func parseCommitmentInfo(from transaction: Transaction) -> Qonversion.TransactionCommitmentInfo? {
+    guard let jsonDict = (try? JSONSerialization.jsonObject(with: transaction.jsonRepresentation)) as? [String: Any],
+          let raw = jsonDict["commitmentInfo"] as? [String: Any],
+          let billingPeriodNumber = raw["billingPeriodNumber"] as? UInt64,
+          let totalBillingPeriods = raw["totalBillingPeriods"] as? UInt64,
+          let priceValue = raw["price"],
+          let expirationDateString = raw["expirationDate"] as? String
+    else { return nil }
+
+    let priceDecimal = NSDecimalNumber(string: "\(priceValue)")
+    let formatter = ISO8601DateFormatter()
+    guard let expirationDate = formatter.date(from: expirationDateString) else { return nil }
+
+    return Qonversion.TransactionCommitmentInfo(
+      billingPeriodNumber: UInt(billingPeriodNumber),
+      totalBillingPeriods: UInt(totalBillingPeriods),
+      pricePerBillingPeriod: priceDecimal,
+      currentBillingPeriodExpirationDate: expirationDate
+    )
   }
   
   private func convert(paymentMode: Product.SubscriptionOffer.PaymentMode) -> String {

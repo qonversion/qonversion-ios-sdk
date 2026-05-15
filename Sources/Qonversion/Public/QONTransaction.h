@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "QONTransactionCommitmentInfo.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -82,6 +83,12 @@ NS_SWIFT_NAME(Qonversion.Transaction)
  Type of the transaction.
  */
 @property (nonatomic, assign) QONTransactionType type;
+
+/**
+ Commitment information for subscriptions with a fixed-term billing commitment (e.g. a monthly price paid over 12 months).
+ Non-nil only when the transaction is part of such a commitment. Requires iOS 26.4 or later to be populated.
+ */
+@property (nonatomic, strong, nullable) QONTransactionCommitmentInfo *commitmentInfo API_AVAILABLE(ios(26.4), macosx(26.4), watchos(26.4), tvos(26.4), visionos(26.4));
 
 @end
 

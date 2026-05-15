@@ -20,8 +20,32 @@
                                   environment:(QONTransactionEnvironment)environment
                                 ownershipType:(QONTransactionOwnershipType)ownershipType
                                          type:(QONTransactionType)type {
+  return [self initWithOriginalTransactionId:originalTransactionId
+                               transactionId:transactionId
+                                   offerCode:offerCode
+                             transactionDate:transactionDate
+                              expirationDate:expirationDate
+                   transactionRevocationDate:transactionRevocationDate
+                                promoOfferId:promoOfferId
+                                 environment:environment
+                               ownershipType:ownershipType
+                                        type:type
+                              commitmentInfo:nil];
+}
+
+- (instancetype)initWithOriginalTransactionId:(NSString *)originalTransactionId
+                                transactionId:(NSString *)transactionId
+                                    offerCode:(NSString *)offerCode
+                              transactionDate:(NSDate *)transactionDate
+                               expirationDate:(NSDate *)expirationDate
+                    transactionRevocationDate:(NSDate *)transactionRevocationDate
+                                 promoOfferId:(NSString *)promoOfferId
+                                  environment:(QONTransactionEnvironment)environment
+                                ownershipType:(QONTransactionOwnershipType)ownershipType
+                                         type:(QONTransactionType)type
+                               commitmentInfo:(nullable QONTransactionCommitmentInfo *)commitmentInfo {
   self = [super init];
-  
+
   if (self) {
     _originalTransactionId = originalTransactionId;
     _transactionId = transactionId;
@@ -33,8 +57,11 @@
     _environment = environment;
     _ownershipType = ownershipType;
     _type = type;
+    if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+      _commitmentInfo = commitmentInfo;
+    }
   }
-  
+
   return self;
 }
 
@@ -51,6 +78,9 @@
     _environment = [coder decodeIntegerForKey:NSStringFromSelector(@selector(environment))];
     _ownershipType = [coder decodeIntegerForKey:NSStringFromSelector(@selector(ownershipType))];
     _type = [coder decodeIntegerForKey:NSStringFromSelector(@selector(type))];
+    if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+      _commitmentInfo = [coder decodeObjectForKey:NSStringFromSelector(@selector(commitmentInfo))];
+    }
   }
   return self;
 }
@@ -66,6 +96,9 @@
   [coder encodeInteger:_environment forKey:NSStringFromSelector(@selector(environment))];
   [coder encodeInteger:_ownershipType forKey:NSStringFromSelector(@selector(ownershipType))];
   [coder encodeInteger:_type forKey:NSStringFromSelector(@selector(type))];
+  if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+    [coder encodeObject:_commitmentInfo forKey:NSStringFromSelector(@selector(commitmentInfo))];
+  }
 }
 
 - (NSString *)description {

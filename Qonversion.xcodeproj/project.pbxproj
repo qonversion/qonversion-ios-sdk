@@ -85,6 +85,8 @@
 		700636152C12125900BB9F9C /* NSError+Sugare.m in Sources */ = {isa = PBXBuildFile; fileRef = 700636132C12125900BB9F9C /* NSError+Sugare.m */; };
 		700B9D4D2E742CBB0031B056 /* QONPurchaseResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 700B9D4C2E742CBB0031B056 /* QONPurchaseResult.m */; };
 		700B9D4E2E742CBB0031B056 /* QONPurchaseResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 700B9D4B2E742CBB0031B056 /* QONPurchaseResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		DEV906BB00000001 /* QONTransactionCommitmentInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = DEV906AA00000001 /* QONTransactionCommitmentInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		DEV906BB00000002 /* QONTransactionCommitmentInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = DEV906AA00000002 /* QONTransactionCommitmentInfo.m */; };
 		700B9D502E742E5D0031B056 /* QONPurchaseResult+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700B9D4F2E742E5D0031B056 /* QONPurchaseResult+Protected.h */; };
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
 		701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922712B10981200724926 /* QONSubscriptionPeriod.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -440,6 +442,8 @@
 		700636122C12125900BB9F9C /* NSError+Sugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+Sugare.h"; sourceTree = "<group>"; };
 		700636132C12125900BB9F9C /* NSError+Sugare.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+Sugare.m"; sourceTree = "<group>"; };
 		700B9D4B2E742CBB0031B056 /* QONPurchaseResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONPurchaseResult.h; sourceTree = "<group>"; };
+		DEV906AA00000001 /* QONTransactionCommitmentInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONTransactionCommitmentInfo.h; sourceTree = "<group>"; };
+		DEV906AA00000002 /* QONTransactionCommitmentInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONTransactionCommitmentInfo.m; sourceTree = "<group>"; };
 		700B9D4C2E742CBB0031B056 /* QONPurchaseResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONPurchaseResult.m; sourceTree = "<group>"; };
 		700B9D4F2E742E5D0031B056 /* QONPurchaseResult+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONPurchaseResult+Protected.h"; sourceTree = "<group>"; };
 		700EC171291277130032E205 /* QONExperimentGroup+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONExperimentGroup+Protected.h"; sourceTree = "<group>"; };
@@ -1335,6 +1339,8 @@
 				895731BF26DD03A2009507A6 /* QONEntitlement.h */,
 				70B917622B3314BD00BF0689 /* QONTransaction.h */,
 				70B917632B3314BD00BF0689 /* QONTransaction.m */,
+				DEV906AA00000001 /* QONTransactionCommitmentInfo.h */,
+				DEV906AA00000002 /* QONTransactionCommitmentInfo.m */,
 				895731C026DD03A2009507A6 /* QONLaunchResult.h */,
 				895731C126DD03A2009507A6 /* QONExperimentGroup.m */,
 				895731C326DD03A2009507A6 /* QONAutomations.m */,
@@ -1868,6 +1874,7 @@
 				8957330126DD03A3009507A6 /* QNUserInfoServiceInterface.h in Headers */,
 				895732C926DD03A3009507A6 /* QNInternalConstants.h in Headers */,
 				70B917642B3314BD00BF0689 /* QONTransaction.h in Headers */,
+				DEV906BB00000001 /* QONTransactionCommitmentInfo.h in Headers */,
 				8957328926DD03A3009507A6 /* QONProduct.h in Headers */,
 				702DBDEC2A3216C900D590D0 /* QONExperiment+Protected.h in Headers */,
 				70CB7CDD2C246DF200241FF1 /* QONPromotionalOffer.h in Headers */,
@@ -2271,6 +2278,7 @@
 				895732C626DD03A3009507A6 /* QNAPIConstants.m in Sources */,
 				6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */,
 				70B917652B3314BD00BF0689 /* QONTransaction.m in Sources */,
+				DEV906BB00000002 /* QONTransactionCommitmentInfo.m in Sources */,
 				70D05A8F29C9FC1600EA5DDF /* QONRemoteConfigManager.m in Sources */,
 				895732C426DD03A3009507A6 /* QNRequestBuilder.m in Sources */,
 				8957329726DD03A3009507A6 /* QONStoreKitSugare.m in Sources */,
