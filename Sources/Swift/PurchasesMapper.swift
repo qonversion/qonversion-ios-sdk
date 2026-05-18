@@ -67,7 +67,85 @@ final class PurchasesMapper {
     
     purchaseInfo.storefrontCountryCode = await Storefront.current?.countryCode
 
+    if #available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *) {
+      // Transitional: parse Transaction.CommitmentInfo from jsonRepresentation.
+      // Swap for direct typed access (transaction.commitmentInfo?.billingPeriodNumber)
+      // once Xcode ships with the iOS 26.4 SDK.
+      purchaseInfo.commitmentInfo = parseCommitmentInfo(from: transaction.jsonRepresentation)
+    }
+
     return purchaseInfo
+  }
+
+  @available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)
+  func parseCommitmentInfo(from jsonRepresentation: Data) -> Qonversion.TransactionCommitmentInfo? {
+    // Decode straight from raw JSON bytes so that `price` is parsed as a Swift Decimal
+    // without round-tripping through Double, and so `billingPeriodNumber` /
+    // `totalBillingPeriods` survive whether Apple emits them as JSON ints or floats.
+    guard let envelope = try? JSONDecoder().decode(TransactionEnvelope.self, from: jsonRepresentation),
+          let info = envelope.commitmentInfo
+    else { return nil }
+
+    return Qonversion.TransactionCommitmentInfo(
+      billingPeriodNumber: UInt(info.billingPeriodNumber),
+      totalBillingPeriods: UInt(info.totalBillingPeriods),
+      pricePerBillingPeriod: NSDecimalNumber(decimal: info.price),
+      currentBillingPeriodExpirationDate: info.expirationDate
+    )
+  }
+
+  @available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)
+  private struct TransactionEnvelope: Decodable {
+    let commitmentInfo: CommitmentInfoJSON?
+  }
+
+  @available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)
+  private struct CommitmentInfoJSON: Decodable {
+    let billingPeriodNumber: UInt64
+    let totalBillingPeriods: UInt64
+    let price: Decimal
+    let expirationDate: Date
+
+    enum CodingKeys: String, CodingKey {
+      case billingPeriodNumber
+      case totalBillingPeriods
+      case price
+      case expirationDate
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      billingPeriodNumber = try container.decode(UInt64.self, forKey: .billingPeriodNumber)
+      totalBillingPeriods = try container.decode(UInt64.self, forKey: .totalBillingPeriods)
+      price = try container.decode(Decimal.self, forKey: .price)
+      expirationDate = try Self.decodeExpirationDate(from: container)
+    }
+
+    // Apple has not yet published the JSON encoding of Transaction.CommitmentInfo.expirationDate
+    // in jsonRepresentation. Other Transaction date fields (purchaseDate, expiresDate,
+    // signedDate) are Unix milliseconds, so we expect a number, but accept ISO-8601 and
+    // numeric strings defensively. Swap to typed transaction.commitmentInfo?.expirationDate
+    // and delete these fallbacks once the iOS 26.4 SDK ships.
+    private static func decodeExpirationDate(
+      from container: KeyedDecodingContainer<CodingKeys>
+    ) throws -> Date {
+      if let millis = try? container.decode(Double.self, forKey: .expirationDate) {
+        return Date(timeIntervalSince1970: millis / 1000.0)
+      }
+
+      let raw = try container.decode(String.self, forKey: .expirationDate)
+      if let date = ISO8601DateFormatter().date(from: raw) {
+        return date
+      }
+      if let millis = Double(raw) {
+        return Date(timeIntervalSince1970: millis / 1000.0)
+      }
+
+      throw DecodingError.dataCorruptedError(
+        forKey: .expirationDate, in: container,
+        debugDescription: "Unrecognized expirationDate encoding: \(raw)"
+      )
+    }
   }
   
   private func convert(paymentMode: Product.SubscriptionOffer.PaymentMode) -> String {

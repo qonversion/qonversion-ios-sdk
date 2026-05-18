@@ -21,7 +21,7 @@
                                 ownershipType:(QONTransactionOwnershipType)ownershipType
                                          type:(QONTransactionType)type {
   self = [super init];
-  
+
   if (self) {
     _originalTransactionId = originalTransactionId;
     _transactionId = transactionId;
@@ -34,7 +34,7 @@
     _ownershipType = ownershipType;
     _type = type;
   }
-  
+
   return self;
 }
 
@@ -51,6 +51,9 @@
     _environment = [coder decodeIntegerForKey:NSStringFromSelector(@selector(environment))];
     _ownershipType = [coder decodeIntegerForKey:NSStringFromSelector(@selector(ownershipType))];
     _type = [coder decodeIntegerForKey:NSStringFromSelector(@selector(type))];
+    if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+      _commitmentInfo = [coder decodeObjectForKey:NSStringFromSelector(@selector(commitmentInfo))];
+    }
   }
   return self;
 }
@@ -66,6 +69,9 @@
   [coder encodeInteger:_environment forKey:NSStringFromSelector(@selector(environment))];
   [coder encodeInteger:_ownershipType forKey:NSStringFromSelector(@selector(ownershipType))];
   [coder encodeInteger:_type forKey:NSStringFromSelector(@selector(type))];
+  if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+    [coder encodeObject:_commitmentInfo forKey:NSStringFromSelector(@selector(commitmentInfo))];
+  }
 }
 
 - (NSString *)description {
@@ -80,9 +86,12 @@
   [description appendFormat:@"environment=%@ (enum value = %li),\n", [self prettyEnvironment], (long) self.environment];
   [description appendFormat:@"ownershipType=%@ (enum value = %li),\n", [self prettyOwnershipType], (long) self.ownershipType];
   [description appendFormat:@"type=%@ (enum value = %li),\n", [self prettyType], (long) self.type];
-  
+  if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+    [description appendFormat:@"commitmentInfo=%@,\n", self.commitmentInfo];
+  }
+
   [description appendString:@">"];
-  
+
   return [description copy];
 }
 
