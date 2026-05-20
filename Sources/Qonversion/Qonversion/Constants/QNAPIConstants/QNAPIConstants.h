@@ -28,6 +28,10 @@ extern NSString *const kStoredRequestsKey;
 extern NSString *const kRemoteConfigEndpoint;
 extern NSString *const kRemoteConfigListEndpoint;
 
+extern NSString *const kWebRedeemEndpoint;
+extern NSString *const kWebRedeemStatusEndpoint;
+extern NSString *const kWebRedeemReissueEndpoint;
+
 extern NSString *const kEventEndpoint;
 
 extern NSString *const kAccessDeniedError;
