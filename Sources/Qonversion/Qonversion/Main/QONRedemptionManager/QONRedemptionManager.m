@@ -67,6 +67,20 @@
 }
 
 - (void)handleRedemptionLink:(NSURL *)url completion:(QONRedemptionCompletionHandler)completion {
+  // Spec rule RT2-W3 (Web 2 App M1): Universal Links are the ONLY supported
+  // transport for email-borne redemption links. The custom `qonversion://`
+  // scheme is left as a *parser-level* concession for in-process
+  // host-app→SDK forwarding (`+tokenFromURL:`), but this public entry point
+  // — documented as the email→app handoff — must reject any non-https URL
+  // before issuing a network request. Any installed app can register the
+  // custom scheme in its CFBundleURLTypes and hijack the redemption token
+  // otherwise.
+  NSString *scheme = [url.scheme lowercaseString];
+  if (![scheme isEqualToString:@"https"]) {
+    [self deliver:QONRedemptionResultInvalidToken completion:completion];
+    return;
+  }
+
   NSString *token = [QONRedemptionManager tokenFromURL:url];
   if (token.length == 0) {
     [self deliver:QONRedemptionResultInvalidToken completion:completion];

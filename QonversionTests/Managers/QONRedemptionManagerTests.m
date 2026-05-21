@@ -147,8 +147,12 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   XCTAssertEqualObjects([QONRedemptionManager tokenFromURL:url], @"tok_xyz123");
 }
 
-- (void)testTokenFromURLAcceptsCustomScheme {
-  // host-app→SDK internal forwarding fallback
+- (void)testTokenFromURLAcceptsCustomScheme_HostAppForwardingOnly {
+  // host-app→SDK internal forwarding fallback. `tokenFromURL` is a pure
+  // parser used by the (private) internal forwarding path; the email-borne
+  // entry point `handleRedemptionLink:completion:` is responsible for
+  // gating the transport scheme to https (Universal Links only) per
+  // spec rule RT2-W3.
   NSURL *url = [NSURL URLWithString:@"qonversion://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTAssertEqualObjects([QONRedemptionManager tokenFromURL:url], @"tok_xyz123");
 }
@@ -304,6 +308,28 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
 
   [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
     XCTAssertEqual(result, QONRedemptionResultNetworkError);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)testHandleRedemptionLink_RejectsCustomScheme_EmailContext {
+  // Spec rule RT2-W3: Universal Links (https) are the ONLY supported email
+  // transport. Any non-https scheme (notably `qonversion://`) can be claimed
+  // by any installed app's CFBundleURLTypes and used to hijack the token, so
+  // the email-borne entry point MUST reject it without ever hitting the
+  // network. The structural parser (`+tokenFromURL:`) remains scheme-
+  // agnostic; gating is the responsibility of `handleRedemptionLink:`.
+  NSURL *url = [NSURL URLWithString:@"qonversion://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(result, QONRedemptionResultInvalidToken);
+    // No HTTP request must have been issued for a rejected scheme — this is
+    // the load-bearing security assertion. Any leak of the token over the
+    // network would already constitute partial compromise.
+    XCTAssertEqual(gStubURLs.count, (NSUInteger)0);
     [exp fulfill];
   }];
 
