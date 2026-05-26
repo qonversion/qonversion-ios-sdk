@@ -215,21 +215,23 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
 }
 
 - (NSString *)advertiserID {
-  if (!_advertiserID && !self.idfaProhibited) {
+  @synchronized (self) {
+    if (!_advertiserID && !self.idfaProhibited) {
 #if TARGET_OS_WATCH || TARGET_OS_VISION
-    self.idfaProhibited = YES;
-    _advertiserID = nil;
-#else
-    SEL selector = NSSelectorFromString(@"obtainAdvertisingID");
-    if ([[QNDevice current] respondsToSelector:selector]) {
-      _advertiserID = ((NSString * (*)(id, SEL))[[QNDevice current] methodForSelector:selector])([QNDevice current], selector);
-    } else {
       self.idfaProhibited = YES;
-    }
+      _advertiserID = nil;
+#else
+      SEL selector = NSSelectorFromString(@"obtainAdvertisingID");
+      if ([[QNDevice current] respondsToSelector:selector]) {
+        _advertiserID = ((NSString * (*)(id, SEL))[[QNDevice current] methodForSelector:selector])([QNDevice current], selector);
+      } else {
+        self.idfaProhibited = YES;
+      }
 #endif
+    }
+
+    return _advertiserID;
   }
-  
-  return _advertiserID;
 }
 
 #if TARGET_OS_WATCH || TARGET_OS_VISION
