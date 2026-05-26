@@ -136,15 +136,17 @@ NS_ASSUME_NONNULL_BEGIN
   purchaseDict[@"period_unit"] = purchaseModel.subscriptionPeriodUnit;
   purchaseDict[@"period_number_of_units"] = purchaseModel.subscriptionPeriodNumberOfUnits;
     
-  NSMutableDictionary *introOffer = [[NSMutableDictionary alloc] init];
-  
-  introOffer[@"value"] = purchaseModel.price;
-  introOffer[@"number_of_periods"] = purchaseModel.introductoryNumberOfPeriods;
-  introOffer[@"period_number_of_units"] = purchaseModel.introductoryPeriodNumberOfUnits;
-  introOffer[@"period_unit"] = purchaseModel.introductoryPeriodUnit;
-  introOffer[@"payment_mode"] = purchaseModel.introductoryPaymentMode;
-  
-  result[@"introductory_offer"] = introOffer.count > 0 ? introOffer : nil;
+  if (purchaseModel.introductoryPrice != nil) {
+    NSMutableDictionary *introOffer = [[NSMutableDictionary alloc] init];
+
+    introOffer[@"value"] = purchaseModel.introductoryPrice;
+    introOffer[@"number_of_periods"] = purchaseModel.introductoryNumberOfPeriods;
+    introOffer[@"period_number_of_units"] = purchaseModel.introductoryPeriodNumberOfUnits;
+    introOffer[@"period_unit"] = purchaseModel.introductoryPeriodUnit;
+    introOffer[@"payment_mode"] = purchaseModel.introductoryPaymentMode;
+
+    result[@"introductory_offer"] = introOffer;
+  }
   
   NSMutableDictionary *promoOffer = [[NSMutableDictionary alloc] init];
   promoOffer[@"id"] = purchaseModel.promoOfferId;
