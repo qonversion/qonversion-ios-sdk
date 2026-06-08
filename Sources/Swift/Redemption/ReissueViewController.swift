@@ -63,7 +63,13 @@ final class ReissueViewController: UIViewController, UITextFieldDelegate {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    // `systemBackground` is unavailable on tvOS; fall back to black there
+    // so the multi-platform podspec lint compiles.
+    #if os(tvOS)
+    view.backgroundColor = .black
+    #else
     view.backgroundColor = .systemBackground
+    #endif
 
     titleLabel.text = L.title
     titleLabel.font = .preferredFont(forTextStyle: .title2)

@@ -64,7 +64,13 @@ extension Qonversion {
     onCompletion: @escaping (Bool) -> Void
   ) {
     let reissueVC = ReissueViewController(onCompletion: onCompletion)
+    // `.formSheet` requires tvOS 26+; use full screen on tvOS so the
+    // multi-platform podspec lint compiles on older deployment targets.
+    #if os(tvOS)
+    reissueVC.modalPresentationStyle = .fullScreen
+    #else
     reissueVC.modalPresentationStyle = .formSheet
+    #endif
     viewController.present(reissueVC, animated: true)
   }
 }
