@@ -88,17 +88,35 @@
   }
 
   NSString *anonUserID = [self.userInfoService obtainUserID];
+  if (anonUserID.length == 0) {
+    // overview: anon_user_id is required for the backend anon→app merge.
+    // `obtainUserID` is expected to lazily generate+persist one, so an empty
+    // value here is a transient SDK precondition failure (e.g. the user info
+    // service has not finished bootstrapping). We must NOT silently fire a
+    // redeem that omits the field — that would consume a single-use token on
+    // the backend with no way to attach the resulting entitlement to a user.
+    // Surface a retryable outcome and issue no network request.
+    [self deliver:QONRedemptionResultRetryable completion:completion];
+    return;
+  }
+
   NSMutableDictionary *body = [NSMutableDictionary new];
   body[@"token"] = token;
-  if (anonUserID.length > 0) {
-    body[@"anon_user_id"] = anonUserID;
-  }
+  body[@"anon_user_id"] = anonUserID;
   // RestoreBehavior=Transfer is the default per plan §"Collision behavior".
   body[@"restore_behavior"] = @"transfer";
+
+  // overview r6: one Idempotency-Key (UUIDv4) per *logical* redeem call — not
+  // per HTTP attempt. Generated here so every HTTP request belonging to this
+  // logical redeem (the redeem POST plus any 409→/status recovery call or
+  // transport-level retry) carries the same key and the backend can dedup
+  // double-taps / retries.
+  NSString *idempotencyKey = [NSUUID UUID].UUIDString;
 
   __weak QONRedemptionManager *weakSelf = self;
   [self postJSON:body
         endpoint:kWebRedeemEndpoint
+  idempotencyKey:idempotencyKey
       completion:^(NSInteger statusCode, NSDictionary * _Nullable response, NSError * _Nullable transportError) {
     QONRedemptionManager *strongSelf = weakSelf;
     if (!strongSelf) {
@@ -148,20 +166,28 @@
     if (statusCode == 409) {
       // RT4-W2 recovery branch — confirm via /v4/web/redeem/status whether
       // the token is genuinely already-consumed, then surface that to host.
-      [strongSelf checkRedemptionStatusForToken:token completion:completion];
+      // Same logical redeem → reuse the same Idempotency-Key.
+      [strongSelf checkRedemptionStatusForToken:token
+                                 idempotencyKey:idempotencyKey
+                                     completion:completion];
       return;
     }
 
-    // 4xx (other) or 5xx — treat as network/transient.
-    [strongSelf deliver:QONRedemptionResultNetworkError completion:completion];
+    // 429 (rate limit) and 5xx (server error), plus any other non-mapped 4xx
+    // (401/403/etc.): the server was reachable and responded, so this is NOT
+    // a "no network" condition. Surface `.retryable` so the host shows a
+    // back-off/retry affordance rather than a misleading offline error.
+    [strongSelf deliver:QONRedemptionResultRetryable completion:completion];
   }];
 }
 
 - (void)reissueWithEmail:(NSString *)email completion:(QONReissueCompletionHandler)completion {
   NSDictionary *body = email.length > 0 ? @{@"email": email} : @{};
 
+  // Reissue is its own logical operation → its own Idempotency-Key.
   [self postJSON:body
         endpoint:kWebRedeemReissueEndpoint
+  idempotencyKey:[NSUUID UUID].UUIDString
       completion:^(NSInteger statusCode, NSDictionary * _Nullable response, NSError * _Nullable transportError) {
     BOOL success = (transportError == nil) && statusCode >= 200 && statusCode < 300;
     if (completion) {
@@ -174,10 +200,13 @@
 
 // MARK: - Private
 
-- (void)checkRedemptionStatusForToken:(NSString *)token completion:(QONRedemptionCompletionHandler)completion {
+- (void)checkRedemptionStatusForToken:(NSString *)token
+                       idempotencyKey:(NSString *)idempotencyKey
+                           completion:(QONRedemptionCompletionHandler)completion {
   __weak QONRedemptionManager *weakSelf = self;
   [self postJSON:@{@"token": token}
         endpoint:kWebRedeemStatusEndpoint
+  idempotencyKey:idempotencyKey
       completion:^(NSInteger statusCode, NSDictionary * _Nullable response, NSError * _Nullable transportError) {
     QONRedemptionManager *strongSelf = weakSelf;
     if (!strongSelf) {
@@ -214,6 +243,7 @@
 
 - (void)postJSON:(NSDictionary *)body
         endpoint:(NSString *)endpoint
+  idempotencyKey:(nullable NSString *)idempotencyKey
       completion:(void (^)(NSInteger statusCode, NSDictionary * _Nullable response, NSError * _Nullable transportError))completion {
   NSString *urlString = [self.baseURL stringByAppendingString:endpoint];
   NSURL *url = [NSURL URLWithString:urlString];
@@ -237,6 +267,11 @@
   request.HTTPMethod = @"POST";
   request.HTTPBody = data;
   [request addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
+
+  // overview r6: mandatory dedup key for the logical redeem/reissue call.
+  if (idempotencyKey.length > 0) {
+    [request addValue:idempotencyKey forHTTPHeaderField:@"Idempotency-Key"];
+  }
 
   // Auth + platform headers — re-use the shared API client's project key.
   NSString *apiKey = [QNAPIClient shared].apiKey;

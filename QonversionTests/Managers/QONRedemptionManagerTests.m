@@ -25,6 +25,7 @@ static NSData *gStubBody = nil;
 static NSError *gStubError = nil;
 static NSMutableArray<NSURL *> *gStubURLs = nil;
 static NSMutableArray<NSDictionary *> *gStubBodies = nil;
+static NSMutableArray<NSDictionary *> *gStubHeaders = nil;
 
 // Per-URL queue: maps endpoint path -> NSArray of dicts
 //   { @"status": NSNumber, @"body": NSData, @"error": NSError (optional) }
@@ -46,6 +47,9 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
     if ([parsed isKindOfClass:[NSDictionary class]]) {
       [gStubBodies addObject:parsed];
     }
+  }
+  if (gStubHeaders) {
+    [gStubHeaders addObject:(self.request.allHTTPHeaderFields ?: @{})];
   }
 
   // Per-path queue takes precedence (multi-step flows like 409 → status).
@@ -112,6 +116,7 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   gStubError = nil;
   gStubURLs = [NSMutableArray new];
   gStubBodies = [NSMutableArray new];
+  gStubHeaders = [NSMutableArray new];
   gStubQueueByPath = [NSMutableDictionary new];
 
   NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
@@ -136,6 +141,7 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   _manager = nil;
   gStubURLs = nil;
   gStubBodies = nil;
+  gStubHeaders = nil;
   gStubQueueByPath = nil;
   [super tearDown];
 }
@@ -330,6 +336,204 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
     // the load-bearing security assertion. Any leak of the token over the
     // network would already constitute partial compromise.
     XCTAssertEqual(gStubURLs.count, (NSUInteger)0);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+#pragma mark - Idempotency-Key (overview r6)
+
+static BOOL QONIsValidUUID(NSString *value) {
+  if (![value isKindOfClass:[NSString class]]) {
+    return NO;
+  }
+  return [[NSUUID alloc] initWithUUIDString:value] != nil;
+}
+
+- (void)testRedeemRequestCarriesValidIdempotencyKeyHeader {
+  // overview r6: the redeem request MUST carry a mandatory `Idempotency-Key`
+  // (a SDK-generated UUIDv4) so the backend can dedup double-taps / retries.
+  gStubStatusCode = 200;
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"app_user_42"} options:0 error:nil];
+  OCMStub([_mockProductCenterManager identify:OCMOCK_ANY completion:[OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], nil]]);
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(gStubHeaders.count, (NSUInteger)1);
+    NSString *key = gStubHeaders.firstObject[@"Idempotency-Key"];
+    XCTAssertNotNil(key, @"redeem request must carry an Idempotency-Key header");
+    XCTAssertTrue(QONIsValidUUID(key), @"Idempotency-Key must be a valid UUID, got %@", key);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)testIdempotencyKeyIsStableAcrossHTTPRetryOfSameLogicalRedeem {
+  // The key is per *logical* redeem call, NOT per HTTP attempt. A transient
+  // transport failure followed by an SDK-level retry of the same logical
+  // redeem must reuse the same Idempotency-Key so the backend dedups it.
+  gStubStatusCode = 200;
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"app_user_42"} options:0 error:nil];
+  OCMStub([_mockProductCenterManager identify:OCMOCK_ANY completion:[OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], nil]]);
+
+  // First logical redeem: capture its key. The status-recovery path (409 →
+  // /status) is part of the same logical redeem, so both HTTP calls must
+  // share one key.
+  NSData *statusBody = [NSJSONSerialization dataWithJSONObject:@{@"consumed": @YES} options:0 error:nil];
+  gStubQueueByPath[kWebRedeemStatusEndpoint] = [@[ @{@"status": @200, @"body": statusBody} ] mutableCopy];
+  gStubQueueByPath[kWebRedeemEndpoint] = [@[ @{@"status": @409, @"body": [@"{}" dataUsingEncoding:NSUTF8StringEncoding]} ] mutableCopy];
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(gStubHeaders.count, (NSUInteger)2, @"redeem + status recovery call");
+    NSString *redeemKey = gStubHeaders[0][@"Idempotency-Key"];
+    NSString *statusKey = gStubHeaders[1][@"Idempotency-Key"];
+    XCTAssertTrue(QONIsValidUUID(redeemKey));
+    XCTAssertEqualObjects(redeemKey, statusKey, @"same logical redeem must reuse the Idempotency-Key across HTTP calls");
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)testSeparateLogicalRedeemsGetDistinctIdempotencyKeys {
+  gStubStatusCode = 200;
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"app_user_42"} options:0 error:nil];
+  OCMStub([_mockProductCenterManager identify:OCMOCK_ANY completion:[OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], nil]]);
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+
+  XCTestExpectation *exp1 = [self expectationWithDescription:@"first"];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [exp1 fulfill]; }];
+  [self waitForExpectations:@[exp1] timeout:5.0];
+  NSString *firstKey = gStubHeaders.lastObject[@"Idempotency-Key"];
+
+  XCTestExpectation *exp2 = [self expectationWithDescription:@"second"];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [exp2 fulfill]; }];
+  [self waitForExpectations:@[exp2] timeout:5.0];
+  NSString *secondKey = gStubHeaders.lastObject[@"Idempotency-Key"];
+
+  XCTAssertTrue(QONIsValidUUID(firstKey));
+  XCTAssertTrue(QONIsValidUUID(secondKey));
+  XCTAssertNotEqualObjects(firstKey, secondKey, @"distinct logical redeems must get distinct keys");
+}
+
+#pragma mark - baseURL override
+
+- (void)testRedeemUsesConfiguredBaseURLNotDefault {
+  // A client configured with a custom / proxy baseURL must have redemption
+  // requests routed there, not to kAPIBase.
+  _manager.baseURL = @"https://proxy.example.test/";
+  gStubStatusCode = 200;
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"u"} options:0 error:nil];
+  OCMStub([_mockProductCenterManager identify:OCMOCK_ANY completion:[OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], nil]]);
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(gStubURLs.count, (NSUInteger)1);
+    XCTAssertEqualObjects(gStubURLs.firstObject.host, @"proxy.example.test");
+    XCTAssertFalse([gStubURLs.firstObject.host isEqualToString:@"api2.qonversion.io"]);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)testManagerDefaultsToAPIBaseWhenNotConfigured {
+  QONRedemptionManager *fresh = [QONRedemptionManager new];
+  XCTAssertEqualObjects(fresh.baseURL, kAPIBase);
+}
+
+#pragma mark - Server errors (429 / 5xx) are retryable, not "network"
+
+- (void)test429ReturnsRetryable {
+  gStubStatusCode = 429;
+  gStubBody = [@"{}" dataUsingEncoding:NSUTF8StringEncoding];
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(result, QONRedemptionResultRetryable);
+    XCTAssertNotEqual(result, QONRedemptionResultNetworkError, @"rate limit is a live-server response, not 'no network'");
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)test500ReturnsRetryable {
+  gStubStatusCode = 500;
+  gStubBody = [@"{}" dataUsingEncoding:NSUTF8StringEncoding];
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(result, QONRedemptionResultRetryable);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)test503ReturnsRetryable {
+  gStubStatusCode = 503;
+  gStubBody = [@"{}" dataUsingEncoding:NSUTF8StringEncoding];
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(result, QONRedemptionResultRetryable);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)test401ReturnsRetryableNotNetwork {
+  // Auth/config server response — a live 401 is not "no network".
+  gStubStatusCode = 401;
+  gStubBody = [@"{}" dataUsingEncoding:NSUTF8StringEncoding];
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertNotEqual(result, QONRedemptionResultNetworkError);
+    XCTAssertEqual(result, QONRedemptionResultRetryable);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+#pragma mark - Empty anon-id is not silently omitted
+
+- (void)testEmptyAnonUserIDFailsFastWithoutNetworkRequest {
+  // Without an anon_user_id the backend cannot merge anon→app, so the SDK
+  // must NOT silently fire a redeem that omits it. It fails fast (retryable)
+  // and issues no network request.
+  [_mockUserInfoService stopMocking];
+  _mockUserInfoService = OCMProtocolMock(@protocol(QNUserInfoServiceInterface));
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"");
+  _manager.userInfoService = _mockUserInfoService;
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(result, QONRedemptionResultRetryable);
+    XCTAssertEqual(gStubURLs.count, (NSUInteger)0, @"no redeem request must be issued without anon_user_id");
     [exp fulfill];
   }];
 
