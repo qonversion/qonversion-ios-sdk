@@ -84,6 +84,104 @@ The **Qonversion No-Code Builder SDK** is the fastest way to design and implemen
 
 See the [No-Code Builder documentation](https://documentation.qonversion.io/docs/no-codes).
 
+## Web to App (Redemption)
+
+Web to App lets a user who purchased on your website redeem that purchase inside the
+native app. The web checkout sends the user an email containing a redemption link of
+the form `https://<your-host>/r/{project_uid}/{token}`. When the user opens that link
+on a device with your app installed, iOS routes it to your app as a
+[Universal Link](https://developer.apple.com/ios/universal-links/), and the SDK
+exchanges the token for an entitlement and merges the web purchase into the app user.
+
+### 1. Configure Universal Links / Associated Domains
+
+1. In Xcode, open your target → **Signing & Capabilities** → add the
+   **Associated Domains** capability.
+2. Add an entry for the host that serves your redemption links:
+
+   ```
+   applinks:<your-host>
+   ```
+
+3. Host an `apple-app-site-association` (AASA) file at
+   `https://<your-host>/.well-known/apple-app-site-association` that maps the
+   `/r/*` path to your app's App ID. Qonversion hosts the AASA for its default
+   redemption host; if you serve links from your own domain, publish the AASA
+   yourself. See Apple's
+   [Supporting Universal Links](https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app)
+   for the exact JSON format.
+
+> Only `https` Universal Links are accepted by `handleRedemptionLink`. Custom URL
+> schemes (e.g. `myapp://`) are intentionally rejected for the email handoff,
+> because any installed app can register a custom scheme and hijack the token.
+
+### 2. Forward the link from `application(_:continue:restorationHandler:)`
+
+When iOS opens a Universal Link, forward it to the SDK from your
+`UIApplicationDelegate` (or the corresponding `SceneDelegate` callback):
+
+```swift
+func application(
+  _ application: UIApplication,
+  continue userActivity: NSUserActivity,
+  restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+) -> Bool {
+  guard userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+        let url = userActivity.webpageURL else {
+    return false
+  }
+
+  Qonversion.handleRedemptionLink(url: url) { result in
+    switch result {
+    case .success:
+      // Entitlement granted. The SDK has already merged the web purchase into
+      // the current app user; your next checkEntitlements call will see it.
+      break
+    case .tokenExpired:
+      // The link's TTL elapsed — offer the reissue UI (see below).
+      break
+    case .alreadyConsumed:
+      // The token was already redeemed (e.g. on another device).
+      break
+    case .invalidToken:
+      // Tampered, mistyped, or stale link.
+      break
+    case .networkError:
+      // The device could not reach the backend — ask the user to retry.
+      break
+    case .retryable:
+      // The server was reachable but returned a transient error (rate limit,
+      // 5xx, auth/config). Safe to retry later; do NOT show an offline error.
+      break
+    @unknown default:
+      break
+    }
+  }
+
+  return true
+}
+```
+
+In a SwiftUI app, attach the handler with `.onContinueUserActivity(NSUserActivityTypeBrowsingWeb)`
+or `.onOpenURL` and call `Qonversion.handleRedemptionLink(url:completion:)` the same way.
+
+### 3. Reissue UI (`presentReissueUI`)
+
+If redemption fails because the token expired (`.tokenExpired`) or install
+attribution could not match the purchase, present the built-in reissue UI so the
+user can request a fresh redemption email:
+
+```swift
+Qonversion.shared().presentReissueUI(from: viewController) { submitted in
+  // `true`  — the user submitted their email (a new redemption email is sent).
+  // `false` — the user dismissed the screen without submitting.
+}
+```
+
+The reissue flow POSTs the user's email to Qonversion, which sends a new
+redemption link. Rate limiting (HTTP 429) is reported back so you can show an
+appropriate "try again later" message.
+
 ## Integrations
 
 Send user-level subscription data to your favorite platforms.
