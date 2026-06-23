@@ -57,6 +57,13 @@ static bool _isInitialized = NO;
   [[QNAPIClient shared] setLocalStorage:[Qonversion sharedInstance].localStorage];
   [[QNAPIClient shared] setSDKVersion:configCopy.version];
   [[QNAPIClient shared] setBaseURL:configCopy.baseURL];
+  // Web2App redemption uses its own NSURLSession (not QNAPIClient), so the
+  // configured baseURL must be propagated to it explicitly — otherwise a
+  // client pointed at a custom/proxy host would still hit the hard-coded
+  // kAPIBase for redemption requests.
+  if (configCopy.baseURL.length > 0) {
+    [Qonversion sharedInstance].redemptionManager.baseURL = configCopy.baseURL;
+  }
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
 #pragma clang diagnostic push
