@@ -134,26 +134,18 @@
     }
 
     if (statusCode >= 200 && statusCode < 300) {
-      // Trigger anon→app identity merge so entitlements roll up under the
-      // newly-issued app-side user. Per RT5-N2: identify must trigger a
-      // launch/permissions fetch — that is the existing contract of
-      // QNProductCenterManager.identify:, see Qonversion+Redemption tests.
-      NSString *appUserID = response[@"user_id"];
-      // productCenterManager is a weak ref; if it has been released we must NOT
-      // trap the success delivery inside its identify: completion (which would
-      // then never fire, hanging the caller). Only route through identify when
-      // the manager is alive AND we have a user_id; otherwise deliver success
-      // directly — redemption already succeeded server-side (HTTP 2xx).
+      // Web2App M1.5 canonical contract: response is { redeemed, app_uid } —
+      // there is NO user_id. Under grant-first the entitlement is ALREADY
+      // granted server-side for app_uid, so the SDK must NOT call
+      // identify(userId)/merge. Instead it triggers a server-state refresh
+      // for the current user (launch / actualize permissions) so the host
+      // app's next checkEntitlements sees the granted product.
+      //
+      // productCenterManager is a weak ref; if it has been released we simply
+      // deliver success — redemption already succeeded server-side (HTTP 2xx)
+      // and the host app will pick up the entitlement on its next cycle.
       QNProductCenterManager *productCenter = strongSelf.productCenterManager;
-      if (productCenter != nil && [appUserID isKindOfClass:[NSString class]] && appUserID.length > 0) {
-        [productCenter identify:appUserID completion:^(QONUser * _Nullable user, NSError * _Nullable error) {
-          // Identify result is best-effort; success of redemption is already
-          // determined by the HTTP 2xx. We surface .success either way and
-          // let the host app fetch entitlements on next cycle.
-          [strongSelf deliver:QONRedemptionResultSuccess completion:completion];
-        }];
-        return;
-      }
+      [productCenter launchWithTrigger:QONRequestTriggerActualizePermissions completion:nil];
       [strongSelf deliver:QONRedemptionResultSuccess completion:completion];
       return;
     }

@@ -4,7 +4,9 @@
 //
 //  Web 2 App redemption — parses Universal Link, calls
 //  /v4/web/redeem*, maps HTTP outcome to QONRedemptionResult,
-//  and on success triggers identify(anon→app) to merge purchases.
+//  and on success triggers an entitlements refresh (the server has
+//  already granted the entitlement under grant-first; the SDK does NOT
+//  call identify/merge).
 //
 
 #import <Foundation/Foundation.h>
@@ -33,9 +35,10 @@ typedef void (^QONReissueCompletionHandler)(BOOL success, NSInteger statusCode, 
 ///   `https://<host>/r/{project_uid}/{token}`
 /// and run the redemption flow. The completion is dispatched on the main queue.
 ///
-/// On `QONRedemptionResultSuccess` the SDK has already requested the anon→app
-/// identity merge; the host app's next `checkEntitlements:` will include the
-/// redeemed product.
+/// On `QONRedemptionResultSuccess` the entitlement has already been granted
+/// server-side for the current user; the SDK triggers an entitlements
+/// refresh so the host app's next `checkEntitlements:` includes the redeemed
+/// product. The SDK does NOT call identify/merge.
 - (void)handleRedemptionLink:(NSURL *)url completion:(QONRedemptionCompletionHandler)completion;
 
 /// POST `/v4/web/redeem/reissue` with the supplied email.

@@ -13,6 +13,7 @@
 #import "QNAPIConstants.h"
 #import "QNProductCenterManager.h"
 #import "QNUserInfoServiceInterface.h"
+#import "QONRequestTrigger.h"
 #import "QNTestConstants.h"
 
 #pragma mark - URLProtocol stub
@@ -197,11 +198,13 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
 }
 
 - (void)testValidURLParsesTokenAndPostsBody {
+  // CANONICAL CONTRACT (Web2App M1.5): request body is
+  //   { "token": <token>, "app_uid": <obtainUserID>, "restore_behavior": <behavior> }
+  // The SDK previously sent "anon_user_id"; the field was renamed to
+  // "app_uid" (value unchanged = obtainUserID). api-gateway / purchaseman
+  // read "app_uid".
   gStubStatusCode = 200;
-  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"app_user_42"} options:0 error:nil];
-
-  // Stub identify to return immediately so completion fires.
-  OCMStub([_mockProductCenterManager identify:OCMOCK_ANY completion:[OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], nil]]);
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"redeemed": @YES, @"app_uid": @"QON_anon_test_id"} options:0 error:nil];
 
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
@@ -214,7 +217,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
     XCTAssertEqual(gStubBodies.count, (NSUInteger)1);
     NSDictionary *body = gStubBodies.firstObject;
     XCTAssertEqualObjects(body[@"token"], @"tok_xyz123");
-    XCTAssertEqualObjects(body[@"anon_user_id"], @"QON_anon_test_id");
+    XCTAssertEqualObjects(body[@"app_uid"], @"QON_anon_test_id");
+    XCTAssertNil(body[@"anon_user_id"], @"legacy field must NOT be sent");
     XCTAssertEqualObjects(body[@"restore_behavior"], @"transfer");
     [exp fulfill];
   }];
@@ -222,21 +226,24 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   [self waitForExpectations:@[exp] timeout:5.0];
 }
 
-- (void)testSuccessTriggersIdentify {
-  // RT5-N2 contract test: identify(newUserId) must be triggered on 2xx
-  // redeem response (which in turn triggers a launch/permissions fetch
-  // by virtue of QNProductCenterManager.identify: contract).
+- (void)testSuccessTriggersRefreshNotIdentify {
+  // CANONICAL CONTRACT (Web2App M1.5): under grant-first entitlement the
+  // server has ALREADY granted the entitlement and the response is
+  //   { "redeemed": bool, "app_uid": string }   (NO user_id).
+  // On success the SDK MUST NOT call identify(userId)/merge. Instead it
+  // triggers a server-state refresh (launch / checkEntitlements) for the
+  // current user so the next checkEntitlements sees the granted product.
   gStubStatusCode = 200;
-  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"app_user_42"} options:0 error:nil];
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"redeemed": @YES, @"app_uid": @"QON_anon_test_id"} options:0 error:nil];
 
-  XCTestExpectation *identifyExp = [self expectationWithDescription:@"identify called"];
+  XCTestExpectation *refreshExp = [self expectationWithDescription:@"launch/refresh triggered"];
 
-  OCMExpect([_mockProductCenterManager identify:@"app_user_42" completion:OCMOCK_ANY])
+  // identify: must NEVER be called on the redeem-success path.
+  OCMReject([_mockProductCenterManager identify:OCMOCK_ANY completion:OCMOCK_ANY]);
+
+  OCMExpect([_mockProductCenterManager launchWithTrigger:QONRequestTriggerActualizePermissions completion:OCMOCK_ANY])
     .andDo(^(NSInvocation *invocation) {
-      __unsafe_unretained void (^block)(id, id) = nil;
-      [invocation getArgument:&block atIndex:3];
-      if (block) block(nil, nil);
-      [identifyExp fulfill];
+      [refreshExp fulfill];
     });
 
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
@@ -247,7 +254,7 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
     [completionExp fulfill];
   }];
 
-  [self waitForExpectations:@[identifyExp, completionExp] timeout:5.0];
+  [self waitForExpectations:@[refreshExp, completionExp] timeout:5.0];
   OCMVerifyAll(_mockProductCenterManager);
 }
 
@@ -355,8 +362,7 @@ static BOOL QONIsValidUUID(NSString *value) {
   // overview r6: the redeem request MUST carry a mandatory `Idempotency-Key`
   // (a SDK-generated UUIDv4) so the backend can dedup double-taps / retries.
   gStubStatusCode = 200;
-  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"app_user_42"} options:0 error:nil];
-  OCMStub([_mockProductCenterManager identify:OCMOCK_ANY completion:[OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], nil]]);
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"redeemed": @YES, @"app_uid": @"QON_anon_test_id"} options:0 error:nil];
 
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
@@ -377,8 +383,7 @@ static BOOL QONIsValidUUID(NSString *value) {
   // transport failure followed by an SDK-level retry of the same logical
   // redeem must reuse the same Idempotency-Key so the backend dedups it.
   gStubStatusCode = 200;
-  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"app_user_42"} options:0 error:nil];
-  OCMStub([_mockProductCenterManager identify:OCMOCK_ANY completion:[OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], nil]]);
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"redeemed": @YES, @"app_uid": @"QON_anon_test_id"} options:0 error:nil];
 
   // First logical redeem: capture its key. The status-recovery path (409 →
   // /status) is part of the same logical redeem, so both HTTP calls must
@@ -404,8 +409,7 @@ static BOOL QONIsValidUUID(NSString *value) {
 
 - (void)testSeparateLogicalRedeemsGetDistinctIdempotencyKeys {
   gStubStatusCode = 200;
-  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"app_user_42"} options:0 error:nil];
-  OCMStub([_mockProductCenterManager identify:OCMOCK_ANY completion:[OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], nil]]);
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"redeemed": @YES, @"app_uid": @"QON_anon_test_id"} options:0 error:nil];
 
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
 
@@ -431,8 +435,7 @@ static BOOL QONIsValidUUID(NSString *value) {
   // requests routed there, not to kAPIBase.
   _manager.baseURL = @"https://proxy.example.test/";
   gStubStatusCode = 200;
-  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"user_id": @"u"} options:0 error:nil];
-  OCMStub([_mockProductCenterManager identify:OCMOCK_ANY completion:[OCMArg invokeBlockWithArgs:[NSNull null], [NSNull null], nil]]);
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"redeemed": @YES, @"app_uid": @"u"} options:0 error:nil];
 
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
@@ -517,12 +520,12 @@ static BOOL QONIsValidUUID(NSString *value) {
   [self waitForExpectations:@[exp] timeout:5.0];
 }
 
-#pragma mark - Empty anon-id is not silently omitted
+#pragma mark - Empty app_uid is not silently omitted
 
-- (void)testEmptyAnonUserIDFailsFastWithoutNetworkRequest {
-  // Without an anon_user_id the backend cannot merge anon→app, so the SDK
-  // must NOT silently fire a redeem that omits it. It fails fast (retryable)
-  // and issues no network request.
+- (void)testEmptyAppUIDFailsFastWithoutNetworkRequest {
+  // Without an app_uid the backend cannot attach the granted entitlement to
+  // a user, so the SDK must NOT silently fire a redeem that omits it. It
+  // fails fast (retryable) and issues no network request.
   [_mockUserInfoService stopMocking];
   _mockUserInfoService = OCMProtocolMock(@protocol(QNUserInfoServiceInterface));
   OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"");
@@ -533,7 +536,7 @@ static BOOL QONIsValidUUID(NSString *value) {
 
   [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
     XCTAssertEqual(result, QONRedemptionResultRetryable);
-    XCTAssertEqual(gStubURLs.count, (NSUInteger)0, @"no redeem request must be issued without anon_user_id");
+    XCTAssertEqual(gStubURLs.count, (NSUInteger)0, @"no redeem request must be issued without app_uid");
     [exp fulfill];
   }];
 

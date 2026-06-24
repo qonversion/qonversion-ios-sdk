@@ -10,9 +10,10 @@
 //    - `presentReissueUI(from:onCompletion:)` — FALLBACK UI: when the token
 //       expired or install attribution failed.
 //
-//  Note: `Qonversion.identify(_:)` is the EXISTING merge primitive; the
-//  redemption flow calls it internally on the SDK side, host app should
-//  not call it as part of redemption itself.
+//  Note: under grant-first the backend already grants the entitlement on a
+//  successful redeem. The SDK does NOT call identify/merge; it only triggers
+//  an entitlements refresh. Host app should not call identify as part of
+//  redemption either.
 //
 
 import Foundation
@@ -29,9 +30,10 @@ extension Qonversion {
   ///
   /// Expected URL shape: `https://<host>/r/{project_uid}/{token}`.
   ///
-  /// Completion is invoked on the main queue. On `.success` the SDK has
-  /// already issued the anon→app identity merge — the host app's next
-  /// `checkEntitlements` call will see the redeemed entitlement.
+  /// Completion is invoked on the main queue. On `.success` the entitlement
+  /// has already been granted server-side; the SDK triggers an entitlements
+  /// refresh so the host app's next `checkEntitlements` call sees the
+  /// redeemed entitlement. The SDK does not call identify/merge.
   ///
   /// - Parameters:
   ///   - url: Universal Link to parse.

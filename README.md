@@ -91,7 +91,9 @@ native app. The web checkout sends the user an email containing a redemption lin
 the form `https://<your-host>/r/{project_uid}/{token}`. When the user opens that link
 on a device with your app installed, iOS routes it to your app as a
 [Universal Link](https://developer.apple.com/ios/universal-links/), and the SDK
-exchanges the token for an entitlement and merges the web purchase into the app user.
+exchanges the token for an entitlement. The backend grants the entitlement to the
+current app user, and the SDK refreshes entitlements so your next
+`checkEntitlements` call sees it.
 
 ### 1. Configure Universal Links / Associated Domains
 
@@ -134,8 +136,8 @@ func application(
   Qonversion.handleRedemptionLink(url: url) { result in
     switch result {
     case .success:
-      // Entitlement granted. The SDK has already merged the web purchase into
-      // the current app user; your next checkEntitlements call will see it.
+      // Entitlement granted server-side for the current app user. The SDK has
+      // refreshed entitlements; your next checkEntitlements call will see it.
       break
     case .tokenExpired:
       // The link's TTL elapsed — offer the reissue UI (see below).
