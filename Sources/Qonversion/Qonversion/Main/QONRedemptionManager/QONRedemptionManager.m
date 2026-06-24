@@ -87,22 +87,27 @@
     return;
   }
 
-  NSString *anonUserID = [self.userInfoService obtainUserID];
-  if (anonUserID.length == 0) {
-    // overview: anon_user_id is required for the backend anon→app merge.
-    // `obtainUserID` is expected to lazily generate+persist one, so an empty
-    // value here is a transient SDK precondition failure (e.g. the user info
-    // service has not finished bootstrapping). We must NOT silently fire a
-    // redeem that omits the field — that would consume a single-use token on
-    // the backend with no way to attach the resulting entitlement to a user.
-    // Surface a retryable outcome and issue no network request.
+  NSString *appUID = [self.userInfoService obtainUserID];
+  if (appUID.length == 0) {
+    // Web2App M1.5 canonical contract: app_uid is required so the backend
+    // can attach the granted entitlement to a user under grant-first. value
+    // is unchanged (obtainUserID); only the field name changed from the
+    // legacy "anon_user_id". `obtainUserID` is expected to lazily
+    // generate+persist one, so an empty value here is a transient SDK
+    // precondition failure (e.g. the user info service has not finished
+    // bootstrapping). We must NOT silently fire a redeem that omits the
+    // field — that would consume a single-use token on the backend with no
+    // way to attach the resulting entitlement to a user. Surface a retryable
+    // outcome and issue no network request.
     [self deliver:QONRedemptionResultRetryable completion:completion];
     return;
   }
 
   NSMutableDictionary *body = [NSMutableDictionary new];
   body[@"token"] = token;
-  body[@"anon_user_id"] = anonUserID;
+  // Canonical contract field name: "app_uid" (renamed from "anon_user_id";
+  // api-gateway and purchaseman read "app_uid"). value = obtainUserID.
+  body[@"app_uid"] = appUID;
   // RestoreBehavior=Transfer is the default per plan §"Collision behavior".
   body[@"restore_behavior"] = @"transfer";
 
