@@ -1,3 +1,4 @@
+require "json"
 
 PROJECT_NAME = "Qonversion"
 PROJECT_SCHEME = "Sample"
@@ -101,22 +102,56 @@ def update_file(path, regex, result_value)
   File.open(path, 'w') { |line| line.puts new_content }
 end
 
+# Dynamically resolve a usable iPhone simulator so tests don't break on
+# runner Xcode bumps (e.g. iPhone 16 Pro -> iPhone 17 Pro). We pick the first
+# available iPhone reported by simctl, falling back to a sane recent default.
+def resolve_iphone_simulator
+  fallback = "iPhone 17 Pro"
+
+  begin
+    json = `xcrun simctl list devices available --json`
+    data = JSON.parse(json)
+    names = data["devices"].values.flatten.map { |device| device["name"] }
+    iphones = names.select { |name| name.start_with?("iPhone") }
+
+    if iphones.empty?
+      UI.important("No available iPhone simulators found, falling back to '#{fallback}'")
+      return fallback
+    end
+
+    # Prefer "Pro" models, then highest model number, for stability.
+    chosen = iphones.sort_by do |name|
+      number = name[/iPhone\s+(\d+)/, 1].to_i
+      is_pro = name.include?("Pro") ? 1 : 0
+      [number, is_pro]
+    end.last
+
+    UI.message("Resolved iPhone simulator: '#{chosen}'")
+    chosen
+  rescue => error
+    UI.important("Failed to resolve iPhone simulator (#{error.message}), falling back to '#{fallback}'")
+    fallback
+  end
+end
+
 def runTests(suite)
   # Увеличиваем таймауты для xcodebuild
   ENV['FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT'] = '10'
   ENV['FASTLANE_XCODEBUILD_SETTINGS_RETRIES'] = '6'
-  
+
   cocoapods(
     repo_update: false,
     podfile: "./Podfile"
   )
+
+  simulator_name = resolve_iphone_simulator
 
   # Setup test parameters
   test_params = {
     workspace: "./#{PROJECT_NAME}.xcworkspace",
     scheme: PROJECT_SCHEME,
     only_testing: suite,
-    destination: "platform=iOS Simulator,name=iPhone 16 Pro",
+    destination: "platform=iOS Simulator,name=#{simulator_name}",
     xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -allowProvisioningUpdates -allowProvisioningDeviceRegistration"
   }
 
