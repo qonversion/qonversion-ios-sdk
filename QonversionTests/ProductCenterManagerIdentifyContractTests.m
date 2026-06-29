@@ -14,22 +14,28 @@
 #import "QONRequestTrigger.h"
 
 /*
- * Web 2 App M1 [RT5-N2] — contract tests for -[QNProductCenterManager processIdentity:].
+ * Contract tests for -[QNProductCenterManager processIdentity:].
  *
- * The /v4/web/redeem/status recovery UX (DEV-845 plan §"POST /v4/web/redeem/status")
- * relies on `Qonversion.identify(userID:)` triggering a fresh entitlement fetch via
- * the merged identity. The SDK honours this implicitly in `processIdentity:`:
- * when the new identity differs from the current user id (QNProductCenterManager.m:313),
- * the manager calls `resetActualPermissionsCache` THEN `launchWithTrigger:QONRequestTriggerIdentify`.
+ * NOTE: these tests pin the behaviour of the host-driven
+ * `Qonversion.identify(userID:)` path only. They are NOT part of the Web 2 App
+ * redemption flow: under grant-first the backend grants the entitlement
+ * server-side and the SDK's redemption success path does NOT call
+ * identify/merge — it triggers an entitlements refresh
+ * (launchWithTrigger:QONRequestTriggerActualizePermissions, see
+ * QONRedemptionManager.m). An earlier version of this comment claimed the
+ * /v4/web/redeem/status recovery UX "relies on identify"; that rationale was
+ * stale and has been removed to avoid misleading integrators into adding a
+ * redundant identify call.
  *
- * If a future SDK change defers or skips the launch step (e.g. lazy-fetch on next
- * checkEntitlements call), the web→app recovery flow silently breaks — the user
- * signs in but the server-side entitlement never reaches the host app. These tests
- * pin the contract so any regression fails CI.
+ * What these tests still legitimately guard: when a host app calls
+ * `identify(userID:)` and the merged Qonversion uid CHANGES
+ * (QNProductCenterManager.m), the manager must call
+ * `resetActualPermissionsCache` THEN `launchWithTrigger:QONRequestTriggerIdentify`
+ * so the freshly-identified user's entitlements are fetched. If a future change
+ * defers or skips the launch step, identify-based user switching silently
+ * breaks — these tests fail CI in that case.
  *
- * Source of truth: QNProductCenterManager.m:292-327.
- * Symmetric Android contract test lives in:
- *   android-sdk/sdk/src/test/.../QProductCenterManagerIdentifyContractTest.kt
+ * Source of truth: -[QNProductCenterManager processIdentity:].
  */
 
 @interface QNProductCenterManager (IdentifyContractPrivate)

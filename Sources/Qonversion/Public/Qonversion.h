@@ -373,9 +373,11 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
  host-app→SDK internal forwarding.
 
  The completion is dispatched on the main queue with one of the
- `QONRedemptionResult` cases. On `QONRedemptionResultSuccess` the SDK has
- already triggered the anon→app identity merge; the host app's next
- `checkEntitlements:` call will include the redeemed entitlement.
+ `QONRedemptionResult` cases. On `QONRedemptionResultSuccess` the backend has
+ already granted the entitlement server-side (grant-first); the SDK does NOT
+ call identify/merge — it only triggers an entitlements refresh, so the host
+ app's next `checkEntitlements:` call will include the redeemed entitlement.
+ Do not add your own `identify` call in response to a successful redemption.
 
  @param url        Universal Link received via `application:continueUserActivity:`.
  @param completion Outcome callback (main queue).

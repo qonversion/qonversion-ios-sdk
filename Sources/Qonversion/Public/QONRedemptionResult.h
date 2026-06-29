@@ -10,24 +10,26 @@
 /**
  Outcome of a Web 2 App redemption attempt.
 
- Cases are intentionally limited per Decision #3 r6 ("5-case enum") so host
- apps can map each value 1:1 to a concrete UX state. Adding cases requires
- a design decision; do not extend ad-hoc.
+ Cases are intentionally limited (6 cases) so host apps can map each value 1:1
+ to a concrete UX state. Adding cases requires a design decision; do not extend
+ ad-hoc.
  */
 typedef NS_ENUM(NSInteger, QONRedemptionResult) {
-  /// Token consumed; entitlement granted. The SDK has already issued the
-  /// internal `identify` call to merge anon→app, so the next entitlements
-  /// fetch will include the redeemed product.
+  /// Token consumed; entitlement granted. Under grant-first the backend has
+  /// ALREADY granted the entitlement server-side, so the SDK does NOT call
+  /// `identify`/merge — it only triggers an entitlements refresh
+  /// (ActualizePermissions). The host app's next `checkEntitlements` will
+  /// include the redeemed product. Do NOT add your own `identify` call here.
   QONRedemptionResultSuccess = 0,
 
   /// Token TTL elapsed before it could be redeemed. Host app should offer
   /// the reissue flow (`presentReissueUI`).
   QONRedemptionResultTokenExpired = 1,
 
-  /// Server responded 409 and `/v4/web/redeem/status` confirms the token
-  /// has already been consumed. Host app may need to call
-  /// `Qonversion.shared().identify(userID:)` if the original purchaser's
-  /// user id is known.
+  /// Server responded 409 and `/v4/web/redeem/status` confirms the token has
+  /// already been consumed (redeemed previously). This is a terminal outcome
+  /// for the link; the host app should inform the user the link was already
+  /// used. The SDK does not attempt any `identify`-based recovery.
   QONRedemptionResultAlreadyConsumed = 2,
 
   /// Token not found (404). Likely tampered, mistyped, or stale link.
