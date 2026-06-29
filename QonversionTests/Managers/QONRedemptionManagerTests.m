@@ -183,6 +183,15 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   XCTAssertNil([QONRedemptionManager tokenFromURL:nil]);
 }
 
+- (void)testTokenFromURL_RSegmentMustBeFirst_NoTypeConfusion {
+  // #8 — the "r" redemption prefix must be the FIRST path segment. A nested
+  // "r" segment (e.g. /foo/r/proj/token) must NOT be mistaken for the
+  // redemption prefix; the canonical structure is /r/{project_uid}/{token}.
+  // (Android parity; defends against path type-confusion.)
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/foo/r/proj_abc/tok_xyz123"];
+  XCTAssertNil([QONRedemptionManager tokenFromURL:url]);
+}
+
 #pragma mark - handleRedemptionLink
 
 - (void)testMalformedURLReturnsInvalidToken {
@@ -313,6 +322,44 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   [self waitForExpectations:@[exp] timeout:5.0];
 }
 
+- (void)test409WithStatusExpiredReturnsTokenExpired {
+  // #5 — 409 recovery: /v4/web/redeem/status reports the token is NOT consumed
+  // but IS expired. The SDK must honour the `expired` flag and surface
+  // QONRedemptionResultTokenExpired (Android parity) so the host offers the
+  // reissue flow — NOT QONRedemptionResultInvalidToken.
+  NSData *statusBody = [NSJSONSerialization dataWithJSONObject:@{@"consumed": @NO, @"expired": @YES} options:0 error:nil];
+  gStubQueueByPath[kWebRedeemStatusEndpoint] = [@[ @{@"status": @200, @"body": statusBody} ] mutableCopy];
+  gStubQueueByPath[kWebRedeemEndpoint] = [@[ @{@"status": @409, @"body": [@"{}" dataUsingEncoding:NSUTF8StringEncoding]} ] mutableCopy];
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(result, QONRedemptionResultTokenExpired);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)test409WithStatusConsumedAndExpiredPrefersAlreadyConsumed {
+  // #5 — when the status reports BOTH consumed and expired, "consumed" is the
+  // stronger statement (the token was actually used), so AlreadyConsumed wins.
+  NSData *statusBody = [NSJSONSerialization dataWithJSONObject:@{@"consumed": @YES, @"expired": @YES} options:0 error:nil];
+  gStubQueueByPath[kWebRedeemStatusEndpoint] = [@[ @{@"status": @200, @"body": statusBody} ] mutableCopy];
+  gStubQueueByPath[kWebRedeemEndpoint] = [@[ @{@"status": @409, @"body": [@"{}" dataUsingEncoding:NSUTF8StringEncoding]} ] mutableCopy];
+
+  NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(result, QONRedemptionResultAlreadyConsumed);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
 - (void)testNetworkErrorReturnsNetworkError {
   gStubError = [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorTimedOut userInfo:nil];
 
@@ -343,6 +390,41 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
     // the load-bearing security assertion. Any leak of the token over the
     // network would already constitute partial compromise.
     XCTAssertEqual(gStubURLs.count, (NSUInteger)0);
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)testHandleRedemptionLink_RejectsForeignHost {
+  // #8 — host pinning: the redemption link host MUST be screens.qonversion.io.
+  // A foreign host (even over https with a structurally valid /r/ path) must be
+  // rejected WITHOUT issuing any network request, so a single-use token can
+  // never be leaked off-host. (Android parity; defense-in-depth.)
+  NSURL *url = [NSURL URLWithString:@"https://evil.example.com/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(result, QONRedemptionResultInvalidToken);
+    XCTAssertEqual(gStubURLs.count, (NSUInteger)0, @"no request may be issued for a foreign host");
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)testHandleRedemptionLink_PinnedHostIsCaseInsensitive {
+  // #8 — host comparison is case-insensitive (DNS hosts are case-insensitive),
+  // so a mixed-case but legitimate host still redeems.
+  gStubStatusCode = 200;
+  gStubBody = [NSJSONSerialization dataWithJSONObject:@{@"redeemed": @YES, @"app_uid": @"QON_anon_test_id"} options:0 error:nil];
+
+  NSURL *url = [NSURL URLWithString:@"https://Screens.Qonversion.IO/r/proj_abc/tok_xyz123"];
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    XCTAssertEqual(result, QONRedemptionResultSuccess);
+    XCTAssertEqual(gStubURLs.count, (NSUInteger)1);
     [exp fulfill];
   }];
 
@@ -556,6 +638,35 @@ static BOOL QONIsValidUUID(NSString *value) {
     XCTAssertNil(error);
     XCTAssertTrue([gStubURLs.firstObject.path hasSuffix:kWebRedeemReissueEndpoint]);
     XCTAssertEqualObjects(gStubBodies.firstObject[@"email"], @"user@example.com");
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)testReissueWithEmptyEmailFailsValidationWithoutNetwork {
+  // #10 — an empty email must NOT trigger a useless POST with an empty body.
+  // The SDK gates it and returns a validation failure (success NO + error),
+  // issuing no network request.
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+  [_manager reissueWithEmail:@"" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) {
+    XCTAssertFalse(success);
+    XCTAssertNotNil(error, @"empty email must yield a validation error");
+    XCTAssertEqualObjects(error.domain, QONRedemptionErrorDomain);
+    XCTAssertEqual(gStubURLs.count, (NSUInteger)0, @"no reissue POST for empty email");
+    [exp fulfill];
+  }];
+
+  [self waitForExpectations:@[exp] timeout:5.0];
+}
+
+- (void)testReissueWithWhitespaceEmailFailsValidationWithoutNetwork {
+  // #10 — a whitespace-only email is also empty after trimming.
+  XCTestExpectation *exp = [self expectationWithDescription:@""];
+  [_manager reissueWithEmail:@"   \n\t" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) {
+    XCTAssertFalse(success);
+    XCTAssertNotNil(error);
+    XCTAssertEqual(gStubURLs.count, (NSUInteger)0);
     [exp fulfill];
   }];
 

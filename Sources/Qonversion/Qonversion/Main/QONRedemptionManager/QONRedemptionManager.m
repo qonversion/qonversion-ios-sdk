@@ -12,6 +12,8 @@
 #import "QNDevice.h"
 #import "QNInternalConstants.h"
 
+NSString * const QONRedemptionErrorDomain = @"com.qonversion.redemption";
+
 @implementation QONRedemptionManager
 
 - (instancetype)init {
@@ -40,14 +42,17 @@
     }
   }
 
-  // Expect: ["r", project_uid, token]
-  NSInteger rIndex = [trimmed indexOfObject:@"r"];
-  if (rIndex == NSNotFound) {
+  // Canonical structure is exactly ["r", project_uid, token]. The "r" prefix
+  // MUST be the FIRST path segment — searching for "r" anywhere (the previous
+  // behaviour) let a nested "r" segment such as /foo/r/proj/token be parsed as
+  // a redemption link (path type-confusion). Pin it to index 0 for Android
+  // parity. (#8)
+  if (trimmed.count == 0 || ![trimmed.firstObject isEqualToString:@"r"]) {
     return nil;
   }
 
-  // token is two segments after "r"
-  NSInteger tokenIndex = rIndex + 2;
+  // token is two segments after the leading "r"
+  NSInteger tokenIndex = 2;
   if (tokenIndex >= (NSInteger)trimmed.count) {
     return nil;
   }
@@ -77,6 +82,17 @@
   // otherwise.
   NSString *scheme = [url.scheme lowercaseString];
   if (![scheme isEqualToString:@"https"]) {
+    [self deliver:QONRedemptionResultInvalidToken completion:completion];
+    return;
+  }
+
+  // #8 — host pinning (defense-in-depth, Android parity). The email-borne
+  // redemption link is always served from `screens.qonversion.io`. Reject any
+  // other host BEFORE touching the network so a look-alike / attacker host can
+  // never coax the SDK into POSTing (and thereby burning) a single-use token.
+  // DNS hosts are case-insensitive, so compare case-insensitively.
+  NSString *host = [url.host lowercaseString];
+  if (![host isEqualToString:kRedemptionLinkHost]) {
     [self deliver:QONRedemptionResultInvalidToken completion:completion];
     return;
   }
@@ -179,10 +195,25 @@
 }
 
 - (void)reissueWithEmail:(NSString *)email completion:(QONReissueCompletionHandler)completion {
-  NSDictionary *body = email.length > 0 ? @{@"email": email} : @{};
+  // #10 — fail fast on an empty / whitespace-only email. Previously an empty
+  // email POSTed an empty body `{}`, burning a request the backend can only
+  // reject. Gate it at the public boundary and surface a validation error
+  // WITHOUT issuing a network request.
+  NSString *trimmedEmail = [email stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+  if (trimmedEmail.length == 0) {
+    if (completion) {
+      NSError *error = [NSError errorWithDomain:QONRedemptionErrorDomain
+                                           code:QONRedemptionErrorCodeEmptyEmail
+                                       userInfo:@{NSLocalizedDescriptionKey: @"A non-empty email is required to reissue a redemption link."}];
+      dispatch_async(dispatch_get_main_queue(), ^{
+        completion(NO, 0, error);
+      });
+    }
+    return;
+  }
 
   // Reissue is its own logical operation → its own Idempotency-Key.
-  [self postJSON:body
+  [self postJSON:@{@"email": trimmedEmail}
         endpoint:kWebRedeemReissueEndpoint
   idempotencyKey:[NSUUID UUID].UUIDString
       completion:^(NSInteger statusCode, NSDictionary * _Nullable response, NSError * _Nullable transportError) {
@@ -222,10 +253,26 @@
       return;
     }
 
+    // #5 — Map the status payload, honouring BOTH `consumed` and `expired`.
+    // "consumed" is the stronger statement (the token was actually used), so it
+    // wins when both are set; otherwise an `expired` token surfaces as
+    // TokenExpired (Android parity) so the host can offer the reissue flow,
+    // rather than the misleading InvalidToken. Only a token that is neither
+    // consumed nor expired is genuinely InvalidToken.
     id consumed = response[@"consumed"];
+    id expired = response[@"expired"];
     BOOL isConsumed = [consumed respondsToSelector:@selector(boolValue)] && [consumed boolValue];
-    [strongSelf deliver:(isConsumed ? QONRedemptionResultAlreadyConsumed : QONRedemptionResultInvalidToken)
-             completion:completion];
+    BOOL isExpired = [expired respondsToSelector:@selector(boolValue)] && [expired boolValue];
+
+    QONRedemptionResult result;
+    if (isConsumed) {
+      result = QONRedemptionResultAlreadyConsumed;
+    } else if (isExpired) {
+      result = QONRedemptionResultTokenExpired;
+    } else {
+      result = QONRedemptionResultInvalidToken;
+    }
+    [strongSelf deliver:result completion:completion];
   }];
 }
 
@@ -271,6 +318,16 @@
   }
 
   // Auth + platform headers — re-use the shared API client's project key.
+  //
+  // #11 (refactor debt): this Bearer construction is inlined rather than
+  // delegated to -[QNRequestBuilder addBearerToRequest:] ON PURPOSE. That
+  // helper emits a plain `Bearer <apiKey>` and does NOT prepend the debug
+  // `test_` prefix, whereas the Web2App redeem contract requires
+  // `Bearer test_<apiKey>` in debug mode (verified, matches Android). Folding
+  // this into the existing helper would silently drop the `test_` prefix and
+  // regress auth. TODO(DEV-847 follow-up): hoist a single debug-aware Bearer
+  // builder shared by QNRequestBuilder and QONRedemptionManager, then route
+  // both through it.
   NSString *apiKey = [QNAPIClient shared].apiKey;
   if (apiKey.length > 0) {
     BOOL debug = [QNAPIClient shared].debug;

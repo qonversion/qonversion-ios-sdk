@@ -28,6 +28,11 @@ extern NSString *const kStoredRequestsKey;
 extern NSString *const kRemoteConfigEndpoint;
 extern NSString *const kRemoteConfigListEndpoint;
 
+/// Pinned host for inbound Web 2 App redemption Universal Links
+/// (`https://screens.qonversion.io/r/{project_uid}/{token}`). Used to reject
+/// look-alike / foreign hosts before issuing a redeem request.
+extern NSString *const kRedemptionLinkHost;
+
 extern NSString *const kWebRedeemEndpoint;
 extern NSString *const kWebRedeemStatusEndpoint;
 extern NSString *const kWebRedeemReissueEndpoint;

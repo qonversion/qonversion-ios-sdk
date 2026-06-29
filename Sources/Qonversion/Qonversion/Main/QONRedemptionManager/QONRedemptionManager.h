@@ -17,6 +17,15 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// Error domain for SDK-side validation failures surfaced before any network
+/// request is issued (e.g. an empty reissue email).
+extern NSString * const QONRedemptionErrorDomain;
+
+typedef NS_ENUM(NSInteger, QONRedemptionErrorCode) {
+  /// `reissueWithEmail:` was called with an empty / whitespace-only email.
+  QONRedemptionErrorCodeEmptyEmail = 1,
+};
+
 typedef void (^QONRedemptionCompletionHandler)(QONRedemptionResult result);
 typedef void (^QONReissueCompletionHandler)(BOOL success, NSInteger statusCode, NSError * _Nullable error);
 

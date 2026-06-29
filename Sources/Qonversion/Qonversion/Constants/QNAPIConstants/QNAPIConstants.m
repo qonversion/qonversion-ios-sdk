@@ -19,6 +19,8 @@ NSString * const kPropertiesEndpoint = @"v3/users/%@/properties";
 NSString * const kRemoteConfigEndpoint = @"v3/remote-config";
 NSString * const kRemoteConfigListEndpoint = @"v3/remote-configs";
 
+NSString * const kRedemptionLinkHost = @"screens.qonversion.io";
+
 NSString * const kWebRedeemEndpoint = @"v4/web/redeem";
 NSString * const kWebRedeemStatusEndpoint = @"v4/web/redeem/status";
 NSString * const kWebRedeemReissueEndpoint = @"v4/web/redeem/reissue";
