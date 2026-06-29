@@ -19,7 +19,7 @@ import UIKit
 /// host apps wanting full L10n control should build their own UI and call
 /// the Obj-C `reissueRedemption(email:completion:)` directly.
 @available(iOS 13.0, tvOS 13.0, *)
-final class ReissueViewController: UIViewController, UITextFieldDelegate {
+final class ReissueViewController: UIViewController, UITextFieldDelegate, UIAdaptivePresentationControllerDelegate {
 
   // MARK: - Strings (kept inline; not yet in .strings — see TODO at bottom)
 
@@ -63,6 +63,12 @@ final class ReissueViewController: UIViewController, UITextFieldDelegate {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    // #4 — own the presentation controller's delegate so an interactive
+    // swipe-to-dismiss (the default for `.formSheet`/`.pageSheet` on iOS 13+)
+    // is reported back to the host via `onCompletion(false)`. Without this the
+    // user could dismiss the sheet by swiping and the host would wait forever
+    // for a completion that never arrives.
+    presentationController?.delegate = self
     // `systemBackground` is unavailable on tvOS; fall back to black there
     // so the multi-platform podspec lint compiles.
     #if os(tvOS)
@@ -183,6 +189,25 @@ final class ReissueViewController: UIViewController, UITextFieldDelegate {
     dismiss(animated: true) {
       callback(success)
     }
+  }
+
+  /// Fires the completion exactly once WITHOUT issuing a dismiss — used when
+  /// the system has already dismissed us (interactive swipe). Calling
+  /// `dismiss` again here would be a no-op whose completion never runs, so the
+  /// callback must be invoked directly.
+  private func completeWithoutDismiss(success: Bool) {
+    guard !didCallCompletion else { return }
+    didCallCompletion = true
+    onCompletion(success)
+  }
+
+  // MARK: - UIAdaptivePresentationControllerDelegate
+
+  /// #4 — Called when the user dismisses the sheet interactively (swipe down).
+  /// `didTapCancel`/`finish` is NOT invoked in that case, so we must report the
+  /// cancellation here or the host hangs.
+  func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+    completeWithoutDismiss(success: false)
   }
 
   // MARK: - Validation
