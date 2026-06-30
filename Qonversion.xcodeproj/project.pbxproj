@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		202B79E6100384DE55BACD10 /* QONEntitlementsUpdateListenerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		0A17440D00C09DABC1E2B1D3 /* QONEntitlementsUpdateListenerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */; };
 		15EE5F2E2F6CBF096CB24CBA /* NoCodesLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */; };
+		176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		207A91DAC28DE776D419F8DC /* NoCodesHTMLInjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59914571FB7D583A6205C7A /* NoCodesHTMLInjector.swift */; };
 		218480F803075431AD24186B /* ScreenEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2865A58C95F0B475399053F2 /* ScreenEvent.swift */; };
+		2703EE3FF4BB2D8ABFCE3237 /* ReissueViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434A1D3EE1FD0B5CD342D26A /* ReissueViewController.swift */; };
 		3521C548C169154D45835C38 /* ScreenEventsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */; };
 		405978D53C69C2F10939A4D4 /* NoCodesContextBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B82604A89181D262616958 /* NoCodesContextBuilder.swift */; };
 		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
@@ -43,6 +43,7 @@
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		48FCBE392ED00F2022C0823A /* ScreenEventsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E55D02AA51A75DD7987D4987 /* ScreenEventsService.swift */; };
 		5985EF58D14088663151FE0D /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C42E3A6D0397F5923D676DC /* Pods_Sample.framework */; };
+		5A9243B784B722D804CF4294 /* Qonversion+Redemption.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CB75E8682A3EB84527DB3E /* Qonversion+Redemption.swift */; };
 		6A121DAC2BB445AE0073B330 /* QONRemoteConfigList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */; };
 		6A121DAE2BB446740073B330 /* QONRemoteConfigList.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6A121DB12BBB10370073B330 /* QONRemoteConfigListRequestData.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A121DB02BBB10370073B330 /* QONRemoteConfigListRequestData.h */; };
@@ -182,6 +183,8 @@
 		70ED967129FAC8D3005F5D00 /* QonversionSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70ED967029FAC8D3005F5D00 /* QonversionSwift.swift */; };
 		70EE74342E2E928100260875 /* Watch Sample Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 70EE742A2E2E928000260875 /* Watch Sample Watch App.app */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		70F07B1B28AD085600A45D41 /* QONEntitlementsCacheLifetime.h in Headers */ = {isa = PBXBuildFile; fileRef = 70F07B1A28AD085600A45D41 /* QONEntitlementsCacheLifetime.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		799CAAB9346375385E5D73EE /* QONRedemptionManager.h in Headers */ = {isa = PBXBuildFile; fileRef = DD81381CD052A553AAAAC274 /* QONRedemptionManager.h */; };
+		7D28F4C830227602F4BC5BF8 /* QONRedemptionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 42BCAF69EE7817634773B8EE /* QONRedemptionManager.m */; };
 		891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */; };
 		891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 891ECE0927734B8900DF6A56 /* AdServices.framework */; };
 		8957327926DD03A3009507A6 /* QNDevice+Advertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B626DD03A2009507A6 /* QNDevice+Advertising.h */; };
@@ -288,6 +291,7 @@
 		AA0001012D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */; };
 		AABB11242E4A21BC00IMGPRE /* ImagePreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */; };
 		AABB11252E4A21BC00IMGPRE /* ImagePreloaderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */; };
+		F0F13F0F4D4F0701F425E45B /* QONRedemptionResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 71CBCE6DF13D23D9A10C4713 /* QONRedemptionResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F5890274B1E90C6993376869 /* ScreenEventType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34DFDAAB92C9BA2A3321007A /* ScreenEventType.swift */; };
 /* End PBXBuildFile section */
 
@@ -344,14 +348,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONDeferredPurchasesListener.h; sourceTree = "<group>"; };
-		C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONEntitlementsUpdateListenerAdapter.h; sourceTree = "<group>"; };
-		0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONEntitlementsUpdateListenerAdapter.m; sourceTree = "<group>"; };
 		02B82604A89181D262616958 /* NoCodesContextBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesContextBuilder.swift; sourceTree = "<group>"; };
+		0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONEntitlementsUpdateListenerAdapter.m; sourceTree = "<group>"; };
 		1037791CABEE4F1611A8561E /* Pods-Watch Sample Watch App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.release.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.release.xcconfig"; sourceTree = "<group>"; };
 		2865A58C95F0B475399053F2 /* ScreenEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEvent.swift; sourceTree = "<group>"; };
 		34DFDAAB92C9BA2A3321007A /* ScreenEventType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventType.swift; sourceTree = "<group>"; };
 		35E933FB622433DEC9555DD4 /* Pods_QonversionTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QonversionTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		42BCAF69EE7817634773B8EE /* QONRedemptionManager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRedemptionManager.m; sourceTree = "<group>"; };
+		434A1D3EE1FD0B5CD342D26A /* ReissueViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReissueViewController.swift; sourceTree = "<group>"; };
 		4502E451257FDF5E006FC750 /* OCMock.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OCMock.framework; path = "../../../../Volumes/OCMock 3.7.1/macOS/OCMock.framework"; sourceTree = "<group>"; };
 		4502E457257FDF90006FC750 /* OCMock.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OCMock.framework; path = "../../../../Volumes/OCMock 3.7.1/iOS framework/OCMock.framework"; sourceTree = "<group>"; };
 		45239D6E2517CEB00085D0A8 /* QonversionFramework.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionFramework.h; sourceTree = "<group>"; };
@@ -395,6 +399,7 @@
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
 		5C42E3A6D0397F5923D676DC /* Pods_Sample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONDeferredPurchasesListener.h; sourceTree = "<group>"; };
 		6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigList.m; sourceTree = "<group>"; };
 		6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigList.h; sourceTree = "<group>"; };
 		6A121DAF2BB44D7B0073B330 /* QONRemoteConfigList+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigList+Protected.h"; sourceTree = "<group>"; };
@@ -541,6 +546,7 @@
 		70ED967029FAC8D3005F5D00 /* QonversionSwift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QonversionSwift.swift; sourceTree = "<group>"; };
 		70EE742A2E2E928000260875 /* Watch Sample Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Watch Sample Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		70F07B1A28AD085600A45D41 /* QONEntitlementsCacheLifetime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONEntitlementsCacheLifetime.h; sourceTree = "<group>"; };
+		71CBCE6DF13D23D9A10C4713 /* QONRedemptionResult.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRedemptionResult.h; sourceTree = "<group>"; };
 		891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNErrorsMapperTests.m; sourceTree = "<group>"; };
 		891ECE0927734B8900DF6A56 /* AdServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk/System/Library/Frameworks/AdServices.framework; sourceTree = DEVELOPER_DIR; };
 		894278832759351C00A8A6EC /* GoogleSignIn.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = GoogleSignIn.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -662,8 +668,11 @@
 		AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloaderInterface.swift; sourceTree = "<group>"; };
 		BDB8E323ED05D47EC4D71E13 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
 		BFD0AC628A0DDF7425142814 /* Pods-Sample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.release.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.release.xcconfig"; sourceTree = "<group>"; };
+		C1CB75E8682A3EB84527DB3E /* Qonversion+Redemption.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Qonversion+Redemption.swift"; sourceTree = "<group>"; };
 		C40E96908815EA44B0705E9D /* Pods-Sample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.debug.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.debug.xcconfig"; sourceTree = "<group>"; };
+		C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONEntitlementsUpdateListenerAdapter.h; sourceTree = "<group>"; };
 		CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventsServiceInterface.swift; sourceTree = "<group>"; };
+		DD81381CD052A553AAAAC274 /* QONRedemptionManager.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRedemptionManager.h; sourceTree = "<group>"; };
 		E55D02AA51A75DD7987D4987 /* ScreenEventsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventsService.swift; sourceTree = "<group>"; };
 		F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesLoadingView.swift; sourceTree = "<group>"; };
 		F538F251781497F893949833 /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -726,6 +735,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		223E7B74704F72F8689D201D /* QONRedemptionManager */ = {
+			isa = PBXGroup;
+			children = (
+				DD81381CD052A553AAAAC274 /* QONRedemptionManager.h */,
+				42BCAF69EE7817634773B8EE /* QONRedemptionManager.m */,
+			);
+			path = QONRedemptionManager;
+			sourceTree = "<group>";
+		};
 		447A040961B196621A548033 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -1013,6 +1031,15 @@
 			path = Helpers;
 			sourceTree = "<group>";
 		};
+		6CC25051A89E22AEA4A0B9CA /* Redemption */ = {
+			isa = PBXGroup;
+			children = (
+				434A1D3EE1FD0B5CD342D26A /* ReissueViewController.swift */,
+				C1CB75E8682A3EB84527DB3E /* Qonversion+Redemption.swift */,
+			);
+			path = Redemption;
+			sourceTree = "<group>";
+		};
 		700635FD2C11C3EA00BB9F9C /* QONFallbackObject */ = {
 			isa = PBXGroup;
 			children = (
@@ -1038,6 +1065,7 @@
 				70EC019C29EEE94300E686E2 /* StoreKit2Service.swift */,
 				70283DF629F66FAC00D138BC /* PurchasesMapper.swift */,
 				70454FFE2C5FD4FA00B03017 /* Extensions.swift */,
+				6CC25051A89E22AEA4A0B9CA /* Redemption */,
 			);
 			name = Swift;
 			path = Sources/Swift;
@@ -1386,6 +1414,7 @@
 				700B9D4C2E742CBB0031B056 /* QONPurchaseResult.m */,
 				70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */,
 				70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */,
+				71CBCE6DF13D23D9A10C4713 /* QONRedemptionResult.h */,
 			);
 			path = Public;
 			sourceTree = "<group>";
@@ -1641,6 +1670,7 @@
 				8957326026DD03A3009507A6 /* QNAttributionManager */,
 				8957326326DD03A3009507A6 /* QNProductCenterManager */,
 				8957326626DD03A3009507A6 /* QNIdentityManager */,
+				223E7B74704F72F8689D201D /* QONRedemptionManager */,
 			);
 			path = Main;
 			sourceTree = "<group>";
@@ -1893,6 +1923,8 @@
 				A18396F8EAB1D96E22ECA3B5 /* QONUserPropertiesMapper.h in Headers */,
 				A1839CFAA659B77B7DDDD910 /* QONUserProperty+Protected.h in Headers */,
 				A183968F7BFAE4D93F96D32D /* QONUserProperties+Protected.h in Headers */,
+				F0F13F0F4D4F0701F425E45B /* QONRedemptionResult.h in Headers */,
+				799CAAB9346375385E5D73EE /* QONRedemptionManager.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2382,6 +2414,9 @@
 				15EE5F2E2F6CBF096CB24CBA /* NoCodesLoadingView.swift in Sources */,
 				405978D53C69C2F10939A4D4 /* NoCodesContextBuilder.swift in Sources */,
 				207A91DAC28DE776D419F8DC /* NoCodesHTMLInjector.swift in Sources */,
+				7D28F4C830227602F4BC5BF8 /* QONRedemptionManager.m in Sources */,
+				2703EE3FF4BB2D8ABFCE3237 /* ReissueViewController.swift in Sources */,
+				5A9243B784B722D804CF4294 /* Qonversion+Redemption.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -15,6 +15,7 @@
 #import "QONExceptionManager.h"
 #import "QONUserProperty.h"
 #import "QONFallbackService.h"
+#import "QONRedemptionManager.h"
 
 static id shared = nil;
 
@@ -25,6 +26,7 @@ static id shared = nil;
 @property (nonatomic, strong) QNAttributionManager *attributionManager;
 @property (nonatomic, strong) QONRemoteConfigManager *remoteConfigManager;
 @property (nonatomic, strong) QONExceptionManager *exceptionManager;
+@property (nonatomic, strong) QONRedemptionManager *redemptionManager;
 @property (nonatomic, strong) id<QNUserInfoServiceInterface> userInfoService;
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
 @property (nonatomic, strong) QONFallbackService *fallbackService;
@@ -55,6 +57,13 @@ static bool _isInitialized = NO;
   [[QNAPIClient shared] setLocalStorage:[Qonversion sharedInstance].localStorage];
   [[QNAPIClient shared] setSDKVersion:configCopy.version];
   [[QNAPIClient shared] setBaseURL:configCopy.baseURL];
+  // Web2App redemption uses its own NSURLSession (not QNAPIClient), so the
+  // configured baseURL must be propagated to it explicitly — otherwise a
+  // client pointed at a custom/proxy host would still hit the hard-coded
+  // kAPIBase for redemption requests.
+  if (configCopy.baseURL.length > 0) {
+    [Qonversion sharedInstance].redemptionManager.baseURL = configCopy.baseURL;
+  }
   [Qonversion sharedInstance].launchMode = configCopy.launchMode;
   [[Qonversion sharedInstance].productCenterManager setEntitlementsCacheLifetime:configCopy.entitlementsCacheLifetime];
 #pragma clang diagnostic push
@@ -270,8 +279,26 @@ static bool _isInitialized = NO;
 
 - (BOOL)isFallbackFileAccessible {
   QONFallbackObject *fallbackData = [self.fallbackService obtainFallbackData];
-  
+
   return fallbackData != nil;
+}
+
+- (void)handleRedemptionLink:(NSURL *)url
+                  completion:(void (^)(QONRedemptionResult result))completion {
+  [self.redemptionManager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+    if (completion) {
+      completion(result);
+    }
+  }];
+}
+
+- (void)reissueRedemptionWithEmail:(NSString *)email
+                        completion:(void (^)(BOOL success, NSInteger statusCode, NSError * _Nullable error))completion {
+  [self.redemptionManager reissueWithEmail:email completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) {
+    if (completion) {
+      completion(success, statusCode, error);
+    }
+  }];
 }
 
 // MARK: - Private
@@ -291,7 +318,10 @@ static bool _isInitialized = NO;
     _attributionManager = [QNAttributionManager new];
     _remoteConfigManager = [QONRemoteConfigManager new];
     _exceptionManager = [QONExceptionManager shared];
-    
+    _redemptionManager = [QONRedemptionManager new];
+    _redemptionManager.productCenterManager = _productCenterManager;
+    _redemptionManager.userInfoService = _userInfoService;
+
     _productCenterManager.remoteConfigManager = _remoteConfigManager;
     _remoteConfigManager.productCenterManager = _productCenterManager;
     _remoteConfigManager.userPropertiesManager = _propertiesManager;
