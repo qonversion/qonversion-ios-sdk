@@ -8,5 +8,9 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:screens.qonversion.io</string>
+	</array>
 </dict>
 </plist>
