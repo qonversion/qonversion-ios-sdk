@@ -25,6 +25,7 @@
 #import "QONPurchaseOptions.h"
 #import "QONPurchaseResult.h"
 #import "QONPromotionalOffer.h"
+#import "QONRedemptionResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -359,6 +360,50 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
  @return flag that indicates whether Qonversion was able to read data from the fallback file or not.
  */
 - (BOOL)isFallbackFileAccessible;
+
+/**
+ Handle a redemption Universal Link forwarded by the host app from an
+ email→app flow (Web 2 App M1, DEV-847).
+
+ Expected URL shape:
+   `https://screens.qonversion.io/r/{project_uid}/{token}`
+
+ Universal/App Links are the only supported email transport (RT2-W3). A
+ custom `qonversion://r/{project_uid}/{token}` scheme is accepted only for
+ host-app→SDK internal forwarding.
+
+ The completion is dispatched on the main queue with one of the
+ `QONRedemptionResult` cases. On `QONRedemptionResultSuccess` the backend has
+ already granted the entitlement server-side (grant-first); the SDK does NOT
+ call identify/merge — it only triggers an entitlements refresh, so the host
+ app's next `checkEntitlements:` call will include the redeemed entitlement.
+ Do not add your own `identify` call in response to a successful redemption.
+
+ @param url        Universal Link received via `application:continueUserActivity:`.
+ @param completion Outcome callback (main queue).
+ */
+- (void)handleRedemptionLink:(NSURL *)url
+                  completion:(void (^)(QONRedemptionResult result))completion
+NS_SWIFT_NAME(handleRedemptionLink(url:completion:));
+
+/**
+ Submit a reissue request for the given email (Web 2 App M1, DEV-847).
+
+ This is the network leg behind the Swift `presentReissueUI(from:onCompletion:)`
+ fallback flow. Host apps typically should NOT call this directly — the
+ Swift UI wraps it with localized strings, rate-limit messaging, and the
+ success affordance ("Email sent if we found a matching purchase…").
+
+ The completion is dispatched on the main queue.
+ `statusCode` is the raw HTTP status (0 for transport-level failures) so
+ callers can distinguish 429 (rate limited) from 5xx (server error).
+
+ @param email      Email entered by the user.
+ @param completion Result block (main queue).
+ */
+- (void)reissueRedemptionWithEmail:(NSString *)email
+                        completion:(void (^)(BOOL success, NSInteger statusCode, NSError * _Nullable error))completion
+NS_SWIFT_NAME(reissueRedemption(email:completion:));
 
 @end
 
