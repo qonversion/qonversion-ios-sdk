@@ -80,8 +80,8 @@
     QONTransactionCommitmentInfo *info =
       [[QONTransactionCommitmentInfo alloc] initWithBillingPeriodNumber:4
                                                     totalBillingPeriods:12
-                                                  pricePerBillingPeriod:[NSDecimalNumber decimalNumberWithString:@"9.99"]
-                                     currentBillingPeriodExpirationDate:[NSDate dateWithTimeIntervalSince1970:1800000000]];
+                                                        commitmentPrice:[NSDecimalNumber decimalNumberWithString:@"9.99"]
+                                               commitmentExpirationDate:[NSDate dateWithTimeIntervalSince1970:1800000000]];
 
     QONStoreKit2PurchaseModel *model = [QONStoreKit2PurchaseModel new];
     model.transactionId = @"txn-1";
@@ -119,8 +119,8 @@
     QONTransactionCommitmentInfo *info =
       [[QONTransactionCommitmentInfo alloc] initWithBillingPeriodNumber:1
                                                     totalBillingPeriods:12
-                                                  pricePerBillingPeriod:[NSDecimalNumber decimalNumberWithString:@"4.99"]
-                                     currentBillingPeriodExpirationDate:[NSDate dateWithTimeIntervalSince1970:1900000000]];
+                                                        commitmentPrice:[NSDecimalNumber decimalNumberWithString:@"4.99"]
+                                               commitmentExpirationDate:[NSDate dateWithTimeIntervalSince1970:1900000000]];
 
     QONStoreKit2PurchaseModel *model = [QONStoreKit2PurchaseModel new];
     model.transactionId = @"txn-pending";

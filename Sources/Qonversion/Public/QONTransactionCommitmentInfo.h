@@ -31,20 +31,22 @@ NS_SWIFT_NAME(Qonversion.TransactionCommitmentInfo)
 @property (nonatomic, assign) NSUInteger totalBillingPeriods;
 
 /**
- The price charged per billing period.
+ The total price of the whole commitment (for example, the full 12-month amount),
+ in the transaction's currency. This is the commitment total, not a single billing period.
  */
-@property (nonatomic, strong, nonnull) NSDecimalNumber *pricePerBillingPeriod;
+@property (nonatomic, strong, nonnull) NSDecimalNumber *commitmentPrice;
 
 /**
- The expiration date of the current billing period.
+ The date the whole commitment expires (the end of the final billing period),
+ not the expiration of the current billing period.
  */
-@property (nonatomic, strong, nonnull) NSDate *currentBillingPeriodExpirationDate;
+@property (nonatomic, strong, nonnull) NSDate *commitmentExpirationDate;
 
 - (instancetype)initWithBillingPeriodNumber:(NSUInteger)billingPeriodNumber
                         totalBillingPeriods:(NSUInteger)totalBillingPeriods
-                       pricePerBillingPeriod:(NSDecimalNumber *)pricePerBillingPeriod
-      currentBillingPeriodExpirationDate:(NSDate *)currentBillingPeriodExpirationDate
-NS_SWIFT_NAME(init(billingPeriodNumber:totalBillingPeriods:pricePerBillingPeriod:currentBillingPeriodExpirationDate:));
+                            commitmentPrice:(NSDecimalNumber *)commitmentPrice
+                   commitmentExpirationDate:(NSDate *)commitmentExpirationDate
+NS_SWIFT_NAME(init(billingPeriodNumber:totalBillingPeriods:commitmentPrice:commitmentExpirationDate:));
 
 @end
 

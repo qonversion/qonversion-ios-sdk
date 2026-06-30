@@ -21,13 +21,13 @@
   QONTransactionCommitmentInfo *info = [[QONTransactionCommitmentInfo alloc]
     initWithBillingPeriodNumber:4
     totalBillingPeriods:12
-    pricePerBillingPeriod:price
-    currentBillingPeriodExpirationDate:expirationDate];
+    commitmentPrice:price
+    commitmentExpirationDate:expirationDate];
 
   XCTAssertEqual(info.billingPeriodNumber, (NSUInteger)4);
   XCTAssertEqual(info.totalBillingPeriods, (NSUInteger)12);
-  XCTAssertEqualObjects(info.pricePerBillingPeriod, price);
-  XCTAssertEqualObjects(info.currentBillingPeriodExpirationDate, expirationDate);
+  XCTAssertEqualObjects(info.commitmentPrice, price);
+  XCTAssertEqualObjects(info.commitmentExpirationDate, expirationDate);
 }
 
 - (void)testQONTransactionCommitmentInfo_NSCoding_roundtrip {
@@ -37,8 +37,8 @@
   QONTransactionCommitmentInfo *original = [[QONTransactionCommitmentInfo alloc]
     initWithBillingPeriodNumber:2
     totalBillingPeriods:6
-    pricePerBillingPeriod:price
-    currentBillingPeriodExpirationDate:expirationDate];
+    commitmentPrice:price
+    commitmentExpirationDate:expirationDate];
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -49,8 +49,8 @@
   XCTAssertNotNil(decoded);
   XCTAssertEqual(decoded.billingPeriodNumber, (NSUInteger)2);
   XCTAssertEqual(decoded.totalBillingPeriods, (NSUInteger)6);
-  XCTAssertEqualObjects(decoded.pricePerBillingPeriod, price);
-  XCTAssertEqualObjects(decoded.currentBillingPeriodExpirationDate, expirationDate);
+  XCTAssertEqualObjects(decoded.commitmentPrice, price);
+  XCTAssertEqualObjects(decoded.commitmentExpirationDate, expirationDate);
 }
 
 @end
