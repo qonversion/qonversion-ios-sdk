@@ -49,6 +49,10 @@
     XCTAssertNotNil(introOffer);
     XCTAssertEqualObjects(introOffer[@"value"], @"1.99");
     XCTAssertNotEqualObjects(introOffer[@"value"], model.price);
+    XCTAssertEqualObjects(introOffer[@"number_of_periods"], @"1");
+    XCTAssertEqualObjects(introOffer[@"period_number_of_units"], @"1");
+    XCTAssertEqualObjects(introOffer[@"period_unit"], @"2");
+    XCTAssertEqualObjects(introOffer[@"payment_mode"], @"1");
 }
 
 - (void)testThatStoreKit2FreeTrialReportsZeroIntroductoryPrice {
@@ -72,6 +76,35 @@
     NSDictionary *data = [self.serializer purchaseInfo:model receipt:nil];
 
     XCTAssertNil(data[@"introductory_offer"]);
+}
+
+- (void)testThatStoreKit2PromoOfferReportsValues {
+    QONStoreKit2PurchaseModel *model = [self baseStoreKit2Model];
+    model.promoOfferId = @"promo_winback";
+    model.promoOfferPrice = @"4.99";
+    model.promoOfferNumberOfPeriods = @"1";
+    model.promoOfferPeriodNumberOfUnits = @"1";
+    model.promoOfferPeriodUnit = @"2";
+    model.promoOfferPaymentMode = @"1";
+
+    NSDictionary *data = [self.serializer purchaseInfo:model receipt:nil];
+    NSDictionary *promoOffer = data[@"promo_offer"];
+
+    XCTAssertNotNil(promoOffer);
+    XCTAssertEqualObjects(promoOffer[@"id"], @"promo_winback");
+    XCTAssertEqualObjects(promoOffer[@"value"], @"4.99");
+    XCTAssertEqualObjects(promoOffer[@"number_of_periods"], @"1");
+    XCTAssertEqualObjects(promoOffer[@"period_number_of_units"], @"1");
+    XCTAssertEqualObjects(promoOffer[@"period_unit"], @"2");
+    XCTAssertEqualObjects(promoOffer[@"payment_mode"], @"1");
+}
+
+- (void)testThatStoreKit2NoPromoOmitsPromoOffer {
+    QONStoreKit2PurchaseModel *model = [self baseStoreKit2Model];
+
+    NSDictionary *data = [self.serializer purchaseInfo:model receipt:nil];
+
+    XCTAssertNil(data[@"promo_offer"]);
 }
 
 @end

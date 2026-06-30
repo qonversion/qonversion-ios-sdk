@@ -148,15 +148,17 @@ NS_ASSUME_NONNULL_BEGIN
     result[@"introductory_offer"] = introOffer;
   }
   
-  NSMutableDictionary *promoOffer = [[NSMutableDictionary alloc] init];
-  promoOffer[@"id"] = purchaseModel.promoOfferId;
-  promoOffer[@"value"] = purchaseModel.promoOfferPrice;
-  promoOffer[@"number_of_periods"] = purchaseModel.promoOfferNumberOfPeriods;
-  promoOffer[@"period_number_of_units"] = purchaseModel.promoOfferPeriodNumberOfUnits;
-  promoOffer[@"period_unit"] = purchaseModel.promoOfferPeriodUnit;
-  promoOffer[@"payment_mode"] = purchaseModel.promoOfferPaymentMode;
+  if (purchaseModel.promoOfferId != nil) {
+    NSMutableDictionary *promoOffer = [[NSMutableDictionary alloc] init];
+    promoOffer[@"id"] = purchaseModel.promoOfferId;
+    promoOffer[@"value"] = purchaseModel.promoOfferPrice;
+    promoOffer[@"number_of_periods"] = purchaseModel.promoOfferNumberOfPeriods;
+    promoOffer[@"period_number_of_units"] = purchaseModel.promoOfferPeriodNumberOfUnits;
+    promoOffer[@"period_unit"] = purchaseModel.promoOfferPeriodUnit;
+    promoOffer[@"payment_mode"] = purchaseModel.promoOfferPaymentMode;
 
-  result[@"promo_offer"] = [promoOffer copy];
+    result[@"promo_offer"] = [promoOffer copy];
+  }
   
   purchaseDict[@"country"] = purchaseModel.storefrontCountryCode;
   
