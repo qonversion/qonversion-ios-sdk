@@ -16,6 +16,8 @@
 		3521C548C169154D45835C38 /* ScreenEventsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */; };
 		405978D53C69C2F10939A4D4 /* NoCodesContextBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B82604A89181D262616958 /* NoCodesContextBuilder.swift */; };
 		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
+		7DE906BB2E7B0001C0000003 /* QONTransactionCommitmentInfoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DE906A12E7B0001C0000003 /* QONTransactionCommitmentInfoTests.m */; };
+		7DE906BB2E7B0001C0000004 /* ProductCenterManagerCommitmentInfoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DE906A12E7B0001C0000004 /* ProductCenterManagerCommitmentInfoTests.m */; };
 		4531CBC824578D300022C422 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 4531CBC724578D300022C422 /* Podfile */; };
 		4531CBCB24581BD80022C422 /* QNUserInfoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC92457F6E00022C422 /* QNUserInfoTests.m */; };
 		454BE21B247C2F0E001FE771 /* QInMemoryStorageTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */; };
@@ -86,6 +88,8 @@
 		700636152C12125900BB9F9C /* NSError+Sugare.m in Sources */ = {isa = PBXBuildFile; fileRef = 700636132C12125900BB9F9C /* NSError+Sugare.m */; };
 		700B9D4D2E742CBB0031B056 /* QONPurchaseResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 700B9D4C2E742CBB0031B056 /* QONPurchaseResult.m */; };
 		700B9D4E2E742CBB0031B056 /* QONPurchaseResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 700B9D4B2E742CBB0031B056 /* QONPurchaseResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		7DE906BB2E7B0001C0000001 /* QONTransactionCommitmentInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DE906A12E7B0001C0000001 /* QONTransactionCommitmentInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		7DE906BB2E7B0001C0000002 /* QONTransactionCommitmentInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DE906A12E7B0001C0000002 /* QONTransactionCommitmentInfo.m */; };
 		700B9D502E742E5D0031B056 /* QONPurchaseResult+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700B9D4F2E742E5D0031B056 /* QONPurchaseResult+Protected.h */; };
 		700EC173291277130032E205 /* QONExperimentGroup+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 700EC171291277130032E205 /* QONExperimentGroup+Protected.h */; };
 		701922732B10981200724926 /* QONSubscriptionPeriod.h in Headers */ = {isa = PBXBuildFile; fileRef = 701922712B10981200724926 /* QONSubscriptionPeriod.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -360,6 +364,8 @@
 		4502E457257FDF90006FC750 /* OCMock.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OCMock.framework; path = "../../../../Volumes/OCMock 3.7.1/iOS framework/OCMock.framework"; sourceTree = "<group>"; };
 		45239D6E2517CEB00085D0A8 /* QonversionFramework.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QonversionFramework.h; sourceTree = "<group>"; };
 		4531CBC5245789D40022C422 /* QDeviceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QDeviceTests.m; sourceTree = "<group>"; };
+		7DE906A12E7B0001C0000003 /* QONTransactionCommitmentInfoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONTransactionCommitmentInfoTests.m; sourceTree = "<group>"; };
+		7DE906A12E7B0001C0000004 /* ProductCenterManagerCommitmentInfoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerCommitmentInfoTests.m; sourceTree = "<group>"; };
 		4531CBC724578D300022C422 /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; };
 		4531CBC92457F6E00022C422 /* QNUserInfoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserInfoTests.m; sourceTree = "<group>"; };
 		454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QInMemoryStorageTests.m; sourceTree = "<group>"; };
@@ -445,6 +451,8 @@
 		700636122C12125900BB9F9C /* NSError+Sugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+Sugare.h"; sourceTree = "<group>"; };
 		700636132C12125900BB9F9C /* NSError+Sugare.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+Sugare.m"; sourceTree = "<group>"; };
 		700B9D4B2E742CBB0031B056 /* QONPurchaseResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONPurchaseResult.h; sourceTree = "<group>"; };
+		7DE906A12E7B0001C0000001 /* QONTransactionCommitmentInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONTransactionCommitmentInfo.h; sourceTree = "<group>"; };
+		7DE906A12E7B0001C0000002 /* QONTransactionCommitmentInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONTransactionCommitmentInfo.m; sourceTree = "<group>"; };
 		700B9D4C2E742CBB0031B056 /* QONPurchaseResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONPurchaseResult.m; sourceTree = "<group>"; };
 		700B9D4F2E742E5D0031B056 /* QONPurchaseResult+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONPurchaseResult+Protected.h"; sourceTree = "<group>"; };
 		700EC171291277130032E205 /* QONExperimentGroup+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONExperimentGroup+Protected.h"; sourceTree = "<group>"; };
@@ -846,6 +854,8 @@
 				459DAB79243E329F0011ECF3 /* Info.plist */,
 				4531CBC5245789D40022C422 /* QDeviceTests.m */,
 				4531CBC92457F6E00022C422 /* QNUserInfoTests.m */,
+				7DE906A12E7B0001C0000003 /* QONTransactionCommitmentInfoTests.m */,
+				7DE906A12E7B0001C0000004 /* ProductCenterManagerCommitmentInfoTests.m */,
 				454BE22C247C3EDC001FE771 /* QonversionPropertiesTests.m */,
 				4587136B24AB963100F4B418 /* QRequestSerializerTests.m */,
 				458A8CCA24B9A3DF00637130 /* StoreKitServiceTests.m */,
@@ -1363,6 +1373,8 @@
 				895731BF26DD03A2009507A6 /* QONEntitlement.h */,
 				70B917622B3314BD00BF0689 /* QONTransaction.h */,
 				70B917632B3314BD00BF0689 /* QONTransaction.m */,
+				7DE906A12E7B0001C0000001 /* QONTransactionCommitmentInfo.h */,
+				7DE906A12E7B0001C0000002 /* QONTransactionCommitmentInfo.m */,
 				895731C026DD03A2009507A6 /* QONLaunchResult.h */,
 				895731C126DD03A2009507A6 /* QONExperimentGroup.m */,
 				895731C326DD03A2009507A6 /* QONAutomations.m */,
@@ -1898,6 +1910,7 @@
 				8957330126DD03A3009507A6 /* QNUserInfoServiceInterface.h in Headers */,
 				895732C926DD03A3009507A6 /* QNInternalConstants.h in Headers */,
 				70B917642B3314BD00BF0689 /* QONTransaction.h in Headers */,
+				7DE906BB2E7B0001C0000001 /* QONTransactionCommitmentInfo.h in Headers */,
 				8957328926DD03A3009507A6 /* QONProduct.h in Headers */,
 				702DBDEC2A3216C900D590D0 /* QONExperiment+Protected.h in Headers */,
 				70CB7CDD2C246DF200241FF1 /* QONPromotionalOffer.h in Headers */,
@@ -2303,6 +2316,7 @@
 				895732C626DD03A3009507A6 /* QNAPIConstants.m in Sources */,
 				6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */,
 				70B917652B3314BD00BF0689 /* QONTransaction.m in Sources */,
+				7DE906BB2E7B0001C0000002 /* QONTransactionCommitmentInfo.m in Sources */,
 				70D05A8F29C9FC1600EA5DDF /* QONRemoteConfigManager.m in Sources */,
 				895732C426DD03A3009507A6 /* QNRequestBuilder.m in Sources */,
 				8957329726DD03A3009507A6 /* QONStoreKitSugare.m in Sources */,
@@ -2437,6 +2451,8 @@
 				454BE22D247C3EDC001FE771 /* QonversionPropertiesTests.m in Sources */,
 				458A8CCB24B9A3DF00637130 /* StoreKitServiceTests.m in Sources */,
 				4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */,
+				7DE906BB2E7B0001C0000003 /* QONTransactionCommitmentInfoTests.m in Sources */,
+				7DE906BB2E7B0001C0000004 /* ProductCenterManagerCommitmentInfoTests.m in Sources */,
 				891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */,
 				89673C2F26F49BAA008D209A /* QNIdentityManagerTests.m in Sources */,
 				4531CBCB24581BD80022C422 /* QNUserInfoTests.m in Sources */,

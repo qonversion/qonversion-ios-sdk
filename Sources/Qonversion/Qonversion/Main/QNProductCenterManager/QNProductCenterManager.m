@@ -26,6 +26,9 @@
 #import "QONPromotionalOffer.h"
 #import "QONPurchaseOptions.h"
 #import "QONPurchaseResult+Protected.h"
+#import "QONTransaction.h"
+#import "QONTransactionCommitmentInfo.h"
+#import "QONEntitlement.h"
 #import <StoreKit/StoreKit.h>
 #import "QONRequestTrigger.h"
 
@@ -66,6 +69,11 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (nonatomic, strong) QONUser *user;
 
 @property (nonatomic, copy) NSDictionary<NSString *, QONPurchaseOptions *> *processingPurchaseOptions;
+
+// Cache of locally-parsed SK2 commitment info, keyed by transactionId. Populated by
+// handlePurchases: (SK2 path) and consumed when QONTransaction instances built from the
+// server response are returned to the consumer. Server does not relay this field.
+@property (nonatomic, strong) NSMutableDictionary<NSString *, QONTransactionCommitmentInfo *> *commitmentInfoByTransactionId;
 
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoading;
@@ -112,8 +120,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _offeringsBlocks = [NSMutableArray new];
     _userInfoBlocks = [NSMutableArray new];
     _pendingIdentityBlocks = [NSMutableDictionary new];
+    _commitmentInfoByTransactionId = [NSMutableDictionary new];
   }
-  
+
   return self;
 }
 
@@ -604,9 +613,36 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   }
 
   if (entitlementsAreActual) {
+    [self enrichEntitlementsWithCommitmentInfo:entitlements];
     run_block_on_main(completion, entitlements, nil);
   } else {
     [self actualizeEntitlements:completion];
+  }
+}
+
+- (void)enrichEntitlementsWithCommitmentInfo:(NSDictionary<NSString *, QONEntitlement *> *)entitlements {
+  if (!entitlements) {
+    return;
+  }
+  if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+    // One-shot consume: each transactionId is applied at most once and then removed
+    // from the cache. Entries that never match a returned QONTransaction (e.g. server
+    // omits the txn from the response) persist until process exit; this is acceptable
+    // given typical SK2 batch sizes of 1-12 transactions per session.
+    @synchronized (self.commitmentInfoByTransactionId) {
+      if (self.commitmentInfoByTransactionId.count == 0) {
+        return;
+      }
+      for (QONEntitlement *entitlement in entitlements.allValues) {
+        for (QONTransaction *transaction in entitlement.transactions) {
+          QONTransactionCommitmentInfo *info = self.commitmentInfoByTransactionId[transaction.transactionId];
+          if (info) {
+            transaction.commitmentInfo = info;
+            [self.commitmentInfoByTransactionId removeObjectForKey:transaction.transactionId];
+          }
+        }
+      }
+    }
   }
 }
 
@@ -919,6 +955,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           launchResult = [QNMapper fillLaunchResult:mappedResult.data];
         }
       }
+      [weakSelf enrichLaunchResultWithCommitmentInfo:launchResult];
       completion(launchResult, error);
       return;
     }
@@ -936,6 +973,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [weakSelf.persistentStorage storeObject:weakSelf.productsEntitlementsRelation forKey:kKeyQUserDefaultsProductsPermissionsRelation];
 
     QONLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
+    [weakSelf enrichLaunchResultWithCommitmentInfo:launchResult];
     completion(launchResult, nil);
     
     static dispatch_once_t onceToken;
@@ -969,6 +1007,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handlePurchases:(NSArray<QONStoreKit2PurchaseModel *> *)purchasesInfo completion:(QONDefaultCompletionHandler)completion {
+  [self cacheCommitmentInfoFromPurchaseModels:purchasesInfo];
+
   __block __weak QNProductCenterManager *weakSelf = self;
   __block QONDefaultCompletionHandler resultCompletion = [completion copy];
   [self.storeKitService receipt:^(NSString * receipt) {
@@ -983,7 +1023,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
         } else {
           [weakSelf.apiClient removeStoredRequestForTransactionId:purchaseModel.transactionId];
         }
-        
+
         if (resultCompletion) {
           resultCompletion(success, error);
           resultCompletion = nil;
@@ -991,6 +1031,22 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       }];
     }
   }];
+}
+
+- (void)cacheCommitmentInfoFromPurchaseModels:(NSArray<QONStoreKit2PurchaseModel *> *)purchaseModels {
+  if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+    @synchronized (self.commitmentInfoByTransactionId) {
+      for (QONStoreKit2PurchaseModel *model in purchaseModels) {
+        if (model.commitmentInfo && model.transactionId.length > 0) {
+          self.commitmentInfoByTransactionId[model.transactionId] = model.commitmentInfo;
+        }
+      }
+    }
+  }
+}
+
+- (void)enrichLaunchResultWithCommitmentInfo:(QONLaunchResult *)launchResult {
+  [self enrichEntitlementsWithCommitmentInfo:launchResult.entitlements];
 }
 
 // MARK: - QNStoreKitServiceDelegate
@@ -1046,13 +1102,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       }
       
       QONLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-      
+      [weakSelf enrichLaunchResultWithCommitmentInfo:launchResult];
+
       if (!resultError) {
         @synchronized (weakSelf) {
           weakSelf.launchResult = launchResult;
           weakSelf.launchError = nil;
         }
-        
+
         [weakSelf storeLaunchResultIfNeeded:launchResult];
       }
       
