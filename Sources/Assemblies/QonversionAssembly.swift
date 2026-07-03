@@ -17,6 +17,13 @@ final class QonversionAssembly {
         self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: ""))
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
+
+        // UserService.init resolves the anonymous user id — persisted QON_… from
+        // LocalStorage or a newly generated one — into InternalConfig, so every
+        // request built from this point on carries a real user id. The full
+        // identity flow (createUser round-trip, identify/logout) comes with the
+        // user manager.
+        _ = servicesAssembly.userService()
     }
     
     func userPropertiesManager() -> UserPropertiesManagerInterface {

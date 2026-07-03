@@ -84,7 +84,6 @@
 		70CD93352BC6E22B0039D65C /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 70CD92F12BC6E22B0039D65C /* Qonversion.h */; };
 		70CD93362BC6E22B0039D65C /* Qonversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92F22BC6E22B0039D65C /* Qonversion.swift */; };
 		70CD93372BC6E22B0039D65C /* StorageConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92F32BC6E22B0039D65C /* StorageConstants.swift */; };
-		70CD93382BC6E22B0039D65C /* TemporaryFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92F42BC6E22B0039D65C /* TemporaryFactory.swift */; };
 		70D876CF2B8634230059AA2B /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70D876CE2B8634230059AA2B /* StoreKit.framework */; };
 		70D877122B8F4E5E0059AA2B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877112B8F4E5E0059AA2B /* AppDelegate.swift */; };
 		70D877142B8F4E5E0059AA2B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877132B8F4E5E0059AA2B /* SceneDelegate.swift */; };
@@ -215,7 +214,6 @@
 		70CD92F12BC6E22B0039D65C /* Qonversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
 		70CD92F22BC6E22B0039D65C /* Qonversion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Qonversion.swift; sourceTree = "<group>"; };
 		70CD92F32BC6E22B0039D65C /* StorageConstants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageConstants.swift; sourceTree = "<group>"; };
-		70CD92F42BC6E22B0039D65C /* TemporaryFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TemporaryFactory.swift; sourceTree = "<group>"; };
 		70CD933B2BC6E2940039D65C /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		70CD937A2BC9298E0039D65C /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; };
 		70CD937B2BC9298E0039D65C /* Qonversion.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Qonversion.podspec; sourceTree = "<group>"; };
@@ -578,7 +576,6 @@
 				70CD92F12BC6E22B0039D65C /* Qonversion.h */,
 				70CD92F22BC6E22B0039D65C /* Qonversion.swift */,
 				70CD92F32BC6E22B0039D65C /* StorageConstants.swift */,
-				70CD92F42BC6E22B0039D65C /* TemporaryFactory.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -911,7 +908,6 @@
 				70CD93292BC6E22B0039D65C /* StoreKitWrapper.swift in Sources */,
 				6A840E0B2BD6AEE500E5E8E3 /* ApiError.swift in Sources */,
 				70CD93132BC6E22B0039D65C /* RequestProcessorInterface.swift in Sources */,
-				70CD93382BC6E22B0039D65C /* TemporaryFactory.swift in Sources */,
 				70CD93052BC6E22B0039D65C /* QonversionError.swift in Sources */,
 				70CD93222BC6E22B0039D65C /* StoreKitFacade.swift in Sources */,
 				70CD930B2BC6E22B0039D65C /* NetworkErrorHandlerInterface.swift in Sources */,

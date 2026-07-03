@@ -64,8 +64,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
 
     func setUserProperty(key: Qonversion.UserPropertyKey, value: String) {
         guard key != .custom else {
-            return print("Can not set user property with the key `.custom`. " +
+            logger.warning("Can not set user property with the key `.custom`. " +
                     "To set custom user property, use the `setCustomUserProperty` method.")
+            return
         }
         
         setCustomUserProperty(key: key.rawValue, value: value)
@@ -101,7 +102,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         do {
             let result: SendUserPropertiesResult? = try await requestProcessor.process(request: request, responseType: SendUserPropertiesResult.self)
             result?.propertyErrors.forEach({ propertyError in
-                print("Failed to save property " + propertyError.key + ": " + propertyError.error)
+                logger.error("Failed to save property " + propertyError.key + ": " + propertyError.error)
             })
             
             sendPropertiesRetryCount = 0
@@ -145,7 +146,7 @@ extension UserPropertiesManager {
                 try await self.sendProperties()
             } catch {
                 #warning("Handle error correctly")
-                print(error)
+                self.logger.error("Failed to send user properties: \(error)")
             }
         }
     }

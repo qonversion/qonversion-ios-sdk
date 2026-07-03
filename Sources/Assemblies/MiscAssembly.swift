@@ -28,7 +28,14 @@ final class MiscAssembly {
     
     var servicesAssembly: ServicesAssembly!
     var internalConfig: InternalConfig
-    
+
+    // Stateful shared components — must stay single-instance so their contract
+    // holds SDK-wide (a per-consumer RateLimiter would multiply the effective
+    // request limit; a per-consumer RequestsStorage would fragment the replay
+    // queue). Stateless components below are deliberately built fresh per call.
+    private var rateLimiterInstance: RateLimiterInterface?
+    private var requestsStorageInstance: RequestsStorageInterface?
+
     init(apiKey: String, userDefaults: UserDefaults, internalConfig: InternalConfig) {
         self.apiKey = apiKey
         self.userDefaults = userDefaults
@@ -56,8 +63,13 @@ final class MiscAssembly {
     }
     
     func requestsStorage() -> RequestsStorageInterface {
+        if let requestsStorageInstance {
+            return requestsStorageInstance
+        }
+
         let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue)
-        
+        requestsStorageInstance = requestsStorage
+
         return requestsStorage
     }
     
@@ -72,8 +84,13 @@ final class MiscAssembly {
     }
     
     func rateLimiter() -> RateLimiterInterface {
+        if let rateLimiterInstance {
+            return rateLimiterInstance
+        }
+
         let rateLimiter = RateLimiter(maxRequestsPerSecond: IntConstants.maxRequestsPerSecond.rawValue)
-        
+        rateLimiterInstance = rateLimiter
+
         return rateLimiter
     }
     
