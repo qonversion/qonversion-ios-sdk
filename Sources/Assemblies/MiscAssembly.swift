@@ -29,10 +29,7 @@ final class MiscAssembly {
     var servicesAssembly: ServicesAssembly!
     var internalConfig: InternalConfig
 
-    // Stateful shared components — must stay single-instance so their contract
-    // holds SDK-wide (a per-consumer RateLimiter would multiply the effective
-    // request limit; a per-consumer RequestsStorage would fragment the replay
-    // queue). Stateless components below are deliberately built fresh per call.
+    // Stateful — shared SDK-wide; everything else is created fresh per call.
     private var rateLimiterInstance: RateLimiterInterface?
     private var requestsStorageInstance: RequestsStorageInterface?
 
