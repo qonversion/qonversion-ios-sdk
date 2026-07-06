@@ -74,10 +74,12 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
     }
     
     
+    #if os(iOS) || os(visionOS)
     @available(iOS 16.0, visionOS 1.0, *)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
         try await AppStore.presentOfferCodeRedeemSheet(in: scene)
     }
+    #endif
     
     private func fetchTransactions(for type: StoreKit.Transaction.Transactions) async -> [StoreKit.Transaction] {
         var transasctions: [StoreKit.Transaction] = []

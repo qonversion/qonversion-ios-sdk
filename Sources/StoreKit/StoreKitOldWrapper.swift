@@ -46,10 +46,12 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
         paymentQueue.restoreCompletedTransactions()
     }
     
+    #if os(iOS) || os(visionOS)
     @available(iOS 14.0, visionOS 1.0, *)
     func presentCodeRedemptionSheet() {
         paymentQueue.presentCodeRedemptionSheet()
     }
+    #endif
     
     func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion) {
         let payment = SKPayment(product: product)

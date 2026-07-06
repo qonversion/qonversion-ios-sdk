@@ -44,7 +44,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
     }
     
     func restore() async throws -> [Qonversion.Transaction] {
-        if #available(iOS 15.0, *) {
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             try await storeKitWrapper.restore()
@@ -59,7 +59,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
     }
     
     func historicalData() async throws -> [Qonversion.Transaction] {
-        if #available(iOS 15.0, *) {
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             let products = try await storeKitWrapper.fetchAll()
@@ -82,19 +82,23 @@ class StoreKitFacade: StoreKitFacadeInterface {
         }
     }
     
+    #if os(iOS) || os(visionOS)
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet() {
         guard let storeKitWrapper = storeKitOldWrapper else { return }
-        
+
         storeKitWrapper.presentCodeRedemptionSheet()
     }
+    #endif
     
+    #if os(iOS) || os(visionOS)
     @available(iOS 16.0, *)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
         guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
-        
+
         try await storeKitWrapper.presentOfferCodeRedeemSheet(in: scene)
     }
+    #endif
     
     func finish(transaction: SKPaymentTransaction) {
         guard let storeKitWrapper = storeKitOldWrapper else { return }

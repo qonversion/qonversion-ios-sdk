@@ -41,10 +41,11 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     }
     
     func collectAppleSearchAdsAttribution() {
-        if #available(iOS 14.3, *) {
+        #if canImport(AdServices)
+        if #available(iOS 14.3, macOS 11.1, visionOS 1.0, *) {
             do {
                 let token: String = try AAAttribution.attributionToken()
-                
+
                 processRequest(with: token)
             } catch {
                 logger.error("\(LoggerInfoMessages.failedToCollectAppleSearchAdsAttribution.rawValue) \(error)")
@@ -52,6 +53,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         } else {
             logger.warning(LoggerInfoMessages.unableToCollectAppleSearchAdsAttribution.rawValue)
         }
+        #else
+        logger.warning(LoggerInfoMessages.unableToCollectAppleSearchAdsAttribution.rawValue)
+        #endif
     }
     
     func userProperties() async throws -> Qonversion.UserProperties {

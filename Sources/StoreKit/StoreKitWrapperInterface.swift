@@ -34,9 +34,8 @@ protocol StoreKitWrapperInterface {
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     func subscribe() async -> [StoreKit.Transaction]
         
+    #if os(iOS) || os(visionOS)
     @available(iOS 16.0, visionOS 1.0, *)
-    @available(macOS, unavailable)
-    @available(watchOS, unavailable)
-    @available(tvOS, unavailable)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws
+    #endif
 }
