@@ -140,14 +140,33 @@ final class MockRequestsStorage: RequestsStorageInterface {
 
 // MARK: - Storage
 
-/// In-memory LocalStorageInterface. Prefer the REAL LocalStorage over
+/// In-memory LocalStorageInterface. Typed set/object mirror the real
+/// LocalStorage (JSON round-trip). Prefer the REAL LocalStorage over
 /// TestDefaults.makeIsolated() when the storage behavior itself matters.
 final class MockLocalStorage: LocalStorageInterface {
 
     private(set) var storage: [String: Any] = [:]
+    var setError: Error?
+    var objectError: Error?
 
-    func object(forKey key: String) -> Any? { storage[key] }
-    func set(_ value: Any?, forKey key: String) { storage[key] = value }
+    private let jsonEncoder = JSONEncoder()
+    private let jsonDecoder = JSONDecoder()
+
+    func object<T>(forKey key: String, dataType: T.Type) throws -> T? where T: Decodable {
+        if let objectError { throw objectError }
+        guard let data = storage[key] as? Data else { return nil }
+        return try jsonDecoder.decode(dataType, from: data)
+    }
+
+    func set(_ value: Encodable?, forKey key: String) throws {
+        if let setError { throw setError }
+        guard let value else {
+            storage.removeValue(forKey: key)
+            return
+        }
+        storage[key] = try jsonEncoder.encode(value)
+    }
+
     func removeObject(forKey key: String) { storage.removeValue(forKey: key) }
     func string(forKey key: String) -> String? { storage[key] as? String }
     func array(forKey key: String) -> [Any]? { storage[key] as? [Any] }
@@ -158,6 +177,7 @@ final class MockLocalStorage: LocalStorageInterface {
     func double(forKey key: String) -> Double { storage[key] as? Double ?? 0 }
     func bool(forKey key: String) -> Bool { storage[key] as? Bool ?? false }
     func url(forKey key: String) -> URL? { storage[key] as? URL }
+    func set(string: String, forKey key: String) { storage[key] = string }
     func set(integer: Int, forKey key: String) { storage[key] = integer }
     func set(float: Float, forKey key: String) { storage[key] = float }
     func set(double: Double, forKey key: String) { storage[key] = double }
@@ -333,16 +353,22 @@ final class MockDeviceService: DeviceServiceInterface {
     var createResult: Device?
     var updateResult: Device?
     var error: Error?
+    var saveError: Error?
+    var currentDeviceError: Error?
 
     private(set) var savedDevices: [Device] = []
     private(set) var createdDevices: [Device] = []
     private(set) var updatedDevices: [Device] = []
 
-    func save(device: Device) {
+    func save(device: Device) throws {
+        if let saveError { throw saveError }
         savedDevices.append(device)
     }
 
-    func currentDevice() -> Device? { current }
+    func currentDevice() throws -> Device? {
+        if let currentDeviceError { throw currentDeviceError }
+        return current
+    }
 
     func create(device: Device) async throws -> Device {
         createdDevices.append(device)

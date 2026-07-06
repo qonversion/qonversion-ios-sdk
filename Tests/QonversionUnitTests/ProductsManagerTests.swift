@@ -136,7 +136,7 @@ final class ProductsManagerTests: XCTestCase {
     // a products service error propagates to the caller as-is and the injected
     // local storage is never consulted.
     func testServiceErrorPropagatesWithoutDiskFallback() async {
-        localStorage.set(Data([0x01]), forKey: "products")
+        try? localStorage.set(Data([0x01]), forKey: "products")
         productsService.error = QonversionError(type: .productsLoadingFailed)
 
         do {

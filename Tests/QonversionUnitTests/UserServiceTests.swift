@@ -15,7 +15,7 @@ final class UserServiceTests: XCTestCase {
     // MARK: - Helpers
 
     private func makeStorage() -> LocalStorage {
-        LocalStorage(userDefaults: TestDefaults.makeIsolated())
+        LocalStorage(userDefaults: TestDefaults.makeIsolated(), encoder: JSONEncoder(), decoder: JSONDecoder())
     }
 
     private func decodeUserStub(
@@ -33,7 +33,7 @@ final class UserServiceTests: XCTestCase {
 
     func testInitUsesPersistedUserIdFromStorage() {
         let storage = makeStorage()
-        storage.set("QON_persisted_id", forKey: userIdKey)
+        storage.set(string: "QON_persisted_id", forKey: userIdKey)
         let config = InternalConfig(userId: "initial")
 
         _ = UserService(requestProcessor: MockRequestProcessor(), localStorage: storage, internalConfig: config)
@@ -140,7 +140,7 @@ final class UserServiceTests: XCTestCase {
     func testUserSendsGetUserRequestWithConfigUserIdAndReturnsUser() async throws {
         let processor = MockRequestProcessor()
         let storage = makeStorage()
-        storage.set("QON_persisted_id", forKey: userIdKey)
+        storage.set(string: "QON_persisted_id", forKey: userIdKey)
         let config = InternalConfig(userId: "initial")
         let service = UserService(requestProcessor: processor, localStorage: storage, internalConfig: config)
 

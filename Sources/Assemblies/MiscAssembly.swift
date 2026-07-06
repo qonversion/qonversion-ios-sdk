@@ -36,7 +36,7 @@ final class MiscAssembly {
     }
     
     func localStorage() -> LocalStorage {
-        return LocalStorage(userDefaults: userDefaults)
+        return LocalStorage(userDefaults: userDefaults, encoder: encoder(), decoder: jsonDecoder())
     }
     
     func userIdProvider() -> UserIdProvider {

@@ -10,52 +10,87 @@ import XCTest
 
 final class LocalStorageTests: XCTestCase {
 
+    private struct Payload: Codable, Equatable {
+        let name: String
+        let count: Int
+    }
+
+    private var defaults: UserDefaults!
     private var storage: LocalStorage!
 
     override func setUp() {
         super.setUp()
-        storage = LocalStorage(userDefaults: TestDefaults.makeIsolated())
+        defaults = TestDefaults.makeIsolated()
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .secondsSince1970
+        storage = LocalStorage(userDefaults: defaults, encoder: JSONEncoder(), decoder: decoder)
     }
 
     override func tearDown() {
         storage = nil
+        defaults = nil
         super.tearDown()
     }
 
-    // MARK: - object
+    // MARK: - typed set / object (Codable round-trip)
 
-    func testObjectRoundtrip() {
-        storage.set("plain value", forKey: "object.key")
+    func testTypedRoundtrip() throws {
+        let payload = Payload(name: "qonversion", count: 2)
 
-        XCTAssertEqual(storage.object(forKey: "object.key") as? String, "plain value")
+        try storage.set(payload, forKey: "typed.key")
+        let restored = try storage.object(forKey: "typed.key", dataType: Payload.self)
+
+        XCTAssertEqual(restored, payload)
     }
 
-    func testObjectReturnsNilForMissingKey() {
-        XCTAssertNil(storage.object(forKey: "missing.key"))
+    func testTypedSetStoresEncodedData() throws {
+        // The typed setter persists JSON Data under the key.
+        try storage.set(Payload(name: "q", count: 1), forKey: "typed.data.key")
+
+        XCTAssertNotNil(storage.data(forKey: "typed.data.key"))
     }
 
-    func testSetNilRemovesValue() {
-        storage.set("value", forKey: "nil.key")
-        storage.set(nil, forKey: "nil.key")
+    func testTypedObjectReturnsNilForMissingKey() throws {
+        XCTAssertNil(try storage.object(forKey: "missing.key", dataType: Payload.self))
+    }
 
-        XCTAssertNil(storage.object(forKey: "nil.key"))
+    func testTypedSetNilRemovesValue() throws {
+        try storage.set(Payload(name: "q", count: 1), forKey: "nil.key")
+        try storage.set(nil, forKey: "nil.key")
+
+        XCTAssertNil(try storage.object(forKey: "nil.key", dataType: Payload.self))
+    }
+
+    func testTypedObjectThrowsDeserializationErrorOnGarbageData() {
+        defaults.set(Data([0xFF, 0x00, 0x12]), forKey: "garbage.key")
+
+        XCTAssertThrowsError(try storage.object(forKey: "garbage.key", dataType: Payload.self)) { error in
+            XCTAssertEqual((error as? QonversionError)?.type, .storageDeserializationFailed)
+        }
+    }
+
+    func testTypedObjectThrowsOnTypeMismatch() throws {
+        try storage.set(Payload(name: "q", count: 1), forKey: "mismatch.typed.key")
+
+        XCTAssertThrowsError(try storage.object(forKey: "mismatch.typed.key", dataType: [Int].self)) { error in
+            XCTAssertEqual((error as? QonversionError)?.type, .storageDeserializationFailed)
+        }
     }
 
     // MARK: - removeObject
 
     func testRemoveObjectDeletesStoredValue() {
-        storage.set("to be removed", forKey: "remove.key")
+        storage.set(string: "to be removed", forKey: "remove.key")
 
         storage.removeObject(forKey: "remove.key")
 
-        XCTAssertNil(storage.object(forKey: "remove.key"))
         XCTAssertNil(storage.string(forKey: "remove.key"))
     }
 
     // MARK: - string
 
     func testStringRoundtrip() {
-        storage.set("string value", forKey: "string.key")
+        storage.set(string: "string value", forKey: "string.key")
 
         XCTAssertEqual(storage.string(forKey: "string.key"), "string value")
     }
@@ -122,7 +157,7 @@ final class LocalStorageTests: XCTestCase {
         // Fixates current behavior: the interface has no URL setter, so a URL can
         // only be read back from a stored string, which UserDefaults interprets
         // as a file path.
-        storage.set("/tmp/qonversion-test", forKey: "url.key")
+        storage.set(string: "/tmp/qonversion-test", forKey: "url.key")
 
         let url = storage.url(forKey: "url.key")
 
@@ -131,11 +166,11 @@ final class LocalStorageTests: XCTestCase {
         XCTAssertEqual(url?.path, "/tmp/qonversion-test")
     }
 
-    // MARK: - data
+    // MARK: - raw plist getters (seeded directly into UserDefaults)
 
-    func testDataRoundtrip() {
+    func testDataGetterReadsRawValue() {
         let data = Data([0x01, 0x02, 0x03])
-        storage.set(data, forKey: "data.key")
+        defaults.set(data, forKey: "data.key")
 
         XCTAssertEqual(storage.data(forKey: "data.key"), data)
     }
@@ -144,10 +179,8 @@ final class LocalStorageTests: XCTestCase {
         XCTAssertNil(storage.data(forKey: "missing.key"))
     }
 
-    // MARK: - array
-
-    func testArrayRoundtrip() {
-        storage.set(["a", "b", "c"], forKey: "array.key")
+    func testArrayGetterReadsRawValue() {
+        defaults.set(["a", "b", "c"], forKey: "array.key")
 
         XCTAssertEqual(storage.array(forKey: "array.key") as? [String], ["a", "b", "c"])
     }
@@ -156,10 +189,8 @@ final class LocalStorageTests: XCTestCase {
         XCTAssertNil(storage.array(forKey: "missing.key"))
     }
 
-    // MARK: - dictionary
-
-    func testDictionaryRoundtrip() {
-        storage.set(["name": "qonversion", "count": 2], forKey: "dict.key")
+    func testDictionaryGetterReadsRawValue() {
+        defaults.set(["name": "qonversion", "count": 2], forKey: "dict.key")
 
         let dictionary = storage.dictionary(forKey: "dict.key")
 
@@ -174,7 +205,7 @@ final class LocalStorageTests: XCTestCase {
     // MARK: - type mismatch behavior
 
     func testTypedGettersReturnDefaultsForMismatchedTypes() {
-        storage.set("not a number", forKey: "mismatch.key")
+        storage.set(string: "not a number", forKey: "mismatch.key")
 
         // UserDefaults conversion behavior: non-numeric string yields defaults.
         XCTAssertEqual(storage.integer(forKey: "mismatch.key"), 0)

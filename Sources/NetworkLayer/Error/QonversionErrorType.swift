@@ -28,6 +28,8 @@ enum QonversionErrorType {
     case detachingUserFromRemoteConfigFailed
     case attachingUserToExperimentFailed
     case detachingUserFromExperimentFailed
+    case storageSerializationFailed
+    case storageDeserializationFailed
 
     func message() -> String {
         // handle other errors here
@@ -38,6 +40,10 @@ enum QonversionErrorType {
             return "SDK is not initialized. Initialize SDK before calling other functions using  Qonversion.initialize()."
         case .unableToSerializeDevice:
             return "Device serialization failed. Unable to send request."
+        case .storageSerializationFailed:
+            return "Failed to serialize data to save to the storage"
+        case .storageDeserializationFailed:
+            return "Failed to deserialize data from the storage"
         case .deviceCreationFailed:
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:

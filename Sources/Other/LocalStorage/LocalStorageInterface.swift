@@ -8,11 +8,11 @@
 import Foundation
 
 protocol LocalStorageInterface {
-    
-    func object(forKey key: String) -> Any?
 
-    func set(_ value: Any?, forKey key: String)
-    
+    func object<T>(forKey key: String, dataType: T.Type) throws -> T? where T : Decodable
+
+    func set(_ value: Encodable?, forKey key: String) throws
+
     func removeObject(forKey key: String)
 
     func string(forKey key: String) -> String?
@@ -33,8 +33,10 @@ protocol LocalStorageInterface {
 
     func url(forKey key: String) -> URL?
 
+    func set(string: String, forKey key: String)
+
     func set(integer: Int, forKey key: String)
-    
+
     func set(float: Float, forKey key: String)
 
     func set(double: Double, forKey key: String)

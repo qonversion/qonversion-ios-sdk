@@ -49,33 +49,32 @@ final class DeviceServiceTests: XCTestCase {
 
     // MARK: - save / currentDevice
 
-    func testSaveStoresDeviceStructDirectlyUnderPrefixedKey() {
+    func testSaveEncodesDeviceToDataUnderPrefixedKey() throws {
         let storage = MockLocalStorage()
         let service = makeService(storage: storage)
         let device = makeDevice()
 
-        service.save(device: device)
+        try service.save(device: device)
 
-        // Fixates current behavior: the Device struct is stored as-is (not encoded to Data).
-        // With a real UserDefaults-backed storage this would fail, because Device
-        // is not a property-list object; it only works with in-memory storage.
-        XCTAssertEqual(storage.storage[expectedDeviceStorageKey] as? Device, device)
+        // The device is persisted through the typed Codable helper as Data —
+        // safe for a real UserDefaults-backed storage.
+        XCTAssertNotNil(storage.storage[expectedDeviceStorageKey] as? Data)
     }
 
-    func testCurrentDeviceReturnsSavedDevice() {
+    func testCurrentDeviceReturnsSavedDevice() throws {
         let storage = MockLocalStorage()
         let service = makeService(storage: storage)
         let device = makeDevice()
 
-        service.save(device: device)
+        try service.save(device: device)
 
-        XCTAssertEqual(service.currentDevice(), device)
+        XCTAssertEqual(try service.currentDevice(), device)
     }
 
-    func testCurrentDeviceReturnsNilWhenNothingSaved() {
+    func testCurrentDeviceReturnsNilWhenNothingSaved() throws {
         let service = makeService()
 
-        XCTAssertNil(service.currentDevice())
+        XCTAssertNil(try service.currentDevice())
     }
 
     // MARK: - create

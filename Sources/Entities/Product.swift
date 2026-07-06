@@ -148,7 +148,7 @@ extension Qonversion {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             qonversionId = try container.decode(String.self, forKey: .qonversionId)
             storeId = try container.decode(String.self, forKey: .storeId)
-            offeringId = try container.decode(String.self, forKey: .offeringId)
+            offeringId = try container.decodeIfPresent(String.self, forKey: .offeringId)
             skProduct = nil
         }
         

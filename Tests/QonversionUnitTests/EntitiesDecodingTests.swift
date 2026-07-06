@@ -321,17 +321,20 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertFalse(product.isStoreProductLinked)
     }
 
-    func testProductDecodingFailsWhenOfferingIdIsNull() {
-        // Fixates current behavior: although offeringId is declared optional,
-        // init(from:) uses decode(String.self), so null (or absent) offeringId throws.
+    func testProductDecodesWithNullOfferingId() throws {
+        // A product outside any offering is valid: offeringId is optional.
         let json = #"{"qonversionId": "main", "storeId": "com.app.main", "offeringId": null}"#
 
-        XCTAssertThrowsError(try decode(Qonversion.Product.self, json))
+        let product = try decode(Qonversion.Product.self, json)
+
+        XCTAssertNil(product.offeringId)
     }
 
-    func testProductDecodingFailsWhenOfferingIdIsMissing() {
+    func testProductDecodesWithMissingOfferingId() throws {
         let json = #"{"qonversionId": "main", "storeId": "com.app.main"}"#
 
-        XCTAssertThrowsError(try decode(Qonversion.Product.self, json))
+        let product = try decode(Qonversion.Product.self, json)
+
+        XCTAssertNil(product.offeringId)
     }
 }
