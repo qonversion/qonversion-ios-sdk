@@ -69,8 +69,8 @@ class StoreKitFacade: StoreKitFacadeInterface {
                         // needs the SKProduct, available only for products
                         // loaded during this session.
                         let mapped: [Qonversion.Transaction] = transactions.compactMap { transaction in
-                            guard let product = self?.loadedOldProducts[transaction.payment.productIdentifier] else { return nil }
-                            return Qonversion.Transaction(transaction: transaction, product: product)
+                            guard let self, let product = self.loadedOldProducts[transaction.payment.productIdentifier] else { return nil }
+                            return self.storeKitMapper.map(transaction, product: product)
                         }
                         continuation.resume(returning: mapped)
                     }

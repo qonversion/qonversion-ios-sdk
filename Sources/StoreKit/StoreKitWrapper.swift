@@ -13,6 +13,12 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
 
     var delegate: StoreKitWrapperDelegate?
 
+    private let mapper: StoreKitMapperInterface
+
+    init(mapper: StoreKitMapperInterface) {
+        self.mapper = mapper
+    }
+
     func products(for ids: [String]) async throws -> [StoreKit.Product] {
         let products: [StoreKit.Product] = try await Product.products(for: ids)
 
@@ -51,7 +57,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
         case .success(let verificationResult):
             switch verificationResult {
             case .verified(let transaction):
-                outcome = .success(Qonversion.Transaction(transaction: transaction, jws: verificationResult.jwsRepresentation))
+                outcome = .success(mapper.map(transaction, jws: verificationResult.jwsRepresentation))
             case .unverified(_, let verificationError):
                 outcome = .unverified(verificationError)
             }
@@ -78,7 +84,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
             let task = Task {
                 for await update in StoreKit.Transaction.updates {
                     if case .verified(let transaction) = update {
-                        continuation.yield(Qonversion.Transaction(transaction: transaction, jws: update.jwsRepresentation))
+                        continuation.yield(self.mapper.map(transaction, jws: update.jwsRepresentation))
                     }
                 }
                 continuation.finish()
@@ -110,7 +116,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
         for await transaction in type {
             switch transaction {
             case .verified(let verifiedTransaction):
-                transasctions.append(Qonversion.Transaction(transaction: verifiedTransaction, jws: transaction.jwsRepresentation))
+                transasctions.append(mapper.map(verifiedTransaction, jws: transaction.jwsRepresentation))
             default:
                 break
             }
