@@ -44,6 +44,11 @@ lane :bump do |options|
     end
   )
 
+  version_bump_podspec(
+    path: "Qonversion.podspec", 
+    version_number: new_version
+  )
+
   file_path = Dir['../**/QONConfiguration.m'].first
   update_file(file_path, /NSString \*const kSDKVersion = @".*";/, "NSString *const kSDKVersion = @\"#{new_version}\";")
 end
@@ -95,6 +100,11 @@ def update_file(path, regex, result_value)
 end
 
 def runTests(suite)
+  cocoapods(
+    repo_update: false,
+    podfile: "./Podfile"
+  )
+
   run_tests(
     scheme: PROJECT_SCHEME,
     only_testing: suite
