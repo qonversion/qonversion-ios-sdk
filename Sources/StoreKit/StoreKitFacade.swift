@@ -106,9 +106,11 @@ class StoreKitFacade: StoreKitFacadeInterface {
             return
         }
 
-        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper {
-            await storeKitWrapper.finish(transaction)
+        guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper else {
+            return
         }
+
+        await storeKitWrapper.finish(transaction)
     }
 
     func startObservingTransactionUpdates() {
