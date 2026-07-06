@@ -71,6 +71,24 @@ final class QonversionAssembly {
         return productsManager
     }
     
+    func purchasesManager() -> PurchasesManagerInterface {
+        let purchasesService: PurchasesServiceInterface = servicesAssembly.purchasesService()
+        let storeKitFacade: StoreKitFacade = servicesAssembly.storeKitFacade()
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let purchasesManager = PurchasesManager(
+            purchasesService: purchasesService,
+            storeKitFacade: storeKitFacade,
+            userManager: userManager(),
+            userIdProvider: miscAssembly.internalConfig,
+            logger: logger
+        )
+
+        // Observed out-of-band transactions flow into the purchases manager.
+        storeKitFacade.delegate = purchasesManager
+
+        return purchasesManager
+    }
+
     func remoteConfigManager() -> RemoteConfigManagerInterface {
         let remoteConfigService = servicesAssembly.remoteConfigService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()

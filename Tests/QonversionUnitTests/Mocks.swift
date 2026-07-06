@@ -196,9 +196,19 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var restoreResult: [Qonversion.Transaction] = []
     var restoreError: Error?
     var historicalDataResult: [Qonversion.Transaction] = []
+    var purchaseResult: Qonversion.Transaction?
+    var purchaseError: Error?
+    private(set) var purchasedStoreIds: [String] = []
     private(set) var finishedTransactions: [Qonversion.Transaction] = []
     private(set) var startObservingCallsCount = 0
     private(set) var stopObservingCallsCount = 0
+
+    func purchase(storeId: String) async throws -> Qonversion.Transaction {
+        purchasedStoreIds.append(storeId)
+        if let purchaseError { throw purchaseError }
+        guard let purchaseResult else { throw MockError.noStub }
+        return purchaseResult
+    }
 
     func products(for ids: [String]) async throws -> [StoreProductWrapper] {
         requestedProductIds.append(ids)
@@ -494,6 +504,19 @@ final class MockUserManager: UserManagerInterface {
         if let error { throw error }
         guard let user else { throw MockError.noStub }
         return user
+    }
+}
+
+final class MockPurchasesService: PurchasesServiceInterface {
+
+    var error: Error?
+    var onSend: (() async -> Void)?
+    private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String)] = []
+
+    func send(_ transaction: Qonversion.Transaction, userId: String) async throws {
+        sentTransactions.append((transaction, userId))
+        await onSend?()
+        if let error { throw error }
     }
 }
 

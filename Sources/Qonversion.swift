@@ -29,6 +29,11 @@ public final class Qonversion {
         Qonversion.shared.deviceManager = assembly.deviceManager()
         Qonversion.shared.productsManager = assembly.productsManager()
         Qonversion.shared.remoteConfigManager = assembly.remoteConfigManager()
+        Qonversion.shared.purchasesManager = assembly.purchasesManager()
+
+        // Start consuming out-of-band transaction updates (renewals, refunds,
+        // Ask to Buy approvals, purchases on other devices).
+        Qonversion.shared.purchasesManager?.startObservingTransactions()
 
         // Warm up the user gate: create the backend user early so the first
         // data-sending call doesn't pay for it. Failure is fine — the gate
@@ -65,6 +70,26 @@ public final class Qonversion {
         guard let userManager else { throw QonversionError.initializationError() }
 
         return try await userManager.userInfo()
+    }
+
+    /// Returns Qonversion products in association with App Store products.
+    /// - Throws: Possible error during the products request or Qonversion initialization error.
+    public func products() async throws -> [Qonversion.Product] {
+        guard let productsManager else { throw QonversionError.initializationError() }
+
+        return try await productsManager.products()
+    }
+
+    /// Buys the product through the App Store and validates the purchase with
+    /// the Qonversion backend. The transaction is finished only after the
+    /// backend confirms the purchase.
+    /// - Parameter product: the product to purchase.
+    /// - Returns: the verified ``Qonversion/Qonversion/Transaction``.
+    @discardableResult
+    public func purchase(_ product: Qonversion.Product) async throws -> Qonversion.Transaction {
+        guard let purchasesManager else { throw QonversionError.initializationError() }
+
+        return try await purchasesManager.purchase(product)
     }
 
     /// Collects Apple Search Ads Attribution data
@@ -195,6 +220,7 @@ public final class Qonversion {
 
     // MARK: - Private
     private var userManager: UserManagerInterface?
+    private var purchasesManager: PurchasesManagerInterface?
     private var userPropertiesManager: UserPropertiesManagerInterface?
     private var deviceManager: DeviceManagerInterface?
     private var productsManager: ProductsManagerInterface?

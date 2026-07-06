@@ -31,6 +31,10 @@
 		70CD93002BC6E22B0039D65C /* DeviceManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92A72BC6E22B0039D65C /* DeviceManagerInterface.swift */; };
 		70CD93012BC6E22B0039D65C /* SendUserPropertiesResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92A92BC6E22B0039D65C /* SendUserPropertiesResult.swift */; };
 		70CD93022BC6E22B0039D65C /* UserPropertiesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92AA2BC6E22B0039D65C /* UserPropertiesManager.swift */; };
+		A300000000000000000000B1 /* PurchasesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A1 /* PurchasesManager.swift */; };
+		A300000000000000000000B2 /* PurchasesManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A2 /* PurchasesManagerInterface.swift */; };
+		A300000000000000000000B3 /* PurchasesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A3 /* PurchasesService.swift */; };
+		A300000000000000000000B4 /* PurchasesServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A4 /* PurchasesServiceInterface.swift */; };
 		A100000000000000000000B1 /* UserManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000A1 /* UserManager.swift */; };
 		A100000000000000000000B2 /* UserManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000A2 /* UserManagerInterface.swift */; };
 		A100000000000000000000B3 /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000A3 /* Identity.swift */; };
@@ -159,6 +163,10 @@
 		70CD92A72BC6E22B0039D65C /* DeviceManagerInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceManagerInterface.swift; sourceTree = "<group>"; };
 		70CD92A92BC6E22B0039D65C /* SendUserPropertiesResult.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SendUserPropertiesResult.swift; sourceTree = "<group>"; };
 		70CD92AA2BC6E22B0039D65C /* UserPropertiesManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserPropertiesManager.swift; sourceTree = "<group>"; };
+		A300000000000000000000A1 /* PurchasesManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesManager.swift; sourceTree = "<group>"; };
+		A300000000000000000000A2 /* PurchasesManagerInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesManagerInterface.swift; sourceTree = "<group>"; };
+		A300000000000000000000A3 /* PurchasesService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesService.swift; sourceTree = "<group>"; };
+		A300000000000000000000A4 /* PurchasesServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesServiceInterface.swift; sourceTree = "<group>"; };
 		A100000000000000000000A1 /* UserManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
 		A100000000000000000000A2 /* UserManagerInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManagerInterface.swift; sourceTree = "<group>"; };
 		A100000000000000000000A3 /* Identity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Identity.swift; sourceTree = "<group>"; };
@@ -376,8 +384,27 @@
 				70CD92A82BC6E22B0039D65C /* Device */,
 				70CD92AC2BC6E22B0039D65C /* UserProperties */,
 				A100000000000000000000C1 /* UserManager */,
+				A300000000000000000000C1 /* PurchasesManager */,
 			);
 			path = Managers;
+			sourceTree = "<group>";
+		};
+		A300000000000000000000C1 /* PurchasesManager */ = {
+			isa = PBXGroup;
+			children = (
+				A300000000000000000000A1 /* PurchasesManager.swift */,
+				A300000000000000000000A2 /* PurchasesManagerInterface.swift */,
+			);
+			path = PurchasesManager;
+			sourceTree = "<group>";
+		};
+		A300000000000000000000C2 /* PurchasesService */ = {
+			isa = PBXGroup;
+			children = (
+				A300000000000000000000A3 /* PurchasesService.swift */,
+				A300000000000000000000A4 /* PurchasesServiceInterface.swift */,
+			);
+			path = PurchasesService;
 			sourceTree = "<group>";
 		};
 		70CD92B12BC6E22B0039D65C /* Error */ = {
@@ -532,6 +559,7 @@
 			children = (
 				70B4E9752BDAA7C300EE808C /* RemoteConfigService */,
 				70EA734F2BD12C7300B0DFDA /* ProductsService */,
+				A300000000000000000000C2 /* PurchasesService */,
 				70CD92D72BC6E22B0039D65C /* Device */,
 				70CD92DA2BC6E22B0039D65C /* UserService */,
 			);
@@ -802,6 +830,10 @@
 				70CD931A2BC6E22B0039D65C /* PropertiesStorage.swift in Sources */,
 				70CD92F62BC6E22B0039D65C /* MiscAssembly.swift in Sources */,
 				70CD93022BC6E22B0039D65C /* UserPropertiesManager.swift in Sources */,
+				A300000000000000000000B1 /* PurchasesManager.swift in Sources */,
+				A300000000000000000000B2 /* PurchasesManagerInterface.swift in Sources */,
+				A300000000000000000000B3 /* PurchasesService.swift in Sources */,
+				A300000000000000000000B4 /* PurchasesServiceInterface.swift in Sources */,
 				A100000000000000000000B1 /* UserManager.swift in Sources */,
 				A100000000000000000000B2 /* UserManagerInterface.swift in Sources */,
 				A100000000000000000000B3 /* Identity.swift in Sources */,

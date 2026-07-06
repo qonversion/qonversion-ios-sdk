@@ -101,4 +101,28 @@ final class QonversionFacadeTests: XCTestCase {
         Qonversion.shared.setUserProperty("value", key: .custom)
         Qonversion.shared.setCustomUserProperty("value", key: "custom_key")
     }
+
+    // MARK: - purchases guards
+
+    func testProductsThrowsInitializationErrorBeforeInitialize() async {
+        do {
+            _ = try await Qonversion.shared.products()
+            XCTFail("Expected initialization error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .sdkInitializationError)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testPurchaseThrowsInitializationErrorBeforeInitialize() async {
+        do {
+            _ = try await Qonversion.shared.purchase(Qonversion.Product(qonversionId: "p", storeId: "s", offeringId: nil))
+            XCTFail("Expected initialization error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .sdkInitializationError)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
 }

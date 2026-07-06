@@ -16,6 +16,7 @@ enum Request : Hashable {
     case getIdentity(externalId: String, endpoint: String = "v3/identities/", type: RequestType = .get)
     case createIdentity(externalId: String, endpoint: String = "v3/identities/", body: RequestBodyDict, type: RequestType = .post)
     case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .post)
+    case createPurchase(userId: String, endpoint: String = "v3/users/%@/purchases", body: RequestBodyDict, type: RequestType = .post)
     case getProperties(userId: String, endpoint: String = "v3/users/%@/properties", type: RequestType = .get)
     case sendProperties(userId: String, endpoint: String = "v3/users/%@/properties", body: RequestBodyArray, type: RequestType = .post)
     case createDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .post)
@@ -58,6 +59,10 @@ enum Request : Hashable {
         case let .entitlements(userId, endpoint, type):
             let urlString = String(format: endpoint, arguments: [userId])
             return defaultRequest(urlString: urlString, body: nil, type: type)
+
+        case let .createPurchase(userId, endpoint, body, type):
+            let urlString = String(format: endpoint, arguments: [userId])
+            return defaultRequest(urlString: urlString, body: body, type: type)
 
         case let .getProperties(userId, endpoint, type):
             let urlString = String(format: endpoint, arguments: [userId])
@@ -143,6 +148,12 @@ enum Request : Hashable {
             hasher.combine("entitlements")
             hasher.combine(userId)
             hasher.combine(endpoint)
+            hasher.combine(type)
+        case let .createPurchase(userId, endpoint, body, type):
+            hasher.combine("createPurchase")
+            hasher.combine(userId)
+            hasher.combine(endpoint)
+            hasher.combine(body)
             hasher.combine(type)
         case let .getProperties(userId, endpoint, type):
             hasher.combine("getProperties")
