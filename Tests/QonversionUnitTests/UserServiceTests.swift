@@ -169,4 +169,74 @@ final class UserServiceTests: XCTestCase {
             XCTFail("Expected QonversionError, got \(error)")
         }
     }
+
+    // MARK: - identity
+
+    private func decodeIdentityStub(id: String, userId: String?) throws -> Qonversion.Identity {
+        let userIdJson = userId.map { "\"\($0)\"" } ?? "null"
+        let json = "{\"id\": \"\(id)\", \"user_id\": \(userIdJson)}"
+        return try JSONDecoder().decode(Qonversion.Identity.self, from: Data(json.utf8))
+    }
+
+    func testIdentitySendsGetIdentityRequestAndReturnsLinkedUid() async throws {
+        let processor = MockRequestProcessor()
+        let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: InternalConfig(userId: "QON_a"))
+        processor.results = [try decodeIdentityStub(id: "ext_1", userId: "QON_linked")]
+
+        let linkedUid = try await service.identity(for: "ext_1")
+
+        XCTAssertEqual(processor.processedRequests, [Request.getIdentity(externalId: "ext_1")])
+        XCTAssertEqual(linkedUid, "QON_linked")
+    }
+
+    func testIdentityMapsNotFoundToNil() async throws {
+        let processor = MockRequestProcessor()
+        let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: InternalConfig(userId: "QON_a"))
+        processor.error = QonversionError(type: .unknown, additionalInfo: ["statusCode": 404])
+
+        let linkedUid = try await service.identity(for: "ext_1")
+
+        XCTAssertNil(linkedUid, "backend 404 means the identity is not linked yet")
+    }
+
+    func testIdentityWrapsOtherErrorsIntoIdentityLoadingFailed() async {
+        let processor = MockRequestProcessor()
+        let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: InternalConfig(userId: "QON_a"))
+        processor.error = QonversionError(type: .internal, additionalInfo: ["statusCode": 500])
+
+        do {
+            _ = try await service.identity(for: "ext_1")
+            XCTFail("Expected identity(for:) to throw")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .identityLoadingFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testCreateIdentitySendsPostWithUserIdBody() async throws {
+        let processor = MockRequestProcessor()
+        let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: InternalConfig(userId: "QON_a"))
+        processor.results = [try decodeIdentityStub(id: "ext_1", userId: "QON_a")]
+
+        let resultUid = try await service.createIdentity(externalId: "ext_1", userId: "QON_a")
+
+        XCTAssertEqual(processor.processedRequests, [Request.createIdentity(externalId: "ext_1", body: ["user_id": "QON_a"])])
+        XCTAssertEqual(resultUid, "QON_a")
+    }
+
+    func testCreateIdentityWrapsErrorsIntoIdentityCreationFailed() async {
+        let processor = MockRequestProcessor()
+        let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: InternalConfig(userId: "QON_a"))
+        processor.error = MockError.stubbed
+
+        do {
+            _ = try await service.createIdentity(externalId: "ext_1", userId: "QON_a")
+            XCTFail("Expected createIdentity to throw")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .identityCreationFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
 }

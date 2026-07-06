@@ -9,9 +9,9 @@ import Foundation
 
 extension Qonversion {
     
-    public struct User: Decodable {
+    public struct User: Codable {
         
-        enum Environment: String, Decodable {
+        enum Environment: String, Codable {
             case sandbox
             case production
         }
@@ -35,6 +35,13 @@ extension Qonversion {
             creationDate = try container.decode(Date.self, forKey: .creationDate)
             environment = try container.decode(User.Environment.self, forKey: .environment)
             id = try container.decode(String.self, forKey: .id)
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(id, forKey: .id)
+            try container.encode(creationDate, forKey: .creationDate)
+            try container.encode(environment, forKey: .environment)
         }
     }
 }

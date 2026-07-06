@@ -7,8 +7,12 @@
 
 import Foundation
 
-fileprivate enum Constants: String {
+/// Storage keys shared between UserService and the user gate (UserManager).
+enum UserServiceStorageKeys: String {
     case userIdKey = "qonversion.keys.userId"
+}
+
+fileprivate enum Constants: String {
     case userIdPrefix = "QON_"
 }
 
@@ -29,7 +33,7 @@ final class UserService: UserServiceInterface {
     func generateUserId() -> String {
         let uuidString: String = UUID().uuidString.replacingOccurrences(of: "-", with: "")
         let userId: String = Constants.userIdPrefix.rawValue + uuidString.lowercased()
-        localStorage.set(string: userId, forKey: Constants.userIdKey.rawValue)
+        localStorage.set(string: userId, forKey: UserServiceStorageKeys.userIdKey.rawValue)
         internalConfig.userId = userId
         
         return userId
@@ -47,6 +51,32 @@ final class UserService: UserServiceInterface {
         }
     }
     
+    func identity(for externalId: String) async throws -> String? {
+        let request = Request.getIdentity(externalId: externalId)
+        do {
+            let identity: Qonversion.Identity = try await requestProcessor.process(request: request, responseType: Qonversion.Identity.self)
+
+            return identity.userId
+        } catch {
+            if let qonversionError = error as? QonversionError,
+               qonversionError.additionalInfo?[ErrorConstants.statusCodeKey.rawValue] as? Int == 404 {
+                return nil
+            }
+            throw QonversionError(type: .identityLoadingFailed, message: nil, error: error)
+        }
+    }
+
+    func createIdentity(externalId: String, userId: String) async throws -> String {
+        let request = Request.createIdentity(externalId: externalId, body: ["user_id": userId])
+        do {
+            let identity: Qonversion.Identity = try await requestProcessor.process(request: request, responseType: Qonversion.Identity.self)
+
+            return identity.userId ?? userId
+        } catch {
+            throw QonversionError(type: .identityCreationFailed, message: nil, error: error)
+        }
+    }
+
     func user() async throws -> Qonversion.User {
         let request = Request.getUser(id: internalConfig.userId)
         do {
@@ -64,7 +94,7 @@ final class UserService: UserServiceInterface {
 extension UserService {
     
     private func prepareUserId() {
-        let userId: String = localStorage.string(forKey: Constants.userIdKey.rawValue) ?? generateUserId()
+        let userId: String = localStorage.string(forKey: UserServiceStorageKeys.userIdKey.rawValue) ?? generateUserId()
         internalConfig.userId = userId
     }
 }

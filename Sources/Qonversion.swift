@@ -24,14 +24,49 @@ public final class Qonversion {
     @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
+        Qonversion.shared.userManager = assembly.userManager()
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
         Qonversion.shared.productsManager = assembly.productsManager()
         Qonversion.shared.remoteConfigManager = assembly.remoteConfigManager()
 
+        // Warm up the user gate: create the backend user early so the first
+        // data-sending call doesn't pay for it. Failure is fine — the gate
+        // retries on the next demand.
+        Task {
+            try? await Qonversion.shared.userManager?.obtainUser()
+        }
+
         return Qonversion.shared
     }
     
+    /// Links the current Qonversion user to your unique user id and shares purchase data.
+    /// If the given id is already linked to another Qonversion user, the SDK switches to that user.
+    /// - Parameter userId: your unique user id.
+    /// - Returns: the current ``Qonversion/Qonversion/User``.
+    @discardableResult
+    public func identify(_ userId: String) async throws -> Qonversion.User {
+        guard let userManager else { throw QonversionError.initializationError() }
+
+        return try await userManager.identify(userId)
+    }
+
+    /// Unlinks the current user from your unique user id and resets to a fresh anonymous user.
+    public func logout() {
+        guard let userManager else { return }
+
+        Task {
+            await userManager.logout()
+        }
+    }
+
+    /// Returns information about the current Qonversion user.
+    public func userInfo() async throws -> Qonversion.User {
+        guard let userManager else { throw QonversionError.initializationError() }
+
+        return try await userManager.userInfo()
+    }
+
     /// Collects Apple Search Ads Attribution data
     /// Available only for iOS 14.3+
     /// See details in the [Apple official documentation](https://developer.apple.com/documentation/iad/setting-up-apple-search-ads-attribution)
@@ -159,6 +194,7 @@ public final class Qonversion {
     }
 
     // MARK: - Private
+    private var userManager: UserManagerInterface?
     private var userPropertiesManager: UserPropertiesManagerInterface?
     private var deviceManager: DeviceManagerInterface?
     private var productsManager: ProductsManagerInterface?

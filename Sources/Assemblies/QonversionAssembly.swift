@@ -11,6 +11,10 @@ final class QonversionAssembly {
     
     private let servicesAssembly: ServicesAssembly
     private let miscAssembly: MiscAssembly
+
+    // The user gate is stateful (single-flight creation pipeline) — it must be
+    // one instance SDK-wide, like InternalConfig.
+    private var userManagerInstance: UserManagerInterface?
     
     required init(apiKey: String, userDefaults: UserDefaults?) {
         let userDefaults = userDefaults ?? UserDefaults.standard
@@ -22,12 +26,26 @@ final class QonversionAssembly {
         _ = servicesAssembly.userService()
     }
     
+    func userManager() -> UserManagerInterface {
+        if let userManagerInstance {
+            return userManagerInstance
+        }
+
+        let userService: UserServiceInterface = servicesAssembly.userService()
+        let localStorage: LocalStorageInterface = miscAssembly.localStorage()
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let userManager = UserManager(userService: userService, localStorage: localStorage, internalConfig: miscAssembly.internalConfig, logger: logger)
+        userManagerInstance = userManager
+
+        return userManager
+    }
+
     func userPropertiesManager() -> UserPropertiesManagerInterface {
         let requestProcessor: RequestProcessorInterface = servicesAssembly.requestProcessor()
         let delayCalculator: IncrementalDelayCalculator = miscAssembly.delayCalculator()
         let propertiesStorage: PropertiesStorage = miscAssembly.userPropertiesStorage()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
-        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, logger: logger)
+        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, userManager: userManager(), logger: logger)
         
         return userPropertiesManager
     }

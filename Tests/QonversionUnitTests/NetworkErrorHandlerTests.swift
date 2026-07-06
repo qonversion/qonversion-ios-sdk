@@ -137,4 +137,15 @@ final class NetworkErrorHandlerTests: XCTestCase {
         let error = QonversionError(type: .unknown, error: nested)
         XCTAssertEqual(error.message, "Unknown error occurred.\nInternal error occurred.")
     }
+
+    // MARK: - status code propagation
+
+    func testErrorCarriesHttpStatusCodeInAdditionalInfo() {
+        let handler = NetworkErrorHandler(criticalErrorCodes: [.unauthorized, .paymentRequired, .forbidden], decoder: ResponseDecoder(decoder: JSONDecoder()))
+        let response = HTTPURLResponse(url: URL(string: "https://api.qonversion.io/v3/identities/x")!, statusCode: 404, httpVersion: nil, headerFields: nil)!
+
+        let error = handler.extractError(from: response, body: Data())
+
+        XCTAssertEqual(error?.additionalInfo?["statusCode"] as? Int, 404)
+    }
 }

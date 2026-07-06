@@ -20,6 +20,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     private let propertiesStorage: PropertiesStorage
     private let delayCalculator: IncrementalDelayCalculator
     private let userIdProvider: UserIdProvider
+    private let userManager: UserManagerInterface
     private let logger: LoggerWrapper
 
     private var sendingTask: Task<Void, Error>? = nil
@@ -31,12 +32,14 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         propertiesStorage: PropertiesStorage,
         delayCalculator: IncrementalDelayCalculator,
         userIdProvider: UserIdProvider,
+        userManager: UserManagerInterface,
         logger: LoggerWrapper
     ) {
         self.requestProcessor = requestProcessor
         self.propertiesStorage = propertiesStorage
         self.delayCalculator = delayCalculator
         self.userIdProvider = userIdProvider
+        self.userManager = userManager
         self.logger = logger
     }
     
@@ -59,6 +62,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     }
     
     func userProperties() async throws -> Qonversion.UserProperties {
+        try await userManager.obtainUser()
+
         let request = Request.getProperties(userId: userIdProvider.getUserId())
         let properties: [Qonversion.UserProperty]? = try? await requestProcessor.process(request: request, responseType: [Qonversion.UserProperty].self)
         let resultProperties: [Qonversion.UserProperty] = properties ?? []
@@ -96,6 +101,17 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         let properties: [Qonversion.UserProperty] = propertiesStorage.all()
 
         guard !properties.isEmpty else { return }
+
+        // The backend user must exist before any data is sent. On failure keep
+        // the properties and retry later — the gate itself retries creation on
+        // the next demand.
+        do {
+            try await userManager.obtainUser()
+        } catch {
+            logger.warning("Failed to obtain user before sending properties: " + error.message)
+            retrySendingProperties()
+            return
+        }
         
         #warning("Fix body type to prevent extra serializations")
         let body: RequestBodyArray = try properties.map { property in

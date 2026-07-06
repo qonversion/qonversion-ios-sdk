@@ -302,11 +302,29 @@ final class MockUserService: UserServiceInterface {
     var error: Error?
     var generatedUserId = "QON_test_generated"
 
+    // Identity stubs
+    /// Linked uid returned by identity(for:); nil models "not linked yet" (404).
+    var identityLinkedUid: String?
+    var identityError: Error?
+    var createIdentityError: Error?
+    /// Uid returned by createIdentity; defaults to the passed userId.
+    var createIdentityResultUid: String?
+
+    // Async hooks — let tests hold a call open to assert sequencing.
+    var onCreateUser: (() async -> Void)?
+    var onIdentity: (() async -> Void)?
+    var onCreateIdentity: (() async -> Void)?
+
     private(set) var userCallsCount = 0
     private(set) var createUserCallsCount = 0
+    private(set) var identityCalls: [String] = []
+    private(set) var createIdentityCalls: [(externalId: String, userId: String)] = []
+    /// Ordered log of every call: "createUser", "identity", "createIdentity", "user".
+    private(set) var callLog: [String] = []
 
     func user() async throws -> Qonversion.User {
         userCallsCount += 1
+        callLog.append("user")
         if let error { throw error }
         guard let userResult else { throw MockError.noStub }
         return userResult
@@ -314,6 +332,8 @@ final class MockUserService: UserServiceInterface {
 
     func createUser() async throws -> Qonversion.User {
         createUserCallsCount += 1
+        callLog.append("createUser")
+        await onCreateUser?()
         if let error { throw error }
         guard let createUserResult else { throw MockError.noStub }
         return createUserResult
@@ -321,6 +341,59 @@ final class MockUserService: UserServiceInterface {
 
     func generateUserId() -> String {
         return generatedUserId
+    }
+
+    func identity(for externalId: String) async throws -> String? {
+        identityCalls.append(externalId)
+        callLog.append("identity")
+        await onIdentity?()
+        if let identityError { throw identityError }
+        return identityLinkedUid
+    }
+
+    func createIdentity(externalId: String, userId: String) async throws -> String {
+        createIdentityCalls.append((externalId, userId))
+        callLog.append("createIdentity")
+        await onCreateIdentity?()
+        if let createIdentityError { throw createIdentityError }
+        return createIdentityResultUid ?? userId
+    }
+}
+
+final class MockUserManager: UserManagerInterface {
+
+    var user: Qonversion.User?
+    var error: Error?
+    private(set) var obtainUserCallsCount = 0
+    private(set) var identifyCalls: [String] = []
+    private(set) var logoutCallsCount = 0
+    private(set) var userInfoCallsCount = 0
+
+    @discardableResult
+    func obtainUser() async throws -> Qonversion.User {
+        obtainUserCallsCount += 1
+        if let error { throw error }
+        guard let user else { throw MockError.noStub }
+        return user
+    }
+
+    @discardableResult
+    func identify(_ externalId: String) async throws -> Qonversion.User {
+        identifyCalls.append(externalId)
+        if let error { throw error }
+        guard let user else { throw MockError.noStub }
+        return user
+    }
+
+    func logout() async {
+        logoutCallsCount += 1
+    }
+
+    func userInfo() async throws -> Qonversion.User {
+        userInfoCallsCount += 1
+        if let error { throw error }
+        guard let user else { throw MockError.noStub }
+        return user
     }
 }
 

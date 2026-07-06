@@ -30,6 +30,8 @@ enum QonversionErrorType {
     case detachingUserFromExperimentFailed
     case storageSerializationFailed
     case storageDeserializationFailed
+    case identityLoadingFailed
+    case identityCreationFailed
 
     func message() -> String {
         // handle other errors here
@@ -44,6 +46,10 @@ enum QonversionErrorType {
             return "Failed to serialize data to save to the storage"
         case .storageDeserializationFailed:
             return "Failed to deserialize data from the storage"
+        case .identityLoadingFailed:
+            return "Failed to load user identity"
+        case .identityCreationFailed:
+            return "Failed to link user identity"
         case .deviceCreationFailed:
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:
