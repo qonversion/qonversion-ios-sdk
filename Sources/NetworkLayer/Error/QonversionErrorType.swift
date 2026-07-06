@@ -32,6 +32,10 @@ enum QonversionErrorType {
     case storageDeserializationFailed
     case identityLoadingFailed
     case identityCreationFailed
+    case purchaseCancelled
+    case purchasePending
+    case purchaseFailed
+    case transactionVerificationFailed
 
     func message() -> String {
         // handle other errors here
@@ -50,6 +54,14 @@ enum QonversionErrorType {
             return "Failed to load user identity"
         case .identityCreationFailed:
             return "Failed to link user identity"
+        case .purchaseCancelled:
+            return "The user canceled the purchase"
+        case .purchasePending:
+            return "The purchase is pending an external action (Ask to Buy / SCA)"
+        case .purchaseFailed:
+            return "The purchase failed"
+        case .transactionVerificationFailed:
+            return "The transaction failed StoreKit verification"
         case .deviceCreationFailed:
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:

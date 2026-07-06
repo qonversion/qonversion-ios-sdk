@@ -10,17 +10,22 @@ import StoreKit
 protocol StoreKitFacadeInterface {
     #warning("replace all return types")
     func products(for ids:[String]) async throws -> [StoreProductWrapper]
-    
+
     func currentEntitlements() async -> [Qonversion.Transaction]
-    
+
     func restore() async throws -> [Qonversion.Transaction]
-    
-    func finish(transaction: SKPaymentTransaction)
-    
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    func finish(transaction: StoreKit.Transaction) async
-    
-    func subscribe() async -> [Qonversion.Transaction]
+
+    func historicalData() async throws -> [Qonversion.Transaction]
+
+    /// Finishes the transaction with the store it came from. Never called
+    /// automatically by the SDK for observed updates.
+    func finish(_ transaction: Qonversion.Transaction) async
+
+    /// Starts the long-lived observation of out-of-band transaction updates;
+    /// verified transactions are delivered to the facade delegate.
+    func startObservingTransactionUpdates()
+
+    func stopObservingTransactionUpdates()
         
     #if os(iOS) || os(visionOS)
     @available(iOS 16.0, *)

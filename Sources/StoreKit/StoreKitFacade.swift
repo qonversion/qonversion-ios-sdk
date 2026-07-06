@@ -21,6 +21,8 @@ class StoreKitFacade: StoreKitFacadeInterface {
     var _loadedProducts: [String: Any] = [:]
     
     var loadedOldProducts: [String: SKProduct] = [:]
+
+    private var transactionUpdatesTask: Task<Void, Never>?
     
     init(storeKitOldWrapper: StoreKitOldWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
         self.storeKitOldWrapper = storeKitOldWrapper
@@ -36,25 +38,17 @@ class StoreKitFacade: StoreKitFacadeInterface {
     
     func currentEntitlements() async -> [Qonversion.Transaction] {
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
-        
-        let transactions: [StoreKit.Transaction] = await storeKitWrapper.currentEntitlements()
-        #warning("Map response here")
-        
-        return []
+
+        return await storeKitWrapper.currentEntitlements()
     }
     
     func restore() async throws -> [Qonversion.Transaction] {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
-            
-            try await storeKitWrapper.restore()
 
-            #warning("Fetch all products and map response here")
-            let res = try await historicalData()
-            return []
+            return try await storeKitWrapper.restore()
         } else {
-            let res = try await historicalData()
-            return []
+            return try await historicalData()
         }
     }
     
@@ -62,20 +56,23 @@ class StoreKitFacade: StoreKitFacadeInterface {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
-            let products = try await storeKitWrapper.fetchAll()
-            #warning("Map response here")
-            return []
+            return await storeKitWrapper.fetchAll()
         } else {
             guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             return try await withCheckedThrowingContinuation { continuation in
-                storeKitWrapper.restore { response, error in
+                storeKitWrapper.restore { [weak self] transactions, error in
                     if let error {
-                        #warning("Handle error here")
-                        continuation.resume(throwing: QonversionError(type: .critical))
+                        continuation.resume(throwing: QonversionError(type: .purchaseFailed, error: error))
                     } else {
-                        #warning("Map response here")
-                        continuation.resume(returning: [])
+                        // Best-effort SK1 mapping: the full domain transaction
+                        // needs the SKProduct, available only for products
+                        // loaded during this session.
+                        let mapped: [Qonversion.Transaction] = transactions.compactMap { transaction in
+                            guard let product = self?.loadedOldProducts[transaction.payment.productIdentifier] else { return nil }
+                            return Qonversion.Transaction(transaction: transaction, product: product)
+                        }
+                        continuation.resume(returning: mapped)
                     }
                 }
             }
@@ -100,21 +97,40 @@ class StoreKitFacade: StoreKitFacadeInterface {
     }
     #endif
     
-    func finish(transaction: SKPaymentTransaction) {
-        guard let storeKitWrapper = storeKitOldWrapper else { return }
-        
-        storeKitWrapper.finish(transaction: transaction)
+    func finish(_ transaction: Qonversion.Transaction) async {
+        // Legacy transactions carry an SKPaymentTransaction handle; everything
+        // else is routed to the StoreKit 2 wrapper, which resolves the
+        // underlying transaction itself.
+        if let skPaymentTransaction = transaction.skPaymentTransaction {
+            storeKitOldWrapper?.finish(transaction: skPaymentTransaction)
+            return
+        }
+
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper {
+            await storeKitWrapper.finish(transaction)
+        }
     }
-    
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    func finish(transaction: StoreKit.Transaction) async {
-        guard let storeKitWrapper = storeKitWrapper else { return }
-        
-        await transaction.finish()
+
+    func startObservingTransactionUpdates() {
+        guard transactionUpdatesTask == nil else { return }
+        guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *),
+              let storeKitWrapper else { return }
+
+        // Observed transactions are handed to the delegate and NEVER finished
+        // here: in Analytics mode the host app owns the transaction lifecycle,
+        // and in subscription-management mode finishing happens only after the
+        // backend confirms the purchase.
+        transactionUpdatesTask = Task { [weak self] in
+            for await transaction in storeKitWrapper.transactionUpdates() {
+                guard let self, !Task.isCancelled else { return }
+                self.delegate?.transactionUpdated(transaction)
+            }
+        }
     }
-    
-    func subscribe() async -> [Qonversion.Transaction] {
-        return []
+
+    func stopObservingTransactionUpdates() {
+        transactionUpdatesTask?.cancel()
+        transactionUpdatesTask = nil
     }
     
     func products(for ids: [String]) async throws -> [StoreProductWrapper] {
