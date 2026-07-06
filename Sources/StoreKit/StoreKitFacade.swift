@@ -146,28 +146,39 @@ class StoreKitFacade: StoreKitFacadeInterface {
             
             return products.map { StoreProductWrapper(_product: $0, oldProduct: nil) }
         } else {
-            guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
-            
-            return try await withCheckedThrowingContinuation { continuation in
-                storeKitWrapper.products(for: ids, completion: { [weak self] response, error in
-                    guard let self else { return }
-                    
-                    if let error {
-                        continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed, error: error))
-                    } else {
-                        guard let response else {
-                            return continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed))
-                        }
-                        
-                        response.products.forEach {
-                            self.loadedOldProducts[$0.productIdentifier] = $0
-                        }
-                        
-                        let products: [StoreProductWrapper] = response.products.map { StoreProductWrapper(_product: nil, oldProduct: $0) }
-                        continuation.resume(returning: products)
+            return try await skOneProducts(for: ids)
+        }
+    }
+
+    /// StoreKit 1 products path, extracted so the continuation behavior is
+    /// unit-testable on hosts where the StoreKit 2 branch is always available.
+    func skOneProducts(for ids: [String]) async throws -> [StoreProductWrapper] {
+        guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            storeKitWrapper.products(for: ids, completion: { [weak self] response, error in
+                // The completion outlives the facade (the old wrapper is kept
+                // alive by SKPaymentQueue), so a dead self MUST still resume
+                // the continuation — otherwise the awaiting task hangs forever.
+                guard let self else {
+                    return continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed))
+                }
+
+                if let error {
+                    continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed, error: error))
+                } else {
+                    guard let response else {
+                        return continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed))
                     }
-                })
-            }
+
+                    response.products.forEach {
+                        self.loadedOldProducts[$0.productIdentifier] = $0
+                    }
+
+                    let products: [StoreProductWrapper] = response.products.map { StoreProductWrapper(_product: nil, oldProduct: $0) }
+                    continuation.resume(returning: products)
+                }
+            })
         }
     }
 }

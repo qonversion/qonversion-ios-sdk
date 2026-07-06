@@ -296,6 +296,34 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
     #endif
 }
 
+/// Mock of the legacy StoreKit 1 wrapper. Captures completions so tests can
+/// fire them at a controlled moment (e.g. after the facade is deallocated).
+final class MockStoreKitOldWrapper: StoreKitOldWrapperInterface {
+
+    private(set) var productsCompletions: [StoreKitOldProductsCompletion] = []
+    private(set) var restoreCompletions: [StoreKitOldTransactionsCompletion] = []
+    private(set) var finishedTransactions: [SKPaymentTransaction] = []
+
+    func products(for ids: [String], completion: @escaping StoreKitOldProductsCompletion) {
+        productsCompletions.append(completion)
+    }
+
+    func restore(with completion: @escaping StoreKitOldTransactionsCompletion) {
+        restoreCompletions.append(completion)
+    }
+
+    #if os(iOS) || os(visionOS)
+    @available(iOS 14.0, visionOS 1.0, *)
+    func presentCodeRedemptionSheet() { }
+    #endif
+
+    func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion) { }
+
+    func finish(transaction: SKPaymentTransaction) {
+        finishedTransactions.append(transaction)
+    }
+}
+
 // MARK: - Services
 
 final class MockProductsService: ProductsServiceInterface {

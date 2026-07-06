@@ -132,6 +132,47 @@ final class StoreKitFacadeTests: XCTestCase {
         XCTAssertTrue(observer.updatedTransactions.isEmpty)
     }
 
+    // MARK: - Continuation safety (SK1 products path)
+
+    func testProductsAwaiterGetsErrorWhenFacadeDiesBeforeCompletion() async {
+        // The completion is retained by the old wrapper (which the real
+        // SKPaymentQueue keeps alive forever), so it CAN fire after the facade
+        // is gone — e.g. after a repeated initialize() rebuilt the managers.
+        // The awaiting task must receive an error, not hang forever.
+        let oldWrapper = MockStoreKitOldWrapper()
+        var dyingFacade: StoreKitFacade? = StoreKitFacade(storeKitOldWrapper: oldWrapper, storeKitMapper: StoreKitMapper())
+
+        let awaiter = Task { () -> Error? in
+            do {
+                _ = try await dyingFacade?.skOneProducts(for: ["p1"])
+                return nil
+            } catch {
+                return error
+            }
+        }
+
+        await waitUntil { oldWrapper.productsCompletions.count >= 1 }
+        dyingFacade = nil
+        oldWrapper.productsCompletions.first?(nil, MockError.stubbed)
+
+        let result = await withTimeout(seconds: 2) { await awaiter.value }
+
+        XCTAssertNotNil(result ?? nil, "the awaiting task must be resumed with an error, not suspended forever")
+    }
+
+    private func withTimeout<T>(seconds: TimeInterval, _ operation: @escaping () async -> T) async -> T? {
+        return await withTaskGroup(of: T?.self) { group in
+            group.addTask { await operation() }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+    }
+
     // MARK: - Purchase outcome mapping (pure)
 
     func testPurchaseOutcomeMapsToGranularErrors() {
