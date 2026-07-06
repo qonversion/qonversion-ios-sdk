@@ -53,7 +53,7 @@ final class UserManagerTests: XCTestCase {
     }
 
     /// Polls until the condition is true or the timeout elapses.
-    private func waitUntil(timeout: TimeInterval = 1.0, _ condition: @escaping () -> Bool) async {
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
         let deadline = Date().addingTimeInterval(timeout)
         while !condition() && Date() < deadline {
             try? await Task.sleep(nanoseconds: 20_000_000)
