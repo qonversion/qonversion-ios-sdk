@@ -9,6 +9,7 @@ import Foundation
 
 enum ErrorConstants: String {
     case messageKey = "message"
+    case statusCodeKey = "statusCode"
 }
 
 enum ResponseCode: Int {

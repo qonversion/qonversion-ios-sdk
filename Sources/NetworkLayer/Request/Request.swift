@@ -13,6 +13,8 @@ typealias RequestBodyArray = [AnyHashable]
 enum Request : Hashable {
     case getUser(id: String, endpoint: String = "v3/users/", type: RequestType = .get)
     case createUser(id: String, endpoint: String = "v3/users/", body: RequestBodyDict, type: RequestType = .post)
+    case getIdentity(externalId: String, endpoint: String = "v3/identities/", type: RequestType = .get)
+    case createIdentity(externalId: String, endpoint: String = "v3/identities/", body: RequestBodyDict, type: RequestType = .post)
     case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .post)
     case getProperties(userId: String, endpoint: String = "v3/users/%@/properties", type: RequestType = .get)
     case sendProperties(userId: String, endpoint: String = "v3/users/%@/properties", body: RequestBodyArray, type: RequestType = .post)
@@ -46,6 +48,12 @@ enum Request : Hashable {
 
         case let .createUser(id, endpoint, body, type):
             return defaultRequest(urlString: endpoint + id, body: body, type: type)
+
+        case let .getIdentity(externalId, endpoint, type):
+            return defaultRequest(urlString: endpoint + externalId, body: nil, type: type)
+
+        case let .createIdentity(externalId, endpoint, body, type):
+            return defaultRequest(urlString: endpoint + externalId, body: body, type: type)
 
         case let .entitlements(userId, endpoint, type):
             let urlString = String(format: endpoint, arguments: [userId])
@@ -117,6 +125,17 @@ enum Request : Hashable {
         case let .createUser(id, endpoint, body, type):
             hasher.combine("createUser")
             hasher.combine(id)
+            hasher.combine(endpoint)
+            hasher.combine(body)
+            hasher.combine(type)
+        case let .getIdentity(externalId, endpoint, type):
+            hasher.combine("getIdentity")
+            hasher.combine(externalId)
+            hasher.combine(endpoint)
+            hasher.combine(type)
+        case let .createIdentity(externalId, endpoint, body, type):
+            hasher.combine("createIdentity")
+            hasher.combine(externalId)
             hasher.combine(endpoint)
             hasher.combine(body)
             hasher.combine(type)

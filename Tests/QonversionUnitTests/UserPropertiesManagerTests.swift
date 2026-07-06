@@ -12,17 +12,21 @@ final class UserPropertiesManagerTests: XCTestCase {
 
     private var requestProcessor: MockRequestProcessor!
     private var propertiesStorage: UserPropertiesStorage!
+    private var userManager: MockUserManager!
     private var manager: UserPropertiesManager!
 
     override func setUp() {
         super.setUp()
         requestProcessor = MockRequestProcessor()
         propertiesStorage = UserPropertiesStorage()
+        userManager = MockUserManager()
+        userManager.user = try? JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(#"{"id": "test-user-id", "created": 1700000000, "environment": "sandbox"}"#.utf8))
         manager = UserPropertiesManager(
             requestProcessor: requestProcessor,
             propertiesStorage: propertiesStorage,
             delayCalculator: IncrementalDelayCalculator(),
             userIdProvider: InternalConfig(userId: "test-user-id"),
+            userManager: userManager,
             logger: LoggerWrapper()
         )
     }
@@ -158,5 +162,45 @@ final class UserPropertiesManagerTests: XCTestCase {
     // in the unit test environment, so we just verify the call does not crash.
     func testCollectAppleSearchAdsAttributionDoesNotCrash() {
         manager.collectAppleSearchAdsAttribution()
+    }
+
+    // MARK: - user gate
+
+    // Data-sending flows must pass the user gate first: the backend user has to
+    // exist before properties are sent.
+    func testSendPropertiesObtainsUserBeforeSendingRequest() async throws {
+        manager.setCustomUserProperty(key: "k", value: "v")
+        requestProcessor.results = [SendUserPropertiesResult(savedProperties: [], propertyErrors: [])]
+
+        try await manager.sendProperties()
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1)
+        XCTAssertEqual(requestProcessor.processedRequests.count, 1)
+    }
+
+    func testSendPropertiesDoesNotFireWhenUserGateFails() async throws {
+        manager.setCustomUserProperty(key: "k", value: "v")
+        userManager.error = MockError.stubbed
+
+        try? await manager.sendProperties()
+
+        XCTAssertTrue(requestProcessor.processedRequests.isEmpty, "no request may be sent when the user is not created")
+        XCTAssertEqual(propertiesStorage.all().count, 1, "properties must be kept for a later retry")
+    }
+
+    func testUserPropertiesObtainsUserBeforeRequest() async throws {
+        requestProcessor.results = [[Qonversion.UserProperty]()]
+
+        _ = try await manager.userProperties()
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1)
+    }
+}
+
+extension JSONDecoder {
+    static var qonversionTest: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .secondsSince1970
+        return decoder
     }
 }

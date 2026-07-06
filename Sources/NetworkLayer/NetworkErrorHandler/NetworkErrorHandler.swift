@@ -47,6 +47,7 @@ class NetworkErrorHandler: NetworkErrorHandlerInterface {
             #warning("Don't forget to check the real value and remove this field if the result is useless")
             info[ErrorConstants.messageKey.rawValue] = HTTPURLResponse.localizedString(forStatusCode: response.statusCode)
         }
+        info[ErrorConstants.statusCodeKey.rawValue] = response.statusCode
 
         return QonversionError(type: type, message: apiErrorWrapper?.error.message, error: error, additionalInfo: info)
     }
