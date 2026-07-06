@@ -122,7 +122,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
     }
 
     private func country() -> String? {
-        return if #available(iOS 16, *) {
+        return if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             Locale.current.region?.identifier
         } else {
             Locale.current.regionCode
@@ -130,7 +130,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
     }
 
     private func language() -> String? {
-        return if #available(iOS 16, *) {
+        return if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
             Locale.current.language.languageCode?.identifier
         } else {
             Locale.current.languageCode

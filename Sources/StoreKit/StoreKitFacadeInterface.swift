@@ -22,9 +22,13 @@ protocol StoreKitFacadeInterface {
     
     func subscribe() async -> [Qonversion.Transaction]
         
+    #if os(iOS) || os(visionOS)
     @available(iOS 16.0, *)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws
-    
+    #endif
+
+    #if os(iOS) || os(visionOS)
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet()
+    #endif
 }

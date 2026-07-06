@@ -41,10 +41,11 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     }
     
     func collectAppleSearchAdsAttribution() {
-        if #available(iOS 14.3, *) {
+        #if canImport(AdServices)
+        if #available(iOS 14.3, macOS 11.1, visionOS 1.0, *) {
             do {
                 let token: String = try AAAttribution.attributionToken()
-                
+
                 processRequest(with: token)
             } catch {
                 logger.error("\(LoggerInfoMessages.failedToCollectAppleSearchAdsAttribution.rawValue) \(error)")
@@ -52,6 +53,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         } else {
             logger.warning(LoggerInfoMessages.unableToCollectAppleSearchAdsAttribution.rawValue)
         }
+        #else
+        logger.warning(LoggerInfoMessages.unableToCollectAppleSearchAdsAttribution.rawValue)
+        #endif
     }
     
     func userProperties() async throws -> Qonversion.UserProperties {
@@ -64,8 +68,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
 
     func setUserProperty(key: Qonversion.UserPropertyKey, value: String) {
         guard key != .custom else {
-            return print("Can not set user property with the key `.custom`. " +
+            logger.warning("Can not set user property with the key `.custom`. " +
                     "To set custom user property, use the `setCustomUserProperty` method.")
+            return
         }
         
         setCustomUserProperty(key: key.rawValue, value: value)
@@ -101,7 +106,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         do {
             let result: SendUserPropertiesResult? = try await requestProcessor.process(request: request, responseType: SendUserPropertiesResult.self)
             result?.propertyErrors.forEach({ propertyError in
-                print("Failed to save property " + propertyError.key + ": " + propertyError.error)
+                logger.error("Failed to save property " + propertyError.key + ": " + propertyError.error)
             })
             
             sendPropertiesRetryCount = 0
@@ -145,7 +150,7 @@ extension UserPropertiesManager {
                 try await self.sendProperties()
             } catch {
                 #warning("Handle error correctly")
-                print(error)
+                self.logger.error("Failed to send user properties: \(error)")
             }
         }
     }

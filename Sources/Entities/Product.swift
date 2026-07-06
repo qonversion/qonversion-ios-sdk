@@ -148,7 +148,7 @@ extension Qonversion {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             qonversionId = try container.decode(String.self, forKey: .qonversionId)
             storeId = try container.decode(String.self, forKey: .storeId)
-            offeringId = try container.decode(String.self, forKey: .offeringId)
+            offeringId = try container.decodeIfPresent(String.self, forKey: .offeringId)
             skProduct = nil
         }
         
@@ -403,14 +403,14 @@ extension Qonversion {
                 promotionalOffers = originalSubscription.promotionalOffers.compactMap {
                     Qonversion.Product.SubscriptionOffer(originalOffer: $0)
                 }
-                subscriptionGroupID = originalSubscription.subscriptionGroupID
+                subscriptionGroupId = originalSubscription.subscriptionGroupID
                 subscriptionPeriod = Qonversion.Product.SubscriptionPeriod(originalPeriod: originalSubscription.subscriptionPeriod)
             }
             
             init?(oldProduct: SKProduct?) {
                 guard let oldProduct, let subscriptionGroupId = oldProduct.subscriptionGroupIdentifier, let skSubscriptionPeriod = oldProduct.subscriptionPeriod else { return nil }
                 
-                subscriptionGroupID = subscriptionGroupId
+                self.subscriptionGroupId = subscriptionGroupId
                 introductoryOffer = Qonversion.Product.SubscriptionOffer(introductoryPrice: oldProduct.introductoryPrice)
                 subscriptionPeriod = Qonversion.Product.SubscriptionPeriod(subscriptionPeriod: skSubscriptionPeriod)
                 promotionalOffers = oldProduct.discounts.compactMap {

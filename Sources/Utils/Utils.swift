@@ -123,3 +123,14 @@ func decode(fromArray container: inout UnkeyedDecodingContainer) -> [Any] {
 
   return result
 }
+
+extension Error {
+    var message: String {
+        switch self {
+        case let qonversionError as QonversionError:
+            return qonversionError.message
+        default:
+            return localizedDescription
+        }
+    }
+}

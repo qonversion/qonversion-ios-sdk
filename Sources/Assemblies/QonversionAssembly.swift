@@ -17,6 +17,9 @@ final class QonversionAssembly {
         self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: ""))
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
+
+        // Resolves the anonymous user id (persisted or generated) into InternalConfig.
+        _ = servicesAssembly.userService()
     }
     
     func userPropertiesManager() -> UserPropertiesManagerInterface {

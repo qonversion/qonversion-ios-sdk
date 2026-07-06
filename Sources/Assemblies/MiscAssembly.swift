@@ -28,7 +28,7 @@ final class MiscAssembly {
     
     var servicesAssembly: ServicesAssembly!
     var internalConfig: InternalConfig
-    
+
     init(apiKey: String, userDefaults: UserDefaults, internalConfig: InternalConfig) {
         self.apiKey = apiKey
         self.userDefaults = userDefaults
@@ -36,7 +36,7 @@ final class MiscAssembly {
     }
     
     func localStorage() -> LocalStorage {
-        return LocalStorage(userDefaults: userDefaults)
+        return LocalStorage(userDefaults: userDefaults, encoder: encoder(), decoder: jsonDecoder())
     }
     
     func userIdProvider() -> UserIdProvider {
@@ -57,12 +57,12 @@ final class MiscAssembly {
     
     func requestsStorage() -> RequestsStorageInterface {
         let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue)
-        
+
         return requestsStorage
     }
     
     func loggerWrapper() -> LoggerWrapper {
-        if #available(iOS 14.0, *) {
+        if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
             let logger = Logger(subsystem: "io.qonversion.sdk", category: "Internal")
             
             return LoggerWrapper(logger: logger, logLevel: .verbose)
@@ -73,7 +73,7 @@ final class MiscAssembly {
     
     func rateLimiter() -> RateLimiterInterface {
         let rateLimiter = RateLimiter(maxRequestsPerSecond: IntConstants.maxRequestsPerSecond.rawValue)
-        
+
         return rateLimiter
     }
     

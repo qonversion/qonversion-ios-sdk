@@ -1,0 +1,154 @@
+//
+//  ProductsManagerTests.swift
+//  QonversionUnitTests
+//
+//  Fixation tests for ProductsManager: lock in the current behavior as-is.
+//
+
+import XCTest
+import StoreKit
+@testable import Qonversion
+
+final class ProductsManagerTests: XCTestCase {
+
+    private var productsService: MockProductsService!
+    private var storeKitFacade: MockStoreKitFacade!
+    private var localStorage: MockLocalStorage!
+    private var manager: ProductsManager!
+
+    override func setUp() {
+        super.setUp()
+        productsService = MockProductsService()
+        storeKitFacade = MockStoreKitFacade()
+        localStorage = MockLocalStorage()
+        manager = ProductsManager(
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            logger: LoggerWrapper()
+        )
+    }
+
+    override func tearDown() {
+        manager = nil
+        productsService = nil
+        storeKitFacade = nil
+        localStorage = nil
+        super.tearDown()
+    }
+
+    // MARK: - Helpers
+
+    private func makeProduct(qonversionId: String = "q_main", storeId: String = "store_main") -> Qonversion.Product {
+        return Qonversion.Product(qonversionId: qonversionId, storeId: storeId, offeringId: nil)
+    }
+
+    // MARK: - In-memory cache
+
+    func testProductsReturnsInMemoryCacheWithoutServiceCall() async throws {
+        manager.loadedProducts = [makeProduct()]
+
+        let result = try await manager.products()
+
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result.first?.qonversionId, "q_main")
+        XCTAssertEqual(productsService.productsCallsCount, 0)
+        XCTAssertTrue(storeKitFacade.requestedProductIds.isEmpty)
+    }
+
+    // MARK: - Store products request
+
+    func testProductsRequestsStoreProductsForAllStoreIds() async throws {
+        productsService.productsResult = [
+            makeProduct(qonversionId: "q_a", storeId: "store_a"),
+            makeProduct(qonversionId: "q_b", storeId: "store_b"),
+        ]
+
+        _ = try await manager.products()
+
+        XCTAssertEqual(storeKitFacade.requestedProductIds, [["store_a", "store_b"]])
+    }
+
+    // MARK: - Enrichment
+
+    // Fixates current behavior: products without a matching store product are silently
+    // skipped, so when the StoreKit facade returns no matching wrappers the manager
+    // returns an EMPTY array even though the API returned products.
+    func testProductsWithoutStoreMatchesReturnsEmptyArray() async throws {
+        productsService.productsResult = [makeProduct()]
+        // A wrapper with neither a StoreKit 2 product nor an SKProduct has a nil id,
+        // so it can never match any storeId.
+        storeKitFacade.productsResult = [StoreProductWrapper(_product: nil, oldProduct: nil)]
+
+        let result = try await manager.products()
+
+        XCTAssertTrue(result.isEmpty)
+        XCTAssertEqual(productsService.productsCallsCount, 1)
+    }
+
+    // Fixates current behavior: an empty enrichment result is assigned to loadedProducts,
+    // which leaves the cache "empty", so the next call hits the service again.
+    func testEmptyEnrichedResultIsNotCached() async throws {
+        productsService.productsResult = [makeProduct()]
+        storeKitFacade.productsResult = []
+
+        _ = try await manager.products()
+        _ = try await manager.products()
+
+        XCTAssertEqual(productsService.productsCallsCount, 2)
+        XCTAssertEqual(storeKitFacade.requestedProductIds.count, 2)
+    }
+
+    // MARK: - StoreKit error fallback
+
+    // Fixates current behavior: StoreKit loading errors are swallowed (only logged) and
+    // the manager falls back to the unenriched API products.
+    func testStoreKitErrorFallsBackToUnenrichedProducts() async throws {
+        productsService.productsResult = [
+            makeProduct(qonversionId: "q_a", storeId: "store_a"),
+            makeProduct(qonversionId: "q_b", storeId: "store_b"),
+        ]
+        storeKitFacade.productsError = MockError.stubbed
+
+        let result = try await manager.products()
+
+        XCTAssertEqual(result.map { $0.qonversionId }, ["q_a", "q_b"])
+        XCTAssertEqual(result.map { $0.isStoreProductLinked }, [false, false])
+    }
+
+    // Fixates current behavior: the unenriched fallback result IS cached in memory,
+    // so a subsequent call does not hit the service or StoreKit again.
+    func testStoreKitErrorFallbackResultIsCached() async throws {
+        productsService.productsResult = [makeProduct()]
+        storeKitFacade.productsError = MockError.stubbed
+
+        _ = try await manager.products()
+        let second = try await manager.products()
+
+        XCTAssertEqual(second.count, 1)
+        XCTAssertEqual(productsService.productsCallsCount, 1)
+        XCTAssertEqual(storeKitFacade.requestedProductIds.count, 1)
+    }
+
+    // MARK: - Service error
+
+    // Fixates current behavior: on this branch there is NO disk-cache fallback —
+    // a products service error propagates to the caller as-is and the injected
+    // local storage is never consulted.
+    func testServiceErrorPropagatesWithoutDiskFallback() async {
+        try? localStorage.set(Data([0x01]), forKey: "products")
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        do {
+            _ = try await manager.products()
+            XCTFail("Expected products() to rethrow the service error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .productsLoadingFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
+        XCTAssertTrue(storeKitFacade.requestedProductIds.isEmpty)
+        XCTAssertTrue(manager.loadedProducts.isEmpty)
+    }
+}
