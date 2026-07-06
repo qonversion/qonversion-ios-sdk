@@ -66,6 +66,7 @@
 		70CD93202BC6E22B0039D65C /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92D82BC6E22B0039D65C /* UserService.swift */; };
 		70CD93212BC6E22B0039D65C /* UserServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92D92BC6E22B0039D65C /* UserServiceInterface.swift */; };
 		70CD93222BC6E22B0039D65C /* StoreKitFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DC2BC6E22B0039D65C /* StoreKitFacade.swift */; };
+		A200000000000000000000B1 /* StoreKitPurchaseOutcome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000000000000000000A1 /* StoreKitPurchaseOutcome.swift */; };
 		70CD93232BC6E22B0039D65C /* StoreKitFacadeInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */; };
 		70CD93242BC6E22B0039D65C /* StoreKitMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DE2BC6E22B0039D65C /* StoreKitMapper.swift */; };
 		70CD93252BC6E22B0039D65C /* StoreKitMapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DF2BC6E22B0039D65C /* StoreKitMapperInterface.swift */; };
@@ -193,6 +194,7 @@
 		70CD92D82BC6E22B0039D65C /* UserService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		70CD92D92BC6E22B0039D65C /* UserServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserServiceInterface.swift; sourceTree = "<group>"; };
 		70CD92DC2BC6E22B0039D65C /* StoreKitFacade.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitFacade.swift; sourceTree = "<group>"; };
+		A200000000000000000000A1 /* StoreKitPurchaseOutcome.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitPurchaseOutcome.swift; sourceTree = "<group>"; };
 		70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitFacadeInterface.swift; sourceTree = "<group>"; };
 		70CD92DE2BC6E22B0039D65C /* StoreKitMapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitMapper.swift; sourceTree = "<group>"; };
 		70CD92DF2BC6E22B0039D65C /* StoreKitMapperInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitMapperInterface.swift; sourceTree = "<group>"; };
@@ -540,6 +542,7 @@
 			isa = PBXGroup;
 			children = (
 				70CD92DC2BC6E22B0039D65C /* StoreKitFacade.swift */,
+				A200000000000000000000A1 /* StoreKitPurchaseOutcome.swift */,
 				70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */,
 				70B4E96D2BD92B9C00EE808C /* StoreKitFacadeDelegate.swift */,
 				70CD92DE2BC6E22B0039D65C /* StoreKitMapper.swift */,
@@ -859,6 +862,7 @@
 				70CD93382BC6E22B0039D65C /* TemporaryFactory.swift in Sources */,
 				70CD93052BC6E22B0039D65C /* QonversionError.swift in Sources */,
 				70CD93222BC6E22B0039D65C /* StoreKitFacade.swift in Sources */,
+				A200000000000000000000B1 /* StoreKitPurchaseOutcome.swift in Sources */,
 				70CD930B2BC6E22B0039D65C /* NetworkErrorHandlerInterface.swift in Sources */,
 				70CD92FA2BC6E22B0039D65C /* Transaction.swift in Sources */,
 			);

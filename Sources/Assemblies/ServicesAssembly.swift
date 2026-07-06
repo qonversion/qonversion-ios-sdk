@@ -67,7 +67,7 @@ final class ServicesAssembly {
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     func storeKitWrapper() -> StoreKitWrapper {
-        let storeKitWrapper = StoreKitWrapper()
+        let storeKitWrapper = StoreKitWrapper(mapper: storeKitMapper())
         
         return storeKitWrapper
     }

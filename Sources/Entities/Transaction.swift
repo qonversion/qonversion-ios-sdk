@@ -292,6 +292,10 @@ extension Qonversion {
             
         }
         
+        /// The JWS representation of the signed transaction — the purchase proof
+        /// used for server-side validation. Available for StoreKit 2 transactions only.
+        public let jws: String?
+
         // MARK: - Private
         
         private let _storeKitTransaction: Any?
@@ -299,8 +303,39 @@ extension Qonversion {
         // Workaround to make offer variable available for specific OS versions
         private let _offer: Qonversion.Transaction.Offer?
         
+        init(
+            id: String?,
+            originalId: String? = nil,
+            productId: String = "",
+            subscriptionGroupId: String? = nil,
+            purchaseDate: Date? = nil,
+            originalPurchaseDate: Date? = nil,
+            purchasedQuantity: Int = 1,
+            price: Decimal? = nil,
+            currency: Qonversion.Currency? = nil,
+            storefront: Qonversion.Storefront? = nil,
+            jws: String? = nil
+        ) {
+            self.jsonRepresentation = nil
+            self.id = id
+            self.originalId = originalId
+            self.productId = productId
+            self.subscriptionGroupId = subscriptionGroupId
+            self.purchaseDate = purchaseDate
+            self.originalPurchaseDate = originalPurchaseDate
+            self.purchasedQuantity = purchasedQuantity
+            self.price = price
+            self.currency = currency
+            self.storefront = storefront
+            self.jws = jws
+            self._offer = nil
+            self._storeKitTransaction = nil
+            self.skPaymentTransaction = nil
+        }
+
         init(transaction: SKPaymentTransaction, product: SKProduct) {
             self.jsonRepresentation = nil
+            self.jws = nil
             self.id = transaction.transactionIdentifier
             self.originalId = transaction.original?.transactionIdentifier
             self.productId = transaction.payment.productIdentifier
@@ -326,8 +361,9 @@ extension Qonversion {
         }
         
         @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-        init(transaction: StoreKit.Transaction) {
+        init(transaction: StoreKit.Transaction, jws: String? = nil) {
             self.jsonRepresentation = transaction.jsonRepresentation
+            self.jws = jws
             self.id = String(transaction.id)
             self.originalId = String(transaction.originalID)
             self.productId = transaction.productID

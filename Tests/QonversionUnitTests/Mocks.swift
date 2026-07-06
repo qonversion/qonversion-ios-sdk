@@ -192,8 +192,13 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var productsError: Error?
     private(set) var requestedProductIds: [[String]] = []
 
+    var currentEntitlementsResult: [Qonversion.Transaction] = []
     var restoreResult: [Qonversion.Transaction] = []
     var restoreError: Error?
+    var historicalDataResult: [Qonversion.Transaction] = []
+    private(set) var finishedTransactions: [Qonversion.Transaction] = []
+    private(set) var startObservingCallsCount = 0
+    private(set) var stopObservingCallsCount = 0
 
     func products(for ids: [String]) async throws -> [StoreProductWrapper] {
         requestedProductIds.append(ids)
@@ -201,19 +206,26 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
         return productsResult
     }
 
-    func currentEntitlements() async -> [Qonversion.Transaction] { [] }
+    func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
 
     func restore() async throws -> [Qonversion.Transaction] {
         if let restoreError { throw restoreError }
         return restoreResult
     }
 
-    func finish(transaction: SKPaymentTransaction) {}
+    func historicalData() async throws -> [Qonversion.Transaction] { historicalDataResult }
 
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    func finish(transaction: StoreKit.Transaction) async {}
+    func finish(_ transaction: Qonversion.Transaction) async {
+        finishedTransactions.append(transaction)
+    }
 
-    func subscribe() async -> [Qonversion.Transaction] { [] }
+    func startObservingTransactionUpdates() {
+        startObservingCallsCount += 1
+    }
+
+    func stopObservingTransactionUpdates() {
+        stopObservingCallsCount += 1
+    }
 
     #if os(iOS) || os(visionOS)
     @available(iOS 16.0, *)
@@ -222,6 +234,94 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet() {}
     #endif
+}
+
+/// Mock of the StoreKit 2 wrapper — domain-typed, so the facade logic is fully
+/// unit-testable without real StoreKit objects. The updates stream is driven
+/// by the test through `emitUpdate`/`finishUpdates`.
+final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
+
+    var currentEntitlementsResult: [Qonversion.Transaction] = []
+    var restoreResult: [Qonversion.Transaction] = []
+    var restoreError: Error?
+    var fetchAllResult: [Qonversion.Transaction] = []
+    var fetchUnfinishedResult: [Qonversion.Transaction] = []
+
+    private(set) var finishedTransactions: [Qonversion.Transaction] = []
+    private(set) var restoreCallsCount = 0
+    private(set) var transactionUpdatesCallsCount = 0
+
+    private var updatesContinuation: AsyncStream<Qonversion.Transaction>.Continuation?
+
+    func emitUpdate(_ transaction: Qonversion.Transaction) {
+        updatesContinuation?.yield(transaction)
+    }
+
+    func finishUpdates() {
+        updatesContinuation?.finish()
+    }
+
+    func purchase(product: StoreKit.Product) async throws -> Qonversion.Transaction {
+        throw MockError.noStub
+    }
+
+    func products(for ids: [String]) async throws -> [StoreKit.Product] { [] }
+
+    func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
+
+    func restore() async throws -> [Qonversion.Transaction] {
+        restoreCallsCount += 1
+        if let restoreError { throw restoreError }
+        return restoreResult
+    }
+
+    func fetchAll() async -> [Qonversion.Transaction] { fetchAllResult }
+
+    func fetchUnfinished() async -> [Qonversion.Transaction] { fetchUnfinishedResult }
+
+    func finish(_ transaction: Qonversion.Transaction) async {
+        finishedTransactions.append(transaction)
+    }
+
+    func transactionUpdates() -> AsyncStream<Qonversion.Transaction> {
+        transactionUpdatesCallsCount += 1
+        return AsyncStream { continuation in
+            self.updatesContinuation = continuation
+        }
+    }
+
+    #if os(iOS) || os(visionOS)
+    @available(iOS 16.0, visionOS 1.0, *)
+    func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {}
+    #endif
+}
+
+/// Mock of the legacy StoreKit 1 wrapper. Captures completions so tests can
+/// fire them at a controlled moment (e.g. after the facade is deallocated).
+final class MockStoreKitOldWrapper: StoreKitOldWrapperInterface {
+
+    private(set) var productsCompletions: [StoreKitOldProductsCompletion] = []
+    private(set) var restoreCompletions: [StoreKitOldTransactionsCompletion] = []
+    private(set) var finishedTransactions: [SKPaymentTransaction] = []
+
+    func products(for ids: [String], completion: @escaping StoreKitOldProductsCompletion) {
+        productsCompletions.append(completion)
+    }
+
+    func restore(with completion: @escaping StoreKitOldTransactionsCompletion) {
+        restoreCompletions.append(completion)
+    }
+
+    #if os(iOS) || os(visionOS)
+    @available(iOS 14.0, visionOS 1.0, *)
+    func presentCodeRedemptionSheet() { }
+    #endif
+
+    func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion) { }
+
+    func finish(transaction: SKPaymentTransaction) {
+        finishedTransactions.append(transaction)
+    }
 }
 
 // MARK: - Services
