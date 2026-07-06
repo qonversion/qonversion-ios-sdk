@@ -19,5 +19,9 @@ let package = Package(
             resources: [
                 .copy("PrivacyInfo.xcprivacy")
             ]),
+        .testTarget(
+            name: "QonversionUnitTests",
+            dependencies: ["Qonversion"],
+            path: "Tests/QonversionUnitTests"),
     ]
 )
