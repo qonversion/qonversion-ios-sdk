@@ -57,4 +57,33 @@ final class ProductsServiceTests: XCTestCase {
             XCTFail("Expected QonversionError, got \(error)")
         }
     }
+
+    // MARK: - product permissions
+
+    func testProductPermissionsSendsGetProductPermissionsRequest() async throws {
+        let processor = MockRequestProcessor()
+        let mapping = try JSONDecoder().decode(ProductsPermissions.self, from: Data(#"{"products_permissions": {"pro": ["premium"]}}"#.utf8))
+        processor.results = [mapping]
+        let service = ProductsService(requestProcessor: processor, internalConfig: InternalConfig(userId: "QON_x"))
+
+        let result = try await service.productPermissions()
+
+        XCTAssertEqual(processor.processedRequests, [Request.getProductPermissions()])
+        XCTAssertEqual(result, ["pro": ["premium"]])
+    }
+
+    func testProductPermissionsWrapsErrors() async {
+        let processor = MockRequestProcessor()
+        processor.error = MockError.stubbed
+        let service = ProductsService(requestProcessor: processor, internalConfig: InternalConfig(userId: "QON_x"))
+
+        do {
+            _ = try await service.productPermissions()
+            XCTFail("Expected productPermissions to throw")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .productPermissionsLoadingFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
 }

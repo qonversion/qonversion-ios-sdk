@@ -23,7 +23,7 @@ public final class Qonversion {
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
     @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
-        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
+        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode)
         Qonversion.shared.userManager = assembly.userManager()
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
@@ -34,6 +34,15 @@ public final class Qonversion {
         // Start consuming out-of-band transaction updates (renewals, refunds,
         // Ask to Buy approvals, purchases on other devices).
         Qonversion.shared.purchasesManager?.startObservingTransactions()
+
+        // In subscription-management mode the SDK needs the product →
+        // permissions mapping for local entitlements calculation; refresh the
+        // persistent cache on every launch.
+        if configuration.launchMode == .subscriptionManagement {
+            Task {
+                await Qonversion.shared.productsManager?.loadProductPermissions()
+            }
+        }
 
         // Warm up the user gate: create the backend user early so the first
         // data-sending call doesn't pay for it. Failure is fine — the gate

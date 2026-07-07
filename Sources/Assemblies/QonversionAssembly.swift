@@ -16,9 +16,9 @@ final class QonversionAssembly {
     // one instance SDK-wide, like InternalConfig.
     private var userManagerInstance: UserManagerInterface?
     
-    required init(apiKey: String, userDefaults: UserDefaults?) {
+    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics) {
         let userDefaults = userDefaults ?? UserDefaults.standard
-        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: ""))
+        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "", launchMode: launchMode))
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
 

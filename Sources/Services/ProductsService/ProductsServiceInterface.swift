@@ -10,5 +10,8 @@ import Foundation
 protocol ProductsServiceInterface {
     
     func products() async throws -> [Qonversion.Product]
-    
+
+    /// Loads the product → permissions mapping used for local entitlements
+    /// calculation when the backend is unreachable.
+    func productPermissions() async throws -> [String: [String]]
 }

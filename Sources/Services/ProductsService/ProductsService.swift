@@ -17,6 +17,17 @@ final class ProductsService: ProductsServiceInterface {
         self.internalConfig = internalConfig
     }
     
+    func productPermissions() async throws -> [String: [String]] {
+        let request = Request.getProductPermissions()
+        do {
+            let response: ProductsPermissions = try await requestProcessor.process(request: request, responseType: ProductsPermissions.self)
+
+            return response.productsPermissions
+        } catch {
+            throw QonversionError(type: .productPermissionsLoadingFailed, message: nil, error: error)
+        }
+    }
+
     func products() async throws -> [Qonversion.Product] {
         let request = Request.getProducts(userId: internalConfig.userId)
         do {

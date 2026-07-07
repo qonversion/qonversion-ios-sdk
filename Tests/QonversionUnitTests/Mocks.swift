@@ -340,12 +340,21 @@ final class MockProductsService: ProductsServiceInterface {
 
     var productsResult: [Qonversion.Product] = []
     var error: Error?
+    var productPermissionsResult: [String: [String]] = [:]
+    var productPermissionsError: Error?
     private(set) var productsCallsCount = 0
+    private(set) var productPermissionsCallsCount = 0
 
     func products() async throws -> [Qonversion.Product] {
         productsCallsCount += 1
         if let error { throw error }
         return productsResult
+    }
+
+    func productPermissions() async throws -> [String: [String]] {
+        productPermissionsCallsCount += 1
+        if let productPermissionsError { throw productPermissionsError }
+        return productPermissionsResult
     }
 }
 
