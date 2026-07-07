@@ -542,7 +542,7 @@ final class MockEntitlementsService: EntitlementsServiceInterface {
     }
 }
 
-final class MockProductsManager: ProductsManagerInterface {
+final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
 
     var productsResult: [Qonversion.Product] = []
     var productsError: Error?

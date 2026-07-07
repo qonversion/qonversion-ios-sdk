@@ -17,7 +17,7 @@ final class EntitlementsManager: EntitlementsManagerInterface {
 
     private let entitlementsService: EntitlementsServiceInterface
     private let storeKitFacade: StoreKitFacadeInterface
-    private let productsManager: ProductsManagerInterface
+    private let productsDataSource: ProductsDataSource
     private let userManager: UserManagerInterface
     private let userIdProvider: UserIdProvider
     private let localStorage: LocalStorageInterface
@@ -26,7 +26,7 @@ final class EntitlementsManager: EntitlementsManagerInterface {
     init(
         entitlementsService: EntitlementsServiceInterface,
         storeKitFacade: StoreKitFacadeInterface,
-        productsManager: ProductsManagerInterface,
+        productsDataSource: ProductsDataSource,
         userManager: UserManagerInterface,
         userIdProvider: UserIdProvider,
         localStorage: LocalStorageInterface,
@@ -34,7 +34,7 @@ final class EntitlementsManager: EntitlementsManagerInterface {
     ) {
         self.entitlementsService = entitlementsService
         self.storeKitFacade = storeKitFacade
-        self.productsManager = productsManager
+        self.productsDataSource = productsDataSource
         self.userManager = userManager
         self.userIdProvider = userIdProvider
         self.localStorage = localStorage
@@ -44,8 +44,8 @@ final class EntitlementsManager: EntitlementsManagerInterface {
     func localFallbackEntitlements(for transactions: [Qonversion.Transaction]) async -> [String: Qonversion.Entitlement] {
         let calculated = EntitlementsCalculator.calculate(
             transactions: transactions,
-            products: productsManager.cachedProducts(),
-            mapping: productsManager.cachedProductPermissions() ?? [:]
+            products: productsDataSource.cachedProducts(),
+            mapping: productsDataSource.cachedProductPermissions() ?? [:]
         )
         let merged = EntitlementsCalculator.merge(calculated, into: cachedEntitlements() ?? [:])
         persist(merged)

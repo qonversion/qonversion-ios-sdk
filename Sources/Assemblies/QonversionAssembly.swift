@@ -18,7 +18,7 @@ final class QonversionAssembly {
 
     // Holds the in-memory products and mapping caches consumed by the local
     // entitlements calculation — stateful, one instance SDK-wide.
-    private var productsManagerInstance: ProductsManagerInterface?
+    private var productsManagerInstance: ProductsManager?
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics) {
         let userDefaults = userDefaults ?? UserDefaults.standard
@@ -64,6 +64,10 @@ final class QonversionAssembly {
     }
     
     func productsManager() -> ProductsManagerInterface {
+        return sharedProductsManager()
+    }
+
+    private func sharedProductsManager() -> ProductsManager {
         if let productsManagerInstance {
             return productsManagerInstance
         }
@@ -106,7 +110,7 @@ final class QonversionAssembly {
         let entitlementsManager = EntitlementsManager(
             entitlementsService: entitlementsService,
             storeKitFacade: storeKitFacade,
-            productsManager: productsManager(),
+            productsDataSource: sharedProductsManager(),
             userManager: userManager(),
             userIdProvider: miscAssembly.internalConfig,
             localStorage: miscAssembly.localStorage(),

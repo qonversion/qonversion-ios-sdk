@@ -116,6 +116,7 @@
 		70EA73532BD12C8000B0DFDA /* ProductsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73522BD12C8000B0DFDA /* ProductsService.swift */; };
 		70EA73552BD12CA500B0DFDA /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA73542BD12CA500B0DFDA /* Product.swift */; };
 		70EA735D2BD6B66300B0DFDA /* ProductsManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA735C2BD6B66300B0DFDA /* ProductsManagerInterface.swift */; };
+		A700000000000000000000B1 /* ProductsDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A700000000000000000000A1 /* ProductsDataSource.swift */; };
 		70EA735F2BD6B68000B0DFDA /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -265,6 +266,7 @@
 		70EA73522BD12C8000B0DFDA /* ProductsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsService.swift; sourceTree = "<group>"; };
 		70EA73542BD12CA500B0DFDA /* Product.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
 		70EA735C2BD6B66300B0DFDA /* ProductsManagerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsManagerInterface.swift; sourceTree = "<group>"; };
+		A700000000000000000000A1 /* ProductsDataSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsDataSource.swift; sourceTree = "<group>"; };
 		70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsManager.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -695,6 +697,7 @@
 			isa = PBXGroup;
 			children = (
 				70EA735C2BD6B66300B0DFDA /* ProductsManagerInterface.swift */,
+				A700000000000000000000A1 /* ProductsDataSource.swift */,
 				70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */,
 			);
 			path = ProductsManager;
@@ -898,6 +901,7 @@
 				70CD93232BC6E22B0039D65C /* StoreKitFacadeInterface.swift in Sources */,
 				70CD93192BC6E22B0039D65C /* LocalStorageInterface.swift in Sources */,
 				70EA735D2BD6B66300B0DFDA /* ProductsManagerInterface.swift in Sources */,
+				A700000000000000000000B1 /* ProductsDataSource.swift in Sources */,
 				70CD932A2BC6E22B0039D65C /* StoreKitWrapperDelegate.swift in Sources */,
 				70CD93072BC6E22B0039D65C /* Header.swift in Sources */,
 				70CD93122BC6E22B0039D65C /* RequestProcessor.swift in Sources */,

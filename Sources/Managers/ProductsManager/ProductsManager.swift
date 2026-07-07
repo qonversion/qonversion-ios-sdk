@@ -12,7 +12,7 @@ fileprivate enum Constants: String {
     case productPermissionsKey = "qonversion.keys.productsPermissions"
 }
 
-final class ProductsManager: ProductsManagerInterface {
+final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
     
     let productsService: ProductsServiceInterface
     let storeKitFacade: StoreKitFacadeInterface

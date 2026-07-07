@@ -37,7 +37,7 @@ final class EntitlementsManagerTests: XCTestCase {
         manager = EntitlementsManager(
             entitlementsService: service,
             storeKitFacade: facade,
-            productsManager: productsManager,
+            productsDataSource: productsManager,
             userManager: userManager,
             userIdProvider: config,
             localStorage: storage,
@@ -150,7 +150,7 @@ final class EntitlementsManagerTests: XCTestCase {
         let recreated = EntitlementsManager(
             entitlementsService: service,
             storeKitFacade: facade,
-            productsManager: productsManager,
+            productsDataSource: productsManager,
             userManager: userManager,
             userIdProvider: config,
             localStorage: storage,
