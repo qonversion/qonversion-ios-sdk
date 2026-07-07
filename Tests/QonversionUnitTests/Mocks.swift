@@ -196,9 +196,19 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var restoreResult: [Qonversion.Transaction] = []
     var restoreError: Error?
     var historicalDataResult: [Qonversion.Transaction] = []
+    var purchaseResult: Qonversion.Transaction?
+    var purchaseError: Error?
+    private(set) var purchasedStoreIds: [String] = []
     private(set) var finishedTransactions: [Qonversion.Transaction] = []
     private(set) var startObservingCallsCount = 0
     private(set) var stopObservingCallsCount = 0
+
+    func purchase(storeId: String) async throws -> Qonversion.Transaction {
+        purchasedStoreIds.append(storeId)
+        if let purchaseError { throw purchaseError }
+        guard let purchaseResult else { throw MockError.noStub }
+        return purchaseResult
+    }
 
     func products(for ids: [String]) async throws -> [StoreProductWrapper] {
         requestedProductIds.append(ids)
@@ -330,12 +340,21 @@ final class MockProductsService: ProductsServiceInterface {
 
     var productsResult: [Qonversion.Product] = []
     var error: Error?
+    var productPermissionsResult: [String: [String]] = [:]
+    var productPermissionsError: Error?
     private(set) var productsCallsCount = 0
+    private(set) var productPermissionsCallsCount = 0
 
     func products() async throws -> [Qonversion.Product] {
         productsCallsCount += 1
         if let error { throw error }
         return productsResult
+    }
+
+    func productPermissions() async throws -> [String: [String]] {
+        productPermissionsCallsCount += 1
+        if let productPermissionsError { throw productPermissionsError }
+        return productPermissionsResult
     }
 }
 
@@ -494,6 +513,74 @@ final class MockUserManager: UserManagerInterface {
         if let error { throw error }
         guard let user else { throw MockError.noStub }
         return user
+    }
+}
+
+final class MockPurchasesService: PurchasesServiceInterface {
+
+    var error: Error?
+    var onSend: (() async -> Void)?
+    private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String)] = []
+
+    func send(_ transaction: Qonversion.Transaction, userId: String) async throws {
+        sentTransactions.append((transaction, userId))
+        await onSend?()
+        if let error { throw error }
+    }
+}
+
+final class MockEntitlementsService: EntitlementsServiceInterface {
+
+    var entitlementsResult: [Qonversion.Entitlement] = []
+    var error: Error?
+    private(set) var entitlementsCalls: [String] = []
+
+    func entitlements(userId: String) async throws -> [Qonversion.Entitlement] {
+        entitlementsCalls.append(userId)
+        if let error { throw error }
+        return entitlementsResult
+    }
+}
+
+final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
+
+    var productsResult: [Qonversion.Product] = []
+    var productsError: Error?
+    var cachedProductsResult: [Qonversion.Product] = []
+    var cachedMapping: [String: [String]]?
+    private(set) var loadPermissionsCallsCount = 0
+
+    func products() async throws -> [Qonversion.Product] {
+        if let productsError { throw productsError }
+        return productsResult
+    }
+
+    func loadProductPermissions() async {
+        loadPermissionsCallsCount += 1
+    }
+
+    func cachedProductPermissions() -> [String: [String]]? { cachedMapping }
+
+    func cachedProducts() -> [Qonversion.Product] { cachedProductsResult }
+}
+
+final class MockEntitlementsManager: EntitlementsManagerInterface {
+
+    var entitlementsResult: [String: Qonversion.Entitlement] = [:]
+    var entitlementsError: Error?
+    var localFallbackResult: [String: Qonversion.Entitlement] = [:]
+    private(set) var entitlementsCallsCount = 0
+    private(set) var localFallbackTransactions: [[Qonversion.Transaction]] = []
+
+    func entitlements() async throws -> [String: Qonversion.Entitlement] {
+        entitlementsCallsCount += 1
+        if let entitlementsError { throw entitlementsError }
+        return entitlementsResult
+    }
+
+    func localFallbackEntitlements(for transactions: [Qonversion.Transaction]) async -> [String: Qonversion.Entitlement] {
+        localFallbackTransactions.append(transactions)
+        return localFallbackResult
     }
 }
 

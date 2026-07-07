@@ -169,6 +169,11 @@ extension Qonversion {
             /// The number of units that the period represents.
             public let value: Int
             
+            init(unit: Qonversion.Product.SubscriptionPeriod.Unit, value: Int) {
+                self.unit = unit
+                self.value = value
+            }
+
             @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
             init(originalPeriod: StoreKit.Product.SubscriptionPeriod) {
                 value = originalPeriod.value
@@ -395,6 +400,13 @@ extension Qonversion {
             /// The duration that this subscription lasts before auto-renewing.
             public let subscriptionPeriod: Qonversion.Product.SubscriptionPeriod
             
+            init(subscriptionGroupId: String, subscriptionPeriod: Qonversion.Product.SubscriptionPeriod, introductoryOffer: Qonversion.Product.SubscriptionOffer? = nil, promotionalOffers: [Qonversion.Product.SubscriptionOffer] = []) {
+                self.subscriptionGroupId = subscriptionGroupId
+                self.subscriptionPeriod = subscriptionPeriod
+                self.introductoryOffer = introductoryOffer
+                self.promotionalOffers = promotionalOffers
+            }
+
             @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
             init?(originalSubscription: StoreKit.Product.SubscriptionInfo?) {
                 guard let originalSubscription else { return nil }

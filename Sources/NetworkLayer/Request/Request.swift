@@ -15,13 +15,15 @@ enum Request : Hashable {
     case createUser(id: String, endpoint: String = "v3/users/", body: RequestBodyDict, type: RequestType = .post)
     case getIdentity(externalId: String, endpoint: String = "v3/identities/", type: RequestType = .get)
     case createIdentity(externalId: String, endpoint: String = "v3/identities/", body: RequestBodyDict, type: RequestType = .post)
-    case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .post)
+    case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .get)
+    case createPurchase(userId: String, endpoint: String = "v3/users/%@/purchases", body: RequestBodyDict, type: RequestType = .post)
     case getProperties(userId: String, endpoint: String = "v3/users/%@/properties", type: RequestType = .get)
     case sendProperties(userId: String, endpoint: String = "v3/users/%@/properties", body: RequestBodyArray, type: RequestType = .post)
     case createDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .post)
     case updateDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .put)
     case appleSearchAds(userId: String, endpoint: String = "v3/appleads/", body: RequestBodyDict, type: RequestType = .post)
     case getProducts(userId: String, endpoint: String = "v3/products/", type: RequestType = .get)
+    case getProductPermissions(endpoint: String = "v3/products/permissions", type: RequestType = .get)
     case remoteConfig(userId: String, contextKey: String?, endpoint: String = "v3/remote-config", type: RequestType = .get)
     case remoteConfigList(userId: String, contextKeys: [String], includeEmptyContextKey: Bool, endpoint: String = "v3/remote-configs", type: RequestType = .get)
     case allRemoteConfigList(userId: String, endpoint: String = "v3/remote-configs?all_context_keys=true", type: RequestType = .get)
@@ -59,6 +61,10 @@ enum Request : Hashable {
             let urlString = String(format: endpoint, arguments: [userId])
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
+        case let .createPurchase(userId, endpoint, body, type):
+            let urlString = String(format: endpoint, arguments: [userId])
+            return defaultRequest(urlString: urlString, body: body, type: type)
+
         case let .getProperties(userId, endpoint, type):
             let urlString = String(format: endpoint, arguments: [userId])
             return defaultRequest(urlString: urlString, body: nil, type: type)
@@ -78,6 +84,9 @@ enum Request : Hashable {
         
         case let .getProducts(userId, endpoint, type):
             return defaultRequest(urlString: endpoint + userId, body: nil, type: type)
+
+        case let .getProductPermissions(endpoint, type):
+            return defaultRequest(urlString: endpoint, body: nil, type: type)
             
         case let .remoteConfig(userId, contextKey, endpoint, type):
             var urlString = endpoint + "?user_id=" + userId
@@ -144,6 +153,12 @@ enum Request : Hashable {
             hasher.combine(userId)
             hasher.combine(endpoint)
             hasher.combine(type)
+        case let .createPurchase(userId, endpoint, body, type):
+            hasher.combine("createPurchase")
+            hasher.combine(userId)
+            hasher.combine(endpoint)
+            hasher.combine(body)
+            hasher.combine(type)
         case let .getProperties(userId, endpoint, type):
             hasher.combine("getProperties")
             hasher.combine(userId)
@@ -176,6 +191,10 @@ enum Request : Hashable {
         case let .getProducts(userId, endpoint, type):
             hasher.combine("getProducts")
             hasher.combine(userId)
+            hasher.combine(endpoint)
+            hasher.combine(type)
+        case let .getProductPermissions(endpoint, type):
+            hasher.combine("getProductPermissions")
             hasher.combine(endpoint)
             hasher.combine(type)
         case let .remoteConfig(userId, contextKey, endpoint, type):

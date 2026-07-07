@@ -21,6 +21,8 @@ enum QonversionErrorType {
     case deviceUpdateFailed
     case unableToSerializeDevice
     case productsLoadingFailed
+    case productPermissionsLoadingFailed
+    case entitlementsLoadingFailed
     case storeProductsLoadingFailed
     case loadingRemoteConfigFailed
     case loadingRemoteConfigListFailed
@@ -32,6 +34,8 @@ enum QonversionErrorType {
     case storageDeserializationFailed
     case identityLoadingFailed
     case identityCreationFailed
+    case purchaseReportingFailed
+    case restoreFailed
     case purchaseCancelled
     case purchasePending
     case purchaseFailed
@@ -54,6 +58,10 @@ enum QonversionErrorType {
             return "Failed to load user identity"
         case .identityCreationFailed:
             return "Failed to link user identity"
+        case .purchaseReportingFailed:
+            return "The purchase succeeded in the store but could not be reported to Qonversion; it will be retried"
+        case .restoreFailed:
+            return "Failed to restore purchases"
         case .purchaseCancelled:
             return "The user canceled the purchase"
         case .purchasePending:
@@ -66,6 +74,10 @@ enum QonversionErrorType {
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:
             return "Device update request failed. Unable to update the device."
+        case .productPermissionsLoadingFailed:
+            return "Failed to load the product permissions mapping"
+        case .entitlementsLoadingFailed:
+            return "Failed to load user entitlements"
         case .productsLoadingFailed:
             return "Products loading request failed."
         case .storeProductsLoadingFailed:

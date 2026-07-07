@@ -11,6 +11,10 @@ protocol StoreKitFacadeInterface {
     #warning("replace all return types")
     func products(for ids:[String]) async throws -> [StoreProductWrapper]
 
+    /// Buys the store product with the given store id (loading it on demand)
+    /// and returns the verified transaction carrying its jws proof.
+    func purchase(storeId: String) async throws -> Qonversion.Transaction
+
     func currentEntitlements() async -> [Qonversion.Transaction]
 
     func restore() async throws -> [Qonversion.Transaction]

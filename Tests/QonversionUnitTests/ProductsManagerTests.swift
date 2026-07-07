@@ -151,4 +151,54 @@ final class ProductsManagerTests: XCTestCase {
         XCTAssertTrue(storeKitFacade.requestedProductIds.isEmpty)
         XCTAssertTrue(manager.loadedProducts.isEmpty)
     }
+
+    // MARK: - product permissions mapping cache
+
+    // The mapping powers local entitlements calculation when the backend is
+    // unreachable: every successful fetch refreshes the persistent cache; a
+    // failed fetch leaves the previously cached mapping intact.
+
+    func testLoadProductPermissionsCachesMappingOnSuccess() async {
+        productsService.productPermissionsResult = ["pro": ["premium"]]
+
+        await manager.loadProductPermissions()
+
+        XCTAssertEqual(manager.cachedProductPermissions(), ["pro": ["premium"]])
+    }
+
+    func testEverySuccessfulLoadRefreshesTheCache() async {
+        productsService.productPermissionsResult = ["pro": ["premium"]]
+        await manager.loadProductPermissions()
+
+        productsService.productPermissionsResult = ["pro": ["premium", "extra"], "lite": ["basic"]]
+        await manager.loadProductPermissions()
+
+        XCTAssertEqual(manager.cachedProductPermissions(), ["pro": ["premium", "extra"], "lite": ["basic"]])
+    }
+
+    func testFailedLoadKeepsPreviouslyCachedMapping() async {
+        productsService.productPermissionsResult = ["pro": ["premium"]]
+        await manager.loadProductPermissions()
+
+        productsService.productPermissionsError = MockError.stubbed
+        await manager.loadProductPermissions()
+
+        XCTAssertEqual(manager.cachedProductPermissions(), ["pro": ["premium"]])
+    }
+
+    func testCachedMappingSurvivesManagerRecreation() async {
+        productsService.productPermissionsResult = ["pro": ["premium"]]
+        await manager.loadProductPermissions()
+
+        // A fresh manager over the same storage reads the persisted cache
+        // without hitting the service.
+        let recreated = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, logger: LoggerWrapper())
+
+        XCTAssertEqual(recreated.cachedProductPermissions(), ["pro": ["premium"]])
+        XCTAssertEqual(productsService.productPermissionsCallsCount, 1)
+    }
+
+    func testCachedMappingIsNilWhenNeverLoaded() {
+        XCTAssertNil(manager.cachedProductPermissions())
+    }
 }

@@ -8,7 +8,11 @@
 import Foundation
 import StoreKit
 
-final class ProductsManager: ProductsManagerInterface {
+fileprivate enum Constants: String {
+    case productPermissionsKey = "qonversion.keys.productsPermissions"
+}
+
+final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
     
     let productsService: ProductsServiceInterface
     let storeKitFacade: StoreKitFacadeInterface
@@ -16,6 +20,8 @@ final class ProductsManager: ProductsManagerInterface {
     private let logger: LoggerWrapper
     
     var loadedProducts: [Qonversion.Product] = []
+
+    private var loadedProductPermissions: [String: [String]]?
     
     init(productsService: ProductsServiceInterface, storeKitFacade: StoreKitFacadeInterface, localStorage: LocalStorageInterface, logger: LoggerWrapper) {
         self.productsService = productsService
@@ -24,6 +30,33 @@ final class ProductsManager: ProductsManagerInterface {
         self.logger = logger
     }
     
+    func cachedProducts() -> [Qonversion.Product] {
+        return loadedProducts
+    }
+
+    func loadProductPermissions() async {
+        do {
+            let mapping = try await productsService.productPermissions()
+            loadedProductPermissions = mapping
+            try localStorage.set(mapping, forKey: Constants.productPermissionsKey.rawValue)
+        } catch {
+            // The previously cached mapping stays — it still powers local
+            // entitlements calculation while the backend is unreachable.
+            logger.warning("Failed to refresh product permissions mapping: " + error.message)
+        }
+    }
+
+    func cachedProductPermissions() -> [String: [String]]? {
+        if let loadedProductPermissions {
+            return loadedProductPermissions
+        }
+
+        let persisted = try? localStorage.object(forKey: Constants.productPermissionsKey.rawValue, dataType: [String: [String]].self)
+        loadedProductPermissions = persisted
+
+        return persisted
+    }
+
     func products() async throws -> [Qonversion.Product] {
         guard loadedProducts.isEmpty else {
             return loadedProducts

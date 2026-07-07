@@ -87,6 +87,20 @@ final class ServicesAssembly {
         return deviceService
     }
     
+    func purchasesService() -> PurchasesServiceInterface {
+        let requestProcessor: RequestProcessorInterface = requestProcessor()
+        let purchasesService = PurchasesService(requestProcessor: requestProcessor)
+
+        return purchasesService
+    }
+
+    func entitlementsService() -> EntitlementsServiceInterface {
+        let requestProcessor: RequestProcessorInterface = requestProcessor()
+        let entitlementsService = EntitlementsService(requestProcessor: requestProcessor)
+
+        return entitlementsService
+    }
+
     func remoteConfigService() -> RemoteConfigServiceInterface {
         let requestProcessor: RequestProcessorInterface = requestProcessor()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()

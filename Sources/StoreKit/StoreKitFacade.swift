@@ -36,6 +36,22 @@ class StoreKitFacade: StoreKitFacadeInterface {
         self.storeKitMapper = storeKitMapper
     }
     
+    func purchase(storeId: String) async throws -> Qonversion.Transaction {
+        guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper else {
+            // StoreKit 1 purchase support lands with the SK1 parity pass.
+            throw QonversionError(type: .storeKitUnavailable)
+        }
+
+        if loadedProducts?[storeId] == nil {
+            _ = try await products(for: [storeId])
+        }
+        guard let product = loadedProducts?[storeId] else {
+            throw QonversionError(type: .storeProductsLoadingFailed)
+        }
+
+        return try await storeKitWrapper.purchase(product: product)
+    }
+
     func currentEntitlements() async -> [Qonversion.Transaction] {
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
 

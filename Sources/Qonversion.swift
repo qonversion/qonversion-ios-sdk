@@ -23,12 +23,27 @@ public final class Qonversion {
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
     @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
-        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults)
+        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode)
         Qonversion.shared.userManager = assembly.userManager()
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
         Qonversion.shared.productsManager = assembly.productsManager()
         Qonversion.shared.remoteConfigManager = assembly.remoteConfigManager()
+        Qonversion.shared.purchasesManager = assembly.purchasesManager()
+        Qonversion.shared.entitlementsManager = assembly.entitlementsManager()
+
+        // Start consuming out-of-band transaction updates (renewals, refunds,
+        // Ask to Buy approvals, purchases on other devices).
+        Qonversion.shared.purchasesManager?.startObservingTransactions()
+
+        // In subscription-management mode the SDK needs the product →
+        // permissions mapping for local entitlements calculation; refresh the
+        // persistent cache on every launch.
+        if configuration.launchMode == .subscriptionManagement {
+            Task {
+                await Qonversion.shared.productsManager?.loadProductPermissions()
+            }
+        }
 
         // Warm up the user gate: create the backend user early so the first
         // data-sending call doesn't pay for it. Failure is fine — the gate
@@ -65,6 +80,46 @@ public final class Qonversion {
         guard let userManager else { throw QonversionError.initializationError() }
 
         return try await userManager.userInfo()
+    }
+
+    /// Returns Qonversion products in association with App Store products.
+    /// - Throws: Possible error during the products request or Qonversion initialization error.
+    public func products() async throws -> [Qonversion.Product] {
+        guard let productsManager else { throw QonversionError.initializationError() }
+
+        return try await productsManager.products()
+    }
+
+    /// Buys the product through the App Store and validates the purchase with
+    /// the Qonversion backend. The transaction is finished only after the
+    /// backend confirms the purchase. When the backend is unreachable, the
+    /// purchase still succeeds with locally calculated entitlements.
+    /// - Parameter product: the product to purchase.
+    /// - Returns: ``Qonversion/Qonversion/PurchaseResult`` with the verified
+    ///   transaction and the user's entitlements.
+    @discardableResult
+    public func purchase(_ product: Qonversion.Product) async throws -> Qonversion.PurchaseResult {
+        guard let purchasesManager else { throw QonversionError.initializationError() }
+
+        return try await purchasesManager.purchase(product)
+    }
+
+    /// Restores the user's purchases and returns the entitlements.
+    /// When the backend is unreachable, entitlements are calculated locally.
+    @discardableResult
+    public func restore() async throws -> [String: Qonversion.Entitlement] {
+        guard let purchasesManager else { throw QonversionError.initializationError() }
+
+        return try await purchasesManager.restore()
+    }
+
+    /// Returns the user's entitlements keyed by entitlement id.
+    /// When the backend is unreachable (5xx / connection issues), entitlements
+    /// are calculated locally from StoreKit data and the cached mapping.
+    public func checkEntitlements() async throws -> [String: Qonversion.Entitlement] {
+        guard let entitlementsManager else { throw QonversionError.initializationError() }
+
+        return try await entitlementsManager.entitlements()
     }
 
     /// Collects Apple Search Ads Attribution data
@@ -195,6 +250,8 @@ public final class Qonversion {
 
     // MARK: - Private
     private var userManager: UserManagerInterface?
+    private var purchasesManager: PurchasesManagerInterface?
+    private var entitlementsManager: EntitlementsManagerInterface?
     private var userPropertiesManager: UserPropertiesManagerInterface?
     private var deviceManager: DeviceManagerInterface?
     private var productsManager: ProductsManagerInterface?

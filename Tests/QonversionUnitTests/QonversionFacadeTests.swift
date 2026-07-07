@@ -101,4 +101,54 @@ final class QonversionFacadeTests: XCTestCase {
         Qonversion.shared.setUserProperty("value", key: .custom)
         Qonversion.shared.setCustomUserProperty("value", key: "custom_key")
     }
+
+    // MARK: - purchases guards
+
+    func testProductsThrowsInitializationErrorBeforeInitialize() async {
+        do {
+            _ = try await Qonversion.shared.products()
+            XCTFail("Expected initialization error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .sdkInitializationError)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testPurchaseThrowsInitializationErrorBeforeInitialize() async {
+        do {
+            _ = try await Qonversion.shared.purchase(Qonversion.Product(qonversionId: "p", storeId: "s", offeringId: nil))
+            XCTFail("Expected initialization error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .sdkInitializationError)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testCheckEntitlementsThrowsInitializationErrorBeforeInitialize() async {
+        do {
+            _ = try await Qonversion.shared.checkEntitlements()
+            XCTFail("Expected initialization error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .sdkInitializationError)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    // MARK: - assembly graph
+
+    func testAssemblySharesTheProductsManagerInstance() {
+        // The entitlements manager consumes the products manager's IN-MEMORY
+        // caches (loaded products, mapping) for the local entitlements
+        // calculation — a second instance would see empty memory and silently
+        // degrade the fallback to cached-entitlements-only.
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+
+        let first = assembly.productsManager() as AnyObject
+        let second = assembly.productsManager() as AnyObject
+
+        XCTAssertTrue(first === second)
+    }
 }

@@ -14,9 +14,11 @@ protocol UserIdProvider {
 final class InternalConfig: UserIdProvider {
     
     var userId: String
-    
-    init(userId: String) {
+    var launchMode: Qonversion.LaunchMode
+
+    init(userId: String, launchMode: Qonversion.LaunchMode = .analytics) {
         self.userId = userId
+        self.launchMode = launchMode
     }
     
     func getUserId() -> String {

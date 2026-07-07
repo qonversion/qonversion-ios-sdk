@@ -15,10 +15,14 @@ final class QonversionAssembly {
     // The user gate is stateful (single-flight creation pipeline) — it must be
     // one instance SDK-wide, like InternalConfig.
     private var userManagerInstance: UserManagerInterface?
+
+    // Holds the in-memory products and mapping caches consumed by the local
+    // entitlements calculation — stateful, one instance SDK-wide.
+    private var productsManagerInstance: ProductsManager?
     
-    required init(apiKey: String, userDefaults: UserDefaults?) {
+    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics) {
         let userDefaults = userDefaults ?? UserDefaults.standard
-        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: ""))
+        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "", launchMode: launchMode))
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
 
@@ -60,6 +64,14 @@ final class QonversionAssembly {
     }
     
     func productsManager() -> ProductsManagerInterface {
+        return sharedProductsManager()
+    }
+
+    private func sharedProductsManager() -> ProductsManager {
+        if let productsManagerInstance {
+            return productsManagerInstance
+        }
+
         let productsService: ProductsServiceInterface = servicesAssembly.productsService()
         let storeKitFacade: StoreKitFacade = servicesAssembly.storeKitFacade()
         let localStorage: LocalStorageInterface = miscAssembly.localStorage()
@@ -67,10 +79,47 @@ final class QonversionAssembly {
         let productsManager = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, logger: logger)
         
         storeKitFacade.delegate = productsManager
+        productsManagerInstance = productsManager
         
         return productsManager
     }
     
+    func purchasesManager() -> PurchasesManagerInterface {
+        let purchasesService: PurchasesServiceInterface = servicesAssembly.purchasesService()
+        let storeKitFacade: StoreKitFacade = servicesAssembly.storeKitFacade()
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let purchasesManager = PurchasesManager(
+            purchasesService: purchasesService,
+            storeKitFacade: storeKitFacade,
+            userManager: userManager(),
+            entitlementsManager: entitlementsManager(),
+            userIdProvider: miscAssembly.internalConfig,
+            logger: logger
+        )
+
+        // Observed out-of-band transactions flow into the purchases manager.
+        storeKitFacade.delegate = purchasesManager
+
+        return purchasesManager
+    }
+
+    func entitlementsManager() -> EntitlementsManagerInterface {
+        let entitlementsService: EntitlementsServiceInterface = servicesAssembly.entitlementsService()
+        let storeKitFacade: StoreKitFacadeInterface = servicesAssembly.storeKitFacade()
+        let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+        let entitlementsManager = EntitlementsManager(
+            entitlementsService: entitlementsService,
+            storeKitFacade: storeKitFacade,
+            productsDataSource: sharedProductsManager(),
+            userManager: userManager(),
+            userIdProvider: miscAssembly.internalConfig,
+            localStorage: miscAssembly.localStorage(),
+            logger: logger
+        )
+
+        return entitlementsManager
+    }
+
     func remoteConfigManager() -> RemoteConfigManagerInterface {
         let remoteConfigService = servicesAssembly.remoteConfigService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()

@@ -132,6 +132,20 @@ final class StoreKitFacadeTests: XCTestCase {
         XCTAssertTrue(observer.updatedTransactions.isEmpty)
     }
 
+    // MARK: - Purchase
+
+    func testPurchaseThrowsWhenStoreProductCannotBeLoaded() async {
+        // The wrapper returns no products for the requested id.
+        do {
+            _ = try await facade.purchase(storeId: "unknown.product")
+            XCTFail("Expected purchase to throw when the store product cannot be loaded")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .storeProductsLoadingFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
     // MARK: - Continuation safety (SK1 products path)
 
     func testProductsAwaiterGetsErrorWhenFacadeDiesBeforeCompletion() async {
