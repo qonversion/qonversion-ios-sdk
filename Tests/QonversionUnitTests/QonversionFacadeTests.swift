@@ -136,4 +136,19 @@ final class QonversionFacadeTests: XCTestCase {
             XCTFail("Unexpected error type: \(error)")
         }
     }
+
+    // MARK: - assembly graph
+
+    func testAssemblySharesTheProductsManagerInstance() {
+        // The entitlements manager consumes the products manager's IN-MEMORY
+        // caches (loaded products, mapping) for the local entitlements
+        // calculation — a second instance would see empty memory and silently
+        // degrade the fallback to cached-entitlements-only.
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+
+        let first = assembly.productsManager() as AnyObject
+        let second = assembly.productsManager() as AnyObject
+
+        XCTAssertTrue(first === second)
+    }
 }

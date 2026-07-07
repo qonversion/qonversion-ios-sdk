@@ -13,7 +13,7 @@ extension Qonversion {
     /// behavior) and the purchase still succeeds for the integrator.
     public struct PurchaseResult {
 
-        /// The verified store transaction.
+        /// The purchase transaction that was verified by the store.
         public let transaction: Qonversion.Transaction
 
         /// The user's entitlements keyed by entitlement id.

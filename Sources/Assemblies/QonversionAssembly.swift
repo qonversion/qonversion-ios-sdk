@@ -15,6 +15,10 @@ final class QonversionAssembly {
     // The user gate is stateful (single-flight creation pipeline) — it must be
     // one instance SDK-wide, like InternalConfig.
     private var userManagerInstance: UserManagerInterface?
+
+    // Holds the in-memory products and mapping caches consumed by the local
+    // entitlements calculation — stateful, one instance SDK-wide.
+    private var productsManagerInstance: ProductsManagerInterface?
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics) {
         let userDefaults = userDefaults ?? UserDefaults.standard
@@ -60,6 +64,10 @@ final class QonversionAssembly {
     }
     
     func productsManager() -> ProductsManagerInterface {
+        if let productsManagerInstance {
+            return productsManagerInstance
+        }
+
         let productsService: ProductsServiceInterface = servicesAssembly.productsService()
         let storeKitFacade: StoreKitFacade = servicesAssembly.storeKitFacade()
         let localStorage: LocalStorageInterface = miscAssembly.localStorage()
@@ -67,6 +75,7 @@ final class QonversionAssembly {
         let productsManager = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, logger: logger)
         
         storeKitFacade.delegate = productsManager
+        productsManagerInstance = productsManager
         
         return productsManager
     }
