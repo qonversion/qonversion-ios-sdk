@@ -23,7 +23,7 @@ public final class Qonversion {
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
     @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
-        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode)
+        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL)
         Qonversion.shared.userManager = assembly.userManager()
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
