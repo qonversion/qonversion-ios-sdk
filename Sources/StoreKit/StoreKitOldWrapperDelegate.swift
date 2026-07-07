@@ -7,7 +7,7 @@
 
 import StoreKit
 
-protocol StoreKitOldWrapperDelegate {
+protocol StoreKitOldWrapperDelegate: AnyObject {
     
     func handle(productsResponse: SKProductsResponse)
     func handle(restoreTransactionsError: Error)

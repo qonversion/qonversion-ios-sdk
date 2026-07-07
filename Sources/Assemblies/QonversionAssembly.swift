@@ -9,7 +9,7 @@ import Foundation
 
 final class QonversionAssembly {
     
-    private let servicesAssembly: ServicesAssembly
+    let servicesAssembly: ServicesAssembly
     private let miscAssembly: MiscAssembly
 
     // The user gate is stateful (single-flight creation pipeline) — it must be
@@ -23,6 +23,11 @@ final class QonversionAssembly {
     // Holds the in-memory per-context-key remote config cache — stateful,
     // one instance SDK-wide.
     private var remoteConfigManagerInstance: RemoteConfigManager?
+
+
+    // Holds the transaction reports dedup gate and the update streams —
+    // stateful, one instance SDK-wide.
+    private var purchasesManagerInstance: PurchasesManager?
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month) {
         let userDefaults = userDefaults ?? UserDefaults.standard
@@ -89,7 +94,6 @@ final class QonversionAssembly {
         
         let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
 
-        storeKitFacade.delegate = productsManager
         productsManagerInstance = productsManager
         userChangesNotifier.add(observer: productsManager)
 
@@ -97,6 +101,10 @@ final class QonversionAssembly {
     }
     
     func purchasesManager() -> PurchasesManagerInterface {
+        if let purchasesManagerInstance {
+            return purchasesManagerInstance
+        }
+
         let purchasesService: PurchasesServiceInterface = servicesAssembly.purchasesService()
         let storeKitFacade: StoreKitFacade = servicesAssembly.storeKitFacade()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
@@ -110,8 +118,10 @@ final class QonversionAssembly {
             logger: logger
         )
 
-        // Observed out-of-band transactions flow into the purchases manager.
+        // Observed out-of-band transactions and promo intents flow into the
+        // purchases manager.
         storeKitFacade.delegate = purchasesManager
+        purchasesManagerInstance = purchasesManager
 
         return purchasesManager
     }

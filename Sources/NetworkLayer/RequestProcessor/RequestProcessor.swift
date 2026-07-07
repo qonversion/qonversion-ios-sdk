@@ -29,18 +29,24 @@ class RequestProcessor: RequestProcessorInterface {
         self.rateLimiter = rateLimiter
     }
 
-    /// Resends requests that failed on transport in previous sessions.
-    /// Requests failing on transport again go back to the storage; an HTTP
-    /// answer of any status counts as delivered (resending would duplicate).
+    /// Resends requests that failed on transport in previous sessions. A
+    /// delivered request (an HTTP answer of any status — resending would
+    /// duplicate) is removed from the queue one by one; a transport failure
+    /// keeps it for the next session. A latched critical error (revoked
+    /// project key) stops the replay.
     func processStoredRequests() {
+        guard criticalError == nil else { return }
+
         let requests: [StoredRequest] = requestsStorage.fetchRequests()
         guard !requests.isEmpty else { return }
 
-        requestsStorage.clean()
-
         Task { [weak self] in
             for stored in requests {
-                guard let self, let url = URL(string: stored.url) else { continue }
+                guard let self, self.criticalError == nil else { return }
+                guard let url = URL(string: stored.url) else {
+                    self.requestsStorage.remove(stored)
+                    continue
+                }
 
                 var urlRequest = URLRequest(url: url)
                 urlRequest.httpMethod = stored.method
@@ -48,9 +54,15 @@ class RequestProcessor: RequestProcessorInterface {
                 self.headersBuilder.addHeaders(to: &urlRequest)
 
                 do {
-                    _ = try await self.networkProvider.send(request: urlRequest)
+                    let (data, urlResponse) = try await self.networkProvider.send(request: urlRequest)
+                    self.requestsStorage.remove(stored)
+
+                    if let error = self.errorHandler.extractError(from: urlResponse, body: data), error.type == .critical {
+                        self.criticalError = error
+                        return
+                    }
                 } catch {
-                    self.requestsStorage.append(stored)
+                    // Kept in the queue for the next session.
                 }
             }
         }
@@ -85,7 +97,8 @@ class RequestProcessor: RequestProcessorInterface {
                 requestsStorage.append(StoredRequest(
                     url: urlRequest.url?.absoluteString ?? "",
                     method: urlRequest.httpMethod ?? "POST",
-                    body: urlRequest.httpBody
+                    body: urlRequest.httpBody,
+                    dedupKey: request.replayDedupKey
                 ))
             }
             throw QonversionError(type: .invalidResponse, error: error)

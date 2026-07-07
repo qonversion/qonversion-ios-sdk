@@ -139,14 +139,3 @@ extension ProductsManager: UserChangedObserver {
     }
 }
 
-// MARK: - StoreKitFacadeDelegate
-
-extension ProductsManager: StoreKitFacadeDelegate {
-    
-    @available(iOS 16.4, macOS 14.4, *)
-    func promoPurchaseIntent(product: Product) {
-        #warning("Add promo purchase logic")
-    }
-    
-    
-}

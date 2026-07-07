@@ -126,7 +126,9 @@ final class PurchasesServiceTests: XCTestCase {
         XCTAssertEqual(userId, "QON_buyer")
         XCTAssertEqual(offerId, "offer1")
         XCTAssertEqual(body["product"] as? String, "com.app.pro")
-        XCTAssertEqual(body["app_account_token"] as? String, "QON_buyer")
+        // The token participates in the signed payload and must match the
+        // purchase, which sets no appAccountToken — so it stays empty.
+        XCTAssertEqual(body["app_account_token"] as? String, "")
         XCTAssertEqual(body["app_bundle_id"] as? String, "com.test.app")
 
         XCTAssertEqual(offer.offerId, "offer1")

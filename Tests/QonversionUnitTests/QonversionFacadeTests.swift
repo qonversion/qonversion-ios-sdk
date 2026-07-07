@@ -163,6 +163,31 @@ final class QonversionFacadeTests: XCTestCase {
         XCTAssertTrue(first === second)
     }
 
+    func testAssemblySharesThePurchasesManagerInstance() {
+        // The purchases manager holds the transaction reports dedup gate and
+        // the update streams — a second instance would split them.
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+
+        let first = assembly.purchasesManager() as AnyObject
+        let second = assembly.purchasesManager() as AnyObject
+
+        XCTAssertTrue(first === second)
+    }
+
+    func testAssemblySharesTheStoreKitFacadeAndItsDelegateIsThePurchasesManager() {
+        // One facade SDK-wide: a single loaded-products cache and a single
+        // delegate — the purchases manager, which consumes observed
+        // transactions and promo intents.
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+
+        let purchasesManager = assembly.purchasesManager()
+        _ = assembly.productsManager()
+
+        let facade = assembly.servicesAssembly.storeKitFacade()
+        XCTAssertTrue(facade === assembly.servicesAssembly.storeKitFacade())
+        XCTAssertTrue(facade.delegate === (purchasesManager as? PurchasesManager))
+    }
+
     func testLogoutClearsUserScopedCachesAcrossAssembly() async {
         // End-to-end wiring: the user gate must reach the caches created by
         // the assembly, no matter the creation order.

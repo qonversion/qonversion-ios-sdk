@@ -75,7 +75,7 @@ final class RequestProcessorTests: XCTestCase {
     // MARK: - offline replay
 
     func testInitDoesNotTouchStoredRequests() {
-        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil))
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil, dedupKey: nil))
 
         _ = makeProcessor()
 
@@ -84,32 +84,45 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertTrue(networkProvider.sentRequests.isEmpty)
     }
 
-    func testProcessStoredRequestsResendsWithFreshHeadersAndCleans() async {
+    func testProcessStoredRequestsResendsWithFreshHeadersAndRemovesDeliveredOnes() async {
         let body = Data("{\"price\": \"9.99\"}".utf8)
-        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: body))
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: body, dedupKey: nil))
         let processor = makeProcessor()
 
         processor.processStoredRequests()
 
-        await waitUntil { self.networkProvider.sentRequests.count >= 1 }
+        await waitUntil { self.networkProvider.sentRequests.count >= 1 && self.requestsStorage.fetchRequests().isEmpty }
         let resent = networkProvider.sentRequests.first
         XCTAssertEqual(resent?.url?.absoluteString, "https://api.qonversion.io/v3/users/u/purchases")
         XCTAssertEqual(resent?.httpMethod, "POST")
         XCTAssertEqual(resent?.httpBody, body)
         XCTAssertEqual(resent?.value(forHTTPHeaderField: "X-Test-Header"), "test", "headers are rebuilt fresh on resend")
-        XCTAssertEqual(requestsStorage.cleanCallsCount, 1)
-        XCTAssertTrue(requestsStorage.fetchRequests().isEmpty)
+        XCTAssertTrue(requestsStorage.fetchRequests().isEmpty, "a delivered request is removed from the queue")
     }
 
     func testProcessStoredRequestsKeepsRequestForNextSessionOnTransportFailure() async {
-        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil))
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil, dedupKey: nil))
         networkProvider.error = URLError(.notConnectedToInternet)
         let processor = makeProcessor()
 
         processor.processStoredRequests()
 
-        await waitUntil { self.requestsStorage.fetchRequests().count >= 1 }
+        await waitUntil { self.networkProvider.sentRequests.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertEqual(requestsStorage.fetchRequests().map(\.url), ["https://api.qonversion.io/v3/users/u/purchases"])
+        XCTAssertEqual(requestsStorage.cleanCallsCount, 0, "the queue must not be dropped wholesale")
+    }
+
+    func testProcessStoredRequestsSkipsWhenCriticalErrorLatched() async {
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil, dedupKey: nil))
+        let processor = makeProcessor()
+        processor.criticalError = QonversionError(type: .critical)
+
+        processor.processStoredRequests()
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(networkProvider.sentRequests.isEmpty, "a revoked project key must stop the replay")
+        XCTAssertEqual(requestsStorage.fetchRequests().count, 1)
     }
 
     // MARK: - storing failed retriable requests
@@ -119,13 +132,26 @@ final class RequestProcessorTests: XCTestCase {
         let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
 
         _ = try? await processor.process(
-            request: .createPurchase(userId: "u", body: ["price": "9.99"]),
+            request: .createPurchase(userId: "u", body: ["price": "9.99", "app_store_data": ["transaction_id": "t1"] as RequestBodyDict]),
             responseType: EmptyApiResponse.self
         )
 
         XCTAssertEqual(requestsStorage.storedRequests.count, 1)
         XCTAssertEqual(requestsStorage.storedRequests.first?.url, "https://api.qonversion.io/v3/users/u/purchases")
         XCTAssertEqual(requestsStorage.storedRequests.first?.method, "POST")
+        XCTAssertEqual(requestsStorage.storedRequests.first?.dedupKey, "createPurchase-u-t1",
+                       "the transaction id keys the dedup so the same purchase never queues twice")
+    }
+
+    func testSamePurchaseFailingTwiceIsQueuedOnce() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let request = Request.createPurchase(userId: "u", body: ["price": "9.99", "app_store_data": ["transaction_id": "t1"] as RequestBodyDict])
+
+        _ = try? await processor.process(request: request, responseType: EmptyApiResponse.self)
+        _ = try? await processor.process(request: request, responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1)
     }
 
     func testTransportFailureOfNonRetriableRequestIsNotStored() async {

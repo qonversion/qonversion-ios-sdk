@@ -12,6 +12,9 @@ import Foundation
 /// the first subscriber (e.g. promo intents arriving before the host is ready).
 final class AsyncMulticast<Element> {
 
+    /// Bounds the no-subscriber backlog; the oldest values are dropped first.
+    static var maxPending: Int { 10 }
+
     private let buffersWhenNoSubscribers: Bool
     private let lock = NSLock()
     private var continuations: [UUID: AsyncStream<Element>.Continuation] = [:]
@@ -46,6 +49,9 @@ final class AsyncMulticast<Element> {
         let active = Array(continuations.values)
         if active.isEmpty && buffersWhenNoSubscribers {
             pending.append(element)
+            if pending.count > Self.maxPending {
+                pending.removeFirst(pending.count - Self.maxPending)
+            }
         }
         lock.unlock()
 

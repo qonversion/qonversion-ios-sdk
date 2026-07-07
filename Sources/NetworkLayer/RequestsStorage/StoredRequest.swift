@@ -12,4 +12,8 @@ struct StoredRequest: Codable, Equatable {
     let url: String
     let method: String
     let body: Data?
+
+    /// Identifies the payload (e.g. by transaction id) so the same failed
+    /// request never queues twice. Nil disables deduplication.
+    let dedupKey: String?
 }

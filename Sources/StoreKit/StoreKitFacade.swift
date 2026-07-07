@@ -13,7 +13,8 @@ class StoreKitFacade: StoreKitFacadeInterface {
     let storeKitOldWrapper: StoreKitOldWrapperInterface?
     let storeKitWrapper: StoreKitWrapperInterface?
     let storeKitMapper: StoreKitMapperInterface
-    var delegate: StoreKitFacadeDelegate?
+    // Weak: the delegate (purchases manager) holds the facade itself.
+    weak var delegate: StoreKitFacadeDelegate?
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     var loadedProducts: [String: StoreKit.Product]? { _loadedProducts as? [String: StoreKit.Product] }

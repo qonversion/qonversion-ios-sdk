@@ -38,6 +38,26 @@ extension Request {
         case detachUserFromRemoteConfig
     }
 
+    /// Identifies the payload for the offline replay dedup: the same failed
+    /// purchase (by transaction id) or per-user device/attribution update
+    /// never queues twice.
+    var replayDedupKey: String? {
+        switch self {
+        case let .createPurchase(userId, _, body, _):
+            let appStoreData = body["app_store_data"] as? RequestBodyDict
+            let transactionId = appStoreData?["transaction_id"] as? String ?? ""
+            return "createPurchase-\(userId)-\(transactionId)"
+        case let .createDevice(userId, _, _, _):
+            return "createDevice-\(userId)"
+        case let .updateDevice(userId, _, _, _):
+            return "updateDevice-\(userId)"
+        case let .appleSearchAds(userId, _, _, _):
+            return "appleSearchAds-\(userId)"
+        default:
+            return nil
+        }
+    }
+
     var kind: Kind {
         switch self {
         case .getUser: return .getUser

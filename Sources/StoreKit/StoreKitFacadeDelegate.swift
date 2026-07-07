@@ -8,7 +8,7 @@
 import Foundation
 import StoreKit
 
-protocol StoreKitFacadeDelegate {
+protocol StoreKitFacadeDelegate: AnyObject {
 
     @available(iOS 16.4, macOS 14.4, *)
     func promoPurchaseIntent(product: Product)

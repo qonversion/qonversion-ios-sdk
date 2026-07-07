@@ -18,8 +18,8 @@ final class RequestsStorageTests: XCTestCase {
         RequestsStorage(userDefaults: defaults, storeKey: storeKey)
     }
 
-    private func makeRequest(url: String = "https://api.qonversion.io/v3/users/u/purchases", body: Data? = Data("{\"price\": \"9.99\"}".utf8)) -> StoredRequest {
-        StoredRequest(url: url, method: "POST", body: body)
+    private func makeRequest(url: String = "https://api.qonversion.io/v3/users/u/purchases", body: Data? = Data("{\"price\": \"9.99\"}".utf8), dedupKey: String? = nil) -> StoredRequest {
+        StoredRequest(url: url, method: "POST", body: body, dedupKey: dedupKey)
     }
 
     func testFetchRequestsOnEmptyStorageReturnsEmptyArray() {
@@ -62,6 +62,38 @@ final class RequestsStorageTests: XCTestCase {
         XCTAssertEqual(fetched.count, RequestsStorage.maxStoredRequests)
         XCTAssertEqual(fetched.first?.url, "https://request-5", "the oldest requests are dropped first")
         XCTAssertEqual(fetched.last?.url, "https://request-\(RequestsStorage.maxStoredRequests + 4)")
+    }
+
+    func testAppendSkipsDuplicateDedupKey() {
+        // The same purchase failing twice must not queue twice.
+        let storage = makeStorage(TestDefaults.makeIsolated())
+
+        storage.append(makeRequest(dedupKey: "createPurchase-u-t1"))
+        storage.append(makeRequest(body: Data("{\"other\": true}".utf8), dedupKey: "createPurchase-u-t1"))
+        storage.append(makeRequest(dedupKey: "createPurchase-u-t2"))
+
+        XCTAssertEqual(storage.fetchRequests().compactMap(\.dedupKey), ["createPurchase-u-t1", "createPurchase-u-t2"])
+    }
+
+    func testAppendWithoutDedupKeyIsNeverDeduplicated() {
+        let storage = makeStorage(TestDefaults.makeIsolated())
+
+        storage.append(makeRequest())
+        storage.append(makeRequest())
+
+        XCTAssertEqual(storage.fetchRequests().count, 2)
+    }
+
+    func testRemoveDeletesTheGivenRequestOnly() {
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        let first = makeRequest(url: "https://a", dedupKey: "k1")
+        let second = makeRequest(url: "https://b", dedupKey: "k2")
+        storage.append(first)
+        storage.append(second)
+
+        storage.remove(first)
+
+        XCTAssertEqual(storage.fetchRequests().map(\.url), ["https://b"])
     }
 
     func testCleanRemovesEverything() {

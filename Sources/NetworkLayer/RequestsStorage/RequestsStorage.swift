@@ -25,11 +25,27 @@ class RequestsStorage: RequestsStorageInterface {
 
     func append(_ request: StoredRequest) {
         var requests: [StoredRequest] = fetchRequests()
+        if let dedupKey = request.dedupKey, requests.contains(where: { $0.dedupKey == dedupKey }) {
+            return
+        }
+
         requests.append(request)
         if requests.count > Self.maxStoredRequests {
             requests.removeFirst(requests.count - Self.maxStoredRequests)
         }
 
+        persist(requests)
+    }
+
+    func remove(_ request: StoredRequest) {
+        var requests: [StoredRequest] = fetchRequests()
+        guard let index = requests.firstIndex(of: request) else { return }
+
+        requests.remove(at: index)
+        persist(requests)
+    }
+
+    private func persist(_ requests: [StoredRequest]) {
         guard let data = try? encoder.encode(requests) else { return }
         userDefaults.set(data, forKey: storeKey)
     }

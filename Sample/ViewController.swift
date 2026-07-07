@@ -16,6 +16,8 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
 
+        subscribeToUpdates()
+
         let actions: [(String, () -> Void)] = [
             ("Products", { self.run { try await self.loadProducts() } }),
             ("Entitlements", { self.run { try await self.checkEntitlements() } }),
@@ -54,6 +56,28 @@ class ViewController: UIViewController {
             rootStack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             rootStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
         ])
+    }
+
+    private func subscribeToUpdates() {
+        // Entitlements refreshed by out-of-band transactions (Ask to Buy
+        // approvals, renewals, purchases on other devices).
+        Task {
+            for await entitlements in Qonversion.shared.entitlementsUpdates {
+                self.show("Entitlements updated:\n" + self.format(entitlements))
+            }
+        }
+
+        // Purchases promoted in the App Store.
+        Task {
+            for await intent in Qonversion.shared.promoPurchaseIntents {
+                do {
+                    let result = try await intent.purchase()
+                    self.show("Promo purchase: \(result.transaction.productId)")
+                } catch {
+                    self.show("Promo purchase failed: \(error)")
+                }
+            }
+        }
     }
 
     // MARK: - Actions

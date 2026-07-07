@@ -101,7 +101,19 @@ final class PurchasesManager: PurchasesManagerInterface {
 
         do {
             for transaction in latest {
-                try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                // Skip transactions already reported this session (sweep,
+                // listener or purchase); the failed report releases the id.
+                if let id = transaction.id {
+                    guard await reportsGate.tryTake(id) else { continue }
+                }
+                do {
+                    try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                } catch {
+                    if let id = transaction.id {
+                        await reportsGate.release(id)
+                    }
+                    throw error
+                }
             }
         } catch {
             if error.allowsLocalEntitlementsFallback {

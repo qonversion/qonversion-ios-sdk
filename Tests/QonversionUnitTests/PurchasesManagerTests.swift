@@ -301,6 +301,29 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
     }
 
+    func testRestoredTransactionIsNotReReportedByTheListener() async throws {
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        _ = try await manager.restore()
+
+        manager.transactionUpdated(makeTransaction(id: "t1"))
+
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+    }
+
+    func testRestoreSkipsTransactionAlreadyReportedThisSession() async throws {
+        let transaction = makeTransaction(id: "t1")
+        manager.transactionUpdated(transaction)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        facade.restoreResult = [transaction]
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let entitlements = try await manager.restore()
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "the backend already has this transaction")
+        XCTAssertEqual(entitlements.keys.sorted(), ["premium"], "restore still returns entitlements")
+    }
+
     // MARK: - observed updates in subscription-management mode (Ask to Buy / renewals)
 
     func testObservedUpdateInSubscriptionManagementModeIsFinishedAfterAck() async {
@@ -417,6 +440,27 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
         XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"])
         XCTAssertEqual(result.entitlements.keys.sorted(), ["premium"])
+    }
+
+    func testIntentPurchaseIsOneShot() async throws {
+        facade.purchaseResult = makeTransaction(id: "t1", productId: "com.app.promo")
+        let collector = StreamCollector(manager.promoPurchaseIntents())
+        manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        let intent = try XCTUnwrap(received.first)
+        _ = try await intent.purchase()
+
+        do {
+            _ = try await intent.purchase()
+            XCTFail("Expected the second purchase() call to throw")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .promoPurchaseIntentAlreadyHandled)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
+        XCTAssertEqual(facade.purchasedStoreIds, ["com.app.promo"], "the flow must run exactly once")
     }
 
     func testIntentEmittedBeforeAnySubscriberIsDeliveredToTheFirstOne() async {

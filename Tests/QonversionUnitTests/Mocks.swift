@@ -126,7 +126,16 @@ final class MockRequestsStorage: RequestsStorageInterface {
     private(set) var cleanCallsCount = 0
 
     func append(_ request: StoredRequest) {
+        if let dedupKey = request.dedupKey, storedRequests.contains(where: { $0.dedupKey == dedupKey }) {
+            return
+        }
         storedRequests.append(request)
+    }
+
+    func remove(_ request: StoredRequest) {
+        if let index = storedRequests.firstIndex(of: request) {
+            storedRequests.remove(at: index)
+        }
     }
 
     func fetchRequests() -> [StoredRequest] {

@@ -78,9 +78,13 @@ final class PurchasesService: PurchasesServiceInterface {
     }
 
     func promotionalOffer(userId: String, offerId: String, productStoreId: String) async throws -> Qonversion.PromotionalOffer {
+        // The token is part of the payload the backend signs, and the App
+        // Store verifies it against the purchase's appAccountToken. The SDK
+        // sets no appAccountToken on purchases, so the signed token must be
+        // empty too — otherwise the store rejects the offer.
         let body: RequestBodyDict = [
             "product": productStoreId,
-            "app_account_token": userId,
+            "app_account_token": "",
             "app_bundle_id": appBundleId,
         ]
         let request = Request.signPromoOffer(userId: userId, offerId: offerId, body: body)
