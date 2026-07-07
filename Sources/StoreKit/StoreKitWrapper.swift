@@ -49,8 +49,22 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
         await storeKitTransaction.finish()
     }
 
-    func purchase(product: Product) async throws -> Qonversion.Transaction {
-        let result: Product.PurchaseResult = try await product.purchase()
+    func purchase(product: Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
+        var purchaseOptions: Set<Product.PurchaseOption> = []
+        if options.quantity > 1 {
+            purchaseOptions.insert(.quantity(options.quantity))
+        }
+        if let promoOffer = options.promoOffer {
+            purchaseOptions.insert(.promotionalOffer(
+                offerID: promoOffer.offerId,
+                keyID: promoOffer.keyId,
+                nonce: promoOffer.nonce,
+                signature: promoOffer.signature,
+                timestamp: promoOffer.timestamp
+            ))
+        }
+
+        let result: Product.PurchaseResult = try await product.purchase(options: purchaseOptions)
 
         let outcome: StoreKitPurchaseOutcome
         switch result {

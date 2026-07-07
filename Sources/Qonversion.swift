@@ -104,10 +104,10 @@ public final class Qonversion {
     /// - Returns: ``Qonversion/Qonversion/PurchaseResult`` with the verified
     ///   transaction and the user's entitlements.
     @discardableResult
-    public func purchase(_ product: Qonversion.Product) async throws -> Qonversion.PurchaseResult {
+    public func purchase(_ product: Qonversion.Product, options: Qonversion.PurchaseOptions? = nil) async throws -> Qonversion.PurchaseResult {
         guard let purchasesManager else { throw QonversionError.initializationError() }
 
-        return try await purchasesManager.purchase(product)
+        return try await purchasesManager.purchase(product, options: options)
     }
 
     /// Restores the user's purchases and returns the entitlements.

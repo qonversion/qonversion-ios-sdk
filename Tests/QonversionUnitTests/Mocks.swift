@@ -201,12 +201,14 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var purchaseResult: Qonversion.Transaction?
     var purchaseError: Error?
     private(set) var purchasedStoreIds: [String] = []
+    private(set) var purchasedOptions: [Qonversion.PurchaseOptions] = []
     private(set) var finishedTransactions: [Qonversion.Transaction] = []
     private(set) var startObservingCallsCount = 0
     private(set) var stopObservingCallsCount = 0
 
-    func purchase(storeId: String) async throws -> Qonversion.Transaction {
+    func purchase(storeId: String, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
         purchasedStoreIds.append(storeId)
+        purchasedOptions.append(options)
         if let purchaseError { throw purchaseError }
         guard let purchaseResult else { throw MockError.noStub }
         return purchaseResult
@@ -278,7 +280,7 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
         updatesContinuation?.finish()
     }
 
-    func purchase(product: StoreKit.Product) async throws -> Qonversion.Transaction {
+    func purchase(product: StoreKit.Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
         throw MockError.noStub
     }
 
@@ -532,10 +534,10 @@ final class MockPurchasesService: PurchasesServiceInterface {
 
     var error: Error?
     var onSend: (() async -> Void)?
-    private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String)] = []
+    private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] = []
 
-    func send(_ transaction: Qonversion.Transaction, userId: String) async throws {
-        sentTransactions.append((transaction, userId))
+    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
+        sentTransactions.append((transaction, userId, options))
         await onSend?()
         if let error { throw error }
     }

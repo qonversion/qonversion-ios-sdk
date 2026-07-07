@@ -13,7 +13,7 @@ protocol StoreKitFacadeInterface {
 
     /// Buys the store product with the given store id (loading it on demand)
     /// and returns the verified transaction carrying its jws proof.
-    func purchase(storeId: String) async throws -> Qonversion.Transaction
+    func purchase(storeId: String, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction
 
     func currentEntitlements() async -> [Qonversion.Transaction]
 
@@ -44,4 +44,11 @@ protocol StoreKitFacadeInterface {
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet()
     #endif
+}
+
+extension StoreKitFacadeInterface {
+
+    func purchase(storeId: String) async throws -> Qonversion.Transaction {
+        try await purchase(storeId: storeId, options: Qonversion.PurchaseOptions())
+    }
 }

@@ -11,7 +11,7 @@ protocol PurchasesManagerInterface {
     /// (through the user gate) and finishes the transaction only after the
     /// backend confirms. Returns the verified transaction.
     @discardableResult
-    func purchase(_ product: Qonversion.Product) async throws -> Qonversion.PurchaseResult
+    func purchase(_ product: Qonversion.Product, options: Qonversion.PurchaseOptions?) async throws -> Qonversion.PurchaseResult
 
     /// Restores the user's purchases: syncs with the store, reports the
     /// latest transaction of every product and returns the entitlements.
@@ -29,4 +29,12 @@ protocol PurchasesManagerInterface {
     /// mode, where the host app owns the transaction lifecycle. Deduplicated
     /// against the transaction updates listener.
     func processUnfinishedTransactions() async
+}
+
+extension PurchasesManagerInterface {
+
+    @discardableResult
+    func purchase(_ product: Qonversion.Product) async throws -> Qonversion.PurchaseResult {
+        try await purchase(product, options: nil)
+    }
 }

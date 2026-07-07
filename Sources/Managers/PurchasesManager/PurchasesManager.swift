@@ -37,14 +37,14 @@ final class PurchasesManager: PurchasesManagerInterface {
     }
 
     @discardableResult
-    func purchase(_ product: Qonversion.Product) async throws -> Qonversion.PurchaseResult {
+    func purchase(_ product: Qonversion.Product, options: Qonversion.PurchaseOptions?) async throws -> Qonversion.PurchaseResult {
         // The backend user must exist before the purchase is reported.
         _ = try await userManager.obtainUser()
 
-        let transaction = try await storeKitFacade.purchase(storeId: product.storeId)
+        let transaction = try await storeKitFacade.purchase(storeId: product.storeId, options: options ?? Qonversion.PurchaseOptions())
 
         do {
-            try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+            try await purchasesService.send(transaction, userId: userIdProvider.getUserId(), options: options)
         } catch {
             // Production fault tolerance: when the backend is unreachable the
             // purchase still succeeds with locally calculated entitlements.

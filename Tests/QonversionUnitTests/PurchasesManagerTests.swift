@@ -110,6 +110,37 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.finishedTransactions.count, 1)
     }
 
+    // MARK: - purchase options
+
+    func testPurchaseForwardsOptionsToStoreAndReport() async throws {
+        facade.purchaseResult = makeTransaction(id: "t1")
+        let options = Qonversion.PurchaseOptions(quantity: 2, contextKeys: ["main"], screenUid: "screen_1")
+
+        _ = try await manager.purchase(makeProduct(storeId: "com.app.pro"), options: options)
+
+        XCTAssertEqual(facade.purchasedOptions.count, 1)
+        XCTAssertEqual(facade.purchasedOptions.first?.quantity, 2)
+        XCTAssertEqual(service.sentTransactions.first?.options?.contextKeys, ["main"])
+        XCTAssertEqual(service.sentTransactions.first?.options?.screenUid, "screen_1")
+    }
+
+    func testPurchaseWithoutOptionsReportsWithoutOptions() async throws {
+        facade.purchaseResult = makeTransaction(id: "t1")
+
+        _ = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(facade.purchasedOptions.first?.quantity, 1)
+        XCTAssertNil(service.sentTransactions.first?.options ?? nil)
+    }
+
+    func testRestoreReportsWithoutOptions() async throws {
+        facade.restoreResult = [makeTransaction(id: "t1")]
+
+        _ = try await manager.restore()
+
+        XCTAssertNil(service.sentTransactions.first?.options ?? nil)
+    }
+
     // MARK: - purchase fault tolerance (production behavior)
 
     func testEligibleReportFailureSucceedsWithLocalEntitlementsAndNoFinish() async throws {
