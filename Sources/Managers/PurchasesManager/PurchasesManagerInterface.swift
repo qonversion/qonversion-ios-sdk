@@ -8,9 +8,10 @@ import StoreKit
 
 protocol PurchasesManagerInterface: AnyObject {
 
-    /// Notified with fresh entitlements after the SDK processes an observed
-    /// transaction in subscription-management mode. Held weakly.
-    var entitlementsUpdateListener: Qonversion.EntitlementsUpdateListener? { get set }
+    /// A stream of entitlements refreshed after the SDK processes an observed
+    /// transaction in subscription-management mode. Every call returns an
+    /// independent stream.
+    func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]>
 
     /// Decides whether an App Store promoted purchase proceeds. Held weakly.
     var promoPurchasesDelegate: Qonversion.PromoPurchasesDelegate? { get set }

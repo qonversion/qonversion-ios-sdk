@@ -138,12 +138,16 @@ public final class Qonversion {
         purchasesManager?.promoPurchasesDelegate = delegate
     }
 
-    /// Sets the listener notified with fresh entitlements after the SDK
-    /// processes an out-of-band transaction in subscription-management mode
-    /// (Ask to Buy approvals, renewals, purchases on other devices).
-    /// The listener is held weakly.
-    public func setEntitlementsUpdateListener(_ listener: EntitlementsUpdateListener) {
-        purchasesManager?.entitlementsUpdateListener = listener
+    /// A stream of entitlements refreshed after the SDK processes an
+    /// out-of-band transaction in subscription-management mode (Ask to Buy
+    /// approvals, renewals, purchases on other devices). Like StoreKit's
+    /// `Transaction.updates`, every access returns an independent stream:
+    ///
+    ///     for await entitlements in Qonversion.shared.entitlementsUpdates { ... }
+    public var entitlementsUpdates: AsyncStream<[String: Qonversion.Entitlement]> {
+        guard let purchasesManager else { return AsyncStream { $0.finish() } }
+
+        return purchasesManager.entitlementsUpdates()
     }
 
     /// Restores the user's purchases and returns the entitlements.

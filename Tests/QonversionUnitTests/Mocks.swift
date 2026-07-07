@@ -541,13 +541,6 @@ final class MockUserManager: UserManagerInterface {
     }
 }
 
-final class MockEntitlementsUpdateListener: Qonversion.EntitlementsUpdateListener {
-    private(set) var receivedEntitlements: [[String: Qonversion.Entitlement]] = []
-    func didReceiveUpdatedEntitlements(_ entitlements: [String: Qonversion.Entitlement]) {
-        receivedEntitlements.append(entitlements)
-    }
-}
-
 final class MockPromoPurchasesDelegate: Qonversion.PromoPurchasesDelegate {
     var shouldPurchase = false
     private(set) var askedProductIds: [String] = []

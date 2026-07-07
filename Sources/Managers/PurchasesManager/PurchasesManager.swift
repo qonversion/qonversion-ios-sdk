@@ -18,12 +18,16 @@ final class PurchasesManager: PurchasesManagerInterface {
 
     private let reportsGate = TransactionReportsGate()
 
-    /// Notified with fresh entitlements after the SDK processes an observed
+    /// Emits fresh entitlements after the SDK processes an observed
     /// transaction in subscription-management mode.
-    weak var entitlementsUpdateListener: Qonversion.EntitlementsUpdateListener?
+    private let entitlementsUpdatesMulticast = AsyncMulticast<[String: Qonversion.Entitlement]>()
 
     /// Decides whether an App Store promoted purchase proceeds. Held weakly.
     weak var promoPurchasesDelegate: Qonversion.PromoPurchasesDelegate?
+
+    func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
+        return entitlementsUpdatesMulticast.stream()
+    }
 
     init(
         purchasesService: PurchasesServiceInterface,
@@ -211,8 +215,8 @@ extension PurchasesManager: StoreKitFacadeDelegate {
         // Out-of-band update (renewal, refund, Ask to Buy approval, another
         // device). In Analytics mode it is only reported — the host app owns
         // the lifecycle. In subscription-management mode the SDK owns it:
-        // finish after the backend ack and hand fresh entitlements to the
-        // listener.
+        // finish after the backend ack and emit fresh entitlements to the
+        // update streams.
         Task { [weak self] in
             guard let self else { return }
             // Transactions without a store id (degraded SK1 mapping) cannot be
@@ -241,7 +245,7 @@ extension PurchasesManager: StoreKitFacadeDelegate {
             } else {
                 entitlements = await self.entitlementsManager.localFallbackEntitlements(for: [transaction])
             }
-            self.entitlementsUpdateListener?.didReceiveUpdatedEntitlements(entitlements)
+            self.entitlementsUpdatesMulticast.yield(entitlements)
         }
     }
 }

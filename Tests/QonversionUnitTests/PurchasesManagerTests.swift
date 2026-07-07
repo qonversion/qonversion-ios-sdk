@@ -80,6 +80,13 @@ final class PurchasesManagerTests: XCTestCase {
         }
     }
 
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () async -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while await !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
     // MARK: - purchase happy path
 
     func testPurchaseGoesGateStorePurchaseReportFinishAndReturnsEntitlements() async throws {
@@ -310,42 +317,62 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.finishedTransactions.map(\.id), ["u1"], "in subscription-management mode the SDK owns the lifecycle")
     }
 
-    func testObservedUpdateInSubscriptionManagementModeNotifiesEntitlementsListener() async {
+    func testObservedUpdateInSubscriptionManagementModeEmitsUpdatedEntitlements() async {
         manager = makeManager(launchMode: .subscriptionManagement)
-        let listener = MockEntitlementsUpdateListener()
-        manager.entitlementsUpdateListener = listener
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
 
         manager.transactionUpdated(makeTransaction(id: "u1"))
 
-        await waitUntil { !listener.receivedEntitlements.isEmpty }
-        XCTAssertEqual(listener.receivedEntitlements.first?.keys.sorted(), ["premium"])
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.keys.sorted(), ["premium"])
+    }
+
+    func testEveryEntitlementsUpdatesStreamReceivesTheUpdate() async {
+        // Transaction.updates style: each access is an independent stream.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let first = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
+        let second = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil {
+            let firstEmpty = await first.received.isEmpty
+            let secondEmpty = await second.received.isEmpty
+            return !firstEmpty && !secondEmpty
+        }
+        let firstReceived = await first.received
+        let secondReceived = await second.received
+        XCTAssertEqual(firstReceived.count, 1)
+        XCTAssertEqual(secondReceived.count, 1)
     }
 
     func testObservedUpdateReportFailureInSubscriptionManagementModeLeavesTransactionUnfinished() async {
         manager = makeManager(launchMode: .subscriptionManagement)
-        let listener = MockEntitlementsUpdateListener()
-        manager.entitlementsUpdateListener = listener
         service.error = MockError.stubbed
+        let collector = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
 
         manager.transactionUpdated(makeTransaction(id: "u1"))
 
         await waitUntil { self.service.sentTransactions.count >= 1 }
         try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
-        XCTAssertTrue(listener.receivedEntitlements.isEmpty)
+        let received = await collector.received
+        XCTAssertTrue(received.isEmpty)
     }
 
-    func testObservedUpdateInAnalyticsModeDoesNotNotifyEntitlementsListener() async {
-        let listener = MockEntitlementsUpdateListener()
-        manager.entitlementsUpdateListener = listener
+    func testObservedUpdateInAnalyticsModeDoesNotEmitEntitlements() async {
+        let collector = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
 
         manager.transactionUpdated(makeTransaction(id: "u1"))
 
         await waitUntil { self.service.sentTransactions.count >= 1 }
         try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
-        XCTAssertTrue(listener.receivedEntitlements.isEmpty)
+        let received = await collector.received
+        XCTAssertTrue(received.isEmpty)
     }
 
     // MARK: - promotional offer signature
@@ -551,5 +578,28 @@ final class PurchasesManagerTests: XCTestCase {
         await manager.processUnfinishedTransactions()
 
         XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+    }
+}
+
+/// Collects everything an entitlements-updates stream emits.
+private actor EntitlementsUpdatesCollector {
+
+    private(set) var received: [[String: Qonversion.Entitlement]] = []
+    private var task: Task<Void, Never>?
+
+    init(_ stream: AsyncStream<[String: Qonversion.Entitlement]>) {
+        Task { await start(stream) }
+    }
+
+    private func start(_ stream: AsyncStream<[String: Qonversion.Entitlement]>) {
+        task = Task {
+            for await entitlements in stream {
+                append(entitlements)
+            }
+        }
+    }
+
+    private func append(_ entitlements: [String: Qonversion.Entitlement]) {
+        received.append(entitlements)
     }
 }
