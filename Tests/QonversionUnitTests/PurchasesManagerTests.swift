@@ -348,6 +348,41 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(listener.receivedEntitlements.isEmpty)
     }
 
+    // MARK: - promoted purchases (App Store promo intents)
+
+    func testPromoIntentRunsFullPurchaseFlowWhenDelegateApproves() async {
+        let delegate = MockPromoPurchasesDelegate()
+        delegate.shouldPurchase = true
+        manager.promoPurchasesDelegate = delegate
+        facade.purchaseResult = makeTransaction(id: "t1", productId: "com.app.promo")
+
+        await manager.processPromoPurchaseIntent(storeProductId: "com.app.promo")
+
+        XCTAssertEqual(delegate.askedProductIds, ["com.app.promo"])
+        XCTAssertEqual(facade.purchasedStoreIds, ["com.app.promo"])
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"])
+    }
+
+    func testPromoIntentDoesNothingWhenDelegateDeclines() async {
+        let delegate = MockPromoPurchasesDelegate()
+        delegate.shouldPurchase = false
+        manager.promoPurchasesDelegate = delegate
+
+        await manager.processPromoPurchaseIntent(storeProductId: "com.app.promo")
+
+        XCTAssertEqual(delegate.askedProductIds, ["com.app.promo"])
+        XCTAssertTrue(facade.purchasedStoreIds.isEmpty)
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
+    func testPromoIntentWithoutDelegateDefersThePurchase() async {
+        await manager.processPromoPurchaseIntent(storeProductId: "com.app.promo")
+
+        XCTAssertTrue(facade.purchasedStoreIds.isEmpty)
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
     // MARK: - handlePurchases (analytics ingestion)
 
     func testHandleTransactionsReportsEachThroughGateAndNeverFinishes() async {

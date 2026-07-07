@@ -157,6 +157,12 @@ class StoreKitFacade: StoreKitFacadeInterface {
                 self.delegate?.transactionUpdated(transaction)
             }
         }
+
+        // Promoted-purchase intents flow to the delegate through the same
+        // observation entry point.
+        if #available(iOS 16.4, macOS 14.4, *) {
+            storeKitWrapper.subscribeToPromoPurchases()
+        }
     }
 
     func stopObservingTransactionUpdates() {

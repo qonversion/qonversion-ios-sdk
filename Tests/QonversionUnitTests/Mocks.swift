@@ -303,6 +303,11 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
 
     func fetchUnfinished() async -> [Qonversion.Transaction] { fetchUnfinishedResult }
 
+    private(set) var subscribeToPromoPurchasesCallsCount = 0
+    func subscribeToPromoPurchases() {
+        subscribeToPromoPurchasesCallsCount += 1
+    }
+
     func finish(_ transaction: Qonversion.Transaction) async {
         finishedTransactions.append(transaction)
     }
@@ -539,6 +544,16 @@ final class MockEntitlementsUpdateListener: Qonversion.EntitlementsUpdateListene
     private(set) var receivedEntitlements: [[String: Qonversion.Entitlement]] = []
     func didReceiveUpdatedEntitlements(_ entitlements: [String: Qonversion.Entitlement]) {
         receivedEntitlements.append(entitlements)
+    }
+}
+
+final class MockPromoPurchasesDelegate: Qonversion.PromoPurchasesDelegate {
+    var shouldPurchase = false
+    private(set) var askedProductIds: [String] = []
+
+    func shouldPurchasePromoProduct(id: String) async -> Bool {
+        askedProductIds.append(id)
+        return shouldPurchase
     }
 }
 

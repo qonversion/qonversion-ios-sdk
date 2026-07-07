@@ -22,6 +22,9 @@ final class PurchasesManager: PurchasesManagerInterface {
     /// transaction in subscription-management mode.
     weak var entitlementsUpdateListener: Qonversion.EntitlementsUpdateListener?
 
+    /// Decides whether an App Store promoted purchase proceeds. Held weakly.
+    weak var promoPurchasesDelegate: Qonversion.PromoPurchasesDelegate?
+
     init(
         purchasesService: PurchasesServiceInterface,
         storeKitFacade: StoreKitFacadeInterface,
@@ -179,6 +182,23 @@ extension PurchasesManager: StoreKitFacadeDelegate {
 
     @available(iOS 16.4, macOS 14.4, *)
     func promoPurchaseIntent(product: Product) {
+        Task { [weak self] in
+            await self?.processPromoPurchaseIntent(storeProductId: product.id)
+        }
+    }
+
+    /// Asks the delegate and, when approved, runs the regular purchase flow
+    /// for the promoted store product. The report keys off the transaction's
+    /// store product id, so no Qonversion product mapping is required.
+    func processPromoPurchaseIntent(storeProductId: String) async {
+        guard let promoPurchasesDelegate else { return }
+        guard await promoPurchasesDelegate.shouldPurchasePromoProduct(id: storeProductId) else { return }
+
+        do {
+            _ = try await purchase(Qonversion.Product(qonversionId: storeProductId, storeId: storeProductId, offeringId: nil), options: nil)
+        } catch {
+            logger.error("Promoted purchase failed: " + error.message)
+        }
     }
 
     func transactionUpdated(_ transaction: Qonversion.Transaction) {

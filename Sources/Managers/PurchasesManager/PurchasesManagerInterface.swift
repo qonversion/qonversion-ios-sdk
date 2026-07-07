@@ -12,6 +12,9 @@ protocol PurchasesManagerInterface: AnyObject {
     /// transaction in subscription-management mode. Held weakly.
     var entitlementsUpdateListener: Qonversion.EntitlementsUpdateListener? { get set }
 
+    /// Decides whether an App Store promoted purchase proceeds. Held weakly.
+    var promoPurchasesDelegate: Qonversion.PromoPurchasesDelegate? { get set }
+
     /// Buys the product through the store, reports the purchase to the backend
     /// (through the user gate) and finishes the transaction only after the
     /// backend confirms. Returns the verified transaction.

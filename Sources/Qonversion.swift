@@ -122,6 +122,13 @@ public final class Qonversion {
         await purchasesManager.handle(purchasedTransactions: verificationResults)
     }
 
+    /// Sets the delegate deciding whether an App Store promoted purchase
+    /// proceeds. Without a delegate promoted purchases are deferred.
+    /// The delegate is held weakly.
+    public func setPromoPurchasesDelegate(_ delegate: PromoPurchasesDelegate) {
+        purchasesManager?.promoPurchasesDelegate = delegate
+    }
+
     /// Sets the listener notified with fresh entitlements after the SDK
     /// processes an out-of-band transaction in subscription-management mode
     /// (Ask to Buy approvals, renewals, purchases on other devices).
