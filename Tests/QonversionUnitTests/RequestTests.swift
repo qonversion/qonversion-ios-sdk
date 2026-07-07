@@ -202,23 +202,19 @@ final class RequestTests: XCTestCase {
 
     // MARK: - URL building style (string concatenation, no explicit percent-encoding)
 
-    func testUserIdWithSpaceIsAutoPercentEncodedByFoundation() throws {
-        // The URL is built by naive string concatenation without explicit percent-encoding.
-        // Fixates current behavior: on modern Foundation, URL(string:) auto-encodes invalid
-        // characters, so a userId containing a space silently becomes "%20" in the URL
-        // instead of failing (on older OS versions this would produce a nil URL request).
+    func testUserIdWithSpaceIsPercentEncoded() throws {
         let request = Request.getUser(id: "user with space").convertToURLRequest(baseURL)
         XCTAssertNotNil(request)
         XCTAssertEqual(request?.url?.absoluteString, "https://api.qonversion.io/v3/users/user%20with%20space")
     }
 
-    func testContextKeyIsNotPercentEncodedManually() throws {
-        // Fixates current behavior: query values are concatenated raw; "&" inside a context key
-        // is NOT escaped and silently corrupts the query into an extra parameter.
+    func testContextKeyIsPercentEncoded() throws {
+        // URL-significant characters in dynamic values must not corrupt the
+        // query structure.
         let request = try XCTUnwrap(
             Request.remoteConfig(userId: "u", contextKey: "a&b").convertToURLRequest(baseURL)
         )
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-config?user_id=u&context_key=a&b")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-config?user_id=u&context_key=a%26b")
     }
 
     // MARK: - Hashable
@@ -256,13 +252,12 @@ final class RequestTests: XCTestCase {
         )
     }
 
-    func testAttachUserToExperimentHashIgnoresGroupId() {
+    func testAttachUserToExperimentHashIncludesGroupId() {
         let a = Request.attachUserToExperiment(userId: "u", experimentId: "e", groupId: "group1")
         let b = Request.attachUserToExperiment(userId: "u", experimentId: "e", groupId: "group2")
-        // Fixates current behavior: hash(into:) for attachUserToExperiment does NOT combine
-        // groupId, so requests differing only in groupId get equal hashes while the
-        // synthesized == still treats them as different values.
-        XCTAssertEqual(a.hashValue, b.hashValue)
+        // hash must agree with the synthesized == : requests differing only in
+        // groupId are different values.
+        XCTAssertNotEqual(a.hashValue, b.hashValue)
         XCTAssertNotEqual(a, b)
     }
 }

@@ -8,6 +8,24 @@
 import XCTest
 @testable import Qonversion
 
+final class CacheDateRoundTripTests: XCTestCase {
+
+    func testUserCreationDateSurvivesTheCacheRoundTrip() throws {
+        // The cache encoder/decoder pair must share the date strategy —
+        // a mismatch shifts persisted dates by the 1970/2001 epoch offset.
+        let misc = MiscAssembly(apiKey: "key", userDefaults: TestDefaults.makeIsolated(), internalConfig: InternalConfig(userId: ""))
+        let user = try JSONDecoder.qonversionTest.decode(
+            Qonversion.User.self,
+            from: Data(#"{"id": "QON_u", "created": 1700000000, "environment": "production"}"#.utf8)
+        )
+
+        let encoded = try misc.encoder().encode(user)
+        let decoded = try misc.jsonDecoder().decode(Qonversion.User.self, from: encoded)
+
+        XCTAssertEqual(decoded.creationDate, user.creationDate)
+    }
+}
+
 final class LocalStorageTests: XCTestCase {
 
     private struct Payload: Codable, Equatable {

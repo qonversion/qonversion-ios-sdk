@@ -125,6 +125,54 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(requestsStorage.fetchRequests().count, 1)
     }
 
+    func testProcessStoredRequestsKeepsRequestOn5xx() async {
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil, dedupKey: nil))
+        networkProvider.response = makeHTTPResponse(statusCode: 503)
+        let processor = makeProcessor()
+
+        processor.processStoredRequests()
+
+        await waitUntil { self.networkProvider.sentRequests.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(requestsStorage.fetchRequests().count, 1, "the backend did not process the request — it must stay queued")
+    }
+
+    func testProcessStoredRequestsRemovesRequestOnPermanent4xx() async {
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil, dedupKey: nil))
+        networkProvider.response = makeHTTPResponse(statusCode: 400)
+        let processor = makeProcessor()
+
+        processor.processStoredRequests()
+
+        await waitUntil { self.requestsStorage.fetchRequests().isEmpty }
+        XCTAssertTrue(requestsStorage.fetchRequests().isEmpty, "a permanently rejected request must not loop forever")
+    }
+
+    func testServerErrorOnRetriableRequestIsStoredForReplay() async {
+        networkProvider.response = makeHTTPResponse(statusCode: 503)
+        errorHandler.errorToReturn = QonversionError(type: .internal)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+
+        _ = try? await processor.process(
+            request: .createPurchase(userId: "u", body: ["app_store_data": ["transaction_id": "t1"] as RequestBodyDict]),
+            responseType: EmptyApiResponse.self
+        )
+
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1, "5xx means the backend did not process the purchase")
+    }
+
+    func testPurchaseWithoutTransactionIdGetsNoDedupKey() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+
+        // Two DIFFERENT purchases, both without a transaction id.
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: ["price": "1"]), responseType: EmptyApiResponse.self)
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: ["price": "2"]), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.count, 2, "without a transaction id the dedup must not collapse distinct purchases")
+        XCTAssertNil(requestsStorage.storedRequests.first?.dedupKey ?? nil)
+    }
+
     // MARK: - storing failed retriable requests
 
     func testTransportFailureOfRetriableRequestIsStored() async {

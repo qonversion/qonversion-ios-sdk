@@ -12,6 +12,9 @@ import AdServices
 
 fileprivate enum Constants: Int {
     case sendPropertiesMinDelaySec = 5
+    // After this many failed attempts the batch stays in the storage but the
+    // scheduling stops; the next setProperty call re-triggers sending.
+    case sendPropertiesMaxRetries = 10
 }
 
 final class UserPropertiesManager : UserPropertiesManagerInterface {
@@ -26,6 +29,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     private var sendingTask: Task<Void, Error>? = nil
     private var sendPropertiesRetryDelay: Int = Constants.sendPropertiesMinDelaySec.rawValue
     private var sendPropertiesRetryCount: Int = 0
+    private var isSendingInProgress: Bool = false
     
     init(
         requestProcessor: RequestProcessorInterface,
@@ -93,6 +97,13 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     }
 
     func sendProperties() async throws {
+        // Single-flight: a batch already in flight covers the current storage
+        // snapshot; properties added meanwhile are picked up by the trailing
+        // reschedule below.
+        guard !isSendingInProgress else { return }
+        isSendingInProgress = true
+        defer { isSendingInProgress = false }
+
         if (sendingTask != nil) {
             sendingTask?.cancel()
             sendingTask = nil
@@ -112,12 +123,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
             retrySendingProperties()
             return
         }
-        
-        #warning("Fix body type to prevent extra serializations")
-        let body: RequestBodyArray = try properties.map { property in
-            let data = try JSONEncoder().encode(property)
-            return try JSONSerialization.jsonObject(with: data, options: []) as? RequestBodyDict
-        }
+
+        let body: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
         let request = Request.sendProperties(userId: userIdProvider.getUserId(), body: body)
         do {
             let result: SendUserPropertiesResult? = try await requestProcessor.process(request: request, responseType: SendUserPropertiesResult.self)
@@ -129,6 +136,11 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
             sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
             
             propertiesStorage.clear(properties: properties)
+
+            // Properties set while the batch was in flight.
+            if !propertiesStorage.all().isEmpty {
+                scheduleSendingProperties(withDelay: Constants.sendPropertiesMinDelaySec.rawValue)
+            }
         } catch {
             retrySendingProperties()
         }
@@ -165,7 +177,8 @@ extension UserPropertiesManager {
             do {
                 try await self.sendProperties()
             } catch {
-                #warning("Handle error correctly")
+                // sendProperties handles its own retries; anything reaching
+                // here is unexpected and must not crash the schedule chain.
                 self.logger.error("Failed to send user properties: \(error)")
             }
         }
@@ -173,6 +186,12 @@ extension UserPropertiesManager {
 
     private func retrySendingProperties() {
         sendPropertiesRetryCount += 1
+        guard sendPropertiesRetryCount <= Constants.sendPropertiesMaxRetries.rawValue else {
+            logger.error("Giving up sending user properties after \(Constants.sendPropertiesMaxRetries.rawValue) attempts; kept for the next trigger.")
+            sendPropertiesRetryCount = 0
+            sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
+            return
+        }
         sendPropertiesRetryDelay = delayCalculator.countDelay(minDelay: Constants.sendPropertiesMinDelaySec.rawValue, retriesCount: sendPropertiesRetryCount)
         scheduleSendingProperties(withDelay: sendPropertiesRetryDelay)
     }

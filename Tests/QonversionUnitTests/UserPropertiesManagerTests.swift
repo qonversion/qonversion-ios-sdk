@@ -8,6 +8,18 @@
 import XCTest
 @testable import Qonversion
 
+final class IncrementalDelayCalculatorClampTests: XCTestCase {
+
+    func testHugeRetryCountDoesNotCrashAndRespectsMaxDelay() {
+        let calculator = IncrementalDelayCalculator()
+
+        let delay = calculator.countDelay(minDelay: 5, retriesCount: 500)
+
+        XCTAssertLessThanOrEqual(delay, 1000)
+        XCTAssertGreaterThan(delay, 0)
+    }
+}
+
 final class UserPropertiesManagerTests: XCTestCase {
 
     private var requestProcessor: MockRequestProcessor!

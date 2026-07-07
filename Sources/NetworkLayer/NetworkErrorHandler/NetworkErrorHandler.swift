@@ -44,7 +44,8 @@ class NetworkErrorHandler: NetworkErrorHandlerInterface {
         if let additionalInfo {
             info = additionalInfo
         } else {
-            #warning("Don't forget to check the real value and remove this field if the result is useless")
+            // Fallback for bodies without the API error payload: at least the
+            // standard reason phrase for the status code.
             info[ErrorConstants.messageKey.rawValue] = HTTPURLResponse.localizedString(forStatusCode: response.statusCode)
         }
         info[ErrorConstants.statusCodeKey.rawValue] = response.statusCode

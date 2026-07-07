@@ -55,7 +55,14 @@ class RequestProcessor: RequestProcessorInterface {
 
                 do {
                     let (data, urlResponse) = try await self.networkProvider.send(request: urlRequest)
-                    self.requestsStorage.remove(stored)
+
+                    // 5xx/429 mean the backend did not process the request —
+                    // keep it queued. Everything else counts as delivered
+                    // (resending would duplicate) or permanently rejected.
+                    let statusCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
+                    if !Self.isRetriableStatusCode(statusCode) {
+                        self.requestsStorage.remove(stored)
+                    }
 
                     if let error = self.errorHandler.extractError(from: urlResponse, body: data), error.type == .critical {
                         self.criticalError = error
@@ -68,6 +75,10 @@ class RequestProcessor: RequestProcessorInterface {
         }
     }
     
+    static func isRetriableStatusCode(_ statusCode: Int) -> Bool {
+        return statusCode >= 500 || statusCode == 429
+    }
+
     func process<T>(request: Request, responseType: T.Type) async throws -> T where T : Decodable {
         if let error = criticalError {
             throw error
@@ -107,6 +118,17 @@ class RequestProcessor: RequestProcessorInterface {
         guard error == nil else {
             if error?.type == .critical {
                 criticalError = error
+            }
+
+            // The backend did not process the request (5xx/429) — persist
+            // retriable ones for the offline replay, like transport failures.
+            if Self.isRetriableStatusCode(responseCode) && retriableRequestKinds.contains(request.kind) {
+                requestsStorage.append(StoredRequest(
+                    url: urlRequest.url?.absoluteString ?? "",
+                    method: urlRequest.httpMethod ?? "POST",
+                    body: urlRequest.httpBody,
+                    dedupKey: request.replayDedupKey
+                ))
             }
 
             throw error!

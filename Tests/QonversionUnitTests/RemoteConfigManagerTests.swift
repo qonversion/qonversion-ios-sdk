@@ -177,6 +177,27 @@ final class RemoteConfigManagerTests: XCTestCase {
 
     // MARK: - User change
 
+    func testResponseForThePreviousUserIsNotCachedAfterUserChange() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "old-user-config")
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfig = { await gate.wait() }
+
+        // The load starts for the previous user and resolves after the switch.
+        async let staleLoad = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        manager.userDidChange()
+        await gate.open()
+        _ = try await staleLoad
+
+        // The next load must hit the service, not the stale cache.
+        remoteConfigService.onLoadRemoteConfig = nil
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "new-user-config")
+        let fresh = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(fresh.source.identifier, "new-user-config")
+        XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 2)
+    }
+
     func testUserDidChangeClearsCachedConfigs() async throws {
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
         _ = try await manager.loadRemoteConfig(contextKey: "main")
@@ -206,4 +227,29 @@ final class RemoteConfigManagerTests: XCTestCase {
             }
         }
     }
+}
+
+/// A reusable async gate: wait() suspends until open() is called.
+private actor ManagerGateStorage {
+    var isOpen = false
+    var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+private final class ManagerAsyncGate: @unchecked Sendable {
+    private let storage = ManagerGateStorage()
+    func open() async { await storage.open() }
+    func wait() async { await storage.wait() }
 }

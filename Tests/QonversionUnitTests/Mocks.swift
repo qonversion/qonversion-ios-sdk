@@ -36,10 +36,12 @@ final class MockRequestProcessor: RequestProcessorInterface {
     /// Stubbed results returned in order. Put decoded values of the expected response type here.
     var results: [Any] = []
     var error: Error?
+    var onProcess: (() async -> Void)?
     private(set) var processedRequests: [Request] = []
 
     func process<T>(request: Request, responseType: T.Type) async throws -> T where T: Decodable {
         processedRequests.append(request)
+        await onProcess?()
         if let error { throw error }
         guard !results.isEmpty else { throw MockError.noStub }
         let next = results.removeFirst()
@@ -401,8 +403,11 @@ final class MockRemoteConfigService: RemoteConfigServiceInterface {
     private(set) var attachedExperiments: [(id: String, groupId: String)] = []
     private(set) var detachedExperimentIds: [String] = []
 
+    var onLoadRemoteConfig: (() async -> Void)?
+
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
         loadRemoteConfigContextKeys.append(contextKey)
+        await onLoadRemoteConfig?()
         if let error { throw error }
         guard let remoteConfigResult else { throw MockError.noStub }
         return remoteConfigResult

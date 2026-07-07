@@ -28,6 +28,10 @@ actor UserManager: UserManagerInterface {
     private var cachedUser: Qonversion.User?
     private var pendingIdentityExternalId: String?
 
+    /// The in-flight identify: a call with the same external id joins it, a
+    /// call with a different id waits for it to settle and then runs its own.
+    private var identifyInFlight: (id: UUID, externalId: String, task: Task<Qonversion.User, Error>)?
+
     fileprivate struct PipelineOutcome {
         let user: Qonversion.User
         /// A pending-identity failure is delivered to the identify caller only;
@@ -52,17 +56,46 @@ actor UserManager: UserManagerInterface {
 
     @discardableResult
     func identify(_ externalId: String) async throws -> Qonversion.User {
+        while let inFlight = identifyInFlight {
+            if inFlight.externalId == externalId {
+                return try await inFlight.task.value
+            }
+            // A different id: let the in-flight one settle first, then re-check.
+            // The settled marker is cleared here as well — awaiting an
+            // already-finished task may not suspend, and waiting for the
+            // owner to clear it would livelock the actor.
+            _ = try? await inFlight.task.value
+            if identifyInFlight?.id == inFlight.id {
+                identifyInFlight = nil
+            }
+        }
+
+        let flightId = UUID()
+        // The branch decision and the pending-identity registration happen
+        // synchronously in THIS actor turn: a pipeline started by a concurrent
+        // obtainUser must not slip in without the pending identity.
+        let task: Task<Qonversion.User, Error>
         if existingUser() != nil && pipeline == nil {
-            return try await linkIdentity(externalId)
+            task = Task { try await self.linkIdentity(externalId) }
+        } else {
+            pendingIdentityExternalId = externalId
+            task = Task {
+                let outcome = try await self.runPipeline()
+                if let identityError = outcome.identityError {
+                    throw identityError
+                }
+                return await self.currentUser() ?? outcome.user
+            }
+        }
+        identifyInFlight = (flightId, externalId, task)
+
+        defer {
+            if identifyInFlight?.id == flightId {
+                identifyInFlight = nil
+            }
         }
 
-        pendingIdentityExternalId = externalId
-        let outcome = try await runPipeline()
-        if let identityError = outcome.identityError {
-            throw identityError
-        }
-
-        return currentUser() ?? outcome.user
+        return try await task.value
     }
 
     func logout() async {

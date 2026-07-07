@@ -29,9 +29,9 @@ final class QonversionAssembly {
     // stateful, one instance SDK-wide.
     private var purchasesManagerInstance: PurchasesManager?
     
-    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month) {
+    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose) {
         let userDefaults = userDefaults ?? UserDefaults.standard
-        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime))
+        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime, logLevel: logLevel))
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly, baseURL: baseURL)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
 

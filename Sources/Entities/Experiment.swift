@@ -42,6 +42,20 @@ extension Qonversion {
                 self.identifier = identifier
                 self.type = type
             }
+
+            public init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                name = try container.decode(String.self, forKey: .name)
+                identifier = try container.decode(String.self, forKey: .identifier)
+                // Unknown backend values must not fail the whole config decode.
+                type = GroupType(rawValue: try container.decode(String.self, forKey: .type)) ?? .unknown
+            }
+
+            private enum CodingKeys: String, CodingKey {
+                case name
+                case identifier
+                case type
+            }
         }
         
         /// Experiment identifier
