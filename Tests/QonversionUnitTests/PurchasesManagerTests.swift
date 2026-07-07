@@ -294,6 +294,55 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
     }
 
+    // MARK: - handlePurchases (analytics ingestion)
+
+    func testHandleTransactionsReportsEachThroughGateAndNeverFinishes() async {
+        await manager.handle(transactions: [makeTransaction(id: "t1"), makeTransaction(id: "t2", productId: "com.app.lite")])
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "the user gate must be passed before reporting")
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t2"])
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "the host app owns the transaction lifecycle")
+    }
+
+    func testHandleTransactionsIsDeduplicatedAgainstItselfAndTheListener() async {
+        let transaction = makeTransaction(id: "t1")
+
+        await manager.handle(transactions: [transaction])
+        await manager.handle(transactions: [transaction])
+        manager.transactionUpdated(transaction)
+
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+    }
+
+    func testHandleTransactionsReportFailureIsSwallowedAndRetriable() async {
+        service.error = MockError.stubbed
+
+        await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+
+        service.error = nil
+        await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t1"], "a failed report must not poison the dedup")
+    }
+
+    func testHandleTransactionsWithEmptyInputDoesNothing() async {
+        await manager.handle(transactions: [])
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 0)
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
+    func testHandleTransactionsUserGateFailureSkipsReporting() async {
+        userManager.error = MockError.stubbed
+
+        await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
     // MARK: - unfinished transactions sweep at launch
 
     func testUnfinishedSweepDoesNothingInAnalyticsMode() async {

@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import StoreKit
 
 protocol PurchasesManagerInterface {
 
@@ -23,6 +24,15 @@ protocol PurchasesManagerInterface {
     /// Ask to Buy approvals): each update is reported to the backend and is
     /// NEVER finished by the SDK.
     func startObservingTransactions()
+
+    /// Reports purchases made by the host app (Analytics mode ingestion).
+    /// Verified transactions are reported through the dedup gate and are
+    /// NEVER finished — the host app owns their lifecycle.
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async
+
+    /// Domain-typed core of the ingestion above.
+    func handle(transactions: [Qonversion.Transaction]) async
 
     /// Re-reports transactions left unfinished by previous sessions and
     /// finishes them after the backend confirms. Does nothing in Analytics

@@ -104,6 +104,40 @@ final class PurchasesManager: PurchasesManagerInterface {
         storeKitFacade.startObservingTransactionUpdates()
     }
 
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async {
+        let transactions = purchasedTransactions.compactMap { storeKitFacade.map($0) }
+
+        await handle(transactions: transactions)
+    }
+
+    func handle(transactions: [Qonversion.Transaction]) async {
+        guard !transactions.isEmpty else { return }
+
+        do {
+            _ = try await userManager.obtainUser()
+        } catch {
+            logger.error("Skipping handed transactions: no backend user: " + error.message)
+            return
+        }
+
+        // The host app made these purchases and owns their lifecycle — the
+        // SDK only tracks them, so no transaction is ever finished here.
+        for transaction in transactions {
+            if let id = transaction.id {
+                guard await reportsGate.tryTake(id) else { continue }
+            }
+            do {
+                try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+            } catch {
+                if let id = transaction.id {
+                    await reportsGate.release(id)
+                }
+                logger.error("Failed to report a handed transaction: " + error.message)
+            }
+        }
+    }
+
     func processUnfinishedTransactions() async {
         // In Analytics mode the host app owns the transaction lifecycle.
         guard launchModeProvider.launchMode == .subscriptionManagement else { return }

@@ -234,6 +234,11 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
         return unfinishedTransactionsResult
     }
 
+    func map(_ verificationResult: VerificationResult<StoreKit.Transaction>) -> Qonversion.Transaction? {
+        guard case .verified(let transaction) = verificationResult else { return nil }
+        return StoreKitMapper().map(transaction, jws: verificationResult.jwsRepresentation)
+    }
+
     func finish(_ transaction: Qonversion.Transaction) async {
         finishedTransactions.append(transaction)
     }

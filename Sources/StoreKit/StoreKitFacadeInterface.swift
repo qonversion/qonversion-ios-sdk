@@ -25,6 +25,11 @@ protocol StoreKitFacadeInterface {
     /// the app in previous sessions).
     func unfinishedTransactions() async -> [Qonversion.Transaction]
 
+    /// Maps a verified store transaction to the domain transaction carrying
+    /// its jws proof; unverified results map to nil.
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    func map(_ verificationResult: VerificationResult<StoreKit.Transaction>) -> Qonversion.Transaction?
+
     /// Finishes the transaction with the store it came from. Never called
     /// automatically by the SDK for observed updates.
     func finish(_ transaction: Qonversion.Transaction) async

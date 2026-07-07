@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import StoreKit
 
 /// An entry point to use Qonversion SDK.
 public final class Qonversion {
@@ -108,6 +109,17 @@ public final class Qonversion {
         guard let purchasesManager else { throw QonversionError.initializationError() }
 
         return try await purchasesManager.purchase(product, options: options)
+    }
+
+    /// Reports purchases made by your own StoreKit 2 code so Qonversion can
+    /// track them (Analytics mode). Pass the verification results you receive
+    /// from `Product.PurchaseResult` or `Transaction.updates`. The SDK never
+    /// finishes these transactions — your app owns their lifecycle.
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async {
+        guard let purchasesManager else { return }
+
+        await purchasesManager.handle(purchasedTransactions: verificationResults)
     }
 
     /// Restores the user's purchases and returns the entitlements.

@@ -95,6 +95,13 @@ class StoreKitFacade: StoreKitFacadeInterface {
         }
     }
     
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    func map(_ verificationResult: VerificationResult<StoreKit.Transaction>) -> Qonversion.Transaction? {
+        guard case .verified(let transaction) = verificationResult else { return nil }
+
+        return storeKitMapper.map(transaction, jws: verificationResult.jwsRepresentation)
+    }
+
     func unfinishedTransactions() async -> [Qonversion.Transaction] {
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper else { return [] }
 
