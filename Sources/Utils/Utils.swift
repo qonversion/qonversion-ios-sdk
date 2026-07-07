@@ -19,9 +19,13 @@ extension Bundle {
     static var appVersion: String? { main.infoDictionary?[InternalConstants.appVersionBundleKey.rawValue] as? String }
 }
 
+// Locale.availableIdentifiers has no stable order — scan a sorted copy so
+// the resolved currency symbol is deterministic across calls and launches.
+fileprivate let sortedLocaleIdentifiers: [String] = Locale.availableIdentifiers.sorted()
+
 extension String {
     func toCurrencySymbol() -> String? {
-        let locale: Locale? = Locale.availableIdentifiers.map { Locale(identifier: $0) }.first { $0.currencyCode == self }
+        let locale: Locale? = sortedLocaleIdentifiers.lazy.map { Locale(identifier: $0) }.first { $0.currencyCode == self }
         
         return locale?.currencySymbol
     }
@@ -30,7 +34,7 @@ extension String {
 @available(macOS 13, iOS 16, tvOS 16, watchOS 9, *)
 extension Locale.Currency {
     func currencySymbol() -> String? {
-        let locale: Locale? = Locale.availableIdentifiers.map { Locale(identifier: $0) }.first { $0.currencyCode == identifier }
+        let locale: Locale? = sortedLocaleIdentifiers.lazy.map { Locale(identifier: $0) }.first { $0.currencyCode == identifier }
         
         return locale?.currencySymbol
     }

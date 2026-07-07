@@ -56,6 +56,11 @@ final class PurchasesManager: PurchasesManagerInterface {
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
         }
 
+        // Mark as reported, so the updates listener never re-reports it.
+        if let id = transaction.id {
+            _ = await reportsGate.tryTake(id)
+        }
+
         // Finish strictly after the backend confirmed the purchase.
         await storeKitFacade.finish(transaction)
 

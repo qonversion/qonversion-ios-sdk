@@ -165,11 +165,13 @@ private extension UserManager {
         internalConfig.userId = uid
         localStorage.set(string: uid, forKey: UserServiceStorageKeys.userIdKey.rawValue)
 
+        // The cleared caches belong to the previous user — clear right after
+        // the uid switch, so a failed user fetch cannot leak them to the new uid.
+        userChangesNotifier.notifyUserChanged()
+
         let user = try await userService.user()
         cachedUser = user
         persist(user)
-
-        userChangesNotifier.notifyUserChanged()
     }
 
     func currentUser() -> Qonversion.User? {

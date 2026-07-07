@@ -283,6 +283,21 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(observer.userDidChangeCallsCount, 1)
     }
 
+    func testIdentitySwitchNotifiesEvenWhenNewUserFetchFails() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        // The uid switches, but fetching the new user fails: the old user's
+        // caches must still be invalidated — they belong to the previous uid.
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = nil
+
+        _ = try? await manager.identify("external_1")
+
+        XCTAssertEqual(config.getUserId(), "QON_other_uid")
+        XCTAssertEqual(observer.userDidChangeCallsCount, 1)
+    }
+
     func testIdentifyKeepingSameUserDoesNotNotifyUserChangeObservers() async throws {
         service.createUserResult = try makeUser(id: anonUid)
         _ = try await manager.obtainUser()

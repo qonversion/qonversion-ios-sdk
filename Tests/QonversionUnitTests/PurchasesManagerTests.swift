@@ -363,6 +363,18 @@ final class PurchasesManagerTests: XCTestCase {
 
     // MARK: - sweep vs listener dedup
 
+    func testObservedUpdateForPurchasedTransactionIsNotReportedAgain() async throws {
+        let transaction = makeTransaction(id: "t1")
+        facade.purchaseResult = transaction
+
+        _ = try await manager.purchase(makeProduct())
+        // The same transaction surfaces through Transaction.updates.
+        manager.transactionUpdated(transaction)
+
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(service.sentTransactions.count, 1, "a reported purchase must not be re-reported by the listener")
+    }
+
     func testObservedUpdateAlreadySweptIsNotReportedTwice() async {
         manager = makeManager(launchMode: .subscriptionManagement)
         let transaction = makeTransaction(id: "t1")
