@@ -574,10 +574,20 @@ final class MockPurchasesService: PurchasesServiceInterface {
     var onSend: (() async -> Void)?
     private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] = []
 
+    var promotionalOfferResult: Qonversion.PromotionalOffer?
+    private(set) var promotionalOfferCalls: [(userId: String, offerId: String, productStoreId: String)] = []
+
     func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
         sentTransactions.append((transaction, userId, options))
         await onSend?()
         if let error { throw error }
+    }
+
+    func promotionalOffer(userId: String, offerId: String, productStoreId: String) async throws -> Qonversion.PromotionalOffer {
+        promotionalOfferCalls.append((userId, offerId, productStoreId))
+        if let error { throw error }
+        guard let promotionalOfferResult else { throw MockError.noStub }
+        return promotionalOfferResult
     }
 }
 

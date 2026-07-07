@@ -13,7 +13,7 @@ import XCTest
 final class PurchasesServiceTests: XCTestCase {
 
     private func makeService(_ processor: MockRequestProcessor) -> PurchasesService {
-        PurchasesService(requestProcessor: processor)
+        PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
     }
 
     private func makeTransaction(
@@ -103,6 +103,67 @@ final class PurchasesServiceTests: XCTestCase {
         }
         let appStoreData = body["app_store_data"] as? RequestBodyDict
         XCTAssertEqual(appStoreData?["receipt"] as? String, "")
+    }
+
+    // MARK: - promotional offer signature
+
+    func testPromotionalOfferPostsSignatureRequestAndMapsResponse() async throws {
+        let processor = MockRequestProcessor()
+        let nonce = UUID()
+        processor.results = [PromoOfferSignatureResponse(
+            keyIdentifier: "KEY123",
+            signature: Data([0x01, 0x02]).base64EncodedString(),
+            nonce: nonce.uuidString,
+            timestamp: "1700000000000"
+        )]
+        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
+
+        let offer = try await service.promotionalOffer(userId: "QON_buyer", offerId: "offer1", productStoreId: "com.app.pro")
+
+        guard case let .signPromoOffer(userId, offerId, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a signPromoOffer request")
+        }
+        XCTAssertEqual(userId, "QON_buyer")
+        XCTAssertEqual(offerId, "offer1")
+        XCTAssertEqual(body["product"] as? String, "com.app.pro")
+        XCTAssertEqual(body["app_account_token"] as? String, "QON_buyer")
+        XCTAssertEqual(body["app_bundle_id"] as? String, "com.test.app")
+
+        XCTAssertEqual(offer.offerId, "offer1")
+        XCTAssertEqual(offer.keyId, "KEY123")
+        XCTAssertEqual(offer.nonce, nonce)
+        XCTAssertEqual(offer.signature, Data([0x01, 0x02]))
+        XCTAssertEqual(offer.timestamp, 1_700_000_000_000)
+    }
+
+    func testPromotionalOfferWithMalformedSignatureThrows() async {
+        let processor = MockRequestProcessor()
+        processor.results = [PromoOfferSignatureResponse(keyIdentifier: "KEY123", signature: "%%%", nonce: "not-a-uuid", timestamp: "soon")]
+        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
+
+        do {
+            _ = try await service.promotionalOffer(userId: "u", offerId: "o", productStoreId: "p")
+            XCTFail("Expected a mapping error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .promoOfferSigningFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testPromotionalOfferWrapsProcessorErrors() async {
+        let processor = MockRequestProcessor()
+        processor.error = MockError.stubbed
+        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
+
+        do {
+            _ = try await service.promotionalOffer(userId: "u", offerId: "o", productStoreId: "p")
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .promoOfferSigningFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
     }
 
     func testSendWrapsErrorsIntoPurchaseReportingFailed() async {

@@ -40,6 +40,10 @@ final class ServicesAssembly {
         return productsService
     }
     
+    func purchasesServiceAppBundleId() -> String {
+        return Bundle.main.bundleIdentifier ?? ""
+    }
+
     func fallbackService() -> FallbackServiceInterface {
         return FallbackService(bundle: .main, decoder: miscAssembly.jsonDecoder())
     }
@@ -95,7 +99,7 @@ final class ServicesAssembly {
     
     func purchasesService() -> PurchasesServiceInterface {
         let requestProcessor: RequestProcessorInterface = requestProcessor()
-        let purchasesService = PurchasesService(requestProcessor: requestProcessor)
+        let purchasesService = PurchasesService(requestProcessor: requestProcessor, appBundleId: purchasesServiceAppBundleId())
 
         return purchasesService
     }

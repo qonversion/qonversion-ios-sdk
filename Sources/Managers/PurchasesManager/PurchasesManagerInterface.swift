@@ -27,6 +27,10 @@ protocol PurchasesManagerInterface: AnyObject {
     @discardableResult
     func restore() async throws -> [String: Qonversion.Entitlement]
 
+    /// Requests a backend-signed promotional offer for the product's discount;
+    /// pass the result via ``Qonversion/Qonversion/PurchaseOptions/promoOffer``.
+    func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer
+
     /// Starts consuming out-of-band transaction updates (renewals, refunds,
     /// Ask to Buy approvals): each update is reported to the backend and is
     /// NEVER finished by the SDK.

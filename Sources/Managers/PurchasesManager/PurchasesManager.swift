@@ -107,6 +107,12 @@ final class PurchasesManager: PurchasesManagerInterface {
         return await entitlementsManager.localFallbackEntitlements(for: latest)
     }
 
+    func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
+        _ = try await userManager.obtainUser()
+
+        return try await purchasesService.promotionalOffer(userId: userIdProvider.getUserId(), offerId: discountId, productStoreId: product.storeId)
+    }
+
     func startObservingTransactions() {
         storeKitFacade.startObservingTransactionUpdates()
     }

@@ -122,6 +122,15 @@ public final class Qonversion {
         await purchasesManager.handle(purchasedTransactions: verificationResults)
     }
 
+    /// Requests a signed promotional offer for the product's subscription
+    /// discount. Pass the result to ``purchase(_:options:)`` via
+    /// ``PurchaseOptions/promoOffer``.
+    public func getPromotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
+        guard let purchasesManager else { throw QonversionError.initializationError() }
+
+        return try await purchasesManager.promotionalOffer(for: product, discountId: discountId)
+    }
+
     /// Sets the delegate deciding whether an App Store promoted purchase
     /// proceeds. Without a delegate promoted purchases are deferred.
     /// The delegate is held weakly.

@@ -348,6 +348,20 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(listener.receivedEntitlements.isEmpty)
     }
 
+    // MARK: - promotional offer signature
+
+    func testPromotionalOfferPassesGateAndForwardsToService() async throws {
+        service.promotionalOfferResult = Qonversion.PromotionalOffer(offerId: "offer1", keyId: "KEY", nonce: UUID(), signature: Data([0x01]), timestamp: 1)
+
+        let offer = try await manager.promotionalOffer(for: makeProduct(storeId: "com.app.pro"), discountId: "offer1")
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "the user gate must be passed first")
+        XCTAssertEqual(service.promotionalOfferCalls.first?.userId, uid)
+        XCTAssertEqual(service.promotionalOfferCalls.first?.offerId, "offer1")
+        XCTAssertEqual(service.promotionalOfferCalls.first?.productStoreId, "com.app.pro")
+        XCTAssertEqual(offer.offerId, "offer1")
+    }
+
     // MARK: - promoted purchases (App Store promo intents)
 
     func testPromoIntentRunsFullPurchaseFlowWhenDelegateApproves() async {
