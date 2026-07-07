@@ -47,8 +47,9 @@ final class RequestTests: XCTestCase {
     func testEntitlements() throws {
         let request = try XCTUnwrap(Request.entitlements(userId: "user1").convertToURLRequest(baseURL))
         XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/users/user1/entitlements")
-        // Fixates current behavior: entitlements is a POST request with no body.
-        XCTAssertEqual(request.httpMethod, "POST")
+        // Reading entitlements is a GET: POST on this route is the server-side
+        // manual-grant API (secret key) and must never be sent by the SDK.
+        XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
     }
 

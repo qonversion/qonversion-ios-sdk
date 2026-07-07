@@ -30,6 +30,10 @@ final class ProductsManager: ProductsManagerInterface {
         self.logger = logger
     }
     
+    func cachedProducts() -> [Qonversion.Product] {
+        return loadedProducts
+    }
+
     func loadProductPermissions() async {
         do {
             let mapping = try await productsService.productPermissions()

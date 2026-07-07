@@ -17,4 +17,7 @@ protocol ProductsManagerInterface {
 
     /// The last known mapping: in-memory, falling back to the persistent cache.
     func cachedProductPermissions() -> [String: [String]]?
+
+    /// Products loaded during this session (used for local entitlements calculation).
+    func cachedProducts() -> [Qonversion.Product]
 }

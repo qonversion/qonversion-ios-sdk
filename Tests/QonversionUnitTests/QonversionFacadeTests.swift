@@ -125,4 +125,15 @@ final class QonversionFacadeTests: XCTestCase {
             XCTFail("Unexpected error type: \(error)")
         }
     }
+
+    func testCheckEntitlementsThrowsInitializationErrorBeforeInitialize() async {
+        do {
+            _ = try await Qonversion.shared.checkEntitlements()
+            XCTFail("Expected initialization error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .sdkInitializationError)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
 }

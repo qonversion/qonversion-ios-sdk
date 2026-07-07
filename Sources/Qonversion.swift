@@ -30,6 +30,7 @@ public final class Qonversion {
         Qonversion.shared.productsManager = assembly.productsManager()
         Qonversion.shared.remoteConfigManager = assembly.remoteConfigManager()
         Qonversion.shared.purchasesManager = assembly.purchasesManager()
+        Qonversion.shared.entitlementsManager = assembly.entitlementsManager()
 
         // Start consuming out-of-band transaction updates (renewals, refunds,
         // Ask to Buy approvals, purchases on other devices).
@@ -99,6 +100,15 @@ public final class Qonversion {
         guard let purchasesManager else { throw QonversionError.initializationError() }
 
         return try await purchasesManager.purchase(product)
+    }
+
+    /// Returns the user's entitlements keyed by entitlement id.
+    /// When the backend is unreachable (5xx / connection issues), entitlements
+    /// are calculated locally from StoreKit data and the cached mapping.
+    public func checkEntitlements() async throws -> [String: Qonversion.Entitlement] {
+        guard let entitlementsManager else { throw QonversionError.initializationError() }
+
+        return try await entitlementsManager.entitlements()
     }
 
     /// Collects Apple Search Ads Attribution data
@@ -230,6 +240,7 @@ public final class Qonversion {
     // MARK: - Private
     private var userManager: UserManagerInterface?
     private var purchasesManager: PurchasesManagerInterface?
+    private var entitlementsManager: EntitlementsManagerInterface?
     private var userPropertiesManager: UserPropertiesManagerInterface?
     private var deviceManager: DeviceManagerInterface?
     private var productsManager: ProductsManagerInterface?

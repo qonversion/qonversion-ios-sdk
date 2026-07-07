@@ -529,6 +529,41 @@ final class MockPurchasesService: PurchasesServiceInterface {
     }
 }
 
+final class MockEntitlementsService: EntitlementsServiceInterface {
+
+    var entitlementsResult: [Qonversion.Entitlement] = []
+    var error: Error?
+    private(set) var entitlementsCalls: [String] = []
+
+    func entitlements(userId: String) async throws -> [Qonversion.Entitlement] {
+        entitlementsCalls.append(userId)
+        if let error { throw error }
+        return entitlementsResult
+    }
+}
+
+final class MockProductsManager: ProductsManagerInterface {
+
+    var productsResult: [Qonversion.Product] = []
+    var productsError: Error?
+    var cachedProductsResult: [Qonversion.Product] = []
+    var cachedMapping: [String: [String]]?
+    private(set) var loadPermissionsCallsCount = 0
+
+    func products() async throws -> [Qonversion.Product] {
+        if let productsError { throw productsError }
+        return productsResult
+    }
+
+    func loadProductPermissions() async {
+        loadPermissionsCallsCount += 1
+    }
+
+    func cachedProductPermissions() -> [String: [String]]? { cachedMapping }
+
+    func cachedProducts() -> [Qonversion.Product] { cachedProductsResult }
+}
+
 // MARK: - Device
 
 final class MockDeviceInfoCollector: DeviceInfoCollectorInterface {

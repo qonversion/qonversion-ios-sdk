@@ -15,7 +15,7 @@ enum Request : Hashable {
     case createUser(id: String, endpoint: String = "v3/users/", body: RequestBodyDict, type: RequestType = .post)
     case getIdentity(externalId: String, endpoint: String = "v3/identities/", type: RequestType = .get)
     case createIdentity(externalId: String, endpoint: String = "v3/identities/", body: RequestBodyDict, type: RequestType = .post)
-    case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .post)
+    case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .get)
     case createPurchase(userId: String, endpoint: String = "v3/users/%@/purchases", body: RequestBodyDict, type: RequestType = .post)
     case getProperties(userId: String, endpoint: String = "v3/users/%@/properties", type: RequestType = .get)
     case sendProperties(userId: String, endpoint: String = "v3/users/%@/properties", body: RequestBodyArray, type: RequestType = .post)

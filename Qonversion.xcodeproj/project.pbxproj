@@ -39,6 +39,12 @@
 		A100000000000000000000B2 /* UserManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000A2 /* UserManagerInterface.swift */; };
 		A100000000000000000000B3 /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000A3 /* Identity.swift */; };
 		A400000000000000000000B1 /* ProductsPermissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A400000000000000000000A1 /* ProductsPermissions.swift */; };
+		A500000000000000000000B1 /* Entitlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A1 /* Entitlement.swift */; };
+		A500000000000000000000B2 /* EntitlementsCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A2 /* EntitlementsCalculator.swift */; };
+		A500000000000000000000B3 /* EntitlementsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A3 /* EntitlementsService.swift */; };
+		A500000000000000000000B4 /* EntitlementsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A4 /* EntitlementsServiceInterface.swift */; };
+		A500000000000000000000B5 /* EntitlementsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A5 /* EntitlementsManager.swift */; };
+		A500000000000000000000B6 /* EntitlementsManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A6 /* EntitlementsManagerInterface.swift */; };
 		70CD93032BC6E22B0039D65C /* UserPropertiesManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92AB2BC6E22B0039D65C /* UserPropertiesManagerInterface.swift */; };
 		70CD93042BC6E22B0039D65C /* ErrorConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92AE2BC6E22B0039D65C /* ErrorConstants.swift */; };
 		70CD93052BC6E22B0039D65C /* QonversionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92AF2BC6E22B0039D65C /* QonversionError.swift */; };
@@ -172,6 +178,12 @@
 		A100000000000000000000A2 /* UserManagerInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManagerInterface.swift; sourceTree = "<group>"; };
 		A100000000000000000000A3 /* Identity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Identity.swift; sourceTree = "<group>"; };
 		A400000000000000000000A1 /* ProductsPermissions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsPermissions.swift; sourceTree = "<group>"; };
+		A500000000000000000000A1 /* Entitlement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Entitlement.swift; sourceTree = "<group>"; };
+		A500000000000000000000A2 /* EntitlementsCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsCalculator.swift; sourceTree = "<group>"; };
+		A500000000000000000000A3 /* EntitlementsService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsService.swift; sourceTree = "<group>"; };
+		A500000000000000000000A4 /* EntitlementsServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsServiceInterface.swift; sourceTree = "<group>"; };
+		A500000000000000000000A5 /* EntitlementsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsManager.swift; sourceTree = "<group>"; };
+		A500000000000000000000A6 /* EntitlementsManagerInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsManagerInterface.swift; sourceTree = "<group>"; };
 		70CD92AB2BC6E22B0039D65C /* UserPropertiesManagerInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserPropertiesManagerInterface.swift; sourceTree = "<group>"; };
 		70CD92AE2BC6E22B0039D65C /* ErrorConstants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorConstants.swift; sourceTree = "<group>"; };
 		70CD92AF2BC6E22B0039D65C /* QonversionError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QonversionError.swift; sourceTree = "<group>"; };
@@ -339,6 +351,7 @@
 				70CD92A12BC6E22B0039D65C /* User.swift */,
 				A100000000000000000000A3 /* Identity.swift */,
 				A400000000000000000000A1 /* ProductsPermissions.swift */,
+				A500000000000000000000A1 /* Entitlement.swift */,
 				70CD92A22BC6E22B0039D65C /* UserProperties.swift */,
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
 				70CD92A42BC6E22B0039D65C /* UserPropertyKey.swift */,
@@ -388,8 +401,27 @@
 				70CD92AC2BC6E22B0039D65C /* UserProperties */,
 				A100000000000000000000C1 /* UserManager */,
 				A300000000000000000000C1 /* PurchasesManager */,
+				A500000000000000000000C2 /* EntitlementsManager */,
 			);
 			path = Managers;
+			sourceTree = "<group>";
+		};
+		A500000000000000000000C1 /* EntitlementsService */ = {
+			isa = PBXGroup;
+			children = (
+				A500000000000000000000A3 /* EntitlementsService.swift */,
+				A500000000000000000000A4 /* EntitlementsServiceInterface.swift */,
+			);
+			path = EntitlementsService;
+			sourceTree = "<group>";
+		};
+		A500000000000000000000C2 /* EntitlementsManager */ = {
+			isa = PBXGroup;
+			children = (
+				A500000000000000000000A5 /* EntitlementsManager.swift */,
+				A500000000000000000000A6 /* EntitlementsManagerInterface.swift */,
+			);
+			path = EntitlementsManager;
 			sourceTree = "<group>";
 		};
 		A300000000000000000000C1 /* PurchasesManager */ = {
@@ -563,6 +595,7 @@
 				70B4E9752BDAA7C300EE808C /* RemoteConfigService */,
 				70EA734F2BD12C7300B0DFDA /* ProductsService */,
 				A300000000000000000000C2 /* PurchasesService */,
+				A500000000000000000000C1 /* EntitlementsService */,
 				70CD92D72BC6E22B0039D65C /* Device */,
 				70CD92DA2BC6E22B0039D65C /* UserService */,
 			);
@@ -595,6 +628,7 @@
 				70CD92E82BC6E22B0039D65C /* IncrementalDelayCalculator.swift */,
 				70CD92E92BC6E22B0039D65C /* LoggerWrapper.swift */,
 				70CD92EA2BC6E22B0039D65C /* Utils.swift */,
+				A500000000000000000000A2 /* EntitlementsCalculator.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -841,6 +875,12 @@
 				A100000000000000000000B2 /* UserManagerInterface.swift in Sources */,
 				A100000000000000000000B3 /* Identity.swift in Sources */,
 				A400000000000000000000B1 /* ProductsPermissions.swift in Sources */,
+				A500000000000000000000B1 /* Entitlement.swift in Sources */,
+				A500000000000000000000B2 /* EntitlementsCalculator.swift in Sources */,
+				A500000000000000000000B3 /* EntitlementsService.swift in Sources */,
+				A500000000000000000000B4 /* EntitlementsServiceInterface.swift in Sources */,
+				A500000000000000000000B5 /* EntitlementsManager.swift in Sources */,
+				A500000000000000000000B6 /* EntitlementsManagerInterface.swift in Sources */,
 				70CD93012BC6E22B0039D65C /* SendUserPropertiesResult.swift in Sources */,
 				70B4E9762BDAA7C300EE808C /* RemoteConfigService.swift in Sources */,
 				70B4E96E2BD92B9C00EE808C /* StoreKitFacadeDelegate.swift in Sources */,
