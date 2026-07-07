@@ -41,8 +41,9 @@ final class QonversionAssembly {
 
         let userService: UserServiceInterface = servicesAssembly.userService()
         let localStorage: LocalStorageInterface = miscAssembly.localStorage()
+        let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
-        let userManager = UserManager(userService: userService, localStorage: localStorage, internalConfig: miscAssembly.internalConfig, userChangesNotifier: miscAssembly.userChangesNotifier(), logger: logger)
+        let userManager = UserManager(userService: userService, localStorage: localStorage, internalConfig: miscAssembly.internalConfig, userChangesNotifier: userChangesNotifier, logger: logger)
         userManagerInstance = userManager
 
         return userManager
@@ -82,9 +83,11 @@ final class QonversionAssembly {
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let productsManager = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, fallbackService: servicesAssembly.fallbackService(), logger: logger)
         
+        let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
+
         storeKitFacade.delegate = productsManager
         productsManagerInstance = productsManager
-        miscAssembly.userChangesNotifier().add(observer: productsManager)
+        userChangesNotifier.add(observer: productsManager)
 
         return productsManager
     }
@@ -124,7 +127,8 @@ final class QonversionAssembly {
             logger: logger
         )
 
-        miscAssembly.userChangesNotifier().add(observer: entitlementsManager)
+        let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
+        userChangesNotifier.add(observer: entitlementsManager)
 
         return entitlementsManager
     }
@@ -138,8 +142,10 @@ final class QonversionAssembly {
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let remoteConfigManager = RemoteConfigManager(remoteConfigService: remoteConfigService, logger: logger)
 
+        let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
+
         remoteConfigManagerInstance = remoteConfigManager
-        miscAssembly.userChangesNotifier().add(observer: remoteConfigManager)
+        userChangesNotifier.add(observer: remoteConfigManager)
 
         return remoteConfigManager
     }
