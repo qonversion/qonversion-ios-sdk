@@ -7,7 +7,7 @@ import Foundation
 
 protocol PurchasesServiceInterface {
 
-    /// Reports the purchase to the backend: POST v3/users/{uid}/purchases.
-    /// The transaction's jws proof travels in app_store_data.receipt.
+    /// Reports the purchase to the backend; the transaction's jws proof is
+    /// included as part of the payload.
     func send(_ transaction: Qonversion.Transaction, userId: String) async throws
 }

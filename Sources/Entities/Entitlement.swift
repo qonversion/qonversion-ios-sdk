@@ -95,7 +95,6 @@ extension Qonversion {
         }
     }
 
-    /// Wire shape of GET v3/users/{uid}/entitlements.
     struct EntitlementsList: Decodable {
         let data: [Qonversion.Entitlement]
     }
