@@ -564,6 +564,26 @@ final class MockProductsManager: ProductsManagerInterface {
     func cachedProducts() -> [Qonversion.Product] { cachedProductsResult }
 }
 
+final class MockEntitlementsManager: EntitlementsManagerInterface {
+
+    var entitlementsResult: [String: Qonversion.Entitlement] = [:]
+    var entitlementsError: Error?
+    var localFallbackResult: [String: Qonversion.Entitlement] = [:]
+    private(set) var entitlementsCallsCount = 0
+    private(set) var localFallbackTransactions: [[Qonversion.Transaction]] = []
+
+    func entitlements() async throws -> [String: Qonversion.Entitlement] {
+        entitlementsCallsCount += 1
+        if let entitlementsError { throw entitlementsError }
+        return entitlementsResult
+    }
+
+    func localFallbackEntitlements(for transactions: [Qonversion.Transaction]) async -> [String: Qonversion.Entitlement] {
+        localFallbackTransactions.append(transactions)
+        return localFallbackResult
+    }
+}
+
 // MARK: - Device
 
 final class MockDeviceInfoCollector: DeviceInfoCollectorInterface {

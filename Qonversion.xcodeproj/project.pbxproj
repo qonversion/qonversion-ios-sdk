@@ -40,6 +40,7 @@
 		A100000000000000000000B3 /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000A3 /* Identity.swift */; };
 		A400000000000000000000B1 /* ProductsPermissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A400000000000000000000A1 /* ProductsPermissions.swift */; };
 		A500000000000000000000B1 /* Entitlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A1 /* Entitlement.swift */; };
+		A600000000000000000000B1 /* PurchaseResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = A600000000000000000000A1 /* PurchaseResult.swift */; };
 		A500000000000000000000B2 /* EntitlementsCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A2 /* EntitlementsCalculator.swift */; };
 		A500000000000000000000B3 /* EntitlementsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A3 /* EntitlementsService.swift */; };
 		A500000000000000000000B4 /* EntitlementsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A4 /* EntitlementsServiceInterface.swift */; };
@@ -179,6 +180,7 @@
 		A100000000000000000000A3 /* Identity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Identity.swift; sourceTree = "<group>"; };
 		A400000000000000000000A1 /* ProductsPermissions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsPermissions.swift; sourceTree = "<group>"; };
 		A500000000000000000000A1 /* Entitlement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Entitlement.swift; sourceTree = "<group>"; };
+		A600000000000000000000A1 /* PurchaseResult.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseResult.swift; sourceTree = "<group>"; };
 		A500000000000000000000A2 /* EntitlementsCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsCalculator.swift; sourceTree = "<group>"; };
 		A500000000000000000000A3 /* EntitlementsService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsService.swift; sourceTree = "<group>"; };
 		A500000000000000000000A4 /* EntitlementsServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsServiceInterface.swift; sourceTree = "<group>"; };
@@ -352,6 +354,7 @@
 				A100000000000000000000A3 /* Identity.swift */,
 				A400000000000000000000A1 /* ProductsPermissions.swift */,
 				A500000000000000000000A1 /* Entitlement.swift */,
+				A600000000000000000000A1 /* PurchaseResult.swift */,
 				70CD92A22BC6E22B0039D65C /* UserProperties.swift */,
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
 				70CD92A42BC6E22B0039D65C /* UserPropertyKey.swift */,
@@ -876,6 +879,7 @@
 				A100000000000000000000B3 /* Identity.swift in Sources */,
 				A400000000000000000000B1 /* ProductsPermissions.swift in Sources */,
 				A500000000000000000000B1 /* Entitlement.swift in Sources */,
+				A600000000000000000000B1 /* PurchaseResult.swift in Sources */,
 				A500000000000000000000B2 /* EntitlementsCalculator.swift in Sources */,
 				A500000000000000000000B3 /* EntitlementsService.swift in Sources */,
 				A500000000000000000000B4 /* EntitlementsServiceInterface.swift in Sources */,

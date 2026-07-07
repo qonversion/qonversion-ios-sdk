@@ -79,6 +79,7 @@ final class QonversionAssembly {
             purchasesService: purchasesService,
             storeKitFacade: storeKitFacade,
             userManager: userManager(),
+            entitlementsManager: entitlementsManager(),
             userIdProvider: miscAssembly.internalConfig,
             logger: logger
         )

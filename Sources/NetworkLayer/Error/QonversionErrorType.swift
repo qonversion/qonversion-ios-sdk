@@ -35,6 +35,7 @@ enum QonversionErrorType {
     case identityLoadingFailed
     case identityCreationFailed
     case purchaseReportingFailed
+    case restoreFailed
     case purchaseCancelled
     case purchasePending
     case purchaseFailed
@@ -59,6 +60,8 @@ enum QonversionErrorType {
             return "Failed to link user identity"
         case .purchaseReportingFailed:
             return "The purchase succeeded in the store but could not be reported to Qonversion; it will be retried"
+        case .restoreFailed:
+            return "Failed to restore purchases"
         case .purchaseCancelled:
             return "The user canceled the purchase"
         case .purchasePending:

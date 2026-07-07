@@ -92,14 +92,25 @@ public final class Qonversion {
 
     /// Buys the product through the App Store and validates the purchase with
     /// the Qonversion backend. The transaction is finished only after the
-    /// backend confirms the purchase.
+    /// backend confirms the purchase. When the backend is unreachable, the
+    /// purchase still succeeds with locally calculated entitlements.
     /// - Parameter product: the product to purchase.
-    /// - Returns: the verified ``Qonversion/Qonversion/Transaction``.
+    /// - Returns: ``Qonversion/Qonversion/PurchaseResult`` with the verified
+    ///   transaction and the user's entitlements.
     @discardableResult
-    public func purchase(_ product: Qonversion.Product) async throws -> Qonversion.Transaction {
+    public func purchase(_ product: Qonversion.Product) async throws -> Qonversion.PurchaseResult {
         guard let purchasesManager else { throw QonversionError.initializationError() }
 
         return try await purchasesManager.purchase(product)
+    }
+
+    /// Restores the user's purchases and returns the entitlements.
+    /// When the backend is unreachable, entitlements are calculated locally.
+    @discardableResult
+    public func restore() async throws -> [String: Qonversion.Entitlement] {
+        guard let purchasesManager else { throw QonversionError.initializationError() }
+
+        return try await purchasesManager.restore()
     }
 
     /// Returns the user's entitlements keyed by entitlement id.

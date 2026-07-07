@@ -41,6 +41,18 @@ final class EntitlementsManager: EntitlementsManagerInterface {
         self.logger = logger
     }
 
+    func localFallbackEntitlements(for transactions: [Qonversion.Transaction]) async -> [String: Qonversion.Entitlement] {
+        let calculated = EntitlementsCalculator.calculate(
+            transactions: transactions,
+            products: productsManager.cachedProducts(),
+            mapping: productsManager.cachedProductPermissions() ?? [:]
+        )
+        let merged = EntitlementsCalculator.merge(calculated, into: cachedEntitlements() ?? [:])
+        persist(merged)
+
+        return merged
+    }
+
     func entitlements() async throws -> [String: Qonversion.Entitlement] {
         _ = try await userManager.obtainUser()
 
@@ -51,21 +63,11 @@ final class EntitlementsManager: EntitlementsManagerInterface {
 
             return entitlements
         } catch {
-            guard isLocalCalculationEligible(error) else { throw error }
+            guard error.allowsLocalEntitlementsFallback else { throw error }
 
-            // Production fault-tolerance path: calculate entitlements locally
-            // from the StoreKit transactions and the cached mapping, merge on
-            // top of the cached entitlements and persist to the same cache.
+            // Production fault-tolerance path.
             let transactions = await storeKitFacade.currentEntitlements()
-            let calculated = EntitlementsCalculator.calculate(
-                transactions: transactions,
-                products: productsManager.cachedProducts(),
-                mapping: productsManager.cachedProductPermissions() ?? [:]
-            )
-            let merged = EntitlementsCalculator.merge(calculated, into: cachedEntitlements() ?? [:])
-            persist(merged)
-
-            return merged
+            return await localFallbackEntitlements(for: transactions)
         }
     }
 }
@@ -73,18 +75,6 @@ final class EntitlementsManager: EntitlementsManagerInterface {
 // MARK: - Private
 
 private extension EntitlementsManager {
-
-    /// Production rule: local calculation only for server (5xx) and
-    /// connection errors — never for validation or auth failures.
-    func isLocalCalculationEligible(_ error: Error) -> Bool {
-        if error is URLError { return true }
-        guard let qonversionError = error as? QonversionError else { return false }
-        if qonversionError.type == .internal { return true }
-        if let underlying = qonversionError.error {
-            return isLocalCalculationEligible(underlying)
-        }
-        return false
-    }
 
     func cachedEntitlements() -> [String: Qonversion.Entitlement]? {
         guard let cached = try? localStorage.object(forKey: Constants.entitlementsKey.rawValue, dataType: [String: Qonversion.Entitlement].self) else {

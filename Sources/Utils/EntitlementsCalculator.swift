@@ -10,6 +10,22 @@
 
 import Foundation
 
+extension Error {
+
+    /// Production rule: entitlements may be calculated locally only for
+    /// server (5xx) and connection errors — never for validation or auth
+    /// failures.
+    var allowsLocalEntitlementsFallback: Bool {
+        if self is URLError { return true }
+        guard let qonversionError = self as? QonversionError else { return false }
+        if qonversionError.type == .internal { return true }
+        if let underlying = qonversionError.error {
+            return underlying.allowsLocalEntitlementsFallback
+        }
+        return false
+    }
+}
+
 enum EntitlementsCalculator {
 
     /// Approximate period length in days, exactly as production does it.
