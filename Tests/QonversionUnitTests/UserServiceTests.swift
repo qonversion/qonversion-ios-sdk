@@ -55,6 +55,33 @@ final class UserServiceTests: XCTestCase {
         XCTAssertEqual(storage.string(forKey: userIdKey), config.userId)
     }
 
+    // MARK: - legacy uid migration (installs updated from the previous production SDK)
+
+    func testInitMigratesLegacyUidToNewStorage() {
+        let storage = makeStorage()
+        storage.set(string: "QON_legacy_uid", forKey: "com.qonversion.keys.storedUserID")
+        let config = InternalConfig(userId: "")
+
+        _ = UserService(requestProcessor: MockRequestProcessor(), localStorage: storage, internalConfig: config)
+
+        XCTAssertEqual(config.userId, "QON_legacy_uid")
+        XCTAssertEqual(storage.string(forKey: userIdKey), "QON_legacy_uid")
+        XCTAssertNil(storage.string(forKey: "com.qonversion.keys.storedUserID"), "the legacy storage must be cleaned after migration")
+    }
+
+    func testInitPrefersLegacyUidOverNewStorage() {
+        let storage = makeStorage()
+        storage.set(string: "QON_legacy_uid", forKey: "com.qonversion.keys.storedUserID")
+        storage.set(string: "QON_new_uid", forKey: userIdKey)
+        let config = InternalConfig(userId: "")
+
+        _ = UserService(requestProcessor: MockRequestProcessor(), localStorage: storage, internalConfig: config)
+
+        XCTAssertEqual(config.userId, "QON_legacy_uid")
+        XCTAssertEqual(storage.string(forKey: userIdKey), "QON_legacy_uid")
+        XCTAssertNil(storage.string(forKey: "com.qonversion.keys.storedUserID"))
+    }
+
     // MARK: - generateUserId
 
     func testGenerateUserIdFormatAndSideEffects() {
@@ -91,7 +118,7 @@ final class UserServiceTests: XCTestCase {
 
     // MARK: - createUser
 
-    func testCreateUserRegeneratesIdAndSendsCreateUserRequest() async throws {
+    func testCreateUserUsesCurrentUidAndSendsCreateUserRequest() async throws {
         let processor = MockRequestProcessor()
         let storage = makeStorage()
         let config = InternalConfig(userId: "initial")
@@ -103,9 +130,10 @@ final class UserServiceTests: XCTestCase {
 
         let user = try await service.createUser()
 
-        // Fixates current behavior: createUser generates a NEW user id, replacing the one created at init.
+        // The backend upserts by uid, so createUser keeps the current uid:
+        // a migrated install gets its existing user back instead of a new one.
         let idAfterCreate = config.userId
-        XCTAssertNotEqual(idAfterInit, idAfterCreate)
+        XCTAssertEqual(idAfterInit, idAfterCreate)
         XCTAssertEqual(storage.string(forKey: userIdKey), idAfterCreate)
 
         // Fixates current behavior: the environment in the request body is hardcoded to "sandbox".
@@ -117,6 +145,22 @@ final class UserServiceTests: XCTestCase {
         XCTAssertEqual(user.id, stubUser.id)
         XCTAssertEqual(user.creationDate, stubUser.creationDate)
         XCTAssertEqual(user.environment, stubUser.environment)
+    }
+
+    func testCreateUserGeneratesUidWhenCurrentIsEmpty() async throws {
+        let processor = MockRequestProcessor()
+        let storage = makeStorage()
+        let config = InternalConfig(userId: "")
+        let service = UserService(requestProcessor: processor, localStorage: storage, internalConfig: config)
+        config.userId = ""
+        storage.removeObject(forKey: userIdKey)
+
+        processor.results = [try decodeUserStub()]
+
+        _ = try await service.createUser()
+
+        XCTAssertTrue(config.userId.hasPrefix("QON_"))
+        XCTAssertEqual(storage.string(forKey: userIdKey), config.userId)
     }
 
     func testCreateUserWrapsProcessorErrorIntoUserCreationFailed() async {
