@@ -22,11 +22,16 @@ final class PurchasesManager: PurchasesManagerInterface {
     /// transaction in subscription-management mode.
     private let entitlementsUpdatesMulticast = AsyncMulticast<[String: Qonversion.Entitlement]>()
 
-    /// Decides whether an App Store promoted purchase proceeds. Held weakly.
-    weak var promoPurchasesDelegate: Qonversion.PromoPurchasesDelegate?
+    /// Emits App Store promoted-purchase intents. Buffered until the first
+    /// subscriber — an intent arriving at app start must not be lost.
+    private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(buffersWhenNoSubscribers: true)
 
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
         return entitlementsUpdatesMulticast.stream()
+    }
+
+    func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent> {
+        return promoIntentsMulticast.stream()
     }
 
     init(
@@ -192,23 +197,21 @@ extension PurchasesManager: StoreKitFacadeDelegate {
 
     @available(iOS 16.4, macOS 14.4, *)
     func promoPurchaseIntent(product: Product) {
-        Task { [weak self] in
-            await self?.processPromoPurchaseIntent(storeProductId: product.id)
-        }
+        emitPromoPurchaseIntent(storeProductId: product.id)
     }
 
-    /// Asks the delegate and, when approved, runs the regular purchase flow
-    /// for the promoted store product. The report keys off the transaction's
-    /// store product id, so no Qonversion product mapping is required.
-    func processPromoPurchaseIntent(storeProductId: String) async {
-        guard let promoPurchasesDelegate else { return }
-        guard await promoPurchasesDelegate.shouldPurchasePromoProduct(id: storeProductId) else { return }
+    /// Hands the promoted-purchase intent to the host through the stream; its
+    /// purchase() runs the regular purchase flow. The report keys off the
+    /// transaction's store product id, so no Qonversion product mapping is
+    /// required.
+    func emitPromoPurchaseIntent(storeProductId: String) {
+        let intent = Qonversion.PromoPurchaseIntent(productId: storeProductId) { [weak self] options in
+            guard let self else { throw QonversionError.initializationError() }
 
-        do {
-            _ = try await purchase(Qonversion.Product(qonversionId: storeProductId, storeId: storeProductId, offeringId: nil), options: nil)
-        } catch {
-            logger.error("Promoted purchase failed: " + error.message)
+            return try await self.purchase(Qonversion.Product(qonversionId: storeProductId, storeId: storeProductId, offeringId: nil), options: options)
         }
+
+        promoIntentsMulticast.yield(intent)
     }
 
     func transactionUpdated(_ transaction: Qonversion.Transaction) {

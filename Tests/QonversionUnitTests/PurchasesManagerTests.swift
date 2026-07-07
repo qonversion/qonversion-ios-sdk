@@ -320,7 +320,7 @@ final class PurchasesManagerTests: XCTestCase {
     func testObservedUpdateInSubscriptionManagementModeEmitsUpdatedEntitlements() async {
         manager = makeManager(launchMode: .subscriptionManagement)
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
-        let collector = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
+        let collector = StreamCollector(manager.entitlementsUpdates())
 
         manager.transactionUpdated(makeTransaction(id: "u1"))
 
@@ -333,8 +333,8 @@ final class PurchasesManagerTests: XCTestCase {
         // Transaction.updates style: each access is an independent stream.
         manager = makeManager(launchMode: .subscriptionManagement)
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
-        let first = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
-        let second = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
+        let first = StreamCollector(manager.entitlementsUpdates())
+        let second = StreamCollector(manager.entitlementsUpdates())
 
         manager.transactionUpdated(makeTransaction(id: "u1"))
 
@@ -352,7 +352,7 @@ final class PurchasesManagerTests: XCTestCase {
     func testObservedUpdateReportFailureInSubscriptionManagementModeLeavesTransactionUnfinished() async {
         manager = makeManager(launchMode: .subscriptionManagement)
         service.error = MockError.stubbed
-        let collector = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
+        let collector = StreamCollector(manager.entitlementsUpdates())
 
         manager.transactionUpdated(makeTransaction(id: "u1"))
 
@@ -364,7 +364,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testObservedUpdateInAnalyticsModeDoesNotEmitEntitlements() async {
-        let collector = EntitlementsUpdatesCollector(manager.entitlementsUpdates())
+        let collector = StreamCollector(manager.entitlementsUpdates())
 
         manager.transactionUpdated(makeTransaction(id: "u1"))
 
@@ -391,37 +391,44 @@ final class PurchasesManagerTests: XCTestCase {
 
     // MARK: - promoted purchases (App Store promo intents)
 
-    func testPromoIntentRunsFullPurchaseFlowWhenDelegateApproves() async {
-        let delegate = MockPromoPurchasesDelegate()
-        delegate.shouldPurchase = true
-        manager.promoPurchasesDelegate = delegate
+    func testPromoIntentIsEmittedToTheStream() async {
+        let collector = StreamCollector(manager.promoPurchaseIntents())
+
+        manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.map(\.productId), ["com.app.promo"])
+        XCTAssertTrue(facade.purchasedStoreIds.isEmpty, "nothing is purchased until the host asks")
+    }
+
+    func testIntentPurchaseRunsTheFullPurchaseFlow() async throws {
         facade.purchaseResult = makeTransaction(id: "t1", productId: "com.app.promo")
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.promoPurchaseIntents())
+        manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        let intent = try XCTUnwrap(received.first)
 
-        await manager.processPromoPurchaseIntent(storeProductId: "com.app.promo")
+        let result = try await intent.purchase()
 
-        XCTAssertEqual(delegate.askedProductIds, ["com.app.promo"])
         XCTAssertEqual(facade.purchasedStoreIds, ["com.app.promo"])
         XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
         XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"])
+        XCTAssertEqual(result.entitlements.keys.sorted(), ["premium"])
     }
 
-    func testPromoIntentDoesNothingWhenDelegateDeclines() async {
-        let delegate = MockPromoPurchasesDelegate()
-        delegate.shouldPurchase = false
-        manager.promoPurchasesDelegate = delegate
+    func testIntentEmittedBeforeAnySubscriberIsDeliveredToTheFirstOne() async {
+        // The intent can arrive at app start before the host subscribes —
+        // it must not be lost.
+        manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
 
-        await manager.processPromoPurchaseIntent(storeProductId: "com.app.promo")
+        let collector = StreamCollector(manager.promoPurchaseIntents())
 
-        XCTAssertEqual(delegate.askedProductIds, ["com.app.promo"])
-        XCTAssertTrue(facade.purchasedStoreIds.isEmpty)
-        XCTAssertTrue(service.sentTransactions.isEmpty)
-    }
-
-    func testPromoIntentWithoutDelegateDefersThePurchase() async {
-        await manager.processPromoPurchaseIntent(storeProductId: "com.app.promo")
-
-        XCTAssertTrue(facade.purchasedStoreIds.isEmpty)
-        XCTAssertTrue(service.sentTransactions.isEmpty)
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.map(\.productId), ["com.app.promo"])
     }
 
     // MARK: - handlePurchases (analytics ingestion)
@@ -581,25 +588,25 @@ final class PurchasesManagerTests: XCTestCase {
     }
 }
 
-/// Collects everything an entitlements-updates stream emits.
-private actor EntitlementsUpdatesCollector {
+/// Collects everything a stream emits.
+private actor StreamCollector<Element> {
 
-    private(set) var received: [[String: Qonversion.Entitlement]] = []
+    private(set) var received: [Element] = []
     private var task: Task<Void, Never>?
 
-    init(_ stream: AsyncStream<[String: Qonversion.Entitlement]>) {
+    init(_ stream: AsyncStream<Element>) {
         Task { await start(stream) }
     }
 
-    private func start(_ stream: AsyncStream<[String: Qonversion.Entitlement]>) {
+    private func start(_ stream: AsyncStream<Element>) {
         task = Task {
-            for await entitlements in stream {
-                append(entitlements)
+            for await element in stream {
+                append(element)
             }
         }
     }
 
-    private func append(_ entitlements: [String: Qonversion.Entitlement]) {
-        received.append(entitlements)
+    private func append(_ element: Element) {
+        received.append(element)
     }
 }

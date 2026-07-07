@@ -541,16 +541,6 @@ final class MockUserManager: UserManagerInterface {
     }
 }
 
-final class MockPromoPurchasesDelegate: Qonversion.PromoPurchasesDelegate {
-    var shouldPurchase = false
-    private(set) var askedProductIds: [String] = []
-
-    func shouldPurchasePromoProduct(id: String) async -> Bool {
-        askedProductIds.append(id)
-        return shouldPurchase
-    }
-}
-
 final class MockFallbackService: FallbackServiceInterface {
 
     var fallbackData: FallbackData?

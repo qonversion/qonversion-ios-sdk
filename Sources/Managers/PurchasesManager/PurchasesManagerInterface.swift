@@ -13,8 +13,9 @@ protocol PurchasesManagerInterface: AnyObject {
     /// independent stream.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]>
 
-    /// Decides whether an App Store promoted purchase proceeds. Held weakly.
-    var promoPurchasesDelegate: Qonversion.PromoPurchasesDelegate? { get set }
+    /// A stream of App Store promoted-purchase intents; call purchase() on an
+    /// intent to proceed. Every call returns an independent stream.
+    func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent>
 
     /// Buys the product through the store, reports the purchase to the backend
     /// (through the user gate) and finishes the transaction only after the

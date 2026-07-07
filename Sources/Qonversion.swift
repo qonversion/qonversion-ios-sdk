@@ -131,11 +131,18 @@ public final class Qonversion {
         return try await purchasesManager.promotionalOffer(for: product, discountId: discountId)
     }
 
-    /// Sets the delegate deciding whether an App Store promoted purchase
-    /// proceeds. Without a delegate promoted purchases are deferred.
-    /// The delegate is held weakly.
-    public func setPromoPurchasesDelegate(_ delegate: PromoPurchasesDelegate) {
-        purchasesManager?.promoPurchasesDelegate = delegate
+    /// A stream of purchases promoted in the App Store. Call purchase() on a
+    /// received intent to proceed — right away or whenever the app is ready;
+    /// dropping the intent defers the purchase. Intents arriving before the
+    /// first subscription are buffered:
+    ///
+    ///     for await intent in Qonversion.shared.promoPurchaseIntents {
+    ///         try await intent.purchase()
+    ///     }
+    public var promoPurchaseIntents: AsyncStream<PromoPurchaseIntent> {
+        guard let purchasesManager else { return AsyncStream { $0.finish() } }
+
+        return purchasesManager.promoPurchaseIntents()
     }
 
     /// A stream of entitlements refreshed after the SDK processes an
