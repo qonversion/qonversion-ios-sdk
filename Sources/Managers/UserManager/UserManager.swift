@@ -18,6 +18,7 @@ actor UserManager: UserManagerInterface {
     private let userService: UserServiceInterface
     private let localStorage: LocalStorageInterface
     private let internalConfig: InternalConfig
+    private let userChangesNotifier: UserChangesNotifierInterface
     private let logger: LoggerWrapper
 
     /// The shared "promise": creation of the backend user plus, when an
@@ -34,10 +35,11 @@ actor UserManager: UserManagerInterface {
         let identityError: Error?
     }
 
-    init(userService: UserServiceInterface, localStorage: LocalStorageInterface, internalConfig: InternalConfig, logger: LoggerWrapper) {
+    init(userService: UserServiceInterface, localStorage: LocalStorageInterface, internalConfig: InternalConfig, userChangesNotifier: UserChangesNotifierInterface, logger: LoggerWrapper) {
         self.userService = userService
         self.localStorage = localStorage
         self.internalConfig = internalConfig
+        self.userChangesNotifier = userChangesNotifier
         self.logger = logger
     }
 
@@ -73,6 +75,8 @@ actor UserManager: UserManagerInterface {
 
         // A fresh anonymous uid; the backend user is created lazily on the next demand.
         _ = userService.generateUserId()
+
+        userChangesNotifier.notifyUserChanged()
     }
 
     func userInfo() async throws -> Qonversion.User {
@@ -164,6 +168,8 @@ private extension UserManager {
         let user = try await userService.user()
         cachedUser = user
         persist(user)
+
+        userChangesNotifier.notifyUserChanged()
     }
 
     func currentUser() -> Qonversion.User? {

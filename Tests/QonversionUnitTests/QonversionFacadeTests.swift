@@ -151,4 +151,30 @@ final class QonversionFacadeTests: XCTestCase {
 
         XCTAssertTrue(first === second)
     }
+
+    func testAssemblySharesTheRemoteConfigManagerInstance() {
+        // The remote config manager holds the in-memory per-context-key cache —
+        // a fresh instance per call would make that cache useless.
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+
+        let first = assembly.remoteConfigManager() as AnyObject
+        let second = assembly.remoteConfigManager() as AnyObject
+
+        XCTAssertTrue(first === second)
+    }
+
+    func testLogoutClearsUserScopedCachesAcrossAssembly() async {
+        // End-to-end wiring: the user gate must reach the caches created by
+        // the assembly, no matter the creation order.
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+        guard let productsManager = assembly.productsManager() as? ProductsManager,
+              let userManager = assembly.userManager() as? UserManager else {
+            return XCTFail("Unexpected assembly types")
+        }
+        productsManager.loadedProducts = [Qonversion.Product(qonversionId: "q", storeId: "s", offeringId: nil)]
+
+        await userManager.logout()
+
+        XCTAssertTrue(productsManager.loadedProducts.isEmpty)
+    }
 }

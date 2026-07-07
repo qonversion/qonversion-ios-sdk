@@ -21,6 +21,8 @@ final class UserManagerTests: XCTestCase {
     private var service: MockUserService!
     private var storage: MockLocalStorage!
     private var config: InternalConfig!
+    private var notifier: UserChangesNotifier!
+    private var observer: UserChangeObserverSpy!
     private var manager: UserManager!
 
     private let anonUid = "QON_anon_uid"
@@ -30,11 +32,16 @@ final class UserManagerTests: XCTestCase {
         service = MockUserService()
         storage = MockLocalStorage()
         config = InternalConfig(userId: anonUid)
+        notifier = UserChangesNotifier()
+        observer = UserChangeObserverSpy()
+        notifier.add(observer: observer)
         manager = makeManager()
     }
 
     override func tearDown() {
         manager = nil
+        observer = nil
+        notifier = nil
         config = nil
         storage = nil
         service = nil
@@ -42,7 +49,7 @@ final class UserManagerTests: XCTestCase {
     }
 
     private func makeManager() -> UserManager {
-        UserManager(userService: service, localStorage: storage, internalConfig: config, logger: LoggerWrapper())
+        UserManager(userService: service, localStorage: storage, internalConfig: config, userChangesNotifier: notifier, logger: LoggerWrapper())
     }
 
     private func makeUser(id: String, environment: String = "sandbox") throws -> Qonversion.User {
@@ -251,6 +258,38 @@ final class UserManagerTests: XCTestCase {
 
         XCTAssertEqual(user.id, "QON_fresh_uid")
         XCTAssertEqual(service.createUserCallsCount, 2)
+    }
+
+    // MARK: - User change notifications
+
+    func testLogoutNotifiesUserChangeObservers() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        await manager.logout()
+
+        XCTAssertEqual(observer.userDidChangeCallsCount, 1)
+    }
+
+    func testIdentifySwitchToLinkedUserNotifiesUserChangeObservers() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = try makeUser(id: "QON_other_uid")
+
+        _ = try await manager.identify("external_1")
+
+        XCTAssertEqual(observer.userDidChangeCallsCount, 1)
+    }
+
+    func testIdentifyKeepingSameUserDoesNotNotifyUserChangeObservers() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        _ = try await manager.identify("external_1")
+
+        XCTAssertEqual(observer.userDidChangeCallsCount, 0)
     }
 
     // MARK: - User info

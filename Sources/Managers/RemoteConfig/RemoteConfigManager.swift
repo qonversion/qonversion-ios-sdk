@@ -76,3 +76,12 @@ final class RemoteConfigManager: RemoteConfigManagerInterface {
         }
     }
 }
+
+// MARK: - UserChangedObserver
+
+extension RemoteConfigManager: UserChangedObserver {
+
+    func userDidChange() {
+        loadedConfigs = [:]
+    }
+}

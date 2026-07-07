@@ -479,6 +479,11 @@ final class MockUserService: UserServiceInterface {
     }
 }
 
+final class UserChangeObserverSpy: UserChangedObserver {
+    private(set) var userDidChangeCallsCount = 0
+    func userDidChange() { userDidChangeCallsCount += 1 }
+}
+
 final class MockUserManager: UserManagerInterface {
 
     var user: Qonversion.User?

@@ -96,6 +96,17 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
     
 }
 
+// MARK: - UserChangedObserver
+
+extension ProductsManager: UserChangedObserver {
+
+    func userDidChange() {
+        // Products may be personalized (experiments); the mapping is
+        // project-scoped and stays.
+        loadedProducts = []
+    }
+}
+
 // MARK: - StoreKitFacadeDelegate
 
 extension ProductsManager: StoreKitFacadeDelegate {

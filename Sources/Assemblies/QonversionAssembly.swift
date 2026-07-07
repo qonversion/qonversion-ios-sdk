@@ -19,6 +19,10 @@ final class QonversionAssembly {
     // Holds the in-memory products and mapping caches consumed by the local
     // entitlements calculation — stateful, one instance SDK-wide.
     private var productsManagerInstance: ProductsManager?
+
+    // Holds the in-memory per-context-key remote config cache — stateful,
+    // one instance SDK-wide.
+    private var remoteConfigManagerInstance: RemoteConfigManager?
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics) {
         let userDefaults = userDefaults ?? UserDefaults.standard
@@ -38,7 +42,7 @@ final class QonversionAssembly {
         let userService: UserServiceInterface = servicesAssembly.userService()
         let localStorage: LocalStorageInterface = miscAssembly.localStorage()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
-        let userManager = UserManager(userService: userService, localStorage: localStorage, internalConfig: miscAssembly.internalConfig, logger: logger)
+        let userManager = UserManager(userService: userService, localStorage: localStorage, internalConfig: miscAssembly.internalConfig, userChangesNotifier: miscAssembly.userChangesNotifier(), logger: logger)
         userManagerInstance = userManager
 
         return userManager
@@ -80,7 +84,8 @@ final class QonversionAssembly {
         
         storeKitFacade.delegate = productsManager
         productsManagerInstance = productsManager
-        
+        miscAssembly.userChangesNotifier().add(observer: productsManager)
+
         return productsManager
     }
     
@@ -117,13 +122,22 @@ final class QonversionAssembly {
             logger: logger
         )
 
+        miscAssembly.userChangesNotifier().add(observer: entitlementsManager)
+
         return entitlementsManager
     }
 
     func remoteConfigManager() -> RemoteConfigManagerInterface {
+        if let remoteConfigManagerInstance {
+            return remoteConfigManagerInstance
+        }
+
         let remoteConfigService = servicesAssembly.remoteConfigService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let remoteConfigManager = RemoteConfigManager(remoteConfigService: remoteConfigService, logger: logger)
+
+        remoteConfigManagerInstance = remoteConfigManager
+        miscAssembly.userChangesNotifier().add(observer: remoteConfigManager)
 
         return remoteConfigManager
     }

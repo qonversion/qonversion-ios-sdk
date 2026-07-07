@@ -72,6 +72,16 @@ final class EntitlementsManager: EntitlementsManagerInterface {
     }
 }
 
+// MARK: - UserChangedObserver
+
+extension EntitlementsManager: UserChangedObserver {
+
+    func userDidChange() {
+        localStorage.removeObject(forKey: Constants.entitlementsKey.rawValue)
+        localStorage.removeObject(forKey: Constants.entitlementsTimestampKey.rawValue)
+    }
+}
+
 // MARK: - Private
 
 private extension EntitlementsManager {

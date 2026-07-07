@@ -201,4 +201,32 @@ final class ProductsManagerTests: XCTestCase {
     func testCachedMappingIsNilWhenNeverLoaded() {
         XCTAssertNil(manager.cachedProductPermissions())
     }
+
+    // MARK: - User change
+
+    func testUserDidChangeClearsLoadedProductsCache() async throws {
+        manager.loadedProducts = [makeProduct()]
+
+        manager.userDidChange()
+
+        XCTAssertTrue(manager.loadedProducts.isEmpty)
+        // The next demand goes back to the service.
+        productsService.productsResult = [makeProduct(qonversionId: "q_new", storeId: "store_new")]
+        storeKitFacade.productsError = MockError.stubbed
+        let result = try await manager.products()
+        XCTAssertEqual(result.map { $0.qonversionId }, ["q_new"])
+        XCTAssertEqual(productsService.productsCallsCount, 1)
+    }
+
+    // The product → permissions mapping is project-scoped, not user-scoped:
+    // it stays valid across a user switch and keeps powering the local
+    // entitlements fallback.
+    func testUserDidChangeKeepsProductPermissionsMapping() async {
+        productsService.productPermissionsResult = ["pro": ["premium"]]
+        await manager.loadProductPermissions()
+
+        manager.userDidChange()
+
+        XCTAssertEqual(manager.cachedProductPermissions(), ["pro": ["premium"]])
+    }
 }

@@ -160,4 +160,21 @@ final class EntitlementsManagerTests: XCTestCase {
 
         XCTAssertEqual(entitlements["premium"]?.active, true)
     }
+
+    // MARK: - User change
+
+    func testUserDidChangeClearsPersistedEntitlementsCache() async throws {
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+
+        manager.userDidChange()
+
+        // Backend unreachable + no StoreKit data: without the cleanup the new
+        // user would inherit the previous user's cached entitlements.
+        service.error = QonversionError(type: .internal)
+        facade.currentEntitlementsResult = []
+        let entitlements = try await manager.entitlements()
+
+        XCTAssertTrue(entitlements.isEmpty)
+    }
 }
