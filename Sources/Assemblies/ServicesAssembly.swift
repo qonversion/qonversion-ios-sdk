@@ -40,6 +40,10 @@ final class ServicesAssembly {
         return productsService
     }
     
+    func fallbackService() -> FallbackServiceInterface {
+        return FallbackService(bundle: .main, decoder: miscAssembly.jsonDecoder())
+    }
+
     func storeKitMapper() -> StoreKitMapperInterface {
         let mapper = StoreKitMapper()
         

@@ -80,7 +80,7 @@ final class QonversionAssembly {
         let storeKitFacade: StoreKitFacade = servicesAssembly.storeKitFacade()
         let localStorage: LocalStorageInterface = miscAssembly.localStorage()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
-        let productsManager = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, logger: logger)
+        let productsManager = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, fallbackService: servicesAssembly.fallbackService(), logger: logger)
         
         storeKitFacade.delegate = productsManager
         productsManagerInstance = productsManager

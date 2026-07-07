@@ -530,6 +530,17 @@ final class MockUserManager: UserManagerInterface {
     }
 }
 
+final class MockFallbackService: FallbackServiceInterface {
+
+    var fallbackData: FallbackData?
+    private(set) var obtainCallsCount = 0
+
+    func obtainFallbackData() -> FallbackData? {
+        obtainCallsCount += 1
+        return fallbackData
+    }
+}
+
 final class MockPurchasesService: PurchasesServiceInterface {
 
     var error: Error?
