@@ -535,6 +535,13 @@ final class MockUserManager: UserManagerInterface {
     }
 }
 
+final class MockEntitlementsUpdateListener: Qonversion.EntitlementsUpdateListener {
+    private(set) var receivedEntitlements: [[String: Qonversion.Entitlement]] = []
+    func didReceiveUpdatedEntitlements(_ entitlements: [String: Qonversion.Entitlement]) {
+        receivedEntitlements.append(entitlements)
+    }
+}
+
 final class MockFallbackService: FallbackServiceInterface {
 
     var fallbackData: FallbackData?

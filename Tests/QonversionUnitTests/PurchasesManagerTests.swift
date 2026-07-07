@@ -294,6 +294,60 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
     }
 
+    // MARK: - observed updates in subscription-management mode (Ask to Buy / renewals)
+
+    func testObservedUpdateInSubscriptionManagementModeIsFinishedAfterAck() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        var finishedAtSendTime = false
+        service.onSend = { [weak self] in
+            finishedAtSendTime = !(self?.facade.finishedTransactions.isEmpty ?? true)
+        }
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { self.facade.finishedTransactions.count >= 1 }
+        XCTAssertFalse(finishedAtSendTime, "finish only after the backend confirmed the report")
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["u1"], "in subscription-management mode the SDK owns the lifecycle")
+    }
+
+    func testObservedUpdateInSubscriptionManagementModeNotifiesEntitlementsListener() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        let listener = MockEntitlementsUpdateListener()
+        manager.entitlementsUpdateListener = listener
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { !listener.receivedEntitlements.isEmpty }
+        XCTAssertEqual(listener.receivedEntitlements.first?.keys.sorted(), ["premium"])
+    }
+
+    func testObservedUpdateReportFailureInSubscriptionManagementModeLeavesTransactionUnfinished() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        let listener = MockEntitlementsUpdateListener()
+        manager.entitlementsUpdateListener = listener
+        service.error = MockError.stubbed
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+        XCTAssertTrue(listener.receivedEntitlements.isEmpty)
+    }
+
+    func testObservedUpdateInAnalyticsModeDoesNotNotifyEntitlementsListener() async {
+        let listener = MockEntitlementsUpdateListener()
+        manager.entitlementsUpdateListener = listener
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+        XCTAssertTrue(listener.receivedEntitlements.isEmpty)
+    }
+
     // MARK: - handlePurchases (analytics ingestion)
 
     func testHandleTransactionsReportsEachThroughGateAndNeverFinishes() async {

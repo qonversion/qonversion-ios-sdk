@@ -122,6 +122,14 @@ public final class Qonversion {
         await purchasesManager.handle(purchasedTransactions: verificationResults)
     }
 
+    /// Sets the listener notified with fresh entitlements after the SDK
+    /// processes an out-of-band transaction in subscription-management mode
+    /// (Ask to Buy approvals, renewals, purchases on other devices).
+    /// The listener is held weakly.
+    public func setEntitlementsUpdateListener(_ listener: EntitlementsUpdateListener) {
+        purchasesManager?.entitlementsUpdateListener = listener
+    }
+
     /// Restores the user's purchases and returns the entitlements.
     /// When the backend is unreachable, entitlements are calculated locally.
     @discardableResult

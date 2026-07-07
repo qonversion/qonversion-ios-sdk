@@ -18,6 +18,10 @@ final class PurchasesManager: PurchasesManagerInterface {
 
     private let reportsGate = TransactionReportsGate()
 
+    /// Notified with fresh entitlements after the SDK processes an observed
+    /// transaction in subscription-management mode.
+    weak var entitlementsUpdateListener: Qonversion.EntitlementsUpdateListener?
+
     init(
         purchasesService: PurchasesServiceInterface,
         storeKitFacade: StoreKitFacadeInterface,
@@ -179,8 +183,10 @@ extension PurchasesManager: StoreKitFacadeDelegate {
 
     func transactionUpdated(_ transaction: Qonversion.Transaction) {
         // Out-of-band update (renewal, refund, Ask to Buy approval, another
-        // device): report it, never finish it — the transaction lifecycle is
-        // owned by the host app (Analytics mode) or by the purchase flow.
+        // device). In Analytics mode it is only reported — the host app owns
+        // the lifecycle. In subscription-management mode the SDK owns it:
+        // finish after the backend ack and hand fresh entitlements to the
+        // listener.
         Task { [weak self] in
             guard let self else { return }
             // Transactions without a store id (degraded SK1 mapping) cannot be
@@ -196,7 +202,20 @@ extension PurchasesManager: StoreKitFacadeDelegate {
                     await self.reportsGate.release(id)
                 }
                 self.logger.error("Failed to report an observed transaction: " + error.message)
+                return
             }
+
+            guard self.launchModeProvider.launchMode == .subscriptionManagement else { return }
+
+            await self.storeKitFacade.finish(transaction)
+
+            let entitlements: [String: Qonversion.Entitlement]
+            if let fetched = try? await self.entitlementsManager.entitlements() {
+                entitlements = fetched
+            } else {
+                entitlements = await self.entitlementsManager.localFallbackEntitlements(for: [transaction])
+            }
+            self.entitlementsUpdateListener?.didReceiveUpdatedEntitlements(entitlements)
         }
     }
 }

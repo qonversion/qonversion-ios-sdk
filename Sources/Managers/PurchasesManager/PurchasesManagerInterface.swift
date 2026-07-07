@@ -6,7 +6,11 @@
 import Foundation
 import StoreKit
 
-protocol PurchasesManagerInterface {
+protocol PurchasesManagerInterface: AnyObject {
+
+    /// Notified with fresh entitlements after the SDK processes an observed
+    /// transaction in subscription-management mode. Held weakly.
+    var entitlementsUpdateListener: Qonversion.EntitlementsUpdateListener? { get set }
 
     /// Buys the product through the store, reports the purchase to the backend
     /// (through the user gate) and finishes the transaction only after the
