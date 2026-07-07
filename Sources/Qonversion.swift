@@ -23,7 +23,7 @@ public final class Qonversion {
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
     @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
-        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode)
+        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime)
         Qonversion.shared.userManager = assembly.userManager()
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
@@ -35,6 +35,12 @@ public final class Qonversion {
         // Start consuming out-of-band transaction updates (renewals, refunds,
         // Ask to Buy approvals, purchases on other devices).
         Qonversion.shared.purchasesManager?.startObservingTransactions()
+
+        // Re-report transactions left unfinished by previous sessions
+        // (no-op in Analytics mode).
+        Task {
+            await Qonversion.shared.purchasesManager?.processUnfinishedTransactions()
+        }
 
         // In subscription-management mode the SDK needs the product →
         // permissions mapping for local entitlements calculation; refresh the
@@ -98,10 +104,10 @@ public final class Qonversion {
     /// - Returns: ``Qonversion/Qonversion/PurchaseResult`` with the verified
     ///   transaction and the user's entitlements.
     @discardableResult
-    public func purchase(_ product: Qonversion.Product) async throws -> Qonversion.PurchaseResult {
+    public func purchase(_ product: Qonversion.Product, options: Qonversion.PurchaseOptions? = nil) async throws -> Qonversion.PurchaseResult {
         guard let purchasesManager else { throw QonversionError.initializationError() }
 
-        return try await purchasesManager.purchase(product)
+        return try await purchasesManager.purchase(product, options: options)
     }
 
     /// Restores the user's purchases and returns the entitlements.

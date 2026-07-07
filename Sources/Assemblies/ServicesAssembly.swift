@@ -15,12 +15,14 @@ final class ServicesAssembly {
     
     private let apiKey: String
     private let miscAssembly: MiscAssembly
+    private let baseURL: String
     
     private var deviceInfoCollectorInstance: DeviceInfoCollector?
     
-    init(apiKey: String, miscAssembly: MiscAssembly) {
+    init(apiKey: String, miscAssembly: MiscAssembly, baseURL: String? = nil) {
         self.apiKey = apiKey
         self.miscAssembly = miscAssembly
+        self.baseURL = baseURL ?? StringConstants.baseURL.rawValue
     }
     
     func userService() -> UserServiceInterface {
@@ -38,6 +40,10 @@ final class ServicesAssembly {
         return productsService
     }
     
+    func fallbackService() -> FallbackServiceInterface {
+        return FallbackService(bundle: .main, decoder: miscAssembly.jsonDecoder())
+    }
+
     func storeKitMapper() -> StoreKitMapperInterface {
         let mapper = StoreKitMapper()
         
@@ -120,7 +126,7 @@ final class ServicesAssembly {
         #warning("Update retriable requests list")
         let retriableRequestsList: [Request] = []
         
-        let processor = RequestProcessor(baseURL: StringConstants.baseURL.rawValue, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
+        let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
         
         return processor
     }

@@ -74,6 +74,15 @@ final class StoreKitFacadeTests: XCTestCase {
         XCTAssertEqual(entitlements.first?.jws, "jws1")
     }
 
+    func testUnfinishedTransactionsPassesWrapperTransactionsThrough() async {
+        wrapper.fetchUnfinishedResult = [makeTransaction(id: "u1", jws: "jws1")]
+
+        let unfinished = await facade.unfinishedTransactions()
+
+        XCTAssertEqual(unfinished.map(\.id), ["u1"])
+        XCTAssertEqual(unfinished.first?.jws, "jws1")
+    }
+
     // MARK: - Finish routing
 
     func testFinishForwardsToWrapper() async {

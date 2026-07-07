@@ -14,6 +14,7 @@ final class ProductsManagerTests: XCTestCase {
     private var productsService: MockProductsService!
     private var storeKitFacade: MockStoreKitFacade!
     private var localStorage: MockLocalStorage!
+    private var fallbackService: MockFallbackService!
     private var manager: ProductsManager!
 
     override func setUp() {
@@ -21,16 +22,23 @@ final class ProductsManagerTests: XCTestCase {
         productsService = MockProductsService()
         storeKitFacade = MockStoreKitFacade()
         localStorage = MockLocalStorage()
-        manager = ProductsManager(
+        fallbackService = MockFallbackService()
+        manager = makeManager()
+    }
+
+    private func makeManager() -> ProductsManager {
+        ProductsManager(
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,
+            fallbackService: fallbackService,
             logger: LoggerWrapper()
         )
     }
 
     override func tearDown() {
         manager = nil
+        fallbackService = nil
         productsService = nil
         storeKitFacade = nil
         localStorage = nil
@@ -132,9 +140,8 @@ final class ProductsManagerTests: XCTestCase {
 
     // MARK: - Service error
 
-    // Fixates current behavior: on this branch there is NO disk-cache fallback —
-    // a products service error propagates to the caller as-is and the injected
-    // local storage is never consulted.
+    // Without a bundled fallback file, a products service error propagates to
+    // the caller as-is and the injected local storage is never consulted.
     func testServiceErrorPropagatesWithoutDiskFallback() async {
         try? localStorage.set(Data([0x01]), forKey: "products")
         productsService.error = QonversionError(type: .productsLoadingFailed)
@@ -150,6 +157,39 @@ final class ProductsManagerTests: XCTestCase {
 
         XCTAssertTrue(storeKitFacade.requestedProductIds.isEmpty)
         XCTAssertTrue(manager.loadedProducts.isEmpty)
+    }
+
+    // MARK: - bundled fallback file
+
+    func testServiceErrorFallsBackToBundledProducts() async throws {
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+        fallbackService.fallbackData = FallbackData(
+            products: [makeProduct(qonversionId: "q_fallback", storeId: "store_fallback")],
+            productsPermissions: nil
+        )
+        storeKitFacade.productsError = MockError.stubbed
+
+        let result = try await manager.products()
+
+        XCTAssertEqual(result.map { $0.qonversionId }, ["q_fallback"])
+        // The bundled snapshot must not shadow the API: the next call retries.
+        XCTAssertTrue(manager.loadedProducts.isEmpty)
+        _ = try? await manager.products()
+        XCTAssertEqual(productsService.productsCallsCount, 2)
+    }
+
+    func testCachedProductPermissionsFallsBackToBundledMapping() {
+        fallbackService.fallbackData = FallbackData(products: nil, productsPermissions: ["pro": ["premium"]])
+
+        XCTAssertEqual(manager.cachedProductPermissions(), ["pro": ["premium"]])
+    }
+
+    func testPersistedMappingIsPreferredOverBundledFallback() async {
+        productsService.productPermissionsResult = ["pro": ["from_api"]]
+        await manager.loadProductPermissions()
+        fallbackService.fallbackData = FallbackData(products: nil, productsPermissions: ["pro": ["from_file"]])
+
+        XCTAssertEqual(manager.cachedProductPermissions(), ["pro": ["from_api"]])
     }
 
     // MARK: - product permissions mapping cache
@@ -192,7 +232,7 @@ final class ProductsManagerTests: XCTestCase {
 
         // A fresh manager over the same storage reads the persisted cache
         // without hitting the service.
-        let recreated = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, logger: LoggerWrapper())
+        let recreated = makeManager()
 
         XCTAssertEqual(recreated.cachedProductPermissions(), ["pro": ["premium"]])
         XCTAssertEqual(productsService.productPermissionsCallsCount, 1)
@@ -200,5 +240,33 @@ final class ProductsManagerTests: XCTestCase {
 
     func testCachedMappingIsNilWhenNeverLoaded() {
         XCTAssertNil(manager.cachedProductPermissions())
+    }
+
+    // MARK: - User change
+
+    func testUserDidChangeClearsLoadedProductsCache() async throws {
+        manager.loadedProducts = [makeProduct()]
+
+        manager.userDidChange()
+
+        XCTAssertTrue(manager.loadedProducts.isEmpty)
+        // The next demand goes back to the service.
+        productsService.productsResult = [makeProduct(qonversionId: "q_new", storeId: "store_new")]
+        storeKitFacade.productsError = MockError.stubbed
+        let result = try await manager.products()
+        XCTAssertEqual(result.map { $0.qonversionId }, ["q_new"])
+        XCTAssertEqual(productsService.productsCallsCount, 1)
+    }
+
+    // The product → permissions mapping is project-scoped, not user-scoped:
+    // it stays valid across a user switch and keeps powering the local
+    // entitlements fallback.
+    func testUserDidChangeKeepsProductPermissionsMapping() async {
+        productsService.productPermissionsResult = ["pro": ["premium"]]
+        await manager.loadProductPermissions()
+
+        manager.userDidChange()
+
+        XCTAssertEqual(manager.cachedProductPermissions(), ["pro": ["premium"]])
     }
 }

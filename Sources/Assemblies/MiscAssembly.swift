@@ -29,10 +29,18 @@ final class MiscAssembly {
     var servicesAssembly: ServicesAssembly!
     var internalConfig: InternalConfig
 
+    // One instance SDK-wide: the user gate notifies through it, and every
+    // user-scoped cache registers with it.
+    private let userChangesNotifierInstance = UserChangesNotifier()
+
     init(apiKey: String, userDefaults: UserDefaults, internalConfig: InternalConfig) {
         self.apiKey = apiKey
         self.userDefaults = userDefaults
         self.internalConfig = internalConfig
+    }
+
+    func userChangesNotifier() -> UserChangesNotifier {
+        return userChangesNotifierInstance
     }
     
     func localStorage() -> LocalStorage {

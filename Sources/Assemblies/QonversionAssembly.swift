@@ -19,11 +19,15 @@ final class QonversionAssembly {
     // Holds the in-memory products and mapping caches consumed by the local
     // entitlements calculation — stateful, one instance SDK-wide.
     private var productsManagerInstance: ProductsManager?
+
+    // Holds the in-memory per-context-key remote config cache — stateful,
+    // one instance SDK-wide.
+    private var remoteConfigManagerInstance: RemoteConfigManager?
     
-    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics) {
+    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month) {
         let userDefaults = userDefaults ?? UserDefaults.standard
-        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "", launchMode: launchMode))
-        self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly)
+        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime))
+        self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly, baseURL: baseURL)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
 
         // Resolves the anonymous user id (persisted or generated) into InternalConfig.
@@ -37,8 +41,9 @@ final class QonversionAssembly {
 
         let userService: UserServiceInterface = servicesAssembly.userService()
         let localStorage: LocalStorageInterface = miscAssembly.localStorage()
+        let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
-        let userManager = UserManager(userService: userService, localStorage: localStorage, internalConfig: miscAssembly.internalConfig, logger: logger)
+        let userManager = UserManager(userService: userService, localStorage: localStorage, internalConfig: miscAssembly.internalConfig, userChangesNotifier: userChangesNotifier, logger: logger)
         userManagerInstance = userManager
 
         return userManager
@@ -76,11 +81,14 @@ final class QonversionAssembly {
         let storeKitFacade: StoreKitFacade = servicesAssembly.storeKitFacade()
         let localStorage: LocalStorageInterface = miscAssembly.localStorage()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
-        let productsManager = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, logger: logger)
+        let productsManager = ProductsManager(productsService: productsService, storeKitFacade: storeKitFacade, localStorage: localStorage, fallbackService: servicesAssembly.fallbackService(), logger: logger)
         
+        let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
+
         storeKitFacade.delegate = productsManager
         productsManagerInstance = productsManager
-        
+        userChangesNotifier.add(observer: productsManager)
+
         return productsManager
     }
     
@@ -94,6 +102,7 @@ final class QonversionAssembly {
             userManager: userManager(),
             entitlementsManager: entitlementsManager(),
             userIdProvider: miscAssembly.internalConfig,
+            launchModeProvider: miscAssembly.internalConfig,
             logger: logger
         )
 
@@ -114,16 +123,29 @@ final class QonversionAssembly {
             userManager: userManager(),
             userIdProvider: miscAssembly.internalConfig,
             localStorage: miscAssembly.localStorage(),
+            cacheLifetime: miscAssembly.internalConfig.entitlementsCacheLifetime.seconds,
             logger: logger
         )
+
+        let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
+        userChangesNotifier.add(observer: entitlementsManager)
 
         return entitlementsManager
     }
 
     func remoteConfigManager() -> RemoteConfigManagerInterface {
+        if let remoteConfigManagerInstance {
+            return remoteConfigManagerInstance
+        }
+
         let remoteConfigService = servicesAssembly.remoteConfigService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let remoteConfigManager = RemoteConfigManager(remoteConfigService: remoteConfigService, logger: logger)
+
+        let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
+
+        remoteConfigManagerInstance = remoteConfigManager
+        userChangesNotifier.add(observer: remoteConfigManager)
 
         return remoteConfigManager
     }

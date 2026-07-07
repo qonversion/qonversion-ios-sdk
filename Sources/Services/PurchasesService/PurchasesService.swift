@@ -13,7 +13,7 @@ final class PurchasesService: PurchasesServiceInterface {
         self.requestProcessor = requestProcessor
     }
 
-    func send(_ transaction: Qonversion.Transaction, userId: String) async throws {
+    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
         let appStoreData: RequestBodyDict = [
             "transaction_id": transaction.id ?? "",
             "original_transaction_id": transaction.originalId ?? "",
@@ -23,12 +23,18 @@ final class PurchasesService: PurchasesServiceInterface {
             // the transaction through the App Store Server API as well.
             "receipt": transaction.jws ?? "",
         ]
-        let body: RequestBodyDict = [
+        var body: RequestBodyDict = [
             "price": transaction.price.map { "\($0)" } ?? "",
             "currency": transaction.currency?.identifier ?? "",
             "purchased": Int64(transaction.purchaseDate?.timeIntervalSince1970 ?? 0),
             "app_store_data": appStoreData,
         ]
+        if let contextKeys = options?.contextKeys, !contextKeys.isEmpty {
+            body["context_keys"] = contextKeys
+        }
+        if let screenUid = options?.screenUid {
+            body["screen_uid"] = screenUid
+        }
 
         let request = Request.createPurchase(userId: userId, body: body)
         do {

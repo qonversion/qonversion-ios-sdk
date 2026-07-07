@@ -62,6 +62,35 @@ final class PurchasesServiceTests: XCTestCase {
         XCTAssertEqual(appStoreData?["receipt"] as? String, "signed-jws", "the jws proof travels in app_store_data.receipt")
     }
 
+    func testSendWithOptionsIncludesContextKeysAndScreenUid() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [EmptyApiResponse()]
+        let service = makeService(processor)
+        let options = Qonversion.PurchaseOptions(contextKeys: ["main", "onboarding"], screenUid: "screen_1")
+
+        try await service.send(makeTransaction(), userId: "QON_buyer", options: options)
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertEqual(body["context_keys"] as? [String], ["main", "onboarding"])
+        XCTAssertEqual(body["screen_uid"] as? String, "screen_1")
+    }
+
+    func testSendWithoutOptionsOmitsAssociationFields() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [EmptyApiResponse()]
+        let service = makeService(processor)
+
+        try await service.send(makeTransaction(), userId: "QON_buyer")
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["context_keys"])
+        XCTAssertNil(body["screen_uid"])
+    }
+
     func testSendWithoutJwsSendsEmptyReceipt() async throws {
         let processor = MockRequestProcessor()
         processor.results = [EmptyApiResponse()]

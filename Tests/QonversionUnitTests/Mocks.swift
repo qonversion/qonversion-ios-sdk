@@ -196,15 +196,19 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var restoreResult: [Qonversion.Transaction] = []
     var restoreError: Error?
     var historicalDataResult: [Qonversion.Transaction] = []
+    var unfinishedTransactionsResult: [Qonversion.Transaction] = []
+    private(set) var unfinishedTransactionsCallsCount = 0
     var purchaseResult: Qonversion.Transaction?
     var purchaseError: Error?
     private(set) var purchasedStoreIds: [String] = []
+    private(set) var purchasedOptions: [Qonversion.PurchaseOptions] = []
     private(set) var finishedTransactions: [Qonversion.Transaction] = []
     private(set) var startObservingCallsCount = 0
     private(set) var stopObservingCallsCount = 0
 
-    func purchase(storeId: String) async throws -> Qonversion.Transaction {
+    func purchase(storeId: String, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
         purchasedStoreIds.append(storeId)
+        purchasedOptions.append(options)
         if let purchaseError { throw purchaseError }
         guard let purchaseResult else { throw MockError.noStub }
         return purchaseResult
@@ -224,6 +228,11 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     }
 
     func historicalData() async throws -> [Qonversion.Transaction] { historicalDataResult }
+
+    func unfinishedTransactions() async -> [Qonversion.Transaction] {
+        unfinishedTransactionsCallsCount += 1
+        return unfinishedTransactionsResult
+    }
 
     func finish(_ transaction: Qonversion.Transaction) async {
         finishedTransactions.append(transaction)
@@ -271,7 +280,7 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
         updatesContinuation?.finish()
     }
 
-    func purchase(product: StoreKit.Product) async throws -> Qonversion.Transaction {
+    func purchase(product: StoreKit.Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
         throw MockError.noStub
     }
 
@@ -479,6 +488,11 @@ final class MockUserService: UserServiceInterface {
     }
 }
 
+final class UserChangeObserverSpy: UserChangedObserver {
+    private(set) var userDidChangeCallsCount = 0
+    func userDidChange() { userDidChangeCallsCount += 1 }
+}
+
 final class MockUserManager: UserManagerInterface {
 
     var user: Qonversion.User?
@@ -516,14 +530,25 @@ final class MockUserManager: UserManagerInterface {
     }
 }
 
+final class MockFallbackService: FallbackServiceInterface {
+
+    var fallbackData: FallbackData?
+    private(set) var obtainCallsCount = 0
+
+    func obtainFallbackData() -> FallbackData? {
+        obtainCallsCount += 1
+        return fallbackData
+    }
+}
+
 final class MockPurchasesService: PurchasesServiceInterface {
 
     var error: Error?
     var onSend: (() async -> Void)?
-    private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String)] = []
+    private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] = []
 
-    func send(_ transaction: Qonversion.Transaction, userId: String) async throws {
-        sentTransactions.append((transaction, userId))
+    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
+        sentTransactions.append((transaction, userId, options))
         await onSend?()
         if let error { throw error }
     }

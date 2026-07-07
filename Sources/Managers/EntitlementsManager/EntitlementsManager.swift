@@ -10,9 +10,6 @@ fileprivate enum Constants: String {
     case entitlementsTimestampKey = "qonversion.keys.entitlementsTimestamp"
 }
 
-// TODO: make configurable via Configuration.entitlementsCacheLifetime (config step).
-fileprivate let cacheLifetimeSeconds: TimeInterval = 30 * 24 * 60 * 60
-
 final class EntitlementsManager: EntitlementsManagerInterface {
 
     private let entitlementsService: EntitlementsServiceInterface
@@ -21,6 +18,7 @@ final class EntitlementsManager: EntitlementsManagerInterface {
     private let userManager: UserManagerInterface
     private let userIdProvider: UserIdProvider
     private let localStorage: LocalStorageInterface
+    private let cacheLifetimeSeconds: TimeInterval
     private let logger: LoggerWrapper
 
     init(
@@ -30,6 +28,7 @@ final class EntitlementsManager: EntitlementsManagerInterface {
         userManager: UserManagerInterface,
         userIdProvider: UserIdProvider,
         localStorage: LocalStorageInterface,
+        cacheLifetime: TimeInterval,
         logger: LoggerWrapper
     ) {
         self.entitlementsService = entitlementsService
@@ -38,6 +37,7 @@ final class EntitlementsManager: EntitlementsManagerInterface {
         self.userManager = userManager
         self.userIdProvider = userIdProvider
         self.localStorage = localStorage
+        self.cacheLifetimeSeconds = cacheLifetime
         self.logger = logger
     }
 
@@ -69,6 +69,16 @@ final class EntitlementsManager: EntitlementsManagerInterface {
             let transactions = await storeKitFacade.currentEntitlements()
             return await localFallbackEntitlements(for: transactions)
         }
+    }
+}
+
+// MARK: - UserChangedObserver
+
+extension EntitlementsManager: UserChangedObserver {
+
+    func userDidChange() {
+        localStorage.removeObject(forKey: Constants.entitlementsKey.rawValue)
+        localStorage.removeObject(forKey: Constants.entitlementsTimestampKey.rawValue)
     }
 }
 

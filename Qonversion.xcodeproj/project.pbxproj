@@ -32,6 +32,11 @@
 		70CD93012BC6E22B0039D65C /* SendUserPropertiesResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92A92BC6E22B0039D65C /* SendUserPropertiesResult.swift */; };
 		70CD93022BC6E22B0039D65C /* UserPropertiesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92AA2BC6E22B0039D65C /* UserPropertiesManager.swift */; };
 		A300000000000000000000B1 /* PurchasesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A1 /* PurchasesManager.swift */; };
+		B100000000000000000000B1 /* UserChangesNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B100000000000000000000A1 /* UserChangesNotifier.swift */; };
+		B200000000000000000000B1 /* TransactionReportsGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000000A1 /* TransactionReportsGate.swift */; };
+		B300000000000000000000B1 /* PurchaseOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B300000000000000000000A1 /* PurchaseOptions.swift */; };
+		B400000000000000000000B1 /* EntitlementsCacheLifetime.swift in Sources */ = {isa = PBXBuildFile; fileRef = B400000000000000000000A1 /* EntitlementsCacheLifetime.swift */; };
+		B500000000000000000000B1 /* FallbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B500000000000000000000A1 /* FallbackService.swift */; };
 		A300000000000000000000B2 /* PurchasesManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A2 /* PurchasesManagerInterface.swift */; };
 		A300000000000000000000B3 /* PurchasesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A3 /* PurchasesService.swift */; };
 		A300000000000000000000B4 /* PurchasesServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A4 /* PurchasesServiceInterface.swift */; };
@@ -177,6 +182,11 @@
 		A300000000000000000000A3 /* PurchasesService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesService.swift; sourceTree = "<group>"; };
 		A300000000000000000000A4 /* PurchasesServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesServiceInterface.swift; sourceTree = "<group>"; };
 		A100000000000000000000A1 /* UserManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
+		B100000000000000000000A1 /* UserChangesNotifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserChangesNotifier.swift; sourceTree = "<group>"; };
+		B200000000000000000000A1 /* TransactionReportsGate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TransactionReportsGate.swift; sourceTree = "<group>"; };
+		B300000000000000000000A1 /* PurchaseOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseOptions.swift; sourceTree = "<group>"; };
+		B400000000000000000000A1 /* EntitlementsCacheLifetime.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsCacheLifetime.swift; sourceTree = "<group>"; };
+		B500000000000000000000A1 /* FallbackService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FallbackService.swift; sourceTree = "<group>"; };
 		A100000000000000000000A2 /* UserManagerInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManagerInterface.swift; sourceTree = "<group>"; };
 		A100000000000000000000A3 /* Identity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Identity.swift; sourceTree = "<group>"; };
 		A400000000000000000000A1 /* ProductsPermissions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsPermissions.swift; sourceTree = "<group>"; };
@@ -356,6 +366,8 @@
 				A100000000000000000000A3 /* Identity.swift */,
 				A400000000000000000000A1 /* ProductsPermissions.swift */,
 				A500000000000000000000A1 /* Entitlement.swift */,
+				B300000000000000000000A1 /* PurchaseOptions.swift */,
+				B400000000000000000000A1 /* EntitlementsCacheLifetime.swift */,
 				A600000000000000000000A1 /* PurchaseResult.swift */,
 				70CD92A22BC6E22B0039D65C /* UserProperties.swift */,
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
@@ -393,6 +405,7 @@
 			children = (
 				A100000000000000000000A1 /* UserManager.swift */,
 				A100000000000000000000A2 /* UserManagerInterface.swift */,
+				B100000000000000000000A1 /* UserChangesNotifier.swift */,
 			);
 			path = UserManager;
 			sourceTree = "<group>";
@@ -434,6 +447,7 @@
 			children = (
 				A300000000000000000000A1 /* PurchasesManager.swift */,
 				A300000000000000000000A2 /* PurchasesManagerInterface.swift */,
+				B200000000000000000000A1 /* TransactionReportsGate.swift */,
 			);
 			path = PurchasesManager;
 			sourceTree = "<group>";
@@ -594,6 +608,14 @@
 			path = UserService;
 			sourceTree = "<group>";
 		};
+		B500000000000000000000C1 /* FallbackService */ = {
+			isa = PBXGroup;
+			children = (
+				B500000000000000000000A1 /* FallbackService.swift */,
+			);
+			path = FallbackService;
+			sourceTree = "<group>";
+		};
 		70CD92DB2BC6E22B0039D65C /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -603,6 +625,7 @@
 				A500000000000000000000C1 /* EntitlementsService */,
 				70CD92D72BC6E22B0039D65C /* Device */,
 				70CD92DA2BC6E22B0039D65C /* UserService */,
+				B500000000000000000000C1 /* FallbackService */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -878,6 +901,11 @@
 				A300000000000000000000B3 /* PurchasesService.swift in Sources */,
 				A300000000000000000000B4 /* PurchasesServiceInterface.swift in Sources */,
 				A100000000000000000000B1 /* UserManager.swift in Sources */,
+				B100000000000000000000B1 /* UserChangesNotifier.swift in Sources */,
+				B200000000000000000000B1 /* TransactionReportsGate.swift in Sources */,
+				B300000000000000000000B1 /* PurchaseOptions.swift in Sources */,
+				B400000000000000000000B1 /* EntitlementsCacheLifetime.swift in Sources */,
+				B500000000000000000000B1 /* FallbackService.swift in Sources */,
 				A100000000000000000000B2 /* UserManagerInterface.swift in Sources */,
 				A100000000000000000000B3 /* Identity.swift in Sources */,
 				A400000000000000000000B1 /* ProductsPermissions.swift in Sources */,

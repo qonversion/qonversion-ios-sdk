@@ -11,7 +11,7 @@ import StoreKit
 protocol StoreKitWrapperInterface {
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    func purchase(product: StoreKit.Product) async throws -> Qonversion.Transaction
+    func purchase(product: StoreKit.Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
     func products(for ids:[String]) async throws -> [StoreKit.Product]

@@ -175,6 +175,18 @@ final class RemoteConfigManagerTests: XCTestCase {
         XCTAssertEqual(remoteConfigService.detachedExperimentIds, ["exp-2"])
     }
 
+    // MARK: - User change
+
+    func testUserDidChangeClearsCachedConfigs() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
+        _ = try await manager.loadRemoteConfig(contextKey: "main")
+
+        manager.userDidChange()
+
+        _ = try await manager.loadRemoteConfig(contextKey: "main")
+        XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 2, "the new user must not see the previous user's configs")
+    }
+
     func testAttachDetachMethodsPropagateServiceErrors() async {
         remoteConfigService.error = MockError.stubbed
 

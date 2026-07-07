@@ -14,6 +14,8 @@ enum UserServiceStorageKeys: String {
 
 fileprivate enum Constants: String {
     case userIdPrefix = "QON_"
+    // The uid key of the previous production SDK generation.
+    case legacyUserIdKey = "com.qonversion.keys.storedUserID"
 }
 
 final class UserService: UserServiceInterface {
@@ -40,7 +42,9 @@ final class UserService: UserServiceInterface {
     }
     
     func createUser() async throws -> Qonversion.User {
-        let userId: String = generateUserId()
+        // The backend upserts by uid: a fresh install creates the user, a
+        // migrated install gets its existing user back.
+        let userId: String = internalConfig.userId.isEmpty ? generateUserId() : internalConfig.userId
         do {
             let request = Request.createUser(id: userId, body: ["environment": "sandbox"])
             let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self)
@@ -94,6 +98,15 @@ final class UserService: UserServiceInterface {
 extension UserService {
     
     private func prepareUserId() {
+        // An install updated from the previous SDK generation keeps its user:
+        // the legacy uid moves to the new storage and the legacy key is cleaned.
+        if let legacyUserId = localStorage.string(forKey: Constants.legacyUserIdKey.rawValue), !legacyUserId.isEmpty {
+            localStorage.set(string: legacyUserId, forKey: UserServiceStorageKeys.userIdKey.rawValue)
+            localStorage.removeObject(forKey: Constants.legacyUserIdKey.rawValue)
+            internalConfig.userId = legacyUserId
+            return
+        }
+
         let userId: String = localStorage.string(forKey: UserServiceStorageKeys.userIdKey.rawValue) ?? generateUserId()
         internalConfig.userId = userId
     }
