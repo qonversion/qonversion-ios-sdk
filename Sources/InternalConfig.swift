@@ -19,10 +19,12 @@ final class InternalConfig: UserIdProvider, LaunchModeProvider {
     
     var userId: String
     var launchMode: Qonversion.LaunchMode
+    var entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime
 
-    init(userId: String, launchMode: Qonversion.LaunchMode = .analytics) {
+    init(userId: String, launchMode: Qonversion.LaunchMode = .analytics, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month) {
         self.userId = userId
         self.launchMode = launchMode
+        self.entitlementsCacheLifetime = entitlementsCacheLifetime
     }
     
     func getUserId() -> String {

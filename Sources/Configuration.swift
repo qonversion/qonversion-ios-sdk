@@ -23,6 +23,9 @@ extension Qonversion {
         /// Base API url: the normalized proxy url when set, nil otherwise.
         let baseURL: String?
 
+        /// How long cached entitlements stay eligible for the local fallback.
+        let entitlementsCacheLifetime: EntitlementsCacheLifetime
+
         /// Initializer of Configuration.
         /// 
         /// Launch with ``Qonversion/LaunchMode/analytics`` mode to use Qonversion with your existing in-app subscription flow to get comprehensive subscription analytics and user engagement tools, and send the data to the leading marketing, analytics, and engagement platforms.
@@ -31,10 +34,12 @@ extension Qonversion {
         ///   - apiKey: Your project key from Qonversion Dashboard to setup the SDK
         ///   - launchMode: launch mode of the Qonversion SDK.
         ///   - proxyURL: URL of your proxy server which redirects all the requests from the app to our API. Please, check the documentation and contact us before using this feature.
-        public init(apiKey: String, launchMode: LaunchMode, proxyURL: String? = nil) {
+        ///   - entitlementsCacheLifetime: how long cached entitlements stay eligible for the local fallback when the backend is unreachable. The default value is `.month`.
+        public init(apiKey: String, launchMode: LaunchMode, proxyURL: String? = nil, entitlementsCacheLifetime: EntitlementsCacheLifetime = .month) {
             self.apiKey = apiKey
             self.launchMode = launchMode
             self.baseURL = proxyURL.map(Configuration.normalizedBaseURL)
+            self.entitlementsCacheLifetime = entitlementsCacheLifetime
         }
 
         private static func normalizedBaseURL(_ url: String) -> String {

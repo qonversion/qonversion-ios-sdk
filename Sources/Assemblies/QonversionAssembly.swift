@@ -24,9 +24,9 @@ final class QonversionAssembly {
     // one instance SDK-wide.
     private var remoteConfigManagerInstance: RemoteConfigManager?
     
-    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil) {
+    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month) {
         let userDefaults = userDefaults ?? UserDefaults.standard
-        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "", launchMode: launchMode))
+        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime))
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly, baseURL: baseURL)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
 
@@ -120,6 +120,7 @@ final class QonversionAssembly {
             userManager: userManager(),
             userIdProvider: miscAssembly.internalConfig,
             localStorage: miscAssembly.localStorage(),
+            cacheLifetime: miscAssembly.internalConfig.entitlementsCacheLifetime.seconds,
             logger: logger
         )
 

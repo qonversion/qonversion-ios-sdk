@@ -34,13 +34,18 @@ final class EntitlementsManagerTests: XCTestCase {
         userManager.user = try? JSONDecoder.qonversionTest.decode(
             Qonversion.User.self,
             from: Data(#"{"id": "QON_holder", "created": 1700000000, "environment": "production"}"#.utf8))
-        manager = EntitlementsManager(
+        manager = makeManager()
+    }
+
+    private func makeManager(cacheLifetime: TimeInterval = Qonversion.EntitlementsCacheLifetime.month.seconds) -> EntitlementsManager {
+        EntitlementsManager(
             entitlementsService: service,
             storeKitFacade: facade,
             productsDataSource: productsManager,
             userManager: userManager,
             userIdProvider: config,
             localStorage: storage,
+            cacheLifetime: cacheLifetime,
             logger: LoggerWrapper()
         )
     }
@@ -147,18 +152,41 @@ final class EntitlementsManagerTests: XCTestCase {
         // A fresh manager over the same storage sees the locally calculated
         // entitlement in its fallback chain even with no StoreKit data.
         facade.currentEntitlementsResult = []
-        let recreated = EntitlementsManager(
-            entitlementsService: service,
-            storeKitFacade: facade,
-            productsDataSource: productsManager,
-            userManager: userManager,
-            userIdProvider: config,
-            localStorage: storage,
-            logger: LoggerWrapper()
-        )
+        let recreated = makeManager()
         let entitlements = try await recreated.entitlements()
 
         XCTAssertEqual(entitlements["premium"]?.active, true)
+    }
+
+    // MARK: - configured cache lifetime
+
+    func testCacheOlderThanConfiguredLifetimeIsIgnoredInFallback() async throws {
+        manager = makeManager(cacheLifetime: Qonversion.EntitlementsCacheLifetime.week.seconds)
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+
+        // Age the cache beyond the configured week.
+        storage.set(double: Date().timeIntervalSince1970 - 8 * 24 * 60 * 60, forKey: "qonversion.keys.entitlementsTimestamp")
+
+        service.error = QonversionError(type: .internal)
+        facade.currentEntitlementsResult = []
+        let entitlements = try await manager.entitlements()
+
+        XCTAssertTrue(entitlements.isEmpty)
+    }
+
+    func testCacheWithinConfiguredLifetimeIsUsedInFallback() async throws {
+        manager = makeManager(cacheLifetime: Qonversion.EntitlementsCacheLifetime.week.seconds)
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+
+        storage.set(double: Date().timeIntervalSince1970 - 6 * 24 * 60 * 60, forKey: "qonversion.keys.entitlementsTimestamp")
+
+        service.error = QonversionError(type: .internal)
+        facade.currentEntitlementsResult = []
+        let entitlements = try await manager.entitlements()
+
+        XCTAssertTrue(entitlements.keys.contains("premium"))
     }
 
     // MARK: - User change
