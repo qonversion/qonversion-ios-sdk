@@ -99,6 +99,7 @@ final class QonversionAssembly {
             userManager: userManager(),
             entitlementsManager: entitlementsManager(),
             userIdProvider: miscAssembly.internalConfig,
+            launchModeProvider: miscAssembly.internalConfig,
             logger: logger
         )
 

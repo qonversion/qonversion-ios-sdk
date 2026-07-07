@@ -21,6 +21,10 @@ protocol StoreKitFacadeInterface {
 
     func historicalData() async throws -> [Qonversion.Transaction]
 
+    /// Transactions the store still considers unfinished (not acknowledged by
+    /// the app in previous sessions).
+    func unfinishedTransactions() async -> [Qonversion.Transaction]
+
     /// Finishes the transaction with the store it came from. Never called
     /// automatically by the SDK for observed updates.
     func finish(_ transaction: Qonversion.Transaction) async

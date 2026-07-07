@@ -36,6 +36,12 @@ public final class Qonversion {
         // Ask to Buy approvals, purchases on other devices).
         Qonversion.shared.purchasesManager?.startObservingTransactions()
 
+        // Re-report transactions left unfinished by previous sessions
+        // (no-op in Analytics mode).
+        Task {
+            await Qonversion.shared.purchasesManager?.processUnfinishedTransactions()
+        }
+
         // In subscription-management mode the SDK needs the product →
         // permissions mapping for local entitlements calculation; refresh the
         // persistent cache on every launch.

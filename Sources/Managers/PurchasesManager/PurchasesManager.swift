@@ -13,7 +13,10 @@ final class PurchasesManager: PurchasesManagerInterface {
     private let userManager: UserManagerInterface
     private let entitlementsManager: EntitlementsManagerInterface
     private let userIdProvider: UserIdProvider
+    private let launchModeProvider: LaunchModeProvider
     private let logger: LoggerWrapper
+
+    private let reportsGate = TransactionReportsGate()
 
     init(
         purchasesService: PurchasesServiceInterface,
@@ -21,6 +24,7 @@ final class PurchasesManager: PurchasesManagerInterface {
         userManager: UserManagerInterface,
         entitlementsManager: EntitlementsManagerInterface,
         userIdProvider: UserIdProvider,
+        launchModeProvider: LaunchModeProvider,
         logger: LoggerWrapper
     ) {
         self.purchasesService = purchasesService
@@ -28,6 +32,7 @@ final class PurchasesManager: PurchasesManagerInterface {
         self.userManager = userManager
         self.entitlementsManager = entitlementsManager
         self.userIdProvider = userIdProvider
+        self.launchModeProvider = launchModeProvider
         self.logger = logger
     }
 
@@ -93,6 +98,36 @@ final class PurchasesManager: PurchasesManagerInterface {
     func startObservingTransactions() {
         storeKitFacade.startObservingTransactionUpdates()
     }
+
+    func processUnfinishedTransactions() async {
+        // In Analytics mode the host app owns the transaction lifecycle.
+        guard launchModeProvider.launchMode == .subscriptionManagement else { return }
+
+        let transactions = await storeKitFacade.unfinishedTransactions()
+        guard !transactions.isEmpty else { return }
+
+        do {
+            _ = try await userManager.obtainUser()
+        } catch {
+            logger.error("Skipping unfinished transactions: no backend user: " + error.message)
+            return
+        }
+
+        for transaction in transactions {
+            if let id = transaction.id {
+                guard await reportsGate.tryTake(id) else { continue }
+            }
+            do {
+                try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                await storeKitFacade.finish(transaction)
+            } catch {
+                if let id = transaction.id {
+                    await reportsGate.release(id)
+                }
+                logger.error("Failed to re-report an unfinished transaction: " + error.message)
+            }
+        }
+    }
 }
 
 // MARK: - StoreKitFacadeDelegate
@@ -109,10 +144,18 @@ extension PurchasesManager: StoreKitFacadeDelegate {
         // owned by the host app (Analytics mode) or by the purchase flow.
         Task { [weak self] in
             guard let self else { return }
+            // Transactions without a store id (degraded SK1 mapping) cannot be
+            // deduplicated and are reported unconditionally.
+            if let id = transaction.id {
+                guard await self.reportsGate.tryTake(id) else { return }
+            }
             do {
                 _ = try await self.userManager.obtainUser()
                 try await self.purchasesService.send(transaction, userId: self.userIdProvider.getUserId())
             } catch {
+                if let id = transaction.id {
+                    await self.reportsGate.release(id)
+                }
                 self.logger.error("Failed to report an observed transaction: " + error.message)
             }
         }

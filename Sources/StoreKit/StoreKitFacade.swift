@@ -95,6 +95,12 @@ class StoreKitFacade: StoreKitFacadeInterface {
         }
     }
     
+    func unfinishedTransactions() async -> [Qonversion.Transaction] {
+        guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper else { return [] }
+
+        return await storeKitWrapper.fetchUnfinished()
+    }
+
     #if os(iOS) || os(visionOS)
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet() {

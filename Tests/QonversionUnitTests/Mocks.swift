@@ -196,6 +196,8 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var restoreResult: [Qonversion.Transaction] = []
     var restoreError: Error?
     var historicalDataResult: [Qonversion.Transaction] = []
+    var unfinishedTransactionsResult: [Qonversion.Transaction] = []
+    private(set) var unfinishedTransactionsCallsCount = 0
     var purchaseResult: Qonversion.Transaction?
     var purchaseError: Error?
     private(set) var purchasedStoreIds: [String] = []
@@ -224,6 +226,11 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     }
 
     func historicalData() async throws -> [Qonversion.Transaction] { historicalDataResult }
+
+    func unfinishedTransactions() async -> [Qonversion.Transaction] {
+        unfinishedTransactionsCallsCount += 1
+        return unfinishedTransactionsResult
+    }
 
     func finish(_ transaction: Qonversion.Transaction) async {
         finishedTransactions.append(transaction)

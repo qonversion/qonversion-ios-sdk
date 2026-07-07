@@ -11,7 +11,11 @@ protocol UserIdProvider {
     func getUserId() -> String
 }
 
-final class InternalConfig: UserIdProvider {
+protocol LaunchModeProvider {
+    var launchMode: Qonversion.LaunchMode { get }
+}
+
+final class InternalConfig: UserIdProvider, LaunchModeProvider {
     
     var userId: String
     var launchMode: Qonversion.LaunchMode

@@ -23,4 +23,10 @@ protocol PurchasesManagerInterface {
     /// Ask to Buy approvals): each update is reported to the backend and is
     /// NEVER finished by the SDK.
     func startObservingTransactions()
+
+    /// Re-reports transactions left unfinished by previous sessions and
+    /// finishes them after the backend confirms. Does nothing in Analytics
+    /// mode, where the host app owns the transaction lifecycle. Deduplicated
+    /// against the transaction updates listener.
+    func processUnfinishedTransactions() async
 }

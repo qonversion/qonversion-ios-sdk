@@ -35,12 +35,18 @@ final class PurchasesManagerTests: XCTestCase {
         userManager.user = try? JSONDecoder.qonversionTest.decode(
             Qonversion.User.self,
             from: Data(#"{"id": "QON_buyer", "created": 1700000000, "environment": "production"}"#.utf8))
-        manager = PurchasesManager(
+        manager = makeManager()
+    }
+
+    private func makeManager(launchMode: Qonversion.LaunchMode = .analytics) -> PurchasesManager {
+        config.launchMode = launchMode
+        return PurchasesManager(
             purchasesService: service,
             storeKitFacade: facade,
             userManager: userManager,
             entitlementsManager: entitlementsManager,
             userIdProvider: config,
+            launchModeProvider: config,
             logger: LoggerWrapper()
         )
     }
@@ -255,5 +261,100 @@ final class PurchasesManagerTests: XCTestCase {
         await waitUntil { self.service.sentTransactions.count >= 1 }
         try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
+    }
+
+    // MARK: - unfinished transactions sweep at launch
+
+    func testUnfinishedSweepDoesNothingInAnalyticsMode() async {
+        // In Analytics mode the host app owns the transaction lifecycle.
+        manager = makeManager(launchMode: .analytics)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(facade.unfinishedTransactionsCallsCount, 0)
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+    }
+
+    func testUnfinishedSweepReportsAndFinishesEachTransaction() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1"), makeTransaction(id: "t2", productId: "com.app.lite")]
+
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "the user gate must be passed before reporting")
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t2"])
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1", "t2"])
+    }
+
+    func testUnfinishedSweepFinishesOnlyAfterReport() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+        var finishedAtSendTime = false
+        service.onSend = { [weak self] in
+            finishedAtSendTime = !(self?.facade.finishedTransactions.isEmpty ?? true)
+        }
+
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertFalse(finishedAtSendTime, "finish only after the backend confirmed the report")
+        XCTAssertEqual(facade.finishedTransactions.count, 1)
+    }
+
+    func testUnfinishedSweepReportFailureLeavesTransactionUnfinishedAndRetriable() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+        service.error = MockError.stubbed
+
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+
+        // The failed report must not poison the dedup: the next sweep retries.
+        service.error = nil
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t1"])
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"])
+    }
+
+    func testUnfinishedSweepUserGateFailureSkipsReporting() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+        userManager.error = MockError.stubbed
+
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+    }
+
+    // MARK: - sweep vs listener dedup
+
+    func testObservedUpdateAlreadySweptIsNotReportedTwice() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        let transaction = makeTransaction(id: "t1")
+        facade.unfinishedTransactionsResult = [transaction]
+
+        await manager.processUnfinishedTransactions()
+        // The same unfinished transaction arrives through Transaction.updates at launch.
+        manager.transactionUpdated(transaction)
+
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"], "the sweep and the listener must not double-report")
+    }
+
+    func testSweepSkipsTransactionAlreadyReportedByListener() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        let transaction = makeTransaction(id: "t1")
+        facade.unfinishedTransactionsResult = [transaction]
+
+        manager.transactionUpdated(transaction)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
     }
 }
