@@ -13,31 +13,47 @@ class RequestProcessor: RequestProcessorInterface {
     let headersBuilder: HeadersBuilderInterface
     let errorHandler: NetworkErrorHandlerInterface
     let decoder: ResponseDecoderInterface
-    let retriableRequestsList: [Request]
+    let retriableRequestKinds: [Request.Kind]
     let requestsStorage: RequestsStorageInterface
     let rateLimiter: RateLimiterInterface
     var criticalError: QonversionError?
 
-    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface) {
+    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
         self.errorHandler = errorHandler
         self.decoder = decoder
-        self.retriableRequestsList = retriableRequestsList
+        self.retriableRequestKinds = retriableRequestKinds
         self.requestsStorage = requestsStorage
         self.rateLimiter = rateLimiter
-        
-        processStoredRequests()
     }
-    
+
+    /// Resends requests that failed on transport in previous sessions.
+    /// Requests failing on transport again go back to the storage; an HTTP
+    /// answer of any status counts as delivered (resending would duplicate).
     func processStoredRequests() {
-        let requests: [URLRequest] = requestsStorage.fetchRequests()
-        let requestsCopy: [URLRequest] = requests
-        
-        #warning("Resend all requests here and remove from the storage")
-        
+        let requests: [StoredRequest] = requestsStorage.fetchRequests()
+        guard !requests.isEmpty else { return }
+
         requestsStorage.clean()
+
+        Task { [weak self] in
+            for stored in requests {
+                guard let self, let url = URL(string: stored.url) else { continue }
+
+                var urlRequest = URLRequest(url: url)
+                urlRequest.httpMethod = stored.method
+                urlRequest.httpBody = stored.body
+                self.headersBuilder.addHeaders(to: &urlRequest)
+
+                do {
+                    _ = try await self.networkProvider.send(request: urlRequest)
+                } catch {
+                    self.requestsStorage.append(stored)
+                }
+            }
+        }
     }
     
     func process<T>(request: Request, responseType: T.Type) async throws -> T where T : Decodable {
@@ -63,6 +79,15 @@ class RequestProcessor: RequestProcessorInterface {
             responseBody = data
             responseCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
         } catch {
+            // The request never reached the backend — persist retriable ones
+            // for the offline replay.
+            if retriableRequestKinds.contains(request.kind) {
+                requestsStorage.append(StoredRequest(
+                    url: urlRequest.url?.absoluteString ?? "",
+                    method: urlRequest.httpMethod ?? "POST",
+                    body: urlRequest.httpBody
+                ))
+            }
             throw QonversionError(type: .invalidResponse, error: error)
         }
 

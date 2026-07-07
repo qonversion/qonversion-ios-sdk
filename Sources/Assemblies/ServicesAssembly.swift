@@ -127,10 +127,11 @@ final class ServicesAssembly {
         let requestsStorage: RequestsStorageInterface = miscAssembly.requestsStorage()
         let rateLimiter: RateLimiterInterface = miscAssembly.rateLimiter()
         
-        #warning("Update retriable requests list")
-        let retriableRequestsList: [Request] = []
+        // Data-delivery requests whose loss hurts analytics; GETs and
+        // interactive flows are excluded — their callers handle failures.
+        let retriableRequestKinds: [Request.Kind] = [.createPurchase, .createDevice, .updateDevice, .appleSearchAds]
         
-        let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
+        let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestKinds: retriableRequestKinds, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
         
         return processor
     }

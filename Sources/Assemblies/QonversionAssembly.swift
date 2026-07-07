@@ -32,6 +32,10 @@ final class QonversionAssembly {
 
         // Resolves the anonymous user id (persisted or generated) into InternalConfig.
         _ = servicesAssembly.userService()
+
+        // Replay requests that failed on transport in previous sessions —
+        // once per initialization.
+        servicesAssembly.requestProcessor().processStoredRequests()
     }
     
     func userManager() -> UserManagerInterface {

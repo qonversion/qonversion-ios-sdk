@@ -46,6 +46,11 @@ final class MockRequestProcessor: RequestProcessorInterface {
         guard let typed = next as? T else { throw MockError.typeMismatch }
         return typed
     }
+
+    private(set) var processStoredRequestsCallsCount = 0
+    func processStoredRequests() {
+        processStoredRequestsCallsCount += 1
+    }
 }
 
 final class MockNetworkProvider: NetworkProviderInterface {
@@ -117,18 +122,14 @@ final class MockRateLimiter: RateLimiterInterface {
 
 final class MockRequestsStorage: RequestsStorageInterface {
 
-    private(set) var storedRequests: [URLRequest] = []
+    private(set) var storedRequests: [StoredRequest] = []
     private(set) var cleanCallsCount = 0
 
-    func store(requests: [URLRequest]) {
-        storedRequests = requests
+    func append(_ request: StoredRequest) {
+        storedRequests.append(request)
     }
 
-    func append(requests: [URLRequest]) {
-        storedRequests.append(contentsOf: requests)
-    }
-
-    func fetchRequests() -> [URLRequest] {
+    func fetchRequests() -> [StoredRequest] {
         return storedRequests
     }
 

@@ -10,6 +10,61 @@ import Foundation
 typealias RequestBodyDict = [String: AnyHashable]
 typealias RequestBodyArray = [AnyHashable]
 
+extension Request {
+
+    /// Case discriminator used to declare which requests are eligible for
+    /// the offline replay.
+    enum Kind {
+        case getUser
+        case createUser
+        case getIdentity
+        case createIdentity
+        case entitlements
+        case createPurchase
+        case signPromoOffer
+        case getProperties
+        case sendProperties
+        case createDevice
+        case updateDevice
+        case appleSearchAds
+        case getProducts
+        case getProductPermissions
+        case remoteConfig
+        case remoteConfigList
+        case allRemoteConfigList
+        case attachUserToExperiment
+        case detachUserFromExperiment
+        case attachUserToRemoteConfig
+        case detachUserFromRemoteConfig
+    }
+
+    var kind: Kind {
+        switch self {
+        case .getUser: return .getUser
+        case .createUser: return .createUser
+        case .getIdentity: return .getIdentity
+        case .createIdentity: return .createIdentity
+        case .entitlements: return .entitlements
+        case .createPurchase: return .createPurchase
+        case .signPromoOffer: return .signPromoOffer
+        case .getProperties: return .getProperties
+        case .sendProperties: return .sendProperties
+        case .createDevice: return .createDevice
+        case .updateDevice: return .updateDevice
+        case .appleSearchAds: return .appleSearchAds
+        case .getProducts: return .getProducts
+        case .getProductPermissions: return .getProductPermissions
+        case .remoteConfig: return .remoteConfig
+        case .remoteConfigList: return .remoteConfigList
+        case .allRemoteConfigList: return .allRemoteConfigList
+        case .attachUserToExperiment: return .attachUserToExperiment
+        case .detachUserFromExperiment: return .detachUserFromExperiment
+        case .attachUserToRemoteConfig: return .attachUserToRemoteConfig
+        case .detachUserFromRemoteConfig: return .detachUserFromRemoteConfig
+        }
+    }
+}
+
 enum Request : Hashable {
     case getUser(id: String, endpoint: String = "v3/users/", type: RequestType = .get)
     case createUser(id: String, endpoint: String = "v3/users/", body: RequestBodyDict, type: RequestType = .post)
