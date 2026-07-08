@@ -69,8 +69,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         try await userManager.obtainUser()
 
         let request = Request.getProperties(userId: userIdProvider.getUserId())
-        let properties: [Qonversion.UserProperty]? = try? await requestProcessor.process(request: request, responseType: [Qonversion.UserProperty].self)
-        let resultProperties: [Qonversion.UserProperty] = properties ?? []
+        let list: ListEnvelope<Qonversion.UserProperty>? = try? await requestProcessor.process(request: request, responseType: ListEnvelope<Qonversion.UserProperty>.self)
+        let resultProperties: [Qonversion.UserProperty] = list?.data ?? []
         let result = Qonversion.UserProperties(resultProperties)
         return result
     }
@@ -124,7 +124,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
             return
         }
 
-        let body: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
+        let items: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
+        let body: RequestBodyDict = ["properties": items]
         let request = Request.sendProperties(userId: userIdProvider.getUserId(), body: body)
         do {
             let result: SendUserPropertiesResult? = try await requestProcessor.process(request: request, responseType: SendUserPropertiesResult.self)

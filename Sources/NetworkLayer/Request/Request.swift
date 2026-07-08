@@ -95,23 +95,23 @@ enum Request : Hashable {
     case getIdentity(externalId: String, endpoint: String = "v4/identities/", type: RequestType = .get)
     // The external id and uid travel in the body — v4 style.
     case createIdentity(endpoint: String = "v4/identities", body: RequestBodyDict, type: RequestType = .post)
-    case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .get)
-    case createPurchase(userId: String, endpoint: String = "v3/users/%@/purchases", body: RequestBodyDict, type: RequestType = .post)
-    case signPromoOffer(userId: String, offerId: String, endpoint: String = "v3/users/%@/offers/%@/signatures", body: RequestBodyDict, type: RequestType = .post)
-    case getProperties(userId: String, endpoint: String = "v3/users/%@/properties", type: RequestType = .get)
-    case sendProperties(userId: String, endpoint: String = "v3/users/%@/properties", body: RequestBodyArray, type: RequestType = .post)
-    case createDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .post)
-    case updateDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .put)
-    case appleSearchAds(userId: String, endpoint: String = "v3/appleads/", body: RequestBodyDict, type: RequestType = .post)
-    case getProducts(userId: String, endpoint: String = "v3/products/", type: RequestType = .get)
-    case getProductPermissions(endpoint: String = "v3/products/permissions", type: RequestType = .get)
-    case remoteConfig(userId: String, contextKey: String?, endpoint: String = "v3/remote-config", type: RequestType = .get)
-    case remoteConfigList(userId: String, contextKeys: [String], includeEmptyContextKey: Bool, endpoint: String = "v3/remote-configs", type: RequestType = .get)
-    case allRemoteConfigList(userId: String, endpoint: String = "v3/remote-configs?all_context_keys=true", type: RequestType = .get)
-    case attachUserToExperiment(userId: String, experimentId: String, groupId: String, endpoint: String = "v3/experiments/%@/users/%@", type: RequestType = .post)
-    case detachUserFromExperiment(userId: String, experimentId: String, endpoint: String = "v3/experiments/%@/users/%@", type: RequestType = .delete)
-    case attachUserToRemoteConfig(userId: String, remoteConfigId: String, endpoint: String = "v3/remote-configurations/%@/users/%@", type: RequestType = .post)
-    case detachUserFromRemoteConfig(userId: String, remoteConfigId: String, endpoint: String = "v3/remote-configurations/%@/users/%@", type: RequestType = .delete)
+    case entitlements(userId: String, endpoint: String = "v4/users/%@/entitlements", type: RequestType = .get)
+    case createPurchase(userId: String, endpoint: String = "v4/users/%@/purchases", body: RequestBodyDict, type: RequestType = .post)
+    case signPromoOffer(userId: String, offerId: String, endpoint: String = "v4/users/%@/offers/%@/signatures", body: RequestBodyDict, type: RequestType = .post)
+    case getProperties(userId: String, endpoint: String = "v4/users/%@/properties", type: RequestType = .get)
+    case sendProperties(userId: String, endpoint: String = "v4/users/%@/properties", body: RequestBodyDict, type: RequestType = .post)
+    case createDevice(userId: String, endpoint: String = "v4/users/%@/device", body: RequestBodyDict, type: RequestType = .post)
+    case updateDevice(userId: String, endpoint: String = "v4/users/%@/device", body: RequestBodyDict, type: RequestType = .put)
+    case appleSearchAds(userId: String, endpoint: String = "v4/users/%@/attribution", body: RequestBodyDict, type: RequestType = .post)
+    case getProducts(endpoint: String = "v4/products", type: RequestType = .get)
+    case getProductPermissions(endpoint: String = "v4/products/permissions", type: RequestType = .get)
+    case remoteConfig(userId: String, contextKey: String?, endpoint: String = "v4/remote-config", type: RequestType = .get)
+    case remoteConfigList(userId: String, contextKeys: [String], includeEmptyContextKey: Bool, endpoint: String = "v4/remote-configs", type: RequestType = .get)
+    case allRemoteConfigList(userId: String, endpoint: String = "v4/remote-configs?all_context_keys=true", type: RequestType = .get)
+    case attachUserToExperiment(userId: String, experimentId: String, groupId: String, endpoint: String = "v4/experiments/%@/users/%@", type: RequestType = .post)
+    case detachUserFromExperiment(userId: String, experimentId: String, endpoint: String = "v4/experiments/%@/users/%@", type: RequestType = .delete)
+    case attachUserToRemoteConfig(userId: String, remoteConfigId: String, endpoint: String = "v4/remote-configurations/%@/users/%@", type: RequestType = .post)
+    case detachUserFromRemoteConfig(userId: String, remoteConfigId: String, endpoint: String = "v4/remote-configurations/%@/users/%@", type: RequestType = .delete)
 
     func convertToURLRequest(_ baseUrl: String) -> URLRequest? {
         // RFC 3986 unreserved characters: everything else in a dynamic path
@@ -167,16 +167,19 @@ enum Request : Hashable {
             return defaultRequest(urlString: urlString, body: body, type: type)
             
         case let .createDevice(userId, endpoint, body, type):
-            return defaultRequest(urlString: endpoint + userId, body: body, type: type)
-            
+            let urlString = String(format: endpoint, arguments: [escaped(userId)])
+            return defaultRequest(urlString: urlString, body: body, type: type)
+
         case let .updateDevice(userId, endpoint, body, type):
-            return defaultRequest(urlString: endpoint + userId, body: body, type: type)
-        
+            let urlString = String(format: endpoint, arguments: [escaped(userId)])
+            return defaultRequest(urlString: urlString, body: body, type: type)
+
         case let .appleSearchAds(userId, endpoint, body, type):
-            return defaultRequest(urlString: endpoint + userId, body: body, type: type)
+            let urlString = String(format: endpoint, arguments: [escaped(userId)])
+            return defaultRequest(urlString: urlString, body: body, type: type)
         
-        case let .getProducts(userId, endpoint, type):
-            return defaultRequest(urlString: endpoint + userId, body: nil, type: type)
+        case let .getProducts(endpoint, type):
+            return defaultRequest(urlString: endpoint, body: nil, type: type)
 
         case let .getProductPermissions(endpoint, type):
             return defaultRequest(urlString: endpoint, body: nil, type: type)
@@ -286,9 +289,8 @@ enum Request : Hashable {
             hasher.combine(endpoint)
             hasher.combine(body)
             hasher.combine(type)
-        case let .getProducts(userId, endpoint, type):
+        case let .getProducts(endpoint, type):
             hasher.combine("getProducts")
-            hasher.combine(userId)
             hasher.combine(endpoint)
             hasher.combine(type)
         case let .getProductPermissions(endpoint, type):

@@ -29,11 +29,11 @@ final class ProductsService: ProductsServiceInterface {
     }
 
     func products() async throws -> [Qonversion.Product] {
-        let request = Request.getProducts(userId: internalConfig.userId)
+        let request = Request.getProducts()
         do {
-            let products: [Qonversion.Product] = try await requestProcessor.process(request: request, responseType: [Qonversion.Product].self)
-            
-            return products
+            let list: ListEnvelope<Qonversion.Product> = try await requestProcessor.process(request: request, responseType: ListEnvelope<Qonversion.Product>.self)
+
+            return list.data
         } catch {
             throw QonversionError(type: .productsLoadingFailed, message: nil, error: error)
         }

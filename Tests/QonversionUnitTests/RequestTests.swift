@@ -66,7 +66,7 @@ final class RequestTests: XCTestCase {
 
     func testEntitlements() throws {
         let request = try XCTUnwrap(Request.entitlements(userId: "user1").convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/users/user1/entitlements")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1/entitlements")
         // Reading entitlements is a GET: POST on this route is the server-side
         // manual-grant API (secret key) and must never be sent by the SDK.
         XCTAssertEqual(request.httpMethod, "GET")
@@ -75,62 +75,63 @@ final class RequestTests: XCTestCase {
 
     func testGetProperties() throws {
         let request = try XCTUnwrap(Request.getProperties(userId: "user1").convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/users/user1/properties")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1/properties")
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
     }
 
     func testSendProperties() throws {
-        let body: RequestBodyArray = [
-            AnyHashable(["key": "_q_email", "value": "a@b.c"] as [String: String]),
+        // v4: the array travels under the "properties" key.
+        let body: RequestBodyDict = [
+            "properties": [["key": "_q_email", "value": "a@b.c"] as RequestBodyDict] as RequestBodyArray,
         ]
         let request = try XCTUnwrap(Request.sendProperties(userId: "user1", body: body).convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/users/user1/properties")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1/properties")
         XCTAssertEqual(request.httpMethod, "POST")
-        let decoded = try bodyArray(request)
-        XCTAssertEqual(decoded.count, 1)
-        let first = try XCTUnwrap(decoded.first as? [String: String])
-        XCTAssertEqual(first, ["key": "_q_email", "value": "a@b.c"])
+        let decoded = try bodyDict(request)
+        let items = try XCTUnwrap(decoded["properties"] as? [[String: String]])
+        XCTAssertEqual(items, [["key": "_q_email", "value": "a@b.c"]])
     }
 
     func testCreateDevice() throws {
         let request = try XCTUnwrap(Request.createDevice(userId: "user1", body: ["os": "iOS"]).convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/device/user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1/device")
         XCTAssertEqual(request.httpMethod, "POST")
         XCTAssertEqual(try bodyDict(request)["os"] as? String, "iOS")
     }
 
     func testUpdateDevice() throws {
         let request = try XCTUnwrap(Request.updateDevice(userId: "user1", body: ["os": "iOS"]).convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/device/user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1/device")
         XCTAssertEqual(request.httpMethod, "PUT")
         XCTAssertEqual(try bodyDict(request)["os"] as? String, "iOS")
     }
 
     func testAppleSearchAds() throws {
         let request = try XCTUnwrap(Request.appleSearchAds(userId: "user1", body: ["token": "abc"]).convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/appleads/user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1/attribution")
         XCTAssertEqual(request.httpMethod, "POST")
         XCTAssertEqual(try bodyDict(request)["token"] as? String, "abc")
     }
 
     func testGetProducts() throws {
-        let request = try XCTUnwrap(Request.getProducts(userId: "user1").convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/products/user1")
+        // v4: the product list is project-scoped, no user in the path.
+        let request = try XCTUnwrap(Request.getProducts().convertToURLRequest(baseURL))
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/products")
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
     }
 
     func testRemoteConfigWithoutContextKey() throws {
         let request = try XCTUnwrap(Request.remoteConfig(userId: "user1", contextKey: nil).convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-config?user_id=user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/remote-config?user_id=user1")
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
     }
 
     func testRemoteConfigWithContextKey() throws {
         let request = try XCTUnwrap(Request.remoteConfig(userId: "user1", contextKey: "main").convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-config?user_id=user1&context_key=main")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/remote-config?user_id=user1&context_key=main")
         XCTAssertEqual(request.httpMethod, "GET")
     }
 
@@ -141,7 +142,7 @@ final class RequestTests: XCTestCase {
         )
         XCTAssertEqual(
             request.url?.absoluteString,
-            "https://api.qonversion.io/v3/remote-configs?user_id=user1&with_empty_context_key=true&context_key=a&context_key=b"
+            "https://api.qonversion.io/v4/remote-configs?user_id=user1&with_empty_context_key=true&context_key=a&context_key=b"
         )
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
@@ -154,7 +155,7 @@ final class RequestTests: XCTestCase {
         )
         XCTAssertEqual(
             request.url?.absoluteString,
-            "https://api.qonversion.io/v3/remote-configs?user_id=user1&with_empty_context_key=false"
+            "https://api.qonversion.io/v4/remote-configs?user_id=user1&with_empty_context_key=false"
         )
     }
 
@@ -164,7 +165,7 @@ final class RequestTests: XCTestCase {
         // and user_id is appended with "&".
         XCTAssertEqual(
             request.url?.absoluteString,
-            "https://api.qonversion.io/v3/remote-configs?all_context_keys=true&user_id=user1"
+            "https://api.qonversion.io/v4/remote-configs?all_context_keys=true&user_id=user1"
         )
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
@@ -176,7 +177,7 @@ final class RequestTests: XCTestCase {
                 .convertToURLRequest(baseURL)
         )
         // Fixates current behavior: experimentId is substituted first, then userId.
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/experiments/exp1/users/user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/experiments/exp1/users/user1")
         XCTAssertEqual(request.httpMethod, "POST")
         let decoded = try bodyDict(request)
         XCTAssertEqual(decoded["group_id"] as? String, "group1")
@@ -187,7 +188,7 @@ final class RequestTests: XCTestCase {
         let request = try XCTUnwrap(
             Request.detachUserFromExperiment(userId: "user1", experimentId: "exp1").convertToURLRequest(baseURL)
         )
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/experiments/exp1/users/user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/experiments/exp1/users/user1")
         XCTAssertEqual(request.httpMethod, "DELETE")
         XCTAssertNil(request.httpBody)
     }
@@ -196,7 +197,7 @@ final class RequestTests: XCTestCase {
         let request = try XCTUnwrap(
             Request.attachUserToRemoteConfig(userId: "user1", remoteConfigId: "rc1").convertToURLRequest(baseURL)
         )
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-configurations/rc1/users/user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/remote-configurations/rc1/users/user1")
         XCTAssertEqual(request.httpMethod, "POST")
         XCTAssertNil(request.httpBody)
     }
@@ -205,7 +206,7 @@ final class RequestTests: XCTestCase {
         let request = try XCTUnwrap(
             Request.detachUserFromRemoteConfig(userId: "user1", remoteConfigId: "rc1").convertToURLRequest(baseURL)
         )
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-configurations/rc1/users/user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/remote-configurations/rc1/users/user1")
         XCTAssertEqual(request.httpMethod, "DELETE")
         XCTAssertNil(request.httpBody)
     }
@@ -215,7 +216,7 @@ final class RequestTests: XCTestCase {
         let request = try XCTUnwrap(
             Request.signPromoOffer(userId: "user1", offerId: "offer1", body: body).convertToURLRequest(baseURL)
         )
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/users/user1/offers/offer1/signatures")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1/offers/offer1/signatures")
         XCTAssertEqual(request.httpMethod, "POST")
         XCTAssertEqual(try bodyDict(request)["product"] as? String, "com.app.pro")
     }
@@ -234,7 +235,7 @@ final class RequestTests: XCTestCase {
         let request = try XCTUnwrap(
             Request.remoteConfig(userId: "u", contextKey: "a&b").convertToURLRequest(baseURL)
         )
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-config?user_id=u&context_key=a%26b")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/remote-config?user_id=u&context_key=a%26b")
     }
 
     // MARK: - Hashable
@@ -265,7 +266,7 @@ final class RequestTests: XCTestCase {
 
     func testDifferentCasesWithSameParamsProduceDifferentHashes() {
         // Each case combines a distinct discriminator string into the hasher.
-        XCTAssertNotEqual(Request.getUser(id: "user1").hashValue, Request.getProducts(userId: "user1").hashValue)
+        XCTAssertNotEqual(Request.getUser(id: "user1").hashValue, Request.entitlements(userId: "user1").hashValue)
         XCTAssertNotEqual(
             Request.createDevice(userId: "u", body: ["k": "v"]).hashValue,
             Request.updateDevice(userId: "u", body: ["k": "v"]).hashValue

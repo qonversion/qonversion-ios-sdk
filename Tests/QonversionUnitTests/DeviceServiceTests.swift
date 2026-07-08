@@ -93,7 +93,7 @@ final class DeviceServiceTests: XCTestCase {
             return XCTFail("Expected createDevice request, got \(processor.processedRequests[0])")
         }
         XCTAssertEqual(requestUserId, userId)
-        XCTAssertEqual(endpoint, "v3/device/")
+        XCTAssertEqual(endpoint, "v4/users/%@/device")
         XCTAssertEqual(type, .post)
         XCTAssertEqual(body["manufacturer"] as? String, "Apple")
         XCTAssertEqual(body["osName"] as? String, "iOS")
@@ -154,7 +154,7 @@ final class DeviceServiceTests: XCTestCase {
             return XCTFail("Expected updateDevice request, got \(processor.processedRequests[0])")
         }
         XCTAssertEqual(requestUserId, userId)
-        XCTAssertEqual(endpoint, "v3/device/")
+        XCTAssertEqual(endpoint, "v4/users/%@/device")
         XCTAssertEqual(type, .put)
         XCTAssertEqual(body["manufacturer"] as? String, "Apple")
     }

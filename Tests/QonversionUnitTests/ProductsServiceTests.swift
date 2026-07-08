@@ -19,11 +19,11 @@ final class ProductsServiceTests: XCTestCase {
             Qonversion.Product(qonversionId: "main", storeId: "com.app.main", offeringId: "offering_1"),
             Qonversion.Product(qonversionId: "secondary", storeId: "com.app.secondary", offeringId: nil)
         ]
-        processor.results = [stubProducts]
+        processor.results = [ListEnvelope<Qonversion.Product>(data: stubProducts)]
 
         let products = try await service.products()
 
-        XCTAssertEqual(processor.processedRequests, [Request.getProducts(userId: "QON_products_user")])
+        XCTAssertEqual(processor.processedRequests, [Request.getProducts()])
         XCTAssertEqual(products.count, 2)
         XCTAssertEqual(products[0].qonversionId, "main")
         XCTAssertEqual(products[0].storeId, "com.app.main")
@@ -35,7 +35,7 @@ final class ProductsServiceTests: XCTestCase {
     func testProductsReturnsEmptyArrayFromProcessor() async throws {
         let processor = MockRequestProcessor()
         let service = ProductsService(requestProcessor: processor, internalConfig: InternalConfig(userId: "QON_products_user"))
-        processor.results = [[Qonversion.Product]()]
+        processor.results = [ListEnvelope<Qonversion.Product>(data: [])]
 
         let products = try await service.products()
 

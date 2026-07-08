@@ -185,7 +185,7 @@ final class RequestProcessorTests: XCTestCase {
         )
 
         XCTAssertEqual(requestsStorage.storedRequests.count, 1)
-        XCTAssertEqual(requestsStorage.storedRequests.first?.url, "https://api.qonversion.io/v3/users/u/purchases")
+        XCTAssertEqual(requestsStorage.storedRequests.first?.url, "https://api.qonversion.io/v4/users/u/purchases")
         XCTAssertEqual(requestsStorage.storedRequests.first?.method, "POST")
         XCTAssertEqual(requestsStorage.storedRequests.first?.dedupKey, "createPurchase-u-t1",
                        "the transaction id keys the dedup so the same purchase never queues twice")
@@ -325,7 +325,7 @@ final class RequestProcessorTests: XCTestCase {
         networkProvider.responseData = Data("{\"id\": \"abc\"}".utf8)
 
         do {
-            _ = try await processor.process(request: .getProducts(userId: "u"), responseType: ProcessorTestPayload.self)
+            _ = try await processor.process(request: .getProducts(), responseType: ProcessorTestPayload.self)
             XCTFail("Expected latched critical error")
         } catch {
             let qonversionError = error as? QonversionError

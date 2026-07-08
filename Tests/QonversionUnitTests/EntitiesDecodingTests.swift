@@ -322,11 +322,10 @@ final class EntitiesDecodingTests: XCTestCase {
 
     // MARK: - Product
 
-    func testProductDecodingUsesCamelCaseIdentityKeysOnly() throws {
-        // Fixates current behavior: Product CodingKeys are camelCase Swift names
-        // (no snake_case mapping) and only the identity fields participate;
-        // any extra JSON fields are ignored and skProduct stays nil.
-        let json = #"{"qonversionId": "main", "storeId": "com.app.main", "offeringId": "offering_1", "displayName": "ignored", "price": 9.99}"#
+    func testProductDecodingUsesV4Keys() throws {
+        // v4 wire keys: id / apple_product_id / offering_id; extra fields are
+        // ignored and skProduct stays nil.
+        let json = #"{"id": "main", "apple_product_id": "com.app.main", "offering_id": "offering_1", "type": "subscription", "created_at": "2024-01-01T00:00:00Z"}"#
 
         let product = try decode(Qonversion.Product.self, json)
 
@@ -341,7 +340,7 @@ final class EntitiesDecodingTests: XCTestCase {
 
     func testProductDecodesWithNullOfferingId() throws {
         // A product outside any offering is valid: offeringId is optional.
-        let json = #"{"qonversionId": "main", "storeId": "com.app.main", "offeringId": null}"#
+        let json = #"{"id": "main", "apple_product_id": "com.app.main", "offering_id": null}"#
 
         let product = try decode(Qonversion.Product.self, json)
 
@@ -349,7 +348,7 @@ final class EntitiesDecodingTests: XCTestCase {
     }
 
     func testProductDecodesWithMissingOfferingId() throws {
-        let json = #"{"qonversionId": "main", "storeId": "com.app.main"}"#
+        let json = #"{"id": "main", "apple_product_id": "com.app.main"}"#
 
         let product = try decode(Qonversion.Product.self, json)
 

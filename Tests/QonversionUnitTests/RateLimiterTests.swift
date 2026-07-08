@@ -49,7 +49,7 @@ final class RateLimiterTests: XCTestCase {
         let limiter = RateLimiter(maxRequestsPerSecond: 1)
         let requestA = Request.getUser(id: "user1")
         let requestB = Request.getUser(id: "user2")
-        let requestC = Request.getProducts(userId: "user1")
+        let requestC = Request.getProducts()
 
         XCTAssertNil(limiter.validateRateLimit(for: requestA))
         XCTAssertNotNil(limiter.validateRateLimit(for: requestA))

@@ -2,7 +2,7 @@
 //  PurchasesServiceTests.swift
 //  QonversionUnitTests
 //
-//  Contract: POST v3/users/{uid}/purchases with price/currency/purchased and
+//  Contract: POST v4/users/{uid}/purchases with price/currency/purchased and
 //  app_store_data carrying the transaction ids and the jws proof in `receipt`
 //  (per the gateway CreateUserPurchaseRequest model).
 //
@@ -48,7 +48,7 @@ final class PurchasesServiceTests: XCTestCase {
             return XCTFail("Expected a createPurchase request")
         }
         XCTAssertEqual(userId, "QON_buyer")
-        XCTAssertEqual(endpoint, "v3/users/%@/purchases")
+        XCTAssertEqual(endpoint, "v4/users/%@/purchases")
         XCTAssertEqual(type, .post)
 
         XCTAssertEqual(body["price"] as? String, "9.99")
