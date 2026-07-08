@@ -60,16 +60,23 @@ final class ProductsServiceTests: XCTestCase {
 
     // MARK: - product permissions
 
-    func testProductPermissionsSendsGetProductPermissionsRequest() async throws {
+    func testProductPermissionsInvertsEntitlementDefinitions() async throws {
         let processor = MockRequestProcessor()
-        let mapping = try JSONDecoder().decode(ProductsPermissions.self, from: Data(#"{"products_permissions": {"pro": ["premium"]}}"#.utf8))
-        processor.results = [mapping]
+        // v4: GET /v4/entitlements returns the dashboard definitions with
+        // their unlocking products; the SDK inverts them.
+        processor.results = [ListEnvelope<EntitlementDefinition>(data: [
+            EntitlementDefinition(id: "premium", productIds: ["pro", "pro_yearly"]),
+            EntitlementDefinition(id: "extra", productIds: ["pro"]),
+            EntitlementDefinition(id: "orphan", productIds: []),
+        ])]
         let service = ProductsService(requestProcessor: processor, internalConfig: InternalConfig(userId: "QON_x"))
 
         let result = try await service.productPermissions()
 
-        XCTAssertEqual(processor.processedRequests, [Request.getProductPermissions()])
-        XCTAssertEqual(result, ["pro": ["premium"]])
+        XCTAssertEqual(processor.processedRequests, [Request.entitlementDefinitions()])
+        XCTAssertEqual(result["pro"]?.sorted(), ["extra", "premium"])
+        XCTAssertEqual(result["pro_yearly"], ["premium"])
+        XCTAssertNil(result["orphan"], "a definition without products grants nothing")
     }
 
     func testProductPermissionsWrapsErrors() async {
