@@ -144,13 +144,6 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertThrowsError(try decode(Qonversion.RemoteConfig.self, json))
     }
 
-    func testRemoteConfigSourceDecodingFailsForUnknownSourceType() {
-        // Fixates current behavior: despite the declared "unknown" case
-        // (marked "todo use as default"), unexpected raw values still throw.
-        let json = remoteConfigJSON(type: "brand_new_type")
-
-        XCTAssertThrowsError(try decode(Qonversion.RemoteConfig.self, json))
-    }
 
     func testRemoteConfigDecodingWithExperiment() throws {
         // Fixates current behavior: Experiment has NO custom CodingKeys, so JSON
@@ -166,6 +159,23 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertEqual(decodedExperiment.group.identifier, "group_1")
         XCTAssertEqual(decodedExperiment.group.name, "Control")
         XCTAssertEqual(decodedExperiment.group.type, .control)
+    }
+
+    func testUnknownRemoteConfigEnumValuesFallBackToUnknown() throws {
+        let json = remoteConfigJSON(type: "brand_new_backend_type", assignmentType: "brand_new_assignment")
+
+        let config = try JSONDecoder.qonversionTest.decode(Qonversion.RemoteConfig.self, from: Data(json.utf8))
+
+        XCTAssertEqual(config.source.type, .unknown)
+        XCTAssertEqual(config.source.assignmentType, .unknown)
+    }
+
+    func testUnknownExperimentGroupTypeFallsBackToUnknown() throws {
+        let json = #"{"identifier": "exp_3", "name": "Exp", "group": {"name": "G", "identifier": "g1", "type": "brand_new_group_type"}}"#
+
+        let experiment = try JSONDecoder.qonversionTest.decode(Qonversion.Experiment.self, from: Data(json.utf8))
+
+        XCTAssertEqual(experiment.group.type, .unknown)
     }
 
     // MARK: - Experiment

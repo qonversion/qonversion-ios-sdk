@@ -136,10 +136,11 @@ final class UserServiceTests: XCTestCase {
         XCTAssertEqual(idAfterInit, idAfterCreate)
         XCTAssertEqual(storage.string(forKey: userIdKey), idAfterCreate)
 
-        // Fixates current behavior: the environment in the request body is hardcoded to "sandbox".
+        // The v3 contract requires the environment field; the SDK always sends
+        // "prod" — sandbox/prod separation is not a client-side concern.
         XCTAssertEqual(
             processor.processedRequests,
-            [Request.createUser(id: idAfterCreate, body: ["environment": "sandbox"])]
+            [Request.createUser(id: idAfterCreate, body: ["environment": "prod"])]
         )
 
         XCTAssertEqual(user.id, stubUser.id)

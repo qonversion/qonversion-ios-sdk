@@ -60,16 +60,15 @@ final class RateLimiterTests: XCTestCase {
         XCTAssertNil(limiter.validateRateLimit(for: requestC))
     }
 
-    func testAttachExperimentRequestsWithDifferentGroupIdsShareTheLimit() {
+    func testAttachExperimentRequestsWithDifferentGroupIdsAreLimitedIndependently() {
         let limiter = RateLimiter(maxRequestsPerSecond: 1)
         let first = Request.attachUserToExperiment(userId: "u", experimentId: "e", groupId: "group1")
         let second = Request.attachUserToExperiment(userId: "u", experimentId: "e", groupId: "group2")
 
         XCTAssertNil(limiter.validateRateLimit(for: first))
-        // Fixates current behavior: the limiter is keyed by request.hashValue and
-        // Request.hash(into:) ignores groupId for attachUserToExperiment, so a request
-        // to attach the user to a DIFFERENT group is rate-limited as if identical.
-        XCTAssertEqual(limiter.validateRateLimit(for: second)?.type, .rateLimitExceeded)
+        // A different group is a different request — it must not inherit the
+        // first one's limit.
+        XCTAssertNil(limiter.validateRateLimit(for: second))
     }
 
     func testWindowExpiryAllowsSameRequestAgain() async throws {

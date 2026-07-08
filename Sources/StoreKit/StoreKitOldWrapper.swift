@@ -12,7 +12,8 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     
     let paymentQueue: SKPaymentQueue
     
-    var delegate: StoreKitOldWrapperDelegate?
+    // Weak: the delegate (facade) holds the wrapper itself.
+    weak var delegate: StoreKitOldWrapperDelegate?
     var productsRequest: SKProductsRequest?
     var productsCompletions: [SKProductsRequest: StoreKitOldProductsCompletion] = [:]
     var purchaseCompletions: [SKPayment: StoreKitOldTransactionsCompletion] = [:]

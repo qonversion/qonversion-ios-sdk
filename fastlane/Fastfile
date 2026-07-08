@@ -3,14 +3,6 @@ PROJECT_NAME = "Qonversion"
 PROJECT_SCHEME = "Qonversion"
 XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
 
-lane :tests do
-  runTests("QonversionTests")
-end
-
-lane :integration_tests do
-  runTests("IntegrationTests")
-end
-
 lane :patch do
   tag = get_tag
   new_version = calculate_patch_version(tag)
@@ -23,15 +15,6 @@ lane :minor do
   new_version = calculate_minor_version(tag)
   new_tag = "prerelease/" + new_version
   push_tag(new_tag)
-end
-
-lane :set_outager_url do |options|
-  url = options[:url]
-
-  path = Dir['../**/QNOutagerIntegrationTests.m'].first
-  regex = /\<paste outager link here\>/
-
-  update_file(path, regex, url)
 end
 
 lane :bump do |options|
@@ -94,9 +77,3 @@ def update_file(path, regex, result_value)
   File.open(path, 'w') { |line| line.puts new_content }
 end
 
-def runTests(suite)
-  run_tests(
-    scheme: PROJECT_SCHEME,
-    only_testing: suite
-  )
-end

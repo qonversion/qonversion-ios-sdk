@@ -36,15 +36,22 @@ final class MockRequestProcessor: RequestProcessorInterface {
     /// Stubbed results returned in order. Put decoded values of the expected response type here.
     var results: [Any] = []
     var error: Error?
+    var onProcess: (() async -> Void)?
     private(set) var processedRequests: [Request] = []
 
     func process<T>(request: Request, responseType: T.Type) async throws -> T where T: Decodable {
         processedRequests.append(request)
+        await onProcess?()
         if let error { throw error }
         guard !results.isEmpty else { throw MockError.noStub }
         let next = results.removeFirst()
         guard let typed = next as? T else { throw MockError.typeMismatch }
         return typed
+    }
+
+    private(set) var processStoredRequestsCallsCount = 0
+    func processStoredRequests() {
+        processStoredRequestsCallsCount += 1
     }
 }
 
@@ -117,18 +124,23 @@ final class MockRateLimiter: RateLimiterInterface {
 
 final class MockRequestsStorage: RequestsStorageInterface {
 
-    private(set) var storedRequests: [URLRequest] = []
+    private(set) var storedRequests: [StoredRequest] = []
     private(set) var cleanCallsCount = 0
 
-    func store(requests: [URLRequest]) {
-        storedRequests = requests
+    func append(_ request: StoredRequest) {
+        if let dedupKey = request.dedupKey, storedRequests.contains(where: { $0.dedupKey == dedupKey }) {
+            return
+        }
+        storedRequests.append(request)
     }
 
-    func append(requests: [URLRequest]) {
-        storedRequests.append(contentsOf: requests)
+    func remove(_ request: StoredRequest) {
+        if let index = storedRequests.firstIndex(of: request) {
+            storedRequests.remove(at: index)
+        }
     }
 
-    func fetchRequests() -> [URLRequest] {
+    func fetchRequests() -> [StoredRequest] {
         return storedRequests
     }
 
@@ -234,6 +246,11 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
         return unfinishedTransactionsResult
     }
 
+    func map(_ verificationResult: VerificationResult<StoreKit.Transaction>) -> Qonversion.Transaction? {
+        guard case .verified(let transaction) = verificationResult else { return nil }
+        return StoreKitMapper().map(transaction, jws: verificationResult.jwsRepresentation)
+    }
+
     func finish(_ transaction: Qonversion.Transaction) async {
         finishedTransactions.append(transaction)
     }
@@ -297,6 +314,11 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
     func fetchAll() async -> [Qonversion.Transaction] { fetchAllResult }
 
     func fetchUnfinished() async -> [Qonversion.Transaction] { fetchUnfinishedResult }
+
+    private(set) var subscribeToPromoPurchasesCallsCount = 0
+    func subscribeToPromoPurchases() {
+        subscribeToPromoPurchasesCallsCount += 1
+    }
 
     func finish(_ transaction: Qonversion.Transaction) async {
         finishedTransactions.append(transaction)
@@ -381,8 +403,11 @@ final class MockRemoteConfigService: RemoteConfigServiceInterface {
     private(set) var attachedExperiments: [(id: String, groupId: String)] = []
     private(set) var detachedExperimentIds: [String] = []
 
+    var onLoadRemoteConfig: (() async -> Void)?
+
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
         loadRemoteConfigContextKeys.append(contextKey)
+        await onLoadRemoteConfig?()
         if let error { throw error }
         guard let remoteConfigResult else { throw MockError.noStub }
         return remoteConfigResult
@@ -547,10 +572,20 @@ final class MockPurchasesService: PurchasesServiceInterface {
     var onSend: (() async -> Void)?
     private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] = []
 
+    var promotionalOfferResult: Qonversion.PromotionalOffer?
+    private(set) var promotionalOfferCalls: [(userId: String, offerId: String, productStoreId: String)] = []
+
     func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
         sentTransactions.append((transaction, userId, options))
         await onSend?()
         if let error { throw error }
+    }
+
+    func promotionalOffer(userId: String, offerId: String, productStoreId: String) async throws -> Qonversion.PromotionalOffer {
+        promotionalOfferCalls.append((userId, offerId, productStoreId))
+        if let error { throw error }
+        guard let promotionalOfferResult else { throw MockError.noStub }
+        return promotionalOfferResult
     }
 }
 

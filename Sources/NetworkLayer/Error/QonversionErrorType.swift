@@ -35,6 +35,8 @@ enum QonversionErrorType {
     case identityLoadingFailed
     case identityCreationFailed
     case purchaseReportingFailed
+    case promoOfferSigningFailed
+    case promoPurchaseIntentAlreadyHandled
     case restoreFailed
     case purchaseCancelled
     case purchasePending

@@ -2,18 +2,19 @@
 //  RequestsStorageInterface.swift
 //  Qonversion
 //
-//  Created by Suren Sarkisyan on 08.02.2024.
-//
 
 import Foundation
 
 protocol RequestsStorageInterface {
-    
-    func store(requests: [URLRequest])
-    
-    func append(requests: [URLRequest])
-    
-    func fetchRequests() -> [URLRequest]
-    
+
+    /// Persists a failed retriable request for the offline replay. Skips the
+    /// request when one with the same non-nil dedupKey is already queued.
+    func append(_ request: StoredRequest)
+
+    /// Removes a delivered request from the queue.
+    func remove(_ request: StoredRequest)
+
+    func fetchRequests() -> [StoredRequest]
+
     func clean()
 }

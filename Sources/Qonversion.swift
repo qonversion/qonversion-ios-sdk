@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import StoreKit
 
 /// An entry point to use Qonversion SDK.
 public final class Qonversion {
@@ -23,7 +24,7 @@ public final class Qonversion {
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
     @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
-        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime)
+        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime, logLevel: configuration.logLevel)
         Qonversion.shared.userManager = assembly.userManager()
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
@@ -108,6 +109,52 @@ public final class Qonversion {
         guard let purchasesManager else { throw QonversionError.initializationError() }
 
         return try await purchasesManager.purchase(product, options: options)
+    }
+
+    /// Reports purchases made by your own StoreKit 2 code so Qonversion can
+    /// track them (Analytics mode). Pass the verification results you receive
+    /// from `Product.PurchaseResult` or `Transaction.updates`. The SDK never
+    /// finishes these transactions — your app owns their lifecycle.
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async {
+        guard let purchasesManager else { return }
+
+        await purchasesManager.handle(purchasedTransactions: verificationResults)
+    }
+
+    /// Requests a signed promotional offer for the product's subscription
+    /// discount. Pass the result to ``purchase(_:options:)`` via
+    /// ``PurchaseOptions/promoOffer``.
+    public func getPromotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
+        guard let purchasesManager else { throw QonversionError.initializationError() }
+
+        return try await purchasesManager.promotionalOffer(for: product, discountId: discountId)
+    }
+
+    /// A stream of purchases promoted in the App Store. Call purchase() on a
+    /// received intent to proceed — right away or whenever the app is ready;
+    /// dropping the intent defers the purchase. Intents arriving before the
+    /// first subscription are buffered:
+    ///
+    ///     for await intent in Qonversion.shared.promoPurchaseIntents {
+    ///         try await intent.purchase()
+    ///     }
+    public var promoPurchaseIntents: AsyncStream<PromoPurchaseIntent> {
+        guard let purchasesManager else { return AsyncStream { $0.finish() } }
+
+        return purchasesManager.promoPurchaseIntents()
+    }
+
+    /// A stream of entitlements refreshed after the SDK processes an
+    /// out-of-band transaction in subscription-management mode (Ask to Buy
+    /// approvals, renewals, purchases on other devices). Like StoreKit's
+    /// `Transaction.updates`, every access returns an independent stream:
+    ///
+    ///     for await entitlements in Qonversion.shared.entitlementsUpdates { ... }
+    public var entitlementsUpdates: AsyncStream<[String: Qonversion.Entitlement]> {
+        guard let purchasesManager else { return AsyncStream { $0.finish() } }
+
+        return purchasesManager.entitlementsUpdates()
     }
 
     /// Restores the user's purchases and returns the entitlements.

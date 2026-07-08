@@ -10,6 +10,84 @@ import Foundation
 typealias RequestBodyDict = [String: AnyHashable]
 typealias RequestBodyArray = [AnyHashable]
 
+extension Request {
+
+    /// Case discriminator used to declare which requests are eligible for
+    /// the offline replay.
+    enum Kind {
+        case getUser
+        case createUser
+        case getIdentity
+        case createIdentity
+        case entitlements
+        case createPurchase
+        case signPromoOffer
+        case getProperties
+        case sendProperties
+        case createDevice
+        case updateDevice
+        case appleSearchAds
+        case getProducts
+        case getProductPermissions
+        case remoteConfig
+        case remoteConfigList
+        case allRemoteConfigList
+        case attachUserToExperiment
+        case detachUserFromExperiment
+        case attachUserToRemoteConfig
+        case detachUserFromRemoteConfig
+    }
+
+    /// Identifies the payload for the offline replay dedup: the same failed
+    /// purchase (by transaction id) or per-user device/attribution update
+    /// never queues twice.
+    var replayDedupKey: String? {
+        switch self {
+        case let .createPurchase(userId, _, body, _):
+            let appStoreData = body["app_store_data"] as? RequestBodyDict
+            let transactionId = appStoreData?["transaction_id"] as? String ?? ""
+            // Without a transaction id the key would collapse distinct
+            // purchases into one — disable dedup instead.
+            guard !transactionId.isEmpty else { return nil }
+            return "createPurchase-\(userId)-\(transactionId)"
+        case let .createDevice(userId, _, _, _):
+            return "createDevice-\(userId)"
+        case let .updateDevice(userId, _, _, _):
+            return "updateDevice-\(userId)"
+        case let .appleSearchAds(userId, _, _, _):
+            return "appleSearchAds-\(userId)"
+        default:
+            return nil
+        }
+    }
+
+    var kind: Kind {
+        switch self {
+        case .getUser: return .getUser
+        case .createUser: return .createUser
+        case .getIdentity: return .getIdentity
+        case .createIdentity: return .createIdentity
+        case .entitlements: return .entitlements
+        case .createPurchase: return .createPurchase
+        case .signPromoOffer: return .signPromoOffer
+        case .getProperties: return .getProperties
+        case .sendProperties: return .sendProperties
+        case .createDevice: return .createDevice
+        case .updateDevice: return .updateDevice
+        case .appleSearchAds: return .appleSearchAds
+        case .getProducts: return .getProducts
+        case .getProductPermissions: return .getProductPermissions
+        case .remoteConfig: return .remoteConfig
+        case .remoteConfigList: return .remoteConfigList
+        case .allRemoteConfigList: return .allRemoteConfigList
+        case .attachUserToExperiment: return .attachUserToExperiment
+        case .detachUserFromExperiment: return .detachUserFromExperiment
+        case .attachUserToRemoteConfig: return .attachUserToRemoteConfig
+        case .detachUserFromRemoteConfig: return .detachUserFromRemoteConfig
+        }
+    }
+}
+
 enum Request : Hashable {
     case getUser(id: String, endpoint: String = "v3/users/", type: RequestType = .get)
     case createUser(id: String, endpoint: String = "v3/users/", body: RequestBodyDict, type: RequestType = .post)
@@ -17,6 +95,7 @@ enum Request : Hashable {
     case createIdentity(externalId: String, endpoint: String = "v3/identities/", body: RequestBodyDict, type: RequestType = .post)
     case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .get)
     case createPurchase(userId: String, endpoint: String = "v3/users/%@/purchases", body: RequestBodyDict, type: RequestType = .post)
+    case signPromoOffer(userId: String, offerId: String, endpoint: String = "v3/users/%@/offers/%@/signatures", body: RequestBodyDict, type: RequestType = .post)
     case getProperties(userId: String, endpoint: String = "v3/users/%@/properties", type: RequestType = .get)
     case sendProperties(userId: String, endpoint: String = "v3/users/%@/properties", body: RequestBodyArray, type: RequestType = .post)
     case createDevice(userId: String, endpoint: String = "v3/device/", body: RequestBodyDict, type: RequestType = .post)
@@ -33,6 +112,14 @@ enum Request : Hashable {
     case detachUserFromRemoteConfig(userId: String, remoteConfigId: String, endpoint: String = "v3/remote-configurations/%@/users/%@", type: RequestType = .delete)
 
     func convertToURLRequest(_ baseUrl: String) -> URLRequest? {
+        // RFC 3986 unreserved characters: everything else in a dynamic path
+        // or query value gets percent-encoded, so ids like "a&b" or "x+y"
+        // cannot corrupt the URL structure.
+        func escaped(_ value: String) -> String {
+            let unreserved = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+            return value.addingPercentEncoding(withAllowedCharacters: unreserved) ?? value
+        }
+
         func defaultRequest(urlString: String, body: Any?, type: RequestType) -> URLRequest? {
             guard let url = URL(string: baseUrl + urlString) else { return nil }
             var request = URLRequest(url: url)
@@ -46,31 +133,35 @@ enum Request : Hashable {
 
         switch self {
         case let .getUser(id, endpoint, type):
-            return defaultRequest(urlString: endpoint + id, body: nil, type: type)
+            return defaultRequest(urlString: endpoint + escaped(id), body: nil, type: type)
 
         case let .createUser(id, endpoint, body, type):
-            return defaultRequest(urlString: endpoint + id, body: body, type: type)
+            return defaultRequest(urlString: endpoint + escaped(id), body: body, type: type)
 
         case let .getIdentity(externalId, endpoint, type):
-            return defaultRequest(urlString: endpoint + externalId, body: nil, type: type)
+            return defaultRequest(urlString: endpoint + escaped(externalId), body: nil, type: type)
 
         case let .createIdentity(externalId, endpoint, body, type):
-            return defaultRequest(urlString: endpoint + externalId, body: body, type: type)
+            return defaultRequest(urlString: endpoint + escaped(externalId), body: body, type: type)
 
         case let .entitlements(userId, endpoint, type):
-            let urlString = String(format: endpoint, arguments: [userId])
+            let urlString = String(format: endpoint, arguments: [escaped(userId)])
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .createPurchase(userId, endpoint, body, type):
-            let urlString = String(format: endpoint, arguments: [userId])
+            let urlString = String(format: endpoint, arguments: [escaped(userId)])
+            return defaultRequest(urlString: urlString, body: body, type: type)
+
+        case let .signPromoOffer(userId, offerId, endpoint, body, type):
+            let urlString = String(format: endpoint, arguments: [escaped(userId), escaped(offerId)])
             return defaultRequest(urlString: urlString, body: body, type: type)
 
         case let .getProperties(userId, endpoint, type):
-            let urlString = String(format: endpoint, arguments: [userId])
+            let urlString = String(format: endpoint, arguments: [escaped(userId)])
             return defaultRequest(urlString: urlString, body: nil, type: type)
             
         case let .sendProperties(userId, endpoint, body, type):
-            let urlString = String(format: endpoint, arguments: [userId])
+            let urlString = String(format: endpoint, arguments: [escaped(userId)])
             return defaultRequest(urlString: urlString, body: body, type: type)
             
         case let .createDevice(userId, endpoint, body, type):
@@ -89,37 +180,37 @@ enum Request : Hashable {
             return defaultRequest(urlString: endpoint, body: nil, type: type)
             
         case let .remoteConfig(userId, contextKey, endpoint, type):
-            var urlString = endpoint + "?user_id=" + userId
+            var urlString = endpoint + "?user_id=" + escaped(userId)
             if let contextKey = contextKey {
-                urlString += "&context_key=" + contextKey
+                urlString += "&context_key=" + escaped(contextKey)
             }
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .remoteConfigList(userId, contextKeys, includeEmptyContextKey, endpoint, type):
-            var urlString = endpoint + "?user_id=" + userId + "&with_empty_context_key=" + (includeEmptyContextKey ? "true" : "false")
+            var urlString = endpoint + "?user_id=" + escaped(userId) + "&with_empty_context_key=" + (includeEmptyContextKey ? "true" : "false")
             for contextKey in contextKeys {
-                urlString += "&context_key=" + contextKey
+                urlString += "&context_key=" + escaped(contextKey)
             }
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .allRemoteConfigList(userId, endpoint, type):
-            var urlString = endpoint + "&user_id=" + userId
+            var urlString = endpoint + "&user_id=" + escaped(userId)
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .attachUserToRemoteConfig(userId, remoteConfigId, endpoint, type):
-            let urlString = String(format: endpoint, arguments: [remoteConfigId, userId])
+            let urlString = String(format: endpoint, arguments: [escaped(remoteConfigId), escaped(userId)])
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .detachUserFromRemoteConfig(userId, remoteConfigId, endpoint, type):
-            let urlString = String(format: endpoint, arguments: [remoteConfigId, userId])
+            let urlString = String(format: endpoint, arguments: [escaped(remoteConfigId), escaped(userId)])
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .attachUserToExperiment(userId, experimentId, groupId, endpoint, type):
-            let urlString = String(format: endpoint, arguments: [experimentId, userId])
+            let urlString = String(format: endpoint, arguments: [escaped(experimentId), escaped(userId)])
             return defaultRequest(urlString: urlString, body: ["group_id": groupId], type: type)
 
         case let .detachUserFromExperiment(userId, experimentId, endpoint, type):
-            let urlString = String(format: endpoint, arguments: [experimentId, userId])
+            let urlString = String(format: endpoint, arguments: [escaped(experimentId), escaped(userId)])
             return defaultRequest(urlString: urlString, body: nil, type: type)
         }
     }
@@ -152,6 +243,13 @@ enum Request : Hashable {
             hasher.combine("entitlements")
             hasher.combine(userId)
             hasher.combine(endpoint)
+            hasher.combine(type)
+        case let .signPromoOffer(userId, offerId, endpoint, body, type):
+            hasher.combine("signPromoOffer")
+            hasher.combine(userId)
+            hasher.combine(offerId)
+            hasher.combine(endpoint)
+            hasher.combine(body)
             hasher.combine(type)
         case let .createPurchase(userId, endpoint, body, type):
             hasher.combine("createPurchase")
@@ -231,6 +329,7 @@ enum Request : Hashable {
             hasher.combine("attachUserToExperiment")
             hasher.combine(userId)
             hasher.combine(experimentId)
+            hasher.combine(groupId)
             hasher.combine(endpoint)
             hasher.combine(type)
         case let .detachUserFromExperiment(userId, experimentId, endpoint, type):

@@ -260,6 +260,47 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(service.createUserCallsCount, 2)
     }
 
+    // MARK: - identify single-flight
+
+    func testConcurrentIdentifyWithSameIdSharesOneRequest() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        let gate = AsyncGate()
+        service.onCreateIdentity = { await gate.wait() }
+
+        async let first = manager.identify("external_1")
+        async let second = manager.identify("external_1")
+
+        await waitUntil { self.service.createIdentityCalls.count >= 1 }
+        await gate.open()
+
+        _ = try await [first, second]
+
+        XCTAssertEqual(service.createIdentityCalls.count, 1, "the same external id must join the in-flight identify")
+    }
+
+    func testConcurrentIdentifyWithDifferentIdsRunSequentially() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        let gate = AsyncGate()
+        service.onCreateIdentity = { await gate.wait() }
+
+        async let first = manager.identify("external_1")
+        await waitUntil { self.service.createIdentityCalls.count >= 1 }
+        async let second = manager.identify("external_2")
+
+        // The second identify must wait for the first one to settle.
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(service.createIdentityCalls.count, 1)
+
+        await gate.open()
+        _ = try await [first, second]
+
+        XCTAssertEqual(service.createIdentityCalls.map(\.externalId), ["external_1", "external_2"])
+    }
+
     // MARK: - User change notifications
 
     func testLogoutNotifiesUserChangeObservers() async throws {

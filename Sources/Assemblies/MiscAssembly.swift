@@ -60,7 +60,12 @@ final class MiscAssembly {
     }
     
     func encoder() -> JSONEncoder {
-        return JSONEncoder()
+        let encoder = JSONEncoder()
+        // Must mirror jsonDecoder(): the cache round-trip (e.g. User.creationDate)
+        // breaks with mismatched date strategies.
+        encoder.dateEncodingStrategy = .secondsSince1970
+
+        return encoder
     }
     
     func requestsStorage() -> RequestsStorageInterface {
@@ -73,7 +78,7 @@ final class MiscAssembly {
         if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
             let logger = Logger(subsystem: "io.qonversion.sdk", category: "Internal")
             
-            return LoggerWrapper(logger: logger, logLevel: .verbose)
+            return LoggerWrapper(logger: logger, logLevel: internalConfig.logLevel)
         } else {
             return LoggerWrapper()
         }
@@ -116,7 +121,7 @@ final class MiscAssembly {
     
     func headersBuilder() -> HeadersBuilderInterface {
         let deviceInfoCollector = servicesAssembly.deviceInfoCollector()
-        let headersBuilder = HeadersBuilder(apiKey: apiKey, sdkVersion: SDKLevelConstants.version.rawValue, deviceInfoCollector: deviceInfoCollector)
+        let headersBuilder = HeadersBuilder(apiKey: apiKey, sdkVersion: SDKLevelConstants.version.rawValue, deviceInfoCollector: deviceInfoCollector, userDefaults: userDefaults)
         
         return headersBuilder
     }

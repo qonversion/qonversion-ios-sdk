@@ -71,8 +71,9 @@ extension Qonversion {
                 let container: KeyedDecodingContainer = try decoder.container(keyedBy: CodingKeys.self)
                 identifier = try container.decode(String.self, forKey: .identifier)
                 name = try container.decode(String.self, forKey: .name)
-                type = try container.decode(SourceType.self, forKey: .type)
-                assignmentType = try container.decode(AssignmentType.self, forKey: .assignmentType)
+                // Unknown backend values must not fail the whole config decode.
+                type = SourceType(rawValue: try container.decode(String.self, forKey: .type)) ?? .unknown
+                assignmentType = AssignmentType(rawValue: try container.decode(String.self, forKey: .assignmentType)) ?? .unknown
                 let contextKeyStr: String? = try container.decode(String?.self, forKey: .contextKey)
                 contextKey = contextKeyStr?.isEmpty == false ? contextKeyStr : nil
             }

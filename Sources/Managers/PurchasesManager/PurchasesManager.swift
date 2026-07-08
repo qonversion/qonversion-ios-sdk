@@ -18,6 +18,22 @@ final class PurchasesManager: PurchasesManagerInterface {
 
     private let reportsGate = TransactionReportsGate()
 
+    /// Emits fresh entitlements after the SDK processes an observed
+    /// transaction in subscription-management mode.
+    private let entitlementsUpdatesMulticast = AsyncMulticast<[String: Qonversion.Entitlement]>()
+
+    /// Emits App Store promoted-purchase intents. Buffered until the first
+    /// subscriber — an intent arriving at app start must not be lost.
+    private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(buffersWhenNoSubscribers: true)
+
+    func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
+        return entitlementsUpdatesMulticast.stream()
+    }
+
+    func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent> {
+        return promoIntentsMulticast.stream()
+    }
+
     init(
         purchasesService: PurchasesServiceInterface,
         storeKitFacade: StoreKitFacadeInterface,
@@ -85,7 +101,19 @@ final class PurchasesManager: PurchasesManagerInterface {
 
         do {
             for transaction in latest {
-                try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                // Skip transactions already reported this session (sweep,
+                // listener or purchase); the failed report releases the id.
+                if let id = transaction.id {
+                    guard await reportsGate.tryTake(id) else { continue }
+                }
+                do {
+                    try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                } catch {
+                    if let id = transaction.id {
+                        await reportsGate.release(id)
+                    }
+                    throw error
+                }
             }
         } catch {
             if error.allowsLocalEntitlementsFallback {
@@ -100,8 +128,48 @@ final class PurchasesManager: PurchasesManagerInterface {
         return await entitlementsManager.localFallbackEntitlements(for: latest)
     }
 
+    func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
+        _ = try await userManager.obtainUser()
+
+        return try await purchasesService.promotionalOffer(userId: userIdProvider.getUserId(), offerId: discountId, productStoreId: product.storeId)
+    }
+
     func startObservingTransactions() {
         storeKitFacade.startObservingTransactionUpdates()
+    }
+
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async {
+        let transactions = purchasedTransactions.compactMap { storeKitFacade.map($0) }
+
+        await handle(transactions: transactions)
+    }
+
+    func handle(transactions: [Qonversion.Transaction]) async {
+        guard !transactions.isEmpty else { return }
+
+        do {
+            _ = try await userManager.obtainUser()
+        } catch {
+            logger.error("Skipping handed transactions: no backend user: " + error.message)
+            return
+        }
+
+        // The host app made these purchases and owns their lifecycle — the
+        // SDK only tracks them, so no transaction is ever finished here.
+        for transaction in transactions {
+            if let id = transaction.id {
+                guard await reportsGate.tryTake(id) else { continue }
+            }
+            do {
+                try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+            } catch {
+                if let id = transaction.id {
+                    await reportsGate.release(id)
+                }
+                logger.error("Failed to report a handed transaction: " + error.message)
+            }
+        }
     }
 
     func processUnfinishedTransactions() async {
@@ -141,12 +209,29 @@ extension PurchasesManager: StoreKitFacadeDelegate {
 
     @available(iOS 16.4, macOS 14.4, *)
     func promoPurchaseIntent(product: Product) {
+        emitPromoPurchaseIntent(storeProductId: product.id)
+    }
+
+    /// Hands the promoted-purchase intent to the host through the stream; its
+    /// purchase() runs the regular purchase flow. The report keys off the
+    /// transaction's store product id, so no Qonversion product mapping is
+    /// required.
+    func emitPromoPurchaseIntent(storeProductId: String) {
+        let intent = Qonversion.PromoPurchaseIntent(productId: storeProductId) { [weak self] options in
+            guard let self else { throw QonversionError.initializationError() }
+
+            return try await self.purchase(Qonversion.Product(qonversionId: storeProductId, storeId: storeProductId, offeringId: nil), options: options)
+        }
+
+        promoIntentsMulticast.yield(intent)
     }
 
     func transactionUpdated(_ transaction: Qonversion.Transaction) {
         // Out-of-band update (renewal, refund, Ask to Buy approval, another
-        // device): report it, never finish it — the transaction lifecycle is
-        // owned by the host app (Analytics mode) or by the purchase flow.
+        // device). In Analytics mode it is only reported — the host app owns
+        // the lifecycle. In subscription-management mode the SDK owns it:
+        // finish after the backend ack and emit fresh entitlements to the
+        // update streams.
         Task { [weak self] in
             guard let self else { return }
             // Transactions without a store id (degraded SK1 mapping) cannot be
@@ -162,7 +247,20 @@ extension PurchasesManager: StoreKitFacadeDelegate {
                     await self.reportsGate.release(id)
                 }
                 self.logger.error("Failed to report an observed transaction: " + error.message)
+                return
             }
+
+            guard self.launchModeProvider.launchMode == .subscriptionManagement else { return }
+
+            await self.storeKitFacade.finish(transaction)
+
+            let entitlements: [String: Qonversion.Entitlement]
+            if let fetched = try? await self.entitlementsManager.entitlements() {
+                entitlements = fetched
+            } else {
+                entitlements = await self.entitlementsManager.localFallbackEntitlements(for: [transaction])
+            }
+            self.entitlementsUpdatesMulticast.yield(entitlements)
         }
     }
 }

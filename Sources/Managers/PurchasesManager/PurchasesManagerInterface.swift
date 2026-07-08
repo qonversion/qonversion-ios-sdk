@@ -4,8 +4,18 @@
 //
 
 import Foundation
+import StoreKit
 
-protocol PurchasesManagerInterface {
+protocol PurchasesManagerInterface: AnyObject {
+
+    /// A stream of entitlements refreshed after the SDK processes an observed
+    /// transaction in subscription-management mode. Every call returns an
+    /// independent stream.
+    func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]>
+
+    /// A stream of App Store promoted-purchase intents; call purchase() on an
+    /// intent to proceed. Every call returns an independent stream.
+    func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent>
 
     /// Buys the product through the store, reports the purchase to the backend
     /// (through the user gate) and finishes the transaction only after the
@@ -19,10 +29,23 @@ protocol PurchasesManagerInterface {
     @discardableResult
     func restore() async throws -> [String: Qonversion.Entitlement]
 
+    /// Requests a backend-signed promotional offer for the product's discount;
+    /// pass the result via ``Qonversion/Qonversion/PurchaseOptions/promoOffer``.
+    func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer
+
     /// Starts consuming out-of-band transaction updates (renewals, refunds,
     /// Ask to Buy approvals): each update is reported to the backend and is
     /// NEVER finished by the SDK.
     func startObservingTransactions()
+
+    /// Reports purchases made by the host app (Analytics mode ingestion).
+    /// Verified transactions are reported through the dedup gate and are
+    /// NEVER finished — the host app owns their lifecycle.
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async
+
+    /// Domain-typed core of the ingestion above.
+    func handle(transactions: [Qonversion.Transaction]) async
 
     /// Re-reports transactions left unfinished by previous sessions and
     /// finishes them after the backend confirms. Does nothing in Analytics

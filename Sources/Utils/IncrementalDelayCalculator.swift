@@ -15,8 +15,10 @@ fileprivate enum Constants: Float {
 
 internal class IncrementalDelayCalculator {
     func countDelay(minDelay: Int, retriesCount: Int) -> Int {
-        var delay: Float = Float(minDelay) + pow(Constants.factor.rawValue, Float(retriesCount))
-        var delta = Int((delay * Constants.jitter.rawValue).rounded())
+        // Clamp before deriving the jitter: pow overflows Float to infinity
+        // at large retry counts, and Int(infinity) traps.
+        var delay: Float = min(Float(minDelay) + pow(Constants.factor.rawValue, Float(retriesCount)), Constants.maxDelay.rawValue)
+        let delta = Int((delay * Constants.jitter.rawValue).rounded())
 
         delay += Float(Int.random(in: 0...delta))
         let resultDelay = Int(min(delay.rounded(), Constants.maxDelay.rawValue))

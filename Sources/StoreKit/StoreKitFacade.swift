@@ -13,7 +13,8 @@ class StoreKitFacade: StoreKitFacadeInterface {
     let storeKitOldWrapper: StoreKitOldWrapperInterface?
     let storeKitWrapper: StoreKitWrapperInterface?
     let storeKitMapper: StoreKitMapperInterface
-    var delegate: StoreKitFacadeDelegate?
+    // Weak: the delegate (purchases manager) holds the facade itself.
+    weak var delegate: StoreKitFacadeDelegate?
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     var loadedProducts: [String: StoreKit.Product]? { _loadedProducts as? [String: StoreKit.Product] }
@@ -95,6 +96,13 @@ class StoreKitFacade: StoreKitFacadeInterface {
         }
     }
     
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    func map(_ verificationResult: VerificationResult<StoreKit.Transaction>) -> Qonversion.Transaction? {
+        guard case .verified(let transaction) = verificationResult else { return nil }
+
+        return storeKitMapper.map(transaction, jws: verificationResult.jwsRepresentation)
+    }
+
     func unfinishedTransactions() async -> [Qonversion.Transaction] {
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper else { return [] }
 
@@ -149,6 +157,12 @@ class StoreKitFacade: StoreKitFacadeInterface {
                 guard let self, !Task.isCancelled else { return }
                 self.delegate?.transactionUpdated(transaction)
             }
+        }
+
+        // Promoted-purchase intents flow to the delegate through the same
+        // observation entry point.
+        if #available(iOS 16.4, macOS 14.4, *) {
+            storeKitWrapper.subscribeToPromoPurchases()
         }
     }
 

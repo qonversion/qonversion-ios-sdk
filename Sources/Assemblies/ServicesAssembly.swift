@@ -18,6 +18,10 @@ final class ServicesAssembly {
     private let baseURL: String
     
     private var deviceInfoCollectorInstance: DeviceInfoCollector?
+
+    // Holds the loaded store products cache and the transaction updates task —
+    // stateful, one instance SDK-wide.
+    private var storeKitFacadeInstance: StoreKitFacade?
     
     init(apiKey: String, miscAssembly: MiscAssembly, baseURL: String? = nil) {
         self.apiKey = apiKey
@@ -51,6 +55,16 @@ final class ServicesAssembly {
     }
     
     func storeKitFacade() -> StoreKitFacade {
+        if let storeKitFacadeInstance {
+            return storeKitFacadeInstance
+        }
+        let facade = makeStoreKitFacade()
+        storeKitFacadeInstance = facade
+
+        return facade
+    }
+
+    private func makeStoreKitFacade() -> StoreKitFacade {
         let mapper: StoreKitMapperInterface = storeKitMapper()
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) {
             let wrapper: StoreKitWrapper = storeKitWrapper()
@@ -95,7 +109,7 @@ final class ServicesAssembly {
     
     func purchasesService() -> PurchasesServiceInterface {
         let requestProcessor: RequestProcessorInterface = requestProcessor()
-        let purchasesService = PurchasesService(requestProcessor: requestProcessor)
+        let purchasesService = PurchasesService(requestProcessor: requestProcessor, appBundleId: Bundle.main.bundleIdentifier ?? "")
 
         return purchasesService
     }
@@ -123,10 +137,11 @@ final class ServicesAssembly {
         let requestsStorage: RequestsStorageInterface = miscAssembly.requestsStorage()
         let rateLimiter: RateLimiterInterface = miscAssembly.rateLimiter()
         
-        #warning("Update retriable requests list")
-        let retriableRequestsList: [Request] = []
+        // Data-delivery requests whose loss hurts analytics; GETs and
+        // interactive flows are excluded — their callers handle failures.
+        let retriableRequestKinds: [Request.Kind] = [.createPurchase, .createDevice, .updateDevice, .appleSearchAds]
         
-        let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestsList: retriableRequestsList, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
+        let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestKinds: retriableRequestKinds, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
         
         return processor
     }

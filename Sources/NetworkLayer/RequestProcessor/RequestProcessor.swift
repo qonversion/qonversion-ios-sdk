@@ -13,33 +13,72 @@ class RequestProcessor: RequestProcessorInterface {
     let headersBuilder: HeadersBuilderInterface
     let errorHandler: NetworkErrorHandlerInterface
     let decoder: ResponseDecoderInterface
-    let retriableRequestsList: [Request]
+    let retriableRequestKinds: [Request.Kind]
     let requestsStorage: RequestsStorageInterface
     let rateLimiter: RateLimiterInterface
     var criticalError: QonversionError?
 
-    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestsList: [Request], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface) {
+    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
         self.errorHandler = errorHandler
         self.decoder = decoder
-        self.retriableRequestsList = retriableRequestsList
+        self.retriableRequestKinds = retriableRequestKinds
         self.requestsStorage = requestsStorage
         self.rateLimiter = rateLimiter
-        
-        processStoredRequests()
     }
-    
+
+    /// Resends requests that failed on transport in previous sessions. A
+    /// delivered request (an HTTP answer of any status — resending would
+    /// duplicate) is removed from the queue one by one; a transport failure
+    /// keeps it for the next session. A latched critical error (revoked
+    /// project key) stops the replay.
     func processStoredRequests() {
-        let requests: [URLRequest] = requestsStorage.fetchRequests()
-        let requestsCopy: [URLRequest] = requests
-        
-        #warning("Resend all requests here and remove from the storage")
-        
-        requestsStorage.clean()
+        guard criticalError == nil else { return }
+
+        let requests: [StoredRequest] = requestsStorage.fetchRequests()
+        guard !requests.isEmpty else { return }
+
+        Task { [weak self] in
+            for stored in requests {
+                guard let self, self.criticalError == nil else { return }
+                guard let url = URL(string: stored.url) else {
+                    self.requestsStorage.remove(stored)
+                    continue
+                }
+
+                var urlRequest = URLRequest(url: url)
+                urlRequest.httpMethod = stored.method
+                urlRequest.httpBody = stored.body
+                self.headersBuilder.addHeaders(to: &urlRequest)
+
+                do {
+                    let (data, urlResponse) = try await self.networkProvider.send(request: urlRequest)
+
+                    // 5xx/429 mean the backend did not process the request —
+                    // keep it queued. Everything else counts as delivered
+                    // (resending would duplicate) or permanently rejected.
+                    let statusCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
+                    if !Self.isRetriableStatusCode(statusCode) {
+                        self.requestsStorage.remove(stored)
+                    }
+
+                    if let error = self.errorHandler.extractError(from: urlResponse, body: data), error.type == .critical {
+                        self.criticalError = error
+                        return
+                    }
+                } catch {
+                    // Kept in the queue for the next session.
+                }
+            }
+        }
     }
     
+    static func isRetriableStatusCode(_ statusCode: Int) -> Bool {
+        return statusCode >= 500 || statusCode == 429
+    }
+
     func process<T>(request: Request, responseType: T.Type) async throws -> T where T : Decodable {
         if let error = criticalError {
             throw error
@@ -63,12 +102,33 @@ class RequestProcessor: RequestProcessorInterface {
             responseBody = data
             responseCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
         } catch {
+            // The request never reached the backend — persist retriable ones
+            // for the offline replay.
+            if retriableRequestKinds.contains(request.kind) {
+                requestsStorage.append(StoredRequest(
+                    url: urlRequest.url?.absoluteString ?? "",
+                    method: urlRequest.httpMethod ?? "POST",
+                    body: urlRequest.httpBody,
+                    dedupKey: request.replayDedupKey
+                ))
+            }
             throw QonversionError(type: .invalidResponse, error: error)
         }
 
         guard error == nil else {
             if error?.type == .critical {
                 criticalError = error
+            }
+
+            // The backend did not process the request (5xx/429) — persist
+            // retriable ones for the offline replay, like transport failures.
+            if Self.isRetriableStatusCode(responseCode) && retriableRequestKinds.contains(request.kind) {
+                requestsStorage.append(StoredRequest(
+                    url: urlRequest.url?.absoluteString ?? "",
+                    method: urlRequest.httpMethod ?? "POST",
+                    body: urlRequest.httpBody,
+                    dedupKey: request.replayDedupKey
+                ))
             }
 
             throw error!

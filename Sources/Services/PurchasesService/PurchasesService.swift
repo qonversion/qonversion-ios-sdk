@@ -5,12 +5,45 @@
 
 import Foundation
 
+/// Wire shape of the backend-signed promotional offer.
+struct PromoOfferSignatureResponse: Decodable {
+
+    let keyIdentifier: String
+    let signature: String
+    let nonce: String
+    let timestamp: String
+
+    private enum CodingKeys: String, CodingKey {
+        case keyIdentifier = "key_identifier"
+        case signature
+        case nonce
+        case timestamp
+    }
+
+    init(keyIdentifier: String, signature: String, nonce: String, timestamp: String) {
+        self.keyIdentifier = keyIdentifier
+        self.signature = signature
+        self.nonce = nonce
+        self.timestamp = timestamp
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        keyIdentifier = try container.decode(String.self, forKey: .keyIdentifier)
+        signature = try container.decode(String.self, forKey: .signature)
+        nonce = try container.decode(String.self, forKey: .nonce)
+        timestamp = try container.decode(String.self, forKey: .timestamp)
+    }
+}
+
 final class PurchasesService: PurchasesServiceInterface {
 
     private let requestProcessor: RequestProcessorInterface
+    private let appBundleId: String
 
-    init(requestProcessor: RequestProcessorInterface) {
+    init(requestProcessor: RequestProcessorInterface, appBundleId: String) {
         self.requestProcessor = requestProcessor
+        self.appBundleId = appBundleId
     }
 
     func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
@@ -42,5 +75,39 @@ final class PurchasesService: PurchasesServiceInterface {
         } catch {
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
         }
+    }
+
+    func promotionalOffer(userId: String, offerId: String, productStoreId: String) async throws -> Qonversion.PromotionalOffer {
+        // The token is part of the payload the backend signs, and the App
+        // Store verifies it against the purchase's appAccountToken. The SDK
+        // sets no appAccountToken on purchases, so the signed token must be
+        // empty too — otherwise the store rejects the offer.
+        let body: RequestBodyDict = [
+            "product": productStoreId,
+            "app_account_token": "",
+            "app_bundle_id": appBundleId,
+        ]
+        let request = Request.signPromoOffer(userId: userId, offerId: offerId, body: body)
+
+        let response: PromoOfferSignatureResponse
+        do {
+            response = try await requestProcessor.process(request: request, responseType: PromoOfferSignatureResponse.self)
+        } catch {
+            throw QonversionError(type: .promoOfferSigningFailed, message: nil, error: error)
+        }
+
+        guard let nonce = UUID(uuidString: response.nonce),
+              let signature = Data(base64Encoded: response.signature),
+              let timestamp = Int(response.timestamp) else {
+            throw QonversionError(type: .promoOfferSigningFailed, message: "Malformed signature response")
+        }
+
+        return Qonversion.PromotionalOffer(
+            offerId: offerId,
+            keyId: response.keyIdentifier,
+            nonce: nonce,
+            signature: signature,
+            timestamp: timestamp
+        )
     }
 }

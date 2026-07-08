@@ -19,13 +19,21 @@ enum LoggerInfoMessages: String {
     case appleSearchAdsAttributionRequestSucceeded = "Apple Search Ads request finished successfully."
 }
 
-enum LogLevel: Int {
-    case critical = 4
-    case error = 3
-    case warning = 2
-    case debug = 1
-    case verbose = 0
+extension Qonversion {
+
+    /// Minimal severity the SDK writes to the unified log.
+    public enum LogLevel: Int {
+        case verbose = 0
+        case debug = 1
+        case warning = 2
+        case error = 3
+        case critical = 4
+        /// Disables SDK logging entirely.
+        case disabled = 5
+    }
 }
+
+typealias LogLevel = Qonversion.LogLevel
 
 final class LoggerWrapper {
     
@@ -82,8 +90,12 @@ extension LoggerWrapper {
                 osLevel = .info
             case .debug:
                 osLevel = .debug
-            case .warning, .error:
+            case .warning:
+                osLevel = .default
+            case .error:
                 osLevel = .error
+            case .disabled:
+                return
             case .critical:
                 osLevel = .fault
             }

@@ -8,32 +8,57 @@
 import Foundation
 
 class RequestsStorage: RequestsStorageInterface {
-    
+
+    /// Bounds UserDefaults growth; the oldest requests are dropped first.
+    static let maxStoredRequests = 50
+
     let userDefaults: UserDefaults
     let storeKey: String
-    
+
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+
     init(userDefaults: UserDefaults, storeKey: String) {
         self.userDefaults = userDefaults
         self.storeKey = storeKey
     }
-    
-    func store(requests: [URLRequest]) {
-        userDefaults.set(requests, forKey: storeKey)
+
+    func append(_ request: StoredRequest) {
+        var requests: [StoredRequest] = fetchRequests()
+        if let dedupKey = request.dedupKey, requests.contains(where: { $0.dedupKey == dedupKey }) {
+            return
+        }
+
+        requests.append(request)
+        if requests.count > Self.maxStoredRequests {
+            requests.removeFirst(requests.count - Self.maxStoredRequests)
+        }
+
+        persist(requests)
     }
-    
-    func append(requests: [URLRequest]) {
-        var storedRequests: [URLRequest] = fetchRequests()
-        storedRequests.append(contentsOf: requests)
-        
-        store(requests: storedRequests)
+
+    func remove(_ request: StoredRequest) {
+        var requests: [StoredRequest] = fetchRequests()
+        guard let index = requests.firstIndex(of: request) else { return }
+
+        requests.remove(at: index)
+        persist(requests)
     }
-    
-    func fetchRequests() -> [URLRequest] {
-        let storedRequests: [URLRequest] = userDefaults.object(forKey: storeKey) as? [URLRequest] ?? []
-        
-        return storedRequests
+
+    private func persist(_ requests: [StoredRequest]) {
+        guard let data = try? encoder.encode(requests) else { return }
+        userDefaults.set(data, forKey: storeKey)
     }
-    
+
+    func fetchRequests() -> [StoredRequest] {
+        guard let data = userDefaults.data(forKey: storeKey),
+              let requests = try? decoder.decode([StoredRequest].self, from: data) else {
+            return []
+        }
+
+        return requests
+    }
+
     func clean() {
         userDefaults.removeObject(forKey: storeKey)
     }

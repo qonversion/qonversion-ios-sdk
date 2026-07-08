@@ -11,7 +11,8 @@ import StoreKit
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
 final class StoreKitWrapper: StoreKitWrapperInterface {
 
-    var delegate: StoreKitWrapperDelegate?
+    // Weak: the delegate (facade) holds the wrapper itself.
+    weak var delegate: StoreKitWrapperDelegate?
 
     private let mapper: StoreKitMapperInterface
 

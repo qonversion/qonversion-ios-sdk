@@ -80,6 +80,13 @@ final class PurchasesManagerTests: XCTestCase {
         }
     }
 
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () async -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while await !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
     // MARK: - purchase happy path
 
     func testPurchaseGoesGateStorePurchaseReportFinishAndReturnsEntitlements() async throws {
@@ -294,6 +301,229 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
     }
 
+    func testRestoredTransactionIsNotReReportedByTheListener() async throws {
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        _ = try await manager.restore()
+
+        manager.transactionUpdated(makeTransaction(id: "t1"))
+
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+    }
+
+    func testRestoreSkipsTransactionAlreadyReportedThisSession() async throws {
+        let transaction = makeTransaction(id: "t1")
+        manager.transactionUpdated(transaction)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        facade.restoreResult = [transaction]
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let entitlements = try await manager.restore()
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "the backend already has this transaction")
+        XCTAssertEqual(entitlements.keys.sorted(), ["premium"], "restore still returns entitlements")
+    }
+
+    // MARK: - observed updates in subscription-management mode (Ask to Buy / renewals)
+
+    func testObservedUpdateInSubscriptionManagementModeIsFinishedAfterAck() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        var finishedAtSendTime = false
+        service.onSend = { [weak self] in
+            finishedAtSendTime = !(self?.facade.finishedTransactions.isEmpty ?? true)
+        }
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { self.facade.finishedTransactions.count >= 1 }
+        XCTAssertFalse(finishedAtSendTime, "finish only after the backend confirmed the report")
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["u1"], "in subscription-management mode the SDK owns the lifecycle")
+    }
+
+    func testObservedUpdateInSubscriptionManagementModeEmitsUpdatedEntitlements() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.keys.sorted(), ["premium"])
+    }
+
+    func testEveryEntitlementsUpdatesStreamReceivesTheUpdate() async {
+        // Transaction.updates style: each access is an independent stream.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let first = StreamCollector(manager.entitlementsUpdates())
+        let second = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil {
+            let firstEmpty = await first.received.isEmpty
+            let secondEmpty = await second.received.isEmpty
+            return !firstEmpty && !secondEmpty
+        }
+        let firstReceived = await first.received
+        let secondReceived = await second.received
+        XCTAssertEqual(firstReceived.count, 1)
+        XCTAssertEqual(secondReceived.count, 1)
+    }
+
+    func testObservedUpdateReportFailureInSubscriptionManagementModeLeavesTransactionUnfinished() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        service.error = MockError.stubbed
+        let collector = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+        let received = await collector.received
+        XCTAssertTrue(received.isEmpty)
+    }
+
+    func testObservedUpdateInAnalyticsModeDoesNotEmitEntitlements() async {
+        let collector = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+        let received = await collector.received
+        XCTAssertTrue(received.isEmpty)
+    }
+
+    // MARK: - promotional offer signature
+
+    func testPromotionalOfferPassesGateAndForwardsToService() async throws {
+        service.promotionalOfferResult = Qonversion.PromotionalOffer(offerId: "offer1", keyId: "KEY", nonce: UUID(), signature: Data([0x01]), timestamp: 1)
+
+        let offer = try await manager.promotionalOffer(for: makeProduct(storeId: "com.app.pro"), discountId: "offer1")
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "the user gate must be passed first")
+        XCTAssertEqual(service.promotionalOfferCalls.first?.userId, uid)
+        XCTAssertEqual(service.promotionalOfferCalls.first?.offerId, "offer1")
+        XCTAssertEqual(service.promotionalOfferCalls.first?.productStoreId, "com.app.pro")
+        XCTAssertEqual(offer.offerId, "offer1")
+    }
+
+    // MARK: - promoted purchases (App Store promo intents)
+
+    func testPromoIntentIsEmittedToTheStream() async {
+        let collector = StreamCollector(manager.promoPurchaseIntents())
+
+        manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.map(\.productId), ["com.app.promo"])
+        XCTAssertTrue(facade.purchasedStoreIds.isEmpty, "nothing is purchased until the host asks")
+    }
+
+    func testIntentPurchaseRunsTheFullPurchaseFlow() async throws {
+        facade.purchaseResult = makeTransaction(id: "t1", productId: "com.app.promo")
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.promoPurchaseIntents())
+        manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        let intent = try XCTUnwrap(received.first)
+
+        let result = try await intent.purchase()
+
+        XCTAssertEqual(facade.purchasedStoreIds, ["com.app.promo"])
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"])
+        XCTAssertEqual(result.entitlements.keys.sorted(), ["premium"])
+    }
+
+    func testIntentPurchaseIsOneShot() async throws {
+        facade.purchaseResult = makeTransaction(id: "t1", productId: "com.app.promo")
+        let collector = StreamCollector(manager.promoPurchaseIntents())
+        manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        let intent = try XCTUnwrap(received.first)
+        _ = try await intent.purchase()
+
+        do {
+            _ = try await intent.purchase()
+            XCTFail("Expected the second purchase() call to throw")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .promoPurchaseIntentAlreadyHandled)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
+        XCTAssertEqual(facade.purchasedStoreIds, ["com.app.promo"], "the flow must run exactly once")
+    }
+
+    func testIntentEmittedBeforeAnySubscriberIsDeliveredToTheFirstOne() async {
+        // The intent can arrive at app start before the host subscribes —
+        // it must not be lost.
+        manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
+
+        let collector = StreamCollector(manager.promoPurchaseIntents())
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.map(\.productId), ["com.app.promo"])
+    }
+
+    // MARK: - handlePurchases (analytics ingestion)
+
+    func testHandleTransactionsReportsEachThroughGateAndNeverFinishes() async {
+        await manager.handle(transactions: [makeTransaction(id: "t1"), makeTransaction(id: "t2", productId: "com.app.lite")])
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "the user gate must be passed before reporting")
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t2"])
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "the host app owns the transaction lifecycle")
+    }
+
+    func testHandleTransactionsIsDeduplicatedAgainstItselfAndTheListener() async {
+        let transaction = makeTransaction(id: "t1")
+
+        await manager.handle(transactions: [transaction])
+        await manager.handle(transactions: [transaction])
+        manager.transactionUpdated(transaction)
+
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+    }
+
+    func testHandleTransactionsReportFailureIsSwallowedAndRetriable() async {
+        service.error = MockError.stubbed
+
+        await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+
+        service.error = nil
+        await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t1"], "a failed report must not poison the dedup")
+    }
+
+    func testHandleTransactionsWithEmptyInputDoesNothing() async {
+        await manager.handle(transactions: [])
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 0)
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
+    func testHandleTransactionsUserGateFailureSkipsReporting() async {
+        userManager.error = MockError.stubbed
+
+        await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
     // MARK: - unfinished transactions sweep at launch
 
     func testUnfinishedSweepDoesNothingInAnalyticsMode() async {
@@ -399,5 +629,28 @@ final class PurchasesManagerTests: XCTestCase {
         await manager.processUnfinishedTransactions()
 
         XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+    }
+}
+
+/// Collects everything a stream emits.
+private actor StreamCollector<Element> {
+
+    private(set) var received: [Element] = []
+    private var task: Task<Void, Never>?
+
+    init(_ stream: AsyncStream<Element>) {
+        Task { await start(stream) }
+    }
+
+    private func start(_ stream: AsyncStream<Element>) {
+        task = Task {
+            for await element in stream {
+                append(element)
+            }
+        }
+    }
+
+    private func append(_ element: Element) {
+        received.append(element)
     }
 }

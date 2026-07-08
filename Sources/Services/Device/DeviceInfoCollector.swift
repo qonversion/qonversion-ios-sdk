@@ -34,13 +34,10 @@ private let OsName = "iOS"
 
 final class DeviceInfoCollector: DeviceInfoCollectorInterface {
 
-    var lastPreparedDevice: Device? = nil
-
     func deviceInfo() -> Device {
-        if let savedDevice: Device = lastPreparedDevice {
-            return savedDevice
-        }
-
+        // Built fresh on every call: advertisingId (ATT grant), locale and
+        // appVersion change at runtime, and a cached snapshot would keep the
+        // device update diff empty forever.
         let manufacturer = "Apple"
         let appVersion: String? = Bundle.appVersion
         let osVersion: String = osVersion()
@@ -66,7 +63,6 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
             installDate: installDate
         )
 
-        lastPreparedDevice = deviceInfo
         return deviceInfo
     }
     
