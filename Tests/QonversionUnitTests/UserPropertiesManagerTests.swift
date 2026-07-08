@@ -32,7 +32,7 @@ final class UserPropertiesManagerTests: XCTestCase {
         requestProcessor = MockRequestProcessor()
         propertiesStorage = UserPropertiesStorage()
         userManager = MockUserManager()
-        userManager.user = try? JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(#"{"id": "test-user-id", "created": 1700000000, "environment": "sandbox"}"#.utf8))
+        userManager.user = try? JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(#"{"id": "test-user-id", "created_at": "2023-11-14T22:13:20Z", "environment": "sandbox"}"#.utf8))
         manager = UserPropertiesManager(
             requestProcessor: requestProcessor,
             propertiesStorage: propertiesStorage,
@@ -212,7 +212,7 @@ final class UserPropertiesManagerTests: XCTestCase {
 extension JSONDecoder {
     static var qonversionTest: JSONDecoder {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
+        decoder.dateDecodingStrategy = .iso8601
         return decoder
     }
 }

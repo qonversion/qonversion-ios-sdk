@@ -89,10 +89,12 @@ extension Request {
 }
 
 enum Request : Hashable {
-    case getUser(id: String, endpoint: String = "v3/users/", type: RequestType = .get)
-    case createUser(id: String, endpoint: String = "v3/users/", body: RequestBodyDict, type: RequestType = .post)
-    case getIdentity(externalId: String, endpoint: String = "v3/identities/", type: RequestType = .get)
-    case createIdentity(externalId: String, endpoint: String = "v3/identities/", body: RequestBodyDict, type: RequestType = .post)
+    case getUser(id: String, endpoint: String = "v4/users/", type: RequestType = .get)
+    // The uid travels in the body ("id") — v4 style.
+    case createUser(endpoint: String = "v4/users", body: RequestBodyDict, type: RequestType = .post)
+    case getIdentity(externalId: String, endpoint: String = "v4/identities/", type: RequestType = .get)
+    // The external id and uid travel in the body — v4 style.
+    case createIdentity(endpoint: String = "v4/identities", body: RequestBodyDict, type: RequestType = .post)
     case entitlements(userId: String, endpoint: String = "v3/users/%@/entitlements", type: RequestType = .get)
     case createPurchase(userId: String, endpoint: String = "v3/users/%@/purchases", body: RequestBodyDict, type: RequestType = .post)
     case signPromoOffer(userId: String, offerId: String, endpoint: String = "v3/users/%@/offers/%@/signatures", body: RequestBodyDict, type: RequestType = .post)
@@ -135,14 +137,14 @@ enum Request : Hashable {
         case let .getUser(id, endpoint, type):
             return defaultRequest(urlString: endpoint + escaped(id), body: nil, type: type)
 
-        case let .createUser(id, endpoint, body, type):
-            return defaultRequest(urlString: endpoint + escaped(id), body: body, type: type)
+        case let .createUser(endpoint, body, type):
+            return defaultRequest(urlString: endpoint, body: body, type: type)
 
         case let .getIdentity(externalId, endpoint, type):
             return defaultRequest(urlString: endpoint + escaped(externalId), body: nil, type: type)
 
-        case let .createIdentity(externalId, endpoint, body, type):
-            return defaultRequest(urlString: endpoint + escaped(externalId), body: body, type: type)
+        case let .createIdentity(endpoint, body, type):
+            return defaultRequest(urlString: endpoint, body: body, type: type)
 
         case let .entitlements(userId, endpoint, type):
             let urlString = String(format: endpoint, arguments: [escaped(userId)])
@@ -222,9 +224,8 @@ enum Request : Hashable {
             hasher.combine(id)
             hasher.combine(endpoint)
             hasher.combine(type)
-        case let .createUser(id, endpoint, body, type):
+        case let .createUser(endpoint, body, type):
             hasher.combine("createUser")
-            hasher.combine(id)
             hasher.combine(endpoint)
             hasher.combine(body)
             hasher.combine(type)
@@ -233,9 +234,8 @@ enum Request : Hashable {
             hasher.combine(externalId)
             hasher.combine(endpoint)
             hasher.combine(type)
-        case let .createIdentity(externalId, endpoint, body, type):
+        case let .createIdentity(endpoint, body, type):
             hasher.combine("createIdentity")
-            hasher.combine(externalId)
             hasher.combine(endpoint)
             hasher.combine(body)
             hasher.combine(type)

@@ -34,7 +34,7 @@ final class PurchasesManagerTests: XCTestCase {
         config = InternalConfig(userId: uid)
         userManager.user = try? JSONDecoder.qonversionTest.decode(
             Qonversion.User.self,
-            from: Data(#"{"id": "QON_buyer", "created": 1700000000, "environment": "production"}"#.utf8))
+            from: Data(#"{"id": "QON_buyer", "created_at": "2023-11-14T22:13:20Z", "environment": "prod"}"#.utf8))
         manager = makeManager()
     }
 

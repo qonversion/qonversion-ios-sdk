@@ -29,19 +29,39 @@ final class RequestTests: XCTestCase {
 
     func testGetUser() throws {
         let request = try XCTUnwrap(Request.getUser(id: "user1").convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/users/user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1")
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
     }
 
     func testCreateUser() throws {
-        let body: RequestBodyDict = ["environment": "sandbox"]
-        let request = try XCTUnwrap(Request.createUser(id: "user1", body: body).convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/users/user1")
+        // v4: the uid travels in the body, not in the path.
+        let body: RequestBodyDict = ["id": "user1", "environment": "prod"]
+        let request = try XCTUnwrap(Request.createUser(body: body).convertToURLRequest(baseURL))
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users")
         XCTAssertEqual(request.httpMethod, "POST")
         let decoded = try bodyDict(request)
-        XCTAssertEqual(decoded["environment"] as? String, "sandbox")
-        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded["id"] as? String, "user1")
+        XCTAssertEqual(decoded["environment"] as? String, "prod")
+        XCTAssertEqual(decoded.count, 2)
+    }
+
+    func testGetIdentity() throws {
+        let request = try XCTUnwrap(Request.getIdentity(externalId: "ext_1").convertToURLRequest(baseURL))
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/identities/ext_1")
+        XCTAssertEqual(request.httpMethod, "GET")
+        XCTAssertNil(request.httpBody)
+    }
+
+    func testCreateIdentity() throws {
+        // v4: both ids travel in the body.
+        let body: RequestBodyDict = ["identity_id": "ext_1", "user_id": "QON_u"]
+        let request = try XCTUnwrap(Request.createIdentity(body: body).convertToURLRequest(baseURL))
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/identities")
+        XCTAssertEqual(request.httpMethod, "POST")
+        let decoded = try bodyDict(request)
+        XCTAssertEqual(decoded["identity_id"] as? String, "ext_1")
+        XCTAssertEqual(decoded["user_id"] as? String, "QON_u")
     }
 
     func testEntitlements() throws {
@@ -205,7 +225,7 @@ final class RequestTests: XCTestCase {
     func testUserIdWithSpaceIsPercentEncoded() throws {
         let request = Request.getUser(id: "user with space").convertToURLRequest(baseURL)
         XCTAssertNotNil(request)
-        XCTAssertEqual(request?.url?.absoluteString, "https://api.qonversion.io/v3/users/user%20with%20space")
+        XCTAssertEqual(request?.url?.absoluteString, "https://api.qonversion.io/v4/users/user%20with%20space")
     }
 
     func testContextKeyIsPercentEncoded() throws {
@@ -225,8 +245,8 @@ final class RequestTests: XCTestCase {
         XCTAssertEqual(a.hashValue, b.hashValue)
         XCTAssertEqual(a, b)
 
-        let c = Request.createUser(id: "u", body: ["k": "v"])
-        let d = Request.createUser(id: "u", body: ["k": "v"])
+        let c = Request.createUser(body: ["k": "v"])
+        let d = Request.createUser(body: ["k": "v"])
         XCTAssertEqual(c.hashValue, d.hashValue)
         XCTAssertEqual(c, d)
     }
@@ -234,8 +254,8 @@ final class RequestTests: XCTestCase {
     func testDifferentParamsProduceDifferentHashes() {
         XCTAssertNotEqual(Request.getUser(id: "user1").hashValue, Request.getUser(id: "user2").hashValue)
         XCTAssertNotEqual(
-            Request.createUser(id: "u", body: ["k": "v1"]).hashValue,
-            Request.createUser(id: "u", body: ["k": "v2"]).hashValue
+            Request.createUser(body: ["k": "v1"]).hashValue,
+            Request.createUser(body: ["k": "v2"]).hashValue
         )
         XCTAssertNotEqual(
             Request.remoteConfig(userId: "u", contextKey: nil).hashValue,

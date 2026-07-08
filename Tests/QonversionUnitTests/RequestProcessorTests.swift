@@ -235,7 +235,7 @@ final class RequestProcessorTests: XCTestCase {
 
         XCTAssertEqual(result, ProcessorTestPayload(id: "abc"))
         XCTAssertEqual(networkProvider.sentRequests.count, 1)
-        XCTAssertEqual(networkProvider.sentRequests.first?.url?.absoluteString, "https://api.qonversion.io/v3/users/u")
+        XCTAssertEqual(networkProvider.sentRequests.first?.url?.absoluteString, "https://api.qonversion.io/v4/users/u")
         // Headers are added to the outgoing request via HeadersBuilder.
         XCTAssertEqual(headersBuilder.callsCount, 1)
         XCTAssertEqual(networkProvider.sentRequests.first?.value(forHTTPHeaderField: "X-Test-Header"), "test")
