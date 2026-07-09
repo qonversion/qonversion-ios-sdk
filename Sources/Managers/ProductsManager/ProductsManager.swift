@@ -54,7 +54,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
 
     func loadProductPermissions() async {
         do {
-            let mapping = try await productsService.productPermissions()
+            let mapping: [String: [String]] = try await productsService.productPermissions()
             storeLoadedPermissions(mapping)
             try localStorage.set(mapping, forKey: Constants.productPermissionsKey.rawValue)
         } catch {
@@ -72,7 +72,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
 
     func cachedProductPermissions() -> [String: [String]]? {
         lock.lock()
-        if let loaded = _loadedProductPermissions {
+        if let loaded: [String: [String]] = _loadedProductPermissions {
             lock.unlock()
             return loaded
         }
@@ -101,7 +101,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         } catch {
             // The bundled snapshot answers this call only — it must not shadow
             // the API, so the in-memory cache stays empty and the next call retries.
-            guard let fallbackProducts = fallbackService.obtainFallbackData()?.products, !fallbackProducts.isEmpty else {
+            guard let fallbackProducts: [Qonversion.Product] = fallbackService.obtainFallbackData()?.products, !fallbackProducts.isEmpty else {
                 throw error
             }
             logger.warning("Products request failed, using the bundled fallback file: " + error.message)
@@ -109,7 +109,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         }
         
         do {
-            let resultProducts = try await storeEnriched(products)
+            let resultProducts: [Qonversion.Product] = try await storeEnriched(products)
             loadedProducts = resultProducts
             
             return resultProducts
@@ -140,11 +140,11 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         var resultProducts: [Qonversion.Product] = []
 
         for var product in products {
-            guard let storeProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
+            guard let storeProductWrapper: StoreProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
 
             if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeProduct = storeProductWrapper.product {
                 product.enrich(storeProduct: storeProduct)
-            } else if let storeProduct = storeProductWrapper.oldProduct {
+            } else if let storeProduct: SKProduct = storeProductWrapper.oldProduct {
                 product.enrich(skProduct: storeProduct)
             }
 

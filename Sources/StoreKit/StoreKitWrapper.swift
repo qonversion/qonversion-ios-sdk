@@ -46,7 +46,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
     }
 
     func finish(_ transaction: Qonversion.Transaction) async {
-        guard let storeKitTransaction = transaction.storeKitTransaction else { return }
+        guard let storeKitTransaction: StoreKit.Transaction = transaction.storeKitTransaction else { return }
 
         await storeKitTransaction.finish()
     }
@@ -97,7 +97,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
     /// host app).
     func transactionUpdates() -> AsyncStream<Qonversion.Transaction> {
         return AsyncStream { continuation in
-            let task = Task {
+            let task: Task<Void, Never> = Task {
                 for await update in StoreKit.Transaction.updates {
                     if case .verified(let transaction) = update {
                         continuation.yield(self.mapper.map(transaction, jws: update.jwsRepresentation))

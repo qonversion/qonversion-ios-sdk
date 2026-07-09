@@ -63,7 +63,7 @@ final class PurchasesService: PurchasesServiceInterface {
             "currency": transaction.currency?.identifier ?? "",
             "store_data": storeData,
         ]
-        if let purchaseDate = transaction.purchaseDate {
+        if let purchaseDate: Date = transaction.purchaseDate {
             // A fresh formatter per call: ISO8601DateFormatter is not Sendable.
             body["purchased_at"] = ISO8601DateFormatter().string(from: purchaseDate)
         }

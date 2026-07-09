@@ -21,7 +21,7 @@ final class DeviceManager: DeviceManagerInterface, @unchecked Sendable {
     }
 
     func collectDeviceInfo() async {
-        let deviceInfo = deviceInfoCollector.deviceInfo()
+        let deviceInfo: Device = deviceInfoCollector.deviceInfo()
 
         let currentDevice: Device? = currentDevice()
 

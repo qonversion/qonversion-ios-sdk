@@ -53,7 +53,7 @@ enum EntitlementsCalculator {
     static func expirationDate(for transaction: Qonversion.Transaction, product: Qonversion.Product?) -> Date? {
         guard let period = product?.subscription?.subscriptionPeriod else { return nil }
 
-        let startDate = transaction.purchaseDate ?? Date()
+        let startDate: Date = transaction.purchaseDate ?? Date()
         return startDate.addingTimeInterval(TimeInterval(periodDays(period) * 24 * 60 * 60))
     }
 
@@ -76,12 +76,12 @@ enum EntitlementsCalculator {
 
         var result: [String: Qonversion.Entitlement] = [:]
         for transaction in transactions {
-            let product = productsByStoreId[transaction.productId]
-            let expiration = expirationDate(for: transaction, product: product)
+            let product: Qonversion.Product? = productsByStoreId[transaction.productId]
+            let expiration: Date? = expirationDate(for: transaction, product: product)
             guard expiration == nil || expiration! > now else { continue }
 
             guard let qonversionId = product?.qonversionId,
-                  let permissionIds = mapping[qonversionId] else { continue }
+                  let permissionIds: [String] = mapping[qonversionId] else { continue }
 
             for permissionId in permissionIds {
                 result[permissionId] = Qonversion.Entitlement(
@@ -106,7 +106,7 @@ enum EntitlementsCalculator {
         _ calculated: [String: Qonversion.Entitlement],
         into existing: [String: Qonversion.Entitlement]
     ) -> [String: Qonversion.Entitlement] {
-        var result = existing
+        var result: [String: Qonversion.Entitlement] = existing
 
         for entitlement in calculated.values {
             guard let current = result[entitlement.id] else {
@@ -133,7 +133,7 @@ enum EntitlementsCalculator {
     /// Restore variant (production-exact): keep only the LATEST transaction
     /// per store product before calculating.
     static func latestTransactionsPerProduct(_ transactions: [Qonversion.Transaction]) -> [Qonversion.Transaction] {
-        let sorted = transactions.sorted {
+        let sorted: [Qonversion.Transaction] = transactions.sorted {
             ($0.purchaseDate ?? .distantPast) > ($1.purchaseDate ?? .distantPast)
         }
 

@@ -37,7 +37,7 @@ final class UserChangesNotifier: UserChangesNotifierInterface, @unchecked Sendab
 
     func notifyUserChanged() {
         lock.lock()
-        let observers = boxes.compactMap { $0.observer }
+        let observers: [UserChangedObserver] = boxes.compactMap { $0.observer }
         lock.unlock()
 
         observers.forEach { $0.userDidChange() }

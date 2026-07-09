@@ -38,7 +38,7 @@ final class ServicesAssembly {
     }
     
     func productsService() -> ProductsServiceInterface {
-        let requestProcessor = requestProcessor()
+        let requestProcessor: RequestProcessorInterface = requestProcessor()
         let productsService = ProductsService(requestProcessor: requestProcessor, internalConfig: miscAssembly.internalConfig)
         
         return productsService
@@ -61,7 +61,7 @@ final class ServicesAssembly {
         if let storeKitFacadeInstance {
             return storeKitFacadeInstance
         }
-        let facade = makeStoreKitFacade()
+        let facade: StoreKitFacade = makeStoreKitFacade()
         storeKitFacadeInstance = facade
 
         return facade

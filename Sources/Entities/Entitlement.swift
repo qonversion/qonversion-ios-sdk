@@ -78,7 +78,7 @@ extension Qonversion {
 
             let product = try container.decodeIfPresent(EntitlementProduct.self, forKey: .product)
             productId = product?.productId
-            let rawRenewState = product?.subscription?.renewState
+            let rawRenewState: String? = product?.subscription?.renewState
             renewState = rawRenewState.flatMap { RenewState(rawValue: $0) } ?? .unknown
         }
 

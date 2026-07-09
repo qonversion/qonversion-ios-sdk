@@ -30,7 +30,7 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
             let id = UUID()
             lock.lock()
             continuations[id] = continuation
-            let backlog = pending
+            let backlog: [Element] = pending
             pending = []
             lock.unlock()
 

@@ -96,8 +96,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         propertiesStorage.save(userProperty)
 
         stateLock.lock()
-        let alreadyScheduled = sendingTask != nil
-        let delay = sendPropertiesRetryDelay
+        let alreadyScheduled: Bool = sendingTask != nil
+        let delay: Int = sendPropertiesRetryDelay
         stateLock.unlock()
         guard !alreadyScheduled else { return }
 
@@ -231,7 +231,7 @@ extension UserPropertiesManager {
             return
         }
         sendPropertiesRetryDelay = delayCalculator.countDelay(minDelay: Constants.sendPropertiesMinDelaySec.rawValue, retriesCount: sendPropertiesRetryCount)
-        let delay = sendPropertiesRetryDelay
+        let delay: Int = sendPropertiesRetryDelay
         stateLock.unlock()
         scheduleSendingProperties(withDelay: delay)
     }

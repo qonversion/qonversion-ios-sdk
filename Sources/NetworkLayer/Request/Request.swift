@@ -185,21 +185,21 @@ enum Request : Hashable {
             return defaultRequest(urlString: endpoint, body: nil, type: type)
             
         case let .remoteConfig(userId, contextKey, endpoint, type):
-            var urlString = endpoint + "?user_id=" + escaped(userId)
+            var urlString: String = endpoint + "?user_id=" + escaped(userId)
             if let contextKey = contextKey {
                 urlString += "&context_key=" + escaped(contextKey)
             }
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .remoteConfigList(userId, contextKeys, includeEmptyContextKey, endpoint, type):
-            var urlString = endpoint + "?user_id=" + escaped(userId) + "&with_empty_context_key=" + (includeEmptyContextKey ? "true" : "false")
+            var urlString: String = endpoint + "?user_id=" + escaped(userId) + "&with_empty_context_key=" + (includeEmptyContextKey ? "true" : "false")
             for contextKey in contextKeys {
                 urlString += "&context_key=" + escaped(contextKey)
             }
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .allRemoteConfigList(userId, endpoint, type):
-            let urlString = endpoint + "&user_id=" + escaped(userId)
+            let urlString: String = endpoint + "&user_id=" + escaped(userId)
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .attachUserToRemoteConfig(userId, remoteConfigId, endpoint, type):

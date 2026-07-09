@@ -58,7 +58,7 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     }
 
     func loadRemoteConfigList() async throws -> Qonversion.RemoteConfigList {
-        let generation = currentGeneration()
+        let generation: Int = currentGeneration()
         let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList()
         handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
         return remoteConfigList

@@ -13,7 +13,7 @@ struct QonversionError: Error, @unchecked Sendable {
     public let additionalInfo: [String: Any]?
 
     init(type: QonversionErrorType, message: String? = nil, error: Error? = nil, additionalInfo: [String : Any]? = nil) {
-        var errorMessage = message ?? type.message()
+        var errorMessage: String = message ?? type.message()
         if let qonversionError = error as? QonversionError {
             errorMessage += "\n" + qonversionError.message
         } else if let error = error {

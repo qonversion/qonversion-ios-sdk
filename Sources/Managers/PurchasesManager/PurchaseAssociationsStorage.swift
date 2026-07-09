@@ -34,7 +34,7 @@ final class PurchaseAssociationsStorage: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        var all = load()
+        var all: [String: PurchaseAssociations] = load()
         all[storeProductId] = associations
         persist(all)
     }
@@ -50,7 +50,7 @@ final class PurchaseAssociationsStorage: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        var all = load()
+        var all: [String: PurchaseAssociations] = load()
         guard all.removeValue(forKey: storeProductId) != nil else { return }
         persist(all)
     }

@@ -30,7 +30,7 @@ final class QonversionAssembly {
     private var purchasesManagerInstance: PurchasesManager?
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose) {
-        let userDefaults = userDefaults ?? UserDefaults.standard
+        let userDefaults: UserDefaults = userDefaults ?? UserDefaults.standard
         let internalConfig = InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime, logLevel: logLevel)
         self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: internalConfig)
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly, baseURL: baseURL)
@@ -71,8 +71,8 @@ final class QonversionAssembly {
     }
     
     func deviceManager() -> DeviceManagerInterface {
-        let deviceInfoCollector = servicesAssembly.deviceInfoCollector()
-        let deviceService = servicesAssembly.deviceService()
+        let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
+        let deviceService: DeviceServiceInterface = servicesAssembly.deviceService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let deviceManager = DeviceManager(deviceInfoCollector: deviceInfoCollector, deviceService: deviceService, logger: logger)
         
@@ -163,7 +163,7 @@ final class QonversionAssembly {
             return remoteConfigManagerInstance
         }
 
-        let remoteConfigService = servicesAssembly.remoteConfigService()
+        let remoteConfigService: RemoteConfigServiceInterface = servicesAssembly.remoteConfigService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let remoteConfigManager = RemoteConfigManager(remoteConfigService: remoteConfigService, logger: logger)
 
