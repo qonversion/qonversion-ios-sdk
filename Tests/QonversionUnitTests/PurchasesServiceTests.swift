@@ -2,9 +2,9 @@
 //  PurchasesServiceTests.swift
 //  QonversionUnitTests
 //
-//  Contract: POST v3/users/{uid}/purchases with price/currency/purchased and
-//  app_store_data carrying the transaction ids and the jws proof in `receipt`
-//  (per the gateway CreateUserPurchaseRequest model).
+//  Contract: POST v4/users/{uid}/purchases — platform + store_data (typed per
+//  store, app_store shape carries the transaction ids and the jws proof in
+//  `receipt`), price/currency/purchased_at at the top level.
 //
 
 import XCTest
@@ -36,7 +36,7 @@ final class PurchasesServiceTests: XCTestCase {
         )
     }
 
-    func testSendPostsPurchaseWithAppStoreDataAndJwsProof() async throws {
+    func testSendPostsPurchaseWithV4StoreDataAndJwsProof() async throws {
         let processor = MockRequestProcessor()
         processor.results = [EmptyApiResponse()]
         let service = makeService(processor)
@@ -48,18 +48,32 @@ final class PurchasesServiceTests: XCTestCase {
             return XCTFail("Expected a createPurchase request")
         }
         XCTAssertEqual(userId, "QON_buyer")
-        XCTAssertEqual(endpoint, "v3/users/%@/purchases")
+        XCTAssertEqual(endpoint, "v4/users/%@/purchases")
         XCTAssertEqual(type, .post)
 
+        XCTAssertEqual(body["platform"] as? String, "app_store")
         XCTAssertEqual(body["price"] as? String, "9.99")
         XCTAssertEqual(body["currency"] as? String, "USD")
-        XCTAssertEqual(body["purchased"] as? Int64, 1_700_000_000)
+        XCTAssertEqual(body["purchased_at"] as? String, "2023-11-14T22:13:20Z")
 
-        let appStoreData = body["app_store_data"] as? RequestBodyDict
-        XCTAssertEqual(appStoreData?["transaction_id"] as? String, "2000000123")
-        XCTAssertEqual(appStoreData?["original_transaction_id"] as? String, "1000000123")
-        XCTAssertEqual(appStoreData?["product_id"] as? String, "com.app.pro")
-        XCTAssertEqual(appStoreData?["receipt"] as? String, "signed-jws", "the jws proof travels in app_store_data.receipt")
+        let storeData = body["store_data"] as? RequestBodyDict
+        XCTAssertEqual(storeData?["transaction_id"] as? String, "2000000123")
+        XCTAssertEqual(storeData?["original_transaction_id"] as? String, "1000000123")
+        XCTAssertEqual(storeData?["product_id"] as? String, "com.app.pro")
+        XCTAssertEqual(storeData?["receipt"] as? String, "signed-jws", "the jws proof travels in store_data.receipt")
+    }
+
+    func testSendWithoutPurchaseDateOmitsPurchasedAt() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [EmptyApiResponse()]
+        let service = makeService(processor)
+
+        try await service.send(makeTransaction(purchaseDate: nil), userId: "QON_buyer")
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["purchased_at"], "the backend derives the date from the jws when the client has none")
     }
 
     func testSendWithOptionsIncludesContextKeysAndScreenUid() async throws {
@@ -101,8 +115,8 @@ final class PurchasesServiceTests: XCTestCase {
         guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
             return XCTFail("Expected a createPurchase request")
         }
-        let appStoreData = body["app_store_data"] as? RequestBodyDict
-        XCTAssertEqual(appStoreData?["receipt"] as? String, "")
+        let storeData = body["store_data"] as? RequestBodyDict
+        XCTAssertEqual(storeData?["receipt"] as? String, "")
     }
 
     // MARK: - promotional offer signature

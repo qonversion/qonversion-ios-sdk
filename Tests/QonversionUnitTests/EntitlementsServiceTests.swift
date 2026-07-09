@@ -10,8 +10,12 @@ final class EntitlementsServiceTests: XCTestCase {
 
     func testEntitlementsSendsGetRequestAndDecodesWrapper() async throws {
         let processor = MockRequestProcessor()
-        let json = #"{"data": [{"id": "premium", "active": true, "started": 1700000000, "expires": 1702600000, "source": "appstore", "product": {"product_id": "pro"}}, {"id": "lifetime", "active": true, "started": 1700000000, "expires": 0, "source": "weird_new_source"}]}"#
-        let list = try JSONDecoder().decode(Qonversion.EntitlementsList.self, from: Data(json.utf8))
+        // v4 wire shape: is_active/started_at/expires_at (RFC3339, absent =
+        // lifetime), renew_state inside product.subscription.
+        let json = #"{"data": [{"id": "premium", "is_active": true, "started_at": "2023-11-14T22:13:20Z", "expires_at": "2023-12-15T00:26:40Z", "source": "appstore", "product": {"product_id": "pro", "subscription": {"renew_state": "will_renew"}}}, {"id": "lifetime", "is_active": true, "started_at": "2023-11-14T22:13:20Z", "source": "weird_new_source"}]}"#
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let list = try decoder.decode(Qonversion.EntitlementsList.self, from: Data(json.utf8))
         processor.results = [list]
         let service = EntitlementsService(requestProcessor: processor)
 
@@ -24,11 +28,13 @@ final class EntitlementsServiceTests: XCTestCase {
         XCTAssertEqual(premium?.active, true)
         XCTAssertEqual(premium?.source, .appStore)
         XCTAssertEqual(premium?.productId, "pro")
+        XCTAssertEqual(premium?.renewState, .willRenew)
         XCTAssertEqual(premium?.expirationDate, Date(timeIntervalSince1970: 1_702_600_000))
 
         let lifetime = entitlements.first { $0.id == "lifetime" }
-        XCTAssertNil(lifetime?.expirationDate, "expires == 0 means a lifetime grant")
+        XCTAssertNil(lifetime?.expirationDate, "absent expires_at means a lifetime grant")
         XCTAssertEqual(lifetime?.source, .unknown, "unknown source strings must not fail decoding")
+        XCTAssertEqual(lifetime?.renewState, .unknown)
     }
 
     func testEntitlementsWrapsErrors() async {

@@ -20,6 +20,9 @@ extension Qonversion {
         /// Source of the purchase via which the entitlement was activated.
         public let source: Qonversion.Entitlement.Source
 
+        /// A renew state of the subscription that granted the entitlement.
+        public let renewState: Qonversion.Entitlement.RenewState
+
         /// Time at which the entitlement was started.
         public let startedDate: Date?
 
@@ -37,10 +40,18 @@ extension Qonversion {
             case manual
         }
 
+        public enum RenewState: String, Codable {
+            case unknown
+            case willRenew = "will_renew"
+            case canceled
+            case billingIssue = "billing_issue"
+        }
+
         init(
             id: String,
             active: Bool,
             source: Qonversion.Entitlement.Source,
+            renewState: Qonversion.Entitlement.RenewState = .unknown,
             startedDate: Date? = nil,
             expirationDate: Date? = nil,
             productId: String? = nil
@@ -48,6 +59,7 @@ extension Qonversion {
             self.id = id
             self.active = active
             self.source = source
+            self.renewState = renewState
             self.startedDate = startedDate
             self.expirationDate = expirationDate
             self.productId = productId
@@ -61,15 +73,13 @@ extension Qonversion {
             let rawSource = try container.decodeIfPresent(String.self, forKey: .source)
             source = rawSource.flatMap { Source(rawValue: $0) } ?? .unknown
 
-            let started = try container.decodeIfPresent(Int64.self, forKey: .started)
-            startedDate = started.map { Date(timeIntervalSince1970: TimeInterval($0)) }
-
-            // The backend sends expires == 0 for lifetime grants.
-            let expires = try container.decodeIfPresent(Int64.self, forKey: .expires)
-            expirationDate = (expires ?? 0) > 0 ? Date(timeIntervalSince1970: TimeInterval(expires!)) : nil
+            startedDate = try container.decodeIfPresent(Date.self, forKey: .started)
+            expirationDate = try container.decodeIfPresent(Date.self, forKey: .expires)
 
             let product = try container.decodeIfPresent(EntitlementProduct.self, forKey: .product)
             productId = product?.productId
+            let rawRenewState = product?.subscription?.renewState
+            renewState = rawRenewState.flatMap { RenewState(rawValue: $0) } ?? .unknown
         }
 
         public func encode(to encoder: Encoder) throws {
@@ -77,21 +87,39 @@ extension Qonversion {
             try container.encode(id, forKey: .id)
             try container.encode(active, forKey: .active)
             try container.encode(source.rawValue, forKey: .source)
-            try container.encodeIfPresent(startedDate.map { Int64($0.timeIntervalSince1970) }, forKey: .started)
-            try container.encodeIfPresent(expirationDate.map { Int64($0.timeIntervalSince1970) }, forKey: .expires)
-            try container.encodeIfPresent(productId.map { EntitlementProduct(productId: $0) }, forKey: .product)
+            try container.encodeIfPresent(startedDate, forKey: .started)
+            try container.encodeIfPresent(expirationDate, forKey: .expires)
+            if productId != nil || renewState != .unknown {
+                let subscription = renewState == .unknown ? nil : EntitlementSubscription(renewState: renewState.rawValue)
+                try container.encode(EntitlementProduct(productId: productId ?? "", subscription: subscription), forKey: .product)
+            }
         }
 
         private struct EntitlementProduct: Codable {
             let productId: String
+            var subscription: EntitlementSubscription?
 
             private enum CodingKeys: String, CodingKey {
                 case productId = "product_id"
+                case subscription
+            }
+        }
+
+        private struct EntitlementSubscription: Codable {
+            let renewState: String?
+
+            private enum CodingKeys: String, CodingKey {
+                case renewState = "renew_state"
             }
         }
 
         private enum CodingKeys: String, CodingKey {
-            case id, active, source, started, expires, product
+            case id
+            case active = "is_active"
+            case source
+            case started = "started_at"
+            case expires = "expires_at"
+            case product
         }
     }
 

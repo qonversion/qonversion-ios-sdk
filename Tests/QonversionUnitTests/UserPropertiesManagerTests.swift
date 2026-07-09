@@ -32,7 +32,7 @@ final class UserPropertiesManagerTests: XCTestCase {
         requestProcessor = MockRequestProcessor()
         propertiesStorage = UserPropertiesStorage()
         userManager = MockUserManager()
-        userManager.user = try? JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(#"{"id": "test-user-id", "created": 1700000000, "environment": "sandbox"}"#.utf8))
+        userManager.user = try? JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(#"{"id": "test-user-id", "created_at": "2023-11-14T22:13:20Z", "environment": "sandbox"}"#.utf8))
         manager = UserPropertiesManager(
             requestProcessor: requestProcessor,
             propertiesStorage: propertiesStorage,
@@ -143,7 +143,7 @@ final class UserPropertiesManagerTests: XCTestCase {
             Qonversion.UserProperty(key: "_q_email", value: "test@qonversion.io"),
             Qonversion.UserProperty(key: "custom_key", value: "custom_value"),
         ]
-        requestProcessor.results = [properties]
+        requestProcessor.results = [ListEnvelope<Qonversion.UserProperty>(data: properties)]
 
         let result = try await manager.userProperties()
 
@@ -201,7 +201,7 @@ final class UserPropertiesManagerTests: XCTestCase {
     }
 
     func testUserPropertiesObtainsUserBeforeRequest() async throws {
-        requestProcessor.results = [[Qonversion.UserProperty]()]
+        requestProcessor.results = [ListEnvelope<Qonversion.UserProperty>(data: [])]
 
         _ = try await manager.userProperties()
 
@@ -212,7 +212,7 @@ final class UserPropertiesManagerTests: XCTestCase {
 extension JSONDecoder {
     static var qonversionTest: JSONDecoder {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
+        decoder.dateDecodingStrategy = .iso8601
         return decoder
     }
 }

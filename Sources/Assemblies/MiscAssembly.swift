@@ -63,7 +63,7 @@ final class MiscAssembly {
         let encoder = JSONEncoder()
         // Must mirror jsonDecoder(): the cache round-trip (e.g. User.creationDate)
         // breaks with mismatched date strategies.
-        encoder.dateEncodingStrategy = .secondsSince1970
+        encoder.dateEncodingStrategy = .iso8601
 
         return encoder
     }
@@ -92,7 +92,8 @@ final class MiscAssembly {
     
     func jsonDecoder() -> JSONDecoder {
         let jsonDecoder = JSONDecoder()
-        jsonDecoder.dateDecodingStrategy = .secondsSince1970
+        // v4 API: all dates are RFC3339.
+        jsonDecoder.dateDecodingStrategy = .iso8601
         
         return jsonDecoder
     }

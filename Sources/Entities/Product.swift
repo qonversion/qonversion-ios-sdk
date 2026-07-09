@@ -147,7 +147,9 @@ extension Qonversion {
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             qonversionId = try container.decode(String.self, forKey: .qonversionId)
-            storeId = try container.decode(String.self, forKey: .storeId)
+            // Products without an App Store id (e.g. Stripe/Play-only) decode
+            // with an empty storeId instead of failing the whole list.
+            storeId = try container.decodeIfPresent(String.self, forKey: .storeId) ?? ""
             offeringId = try container.decodeIfPresent(String.self, forKey: .offeringId)
             skProduct = nil
         }
@@ -482,9 +484,9 @@ extension Qonversion {
         }
         
         private enum CodingKeys: String, CodingKey {
-            case qonversionId
-            case storeId
-            case offeringId
+            case qonversionId = "id"
+            case storeId = "apple_product_id"
+            case offeringId = "offering_id"
         }
     }
 }

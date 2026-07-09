@@ -46,9 +46,9 @@ final class UserService: UserServiceInterface {
         // migrated install gets its existing user back.
         let userId: String = internalConfig.userId.isEmpty ? generateUserId() : internalConfig.userId
         do {
-            // The v3 contract requires the field; sandbox/prod separation is
-            // not a client-side concern.
-            let request = Request.createUser(id: userId, body: ["environment": "prod"])
+            // The contract requires the environment field; sandbox/prod
+            // separation is not a client-side concern.
+            let request = Request.createUser(body: ["id": userId, "environment": "prod"])
             let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self)
             
             return user
@@ -73,7 +73,7 @@ final class UserService: UserServiceInterface {
     }
 
     func createIdentity(externalId: String, userId: String) async throws -> String {
-        let request = Request.createIdentity(externalId: externalId, body: ["user_id": userId])
+        let request = Request.createIdentity(body: ["identity_id": externalId, "user_id": userId])
         do {
             let identity: Qonversion.Identity = try await requestProcessor.process(request: request, responseType: Qonversion.Identity.self)
 

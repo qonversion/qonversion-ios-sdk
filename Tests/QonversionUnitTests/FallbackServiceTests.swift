@@ -40,8 +40,8 @@ final class FallbackServiceTests: XCTestCase {
         let json = """
         {
             "products": [
-                {"qonversionId": "pro", "storeId": "com.app.pro"},
-                {"qonversionId": "lite", "storeId": "com.app.lite", "offeringId": "main"}
+                {"id": "pro", "apple_product_id": "com.app.pro"},
+                {"id": "lite", "apple_product_id": "com.app.lite", "offering_id": "main"}
             ],
             "products_permissions": {"pro": ["premium"], "lite": ["basic"]}
         }

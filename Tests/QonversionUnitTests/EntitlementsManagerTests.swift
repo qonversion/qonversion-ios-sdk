@@ -33,7 +33,7 @@ final class EntitlementsManagerTests: XCTestCase {
         config = InternalConfig(userId: uid)
         userManager.user = try? JSONDecoder.qonversionTest.decode(
             Qonversion.User.self,
-            from: Data(#"{"id": "QON_holder", "created": 1700000000, "environment": "production"}"#.utf8))
+            from: Data(#"{"id": "QON_holder", "created_at": "2023-11-14T22:13:20Z", "environment": "prod"}"#.utf8))
         manager = makeManager()
     }
 

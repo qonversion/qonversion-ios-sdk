@@ -16,4 +16,9 @@ struct SendUserPropertiesResult: Decodable {
         let key: String
         let error: String
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case savedProperties = "saved_properties"
+        case propertyErrors = "property_errors"
+    }
 }

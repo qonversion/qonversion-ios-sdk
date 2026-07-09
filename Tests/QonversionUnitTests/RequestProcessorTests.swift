@@ -154,7 +154,7 @@ final class RequestProcessorTests: XCTestCase {
         let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
 
         _ = try? await processor.process(
-            request: .createPurchase(userId: "u", body: ["app_store_data": ["transaction_id": "t1"] as RequestBodyDict]),
+            request: .createPurchase(userId: "u", body: ["store_data": ["transaction_id": "t1"] as RequestBodyDict]),
             responseType: EmptyApiResponse.self
         )
 
@@ -180,12 +180,12 @@ final class RequestProcessorTests: XCTestCase {
         let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
 
         _ = try? await processor.process(
-            request: .createPurchase(userId: "u", body: ["price": "9.99", "app_store_data": ["transaction_id": "t1"] as RequestBodyDict]),
+            request: .createPurchase(userId: "u", body: ["price": "9.99", "store_data": ["transaction_id": "t1"] as RequestBodyDict]),
             responseType: EmptyApiResponse.self
         )
 
         XCTAssertEqual(requestsStorage.storedRequests.count, 1)
-        XCTAssertEqual(requestsStorage.storedRequests.first?.url, "https://api.qonversion.io/v3/users/u/purchases")
+        XCTAssertEqual(requestsStorage.storedRequests.first?.url, "https://api.qonversion.io/v4/users/u/purchases")
         XCTAssertEqual(requestsStorage.storedRequests.first?.method, "POST")
         XCTAssertEqual(requestsStorage.storedRequests.first?.dedupKey, "createPurchase-u-t1",
                        "the transaction id keys the dedup so the same purchase never queues twice")
@@ -194,7 +194,7 @@ final class RequestProcessorTests: XCTestCase {
     func testSamePurchaseFailingTwiceIsQueuedOnce() async {
         networkProvider.error = URLError(.notConnectedToInternet)
         let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
-        let request = Request.createPurchase(userId: "u", body: ["price": "9.99", "app_store_data": ["transaction_id": "t1"] as RequestBodyDict])
+        let request = Request.createPurchase(userId: "u", body: ["price": "9.99", "store_data": ["transaction_id": "t1"] as RequestBodyDict])
 
         _ = try? await processor.process(request: request, responseType: EmptyApiResponse.self)
         _ = try? await processor.process(request: request, responseType: EmptyApiResponse.self)
@@ -235,7 +235,7 @@ final class RequestProcessorTests: XCTestCase {
 
         XCTAssertEqual(result, ProcessorTestPayload(id: "abc"))
         XCTAssertEqual(networkProvider.sentRequests.count, 1)
-        XCTAssertEqual(networkProvider.sentRequests.first?.url?.absoluteString, "https://api.qonversion.io/v3/users/u")
+        XCTAssertEqual(networkProvider.sentRequests.first?.url?.absoluteString, "https://api.qonversion.io/v4/users/u")
         // Headers are added to the outgoing request via HeadersBuilder.
         XCTAssertEqual(headersBuilder.callsCount, 1)
         XCTAssertEqual(networkProvider.sentRequests.first?.value(forHTTPHeaderField: "X-Test-Header"), "test")
@@ -325,7 +325,7 @@ final class RequestProcessorTests: XCTestCase {
         networkProvider.responseData = Data("{\"id\": \"abc\"}".utf8)
 
         do {
-            _ = try await processor.process(request: .getProducts(userId: "u"), responseType: ProcessorTestPayload.self)
+            _ = try await processor.process(request: .getProducts(), responseType: ProcessorTestPayload.self)
             XCTFail("Expected latched critical error")
         } catch {
             let qonversionError = error as? QonversionError

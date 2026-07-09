@@ -46,22 +46,30 @@ final class PurchasesService: PurchasesServiceInterface {
         self.appBundleId = appBundleId
     }
 
+    private static let purchasedAtFormatter = ISO8601DateFormatter()
+
     func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
-        let appStoreData: RequestBodyDict = [
+        // The v4 store_data shape for the app_store platform; the signed
+        // transaction (jws) travels in the receipt slot, the ids next to it
+        // let the backend resolve and dedupe before verification.
+        let storeData: RequestBodyDict = [
             "transaction_id": transaction.id ?? "",
             "original_transaction_id": transaction.originalId ?? "",
             "product_id": transaction.productId,
-            // The signed-transaction jws proof travels in the receipt slot of
-            // the purchase contract; ids next to it let the backend resolve
-            // the transaction through the App Store Server API as well.
             "receipt": transaction.jws ?? "",
         ]
         var body: RequestBodyDict = [
+            "platform": "app_store",
             "price": transaction.price.map { "\($0)" } ?? "",
             "currency": transaction.currency?.identifier ?? "",
-            "purchased": Int64(transaction.purchaseDate?.timeIntervalSince1970 ?? 0),
-            "app_store_data": appStoreData,
+            "store_data": storeData,
         ]
+        if let purchaseDate = transaction.purchaseDate {
+            body["purchased_at"] = Self.purchasedAtFormatter.string(from: purchaseDate)
+        }
+        // context_keys and screen_uid are not part of the documented v4
+        // purchases contract yet — the backend is going to add them; the SDK
+        // sends them from day one.
         if let contextKeys = options?.contextKeys, !contextKeys.isEmpty {
             body["context_keys"] = contextKeys
         }

@@ -20,12 +20,12 @@ final class UserServiceTests: XCTestCase {
 
     private func decodeUserStub(
         id: String = "QON_stub_user",
-        created: TimeInterval = 1_710_000_000,
-        environment: String = "production"
+        createdAt: String = "2024-03-09T16:10:00Z",
+        environment: String = "prod"
     ) throws -> Qonversion.User {
-        let json = #"{"id": "\#(id)", "created": \#(created), "environment": "\#(environment)"}"#
+        let json = #"{"id": "\#(id)", "created_at": "\#(createdAt)", "environment": "\#(environment)"}"#
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
+        decoder.dateDecodingStrategy = .iso8601
         return try decoder.decode(Qonversion.User.self, from: Data(json.utf8))
     }
 
@@ -140,7 +140,7 @@ final class UserServiceTests: XCTestCase {
         // "prod" — sandbox/prod separation is not a client-side concern.
         XCTAssertEqual(
             processor.processedRequests,
-            [Request.createUser(id: idAfterCreate, body: ["environment": "prod"])]
+            [Request.createUser(body: ["id": idAfterCreate, "environment": "prod"])]
         )
 
         XCTAssertEqual(user.id, stubUser.id)
@@ -266,7 +266,7 @@ final class UserServiceTests: XCTestCase {
 
         let resultUid = try await service.createIdentity(externalId: "ext_1", userId: "QON_a")
 
-        XCTAssertEqual(processor.processedRequests, [Request.createIdentity(externalId: "ext_1", body: ["user_id": "QON_a"])])
+        XCTAssertEqual(processor.processedRequests, [Request.createIdentity(body: ["identity_id": "ext_1", "user_id": "QON_a"])])
         XCTAssertEqual(resultUid, "QON_a")
     }
 

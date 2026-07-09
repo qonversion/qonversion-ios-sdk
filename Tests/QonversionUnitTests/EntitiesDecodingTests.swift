@@ -14,7 +14,7 @@ final class EntitiesDecodingTests: XCTestCase {
     /// Mirrors MiscAssembly.jsonDecoder().
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
+        decoder.dateDecodingStrategy = .iso8601
         return decoder
     }()
 
@@ -24,36 +24,44 @@ final class EntitiesDecodingTests: XCTestCase {
 
     // MARK: - User
 
-    func testUserDecodingMapsCreatedToCreationDate() throws {
-        let json = #"{"id": "QON_abc", "created": 1710000000, "environment": "production"}"#
+    func testUserDecodingMapsV4Fields() throws {
+        let json = #"{"id": "QON_abc", "created_at": "2024-03-09T16:00:00Z", "identity_id": "ext_1", "environment": "prod"}"#
 
         let user = try decode(Qonversion.User.self, json)
 
         XCTAssertEqual(user.id, "QON_abc")
-        XCTAssertEqual(user.creationDate, Date(timeIntervalSince1970: 1_710_000_000))
+        XCTAssertEqual(user.creationDate, Date(timeIntervalSince1970: 1_709_999_400 + 600))
+        XCTAssertEqual(user.identityId, "ext_1")
         XCTAssertEqual(user.environment, .production)
     }
 
     func testUserDecodingSandboxEnvironment() throws {
-        let json = #"{"id": "QON_abc", "created": 1700000000, "environment": "sandbox"}"#
+        let json = #"{"id": "QON_abc", "created_at": "2023-11-14T22:13:20Z", "environment": "sandbox"}"#
 
         let user = try decode(Qonversion.User.self, json)
 
         XCTAssertEqual(user.environment, .sandbox)
     }
 
-    func testUserDecodingFailsWhenEnvironmentIsMissing() {
-        // Fixates current behavior: all User fields are required — the custom
-        // init(from:) uses decode, not decodeIfPresent, for every field.
-        let json = #"{"id": "QON_abc", "created": 1700000000}"#
+    func testUserDecodingToleratesMissingOptionalFields() throws {
+        // Only the id is required; created_at/identity_id/environment may be
+        // absent (environment defaults to production).
+        let json = #"{"id": "QON_abc"}"#
 
-        XCTAssertThrowsError(try decode(Qonversion.User.self, json))
+        let user = try decode(Qonversion.User.self, json)
+
+        XCTAssertEqual(user.id, "QON_abc")
+        XCTAssertNil(user.creationDate)
+        XCTAssertNil(user.identityId)
+        XCTAssertEqual(user.environment, .production)
     }
 
-    func testUserDecodingFailsForUnknownEnvironment() {
-        let json = #"{"id": "QON_abc", "created": 1700000000, "environment": "staging"}"#
+    func testUserDecodingToleratesUnknownEnvironment() throws {
+        let json = #"{"id": "QON_abc", "created_at": "2023-11-14T22:13:20Z", "environment": "staging"}"#
 
-        XCTAssertThrowsError(try decode(Qonversion.User.self, json))
+        let user = try decode(Qonversion.User.self, json)
+
+        XCTAssertEqual(user.environment, .production)
     }
 
     // MARK: - RemoteConfig
@@ -314,11 +322,10 @@ final class EntitiesDecodingTests: XCTestCase {
 
     // MARK: - Product
 
-    func testProductDecodingUsesCamelCaseIdentityKeysOnly() throws {
-        // Fixates current behavior: Product CodingKeys are camelCase Swift names
-        // (no snake_case mapping) and only the identity fields participate;
-        // any extra JSON fields are ignored and skProduct stays nil.
-        let json = #"{"qonversionId": "main", "storeId": "com.app.main", "offeringId": "offering_1", "displayName": "ignored", "price": 9.99}"#
+    func testProductDecodingUsesV4Keys() throws {
+        // v4 wire keys: id / apple_product_id / offering_id; extra fields are
+        // ignored and skProduct stays nil.
+        let json = #"{"id": "main", "apple_product_id": "com.app.main", "offering_id": "offering_1", "type": "subscription", "created_at": "2024-01-01T00:00:00Z"}"#
 
         let product = try decode(Qonversion.Product.self, json)
 
@@ -333,7 +340,7 @@ final class EntitiesDecodingTests: XCTestCase {
 
     func testProductDecodesWithNullOfferingId() throws {
         // A product outside any offering is valid: offeringId is optional.
-        let json = #"{"qonversionId": "main", "storeId": "com.app.main", "offeringId": null}"#
+        let json = #"{"id": "main", "apple_product_id": "com.app.main", "offering_id": null}"#
 
         let product = try decode(Qonversion.Product.self, json)
 
@@ -341,7 +348,7 @@ final class EntitiesDecodingTests: XCTestCase {
     }
 
     func testProductDecodesWithMissingOfferingId() throws {
-        let json = #"{"qonversionId": "main", "storeId": "com.app.main"}"#
+        let json = #"{"id": "main", "apple_product_id": "com.app.main"}"#
 
         let product = try decode(Qonversion.Product.self, json)
 

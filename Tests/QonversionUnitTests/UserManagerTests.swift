@@ -53,9 +53,9 @@ final class UserManagerTests: XCTestCase {
     }
 
     private func makeUser(id: String, environment: String = "sandbox") throws -> Qonversion.User {
-        let json = #"{"id": "\#(id)", "created": 1700000000, "environment": "\#(environment)"}"#
+        let json = #"{"id": "\#(id)", "created_at": "2023-11-14T22:13:20Z", "environment": "\#(environment)"}"#
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
+        decoder.dateDecodingStrategy = .iso8601
         return try decoder.decode(Qonversion.User.self, from: Data(json.utf8))
     }
 

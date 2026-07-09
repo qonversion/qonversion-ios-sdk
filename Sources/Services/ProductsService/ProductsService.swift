@@ -18,22 +18,30 @@ final class ProductsService: ProductsServiceInterface {
     }
     
     func productPermissions() async throws -> [String: [String]] {
-        let request = Request.getProductPermissions()
+        // The dashboard defines entitlements with their unlocking products;
+        // the SDK needs the inverse: product -> entitlements it grants.
+        let request = Request.entitlementDefinitions()
         do {
-            let response: ProductsPermissions = try await requestProcessor.process(request: request, responseType: ProductsPermissions.self)
+            let list: ListEnvelope<EntitlementDefinition> = try await requestProcessor.process(request: request, responseType: ListEnvelope<EntitlementDefinition>.self)
 
-            return response.productsPermissions
+            var mapping: [String: [String]] = [:]
+            for definition in list.data {
+                for productId in definition.productIds {
+                    mapping[productId, default: []].append(definition.id)
+                }
+            }
+            return mapping
         } catch {
             throw QonversionError(type: .productPermissionsLoadingFailed, message: nil, error: error)
         }
     }
 
     func products() async throws -> [Qonversion.Product] {
-        let request = Request.getProducts(userId: internalConfig.userId)
+        let request = Request.getProducts()
         do {
-            let products: [Qonversion.Product] = try await requestProcessor.process(request: request, responseType: [Qonversion.Product].self)
-            
-            return products
+            let list: ListEnvelope<Qonversion.Product> = try await requestProcessor.process(request: request, responseType: ListEnvelope<Qonversion.Product>.self)
+
+            return list.data
         } catch {
             throw QonversionError(type: .productsLoadingFailed, message: nil, error: error)
         }
