@@ -7,7 +7,8 @@
 
 import Foundation
 
-final class LocalStorage: LocalStorageInterface {
+final // @unchecked: UserDefaults is thread-safe; the coders are not mutated.
+class LocalStorage: LocalStorageInterface, @unchecked Sendable {
 
     private let userDefaults: UserDefaults
     private let encoder: JSONEncoder

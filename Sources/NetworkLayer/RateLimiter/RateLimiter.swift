@@ -7,15 +7,23 @@
 //
 import Foundation
 
-final class RateLimiter: RateLimiterInterface {
+// @unchecked: the requests map is lock-guarded.
+final class RateLimiter: RateLimiterInterface, @unchecked Sendable {
     private var maxRequestsPerSecond: UInt
     private var requests: [Int: [TimeInterval]] = [:]
+
+    // Concurrent requests validate simultaneously; the check-then-save below
+    // is a read-modify-write over the shared map.
+    private let lock = NSLock()
 
     init(maxRequestsPerSecond: UInt) {
         self.maxRequestsPerSecond = maxRequestsPerSecond
     }
 
     func validateRateLimit(for request: Request) -> QonversionError? {
+        lock.lock()
+        defer { lock.unlock() }
+
         let hash: Int = request.hashValue
         let isLimitExceeded: Bool = isRateLimitExceeded(hash: hash)
         if isLimitExceeded {

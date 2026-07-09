@@ -9,6 +9,23 @@
 import XCTest
 @testable import Qonversion
 
+final class RateLimiterConcurrencyTests: XCTestCase {
+
+    func testConcurrentValidationsDoNotCrashAndCountConsistently() async {
+        let limiter = RateLimiter(maxRequestsPerSecond: 1000)
+
+        await withTaskGroup(of: Void.self) { group in
+            for index in 0..<300 {
+                group.addTask {
+                    _ = limiter.validateRateLimit(for: .getUser(id: "user_\(index % 3)"))
+                }
+            }
+        }
+
+        XCTAssertNil(limiter.validateRateLimit(for: .getUser(id: "fresh")))
+    }
+}
+
 final class RateLimiterTests: XCTestCase {
 
     func testUnderLimitReturnsNil() {

@@ -21,6 +21,7 @@ final class PurchasesManagerTests: XCTestCase {
     private var userManager: MockUserManager!
     private var entitlementsManager: MockEntitlementsManager!
     private var config: InternalConfig!
+    private var localStorage: MockLocalStorage!
     private var manager: PurchasesManager!
 
     private let uid = "QON_buyer"
@@ -32,6 +33,7 @@ final class PurchasesManagerTests: XCTestCase {
         userManager = MockUserManager()
         entitlementsManager = MockEntitlementsManager()
         config = InternalConfig(userId: uid)
+        localStorage = MockLocalStorage()
         userManager.user = try? JSONDecoder.qonversionTest.decode(
             Qonversion.User.self,
             from: Data(#"{"id": "QON_buyer", "created_at": "2023-11-14T22:13:20Z", "environment": "prod"}"#.utf8))
@@ -47,6 +49,7 @@ final class PurchasesManagerTests: XCTestCase {
             entitlementsManager: entitlementsManager,
             userIdProvider: config,
             launchModeProvider: config,
+            purchaseAssociationsStorage: PurchaseAssociationsStorage(localStorage: localStorage),
             logger: LoggerWrapper()
         )
     }
@@ -522,6 +525,65 @@ final class PurchasesManagerTests: XCTestCase {
         await manager.handle(transactions: [makeTransaction(id: "t1")])
 
         XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
+    // MARK: - persisted purchase associations (contextKeys / screenUid)
+
+    func testSweepAttachesPersistedAssociationsOfTheOriginalPurchase() async {
+        // The purchase was made through the SDK with associations, the report
+        // failed, the app restarted: the sweep must re-report WITH them.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        service.error = QonversionError(type: .internal)
+        _ = try? await manager.purchase(makeProduct(), options: Qonversion.PurchaseOptions(contextKeys: ["main"], screenUid: "scr_1"))
+
+        // "Next launch": a fresh manager over the same storage.
+        service.error = nil
+        let relaunched = makeManager(launchMode: .subscriptionManagement)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+        await relaunched.processUnfinishedTransactions()
+
+        let reported = service.sentTransactions.last
+        XCTAssertEqual(reported?.transaction.id, "t1")
+        XCTAssertEqual(reported?.options?.contextKeys, ["main"])
+        XCTAssertEqual(reported?.options?.screenUid, "scr_1")
+    }
+
+    func testSuccessfulPurchaseReportClearsPersistedAssociations() async throws {
+        facade.purchaseResult = makeTransaction(id: "t1")
+        _ = try await manager.purchase(makeProduct(), options: Qonversion.PurchaseOptions(contextKeys: ["main"]))
+
+        // A later out-of-band report of the same product must not inherit them.
+        manager.transactionUpdated(makeTransaction(id: "t2"))
+        await waitUntil { self.service.sentTransactions.count >= 2 }
+
+        XCTAssertNil(service.sentTransactions.last?.options ?? nil)
+    }
+
+    func testFailedStorePurchaseClearsPersistedAssociations() async {
+        facade.purchaseError = QonversionError(type: .purchaseCancelled)
+        _ = try? await manager.purchase(makeProduct(), options: Qonversion.PurchaseOptions(contextKeys: ["main"]))
+
+        // The next unrelated transaction of this product must not pick up
+        // associations of a purchase that never happened.
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+        let subMgmt = makeManager(launchMode: .subscriptionManagement)
+        await subMgmt.processUnfinishedTransactions()
+
+        XCTAssertNil(service.sentTransactions.last?.options ?? nil)
+    }
+
+    func testObservedUpdateAttachesPersistedAssociations() async {
+        // Ask to Buy: the purchase started through the SDK, the approved
+        // transaction arrives via the listener later.
+        facade.purchaseError = QonversionError(type: .purchasePending)
+        _ = try? await manager.purchase(makeProduct(), options: Qonversion.PurchaseOptions(contextKeys: ["main"], screenUid: "scr_1"))
+
+        manager.transactionUpdated(makeTransaction(id: "t1"))
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        XCTAssertEqual(service.sentTransactions.last?.options?.contextKeys, ["main"])
+        XCTAssertEqual(service.sentTransactions.last?.options?.screenUid, "scr_1")
     }
 
     // MARK: - unfinished transactions sweep at launch

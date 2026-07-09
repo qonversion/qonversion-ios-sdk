@@ -18,7 +18,8 @@ fileprivate enum Constants: String {
     case legacyUserIdKey = "com.qonversion.keys.storedUserID"
 }
 
-final class UserService: UserServiceInterface {
+// @unchecked: stateless — every dependency is thread-safe on its own.
+final class UserService: UserServiceInterface, @unchecked Sendable {
     
     private let requestProcessor: RequestProcessorInterface
     private let localStorage: LocalStorageInterface
@@ -102,7 +103,7 @@ extension UserService {
     private func prepareUserId() {
         // An install updated from the previous SDK generation keeps its user:
         // the legacy uid moves to the new storage and the legacy key is cleaned.
-        if let legacyUserId = localStorage.string(forKey: Constants.legacyUserIdKey.rawValue), !legacyUserId.isEmpty {
+        if let legacyUserId: String = localStorage.string(forKey: Constants.legacyUserIdKey.rawValue), !legacyUserId.isEmpty {
             localStorage.set(string: legacyUserId, forKey: UserServiceStorageKeys.userIdKey.rawValue)
             localStorage.removeObject(forKey: Constants.legacyUserIdKey.rawValue)
             internalConfig.userId = legacyUserId

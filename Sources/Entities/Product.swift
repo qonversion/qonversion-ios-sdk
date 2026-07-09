@@ -10,7 +10,9 @@ import StoreKit
 
 extension Qonversion {
     
-    public struct Product: Decodable {
+    // @unchecked: the StoreKit products inside are reference types managed by
+    // StoreKit itself.
+    public struct Product: Decodable, @unchecked Sendable {
         
         /// The unique Qonversion product identifier.
         public let qonversionId: String

@@ -44,7 +44,11 @@ final class MiscAssembly {
     }
     
     func localStorage() -> LocalStorage {
-        return LocalStorage(userDefaults: userDefaults, encoder: encoder(), decoder: jsonDecoder())
+        let encoder: JSONEncoder = encoder()
+        let decoder: JSONDecoder = jsonDecoder()
+        let localStorage = LocalStorage(userDefaults: userDefaults, encoder: encoder, decoder: decoder)
+
+        return localStorage
     }
     
     func userIdProvider() -> UserIdProvider {
@@ -69,7 +73,10 @@ final class MiscAssembly {
     }
     
     func requestsStorage() -> RequestsStorageInterface {
-        let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue)
+        // Scoped by apiKey: the replayed requests are stamped with the CURRENT
+        // Authorization, so another project's queue must never leak into it.
+        let storeKey: String = InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue + "." + apiKey
+        let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: storeKey)
 
         return requestsStorage
     }
@@ -99,7 +106,7 @@ final class MiscAssembly {
     }
     
     func responseDecoder() -> ResponseDecoderInterface {
-        let jsonDecoder = jsonDecoder()
+        let jsonDecoder: JSONDecoder = jsonDecoder()
         
         let responseDecoder = ResponseDecoder(decoder: jsonDecoder)
         
@@ -121,7 +128,7 @@ final class MiscAssembly {
     }
     
     func headersBuilder() -> HeadersBuilderInterface {
-        let deviceInfoCollector = servicesAssembly.deviceInfoCollector()
+        let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
         let headersBuilder = HeadersBuilder(apiKey: apiKey, sdkVersion: SDKLevelConstants.version.rawValue, deviceInfoCollector: deviceInfoCollector, userDefaults: userDefaults)
         
         return headersBuilder

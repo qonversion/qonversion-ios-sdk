@@ -9,9 +9,9 @@ import Foundation
 
 extension Qonversion {
     
-    public struct User: Codable {
+    public struct User: Codable, Sendable {
         
-        enum Environment: String, Codable {
+        enum Environment: String, Codable, Sendable {
             case production = "prod"
             case sandbox
         }

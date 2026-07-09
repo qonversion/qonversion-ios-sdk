@@ -50,8 +50,8 @@ final class FallbackService: FallbackServiceInterface {
     }
 
     func obtainFallbackData() -> FallbackData? {
-        guard let url = bundle.url(forResource: Constants.fileName.rawValue, withExtension: Constants.fileExtension.rawValue),
-              let data = try? Data(contentsOf: url) else {
+        guard let url: URL = bundle.url(forResource: Constants.fileName.rawValue, withExtension: Constants.fileExtension.rawValue),
+              let data: Data = try? Data(contentsOf: url) else {
             return nil
         }
 

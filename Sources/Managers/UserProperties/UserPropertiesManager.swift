@@ -17,7 +17,8 @@ fileprivate enum Constants: Int {
     case sendPropertiesMaxRetries = 10
 }
 
-final class UserPropertiesManager : UserPropertiesManagerInterface {
+// @unchecked: mutable state is guarded by stateLock; deps are thread-safe.
+final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked Sendable {
     
     private let requestProcessor: RequestProcessorInterface
     private let propertiesStorage: PropertiesStorage
@@ -26,6 +27,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     private let userManager: UserManagerInterface
     private let logger: LoggerWrapper
 
+    // Mutated from the caller's thread (setProperty) and from the scheduled
+    // sending task concurrently.
+    private let stateLock = NSLock()
     private var sendingTask: Task<Void, Error>? = nil
     private var sendPropertiesRetryDelay: Int = Constants.sendPropertiesMinDelaySec.rawValue
     private var sendPropertiesRetryCount: Int = 0
@@ -90,24 +94,22 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
 
         let userProperty = Qonversion.UserProperty(key: key, value: value)
         propertiesStorage.save(userProperty)
-        
-        guard sendingTask == nil else { return }
 
-        scheduleSendingProperties(withDelay: sendPropertiesRetryDelay)
+        stateLock.lock()
+        let alreadyScheduled: Bool = sendingTask != nil
+        let delay: Int = sendPropertiesRetryDelay
+        stateLock.unlock()
+        guard !alreadyScheduled else { return }
+
+        scheduleSendingProperties(withDelay: delay)
     }
 
     func sendProperties() async throws {
         // Single-flight: a batch already in flight covers the current storage
         // snapshot; properties added meanwhile are picked up by the trailing
         // reschedule below.
-        guard !isSendingInProgress else { return }
-        isSendingInProgress = true
-        defer { isSendingInProgress = false }
-
-        if (sendingTask != nil) {
-            sendingTask?.cancel()
-            sendingTask = nil
-        }
+        guard beginSendingIfIdle() else { return }
+        defer { endSending() }
 
         let properties: [Qonversion.UserProperty] = propertiesStorage.all()
 
@@ -133,9 +135,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
                 logger.error("Failed to save property " + propertyError.key + ": " + propertyError.error)
             })
             
-            sendPropertiesRetryCount = 0
-            sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
-            
+            resetRetryState()
+
             propertiesStorage.clear(properties: properties)
 
             // Properties set while the batch was in flight.
@@ -170,11 +171,14 @@ extension UserPropertiesManager {
     }
     
     private func scheduleSendingProperties(withDelay delaySec: Int) {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+
         // Cancel for the case, when the previous task was scheduled via "setProperty" call, but then retry for another request occurred.
         sendingTask?.cancel()
 
         sendingTask = Task<Void, Error>.delayed(byTimeInterval: TimeInterval(delaySec)) {
-            self.sendingTask = nil
+            self.clearScheduledTask()
             do {
                 try await self.sendProperties()
             } catch {
@@ -185,15 +189,50 @@ extension UserPropertiesManager {
         }
     }
 
+    private func clearScheduledTask() {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        sendingTask = nil
+    }
+
+    /// True when no send was in progress; marks the flow busy and cancels a
+    /// pending schedule.
+    private func beginSendingIfIdle() -> Bool {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        guard !isSendingInProgress else { return false }
+        isSendingInProgress = true
+        sendingTask?.cancel()
+        sendingTask = nil
+        return true
+    }
+
+    private func endSending() {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        isSendingInProgress = false
+    }
+
+    private func resetRetryState() {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        sendPropertiesRetryCount = 0
+        sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
+    }
+
     private func retrySendingProperties() {
+        stateLock.lock()
         sendPropertiesRetryCount += 1
         guard sendPropertiesRetryCount <= Constants.sendPropertiesMaxRetries.rawValue else {
-            logger.error("Giving up sending user properties after \(Constants.sendPropertiesMaxRetries.rawValue) attempts; kept for the next trigger.")
             sendPropertiesRetryCount = 0
             sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
+            stateLock.unlock()
+            logger.error("Giving up sending user properties after \(Constants.sendPropertiesMaxRetries.rawValue) attempts; kept for the next trigger.")
             return
         }
         sendPropertiesRetryDelay = delayCalculator.countDelay(minDelay: Constants.sendPropertiesMinDelaySec.rawValue, retriesCount: sendPropertiesRetryCount)
-        scheduleSendingProperties(withDelay: sendPropertiesRetryDelay)
+        let delay: Int = sendPropertiesRetryDelay
+        stateLock.unlock()
+        scheduleSendingProperties(withDelay: delay)
     }
 }

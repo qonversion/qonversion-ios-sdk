@@ -8,7 +8,8 @@
 import Foundation
 import StoreKit
 
-class StoreKitFacade: StoreKitFacadeInterface {
+// @unchecked: the product caches are lock-guarded; the delegate is weak.
+class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     
     let storeKitOldWrapper: StoreKitOldWrapperInterface?
     let storeKitWrapper: StoreKitWrapperInterface?
@@ -16,13 +17,49 @@ class StoreKitFacade: StoreKitFacadeInterface {
     // Weak: the delegate (purchases manager) holds the facade itself.
     weak var delegate: StoreKitFacadeDelegate?
     
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    var loadedProducts: [String: StoreKit.Product]? { _loadedProducts as? [String: StoreKit.Product] }
-    
-    var _loadedProducts: [String: Any] = [:]
-    
-    var loadedOldProducts: [String: SKProduct] = [:]
+    // Written by concurrent products(for:) calls and read by purchase flows.
+    private let productsLock = NSLock()
 
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    var loadedProducts: [String: StoreKit.Product]? {
+        productsLock.lock()
+        defer { productsLock.unlock() }
+        return __loadedProducts as? [String: StoreKit.Product]
+    }
+
+    private var __loadedProducts: [String: Any] = [:]
+
+    var _loadedProducts: [String: Any] {
+        get {
+            productsLock.lock()
+            defer { productsLock.unlock() }
+            return __loadedProducts
+        }
+        set {
+            productsLock.lock()
+            defer { productsLock.unlock() }
+            __loadedProducts = newValue
+        }
+    }
+
+    private var _loadedOldProducts: [String: SKProduct] = [:]
+
+    var loadedOldProducts: [String: SKProduct] {
+        get {
+            productsLock.lock()
+            defer { productsLock.unlock() }
+            return _loadedOldProducts
+        }
+        set {
+            productsLock.lock()
+            defer { productsLock.unlock() }
+            _loadedOldProducts = newValue
+        }
+    }
+
+    // Started once from initialize, stopped from tests — still guarded so a
+    // concurrent start cannot double-subscribe.
+    private let observationLock = NSLock()
     private var transactionUpdatesTask: Task<Void, Never>?
     
     init(storeKitOldWrapper: StoreKitOldWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
@@ -46,7 +83,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         if loadedProducts?[storeId] == nil {
             _ = try await products(for: [storeId])
         }
-        guard let product = loadedProducts?[storeId] else {
+        guard let product: StoreKit.Product = loadedProducts?[storeId] else {
             throw QonversionError(type: .storeProductsLoadingFailed)
         }
 
@@ -54,14 +91,14 @@ class StoreKitFacade: StoreKitFacadeInterface {
     }
 
     func currentEntitlements() async -> [Qonversion.Transaction] {
-        guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper = storeKitWrapper else { return [] }
+        guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper: StoreKitWrapperInterface = storeKitWrapper else { return [] }
 
         return await storeKitWrapper.currentEntitlements()
     }
     
     func restore() async throws -> [Qonversion.Transaction] {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
-            guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+            guard let storeKitWrapper: StoreKitWrapperInterface = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
 
             return try await storeKitWrapper.restore()
         } else {
@@ -71,11 +108,11 @@ class StoreKitFacade: StoreKitFacadeInterface {
     
     func historicalData() async throws -> [Qonversion.Transaction] {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
-            guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+            guard let storeKitWrapper: StoreKitWrapperInterface = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             return await storeKitWrapper.fetchAll()
         } else {
-            guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+            guard let storeKitWrapper: StoreKitOldWrapperInterface = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             return try await withCheckedThrowingContinuation { continuation in
                 storeKitWrapper.restore { [weak self] transactions, error in
@@ -112,7 +149,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
     #if os(iOS) || os(visionOS)
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet() {
-        guard let storeKitWrapper = storeKitOldWrapper else { return }
+        guard let storeKitWrapper: StoreKitOldWrapperInterface = storeKitOldWrapper else { return }
 
         storeKitWrapper.presentCodeRedemptionSheet()
     }
@@ -121,7 +158,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
     #if os(iOS) || os(visionOS)
     @available(iOS 16.0, *)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
-        guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+        guard let storeKitWrapper: StoreKitWrapperInterface = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
 
         try await storeKitWrapper.presentOfferCodeRedeemSheet(in: scene)
     }
@@ -131,7 +168,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
         // Legacy transactions carry an SKPaymentTransaction handle; everything
         // else is routed to the StoreKit 2 wrapper, which resolves the
         // underlying transaction itself.
-        if let skPaymentTransaction = transaction.skPaymentTransaction {
+        if let skPaymentTransaction: SKPaymentTransaction = transaction.skPaymentTransaction {
             storeKitOldWrapper?.finish(transaction: skPaymentTransaction)
             return
         }
@@ -143,7 +180,19 @@ class StoreKitFacade: StoreKitFacadeInterface {
         await storeKitWrapper.finish(transaction)
     }
 
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    private func storeLoadedProducts(_ products: [StoreKit.Product]) {
+        productsLock.lock()
+        defer { productsLock.unlock() }
+        products.forEach {
+            __loadedProducts[$0.id] = $0
+        }
+    }
+
     func startObservingTransactionUpdates() {
+        observationLock.lock()
+        defer { observationLock.unlock() }
+
         guard transactionUpdatesTask == nil else { return }
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *),
               let storeKitWrapper else { return }
@@ -167,18 +216,19 @@ class StoreKitFacade: StoreKitFacadeInterface {
     }
 
     func stopObservingTransactionUpdates() {
+        observationLock.lock()
+        defer { observationLock.unlock() }
+
         transactionUpdatesTask?.cancel()
         transactionUpdatesTask = nil
     }
     
     func products(for ids: [String]) async throws -> [StoreProductWrapper] {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) {
-            guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+            guard let storeKitWrapper: StoreKitWrapperInterface = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
-            let products = try await storeKitWrapper.products(for: ids)
-            products.forEach {
-                _loadedProducts[$0.id] = $0
-            }
+            let products: [StoreKit.Product] = try await storeKitWrapper.products(for: ids)
+            storeLoadedProducts(products)
             
             return products.map { StoreProductWrapper(_product: $0, oldProduct: nil) }
         } else {
@@ -189,7 +239,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
     /// StoreKit 1 products path, extracted so the continuation behavior is
     /// unit-testable on hosts where the StoreKit 2 branch is always available.
     func skOneProducts(for ids: [String]) async throws -> [StoreProductWrapper] {
-        guard let storeKitWrapper = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+        guard let storeKitWrapper: StoreKitOldWrapperInterface = storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
 
         return try await withCheckedThrowingContinuation { continuation in
             storeKitWrapper.products(for: ids, completion: { [weak self] response, error in
@@ -207,9 +257,11 @@ class StoreKitFacade: StoreKitFacadeInterface {
                         return continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed))
                     }
 
+                    self.productsLock.lock()
                     response.products.forEach {
-                        self.loadedOldProducts[$0.productIdentifier] = $0
+                        self._loadedOldProducts[$0.productIdentifier] = $0
                     }
+                    self.productsLock.unlock()
 
                     let products: [StoreProductWrapper] = response.products.map { StoreProductWrapper(_product: nil, oldProduct: $0) }
                     continuation.resume(returning: products)

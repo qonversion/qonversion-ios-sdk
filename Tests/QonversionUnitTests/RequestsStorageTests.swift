@@ -107,6 +107,34 @@ final class RequestsStorageTests: XCTestCase {
         XCTAssertEqual(storage.fetchRequests(), [])
     }
 
+    func testQueuesOfDifferentApiKeysAreIsolated() {
+        // Switching projects (staging <-> prod key) must not replay the other
+        // project's queue with the new Authorization.
+        let defaults = TestDefaults.makeIsolated()
+        let first = MiscAssembly(apiKey: "key_A", userDefaults: defaults, internalConfig: InternalConfig(userId: "")).requestsStorage()
+        let second = MiscAssembly(apiKey: "key_B", userDefaults: defaults, internalConfig: InternalConfig(userId: "")).requestsStorage()
+
+        first.append(StoredRequest(url: "https://a", method: "POST", body: nil, dedupKey: nil))
+
+        XCTAssertEqual(first.fetchRequests().count, 1)
+        XCTAssertTrue(second.fetchRequests().isEmpty)
+    }
+
+    func testConcurrentAppendsDoNotLoseRequests() async {
+        let storage = makeStorage(TestDefaults.makeIsolated())
+
+        await withTaskGroup(of: Void.self) { group in
+            for index in 0..<100 {
+                group.addTask {
+                    storage.append(StoredRequest(url: "https://request-\(index)", method: "POST", body: nil, dedupKey: "k\(index)"))
+                }
+            }
+        }
+
+        XCTAssertEqual(storage.fetchRequests().count, RequestsStorage.maxStoredRequests,
+                       "the read-modify-write must be atomic: no lost updates, only the cap trims")
+    }
+
     func testFetchRequestsIgnoresForeignValueUnderTheKey() {
         let defaults = TestDefaults.makeIsolated()
         defaults.set(["not", "stored", "requests"], forKey: storeKey)

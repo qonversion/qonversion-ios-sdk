@@ -5,14 +5,15 @@
 //  Created by Suren Sarkisyan on 07.02.2024.
 //
 
-struct QonversionError: Error {
+// @unchecked: additionalInfo carries plist-like values only.
+struct QonversionError: Error, @unchecked Sendable {
     public let type: QonversionErrorType
     public let message: String
     public let error: Error?
     public let additionalInfo: [String: Any]?
 
     init(type: QonversionErrorType, message: String? = nil, error: Error? = nil, additionalInfo: [String : Any]? = nil) {
-        var errorMessage = message ?? type.message()
+        var errorMessage: String = message ?? type.message()
         if let qonversionError = error as? QonversionError {
             errorMessage += "\n" + qonversionError.message
         } else if let error = error {

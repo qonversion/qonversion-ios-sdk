@@ -29,16 +29,16 @@ class HeadersBuilder: HeadersBuilderInterface {
     }
     
     func addHeaders(to request: inout URLRequest) {
-        let device = deviceInfoCollector.deviceInfo()
+        let device: Device = deviceInfoCollector.deviceInfo()
         
         request.addValue("application/json; charset=utf-8", forHTTPHeaderField: Header.contentType.rawValue)
         request.addValue("Bearer " + apiKey, forHTTPHeaderField: Header.authorization.rawValue)
         request.addValue(device.appVersion ?? "", forHTTPHeaderField: Header.appVersion.rawValue)
         request.addValue(device.country ?? "", forHTTPHeaderField: Header.country.rawValue)
         request.addValue(device.language ?? "", forHTTPHeaderField: Header.userLocale.rawValue)
-        let source = userDefaults.string(forKey: SourceOverrideKeys.source.rawValue) ?? "iOS"
+        let source: String = userDefaults.string(forKey: SourceOverrideKeys.source.rawValue) ?? "iOS"
         request.addValue(source, forHTTPHeaderField: Header.source.rawValue)
-        let sourceVersion = userDefaults.string(forKey: SourceOverrideKeys.sourceVersion.rawValue) ?? sdkVersion
+        let sourceVersion: String = userDefaults.string(forKey: SourceOverrideKeys.sourceVersion.rawValue) ?? sdkVersion
         request.addValue(sourceVersion, forHTTPHeaderField: Header.sourceVersion.rawValue)
         request.addValue(device.osName, forHTTPHeaderField: Header.platform.rawValue)
         request.addValue(device.osVersion, forHTTPHeaderField: Header.platformVersion.rawValue)

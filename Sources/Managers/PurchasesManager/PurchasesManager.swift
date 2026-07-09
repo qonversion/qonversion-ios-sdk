@@ -6,7 +6,8 @@
 import Foundation
 import StoreKit
 
-final class PurchasesManager: PurchasesManagerInterface {
+// @unchecked: mutable state lives in the actor gate and lock-guarded storages.
+final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     private let purchasesService: PurchasesServiceInterface
     private let storeKitFacade: StoreKitFacadeInterface
@@ -14,6 +15,7 @@ final class PurchasesManager: PurchasesManagerInterface {
     private let entitlementsManager: EntitlementsManagerInterface
     private let userIdProvider: UserIdProvider
     private let launchModeProvider: LaunchModeProvider
+    private let purchaseAssociationsStorage: PurchaseAssociationsStorage
     private let logger: LoggerWrapper
 
     private let reportsGate = TransactionReportsGate()
@@ -41,6 +43,7 @@ final class PurchasesManager: PurchasesManagerInterface {
         entitlementsManager: EntitlementsManagerInterface,
         userIdProvider: UserIdProvider,
         launchModeProvider: LaunchModeProvider,
+        purchaseAssociationsStorage: PurchaseAssociationsStorage,
         logger: LoggerWrapper
     ) {
         self.purchasesService = purchasesService
@@ -49,31 +52,57 @@ final class PurchasesManager: PurchasesManagerInterface {
         self.entitlementsManager = entitlementsManager
         self.userIdProvider = userIdProvider
         self.launchModeProvider = launchModeProvider
+        self.purchaseAssociationsStorage = purchaseAssociationsStorage
         self.logger = logger
     }
 
     @discardableResult
     func purchase(_ product: Qonversion.Product, options: Qonversion.PurchaseOptions?) async throws -> Qonversion.PurchaseResult {
-        // The backend user must exist before the purchase is reported.
+        // The backend user must exist before the purchase is reported. The
+        // uid is captured HERE: a logout during the payment sheet must not
+        // reroute the report to the next anonymous user.
         _ = try await userManager.obtainUser()
+        let userId: String = userIdProvider.getUserId()
 
-        let transaction = try await storeKitFacade.purchase(storeId: product.storeId, options: options ?? Qonversion.PurchaseOptions())
+        // Persisted for the whole purchase lifecycle: a report happening
+        // after a relaunch (unfinished sweep, Ask to Buy approval) must still
+        // carry the paywall context of THIS call.
+        if options?.contextKeys?.isEmpty == false || options?.screenUid != nil {
+            purchaseAssociationsStorage.store(
+                PurchaseAssociations(contextKeys: options?.contextKeys, screenUid: options?.screenUid),
+                for: product.storeId
+            )
+        }
+
+        let transaction: Qonversion.Transaction
+        do {
+            transaction = try await storeKitFacade.purchase(storeId: product.storeId, options: options ?? Qonversion.PurchaseOptions())
+        } catch {
+            // A pending purchase (Ask to Buy) arrives later via the listener
+            // and must keep its associations; any other failure means no
+            // transaction will ever match them.
+            if (error as? QonversionError)?.type != .purchasePending {
+                purchaseAssociationsStorage.remove(for: product.storeId)
+            }
+            throw error
+        }
 
         do {
-            try await purchasesService.send(transaction, userId: userIdProvider.getUserId(), options: options)
+            try await purchasesService.send(transaction, userId: userId, options: options)
+            purchaseAssociationsStorage.remove(for: product.storeId)
         } catch {
             // Production fault tolerance: when the backend is unreachable the
             // purchase still succeeds with locally calculated entitlements.
             // The transaction stays unfinished so it can be re-reported later.
             if error.allowsLocalEntitlementsFallback {
-                let entitlements = await entitlementsManager.localFallbackEntitlements(for: [transaction])
+                let entitlements: [String: Qonversion.Entitlement] = await entitlementsManager.localFallbackEntitlements(for: [transaction])
                 return Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements)
             }
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
         }
 
         // Mark as reported, so the updates listener never re-reports it.
-        if let id = transaction.id {
+        if let id: String = transaction.id {
             _ = await reportsGate.tryTake(id)
         }
 
@@ -82,7 +111,7 @@ final class PurchasesManager: PurchasesManagerInterface {
 
         // A reported purchase must not fail because of the entitlements fetch.
         let entitlements: [String: Qonversion.Entitlement]
-        if let fetched = try? await entitlementsManager.entitlements() {
+        if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
             entitlements = fetched
         } else {
             entitlements = await entitlementsManager.localFallbackEntitlements(for: [transaction])
@@ -94,8 +123,9 @@ final class PurchasesManager: PurchasesManagerInterface {
     @discardableResult
     func restore() async throws -> [String: Qonversion.Entitlement] {
         _ = try await userManager.obtainUser()
+        let userId: String = userIdProvider.getUserId()
 
-        let restored = try await storeKitFacade.restore()
+        let restored: [Qonversion.Transaction] = try await storeKitFacade.restore()
         // Production rule: only the latest transaction per product participates.
         let latest = EntitlementsCalculator.latestTransactionsPerProduct(restored)
 
@@ -103,13 +133,13 @@ final class PurchasesManager: PurchasesManagerInterface {
             for transaction in latest {
                 // Skip transactions already reported this session (sweep,
                 // listener or purchase); the failed report releases the id.
-                if let id = transaction.id {
+                if let id: String = transaction.id {
                     guard await reportsGate.tryTake(id) else { continue }
                 }
                 do {
-                    try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                    try await purchasesService.send(transaction, userId: userId)
                 } catch {
-                    if let id = transaction.id {
+                    if let id: String = transaction.id {
                         await reportsGate.release(id)
                     }
                     throw error
@@ -122,7 +152,7 @@ final class PurchasesManager: PurchasesManagerInterface {
             throw QonversionError(type: .restoreFailed, message: nil, error: error)
         }
 
-        if let fetched = try? await entitlementsManager.entitlements() {
+        if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
             return fetched
         }
         return await entitlementsManager.localFallbackEntitlements(for: latest)
@@ -130,8 +160,17 @@ final class PurchasesManager: PurchasesManagerInterface {
 
     func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
         _ = try await userManager.obtainUser()
+        let userId: String = userIdProvider.getUserId()
 
-        return try await purchasesService.promotionalOffer(userId: userIdProvider.getUserId(), offerId: discountId, productStoreId: product.storeId)
+        return try await purchasesService.promotionalOffer(userId: userId, offerId: discountId, productStoreId: product.storeId)
+    }
+
+    /// Associations of the original SDK-initiated purchase of this product,
+    /// if the report has not delivered them yet.
+    private func reportOptions(for transaction: Qonversion.Transaction) -> Qonversion.PurchaseOptions? {
+        guard let associations: PurchaseAssociations = purchaseAssociationsStorage.associations(for: transaction.productId) else { return nil }
+
+        return Qonversion.PurchaseOptions(contextKeys: associations.contextKeys, screenUid: associations.screenUid)
     }
 
     func startObservingTransactions() {
@@ -140,7 +179,7 @@ final class PurchasesManager: PurchasesManagerInterface {
 
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async {
-        let transactions = purchasedTransactions.compactMap { storeKitFacade.map($0) }
+        let transactions: [Qonversion.Transaction] = purchasedTransactions.compactMap { storeKitFacade.map($0) }
 
         await handle(transactions: transactions)
     }
@@ -148,8 +187,10 @@ final class PurchasesManager: PurchasesManagerInterface {
     func handle(transactions: [Qonversion.Transaction]) async {
         guard !transactions.isEmpty else { return }
 
+        let userId: String
         do {
             _ = try await userManager.obtainUser()
+            userId = userIdProvider.getUserId()
         } catch {
             logger.error("Skipping handed transactions: no backend user: " + error.message)
             return
@@ -158,13 +199,13 @@ final class PurchasesManager: PurchasesManagerInterface {
         // The host app made these purchases and owns their lifecycle — the
         // SDK only tracks them, so no transaction is ever finished here.
         for transaction in transactions {
-            if let id = transaction.id {
+            if let id: String = transaction.id {
                 guard await reportsGate.tryTake(id) else { continue }
             }
             do {
-                try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                try await purchasesService.send(transaction, userId: userId)
             } catch {
-                if let id = transaction.id {
+                if let id: String = transaction.id {
                     await reportsGate.release(id)
                 }
                 logger.error("Failed to report a handed transaction: " + error.message)
@@ -176,25 +217,28 @@ final class PurchasesManager: PurchasesManagerInterface {
         // In Analytics mode the host app owns the transaction lifecycle.
         guard launchModeProvider.launchMode == .subscriptionManagement else { return }
 
-        let transactions = await storeKitFacade.unfinishedTransactions()
+        let transactions: [Qonversion.Transaction] = await storeKitFacade.unfinishedTransactions()
         guard !transactions.isEmpty else { return }
 
+        let userId: String
         do {
             _ = try await userManager.obtainUser()
+            userId = userIdProvider.getUserId()
         } catch {
             logger.error("Skipping unfinished transactions: no backend user: " + error.message)
             return
         }
 
         for transaction in transactions {
-            if let id = transaction.id {
+            if let id: String = transaction.id {
                 guard await reportsGate.tryTake(id) else { continue }
             }
             do {
-                try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                try await purchasesService.send(transaction, userId: userId, options: reportOptions(for: transaction))
+                purchaseAssociationsStorage.remove(for: transaction.productId)
                 await storeKitFacade.finish(transaction)
             } catch {
-                if let id = transaction.id {
+                if let id: String = transaction.id {
                     await reportsGate.release(id)
                 }
                 logger.error("Failed to re-report an unfinished transaction: " + error.message)
@@ -217,7 +261,7 @@ extension PurchasesManager: StoreKitFacadeDelegate {
     /// transaction's store product id, so no Qonversion product mapping is
     /// required.
     func emitPromoPurchaseIntent(storeProductId: String) {
-        let intent = Qonversion.PromoPurchaseIntent(productId: storeProductId) { [weak self] options in
+        let intent: Qonversion.PromoPurchaseIntent = Qonversion.PromoPurchaseIntent(productId: storeProductId) { [weak self] options in
             guard let self else { throw QonversionError.initializationError() }
 
             return try await self.purchase(Qonversion.Product(qonversionId: storeProductId, storeId: storeProductId, offeringId: nil), options: options)
@@ -236,14 +280,16 @@ extension PurchasesManager: StoreKitFacadeDelegate {
             guard let self else { return }
             // Transactions without a store id (degraded SK1 mapping) cannot be
             // deduplicated and are reported unconditionally.
-            if let id = transaction.id {
+            if let id: String = transaction.id {
                 guard await self.reportsGate.tryTake(id) else { return }
             }
             do {
                 _ = try await self.userManager.obtainUser()
-                try await self.purchasesService.send(transaction, userId: self.userIdProvider.getUserId())
+                let userId: String = self.userIdProvider.getUserId()
+                try await self.purchasesService.send(transaction, userId: userId, options: self.reportOptions(for: transaction))
+                self.purchaseAssociationsStorage.remove(for: transaction.productId)
             } catch {
-                if let id = transaction.id {
+                if let id: String = transaction.id {
                     await self.reportsGate.release(id)
                 }
                 self.logger.error("Failed to report an observed transaction: " + error.message)
@@ -255,7 +301,7 @@ extension PurchasesManager: StoreKitFacadeDelegate {
             await self.storeKitFacade.finish(transaction)
 
             let entitlements: [String: Qonversion.Entitlement]
-            if let fetched = try? await self.entitlementsManager.entitlements() {
+            if let fetched: [String: Qonversion.Entitlement] = try? await self.entitlementsManager.entitlements() {
                 entitlements = fetched
             } else {
                 entitlements = await self.entitlementsManager.localFallbackEntitlements(for: [transaction])

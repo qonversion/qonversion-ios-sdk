@@ -10,7 +10,8 @@ import Foundation
 /// subscription). By default values yielded while nobody subscribes are
 /// dropped; with `buffersWhenNoSubscribers` they are kept and delivered to
 /// the first subscriber (e.g. promo intents arriving before the host is ready).
-final class AsyncMulticast<Element> {
+// @unchecked: the continuations and backlog are lock-guarded.
+final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
 
     /// Bounds the no-subscriber backlog; the oldest values are dropped first.
     static var maxPending: Int { 10 }
@@ -29,7 +30,7 @@ final class AsyncMulticast<Element> {
             let id = UUID()
             lock.lock()
             continuations[id] = continuation
-            let backlog = pending
+            let backlog: [Element] = pending
             pending = []
             lock.unlock()
 

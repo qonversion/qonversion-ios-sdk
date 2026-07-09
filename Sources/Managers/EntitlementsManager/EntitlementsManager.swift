@@ -10,7 +10,8 @@ fileprivate enum Constants: String {
     case entitlementsTimestampKey = "qonversion.keys.entitlementsTimestamp"
 }
 
-final class EntitlementsManager: EntitlementsManagerInterface {
+// @unchecked: stateless — every dependency is thread-safe on its own.
+final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendable {
 
     private let entitlementsService: EntitlementsServiceInterface
     private let storeKitFacade: StoreKitFacadeInterface
@@ -57,7 +58,7 @@ final class EntitlementsManager: EntitlementsManagerInterface {
         _ = try await userManager.obtainUser()
 
         do {
-            let list = try await entitlementsService.entitlements(userId: userIdProvider.getUserId())
+            let list: [Qonversion.Entitlement] = try await entitlementsService.entitlements(userId: userIdProvider.getUserId())
             let entitlements = Dictionary(list.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
             persist(entitlements)
 
@@ -66,7 +67,7 @@ final class EntitlementsManager: EntitlementsManagerInterface {
             guard error.allowsLocalEntitlementsFallback else { throw error }
 
             // Production fault-tolerance path.
-            let transactions = await storeKitFacade.currentEntitlements()
+            let transactions: [Qonversion.Transaction] = await storeKitFacade.currentEntitlements()
             return await localFallbackEntitlements(for: transactions)
         }
     }
@@ -91,7 +92,7 @@ private extension EntitlementsManager {
             return nil
         }
 
-        let timestamp = localStorage.double(forKey: Constants.entitlementsTimestampKey.rawValue)
+        let timestamp: TimeInterval = localStorage.double(forKey: Constants.entitlementsTimestampKey.rawValue)
         guard timestamp > 0, Date().timeIntervalSince1970 - timestamp <= cacheLifetimeSeconds else {
             return nil
         }

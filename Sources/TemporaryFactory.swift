@@ -8,7 +8,7 @@
 import Foundation
 import StoreKit
 
-#warning("remove this file")
+// TODO: remove this file once the test stack is assembled without it.
 final public class TemporaryFactory: StoreKitWrapperDelegate, StoreKitOldWrapperDelegate {
     func handle(productsResponse: SKProductsResponse) {
         
@@ -51,10 +51,11 @@ final public class TemporaryFactory: StoreKitWrapperDelegate, StoreKitOldWrapper
     }
     
     public func test() {
-        Task.init {
+        let facade = self.facade
+        Task {
             do {
-                let res = try await facade?.restore()
-                print(res)
+                let res: [Qonversion.Transaction]? = try await facade?.restore()
+                print(res ?? [])
             } catch {
                 print(error)
             }

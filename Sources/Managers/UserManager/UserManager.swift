@@ -32,7 +32,7 @@ actor UserManager: UserManagerInterface {
     /// call with a different id waits for it to settle and then runs its own.
     private var identifyInFlight: (id: UUID, externalId: String, task: Task<Qonversion.User, Error>)?
 
-    fileprivate struct PipelineOutcome {
+    fileprivate struct PipelineOutcome: Sendable {
         let user: Qonversion.User
         /// A pending-identity failure is delivered to the identify caller only;
         /// data-sending waiters proceed with the created user.
@@ -49,7 +49,7 @@ actor UserManager: UserManagerInterface {
 
     @discardableResult
     func obtainUser() async throws -> Qonversion.User {
-        let outcome = try await runPipeline()
+        let outcome: PipelineOutcome = try await runPipeline()
 
         return currentUser() ?? outcome.user
     }
@@ -80,11 +80,11 @@ actor UserManager: UserManagerInterface {
         } else {
             pendingIdentityExternalId = externalId
             task = Task {
-                let outcome = try await self.runPipeline()
-                if let identityError = outcome.identityError {
+                let outcome: PipelineOutcome = try await self.runPipeline()
+                if let identityError: Error = outcome.identityError {
                     throw identityError
                 }
-                return await self.currentUser() ?? outcome.user
+                return self.currentUser() ?? outcome.user
             }
         }
         identifyInFlight = (flightId, externalId, task)
@@ -131,13 +131,13 @@ private extension UserManager {
             return try await pipeline.value
         }
 
-        if let user = existingUser(), pendingIdentityExternalId == nil {
+        if let user: Qonversion.User = existingUser(), pendingIdentityExternalId == nil {
             return PipelineOutcome(user: user, identityError: nil)
         }
 
         let task = Task<PipelineOutcome, Error> {
             let user: Qonversion.User
-            if let existing = existingUser() {
+            if let existing: Qonversion.User = existingUser() {
                 user = existing
             } else {
                 user = try await userService.createUser()
@@ -160,7 +160,7 @@ private extension UserManager {
 
         pipeline = task
         do {
-            let outcome = try await task.value
+            let outcome: PipelineOutcome = try await task.value
             pipeline = nil
             return outcome
         } catch {
@@ -172,14 +172,14 @@ private extension UserManager {
     /// Links the external id to the current user. When the external id is
     /// already linked to another Qonversion user, switches to that user.
     func linkIdentity(_ externalId: String) async throws -> Qonversion.User {
-        let currentUid = internalConfig.userId
+        let currentUid: String = internalConfig.userId
 
         if let linkedUid = try await userService.identity(for: externalId) {
             if linkedUid != currentUid {
                 try await switchUser(to: linkedUid)
             }
         } else {
-            let resultUid = try await userService.createIdentity(externalId: externalId, userId: currentUid)
+            let resultUid: String = try await userService.createIdentity(externalId: externalId, userId: currentUid)
             if resultUid != currentUid {
                 try await switchUser(to: resultUid)
             }
@@ -202,7 +202,7 @@ private extension UserManager {
         // the uid switch, so a failed user fetch cannot leak them to the new uid.
         userChangesNotifier.notifyUserChanged()
 
-        let user = try await userService.user()
+        let user: Qonversion.User = try await userService.user()
         cachedUser = user
         persist(user)
     }

@@ -89,7 +89,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         #elseif os(watchOS)
         osVersion = WKInterfaceDevice.current().systemVersion
         #else
-        let systemVersion = ProcessInfo.processInfo.operatingSystemVersion
+        let systemVersion: OperatingSystemVersion = ProcessInfo.processInfo.operatingSystemVersion
         osVersion = "\(systemVersion.majorVersion).\(systemVersion.minorVersion).\(systemVersion.patchVersion)"
         #endif
 

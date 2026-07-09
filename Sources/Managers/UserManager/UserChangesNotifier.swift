@@ -16,7 +16,8 @@ protocol UserChangesNotifierInterface {
     func notifyUserChanged()
 }
 
-final class UserChangesNotifier: UserChangesNotifierInterface {
+// @unchecked: the observer list is lock-guarded.
+final class UserChangesNotifier: UserChangesNotifierInterface, @unchecked Sendable {
 
     private struct WeakBox {
         weak var observer: UserChangedObserver?
@@ -36,7 +37,7 @@ final class UserChangesNotifier: UserChangesNotifierInterface {
 
     func notifyUserChanged() {
         lock.lock()
-        let observers = boxes.compactMap { $0.observer }
+        let observers: [UserChangedObserver] = boxes.compactMap { $0.observer }
         lock.unlock()
 
         observers.forEach { $0.userDidChange() }

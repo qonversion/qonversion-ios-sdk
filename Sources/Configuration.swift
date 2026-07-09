@@ -48,7 +48,7 @@ extension Qonversion {
         }
 
         private static func normalizedBaseURL(_ url: String) -> String {
-            var result = url
+            var result: String = url
             if !result.hasPrefix("http://") && !result.hasPrefix("https://") {
                 result = "https://" + result
             }

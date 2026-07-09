@@ -35,7 +35,8 @@ extension Qonversion {
 
 typealias LogLevel = Qonversion.LogLevel
 
-final class LoggerWrapper {
+// @unchecked: immutable after init; os.Logger is thread-safe.
+final class LoggerWrapper: @unchecked Sendable {
     
     @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
     var logger: Logger? { _logger as? Logger }

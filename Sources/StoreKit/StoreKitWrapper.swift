@@ -9,7 +9,8 @@ import Foundation
 import StoreKit
 
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-final class StoreKitWrapper: StoreKitWrapperInterface {
+// @unchecked: the mapper is stateless; the delegate is weak.
+final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
 
     // Weak: the delegate (facade) holds the wrapper itself.
     weak var delegate: StoreKitWrapperDelegate?
@@ -45,7 +46,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
     }
 
     func finish(_ transaction: Qonversion.Transaction) async {
-        guard let storeKitTransaction = transaction.storeKitTransaction else { return }
+        guard let storeKitTransaction: StoreKit.Transaction = transaction.storeKitTransaction else { return }
 
         await storeKitTransaction.finish()
     }
@@ -96,7 +97,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface {
     /// host app).
     func transactionUpdates() -> AsyncStream<Qonversion.Transaction> {
         return AsyncStream { continuation in
-            let task = Task {
+            let task: Task<Void, Never> = Task {
                 for await update in StoreKit.Transaction.updates {
                     if case .verified(let transaction) = update {
                         continuation.yield(self.mapper.map(transaction, jws: update.jwsRepresentation))

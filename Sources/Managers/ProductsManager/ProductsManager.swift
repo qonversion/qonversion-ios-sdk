@@ -12,7 +12,8 @@ fileprivate enum Constants: String {
     case productPermissionsKey = "qonversion.keys.productsPermissions"
 }
 
-final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
+// @unchecked: the caches are lock-guarded.
+final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unchecked Sendable {
     
     let productsService: ProductsServiceInterface
     let storeKitFacade: StoreKitFacadeInterface
@@ -20,9 +21,24 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
     private let fallbackService: FallbackServiceInterface
     private let logger: LoggerWrapper
     
-    var loadedProducts: [Qonversion.Product] = []
+    // Read by the local entitlements calculation and by concurrent products()
+    // calls, cleared from the user-change notification thread.
+    private let lock = NSLock()
+    private var _loadedProducts: [Qonversion.Product] = []
+    private var _loadedProductPermissions: [String: [String]]?
 
-    private var loadedProductPermissions: [String: [String]]?
+    var loadedProducts: [Qonversion.Product] {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _loadedProducts
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            _loadedProducts = newValue
+        }
+    }
     
     init(productsService: ProductsServiceInterface, storeKitFacade: StoreKitFacadeInterface, localStorage: LocalStorageInterface, fallbackService: FallbackServiceInterface, logger: LoggerWrapper) {
         self.productsService = productsService
@@ -38,8 +54,8 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
 
     func loadProductPermissions() async {
         do {
-            let mapping = try await productsService.productPermissions()
-            loadedProductPermissions = mapping
+            let mapping: [String: [String]] = try await productsService.productPermissions()
+            storeLoadedPermissions(mapping)
             try localStorage.set(mapping, forKey: Constants.productPermissionsKey.rawValue)
         } catch {
             // The previously cached mapping stays — it still powers local
@@ -48,13 +64,24 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
         }
     }
 
+    private func storeLoadedPermissions(_ mapping: [String: [String]]) {
+        lock.lock()
+        defer { lock.unlock() }
+        _loadedProductPermissions = mapping
+    }
+
     func cachedProductPermissions() -> [String: [String]]? {
-        if let loadedProductPermissions {
-            return loadedProductPermissions
+        lock.lock()
+        if let loaded: [String: [String]] = _loadedProductPermissions {
+            lock.unlock()
+            return loaded
         }
+        lock.unlock()
 
         if let persisted = try? localStorage.object(forKey: Constants.productPermissionsKey.rawValue, dataType: [String: [String]].self) {
-            loadedProductPermissions = persisted
+            lock.lock()
+            _loadedProductPermissions = persisted
+            lock.unlock()
             return persisted
         }
 
@@ -74,7 +101,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
         } catch {
             // The bundled snapshot answers this call only — it must not shadow
             // the API, so the in-memory cache stays empty and the next call retries.
-            guard let fallbackProducts = fallbackService.obtainFallbackData()?.products, !fallbackProducts.isEmpty else {
+            guard let fallbackProducts: [Qonversion.Product] = fallbackService.obtainFallbackData()?.products, !fallbackProducts.isEmpty else {
                 throw error
             }
             logger.warning("Products request failed, using the bundled fallback file: " + error.message)
@@ -82,7 +109,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
         }
         
         do {
-            let resultProducts = try await storeEnriched(products)
+            let resultProducts: [Qonversion.Product] = try await storeEnriched(products)
             loadedProducts = resultProducts
             
             return resultProducts
@@ -113,11 +140,11 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
         var resultProducts: [Qonversion.Product] = []
 
         for var product in products {
-            guard let storeProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
+            guard let storeProductWrapper: StoreProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
 
             if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeProduct = storeProductWrapper.product {
                 product.enrich(storeProduct: storeProduct)
-            } else if let storeProduct = storeProductWrapper.oldProduct {
+            } else if let storeProduct: SKProduct = storeProductWrapper.oldProduct {
                 product.enrich(skProduct: storeProduct)
             }
 

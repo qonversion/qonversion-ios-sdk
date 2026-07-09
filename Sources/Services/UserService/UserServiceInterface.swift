@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol UserServiceInterface {
+protocol UserServiceInterface: Sendable {
 
     func user() async throws -> Qonversion.User
 
