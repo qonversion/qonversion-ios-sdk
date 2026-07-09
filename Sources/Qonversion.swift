@@ -9,7 +9,9 @@ import Foundation
 import StoreKit
 
 /// An entry point to use Qonversion SDK.
-public final class Qonversion {
+// @unchecked: the managers are written once in initialize() and the SDK
+// contract requires initialize() before any other call.
+public final class Qonversion: @unchecked Sendable {
     
     // MARK: - Public
     

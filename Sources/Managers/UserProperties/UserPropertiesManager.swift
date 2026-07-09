@@ -17,7 +17,8 @@ fileprivate enum Constants: Int {
     case sendPropertiesMaxRetries = 10
 }
 
-final class UserPropertiesManager : UserPropertiesManagerInterface {
+// @unchecked: mutable state is guarded by stateLock; deps are thread-safe.
+final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked Sendable {
     
     private let requestProcessor: RequestProcessorInterface
     private let propertiesStorage: PropertiesStorage
@@ -107,20 +108,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
         // Single-flight: a batch already in flight covers the current storage
         // snapshot; properties added meanwhile are picked up by the trailing
         // reschedule below.
-        stateLock.lock()
-        guard !isSendingInProgress else {
-            stateLock.unlock()
-            return
-        }
-        isSendingInProgress = true
-        sendingTask?.cancel()
-        sendingTask = nil
-        stateLock.unlock()
-        defer {
-            stateLock.lock()
-            isSendingInProgress = false
-            stateLock.unlock()
-        }
+        guard beginSendingIfIdle() else { return }
+        defer { endSending() }
 
         let properties: [Qonversion.UserProperty] = propertiesStorage.all()
 
@@ -146,10 +135,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
                 logger.error("Failed to save property " + propertyError.key + ": " + propertyError.error)
             })
             
-            stateLock.lock()
-            sendPropertiesRetryCount = 0
-            sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
-            stateLock.unlock()
+            resetRetryState()
 
             propertiesStorage.clear(properties: properties)
 
@@ -192,9 +178,7 @@ extension UserPropertiesManager {
         sendingTask?.cancel()
 
         sendingTask = Task<Void, Error>.delayed(byTimeInterval: TimeInterval(delaySec)) {
-            self.stateLock.lock()
-            self.sendingTask = nil
-            self.stateLock.unlock()
+            self.clearScheduledTask()
             do {
                 try await self.sendProperties()
             } catch {
@@ -203,6 +187,37 @@ extension UserPropertiesManager {
                 self.logger.error("Failed to send user properties: \(error)")
             }
         }
+    }
+
+    private func clearScheduledTask() {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        sendingTask = nil
+    }
+
+    /// True when no send was in progress; marks the flow busy and cancels a
+    /// pending schedule.
+    private func beginSendingIfIdle() -> Bool {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        guard !isSendingInProgress else { return false }
+        isSendingInProgress = true
+        sendingTask?.cancel()
+        sendingTask = nil
+        return true
+    }
+
+    private func endSending() {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        isSendingInProgress = false
+    }
+
+    private func resetRetryState() {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        sendPropertiesRetryCount = 0
+        sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
     }
 
     private func retrySendingProperties() {

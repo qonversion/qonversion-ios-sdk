@@ -12,7 +12,8 @@ fileprivate enum Constants: String {
     case productPermissionsKey = "qonversion.keys.productsPermissions"
 }
 
-final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
+// @unchecked: the caches are lock-guarded.
+final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unchecked Sendable {
     
     let productsService: ProductsServiceInterface
     let storeKitFacade: StoreKitFacadeInterface
@@ -54,15 +55,19 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
     func loadProductPermissions() async {
         do {
             let mapping = try await productsService.productPermissions()
-            lock.lock()
-            _loadedProductPermissions = mapping
-            lock.unlock()
+            storeLoadedPermissions(mapping)
             try localStorage.set(mapping, forKey: Constants.productPermissionsKey.rawValue)
         } catch {
             // The previously cached mapping stays — it still powers local
             // entitlements calculation while the backend is unreachable.
             logger.warning("Failed to refresh product permissions mapping: " + error.message)
         }
+    }
+
+    private func storeLoadedPermissions(_ mapping: [String: [String]]) {
+        lock.lock()
+        defer { lock.unlock() }
+        _loadedProductPermissions = mapping
     }
 
     func cachedProductPermissions() -> [String: [String]]? {

@@ -7,7 +7,8 @@
 
 import Foundation
 
-final class DeviceManager: DeviceManagerInterface {
+// @unchecked: stateless — every dependency is thread-safe on its own.
+final class DeviceManager: DeviceManagerInterface, @unchecked Sendable {
 
     private let deviceInfoCollector: DeviceInfoCollectorInterface
     private let deviceService: DeviceServiceInterface

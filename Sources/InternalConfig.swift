@@ -15,7 +15,8 @@ protocol LaunchModeProvider {
     var launchMode: Qonversion.LaunchMode { get }
 }
 
-final class InternalConfig: UserIdProvider, LaunchModeProvider {
+// @unchecked: userId is lock-guarded, the rest is set once at init.
+final class InternalConfig: UserIdProvider, LaunchModeProvider, @unchecked Sendable {
 
     // Written by the user gate (logout/identity switch) and read by every
     // request-building path concurrently.

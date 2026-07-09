@@ -10,7 +10,8 @@ fileprivate enum Constants: String {
     case entitlementsTimestampKey = "qonversion.keys.entitlementsTimestamp"
 }
 
-final class EntitlementsManager: EntitlementsManagerInterface {
+// @unchecked: stateless — every dependency is thread-safe on its own.
+final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendable {
 
     private let entitlementsService: EntitlementsServiceInterface
     private let storeKitFacade: StoreKitFacadeInterface

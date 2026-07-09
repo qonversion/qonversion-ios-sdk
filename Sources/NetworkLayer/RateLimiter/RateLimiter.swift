@@ -7,7 +7,8 @@
 //
 import Foundation
 
-final class RateLimiter: RateLimiterInterface {
+// @unchecked: the requests map is lock-guarded.
+final class RateLimiter: RateLimiterInterface, @unchecked Sendable {
     private var maxRequestsPerSecond: UInt
     private var requests: [Int: [TimeInterval]] = [:]
 

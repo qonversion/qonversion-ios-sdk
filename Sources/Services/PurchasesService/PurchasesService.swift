@@ -46,7 +46,6 @@ final class PurchasesService: PurchasesServiceInterface {
         self.appBundleId = appBundleId
     }
 
-    private static let purchasedAtFormatter = ISO8601DateFormatter()
 
     func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
         // The v4 store_data shape for the app_store platform; the signed
@@ -65,7 +64,8 @@ final class PurchasesService: PurchasesServiceInterface {
             "store_data": storeData,
         ]
         if let purchaseDate = transaction.purchaseDate {
-            body["purchased_at"] = Self.purchasedAtFormatter.string(from: purchaseDate)
+            // A fresh formatter per call: ISO8601DateFormatter is not Sendable.
+            body["purchased_at"] = ISO8601DateFormatter().string(from: purchaseDate)
         }
         // context_keys and screen_uid are not part of the documented v4
         // purchases contract yet — the backend is going to add them; the SDK

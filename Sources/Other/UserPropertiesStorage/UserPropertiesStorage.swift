@@ -7,7 +7,8 @@
 
 import Foundation
 
-final class UserPropertiesStorage: PropertiesStorage {
+// @unchecked: lock-guarded.
+final class UserPropertiesStorage: PropertiesStorage, @unchecked Sendable {
 
     // Mutated from the caller's thread (setProperty) and from the sending
     // task concurrently.

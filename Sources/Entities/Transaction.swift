@@ -11,7 +11,9 @@ import StoreKit
 extension Qonversion {
 
     /// StoreKit [Transaction](https://developer.apple.com/documentation/storekit/transaction) wrapper.
-    public struct Transaction {
+    // @unchecked: the StoreKit handles inside are reference types managed
+    // by StoreKit itself.
+    public struct Transaction: @unchecked Sendable {
         
         /// The raw JSON representation of the transaction information.
         public var jsonRepresentation: Data?

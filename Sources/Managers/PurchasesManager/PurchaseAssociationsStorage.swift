@@ -16,7 +16,8 @@ struct PurchaseAssociations: Codable {
     let screenUid: String?
 }
 
-final class PurchaseAssociationsStorage {
+// @unchecked: lock-guarded.
+final class PurchaseAssociationsStorage: @unchecked Sendable {
 
     private enum Constants: String {
         case storageKey = "qonversion.keys.purchaseAssociations"

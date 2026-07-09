@@ -18,6 +18,9 @@ let package = Package(
             name: "Qonversion",
             resources: [
                 .copy("PrivacyInfo.xcprivacy")
+            ],
+            swiftSettings: [
+                .enableUpcomingFeature("StrictConcurrency")
             ]),
         .testTarget(
             name: "QonversionUnitTests",

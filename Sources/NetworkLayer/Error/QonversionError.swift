@@ -5,7 +5,8 @@
 //  Created by Suren Sarkisyan on 07.02.2024.
 //
 
-struct QonversionError: Error {
+// @unchecked: additionalInfo carries plist-like values only.
+struct QonversionError: Error, @unchecked Sendable {
     public let type: QonversionErrorType
     public let message: String
     public let error: Error?

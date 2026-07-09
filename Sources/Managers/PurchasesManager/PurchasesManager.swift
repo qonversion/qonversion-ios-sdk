@@ -6,7 +6,8 @@
 import Foundation
 import StoreKit
 
-final class PurchasesManager: PurchasesManagerInterface {
+// @unchecked: mutable state lives in the actor gate and lock-guarded storages.
+final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     private let purchasesService: PurchasesServiceInterface
     private let storeKitFacade: StoreKitFacadeInterface

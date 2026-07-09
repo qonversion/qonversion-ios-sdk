@@ -32,7 +32,7 @@ actor UserManager: UserManagerInterface {
     /// call with a different id waits for it to settle and then runs its own.
     private var identifyInFlight: (id: UUID, externalId: String, task: Task<Qonversion.User, Error>)?
 
-    fileprivate struct PipelineOutcome {
+    fileprivate struct PipelineOutcome: Sendable {
         let user: Qonversion.User
         /// A pending-identity failure is delivered to the identify caller only;
         /// data-sending waiters proceed with the created user.
@@ -84,7 +84,7 @@ actor UserManager: UserManagerInterface {
                 if let identityError = outcome.identityError {
                     throw identityError
                 }
-                return await self.currentUser() ?? outcome.user
+                return self.currentUser() ?? outcome.user
             }
         }
         identifyInFlight = (flightId, externalId, task)

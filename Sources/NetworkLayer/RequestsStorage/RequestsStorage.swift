@@ -7,7 +7,8 @@
 
 import Foundation
 
-class RequestsStorage: RequestsStorageInterface {
+// @unchecked: lock-guarded over thread-safe UserDefaults.
+class RequestsStorage: RequestsStorageInterface, @unchecked Sendable {
 
     /// Bounds UserDefaults growth; the oldest requests are dropped first.
     static let maxStoredRequests = 50

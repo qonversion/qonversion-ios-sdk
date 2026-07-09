@@ -8,7 +8,8 @@
 import Foundation
 import StoreKit
 
-class StoreKitFacade: StoreKitFacadeInterface {
+// @unchecked: the product caches are lock-guarded; the delegate is weak.
+class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     
     let storeKitOldWrapper: StoreKitOldWrapperInterface?
     let storeKitWrapper: StoreKitWrapperInterface?
@@ -176,6 +177,15 @@ class StoreKitFacade: StoreKitFacadeInterface {
         await storeKitWrapper.finish(transaction)
     }
 
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
+    private func storeLoadedProducts(_ products: [StoreKit.Product]) {
+        productsLock.lock()
+        defer { productsLock.unlock() }
+        products.forEach {
+            __loadedProducts[$0.id] = $0
+        }
+    }
+
     func startObservingTransactionUpdates() {
         guard transactionUpdatesTask == nil else { return }
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *),
@@ -209,11 +219,7 @@ class StoreKitFacade: StoreKitFacadeInterface {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             let products = try await storeKitWrapper.products(for: ids)
-            productsLock.lock()
-            products.forEach {
-                __loadedProducts[$0.id] = $0
-            }
-            productsLock.unlock()
+            storeLoadedProducts(products)
             
             return products.map { StoreProductWrapper(_product: $0, oldProduct: nil) }
         } else {

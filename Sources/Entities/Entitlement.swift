@@ -8,7 +8,7 @@ import Foundation
 extension Qonversion {
 
     /// A user's access right to a feature, granted by a purchase or manually.
-    public struct Entitlement: Codable {
+    public struct Entitlement: Codable, Sendable {
 
         /// Qonversion entitlement identifier.
         public let id: String
@@ -32,7 +32,7 @@ extension Qonversion {
         /// Qonversion product id that granted the entitlement.
         public let productId: String?
 
-        public enum Source: String, Codable {
+        public enum Source: String, Codable, Sendable {
             case unknown
             case appStore = "appstore"
             case playStore = "playstore"
@@ -40,7 +40,7 @@ extension Qonversion {
             case manual
         }
 
-        public enum RenewState: String, Codable {
+        public enum RenewState: String, Codable, Sendable {
             case unknown
             case willRenew = "will_renew"
             case canceled

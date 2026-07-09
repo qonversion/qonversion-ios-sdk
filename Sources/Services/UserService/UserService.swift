@@ -18,7 +18,8 @@ fileprivate enum Constants: String {
     case legacyUserIdKey = "com.qonversion.keys.storedUserID"
 }
 
-final class UserService: UserServiceInterface {
+// @unchecked: stateless — every dependency is thread-safe on its own.
+final class UserService: UserServiceInterface, @unchecked Sendable {
     
     private let requestProcessor: RequestProcessorInterface
     private let localStorage: LocalStorageInterface

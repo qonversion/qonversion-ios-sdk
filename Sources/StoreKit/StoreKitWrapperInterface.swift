@@ -8,7 +8,7 @@
 import Foundation
 import StoreKit
 
-protocol StoreKitWrapperInterface {
+protocol StoreKitWrapperInterface: Sendable {
     
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     func purchase(product: StoreKit.Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction

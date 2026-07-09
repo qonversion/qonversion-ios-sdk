@@ -199,7 +199,7 @@ enum Request : Hashable {
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .allRemoteConfigList(userId, endpoint, type):
-            var urlString = endpoint + "&user_id=" + escaped(userId)
+            let urlString = endpoint + "&user_id=" + escaped(userId)
             return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .attachUserToRemoteConfig(userId, remoteConfigId, endpoint, type):

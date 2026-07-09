@@ -7,8 +7,8 @@
 
 import StoreKit
 
-protocol StoreKitFacadeInterface {
-    #warning("replace all return types")
+protocol StoreKitFacadeInterface: Sendable {
+    // TODO: replace the remaining wrapper return types with domain models.
     func products(for ids:[String]) async throws -> [StoreProductWrapper]
 
     /// Buys the store product with the given store id (loading it on demand)

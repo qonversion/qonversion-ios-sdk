@@ -7,7 +7,9 @@
 
 import Foundation
 
-class RequestProcessor: RequestProcessorInterface {
+// @unchecked: criticalError is the only mutable field and is lock-guarded;
+// every dependency is thread-safe on its own.
+class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     let baseURL: String
     let networkProvider: NetworkProviderInterface
     let headersBuilder: HeadersBuilderInterface
@@ -16,7 +18,21 @@ class RequestProcessor: RequestProcessorInterface {
     let retriableRequestKinds: [Request.Kind]
     let requestsStorage: RequestsStorageInterface
     let rateLimiter: RateLimiterInterface
-    var criticalError: QonversionError?
+    private let criticalErrorLock = NSLock()
+    private var _criticalError: QonversionError?
+
+    var criticalError: QonversionError? {
+        get {
+            criticalErrorLock.lock()
+            defer { criticalErrorLock.unlock() }
+            return _criticalError
+        }
+        set {
+            criticalErrorLock.lock()
+            defer { criticalErrorLock.unlock() }
+            _criticalError = newValue
+        }
+    }
 
     init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface) {
         self.baseURL = baseURL

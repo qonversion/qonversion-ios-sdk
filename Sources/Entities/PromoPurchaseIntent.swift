@@ -11,9 +11,9 @@ extension Qonversion {
     /// proceed — immediately or whenever the app is ready (e.g. after
     /// onboarding); dropping the intent defers the purchase. The intent is
     /// one-shot: the second purchase() call throws.
-    public struct PromoPurchaseIntent {
+    public struct PromoPurchaseIntent: Sendable {
 
-        private final class OneShotFlag {
+        private final class OneShotFlag: @unchecked Sendable {
             private let lock = NSLock()
             private var used = false
 
@@ -31,9 +31,9 @@ extension Qonversion {
         public let productId: String
 
         private let flag = OneShotFlag()
-        private let purchaseHandler: (PurchaseOptions?) async throws -> PurchaseResult
+        private let purchaseHandler: @Sendable (PurchaseOptions?) async throws -> PurchaseResult
 
-        init(productId: String, purchaseHandler: @escaping (PurchaseOptions?) async throws -> PurchaseResult) {
+        init(productId: String, purchaseHandler: @escaping @Sendable (PurchaseOptions?) async throws -> PurchaseResult) {
             self.productId = productId
             self.purchaseHandler = purchaseHandler
         }
