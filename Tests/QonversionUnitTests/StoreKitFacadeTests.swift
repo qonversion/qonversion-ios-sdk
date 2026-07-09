@@ -237,6 +237,9 @@ private final class FakeSKProduct: SKProduct {
     private let id: String
     init(id: String) { self.id = id; super.init() }
     override var productIdentifier: String { id }
+    // The empty SKProduct backs these with nil and crashes on access.
+    override var price: NSDecimalNumber { NSDecimalNumber(string: "9.99") }
+    override var priceLocale: Locale { Locale(identifier: "en_US") }
 }
 
 private final class FakeSKTransaction: SKPaymentTransaction {
