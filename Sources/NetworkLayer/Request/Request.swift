@@ -44,8 +44,8 @@ extension Request {
     var replayDedupKey: String? {
         switch self {
         case let .createPurchase(userId, _, body, _):
-            let appStoreData = body["app_store_data"] as? RequestBodyDict
-            let transactionId = appStoreData?["transaction_id"] as? String ?? ""
+            let storeData = body["store_data"] as? RequestBodyDict
+            let transactionId = storeData?["transaction_id"] as? String ?? ""
             // Without a transaction id the key would collapse distinct
             // purchases into one — disable dedup instead.
             guard !transactionId.isEmpty else { return nil }

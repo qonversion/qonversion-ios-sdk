@@ -154,7 +154,7 @@ final class RequestProcessorTests: XCTestCase {
         let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
 
         _ = try? await processor.process(
-            request: .createPurchase(userId: "u", body: ["app_store_data": ["transaction_id": "t1"] as RequestBodyDict]),
+            request: .createPurchase(userId: "u", body: ["store_data": ["transaction_id": "t1"] as RequestBodyDict]),
             responseType: EmptyApiResponse.self
         )
 
@@ -180,7 +180,7 @@ final class RequestProcessorTests: XCTestCase {
         let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
 
         _ = try? await processor.process(
-            request: .createPurchase(userId: "u", body: ["price": "9.99", "app_store_data": ["transaction_id": "t1"] as RequestBodyDict]),
+            request: .createPurchase(userId: "u", body: ["price": "9.99", "store_data": ["transaction_id": "t1"] as RequestBodyDict]),
             responseType: EmptyApiResponse.self
         )
 
@@ -194,7 +194,7 @@ final class RequestProcessorTests: XCTestCase {
     func testSamePurchaseFailingTwiceIsQueuedOnce() async {
         networkProvider.error = URLError(.notConnectedToInternet)
         let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
-        let request = Request.createPurchase(userId: "u", body: ["price": "9.99", "app_store_data": ["transaction_id": "t1"] as RequestBodyDict])
+        let request = Request.createPurchase(userId: "u", body: ["price": "9.99", "store_data": ["transaction_id": "t1"] as RequestBodyDict])
 
         _ = try? await processor.process(request: request, responseType: EmptyApiResponse.self)
         _ = try? await processor.process(request: request, responseType: EmptyApiResponse.self)
