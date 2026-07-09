@@ -107,6 +107,19 @@ final class RequestsStorageTests: XCTestCase {
         XCTAssertEqual(storage.fetchRequests(), [])
     }
 
+    func testQueuesOfDifferentApiKeysAreIsolated() {
+        // Switching projects (staging <-> prod key) must not replay the other
+        // project's queue with the new Authorization.
+        let defaults = TestDefaults.makeIsolated()
+        let first = MiscAssembly(apiKey: "key_A", userDefaults: defaults, internalConfig: InternalConfig(userId: "")).requestsStorage()
+        let second = MiscAssembly(apiKey: "key_B", userDefaults: defaults, internalConfig: InternalConfig(userId: "")).requestsStorage()
+
+        first.append(StoredRequest(url: "https://a", method: "POST", body: nil, dedupKey: nil))
+
+        XCTAssertEqual(first.fetchRequests().count, 1)
+        XCTAssertTrue(second.fetchRequests().isEmpty)
+    }
+
     func testConcurrentAppendsDoNotLoseRequests() async {
         let storage = makeStorage(TestDefaults.makeIsolated())
 

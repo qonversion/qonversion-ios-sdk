@@ -117,8 +117,10 @@ class ViewController: UIViewController {
     }
 
     private func logout() {
-        Qonversion.shared.logout()
-        show("Logged out")
+        Task {
+            await Qonversion.shared.logout()
+            show("Logged out")
+        }
     }
 
     private func setProperty() {

@@ -57,8 +57,11 @@ final class PurchasesManager: PurchasesManagerInterface {
 
     @discardableResult
     func purchase(_ product: Qonversion.Product, options: Qonversion.PurchaseOptions?) async throws -> Qonversion.PurchaseResult {
-        // The backend user must exist before the purchase is reported.
+        // The backend user must exist before the purchase is reported. The
+        // uid is captured HERE: a logout during the payment sheet must not
+        // reroute the report to the next anonymous user.
         _ = try await userManager.obtainUser()
+        let userId = userIdProvider.getUserId()
 
         // Persisted for the whole purchase lifecycle: a report happening
         // after a relaunch (unfinished sweep, Ask to Buy approval) must still
@@ -84,7 +87,7 @@ final class PurchasesManager: PurchasesManagerInterface {
         }
 
         do {
-            try await purchasesService.send(transaction, userId: userIdProvider.getUserId(), options: options)
+            try await purchasesService.send(transaction, userId: userId, options: options)
             purchaseAssociationsStorage.remove(for: product.storeId)
         } catch {
             // Production fault tolerance: when the backend is unreachable the
@@ -119,6 +122,7 @@ final class PurchasesManager: PurchasesManagerInterface {
     @discardableResult
     func restore() async throws -> [String: Qonversion.Entitlement] {
         _ = try await userManager.obtainUser()
+        let userId = userIdProvider.getUserId()
 
         let restored = try await storeKitFacade.restore()
         // Production rule: only the latest transaction per product participates.
@@ -132,7 +136,7 @@ final class PurchasesManager: PurchasesManagerInterface {
                     guard await reportsGate.tryTake(id) else { continue }
                 }
                 do {
-                    try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                    try await purchasesService.send(transaction, userId: userId)
                 } catch {
                     if let id = transaction.id {
                         await reportsGate.release(id)
@@ -155,8 +159,9 @@ final class PurchasesManager: PurchasesManagerInterface {
 
     func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
         _ = try await userManager.obtainUser()
+        let userId = userIdProvider.getUserId()
 
-        return try await purchasesService.promotionalOffer(userId: userIdProvider.getUserId(), offerId: discountId, productStoreId: product.storeId)
+        return try await purchasesService.promotionalOffer(userId: userId, offerId: discountId, productStoreId: product.storeId)
     }
 
     /// Associations of the original SDK-initiated purchase of this product,
@@ -181,8 +186,10 @@ final class PurchasesManager: PurchasesManagerInterface {
     func handle(transactions: [Qonversion.Transaction]) async {
         guard !transactions.isEmpty else { return }
 
+        let userId: String
         do {
             _ = try await userManager.obtainUser()
+            userId = userIdProvider.getUserId()
         } catch {
             logger.error("Skipping handed transactions: no backend user: " + error.message)
             return
@@ -195,7 +202,7 @@ final class PurchasesManager: PurchasesManagerInterface {
                 guard await reportsGate.tryTake(id) else { continue }
             }
             do {
-                try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                try await purchasesService.send(transaction, userId: userId)
             } catch {
                 if let id = transaction.id {
                     await reportsGate.release(id)
@@ -212,8 +219,10 @@ final class PurchasesManager: PurchasesManagerInterface {
         let transactions = await storeKitFacade.unfinishedTransactions()
         guard !transactions.isEmpty else { return }
 
+        let userId: String
         do {
             _ = try await userManager.obtainUser()
+            userId = userIdProvider.getUserId()
         } catch {
             logger.error("Skipping unfinished transactions: no backend user: " + error.message)
             return
@@ -224,7 +233,7 @@ final class PurchasesManager: PurchasesManagerInterface {
                 guard await reportsGate.tryTake(id) else { continue }
             }
             do {
-                try await purchasesService.send(transaction, userId: userIdProvider.getUserId(), options: reportOptions(for: transaction))
+                try await purchasesService.send(transaction, userId: userId, options: reportOptions(for: transaction))
                 purchaseAssociationsStorage.remove(for: transaction.productId)
                 await storeKitFacade.finish(transaction)
             } catch {
@@ -275,7 +284,8 @@ extension PurchasesManager: StoreKitFacadeDelegate {
             }
             do {
                 _ = try await self.userManager.obtainUser()
-                try await self.purchasesService.send(transaction, userId: self.userIdProvider.getUserId(), options: self.reportOptions(for: transaction))
+                let userId = self.userIdProvider.getUserId()
+                try await self.purchasesService.send(transaction, userId: userId, options: self.reportOptions(for: transaction))
                 self.purchaseAssociationsStorage.remove(for: transaction.productId)
             } catch {
                 if let id = transaction.id {

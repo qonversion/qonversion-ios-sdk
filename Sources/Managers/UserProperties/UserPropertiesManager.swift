@@ -26,6 +26,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
     private let userManager: UserManagerInterface
     private let logger: LoggerWrapper
 
+    // Mutated from the caller's thread (setProperty) and from the scheduled
+    // sending task concurrently.
+    private let stateLock = NSLock()
     private var sendingTask: Task<Void, Error>? = nil
     private var sendPropertiesRetryDelay: Int = Constants.sendPropertiesMinDelaySec.rawValue
     private var sendPropertiesRetryCount: Int = 0
@@ -90,23 +93,33 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
 
         let userProperty = Qonversion.UserProperty(key: key, value: value)
         propertiesStorage.save(userProperty)
-        
-        guard sendingTask == nil else { return }
 
-        scheduleSendingProperties(withDelay: sendPropertiesRetryDelay)
+        stateLock.lock()
+        let alreadyScheduled = sendingTask != nil
+        let delay = sendPropertiesRetryDelay
+        stateLock.unlock()
+        guard !alreadyScheduled else { return }
+
+        scheduleSendingProperties(withDelay: delay)
     }
 
     func sendProperties() async throws {
         // Single-flight: a batch already in flight covers the current storage
         // snapshot; properties added meanwhile are picked up by the trailing
         // reschedule below.
-        guard !isSendingInProgress else { return }
+        stateLock.lock()
+        guard !isSendingInProgress else {
+            stateLock.unlock()
+            return
+        }
         isSendingInProgress = true
-        defer { isSendingInProgress = false }
-
-        if (sendingTask != nil) {
-            sendingTask?.cancel()
-            sendingTask = nil
+        sendingTask?.cancel()
+        sendingTask = nil
+        stateLock.unlock()
+        defer {
+            stateLock.lock()
+            isSendingInProgress = false
+            stateLock.unlock()
         }
 
         let properties: [Qonversion.UserProperty] = propertiesStorage.all()
@@ -133,9 +146,11 @@ final class UserPropertiesManager : UserPropertiesManagerInterface {
                 logger.error("Failed to save property " + propertyError.key + ": " + propertyError.error)
             })
             
+            stateLock.lock()
             sendPropertiesRetryCount = 0
             sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
-            
+            stateLock.unlock()
+
             propertiesStorage.clear(properties: properties)
 
             // Properties set while the batch was in flight.
@@ -170,11 +185,16 @@ extension UserPropertiesManager {
     }
     
     private func scheduleSendingProperties(withDelay delaySec: Int) {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+
         // Cancel for the case, when the previous task was scheduled via "setProperty" call, but then retry for another request occurred.
         sendingTask?.cancel()
 
         sendingTask = Task<Void, Error>.delayed(byTimeInterval: TimeInterval(delaySec)) {
+            self.stateLock.lock()
             self.sendingTask = nil
+            self.stateLock.unlock()
             do {
                 try await self.sendProperties()
             } catch {
@@ -186,14 +206,18 @@ extension UserPropertiesManager {
     }
 
     private func retrySendingProperties() {
+        stateLock.lock()
         sendPropertiesRetryCount += 1
         guard sendPropertiesRetryCount <= Constants.sendPropertiesMaxRetries.rawValue else {
-            logger.error("Giving up sending user properties after \(Constants.sendPropertiesMaxRetries.rawValue) attempts; kept for the next trigger.")
             sendPropertiesRetryCount = 0
             sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
+            stateLock.unlock()
+            logger.error("Giving up sending user properties after \(Constants.sendPropertiesMaxRetries.rawValue) attempts; kept for the next trigger.")
             return
         }
         sendPropertiesRetryDelay = delayCalculator.countDelay(minDelay: Constants.sendPropertiesMinDelaySec.rawValue, retriesCount: sendPropertiesRetryCount)
-        scheduleSendingProperties(withDelay: sendPropertiesRetryDelay)
+        let delay = sendPropertiesRetryDelay
+        stateLock.unlock()
+        scheduleSendingProperties(withDelay: delay)
     }
 }

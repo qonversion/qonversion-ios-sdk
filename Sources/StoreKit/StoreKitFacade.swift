@@ -16,12 +16,45 @@ class StoreKitFacade: StoreKitFacadeInterface {
     // Weak: the delegate (purchases manager) holds the facade itself.
     weak var delegate: StoreKitFacadeDelegate?
     
+    // Written by concurrent products(for:) calls and read by purchase flows.
+    private let productsLock = NSLock()
+
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    var loadedProducts: [String: StoreKit.Product]? { _loadedProducts as? [String: StoreKit.Product] }
-    
-    var _loadedProducts: [String: Any] = [:]
-    
-    var loadedOldProducts: [String: SKProduct] = [:]
+    var loadedProducts: [String: StoreKit.Product]? {
+        productsLock.lock()
+        defer { productsLock.unlock() }
+        return __loadedProducts as? [String: StoreKit.Product]
+    }
+
+    private var __loadedProducts: [String: Any] = [:]
+
+    var _loadedProducts: [String: Any] {
+        get {
+            productsLock.lock()
+            defer { productsLock.unlock() }
+            return __loadedProducts
+        }
+        set {
+            productsLock.lock()
+            defer { productsLock.unlock() }
+            __loadedProducts = newValue
+        }
+    }
+
+    private var _loadedOldProducts: [String: SKProduct] = [:]
+
+    var loadedOldProducts: [String: SKProduct] {
+        get {
+            productsLock.lock()
+            defer { productsLock.unlock() }
+            return _loadedOldProducts
+        }
+        set {
+            productsLock.lock()
+            defer { productsLock.unlock() }
+            _loadedOldProducts = newValue
+        }
+    }
 
     private var transactionUpdatesTask: Task<Void, Never>?
     
@@ -176,9 +209,11 @@ class StoreKitFacade: StoreKitFacadeInterface {
             guard let storeKitWrapper = storeKitWrapper else { throw QonversionError(type: .storeKitUnavailable) }
             
             let products = try await storeKitWrapper.products(for: ids)
+            productsLock.lock()
             products.forEach {
-                _loadedProducts[$0.id] = $0
+                __loadedProducts[$0.id] = $0
             }
+            productsLock.unlock()
             
             return products.map { StoreProductWrapper(_product: $0, oldProduct: nil) }
         } else {
@@ -207,9 +242,11 @@ class StoreKitFacade: StoreKitFacadeInterface {
                         return continuation.resume(throwing: QonversionError(type: .storeProductsLoadingFailed))
                     }
 
+                    self.productsLock.lock()
                     response.products.forEach {
-                        self.loadedOldProducts[$0.productIdentifier] = $0
+                        self._loadedOldProducts[$0.productIdentifier] = $0
                     }
+                    self.productsLock.unlock()
 
                     let products: [StoreProductWrapper] = response.products.map { StoreProductWrapper(_product: nil, oldProduct: $0) }
                     continuation.resume(returning: products)

@@ -15,6 +15,10 @@ final class RemoteConfigManager: RemoteConfigManagerInterface {
 
     private let remoteConfigService: RemoteConfigServiceInterface
     private let logger: LoggerWrapper
+
+    // The cache is read/written from concurrent loads and cleared from the
+    // user-change notification thread.
+    private let lock = NSLock()
     private var loadedConfigs: [String: Qonversion.RemoteConfig] = [:]
 
     /// Bumped on every user switch: a load that started for the previous user
@@ -28,33 +32,41 @@ final class RemoteConfigManager: RemoteConfigManagerInterface {
 
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
         let finalKey: String = contextKey ?? Constants.emptyContextKey.rawValue
-        if let cachedConfig: Qonversion.RemoteConfig = loadedConfigs[finalKey] {
-            return cachedConfig
+        lock.lock()
+        let cached = loadedConfigs[finalKey]
+        let generation = cacheGeneration
+        lock.unlock()
+        if let cached {
+            return cached
         }
 
-        let generation = cacheGeneration
         let remoteConfig: Qonversion.RemoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
+        lock.lock()
         if generation == cacheGeneration {
             loadedConfigs[finalKey] = remoteConfig
         }
+        lock.unlock()
 
         return remoteConfig
     }
 
     func loadRemoteConfigList() async throws -> Qonversion.RemoteConfigList {
+        lock.lock()
         let generation = cacheGeneration
+        lock.unlock()
         let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList()
         handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
         return remoteConfigList
     }
 
     func loadRemoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList {
+        lock.lock()
         let cachedConfigs = contextKeys.compactMap { self.loadedConfigs[$0] }
+        let generation = cacheGeneration
+        lock.unlock()
         if (cachedConfigs.count == contextKeys.count) {
             return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
         }
-
-        let generation = cacheGeneration
         let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
         handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
         return remoteConfigList
@@ -79,6 +91,9 @@ final class RemoteConfigManager: RemoteConfigManagerInterface {
     // MARK: - Private
 
     private func handleLoadedRemoteConfigList(_ remoteConfigList: Qonversion.RemoteConfigList, generation: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+
         guard generation == cacheGeneration else { return }
 
         remoteConfigList.remoteConfigs.forEach { remoteConfig in
@@ -93,6 +108,9 @@ final class RemoteConfigManager: RemoteConfigManagerInterface {
 extension RemoteConfigManager: UserChangedObserver {
 
     func userDidChange() {
+        lock.lock()
+        defer { lock.unlock() }
+
         cacheGeneration += 1
         loadedConfigs = [:]
     }

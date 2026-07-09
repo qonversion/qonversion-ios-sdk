@@ -20,9 +20,24 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
     private let fallbackService: FallbackServiceInterface
     private let logger: LoggerWrapper
     
-    var loadedProducts: [Qonversion.Product] = []
+    // Read by the local entitlements calculation and by concurrent products()
+    // calls, cleared from the user-change notification thread.
+    private let lock = NSLock()
+    private var _loadedProducts: [Qonversion.Product] = []
+    private var _loadedProductPermissions: [String: [String]]?
 
-    private var loadedProductPermissions: [String: [String]]?
+    var loadedProducts: [Qonversion.Product] {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _loadedProducts
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            _loadedProducts = newValue
+        }
+    }
     
     init(productsService: ProductsServiceInterface, storeKitFacade: StoreKitFacadeInterface, localStorage: LocalStorageInterface, fallbackService: FallbackServiceInterface, logger: LoggerWrapper) {
         self.productsService = productsService
@@ -39,7 +54,9 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
     func loadProductPermissions() async {
         do {
             let mapping = try await productsService.productPermissions()
-            loadedProductPermissions = mapping
+            lock.lock()
+            _loadedProductPermissions = mapping
+            lock.unlock()
             try localStorage.set(mapping, forKey: Constants.productPermissionsKey.rawValue)
         } catch {
             // The previously cached mapping stays — it still powers local
@@ -49,12 +66,17 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource {
     }
 
     func cachedProductPermissions() -> [String: [String]]? {
-        if let loadedProductPermissions {
-            return loadedProductPermissions
+        lock.lock()
+        if let loaded = _loadedProductPermissions {
+            lock.unlock()
+            return loaded
         }
+        lock.unlock()
 
         if let persisted = try? localStorage.object(forKey: Constants.productPermissionsKey.rawValue, dataType: [String: [String]].self) {
-            loadedProductPermissions = persisted
+            lock.lock()
+            _loadedProductPermissions = persisted
+            lock.unlock()
             return persisted
         }
 

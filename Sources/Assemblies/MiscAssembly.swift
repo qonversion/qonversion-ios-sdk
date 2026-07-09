@@ -69,7 +69,10 @@ final class MiscAssembly {
     }
     
     func requestsStorage() -> RequestsStorageInterface {
-        let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue)
+        // Scoped by apiKey: the replayed requests are stamped with the CURRENT
+        // Authorization, so another project's queue must never leak into it.
+        let storeKey = InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue + "." + apiKey
+        let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: storeKey)
 
         return requestsStorage
     }

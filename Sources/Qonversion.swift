@@ -73,13 +73,13 @@ public final class Qonversion {
         return try await userManager.identify(userId)
     }
 
-    /// Unlinks the current user from your unique user id and resets to a fresh anonymous user.
-    public func logout() {
+    /// Unlinks the current user from your unique user id and resets to a
+    /// fresh anonymous user. Await the call before the next identify — the
+    /// reset is guaranteed to be finished when it returns.
+    public func logout() async {
         guard let userManager else { return }
 
-        Task {
-            await userManager.logout()
-        }
+        await userManager.logout()
     }
 
     /// Returns information about the current Qonversion user.
