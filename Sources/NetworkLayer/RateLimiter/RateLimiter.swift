@@ -11,11 +11,18 @@ final class RateLimiter: RateLimiterInterface {
     private var maxRequestsPerSecond: UInt
     private var requests: [Int: [TimeInterval]] = [:]
 
+    // Concurrent requests validate simultaneously; the check-then-save below
+    // is a read-modify-write over the shared map.
+    private let lock = NSLock()
+
     init(maxRequestsPerSecond: UInt) {
         self.maxRequestsPerSecond = maxRequestsPerSecond
     }
 
     func validateRateLimit(for request: Request) -> QonversionError? {
+        lock.lock()
+        defer { lock.unlock() }
+
         let hash: Int = request.hashValue
         let isLimitExceeded: Bool = isRateLimitExceeded(hash: hash)
         if isLimitExceeded {

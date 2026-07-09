@@ -8,6 +8,43 @@
 import XCTest
 @testable import Qonversion
 
+final class UserPropertiesStorageConcurrencyTests: XCTestCase {
+
+    func testConcurrentSavesAndReadsDoNotLoseProperties() async {
+        let storage = UserPropertiesStorage()
+
+        await withTaskGroup(of: Void.self) { group in
+            for index in 0..<200 {
+                group.addTask {
+                    storage.save(Qonversion.UserProperty(key: "key_\(index)", value: "value"))
+                }
+                group.addTask {
+                    _ = storage.all()
+                }
+            }
+        }
+
+        XCTAssertEqual(storage.all().count, 200)
+    }
+
+    func testConcurrentSaveAndClearDoNotCrash() async {
+        let storage = UserPropertiesStorage()
+        let seed = (0..<50).map { Qonversion.UserProperty(key: "seed_\($0)", value: "v") }
+        seed.forEach { storage.save($0) }
+
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { storage.clear(properties: seed) }
+            for index in 0..<100 {
+                group.addTask {
+                    storage.save(Qonversion.UserProperty(key: "new_\(index)", value: "v"))
+                }
+            }
+        }
+
+        XCTAssertEqual(storage.all().count, 100, "the cleared seed must not swallow concurrent saves")
+    }
+}
+
 final class UserPropertiesStorageTests: XCTestCase {
 
     func testNewInstanceStartsEmpty() {

@@ -107,6 +107,21 @@ final class RequestsStorageTests: XCTestCase {
         XCTAssertEqual(storage.fetchRequests(), [])
     }
 
+    func testConcurrentAppendsDoNotLoseRequests() async {
+        let storage = makeStorage(TestDefaults.makeIsolated())
+
+        await withTaskGroup(of: Void.self) { group in
+            for index in 0..<100 {
+                group.addTask {
+                    storage.append(StoredRequest(url: "https://request-\(index)", method: "POST", body: nil, dedupKey: "k\(index)"))
+                }
+            }
+        }
+
+        XCTAssertEqual(storage.fetchRequests().count, RequestsStorage.maxStoredRequests,
+                       "the read-modify-write must be atomic: no lost updates, only the cap trims")
+    }
+
     func testFetchRequestsIgnoresForeignValueUnderTheKey() {
         let defaults = TestDefaults.makeIsolated()
         defaults.set(["not", "stored", "requests"], forKey: storeKey)
