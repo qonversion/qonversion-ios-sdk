@@ -76,8 +76,7 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     
     func purchase(storeId: String, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper else {
-            // StoreKit 1 purchase support lands with the SK1 parity pass.
-            throw QonversionError(type: .storeKitUnavailable)
+            return try await skOnePurchase(storeId: storeId)
         }
 
         if loadedProducts?[storeId] == nil {
@@ -88,6 +87,55 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         }
 
         return try await storeKitWrapper.purchase(product: product, options: options)
+    }
+
+    /// StoreKit 1 purchase path, extracted so the continuation behavior is
+    /// unit-testable on hosts where the StoreKit 2 branch is always available.
+    /// Store-affecting purchase options (quantity, promo offer) are not
+    /// supported on this legacy path.
+    func skOnePurchase(storeId: String) async throws -> Qonversion.Transaction {
+        guard let storeKitOldWrapper else { throw QonversionError(type: .storeKitUnavailable) }
+
+        if loadedOldProducts[storeId] == nil {
+            _ = try? await skOneProducts(for: [storeId])
+        }
+        guard let product: SKProduct = loadedOldProducts[storeId] else {
+            throw QonversionError(type: .storeProductsLoadingFailed)
+        }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            storeKitOldWrapper.purchase(product: product) { [weak self] transactions, error in
+                // The completion outlives the facade (the old wrapper is kept
+                // alive by SKPaymentQueue), so a dead self MUST still resume
+                // the continuation — otherwise the awaiting task hangs forever.
+                guard let self else {
+                    return continuation.resume(throwing: QonversionError(type: .purchaseFailed))
+                }
+
+                if let error {
+                    return continuation.resume(throwing: QonversionError(type: .purchaseFailed, error: error))
+                }
+
+                let candidates: [SKPaymentTransaction] = transactions.filter { $0.payment.productIdentifier == storeId }
+
+                if let purchased: SKPaymentTransaction = candidates.first(where: { $0.transactionState == .purchased }) {
+                    return continuation.resume(returning: self.storeKitMapper.map(purchased, product: product))
+                }
+
+                if candidates.contains(where: { $0.transactionState == .deferred }) {
+                    return continuation.resume(throwing: QonversionError(type: .purchasePending))
+                }
+
+                if let failed: SKPaymentTransaction = candidates.first(where: { $0.transactionState == .failed }) {
+                    if (failed.error as? SKError)?.code == .paymentCancelled {
+                        return continuation.resume(throwing: QonversionError(type: .purchaseCancelled))
+                    }
+                    return continuation.resume(throwing: QonversionError(type: .purchaseFailed, error: failed.error))
+                }
+
+                continuation.resume(throwing: QonversionError(type: .purchaseFailed))
+            }
+        }
     }
 
     func currentEntitlements() async -> [Qonversion.Transaction] {
