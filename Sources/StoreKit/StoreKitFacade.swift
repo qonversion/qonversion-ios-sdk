@@ -57,6 +57,9 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         }
     }
 
+    // Started once from initialize, stopped from tests — still guarded so a
+    // concurrent start cannot double-subscribe.
+    private let observationLock = NSLock()
     private var transactionUpdatesTask: Task<Void, Never>?
     
     init(storeKitOldWrapper: StoreKitOldWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
@@ -187,6 +190,9 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     }
 
     func startObservingTransactionUpdates() {
+        observationLock.lock()
+        defer { observationLock.unlock() }
+
         guard transactionUpdatesTask == nil else { return }
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *),
               let storeKitWrapper else { return }
@@ -210,6 +216,9 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     }
 
     func stopObservingTransactionUpdates() {
+        observationLock.lock()
+        defer { observationLock.unlock() }
+
         transactionUpdatesTask?.cancel()
         transactionUpdatesTask = nil
     }

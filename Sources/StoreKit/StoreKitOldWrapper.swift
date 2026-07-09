@@ -14,6 +14,10 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     
     // Weak: the delegate (facade) holds the wrapper itself.
     weak var delegate: StoreKitOldWrapperDelegate?
+
+    // Mutated from SDK call threads and read/cleared from the SKPaymentQueue
+    // delegate thread.
+    private let completionsLock = NSLock()
     var productsRequest: SKProductsRequest?
     var productsCompletions: [SKProductsRequest: StoreKitOldProductsCompletion] = [:]
     var purchaseCompletions: [SKPayment: StoreKitOldTransactionsCompletion] = [:]
@@ -30,20 +34,22 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     func products(for ids:[String], completion: @escaping  StoreKitOldProductsCompletion) {
         let request = SKProductsRequest.init(productIdentifiers: Set(ids))
         request.delegate = self
-        request.start()
-        
+
+        completionsLock.lock()
         productsRequest = request
         productsCompletions[request] = completion
+        completionsLock.unlock()
+
+        request.start()
     }
     
     func restore(with completion: @escaping StoreKitOldTransactionsCompletion) {
-        defer {
-            restoreCompletions.append(completion)
-        }
-        
-        if restoreCompletions.count > 0 {
-            return
-        }
+        completionsLock.lock()
+        let isRestoreInProgress: Bool = !restoreCompletions.isEmpty
+        restoreCompletions.append(completion)
+        completionsLock.unlock()
+
+        guard !isRestoreInProgress else { return }
         paymentQueue.restoreCompletedTransactions()
     }
     
@@ -56,8 +62,14 @@ class StoreKitOldWrapper: NSObject, StoreKitOldWrapperInterface {
     
     func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion) {
         let payment = SKPayment(product: product)
-        paymentQueue.add(payment)
+
+        // Registered BEFORE the payment is enqueued: the queue delegate may
+        // fire on another thread right away.
+        completionsLock.lock()
         purchaseCompletions[payment] = completion
+        completionsLock.unlock()
+
+        paymentQueue.add(payment)
     }
     
     func finish(transaction: SKPaymentTransaction) {
@@ -73,19 +85,28 @@ extension StoreKitOldWrapper: SKPaymentTransactionObserver {
  
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         let restoredTransactions: [SKPaymentTransaction] = transactions.filter { $0.transactionState == .restored }
-        if restoredTransactions.count > 0, restoreCompletions.count > 0  {
+        completionsLock.lock()
+        let hasRestoreCompletions: Bool = !restoreCompletions.isEmpty
+        completionsLock.unlock()
+        if restoredTransactions.count > 0, hasRestoreCompletions {
             fireRestoreCompletions(with: restoredTransactions)
         }
         
         firePurchaseCompletions(with: transactions)
         
-        if purchaseCompletions.isEmpty {
+        completionsLock.lock()
+        let hasPurchaseCompletions: Bool = !purchaseCompletions.isEmpty
+        completionsLock.unlock()
+        if !hasPurchaseCompletions {
             delegate?.updated(transactions: transactions)
         }
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
-        guard restoreCompletions.count > 0 else {
+        completionsLock.lock()
+        let hasRestoreCompletions: Bool = !restoreCompletions.isEmpty
+        completionsLock.unlock()
+        guard hasRestoreCompletions else {
             delegate?.handle(restoreTransactionsError: error)
             return
         }
@@ -104,7 +125,11 @@ extension StoreKitOldWrapper: SKPaymentTransactionObserver {
 extension StoreKitOldWrapper: SKProductsRequestDelegate {
    
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-        guard let completion: StoreKitOldProductsCompletion = productsCompletions[request] else {
+        completionsLock.lock()
+        let completion: StoreKitOldProductsCompletion? = productsCompletions.removeValue(forKey: request)
+        completionsLock.unlock()
+
+        guard let completion else {
             delegate?.handle(productsResponse: response)
             return
         }
@@ -125,17 +150,26 @@ extension StoreKitOldWrapper: SKProductsRequestDelegate {
 extension StoreKitOldWrapper {
     
     func fireRestoreCompletions(with transactions: [SKPaymentTransaction], error: Error? = nil) {
-        restoreCompletions.forEach { $0(transactions, error) }
+        completionsLock.lock()
+        let completions: [StoreKitOldTransactionsCompletion] = restoreCompletions
         restoreCompletions.removeAll()
+        completionsLock.unlock()
+
+        completions.forEach { $0(transactions, error) }
     }
     
     func firePurchaseCompletions(with transactions: [SKPaymentTransaction]) {
+        completionsLock.lock()
         let completionsCopy: [SKPayment: StoreKitOldTransactionsCompletion] = purchaseCompletions
+        completionsLock.unlock()
+
         completionsCopy.keys.forEach { payment in
             if let _: SKPaymentTransaction = transactions.first(where: { $0.payment == payment }),
                let completion: StoreKitOldTransactionsCompletion = completionsCopy[payment] {
                 completion(transactions, nil)
+                completionsLock.lock()
                 purchaseCompletions[payment] = nil
+                completionsLock.unlock()
             }
         }
     }
