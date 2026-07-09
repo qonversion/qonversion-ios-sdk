@@ -22,31 +22,110 @@ Qonversion - In-app subscription monetization: implement subscriptions and grow 
 
 ## Getting Started
 
-The SDK is distributed via Swift Package Manager only:
+### Requirements
+
+- iOS 13.0+ / macOS 10.15+ / tvOS 13.0+ / watchOS 6.0+ / visionOS 1.0+
+- Purchases run on StoreKit 2 (iOS 15+) with an automatic StoreKit 1 fallback on older systems
+- The public API is async/await-first
+
+### Installation
+
+The SDK is distributed via Swift Package Manager only. In Xcode: **File → Add Package Dependencies…** and paste:
 
 ```
 https://github.com/qonversion/qonversion-ios-sdk
 ```
 
-Initialize the SDK on app launch:
+Or add it to your `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/qonversion/qonversion-ios-sdk", from: "6.0.0")
+]
+```
+
+### Initialization
+
+Initialize the SDK once, as early as possible on app launch:
 
 ```swift
 import Qonversion
 
-let configuration = Qonversion.Configuration(apiKey: "YOUR_PROJECT_KEY", launchMode: .subscriptionManagement)
+let configuration = Qonversion.Configuration(
+    apiKey: "YOUR_PROJECT_KEY",          // Qonversion Dashboard → Settings
+    launchMode: .subscriptionManagement
+)
 Qonversion.initialize(with: configuration)
 ```
 
-Load products and make a purchase — the transaction is finished only after
-Qonversion confirms it; when the backend is unreachable, the purchase still
-succeeds with locally calculated entitlements:
+Pick the launch mode by who owns the purchase flow:
+
+| Mode | Who processes purchases | Who finishes transactions |
+|---|---|---|
+| `.subscriptionManagement` | The SDK (`purchase`, `restore`) | The SDK, strictly after Qonversion confirms the purchase |
+| `.analytics` | Your own StoreKit code | Your app — the SDK only tracks (`handlePurchases`) and never finishes anything |
+
+Optional configuration:
+
+```swift
+Qonversion.Configuration(
+    apiKey: "YOUR_PROJECT_KEY",
+    launchMode: .subscriptionManagement,
+    proxyURL: "your.proxy.domain",             // route API traffic through your server
+    entitlementsCacheLifetime: .month,         // how long cached entitlements power the offline fallback
+    logLevel: .warning                         // .verbose ... .disabled
+)
+```
+
+### User identity
+
+Every install gets an anonymous Qonversion user. Link it to your own user id after sign-in — if the id is already linked to another Qonversion user, the SDK switches to that user and invalidates every user-scoped cache:
+
+```swift
+try await Qonversion.shared.identify("your_user_id")
+
+await Qonversion.shared.logout()   // back to a fresh anonymous user; await it before the next identify
+
+let user = try await Qonversion.shared.userInfo()
+```
+
+Installs updated from the previous production SDK keep their user automatically — the stored uid is migrated on first launch.
+
+### Products and purchases
 
 ```swift
 let products = try await Qonversion.shared.products()
+
 let result = try await Qonversion.shared.purchase(products[0])
+// result.transaction — the verified store transaction
+// result.entitlements — the user's access after the purchase
 ```
 
-Check the user's access:
+The transaction is finished **only after Qonversion confirms the purchase**. If the backend is unreachable, the purchase still succeeds with locally calculated entitlements, and the report is retried automatically (offline queue + a sweep of unfinished transactions on the next launch).
+
+Attach context to a purchase — quantity, the remote config context and the screen that initiated it:
+
+```swift
+let options = Qonversion.PurchaseOptions(quantity: 1, contextKeys: ["main_paywall"], screenUid: "scr_42")
+try await Qonversion.shared.purchase(product, options: options)
+```
+
+Promotional offers are signed by Qonversion:
+
+```swift
+let offer = try await Qonversion.shared.getPromotionalOffer(for: product, discountId: "promo_id")
+try await Qonversion.shared.purchase(product, options: Qonversion.PurchaseOptions(promoOffer: offer))
+```
+
+Restore and history:
+
+```swift
+let entitlements = try await Qonversion.shared.restore()
+
+Qonversion.shared.syncHistoricalData()   // once per install; call it on the first launch of the integrated build
+```
+
+### Entitlements
 
 ```swift
 let entitlements = try await Qonversion.shared.checkEntitlements()
@@ -55,24 +134,53 @@ if entitlements["premium"]?.active == true {
 }
 ```
 
-Follow out-of-band updates (Ask to Buy approvals, renewals, purchases on
-other devices) and App Store promoted purchases — both are AsyncStreams in
-the style of StoreKit's `Transaction.updates`:
+When Qonversion is unreachable (5xx / connection issues), entitlements are calculated locally from StoreKit data with the production-grade rules and the persisted cache — purchases and restores never fail because of a temporary outage. For the very first launch without a network connection, bundle a fallback file `qonversion_ios_fallbacks.json` with your products and entitlement definitions.
+
+### Update streams
+
+Both streams follow the style of StoreKit's `Transaction.updates`: every access returns an independent stream, so subscribe from as many places as you need.
+
+Entitlements refreshed by out-of-band transactions — Ask to Buy approvals, renewals, purchases on other devices (subscription-management mode):
 
 ```swift
-for await entitlements in Qonversion.shared.entitlementsUpdates { /* ... */ }
+for await entitlements in Qonversion.shared.entitlementsUpdates {
+    // refresh the UI
+}
+```
 
+Purchases promoted in the App Store — call `purchase()` right away or keep the intent and trigger it when the app is ready (e.g. after onboarding); intents arriving before your subscription are buffered:
+
+```swift
 for await intent in Qonversion.shared.promoPurchaseIntents {
     try await intent.purchase()
 }
 ```
 
-In Analytics mode, report the purchases your own StoreKit 2 code makes:
+### Analytics mode
+
+Report the purchases your own StoreKit 2 code makes, so Qonversion can track them. The SDK never finishes these transactions — your app owns their lifecycle:
 
 ```swift
-await Qonversion.shared.handlePurchases([verificationResult])
+let result = try await product.purchase()
+if case .success(let verificationResult) = result {
+    await Qonversion.shared.handlePurchases([verificationResult])
+}
 ```
 
+### User properties and attribution
+
+```swift
+Qonversion.shared.setUserProperty("test@example.com", key: .email)
+Qonversion.shared.setCustomUserProperty("value", key: "my_key")
+let properties = try await Qonversion.shared.userProperties()
+
+Qonversion.shared.collectAppleSearchAdsAttribution()
+Qonversion.shared.collectAdvertisingId()   // after the ATT permission is granted
+```
+
+### Sample
+
+The `Sample` scheme in `Qonversion.xcodeproj` is a working demo of every flow above — set your project key in `AppDelegate` and run.
 
 ## In-App Subscription Implementation & Management
 

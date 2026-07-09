@@ -9,10 +9,6 @@ import Foundation
 import OSLog
 import StoreKit
 
-fileprivate enum SDKLevelConstants: String {
-    case version = "1.0"
-}
-
 fileprivate enum IntConstants: UInt {
     case maxRequestsPerSecond = 5
 }
@@ -129,7 +125,7 @@ final class MiscAssembly {
     
     func headersBuilder() -> HeadersBuilderInterface {
         let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
-        let headersBuilder = HeadersBuilder(apiKey: apiKey, sdkVersion: SDKLevelConstants.version.rawValue, deviceInfoCollector: deviceInfoCollector, userDefaults: userDefaults)
+        let headersBuilder = HeadersBuilder(apiKey: apiKey, sdkVersion: SDKVersion.current, deviceInfoCollector: deviceInfoCollector, userDefaults: userDefaults)
         
         return headersBuilder
     }

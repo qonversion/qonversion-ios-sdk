@@ -21,8 +21,8 @@ lane :bump do |options|
   new_version = options[:version]
 
   # The SDK version lives in a single Swift constant (sent in request headers).
-  file_path = Dir['../Sources/Assemblies/MiscAssembly.swift'].first
-  update_file(file_path, /case version = ".*"/, "case version = \"#{new_version}\"")
+  file_path = Dir['../Sources/SDKVersion.swift'].first
+  update_file(file_path, /static let current: String = ".*"/, "static let current: String = \"#{new_version}\"")
 end
 
 def get_tag
