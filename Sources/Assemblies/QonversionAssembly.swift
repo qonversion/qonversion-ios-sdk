@@ -31,7 +31,8 @@ final class QonversionAssembly {
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose) {
         let userDefaults = userDefaults ?? UserDefaults.standard
-        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime, logLevel: logLevel))
+        let internalConfig = InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime, logLevel: logLevel)
+        self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: internalConfig)
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly, baseURL: baseURL)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
 
@@ -63,7 +64,8 @@ final class QonversionAssembly {
         let delayCalculator: IncrementalDelayCalculator = miscAssembly.delayCalculator()
         let propertiesStorage: PropertiesStorage = miscAssembly.userPropertiesStorage()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
-        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, userManager: userManager(), logger: logger)
+        let userManager: UserManagerInterface = userManager()
+        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, userManager: userManager, logger: logger)
         
         return userPropertiesManager
     }
@@ -107,15 +109,19 @@ final class QonversionAssembly {
 
         let purchasesService: PurchasesServiceInterface = servicesAssembly.purchasesService()
         let storeKitFacade: StoreKitFacade = servicesAssembly.storeKitFacade()
+        let localStorage: LocalStorageInterface = miscAssembly.localStorage()
+        let purchaseAssociationsStorage = PurchaseAssociationsStorage(localStorage: localStorage)
+        let userManager: UserManagerInterface = userManager()
+        let entitlementsManager: EntitlementsManagerInterface = entitlementsManager()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let purchasesManager = PurchasesManager(
             purchasesService: purchasesService,
             storeKitFacade: storeKitFacade,
-            userManager: userManager(),
-            entitlementsManager: entitlementsManager(),
+            userManager: userManager,
+            entitlementsManager: entitlementsManager,
             userIdProvider: miscAssembly.internalConfig,
             launchModeProvider: miscAssembly.internalConfig,
-            purchaseAssociationsStorage: PurchaseAssociationsStorage(localStorage: miscAssembly.localStorage()),
+            purchaseAssociationsStorage: purchaseAssociationsStorage,
             logger: logger
         )
 
@@ -130,15 +136,19 @@ final class QonversionAssembly {
     func entitlementsManager() -> EntitlementsManagerInterface {
         let entitlementsService: EntitlementsServiceInterface = servicesAssembly.entitlementsService()
         let storeKitFacade: StoreKitFacadeInterface = servicesAssembly.storeKitFacade()
+        let productsDataSource: ProductsDataSource = sharedProductsManager()
+        let userManager: UserManagerInterface = userManager()
+        let localStorage: LocalStorageInterface = miscAssembly.localStorage()
+        let cacheLifetime: TimeInterval = miscAssembly.internalConfig.entitlementsCacheLifetime.seconds
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let entitlementsManager = EntitlementsManager(
             entitlementsService: entitlementsService,
             storeKitFacade: storeKitFacade,
-            productsDataSource: sharedProductsManager(),
-            userManager: userManager(),
+            productsDataSource: productsDataSource,
+            userManager: userManager,
             userIdProvider: miscAssembly.internalConfig,
-            localStorage: miscAssembly.localStorage(),
-            cacheLifetime: miscAssembly.internalConfig.entitlementsCacheLifetime.seconds,
+            localStorage: localStorage,
+            cacheLifetime: cacheLifetime,
             logger: logger
         )
 

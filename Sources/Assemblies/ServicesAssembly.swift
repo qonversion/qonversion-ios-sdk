@@ -45,7 +45,10 @@ final class ServicesAssembly {
     }
     
     func fallbackService() -> FallbackServiceInterface {
-        return FallbackService(bundle: .main, decoder: miscAssembly.jsonDecoder())
+        let decoder: JSONDecoder = miscAssembly.jsonDecoder()
+        let fallbackService = FallbackService(bundle: .main, decoder: decoder)
+
+        return fallbackService
     }
 
     func storeKitMapper() -> StoreKitMapperInterface {
@@ -109,7 +112,8 @@ final class ServicesAssembly {
     
     func purchasesService() -> PurchasesServiceInterface {
         let requestProcessor: RequestProcessorInterface = requestProcessor()
-        let purchasesService = PurchasesService(requestProcessor: requestProcessor, appBundleId: Bundle.main.bundleIdentifier ?? "")
+        let appBundleId: String = Bundle.main.bundleIdentifier ?? ""
+        let purchasesService = PurchasesService(requestProcessor: requestProcessor, appBundleId: appBundleId)
 
         return purchasesService
     }
