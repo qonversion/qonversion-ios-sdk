@@ -18,9 +18,60 @@ Qonversion - In-app subscription monetization: implement subscriptions and grow 
 
 [![SPM Compatible](https://img.shields.io/badge/SPM-compatible-green.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup)
 [![Release](https://img.shields.io/github/v/release/qonversion/qonversion-ios-sdk?style=flat)](https://github.com/qonversion/qonversion-ios-sdk/releases)
-[![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup#install-via-carthage)
-[![SwiftPM compatible](https://img.shields.io/badge/SwiftPM-compatible-4BC51D.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup#install-via-swift-package-manager)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://qonversion.io)
+
+## Getting Started
+
+The SDK is distributed via Swift Package Manager only:
+
+```
+https://github.com/qonversion/qonversion-ios-sdk
+```
+
+Initialize the SDK on app launch:
+
+```swift
+import Qonversion
+
+let configuration = Qonversion.Configuration(apiKey: "YOUR_PROJECT_KEY", launchMode: .subscriptionManagement)
+Qonversion.initialize(with: configuration)
+```
+
+Load products and make a purchase — the transaction is finished only after
+Qonversion confirms it; when the backend is unreachable, the purchase still
+succeeds with locally calculated entitlements:
+
+```swift
+let products = try await Qonversion.shared.products()
+let result = try await Qonversion.shared.purchase(products[0])
+```
+
+Check the user's access:
+
+```swift
+let entitlements = try await Qonversion.shared.checkEntitlements()
+if entitlements["premium"]?.active == true {
+    // unlock the feature
+}
+```
+
+Follow out-of-band updates (Ask to Buy approvals, renewals, purchases on
+other devices) and App Store promoted purchases — both are AsyncStreams in
+the style of StoreKit's `Transaction.updates`:
+
+```swift
+for await entitlements in Qonversion.shared.entitlementsUpdates { /* ... */ }
+
+for await intent in Qonversion.shared.promoPurchaseIntents {
+    try await intent.purchase()
+}
+```
+
+In Analytics mode, report the purchases your own StoreKit 2 code makes:
+
+```swift
+await Qonversion.shared.handlePurchases([verificationResult])
+```
 
 
 ## In-App Subscription Implementation & Management
