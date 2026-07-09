@@ -122,6 +122,7 @@ final class QonversionAssembly {
             userIdProvider: miscAssembly.internalConfig,
             launchModeProvider: miscAssembly.internalConfig,
             purchaseAssociationsStorage: purchaseAssociationsStorage,
+            localStorage: localStorage,
             logger: logger
         )
 

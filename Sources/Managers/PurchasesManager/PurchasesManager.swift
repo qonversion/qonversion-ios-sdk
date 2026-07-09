@@ -6,6 +6,10 @@
 import Foundation
 import StoreKit
 
+fileprivate enum Constants: String {
+    case historicalDataSyncedKey = "qonversion.keys.historicalDataSynced"
+}
+
 // @unchecked: mutable state lives in the actor gate and lock-guarded storages.
 final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
@@ -16,6 +20,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     private let userIdProvider: UserIdProvider
     private let launchModeProvider: LaunchModeProvider
     private let purchaseAssociationsStorage: PurchaseAssociationsStorage
+    private let localStorage: LocalStorageInterface
     private let logger: LoggerWrapper
 
     private let reportsGate = TransactionReportsGate()
@@ -44,6 +49,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         userIdProvider: UserIdProvider,
         launchModeProvider: LaunchModeProvider,
         purchaseAssociationsStorage: PurchaseAssociationsStorage,
+        localStorage: LocalStorageInterface,
         logger: LoggerWrapper
     ) {
         self.purchasesService = purchasesService
@@ -53,6 +59,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         self.userIdProvider = userIdProvider
         self.launchModeProvider = launchModeProvider
         self.purchaseAssociationsStorage = purchaseAssociationsStorage
+        self.localStorage = localStorage
         self.logger = logger
     }
 
@@ -210,6 +217,53 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 }
                 logger.error("Failed to report a handed transaction: " + error.message)
             }
+        }
+    }
+
+    func syncHistoricalData() async {
+        // Once per install, like the production SDK; a failed attempt stays
+        // retriable on the next call.
+        guard !localStorage.bool(forKey: Constants.historicalDataSyncedKey.rawValue) else { return }
+
+        let userId: String
+        do {
+            _ = try await userManager.obtainUser()
+            userId = userIdProvider.getUserId()
+        } catch {
+            logger.error("Skipping historical data sync: no backend user: " + error.message)
+            return
+        }
+
+        // Transaction.all, deliberately WITHOUT AppStore.sync(): a background
+        // sync must never trigger the App Store sign-in prompt.
+        let history: [Qonversion.Transaction]
+        do {
+            history = try await storeKitFacade.historicalData()
+        } catch {
+            logger.error("Failed to fetch historical transactions: " + error.message)
+            return
+        }
+
+        let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(history)
+
+        var hadFailures = false
+        for transaction in latest {
+            if let id: String = transaction.id {
+                guard await reportsGate.tryTake(id) else { continue }
+            }
+            do {
+                try await purchasesService.send(transaction, userId: userId)
+            } catch {
+                if let id: String = transaction.id {
+                    await reportsGate.release(id)
+                }
+                hadFailures = true
+                logger.error("Failed to report a historical transaction: " + error.message)
+            }
+        }
+
+        if !hadFailures {
+            localStorage.set(bool: true, forKey: Constants.historicalDataSyncedKey.rawValue)
         }
     }
 
