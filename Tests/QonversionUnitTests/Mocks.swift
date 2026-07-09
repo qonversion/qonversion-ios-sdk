@@ -553,6 +553,13 @@ final class MockUserManager: UserManagerInterface {
         logoutCallsCount += 1
     }
 
+    private(set) var switchedToUserIds: [String] = []
+
+    func switchToUser(with uid: String) async throws {
+        switchedToUserIds.append(uid)
+        if let error { throw error }
+    }
+
     func userInfo() async throws -> Qonversion.User {
         userInfoCallsCount += 1
         if let error { throw error }
@@ -581,10 +588,14 @@ final class MockPurchasesService: PurchasesServiceInterface {
     var promotionalOfferResult: Qonversion.PromotionalOffer?
     private(set) var promotionalOfferCalls: [(userId: String, offerId: String, productStoreId: String)] = []
 
-    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
+    var reportedOwnerUserId: String?
+
+    @discardableResult
+    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws -> String? {
         sentTransactions.append((transaction, userId, options))
         await onSend?()
         if let error { throw error }
+        return reportedOwnerUserId
     }
 
     func promotionalOffer(userId: String, offerId: String, productStoreId: String) async throws -> Qonversion.PromotionalOffer {
