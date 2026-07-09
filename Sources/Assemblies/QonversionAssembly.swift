@@ -115,6 +115,7 @@ final class QonversionAssembly {
             entitlementsManager: entitlementsManager(),
             userIdProvider: miscAssembly.internalConfig,
             launchModeProvider: miscAssembly.internalConfig,
+            purchaseAssociationsStorage: PurchaseAssociationsStorage(localStorage: miscAssembly.localStorage()),
             logger: logger
         )
 

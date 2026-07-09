@@ -14,6 +14,7 @@ final class PurchasesManager: PurchasesManagerInterface {
     private let entitlementsManager: EntitlementsManagerInterface
     private let userIdProvider: UserIdProvider
     private let launchModeProvider: LaunchModeProvider
+    private let purchaseAssociationsStorage: PurchaseAssociationsStorage
     private let logger: LoggerWrapper
 
     private let reportsGate = TransactionReportsGate()
@@ -41,6 +42,7 @@ final class PurchasesManager: PurchasesManagerInterface {
         entitlementsManager: EntitlementsManagerInterface,
         userIdProvider: UserIdProvider,
         launchModeProvider: LaunchModeProvider,
+        purchaseAssociationsStorage: PurchaseAssociationsStorage,
         logger: LoggerWrapper
     ) {
         self.purchasesService = purchasesService
@@ -49,6 +51,7 @@ final class PurchasesManager: PurchasesManagerInterface {
         self.entitlementsManager = entitlementsManager
         self.userIdProvider = userIdProvider
         self.launchModeProvider = launchModeProvider
+        self.purchaseAssociationsStorage = purchaseAssociationsStorage
         self.logger = logger
     }
 
@@ -57,10 +60,32 @@ final class PurchasesManager: PurchasesManagerInterface {
         // The backend user must exist before the purchase is reported.
         _ = try await userManager.obtainUser()
 
-        let transaction = try await storeKitFacade.purchase(storeId: product.storeId, options: options ?? Qonversion.PurchaseOptions())
+        // Persisted for the whole purchase lifecycle: a report happening
+        // after a relaunch (unfinished sweep, Ask to Buy approval) must still
+        // carry the paywall context of THIS call.
+        if options?.contextKeys?.isEmpty == false || options?.screenUid != nil {
+            purchaseAssociationsStorage.store(
+                PurchaseAssociations(contextKeys: options?.contextKeys, screenUid: options?.screenUid),
+                for: product.storeId
+            )
+        }
+
+        let transaction: Qonversion.Transaction
+        do {
+            transaction = try await storeKitFacade.purchase(storeId: product.storeId, options: options ?? Qonversion.PurchaseOptions())
+        } catch {
+            // A pending purchase (Ask to Buy) arrives later via the listener
+            // and must keep its associations; any other failure means no
+            // transaction will ever match them.
+            if (error as? QonversionError)?.type != .purchasePending {
+                purchaseAssociationsStorage.remove(for: product.storeId)
+            }
+            throw error
+        }
 
         do {
             try await purchasesService.send(transaction, userId: userIdProvider.getUserId(), options: options)
+            purchaseAssociationsStorage.remove(for: product.storeId)
         } catch {
             // Production fault tolerance: when the backend is unreachable the
             // purchase still succeeds with locally calculated entitlements.
@@ -134,6 +159,14 @@ final class PurchasesManager: PurchasesManagerInterface {
         return try await purchasesService.promotionalOffer(userId: userIdProvider.getUserId(), offerId: discountId, productStoreId: product.storeId)
     }
 
+    /// Associations of the original SDK-initiated purchase of this product,
+    /// if the report has not delivered them yet.
+    private func reportOptions(for transaction: Qonversion.Transaction) -> Qonversion.PurchaseOptions? {
+        guard let associations = purchaseAssociationsStorage.associations(for: transaction.productId) else { return nil }
+
+        return Qonversion.PurchaseOptions(contextKeys: associations.contextKeys, screenUid: associations.screenUid)
+    }
+
     func startObservingTransactions() {
         storeKitFacade.startObservingTransactionUpdates()
     }
@@ -191,7 +224,8 @@ final class PurchasesManager: PurchasesManagerInterface {
                 guard await reportsGate.tryTake(id) else { continue }
             }
             do {
-                try await purchasesService.send(transaction, userId: userIdProvider.getUserId())
+                try await purchasesService.send(transaction, userId: userIdProvider.getUserId(), options: reportOptions(for: transaction))
+                purchaseAssociationsStorage.remove(for: transaction.productId)
                 await storeKitFacade.finish(transaction)
             } catch {
                 if let id = transaction.id {
@@ -241,7 +275,8 @@ extension PurchasesManager: StoreKitFacadeDelegate {
             }
             do {
                 _ = try await self.userManager.obtainUser()
-                try await self.purchasesService.send(transaction, userId: self.userIdProvider.getUserId())
+                try await self.purchasesService.send(transaction, userId: self.userIdProvider.getUserId(), options: self.reportOptions(for: transaction))
+                self.purchaseAssociationsStorage.remove(for: transaction.productId)
             } catch {
                 if let id = transaction.id {
                     await self.reportsGate.release(id)
