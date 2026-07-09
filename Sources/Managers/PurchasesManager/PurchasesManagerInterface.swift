@@ -47,6 +47,11 @@ protocol PurchasesManagerInterface: AnyObject {
     /// Domain-typed core of the ingestion above.
     func handle(transactions: [Qonversion.Transaction]) async
 
+    /// Reports the historical store transactions (latest per product) to the
+    /// backend once per install. Never finishes them and never triggers the
+    /// App Store sign-in prompt.
+    func syncHistoricalData() async
+
     /// Re-reports transactions left unfinished by previous sessions and
     /// finishes them after the backend confirms. Does nothing in Analytics
     /// mode, where the host app owns the transaction lifecycle. Deduplicated

@@ -228,3 +228,143 @@ private final class RecordingFacadeDelegate: StoreKitFacadeDelegate {
         updatedTransactions.append(transaction)
     }
 }
+
+// MARK: - StoreKit 1 purchase path
+
+/// SKProduct/SKPaymentTransaction stand-ins: the real initializers produce
+/// empty objects, so the readonly fields are overridden.
+private final class FakeSKProduct: SKProduct {
+    private let id: String
+    init(id: String) { self.id = id; super.init() }
+    override var productIdentifier: String { id }
+    // The empty SKProduct backs these with nil and crashes on access.
+    override var price: NSDecimalNumber { NSDecimalNumber(string: "9.99") }
+    override var priceLocale: Locale { Locale(identifier: "en_US") }
+}
+
+private final class FakeSKTransaction: SKPaymentTransaction {
+    private let fakePayment: SKPayment
+    private let state: SKPaymentTransactionState
+    private let fakeError: Error?
+
+    init(productId: String, state: SKPaymentTransactionState, error: Error? = nil) {
+        self.fakePayment = SKPayment(product: FakeSKProduct(id: productId))
+        self.state = state
+        self.fakeError = error
+        super.init()
+    }
+
+    override var payment: SKPayment { fakePayment }
+    override var transactionState: SKPaymentTransactionState { state }
+    override var error: Error? { fakeError }
+    override var transactionIdentifier: String? { "sk1-transaction" }
+}
+
+final class StoreKitOldPurchaseTests: XCTestCase {
+
+    private var oldWrapper: MockStoreKitOldWrapper!
+    private var facade: StoreKitFacade!
+
+    override func setUp() {
+        super.setUp()
+        oldWrapper = MockStoreKitOldWrapper()
+        facade = StoreKitFacade(storeKitOldWrapper: oldWrapper, storeKitMapper: StoreKitMapper())
+        facade.loadedOldProducts = ["com.app.pro": FakeSKProduct(id: "com.app.pro")]
+    }
+
+    override func tearDown() {
+        facade = nil
+        oldWrapper = nil
+        super.tearDown()
+    }
+
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
+    func testSuccessfulPurchaseMapsThePurchasedTransaction() async throws {
+        async let purchased = facade.skOnePurchase(storeId: "com.app.pro")
+        await waitUntil { self.oldWrapper.purchaseCompletions.count >= 1 }
+
+        oldWrapper.purchaseCompletions.first?([FakeSKTransaction(productId: "com.app.pro", state: .purchased)], nil)
+
+        let transaction = try await purchased
+        XCTAssertEqual(transaction.productId, "com.app.pro")
+        XCTAssertEqual(transaction.id, "sk1-transaction")
+        XCTAssertNotNil(transaction.skPaymentTransaction, "finish must be able to route back to StoreKit 1")
+    }
+
+    func testCancelledPurchaseThrowsPurchaseCancelled() async {
+        async let purchased = facade.skOnePurchase(storeId: "com.app.pro")
+        await waitUntil { self.oldWrapper.purchaseCompletions.count >= 1 }
+
+        let cancelled = FakeSKTransaction(productId: "com.app.pro", state: .failed, error: SKError(.paymentCancelled))
+        oldWrapper.purchaseCompletions.first?([cancelled], nil)
+
+        do {
+            _ = try await purchased
+            XCTFail("Expected purchaseCancelled")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseCancelled)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testDeferredPurchaseThrowsPurchasePending() async {
+        async let purchased = facade.skOnePurchase(storeId: "com.app.pro")
+        await waitUntil { self.oldWrapper.purchaseCompletions.count >= 1 }
+
+        oldWrapper.purchaseCompletions.first?([FakeSKTransaction(productId: "com.app.pro", state: .deferred)], nil)
+
+        do {
+            _ = try await purchased
+            XCTFail("Expected purchasePending")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchasePending)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testFailedPurchaseWithoutCancellationThrowsPurchaseFailed() async {
+        async let purchased = facade.skOnePurchase(storeId: "com.app.pro")
+        await waitUntil { self.oldWrapper.purchaseCompletions.count >= 1 }
+
+        let failed = FakeSKTransaction(productId: "com.app.pro", state: .failed, error: SKError(.paymentInvalid))
+        oldWrapper.purchaseCompletions.first?([failed], nil)
+
+        do {
+            _ = try await purchased
+            XCTFail("Expected purchaseFailed")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testUnknownProductThrowsWithoutStorePurchase() async {
+        // The product cannot be loaded: the wrapper products request never
+        // resolves in this mock, so the purchase must fail fast.
+        facade.loadedOldProducts = [:]
+
+        async let purchased = facade.skOnePurchase(storeId: "unknown")
+        await waitUntil { self.oldWrapper.productsCompletions.count >= 1 }
+        oldWrapper.productsCompletions.first?(nil, MockError.stubbed)
+
+        do {
+            _ = try await purchased
+            XCTFail("Expected storeProductsLoadingFailed")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .storeProductsLoadingFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
+        XCTAssertTrue(oldWrapper.purchasedProducts.isEmpty)
+    }
+}

@@ -358,7 +358,13 @@ final class MockStoreKitOldWrapper: StoreKitOldWrapperInterface {
     func presentCodeRedemptionSheet() { }
     #endif
 
-    func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion) { }
+    private(set) var purchasedProducts: [SKProduct] = []
+    private(set) var purchaseCompletions: [StoreKitOldTransactionsCompletion] = []
+
+    func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion) {
+        purchasedProducts.append(product)
+        purchaseCompletions.append(completion)
+    }
 
     func finish(transaction: SKPaymentTransaction) {
         finishedTransactions.append(transaction)

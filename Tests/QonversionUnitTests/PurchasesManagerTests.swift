@@ -50,6 +50,7 @@ final class PurchasesManagerTests: XCTestCase {
             userIdProvider: config,
             launchModeProvider: config,
             purchaseAssociationsStorage: PurchaseAssociationsStorage(localStorage: localStorage),
+            localStorage: localStorage,
             logger: LoggerWrapper()
         )
     }
@@ -525,6 +526,57 @@ final class PurchasesManagerTests: XCTestCase {
         await manager.handle(transactions: [makeTransaction(id: "t1")])
 
         XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
+    // MARK: - historical data sync
+
+    func testSyncHistoricalDataReportsLatestTransactionPerProductWithoutFinishing() async {
+        let older = makeTransaction(id: "old", purchaseDate: Date(timeIntervalSince1970: 1_600_000_000))
+        let newer = makeTransaction(id: "new", purchaseDate: Date(timeIntervalSince1970: 1_700_000_000))
+        facade.historicalDataResult = [older, newer]
+
+        await manager.syncHistoricalData()
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "the user gate must be passed first")
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["new"], "only the latest transaction per product is reported")
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "historical transactions are never finished")
+    }
+
+    func testSyncHistoricalDataRunsOncePerInstall() async {
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+
+        await manager.syncHistoricalData()
+        await manager.syncHistoricalData()
+
+        XCTAssertEqual(service.sentTransactions.count, 1)
+
+        // The flag is persisted: a fresh manager over the same storage skips too.
+        let relaunched = makeManager()
+        await relaunched.syncHistoricalData()
+        XCTAssertEqual(service.sentTransactions.count, 1)
+    }
+
+    func testSyncHistoricalDataFailureIsRetriableOnNextCall() async {
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+        service.error = MockError.stubbed
+
+        await manager.syncHistoricalData()
+
+        service.error = nil
+        await manager.syncHistoricalData()
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t1"], "a failed sync must not latch the once-per-install flag")
+    }
+
+    func testSyncHistoricalDataSharesTheDedupGateWithTheListener() async {
+        let transaction = makeTransaction(id: "t1")
+        manager.transactionUpdated(transaction)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        facade.historicalDataResult = [transaction]
+        await manager.syncHistoricalData()
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "an already-reported transaction must not be re-sent")
     }
 
     // MARK: - persisted purchase associations (contextKeys / screenUid)

@@ -159,6 +159,18 @@ public final class Qonversion: @unchecked Sendable {
         return purchasesManager.entitlementsUpdates()
     }
 
+    /// Sends the historical App Store transactions to Qonversion once per
+    /// install. Call it right after the first launch of the app version that
+    /// integrates the SDK, so the existing subscribers' data reaches the
+    /// analytics.
+    public func syncHistoricalData() {
+        guard let purchasesManager else { return }
+
+        Task {
+            await purchasesManager.syncHistoricalData()
+        }
+    }
+
     /// Restores the user's purchases and returns the entitlements.
     /// When the backend is unreachable, entitlements are calculated locally.
     @discardableResult
