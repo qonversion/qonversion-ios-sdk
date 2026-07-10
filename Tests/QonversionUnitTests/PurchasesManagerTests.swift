@@ -528,6 +528,66 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(service.sentTransactions.isEmpty)
     }
 
+    // MARK: - restore user switching
+
+    func testRestoreSwitchesToTheTransactionsOwner() async throws {
+        // The backend resolves the reported transaction to ANOTHER user.
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.reportedOwnerUserId = "QON_owner"
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
+    }
+
+    func testRestoreDoesNotSwitchWhenTheOwnerMatches() async throws {
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.reportedOwnerUserId = uid
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.restore()
+
+        XCTAssertTrue(userManager.switchedToUserIds.isEmpty)
+    }
+
+    func testSyncHistoricalDataSwitchesToTheTransactionsOwner() async {
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+        service.reportedOwnerUserId = "QON_owner"
+
+        await manager.syncHistoricalData()
+
+        XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
+    }
+
+    // MARK: - backend entitlements survive a store failure on restore
+
+    func testRestoreReturnsBackendEntitlementsWhenTheStoreFails() async throws {
+        // A Stripe-only user on iOS: the store sync fails (no Apple receipt /
+        // cancelled sign-in), but the backend knows the entitlements.
+        facade.restoreError = QonversionError(type: .purchaseFailed)
+        entitlementsManager.entitlementsResult = ["stripe_premium": entitlement(id: "stripe_premium")]
+
+        let entitlements = try await manager.restore()
+
+        XCTAssertEqual(entitlements.keys.sorted(), ["stripe_premium"])
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
+    func testRestoreRethrowsTheStoreErrorWhenTheBackendHasNothing() async {
+        facade.restoreError = QonversionError(type: .purchaseFailed)
+        entitlementsManager.entitlementsResult = [:]
+
+        do {
+            _ = try await manager.restore()
+            XCTFail("Expected the store error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
     // MARK: - historical data sync
 
     func testSyncHistoricalDataReportsLatestTransactionPerProductWithoutFinishing() async {

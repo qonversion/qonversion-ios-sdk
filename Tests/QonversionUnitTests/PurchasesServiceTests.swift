@@ -38,7 +38,7 @@ final class PurchasesServiceTests: XCTestCase {
 
     func testSendPostsPurchaseWithV4StoreDataAndJwsProof() async throws {
         let processor = MockRequestProcessor()
-        processor.results = [EmptyApiResponse()]
+        processor.results = [PurchaseReportResponse(userId: nil)]
         let service = makeService(processor)
 
         try await service.send(makeTransaction(), userId: "QON_buyer")
@@ -65,7 +65,7 @@ final class PurchasesServiceTests: XCTestCase {
 
     func testSendWithoutPurchaseDateOmitsPurchasedAt() async throws {
         let processor = MockRequestProcessor()
-        processor.results = [EmptyApiResponse()]
+        processor.results = [PurchaseReportResponse(userId: nil)]
         let service = makeService(processor)
 
         try await service.send(makeTransaction(purchaseDate: nil), userId: "QON_buyer")
@@ -78,7 +78,7 @@ final class PurchasesServiceTests: XCTestCase {
 
     func testSendWithOptionsIncludesContextKeysAndScreenUid() async throws {
         let processor = MockRequestProcessor()
-        processor.results = [EmptyApiResponse()]
+        processor.results = [PurchaseReportResponse(userId: nil)]
         let service = makeService(processor)
         let options = Qonversion.PurchaseOptions(contextKeys: ["main", "onboarding"], screenUid: "screen_1")
 
@@ -93,7 +93,7 @@ final class PurchasesServiceTests: XCTestCase {
 
     func testSendWithoutOptionsOmitsAssociationFields() async throws {
         let processor = MockRequestProcessor()
-        processor.results = [EmptyApiResponse()]
+        processor.results = [PurchaseReportResponse(userId: nil)]
         let service = makeService(processor)
 
         try await service.send(makeTransaction(), userId: "QON_buyer")
@@ -107,7 +107,7 @@ final class PurchasesServiceTests: XCTestCase {
 
     func testSendWithoutJwsSendsEmptyReceipt() async throws {
         let processor = MockRequestProcessor()
-        processor.results = [EmptyApiResponse()]
+        processor.results = [PurchaseReportResponse(userId: nil)]
         let service = makeService(processor)
 
         try await service.send(makeTransaction(jws: nil), userId: "QON_buyer")

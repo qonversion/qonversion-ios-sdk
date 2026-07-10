@@ -132,10 +132,22 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         _ = try await userManager.obtainUser()
         let userId: String = userIdProvider.getUserId()
 
-        let restored: [Qonversion.Transaction] = try await storeKitFacade.restore()
+        let restored: [Qonversion.Transaction]
+        do {
+            restored = try await storeKitFacade.restore()
+        } catch {
+            // A store failure (e.g. a Stripe-only user without an Apple
+            // receipt) must not discard the entitlements the backend knows.
+            if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements(), !fetched.isEmpty {
+                logger.warning("Store restore failed, returning backend entitlements: " + error.message)
+                return fetched
+            }
+            throw error
+        }
         // Production rule: only the latest transaction per product participates.
         let latest = EntitlementsCalculator.latestTransactionsPerProduct(restored)
 
+        var resolvedOwnerUserId: String?
         do {
             for transaction in latest {
                 // Skip transactions already reported this session (sweep,
@@ -144,7 +156,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                     guard await reportsGate.tryTake(id) else { continue }
                 }
                 do {
-                    try await purchasesService.send(transaction, userId: userId)
+                    let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId)
+                    if let ownerUserId, ownerUserId != userId {
+                        resolvedOwnerUserId = ownerUserId
+                    }
                 } catch {
                     if let id: String = transaction.id {
                         await reportsGate.release(id)
@@ -159,10 +174,24 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             throw QonversionError(type: .restoreFailed, message: nil, error: error)
         }
 
+        await switchToOwnerIfNeeded(resolvedOwnerUserId)
+
         if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
             return fetched
         }
         return await entitlementsManager.localFallbackEntitlements(for: latest)
+    }
+
+    /// The restored transactions may belong to another Qonversion user — the
+    /// backend resolves the owner and the SDK follows (production parity).
+    private func switchToOwnerIfNeeded(_ ownerUserId: String?) async {
+        guard let ownerUserId else { return }
+
+        do {
+            try await userManager.switchToUser(with: ownerUserId)
+        } catch {
+            logger.error("Failed to switch to the transactions owner: " + error.message)
+        }
     }
 
     func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
@@ -247,12 +276,16 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(history)
 
         var hadFailures = false
+        var resolvedOwnerUserId: String?
         for transaction in latest {
             if let id: String = transaction.id {
                 guard await reportsGate.tryTake(id) else { continue }
             }
             do {
-                try await purchasesService.send(transaction, userId: userId)
+                let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId)
+                if let ownerUserId, ownerUserId != userId {
+                    resolvedOwnerUserId = ownerUserId
+                }
             } catch {
                 if let id: String = transaction.id {
                     await reportsGate.release(id)
@@ -261,6 +294,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 logger.error("Failed to report a historical transaction: " + error.message)
             }
         }
+
+        await switchToOwnerIfNeeded(resolvedOwnerUserId)
 
         if !hadFailures {
             localStorage.set(bool: true, forKey: Constants.historicalDataSyncedKey.rawValue)

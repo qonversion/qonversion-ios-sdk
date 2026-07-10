@@ -5,6 +5,27 @@
 
 import Foundation
 
+/// Wire shape of the created purchase; only the fields the SDK consumes.
+struct PurchaseReportResponse: Decodable {
+
+    /// The resolved owner of the transaction — may differ from the reporting
+    /// user when the store account belongs to another Qonversion user.
+    let userId: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+    }
+
+    init(userId: String?) {
+        self.userId = userId
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        userId = try container.decodeIfPresent(String.self, forKey: .userId)
+    }
+}
+
 /// Wire shape of the backend-signed promotional offer.
 struct PromoOfferSignatureResponse: Decodable {
 
@@ -47,7 +68,8 @@ final class PurchasesService: PurchasesServiceInterface {
     }
 
 
-    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
+    @discardableResult
+    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws -> String? {
         // The v4 store_data shape for the app_store platform; the signed
         // transaction (jws) travels in the receipt slot, the ids next to it
         // let the backend resolve and dedupe before verification.
@@ -79,7 +101,9 @@ final class PurchasesService: PurchasesServiceInterface {
 
         let request = Request.createPurchase(userId: userId, body: body)
         do {
-            _ = try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
+            let response: PurchaseReportResponse = try await requestProcessor.process(request: request, responseType: PurchaseReportResponse.self)
+
+            return response.userId
         } catch {
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
         }
