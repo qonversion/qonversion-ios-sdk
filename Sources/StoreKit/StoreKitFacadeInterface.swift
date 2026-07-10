@@ -17,6 +17,11 @@ protocol StoreKitFacadeInterface: Sendable {
 
     func currentEntitlements() async -> [Qonversion.Transaction]
 
+    /// Whether the user is eligible for the introductory offer of the given
+    /// store product; nil when the store cannot answer (product not loaded,
+    /// not a subscription, or the system is older than StoreKit 2).
+    func isEligibleForIntroOffer(storeId: String) async -> Bool?
+
     func restore() async throws -> [Qonversion.Transaction]
 
     func historicalData() async throws -> [Qonversion.Transaction]

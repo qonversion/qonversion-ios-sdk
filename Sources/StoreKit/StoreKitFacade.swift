@@ -138,6 +138,17 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         }
     }
 
+    func isEligibleForIntroOffer(storeId: String) async -> Bool? {
+        // Only StoreKit 2 can answer eligibility from the subscription
+        // group history; on older systems the status stays unknown.
+        guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) else { return nil }
+
+        let wrappers: [StoreProductWrapper]? = try? await products(for: [storeId])
+        guard let subscription: StoreKit.Product.SubscriptionInfo = wrappers?.first?.product?.subscription else { return nil }
+
+        return await subscription.isEligibleForIntroOffer
+    }
+
     func currentEntitlements() async -> [Qonversion.Transaction] {
         guard #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeKitWrapper: StoreKitWrapperInterface = storeKitWrapper else { return [] }
 

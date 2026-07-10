@@ -15,6 +15,7 @@ final class ProductsManagerTests: XCTestCase {
     private var storeKitFacade: MockStoreKitFacade!
     private var localStorage: MockLocalStorage!
     private var fallbackService: MockFallbackService!
+    private var userManager: MockUserManager!
     private var manager: ProductsManager!
 
     override func setUp() {
@@ -23,21 +24,27 @@ final class ProductsManagerTests: XCTestCase {
         storeKitFacade = MockStoreKitFacade()
         localStorage = MockLocalStorage()
         fallbackService = MockFallbackService()
+        userManager = MockUserManager()
+        userManager.user = Qonversion.User(id: "user_abc")
         manager = makeManager()
     }
 
     private func makeManager() -> ProductsManager {
-        ProductsManager(
+        let config = InternalConfig(userId: "user_abc")
+        return ProductsManager(
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,
             fallbackService: fallbackService,
+            userManager: userManager,
+            userIdProvider: config,
             logger: LoggerWrapper()
         )
     }
 
     override func tearDown() {
         manager = nil
+        userManager = nil
         fallbackService = nil
         productsService = nil
         storeKitFacade = nil

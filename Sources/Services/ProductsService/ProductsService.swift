@@ -36,6 +36,17 @@ final class ProductsService: ProductsServiceInterface {
         }
     }
 
+    func offerings(userId: String) async throws -> [Qonversion.Offering] {
+        let request = Request.getOfferings(userId: userId)
+        do {
+            let list: ListEnvelope<Qonversion.Offering> = try await requestProcessor.process(request: request, responseType: ListEnvelope<Qonversion.Offering>.self)
+
+            return list.data
+        } catch {
+            throw QonversionError(type: .offeringsLoadingFailed, message: nil, error: error)
+        }
+    }
+
     func products() async throws -> [Qonversion.Product] {
         let request = Request.getProducts()
         do {

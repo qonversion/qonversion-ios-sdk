@@ -99,6 +99,25 @@ public final class Qonversion: @unchecked Sendable {
         return try await productsManager.products()
     }
 
+    /// Returns the user's offerings — groups of products behind your
+    /// paywalls, personalized by experiments. Products come enriched with
+    /// App Store data; the array order is the paywall order.
+    public func offerings() async throws -> Qonversion.Offerings {
+        guard let productsManager else { throw QonversionError.initializationError() }
+
+        return try await productsManager.offerings()
+    }
+
+    /// Resolves the user's eligibility for the introductory offers of the
+    /// given Qonversion products. The check runs on the device via StoreKit 2;
+    /// on systems older than iOS 15 the status is `.unknown`.
+    /// - Parameter productIds: Qonversion product identifiers.
+    public func checkTrialIntroEligibility(_ productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
+        guard let productsManager else { throw QonversionError.initializationError() }
+
+        return try await productsManager.checkTrialIntroEligibility(productIds: productIds)
+    }
+
     /// Buys the product through the App Store and validates the purchase with
     /// the Qonversion backend. The transaction is finished only after the
     /// backend confirms the purchase. When the backend is unreachable, the
