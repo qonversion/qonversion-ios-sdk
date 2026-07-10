@@ -232,6 +232,14 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
         return productsResult
     }
 
+    var introOfferEligibilityResults: [String: Bool] = [:]
+    private(set) var eligibilityRequestedStoreIds: [String] = []
+
+    func isEligibleForIntroOffer(storeId: String) async -> Bool? {
+        eligibilityRequestedStoreIds.append(storeId)
+        return introOfferEligibilityResults[storeId]
+    }
+
     func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
 
     func restore() async throws -> [Qonversion.Transaction] {
@@ -392,6 +400,18 @@ final class MockProductsService: ProductsServiceInterface {
         productPermissionsCallsCount += 1
         if let productPermissionsError { throw productPermissionsError }
         return productPermissionsResult
+    }
+
+    var offeringsResult: [Qonversion.Offering] = []
+    var offeringsError: Error?
+    private(set) var offeringsCallsCount = 0
+    private(set) var offeringsRequestedUserIds: [String] = []
+
+    func offerings(userId: String) async throws -> [Qonversion.Offering] {
+        offeringsCallsCount += 1
+        offeringsRequestedUserIds.append(userId)
+        if let offeringsError { throw offeringsError }
+        return offeringsResult
     }
 }
 
@@ -634,6 +654,22 @@ final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
 
     func loadProductPermissions() async {
         loadPermissionsCallsCount += 1
+    }
+
+    var offeringsResult: Qonversion.Offerings?
+    var offeringsError: Error?
+    var eligibilityResult: [String: Qonversion.IntroEligibilityStatus] = [:]
+    private(set) var eligibilityRequestedProductIds: [[String]] = []
+
+    func offerings() async throws -> Qonversion.Offerings {
+        if let offeringsError { throw offeringsError }
+        guard let offeringsResult else { throw MockError.noStub }
+        return offeringsResult
+    }
+
+    func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
+        eligibilityRequestedProductIds.append(productIds)
+        return eligibilityResult
     }
 
     func cachedProductPermissions() -> [String: [String]]? { cachedMapping }

@@ -28,6 +28,7 @@ extension Request {
         case updateDevice
         case appleSearchAds
         case getProducts
+        case getOfferings
         case entitlementDefinitions
         case remoteConfig
         case remoteConfigList
@@ -76,6 +77,7 @@ extension Request {
         case .updateDevice: return .updateDevice
         case .appleSearchAds: return .appleSearchAds
         case .getProducts: return .getProducts
+        case .getOfferings: return .getOfferings
         case .entitlementDefinitions: return .entitlementDefinitions
         case .remoteConfig: return .remoteConfig
         case .remoteConfigList: return .remoteConfigList
@@ -104,6 +106,7 @@ enum Request : Hashable {
     case updateDevice(userId: String, endpoint: String = "v4/users/%@/device", body: RequestBodyDict, type: RequestType = .put)
     case appleSearchAds(userId: String, endpoint: String = "v4/users/%@/attribution", body: RequestBodyDict, type: RequestType = .post)
     case getProducts(endpoint: String = "v4/products", type: RequestType = .get)
+    case getOfferings(userId: String, endpoint: String = "v4/users/%@/offerings", type: RequestType = .get)
     case entitlementDefinitions(endpoint: String = "v4/entitlements", type: RequestType = .get)
     case remoteConfig(userId: String, contextKey: String?, endpoint: String = "v4/remote-config", type: RequestType = .get)
     case remoteConfigList(userId: String, contextKeys: [String], includeEmptyContextKey: Bool, endpoint: String = "v4/remote-configs", type: RequestType = .get)
@@ -180,6 +183,10 @@ enum Request : Hashable {
         
         case let .getProducts(endpoint, type):
             return defaultRequest(urlString: endpoint, body: nil, type: type)
+
+        case let .getOfferings(userId, endpoint, type):
+            let urlString = String(format: endpoint, arguments: [escaped(userId)])
+            return defaultRequest(urlString: urlString, body: nil, type: type)
 
         case let .entitlementDefinitions(endpoint, type):
             return defaultRequest(urlString: endpoint, body: nil, type: type)
@@ -291,6 +298,11 @@ enum Request : Hashable {
             hasher.combine(type)
         case let .getProducts(endpoint, type):
             hasher.combine("getProducts")
+            hasher.combine(endpoint)
+            hasher.combine(type)
+        case let .getOfferings(userId, endpoint, type):
+            hasher.combine("getOfferings")
+            hasher.combine(userId)
             hasher.combine(endpoint)
             hasher.combine(type)
         case let .entitlementDefinitions(endpoint, type):

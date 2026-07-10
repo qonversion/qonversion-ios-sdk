@@ -32,6 +32,8 @@
 		70CD93012BC6E22B0039D65C /* SendUserPropertiesResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92A92BC6E22B0039D65C /* SendUserPropertiesResult.swift */; };
 		70CD93022BC6E22B0039D65C /* UserPropertiesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92AA2BC6E22B0039D65C /* UserPropertiesManager.swift */; };
 		A300000000000000000000B1 /* PurchasesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A1 /* PurchasesManager.swift */; };
+		C800000000000000000000B1 /* IntroEligibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C800000000000000000000A1 /* IntroEligibility.swift */; };
+		C700000000000000000000B1 /* Offering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C700000000000000000000A1 /* Offering.swift */; };
 		C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */; };
 		C400000000000000000000B1 /* ListEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = C400000000000000000000A1 /* ListEnvelope.swift */; };
 		C100000000000000000000B1 /* AsyncMulticast.swift in Sources */ = {isa = PBXBuildFile; fileRef = C100000000000000000000A1 /* AsyncMulticast.swift */; };
@@ -187,6 +189,8 @@
 		A300000000000000000000A3 /* PurchasesService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesService.swift; sourceTree = "<group>"; };
 		A300000000000000000000A4 /* PurchasesServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesServiceInterface.swift; sourceTree = "<group>"; };
 		A100000000000000000000A1 /* UserManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
+		C800000000000000000000A1 /* IntroEligibility.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntroEligibility.swift; sourceTree = "<group>"; };
+		C700000000000000000000A1 /* Offering.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Offering.swift; sourceTree = "<group>"; };
 		C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseAssociationsStorage.swift; sourceTree = "<group>"; };
 		C400000000000000000000A1 /* ListEnvelope.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ListEnvelope.swift; sourceTree = "<group>"; };
 		C100000000000000000000A1 /* AsyncMulticast.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncMulticast.swift; sourceTree = "<group>"; };
@@ -385,6 +389,8 @@
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
 				70CD92A42BC6E22B0039D65C /* UserPropertyKey.swift */,
 				70EA73542BD12CA500B0DFDA /* Product.swift */,
+				C800000000000000000000A1 /* IntroEligibility.swift */,
+				C700000000000000000000A1 /* Offering.swift */,
 				70B4E96F2BD940F700EE808C /* StoreProductWrapper.swift */,
 				6A840DF82BD6ADAD00E5E8E3 /* Experiment.swift */,
 				6A840DFC2BD6ADD700E5E8E3 /* RemoteConfig.swift */,
@@ -916,6 +922,8 @@
 				A300000000000000000000B3 /* PurchasesService.swift in Sources */,
 				A300000000000000000000B4 /* PurchasesServiceInterface.swift in Sources */,
 				A100000000000000000000B1 /* UserManager.swift in Sources */,
+				C800000000000000000000B1 /* IntroEligibility.swift in Sources */,
+				C700000000000000000000B1 /* Offering.swift in Sources */,
 				C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */,
 				C400000000000000000000B1 /* ListEnvelope.swift in Sources */,
 				C100000000000000000000B1 /* AsyncMulticast.swift in Sources */,

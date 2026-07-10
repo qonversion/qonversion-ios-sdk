@@ -21,6 +21,7 @@ enum QonversionErrorType {
     case deviceUpdateFailed
     case unableToSerializeDevice
     case productsLoadingFailed
+    case offeringsLoadingFailed
     case productPermissionsLoadingFailed
     case entitlementsLoadingFailed
     case storeProductsLoadingFailed
@@ -82,6 +83,8 @@ enum QonversionErrorType {
             return "Failed to load user entitlements"
         case .productsLoadingFailed:
             return "Products loading request failed."
+        case .offeringsLoadingFailed:
+            return "Failed to load offerings."
         case .storeProductsLoadingFailed:
             return "Store products loading failed."
         case .loadingRemoteConfigFailed:
