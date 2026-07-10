@@ -32,6 +32,7 @@
 		70CD93012BC6E22B0039D65C /* SendUserPropertiesResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92A92BC6E22B0039D65C /* SendUserPropertiesResult.swift */; };
 		70CD93022BC6E22B0039D65C /* UserPropertiesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92AA2BC6E22B0039D65C /* UserPropertiesManager.swift */; };
 		A300000000000000000000B1 /* PurchasesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A1 /* PurchasesManager.swift */; };
+		C600000000000000000000B1 /* SDKVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C600000000000000000000A1 /* SDKVersion.swift */; };
 		C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */; };
 		C400000000000000000000B1 /* ListEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = C400000000000000000000A1 /* ListEnvelope.swift */; };
 		C100000000000000000000B1 /* AsyncMulticast.swift in Sources */ = {isa = PBXBuildFile; fileRef = C100000000000000000000A1 /* AsyncMulticast.swift */; };
@@ -187,6 +188,7 @@
 		A300000000000000000000A3 /* PurchasesService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesService.swift; sourceTree = "<group>"; };
 		A300000000000000000000A4 /* PurchasesServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesServiceInterface.swift; sourceTree = "<group>"; };
 		A100000000000000000000A1 /* UserManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
+		C600000000000000000000A1 /* SDKVersion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SDKVersion.swift; sourceTree = "<group>"; };
 		C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseAssociationsStorage.swift; sourceTree = "<group>"; };
 		C400000000000000000000A1 /* ListEnvelope.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ListEnvelope.swift; sourceTree = "<group>"; };
 		C100000000000000000000A1 /* AsyncMulticast.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncMulticast.swift; sourceTree = "<group>"; };
@@ -688,6 +690,7 @@
 				70CD92E62BC6E22B0039D65C /* StoreKit */,
 				70CD92EB2BC6E22B0039D65C /* Utils */,
 				70CD92EC2BC6E22B0039D65C /* Configuration.swift */,
+				C600000000000000000000A1 /* SDKVersion.swift */,
 				70CD92ED2BC6E22B0039D65C /* InternalConfig.swift */,
 				70CD92EE2BC6E22B0039D65C /* LaunchMode.swift */,
 				70CD92EF2BC6E22B0039D65C /* PrivacyInfo.xcprivacy */,
@@ -916,6 +919,7 @@
 				A300000000000000000000B3 /* PurchasesService.swift in Sources */,
 				A300000000000000000000B4 /* PurchasesServiceInterface.swift in Sources */,
 				A100000000000000000000B1 /* UserManager.swift in Sources */,
+				C600000000000000000000B1 /* SDKVersion.swift in Sources */,
 				C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */,
 				C400000000000000000000B1 /* ListEnvelope.swift in Sources */,
 				C100000000000000000000B1 /* AsyncMulticast.swift in Sources */,
