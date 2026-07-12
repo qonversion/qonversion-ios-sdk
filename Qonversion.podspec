@@ -44,7 +44,7 @@ Pod::Spec.new do |s|
   end
 
   s.subspec 'NoIdfa' do |sss|
-    sss.source_files              = ['Sources/Qonversion/**/*.{h,m}', 'Sources/Swift/**/*.swift']
+    sss.source_files              = ['Sources/Qonversion/**/*.{h,m}', 'Sources/Swift/**/*.swift', 'Sources/NoCodes/**/*.swift']
     sss.osx.exclude_files         = excluded_files + idfa_exclude_files
     sss.tvos.exclude_files        = excluded_files + idfa_exclude_files
     sss.watchos.exclude_files     = excluded_files + idfa_exclude_files
