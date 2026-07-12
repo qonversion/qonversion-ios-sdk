@@ -56,7 +56,51 @@ class NoCodesIntegrationTest: XCTestCase {
     XCTAssertNotNil(screen.html, "Screen content should exist")
     XCTAssertEqual(screen.contextKey, CONTEXT_KEY_FOR_SCREEN_BY_ID, "Context key should match")
   }
-  
+
+  // MARK: - loadScreen(withContextKey:) — load-before-present
+
+  func testLoadScreenByContextKeyReturnsScreenWithPublicIdentifiers() async throws {
+    // given
+    let flowCoordinator = getFlowCoordinator()
+
+    // when
+    let screen = try await flowCoordinator.loadScreen(withContextKey: VALID_CONTEXT_KEY)
+
+    // then
+    // The public identifiers must be readable by consumers outside the module.
+    XCTAssertEqual(screen.contextKey, VALID_CONTEXT_KEY, "Public context key should match")
+    XCTAssertEqual(screen.id, ID_FOR_SCREEN_BY_CONTEXT_KEY, "Public screen ID should match")
+  }
+
+  func testLoadScreenByContextKeyNotFoundThrowsScreenNotFound() async {
+    // given
+    let flowCoordinator = getFlowCoordinator()
+
+    // when
+    do {
+      _ = try await flowCoordinator.loadScreen(withContextKey: NON_EXISTENT_CONTEXT_KEY)
+      XCTFail("Should fail with non-existent context key")
+    } catch {
+      // then
+      XCTAssertEqual((error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Error type should be screenNotFound")
+    }
+  }
+
+  func testLoadScreenWarmsCacheForSubsequentLoad() async throws {
+    // given
+    let noCodesService = getNoCodesService()
+
+    // when
+    // A first load populates the shared cache; the second load must resolve to the same screen,
+    // which is what lets a following showScreen render from a warm cache.
+    let firstLoad = try await noCodesService.loadScreen(withContextKey: VALID_CONTEXT_KEY)
+    let secondLoad = try await noCodesService.loadScreen(withContextKey: VALID_CONTEXT_KEY)
+
+    // then
+    XCTAssertEqual(firstLoad.id, secondLoad.id, "Cached load should return the same screen ID")
+    XCTAssertEqual(firstLoad.contextKey, secondLoad.contextKey, "Cached load should return the same context key")
+  }
+
   func testPreloadScreens() async throws {
     // given
     let noCodesService = getNoCodesService()
@@ -99,30 +143,32 @@ class NoCodesIntegrationTest: XCTestCase {
   func testGetScreenWithNonExistentContextKey() async {
     // given
     let noCodesService = getNoCodesService()
-    
+
     // when
     do {
       _ = try await noCodesService.loadScreen(withContextKey: NON_EXISTENT_CONTEXT_KEY)
       XCTFail("Should fail with non-existent context key")
     } catch {
       // then
+      // A genuinely absent screen is surfaced unwrapped, so callers can branch on the top-level type.
       XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
-      XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
+      XCTAssertEqual((error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Error type should be screenNotFound")
     }
   }
-  
+
   func testGetScreenWithEmptyContextKey() async {
     // given
     let noCodesService = getNoCodesService()
-    
+
     // when
     do {
       _ = try await noCodesService.loadScreen(withContextKey: "")
       XCTFail("Should fail with empty context key")
     } catch {
       // then
+      // A genuinely absent screen is surfaced unwrapped, so callers can branch on the top-level type.
       XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
-      XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
+      XCTAssertEqual((error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Error type should be screenNotFound")
     }
   }
   
@@ -197,7 +243,15 @@ class NoCodesIntegrationTest: XCTestCase {
     let miscAssembly = MiscAssembly(projectKey: key)
     let servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly)
     miscAssembly.servicesAssembly = servicesAssembly
-    
+
     return servicesAssembly.noCodesService()
+  }
+
+  private func getFlowCoordinator(projectKey: String? = nil) -> NoCodesFlowCoordinator {
+    let key = projectKey ?? PROJECT_KEY
+    let configuration = NoCodesConfiguration(projectKey: key)
+    let assembly = NoCodesAssembly(configuration: configuration)
+
+    return assembly.flowCoordinator()
   }
 }

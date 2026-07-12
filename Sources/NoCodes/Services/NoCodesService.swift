@@ -76,8 +76,12 @@ class NoCodesService: NoCodesServiceInterface {
 
       // Save to cache (no image preloading for on-demand loads)
       cacheScreen(screen)
-      
+
       return screen
+    } catch let error as NoCodesError where error.type == .screenNotFound {
+      // Surface "not found" unwrapped so callers can distinguish a genuinely absent screen
+      // (show fallback) from a transient load failure (maybe retry).
+      throw error
     } catch {
       // Try fallback if available and error is network-related or server error
       if let fallbackService = fallbackService,
@@ -90,7 +94,7 @@ class NoCodesService: NoCodesServiceInterface {
       throw NoCodesError(type: .screenLoadingFailed, message: nil, error: error)
     }
   }
-  
+
   func preloadScreens() async throws -> [NoCodesScreen] {
     let request = Request.getPreloadScreens()
     let screens: [NoCodesScreen] = try await requestProcessor.process(request: request, responseType: [NoCodesScreen].self)

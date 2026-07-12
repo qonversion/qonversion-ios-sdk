@@ -69,12 +69,34 @@ public final class NoCodes {
   
   /// Use this function to display the screen.
   /// - Parameters:
-  ///   - id: the context key of the screen.
+  ///   - contextKey: the context key of the screen.
   @MainActor
   public func showScreen(withContextKey contextKey: String) {
     flowCoordinator?.showScreen(withContextKey: contextKey)
   }
-  
+
+  /// Loads a No-Code screen (from cache or network) without presenting it, so you can decide
+  /// whether to present it or show your own fallback UI before any SDK screen appears.
+  ///
+  /// A successful load warms the shared cache, so a following ``showScreen(withContextKey:)``
+  /// renders from cache with a minimal skeleton.
+  ///
+  /// - Parameters:
+  ///   - contextKey: the context key of the screen.
+  /// - Returns: the loaded ``NoCodesScreen``.
+  /// - Throws: ``NoCodesError``. Its ``NoCodesError/type`` is `.sdkInitializationError` when the SDK
+  ///   is not initialized, `.screenNotFound` when no screen exists for the context key, or
+  ///   `.screenLoadingFailed` on a network or other load failure.
+  public func loadScreen(withContextKey contextKey: String) async throws -> NoCodesScreen {
+    // A throwing API cannot silently no-op like the void facade methods, so surface the
+    // not-initialized state explicitly instead of returning nothing.
+    guard let flowCoordinator else {
+      throw NoCodesError.initializationError()
+    }
+
+    return try await flowCoordinator.loadScreen(withContextKey: contextKey)
+  }
+
   /// Use this function to display the screen.
   /// - Parameters:
   ///   - id: identifier of the screen.

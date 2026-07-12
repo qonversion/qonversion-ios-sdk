@@ -10,10 +10,10 @@ import Foundation
 
 #if os(iOS)
 
-public struct NoCodesScreen: Decodable {
-  let id: String
+public struct NoCodesScreen: Decodable, Sendable {
+  public let id: String
   let html: String
-  let contextKey: String
+  public let contextKey: String
   
   private enum CodingKeys: String, CodingKey {
     // After adding any keys here, duplicate them in the ResponseCodingKeys
