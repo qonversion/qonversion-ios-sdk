@@ -1,4 +1,5 @@
 Pod::Spec.new do |s|
+  all_sources = ['Sources/Qonversion/**/*.{h,m}', 'Sources/Swift/**/*.swift', 'Sources/NoCodes/**/*.swift']
   excluded_files = ['Sources/NoCodes/**/*.swift']
   idfa_exclude_files = ['Sources/Qonversion/IDFA']
   s.name         = 'Qonversion'
@@ -36,7 +37,7 @@ Pod::Spec.new do |s|
   s.default_subspecs = 'Main'
   
   s.subspec 'Main' do |ss|
-    ss.source_files              = ['Sources/Qonversion/**/*.{h,m}', 'Sources/Swift/**/*.swift', 'Sources/NoCodes/**/*.swift']
+    ss.source_files              = all_sources
     ss.osx.exclude_files         = excluded_files
     ss.tvos.exclude_files        = excluded_files
     ss.watchos.exclude_files     = excluded_files
@@ -44,7 +45,7 @@ Pod::Spec.new do |s|
   end
 
   s.subspec 'NoIdfa' do |sss|
-    sss.source_files              = ['Sources/Qonversion/**/*.{h,m}', 'Sources/Swift/**/*.swift']
+    sss.source_files              = all_sources
     sss.osx.exclude_files         = excluded_files + idfa_exclude_files
     sss.tvos.exclude_files        = excluded_files + idfa_exclude_files
     sss.watchos.exclude_files     = excluded_files + idfa_exclude_files

@@ -10,10 +10,8 @@ import Foundation
 #if os(iOS)
 
 protocol DeviceInfoCollectorInterface {
-    
+
     func deviceInfo() -> Device
-    
-    func advertisingId() -> String?
 }
 
 #endif

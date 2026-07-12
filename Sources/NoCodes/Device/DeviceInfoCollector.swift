@@ -8,10 +8,6 @@
 
 import Foundation
 
-#if canImport(AdSupport)
-import AdSupport
-#endif
-
 #if os(iOS)
 import UIKit
 #elseif os(macOS)
@@ -50,7 +46,6 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         let country: String? = country()
         let language: String? = language()
         let timezone: String = TimeZone.current.identifier
-        let advertisingId: String? = advertisingId()
         let vendorId: String? = vendorId()
 
         let deviceInfo = Device(
@@ -62,28 +57,12 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
             country: country,
             language: language,
             timezone: timezone,
-            advertisingId: advertisingId,
             vendorId: vendorId,
             installDate: installDate
         )
 
         lastPreparedDevice = deviceInfo
         return deviceInfo
-    }
-    
-    func advertisingId() -> String? {
-        var result: String? = nil
-
-        #if canImport(AdSupport)
-        let advertisingId: UUID = ASIdentifierManager.shared().advertisingIdentifier
-        result = advertisingId.uuidString
-
-        if result == "00000000-0000-0000-0000-000000000000" {
-            result = nil
-        }
-        #endif
-
-        return result
     }
 
     private func osVersion() -> String {
