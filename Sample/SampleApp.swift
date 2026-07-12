@@ -21,6 +21,37 @@ struct SampleApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
+                // Web2App redemption (DEV-847): the redemption email opens a
+                // Universal Link https://screens.qonversion.io/r/{project_uid}/{token}.
+                // iOS delivers it as a browsing-web user activity. Forward the URL
+                // to the SDK, which validates host + path internally (grant-first:
+                // on success the backend already granted the entitlement, the SDK
+                // just refreshes — no identify).
+                .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+                    guard let url = activity.webpageURL else { return }
+                    handleRedemption(url)
+                }
+        }
+    }
+
+    private func handleRedemption(_ url: URL) {
+        Qonversion.shared().handleRedemptionLink(url: url) { result in
+            switch result {
+            case .success:
+                print("✅ Redemption succeeded — entitlements refreshed")
+            case .tokenExpired:
+                print("⏰ Redemption token expired — offer reissue")
+            case .alreadyConsumed:
+                print("♻️ Redemption token already consumed")
+            case .invalidToken:
+                print("❌ Invalid redemption token")
+            case .networkError:
+                print("📡 Network error during redemption")
+            case .retryable:
+                print("🔁 Retryable error during redemption — try again")
+            @unknown default:
+                print("Redemption result: \(result.rawValue)")
+            }
         }
     }
     
