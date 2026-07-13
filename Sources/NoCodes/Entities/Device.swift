@@ -18,7 +18,6 @@ struct Device: Comparable, Codable {
     let country: String?
     let language: String?
     let timezone: String?
-    let advertisingId: String?
     let vendorId: String?
     let installDate: TimeInterval
 
@@ -31,7 +30,6 @@ struct Device: Comparable, Codable {
         country: String?,
         language: String?,
         timezone: String,
-        advertisingId: String?,
         vendorId: String?,
         installDate: TimeInterval
     ) {
@@ -43,7 +41,6 @@ struct Device: Comparable, Codable {
         self.country = country
         self.language = language
         self.timezone = timezone
-        self.advertisingId = advertisingId
         self.vendorId = vendorId
         self.installDate = installDate
     }
@@ -57,7 +54,6 @@ struct Device: Comparable, Codable {
         && lhs.country == rhs.country
         && lhs.language == rhs.language
         && lhs.timezone == rhs.timezone
-        && lhs.advertisingId == rhs.advertisingId
         && lhs.vendorId == rhs.vendorId
         && lhs.installDate == rhs.installDate
         
