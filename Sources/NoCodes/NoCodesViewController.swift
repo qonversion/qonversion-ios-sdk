@@ -61,6 +61,7 @@ final class NoCodesViewController: UIViewController {
   private var theme: NoCodesTheme!
   private var didTrackScreenShown = false
   private var didTrackScreenClosed = false
+  private var hasWebPurchaseLoader = false
   private var contextBuilder: NoCodesContextBuilderInterface!
   private var htmlInjector: NoCodesHTMLInjectorInterface!
 
@@ -249,7 +250,7 @@ extension NoCodesViewController: WKScriptMessageHandler {
       return
     }
     
-    if action.type != .loadProducts && action.type != .screenAnalytics && action.type != .getContext {
+    if action.type != .loadProducts && action.type != .screenAnalytics && action.type != .getContext && action.type != .purchaseLoaderPresent {
       delegate.noCodesStartsExecuting(action: action)
     }
     
@@ -276,6 +277,8 @@ extension NoCodesViewController: WKScriptMessageHandler {
       handle(screenAnalyticsAction: action)
     case .getContext:
       handle(getContextAction: action)
+    case .purchaseLoaderPresent:
+      hasWebPurchaseLoader = true
     default: break
     }
   }
@@ -537,7 +540,7 @@ extension NoCodesViewController {
   private func handle(purchaseAction: NoCodesAction) {
     guard let productId: String = purchaseAction.parameters?[Constants.productId.rawValue] as? String else { return }
 
-    activityIndicator.startAnimating()
+    if !hasWebPurchaseLoader { activityIndicator.startAnimating() }
     Task {
       do {
         let products = try await Qonversion.shared().products()
@@ -580,7 +583,7 @@ extension NoCodesViewController {
   }
   
   private func handle(restoreAction: NoCodesAction) {
-    activityIndicator.startAnimating()
+    if !hasWebPurchaseLoader { activityIndicator.startAnimating() }
     
     Task {
       do {
