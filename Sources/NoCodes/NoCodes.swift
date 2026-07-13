@@ -78,6 +78,9 @@ public final class NoCodes {
   /// Loads a No-Code screen (from cache or network) without presenting it, so you can decide
   /// whether to present it or show your own fallback UI before any SDK screen appears.
   ///
+  /// This is an optional entry point, not the primary loader: screens with the "Preload" option in the
+  /// No-Codes builder are preloaded automatically and ``showScreen(withContextKey:)`` works on its own.
+  ///
   /// A successful load warms the shared cache, so a following ``showScreen(withContextKey:)``
   /// renders from cache with a minimal skeleton.
   ///

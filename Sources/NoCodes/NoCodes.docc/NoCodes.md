@@ -14,6 +14,10 @@ By default, ``NoCodes/NoCodes/showScreen(withContextKey:)`` presents a full-scre
 immediately and loads the content afterwards, so your app only learns the outcome through delegate
 callbacks after the screen is already on screen.
 
+Screens with the **Preload** option enabled in the No-Codes builder are fetched automatically at
+SDK initialization, so `showScreen` renders them from cache on its own. `loadScreen` is an optional,
+additional entry point — not a prerequisite for loading and not the primary source.
+
 Use ``NoCodes/NoCodes/loadScreen(withContextKey:)`` when you want to decide up front — an "ask-first
 gate". It awaits the screen's availability and data (from cache or network) *before* anything is
 presented, so you can present the screen or show your own fallback UI without the SDK skeleton ever
