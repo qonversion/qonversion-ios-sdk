@@ -23,7 +23,15 @@ public protocol NoCodesDelegate {
   /// - Parameters:
   ///   - id: Screen identifier
   func noCodesHasShownScreen(id: String)
-  
+
+  /// Called when No-Codes screen is shown, providing the product ids configured on that screen.
+  /// Use this to keep analytics consistent with the full set of products the screen was built with,
+  /// not only the ones the rendered screen requested.
+  /// - Parameters:
+  ///   - id: Screen identifier
+  ///   - products: Qonversion product ids configured on the screen (may be empty)
+  func noCodesHasShownScreen(id: String, products: [String])
+
   /// Called when No-Codes flow starts executing an action
   /// - Parameters:
   ///   - action: ``NoCodesAction``
@@ -102,9 +110,15 @@ public extension NoCodesDelegate {
   }
   
   func noCodesHasShownScreen(id: String) {
-    
+
   }
-  
+
+  /// Defaults to the id-only callback so existing conformers keep working; only the
+  /// screen-shown event is fired once (via the 2-arg variant at the call site).
+  func noCodesHasShownScreen(id: String, products: [String]) {
+    noCodesHasShownScreen(id: id)
+  }
+
   func noCodesStartsExecuting(action: NoCodesAction) {
     
   }

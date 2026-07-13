@@ -269,12 +269,12 @@ class NoCodesListenerHandler: NoCodesDelegate {
         return nil
     }
     
-    func noCodesHasShownScreen(id: String) {
+    func noCodesHasShownScreen(id: String, products: [String]) {
         Task { @MainActor in
-            appState?.addNoCodesEvent("Screen shown: \(id)")
+            appState?.addNoCodesEvent("Screen shown: \(id), products: \(products)")
         }
     }
-    
+
     func noCodesStartsExecuting(action: NoCodesAction) {
         Task { @MainActor in
             appState?.addNoCodesEvent("Action started: \(actionTypeString(action.type))")

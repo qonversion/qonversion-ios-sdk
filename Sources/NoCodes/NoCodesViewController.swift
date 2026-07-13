@@ -24,9 +24,9 @@ enum Constants: String {
 }
 
 protocol NoCodesViewControllerDelegate {
-  
-  func noCodesHasShownScreen(id: String)
-  
+
+  func noCodesHasShownScreen(id: String, products: [String])
+
   func noCodesStartsExecuting(action: NoCodesAction)
   
   func noCodesFailedToExecute(action: NoCodesAction, error: Error?)
@@ -147,7 +147,7 @@ final class NoCodesViewController: UIViewController {
 
         self.screenId = screen.id
         self.contextKey = screen.contextKey
-        delegate.noCodesHasShownScreen(id: screen.id)
+        delegate.noCodesHasShownScreen(id: screen.id, products: screen.products)
         trackScreenShownIfNeeded()
 
         var htmlToLoad = htmlInjector.injectCustomLocale(into: screen.html, locale: customLocale)

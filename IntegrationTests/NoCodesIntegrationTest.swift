@@ -42,7 +42,29 @@ class NoCodesIntegrationTest: XCTestCase {
     XCTAssertNotNil(screen.html, "Screen content should exist")
     XCTAssertEqual(screen.id, ID_FOR_SCREEN_BY_CONTEXT_KEY, "Screen ID should match")
   }
-  
+
+  // Backend-independent: exercises NoCodesScreen decoding of the configured `products`
+  // list across both response shapes (array-nested fallback + keyed single-screen),
+  // and the defaulting when the key is absent (older payloads / bundled fallbacks).
+  func testScreenDecodesConfiguredProducts() throws {
+    let decoder = JSONDecoder()
+
+    // Array-nested shape (getPublishedPayloads / fallback) with products.
+    let arrayJSON = "[{\"id\":\"s1\",\"body\":\"<html>\",\"context_key\":\"ctx\",\"products\":[\"annual\",\"weekly\"]}]"
+    let arrayScreen = try decoder.decode(NoCodesScreen.self, from: Data(arrayJSON.utf8))
+    XCTAssertEqual(arrayScreen.products, ["annual", "weekly"], "Products should decode from the array-nested response")
+
+    // Keyed single-screen shape with products.
+    let keyedJSON = "{\"data\":{},\"id\":\"s2\",\"body\":\"<html>\",\"context_key\":\"ctx2\",\"products\":[\"lifetime\"]}"
+    let keyedScreen = try decoder.decode(NoCodesScreen.self, from: Data(keyedJSON.utf8))
+    XCTAssertEqual(keyedScreen.products, ["lifetime"], "Products should decode from the keyed response")
+
+    // Missing products key defaults to an empty array (no crash).
+    let legacyJSON = "[{\"id\":\"s3\",\"body\":\"<html>\",\"context_key\":\"ctx3\"}]"
+    let legacyScreen = try decoder.decode(NoCodesScreen.self, from: Data(legacyJSON.utf8))
+    XCTAssertEqual(legacyScreen.products, [], "Missing products should default to an empty array")
+  }
+
   func testGetScreenById() async throws {
     // given
     let noCodesService = getNoCodesService()
