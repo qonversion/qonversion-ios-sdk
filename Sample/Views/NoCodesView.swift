@@ -269,9 +269,10 @@ class NoCodesListenerHandler: NoCodesDelegate {
         return nil
     }
     
-    func noCodesHasShownScreen(id: String, products: [String]) {
+    func noCodesHasShownScreen(id: String, products: [String], variables: [NoCodesScreenVariable]) {
         Task { @MainActor in
-            appState?.addNoCodesEvent("Screen shown: \(id), products: \(products)")
+            let vars = variables.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
+            appState?.addNoCodesEvent("Screen shown: \(id), products: \(products), variables: [\(vars)]")
         }
     }
 
