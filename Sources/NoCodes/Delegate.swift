@@ -32,6 +32,15 @@ public protocol NoCodesDelegate {
   ///   - products: Qonversion product ids configured on the screen (may be empty)
   func noCodesHasShownScreen(id: String, products: [String])
 
+  /// Called when No-Codes screen is shown, providing the screen variables authored on it.
+  /// Read them by key (`NoCodesScreenVariable.key`) to react to the screen's configured
+  /// values after it loads; each value keeps its authored type (bool / string / number).
+  /// - Parameters:
+  ///   - id: Screen identifier
+  ///   - products: Qonversion product ids configured on the screen (may be empty)
+  ///   - variables: Screen variables authored on the screen (may be empty)
+  func noCodesHasShownScreen(id: String, products: [String], variables: [NoCodesScreenVariable])
+
   /// Called when No-Codes flow starts executing an action
   /// - Parameters:
   ///   - action: ``NoCodesAction``
@@ -117,6 +126,12 @@ public extension NoCodesDelegate {
   /// screen-shown event is fired once (via the 2-arg variant at the call site).
   func noCodesHasShownScreen(id: String, products: [String]) {
     noCodesHasShownScreen(id: id)
+  }
+
+  /// Defaults to the products variant so existing conformers keep working; the screen-shown
+  /// event is fired once (via the 3-arg variant at the call site).
+  func noCodesHasShownScreen(id: String, products: [String], variables: [NoCodesScreenVariable]) {
+    noCodesHasShownScreen(id: id, products: products)
   }
 
   func noCodesStartsExecuting(action: NoCodesAction) {
