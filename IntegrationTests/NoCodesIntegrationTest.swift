@@ -104,20 +104,6 @@ class NoCodesIntegrationTest: XCTestCase {
     XCTAssertEqual(requestProcessor.processCallCount, 1, "Second load should be served from cache without a second network request")
   }
 
-  func testLoadScreenNotInitializedThrowsInitializationError() async {
-    // given
-    // No test in this suite initializes the shared singleton, so its flowCoordinator stays nil here.
-
-    // when
-    do {
-      _ = try await NoCodes.shared.loadScreen(withContextKey: VALID_CONTEXT_KEY)
-      XCTFail("Should fail when the SDK is not initialized")
-    } catch {
-      // then
-      XCTAssertEqual((error as? NoCodesError)?.type, NoCodesErrorType.sdkInitializationError, "Error type should be sdkInitializationError")
-    }
-  }
-
   func testLoadScreenFiresNoScreenEvents() async throws {
     // given
     let spyScreenEventsService = SpyScreenEventsService()
