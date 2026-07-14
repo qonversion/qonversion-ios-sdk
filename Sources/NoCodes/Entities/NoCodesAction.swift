@@ -50,6 +50,10 @@ public enum NoCodesActionType {
 
   /// Internal action for loading context data (device info, user info, entitlements)
   case getContext
+
+  /// Internal action: the web page announces it renders its own purchase loader,
+  /// so the native purchase spinner should be suppressed to avoid a double loader
+  case purchaseLoaderPresent
 }
 
 /// Action performed in the No-Codes
