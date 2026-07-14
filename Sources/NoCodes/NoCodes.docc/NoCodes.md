@@ -41,9 +41,9 @@ transient network or load failure (you may retry). If the SDK is not initialized
 Two known, benign limitations:
 - Unlike `showScreen`, `loadScreen` skips `forceSendProperties`, so the targeting basis may differ
   slightly from a direct `showScreen` call.
-- On-demand loads cache an HTML variant without base64-embedded images, while init-time preloading
-  caches a base64-embedded variant. If the two race, which variant ends up cached is nondeterministic
-  (this only affects image-embedding, not correctness).
+- Image embedding is preload-only (same as `showScreen`): on-demand fetches cache an un-embedded HTML
+  variant, init-time preload embeds base64; if the two race, the cached variant is nondeterministic —
+  affects image-embedding only, not correctness or availability.
 
 ## Configuration Management
 
