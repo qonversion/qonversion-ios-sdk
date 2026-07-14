@@ -91,8 +91,9 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
       XCTFail("Should fail with non-existent context key")
     } catch {
       // then
+      // The context-key path surfaces a genuinely absent screen unwrapped, as a top-level error.
       XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
-      XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
+      XCTAssertEqual((error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Error type should be screenNotFound")
     }
   }
   
@@ -106,8 +107,9 @@ class NoCodesOutagerIntegrationTest: XCTestCase {
       XCTFail("Should fail with empty context key")
     } catch {
       // then
+      // The context-key path surfaces a genuinely absent screen unwrapped, as a top-level error.
       XCTAssertTrue(error is NoCodesError, "Error should be NoCodesError")
-      XCTAssertEqual(((error as? NoCodesError)?.error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Nested error type should be screenNotFound")
+      XCTAssertEqual((error as? NoCodesError)?.type, NoCodesErrorType.screenNotFound, "Error type should be screenNotFound")
     }
   }
   

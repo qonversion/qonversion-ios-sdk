@@ -10,10 +10,10 @@ import Foundation
 
 #if os(iOS)
 
-public struct NoCodesScreen: Decodable {
-  let id: String
+public struct NoCodesScreen: Decodable, Sendable {
+  public let id: String
   let html: String
-  let contextKey: String
+  public let contextKey: String
   /// Qonversion product ids configured in the builder for this screen (may be empty).
   let products: [String]
   /// Screen variables authored in the builder for this screen, read by key (may be empty).
@@ -77,7 +77,7 @@ public struct NoCodesScreen: Decodable {
 /// A No-Codes screen variable authored in the builder, delivered to the SDK at screen load
 /// so it can be read by key. The value keeps its authored type (bool / string / number) rather
 /// than being coerced to a string.
-public struct NoCodesScreenVariable: Decodable {
+public struct NoCodesScreenVariable: Decodable, Sendable {
   /// Variable name it is addressed by (`variable.<key>` in the builder). May contain spaces.
   public let key: String
   /// Authored type: `"boolean"`, `"string"` or `"number"`.
@@ -94,7 +94,7 @@ public struct NoCodesScreenVariable: Decodable {
 
 /// Typed value of a ``NoCodesScreenVariable``. Preserves the authored JSON type instead of
 /// collapsing everything to `String`.
-public enum NoCodesScreenVariableValue: Decodable, Equatable {
+public enum NoCodesScreenVariableValue: Decodable, Equatable, Sendable {
   case bool(Bool)
   case string(String)
   case number(Double)

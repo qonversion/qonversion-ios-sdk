@@ -38,7 +38,24 @@ struct NoCodesView: View {
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
-                
+
+                // Load Before Present Section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Load Before Present")
+                        .font(.headline)
+
+                    Text("Ask-first: load the screen, then present it or show your own fallback.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    ActionButton(title: "Load, Then Present or Fallback", color: .indigo) {
+                        loadBeforePresent()
+                    }
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+
                 // Presentation Config Section
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Presentation Config")
@@ -214,6 +231,22 @@ struct NoCodesView: View {
         NoCodes.shared.set(screenCustomizationDelegate: handler)
         customizationDelegateSet = true
         appState.successMessage = "Screen customization delegate set with \(selectedPresentationStyle.displayName) style!"
+    }
+
+    private func loadBeforePresent() {
+        let key = contextKey
+        Task { @MainActor in
+            do {
+                // Gate on real availability before anything is presented.
+                let screen = try await NoCodes.shared.loadScreen(withContextKey: key)
+                appState.addNoCodesEvent("Screen loaded (id: \(screen.id)), presenting from warm cache")
+                NoCodes.shared.showScreen(withContextKey: key)
+            } catch {
+                // The SDK skeleton never appeared, so we can show our own fallback UI instead.
+                let type = (error as? NoCodesError)?.type
+                appState.errorMessage = "Load failed (\(String(describing: type))), showing app fallback instead of the No-Code screen."
+            }
+        }
     }
 }
 
