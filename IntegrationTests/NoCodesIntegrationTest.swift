@@ -44,17 +44,17 @@ class NoCodesIntegrationTest: XCTestCase {
   }
 
   // Backend-independent: exercises NoCodesScreen decoding of the configured `products`
-  // list across both response shapes (array-nested fallback + keyed single-screen),
-  // and the defaulting when the key is absent (older payloads / bundled fallbacks).
+  // list across both decode branches, and the defaulting when the key is absent
+  // (older payloads / bundled fallbacks).
   func testScreenDecodesConfiguredProducts() throws {
     let decoder = JSONDecoder()
 
-    // Array-nested shape (getPublishedPayloads / fallback) with products.
+    // Array-nested shape (legacy get-by-id `[{…}]`) → the unkeyed CodingKeys branch.
     let arrayJSON = "[{\"id\":\"s1\",\"body\":\"<html>\",\"context_key\":\"ctx\",\"products\":[\"annual\",\"weekly\"]}]"
     let arrayScreen = try decoder.decode(NoCodesScreen.self, from: Data(arrayJSON.utf8))
     XCTAssertEqual(arrayScreen.products, ["annual", "weekly"], "Products should decode from the array-nested response")
 
-    // Keyed single-screen shape with products.
+    // Keyed shape (by-context-key / preload / bundled fallback) → the ResponseCodingKeys branch.
     let keyedJSON = "{\"data\":{},\"id\":\"s2\",\"body\":\"<html>\",\"context_key\":\"ctx2\",\"products\":[\"lifetime\"]}"
     let keyedScreen = try decoder.decode(NoCodesScreen.self, from: Data(keyedJSON.utf8))
     XCTAssertEqual(keyedScreen.products, ["lifetime"], "Products should decode from the keyed response")
