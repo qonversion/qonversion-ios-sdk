@@ -36,11 +36,7 @@ public struct NoCodesError: Error {
   }
   
   static func fromClientError(_ error: Error?) -> NoCodesError {
-    let errorMessage = error?.localizedDescription ?? (error.map { String(describing: $0) }) ?? "Unknown error"
-    return NoCodesError(
-      type: .clientError,
-      message: errorMessage
-    )
+    return NoCodesError(type: .clientError, error: error)
   }
 }
 
