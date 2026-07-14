@@ -42,7 +42,61 @@ class NoCodesIntegrationTest: XCTestCase {
     XCTAssertNotNil(screen.html, "Screen content should exist")
     XCTAssertEqual(screen.id, ID_FOR_SCREEN_BY_CONTEXT_KEY, "Screen ID should match")
   }
-  
+
+  // Backend-independent: exercises NoCodesScreen decoding of the configured `products`
+  // list across both decode branches, and the defaulting when the key is absent
+  // (older payloads / bundled fallbacks).
+  func testScreenDecodesConfiguredProducts() throws {
+    let decoder = JSONDecoder()
+
+    // Array-nested shape (legacy get-by-id `[{…}]`) → the unkeyed CodingKeys branch.
+    let arrayJSON = "[{\"id\":\"s1\",\"body\":\"<html>\",\"context_key\":\"ctx\",\"products\":[\"annual\",\"weekly\"]}]"
+    let arrayScreen = try decoder.decode(NoCodesScreen.self, from: Data(arrayJSON.utf8))
+    XCTAssertEqual(arrayScreen.products, ["annual", "weekly"], "Products should decode from the array-nested response")
+
+    // Keyed shape (by-context-key / preload / bundled fallback) → the ResponseCodingKeys branch.
+    let keyedJSON = "{\"data\":{},\"id\":\"s2\",\"body\":\"<html>\",\"context_key\":\"ctx2\",\"products\":[\"lifetime\"]}"
+    let keyedScreen = try decoder.decode(NoCodesScreen.self, from: Data(keyedJSON.utf8))
+    XCTAssertEqual(keyedScreen.products, ["lifetime"], "Products should decode from the keyed response")
+
+    // Missing products key defaults to an empty array (no crash).
+    let legacyJSON = "[{\"id\":\"s3\",\"body\":\"<html>\",\"context_key\":\"ctx3\"}]"
+    let legacyScreen = try decoder.decode(NoCodesScreen.self, from: Data(legacyJSON.utf8))
+    XCTAssertEqual(legacyScreen.products, [], "Missing products should default to an empty array")
+  }
+
+  // Backend-independent: exercises NoCodesScreen decoding of the authored `variables`, that the
+  // native type is preserved per variable, and defaulting when the key is absent. The shapes
+  // (space in key, empty-string default) mirror real published_configs.
+  func testScreenDecodesTypedVariables() throws {
+    let decoder = JSONDecoder()
+
+    // Array-nested shape → the unkeyed CodingKeys branch.
+    let arrayJSON = """
+    [{"id":"s1","body":"<html>","context_key":"ctx","variables":[\
+    {"key":"isTrial","type":"boolean","value":true},\
+    {"key":"headline","type":"string","value":"Go Premium"},\
+    {"key":"discount","type":"number","value":30},\
+    {"key":"custom var","type":"string","value":""}]}]
+    """
+    let arrayScreen = try decoder.decode(NoCodesScreen.self, from: Data(arrayJSON.utf8))
+    XCTAssertEqual(arrayScreen.variables.map { $0.key }, ["isTrial", "headline", "discount", "custom var"])
+    XCTAssertEqual(arrayScreen.variables[0].value, .bool(true))
+    XCTAssertEqual(arrayScreen.variables[1].value, .string("Go Premium"))
+    XCTAssertEqual(arrayScreen.variables[2].value, .number(30))
+    XCTAssertEqual(arrayScreen.variables[3].value, .string(""), "Empty-string default is preserved")
+
+    // Keyed shape → the ResponseCodingKeys branch.
+    let keyedJSON = "{\"data\":{},\"id\":\"s2\",\"body\":\"<html>\",\"context_key\":\"ctx2\",\"variables\":[{\"key\":\"promo\",\"type\":\"boolean\",\"value\":false}]}"
+    let keyedScreen = try decoder.decode(NoCodesScreen.self, from: Data(keyedJSON.utf8))
+    XCTAssertEqual(keyedScreen.variables.first?.value, .bool(false), "Variables should decode from the keyed response")
+
+    // Missing variables key defaults to an empty array (no crash).
+    let legacyJSON = "[{\"id\":\"s3\",\"body\":\"<html>\",\"context_key\":\"ctx3\"}]"
+    let legacyScreen = try decoder.decode(NoCodesScreen.self, from: Data(legacyJSON.utf8))
+    XCTAssertEqual(legacyScreen.variables.count, 0, "Missing variables should default to an empty array")
+  }
+
   func testGetScreenById() async throws {
     // given
     let noCodesService = getNoCodesService()
