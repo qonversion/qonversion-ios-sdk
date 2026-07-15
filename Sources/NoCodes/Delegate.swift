@@ -57,7 +57,15 @@ public protocol NoCodesDelegate {
   ///   - action: ``NoCodesAction``
   /// For example, if the user made a purchase then action.type == .purchase
   func noCodesFinishedExecuting(action: NoCodesAction)
-  
+
+  /// Called when a custom action configured in the builder is triggered on the screen.
+  /// The No-Codes SDK does not execute anything itself — handle the value in your app code.
+  /// The screen stays open; close it using `NoCodes.shared.close()` if needed.
+  /// - Parameters:
+  ///   - value: the string value configured for the custom action in the builder,
+  ///   or an empty string if no value was configured
+  func noCodesReceivedCustomAction(value: String)
+
   /// Called when No-Codes flow is finished and the No-Codes screen is closed
   func noCodesFinished()
   
@@ -143,9 +151,13 @@ public extension NoCodesDelegate {
   }
   
   func noCodesFinishedExecuting(action: NoCodesAction) {
-    
+
   }
-  
+
+  func noCodesReceivedCustomAction(value: String) {
+
+  }
+
   func noCodesFinished() {
     
   }

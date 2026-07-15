@@ -173,7 +173,11 @@ extension NoCodesFlowCoordinator: NoCodesViewControllerDelegate {
   func noCodesFinishedExecuting(action: NoCodesAction) {
     delegate?.noCodesFinishedExecuting(action: action)
   }
-  
+
+  func noCodesReceivedCustomAction(value: String) {
+    delegate?.noCodesReceivedCustomAction(value: value)
+  }
+
   func noCodesFinished() {
     screenEventsService.flush()
     delegate?.noCodesFinished()
