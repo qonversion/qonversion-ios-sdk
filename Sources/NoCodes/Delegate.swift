@@ -62,7 +62,8 @@ public protocol NoCodesDelegate {
   /// The No-Codes SDK does not execute anything itself — handle the value in your app code.
   /// The screen stays open; close it using `NoCodes.shared.close()` if needed.
   /// - Parameters:
-  ///   - value: the string value configured for the custom action in the builder
+  ///   - value: the string value configured for the custom action in the builder,
+  ///   or an empty string if no value was configured
   func noCodesReceivedCustomAction(value: String)
 
   /// Called when No-Codes flow is finished and the No-Codes screen is closed

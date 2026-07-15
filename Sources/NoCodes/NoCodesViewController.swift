@@ -543,10 +543,7 @@ extension NoCodesViewController {
   }
   
   private func handle(customAction: NoCodesAction) {
-    guard let value: String = customAction.parameters?[Constants.value.rawValue] as? String else {
-      logger.error(LoggerInfoMessages.customActionHandlingFailed.rawValue)
-      return delegate.noCodesFailedToExecute(action: customAction, error: nil)
-    }
+    let value: String = customAction.parameters?[Constants.value.rawValue] as? String ?? ""
 
     delegate.noCodesReceivedCustomAction(value: value)
     delegate.noCodesFinishedExecuting(action: customAction)

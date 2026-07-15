@@ -15,7 +15,6 @@ enum LoggerInfoMessages: String {
   case urlHandlingFailed = "Failed to handle the URL"
   case screenEventTrackingFailed = "Failed to send screen events"
   case screenEventFlushed = "Screen events flushed successfully"
-  case customActionHandlingFailed = "Failed to handle the custom action: value is missing"
 }
 
 enum LogLevel: Int {
