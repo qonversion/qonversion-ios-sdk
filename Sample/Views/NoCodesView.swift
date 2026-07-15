@@ -240,12 +240,30 @@ struct NoCodesView: View {
                 // Gate on real availability before anything is presented.
                 let screen = try await NoCodes.shared.loadScreen(withContextKey: key)
                 appState.addNoCodesEvent("Screen loaded (id: \(screen.id)), presenting from warm cache")
+
+                // The loaded entity carries the typed default variables configured in the
+                // builder — authored custom variables and product slots — readable by key
+                // (e.g. screen.defaultVariable(forKey: "show_trial")) before presenting.
+                let variables = screen.defaultVariables
+                    .map { "\($0.kind.rawValue) \($0.key) = \(formatVariableValue($0.value))" }
+                    .joined(separator: ", ")
+                appState.addNoCodesEvent("Default variables: [\(variables)]")
+
                 NoCodes.shared.showScreen(withContextKey: key)
             } catch {
                 // The SDK skeleton never appeared, so we can show our own fallback UI instead.
                 let type = (error as? NoCodesError)?.type
                 appState.errorMessage = "Load failed (\(String(describing: type))), showing app fallback instead of the No-Code screen."
             }
+        }
+    }
+
+    private func formatVariableValue(_ value: NoCodesScreenVariableValue) -> String {
+        switch value {
+        case .bool(let boolValue): return String(boolValue)
+        case .string(let stringValue): return "\"\(stringValue)\""
+        case .number(let numberValue): return String(numberValue)
+        case .none: return "null"
         }
     }
 }
@@ -302,10 +320,9 @@ class NoCodesListenerHandler: NoCodesDelegate {
         return nil
     }
     
-    func noCodesHasShownScreen(id: String, products: [String], variables: [NoCodesScreenVariable]) {
+    func noCodesHasShownScreen(id: String) {
         Task { @MainActor in
-            let vars = variables.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
-            appState?.addNoCodesEvent("Screen shown: \(id), products: \(products), variables: [\(vars)]")
+            appState?.addNoCodesEvent("Screen shown: \(id)")
         }
     }
 
