@@ -21,6 +21,7 @@ enum Constants: String {
   case productId
   case setProducts
   case setContext
+  case value
 }
 
 protocol NoCodesViewControllerDelegate {
@@ -32,11 +33,13 @@ protocol NoCodesViewControllerDelegate {
   func noCodesFailedToExecute(action: NoCodesAction, error: Error?)
   
   func noCodesFinishedExecuting(action: NoCodesAction)
-  
+
+  func noCodesReceivedCustomAction(value: String)
+
   func noCodesFinished()
-  
+
   func noCodesFailedToLoadScreen(error: Error?)
-  
+
 }
 
 final class NoCodesViewController: UIViewController {
@@ -279,6 +282,8 @@ extension NoCodesViewController: WKScriptMessageHandler {
       handle(getContextAction: action)
     case .purchaseLoaderPresent:
       hasWebPurchaseLoader = true
+    case .custom:
+      handle(customAction: action)
     default: break
     }
   }
@@ -537,6 +542,16 @@ extension NoCodesViewController {
     }
   }
   
+  private func handle(customAction: NoCodesAction) {
+    guard let value: String = customAction.parameters?[Constants.value.rawValue] as? String else {
+      logger.error(LoggerInfoMessages.customActionHandlingFailed.rawValue)
+      return delegate.noCodesFailedToExecute(action: customAction, error: nil)
+    }
+
+    delegate.noCodesReceivedCustomAction(value: value)
+    delegate.noCodesFinishedExecuting(action: customAction)
+  }
+
   private func handle(purchaseAction: NoCodesAction) {
     guard let productId: String = purchaseAction.parameters?[Constants.productId.rawValue] as? String else { return }
 
