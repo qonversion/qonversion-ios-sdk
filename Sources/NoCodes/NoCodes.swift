@@ -84,6 +84,10 @@ public final class NoCodes {
   /// A successful load warms the shared cache, so a following ``showScreen(withContextKey:)``
   /// renders from cache with a minimal skeleton.
   ///
+  /// The returned screen carries the typed default variables configured in the builder
+  /// (``NoCodesScreen/defaultVariables``) — authored custom variables and product slots —
+  /// so you can read them by key before presenting.
+  ///
   /// - Parameters:
   ///   - contextKey: the context key of the screen.
   /// - Returns: the loaded ``NoCodesScreen``.
