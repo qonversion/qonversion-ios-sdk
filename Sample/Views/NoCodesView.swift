@@ -240,6 +240,17 @@ struct NoCodesView: View {
                 // Gate on real availability before anything is presented.
                 let screen = try await NoCodes.shared.loadScreen(withContextKey: key)
                 appState.addNoCodesEvent("Screen loaded (id: \(screen.id)), presenting from warm cache")
+
+                // The loaded entity carries the typed default variables configured in the
+                // builder — custom variables, product slots and the default selected
+                // product — readable by key (e.g. screen.defaultVariable(forKey: "primary",
+                // kind: .product)) before presenting.
+                let variables = screen.defaultVariables
+                    .map { "\($0.kind.rawValue) \($0.key) = \($0.value.stringValue)" }
+                    .joined(separator: ", ")
+                appState.addNoCodesEvent("Default variables: [\(variables)]")
+                appState.addNoCodesEvent("Default selected product: \(screen.defaultSelectedProductId ?? "none")")
+
                 NoCodes.shared.showScreen(withContextKey: key)
             } catch {
                 // The SDK skeleton never appeared, so we can show our own fallback UI instead.
@@ -248,6 +259,7 @@ struct NoCodesView: View {
             }
         }
     }
+
 }
 
 // MARK: - NoCodes Presentation Style Option
@@ -302,10 +314,9 @@ class NoCodesListenerHandler: NoCodesDelegate {
         return nil
     }
     
-    func noCodesHasShownScreen(id: String, products: [String], variables: [NoCodesScreenVariable]) {
+    func noCodesHasShownScreen(id: String) {
         Task { @MainActor in
-            let vars = variables.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
-            appState?.addNoCodesEvent("Screen shown: \(id), products: \(products), variables: [\(vars)]")
+            appState?.addNoCodesEvent("Screen shown: \(id)")
         }
     }
 
