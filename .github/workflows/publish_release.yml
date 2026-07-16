@@ -1,0 +1,14 @@
+name: Publish release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  publish_release:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/') && contains(github.event.pull_request.labels.*.name, 'one-click-release')
+    uses: qonversion/shared-sdk-workflows/.github/workflows/publish_release.yml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
