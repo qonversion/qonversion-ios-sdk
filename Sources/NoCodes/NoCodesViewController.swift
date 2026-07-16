@@ -21,22 +21,25 @@ enum Constants: String {
   case productId
   case setProducts
   case setContext
+  case value
 }
 
 protocol NoCodesViewControllerDelegate {
-  
+
   func noCodesHasShownScreen(id: String)
-  
+
   func noCodesStartsExecuting(action: NoCodesAction)
   
   func noCodesFailedToExecute(action: NoCodesAction, error: Error?)
   
   func noCodesFinishedExecuting(action: NoCodesAction)
-  
+
+  func noCodesReceivedCustomAction(value: String)
+
   func noCodesFinished()
-  
+
   func noCodesFailedToLoadScreen(error: Error?)
-  
+
 }
 
 final class NoCodesViewController: UIViewController {
@@ -61,6 +64,7 @@ final class NoCodesViewController: UIViewController {
   private var theme: NoCodesTheme!
   private var didTrackScreenShown = false
   private var didTrackScreenClosed = false
+  private var hasWebPurchaseLoader = false
   private var contextBuilder: NoCodesContextBuilderInterface!
   private var htmlInjector: NoCodesHTMLInjectorInterface!
 
@@ -249,7 +253,7 @@ extension NoCodesViewController: WKScriptMessageHandler {
       return
     }
     
-    if action.type != .loadProducts && action.type != .screenAnalytics && action.type != .getContext {
+    if action.type != .loadProducts && action.type != .screenAnalytics && action.type != .getContext && action.type != .purchaseLoaderPresent {
       delegate.noCodesStartsExecuting(action: action)
     }
     
@@ -276,6 +280,10 @@ extension NoCodesViewController: WKScriptMessageHandler {
       handle(screenAnalyticsAction: action)
     case .getContext:
       handle(getContextAction: action)
+    case .purchaseLoaderPresent:
+      hasWebPurchaseLoader = true
+    case .custom:
+      handle(customAction: action)
     default: break
     }
   }
@@ -534,10 +542,17 @@ extension NoCodesViewController {
     }
   }
   
+  private func handle(customAction: NoCodesAction) {
+    let value: String = customAction.parameters?[Constants.value.rawValue] as? String ?? ""
+
+    delegate.noCodesReceivedCustomAction(value: value)
+    delegate.noCodesFinishedExecuting(action: customAction)
+  }
+
   private func handle(purchaseAction: NoCodesAction) {
     guard let productId: String = purchaseAction.parameters?[Constants.productId.rawValue] as? String else { return }
 
-    activityIndicator.startAnimating()
+    if !hasWebPurchaseLoader { activityIndicator.startAnimating() }
     Task {
       do {
         let products = try await Qonversion.shared().products()
@@ -580,7 +595,7 @@ extension NoCodesViewController {
   }
   
   private func handle(restoreAction: NoCodesAction) {
-    activityIndicator.startAnimating()
+    if !hasWebPurchaseLoader { activityIndicator.startAnimating() }
     
     Task {
       do {

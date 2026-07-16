@@ -50,6 +50,15 @@ public enum NoCodesActionType {
 
   /// Internal action for loading context data (device info, user info, entitlements)
   case getContext
+
+  /// Internal action: the web page announces it renders its own purchase loader,
+  /// so the native purchase spinner should be suppressed to avoid a double loader
+  case purchaseLoaderPresent
+
+  /// Custom action configured in the builder. The SDK does not execute anything itself —
+  /// the configured string value is delivered to the app code via
+  /// ``NoCodesDelegate/noCodesReceivedCustomAction(value:)``
+  case custom
 }
 
 /// Action performed in the No-Codes
