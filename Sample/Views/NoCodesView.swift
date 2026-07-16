@@ -249,6 +249,7 @@ struct NoCodesView: View {
                     .map { "\($0.kind.rawValue) \($0.key) = \($0.value.stringValue)" }
                     .joined(separator: ", ")
                 appState.addNoCodesEvent("Default variables: [\(variables)]")
+                appState.addNoCodesEvent("Default selected product: \(screen.defaultSelectedProductId ?? "none")")
 
                 NoCodes.shared.showScreen(withContextKey: key)
             } catch {

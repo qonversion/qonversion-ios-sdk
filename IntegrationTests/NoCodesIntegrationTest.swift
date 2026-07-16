@@ -110,7 +110,11 @@ class NoCodesIntegrationTest: XCTestCase {
     XCTAssertEqual(screen.defaultVariable(forKey: "primary")?.kind, .custom, "Unfiltered lookup returns the first match in payload order")
     XCTAssertEqual(screen.defaultVariable(forKey: "primary", kind: .product)?.value, .string("weekly_299"))
     XCTAssertNil(screen.defaultVariable(forKey: "known", kind: .product))
-    XCTAssertEqual(screen.defaultVariable(forKey: "default_selected_product", kind: .selectedProduct)?.value, .string("annual"))
+
+    // The default selected product resolves via the typed shortcut — no magic key needed.
+    XCTAssertEqual(screen.defaultSelectedProductId, "annual")
+    let bareScreen = try decoder.decode(NoCodesScreen.self, from: Data("[{\"id\":\"s2\",\"body\":\"<html>\",\"context_key\":\"c\"}]".utf8))
+    XCTAssertNil(bareScreen.defaultSelectedProductId, "No selected_product entry -> nil")
   }
 
   // stringValue renders any variable value as a plain string regardless of native type.

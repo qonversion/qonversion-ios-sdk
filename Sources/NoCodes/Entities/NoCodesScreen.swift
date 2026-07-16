@@ -62,12 +62,25 @@ public struct NoCodesScreen: Decodable, Sendable {
     }
   }
 
+  /// The Qonversion product id selected by default when the screen opens (the builder's
+  /// Default Product), or `nil` when none is configured. Convenience over the
+  /// ``NoCodesScreenVariableKind/selectedProduct`` entry of ``defaultVariables``.
+  public var defaultSelectedProductId: String? {
+    guard let variable = defaultVariables.first(where: { $0.kind == .selectedProduct }),
+          case .string(let productId) = variable.value else {
+      return nil
+    }
+    return productId
+  }
+
   /// Returns the default variable configured under the given key, or `nil` when the screen
   /// has no variable with that exact (case-sensitive) key.
   ///
   /// Keys are only unique within a kind — a custom variable and a product slot may share a
   /// name — so pass `kind` to disambiguate; without it the first match in payload order
   /// (custom variables, then product slots, then the selected product) is returned.
+  ///
+  /// For the default selected product prefer ``defaultSelectedProductId`` — it needs no key.
   public func defaultVariable(forKey key: String, kind: NoCodesScreenVariableKind? = nil) -> NoCodesScreenVariable? {
     return defaultVariables.first { $0.key == key && (kind == nil || $0.kind == kind) }
   }
