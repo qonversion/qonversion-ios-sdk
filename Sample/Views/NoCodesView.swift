@@ -242,10 +242,11 @@ struct NoCodesView: View {
                 appState.addNoCodesEvent("Screen loaded (id: \(screen.id)), presenting from warm cache")
 
                 // The loaded entity carries the typed default variables configured in the
-                // builder — authored custom variables and product slots — readable by key
-                // (e.g. screen.defaultVariable(forKey: "show_trial")) before presenting.
+                // builder — custom variables, product slots and the default selected
+                // product — readable by key (e.g. screen.defaultVariable(forKey: "primary",
+                // kind: .product)) before presenting.
                 let variables = screen.defaultVariables
-                    .map { "\($0.kind.rawValue) \($0.key) = \(formatVariableValue($0.value))" }
+                    .map { "\($0.kind.rawValue) \($0.key) = \($0.value.stringValue)" }
                     .joined(separator: ", ")
                 appState.addNoCodesEvent("Default variables: [\(variables)]")
 
@@ -258,14 +259,6 @@ struct NoCodesView: View {
         }
     }
 
-    private func formatVariableValue(_ value: NoCodesScreenVariableValue) -> String {
-        switch value {
-        case .bool(let boolValue): return String(boolValue)
-        case .string(let stringValue): return "\"\(stringValue)\""
-        case .number(let numberValue): return String(numberValue)
-        case .none: return "null"
-        }
-    }
 }
 
 // MARK: - NoCodes Presentation Style Option

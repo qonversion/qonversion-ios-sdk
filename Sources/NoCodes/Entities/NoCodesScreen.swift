@@ -64,8 +64,12 @@ public struct NoCodesScreen: Decodable, Sendable {
 
   /// Returns the default variable configured under the given key, or `nil` when the screen
   /// has no variable with that exact (case-sensitive) key.
-  public func defaultVariable(forKey key: String) -> NoCodesScreenVariable? {
-    return defaultVariables.first { $0.key == key }
+  ///
+  /// Keys are only unique within a kind — a custom variable and a product slot may share a
+  /// name — so pass `kind` to disambiguate; without it the first match in payload order
+  /// (custom variables, then product slots, then the selected product) is returned.
+  public func defaultVariable(forKey key: String, kind: NoCodesScreenVariableKind? = nil) -> NoCodesScreenVariable? {
+    return defaultVariables.first { $0.key == key && (kind == nil || $0.kind == kind) }
   }
 
   /// Creates a copy of the screen with modified HTML content.
@@ -127,6 +131,10 @@ public enum NoCodesScreenVariableKind: String, Sendable {
   /// A product slot: ``NoCodesScreenVariable/key`` is the slot name and
   /// ``NoCodesScreenVariable/value`` is the default Qonversion product id assigned to it.
   case product
+  /// The screen's Default Product configured in the builder:
+  /// ``NoCodesScreenVariable/key`` is always `"default_selected_product"` and
+  /// ``NoCodesScreenVariable/value`` is the Qonversion product id selected by default.
+  case selectedProduct = "selected_product"
   /// A kind introduced on the backend after this SDK version was released.
   case unknown
 }
@@ -139,6 +147,25 @@ public enum NoCodesScreenVariableValue: Decodable, Equatable, Sendable {
   case number(Double)
   /// A `null`/absent authored default.
   case none
+
+  /// The value rendered as a plain string regardless of its native type: `"true"`/`"false"`
+  /// for booleans, the string itself, a number without a trailing `.0` when integral
+  /// (`34`, `3.5`), or an empty string for ``none``.
+  public var stringValue: String {
+    switch self {
+    case .bool(let boolValue):
+      return boolValue ? "true" : "false"
+    case .string(let stringValue):
+      return stringValue
+    case .number(let numberValue):
+      if numberValue.truncatingRemainder(dividingBy: 1) == 0, abs(numberValue) < 1e15 {
+        return String(Int64(numberValue))
+      }
+      return String(numberValue)
+    case .none:
+      return ""
+    }
+  }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()

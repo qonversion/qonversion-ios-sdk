@@ -88,7 +88,10 @@ class NoCodesIntegrationTest: XCTestCase {
     [{"id":"s1","body":"<html>","context_key":"ctx","variables":[\
     {"key":"legacy","type":"string","value":"pre-kind payload"},\
     {"kind":"device","key":"future","type":"string","value":"added later"},\
-    {"kind":"custom","key":"known","type":"boolean","value":false}]}]
+    {"kind":"custom","key":"known","type":"boolean","value":false},\
+    {"kind":"custom","key":"primary","type":"string","value":"custom wins unfiltered"},\
+    {"kind":"product","key":"primary","type":"string","value":"weekly_299"},\
+    {"kind":"selected_product","key":"default_selected_product","type":"string","value":"annual"}]}]
     """
     let screen = try decoder.decode(NoCodesScreen.self, from: Data(json.utf8))
 
@@ -96,11 +99,30 @@ class NoCodesIntegrationTest: XCTestCase {
     XCTAssertEqual(screen.defaultVariables[0].kind, .custom, "Missing kind must default to custom")
     XCTAssertEqual(screen.defaultVariables[1].kind, .unknown, "Unknown kind must decode tolerantly")
     XCTAssertEqual(screen.defaultVariables[2].kind, .custom)
+    XCTAssertEqual(screen.defaultVariables[5].kind, .selectedProduct, "selected_product must decode to the dedicated kind")
 
     // By-key lookup is exact and case-sensitive.
     XCTAssertEqual(screen.defaultVariable(forKey: "known")?.value, .bool(false))
     XCTAssertNil(screen.defaultVariable(forKey: "Known"))
     XCTAssertNil(screen.defaultVariable(forKey: "absent"))
+
+    // Keys are only unique within a kind — the kind filter disambiguates collisions.
+    XCTAssertEqual(screen.defaultVariable(forKey: "primary")?.kind, .custom, "Unfiltered lookup returns the first match in payload order")
+    XCTAssertEqual(screen.defaultVariable(forKey: "primary", kind: .product)?.value, .string("weekly_299"))
+    XCTAssertNil(screen.defaultVariable(forKey: "known", kind: .product))
+    XCTAssertEqual(screen.defaultVariable(forKey: "default_selected_product", kind: .selectedProduct)?.value, .string("annual"))
+  }
+
+  // stringValue renders any variable value as a plain string regardless of native type.
+  func testVariableValueStringValue() {
+    XCTAssertEqual(NoCodesScreenVariableValue.bool(true).stringValue, "true")
+    XCTAssertEqual(NoCodesScreenVariableValue.bool(false).stringValue, "false")
+    XCTAssertEqual(NoCodesScreenVariableValue.string("Go Premium").stringValue, "Go Premium")
+    XCTAssertEqual(NoCodesScreenVariableValue.string("").stringValue, "")
+    XCTAssertEqual(NoCodesScreenVariableValue.number(34).stringValue, "34", "Integral numbers must not carry a trailing .0")
+    XCTAssertEqual(NoCodesScreenVariableValue.number(-2).stringValue, "-2")
+    XCTAssertEqual(NoCodesScreenVariableValue.number(3.5).stringValue, "3.5")
+    XCTAssertEqual(NoCodesScreenVariableValue.none.stringValue, "")
   }
 
   func testGetScreenById() async throws {
