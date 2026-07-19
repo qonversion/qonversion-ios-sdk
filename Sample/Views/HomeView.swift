@@ -90,14 +90,6 @@ struct HomeView: View {
                             }
                             
                             QuickActionButton(
-                                title: "Load Offerings",
-                                icon: "gift.fill",
-                                color: .purple
-                            ) {
-                                Task { await appState.loadOfferings() }
-                            }
-                            
-                            QuickActionButton(
                                 title: "Restore Purchases",
                                 icon: "arrow.clockwise",
                                 color: .orange

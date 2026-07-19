@@ -10,9 +10,10 @@ import Qonversion
 
 @MainActor
 class AppState: ObservableObject {
+    // Products are managed via Remote Configs — see migration guide:
+    // https://documentation.qonversion.io/docs/migrate-offerings-to-remote-configs
     @Published var products: [String: Qonversion.Product] = [:]
     @Published var entitlements: [String: Qonversion.Entitlement] = [:]
-    @Published var offerings: Qonversion.Offerings?
     @Published var remoteConfigs: Qonversion.RemoteConfigList?
     @Published var userInfo: Qonversion.User?
     @Published var userProperties: Qonversion.UserProperties?
@@ -111,26 +112,6 @@ class AppState: ObservableObject {
     func syncStoreKit2Purchases() {
         QonversionSwift.shared.syncStoreKit2Purchases()
         successMessage = "StoreKit 2 purchases synced"
-    }
-    
-    // MARK: - Offerings
-    func loadOfferings() async {
-        isLoading = true
-        errorMessage = nil
-        
-        await withCheckedContinuation { continuation in
-            Qonversion.shared().offerings { [weak self] result, error in
-                Task { @MainActor in
-                    if let error = error {
-                        self?.errorMessage = error.localizedDescription
-                    } else {
-                        self?.offerings = result
-                    }
-                    self?.isLoading = false
-                    continuation.resume()
-                }
-            }
-        }
     }
     
     // MARK: - Purchase

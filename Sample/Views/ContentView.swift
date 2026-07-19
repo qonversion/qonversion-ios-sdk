@@ -27,11 +27,6 @@ struct ContentView: View {
                     Label("Entitlements", systemImage: "checkmark.seal.fill")
                 }
             
-            OfferingsView()
-                .tabItem {
-                    Label("Offerings", systemImage: "gift.fill")
-                }
-            
             MoreView()
                 .tabItem {
                     Label("More", systemImage: "ellipsis.circle.fill")
