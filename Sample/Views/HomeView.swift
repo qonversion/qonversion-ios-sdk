@@ -90,19 +90,19 @@ struct HomeView: View {
                             }
                             
                             QuickActionButton(
-                                title: "Load Offerings",
-                                icon: "gift.fill",
-                                color: .purple
-                            ) {
-                                Task { await appState.loadOfferings() }
-                            }
-                            
-                            QuickActionButton(
                                 title: "Restore Purchases",
                                 icon: "arrow.clockwise",
                                 color: .orange
                             ) {
                                 Task { await appState.restore() }
+                            }
+
+                            QuickActionButton(
+                                title: "Load Remote Configs",
+                                icon: "slider.horizontal.3",
+                                color: .purple
+                            ) {
+                                Task { await appState.loadRemoteConfigList(contextKeys: nil) }
                             }
                         }
                     }

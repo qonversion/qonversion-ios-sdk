@@ -31,8 +31,8 @@ struct ContentView: View {
             }
             .buttonStyle(.bordered)
             
-            Button("Get Offerings") {
-              qonversionManager.getOfferings()
+            Button("Get Products") {
+              qonversionManager.getProducts()
             }
             .buttonStyle(.bordered)
             
@@ -127,22 +127,23 @@ class QonversionManager: ObservableObject {
     }
   }
   
-  func getOfferings() {
-    addLog("📦 Getting offerings...")
-    
-    Qonversion.shared().offerings { [weak self] offerings, error in
+  // Products are managed via Remote Configs — see migration guide:
+  // https://documentation.qonversion.io/docs/migrate-offerings-to-remote-configs
+  func getProducts() {
+    addLog("📦 Getting products...")
+
+    Qonversion.shared().products { [weak self] products, error in
       DispatchQueue.main.async {
         if let error = error {
-          self?.addLog("❌ Error getting offerings: \(error.localizedDescription)")
-        } else if let offerings = offerings {
-          let count = offerings.availableOfferings.count
-          self?.addLog("✅ Found offerings: \(count)")
-          
-          for offering in offerings.availableOfferings {
-            self?.addLog("  - \(offering.identifier): \(offering.products.count) products")
+          self?.addLog("❌ Error getting products: \(error.localizedDescription)")
+        } else if !products.isEmpty {
+          self?.addLog("✅ Found products: \(products.count)")
+
+          for (id, product) in products {
+            self?.addLog("  - \(id): \(product.prettyPrice)")
           }
         } else {
-          self?.addLog("ℹ️ No offerings found")
+          self?.addLog("ℹ️ No products found")
         }
       }
     }
