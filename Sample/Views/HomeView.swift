@@ -96,6 +96,14 @@ struct HomeView: View {
                             ) {
                                 Task { await appState.restore() }
                             }
+
+                            QuickActionButton(
+                                title: "Load Remote Configs",
+                                icon: "slider.horizontal.3",
+                                color: .purple
+                            ) {
+                                Task { await appState.loadRemoteConfigList(contextKeys: nil) }
+                            }
                         }
                     }
                     .padding(.horizontal)
