@@ -357,9 +357,13 @@ extension NoCodesViewController {
   private func handle(getContextAction: NoCodesAction) {
     Task {
       let variables = getContextAction.parameters?["variables"] as? [String] ?? []
-      var contextProductIds = extractProductIds(from: variables)
-      if variables.contains("products.hasAnyIntro") {
-        contextProductIds = Array(Set(contextProductIds).union(screenProductIds))
+      let requestedProductIds = extractProductIds(from: variables)
+      let needsHasAnyIntro = variables.contains(IntroConditionVariable.hasAnyIntro)
+      let contextProductIds = needsHasAnyIntro
+        ? Array(Set(requestedProductIds).union(screenProductIds))
+        : requestedProductIds
+      if needsHasAnyIntro && contextProductIds.isEmpty {
+        logger.warning("products.hasAnyIntro is used in conditions, but the screen has no known products — the condition will evaluate to false")
       }
       let checkEligibility = requiresIntroEligibility(variables: variables)
 
@@ -390,10 +394,22 @@ extension NoCodesViewController {
     return Array(ids)
   }
 
+  // Names of the builder's intro condition variables (conditionalLogicVariables.ts
+  // in dash-mono). Must stay in sync with the builder: a variable missing here
+  // silently skips the eligibility request for screens that use it.
+  private enum IntroConditionVariable {
+    static let productsPrefix = "products."
+    static let hasAnyIntro = "products.hasAnyIntro"
+    static let hasIntroSuffix = ".hasIntro"
+    static let introTypeSuffix = ".introType"
+  }
+
   private func requiresIntroEligibility(variables: [String]) -> Bool {
     return variables.contains { variable in
-      guard variable.hasPrefix("products.") else { return false }
-      return variable == "products.hasAnyIntro" || variable.hasSuffix(".hasIntro") || variable.hasSuffix(".introType")
+      guard variable.hasPrefix(IntroConditionVariable.productsPrefix) else { return false }
+      return variable == IntroConditionVariable.hasAnyIntro
+        || variable.hasSuffix(IntroConditionVariable.hasIntroSuffix)
+        || variable.hasSuffix(IntroConditionVariable.introTypeSuffix)
     }
   }
 
@@ -408,7 +424,9 @@ extension NoCodesViewController {
   }
 
   private func loadProductsContext(productIds: [String], checkEligibility: Bool) async -> [String: Any] {
-    guard !productIds.isEmpty else { return [:] }
+    // An explicit false keeps products.hasAnyIntro defined even when the screen
+    // has no known products, matching the evaluator's missing-variable → false.
+    guard !productIds.isEmpty else { return ["hasAnyIntro": "false"] }
 
     do {
       let products = try await Qonversion.shared().products()
@@ -464,17 +482,19 @@ extension NoCodesViewController {
     }
   }
 
-  // Unknown status and eligibility loading failures fall back to eligible
-  // to keep the pre-eligibility behavior of the intro conditions.
+  // Only an explicit ineligible status hides the intro: unknown and
+  // nonIntroOrTrialProduct statuses, missing entries, and eligibility loading
+  // failures all fall back to eligible to keep the pre-eligibility behavior
+  // of the intro conditions. Store presence still gates hasIntro.
   private func isIntroEligible(_ eligibility: Qonversion.IntroEligibility?) -> Bool {
     guard let eligibility else { return true }
     return eligibility.status != .ineligible
   }
 
-  // Legacy context channel for screens published with older runtime scripts;
-  // the current runtime consumes only the getContext/setContext flow. Kept
-  // presence-based on purpose: an eligibility request here would fire on every
-  // screen open, even when no condition needs it.
+  // Dead context channel: no published runtime has ever listened to
+  // noCodesContextUpdate, and the setContext handler replaces
+  // window.noCodesContext wholesale. Intentionally presence-based — an
+  // eligibility request here would fire on every screen open for nothing.
   private func injectProductsContext(products: [String: Qonversion.Product]) async {
     var productEntries: [String] = []
     var hasAnyIntro = false
@@ -531,9 +551,11 @@ extension NoCodesViewController {
   }
   
   private func handle(loadProductsAction: NoCodesAction) {
-    // Captured synchronously: the runtime sends getProducts before getContext,
-    // and hasAnyIntro in the context must cover all products of the screen,
-    // not only the ones referenced by three-part condition variables.
+    // Captured synchronously: when the screen has products, the runtime sends
+    // getProducts before getContext in the same tick, and hasAnyIntro must
+    // cover all screen products, not only the ones referenced by three-part
+    // condition variables. Screens without product bindings never send
+    // getProducts, leaving this empty.
     if let productIds = loadProductsAction.parameters?["productIds"] as? [String] {
       screenProductIds = productIds
     }
