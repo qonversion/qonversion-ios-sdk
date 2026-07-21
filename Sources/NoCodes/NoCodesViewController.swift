@@ -400,16 +400,17 @@ extension NoCodesViewController {
 
     do {
       let products = try await Qonversion.shared().products()
+      let eligibilities = await loadIntroEligibility(productIds: productIds.filter { products[$0] != nil })
       var context: [String: Any] = [:]
       var hasAnyIntro = false
 
       for id in productIds {
         guard let product = products[id] else { continue }
-        let hasIntro = product.skProduct?.introductoryPrice != nil
+        let hasIntro = product.skProduct?.introductoryPrice != nil && isIntroEligible(eligibilities[id])
         if hasIntro { hasAnyIntro = true }
 
         var introType = ""
-        if let introPrice = product.skProduct?.introductoryPrice {
+        if hasIntro, let introPrice = product.skProduct?.introductoryPrice {
           switch introPrice.paymentMode {
           case .freeTrial: introType = "free_trial"
           case .payUpFront: introType = "pay_up_front"
@@ -432,16 +433,43 @@ extension NoCodesViewController {
     }
   }
 
+  private func loadIntroEligibility(productIds: [String]) async -> [String: Qonversion.IntroEligibility] {
+    guard !productIds.isEmpty else { return [:] }
+
+    do {
+      return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[String: Qonversion.IntroEligibility], Error>) in
+        Qonversion.shared().checkTrialIntroEligibility(productIds) { eligibilities, error in
+          if let error {
+            continuation.resume(throwing: error)
+          } else {
+            continuation.resume(returning: eligibilities)
+          }
+        }
+      }
+    } catch {
+      logger.error("Failed to load intro eligibility: \(error.localizedDescription)")
+      return [:]
+    }
+  }
+
+  // Unknown status and eligibility loading failures fall back to eligible
+  // to keep the pre-eligibility behavior of the intro conditions.
+  private func isIntroEligible(_ eligibility: Qonversion.IntroEligibility?) -> Bool {
+    guard let eligibility else { return true }
+    return eligibility.status != .ineligible
+  }
+
   private func injectProductsContext(products: [String: Qonversion.Product]) async {
+    let eligibilities = await loadIntroEligibility(productIds: Array(products.keys))
     var productEntries: [String] = []
     var hasAnyIntro = false
 
     for (id, product) in products {
-      let hasIntro = product.skProduct?.introductoryPrice != nil
+      let hasIntro = product.skProduct?.introductoryPrice != nil && isIntroEligible(eligibilities[id])
       if hasIntro { hasAnyIntro = true }
 
       var introType = "null"
-      if let introPrice = product.skProduct?.introductoryPrice {
+      if hasIntro, let introPrice = product.skProduct?.introductoryPrice {
         introType = "\"\(noCodesMapper.map(introPricePaymentType: introPrice.paymentMode))\""
       }
 
