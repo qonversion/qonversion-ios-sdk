@@ -358,14 +358,17 @@ extension NoCodesViewController {
     Task {
       let variables = getContextAction.parameters?["variables"] as? [String] ?? []
       let requestedProductIds = extractProductIds(from: variables)
-      let needsHasAnyIntro = variables.contains(IntroConditionVariable.hasAnyIntro)
-      let contextProductIds = needsHasAnyIntro
+      let checkEligibility = requiresIntroEligibility(variables: variables)
+      // Intro conditions need entries for every screen product, not only the ones
+      // referenced by three-part variables: hasAnyIntro aggregates over all of
+      // them, and slot variables (vars.products.{slot}) are resolved by the
+      // runtime against ctx.products by the bound product id.
+      let contextProductIds = checkEligibility
         ? Array(Set(requestedProductIds).union(screenProductIds))
         : requestedProductIds
-      if needsHasAnyIntro && contextProductIds.isEmpty {
+      if variables.contains(IntroConditionVariable.hasAnyIntro) && contextProductIds.isEmpty {
         logger.warning("products.hasAnyIntro is used in conditions, but the screen has no known products — the condition will evaluate to false")
       }
-      let checkEligibility = requiresIntroEligibility(variables: variables)
 
       async let entitlementsResult = loadActiveEntitlementIds()
       async let productsResult = loadProductsContext(productIds: contextProductIds, checkEligibility: checkEligibility)
@@ -399,6 +402,7 @@ extension NoCodesViewController {
   // silently skips the eligibility request for screens that use it.
   private enum IntroConditionVariable {
     static let productsPrefix = "products."
+    static let slotProductsPrefix = "vars.products."
     static let hasAnyIntro = "products.hasAnyIntro"
     static let hasIntroSuffix = ".hasIntro"
     static let introTypeSuffix = ".introType"
@@ -406,7 +410,8 @@ extension NoCodesViewController {
 
   private func requiresIntroEligibility(variables: [String]) -> Bool {
     return variables.contains { variable in
-      guard variable.hasPrefix(IntroConditionVariable.productsPrefix) else { return false }
+      guard variable.hasPrefix(IntroConditionVariable.productsPrefix)
+              || variable.hasPrefix(IntroConditionVariable.slotProductsPrefix) else { return false }
       return variable == IntroConditionVariable.hasAnyIntro
         || variable.hasSuffix(IntroConditionVariable.hasIntroSuffix)
         || variable.hasSuffix(IntroConditionVariable.introTypeSuffix)
