@@ -496,38 +496,6 @@ extension NoCodesViewController {
     return eligibility.status != .ineligible
   }
 
-  // Dead context channel: no published runtime has ever listened to
-  // noCodesContextUpdate, and the setContext handler replaces
-  // window.noCodesContext wholesale. Intentionally presence-based — an
-  // eligibility request here would fire on every screen open for nothing.
-  private func injectProductsContext(products: [String: Qonversion.Product]) async {
-    var productEntries: [String] = []
-    var hasAnyIntro = false
-
-    for (id, product) in products {
-      let hasIntro = product.skProduct?.introductoryPrice != nil
-      if hasIntro { hasAnyIntro = true }
-
-      var introType = "null"
-      if let introPrice = product.skProduct?.introductoryPrice {
-        introType = "\"\(noCodesMapper.map(introPricePaymentType: introPrice.paymentMode))\""
-      }
-
-      productEntries.append("\"\(id)\": { hasIntro: \(hasIntro), introType: \(introType) }")
-    }
-
-    let productsJS = "{ " + productEntries.joined(separator: ", ") + " }"
-    let js = """
-    window.noCodesContext = window.noCodesContext || {};
-    window.noCodesContext.products = \(productsJS);
-    window.noCodesContext.products.hasAnyIntro = \(hasAnyIntro);
-    window.dispatchEvent(new Event("noCodesContextUpdate"));
-    """
-    await MainActor.run {
-      webView?.evaluateJavaScript(js, completionHandler: nil)
-    }
-  }
-
   private var isModalPresentation: Bool {
     if let navigationController = navigationController, navigationController.viewControllers.count > 1 {
       return false
@@ -586,7 +554,6 @@ extension NoCodesViewController {
         return delegate.noCodesFailedToLoadScreen(error: NoCodesError(type: .productsLoadingFailed))
       }
       await send(event: Constants.setProducts.rawValue, data: jsString)
-      await injectProductsContext(products: filteredProducts)
     }
   }
 
