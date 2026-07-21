@@ -65,6 +65,7 @@ final class NoCodesViewController: UIViewController {
   private var didTrackScreenShown = false
   private var didTrackScreenClosed = false
   private var hasWebPurchaseLoader = false
+  private var screenProductIds: [String] = []
   private var contextBuilder: NoCodesContextBuilderInterface!
   private var htmlInjector: NoCodesHTMLInjectorInterface!
 
@@ -357,9 +358,20 @@ extension NoCodesViewController {
     Task {
       let variables = getContextAction.parameters?["variables"] as? [String] ?? []
       let requestedProductIds = extractProductIds(from: variables)
+      let checkEligibility = requiresIntroEligibility(variables: variables)
+      // Intro conditions need entries for every screen product, not only the ones
+      // referenced by three-part variables: hasAnyIntro aggregates over all of
+      // them, and slot variables (vars.products.{slot}) are resolved by the
+      // runtime against ctx.products by the bound product id.
+      let contextProductIds = checkEligibility
+        ? Array(Set(requestedProductIds).union(screenProductIds))
+        : requestedProductIds
+      if variables.contains(IntroConditionVariable.hasAnyIntro) && contextProductIds.isEmpty {
+        logger.warning("products.hasAnyIntro is used in conditions, but the screen has no known products — the condition will evaluate to false")
+      }
 
       async let entitlementsResult = loadActiveEntitlementIds()
-      async let productsResult = loadProductsContext(productIds: requestedProductIds)
+      async let productsResult = loadProductsContext(productIds: contextProductIds, checkEligibility: checkEligibility)
       async let userPropsResult = loadUserProperties()
 
       let activeEntitlementIds = await entitlementsResult
@@ -385,6 +397,27 @@ extension NoCodesViewController {
     return Array(ids)
   }
 
+  // Names of the builder's intro condition variables (conditionalLogicVariables.ts
+  // in dash-mono). Must stay in sync with the builder: a variable missing here
+  // silently skips the eligibility request for screens that use it.
+  private enum IntroConditionVariable {
+    static let productsPrefix = "products."
+    static let slotProductsPrefix = "vars.products."
+    static let hasAnyIntro = "products.hasAnyIntro"
+    static let hasIntroSuffix = ".hasIntro"
+    static let introTypeSuffix = ".introType"
+  }
+
+  private func requiresIntroEligibility(variables: [String]) -> Bool {
+    return variables.contains { variable in
+      guard variable.hasPrefix(IntroConditionVariable.productsPrefix)
+              || variable.hasPrefix(IntroConditionVariable.slotProductsPrefix) else { return false }
+      return variable == IntroConditionVariable.hasAnyIntro
+        || variable.hasSuffix(IntroConditionVariable.hasIntroSuffix)
+        || variable.hasSuffix(IntroConditionVariable.introTypeSuffix)
+    }
+  }
+
   private func loadActiveEntitlementIds() async -> [String] {
     do {
       let entitlements = try await Qonversion.shared().checkEntitlements()
@@ -395,21 +428,24 @@ extension NoCodesViewController {
     }
   }
 
-  private func loadProductsContext(productIds: [String]) async -> [String: Any] {
-    guard !productIds.isEmpty else { return [:] }
+  private func loadProductsContext(productIds: [String], checkEligibility: Bool) async -> [String: Any] {
+    // An explicit false keeps products.hasAnyIntro defined even when the screen
+    // has no known products, matching the evaluator's missing-variable → false.
+    guard !productIds.isEmpty else { return ["hasAnyIntro": "false"] }
 
     do {
       let products = try await Qonversion.shared().products()
+      let eligibilities = checkEligibility ? await loadIntroEligibility(productIds: productIds.filter { products[$0] != nil }) : [:]
       var context: [String: Any] = [:]
       var hasAnyIntro = false
 
       for id in productIds {
         guard let product = products[id] else { continue }
-        let hasIntro = product.skProduct?.introductoryPrice != nil
+        let hasIntro = product.skProduct?.introductoryPrice != nil && isIntroEligible(eligibilities[id])
         if hasIntro { hasAnyIntro = true }
 
         var introType = ""
-        if let introPrice = product.skProduct?.introductoryPrice {
+        if hasIntro, let introPrice = product.skProduct?.introductoryPrice {
           switch introPrice.paymentMode {
           case .freeTrial: introType = "free_trial"
           case .payUpFront: introType = "pay_up_front"
@@ -432,32 +468,32 @@ extension NoCodesViewController {
     }
   }
 
-  private func injectProductsContext(products: [String: Qonversion.Product]) async {
-    var productEntries: [String] = []
-    var hasAnyIntro = false
+  private func loadIntroEligibility(productIds: [String]) async -> [String: Qonversion.IntroEligibility] {
+    guard !productIds.isEmpty else { return [:] }
 
-    for (id, product) in products {
-      let hasIntro = product.skProduct?.introductoryPrice != nil
-      if hasIntro { hasAnyIntro = true }
-
-      var introType = "null"
-      if let introPrice = product.skProduct?.introductoryPrice {
-        introType = "\"\(noCodesMapper.map(introPricePaymentType: introPrice.paymentMode))\""
+    do {
+      return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[String: Qonversion.IntroEligibility], Error>) in
+        Qonversion.shared().checkTrialIntroEligibility(productIds) { eligibilities, error in
+          if let error {
+            continuation.resume(throwing: error)
+          } else {
+            continuation.resume(returning: eligibilities)
+          }
+        }
       }
-
-      productEntries.append("\"\(id)\": { hasIntro: \(hasIntro), introType: \(introType) }")
+    } catch {
+      logger.error("Failed to load intro eligibility: \(error.localizedDescription)")
+      return [:]
     }
+  }
 
-    let productsJS = "{ " + productEntries.joined(separator: ", ") + " }"
-    let js = """
-    window.noCodesContext = window.noCodesContext || {};
-    window.noCodesContext.products = \(productsJS);
-    window.noCodesContext.products.hasAnyIntro = \(hasAnyIntro);
-    window.dispatchEvent(new Event("noCodesContextUpdate"));
-    """
-    await MainActor.run {
-      webView?.evaluateJavaScript(js, completionHandler: nil)
-    }
+  // Only an explicit ineligible status hides the intro: unknown and
+  // nonIntroOrTrialProduct statuses, missing entries, and eligibility loading
+  // failures all fall back to eligible to keep the pre-eligibility behavior
+  // of the intro conditions. Store presence still gates hasIntro.
+  private func isIntroEligible(_ eligibility: Qonversion.IntroEligibility?) -> Bool {
+    guard let eligibility else { return true }
+    return eligibility.status != .ineligible
   }
 
   private var isModalPresentation: Bool {
@@ -488,6 +524,14 @@ extension NoCodesViewController {
   }
   
   private func handle(loadProductsAction: NoCodesAction) {
+    // Captured synchronously: when the screen has products, the runtime sends
+    // getProducts before getContext in the same tick, and hasAnyIntro must
+    // cover all screen products, not only the ones referenced by three-part
+    // condition variables. Screens without product bindings never send
+    // getProducts, leaving this empty.
+    if let productIds = loadProductsAction.parameters?["productIds"] as? [String] {
+      screenProductIds = productIds
+    }
     Task {
       guard let productIds: [String] = loadProductsAction.parameters?["productIds"] as? [String],
             let products: [String: Qonversion.Product] = try? await Qonversion.shared().products()
@@ -510,7 +554,6 @@ extension NoCodesViewController {
         return delegate.noCodesFailedToLoadScreen(error: NoCodesError(type: .productsLoadingFailed))
       }
       await send(event: Constants.setProducts.rawValue, data: jsString)
-      await injectProductsContext(products: filteredProducts)
     }
   }
 

@@ -33,7 +33,6 @@ struct ProductDetailView: View {
                     DetailRow(label: "Qonversion ID", value: product.qonversionID)
                     DetailRow(label: "Store ID", value: product.storeID)
                     DetailRow(label: "Type", value: productTypeString(product.type))
-                    DetailRow(label: "Offering ID", value: product.offeringID ?? "N/A")
                 }
                 
                 // Pricing

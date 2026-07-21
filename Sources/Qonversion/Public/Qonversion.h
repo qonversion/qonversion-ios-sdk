@@ -243,16 +243,16 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
 
 /**
  Returns Qonversion Offerings Object
- 
+
  An offering is a group of products that you can offer to a user on a given paywall based on your business logic.
  For example, you can offer one set of products on a paywall immediately after onboarding and another set of products
  with discounts later on if a user has not converted.
  Offerings allow changing the products offered remotely without releasing app updates.
- 
- @see [Offerings](https://qonversion.io/docs/offerings)
+
+ @see [Migrate Offerings to Remote Configs](https://documentation.qonversion.io/docs/migrate-offerings-to-remote-configs)
  @param completion Completion block that includes information about the offerings user and error
  */
-- (void)offerings:(QONOfferingsCompletionHandler)completion;
+- (void)offerings:(QONOfferingsCompletionHandler)completion DEPRECATED_MSG_ATTRIBUTE("Offerings are deprecated. Manage paywall products with Remote Configs instead: https://documentation.qonversion.io/docs/migrate-offerings-to-remote-configs");
 
 /**
  Information about the current Qonversion user
