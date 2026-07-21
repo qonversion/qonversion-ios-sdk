@@ -65,6 +65,7 @@ final class NoCodesViewController: UIViewController {
   private var didTrackScreenShown = false
   private var didTrackScreenClosed = false
   private var hasWebPurchaseLoader = false
+  private var screenProductIds: [String] = []
   private var contextBuilder: NoCodesContextBuilderInterface!
   private var htmlInjector: NoCodesHTMLInjectorInterface!
 
@@ -356,10 +357,14 @@ extension NoCodesViewController {
   private func handle(getContextAction: NoCodesAction) {
     Task {
       let variables = getContextAction.parameters?["variables"] as? [String] ?? []
-      let requestedProductIds = extractProductIds(from: variables)
+      var contextProductIds = extractProductIds(from: variables)
+      if variables.contains("products.hasAnyIntro") {
+        contextProductIds = Array(Set(contextProductIds).union(screenProductIds))
+      }
+      let checkEligibility = requiresIntroEligibility(variables: variables)
 
       async let entitlementsResult = loadActiveEntitlementIds()
-      async let productsResult = loadProductsContext(productIds: requestedProductIds)
+      async let productsResult = loadProductsContext(productIds: contextProductIds, checkEligibility: checkEligibility)
       async let userPropsResult = loadUserProperties()
 
       let activeEntitlementIds = await entitlementsResult
@@ -385,6 +390,13 @@ extension NoCodesViewController {
     return Array(ids)
   }
 
+  private func requiresIntroEligibility(variables: [String]) -> Bool {
+    return variables.contains { variable in
+      guard variable.hasPrefix("products.") else { return false }
+      return variable == "products.hasAnyIntro" || variable.hasSuffix(".hasIntro") || variable.hasSuffix(".introType")
+    }
+  }
+
   private func loadActiveEntitlementIds() async -> [String] {
     do {
       let entitlements = try await Qonversion.shared().checkEntitlements()
@@ -395,12 +407,12 @@ extension NoCodesViewController {
     }
   }
 
-  private func loadProductsContext(productIds: [String]) async -> [String: Any] {
+  private func loadProductsContext(productIds: [String], checkEligibility: Bool) async -> [String: Any] {
     guard !productIds.isEmpty else { return [:] }
 
     do {
       let products = try await Qonversion.shared().products()
-      let eligibilities = await loadIntroEligibility(productIds: productIds.filter { products[$0] != nil })
+      let eligibilities = checkEligibility ? await loadIntroEligibility(productIds: productIds.filter { products[$0] != nil }) : [:]
       var context: [String: Any] = [:]
       var hasAnyIntro = false
 
@@ -459,17 +471,20 @@ extension NoCodesViewController {
     return eligibility.status != .ineligible
   }
 
+  // Legacy context channel for screens published with older runtime scripts;
+  // the current runtime consumes only the getContext/setContext flow. Kept
+  // presence-based on purpose: an eligibility request here would fire on every
+  // screen open, even when no condition needs it.
   private func injectProductsContext(products: [String: Qonversion.Product]) async {
-    let eligibilities = await loadIntroEligibility(productIds: Array(products.keys))
     var productEntries: [String] = []
     var hasAnyIntro = false
 
     for (id, product) in products {
-      let hasIntro = product.skProduct?.introductoryPrice != nil && isIntroEligible(eligibilities[id])
+      let hasIntro = product.skProduct?.introductoryPrice != nil
       if hasIntro { hasAnyIntro = true }
 
       var introType = "null"
-      if hasIntro, let introPrice = product.skProduct?.introductoryPrice {
+      if let introPrice = product.skProduct?.introductoryPrice {
         introType = "\"\(noCodesMapper.map(introPricePaymentType: introPrice.paymentMode))\""
       }
 
@@ -516,6 +531,12 @@ extension NoCodesViewController {
   }
   
   private func handle(loadProductsAction: NoCodesAction) {
+    // Captured synchronously: the runtime sends getProducts before getContext,
+    // and hasAnyIntro in the context must cover all products of the screen,
+    // not only the ones referenced by three-part condition variables.
+    if let productIds = loadProductsAction.parameters?["productIds"] as? [String] {
+      screenProductIds = productIds
+    }
     Task {
       guard let productIds: [String] = loadProductsAction.parameters?["productIds"] as? [String],
             let products: [String: Qonversion.Product] = try? await Qonversion.shared().products()
