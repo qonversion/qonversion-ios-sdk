@@ -90,5 +90,9 @@ let package = Package(
                 ],
                 swiftSettings: [
                     .define("SWIFT_PACKAGE")
-                ])]
+                ]),
+              .testTarget(
+                name: "QonversionSwiftTests",
+                dependencies: ["QonversionSwift"],
+                path: "QonversionSwiftTests")]
 )

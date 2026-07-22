@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "QONTransactionCommitmentInfo.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -32,6 +33,13 @@ NS_SWIFT_NAME(Qonversion.StoreKit2PurchaseModel)
 @property (nonatomic, copy, nullable) NSString *promoOfferPeriodNumberOfUnits;
 @property (nonatomic, copy, nullable) NSString *promoOfferPaymentMode;
 @property (nonatomic, copy, nullable) NSString *storefrontCountryCode;
+
+/**
+ Commitment info parsed from the local StoreKit2 transaction (iOS 26.4+).
+ Populated in PurchasesMapper from Transaction.jsonRepresentation and forwarded to
+ QONTransaction once the Qonversion backend includes commitment data in transaction responses.
+ */
+@property (nonatomic, strong, nullable) QONTransactionCommitmentInfo *commitmentInfo API_AVAILABLE(ios(26.4), macosx(26.4), watchos(26.4), tvos(26.4), visionos(26.4));
 
 @end
 
