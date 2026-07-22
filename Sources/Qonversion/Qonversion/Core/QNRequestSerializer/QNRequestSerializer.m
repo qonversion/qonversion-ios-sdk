@@ -136,25 +136,29 @@ NS_ASSUME_NONNULL_BEGIN
   purchaseDict[@"period_unit"] = purchaseModel.subscriptionPeriodUnit;
   purchaseDict[@"period_number_of_units"] = purchaseModel.subscriptionPeriodNumberOfUnits;
     
-  NSMutableDictionary *introOffer = [[NSMutableDictionary alloc] init];
-  
-  introOffer[@"value"] = purchaseModel.price;
-  introOffer[@"number_of_periods"] = purchaseModel.introductoryNumberOfPeriods;
-  introOffer[@"period_number_of_units"] = purchaseModel.introductoryPeriodNumberOfUnits;
-  introOffer[@"period_unit"] = purchaseModel.introductoryPeriodUnit;
-  introOffer[@"payment_mode"] = purchaseModel.introductoryPaymentMode;
-  
-  result[@"introductory_offer"] = introOffer.count > 0 ? introOffer : nil;
-  
-  NSMutableDictionary *promoOffer = [[NSMutableDictionary alloc] init];
-  promoOffer[@"id"] = purchaseModel.promoOfferId;
-  promoOffer[@"value"] = purchaseModel.promoOfferPrice;
-  promoOffer[@"number_of_periods"] = purchaseModel.promoOfferNumberOfPeriods;
-  promoOffer[@"period_number_of_units"] = purchaseModel.promoOfferPeriodNumberOfUnits;
-  promoOffer[@"period_unit"] = purchaseModel.promoOfferPeriodUnit;
-  promoOffer[@"payment_mode"] = purchaseModel.promoOfferPaymentMode;
+  if (purchaseModel.introductoryPrice != nil) {
+    NSMutableDictionary *introOffer = [[NSMutableDictionary alloc] init];
 
-  result[@"promo_offer"] = [promoOffer copy];
+    introOffer[@"value"] = purchaseModel.introductoryPrice;
+    introOffer[@"number_of_periods"] = purchaseModel.introductoryNumberOfPeriods;
+    introOffer[@"period_number_of_units"] = purchaseModel.introductoryPeriodNumberOfUnits;
+    introOffer[@"period_unit"] = purchaseModel.introductoryPeriodUnit;
+    introOffer[@"payment_mode"] = purchaseModel.introductoryPaymentMode;
+
+    result[@"introductory_offer"] = introOffer;
+  }
+  
+  if (purchaseModel.promoOfferId != nil) {
+    NSMutableDictionary *promoOffer = [[NSMutableDictionary alloc] init];
+    promoOffer[@"id"] = purchaseModel.promoOfferId;
+    promoOffer[@"value"] = purchaseModel.promoOfferPrice;
+    promoOffer[@"number_of_periods"] = purchaseModel.promoOfferNumberOfPeriods;
+    promoOffer[@"period_number_of_units"] = purchaseModel.promoOfferPeriodNumberOfUnits;
+    promoOffer[@"period_unit"] = purchaseModel.promoOfferPeriodUnit;
+    promoOffer[@"payment_mode"] = purchaseModel.promoOfferPaymentMode;
+
+    result[@"promo_offer"] = [promoOffer copy];
+  }
   
   purchaseDict[@"country"] = purchaseModel.storefrontCountryCode;
   
