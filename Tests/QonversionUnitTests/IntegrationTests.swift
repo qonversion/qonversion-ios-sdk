@@ -353,10 +353,15 @@ final class IntegrationTests: XCTestCase {
 
         let result = try await world.productsManager.checkTrialIntroEligibility(productIds: ["pro", "missing"])
 
-        // Honest scope: real StoreKit products cannot be fabricated here, so
-        // the eligibility resolution itself is unit-tested elsewhere and the
-        // store path belongs to the StoreKitTest layer. This smoke pins only
-        // that the real manager consulted the real backend catalog first.
+        // Honest scope, deliberately left as-is: StoreKit.Product cannot be
+        // constructed outside a real StoreKit session, so over the object
+        // graph both ids can only resolve to .unknown. The eligibility
+        // resolution itself is pinned in ProductsManagerTests (over the
+        // injectable check seam) and in the StoreKitTest layer, which runs the
+        // real StoreKit over an SKTestSession. What this smoke test pins is
+        // the part that IS reachable here: the real manager consulted the real
+        // backend catalog first, and an id absent from it does not fail the
+        // call.
         XCTAssertEqual(world.network.recordedRequests("GET", "/v4/products").count, 1)
         XCTAssertEqual(result["pro"], .unknown)
         XCTAssertEqual(result["missing"], .unknown)
