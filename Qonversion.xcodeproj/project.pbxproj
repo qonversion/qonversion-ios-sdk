@@ -187,6 +187,7 @@
 		AC0DE000000000000000006A /* NoCodesContextBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000069 /* NoCodesContextBuilder.swift */; };
 		AC0DE000000000000000006C /* NoCodesHTMLInjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000006B /* NoCodesHTMLInjector.swift */; };
 		AC0DE000000000000000020B /* NoCodesScreenLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000020A /* NoCodesScreenLifecycle.swift */; };
+		AC0DE000000000000000020D /* NoCodesJavaScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000020C /* NoCodesJavaScript.swift */; };
 		AC0DE000000000000000006E /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000006D /* Utils.swift */; };
 		AC0DE000000000000000007B /* NoCodes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000070 /* NoCodes.framework */; };
 		AC0DE000000000000000007C /* NoCodes.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000070 /* NoCodes.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -428,6 +429,7 @@
 		AC0DE0000000000000000069 /* NoCodesContextBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesContextBuilder.swift; path = Utils/NoCodesContextBuilder.swift; sourceTree = "<group>"; };
 		AC0DE000000000000000006B /* NoCodesHTMLInjector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesHTMLInjector.swift; path = Utils/NoCodesHTMLInjector.swift; sourceTree = "<group>"; };
 		AC0DE000000000000000020A /* NoCodesScreenLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesScreenLifecycle.swift; path = Utils/NoCodesScreenLifecycle.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000020C /* NoCodesJavaScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesJavaScript.swift; path = Utils/NoCodesJavaScript.swift; sourceTree = "<group>"; };
 		AC0DE000000000000000006D /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Utils.swift; path = Utils/Utils.swift; sourceTree = "<group>"; };
 		AC0DE0000000000000000070 /* NoCodes.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NoCodes.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC0DE000000000000000007D /* NoCodesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesViewController.swift; sourceTree = "<group>"; };
@@ -980,6 +982,7 @@
 				AC0DE0000000000000000069 /* NoCodesContextBuilder.swift */,
 				AC0DE000000000000000006B /* NoCodesHTMLInjector.swift */,
 				AC0DE000000000000000020A /* NoCodesScreenLifecycle.swift */,
+				AC0DE000000000000000020C /* NoCodesJavaScript.swift */,
 				AC0DE000000000000000006D /* Utils.swift */,
 			);
 			path = NoCodes;
@@ -1315,6 +1318,7 @@
 				AC0DE000000000000000006A /* NoCodesContextBuilder.swift in Sources */,
 				AC0DE000000000000000006C /* NoCodesHTMLInjector.swift in Sources */,
 				AC0DE000000000000000020B /* NoCodesScreenLifecycle.swift in Sources */,
+				AC0DE000000000000000020D /* NoCodesJavaScript.swift in Sources */,
 				AC0DE000000000000000006E /* Utils.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

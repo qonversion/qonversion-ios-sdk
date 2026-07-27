@@ -370,18 +370,14 @@ extension NoCodesViewController {
   }
 
   private func injectCustomVariables(completion: @escaping () -> Void) {
-    let key = contextKey ?? ""
-    guard let variables = customVariablesDelegate?.customVariables(for: key),
+    let key: String = contextKey ?? ""
+    guard let variables: [String: String] = customVariablesDelegate?.customVariables(for: key),
           !variables.isEmpty else {
       completion()
       return
     }
 
-    let setVariableCalls = variables.map { (name, value) -> String in
-      let escapedName = name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-      let escapedValue = value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-      return "window.noCodesSetVariable?.(\"\(escapedName)\", \"\(escapedValue)\");"
-    }.joined(separator: "\n")
+    let setVariableCalls: String = NoCodesJavaScript.setCustomVariablesScript(for: variables)
 
     webView?.evaluateJavaScript(setVariableCalls) { _, _ in
       completion()
