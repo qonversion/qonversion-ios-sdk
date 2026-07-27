@@ -42,6 +42,10 @@ protocol StoreKitFacadeInterface: Sendable {
     /// verified transactions are delivered to the facade delegate.
     func startObservingTransactionUpdates()
 
+    /// Fires when the App Store storefront changes and everything cached about
+    /// products (prices, availability, offers) has become stale.
+    func storefrontUpdates() -> AsyncStream<Void>
+
     func stopObservingTransactionUpdates()
         
     #if os(iOS) || os(visionOS)

@@ -65,6 +65,10 @@ public final class Qonversion: @unchecked Sendable {
             await managers.purchasesManager.processUnfinishedTransactions()
         }
 
+        // Prices and offers are per-storefront; a change must invalidate the
+        // enriched catalog.
+        managers.productsManager.startObservingStorefrontChanges()
+
         // In subscription-management mode the SDK needs the product →
         // permissions mapping for local entitlements calculation; refresh the
         // persistent cache on every launch.

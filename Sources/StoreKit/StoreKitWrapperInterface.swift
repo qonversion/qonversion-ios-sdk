@@ -37,6 +37,11 @@ protocol StoreKitWrapperInterface: AnyObject, Sendable {
     /// (renewals, refunds, Ask to Buy approvals, purchases on other devices).
     func transactionUpdates() -> AsyncStream<Qonversion.Transaction>
 
+    /// Fires when the App Store storefront changes: prices, availability and
+    /// offers are per-storefront, so everything cached about products is
+    /// stale afterwards.
+    func storefrontUpdates() -> AsyncStream<Void>
+
     #if !os(watchOS)
     /// Starts observing App Store promoted-purchase intents; they are
     /// delivered to the wrapper delegate.

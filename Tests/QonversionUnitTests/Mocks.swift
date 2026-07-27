@@ -331,6 +331,18 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
 
     func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
 
+    private var storefrontContinuation: AsyncStream<Void>.Continuation?
+
+    func emitStorefrontChange() {
+        storefrontContinuation?.yield(())
+    }
+
+    func storefrontUpdates() -> AsyncStream<Void> {
+        return AsyncStream { continuation in
+            self.storefrontContinuation = continuation
+        }
+    }
+
     private(set) var facadeRestoreCallsCount = 0
     var onRestore: (() async -> Void)?
 
@@ -402,9 +414,20 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
     private(set) var transactionUpdatesCallsCount = 0
 
     private var updatesContinuation: AsyncStream<Qonversion.Transaction>.Continuation?
+    private var storefrontContinuation: AsyncStream<Void>.Continuation?
 
     func emitUpdate(_ transaction: Qonversion.Transaction) {
         updatesContinuation?.yield(transaction)
+    }
+
+    func emitStorefrontChange() {
+        storefrontContinuation?.yield(())
+    }
+
+    func storefrontUpdates() -> AsyncStream<Void> {
+        return AsyncStream { continuation in
+            self.storefrontContinuation = continuation
+        }
     }
 
     func finishUpdates() {
@@ -751,6 +774,12 @@ final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
 
     func loadProductPermissions() async {
         loadPermissionsCallsCount += 1
+    }
+
+    private(set) var startObservingStorefrontChangesCallsCount = 0
+
+    func startObservingStorefrontChanges() {
+        startObservingStorefrontChangesCallsCount += 1
     }
 
     var fallbackFileAccessible = false

@@ -19,6 +19,10 @@ protocol ProductsManagerInterface {
     /// cache on every success; on failure the previously cached mapping stays.
     func loadProductPermissions() async
 
+    /// Starts dropping the store-enriched catalog whenever the App Store
+    /// storefront changes, so prices and offers are refetched.
+    func startObservingStorefrontChanges()
+
     /// Whether the bundled fallback file is present and parses.
     func isFallbackFileAccessible() -> Bool
 }

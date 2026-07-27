@@ -39,9 +39,53 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
     }
 
     func restore() async throws -> [Qonversion.Transaction] {
-        try await AppStore.sync()
+        return try await Self.restoreTransactions(
+            localTransactions: { await self.fetchTransactions(for: StoreKit.Transaction.all) },
+            sync: { try await AppStore.sync() }
+        )
+    }
 
-        return await fetchTransactions(for: StoreKit.Transaction.all)
+    /// AppStore.sync() shows an App Store authentication prompt by design, so
+    /// it runs only when the device itself has nothing to restore.
+    static func restoreTransactions(
+        localTransactions: () async -> [Qonversion.Transaction],
+        sync: () async throws -> Void
+    ) async throws -> [Qonversion.Transaction] {
+        let local: [Qonversion.Transaction] = await localTransactions()
+        guard local.isEmpty else { return local }
+
+        try await sync()
+
+        return await localTransactions()
+    }
+
+    /// The store options a purchase call carries. Extracted so the mapping
+    /// stays testable without a real StoreKit product.
+    static func storeOptions(for options: Qonversion.PurchaseOptions) -> Set<Product.PurchaseOption> {
+        var purchaseOptions: Set<Product.PurchaseOption> = []
+        if options.quantity > 1 {
+            purchaseOptions.insert(.quantity(options.quantity))
+        }
+        if let promoOffer = options.promoOffer {
+            purchaseOptions.insert(.promotionalOffer(
+                offerID: promoOffer.offerId,
+                keyID: promoOffer.keyId,
+                nonce: promoOffer.nonce,
+                signature: promoOffer.signature,
+                timestamp: promoOffer.timestamp
+            ))
+        }
+        #if !os(visionOS)
+        if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *) {
+            // Win-back offers are applied only when the caller passes an offer
+            // that came from the store itself.
+            if let winBackOffer = options.winBackOffer?.originalOffer {
+                purchaseOptions.insert(.winBackOffer(winBackOffer))
+            }
+        }
+        #endif
+
+        return purchaseOptions
     }
 
     func fetchAll() async -> [Qonversion.Transaction] {
@@ -59,21 +103,16 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
     }
 
     func purchase(product: Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
-        var purchaseOptions: Set<Product.PurchaseOption> = []
-        if options.quantity > 1 {
-            purchaseOptions.insert(.quantity(options.quantity))
-        }
-        if let promoOffer = options.promoOffer {
-            purchaseOptions.insert(.promotionalOffer(
-                offerID: promoOffer.offerId,
-                keyID: promoOffer.keyId,
-                nonce: promoOffer.nonce,
-                signature: promoOffer.signature,
-                timestamp: promoOffer.timestamp
-            ))
-        }
+        let purchaseOptions: Set<Product.PurchaseOption> = Self.storeOptions(for: options)
 
-        let result: Product.PurchaseResult = try await product.purchase(options: purchaseOptions)
+        let result: Product.PurchaseResult
+        do {
+            result = try await product.purchase(options: purchaseOptions)
+        } catch {
+            // Raw StoreKit errors must never reach the integrator: a
+            // `catch let error as QonversionError` has to cover every failure.
+            throw StoreKitPurchaseOutcome.failed(error).qonversionError() ?? QonversionError(type: .purchaseFailed, error: error)
+        }
 
         let outcome: StoreKitPurchaseOutcome
         switch result {
@@ -109,6 +148,20 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
                     if case .verified(let transaction) = update {
                         continuation.yield(self.mapper.map(transaction, jws: update.jwsRepresentation))
                     }
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in
+                task.cancel()
+            }
+        }
+    }
+
+    func storefrontUpdates() -> AsyncStream<Void> {
+        return AsyncStream { continuation in
+            let task: Task<Void, Never> = Task {
+                for await _ in Storefront.updates {
+                    continuation.yield(())
                 }
                 continuation.finish()
             }

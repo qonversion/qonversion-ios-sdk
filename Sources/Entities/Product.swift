@@ -174,7 +174,9 @@ extension Qonversion {
         }
         
         /// Information about a subscription offer configured in App Store Connect.
-        public struct SubscriptionOffer: Sendable {
+        // @unchecked: the StoreKit offer inside is a value managed by
+        // StoreKit itself, like the store product on Product.
+        public struct SubscriptionOffer: @unchecked Sendable {
             
             /// The promotional offer identifier.
             ///
@@ -203,8 +205,17 @@ extension Qonversion {
 
             /// How the user is charged for this offer.
             public let paymentMode: Qonversion.Product.SubscriptionOffer.PaymentMode
-            
+
+            /// The store offer this one was built from. Required to purchase
+            /// with a win-back offer, which StoreKit accepts only as its own
+            /// object.
+            var originalOffer: StoreKit.Product.SubscriptionOffer? { _originalOffer as? StoreKit.Product.SubscriptionOffer }
+
+            // Workaround to keep the struct usable where StoreKit types are not.
+            private let _originalOffer: Any?
+
             init(id: String?, type: Qonversion.Product.SubscriptionOffer.OfferType, price: Decimal, displayPrice: String, period: Qonversion.Product.SubscriptionPeriod, periodCount: Int, paymentMode: Qonversion.Product.SubscriptionOffer.PaymentMode) {
+                self._originalOffer = nil
                 self.id = id
                 self.type = type
                 self.price = price
@@ -216,6 +227,7 @@ extension Qonversion {
 
             init?(originalOffer: StoreKit.Product.SubscriptionOffer?) {
                 guard let originalOffer else { return nil }
+                _originalOffer = originalOffer
                 id = originalOffer.id
                 type = Qonversion.Product.SubscriptionOffer.OfferType.from(offerType: originalOffer.type)
                 price = originalOffer.price
@@ -239,9 +251,19 @@ extension Qonversion {
                 
                 /// A promotional offer.
                 case promotional
-                
+
+                /// A win-back offer, shown to a lapsed subscriber (iOS 18+).
+                case winBack
+
                 static func from(offerType: StoreKit.Product.SubscriptionOffer.OfferType?) -> Qonversion.Product.SubscriptionOffer.OfferType {
                     guard let offerType else { return .unknown }
+
+                    #if !os(visionOS)
+                    if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *), offerType == .winBack {
+                        return .winBack
+                    }
+                    #endif
+
                     switch offerType {
                     case .introductory:
                         return .introductory
@@ -297,17 +319,22 @@ extension Qonversion {
             /// An array of all the promotional offers configured for this subscription.
             public let promotionalOffers: [Qonversion.Product.SubscriptionOffer]
 
+            /// The win-back offers configured for this subscription, for
+            /// lapsed subscribers. Always empty below iOS 18.
+            public let winBackOffers: [Qonversion.Product.SubscriptionOffer]
+
             /// The group identifier for this subscription.
             public let subscriptionGroupId: String
 
             /// The duration that this subscription lasts before auto-renewing.
             public let subscriptionPeriod: Qonversion.Product.SubscriptionPeriod
             
-            init(subscriptionGroupId: String, subscriptionPeriod: Qonversion.Product.SubscriptionPeriod, introductoryOffer: Qonversion.Product.SubscriptionOffer? = nil, promotionalOffers: [Qonversion.Product.SubscriptionOffer] = []) {
+            init(subscriptionGroupId: String, subscriptionPeriod: Qonversion.Product.SubscriptionPeriod, introductoryOffer: Qonversion.Product.SubscriptionOffer? = nil, promotionalOffers: [Qonversion.Product.SubscriptionOffer] = [], winBackOffers: [Qonversion.Product.SubscriptionOffer] = []) {
                 self.subscriptionGroupId = subscriptionGroupId
                 self.subscriptionPeriod = subscriptionPeriod
                 self.introductoryOffer = introductoryOffer
                 self.promotionalOffers = promotionalOffers
+                self.winBackOffers = winBackOffers
             }
 
             init?(originalSubscription: StoreKit.Product.SubscriptionInfo?) {
@@ -317,6 +344,17 @@ extension Qonversion {
                 promotionalOffers = originalSubscription.promotionalOffers.compactMap {
                     Qonversion.Product.SubscriptionOffer(originalOffer: $0)
                 }
+                #if !os(visionOS)
+                if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *) {
+                    winBackOffers = originalSubscription.winBackOffers.compactMap {
+                        Qonversion.Product.SubscriptionOffer(originalOffer: $0)
+                    }
+                } else {
+                    winBackOffers = []
+                }
+                #else
+                winBackOffers = []
+                #endif
                 subscriptionGroupId = originalSubscription.subscriptionGroupID
                 subscriptionPeriod = Qonversion.Product.SubscriptionPeriod(originalPeriod: originalSubscription.subscriptionPeriod)
             }

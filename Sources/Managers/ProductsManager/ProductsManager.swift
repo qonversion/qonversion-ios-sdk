@@ -28,6 +28,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     private var _loadedProducts: [Qonversion.Product] = []
     private var _loadedProductPermissions: [String: [String]]?
     private var _productsTask: Task<[Qonversion.Product], Error>?
+    private var _storefrontTask: Task<Void, Never>?
 
     /// Bumped on every user switch: a load that started for the previous user
     /// must not cache or persist its (possibly personalized) catalog for the
@@ -214,6 +215,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         let allProducts: [Qonversion.Product] = try await products()
 
         var result: [String: Qonversion.IntroEligibilityStatus] = [:]
+        var storeIdsToCheck: [String: String] = [:]
         for productId in productIds {
             guard let product: Qonversion.Product = allProducts.first(where: { $0.qonversionId == productId }), product.isStoreProductLinked else {
                 result[productId] = .unknown
@@ -225,17 +227,74 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
                 continue
             }
 
-            switch await storeKitFacade.isEligibleForIntroOffer(storeId: product.storeId) {
-            case .some(true):
-                result[productId] = .eligible
-            case .some(false):
-                result[productId] = .ineligible
-            case .none:
-                result[productId] = .unknown
+            storeIdsToCheck[productId] = product.storeId
+        }
+
+        let facade: StoreKitFacadeInterface = storeKitFacade
+        let eligibilities: [String: Qonversion.IntroEligibilityStatus] = await Self.introEligibilities(for: storeIdsToCheck) { storeId in
+            await facade.isEligibleForIntroOffer(storeId: storeId)
+        }
+        eligibilities.forEach { result[$0.key] = $0.value }
+
+        return result
+    }
+
+    /// Asks the store about every product that needs a check CONCURRENTLY:
+    /// asking one after another made the check as slow as the paywall is long.
+    static func introEligibilities(
+        for storeIdsByProductId: [String: String],
+        check: @escaping @Sendable (String) async -> Bool?
+    ) async -> [String: Qonversion.IntroEligibilityStatus] {
+        return await withTaskGroup(of: (String, Qonversion.IntroEligibilityStatus).self) { group in
+            for (productId, storeId) in storeIdsByProductId {
+                group.addTask {
+                    switch await check(storeId) {
+                    case .some(true):
+                        return (productId, .eligible)
+                    case .some(false):
+                        return (productId, .ineligible)
+                    case .none:
+                        return (productId, .unknown)
+                    }
+                }
+            }
+
+            var collected: [String: Qonversion.IntroEligibilityStatus] = [:]
+            for await eligibility in group {
+                collected[eligibility.0] = eligibility.1
+            }
+
+            return collected
+        }
+    }
+
+    /// The storefront defines prices, availability and offers: everything
+    /// enriched from the store must be refetched after a change.
+    func startObservingStorefrontChanges() {
+        lock.lock()
+        let alreadyObserving: Bool = _storefrontTask != nil
+        lock.unlock()
+        guard !alreadyObserving else { return }
+
+        let task = Task { [weak self] in
+            guard let self else { return }
+            for await _ in self.storeKitFacade.storefrontUpdates() {
+                guard !Task.isCancelled else { return }
+                self.dropStoreEnrichment()
             }
         }
 
-        return result
+        lock.lock()
+        _storefrontTask = task
+        lock.unlock()
+    }
+
+    private func dropStoreEnrichment() {
+        lock.lock()
+        defer { lock.unlock() }
+        // The catalog itself is backend-driven and stays; only the enriched
+        // copy dies, so the next products() call refetches the store data.
+        _loadedProducts = []
     }
 
     /// Best-effort StoreKit enrichment that never fails: on a store error the

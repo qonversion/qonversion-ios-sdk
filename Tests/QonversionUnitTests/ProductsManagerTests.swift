@@ -405,3 +405,94 @@ private final class ProductsAsyncGate: @unchecked Sendable {
     func open() async { await storage.open() }
     func wait() async { await storage.wait() }
 }
+
+/// Resumes every waiter only once the expected number of them has arrived.
+private actor EligibilityBarrier {
+
+    private let expected: Int
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    init(expected: Int) {
+        self.expected = expected
+    }
+
+    func arriveAndWait() async {
+        if waiters.count + 1 >= expected {
+            waiters.forEach { $0.resume() }
+            waiters.removeAll()
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+// MARK: - storefront changes and eligibility fan-out
+
+final class ProductsStorefrontTests: XCTestCase {
+
+    private var productsService: MockProductsService!
+    private var storeKitFacade: MockStoreKitFacade!
+    private var manager: ProductsManager!
+
+    override func setUp() {
+        super.setUp()
+        productsService = MockProductsService()
+        storeKitFacade = MockStoreKitFacade()
+        manager = ProductsManager(
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: MockLocalStorage(),
+            fallbackService: MockFallbackService(),
+            logger: LoggerWrapper()
+        )
+    }
+
+    override func tearDown() {
+        manager = nil
+        storeKitFacade = nil
+        productsService = nil
+        super.tearDown()
+    }
+
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
+    func testStorefrontChangeDropsTheEnrichedCatalog() async throws {
+        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s", offeringId: nil)]
+        _ = try await manager.products()
+        XCTAssertFalse(manager.loadedProducts.isEmpty)
+
+        manager.startObservingStorefrontChanges()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        storeKitFacade.emitStorefrontChange()
+
+        await waitUntil { self.manager.loadedProducts.isEmpty }
+        XCTAssertTrue(manager.loadedProducts.isEmpty, "prices and offers must be refetched for the new storefront")
+    }
+
+    func testEligibilityChecksRunConcurrentlyAndMapEveryProduct() async {
+        // Every product is still asked about — just not one after another.
+        let barrier = EligibilityBarrier(expected: 3)
+        let answers: [String: Bool?] = ["s0": true, "s1": false, "s2": nil]
+
+        let result: [String: Qonversion.IntroEligibilityStatus] = await ProductsManager.introEligibilities(
+            for: ["q0": "s0", "q1": "s1", "q2": "s2"]
+        ) { storeId in
+            // Resumes only once all three checks are in flight: a sequential
+            // implementation would deadlock here.
+            await barrier.arriveAndWait()
+            return answers[storeId] ?? nil
+        }
+
+        XCTAssertEqual(result["q0"], .eligible)
+        XCTAssertEqual(result["q1"], .ineligible)
+        XCTAssertEqual(result["q2"], .unknown)
+    }
+}
