@@ -232,6 +232,14 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
         return productsResult
     }
 
+    var introOfferEligibilityResults: [String: Bool] = [:]
+    private(set) var eligibilityRequestedStoreIds: [String] = []
+
+    func isEligibleForIntroOffer(storeId: String) async -> Bool? {
+        eligibilityRequestedStoreIds.append(storeId)
+        return introOfferEligibilityResults[storeId]
+    }
+
     func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
 
     func restore() async throws -> [Qonversion.Transaction] {
@@ -634,6 +642,14 @@ final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
 
     func loadProductPermissions() async {
         loadPermissionsCallsCount += 1
+    }
+
+    var eligibilityResult: [String: Qonversion.IntroEligibilityStatus] = [:]
+    private(set) var eligibilityRequestedProductIds: [[String]] = []
+
+    func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
+        eligibilityRequestedProductIds.append(productIds)
+        return eligibilityResult
     }
 
     func cachedProductPermissions() -> [String: [String]]? { cachedMapping }
