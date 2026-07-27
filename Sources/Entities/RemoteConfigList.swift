@@ -20,6 +20,15 @@ extension Qonversion {
             self.remoteConfigs = remoteConfigs
         }
 
+        public init(from decoder: Decoder) throws {
+            var container = try decoder.container(keyedBy: CodingKeys.self).nestedUnkeyedContainer(forKey: .remoteConfigs)
+            remoteConfigs = LossyArray.decode(RemoteConfig.self, from: &container)
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case remoteConfigs
+        }
+
         /// Searches for remote configuration with the specific context key.
         /// - Parameters:
         ///   - contextKey: context key to search remote configuration for.

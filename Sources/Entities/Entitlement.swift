@@ -308,26 +308,12 @@ extension Qonversion {
             // Production tolerance: one malformed element degrades, it does
             // not null the user's whole access list.
             var container = try decoder.container(keyedBy: CodingKeys.self).nestedUnkeyedContainer(forKey: .data)
-            var elements: [Qonversion.Entitlement] = []
-            while !container.isAtEnd {
-                if let entitlement: Qonversion.Entitlement = try? container.decode(Qonversion.Entitlement.self) {
-                    elements.append(entitlement)
-                } else {
-                    // Skip the malformed element; the container must still advance.
-                    _ = try? container.decode(AnyDecodable.self)
-                }
-            }
-            data = elements
+            data = LossyArray.decode(Qonversion.Entitlement.self, from: &container)
         }
 
         private enum CodingKeys: String, CodingKey {
             case data
         }
-    }
-
-    /// Consumes one arbitrary JSON value so a lossy array can advance past it.
-    fileprivate struct AnyDecodable: Decodable {
-        init(from decoder: Decoder) throws { }
     }
 }
 

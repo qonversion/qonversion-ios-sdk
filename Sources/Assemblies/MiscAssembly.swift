@@ -115,8 +115,10 @@ final class MiscAssembly {
     
     func jsonDecoder() -> JSONDecoder {
         let jsonDecoder = JSONDecoder()
-        // v4 API: all dates are RFC3339.
-        jsonDecoder.dateDecodingStrategy = .iso8601
+        // v4 API: all dates are RFC3339 — with or without fractional seconds,
+        // and unix timestamps on the fields inherited from the previous API
+        // generation. A strict strategy would fail the whole payload.
+        jsonDecoder.dateDecodingStrategy = .qonversionTolerant
         
         return jsonDecoder
     }

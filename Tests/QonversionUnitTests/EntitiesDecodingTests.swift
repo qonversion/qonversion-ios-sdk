@@ -587,3 +587,103 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertNil(product.offeringId)
     }
 }
+
+// MARK: - tolerant decoding installed by the assembly
+
+final class ToleratedDecodingTests: XCTestCase {
+
+    /// The very decoder the SDK uses for both the network and the storage.
+    private func sdkDecoder() -> JSONDecoder {
+        let internalConfig = InternalConfig(userId: "u")
+        let miscAssembly = MiscAssembly(apiKey: "key", userDefaults: TestDefaults.makeIsolated(), internalConfig: internalConfig)
+
+        return miscAssembly.jsonDecoder()
+    }
+
+    func testFractionalSecondsDateDecodes() throws {
+        let json = #"{"id": "QON_abc", "created_at": "2026-07-27T10:00:00.123Z"}"#
+
+        let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
+
+        XCTAssertEqual(user.creationDate?.timeIntervalSince1970 ?? 0, 1_785_146_400.123, accuracy: 0.001)
+    }
+
+    func testPlainRfc3339DateStillDecodes() throws {
+        let json = #"{"id": "QON_abc", "created_at": "2026-07-27T10:00:00Z"}"#
+
+        let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
+
+        XCTAssertEqual(user.creationDate, Date(timeIntervalSince1970: 1_785_146_400))
+    }
+
+    func testDateWithAnOffsetDecodes() throws {
+        let json = #"{"id": "QON_abc", "created_at": "2026-07-27T12:00:00+02:00"}"#
+
+        let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
+
+        XCTAssertEqual(user.creationDate, Date(timeIntervalSince1970: 1_785_146_400))
+    }
+
+    func testEpochTimestampDateDecodes() throws {
+        let json = #"{"id": "QON_abc", "created_at": 1785146400}"#
+
+        let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
+
+        XCTAssertEqual(user.creationDate, Date(timeIntervalSince1970: 1_785_146_400))
+    }
+
+    func testAnUnreadableDateStillFailsThatValue() {
+        let json = #"{"id": "QON_abc", "created_at": "yesterday"}"#
+
+        XCTAssertThrowsError(try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8)))
+    }
+
+    // MARK: - originalAppVersion
+
+    func testUserDecodesTheOriginalAppVersion() throws {
+        let json = #"{"id": "QON_abc", "apple_extra": {"original_application_version": "1.0.3"}}"#
+
+        let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
+
+        XCTAssertEqual(user.originalAppVersion, "1.0.3")
+    }
+
+    func testUserToleratesAMissingAppleExtra() throws {
+        let json = #"{"id": "QON_abc"}"#
+
+        let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
+
+        XCTAssertNil(user.originalAppVersion)
+    }
+
+    func testUserOriginalAppVersionSurvivesTheStorageRoundtrip() throws {
+        let json = #"{"id": "QON_abc", "apple_extra": {"original_application_version": "1.0.3"}}"#
+        let decoder: JSONDecoder = sdkDecoder()
+        let user = try decoder.decode(Qonversion.User.self, from: Data(json.utf8))
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+
+        let restored = try decoder.decode(Qonversion.User.self, from: try encoder.encode(user))
+
+        XCTAssertEqual(restored.originalAppVersion, "1.0.3")
+    }
+
+    // MARK: - lossy lists
+
+    func testUserPropertiesListSkipsMalformedRows() throws {
+        let json = #"{"data": [{"key": "_q_email", "value": "dev@qonversion.io"}, {"key": "broken"}, {"key": "custom", "value": "v"}]}"#
+
+        let list = try sdkDecoder().decode(ListEnvelope<Qonversion.UserProperty>.self, from: Data(json.utf8))
+
+        XCTAssertEqual(list.data.map(\.key), ["_q_email", "custom"])
+    }
+
+    func testRemoteConfigListSkipsMalformedRows() throws {
+        let good = #"{"payload": null, "experiment": null, "source": {"uid": "s1", "name": "n", "type": "remote_configuration", "assignment_type": "auto", "context_key": "main"}}"#
+        let json = "{\"remoteConfigs\": [\(good), {\"source\": {}}]}"
+
+        let list = try sdkDecoder().decode(Qonversion.RemoteConfigList.self, from: Data(json.utf8))
+
+        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["s1"])
+    }
+}

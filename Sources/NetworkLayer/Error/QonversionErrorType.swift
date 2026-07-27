@@ -43,6 +43,22 @@ public enum QonversionErrorType: Sendable {
     case purchasePending
     case purchaseFailed
     case transactionVerificationFailed
+    /// The product is not in the Qonversion catalog.
+    case productNotFound
+    /// This device is not allowed to make payments (e.g. parental controls).
+    case paymentNotAllowed
+    /// The product is not available in the current storefront.
+    case storeProductNotAvailable
+    /// The backend rejected the purchase as fraudulent.
+    case fraudPurchase
+    /// The backend could not validate the purchase with Apple.
+    case receiptValidationError
+    /// The project is misconfigured in the Qonversion Dashboard.
+    case projectConfigError
+    /// The feature is not available on the project's plan.
+    case featureNotSupported
+    /// The backend does not know this user id.
+    case invalidClientUID
 
     public func message() -> String {
         // handle other errors here
@@ -75,6 +91,22 @@ public enum QonversionErrorType: Sendable {
             return "The purchase failed"
         case .transactionVerificationFailed:
             return "The transaction failed StoreKit verification"
+        case .productNotFound:
+            return "The product was not found in the Qonversion product catalog"
+        case .paymentNotAllowed:
+            return "This device is not allowed to make payments"
+        case .storeProductNotAvailable:
+            return "The product is not available in the current storefront"
+        case .fraudPurchase:
+            return "The purchase was rejected as fraudulent"
+        case .receiptValidationError:
+            return "Failed to validate the purchase with the App Store"
+        case .projectConfigError:
+            return "The Qonversion project is misconfigured. Check the project settings in the Dashboard."
+        case .featureNotSupported:
+            return "The feature is not supported for the current project"
+        case .invalidClientUID:
+            return "The Qonversion user id is unknown to the backend"
         case .deviceCreationFailed:
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:
@@ -101,6 +133,31 @@ public enum QonversionErrorType: Sendable {
             return "Failed to detach user from the experiment."
         default:
             return "Unknown error occurred."
+        }
+    }
+}
+
+extension QonversionErrorType {
+
+    /// The backend error codes that carry a meaning of their own. Taken from
+    /// the production error mapper; anything absent keeps the classification
+    /// derived from the HTTP status.
+    init?(apiCode: String?) {
+        guard let apiCode, let code = Int(apiCode) else { return nil }
+
+        switch code {
+        case 10004, 10005, 20014:
+            self = .invalidClientUID
+        case 10008:
+            self = .fraudPurchase
+        case 20005:
+            self = .featureNotSupported
+        case 20011, 20012, 20013:
+            self = .projectConfigError
+        case 20100, 20102, 20103, 20105, 20107, 20108, 20110, 21099:
+            self = .receiptValidationError
+        default:
+            return nil
         }
     }
 }
