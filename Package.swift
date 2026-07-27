@@ -12,12 +12,27 @@ let package = Package(
         .library(
             name: "Qonversion",
             targets: ["Qonversion"]),
+        .library(
+            name: "NoCodes",
+            targets: ["NoCodes"]),
     ],
     targets: [
         .target(
             name: "Qonversion",
+            path: "Sources",
+            exclude: ["NoCodes"],
             resources: [
                 .copy("PrivacyInfo.xcprivacy")
+            ],
+            swiftSettings: [
+                .enableUpcomingFeature("StrictConcurrency")
+            ]),
+        .target(
+            name: "NoCodes",
+            dependencies: ["Qonversion"],
+            path: "Sources/NoCodes",
+            resources: [
+                .copy("../PrivacyInfo.xcprivacy")
             ],
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency")
@@ -29,5 +44,9 @@ let package = Package(
             resources: [
                 .copy("Resources/Qonversion.storekit")
             ]),
+        .testTarget(
+            name: "NoCodesTests",
+            dependencies: ["NoCodes"],
+            path: "Tests/NoCodesTests"),
     ]
 )

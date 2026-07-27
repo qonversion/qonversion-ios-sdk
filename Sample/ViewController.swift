@@ -28,6 +28,7 @@ class ViewController: UIViewController {
             ("Identify", { self.run { try await self.identify() } }),
             ("Logout", { self.logout() }),
             ("Set property", { self.setProperty() }),
+            ("No-Codes", { self.showNoCodes() }),
         ]
 
         let buttons = actions.map { title, handler in
@@ -132,6 +133,12 @@ class ViewController: UIViewController {
             await Qonversion.shared.logout()
             show("Logged out")
         }
+    }
+
+    private func showNoCodes() {
+        let noCodesViewController = NoCodesViewController()
+        let navigationController = UINavigationController(rootViewController: noCodesViewController)
+        present(navigationController, animated: true)
     }
 
     private func setProperty() {

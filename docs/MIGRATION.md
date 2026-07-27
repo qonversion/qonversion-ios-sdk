@@ -187,9 +187,28 @@ statements port unchanged — only where `.nonRenewable` comes from differs.
 
 The bundled fallback file keeps the same name (`qonversion_ios_fallbacks.json`) and shape: `products`, `products_permissions` and `remote_config_list` are honored when the API is unreachable and no cache exists yet.
 
-## NoCodes and Web2App
+## NoCodes
 
-The NoCodes screens and Web2App redemption flow are not part of this SDK yet. If you rely on them, stay on the Objective-C SDK for now.
+NoCodes screens are part of this SDK, as a separate `NoCodes` library in the same package — add it to your app target next to `Qonversion` and `import NoCodes`. In the Objective-C SDK the module was compiled into the main framework, so the only integration change is the extra product and import.
+
+No-Codes is an iOS-only feature. The library resolves on the other platforms so a multi-platform package can depend on it unconditionally, but it exposes no entry point there — keep the calls behind `#if os(iOS)`.
+
+The API kept its shape: `NoCodes.initialize(with: NoCodesConfiguration(projectKey:))`, `showScreen(withContextKey:)`, `loadScreen(withContextKey:)`, `close()`, `setLocale(_:)`, `setTheme(_:)` and the `NoCodesDelegate` / `NoCodesScreenCustomizationDelegate` / `NoCodesCustomVariablesDelegate` / `NoCodesPurchaseDelegate` set. The differences to expect:
+
+| Objective-C SDK | Swift SDK |
+|---|---|
+| `showScreen(with id:)` *(deprecated)* | Removed — screens are addressed by their context key: `showScreen(withContextKey:)` |
+| `NoCodesScreenCustomizationDelegate.presentationConfigurationForScreen(id:)` | Removed together with the id-based entry point that used to call it. Configure the presentation in `presentationConfigurationForScreen(contextKey:)`; screens opened by an in-chain navigation action keep the configuration of the screen that opened them. |
+| Delegates retained by the SDK | Held **weakly**, like any UIKit delegate. All four protocols are class-bound now (`AnyObject`), so keep your own strong reference — a delegate created inline and passed to `NoCodesConfiguration` is released immediately and the callbacks stop arriving. |
+| `import NoCodes` re-exported the main SDK | Import both: `import Qonversion` is required wherever you touch `Qonversion.Product` (for example in a `NoCodesPurchaseDelegate` implementation) — the `@_exported` import is gone now that NoCodes is its own module. |
+| `noCodesFailedToExecute(action:error:)` had to be implemented | It has a default no-op implementation now, like every other `NoCodesDelegate` method. A misspelled signature therefore compiles and silently loses the callbacks — the exact signature is `func noCodesFailedToExecute(action: NoCodesAction, error: Error?)`. |
+| Facade and delegates callable from any thread | Main-actor isolated: they present and hand out UIKit objects, so call them from the main actor and mark your delegate implementations `@MainActor`. `NoCodesConfiguration` is main-actor isolated too. |
+
+The bundled fallback file keeps the same name (`nocodes_fallbacks.json`) and shape.
+
+## Web2App
+
+The Web2App redemption flow is not part of this SDK yet. If you rely on it, stay on the Objective-C SDK for now.
 
 ## Offline purchase queue of the Objective-C SDK
 

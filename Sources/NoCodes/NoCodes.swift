@@ -1,0 +1,160 @@
+//
+//  NoCodes.swift
+//  NoCodes
+//
+//  Created by Suren Sarkisyan on 17.12.2024.
+//  Copyright © 2024 Qonversion Inc. All rights reserved.
+//
+
+import Foundation
+
+#if os(iOS)
+
+// The facade drives UIKit presentation and owns the graph it hands to the
+// flow coordinator, so the whole entry point lives on the main actor.
+@MainActor
+public final class NoCodes {
+  
+  // MARK: - Public
+  
+  /// Use this variable to get the current initialized instance of the Qonversion No-Codes SDK.
+  /// Please, use the variable only after initializing the SDK.
+  /// - Returns: the current initialized instance of the ``NoCodes/NoCodes`` SDK
+  public static let shared = NoCodes()
+
+  // The facade owns the assembly graph: the flow coordinator holds its own
+  // dependencies, but the assemblies hold the shared service instances and the
+  // weak back reference between them. Replacing both together on re-initialize
+  // releases the previous graph instead of leaking it.
+  private var assembly: NoCodesAssembly?
+  private var flowCoordinator: NoCodesFlowCoordinator? = nil
+
+  /// Use this function to initialize the No-Codes SDK.
+  /// - Parameters:
+  ///   - configuration: ``NoCodesConfiguration`` data for the SDK configuration.
+  /// - Returns: ``NoCodes`` instance of the SDK.
+  @discardableResult
+  public static func initialize(with configuration: NoCodesConfiguration) -> NoCodes {
+    let assembly = NoCodesAssembly(configuration: configuration)
+    let flowCoordinator: NoCodesFlowCoordinator = assembly.flowCoordinator()
+
+    // Close whatever the previous graph still has on screen: the new
+    // coordinator knows nothing about it, so close() would silently no-op and
+    // the screen would stay up forever.
+    NoCodes.shared.flowCoordinator?.close()
+    NoCodes.shared.flowCoordinator = nil
+    NoCodes.shared.assembly = assembly
+    NoCodes.shared.flowCoordinator = flowCoordinator
+
+    flowCoordinator.preloadScreens()
+
+    return NoCodes.shared
+  }
+  
+  /// Use this function to set the delegate that will report what is happening inside No-Codes, what actions are being executed/failed, and so on.
+  /// - Parameters:
+  ///   - delegate: ``NoCodesDelegate`` object.
+  public func set(delegate: NoCodesDelegate) {
+    flowCoordinator?.set(delegate: delegate)
+  }
+  
+  /// Use this function to set the screen customization delegate.
+  /// - Parameters:
+  ///   - delegate: screen customization ``NoCodesScreenCustomizationDelegate`` object.
+  public func set(screenCustomizationDelegate: NoCodesScreenCustomizationDelegate) {
+    flowCoordinator?.set(screenCustomizationDelegate: screenCustomizationDelegate)
+  }
+  
+  /// Use this function to set the custom variables delegate.
+  /// This delegate will be called each time a screen is about to be displayed
+  /// to get custom variables that will be injected into the screen's JavaScript context.
+  /// - Parameters:
+  ///   - delegate: ``NoCodesCustomVariablesDelegate`` object.
+  public func set(customVariablesDelegate: NoCodesCustomVariablesDelegate) {
+    flowCoordinator?.set(customVariablesDelegate: customVariablesDelegate)
+  }
+
+  /// Use this function to set the purchase delegate.
+  /// This delegate should be used if you want to handle purchases and restore operations on your end.
+  /// If this delegate is provided, it will be used instead of the default Qonversion SDK purchase flow.
+  /// You can also provide it during the initialization via ``NoCodesConfiguration/purchaseDelegate``.
+  /// - Parameters:
+  ///   - delegate: ``NoCodesPurchaseDelegate`` object responsible for handling purchases and restore operations.
+  public func set(purchaseDelegate: NoCodesPurchaseDelegate) {
+    flowCoordinator?.set(purchaseDelegate: purchaseDelegate)
+  }
+  
+  /// Use this function to display the screen.
+  /// - Parameters:
+  ///   - contextKey: the context key of the screen.
+  @MainActor
+  public func showScreen(withContextKey contextKey: String) {
+    flowCoordinator?.showScreen(withContextKey: contextKey)
+  }
+
+  /// Loads a No-Code screen (from cache or network) without presenting it, so you can decide
+  /// whether to present it or show your own fallback UI before any SDK screen appears.
+  ///
+  /// This is an optional entry point, not the primary loader: screens with the "Preload" option in the
+  /// No-Codes builder are preloaded automatically and ``showScreen(withContextKey:)`` works on its own.
+  ///
+  /// A successful load warms the shared cache, so a following ``showScreen(withContextKey:)``
+  /// renders from cache with a minimal skeleton.
+  ///
+  /// The returned screen carries the typed default variables configured in the builder
+  /// (``NoCodesScreen/defaultVariables``) — authored custom variables and product slots —
+  /// so you can read them by key before presenting.
+  ///
+  /// - Parameters:
+  ///   - contextKey: the context key of the screen.
+  /// - Returns: the loaded ``NoCodesScreen``.
+  /// - Throws: ``NoCodesError``. Its ``NoCodesError/type`` is `.sdkInitializationError` when the SDK
+  ///   is not initialized, `.screenNotFound` when no screen exists for the context key, or
+  ///   `.screenLoadingFailed` on a network or other load failure.
+  public func loadScreen(withContextKey contextKey: String) async throws -> NoCodesScreen {
+    // A throwing API cannot silently no-op like the void facade methods, so surface the
+    // not-initialized state explicitly instead of returning nothing.
+    guard let flowCoordinator else {
+      throw NoCodesError.initializationError()
+    }
+
+    return try await flowCoordinator.loadScreen(withContextKey: contextKey)
+  }
+
+  /// Use this function to close all ``No-Codes`` screens.
+  public func close() {
+    flowCoordinator?.close()
+  }
+  
+  /// Set a custom locale for No-Code screens localization.
+  /// If set, this locale will take priority over the system default locale when determining
+  /// which localization to show on No-Code screens.
+  /// The locale should be in standard format (e.g., "en", "en-US", "de", "de-DE").
+  ///
+  /// You may set locale both after No-Codes SDK initialization with this method
+  /// and during initialization via ``NoCodesConfiguration/locale``.
+  ///
+  /// Pass nil to reset to system default locale.
+  ///
+  /// - Parameters:
+  ///   - locale: the custom locale code, or nil to use system default.
+  public func setLocale(_ locale: String?) {
+    flowCoordinator?.setLocale(locale)
+  }
+  
+  /// Set the theme mode for No-Code screens.
+  /// Controls how screens adapt to light/dark themes.
+  ///
+  /// You may set the theme both after No-Codes SDK initialization with this method
+  /// and during initialization via ``NoCodesConfiguration/theme``.
+  ///
+  /// - Parameters:
+  ///   - theme: the desired theme mode. Use `.auto` to follow device settings,
+  ///            `.light` to force light theme, or `.dark` to force dark theme.
+  public func setTheme(_ theme: NoCodesTheme) {
+    flowCoordinator?.setTheme(theme)
+  }
+  
+}
+
+#endif

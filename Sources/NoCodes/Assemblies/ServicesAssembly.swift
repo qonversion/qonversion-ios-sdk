@@ -1,0 +1,146 @@
+//
+//  ServicesAssembly.swift
+//  NoCodes
+//
+//  Created by Suren Sarkisyan on 18.12.2024.
+//  Copyright © 2024 Qonversion Inc. All rights reserved.
+//
+
+import Foundation
+
+fileprivate enum StringConstants: String {
+  case baseURL = "https://api2.qonversion.io/"
+}
+
+fileprivate enum ServicesConstants {
+  static let defaultTimeout: TimeInterval = 20.0
+}
+
+fileprivate enum FallbackConstants {
+  static let defaultFileName = "nocodes_fallbacks.json"
+  static let fallbackTimeout: TimeInterval = 5.0
+}
+
+@MainActor
+final class ServicesAssembly {
+  
+  private let miscAssembly: MiscAssembly
+  private var deviceInfoCollectorInstance: DeviceInfoCollector?
+  private var requestProcessorInstance: RequestProcessorInterface?
+  private var noCodesServiceInstance: NoCodesServiceInterface?
+  private var screenEventsServiceInstance: ScreenEventsServiceInterface?
+  private let fallbackFileName: String?
+  private var proxyURL: String?
+  
+  init(miscAssembly: MiscAssembly, fallbackFileName: String? = nil, proxyURL: String? = nil) {
+    self.miscAssembly = miscAssembly
+    self.fallbackFileName = fallbackFileName
+    self.proxyURL = proxyURL
+  }
+  
+  func noCodesService() -> NoCodesServiceInterface {
+    if let noCodesServiceInstance {
+      return noCodesServiceInstance
+    }
+    
+    let service = NoCodesService(
+      requestProcessor: requestProcessor(),
+      fallbackService: fallbackService(),
+      imagePreloader: imagePreloader()
+    )
+    noCodesServiceInstance = service
+    
+    return service
+  }
+  
+  func imagePreloader() -> ImagePreloaderInterface {
+    return ImagePreloader(urlSession: urlSession())
+  }
+
+  func screenEventsService() -> ScreenEventsServiceInterface {
+    if let screenEventsServiceInstance {
+      return screenEventsServiceInstance
+    }
+
+    let service = ScreenEventsService(requestProcessor: requestProcessor(), logger: miscAssembly.loggerWrapper())
+    screenEventsServiceInstance = service
+
+    return service
+  }
+
+  func fallbackService() -> FallbackServiceInterface? {
+    let logger: LoggerWrapper = miscAssembly.loggerWrapper()
+    let decoder: JSONDecoder = miscAssembly.jsonDecoder()
+
+    return FallbackService(logger: logger, fallbackFileName: getFallbackFileName(), decoder: decoder)
+  }
+  
+  func requestProcessor() -> RequestProcessorInterface {
+    if let requestProcessorInstance {
+      return requestProcessorInstance
+    }
+    
+    let networkProvider: NetworkProviderInterface = networkProvider()
+    let deviceInfoCollector: DeviceInfoCollectorInterface = deviceInfoCollector()
+    let headersBuilder: HeadersBuilderInterface = miscAssembly.headersBuilder(deviceInfoCollector: deviceInfoCollector)
+    let errorHandler: NetworkErrorHandlerInterface = miscAssembly.errorHandler()
+    let decoder: ResponseDecoderInterface = miscAssembly.responseDecoder()
+    let rateLimiter: RateLimiterInterface = miscAssembly.rateLimiter()
+
+    let baseURL: String = getBaseURL()
+    let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, rateLimiter: rateLimiter)
+    
+    requestProcessorInstance = processor
+    return processor
+  }
+  
+  func networkProvider() -> NetworkProviderInterface {
+    let fallbackAvailable: Bool = FallbackService.isFallbackFileAvailable(getFallbackFileName())
+    let timeout: TimeInterval? = fallbackAvailable ? FallbackConstants.fallbackTimeout : ServicesConstants.defaultTimeout
+    
+    let networkProvider = NetworkProvider(timeout: timeout)
+    return networkProvider
+  }
+  
+  func urlSession() -> URLSession {
+    return URLSession.shared
+  }
+  
+  func deviceInfoCollector() -> DeviceInfoCollectorInterface {
+    if let deviceInfoCollectorInstance {
+      return deviceInfoCollectorInstance
+    }
+    
+    let deviceInfoCollector = DeviceInfoCollector()
+    deviceInfoCollectorInstance = deviceInfoCollector
+    
+    return deviceInfoCollector
+  }
+  
+  // MARK: - Private Methods
+  
+  private func getFallbackFileName() -> String {
+    return fallbackFileName ?? FallbackConstants.defaultFileName
+  }
+  
+  private func getBaseURL() -> String {
+    guard let proxyURL = proxyURL else {
+      return StringConstants.baseURL.rawValue
+    }
+    
+    var normalizedURL = proxyURL
+    
+    // Add https:// prefix if not present
+    if !normalizedURL.hasPrefix("http://") && !normalizedURL.hasPrefix("https://") {
+      normalizedURL = "https://" + normalizedURL
+    }
+    
+    // Add trailing slash if not present
+    if !normalizedURL.hasSuffix("/") {
+      normalizedURL = normalizedURL + "/"
+    }
+    
+    return normalizedURL
+  }
+  
+}

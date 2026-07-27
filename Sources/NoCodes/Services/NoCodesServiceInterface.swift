@@ -1,0 +1,19 @@
+//
+//  NoCodesServiceInterface.swift
+//  NoCodes
+//
+//  Created by Suren Sarkisyan on 18.12.2024.
+//  Copyright © 2024 Qonversion Inc. All rights reserved.
+//
+
+import Foundation
+
+protocol NoCodesServiceInterface: Sendable {
+  
+  func loadScreen(with id: String) async throws -> NoCodesScreen
+  
+  func loadScreen(withContextKey contextKey: String) async throws -> NoCodesScreen
+  
+  func preloadScreens() async throws -> [NoCodesScreen]
+  
+}

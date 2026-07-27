@@ -1,0 +1,159 @@
+//
+//  Delegate.swift
+//  NoCodes
+//
+//  Created by Suren Sarkisyan on 20.12.2024.
+//  Copyright © 2024 Qonversion Inc. All rights reserved.
+//
+
+import Foundation
+
+#if os(iOS)
+import UIKit
+import Qonversion
+
+/// Delegate protocol from No-Codes module
+///
+/// The SDK holds the delegate weakly — keep your own strong reference to it.
+@MainActor
+public protocol NoCodesDelegate: AnyObject {
+  /// Return a source ViewController for navigation
+  func controllerForNavigation() -> UIViewController?
+  
+  /// Called when No-Codes screen is shown
+  /// - Parameters:
+  ///   - id: Screen identifier
+  func noCodesHasShownScreen(id: String)
+
+  /// Called when No-Codes flow starts executing an action
+  /// - Parameters:
+  ///   - action: ``NoCodesAction``
+  func noCodesStartsExecuting(action: NoCodesAction)
+  
+  /// Called when No-Codes flow fails to execute an action
+  /// - Parameters:
+  ///   - action: ``NoCodesAction``
+  ///   - error: error details
+  func noCodesFailedToExecute(action: NoCodesAction, error: Error?)
+  
+  /// Called when No-Codes flow finishes executing an action
+  /// - Parameters:
+  ///   - action: ``NoCodesAction``
+  /// For example, if the user made a purchase then action.type == .purchase
+  func noCodesFinishedExecuting(action: NoCodesAction)
+
+  /// Called when a custom action configured in the builder is triggered on the screen.
+  /// The No-Codes SDK does not execute anything itself — handle the value in your app code.
+  /// The screen stays open; close it using `NoCodes.shared.close()` if needed.
+  /// - Parameters:
+  ///   - value: the string value configured for the custom action in the builder,
+  ///   or an empty string if no value was configured
+  func noCodesReceivedCustomAction(value: String)
+
+  /// Called when No-Codes flow is finished and the No-Codes screen is closed
+  func noCodesFinished()
+  
+  /// Called when No-Codes screen loading failed
+  /// Don't forget to close the screen using `NoCodes.shared.close()`
+  /// - Parameters:
+  ///   - error: error details
+  func noCodesFailedToLoadScreen(error: Error?)
+}
+
+/// NoCodesScreenCustomizationDelegate protocol from No-Codes module
+///
+/// The SDK holds the delegate weakly — keep your own strong reference to it.
+@MainActor
+public protocol NoCodesScreenCustomizationDelegate: AnyObject {
+  /// The function should return the screen presentation configuration used to present the first screen in the chain.
+  func presentationConfigurationForScreen(contextKey: String) -> NoCodesPresentationConfiguration
+
+  /// View for popover presentation style for iPad. A new popover will be presented from this view
+  /// Used only for screenPresentationStyle == .popover for iPad.
+  /// You can omit implementing this delegate function if you do not support iPad or do not use popover presentation style.
+  func viewForPopoverPresentation() -> UIView?
+
+  /// Returns a custom loading view to display while the NoCodes screen is loading.
+  /// If nil is returned, the default skeleton loading view will be used.
+  func noCodesCustomLoadingView() -> NoCodesLoadingView?
+}
+
+/// Delegate responsible for providing custom variables for No-Codes screens.
+/// Custom variables are injected into the screen's JavaScript context
+/// and can be used to influence content displayed on the screen.
+@MainActor
+public protocol NoCodesCustomVariablesDelegate: AnyObject {
+  /// Provide custom variables for a specific screen identified by context key.
+  /// Called each time a screen is about to be displayed.
+  /// - Parameter contextKey: the context key of the screen being loaded.
+  /// - Returns: a dictionary of custom variables to inject into the screen.
+  func customVariables(for contextKey: String) -> [String: String]
+}
+
+/// Delegate responsible for custom purchase and restore handling.
+/// When this delegate is provided, it replaces the default Qonversion SDK purchase flow.
+///
+/// The SDK holds the delegate weakly — keep your own strong reference to it.
+@MainActor
+public protocol NoCodesPurchaseDelegate: AnyObject {
+  /// Handle purchase for the given product using Swift concurrency.
+  /// - Parameter product: Product to purchase.
+  /// - Returns: Completes successfully when purchase finishes, otherwise throws an error.
+  func purchase(product: Qonversion.Product) async throws
+  
+  /// Handle restore flow using Swift concurrency.
+  /// - Returns: Completes successfully when restore finishes, otherwise throws an error.
+  func restore() async throws
+}
+
+// MARK: - Default Implementations
+
+public extension NoCodesDelegate {
+  func controllerForNavigation() -> UIViewController? {
+    return nil
+  }
+  
+  func noCodesHasShownScreen(id: String) {
+
+  }
+
+  func noCodesStartsExecuting(action: NoCodesAction) {
+    
+  }
+  
+  func noCodesFailedToExecute(action: NoCodesAction, error: Error?) {
+
+  }
+  
+  func noCodesFinishedExecuting(action: NoCodesAction) {
+
+  }
+
+  func noCodesReceivedCustomAction(value: String) {
+
+  }
+
+  func noCodesFinished() {
+    
+  }
+  
+  func noCodesFailedToLoadScreen(error: Error?) {
+    
+  }
+}
+
+public extension NoCodesScreenCustomizationDelegate {
+  func presentationConfigurationForScreen(contextKey: String) -> NoCodesPresentationConfiguration {
+    return NoCodesPresentationConfiguration.defaultConfiguration()
+  }
+  
+  func viewForPopoverPresentation() -> UIView? {
+    return nil
+  }
+
+  func noCodesCustomLoadingView() -> NoCodesLoadingView? {
+    return nil
+  }
+}
+
+#endif
