@@ -181,3 +181,45 @@ final class RequestsStorageTests: XCTestCase {
         XCTAssertEqual(makeStorage(defaults).fetchRequests(), [])
     }
 }
+
+// MARK: - legacy offline purchase queue
+
+final class LegacyPurchasesQueueMigrationTests: XCTestCase {
+
+    private let suiteName = "qonversion.localstorage.main"
+    private let queueKey = "com.qonversion.keys.requests.stored.purchases"
+    private var legacyDefaults: UserDefaults!
+
+    override func setUp() {
+        super.setUp()
+        legacyDefaults = UserDefaults(suiteName: suiteName)
+        legacyDefaults.removePersistentDomain(forName: suiteName)
+    }
+
+    override func tearDown() {
+        legacyDefaults.removePersistentDomain(forName: suiteName)
+        legacyDefaults = nil
+        super.tearDown()
+    }
+
+    func testTheLegacyPurchaseQueueIsConsumed() {
+        // The archived payloads target the previous API and cannot be
+        // replayed; the unfinished-transaction sweep re-reports the purchases,
+        // so the key is dropped instead of migrated.
+        legacyDefaults.set(Data([0x01, 0x02]), forKey: queueKey)
+        let migration = LegacyPurchasesQueueMigration()
+
+        migration.run()
+
+        XCTAssertNil(legacyDefaults.data(forKey: queueKey))
+    }
+
+    func testRunningTwiceIsHarmless() {
+        let migration = LegacyPurchasesQueueMigration()
+
+        migration.run()
+        migration.run()
+
+        XCTAssertNil(legacyDefaults.data(forKey: queueKey))
+    }
+}

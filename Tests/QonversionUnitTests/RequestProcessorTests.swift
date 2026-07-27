@@ -156,6 +156,36 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertTrue(requestsStorage.storedRequests.isEmpty, "replaying the queued copy would double-report the purchase")
     }
 
+    func testDeliveredReportDoesNotEvictAnUnrelatedPurchaseOfAHostileUid() async {
+        // A backend-issued uid that ends in "-<transactionId>" must not make a
+        // delivered report evict somebody else's queued purchase.
+        requestsStorage.append(StoredRequest(
+            url: "https://api2.qonversion.io/v4/users/QON_evil-tx42/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-QON_evil-tx42",
+            transactionId: "other-transaction"
+        ))
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        networkProvider.responseData = Data("{}".utf8)
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "tx42"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: Request.createPurchase(userId: "QON_NEW", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1, "an unrelated queued purchase must survive")
+    }
+
+    func testQueuedPurchaseCarriesItsTransactionId() async {
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "tx42"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: Request.createPurchase(userId: "QON_u", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.first?.transactionId, "tx42")
+    }
+
     func testLegacyStoredRequestDecodesWithAttemptOne() throws {
         let legacyJson = #"{"url": "https://api2.qonversion.io/v4/users/u1/purchases", "method": "POST"}"#
 

@@ -124,7 +124,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             body: stored.body,
             dedupKey: stored.dedupKey,
             trigger: stored.trigger,
-            attempt: stored.attempt + 1
+            attempt: stored.attempt + 1,
+            transactionId: stored.transactionId
         )
         // One atomic step: a check followed by a separate remove and append
         // leaves two windows for a clean() to be undone.
@@ -166,7 +167,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
-                    trigger: trigger?.rawValue
+                    trigger: trigger?.rawValue,
+                    transactionId: request.replayTransactionId
                 ))
             }
             throw QonversionError(type: .invalidResponse, error: error)
@@ -185,7 +187,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
-                    trigger: trigger?.rawValue
+                    trigger: trigger?.rawValue,
+                    transactionId: request.replayTransactionId
                 ))
             }
 
@@ -203,7 +206,16 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         // the next launch would double-report the purchase.
         if request.kind == .createPurchase, let transactionId: String = request.replayTransactionId {
             requestsStorage.removeAll { stored in
-                stored.dedupKey?.hasSuffix("-" + transactionId) == true
+                if let storedTransactionId: String = stored.transactionId {
+                    return storedTransactionId == transactionId
+                }
+
+                // Entries queued by an older build carry no transaction id:
+                // fall back to an ANCHORED dedup key match, so a uid that ends
+                // in "-<transactionId>" cannot evict an unrelated purchase.
+                guard let dedupKey: String = stored.dedupKey else { return false }
+
+                return dedupKey.hasPrefix("createPurchase-") && dedupKey.hasSuffix("-" + transactionId)
             }
         }
 

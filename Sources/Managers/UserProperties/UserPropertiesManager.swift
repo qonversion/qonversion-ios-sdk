@@ -13,6 +13,11 @@ import UIKit
 import AdServices
 #endif
 
+fileprivate enum StringConstants: String {
+    // The provider name the backend expects for AdServices tokens.
+    case appleAdServicesProvider = "apple_adservices_token"
+}
+
 fileprivate enum Constants: Int {
     case sendPropertiesMinDelaySec = 5
     // After this many failed attempts the batch stays in the storage but the
@@ -97,9 +102,10 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         #if canImport(AdServices)
         if #available(iOS 14.3, macOS 11.1, visionOS 1.0, *) {
             do {
+                let requestedAt: TimeInterval = Date().timeIntervalSince1970
                 let token: String = try AAAttribution.attributionToken()
 
-                processRequest(with: token)
+                processRequest(with: token, requestedAt: requestedAt)
             } catch {
                 logger.error("\(LoggerInfoMessages.failedToCollectAppleSearchAdsAttribution.rawValue) \(error)")
             }
@@ -240,11 +246,11 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
 extension UserPropertiesManager {
 
-    func processRequest(with token: String) {
+    func processRequest(with token: String, requestedAt: TimeInterval = Date().timeIntervalSince1970) {
         Task { [weak self] in
             guard let self else { return }
             do {
-                try await self.sendAppleSearchAdsToken(token)
+                try await self.sendAppleSearchAdsToken(token, requestedAt: requestedAt)
                 self.logger.info(LoggerInfoMessages.appleSearchAdsAttributionRequestSucceeded.rawValue)
             } catch {
                 self.logger.error("\(LoggerInfoMessages.appleSearchAdsAttributionRequestFailed.rawValue) \(error)")
@@ -254,10 +260,17 @@ extension UserPropertiesManager {
 
     /// The attribution endpoint acknowledges with an empty body, like every
     /// other data-sending flow — and, like them, needs the backend user first.
-    func sendAppleSearchAdsToken(_ token: String) async throws {
+    /// `requested_at` is the moment the token was obtained, which the backend
+    /// needs to match the attribution window.
+    func sendAppleSearchAdsToken(_ token: String, requestedAt: TimeInterval = Date().timeIntervalSince1970) async throws {
         try await userManager.obtainUser()
 
-        let request = Request.appleSearchAds(userId: userIdProvider.getUserId(), body: ["token": token])
+        let body: RequestBodyDict = [
+            "token": token,
+            "requested_at": Int(requestedAt),
+            "provider": StringConstants.appleAdServicesProvider.rawValue
+        ]
+        let request = Request.appleSearchAds(userId: userIdProvider.getUserId(), body: body)
         let _: EmptyApiResponse = try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
     }
     

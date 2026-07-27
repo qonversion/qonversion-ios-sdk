@@ -29,6 +29,10 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     /// must not cache its (stale) response for the new one.
     private var cacheGeneration = 0
 
+    /// One in-flight load per context key: N concurrent callers share a single
+    /// request instead of racing each other into the rate limiter.
+    private var loadTasks: [String: Task<Qonversion.RemoteConfig, Error>] = [:]
+
     init(remoteConfigService: RemoteConfigServiceInterface, userManager: UserManagerInterface, userPropertiesManager: UserPropertiesManagerInterface, fallbackService: FallbackServiceInterface, logger: LoggerWrapper) {
         self.remoteConfigService = remoteConfigService
         self.userManager = userManager
@@ -63,19 +67,48 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
                 return cached
             }
 
-            try await prepareUserForRemoteConfig()
+            let task: Task<Qonversion.RemoteConfig, Error> = joinedLoadTask(for: finalKey, contextKey: contextKey)
+            defer { clearLoadTask(task, for: finalKey) }
 
-            // Snapshotted right before the request, like every other loader.
-            let generation: Int = currentGeneration()
-            let remoteConfig: Qonversion.RemoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
-            cacheConfig(remoteConfig, for: finalKey, ifGenerationIs: generation)
-
-            return remoteConfig
+            return try await task.value
         } catch {
             guard error.allowsLocalEntitlementsFallback, let fallback: Qonversion.RemoteConfig = fallbackRemoteConfig(for: finalKey) else { throw error }
 
             logger.warning("Remote config request failed, using the bundled fallback file: " + error.message)
             return fallback
+        }
+    }
+
+    private func joinedLoadTask(for key: String, contextKey: String?) -> Task<Qonversion.RemoteConfig, Error> {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let inFlight: Task<Qonversion.RemoteConfig, Error> = loadTasks[key] {
+            return inFlight
+        }
+
+        let task = Task { [weak self] () throws -> Qonversion.RemoteConfig in
+            guard let self else { throw QonversionError.initializationError() }
+
+            try await self.prepareUserForRemoteConfig()
+
+            // Snapshotted right before the request, like every other loader.
+            let generation: Int = self.currentGeneration()
+            let remoteConfig: Qonversion.RemoteConfig = try await self.remoteConfigService.loadRemoteConfig(contextKey: contextKey)
+            self.cacheConfig(remoteConfig, for: key, ifGenerationIs: generation)
+
+            return remoteConfig
+        }
+        loadTasks[key] = task
+
+        return task
+    }
+
+    private func clearLoadTask(_ task: Task<Qonversion.RemoteConfig, Error>, for key: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        if loadTasks[key] == task {
+            loadTasks[key] = nil
         }
     }
 

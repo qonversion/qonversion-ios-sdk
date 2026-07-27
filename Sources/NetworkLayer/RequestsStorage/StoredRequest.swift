@@ -24,13 +24,20 @@ struct StoredRequest: Codable, Equatable {
     /// How many times the request has been sent so far.
     let attempt: Int
 
-    init(url: String, method: String, body: Data?, dedupKey: String?, trigger: String? = nil, attempt: Int = 1) {
+    /// The store transaction this request reports, when it reports one. A
+    /// delivered report evicts its queued copy by this value: substring
+    /// matching on the dedup key could evict an unrelated purchase whose uid
+    /// happens to end the same way.
+    let transactionId: String?
+
+    init(url: String, method: String, body: Data?, dedupKey: String?, trigger: String? = nil, attempt: Int = 1, transactionId: String? = nil) {
         self.url = url
         self.method = method
         self.body = body
         self.dedupKey = dedupKey
         self.trigger = trigger
         self.attempt = attempt
+        self.transactionId = transactionId
     }
 
     init(from decoder: Decoder) throws {
@@ -42,6 +49,7 @@ struct StoredRequest: Codable, Equatable {
         // Entries queued by older SDK builds carry neither field.
         trigger = try container.decodeIfPresent(String.self, forKey: .trigger)
         attempt = try container.decodeIfPresent(Int.self, forKey: .attempt) ?? 1
+        transactionId = try container.decodeIfPresent(String.self, forKey: .transactionId)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -51,5 +59,6 @@ struct StoredRequest: Codable, Equatable {
         case dedupKey
         case trigger
         case attempt
+        case transactionId
     }
 }

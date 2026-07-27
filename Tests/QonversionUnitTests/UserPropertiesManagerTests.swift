@@ -274,7 +274,7 @@ final class UserPropertiesManagerTests: XCTestCase {
         // turned every successful call into an invalidResponse failure.
         requestProcessor.results = [EmptyApiResponse()]
 
-        try await manager.sendAppleSearchAdsToken("attribution-token")
+        try await manager.sendAppleSearchAdsToken("attribution-token", requestedAt: 1_700_000_000)
 
         XCTAssertEqual(userManager.obtainUserCallsCount, 1, "no data is sent before the backend user exists")
         XCTAssertEqual(requestProcessor.processedRequests.count, 1)
@@ -283,6 +283,8 @@ final class UserPropertiesManagerTests: XCTestCase {
         }
         XCTAssertEqual(userId, "test-user-id")
         XCTAssertEqual(body["token"] as? String, "attribution-token")
+        XCTAssertEqual(body["provider"] as? String, "apple_adservices_token")
+        XCTAssertEqual(body["requested_at"] as? Int, 1_700_000_000, "the backend matches the attribution window by this timestamp")
     }
 
     func testAppleSearchAdsTokenIsNotSentWhenTheUserGateFails() async {

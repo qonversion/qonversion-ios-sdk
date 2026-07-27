@@ -310,6 +310,35 @@ final class RemoteConfigManagerTests: XCTestCase {
         XCTAssertTrue(remoteConfigService.detachedExperimentIds.isEmpty)
     }
 
+    func testConcurrentLoadsOfTheSameContextKeyShareOneRequest() async throws {
+        // Racing into the per-service rate limiter would answer callers 2..N
+        // with rateLimitExceeded instead of the config.
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "shared")
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfig = { await gate.wait() }
+
+        async let first: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "main")
+        async let second: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "main")
+        async let third: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        await gate.open()
+
+        let results: [Qonversion.RemoteConfig] = try await [first, second, third]
+
+        XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 1, "concurrent callers must share one request")
+        XCTAssertEqual(results.map { $0.source.identifier }, ["shared", "shared", "shared"])
+    }
+
+    func testConcurrentLoadsOfDifferentContextKeysDoNotShareARequest() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
+
+        async let first: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "a")
+        async let second: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "b")
+        _ = try await [first, second]
+
+        XCTAssertEqual(Set(remoteConfigService.loadRemoteConfigContextKeys.compactMap { $0 }), ["a", "b"])
+    }
+
     // MARK: - loadRemoteConfig caching
 
     func testLoadRemoteConfigCachesResultByContextKey() async throws {

@@ -117,3 +117,16 @@ The bundled fallback file keeps the same name (`qonversion_ios_fallbacks.json`) 
 ## NoCodes and Web2App
 
 The NoCodes screens and Web2App redemption flow are not part of this SDK yet. If you rely on them, stay on the Objective-C SDK for now.
+
+## Offline purchase queue of the Objective-C SDK
+
+The previous SDK kept failed purchase reports in its own UserDefaults suite as
+archived `NSURLRequest`s. Those requests target the previous API, so they
+cannot be replayed against v4, and the transaction ids they are keyed by are
+not enough to rebuild a v4 report. The SDK therefore drops that key on the
+first launch.
+
+No purchase is lost by this: the Objective-C SDK never finished a transaction
+whose report had failed, so those purchases are still unfinished in StoreKit
+and the SDK re-reports them on the first launch (and `syncHistoricalData()`
+covers the rest of the history once per install).
