@@ -237,6 +237,22 @@ final class UserServiceTests: XCTestCase {
         XCTAssertEqual(user.environment, stubUser.environment)
     }
 
+    func testCreateUserSendsTheSandboxEnvironment() async throws {
+        // The v4 contract separates sandbox data by this body field — the SDK
+        // must pass the configured environment through.
+        let processor = MockRequestProcessor()
+        let config = InternalConfig(userId: "initial", environment: .sandbox)
+        let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: config)
+        processor.results = [try decodeUserStub()]
+
+        _ = try await service.createUser()
+
+        XCTAssertEqual(
+            processor.processedRequests,
+            [Request.createUser(body: ["id": config.userId, "environment": "sandbox"])]
+        )
+    }
+
     func testCreateUserGeneratesUidWhenCurrentIsEmpty() async throws {
         let processor = MockRequestProcessor()
         let storage = makeStorage()

@@ -37,7 +37,7 @@ public final class Qonversion: @unchecked Sendable {
             return shared
         }
 
-        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime, logLevel: configuration.logLevel)
+        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime, logLevel: configuration.logLevel, environment: configuration.environment)
         // Replay requests that failed on transport in previous sessions.
         assembly.replayStoredRequests()
         let managers = Managers(

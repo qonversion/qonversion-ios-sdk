@@ -37,9 +37,9 @@ final class QonversionAssembly {
     // SDK-wide, and a single user-change observer registration.
     private var entitlementsManagerInstance: EntitlementsManagerInterface?
     
-    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose) {
+    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose, environment: Qonversion.Environment = .production) {
         let userDefaults: UserDefaults = userDefaults ?? UserDefaults.standard
-        let internalConfig = InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime, logLevel: logLevel)
+        let internalConfig = InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime, logLevel: logLevel, environment: environment)
         self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: internalConfig)
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly, baseURL: baseURL)
         self.miscAssembly.servicesAssembly = self.servicesAssembly

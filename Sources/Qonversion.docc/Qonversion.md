@@ -31,6 +31,7 @@ The API is async/await-first. Purchases run natively on StoreKit 2; transactions
 - ``Qonversion/Qonversion/shared``
 - ``Qonversion/Qonversion/Configuration``
 - ``Qonversion/Qonversion/LaunchMode``
+- ``Qonversion/Qonversion/Environment``
 
 ### User identity
 

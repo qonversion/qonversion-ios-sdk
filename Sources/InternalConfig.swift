@@ -39,12 +39,14 @@ final class InternalConfig: UserIdProvider, LaunchModeProvider, @unchecked Senda
     var launchMode: Qonversion.LaunchMode
     var entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime
     var logLevel: Qonversion.LogLevel
+    var environment: Qonversion.Environment
 
-    init(userId: String, launchMode: Qonversion.LaunchMode = .analytics, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose) {
+    init(userId: String, launchMode: Qonversion.LaunchMode = .analytics, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose, environment: Qonversion.Environment = .production) {
         self._userId = userId
         self.launchMode = launchMode
         self.entitlementsCacheLifetime = entitlementsCacheLifetime
         self.logLevel = logLevel
+        self.environment = environment
     }
     
     func getUserId() -> String {

@@ -86,7 +86,8 @@ let configuration = Qonversion.Configuration(
     launchMode: .subscriptionManagement,
     proxyURL: "your.proxy.domain",       // optional
     entitlementsCacheLifetime: .month,   // default .month
-    logLevel: .warning                   // default .verbose
+    logLevel: .warning,                  // default .verbose
+    environment: .production             // default .production
 )
 ```
 
@@ -95,6 +96,7 @@ let configuration = Qonversion.Configuration(
 | `proxyURL` | Routes all SDK traffic through your server — for regions where the API domain may be unreachable. Contact Qonversion before using it. |
 | `entitlementsCacheLifetime` | How long cached entitlements stay eligible for the offline fallback: `.week`, `.twoWeeks`, `.month`, `.twoMonths`, `.threeMonths`, `.sixMonths`, `.year`, `.unlimited`. |
 | `logLevel` | Minimal severity written to the unified log: `.verbose`, `.debug`, `.warning`, `.error`, `.critical`, or `.disabled`. |
+| `environment` | The store environment the app runs against: `.production` or `.sandbox`. Set `.sandbox` in TestFlight, Xcode and StoreKit testing builds so the backend keeps that data apart from production. |
 
 ### Launch modes
 

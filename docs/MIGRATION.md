@@ -38,6 +38,7 @@ Every completion-handler API became `async`. Errors are thrown instead of passed
 | `attachUserToExperiment` / `detach...` / `...RemoteConfiguration` | unchanged, `async throws` |
 | `presentCodeRedemptionSheet()` | unchanged; plus `presentOfferCodeRedeemSheet(in:)` on iOS 16+ |
 | `isFallbackFileAccessible()` | unchanged |
+| `QONEnvironment` on the configuration | `Configuration(apiKey:launchMode:environment:)` — the same two values, `.production` by default. The environment travels in the user creation body; the `test_` API key prefix of the older API is not used. |
 
 ### Listeners became streams
 
