@@ -20,4 +20,8 @@ protocol UserPropertiesManagerInterface {
     func clearDelayedProperties()
     
     func collectAppleSearchAdsAttribution()
+
+    /// Collects attribution ids of integrated third-party SDKs (Adjust,
+    /// AppsFlyer, Facebook) as user properties.
+    func collectIntegrationsData()
 }

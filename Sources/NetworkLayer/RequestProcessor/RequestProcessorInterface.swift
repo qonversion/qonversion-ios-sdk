@@ -7,8 +7,16 @@
 
 protocol RequestProcessorInterface {
     @discardableResult
-    func process<T>(request: Request, responseType: T.Type) async throws -> T where T : Decodable
+    func process<T>(request: Request, responseType: T.Type, trigger: RequestTrigger?) async throws -> T where T : Decodable
 
     /// Resends requests that failed on transport in previous sessions.
     func processStoredRequests()
+}
+
+extension RequestProcessorInterface {
+
+    @discardableResult
+    func process<T>(request: Request, responseType: T.Type) async throws -> T where T : Decodable {
+        try await process(request: request, responseType: responseType, trigger: nil)
+    }
 }

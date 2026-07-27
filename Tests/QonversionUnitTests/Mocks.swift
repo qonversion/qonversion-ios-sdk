@@ -38,9 +38,11 @@ final class MockRequestProcessor: RequestProcessorInterface {
     var error: Error?
     var onProcess: (() async -> Void)?
     private(set) var processedRequests: [Request] = []
+    private(set) var processedTriggers: [RequestTrigger?] = []
 
-    func process<T>(request: Request, responseType: T.Type) async throws -> T where T: Decodable {
+    func process<T>(request: Request, responseType: T.Type, trigger: RequestTrigger?) async throws -> T where T: Decodable {
         processedRequests.append(request)
+        processedTriggers.append(trigger)
         await onProcess?()
         if let error { throw error }
         guard !results.isEmpty else { throw MockError.noStub }
@@ -66,6 +68,66 @@ final class MockNetworkProvider: NetworkProviderInterface {
         sentRequests.append(request)
         if let error { throw error }
         return (responseData, response)
+    }
+}
+
+final class MockIntegrationsInfoCollector: IntegrationsInfoCollectorInterface {
+
+    var adjustUserIdResult: String?
+    var appsFlyerUserIdResult: String?
+    var facebookAnonymousIdResult: String?
+
+    func adjustUserId(completion: @escaping @Sendable (String?) -> Void) {
+        completion(adjustUserIdResult)
+    }
+
+    func appsFlyerUserId() -> String? { appsFlyerUserIdResult }
+
+    func facebookAnonymousId() -> String? { facebookAnonymousIdResult }
+}
+
+final class MockReceiptFetcher: ReceiptFetcherInterface {
+
+    var receipt: String?
+    private(set) var fetchCallsCount = 0
+
+    func appStoreReceipt() -> String? {
+        fetchCallsCount += 1
+        return receipt
+    }
+}
+
+final class MockUserPropertiesManager: UserPropertiesManagerInterface {
+
+    var userPropertiesResult: Qonversion.UserProperties?
+    var error: Error?
+    private(set) var sendPropertiesCallsCount = 0
+    var onSendProperties: (() async -> Void)?
+
+    func userProperties() async throws -> Qonversion.UserProperties {
+        if let error { throw error }
+        guard let userPropertiesResult else { throw MockError.noStub }
+        return userPropertiesResult
+    }
+
+    func setUserProperty(key: Qonversion.UserPropertyKey, value: String) { }
+
+    func setCustomUserProperty(key: String, value: String) { }
+
+    func sendProperties() async throws {
+        sendPropertiesCallsCount += 1
+        await onSendProperties?()
+        if let error { throw error }
+    }
+
+    func clearDelayedProperties() { }
+
+    func collectAppleSearchAdsAttribution() { }
+
+    private(set) var collectIntegrationsDataCallsCount = 0
+
+    func collectIntegrationsData() {
+        collectIntegrationsDataCallsCount += 1
     }
 }
 
@@ -232,9 +294,22 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
         return productsResult
     }
 
+    var introOfferEligibilityResults: [String: Bool] = [:]
+    private(set) var eligibilityRequestedStoreIds: [String] = []
+
+    func isEligibleForIntroOffer(storeId: String) async -> Bool? {
+        eligibilityRequestedStoreIds.append(storeId)
+        return introOfferEligibilityResults[storeId]
+    }
+
     func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
 
+    private(set) var facadeRestoreCallsCount = 0
+    var onRestore: (() async -> Void)?
+
     func restore() async throws -> [Qonversion.Transaction] {
+        facadeRestoreCallsCount += 1
+        await onRestore?()
         if let restoreError { throw restoreError }
         return restoreResult
     }
@@ -553,6 +628,13 @@ final class MockUserManager: UserManagerInterface {
         logoutCallsCount += 1
     }
 
+    private(set) var switchedToUserIds: [String] = []
+
+    func switchToUser(with uid: String) async throws {
+        switchedToUserIds.append(uid)
+        if let error { throw error }
+    }
+
     func userInfo() async throws -> Qonversion.User {
         userInfoCallsCount += 1
         if let error { throw error }
@@ -577,14 +659,20 @@ final class MockPurchasesService: PurchasesServiceInterface {
     var error: Error?
     var onSend: (() async -> Void)?
     private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] = []
+    private(set) var sentTriggers: [RequestTrigger] = []
 
     var promotionalOfferResult: Qonversion.PromotionalOffer?
     private(set) var promotionalOfferCalls: [(userId: String, offerId: String, productStoreId: String)] = []
 
-    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws {
+    var reportedOwnerUserId: String?
+
+    @discardableResult
+    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?, trigger: RequestTrigger) async throws -> String? {
         sentTransactions.append((transaction, userId, options))
+        sentTriggers.append(trigger)
         await onSend?()
         if let error { throw error }
+        return reportedOwnerUserId
     }
 
     func promotionalOffer(userId: String, offerId: String, productStoreId: String) async throws -> Qonversion.PromotionalOffer {
@@ -623,6 +711,18 @@ final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
 
     func loadProductPermissions() async {
         loadPermissionsCallsCount += 1
+    }
+
+    var fallbackFileAccessible = false
+
+    func isFallbackFileAccessible() -> Bool { fallbackFileAccessible }
+
+    var eligibilityResult: [String: Qonversion.IntroEligibilityStatus] = [:]
+    private(set) var eligibilityRequestedProductIds: [[String]] = []
+
+    func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
+        eligibilityRequestedProductIds.append(productIds)
+        return eligibilityResult
     }
 
     func cachedProductPermissions() -> [String: [String]]? { cachedMapping }

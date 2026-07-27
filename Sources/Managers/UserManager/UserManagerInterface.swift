@@ -30,6 +30,10 @@ protocol UserManagerInterface {
     /// Unlinks the current identity and resets to a fresh anonymous user.
     func logout() async
 
+    /// Switches the SDK to another Qonversion user (e.g. the resolved owner
+    /// of restored transactions) and invalidates the user-scoped caches.
+    func switchToUser(with uid: String) async throws
+
     /// Returns up-to-date info about the current user from the backend.
     func userInfo() async throws -> Qonversion.User
 }

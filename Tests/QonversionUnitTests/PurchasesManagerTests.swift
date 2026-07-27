@@ -93,6 +93,36 @@ final class PurchasesManagerTests: XCTestCase {
 
     // MARK: - purchase happy path
 
+    func testEachFlowReportsWithItsOwnTrigger() async throws {
+        // purchase
+        facade.purchaseResult = makeTransaction(id: "trig-1")
+        entitlementsManager.entitlementsResult = [:]
+        _ = try await manager.purchase(makeProduct(), options: nil)
+        XCTAssertEqual(service.sentTriggers, [.purchase])
+
+        // restore
+        facade.restoreResult = [makeTransaction(id: "trig-2")]
+        _ = try await manager.restore()
+        XCTAssertEqual(service.sentTriggers.last, .restore)
+
+        // analytics ingestion
+        await manager.handle(transactions: [makeTransaction(id: "trig-3")])
+        XCTAssertEqual(service.sentTriggers.last, .handleStoreKit2Transactions)
+    }
+
+    func testSyncAndSweepReportWithTheirOwnTriggers() async throws {
+        // historical data sync
+        facade.historicalDataResult = [makeTransaction(id: "trig-4")]
+        await manager.syncHistoricalData()
+        XCTAssertEqual(service.sentTriggers.last, .syncHistoricalData)
+
+        // unfinished transactions sweep
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "trig-5")]
+        await manager.processUnfinishedTransactions()
+        XCTAssertEqual(service.sentTriggers.last, .initialization)
+    }
+
     func testPurchaseGoesGateStorePurchaseReportFinishAndReturnsEntitlements() async throws {
         facade.purchaseResult = makeTransaction(id: "t1")
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
@@ -235,6 +265,32 @@ final class PurchasesManagerTests: XCTestCase {
 
         XCTAssertTrue(service.sentTransactions.isEmpty)
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
+    }
+
+    // MARK: - restore single-flight
+
+    func testConcurrentRestoresShareOneStoreRun() async throws {
+        let gate = PurchasesAsyncGate()
+        facade.onRestore = { await gate.wait() }
+        entitlementsManager.entitlementsResult = [:]
+
+        async let first: [String: Qonversion.Entitlement] = manager.restore()
+        async let second: [String: Qonversion.Entitlement] = manager.restore()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        await gate.open()
+        _ = try await first
+        _ = try await second
+
+        XCTAssertEqual(facade.facadeRestoreCallsCount, 1, "concurrent restore() calls must join the in-flight run")
+    }
+
+    func testRestoreRunsAgainAfterTheFirstOneFinishes() async throws {
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.restore()
+        _ = try await manager.restore()
+
+        XCTAssertEqual(facade.facadeRestoreCallsCount, 2)
     }
 
     // MARK: - restore
@@ -528,6 +584,66 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(service.sentTransactions.isEmpty)
     }
 
+    // MARK: - restore user switching
+
+    func testRestoreSwitchesToTheTransactionsOwner() async throws {
+        // The backend resolves the reported transaction to ANOTHER user.
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.reportedOwnerUserId = "QON_owner"
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
+    }
+
+    func testRestoreDoesNotSwitchWhenTheOwnerMatches() async throws {
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.reportedOwnerUserId = uid
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.restore()
+
+        XCTAssertTrue(userManager.switchedToUserIds.isEmpty)
+    }
+
+    func testSyncHistoricalDataSwitchesToTheTransactionsOwner() async {
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+        service.reportedOwnerUserId = "QON_owner"
+
+        await manager.syncHistoricalData()
+
+        XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
+    }
+
+    // MARK: - backend entitlements survive a store failure on restore
+
+    func testRestoreReturnsBackendEntitlementsWhenTheStoreFails() async throws {
+        // A Stripe-only user on iOS: the store sync fails (no Apple receipt /
+        // cancelled sign-in), but the backend knows the entitlements.
+        facade.restoreError = QonversionError(type: .purchaseFailed)
+        entitlementsManager.entitlementsResult = ["stripe_premium": entitlement(id: "stripe_premium")]
+
+        let entitlements = try await manager.restore()
+
+        XCTAssertEqual(entitlements.keys.sorted(), ["stripe_premium"])
+        XCTAssertTrue(service.sentTransactions.isEmpty)
+    }
+
+    func testRestoreRethrowsTheStoreErrorWhenTheBackendHasNothing() async {
+        facade.restoreError = QonversionError(type: .purchaseFailed)
+        entitlementsManager.entitlementsResult = [:]
+
+        do {
+            _ = try await manager.restore()
+            XCTFail("Expected the store error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
     // MARK: - historical data sync
 
     func testSyncHistoricalDataReportsLatestTransactionPerProductWithoutFinishing() async {
@@ -767,4 +883,29 @@ private actor StreamCollector<Element> {
     private func append(_ element: Element) {
         received.append(element)
     }
+}
+
+/// A reusable async gate: wait() suspends until open() is called.
+private actor PurchasesGateStorage {
+    var isOpen = false
+    var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+private final class PurchasesAsyncGate: @unchecked Sendable {
+    private let storage = PurchasesGateStorage()
+    func open() async { await storage.open() }
+    func wait() async { await storage.wait() }
 }

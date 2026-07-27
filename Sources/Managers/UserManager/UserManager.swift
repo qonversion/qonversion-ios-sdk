@@ -112,6 +112,12 @@ actor UserManager: UserManagerInterface {
         userChangesNotifier.notifyUserChanged()
     }
 
+    func switchToUser(with uid: String) async throws {
+        guard uid != internalConfig.userId else { return }
+
+        try await switchUser(to: uid)
+    }
+
     func userInfo() async throws -> Qonversion.User {
         try await obtainUser()
 

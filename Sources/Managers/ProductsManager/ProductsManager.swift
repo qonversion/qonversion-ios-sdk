@@ -52,6 +52,10 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         return loadedProducts
     }
 
+    func isFallbackFileAccessible() -> Bool {
+        return fallbackService.obtainFallbackData() != nil
+    }
+
     func loadProductPermissions() async {
         do {
             let mapping: [String: [String]] = try await productsService.productPermissions()
@@ -120,6 +124,34 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         loadedProducts = products
         
         return products
+    }
+
+    func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
+        let allProducts: [Qonversion.Product] = try await products()
+
+        var result: [String: Qonversion.IntroEligibilityStatus] = [:]
+        for productId in productIds {
+            guard let product: Qonversion.Product = allProducts.first(where: { $0.qonversionId == productId }), product.isStoreProductLinked else {
+                result[productId] = .unknown
+                continue
+            }
+
+            guard product.subscription?.introductoryOffer != nil else {
+                result[productId] = .nonIntroOrTrialProduct
+                continue
+            }
+
+            switch await storeKitFacade.isEligibleForIntroOffer(storeId: product.storeId) {
+            case .some(true):
+                result[productId] = .eligible
+            case .some(false):
+                result[productId] = .ineligible
+            case .none:
+                result[productId] = .unknown
+            }
+        }
+
+        return result
     }
 
     /// Best-effort StoreKit enrichment that never fails: on a store error the

@@ -23,6 +23,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     private let localStorage: LocalStorageInterface
     private let logger: LoggerWrapper
 
+    // Joined by concurrent restore() calls; guarded by restoreTaskLock.
+    private let restoreTaskLock = NSLock()
+    private var restoreTask: Task<[String: Qonversion.Entitlement], Error>?
+
     private let reportsGate = TransactionReportsGate()
 
     /// Emits fresh entitlements after the SDK processes an observed
@@ -65,6 +69,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     @discardableResult
     func purchase(_ product: Qonversion.Product, options: Qonversion.PurchaseOptions?) async throws -> Qonversion.PurchaseResult {
+        if launchModeProvider.launchMode == .analytics {
+            logger.warning("Making purchases via Qonversion in the Analytics mode can lead to an inconsistent state in the store. Consider switching to the Subscription management mode.")
+        }
+
         // The backend user must exist before the purchase is reported. The
         // uid is captured HERE: a logout during the payment sheet must not
         // reroute the report to the next anonymous user.
@@ -95,7 +103,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         }
 
         do {
-            try await purchasesService.send(transaction, userId: userId, options: options)
+            try await purchasesService.send(transaction, userId: userId, options: options, trigger: .purchase)
             purchaseAssociationsStorage.remove(for: product.storeId)
         } catch {
             // Production fault tolerance: when the backend is unreachable the
@@ -129,13 +137,59 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     @discardableResult
     func restore() async throws -> [String: Qonversion.Entitlement] {
+        // Production parity: concurrent restore() calls join one in-flight
+        // run instead of syncing with the store twice.
+        let task: Task<[String: Qonversion.Entitlement], Error> = joinedRestoreTask()
+        defer { clearRestoreTask(task) }
+
+        return try await task.value
+    }
+
+    private func joinedRestoreTask() -> Task<[String: Qonversion.Entitlement], Error> {
+        restoreTaskLock.lock()
+        defer { restoreTaskLock.unlock() }
+
+        if let inFlight: Task<[String: Qonversion.Entitlement], Error> = restoreTask {
+            return inFlight
+        }
+
+        let task = Task { [weak self] () throws -> [String: Qonversion.Entitlement] in
+            guard let self else { return [:] }
+            return try await self.performRestore()
+        }
+        restoreTask = task
+
+        return task
+    }
+
+    private func clearRestoreTask(_ task: Task<[String: Qonversion.Entitlement], Error>) {
+        restoreTaskLock.lock()
+        defer { restoreTaskLock.unlock() }
+        if restoreTask == task {
+            restoreTask = nil
+        }
+    }
+
+    private func performRestore() async throws -> [String: Qonversion.Entitlement] {
         _ = try await userManager.obtainUser()
         let userId: String = userIdProvider.getUserId()
 
-        let restored: [Qonversion.Transaction] = try await storeKitFacade.restore()
+        let restored: [Qonversion.Transaction]
+        do {
+            restored = try await storeKitFacade.restore()
+        } catch {
+            // A store failure (e.g. a Stripe-only user without an Apple
+            // receipt) must not discard the entitlements the backend knows.
+            if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements(), !fetched.isEmpty {
+                logger.warning("Store restore failed, returning backend entitlements: " + error.message)
+                return fetched
+            }
+            throw error
+        }
         // Production rule: only the latest transaction per product participates.
         let latest = EntitlementsCalculator.latestTransactionsPerProduct(restored)
 
+        var resolvedOwnerUserId: String?
         do {
             for transaction in latest {
                 // Skip transactions already reported this session (sweep,
@@ -144,7 +198,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                     guard await reportsGate.tryTake(id) else { continue }
                 }
                 do {
-                    try await purchasesService.send(transaction, userId: userId)
+                    let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId, trigger: .restore)
+                    if let ownerUserId, ownerUserId != userId {
+                        resolvedOwnerUserId = ownerUserId
+                    }
                 } catch {
                     if let id: String = transaction.id {
                         await reportsGate.release(id)
@@ -159,10 +216,24 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             throw QonversionError(type: .restoreFailed, message: nil, error: error)
         }
 
+        await switchToOwnerIfNeeded(resolvedOwnerUserId)
+
         if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
             return fetched
         }
         return await entitlementsManager.localFallbackEntitlements(for: latest)
+    }
+
+    /// The restored transactions may belong to another Qonversion user — the
+    /// backend resolves the owner and the SDK follows (production parity).
+    private func switchToOwnerIfNeeded(_ ownerUserId: String?) async {
+        guard let ownerUserId else { return }
+
+        do {
+            try await userManager.switchToUser(with: ownerUserId)
+        } catch {
+            logger.error("Failed to switch to the transactions owner: " + error.message)
+        }
     }
 
     func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
@@ -210,7 +281,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 guard await reportsGate.tryTake(id) else { continue }
             }
             do {
-                try await purchasesService.send(transaction, userId: userId)
+                try await purchasesService.send(transaction, userId: userId, trigger: .handleStoreKit2Transactions)
             } catch {
                 if let id: String = transaction.id {
                     await reportsGate.release(id)
@@ -247,12 +318,16 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(history)
 
         var hadFailures = false
+        var resolvedOwnerUserId: String?
         for transaction in latest {
             if let id: String = transaction.id {
                 guard await reportsGate.tryTake(id) else { continue }
             }
             do {
-                try await purchasesService.send(transaction, userId: userId)
+                let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId, trigger: .syncHistoricalData)
+                if let ownerUserId, ownerUserId != userId {
+                    resolvedOwnerUserId = ownerUserId
+                }
             } catch {
                 if let id: String = transaction.id {
                     await reportsGate.release(id)
@@ -261,6 +336,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 logger.error("Failed to report a historical transaction: " + error.message)
             }
         }
+
+        await switchToOwnerIfNeeded(resolvedOwnerUserId)
 
         if !hadFailures {
             localStorage.set(bool: true, forKey: Constants.historicalDataSyncedKey.rawValue)
@@ -288,7 +365,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 guard await reportsGate.tryTake(id) else { continue }
             }
             do {
-                try await purchasesService.send(transaction, userId: userId, options: reportOptions(for: transaction))
+                try await purchasesService.send(transaction, userId: userId, options: reportOptions(for: transaction), trigger: .initialization)
                 purchaseAssociationsStorage.remove(for: transaction.productId)
                 await storeKitFacade.finish(transaction)
             } catch {
@@ -340,7 +417,7 @@ extension PurchasesManager: StoreKitFacadeDelegate {
             do {
                 _ = try await self.userManager.obtainUser()
                 let userId: String = self.userIdProvider.getUserId()
-                try await self.purchasesService.send(transaction, userId: userId, options: self.reportOptions(for: transaction))
+                try await self.purchasesService.send(transaction, userId: userId, options: self.reportOptions(for: transaction), trigger: .purchase)
                 self.purchaseAssociationsStorage.remove(for: transaction.productId)
             } catch {
                 if let id: String = transaction.id {
