@@ -5,7 +5,8 @@
 //  Created by Suren Sarkisyan on 07.02.2024.
 //
 
-enum QonversionErrorType {
+/// Every failure kind the SDK can throw, exposed on ``QonversionError/type``.
+public enum QonversionErrorType: Sendable {
     case unknown
     case `internal`
     case sdkInitializationError
@@ -43,7 +44,7 @@ enum QonversionErrorType {
     case purchaseFailed
     case transactionVerificationFailed
 
-    func message() -> String {
+    public func message() -> String {
         // handle other errors here
         switch self {
         case .internal:

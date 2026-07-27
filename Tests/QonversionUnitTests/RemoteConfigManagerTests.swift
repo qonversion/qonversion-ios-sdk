@@ -13,6 +13,7 @@ final class RemoteConfigManagerTests: XCTestCase {
     private var remoteConfigService: MockRemoteConfigService!
     private var userManager: MockUserManager!
     private var userPropertiesManager: MockUserPropertiesManager!
+    private var fallbackService: MockFallbackService!
     private var manager: RemoteConfigManager!
 
     override func setUp() {
@@ -21,20 +22,36 @@ final class RemoteConfigManagerTests: XCTestCase {
         userManager = MockUserManager()
         userManager.user = Qonversion.User(id: "user_abc")
         userPropertiesManager = MockUserPropertiesManager()
+        fallbackService = MockFallbackService()
         manager = RemoteConfigManager(
             remoteConfigService: remoteConfigService,
             userManager: userManager,
             userPropertiesManager: userPropertiesManager,
+            fallbackService: fallbackService,
             logger: LoggerWrapper()
         )
     }
 
     override func tearDown() {
         manager = nil
+        fallbackService = nil
         userPropertiesManager = nil
         userManager = nil
         remoteConfigService = nil
         super.tearDown()
+    }
+
+    private func stubFallbackConfigs() {
+        let configs: [Qonversion.RemoteConfig] = [
+            makeRemoteConfig(contextKey: "main", identifier: "fallback-main"),
+            makeRemoteConfig(contextKey: nil, identifier: "fallback-empty"),
+        ]
+        fallbackService.fallbackData = FallbackData(products: nil, productsPermissions: nil, remoteConfigs: configs)
+    }
+
+    private func retriableError() -> QonversionError {
+        let transportError = URLError(.notConnectedToInternet)
+        return QonversionError(type: .loadingRemoteConfigFailed, message: nil, error: transportError)
     }
 
     // MARK: - Helpers
@@ -48,6 +65,82 @@ final class RemoteConfigManagerTests: XCTestCase {
             contextKey: contextKey
         )
         return Qonversion.RemoteConfig(payload: ["flag": "on"], experiment: nil, source: source)
+    }
+
+    // MARK: - bundled fallback file (production parity)
+
+    func testRetriableLoadFailureFallsBackToTheBundledConfig() async throws {
+        remoteConfigService.error = retriableError()
+        stubFallbackConfigs()
+
+        let config = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(config.source.identifier, "fallback-main")
+    }
+
+    func testFallbackMatchesTheEmptyContextKey() async throws {
+        remoteConfigService.error = retriableError()
+        stubFallbackConfigs()
+
+        let config = try await manager.loadRemoteConfig(contextKey: nil)
+
+        XCTAssertEqual(config.source.identifier, "fallback-empty")
+    }
+
+    func testNonRetriableLoadFailureIgnoresTheFallbackFile() async {
+        remoteConfigService.error = MockError.stubbed
+        stubFallbackConfigs()
+
+        do {
+            _ = try await manager.loadRemoteConfig(contextKey: "main")
+            XCTFail("Expected the original error")
+        } catch {
+            XCTAssertEqual(error as? MockError, .stubbed)
+        }
+    }
+
+    func testRetriableFailureWithoutTheFileRethrows() async {
+        remoteConfigService.error = retriableError()
+
+        do {
+            _ = try await manager.loadRemoteConfig(contextKey: "main")
+            XCTFail("Expected the original error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .loadingRemoteConfigFailed)
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testOfflineUserGateFallsBackToTheBundledConfig() async throws {
+        // The first launch without a network connection: even the user
+        // creation fails, yet the bundled config must answer.
+        userManager.error = QonversionError(type: .userCreationFailed, message: nil, error: URLError(.notConnectedToInternet))
+        stubFallbackConfigs()
+
+        let config = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(config.source.identifier, "fallback-main")
+    }
+
+    func testListLoadFailureFallsBackToAllBundledConfigs() async throws {
+        remoteConfigService.error = retriableError()
+        stubFallbackConfigs()
+
+        let list = try await manager.loadRemoteConfigList()
+
+        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["fallback-main", "fallback-empty"])
+    }
+
+    func testListWithContextKeysFallsBackFiltered() async throws {
+        remoteConfigService.error = retriableError()
+        stubFallbackConfigs()
+
+        let withEmpty = try await manager.loadRemoteConfigList(contextKeys: ["main"], includeEmptyContextKey: true)
+        let withoutEmpty = try await manager.loadRemoteConfigList(contextKeys: ["main"], includeEmptyContextKey: false)
+
+        XCTAssertEqual(withEmpty.remoteConfigs.map { $0.source.identifier }, ["fallback-main", "fallback-empty"])
+        XCTAssertEqual(withoutEmpty.remoteConfigs.map { $0.source.identifier }, ["fallback-main"])
     }
 
     // MARK: - user gate and properties flush (production parity)
