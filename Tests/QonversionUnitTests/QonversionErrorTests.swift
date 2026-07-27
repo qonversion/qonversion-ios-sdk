@@ -37,13 +37,29 @@ final class QonversionErrorTests: XCTestCase {
             criticalErrorCodes: [.unauthorized, .paymentRequired, .forbidden],
             decoder: ResponseDecoder(decoder: JSONDecoder())
         )
-        let body = Data(#"{"error": {"code": "receipt_validation_error", "message": "bad receipt", "type": "invalid_request"}}"#.utf8)
-        let response = HTTPURLResponse(url: URL(string: "https://api2.qonversion.io/v4/users/u/purchases")!, statusCode: 400, httpVersion: nil, headerFields: nil)!
+        let body = Data(#"{"error": {"code": "purchase_fraud", "message": "bad purchase", "type": "logical"}}"#.utf8)
+        let response = HTTPURLResponse(url: URL(string: "https://api2.qonversion.io/v4/users/u/purchases")!, statusCode: 422, httpVersion: nil, headerFields: nil)!
 
         let error = handler.extractError(from: response, body: body)
 
-        XCTAssertEqual(error?.apiCode, "receipt_validation_error")
-        XCTAssertEqual(error?.apiType, "invalid_request")
+        XCTAssertEqual(error?.apiCode, "purchase_fraud")
+        XCTAssertEqual(error?.apiType, "logical")
+        XCTAssertEqual(error?.type, .fraudPurchase)
+    }
+
+    func testEveryTypeTheBackendMappingProducesCarriesItsOwnMessage() {
+        // A type whose message() falls through to "Unknown error occurred."
+        // tells the integrator nothing the generic error did not.
+        let mapped: [QonversionErrorType] = [.invalidRequest, .resourceNotFound, .rateLimitExceeded, .fraudPurchase, .receiptValidationError, .projectConfigError, .purchaseSceneMissing]
+
+        for type in mapped {
+            XCTAssertNotEqual(type.message(), QonversionErrorType.unknown.message(), "\(type) has no message of its own")
+        }
+    }
+
+    func testTheVisionOSSceneErrorNamesTheCallThatFixesIt() {
+        // The only way out of it is an API call, so the message has to name it.
+        XCTAssertTrue(QonversionErrorType.purchaseSceneMissing.message().contains("setPurchaseConfirmationScene"))
     }
 
     func testUnderlyingErrorIsPreservedAndAppendedToTheMessage() {

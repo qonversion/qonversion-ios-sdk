@@ -34,7 +34,7 @@ final class EntitlementsServiceTests: XCTestCase {
         let lifetime = entitlements.first { $0.id == "lifetime" }
         XCTAssertNil(lifetime?.expirationDate, "absent expires_at means a lifetime grant")
         XCTAssertEqual(lifetime?.source, .unknown, "unknown source strings must not fail decoding")
-        XCTAssertEqual(lifetime?.renewState, .unknown)
+        XCTAssertEqual(lifetime?.renewState, .unknown, "no subscription object means non-renewable only on a source the SDK recognizes; an unknown store claims nothing")
     }
 
     func testEntitlementsWrapsErrors() async {

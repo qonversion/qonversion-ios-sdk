@@ -10,8 +10,8 @@ import StoreKit
 
 protocol StoreKitFacadeDelegate: AnyObject {
 
-    // Promoted purchases do not exist on watchOS.
-    #if !os(watchOS)
+    // Promoted purchases do not exist on watchOS, tvOS or visionOS.
+    #if !os(watchOS) && !os(tvOS) && !os(visionOS)
     @available(iOS 16.4, macOS 14.4, *)
     func promoPurchaseIntent(product: Product)
     #endif

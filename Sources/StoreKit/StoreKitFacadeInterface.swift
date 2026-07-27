@@ -57,6 +57,13 @@ protocol StoreKitFacadeInterface: Sendable {
     @available(iOS 14.0, *)
     func presentCodeRedemptionSheet()
     #endif
+
+    #if os(visionOS)
+    /// The scene the visionOS purchase sheet is confirmed in; visionOS has no
+    /// scene-less purchase call.
+    @MainActor
+    func setPurchaseConfirmationScene(_ scene: UIScene?)
+    #endif
 }
 
 extension StoreKitFacadeInterface {

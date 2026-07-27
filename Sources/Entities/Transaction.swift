@@ -354,11 +354,18 @@ extension Qonversion {
                 self.currency = Qonversion.Currency(identifier: transaction.currencyCode, symbol: transaction.currencyCode?.toCurrencySymbol())
             }
             
-            if #available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, visionOS 1.0, *) {
+            #if os(visionOS)
+            // visionOS starts at 1.0, which already has `storefront`; the
+            // pre-17 `storefrontCountryCode` fallback is not merely
+            // deprecated there, it is declared unavailable.
+            self.storefront = Qonversion.Storefront(countryCode: transaction.storefront.countryCode, id: transaction.storefront.id)
+            #else
+            if #available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, *) {
                 self.storefront = Qonversion.Storefront(countryCode: transaction.storefront.countryCode, id: transaction.storefront.id)
             } else {
                 self.storefront = Qonversion.Storefront(countryCode: transaction.storefrontCountryCode, id: nil)
             }
+            #endif
             
             self._offer = Qonversion.Transaction.Offer(with: transaction)
             self._storeKitTransaction = transaction

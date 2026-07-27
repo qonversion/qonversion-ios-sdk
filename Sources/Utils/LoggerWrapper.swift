@@ -54,6 +54,20 @@ final class LoggerWrapper: @unchecked Sendable {
         self._logger = nil
         self.logLevel = .verbose
     }
+
+    /// The SDK's logger with the given severity floor. Used by the assembly
+    /// once the SDK is configured, and by the facade before it is — a misuse
+    /// warning has to reach the developer even when the misuse is calling
+    /// before initialize(), which is exactly when no configured logger exists.
+    static func make(logLevel: LogLevel) -> LoggerWrapper {
+        if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+            let logger = Logger(subsystem: "io.qonversion.sdk", category: "Internal")
+
+            return LoggerWrapper(logger: logger, logLevel: logLevel)
+        }
+
+        return LoggerWrapper()
+    }
     
     func info(_ message: String) {
         log(message, level: .verbose)

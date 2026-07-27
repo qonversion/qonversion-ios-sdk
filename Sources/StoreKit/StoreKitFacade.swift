@@ -99,6 +99,13 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     }
     #endif
 
+    #if os(visionOS)
+    @MainActor
+    func setPurchaseConfirmationScene(_ scene: UIScene?) {
+        storeKitWrapper.setPurchaseConfirmationScene(scene)
+    }
+    #endif
+
     func finish(_ transaction: Qonversion.Transaction) async {
         await storeKitWrapper.finish(transaction)
     }
@@ -148,7 +155,7 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         // observation entry point. StoreKit 2 exposes them from iOS 16.4;
         // on iOS 15.0–16.3 promoted purchases are a known gap, and watchOS
         // has no promoted purchases at all.
-        #if !os(watchOS)
+        #if !os(watchOS) && !os(tvOS) && !os(visionOS)
         if #available(iOS 16.4, macOS 14.4, *) {
             storeKitWrapper.subscribeToPromoPurchases()
         }
@@ -163,7 +170,7 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         transactionUpdatesTask = nil
         storefrontTask?.cancel()
         storefrontTask = nil
-        #if !os(watchOS)
+        #if !os(watchOS) && !os(tvOS) && !os(visionOS)
         storeKitWrapper.unsubscribeFromPromoPurchases()
         #endif
     }
@@ -178,7 +185,7 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
 
 // MARK: - StoreKitWrapperDelegate
 
-#if !os(watchOS)
+#if !os(watchOS) && !os(tvOS) && !os(visionOS)
 extension StoreKitFacade: StoreKitWrapperDelegate {
 
     @available(iOS 16.4, macOS 14.4, *)

@@ -50,6 +50,12 @@ protocol PurchasesManagerInterface: AnyObject {
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws
     #endif
 
+    #if os(visionOS)
+    /// The scene the visionOS purchase sheet is confirmed in.
+    @MainActor
+    func setPurchaseConfirmationScene(_ scene: UIScene?)
+    #endif
+
     /// Reports purchases made by the host app (Analytics mode ingestion).
     /// Verified transactions are reported through the dedup gate and are
     /// NEVER finished — the host app owns their lifecycle.

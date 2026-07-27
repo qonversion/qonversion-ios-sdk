@@ -53,6 +53,13 @@ The API is async/await-first. Purchases run natively on StoreKit 2; transactions
 - ``Qonversion/Qonversion/PurchaseResult``
 - ``Qonversion/Qonversion/EntitlementsSource``
 
+On visionOS, StoreKit has no scene-less purchase call: name the scene the
+purchase sheet is confirmed in with
+``Qonversion/Qonversion/setPurchaseConfirmationScene(_:)`` after
+``Qonversion/Qonversion/initialize(with:)`` and before the first purchase.
+
+- ``Qonversion/Qonversion/setPurchaseConfirmationScene(_:)``
+
 ### Entitlements
 
 - ``Qonversion/Qonversion/checkEntitlements()``
@@ -88,6 +95,14 @@ The API is async/await-first. Purchases run natively on StoreKit 2; transactions
 - ``Qonversion/Qonversion/RemoteConfig``
 
 ### Errors
+
+Every SDK call throws ``QonversionError``. Switch on ``QonversionError/type``
+to react precisely; when the failure came from the API, ``QonversionError/apiCode``
+carries the backend code verbatim (a snake_case slug such as `relation_not_found`
+or `purchase_fraud`) and ``QonversionError/apiType`` its class — `internal`,
+`logical`, `request` or `resource`. A code the SDK has no typed meaning for
+leaves ``QonversionError/type`` derived from the HTTP status and still reaches
+you through ``QonversionError/apiCode``.
 
 - ``QonversionError``
 - ``QonversionErrorType``
