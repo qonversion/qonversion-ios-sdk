@@ -267,6 +267,45 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
     }
 
+    func testConcurrentPurchaseOfTheSameProductIsRefused() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = [:]
+        let gate = PurchasesAsyncGate()
+        facade.purchaseResult = makeTransaction(id: "slow-1")
+        facade.onPurchase = { await gate.wait() }
+
+        async let first = manager.purchase(makeProduct(), options: nil)
+        await waitUntil { self.facade.purchasedStoreIds.count >= 1 }
+
+        do {
+            _ = try await manager.purchase(makeProduct(), options: nil)
+            XCTFail("Expected the second concurrent purchase to be refused")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseInProgress)
+        }
+
+        await gate.open()
+        _ = try await first
+        XCTAssertEqual(facade.purchasedStoreIds.count, 1, "one payment sheet per product")
+    }
+
+    func testEntitlementsUpdateEmittedBeforeSubscriptionIsBuffered() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        // The out-of-band transaction arrives before the host subscribes.
+        await manager.transactionUpdated(makeTransaction(id: "early-1"))
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+
+        var received: [String: Qonversion.Entitlement]?
+        for await update in manager.entitlementsUpdates() {
+            received = update
+            break
+        }
+
+        XCTAssertEqual(received?.keys.sorted(), ["premium"], "an Ask to Buy approval during launch must not be dropped")
+    }
+
     // MARK: - report idempotency (review findings)
 
     func testPurchaseClaimsTheGateBeforeTheReportGoesOut() async throws {

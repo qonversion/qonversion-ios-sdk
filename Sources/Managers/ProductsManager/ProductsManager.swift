@@ -27,6 +27,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     private let lock = NSLock()
     private var _loadedProducts: [Qonversion.Product] = []
     private var _loadedProductPermissions: [String: [String]]?
+    private var _productsTask: Task<[Qonversion.Product], Error>?
 
     var loadedProducts: [Qonversion.Product] {
         get {
@@ -111,6 +112,39 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
             return loadedProducts
         }
 
+        // Single-flight: N concurrent callers share one API + StoreKit round.
+        let task: Task<[Qonversion.Product], Error> = joinedProductsTask()
+        defer { clearProductsTask(task) }
+
+        return try await task.value
+    }
+
+    private func joinedProductsTask() -> Task<[Qonversion.Product], Error> {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let inFlight: Task<[Qonversion.Product], Error> = _productsTask {
+            return inFlight
+        }
+
+        let task = Task { [weak self] () throws -> [Qonversion.Product] in
+            guard let self else { return [] }
+            return try await self.loadProducts()
+        }
+        _productsTask = task
+
+        return task
+    }
+
+    private func clearProductsTask(_ task: Task<[Qonversion.Product], Error>) {
+        lock.lock()
+        defer { lock.unlock() }
+        if _productsTask == task {
+            _productsTask = nil
+        }
+    }
+
+    private func loadProducts() async throws -> [Qonversion.Product] {
         let products: [Qonversion.Product]
         do {
             products = try await productsService.products()

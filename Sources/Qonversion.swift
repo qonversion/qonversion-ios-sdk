@@ -152,10 +152,13 @@ public final class Qonversion: @unchecked Sendable {
     /// track them (Analytics mode). Pass the verification results you receive
     /// from `Product.PurchaseResult` or `Transaction.updates`. The SDK never
     /// finishes these transactions — your app owns their lifecycle.
-    public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async {
-        guard let purchasesManager else { return }
+    /// - Returns: true when every purchase was reported to Qonversion;
+    ///   failed reports are retried automatically by the offline queue.
+    @discardableResult
+    public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async -> Bool {
+        guard let purchasesManager else { return false }
 
-        await purchasesManager.handle(purchasedTransactions: verificationResults)
+        return await purchasesManager.handle(purchasedTransactions: verificationResults)
     }
 
     /// Requests a signed promotional offer for the product's subscription

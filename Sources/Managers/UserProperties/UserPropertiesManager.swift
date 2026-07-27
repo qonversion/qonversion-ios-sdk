@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(UIKit) && !os(watchOS)
+import UIKit
+#endif
 #if canImport(AdServices)
 import AdServices
 #endif
@@ -52,11 +55,26 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         self.userManager = userManager
         self.integrationsInfoCollector = integrationsInfoCollector
         self.logger = logger
+
+        subscribeToBackgroundFlush()
+    }
+
+    /// The pending batch waits on a delay timer that never fires once the
+    /// process is suspended — flush it when the app goes to background.
+    private func subscribeToBackgroundFlush() {
+        #if canImport(UIKit) && !os(watchOS)
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: nil) { [weak self] _ in
+            guard let self else { return }
+            Task {
+                try? await self.sendProperties()
+            }
+        }
+        #endif
     }
 
     func collectIntegrationsData() {
-        // Watch and vision apps do not ship attribution SDKs — same platform
-        // gate as production.
+        // Adjust/AppsFlyer do not ship on watch and vision — same platform
+        // gate as production; the Facebook anonymous id is collected everywhere.
         #if !os(watchOS) && !os(visionOS)
         integrationsInfoCollector.adjustUserId { [weak self] adjustUserId in
             guard let self, let adjustUserId, !adjustUserId.isEmpty else { return }
@@ -65,12 +83,12 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         if let appsFlyerUserId: String = integrationsInfoCollector.appsFlyerUserId(), !appsFlyerUserId.isEmpty {
             setUserProperty(key: .appsFlyerUserId, value: appsFlyerUserId)
         }
+        #endif
         if let facebookAnonymousId: String = integrationsInfoCollector.facebookAnonymousId(), !facebookAnonymousId.isEmpty {
             // The key is intentionally not part of the public UserPropertyKey
             // enum — mirrors the production contract.
             setCustomUserProperty(key: "_q_fb_anon_id", value: facebookAnonymousId)
         }
-        #endif
     }
     
     func collectAppleSearchAdsAttribution() {
@@ -95,9 +113,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         try await userManager.obtainUser()
 
         let request = Request.getProperties(userId: userIdProvider.getUserId())
-        let list: ListEnvelope<Qonversion.UserProperty>? = try? await requestProcessor.process(request: request, responseType: ListEnvelope<Qonversion.UserProperty>.self)
-        let resultProperties: [Qonversion.UserProperty] = list?.data ?? []
-        let result = Qonversion.UserProperties(resultProperties)
+        let list: ListEnvelope<Qonversion.UserProperty> = try await requestProcessor.process(request: request, responseType: ListEnvelope<Qonversion.UserProperty>.self)
+        let result = Qonversion.UserProperties(list.data)
         return result
     }
 
@@ -113,6 +130,12 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
     func setCustomUserProperty(key: String, value: String) {
         guard !value.isEmpty else { return }
+        // The production key contract: latin letters required, plus digits
+        // and -_.: — anything else is refused before it reaches the batch.
+        guard key.range(of: "(?=.*[a-zA-Z])^[-a-zA-Z0-9_.:]+$", options: .regularExpression) != nil else {
+            logger.warning("Invalid user property key \"" + key + "\" — the property is ignored.")
+            return
+        }
 
         let userProperty = Qonversion.UserProperty(key: key, value: value)
         propertiesStorage.save(userProperty)

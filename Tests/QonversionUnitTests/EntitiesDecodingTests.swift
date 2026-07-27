@@ -144,12 +144,33 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertNil(remoteConfig.source.contextKey)
     }
 
-    func testRemoteConfigSourceDecodingFailsWhenContextKeyIsMissing() {
-        // Fixates current behavior: Source.init(from:) uses decode(String?.self),
-        // which requires the context_key key to be PRESENT (null is fine, absence is not).
+    func testOneMalformedEntitlementDoesNotNullTheWholeList() throws {
+        let json = """
+        {
+            "object": "list",
+            "data": [
+                {"id": "premium", "is_active": true},
+                {"is_active": true},
+                {"id": "basic", "is_active": false}
+            ]
+        }
+        """
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        let list = try decoder.decode(Qonversion.EntitlementsList.self, from: Data(json.utf8))
+
+        XCTAssertEqual(list.data.map(\.id), ["premium", "basic"], "the malformed element degrades, the user's access list survives")
+    }
+
+    func testRemoteConfigSourceToleratesAMissingContextKey() throws {
+        // An absent key must decode like an explicit null — production
+        // payloads omit optional fields.
         let json = remoteConfigJSON(contextKeyFragment: #""ignored": null"#)
 
-        XCTAssertThrowsError(try decode(Qonversion.RemoteConfig.self, json))
+        let remoteConfig = try decode(Qonversion.RemoteConfig.self, json)
+
+        XCTAssertNil(remoteConfig.source.contextKey)
     }
 
 

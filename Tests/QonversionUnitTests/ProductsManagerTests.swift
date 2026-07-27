@@ -51,6 +51,21 @@ final class ProductsManagerTests: XCTestCase {
         return Qonversion.Product(qonversionId: qonversionId, storeId: storeId, offeringId: nil)
     }
 
+    func testConcurrentProductsCallsShareOneRound() async throws {
+        productsService.productsResult = [makeProduct()]
+        let gate = ProductsAsyncGate()
+        productsService.onProducts = { await gate.wait() }
+
+        async let first = manager.products()
+        async let second = manager.products()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        await gate.open()
+        _ = try await first
+        _ = try await second
+
+        XCTAssertEqual(productsService.productsCallsCount, 1, "N concurrent callers must not issue N API rounds")
+    }
+
     // MARK: - offline catalog for the local entitlements calculation (A2.5)
 
     func testCachedProductsFallBackToThePersistedCatalog() async throws {
@@ -300,4 +315,29 @@ final class ProductsManagerTests: XCTestCase {
 
         XCTAssertEqual(manager.cachedProductPermissions(), ["pro": ["premium"]])
     }
+}
+
+/// A reusable async gate: wait() suspends until open() is called.
+private actor ProductsGateStorage {
+    var isOpen = false
+    var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+private final class ProductsAsyncGate: @unchecked Sendable {
+    private let storage = ProductsGateStorage()
+    func open() async { await storage.open() }
+    func wait() async { await storage.wait() }
 }

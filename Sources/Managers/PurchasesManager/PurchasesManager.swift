@@ -27,11 +27,18 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     private let restoreTaskLock = NSLock()
     private var restoreTask: Task<[String: Qonversion.Entitlement], Error>?
 
+    // Products with a payment sheet in flight; a second purchase of the same
+    // product must not present a second sheet (production behavior).
+    private let purchasingLock = NSLock()
+    private var purchasingStoreIds: Set<String> = []
+
     private let reportsGate = TransactionReportsGate()
 
     /// Emits fresh entitlements after the SDK processes an observed
     /// transaction in subscription-management mode.
-    private let entitlementsUpdatesMulticast = AsyncMulticast<[String: Qonversion.Entitlement]>()
+    // Buffered: an Ask to Buy approval processed during launch, before the
+    // host subscribes, must not be dropped.
+    private let entitlementsUpdatesMulticast = AsyncMulticast<[String: Qonversion.Entitlement]>(buffersWhenNoSubscribers: true)
 
     /// Emits App Store promoted-purchase intents. Buffered until the first
     /// subscriber — an intent arriving at app start must not be lost.
@@ -69,6 +76,21 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     @discardableResult
     func purchase(_ product: Qonversion.Product, options: Qonversion.PurchaseOptions?) async throws -> Qonversion.PurchaseResult {
+        purchasingLock.lock()
+        let alreadyPurchasing: Bool = purchasingStoreIds.contains(product.storeId)
+        if !alreadyPurchasing {
+            purchasingStoreIds.insert(product.storeId)
+        }
+        purchasingLock.unlock()
+        guard !alreadyPurchasing else {
+            throw QonversionError(type: .purchaseInProgress)
+        }
+        defer {
+            purchasingLock.lock()
+            purchasingStoreIds.remove(product.storeId)
+            purchasingLock.unlock()
+        }
+
         if launchModeProvider.launchMode == .analytics {
             logger.warning("Making purchases via Qonversion in the Analytics mode can lead to an inconsistent state in the store. Consider switching to the Subscription management mode.")
         }
@@ -274,14 +296,20 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         storeKitFacade.startObservingTransactionUpdates()
     }
 
-    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async {
+    @discardableResult
+    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async -> Bool {
         let transactions: [Qonversion.Transaction] = purchasedTransactions.compactMap { storeKitFacade.map($0) }
+        // Unverified results are dropped by the mapping — that is a failure
+        // signal for the caller, not a silent success.
+        let allVerified: Bool = transactions.count == purchasedTransactions.count
 
-        await handle(transactions: transactions)
+        let allReported: Bool = await handle(transactions: transactions)
+        return allReported && allVerified
     }
 
-    func handle(transactions: [Qonversion.Transaction]) async {
-        guard !transactions.isEmpty else { return }
+    @discardableResult
+    func handle(transactions: [Qonversion.Transaction]) async -> Bool {
+        guard !transactions.isEmpty else { return true }
 
         let userId: String
         do {
@@ -289,11 +317,12 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             userId = userIdProvider.getUserId()
         } catch {
             logger.error("Skipping handed transactions: no backend user: " + error.message)
-            return
+            return false
         }
 
         // The host app made these purchases and owns their lifecycle — the
         // SDK only tracks them, so no transaction is ever finished here.
+        var allReported = true
         for transaction in transactions {
             if let id: String = transaction.id {
                 guard await reportsGate.tryTake(id) else { continue }
@@ -304,9 +333,11 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 if let id: String = transaction.id {
                     await reportsGate.release(id)
                 }
+                allReported = false
                 logger.error("Failed to report a handed transaction: " + error.message)
             }
         }
+        return allReported
     }
 
     func syncHistoricalData() async {

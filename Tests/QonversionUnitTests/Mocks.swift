@@ -274,9 +274,12 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     private(set) var startObservingCallsCount = 0
     private(set) var stopObservingCallsCount = 0
 
+    var onPurchase: (() async -> Void)?
+
     func purchase(storeId: String, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
         purchasedStoreIds.append(storeId)
         purchasedOptions.append(options)
+        await onPurchase?()
         if let purchaseError { throw purchaseError }
         guard let purchaseResult else { throw MockError.noStub }
         return purchaseResult
@@ -422,8 +425,11 @@ final class MockProductsService: ProductsServiceInterface {
     private(set) var productsCallsCount = 0
     private(set) var productPermissionsCallsCount = 0
 
+    var onProducts: (() async -> Void)?
+
     func products() async throws -> [Qonversion.Product] {
         productsCallsCount += 1
+        await onProducts?()
         if let error { throw error }
         return productsResult
     }

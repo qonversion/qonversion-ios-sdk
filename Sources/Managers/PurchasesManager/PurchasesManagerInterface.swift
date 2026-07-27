@@ -49,10 +49,12 @@ protocol PurchasesManagerInterface: AnyObject {
     /// Reports purchases made by the host app (Analytics mode ingestion).
     /// Verified transactions are reported through the dedup gate and are
     /// NEVER finished — the host app owns their lifecycle.
-    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async
+    @discardableResult
+    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async -> Bool
 
     /// Domain-typed core of the ingestion above.
-    func handle(transactions: [Qonversion.Transaction]) async
+    @discardableResult
+    func handle(transactions: [Qonversion.Transaction]) async -> Bool
 
     /// Reports the historical store transactions (latest per product) to the
     /// backend once per install. Never finishes them and never triggers the

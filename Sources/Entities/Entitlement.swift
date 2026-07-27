@@ -68,7 +68,7 @@ extension Qonversion {
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             id = try container.decode(String.self, forKey: .id)
-            active = try container.decode(Bool.self, forKey: .active)
+            active = try container.decodeIfPresent(Bool.self, forKey: .active) ?? false
 
             let rawSource = try container.decodeIfPresent(String.self, forKey: .source)
             source = rawSource.flatMap { Source(rawValue: $0) } ?? .unknown
@@ -125,5 +125,30 @@ extension Qonversion {
 
     struct EntitlementsList: Decodable {
         let data: [Qonversion.Entitlement]
+
+        init(from decoder: Decoder) throws {
+            // Production tolerance: one malformed element degrades, it does
+            // not null the user's whole access list.
+            var container = try decoder.container(keyedBy: CodingKeys.self).nestedUnkeyedContainer(forKey: .data)
+            var elements: [Qonversion.Entitlement] = []
+            while !container.isAtEnd {
+                if let entitlement: Qonversion.Entitlement = try? container.decode(Qonversion.Entitlement.self) {
+                    elements.append(entitlement)
+                } else {
+                    // Skip the malformed element; the container must still advance.
+                    _ = try? container.decode(AnyDecodable.self)
+                }
+            }
+            data = elements
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case data
+        }
+    }
+
+    /// Consumes one arbitrary JSON value so a lossy array can advance past it.
+    fileprivate struct AnyDecodable: Decodable {
+        init(from decoder: Decoder) throws { }
     }
 }
