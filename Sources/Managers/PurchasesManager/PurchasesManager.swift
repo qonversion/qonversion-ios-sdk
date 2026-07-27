@@ -102,10 +102,23 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             throw error
         }
 
+        // The id is claimed BEFORE the report goes out: a concurrent restore
+        // or sweep must not report the same transaction while this one is in
+        // flight. A failed report releases the id for retries.
+        let gateTaken: Bool
+        if let id: String = transaction.id {
+            gateTaken = await reportsGate.tryTake(id)
+        } else {
+            gateTaken = false
+        }
+
         do {
             try await purchasesService.send(transaction, userId: userId, options: options, trigger: .purchase)
             purchaseAssociationsStorage.remove(for: product.storeId)
         } catch {
+            if gateTaken, let id: String = transaction.id {
+                await reportsGate.release(id)
+            }
             // Production fault tolerance: when the backend is unreachable the
             // purchase still succeeds with locally calculated entitlements.
             // The transaction stays unfinished so it can be re-reported later.
@@ -114,11 +127,6 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 return Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements)
             }
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
-        }
-
-        // Mark as reported, so the updates listener never re-reports it.
-        if let id: String = transaction.id {
-            _ = await reportsGate.tryTake(id)
         }
 
         // Finish strictly after the backend confirmed the purchase.
@@ -355,8 +363,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     }
 
     func processUnfinishedTransactions() async {
-        // In Analytics mode the host app owns the transaction lifecycle.
-        guard launchModeProvider.launchMode == .subscriptionManagement else { return }
+        // Both modes re-report transactions whose report never reached the
+        // backend; only subscription management may FINISH them afterwards —
+        // in Analytics mode the host app owns the transaction lifecycle.
+        let finishAfterReport: Bool = launchModeProvider.launchMode == .subscriptionManagement
 
         let transactions: [Qonversion.Transaction] = await storeKitFacade.unfinishedTransactions()
         guard !transactions.isEmpty else { return }
@@ -377,13 +387,29 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             do {
                 try await purchasesService.send(transaction, userId: userId, options: reportOptions(for: transaction), trigger: .initialization)
                 purchaseAssociationsStorage.remove(for: transaction.productId)
-                await storeKitFacade.finish(transaction)
+                if finishAfterReport {
+                    await storeKitFacade.finish(transaction)
+                }
             } catch {
                 if let id: String = transaction.id {
                     await reportsGate.release(id)
                 }
                 logger.error("Failed to re-report an unfinished transaction: " + error.message)
             }
+        }
+    }
+}
+
+// MARK: - UserChangedObserver
+
+extension PurchasesManager: UserChangedObserver {
+
+    func userDidChange() {
+        // A restore right after identify/logout must be able to attach the
+        // store transactions to the new user — the reported-ids gate belongs
+        // to the previous one.
+        Task { [reportsGate] in
+            await reportsGate.reset()
         }
     }
 }

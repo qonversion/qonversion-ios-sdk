@@ -30,6 +30,9 @@ protocol UserManagerInterface {
     /// Unlinks the current identity and resets to a fresh anonymous user.
     func logout() async
 
+    /// Waits until no identify is in flight and the user pipeline settled.
+    func awaitUserStability() async
+
     /// Switches the SDK to another Qonversion user (e.g. the resolved owner
     /// of restored transactions) and invalidates the user-scoped caches.
     func switchToUser(with uid: String) async throws

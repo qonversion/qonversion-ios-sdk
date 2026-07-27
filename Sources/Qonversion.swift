@@ -73,6 +73,12 @@ public final class Qonversion: @unchecked Sendable {
             Qonversion.shared.userPropertiesManager?.collectIntegrationsData()
         }
 
+        // Create/refresh the backend device record (model, timezone, IDFV,
+        // install date) — production does this on every launch.
+        Task {
+            await Qonversion.shared.deviceManager?.collectDeviceInfo()
+        }
+
         // Warm up the user gate: create the backend user early so the first
         // data-sending call doesn't pay for it. Failure is fine — the gate
         // retries on the next demand.

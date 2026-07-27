@@ -34,6 +34,10 @@ final class DeviceManager: DeviceManagerInterface, @unchecked Sendable {
         return await update(deviceInfo: deviceInfo)
     }
 
+    func clearStoredDevice() {
+        deviceService.removeStoredDevice()
+    }
+
     func collectAdvertisingId() {
         let currentDevice: Device? = currentDevice()
         let advertisingId: String? = deviceInfoCollector.advertisingId()
@@ -85,5 +89,16 @@ extension DeviceManager {
             logger.error("Failed to load current device from storage: " + error.message)
         }
         return currentDevice
+    }
+}
+
+// MARK: - UserChangedObserver
+
+extension DeviceManager: UserChangedObserver {
+
+    func userDidChange() {
+        // The stored record belongs to the previous user; the new one gets
+        // its own device row on the next collection.
+        clearStoredDevice()
     }
 }

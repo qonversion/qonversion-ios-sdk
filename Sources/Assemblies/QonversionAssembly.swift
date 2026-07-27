@@ -90,7 +90,8 @@ final class QonversionAssembly {
         let deviceService: DeviceServiceInterface = servicesAssembly.deviceService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let deviceManager = DeviceManager(deviceInfoCollector: deviceInfoCollector, deviceService: deviceService, logger: logger)
-        
+        miscAssembly.userChangesNotifier().add(observer: deviceManager)
+
         return deviceManager
     }
     
@@ -145,6 +146,7 @@ final class QonversionAssembly {
         // purchases manager.
         storeKitFacade.delegate = purchasesManager
         purchasesManagerInstance = purchasesManager
+        miscAssembly.userChangesNotifier().add(observer: purchasesManager)
 
         return purchasesManager
     }

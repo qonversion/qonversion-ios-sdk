@@ -22,4 +22,10 @@ actor TransactionReportsGate {
     func release(_ id: String) {
         takenIds.remove(id)
     }
+
+    /// The new user's restore must re-report everything: the gate belongs to
+    /// the reporting session of one user.
+    func reset() {
+        takenIds.removeAll()
+    }
 }

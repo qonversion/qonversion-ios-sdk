@@ -192,6 +192,10 @@ final class MockRequestsStorage: RequestsStorageInterface {
         }
     }
 
+    func removeAll(where shouldRemove: (StoredRequest) -> Bool) {
+        storedRequests.removeAll(where: shouldRemove)
+    }
+
     func fetchRequests() -> [StoredRequest] {
         return storedRequests
     }
@@ -589,6 +593,12 @@ final class MockUserManager: UserManagerInterface {
         logoutCallsCount += 1
     }
 
+    private(set) var awaitUserStabilityCallsCount = 0
+
+    func awaitUserStability() async {
+        awaitUserStabilityCallsCount += 1
+    }
+
     private(set) var switchedToUserIds: [String] = []
 
     func switchToUser(with uid: String) async throws {
@@ -762,6 +772,12 @@ final class MockDeviceService: DeviceServiceInterface {
     var currentDeviceError: Error?
 
     private(set) var savedDevices: [Device] = []
+    private(set) var removeStoredDeviceCallsCount = 0
+
+    func removeStoredDevice() {
+        removeStoredDeviceCallsCount += 1
+        current = nil
+    }
     private(set) var createdDevices: [Device] = []
     private(set) var updatedDevices: [Device] = []
 

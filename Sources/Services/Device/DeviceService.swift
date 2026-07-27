@@ -34,6 +34,10 @@ final class DeviceService: DeviceServiceInterface {
         try localStorage.set(device, forKey: deviceKey())
     }
 
+    func removeStoredDevice() {
+        localStorage.removeObject(forKey: deviceKey())
+    }
+
     func currentDevice() throws -> Device? {
         guard let device = try localStorage.object(forKey: deviceKey(), dataType: Device.self) else { return nil }
 

@@ -45,6 +45,15 @@ class RequestsStorage: RequestsStorageInterface, @unchecked Sendable {
         persist(requests)
     }
 
+    func removeAll(where shouldRemove: (StoredRequest) -> Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        var requests: [StoredRequest] = fetchStoredRequests()
+        requests.removeAll(where: shouldRemove)
+        persist(requests)
+    }
+
     func remove(_ request: StoredRequest) {
         lock.lock()
         defer { lock.unlock() }

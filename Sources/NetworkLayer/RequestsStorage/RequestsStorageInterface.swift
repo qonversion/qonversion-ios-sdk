@@ -14,6 +14,8 @@ protocol RequestsStorageInterface: Sendable {
     /// Removes a delivered request from the queue.
     func remove(_ request: StoredRequest)
 
+    func removeAll(where shouldRemove: (StoredRequest) -> Bool)
+
     func fetchRequests() -> [StoredRequest]
 
     func clean()

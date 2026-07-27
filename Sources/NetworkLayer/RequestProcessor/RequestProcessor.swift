@@ -187,6 +187,15 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             return EmptyApiResponse() as! T
         }
         
+        // A delivered purchase report supersedes any queued copy of the same
+        // transaction (it may sit under the previous uid) — replaying it on
+        // the next launch would double-report the purchase.
+        if request.kind == .createPurchase, let transactionId: String = request.replayTransactionId {
+            requestsStorage.removeAll { stored in
+                stored.dedupKey?.hasSuffix("-" + transactionId) == true
+            }
+        }
+
         do {
             let result: T = try decoder.decode(responseType, from: responseBody)
 

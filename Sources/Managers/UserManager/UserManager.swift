@@ -147,6 +147,20 @@ actor UserManager: UserManagerInterface {
         try await switchUser(to: uid)
     }
 
+    /// Waits until no identify is in flight and the creation pipeline has
+    /// settled — user-scoped requests (remote config) must not race a uid switch.
+    func awaitUserStability() async {
+        while let inFlight = identifyInFlight {
+            _ = try? await inFlight.task.value
+            if identifyInFlight?.id == inFlight.id {
+                identifyInFlight = nil
+            }
+        }
+        if let pipeline {
+            _ = try? await pipeline.value
+        }
+    }
+
     func userInfo() async throws -> Qonversion.User {
         try await obtainUser()
 
