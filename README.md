@@ -400,9 +400,90 @@ remoteConfig.experiment?.group.type   // .control / .treatment
 
 Link purchases to the experiment that drove them by passing the same context keys to `PurchaseOptions(contextKeys:)`.
 
+### No-Codes
+
+No-Codes screens are paywalls and onboarding flows designed in the Qonversion Dashboard and delivered to the app without a release. They ship as a separate `NoCodes` library in the same package — add it to your app target next to `Qonversion`:
+
+```swift
+.product(name: "NoCodes", package: "qonversion-ios-sdk")
+```
+
+Initialize it after the main SDK, with the same project key:
+
+```swift
+import NoCodes
+
+let noCodesConfiguration = NoCodesConfiguration(projectKey: "YOUR_PROJECT_KEY")
+NoCodes.initialize(with: noCodesConfiguration)
+```
+
+Screens marked **Preload** in the builder are fetched right away, so showing one is a single call. A screen is addressed by its context key — the same key you assign in the Dashboard:
+
+```swift
+NoCodes.shared.showScreen(withContextKey: "main_paywall")
+```
+
+The screen presents immediately with a loading skeleton and fills in when the content arrives. To decide before anything is presented — show your own UI when no screen is configured — load it first:
+
+```swift
+do {
+    let screen = try await NoCodes.shared.loadScreen(withContextKey: "main_paywall")
+    // the screen's default variables from the builder, readable before presenting
+    let title = screen.defaultVariable(forKey: "headline")?.value.stringValue
+    NoCodes.shared.showScreen(withContextKey: "main_paywall")  // renders from the warm cache
+} catch {
+    presentOwnPaywall()
+}
+```
+
+Everything that happens inside a screen is reported through delegates you set once:
+
+| Delegate | What it does |
+|---|---|
+| `NoCodesDelegate` | The flow lifecycle: screen shown, action started / finished / failed, custom actions, flow finished, screen failed to load. Also supplies the view controller to present from. |
+| `NoCodesScreenCustomizationDelegate` | How a screen is presented: full screen, push or popover, animated or not, plus a custom loading view. |
+| `NoCodesCustomVariablesDelegate` | Values injected into the screen's JavaScript context before it is displayed. |
+| `NoCodesPurchaseDelegate` | Optional. Takes over purchases and restores — see below. |
+
+```swift
+NoCodes.shared.set(delegate: self)
+NoCodes.shared.set(screenCustomizationDelegate: self)
+NoCodes.shared.close()   // dismiss the whole No-Codes flow
+```
+
+Localization and appearance can be pinned from code, overriding the device defaults:
+
+```swift
+NoCodes.shared.setLocale("de-DE")   // nil goes back to the system locale
+NoCodes.shared.setTheme(.dark)      // .auto follows the device appearance
+```
+
+**Purchases.** By default a purchase button on a screen runs the standard Qonversion purchase flow, and the screen uid travels with the report so the revenue is attributed to the screen. If your app already owns the purchase flow (for example in `.analytics` launch mode), provide a `NoCodesPurchaseDelegate` — it replaces the SDK flow entirely, and the screen reacts to whether your implementation returns or throws:
+
+```swift
+func purchase(product: Qonversion.Product) async throws { /* your flow */ }
+func restore() async throws { /* your flow */ }
+```
+
+**Offline behavior.** Bundle a `nocodes_fallbacks.json` file to keep screens working on a first launch without a network connection. It maps context keys to screens, and the SDK falls back to it when the API is unreachable:
+
+```json
+{
+    "screens": {
+        "main_paywall": {
+            "id": "scr_42",
+            "context_key": "main_paywall",
+            "body": "<!DOCTYPE html><html>…</html>"
+        }
+    }
+}
+```
+
+Pass `NoCodesConfiguration(projectKey:fallbackFileName:)` to use a different file name.
+
 ### Sample
 
-The `Sample` scheme in `Qonversion.xcodeproj` is a working demo of every flow above — set your project key in `AppDelegate` and run.
+The `Sample` scheme in `Qonversion.xcodeproj` is a working demo of every flow above — set your project key in `AppDelegate` and run. The **No-Codes** button opens a screen that exercises the No-Codes API.
 
 ## In-App Subscription Implementation & Management
 

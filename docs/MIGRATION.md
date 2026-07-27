@@ -187,9 +187,22 @@ statements port unchanged — only where `.nonRenewable` comes from differs.
 
 The bundled fallback file keeps the same name (`qonversion_ios_fallbacks.json`) and shape: `products`, `products_permissions` and `remote_config_list` are honored when the API is unreachable and no cache exists yet.
 
-## NoCodes and Web2App
+## NoCodes
 
-The NoCodes screens and Web2App redemption flow are not part of this SDK yet. If you rely on them, stay on the Objective-C SDK for now.
+NoCodes screens are part of this SDK, as a separate `NoCodes` library in the same package — add it to your app target next to `Qonversion` and `import NoCodes`. In the Objective-C SDK the module was compiled into the main framework, so the only integration change is the extra product and import.
+
+The API kept its shape: `NoCodes.initialize(with: NoCodesConfiguration(projectKey:))`, `showScreen(withContextKey:)`, `loadScreen(withContextKey:)`, `close()`, `setLocale(_:)`, `setTheme(_:)` and the `NoCodesDelegate` / `NoCodesScreenCustomizationDelegate` / `NoCodesCustomVariablesDelegate` / `NoCodesPurchaseDelegate` set. Two differences to expect:
+
+| Objective-C SDK | Swift SDK |
+|---|---|
+| `showScreen(with id:)` *(deprecated)* | Removed — screens are addressed by their context key: `showScreen(withContextKey:)` |
+| Facade and delegates callable from any thread | Main-actor isolated: they present and hand out UIKit objects, so call them from the main actor and mark your delegate implementations `@MainActor` |
+
+The bundled fallback file keeps the same name (`nocodes_fallbacks.json`) and shape.
+
+## Web2App
+
+The Web2App redemption flow is not part of this SDK yet. If you rely on it, stay on the Objective-C SDK for now.
 
 ## Offline purchase queue of the Objective-C SDK
 
