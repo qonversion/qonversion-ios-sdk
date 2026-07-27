@@ -24,6 +24,7 @@ enum Constants: String {
   case value
 }
 
+@MainActor
 protocol NoCodesViewControllerDelegate {
 
   func noCodesHasShownScreen(id: String)
@@ -421,7 +422,7 @@ extension NoCodesViewController {
     }
   }
 
-  private func loadProductsContext(productIds: [String], checkEligibility: Bool) async -> [String: Any] {
+  private func loadProductsContext(productIds: [String], checkEligibility: Bool) async -> [String: any Sendable] {
     // An explicit false keeps products.hasAnyIntro defined even when the screen
     // has no known products, matching the evaluator's missing-variable → false.
     guard !productIds.isEmpty else { return ["hasAnyIntro": "false"] }
@@ -429,7 +430,7 @@ extension NoCodesViewController {
     do {
       let products: [String: Qonversion.Product] = try await loadProductsByQonversionId()
       let eligibilities: [String: Qonversion.IntroEligibilityStatus] = checkEligibility ? await loadIntroEligibility(productIds: productIds.filter { products[$0] != nil }) : [:]
-      var context: [String: Any] = [:]
+      var context: [String: any Sendable] = [:]
       var hasAnyIntro = false
 
       for id in productIds {

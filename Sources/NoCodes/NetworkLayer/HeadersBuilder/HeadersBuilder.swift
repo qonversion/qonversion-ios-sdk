@@ -7,7 +7,7 @@
 
 import Foundation
 
-class HeadersBuilder: HeadersBuilderInterface {
+final class HeadersBuilder: HeadersBuilderInterface, Sendable {
     
     let projectKey: String
     let deviceInfoCollector: DeviceInfoCollectorInterface

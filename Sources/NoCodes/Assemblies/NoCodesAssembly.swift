@@ -10,6 +10,7 @@ import Foundation
 
 #if os(iOS)
 
+@MainActor
 final class NoCodesAssembly {
   
   let configuration: NoCodesConfiguration

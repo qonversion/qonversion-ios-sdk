@@ -7,7 +7,7 @@
 
 import Foundation
 
-class NetworkErrorHandler: NetworkErrorHandlerInterface {
+final class NetworkErrorHandler: NetworkErrorHandlerInterface, Sendable {
     
     let criticalErrorCodes: [ResponseCode]
     let decoder: ResponseDecoderInterface

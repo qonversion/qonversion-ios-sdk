@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol FallbackServiceInterface {
+protocol FallbackServiceInterface: Sendable {
   func loadScreen(withContextKey contextKey: String) -> NoCodesScreen?
   func loadScreen(with id: String) -> NoCodesScreen?
 }

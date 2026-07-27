@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ImagePreloader: ImagePreloaderInterface {
+final class ImagePreloader: ImagePreloaderInterface, Sendable {
   
   private let urlSession: URLSession
   

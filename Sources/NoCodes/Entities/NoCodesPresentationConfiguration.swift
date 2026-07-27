@@ -9,14 +9,14 @@
 import Foundation
 
 /// NoCodesPresentationStyle enum from No-Codes module
-public enum NoCodesPresentationStyle {
+public enum NoCodesPresentationStyle: Sendable {
   case popover
   case push
   case fullScreen
 }
 
 /// PresentationConfiguration type from No-Codes module
-public struct NoCodesPresentationConfiguration {
+public struct NoCodesPresentationConfiguration: Sendable {
   let animated: Bool
   let presentationStyle: NoCodesPresentationStyle
   let statusBarHidden: Bool

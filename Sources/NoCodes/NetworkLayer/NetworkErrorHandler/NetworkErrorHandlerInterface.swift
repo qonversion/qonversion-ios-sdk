@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol NetworkErrorHandlerInterface {
+protocol NetworkErrorHandlerInterface: Sendable {
     
     func extractError(from response: URLResponse, body: Data) -> NoCodesError?
 }

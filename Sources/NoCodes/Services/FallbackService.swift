@@ -10,18 +10,22 @@ import Foundation
 
 // MARK: - Fallback File Structures
 
-struct FallbackFile: Decodable {
+struct FallbackFile: Decodable, Sendable {
   let screens: [String: NoCodesScreen]
 }
 
-final class FallbackService: FallbackServiceInterface {
+// @unchecked: the only mutable state is `cachedFallbackFile`, guarded by
+// `cacheLock` on every access.
+final class FallbackService: FallbackServiceInterface, @unchecked Sendable {
   private let logger: LoggerWrapper
   private let fallbackFileName: String
   private let decoder: JSONDecoder
   
-  // Lazy caching
+  // Lazy caching. Screens are loaded from concurrent screen requests, so the
+  // cache is guarded; the lock is only held around synchronous work.
+  private let cacheLock = NSLock()
   private var cachedFallbackFile: FallbackFile?
-  
+
   init(logger: LoggerWrapper, fallbackFileName: String = "nocodes_fallbacks.json", decoder: JSONDecoder = JSONDecoder()) {
     self.logger = logger
     self.fallbackFileName = fallbackFileName
@@ -71,10 +75,11 @@ final class FallbackService: FallbackServiceInterface {
   
   private func loadFallbackData() throws -> FallbackFile {
     // Return cached data if already loaded
-    if let cached = cachedFallbackFile {
+    let cached: FallbackFile? = cachedFile()
+    if let cached {
       return cached
     }
-    
+
     // Load from file if not cached
     guard let path = FallbackService.getFallbackFilePath(for: fallbackFileName) else {
       logger.debug("Fallback file not found: \(fallbackFileName)")
@@ -87,12 +92,26 @@ final class FallbackService: FallbackServiceInterface {
     let fallbackFile = try decoder.decode(FallbackFile.self, from: data)
     
     // Cache the loaded data
-    cachedFallbackFile = fallbackFile
-    
+    store(fallbackFile: fallbackFile)
+
     logger.debug("Fallback file loaded and cached: \(fallbackFileName)")
     return fallbackFile
   }
-  
+
+  private func cachedFile() -> FallbackFile? {
+    cacheLock.lock()
+    defer { cacheLock.unlock() }
+
+    return cachedFallbackFile
+  }
+
+  private func store(fallbackFile: FallbackFile) {
+    cacheLock.lock()
+    defer { cacheLock.unlock() }
+
+    cachedFallbackFile = fallbackFile
+  }
+
   static func isFallbackFileAvailable(_ fileName: String = "nocodes_fallbacks.json") -> Bool {
     return getFallbackFilePath(for: fileName) != nil
   }

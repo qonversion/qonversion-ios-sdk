@@ -27,7 +27,7 @@ enum LogLevel: Int {
 
 // os.Logger is available on every platform this package supports, so the
 // wrapper stores it directly instead of the old Any-based back deployment.
-final class LoggerWrapper {
+final class LoggerWrapper: Sendable {
 
     let logger: Logger?
 

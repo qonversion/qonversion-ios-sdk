@@ -7,8 +7,10 @@
 
 import Foundation
 
-class RequestProcessor: RequestProcessorInterface {
-  var baseURL: String
+// @unchecked: the only mutable state is `_criticalError`, guarded by
+// `criticalErrorLock` on every read and write.
+final class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
+  let baseURL: String
   let networkProvider: NetworkProviderInterface
   let headersBuilder: HeadersBuilderInterface
   let errorHandler: NetworkErrorHandlerInterface

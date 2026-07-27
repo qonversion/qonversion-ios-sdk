@@ -9,7 +9,9 @@
 import Foundation
 
 /// NoCodesError type from No-Codes module
-public struct NoCodesError: Error {
+// @unchecked: every stored property is a `let`, and the only values the SDK
+// ever puts into `additionalInfo` are immutable strings taken from the response.
+public struct NoCodesError: Error, @unchecked Sendable {
   public let type: NoCodesErrorType
   public let message: String
   public let error: Error?

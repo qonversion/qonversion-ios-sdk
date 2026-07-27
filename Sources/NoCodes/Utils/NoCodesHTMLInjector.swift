@@ -8,12 +8,12 @@
 
 import Foundation
 
-protocol NoCodesHTMLInjectorInterface {
+protocol NoCodesHTMLInjectorInterface: Sendable {
   func injectCustomLocale(into html: String, locale: String?) -> String
   func injectTheme(into html: String, theme: NoCodesTheme) -> String
 }
 
-final class NoCodesHTMLInjector: NoCodesHTMLInjectorInterface {
+final class NoCodesHTMLInjector: NoCodesHTMLInjectorInterface, Sendable {
 
   func injectCustomLocale(into html: String, locale: String?) -> String {
     guard let locale = locale else {

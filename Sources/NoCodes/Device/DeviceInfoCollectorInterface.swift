@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol DeviceInfoCollectorInterface {
+protocol DeviceInfoCollectorInterface: Sendable {
 
     func deviceInfo() -> Device
 }

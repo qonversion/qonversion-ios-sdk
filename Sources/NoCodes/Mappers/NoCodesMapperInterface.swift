@@ -9,7 +9,7 @@
 import Foundation
 import Qonversion
 
-protocol NoCodesMapperInterface {
+protocol NoCodesMapperInterface: Sendable {
 
   func map(rawAction: [String: Any]) -> NoCodesAction
   func map(introPriceType: Qonversion.Product.SubscriptionOffer.OfferType) -> String

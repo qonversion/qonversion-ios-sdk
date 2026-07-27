@@ -10,7 +10,7 @@ import Foundation
 
 /// Theme mode for No-Code screens.
 /// Use this to control how screens adapt to light/dark themes.
-public enum NoCodesTheme: String {
+public enum NoCodesTheme: String, Sendable {
   /// Automatically follow the device's system appearance (default).
   /// The screen will use light theme in light mode and dark theme in dark mode.
   case auto = "auto"

@@ -9,7 +9,9 @@
 import Foundation
 import Qonversion
 
-final class ScreenEventsService: ScreenEventsServiceInterface {
+// @unchecked: `buffer`, `isFlushing` and `cachedUserId` are only ever touched
+// inside `queue` (barrier writes, sync reads).
+final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendable {
 
   private let requestProcessor: RequestProcessorInterface
   private let logger: LoggerWrapper

@@ -13,6 +13,7 @@ fileprivate enum IntConstants: UInt {
   case maxRequestsPerSecond = 5
 }
 
+@MainActor
 final class MiscAssembly {
   
   let projectKey: String

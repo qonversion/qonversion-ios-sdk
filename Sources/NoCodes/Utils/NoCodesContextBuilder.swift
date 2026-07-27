@@ -20,26 +20,35 @@ enum NoCodesResolvedTheme: String {
   case dark
 }
 
-protocol NoCodesContextBuilderInterface {
-  func buildContextJSON(resolvedTheme: NoCodesResolvedTheme, activeEntitlementIds: [String], productsContext: [String: Any], userProperties: [String: String]) -> String?
+protocol NoCodesContextBuilderInterface: Sendable {
+  func buildContextJSON(resolvedTheme: NoCodesResolvedTheme, activeEntitlementIds: [String], productsContext: [String: any Sendable], userProperties: [String: String]) -> String?
   func resolveIsFirstLaunch() -> Bool
   func calculateDaysSinceInstall() -> Int
 }
 
 extension NoCodesContextBuilderInterface {
-  func buildContextJSON(resolvedTheme: NoCodesResolvedTheme, activeEntitlementIds: [String], productsContext: [String: Any]) -> String? {
+  func buildContextJSON(resolvedTheme: NoCodesResolvedTheme, activeEntitlementIds: [String], productsContext: [String: any Sendable]) -> String? {
     return buildContextJSON(resolvedTheme: resolvedTheme, activeEntitlementIds: activeEntitlementIds, productsContext: productsContext, userProperties: [:])
   }
 }
 
-final class NoCodesContextBuilder: NoCodesContextBuilderInterface {
+final class NoCodesContextBuilder: NoCodesContextBuilderInterface, Sendable {
 
   private static let alreadyLaunchedKey = "io.qonversion.nocodes.alreadyLaunchedBefore"
 
-  func buildContextJSON(resolvedTheme: NoCodesResolvedTheme, activeEntitlementIds: [String], productsContext: [String: Any], userProperties: [String: String] = [:]) -> String? {
+  /// UIDevice is main-actor isolated, so the OS version is snapshotted at
+  /// construction (the assemblies build the graph on the main actor).
+  private let osVersion: String
+
+  @MainActor
+  init() {
+    osVersion = PlatformConstants.currentOSVersion()
+  }
+
+  func buildContextJSON(resolvedTheme: NoCodesResolvedTheme, activeEntitlementIds: [String], productsContext: [String: any Sendable], userProperties: [String: String] = [:]) -> String? {
     var device: [String: String] = [:]
     device["platform"] = PlatformConstants.name
-    device["osVersion"] = PlatformConstants.osVersion
+    device["osVersion"] = osVersion
 
     if #available(iOS 16, macOS 13, tvOS 16, watchOS 9, *) {
       if let lang = Locale.current.language.languageCode?.identifier {
@@ -127,14 +136,15 @@ private enum PlatformConstants {
     #endif
   }()
 
-  static let osVersion: String = {
+  @MainActor
+  static func currentOSVersion() -> String {
     #if os(iOS)
     return UIDevice.current.systemVersion
     #else
     let version: OperatingSystemVersion = ProcessInfo.processInfo.operatingSystemVersion
     return "\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)"
     #endif
-  }()
+  }
 }
 
 #if os(iOS)

@@ -10,8 +10,8 @@ import Foundation
 // No URLSessionDelegate: the session must use the system's default server
 // trust evaluation. Any custom authentication-challenge handling here would
 // weaken TLS for every No-Codes request.
-class NetworkProvider: NetworkProviderInterface {
-  private(set) var session: URLSession
+final class NetworkProvider: NetworkProviderInterface, Sendable {
+  let session: URLSession
 
   init(timeout: TimeInterval?) {
     let config: URLSessionConfiguration = URLSessionConfiguration.default

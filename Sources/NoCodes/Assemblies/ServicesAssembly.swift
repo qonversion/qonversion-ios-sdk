@@ -21,6 +21,7 @@ fileprivate enum FallbackConstants {
   static let fallbackTimeout: TimeInterval = 5.0
 }
 
+@MainActor
 final class ServicesAssembly {
   
   private let miscAssembly: MiscAssembly

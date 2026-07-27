@@ -9,7 +9,7 @@
 import Foundation
 import Qonversion
 
-final class NoCodesMapper: NoCodesMapperInterface {
+final class NoCodesMapper: NoCodesMapperInterface, Sendable {
 
   func map(rawAction: [String: Any]) -> NoCodesAction {
     let types: [String: NoCodesActionType] = [

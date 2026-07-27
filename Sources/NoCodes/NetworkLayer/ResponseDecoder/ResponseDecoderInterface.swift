@@ -7,6 +7,6 @@
 
 import Foundation
 
-protocol ResponseDecoderInterface {
+protocol ResponseDecoderInterface: Sendable {
     func decode<T>(_ type: T.Type, from data: Data) throws -> T where T : Decodable
 }

@@ -8,7 +8,9 @@
 
 import Foundation
 
-class NoCodesService: NoCodesServiceInterface {
+// @unchecked: the only mutable state is the two screen caches, guarded by
+// `cacheQueue` (concurrent reads, barrier writes) on every access.
+final class NoCodesService: NoCodesServiceInterface, @unchecked Sendable {
   
   private static let cacheQueueLabel = "io.qonversion.nocodes.cache"
   

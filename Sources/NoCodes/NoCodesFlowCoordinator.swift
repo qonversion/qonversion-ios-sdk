@@ -12,6 +12,7 @@ import Foundation
 import UIKit
 import Qonversion
 
+@MainActor
 final class NoCodesFlowCoordinator {
   
   private var delegate: NoCodesDelegate?

@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol NoCodesServiceInterface {
+protocol NoCodesServiceInterface: Sendable {
   
   func loadScreen(with id: String) async throws -> NoCodesScreen
   

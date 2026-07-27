@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol RateLimiterInterface {
+protocol RateLimiterInterface: Sendable {
     
     func validateRateLimit(for request: Request) -> NoCodesError?
 }

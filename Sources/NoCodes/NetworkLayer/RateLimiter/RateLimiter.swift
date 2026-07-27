@@ -10,7 +10,9 @@ import Foundation
 // The limiter is consulted from every request task, so the timestamp table is
 // shared mutable state. The lock is only ever held around synchronous
 // dictionary work — never across a suspension point.
-final class RateLimiter: RateLimiterInterface {
+// @unchecked: the only mutable state is `requests`, guarded by `lock` on
+// every access.
+final class RateLimiter: RateLimiterInterface, @unchecked Sendable {
     private let maxRequestsPerSecond: UInt
     private let lock = NSLock()
     private var requests: [Int: [TimeInterval]] = [:]

@@ -9,7 +9,7 @@
 import Foundation
 
 /// NoCodesErrorType from No-Codes module
-public enum NoCodesErrorType {
+public enum NoCodesErrorType: Sendable {
   case unknown
   case `internal`
   case sdkInitializationError

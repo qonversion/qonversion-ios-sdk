@@ -28,15 +28,36 @@ private let OsName = "watchOS"
 private let OsName = "iOS"
 #endif
 
-final class DeviceInfoCollector: DeviceInfoCollectorInterface {
+final class DeviceInfoCollector: DeviceInfoCollectorInterface, Sendable {
 
-    var lastPreparedDevice: Device? = nil
+    // UIDevice is main-actor isolated while the headers are built on the
+    // network path, so the device record is snapshotted once at construction
+    // (the assemblies build the graph on the main actor) and stays immutable.
+    private let preparedDevice: Device
+
+    @MainActor
+    init() {
+        preparedDevice = DeviceInfoCollector.collectDeviceInfo()
+    }
 
     func deviceInfo() -> Device {
-        if let savedDevice: Device = lastPreparedDevice {
-            return savedDevice
-        }
+        return preparedDevice
+    }
 
+    @MainActor
+    private static func collectDeviceInfo() -> Device {
+        let collector = Collector()
+
+        return collector.deviceInfo()
+    }
+}
+
+/// The platform probes, kept apart from the snapshot holder so the UIKit reads
+/// stay in one main-actor-isolated place.
+@MainActor
+private struct Collector {
+
+    func deviceInfo() -> Device {
         let manufacturer = "Apple"
         let appVersion: String? = Bundle.appVersion
         let osVersion: String = osVersion()
@@ -60,7 +81,6 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
             installDate: installDate
         )
 
-        lastPreparedDevice = deviceInfo
         return deviceInfo
     }
 

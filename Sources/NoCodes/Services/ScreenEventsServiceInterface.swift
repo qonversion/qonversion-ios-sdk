@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol ScreenEventsServiceInterface {
+protocol ScreenEventsServiceInterface: Sendable {
 
   /// Record a screen event. The event is buffered locally and sent in a batch later.
   func track(event: ScreenEvent)

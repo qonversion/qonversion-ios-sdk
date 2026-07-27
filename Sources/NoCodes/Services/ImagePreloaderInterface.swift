@@ -9,7 +9,7 @@
 import Foundation
 
 /// Protocol for preloading images in HTML content and converting them to base64 data URIs.
-protocol ImagePreloaderInterface {
+protocol ImagePreloaderInterface: Sendable {
   
   /// Processes HTML content by extracting image URLs, downloading images,
   /// and replacing URLs with base64 data URIs.

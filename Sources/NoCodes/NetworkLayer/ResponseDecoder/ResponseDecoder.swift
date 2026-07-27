@@ -7,7 +7,9 @@
 
 import Foundation
 
-class ResponseDecoder: ResponseDecoderInterface {
+// @unchecked: `decoder` is configured once in init and never mutated
+// afterwards, so its `decode` calls are safe from any thread.
+final class ResponseDecoder: ResponseDecoderInterface, @unchecked Sendable {
     let decoder: JSONDecoder
     
     init(decoder: JSONDecoder) {

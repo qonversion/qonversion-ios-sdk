@@ -31,11 +31,11 @@ let package = Package(
             name: "NoCodes",
             dependencies: ["Qonversion"],
             path: "Sources/NoCodes",
-            // StrictConcurrency is deliberately not enabled here yet: the
-            // ported UIKit/WebKit layer needs a full actor-isolation pass
-            // before it can build warning-free under it.
             resources: [
                 .copy("../PrivacyInfo.xcprivacy")
+            ],
+            swiftSettings: [
+                .enableUpcomingFeature("StrictConcurrency")
             ]),
         .testTarget(
             name: "QonversionUnitTests",

@@ -12,6 +12,7 @@ import UIKit
 
 /// Protocol for custom loading views displayed while NoCodes screens are loading.
 /// Conforming types must be UIView subclasses.
+@MainActor
 public protocol NoCodesLoadingView where Self: UIView {
   /// Called when the loading view should start its loading animation.
   func startAnimating()

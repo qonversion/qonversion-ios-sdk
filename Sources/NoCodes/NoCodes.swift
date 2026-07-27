@@ -10,6 +10,9 @@ import Foundation
 
 #if os(iOS)
 
+// The facade drives UIKit presentation and owns the graph it hands to the
+// flow coordinator, so the whole entry point lives on the main actor.
+@MainActor
 public final class NoCodes {
   
   // MARK: - Public

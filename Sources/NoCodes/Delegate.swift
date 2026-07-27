@@ -13,6 +13,7 @@ import UIKit
 import Qonversion
 
 /// Delegate protocol from No-Codes module
+@MainActor
 public protocol NoCodesDelegate {
   /// Return a source ViewController for navigation
   func controllerForNavigation() -> UIViewController?
@@ -58,6 +59,7 @@ public protocol NoCodesDelegate {
 }
 
 /// NoCodesScreenCustomizationDelegate protocol from No-Codes module
+@MainActor
 public protocol NoCodesScreenCustomizationDelegate {
   /// The function should return the screen presentation configuration used to present the first screen in the chain.
   func presentationConfigurationForScreen(contextKey: String) -> NoCodesPresentationConfiguration
@@ -79,6 +81,7 @@ public protocol NoCodesScreenCustomizationDelegate {
 /// Delegate responsible for providing custom variables for No-Codes screens.
 /// Custom variables are injected into the screen's JavaScript context
 /// and can be used to influence content displayed on the screen.
+@MainActor
 public protocol NoCodesCustomVariablesDelegate: AnyObject {
   /// Provide custom variables for a specific screen identified by context key.
   /// Called each time a screen is about to be displayed.
@@ -89,6 +92,7 @@ public protocol NoCodesCustomVariablesDelegate: AnyObject {
 
 /// Delegate responsible for custom purchase and restore handling.
 /// When this delegate is provided, it replaces the default Qonversion SDK purchase flow.
+@MainActor
 public protocol NoCodesPurchaseDelegate {
   /// Handle purchase for the given product using Swift concurrency.
   /// - Parameter product: Product to purchase.
