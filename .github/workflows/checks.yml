@@ -8,7 +8,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: SPM validation
         run: |
           swift build
@@ -17,7 +17,29 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Tests
         run: |
           swift test
+
+  # The jobs above run on macOS, where everything wrapped in `#if os(iOS)`
+  # compiles to nothing. That leaves the whole NoCodes presentation layer,
+  # around 1700 lines, never built by CI, and files missing from the Xcode
+  # target unnoticed.
+  ios:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: NoCodes iOS build
+        run: |
+          xcodebuild build -project Qonversion.xcodeproj -scheme NoCodes -destination "generic/platform=iOS" CODE_SIGNING_ALLOWED=NO
+
+  sample:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sample iOS build
+        run: |
+          xcodebuild build -project Qonversion.xcodeproj -scheme Sample -destination "generic/platform=iOS" CODE_SIGNING_ALLOWED=NO
