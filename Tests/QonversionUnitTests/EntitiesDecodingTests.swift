@@ -352,6 +352,177 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertEqual(restored, device)
     }
 
+    // MARK: - Entitlement
+
+    func testEntitlementDecodesTheFullPayload() throws {
+        let json = """
+        {
+            "id": "premium",
+            "is_active": true,
+            "source": "appstore",
+            "started_at": "2024-01-01T00:00:00Z",
+            "expires_at": "2024-02-01T00:00:00Z",
+            "renews_count": 18,
+            "trial_start_timestamp": "2023-12-25T00:00:00Z",
+            "first_purchase_timestamp": "2024-01-01T00:00:00Z",
+            "last_purchase_timestamp": "2024-01-20T00:00:00Z",
+            "auto_renew_disable_timestamp": "2024-01-25T00:00:00Z",
+            "last_activated_offer_code": "PROMO10",
+            "grant_type": "offer_code",
+            "product": {"product_id": "pro", "subscription": {"renew_state": "will_renew"}},
+            "store_transactions": [
+                {
+                    "transaction_id": "tx_1",
+                    "original_transaction_id": "otx_1",
+                    "offer_code": "PROMO10",
+                    "promo_offer_id": "promo_1",
+                    "transaction_timestamp": "2024-01-01T00:00:00Z",
+                    "expiration_timestamp": "2024-02-01T00:00:00Z",
+                    "transaction_revoke_timestamp": "2024-01-15T00:00:00Z",
+                    "environment": "sandbox",
+                    "ownership_type": "family_sharing",
+                    "type": "trial_started"
+                }
+            ]
+        }
+        """
+
+        let entitlement = try decode(Qonversion.Entitlement.self, json)
+
+        XCTAssertEqual(entitlement.id, "premium")
+        XCTAssertEqual(entitlement.renewsCount, 18)
+        XCTAssertEqual(entitlement.trialStartDate, Date(timeIntervalSince1970: 1_703_462_400))
+        XCTAssertEqual(entitlement.firstPurchaseDate, Date(timeIntervalSince1970: 1_704_067_200))
+        XCTAssertEqual(entitlement.lastPurchaseDate, Date(timeIntervalSince1970: 1_705_708_800))
+        XCTAssertEqual(entitlement.autoRenewDisableDate, Date(timeIntervalSince1970: 1_706_140_800))
+        XCTAssertEqual(entitlement.lastActivatedOfferCode, "PROMO10")
+        XCTAssertEqual(entitlement.grantType, .offerCode)
+        XCTAssertEqual(entitlement.transactions.count, 1)
+
+        let transaction = try XCTUnwrap(entitlement.transactions.first)
+        XCTAssertEqual(transaction.transactionId, "tx_1")
+        XCTAssertEqual(transaction.originalTransactionId, "otx_1")
+        XCTAssertEqual(transaction.offerCode, "PROMO10")
+        XCTAssertEqual(transaction.promoOfferId, "promo_1")
+        XCTAssertEqual(transaction.transactionDate, Date(timeIntervalSince1970: 1_704_067_200))
+        XCTAssertEqual(transaction.expirationDate, Date(timeIntervalSince1970: 1_706_745_600))
+        XCTAssertEqual(transaction.revocationDate, Date(timeIntervalSince1970: 1_705_276_800))
+        XCTAssertEqual(transaction.environment, .sandbox)
+        XCTAssertEqual(transaction.ownershipType, .familySharing)
+        XCTAssertEqual(transaction.type, .trialStarted)
+    }
+
+    func testEntitlementDecodesTheMinimalPayload() throws {
+        // Every added field is optional on the wire: the current backend does
+        // not send them yet and the decode must not fail.
+        let json = #"{"id": "premium", "is_active": true}"#
+
+        let entitlement = try decode(Qonversion.Entitlement.self, json)
+
+        XCTAssertEqual(entitlement.id, "premium")
+        XCTAssertEqual(entitlement.renewsCount, 0)
+        XCTAssertNil(entitlement.trialStartDate)
+        XCTAssertNil(entitlement.firstPurchaseDate)
+        XCTAssertNil(entitlement.lastPurchaseDate)
+        XCTAssertNil(entitlement.autoRenewDisableDate)
+        XCTAssertNil(entitlement.lastActivatedOfferCode)
+        XCTAssertEqual(entitlement.grantType, .purchase, "the production default")
+        XCTAssertTrue(entitlement.transactions.isEmpty)
+    }
+
+    func testEntitlementUnknownEnumValuesFallBackToTheProductionDefaults() throws {
+        let json = """
+        {
+            "id": "premium",
+            "is_active": true,
+            "grant_type": "brand_new_grant_type",
+            "product": {"product_id": "pro", "subscription": {"renew_state": "brand_new_state"}},
+            "store_transactions": [
+                {"transaction_id": "tx_1", "environment": "brand_new_env", "ownership_type": "brand_new_owner", "type": "brand_new_type"}
+            ]
+        }
+        """
+
+        let entitlement = try decode(Qonversion.Entitlement.self, json)
+
+        XCTAssertEqual(entitlement.grantType, .purchase)
+        XCTAssertEqual(entitlement.renewState, .unknown)
+        let transaction = try XCTUnwrap(entitlement.transactions.first)
+        XCTAssertEqual(transaction.environment, .production)
+        XCTAssertEqual(transaction.ownershipType, .owner)
+        XCTAssertEqual(transaction.type, .unknown)
+    }
+
+    func testEntitlementDecodesNonRenewableState() throws {
+        let json = #"{"id": "lifetime", "is_active": true, "product": {"product_id": "pro", "subscription": {"renew_state": "non_renewable"}}}"#
+
+        let entitlement = try decode(Qonversion.Entitlement.self, json)
+
+        XCTAssertEqual(entitlement.renewState, .nonRenewable)
+    }
+
+    func testEntitlementDecodesEpochTimestamps() throws {
+        // The keys are inherited from the previous API generation, where the
+        // values were unix timestamps — both forms must decode.
+        let json = #"{"id": "premium", "is_active": true, "trial_start_timestamp": 1703462400, "store_transactions": [{"transaction_id": "tx_1", "transaction_timestamp": 1704067200}]}"#
+
+        let entitlement = try decode(Qonversion.Entitlement.self, json)
+
+        XCTAssertEqual(entitlement.trialStartDate, Date(timeIntervalSince1970: 1_703_462_400))
+        XCTAssertEqual(entitlement.transactions.first?.transactionDate, Date(timeIntervalSince1970: 1_704_067_200))
+    }
+
+    func testEntitlementCacheRoundtripKeepsTheNewFields() throws {
+        // The entitlements cache round-trips through Codable: a field that
+        // does not survive encoding is lost on every offline launch.
+        let json = """
+        {
+            "id": "premium",
+            "is_active": true,
+            "source": "appstore",
+            "renews_count": 3,
+            "last_activated_offer_code": "PROMO10",
+            "grant_type": "family_sharing",
+            "trial_start_timestamp": "2023-12-25T00:00:00Z",
+            "store_transactions": [{"transaction_id": "tx_1", "type": "subscription_renewed", "environment": "sandbox"}]
+        }
+        """
+        let entitlement = try decode(Qonversion.Entitlement.self, json)
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+
+        let data: Data = try encoder.encode(entitlement)
+        let restored = try decoder.decode(Qonversion.Entitlement.self, from: data)
+
+        XCTAssertEqual(restored.renewsCount, 3)
+        XCTAssertEqual(restored.lastActivatedOfferCode, "PROMO10")
+        XCTAssertEqual(restored.grantType, .familySharing)
+        XCTAssertEqual(restored.trialStartDate, entitlement.trialStartDate)
+        XCTAssertEqual(restored.transactions.first?.transactionId, "tx_1")
+        XCTAssertEqual(restored.transactions.first?.type, .subscriptionRenewed)
+        XCTAssertEqual(restored.transactions.first?.environment, .sandbox)
+    }
+
+    // MARK: - Transaction.Offer
+
+    func testLegacyOfferExistsOnlyWhenTheTransactionCarriesOfferData() {
+        // Below iOS 17.2 the else branch returned a non-nil offer with a nil
+        // id and a nil type for EVERY transaction — the host could not tell
+        // an offer purchase from a regular one.
+        XCTAssertFalse(Qonversion.Transaction.Offer.hasLegacyOfferData(id: nil, type: nil))
+        XCTAssertTrue(Qonversion.Transaction.Offer.hasLegacyOfferData(id: "offer_1", type: nil))
+        XCTAssertTrue(Qonversion.Transaction.Offer.hasLegacyOfferData(id: nil, type: .introductory))
+        XCTAssertTrue(Qonversion.Transaction.Offer.hasLegacyOfferData(id: "offer_1", type: .promotional))
+    }
+
+    func testTransactionWithoutStoreKitDataHasNoOffer() {
+        // The wire-only transaction (offline replay, local calculation) has
+        // no StoreKit object behind it and therefore no offer.
+        let transaction = Qonversion.Transaction(id: "t1", productId: "com.app.pro")
+
+        XCTAssertNil(transaction.offer)
+    }
+
     // MARK: - Product
 
     func testProductDecodingUsesV4Keys() throws {

@@ -89,6 +89,23 @@ do {
 | `setNotificationsToken` / `handleNotification` | Removed — were deprecated automation APIs |
 | `launchMode` implicit default | `Configuration(apiKey:launchMode:)` requires an explicit mode |
 
+## Entitlement fields
+
+`Qonversion.Entitlement` exposes the same information as `QONEntitlement`: next
+to `id`, `active`, `source`, `renewState`, `startedDate`, `expirationDate` and
+`productId` it carries `grantType`, `renewsCount`, `trialStartDate`,
+`firstPurchaseDate`, `lastPurchaseDate`, `autoRenewDisableDate`,
+`lastActivatedOfferCode` and `transactions`.
+
+`transactions` is a list of `Qonversion.Entitlement.StoreTransaction` — the
+billing history records behind the entitlement (`QONTransaction` in the
+Objective-C SDK). The StoreKit wrapper returned by purchases keeps its own
+name, `Qonversion.Transaction`.
+
+Every one of these fields is optional on the wire: an older backend that does
+not send them yet yields the defaults (`grantType == .purchase`,
+`renewsCount == 0`, nil dates, an empty `transactions` list).
+
 ## Fallback file
 
 The bundled fallback file keeps the same name (`qonversion_ios_fallbacks.json`) and shape: `products`, `products_permissions` and `remote_config_list` are honored when the API is unreachable and no cache exists yet.
