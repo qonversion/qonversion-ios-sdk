@@ -90,7 +90,7 @@ enum EntitlementsCalculator {
                   let permissionIds: [String] = mapping[qonversionId] else { continue }
 
             for permissionId in permissionIds {
-                result[permissionId] = Qonversion.Entitlement(
+                let entitlement = Qonversion.Entitlement(
                     id: permissionId,
                     active: true,
                     source: .appStore,
@@ -98,10 +98,29 @@ enum EntitlementsCalculator {
                     expirationDate: expiration,
                     productId: qonversionId
                 )
+                // Several products may grant the same permission: the longest
+                // access wins, no matter in which order the store returned
+                // the transactions.
+                if let existing = result[permissionId], !outlasts(entitlement, existing) { continue }
+
+                result[permissionId] = entitlement
             }
         }
 
         return result
+    }
+
+    /// Whether the candidate grants access at least as long as the current
+    /// one: a nil expiration is a lifetime grant and outlasts any date.
+    static func outlasts(_ candidate: Qonversion.Entitlement, _ current: Qonversion.Entitlement) -> Bool {
+        switch (candidate.expirationDate, current.expirationDate) {
+        case (nil, _):
+            return true
+        case (_, nil):
+            return false
+        case (let candidateDate?, let currentDate?):
+            return candidateDate > currentDate
+        }
     }
 
     /// Merges locally calculated entitlements on top of the current ones
@@ -119,16 +138,7 @@ enum EntitlementsCalculator {
                 result[entitlement.id] = entitlement
                 continue
             }
-            let expiresLater: Bool
-            switch (entitlement.expirationDate, current.expirationDate) {
-            case (nil, _):
-                expiresLater = true
-            case (_, nil):
-                expiresLater = false
-            case (let new?, let old?):
-                expiresLater = new > old
-            }
-            if !current.active || expiresLater {
+            if !current.active || outlasts(entitlement, current) {
                 result[entitlement.id] = entitlement
             }
         }

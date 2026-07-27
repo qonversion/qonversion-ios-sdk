@@ -697,10 +697,12 @@ final class MockEntitlementsService: EntitlementsServiceInterface {
 
     var entitlementsResult: [Qonversion.Entitlement] = []
     var error: Error?
+    var onEntitlements: (() async -> Void)?
     private(set) var entitlementsCalls: [String] = []
 
     func entitlements(userId: String) async throws -> [Qonversion.Entitlement] {
         entitlementsCalls.append(userId)
+        await onEntitlements?()
         if let error { throw error }
         return entitlementsResult
     }

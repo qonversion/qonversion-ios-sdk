@@ -82,6 +82,58 @@ final class EntitlementsCalculatorTests: XCTestCase {
         XCTAssertEqual(premium?.expirationDate, now.addingTimeInterval(20 * day))
     }
 
+    // MARK: - two products granting the same permission
+
+    func testTheStrongestGrantWinsRegardlessOfTheIterationOrder() {
+        let day: TimeInterval = 24 * 60 * 60
+        let monthly: Qonversion.Product = makeProduct(qonversionId: "monthly", storeId: "com.app.monthly", periodUnit: .month, periodValue: 1)
+        let annual: Qonversion.Product = makeProduct(qonversionId: "annual", storeId: "com.app.annual", periodUnit: .year, periodValue: 1)
+        let monthlyTransaction: Qonversion.Transaction = makeTransaction(productId: "com.app.monthly", purchasedSecondsAgo: 0)
+        let annualTransaction: Qonversion.Transaction = makeTransaction(productId: "com.app.annual", purchasedSecondsAgo: 0)
+        let mapping: [String: [String]] = ["monthly": ["premium"], "annual": ["premium"]]
+
+        let monthlyFirst = EntitlementsCalculator.calculate(
+            transactions: [monthlyTransaction, annualTransaction],
+            products: [monthly, annual],
+            mapping: mapping,
+            now: now
+        )
+        let annualFirst = EntitlementsCalculator.calculate(
+            transactions: [annualTransaction, monthlyTransaction],
+            products: [monthly, annual],
+            mapping: mapping,
+            now: now
+        )
+
+        XCTAssertEqual(monthlyFirst["premium"]?.expirationDate, now.addingTimeInterval(365 * day))
+        XCTAssertEqual(annualFirst["premium"]?.expirationDate, now.addingTimeInterval(365 * day),
+                       "the later transaction must not shorten an entitlement another product grants for longer")
+    }
+
+    func testLifetimeGrantBeatsADatedOneRegardlessOfTheIterationOrder() {
+        let lifetime: Qonversion.Product = makeProduct(qonversionId: "lifetime", storeId: "com.app.lifetime", periodUnit: nil)
+        let monthly: Qonversion.Product = makeProduct(qonversionId: "monthly", storeId: "com.app.monthly", periodUnit: .month, periodValue: 1)
+        let lifetimeTransaction: Qonversion.Transaction = makeTransaction(productId: "com.app.lifetime", purchasedSecondsAgo: 0)
+        let monthlyTransaction: Qonversion.Transaction = makeTransaction(productId: "com.app.monthly", purchasedSecondsAgo: 0)
+        let mapping: [String: [String]] = ["lifetime": ["premium"], "monthly": ["premium"]]
+
+        let lifetimeFirst = EntitlementsCalculator.calculate(
+            transactions: [lifetimeTransaction, monthlyTransaction],
+            products: [lifetime, monthly],
+            mapping: mapping,
+            now: now
+        )
+        let monthlyFirst = EntitlementsCalculator.calculate(
+            transactions: [monthlyTransaction, lifetimeTransaction],
+            products: [lifetime, monthly],
+            mapping: mapping,
+            now: now
+        )
+
+        XCTAssertNil(lifetimeFirst["premium"]?.expirationDate)
+        XCTAssertNil(monthlyFirst["premium"]?.expirationDate)
+    }
+
     func testExpiredTransactionIsSkippedEntirely() {
         let day: TimeInterval = 24 * 60 * 60
         let entitlements = EntitlementsCalculator.calculate(

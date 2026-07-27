@@ -29,6 +29,11 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     private var _loadedProductPermissions: [String: [String]]?
     private var _productsTask: Task<[Qonversion.Product], Error>?
 
+    /// Bumped on every user switch: a load that started for the previous user
+    /// must not cache or persist its (possibly personalized) catalog for the
+    /// new one.
+    private var cacheGeneration = 0
+
     var loadedProducts: [Qonversion.Product] {
         get {
             lock.lock()
@@ -145,6 +150,10 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     }
 
     private func loadProducts() async throws -> [Qonversion.Product] {
+        // Snapshotted before the first suspension: everything below writes
+        // user-scoped state, and a user switch may land mid-request.
+        let generation: Int = currentGeneration()
+
         let products: [Qonversion.Product]
         do {
             products = try await productsService.products()
@@ -161,20 +170,42 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         // Persisted for the offline local entitlements calculation on the
         // next launches (StoreKit enrichment does not survive encoding —
         // the wire fields are enough for the calculation).
-        try? localStorage.set(products, forKey: Constants.productsKey.rawValue)
+        if isCurrent(generation) {
+            try? localStorage.set(products, forKey: Constants.productsKey.rawValue)
+        }
 
         do {
             let resultProducts: [Qonversion.Product] = try await storeEnriched(products)
-            loadedProducts = resultProducts
-            
+            store(resultProducts, ifGenerationIs: generation)
+
             return resultProducts
         } catch {
             logger.error(error.localizedDescription)
         }
-        
-        loadedProducts = products
-        
+
+        store(products, ifGenerationIs: generation)
+
         return products
+    }
+
+    private func currentGeneration() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return cacheGeneration
+    }
+
+    private func isCurrent(_ generation: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return generation == cacheGeneration
+    }
+
+    private func store(_ products: [Qonversion.Product], ifGenerationIs generation: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard generation == cacheGeneration else { return }
+
+        _loadedProducts = products
     }
 
     func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
@@ -244,7 +275,14 @@ extension ProductsManager: UserChangedObserver {
     func userDidChange() {
         // Products may be personalized (experiments); the mapping is
         // project-scoped and stays.
-        loadedProducts = []
+        lock.lock()
+        cacheGeneration += 1
+        _loadedProducts = []
+        // The in-flight load belongs to the previous user — the next caller
+        // must start its own instead of joining it.
+        _productsTask = nil
+        lock.unlock()
+
         localStorage.removeObject(forKey: Constants.productsKey.rawValue)
     }
 }

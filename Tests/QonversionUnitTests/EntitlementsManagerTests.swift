@@ -61,8 +61,16 @@ final class EntitlementsManagerTests: XCTestCase {
         super.tearDown()
     }
 
+    /// A live entitlement: the expiration must stay in the future, otherwise
+    /// the cache read drops it as stale (production parity).
     private func serverEntitlement(id: String, active: Bool = true) -> Qonversion.Entitlement {
-        Qonversion.Entitlement(id: id, active: active, source: .appStore, startedDate: now, expirationDate: now.addingTimeInterval(3600))
+        Qonversion.Entitlement(id: id, active: active, source: .appStore, startedDate: now, expirationDate: Date().addingTimeInterval(3600))
+    }
+
+    /// What the SDK actually hands to the host: with nothing to serve the
+    /// call throws, which is the same observable outcome as "no access".
+    private func servedEntitlements() async -> [String: Qonversion.Entitlement] {
+        return (try? await manager.entitlements()) ?? [:]
     }
 
     private func setupLocalCalculationContext() {
@@ -118,20 +126,43 @@ final class EntitlementsManagerTests: XCTestCase {
         XCTAssertEqual(entitlements["premium"]?.active, true)
     }
 
-    func testOtherErrorsAreRethrownWithoutLocalCalculation() async {
+    func testAnyErrorIsAnsweredFromTheLocalFallbackWhenItHasSomethingToServe() async throws {
+        // Production parity: the cache and the StoreKit calculation answer on
+        // ANY launch failure — a 401/403/429 must not drop the user's access.
         service.error = QonversionError(type: .critical)          // 401/402/403
         setupLocalCalculationContext()
 
-        do {
-            _ = try await manager.entitlements()
-            XCTFail("Expected the error to be rethrown")
-        } catch { }
+        let entitlements = try await manager.entitlements()
 
+        XCTAssertEqual(entitlements["premium"]?.active, true)
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
     }
 
-    func testGateFailureIsRethrownWithoutServiceCall() async {
+    func testErrorIsRethrownWhenTheLocalFallbackHasNothingToServe() async {
+        service.error = QonversionError(type: .critical)
+        facade.currentEntitlementsResult = []
+
+        do {
+            _ = try await manager.entitlements()
+            XCTFail("Expected the error to be rethrown when there is nothing to serve")
+        } catch { }
+    }
+
+    func testGateFailureIsAnsweredFromTheLocalFallbackWithoutServiceCall() async throws {
+        // The user gate must not short-circuit the fault-tolerance path: an
+        // offline first call still has the cache and the store to answer from.
         userManager.error = MockError.stubbed
+        setupLocalCalculationContext()
+
+        let entitlements = try await manager.entitlements()
+
+        XCTAssertEqual(entitlements["premium"]?.active, true)
+        XCTAssertTrue(service.entitlementsCalls.isEmpty, "no request may go out without a backend user")
+    }
+
+    func testGateFailureIsRethrownWhenTheLocalFallbackIsEmpty() async {
+        userManager.error = MockError.stubbed
+        facade.currentEntitlementsResult = []
 
         do {
             _ = try await manager.entitlements()
@@ -139,6 +170,66 @@ final class EntitlementsManagerTests: XCTestCase {
         } catch { }
 
         XCTAssertTrue(service.entitlementsCalls.isEmpty)
+    }
+
+    // MARK: - expired cache revalidation
+
+    func testCachedActiveEntitlementPastItsExpirationIsNotServed() async throws {
+        let expired = Qonversion.Entitlement(
+            id: "premium",
+            active: true,
+            source: .appStore,
+            startedDate: now,
+            expirationDate: Date().addingTimeInterval(-3600)
+        )
+        try storage.set(["premium": expired], forKey: "qonversion.keys.entitlements")
+        storage.set(double: Date().timeIntervalSince1970, forKey: "qonversion.keys.entitlementsTimestamp")
+
+        service.error = QonversionError(type: .internal)
+        facade.currentEntitlementsResult = []
+
+        let entitlements: [String: Qonversion.Entitlement] = await servedEntitlements()
+
+        XCTAssertTrue(entitlements.isEmpty, "an entitlement claiming active past its expiration is stale")
+    }
+
+    // MARK: - user switch during the fetch
+
+    func testEntitlementsOfThePreviousUserAreNotPersistedAfterASwitch() async throws {
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        let gate = EntitlementsAsyncGate()
+        service.onEntitlements = { await gate.wait() }
+
+        async let staleFetch: [String: Qonversion.Entitlement] = manager.entitlements()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        manager.userDidChange()
+        await gate.open()
+        _ = try? await staleFetch
+
+        let persisted: [String: Qonversion.Entitlement]? = try storage.object(
+            forKey: "qonversion.keys.entitlements",
+            dataType: [String: Qonversion.Entitlement].self
+        )
+        XCTAssertNil(persisted, "the previous user's entitlements must not be persisted for the new one")
+    }
+
+    func testLocalFallbackOfThePreviousUserIsNotPersistedAfterASwitch() async throws {
+        service.error = QonversionError(type: .internal)
+        setupLocalCalculationContext()
+        let gate = EntitlementsAsyncGate()
+        service.onEntitlements = { await gate.wait() }
+
+        async let staleFetch: [String: Qonversion.Entitlement] = manager.entitlements()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        manager.userDidChange()
+        await gate.open()
+        _ = try? await staleFetch
+
+        let persisted: [String: Qonversion.Entitlement]? = try storage.object(
+            forKey: "qonversion.keys.entitlements",
+            dataType: [String: Qonversion.Entitlement].self
+        )
+        XCTAssertNil(persisted, "the offline merge path must not leak the previous user's access")
     }
 
     // MARK: - Local calculation persists to the same cache
@@ -170,7 +261,7 @@ final class EntitlementsManagerTests: XCTestCase {
 
         service.error = QonversionError(type: .internal)
         facade.currentEntitlementsResult = []
-        let entitlements = try await manager.entitlements()
+        let entitlements: [String: Qonversion.Entitlement] = await servedEntitlements()
 
         XCTAssertTrue(entitlements.isEmpty)
     }
@@ -201,8 +292,33 @@ final class EntitlementsManagerTests: XCTestCase {
         // user would inherit the previous user's cached entitlements.
         service.error = QonversionError(type: .internal)
         facade.currentEntitlementsResult = []
-        let entitlements = try await manager.entitlements()
+        let entitlements: [String: Qonversion.Entitlement] = await servedEntitlements()
 
         XCTAssertTrue(entitlements.isEmpty)
     }
+}
+
+/// A reusable async gate: wait() suspends until open() is called.
+private actor EntitlementsGateStorage {
+    var isOpen = false
+    var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+private final class EntitlementsAsyncGate: @unchecked Sendable {
+    private let storage = EntitlementsGateStorage()
+    func open() async { await storage.open() }
+    func wait() async { await storage.wait() }
 }
