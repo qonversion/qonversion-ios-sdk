@@ -102,6 +102,52 @@ final class RemoteConfigManagerTests: XCTestCase {
         XCTAssertEqual(userPropertiesManager.sendPropertiesCallsCount, 1)
     }
 
+    func testPropertiesFlushHappensStrictlyBeforeTheConfigRequest() async throws {
+        let order = OrderRecorder()
+        userPropertiesManager.onSendProperties = { await order.record("flush") }
+        remoteConfigService.onLoadRemoteConfig = { await order.record("load") }
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
+
+        _ = try await manager.loadRemoteConfig(contextKey: "main")
+
+        let events: [String] = await order.events
+        XCTAssertEqual(events, ["flush", "load"])
+    }
+
+    func testLoadListWithContextKeysFlushesPropertiesFirst() async throws {
+        remoteConfigService.remoteConfigListResult = Qonversion.RemoteConfigList(remoteConfigs: [
+            makeRemoteConfig(contextKey: "a"),
+        ])
+
+        _ = try await manager.loadRemoteConfigList(contextKeys: ["a"], includeEmptyContextKey: false)
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1)
+        XCTAssertEqual(userPropertiesManager.sendPropertiesCallsCount, 1)
+    }
+
+    func testAttachAndDetachWaitForTheUserGate() async {
+        userManager.error = MockError.stubbed
+
+        let operations: [() async throws -> Void] = [
+            { try await self.manager.attachUserToRemoteConfig(id: "rc") },
+            { try await self.manager.detachUserFromRemoteConfig(id: "rc") },
+            { try await self.manager.attachUserToExperiment(id: "exp", groupId: "g") },
+            { try await self.manager.detachUserFromExperiment(id: "exp") },
+        ]
+        for operation in operations {
+            do {
+                try await operation()
+                XCTFail("Expected the user gate error to propagate")
+            } catch {
+                XCTAssertEqual(error as? MockError, .stubbed)
+            }
+        }
+        XCTAssertTrue(remoteConfigService.attachedRemoteConfigIds.isEmpty)
+        XCTAssertTrue(remoteConfigService.detachedRemoteConfigIds.isEmpty)
+        XCTAssertTrue(remoteConfigService.attachedExperiments.isEmpty)
+        XCTAssertTrue(remoteConfigService.detachedExperimentIds.isEmpty)
+    }
+
     // MARK: - loadRemoteConfig caching
 
     func testLoadRemoteConfigCachesResultByContextKey() async throws {
@@ -316,4 +362,10 @@ private final class ManagerAsyncGate: @unchecked Sendable {
     private let storage = ManagerGateStorage()
     func open() async { await storage.open() }
     func wait() async { await storage.wait() }
+}
+
+/// Records event ordering across concurrent async hooks.
+private actor OrderRecorder {
+    var events: [String] = []
+    func record(_ event: String) { events.append(event) }
 }

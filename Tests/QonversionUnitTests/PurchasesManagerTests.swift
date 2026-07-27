@@ -93,6 +93,36 @@ final class PurchasesManagerTests: XCTestCase {
 
     // MARK: - purchase happy path
 
+    func testEachFlowReportsWithItsOwnTrigger() async throws {
+        // purchase
+        facade.purchaseResult = makeTransaction(id: "trig-1")
+        entitlementsManager.entitlementsResult = [:]
+        _ = try await manager.purchase(makeProduct(), options: nil)
+        XCTAssertEqual(service.sentTriggers, [.purchase])
+
+        // restore
+        facade.restoreResult = [makeTransaction(id: "trig-2")]
+        _ = try await manager.restore()
+        XCTAssertEqual(service.sentTriggers.last, .restore)
+
+        // analytics ingestion
+        await manager.handle(transactions: [makeTransaction(id: "trig-3")])
+        XCTAssertEqual(service.sentTriggers.last, .handleStoreKit2Transactions)
+    }
+
+    func testSyncAndSweepReportWithTheirOwnTriggers() async throws {
+        // historical data sync
+        facade.historicalDataResult = [makeTransaction(id: "trig-4")]
+        await manager.syncHistoricalData()
+        XCTAssertEqual(service.sentTriggers.last, .syncHistoricalData)
+
+        // unfinished transactions sweep
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "trig-5")]
+        await manager.processUnfinishedTransactions()
+        XCTAssertEqual(service.sentTriggers.last, .initialization)
+    }
+
     func testPurchaseGoesGateStorePurchaseReportFinishAndReturnsEntitlements() async throws {
         facade.purchaseResult = makeTransaction(id: "t1")
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]

@@ -100,6 +100,38 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(sent.value(forHTTPHeaderField: "Trigger"), "Purchase")
     }
 
+    func testFailedReplayBumpsThePersistedAttempt() async throws {
+        let stored = StoredRequest(
+            url: baseURL + "v4/users/u1/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: nil,
+            trigger: "Purchase",
+            attempt: 1
+        )
+        requestsStorage.append(stored)
+        let processor = makeProcessor()
+        networkProvider.response = makeHTTPResponse(statusCode: 500)
+
+        processor.processStoredRequests()
+        await waitUntil { self.requestsStorage.storedRequests.first?.attempt == 2 }
+
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1)
+        XCTAssertEqual(requestsStorage.storedRequests.first?.attempt, 2, "the next replay must report the true attempt number")
+        XCTAssertEqual(requestsStorage.storedRequests.first?.trigger, "Purchase")
+    }
+
+    func testRejectedRetriableRequestStoresItsTrigger() async {
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        networkProvider.response = makeHTTPResponse(statusCode: 503)
+        errorHandler.errorToReturn = QonversionError(type: .internal)
+        let request = Request.createPurchase(userId: "u1", body: ["price": "1"])
+
+        _ = try? await processor.process(request: request, responseType: EmptyApiResponse.self, trigger: .restore)
+
+        XCTAssertEqual(requestsStorage.storedRequests.first?.trigger, "Restore", "the replay must repeat the original flow's trigger")
+    }
+
     func testLegacyStoredRequestDecodesWithAttemptOne() throws {
         let legacyJson = #"{"url": "https://api2.qonversion.io/v4/users/u1/purchases", "method": "POST"}"#
 

@@ -118,6 +118,16 @@ final class UserServiceTests: XCTestCase {
 
     // MARK: - createUser
 
+    func testUserRequestsCarryTheInitTrigger() async throws {
+        let processor = MockRequestProcessor()
+        let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: InternalConfig(userId: "initial"))
+        processor.results = [try decodeUserStub()]
+
+        _ = try await service.createUser()
+
+        XCTAssertEqual(processor.processedTriggers, [.initialization])
+    }
+
     func testCreateUserUsesCurrentUidAndSendsCreateUserRequest() async throws {
         let processor = MockRequestProcessor()
         let storage = makeStorage()
