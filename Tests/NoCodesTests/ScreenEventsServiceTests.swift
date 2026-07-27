@@ -78,6 +78,7 @@ private final class UserIdProviderSpy: @unchecked Sendable {
     private let lock = NSLock()
     private var calls = 0
     private var userId: String
+    private var shouldFail = false
 
     init(userId: String) {
         self.userId = userId
@@ -90,6 +91,13 @@ private final class UserIdProviderSpy: @unchecked Sendable {
         self.userId = userId
     }
 
+    func failNextResolutions(_ shouldFail: Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        self.shouldFail = shouldFail
+    }
+
     var callsCount: Int {
         lock.lock()
         defer { lock.unlock() }
@@ -99,16 +107,20 @@ private final class UserIdProviderSpy: @unchecked Sendable {
 
     func provider() -> ScreenEventsService.UserIdProvider {
         return { [self] in
-            resolve()
+            try resolve()
         }
     }
 
     /// Kept synchronous so the lock is never held across a suspension point.
-    private func resolve() -> String {
+    private func resolve() throws -> String {
         lock.lock()
         defer { lock.unlock() }
 
         calls += 1
+
+        if shouldFail {
+            throw NoCodesError(type: .sdkInitializationError)
+        }
 
         return userId
     }
@@ -156,7 +168,7 @@ final class ScreenEventsServiceTests: XCTestCase {
         XCTAssertEqual(processor.lastBatch?.count, 1)
     }
 
-    func testFlushingAnEmptyBufferSendsNothing() async throws {
+    func testFlushingAnEmptyBufferSendsNothingAndLeavesTheServiceUsable() async throws {
         let processor = EventsRequestProcessor()
         let service: ScreenEventsService = makeService(processor: processor)
 
@@ -164,6 +176,54 @@ final class ScreenEventsServiceTests: XCTestCase {
 
         await waitUntilQuiet(processor)
         XCTAssertEqual(processor.batchesCount, 0)
+
+        // Same instance: an empty flush must not latch the in-flight guard, or
+        // every later event is silently swallowed for the rest of the process.
+        let event: ScreenEvent = makeEvent(index: 0)
+        service.track(event: event)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 1 }
+        XCTAssertEqual(processor.lastBatch?.count, 1)
+        XCTAssertEqual(processor.lastBatch?.first?["index"] as? Int, 0)
+    }
+
+    /// Every screen close flushes, and most of those flushes find an already
+    /// drained buffer, so the empty case is the common one rather than the edge.
+    func testRepeatedEmptyFlushesDoNotStopLaterEventsFromBeingSent() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+
+        for _ in 0..<5 {
+            service.flush()
+        }
+        await waitUntilQuiet(processor)
+        XCTAssertEqual(processor.batchesCount, 0)
+
+        let event: ScreenEvent = makeEvent(index: 7)
+        service.track(event: event)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 1 }
+        XCTAssertEqual(processor.lastBatch?.first?["index"] as? Int, 7)
+    }
+
+    /// The batch-size auto flush goes through the same guard, so it has to
+    /// survive an earlier empty flush too.
+    func testAnEmptyFlushDoesNotBlockTheAutomaticBatchSizeFlush() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+
+        service.flush()
+        await waitUntilQuiet(processor)
+
+        for index in 0..<10 {
+            let event: ScreenEvent = makeEvent(index: index)
+            service.track(event: event)
+        }
+
+        await waitUntil { processor.batchesCount == 1 }
+        XCTAssertEqual(processor.lastBatch?.count, 10)
     }
 
     func testTheBufferIsEmptiedByASuccessfulFlush() async throws {
@@ -266,25 +326,27 @@ final class ScreenEventsServiceTests: XCTestCase {
 
     func testAFailingUserIdResolutionKeepsTheEventsForTheNextAttempt() async throws {
         let processor = EventsRequestProcessor()
-        let failingProvider: ScreenEventsService.UserIdProvider = {
-            throw NoCodesError(type: .sdkInitializationError)
-        }
-        let service = ScreenEventsService(requestProcessor: processor, logger: LoggerWrapper(), userIdProvider: failingProvider)
+        let userIdProvider = UserIdProviderSpy(userId: "user-1")
+        userIdProvider.failNextResolutions(true)
+        let service: ScreenEventsService = makeService(processor: processor, userIdProvider: userIdProvider)
         let event: ScreenEvent = makeEvent(index: 0)
         service.track(event: event)
 
         service.flush()
 
+        await waitUntil { userIdProvider.callsCount == 1 }
         await waitUntilQuiet(processor)
         XCTAssertEqual(processor.batchesCount, 0, "the batch never reached the transport")
 
-        // The events survived: a later flush with a working resolution sends them.
-        let workingService = ScreenEventsService(requestProcessor: processor, logger: LoggerWrapper(), userIdProvider: { "user-1" })
-        let another: ScreenEvent = makeEvent(index: 1)
-        workingService.track(event: another)
-        workingService.flush()
+        // The very same service recovers: the buffered event is still there and
+        // the next flush, with a working resolution, delivers it.
+        userIdProvider.failNextResolutions(false)
+        service.flush()
+
         await waitUntil { processor.batchesCount == 1 }
-        XCTAssertEqual(processor.batchesCount, 1)
+        let recovered: [[String: AnyHashable]] = try XCTUnwrap(processor.lastBatch)
+        XCTAssertEqual(recovered.count, 1)
+        XCTAssertEqual(recovered.first?["index"] as? Int, 0)
     }
 
     // MARK: - Private
