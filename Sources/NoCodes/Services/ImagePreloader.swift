@@ -180,7 +180,8 @@ final class ImagePreloader: ImagePreloaderInterface, Sendable {
   }
   
   /// Detects MIME type from response or file extension.
-  private func detectMimeType(from response: URLResponse, data: Data, url: URL) -> String {
+  /// Not private so the resolution order can be pinned by unit tests.
+  func detectMimeType(from response: URLResponse, data: Data, url: URL) -> String {
     // Try to get MIME type from response
     if let mimeType = response.mimeType, !mimeType.isEmpty {
       return mimeType
@@ -210,7 +211,8 @@ final class ImagePreloader: ImagePreloaderInterface, Sendable {
   }
   
   /// Detects MIME type from data magic bytes.
-  private func detectMimeTypeFromData(_ data: Data) -> String? {
+  /// Not private so the resolution order can be pinned by unit tests.
+  func detectMimeTypeFromData(_ data: Data) -> String? {
     guard data.count >= 4 else { return nil }
     
     let bytes = [UInt8](data.prefix(12))

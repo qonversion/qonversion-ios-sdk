@@ -18,6 +18,7 @@ struct FallbackFile: Decodable, Sendable {
 // `cacheLock` on every access.
 final class FallbackService: FallbackServiceInterface, @unchecked Sendable {
   private let logger: LoggerWrapper
+  private let bundle: Bundle
   private let fallbackFileName: String
   private let decoder: JSONDecoder
   
@@ -26,8 +27,9 @@ final class FallbackService: FallbackServiceInterface, @unchecked Sendable {
   private let cacheLock = NSLock()
   private var cachedFallbackFile: FallbackFile?
 
-  init(logger: LoggerWrapper, fallbackFileName: String = "nocodes_fallbacks.json", decoder: JSONDecoder = JSONDecoder()) {
+  init(logger: LoggerWrapper, bundle: Bundle = .main, fallbackFileName: String = "nocodes_fallbacks.json", decoder: JSONDecoder = JSONDecoder()) {
     self.logger = logger
+    self.bundle = bundle
     self.fallbackFileName = fallbackFileName
     self.decoder = decoder
   }
@@ -81,7 +83,7 @@ final class FallbackService: FallbackServiceInterface, @unchecked Sendable {
     }
 
     // Load from file if not cached
-    guard let path = FallbackService.getFallbackFilePath(for: fallbackFileName) else {
+    guard let path = FallbackService.fallbackFilePath(for: fallbackFileName, in: bundle) else {
       logger.debug("Fallback file not found: \(fallbackFileName)")
       throw FallbackError.fileNotFound
     }
@@ -112,12 +114,14 @@ final class FallbackService: FallbackServiceInterface, @unchecked Sendable {
     cachedFallbackFile = fallbackFile
   }
 
-  static func isFallbackFileAvailable(_ fileName: String = "nocodes_fallbacks.json") -> Bool {
-    return getFallbackFilePath(for: fileName) != nil
+  static func isFallbackFileAvailable(_ fileName: String = "nocodes_fallbacks.json", in bundle: Bundle = .main) -> Bool {
+    return fallbackFilePath(for: fileName, in: bundle) != nil
   }
-  
-  private static func getFallbackFilePath(for fileName: String) -> String? {
-    return Bundle.main.path(forResource: fileName.replacingOccurrences(of: ".json", with: ""), ofType: "json")
+
+  private static func fallbackFilePath(for fileName: String, in bundle: Bundle) -> String? {
+    let resource: String = fileName.replacingOccurrences(of: ".json", with: "")
+
+    return bundle.path(forResource: resource, ofType: "json")
   }
 }
 

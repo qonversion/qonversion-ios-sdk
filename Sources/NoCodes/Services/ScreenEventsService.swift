@@ -13,8 +13,13 @@ import Qonversion
 // inside `queue` (barrier writes, sync reads).
 final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendable {
 
+  /// Resolves the Qonversion user id the events are reported for. Injected so
+  /// the batching logic can be exercised without a live SDK instance.
+  typealias UserIdProvider = @Sendable () async throws -> String
+
   private let requestProcessor: RequestProcessorInterface
   private let logger: LoggerWrapper
+  private let userIdProvider: UserIdProvider
 
   /// Thread-safe buffer for accumulated events.
   private let queue = DispatchQueue(label: "io.qonversion.nocodes.screenevents", attributes: .concurrent)
@@ -33,9 +38,16 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
   /// Oldest events are dropped when this limit is exceeded.
   private static let maxBufferSize = 100
 
-  init(requestProcessor: RequestProcessorInterface, logger: LoggerWrapper) {
+  init(requestProcessor: RequestProcessorInterface, logger: LoggerWrapper, userIdProvider: @escaping UserIdProvider = ScreenEventsService.currentUserId) {
     self.requestProcessor = requestProcessor
     self.logger = logger
+    self.userIdProvider = userIdProvider
+  }
+
+  private static let currentUserId: UserIdProvider = {
+    let userInfo: Qonversion.User = try await Qonversion.shared.userInfo()
+
+    return userInfo.id
   }
 
   func track(event: ScreenEvent) {
@@ -69,9 +81,9 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
         if let cached = queue.sync(execute: { cachedUserId }) {
           uid = cached
         } else {
-          let userInfo: Qonversion.User = try await Qonversion.shared.userInfo()
-          uid = userInfo.id
-          queue.sync(flags: .barrier) { cachedUserId = uid }
+          let resolvedUid: String = try await userIdProvider()
+          uid = resolvedUid
+          queue.sync(flags: .barrier) { cachedUserId = resolvedUid }
         }
 
         let eventDicts: [[String: AnyHashable]] = eventsToSend.map { $0.toMap() }
