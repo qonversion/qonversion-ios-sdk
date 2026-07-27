@@ -15,6 +15,8 @@ fileprivate enum Constants: String {
 final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendable {
 
     private let remoteConfigService: RemoteConfigServiceInterface
+    private let userManager: UserManagerInterface
+    private let userPropertiesManager: UserPropertiesManagerInterface
     private let logger: LoggerWrapper
 
     // The cache is read/written from concurrent loads and cleared from the
@@ -26,9 +28,20 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     /// must not cache its (stale) response for the new one.
     private var cacheGeneration = 0
 
-    init(remoteConfigService: RemoteConfigServiceInterface, logger: LoggerWrapper) {
+    init(remoteConfigService: RemoteConfigServiceInterface, userManager: UserManagerInterface, userPropertiesManager: UserPropertiesManagerInterface, logger: LoggerWrapper) {
         self.remoteConfigService = remoteConfigService
+        self.userManager = userManager
+        self.userPropertiesManager = userPropertiesManager
         self.logger = logger
+    }
+
+    /// Remote configs are computed per user from fresh segmentation data: the
+    /// user must be settled (identify in flight would change the uid) and the
+    /// pending properties batch must reach the backend first. A flush failure
+    /// is not fatal — properties retry on their own schedule.
+    private func prepareUserForRemoteConfig() async throws {
+        _ = try await userManager.obtainUser()
+        try? await userPropertiesManager.sendProperties()
     }
 
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
@@ -37,6 +50,8 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         if let cached {
             return cached
         }
+
+        try await prepareUserForRemoteConfig()
 
         let remoteConfig: Qonversion.RemoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
         cacheConfig(remoteConfig, for: finalKey, ifGenerationIs: generation)
@@ -58,6 +73,8 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     }
 
     func loadRemoteConfigList() async throws -> Qonversion.RemoteConfigList {
+        try await prepareUserForRemoteConfig()
+
         let generation: Int = currentGeneration()
         let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList()
         handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
@@ -69,24 +86,30 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         if (cachedConfigs.count == contextKeys.count) {
             return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
         }
+        try await prepareUserForRemoteConfig()
+
         let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
         handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
         return remoteConfigList
     }
 
     func attachUserToRemoteConfig(id: String) async throws {
+        _ = try await userManager.obtainUser()
         try await remoteConfigService.attachUserToRemoteConfig(id: id)
     }
 
     func detachUserFromRemoteConfig(id: String) async throws {
+        _ = try await userManager.obtainUser()
         try await remoteConfigService.detachUserFromRemoteConfig(id: id)
     }
 
     func attachUserToExperiment(id: String, groupId: String) async throws {
+        _ = try await userManager.obtainUser()
         try await remoteConfigService.attachUserToExperiment(id: id, groupId: groupId)
     }
 
     func detachUserFromExperiment(id: String) async throws {
+        _ = try await userManager.obtainUser()
         try await remoteConfigService.detachUserFromExperiment(id: id)
     }
     

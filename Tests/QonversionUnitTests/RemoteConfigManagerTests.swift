@@ -11,16 +11,28 @@ import XCTest
 final class RemoteConfigManagerTests: XCTestCase {
 
     private var remoteConfigService: MockRemoteConfigService!
+    private var userManager: MockUserManager!
+    private var userPropertiesManager: MockUserPropertiesManager!
     private var manager: RemoteConfigManager!
 
     override func setUp() {
         super.setUp()
         remoteConfigService = MockRemoteConfigService()
-        manager = RemoteConfigManager(remoteConfigService: remoteConfigService, logger: LoggerWrapper())
+        userManager = MockUserManager()
+        userManager.user = Qonversion.User(id: "user_abc")
+        userPropertiesManager = MockUserPropertiesManager()
+        manager = RemoteConfigManager(
+            remoteConfigService: remoteConfigService,
+            userManager: userManager,
+            userPropertiesManager: userPropertiesManager,
+            logger: LoggerWrapper()
+        )
     }
 
     override func tearDown() {
         manager = nil
+        userPropertiesManager = nil
+        userManager = nil
         remoteConfigService = nil
         super.tearDown()
     }
@@ -36,6 +48,58 @@ final class RemoteConfigManagerTests: XCTestCase {
             contextKey: contextKey
         )
         return Qonversion.RemoteConfig(payload: ["flag": "on"], experiment: nil, source: source)
+    }
+
+    // MARK: - user gate and properties flush (production parity)
+
+    func testLoadWaitsForTheUserGateAndFlushesPropertiesFirst() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
+
+        _ = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1)
+        XCTAssertEqual(userPropertiesManager.sendPropertiesCallsCount, 1,
+                       "pending properties must reach the backend before the config is computed")
+    }
+
+    func testLoadListFlushesPropertiesFirst() async throws {
+        remoteConfigService.remoteConfigListResult = Qonversion.RemoteConfigList(remoteConfigs: [])
+
+        _ = try await manager.loadRemoteConfigList()
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1)
+        XCTAssertEqual(userPropertiesManager.sendPropertiesCallsCount, 1)
+    }
+
+    func testUserGateErrorFailsTheLoadWithoutServiceCall() async {
+        userManager.error = MockError.stubbed
+
+        do {
+            _ = try await manager.loadRemoteConfig(contextKey: "main")
+            XCTFail("Expected the user gate error to propagate")
+        } catch {
+            XCTAssertEqual(error as? MockError, .stubbed)
+        }
+        XCTAssertTrue(remoteConfigService.loadRemoteConfigContextKeys.isEmpty)
+    }
+
+    func testPropertiesFlushFailureDoesNotBlockTheLoad() async throws {
+        userPropertiesManager.error = MockError.stubbed
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
+
+        let config = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(config.source.contextKey, "main")
+    }
+
+    func testCachedLoadSkipsTheGateAndTheFlush() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
+        _ = try await manager.loadRemoteConfig(contextKey: "main")
+
+        _ = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1)
+        XCTAssertEqual(userPropertiesManager.sendPropertiesCallsCount, 1)
     }
 
     // MARK: - loadRemoteConfig caching

@@ -55,6 +55,6 @@ final class ConfigurationTests: XCTestCase {
 
         let processor = servicesAssembly.requestProcessor() as? RequestProcessor
 
-        XCTAssertEqual(processor?.baseURL, "https://api.qonversion.io/")
+        XCTAssertEqual(processor?.baseURL, "https://api2.qonversion.io/")
     }
 }

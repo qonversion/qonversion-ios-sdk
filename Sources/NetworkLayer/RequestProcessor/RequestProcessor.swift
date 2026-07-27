@@ -68,6 +68,10 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                 urlRequest.httpMethod = stored.method
                 urlRequest.httpBody = stored.body
                 self.headersBuilder.addHeaders(to: &urlRequest)
+                urlRequest.addValue("\(stored.attempt + 1)", forHTTPHeaderField: Self.attemptHeader)
+                if let trigger: String = stored.trigger {
+                    urlRequest.addValue(trigger, forHTTPHeaderField: Self.triggerHeader)
+                }
 
                 do {
                     let (data, urlResponse) = try await self.networkProvider.send(request: urlRequest)
@@ -76,7 +80,9 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     // keep it queued. Everything else counts as delivered
                     // (resending would duplicate) or permanently rejected.
                     let statusCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
-                    if !Self.isRetriableStatusCode(statusCode) {
+                    if Self.isRetriableStatusCode(statusCode) {
+                        self.bumpAttempt(of: stored)
+                    } else {
                         self.requestsStorage.remove(stored)
                     }
 
@@ -86,6 +92,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     }
                 } catch {
                     // Kept in the queue for the next session.
+                    self.bumpAttempt(of: stored)
                 }
             }
         }
@@ -95,7 +102,25 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         return statusCode >= 500 || statusCode == 429
     }
 
-    func process<T>(request: Request, responseType: T.Type) async throws -> T where T : Decodable {
+    static let attemptHeader: String = "Attempt"
+    static let triggerHeader: String = "Trigger"
+
+    /// Records one more failed send of a queued request, so the next replay
+    /// reports the true attempt number.
+    private func bumpAttempt(of stored: StoredRequest) {
+        requestsStorage.remove(stored)
+        let updated = StoredRequest(
+            url: stored.url,
+            method: stored.method,
+            body: stored.body,
+            dedupKey: stored.dedupKey,
+            trigger: stored.trigger,
+            attempt: stored.attempt + 1
+        )
+        requestsStorage.append(updated)
+    }
+
+    func process<T>(request: Request, responseType: T.Type, trigger: RequestTrigger?) async throws -> T where T : Decodable {
         if let error = criticalError {
             throw error
         }
@@ -108,6 +133,10 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             throw QonversionError(type: .invalidRequest)
         }
         headersBuilder.addHeaders(to: &urlRequest)
+        urlRequest.addValue("1", forHTTPHeaderField: Self.attemptHeader)
+        if let trigger {
+            urlRequest.addValue(trigger.rawValue, forHTTPHeaderField: Self.triggerHeader)
+        }
 
         let responseBody: Data
         let error: QonversionError?
@@ -125,7 +154,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     url: urlRequest.url?.absoluteString ?? "",
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
-                    dedupKey: request.replayDedupKey
+                    dedupKey: request.replayDedupKey,
+                    trigger: trigger?.rawValue
                 ))
             }
             throw QonversionError(type: .invalidResponse, error: error)
@@ -143,7 +173,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     url: urlRequest.url?.absoluteString ?? "",
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
-                    dedupKey: request.replayDedupKey
+                    dedupKey: request.replayDedupKey,
+                    trigger: trigger?.rawValue
                 ))
             }
 

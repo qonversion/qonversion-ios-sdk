@@ -56,6 +56,59 @@ final class RequestProcessorTests: XCTestCase {
         )
     }
 
+    // MARK: - Attempt and Trigger headers (production parity)
+
+    func testLiveRequestCarriesAttemptOneAndNoTriggerByDefault() async throws {
+        let processor = makeProcessor()
+        networkProvider.responseData = Data("{}".utf8)
+
+        _ = try? await processor.process(request: Request.getProducts(), responseType: EmptyApiResponse.self)
+
+        let sent = try XCTUnwrap(networkProvider.sentRequests.first)
+        XCTAssertEqual(sent.value(forHTTPHeaderField: "Attempt"), "1")
+        XCTAssertNil(sent.value(forHTTPHeaderField: "Trigger"))
+    }
+
+    func testExplicitTriggerTravelsInTheHeader() async throws {
+        let processor = makeProcessor()
+        networkProvider.responseData = Data("{}".utf8)
+
+        _ = try? await processor.process(request: Request.getProducts(), responseType: EmptyApiResponse.self, trigger: .restore)
+
+        let sent = try XCTUnwrap(networkProvider.sentRequests.first)
+        XCTAssertEqual(sent.value(forHTTPHeaderField: "Trigger"), "Restore")
+    }
+
+    func testReplayedRequestCarriesIncrementedAttemptAndOriginalTrigger() async throws {
+        let stored = StoredRequest(
+            url: baseURL + "v4/users/u1/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: nil,
+            trigger: "Purchase",
+            attempt: 1
+        )
+        requestsStorage.append(stored)
+        let processor = makeProcessor()
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+
+        processor.processStoredRequests()
+        await waitUntil { !self.networkProvider.sentRequests.isEmpty }
+
+        let sent = try XCTUnwrap(networkProvider.sentRequests.first)
+        XCTAssertEqual(sent.value(forHTTPHeaderField: "Attempt"), "2")
+        XCTAssertEqual(sent.value(forHTTPHeaderField: "Trigger"), "Purchase")
+    }
+
+    func testLegacyStoredRequestDecodesWithAttemptOne() throws {
+        let legacyJson = #"{"url": "https://api2.qonversion.io/v4/users/u1/purchases", "method": "POST"}"#
+
+        let stored: StoredRequest = try JSONDecoder().decode(StoredRequest.self, from: Data(legacyJson.utf8))
+
+        XCTAssertEqual(stored.attempt, 1)
+        XCTAssertNil(stored.trigger)
+    }
+
     private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
         let deadline = Date().addingTimeInterval(timeout)
         while !condition() && Date() < deadline {

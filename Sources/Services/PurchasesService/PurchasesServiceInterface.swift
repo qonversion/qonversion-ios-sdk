@@ -12,7 +12,7 @@ protocol PurchasesServiceInterface {
     /// screenUid), when given, are attached to the report. Returns the
     /// resolved owner of the transaction when the backend provides one.
     @discardableResult
-    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws -> String?
+    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?, trigger: RequestTrigger) async throws -> String?
 
     /// Requests a backend-signed promotional offer for the store product.
     func promotionalOffer(userId: String, offerId: String, productStoreId: String) async throws -> Qonversion.PromotionalOffer
@@ -21,7 +21,17 @@ protocol PurchasesServiceInterface {
 extension PurchasesServiceInterface {
 
     @discardableResult
+    func send(_ transaction: Qonversion.Transaction, userId: String, trigger: RequestTrigger) async throws -> String? {
+        try await send(transaction, userId: userId, options: nil, trigger: trigger)
+    }
+
+    @discardableResult
+    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws -> String? {
+        try await send(transaction, userId: userId, options: options, trigger: .purchase)
+    }
+
+    @discardableResult
     func send(_ transaction: Qonversion.Transaction, userId: String) async throws -> String? {
-        try await send(transaction, userId: userId, options: nil)
+        try await send(transaction, userId: userId, options: nil, trigger: .purchase)
     }
 }

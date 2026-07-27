@@ -83,6 +83,12 @@ final class UserPropertiesManagerTests: XCTestCase {
         XCTAssertEqual(propertiesStorage.all(), [Qonversion.UserProperty(key: "my_key", value: "my_value")])
     }
 
+    // MARK: - defined property keys
+
+    func testTenjinKeyMatchesTheCrossPlatformContract() {
+        XCTAssertEqual(Qonversion.UserPropertyKey.tenjinAnalyticsInstallationId.rawValue, "_q_tenjin_aiid")
+    }
+
     // MARK: - sendProperties
 
     func testSendPropertiesSuccessClearsStorageAndSendsRequest() async throws {

@@ -28,6 +28,10 @@ final class QonversionAssembly {
     // Holds the transaction reports dedup gate and the update streams —
     // stateful, one instance SDK-wide.
     private var purchasesManagerInstance: PurchasesManager?
+
+    // Owns the shared pending-properties storage: the remote config manager
+    // flushes the same batch the facade fills — one instance SDK-wide.
+    private var userPropertiesManagerInstance: UserPropertiesManagerInterface?
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose) {
         let userDefaults: UserDefaults = userDefaults ?? UserDefaults.standard
@@ -60,13 +64,18 @@ final class QonversionAssembly {
     }
 
     func userPropertiesManager() -> UserPropertiesManagerInterface {
+        if let userPropertiesManagerInstance {
+            return userPropertiesManagerInstance
+        }
+
         let requestProcessor: RequestProcessorInterface = servicesAssembly.requestProcessor()
         let delayCalculator: IncrementalDelayCalculator = miscAssembly.delayCalculator()
         let propertiesStorage: PropertiesStorage = miscAssembly.userPropertiesStorage()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let userManager: UserManagerInterface = userManager()
         let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, userManager: userManager, logger: logger)
-        
+        userPropertiesManagerInstance = userPropertiesManager
+
         return userPropertiesManager
     }
     
@@ -166,7 +175,9 @@ final class QonversionAssembly {
 
         let remoteConfigService: RemoteConfigServiceInterface = servicesAssembly.remoteConfigService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
-        let remoteConfigManager = RemoteConfigManager(remoteConfigService: remoteConfigService, logger: logger)
+        let userManager: UserManagerInterface = userManager()
+        let userPropertiesManager: UserPropertiesManagerInterface = userPropertiesManager()
+        let remoteConfigManager = RemoteConfigManager(remoteConfigService: remoteConfigService, userManager: userManager, userPropertiesManager: userPropertiesManager, logger: logger)
 
         let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
 

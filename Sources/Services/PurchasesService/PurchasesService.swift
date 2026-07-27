@@ -61,23 +61,32 @@ final class PurchasesService: PurchasesServiceInterface {
 
     private let requestProcessor: RequestProcessorInterface
     private let appBundleId: String
+    private let receiptFetcher: ReceiptFetcherInterface
 
-    init(requestProcessor: RequestProcessorInterface, appBundleId: String) {
+    init(requestProcessor: RequestProcessorInterface, appBundleId: String, receiptFetcher: ReceiptFetcherInterface) {
         self.requestProcessor = requestProcessor
         self.appBundleId = appBundleId
+        self.receiptFetcher = receiptFetcher
     }
 
 
     @discardableResult
-    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?) async throws -> String? {
+    func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?, trigger: RequestTrigger) async throws -> String? {
         // The v4 store_data shape for the app_store platform; the signed
         // transaction (jws) travels in the receipt slot, the ids next to it
-        // let the backend resolve and dedupe before verification.
+        // let the backend resolve and dedupe before verification. StoreKit 1
+        // transactions have no jws — the base64 app receipt is their proof.
+        let proof: String
+        if let jws: String = transaction.jws {
+            proof = jws
+        } else {
+            proof = receiptFetcher.appStoreReceipt() ?? ""
+        }
         let storeData: RequestBodyDict = [
             "transaction_id": transaction.id ?? "",
             "original_transaction_id": transaction.originalId ?? "",
             "product_id": transaction.productId,
-            "receipt": transaction.jws ?? "",
+            "receipt": proof,
         ]
         var body: RequestBodyDict = [
             "platform": "app_store",
@@ -101,7 +110,7 @@ final class PurchasesService: PurchasesServiceInterface {
 
         let request = Request.createPurchase(userId: userId, body: body)
         do {
-            let response: PurchaseReportResponse = try await requestProcessor.process(request: request, responseType: PurchaseReportResponse.self)
+            let response: PurchaseReportResponse = try await requestProcessor.process(request: request, responseType: PurchaseReportResponse.self, trigger: trigger)
 
             return response.userId
         } catch {

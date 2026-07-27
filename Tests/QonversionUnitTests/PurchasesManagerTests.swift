@@ -237,6 +237,32 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
     }
 
+    // MARK: - restore single-flight
+
+    func testConcurrentRestoresShareOneStoreRun() async throws {
+        let gate = PurchasesAsyncGate()
+        facade.onRestore = { await gate.wait() }
+        entitlementsManager.entitlementsResult = [:]
+
+        async let first: [String: Qonversion.Entitlement] = manager.restore()
+        async let second: [String: Qonversion.Entitlement] = manager.restore()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        await gate.open()
+        _ = try await first
+        _ = try await second
+
+        XCTAssertEqual(facade.facadeRestoreCallsCount, 1, "concurrent restore() calls must join the in-flight run")
+    }
+
+    func testRestoreRunsAgainAfterTheFirstOneFinishes() async throws {
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.restore()
+        _ = try await manager.restore()
+
+        XCTAssertEqual(facade.facadeRestoreCallsCount, 2)
+    }
+
     // MARK: - restore
 
     func testRestoreReportsLatestTransactionPerProductAndReturnsEntitlements() async throws {
@@ -827,4 +853,29 @@ private actor StreamCollector<Element> {
     private func append(_ element: Element) {
         received.append(element)
     }
+}
+
+/// A reusable async gate: wait() suspends until open() is called.
+private actor PurchasesGateStorage {
+    var isOpen = false
+    var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+private final class PurchasesAsyncGate: @unchecked Sendable {
+    private let storage = PurchasesGateStorage()
+    func open() async { await storage.open() }
+    func wait() async { await storage.wait() }
 }
