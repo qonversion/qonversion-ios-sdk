@@ -543,7 +543,14 @@ final class MockRemoteConfigService: RemoteConfigServiceInterface {
     var remoteConfigListResult: Qonversion.RemoteConfigList?
     var error: Error?
 
-    private(set) var loadRemoteConfigContextKeys: [String?] = []
+    // Concurrent callers share one request, so the recording is lock-guarded.
+    private let serviceStateLock = NSLock()
+    private var _loadRemoteConfigContextKeys: [String?] = []
+    var loadRemoteConfigContextKeys: [String?] {
+        serviceStateLock.lock()
+        defer { serviceStateLock.unlock() }
+        return _loadRemoteConfigContextKeys
+    }
     private(set) var loadListCallsCount = 0
     private(set) var loadListContextKeysArgs: [(contextKeys: [String], includeEmpty: Bool)] = []
     private(set) var attachedRemoteConfigIds: [String] = []
@@ -554,7 +561,9 @@ final class MockRemoteConfigService: RemoteConfigServiceInterface {
     var onLoadRemoteConfig: (() async -> Void)?
 
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
-        loadRemoteConfigContextKeys.append(contextKey)
+        serviceStateLock.lock()
+        _loadRemoteConfigContextKeys.append(contextKey)
+        serviceStateLock.unlock()
         await onLoadRemoteConfig?()
         if let error { throw error }
         guard let remoteConfigResult else { throw MockError.noStub }

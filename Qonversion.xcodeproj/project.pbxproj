@@ -39,6 +39,8 @@
 		C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */; };
 		C400000000000000000000B1 /* ListEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = C400000000000000000000A1 /* ListEnvelope.swift */; };
 		C100000000000000000000B1 /* AsyncMulticast.swift in Sources */ = {isa = PBXBuildFile; fileRef = C100000000000000000000A1 /* AsyncMulticast.swift */; };
+		D300000000000000000000B1 /* JSONDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = D300000000000000000000A1 /* JSONDecoding.swift */; };
+		D400000000000000000000B1 /* LegacyPurchasesQueueMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D400000000000000000000A1 /* LegacyPurchasesQueueMigration.swift */; };
 		C200000000000000000000B1 /* PromoPurchaseIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C200000000000000000000A1 /* PromoPurchaseIntent.swift */; };
 		C300000000000000000000B1 /* StoredRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C300000000000000000000A1 /* StoredRequest.swift */; };
 		B100000000000000000000B1 /* UserChangesNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B100000000000000000000A1 /* UserChangesNotifier.swift */; };
@@ -196,6 +198,8 @@
 		C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseAssociationsStorage.swift; sourceTree = "<group>"; };
 		C400000000000000000000A1 /* ListEnvelope.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ListEnvelope.swift; sourceTree = "<group>"; };
 		C100000000000000000000A1 /* AsyncMulticast.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncMulticast.swift; sourceTree = "<group>"; };
+		D300000000000000000000A1 /* JSONDecoding.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONDecoding.swift; sourceTree = "<group>"; };
+		D400000000000000000000A1 /* LegacyPurchasesQueueMigration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LegacyPurchasesQueueMigration.swift; sourceTree = "<group>"; };
 		C200000000000000000000A1 /* PromoPurchaseIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromoPurchaseIntent.swift; sourceTree = "<group>"; };
 		C300000000000000000000A1 /* StoredRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoredRequest.swift; sourceTree = "<group>"; };
 		B100000000000000000000A1 /* UserChangesNotifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserChangesNotifier.swift; sourceTree = "<group>"; };
@@ -586,6 +590,7 @@
 			isa = PBXGroup;
 			children = (
 				70CD92CC2BC6E22B0039D65C /* LocalStorage.swift */,
+				D400000000000000000000A1 /* LegacyPurchasesQueueMigration.swift */,
 				70CD92CD2BC6E22B0039D65C /* LocalStorageInterface.swift */,
 			);
 			path = LocalStorage;
@@ -677,6 +682,7 @@
 				70CD92EA2BC6E22B0039D65C /* Utils.swift */,
 				A500000000000000000000A2 /* EntitlementsCalculator.swift */,
 				C100000000000000000000A1 /* AsyncMulticast.swift */,
+				D300000000000000000000A1 /* JSONDecoding.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -929,6 +935,8 @@
 				C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */,
 				C400000000000000000000B1 /* ListEnvelope.swift in Sources */,
 				C100000000000000000000B1 /* AsyncMulticast.swift in Sources */,
+				D300000000000000000000B1 /* JSONDecoding.swift in Sources */,
+				D400000000000000000000B1 /* LegacyPurchasesQueueMigration.swift in Sources */,
 				C200000000000000000000B1 /* PromoPurchaseIntent.swift in Sources */,
 				C300000000000000000000B1 /* StoredRequest.swift in Sources */,
 				B100000000000000000000B1 /* UserChangesNotifier.swift in Sources */,
