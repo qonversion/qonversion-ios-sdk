@@ -60,7 +60,7 @@ extension Qonversion {
         case tenjinAnalyticsInstallationId = "_q_tenjin_aiid"
         
         /// Value for custom user property
-        /// - Important: Do not pass this value directly. Use ``Qonversion/Qonversion/setCustomUserProperty(_:key:)`` instead.
+        /// - Important: Do not pass this value directly. Use ``Qonversion/Qonversion/setCustomUserProperty(key:value:)`` instead.
         case custom = ""
     }
 }

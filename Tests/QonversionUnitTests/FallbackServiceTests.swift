@@ -82,6 +82,86 @@ final class FallbackServiceTests: XCTestCase {
         XCTAssertNil(fallback?.remoteConfigs?.last?.source.contextKey)
     }
 
+    // MARK: - the shipped ObjC contract
+
+    func testTheObjCShapedFileDecodes() throws {
+        // The file the previous SDK generation shipped keys the App Store id
+        // as "store_id" (QNMapper.m), and MIGRATION.md promises the shape is
+        // unchanged. Files already sitting in customers' bundles must work.
+        let json = """
+        {
+            "products": [
+                {"id": "pro", "store_id": "com.app.pro", "type": 1, "duration": 3},
+                {"id": "lite", "store_id": "com.app.lite"}
+            ],
+            "products_permissions": {"pro": ["premium"], "consumable": []}
+        }
+        """
+        let service = try makeService(fileContent: json)
+
+        let fallback = service.obtainFallbackData()
+
+        XCTAssertEqual(fallback?.products?.map(\.qonversionId), ["pro", "lite"])
+        XCTAssertEqual(fallback?.products?.map(\.storeId), ["com.app.pro", "com.app.lite"])
+        XCTAssertEqual(fallback?.productsPermissions, ["pro": ["premium"], "consumable": []])
+    }
+
+    func testStoreIdWinsOverAppleProductIdWhenBothArePresent() throws {
+        let json = #"{"products": [{"id": "pro", "store_id": "from-store-id", "apple_product_id": "from-apple-product-id"}]}"#
+        let service = try makeService(fileContent: json)
+
+        XCTAssertEqual(service.obtainFallbackData()?.products?.first?.storeId, "from-store-id")
+    }
+
+    // MARK: - lossy rows
+
+    func testOneMalformedProductRowDoesNotKillTheFile() throws {
+        // The fallback file is the last line of defense: losing
+        // products_permissions and remote_config_list over one bad product row
+        // leaves the app with nothing at all.
+        let json = """
+        {
+            "products": [{"id": "pro", "store_id": "com.app.pro"}, {"no_id": true}, 42],
+            "products_permissions": {"pro": ["premium"]},
+            "remote_config_list": [
+                {"payload": {"k": "v"}, "experiment": null, "source": {"uid": "src-1", "name": "n", "type": "remote_configuration", "assignment_type": "auto", "context_key": "main"}}
+            ]
+        }
+        """
+        let service = try makeService(fileContent: json)
+
+        let fallback = service.obtainFallbackData()
+
+        XCTAssertEqual(fallback?.products?.map(\.qonversionId), ["pro"], "the malformed rows are skipped")
+        XCTAssertEqual(fallback?.productsPermissions, ["pro": ["premium"]], "the other sections survive")
+        XCTAssertEqual(fallback?.remoteConfigs?.count, 1)
+    }
+
+    func testOneMalformedRemoteConfigRowDoesNotKillTheFile() throws {
+        let json = """
+        {
+            "products": [{"id": "pro", "store_id": "com.app.pro"}],
+            "remote_config_list": [
+                {"source": {}},
+                {"payload": {"k": "v"}, "experiment": null, "source": {"uid": "src-1", "name": "n", "type": "remote_configuration", "assignment_type": "auto", "context_key": "main"}}
+            ]
+        }
+        """
+        let service = try makeService(fileContent: json)
+
+        let fallback = service.obtainFallbackData()
+
+        XCTAssertEqual(fallback?.products?.map(\.qonversionId), ["pro"])
+        XCTAssertEqual(fallback?.remoteConfigs?.map { $0.source.identifier }, ["src-1"])
+    }
+
+    func testOneMalformedPermissionsRelationDoesNotKillTheOthers() throws {
+        let json = #"{"products_permissions": {"pro": ["premium"], "broken": 7}}"#
+        let service = try makeService(fileContent: json)
+
+        XCTAssertEqual(service.obtainFallbackData()?.productsPermissions, ["pro": ["premium"]])
+    }
+
     func testMissingFileReturnsNil() throws {
         let service = try makeService(fileContent: nil)
 

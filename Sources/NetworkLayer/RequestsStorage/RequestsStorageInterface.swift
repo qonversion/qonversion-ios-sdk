@@ -7,9 +7,13 @@ import Foundation
 
 protocol RequestsStorageInterface: Sendable {
 
-    /// Persists a failed retriable request for the offline replay. Skips the
-    /// request when one with the same non-nil dedupKey is already queued.
-    func append(_ request: StoredRequest)
+    /// Persists a failed retriable request for the offline replay, and only
+    /// while the queue still belongs to the same user: the request was sent
+    /// for the uid that was current when it was enqueued, so a clean() that
+    /// landed while it was in flight (user switch) must not be undone by its
+    /// failure. Skips the request when one with the same non-nil dedupKey is
+    /// already queued.
+    func append(_ request: StoredRequest, ifGenerationIs generation: Int)
 
     /// Removes a delivered request from the queue.
     func remove(_ request: StoredRequest)
@@ -29,4 +33,14 @@ protocol RequestsStorageInterface: Sendable {
     var cleanGeneration: Int { get }
 
     func clean()
+}
+
+extension RequestsStorageInterface {
+
+    /// Enqueues against the generation the queue has right now — for callers
+    /// that hold no earlier snapshot of it (there was no window in which a
+    /// user switch could have happened behind their back).
+    func append(_ request: StoredRequest) {
+        append(request, ifGenerationIs: cleanGeneration)
+    }
 }

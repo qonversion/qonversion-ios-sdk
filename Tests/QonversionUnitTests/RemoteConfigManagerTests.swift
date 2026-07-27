@@ -505,7 +505,7 @@ final class RemoteConfigManagerTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 50_000_000)
         manager.userDidChange()
         await gate.open()
-        _ = try await staleLoad
+        _ = try? await staleLoad
 
         // The next load must hit the service, not the stale cache.
         remoteConfigService.onLoadRemoteConfig = nil
@@ -540,6 +540,84 @@ final class RemoteConfigManagerTests: XCTestCase {
 
         XCTAssertEqual(fresh.source.identifier, "new-user-config")
         XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 2, "the new user must start its own request")
+    }
+
+    func testTheAbandonedLoaderSurfacesAQonversionError() async throws {
+        // The awaiter of a load cancelled by a user switch used to receive a
+        // bare CancellationError — a Swift runtime type leaking straight out
+        // of the public API, which no `catch let error as QonversionError`
+        // can classify.
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "previous-user-config")
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfig = { await gate.wait() }
+
+        async let staleLoad: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        manager.userDidChange()
+        await gate.open()
+
+        do {
+            _ = try await staleLoad
+            XCTFail("Expected the abandoned load to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
+    func testACancelledLoadIsNotAnsweredFromTheBundledFallback() async throws {
+        // URLError(.cancelled) satisfies allowsLocalEntitlementsFallback, so
+        // without an explicit check the abandoned load quietly served the
+        // bundled config for a user that is no longer current.
+        stubFallbackConfigs()
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "previous-user-config")
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfig = { await gate.wait() }
+
+        async let staleLoad: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        manager.userDidChange()
+        await gate.open()
+
+        do {
+            _ = try await staleLoad
+            XCTFail("Expected the abandoned load to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled, "a user switch is not an outage — the fallback must not answer it")
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
+    func testACancelledListLoadIsNotAnsweredFromTheBundledFallback() async throws {
+        stubFallbackConfigs()
+        let cancelled = QonversionError(type: .loadingRemoteConfigListFailed, message: nil, error: URLError(.cancelled))
+        remoteConfigService.error = cancelled
+
+        do {
+            _ = try await manager.loadRemoteConfigList()
+            XCTFail("Expected the cancelled load to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
+    func testACancelledContextKeyedListLoadIsNotAnsweredFromTheBundledFallback() async throws {
+        stubFallbackConfigs()
+        let cancelled = QonversionError(type: .loadingRemoteConfigListFailed, message: nil, error: URLError(.cancelled))
+        remoteConfigService.error = cancelled
+
+        do {
+            _ = try await manager.loadRemoteConfigList(contextKeys: ["main"], includeEmptyContextKey: false)
+            XCTFail("Expected the cancelled load to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
     }
 
     func testUserDidChangeClearsCachedConfigs() async throws {

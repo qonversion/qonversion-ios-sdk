@@ -40,6 +40,10 @@ final class QonversionAssembly {
     // A weakly held observer: a per-call instance would deregister itself the
     // moment the caller let go of it.
     private var deviceManagerInstance: DeviceManagerInterface?
+
+    // The crash handler and the launch sender must read and write the same
+    // bounded queue — one instance SDK-wide.
+    private var crashReportsStorageInstance: CrashReportsStorage?
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose, environment: Qonversion.Environment = .production) {
         let userDefaults: UserDefaults = userDefaults ?? UserDefaults.standard
@@ -55,6 +59,15 @@ final class QonversionAssembly {
         // replayed against v4; the unfinished-transaction sweep covers it.
         let legacyPurchasesQueueMigration = LegacyPurchasesQueueMigration()
         legacyPurchasesQueueMigration.run()
+
+        // ...but its entitlements cache and product mapping CAN be carried
+        // over, and must be: without them an upgrading user who opens the app
+        // offline has no access until the first successful request.
+        let legacyEntitlementsMigration = LegacyEntitlementsMigration(
+            localStorage: miscAssembly.localStorage(),
+            logger: miscAssembly.loggerWrapper()
+        )
+        legacyEntitlementsMigration.run()
     }
 
     /// Registers every user-scoped cache with the user gate in a FIXED order,
@@ -68,12 +81,44 @@ final class QonversionAssembly {
         _ = productsManager()
         _ = remoteConfigManager()
         _ = deviceManager()
+        _ = userPropertiesManager()
     }
 
     /// Resends requests that failed on transport in previous sessions —
     /// called once per initialization by the facade, after the graph is built.
     func replayStoredRequests() {
         servicesAssembly.requestProcessor().processStoredRequests()
+    }
+
+    /// Starts capturing uncaught exceptions raised inside the SDK, chaining to
+    /// whatever handler the host already installed.
+    func startCrashReporting() {
+        CrashReporter.shared.install(storage: crashReportsStorage())
+    }
+
+    /// Ships the reports the previous launch left behind. Fails soft — the
+    /// endpoint is a proposal, see ``CrashReporter``.
+    func sendStoredCrashReports() async {
+        let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
+        let sender = CrashReportsSender(
+            storage: crashReportsStorage(),
+            requestProcessor: servicesAssembly.requestProcessor(),
+            userIdProvider: miscAssembly.internalConfig,
+            platform: deviceInfoCollector.headerDeviceInfo().osName
+        )
+
+        await sender.sendStoredReports()
+    }
+
+    private func crashReportsStorage() -> CrashReportsStorage {
+        if let crashReportsStorageInstance {
+            return crashReportsStorageInstance
+        }
+
+        let storage = CrashReportsStorage(localStorage: miscAssembly.localStorage())
+        crashReportsStorageInstance = storage
+
+        return storage
     }
     
     func userManager() -> UserManagerInterface {
@@ -105,6 +150,7 @@ final class QonversionAssembly {
         let integrationsInfoCollector = IntegrationsInfoCollector(deviceInfoCollector: deviceInfoCollector)
         let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, userManager: userManager, integrationsInfoCollector: integrationsInfoCollector, logger: logger)
         userPropertiesManagerInstance = userPropertiesManager
+        miscAssembly.userChangesNotifier().add(observer: userPropertiesManager)
 
         return userPropertiesManager
     }
@@ -168,6 +214,7 @@ final class QonversionAssembly {
             launchModeProvider: miscAssembly.internalConfig,
             purchaseAssociationsStorage: purchaseAssociationsStorage,
             localStorage: localStorage,
+            reportsGate: miscAssembly.transactionReportsGate(),
             logger: logger
         )
 

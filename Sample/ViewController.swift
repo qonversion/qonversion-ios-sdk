@@ -142,7 +142,7 @@ class ViewController: UIViewController {
     }
 
     private func setProperty() {
-        Qonversion.shared.setUserProperty("sample@qonversion.io", key: .email)
+        Qonversion.shared.setUserProperty(key: .email, value: "sample@qonversion.io")
         show("Email property set")
     }
 

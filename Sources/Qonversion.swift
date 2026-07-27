@@ -58,6 +58,14 @@ public final class Qonversion: @unchecked Sendable {
         shared.managers = managers
         shared.stateLock.unlock()
 
+        // Capture uncaught exceptions raised inside the SDK from here on, and
+        // ship whatever the previous launch left behind. Chained: the host's
+        // own crash reporter keeps working.
+        assembly.startCrashReporting()
+        Task {
+            await assembly.sendStoredCrashReports()
+        }
+
         // Start consuming out-of-band transaction updates (renewals, refunds,
         // Ask to Buy approvals, purchases on other devices).
         managers.purchasesManager.startObservingTransactions()
@@ -332,24 +340,24 @@ public final class Qonversion: @unchecked Sendable {
     
     /// Sets Qonversion defined user properties, like email or appsFlyer user ID.
     /// - Note that using ``Qonversion/Qonversion/UserPropertyKey/custom`` here will do nothing.
-    /// - To set custom user property, use ``Qonversion/Qonversion/setCustomUserProperty(_:key:)``  instead.
+    /// - To set custom user property, use ``Qonversion/Qonversion/setCustomUserProperty(key:value:)``  instead.
     /// - Parameters:
-    ///   - userProperty: Property value
     ///   - key: Defined enum key
-    public func setUserProperty(_ userProperty: String, key: UserPropertyKey) {
+    ///   - value: Property value
+    public func setUserProperty(key: UserPropertyKey, value: String) {
         guard let managers: Managers = currentManagers() else { return }
 
-        managers.userPropertiesManager.setUserProperty(key: key, value: userProperty)
+        managers.userPropertiesManager.setUserProperty(key: key, value: value)
     }
     
     /// Sets custom user property
     /// - Parameters:
-    ///   - userProperty: Property value
     ///   - key: Custom property key
-    public func setCustomUserProperty(_ userProperty: String, key: String) {
+    ///   - value: Property value
+    public func setCustomUserProperty(key: String, value: String) {
         guard let managers: Managers = currentManagers() else { return }
 
-        managers.userPropertiesManager.setCustomUserProperty(key: key, value: userProperty)
+        managers.userPropertiesManager.setCustomUserProperty(key: key, value: value)
     }
     
     /// This method returns all the properties, set for the current Qonversion user.

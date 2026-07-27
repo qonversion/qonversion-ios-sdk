@@ -36,9 +36,11 @@ class RequestsStorage: RequestsStorageInterface, @unchecked Sendable {
         self.storeKey = storeKey
     }
 
-    func append(_ request: StoredRequest) {
+    func append(_ request: StoredRequest, ifGenerationIs generation: Int) {
         lock.lock()
         defer { lock.unlock() }
+
+        guard _cleanGeneration == generation else { return }
 
         var requests: [StoredRequest] = fetchStoredRequests()
         if let dedupKey = request.dedupKey, requests.contains(where: { $0.dedupKey == dedupKey }) {

@@ -230,10 +230,25 @@ final class EntitiesDecodingTests: XCTestCase {
 
     // MARK: - RemoteConfigList
 
-    func testRemoteConfigListDecodesFromCamelCaseWrapperKey() throws {
-        // Fixates current behavior: RemoteConfigList's Decodable conformance is
-        // synthesized (vestigial) and expects a "remoteConfigs" camelCase key —
-        // not a bare array and not snake_case.
+    func testRemoteConfigListDecodesFromTheBareArrayTheApiAnswersWith() throws {
+        // The wire shape of v4/remote-configs.
+        let json = "[\(remoteConfigJSON())]"
+
+        let list = try decode(Qonversion.RemoteConfigList.self, json)
+
+        XCTAssertEqual(list.remoteConfigs.count, 1)
+        XCTAssertEqual(list.remoteConfigs[0].source.identifier, "source_uid")
+    }
+
+    func testRemoteConfigListSkipsAMalformedRowOfTheBareArray() throws {
+        let json = "[\(remoteConfigJSON()), {\"source\": {}}]"
+
+        let list = try decode(Qonversion.RemoteConfigList.self, json)
+
+        XCTAssertEqual(list.remoteConfigs.count, 1)
+    }
+
+    func testRemoteConfigListStillDecodesFromTheKeyedWrapper() throws {
         let json = """
         {"remoteConfigs": [\(remoteConfigJSON())]}
         """

@@ -88,8 +88,21 @@ final class UserChangeObserverOrderTests: XCTestCase {
         let types: [String] = observers.map { String(describing: type(of: $0)) }
         XCTAssertEqual(types.first, "ReplayQueueUserObserver", "the previous user's queued requests stop first")
         XCTAssertEqual(types.dropFirst().first, "PurchasesManager", "then the purchase bookkeeping")
-        XCTAssertEqual(Set(types.dropFirst(2)), ["EntitlementsManager", "ProductsManager", "RemoteConfigManager", "DeviceManager"],
+        XCTAssertEqual(Set(types.dropFirst(2)),
+                       ["EntitlementsManager", "ProductsManager", "RemoteConfigManager", "DeviceManager", "UserPropertiesManager"],
                        "every user-scoped cache is registered")
+    }
+
+    func testThePendingUserPropertiesAreTornDownOnAUserSwitch() {
+        // Properties queued for the previous user must never be posted under
+        // the new uid.
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+
+        assembly.registerUserChangeObservers()
+
+        let observers = assembly.servicesAssembly.miscAssembly.userChangesNotifier().registeredObservers
+        let types: [String] = observers.map { String(describing: type(of: $0)) }
+        XCTAssertTrue(types.contains("UserPropertiesManager"), "the pending properties batch is user-scoped state")
     }
 
     func testRegisteringTwiceKeepsOneEntryPerObserver() {
@@ -98,7 +111,7 @@ final class UserChangeObserverOrderTests: XCTestCase {
         assembly.registerUserChangeObservers()
         assembly.registerUserChangeObservers()
 
-        XCTAssertEqual(assembly.servicesAssembly.miscAssembly.userChangesNotifier().registeredObservers.count, 6)
+        XCTAssertEqual(assembly.servicesAssembly.miscAssembly.userChangesNotifier().registeredObservers.count, 7)
     }
 
     func testTheTeardownOrderDoesNotDependOnTheConstructionOrder() {

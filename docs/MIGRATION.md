@@ -2,6 +2,18 @@
 
 This SDK is a full Swift rewrite with an async/await-first API. Existing installs migrate automatically — the stored Qonversion user id is picked up on the first launch of the new version, so your users keep their identity, purchases and entitlements. No data migration code is needed.
 
+On that first launch the SDK also carries over the Objective-C SDK's local
+caches: the cached entitlements (with their sources, renew states, dates and
+store transactions) and the product → entitlements mapping. That mapping is
+what powers the offline local entitlement calculation, so a user who updates
+the app and opens it without a network keeps their access instead of losing it
+until the first successful request. The old keys are consumed once read.
+
+The one thing that is NOT carried over is the previous SDK's offline purchase
+queue: those requests target the previous API and cannot be replayed. Nothing
+is lost — that SDK never finished a transaction whose report had failed, so the
+unfinished-transaction sweep re-reports them in v4 form.
+
 ## Requirements
 
 - iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+ / visionOS 1.0+ (previously iOS 9)
@@ -31,7 +43,7 @@ Every completion-handler API became `async`. Errors are thrown instead of passed
 | `setEntitlementsUpdateListener(listener)` *(deprecated)* | `entitlementsUpdates` — the entitlements-only projection of the same stream |
 | `setPromoPurchasesDelegate(delegate)` | `for await intent in Qonversion.shared.promoPurchaseIntents { try await intent.purchase() }` |
 | `handlePurchases([QONStoreKit2PurchaseModel], completion)` | `await handlePurchases([VerificationResult<Transaction>]) -> Bool` — pass StoreKit 2 results directly; the returned flag replaces the completion |
-| `setUserProperty(key, value)` / `setCustomUserProperty` | unchanged (plus the new `.tenjinAnalyticsInstallationId` key) |
+| `setUserProperty:value:` / `setCustomUserProperty:value:` | `setUserProperty(key:value:)` / `setCustomUserProperty(key:value:)` — same key-first order as Objective-C, plus the new `.tenjinAnalyticsInstallationId` key |
 | `userProperties(completion)` | `try await userProperties()` |
 | `forceSendProperties(completion)` | `await forceSendProperties()` |
 | `collectAppleSearchAdsAttribution()` / `collectAdvertisingId()` | unchanged |
@@ -105,6 +117,27 @@ keeps the status-derived type and reaches you as `apiCode`:
 `.paymentNotAllowed` and `.storeProductNotAvailable` have no backend code — they
 come from StoreKit failures (parental controls, a product missing from the
 current storefront).
+
+One mapping is contextual: on the remote config endpoints `not_found` and
+`relation_not_found` mean *this user (or this context key) has no
+configuration*, not "the SDK asked for something that does not exist". There
+they become `.remoteConfigurationNotAvailable` — the counterpart of the ObjC
+SDK's `QONErrorCodeRemoteConfigurationNotAvailable`. Everywhere else the 404
+family stays `.resourceNotFound`.
+
+A load abandoned because the SDK switched users (a logout, or an identify that
+resolved to another user) fails with `.cancelled` rather than a bare
+`CancellationError` — the call is safe to repeat once the switch is done.
+
+`userInfo()` answers from the persisted user record when the network fetch
+fails, like the Objective-C SDK always did; it throws only when there is no
+user at all.
+
+Remote config failures are no longer flattened into
+`.loadingRemoteConfigFailed`: a classified backend failure reaches you with its
+own `type`, `apiCode` and `apiType`. `.loadingRemoteConfigFailed` and
+`.loadingRemoteConfigListFailed` are now what they say — the failure could not
+be classified.
 
 ### visionOS purchases
 
@@ -186,6 +219,31 @@ statements port unchanged — only where `.nonRenewable` comes from differs.
 ## Fallback file
 
 The bundled fallback file keeps the same name (`qonversion_ios_fallbacks.json`) and shape: `products`, `products_permissions` and `remote_config_list` are honored when the API is unreachable and no cache exists yet.
+
+A product row's App Store id may be spelled `store_id` (what the Objective-C
+SDK read, and what the files already in your bundle use) or `apple_product_id`
+(the spelling of the `/v4/products` API). `store_id` wins when both are
+present, so an unmodified file from the previous SDK generation keeps working.
+
+Every section and every row is read independently: a malformed product row is
+skipped instead of discarding the file, and a broken `products` section no
+longer takes `products_permissions` and `remote_config_list` down with it.
+
+## SDK crash reporting
+
+The Objective-C SDK installed an uncaught-exception handler and captured
+exceptions whose stack ran through Qonversion (`QONExceptionManager`). That is
+back, with the same scope — **NSException only**, no signal handlers, no Mach
+exception ports, so it never competes with the crash reporter your app already
+uses — and the handler that was installed before it is always called
+afterwards.
+
+What changed: the queue of pending reports is hard-bounded (five, oldest
+dropped) instead of unbounded files in the app's Documents directory, and the
+whole call stack is scanned instead of stopping at the first app frame.
+
+Nothing is sent for your app's own crashes; a stack with no Qonversion frame is
+ignored.
 
 ## NoCodes
 

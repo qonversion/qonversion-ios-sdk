@@ -225,6 +225,30 @@ extension Qonversion {
                 }
             }
 
+            init(
+                transactionId: String?,
+                originalTransactionId: String?,
+                offerCode: String? = nil,
+                promoOfferId: String? = nil,
+                transactionDate: Date? = nil,
+                expirationDate: Date? = nil,
+                revocationDate: Date? = nil,
+                environment: Environment = .production,
+                ownershipType: OwnershipType = .owner,
+                type: TransactionType = .unknown
+            ) {
+                self.transactionId = transactionId
+                self.originalTransactionId = originalTransactionId
+                self.offerCode = offerCode
+                self.promoOfferId = promoOfferId
+                self.transactionDate = transactionDate
+                self.expirationDate = expirationDate
+                self.revocationDate = revocationDate
+                self.environment = environment
+                self.ownershipType = ownershipType
+                self.type = type
+            }
+
             public init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 transactionId = try container.decodeIfPresent(String.self, forKey: .transactionId)

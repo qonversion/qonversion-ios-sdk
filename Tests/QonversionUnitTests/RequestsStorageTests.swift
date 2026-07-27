@@ -36,18 +36,45 @@ final class RequestsStorageTests: XCTestCase {
     }
 
     func testReplaceIsANoOpAfterTheQueueWasCleaned() {
-        // The whole point of the atomic form: a clean() between the check and
-        // the write would otherwise resurrect the previous user's request.
+        // The whole point of the atomic form. An empty queue after clean()
+        // would make the guard untestable — replace finds nothing to swap
+        // either way — so the NEW user enqueues an identical request and the
+        // stale generation must not be allowed to touch it.
         let storage = makeStorage(TestDefaults.makeIsolated())
         let original: StoredRequest = makeRequest()
         storage.append(original)
         let generation: Int = storage.cleanGeneration
         storage.clean()
+        storage.append(makeRequest())
         let bumped = StoredRequest(url: original.url, method: original.method, body: original.body, dedupKey: original.dedupKey, trigger: original.trigger, attempt: 2)
 
         storage.replace(original, with: bumped, ifGenerationIs: generation)
 
+        XCTAssertEqual(storage.fetchRequests().map(\.attempt), [1],
+                       "the new user's identical entry must not inherit the previous user's attempt count")
+    }
+
+    // MARK: - generation-guarded append
+
+    func testAppendIsANoOpAgainstAStaleGeneration() {
+        // A request that failed after the queue was cleaned belongs to the
+        // previous user; re-queueing it would replay it under the new uid.
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        let generation: Int = storage.cleanGeneration
+        storage.clean()
+
+        storage.append(makeRequest(), ifGenerationIs: generation)
+
         XCTAssertTrue(storage.fetchRequests().isEmpty, "a cleaned queue must stay clean")
+    }
+
+    func testAppendAgainstTheCurrentGenerationStillEnqueues() {
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        storage.clean()
+
+        storage.append(makeRequest(), ifGenerationIs: storage.cleanGeneration)
+
+        XCTAssertEqual(storage.fetchRequests().count, 1, "a new request must still be queued after a switch")
     }
 
     func testRemoveAllWherePersistsTheFilteredQueue() {
@@ -160,10 +187,30 @@ final class RequestsStorageTests: XCTestCase {
     }
 
     func testConcurrentAppendsDoNotLoseRequests() async {
+        // Below the cap on purpose: at 100 appends into a 50-slot queue the
+        // count would land on the cap even if half the updates were lost, so
+        // the assertion proved nothing. Every single request must be there.
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        let count: Int = RequestsStorage.maxStoredRequests - 10
+
+        await withTaskGroup(of: Void.self) { group in
+            for index in 0..<count {
+                group.addTask {
+                    storage.append(StoredRequest(url: "https://request-\(index)", method: "POST", body: nil, dedupKey: "k\(index)"))
+                }
+            }
+        }
+
+        let stored: Set<String> = Set(storage.fetchRequests().compactMap { $0.dedupKey })
+        let expected: Set<String> = Set((0..<count).map { "k\($0)" })
+        XCTAssertEqual(stored, expected, "the read-modify-write must be atomic: no lost updates")
+    }
+
+    func testConcurrentAppendsBeyondTheCapTrimToTheCap() async {
         let storage = makeStorage(TestDefaults.makeIsolated())
 
         await withTaskGroup(of: Void.self) { group in
-            for index in 0..<100 {
+            for index in 0..<(RequestsStorage.maxStoredRequests * 2) {
                 group.addTask {
                     storage.append(StoredRequest(url: "https://request-\(index)", method: "POST", body: nil, dedupKey: "k\(index)"))
                 }
@@ -171,7 +218,7 @@ final class RequestsStorageTests: XCTestCase {
         }
 
         XCTAssertEqual(storage.fetchRequests().count, RequestsStorage.maxStoredRequests,
-                       "the read-modify-write must be atomic: no lost updates, only the cap trims")
+                       "the cap is the only thing that may drop a request")
     }
 
     func testFetchRequestsIgnoresForeignValueUnderTheKey() {

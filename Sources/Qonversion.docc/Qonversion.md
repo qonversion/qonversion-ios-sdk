@@ -80,8 +80,8 @@ purchase sheet is confirmed in with
 
 ### User properties and attribution
 
-- ``Qonversion/Qonversion/setUserProperty(_:key:)``
-- ``Qonversion/Qonversion/setCustomUserProperty(_:key:)``
+- ``Qonversion/Qonversion/setUserProperty(key:value:)``
+- ``Qonversion/Qonversion/setCustomUserProperty(key:value:)``
 - ``Qonversion/Qonversion/userProperties()``
 - ``Qonversion/Qonversion/forceSendProperties()``
 - ``Qonversion/Qonversion/collectAppleSearchAdsAttribution()``

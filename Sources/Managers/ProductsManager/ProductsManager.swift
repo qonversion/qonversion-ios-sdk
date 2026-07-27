@@ -68,7 +68,10 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
             return persisted
         }
 
-        return fallbackService.obtainFallbackData()?.products ?? []
+        let fallbackProducts: [Qonversion.Product] = fallbackService.obtainFallbackData()?.products ?? []
+        reportProductsWithoutStoreId(fallbackProducts)
+
+        return fallbackProducts
     }
 
     func isFallbackFileAccessible() -> Bool {
@@ -165,9 +168,16 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
                 throw error
             }
             logger.warning("Products request failed, using the bundled fallback file: " + error.message)
+            // Reported HERE too, not only on the API path: the fallback file
+            // is precisely where a product row with neither `store_id` nor
+            // `apple_product_id` comes from, and it returns early.
+            reportProductsWithoutStoreId(fallbackProducts)
+
             return await enriched(fallbackProducts)
         }
-        
+
+        reportProductsWithoutStoreId(products)
+
         // Persisted for the offline local entitlements calculation on the
         // next launches (StoreKit enrichment does not survive encoding —
         // the wire fields are enough for the calculation).
@@ -179,12 +189,27 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
 
             return resultProducts
         } catch {
-            logger.error(error.localizedDescription)
+            // Answer this caller with what the backend gave, but do NOT make
+            // it the cache: a StoreKit outage is transient, and caching the
+            // unenriched catalog made it permanent for the whole session —
+            // prices and offers never came back however long the store stayed
+            // healthy afterwards. The next products() call retries the
+            // enrichment.
+            logger.error("Store products could not be loaded, returning the catalog unenriched: " + error.message)
+
+            return products
         }
+    }
 
-        store(products, ifGenerationIs: generation)
+    /// An empty storeId is a product the store can never price. It is legal
+    /// (a Stripe- or Play-only product) but it is far more often a fallback
+    /// file row with neither `store_id` nor `apple_product_id`, so it is
+    /// never swallowed silently.
+    private func reportProductsWithoutStoreId(_ products: [Qonversion.Product]) {
+        let unlinked: [String] = products.filter { $0.storeId.isEmpty }.map { $0.qonversionId }
+        guard !unlinked.isEmpty else { return }
 
-        return products
+        logger.warning("These products carry no App Store product id and cannot be priced by the store: " + unlinked.joined(separator: ", "))
     }
 
     private func currentGeneration() -> Int {
@@ -217,7 +242,15 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         var result: [String: Qonversion.IntroEligibilityStatus] = [:]
         var storeIdsToCheck: [String: String] = [:]
         for productId in productIds {
-            guard let product: Qonversion.Product = allProducts.first(where: { $0.qonversionId == productId }), product.isStoreProductLinked else {
+            guard let product: Qonversion.Product = allProducts.first(where: { $0.qonversionId == productId }) else {
+                // .unknown alone hides a typo in the product id: the caller
+                // cannot tell "the store would not say" from "this product is
+                // not in your Qonversion catalog at all".
+                logger.warning("Intro eligibility was requested for \"" + productId + "\", which is not in the products catalog.")
+                result[productId] = .unknown
+                continue
+            }
+            guard product.isStoreProductLinked else {
                 result[productId] = .unknown
                 continue
             }
@@ -291,7 +324,15 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         defer { lock.unlock() }
         // The catalog itself is backend-driven and stays; only the enriched
         // copy dies, so the next products() call refetches the store data.
+        //
+        // The generation bump and the cleared task are what make that true: a
+        // load that started BEFORE the storefront changed carries the old
+        // storefront's prices and offers, and would otherwise write them
+        // straight back into the cache this just emptied — or be joined by a
+        // caller arriving after the change.
+        cacheGeneration += 1
         _loadedProducts = []
+        _productsTask = nil
     }
 
     /// Best-effort StoreKit enrichment that never fails: on a store error the
@@ -310,6 +351,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
 
         var resultProducts: [Qonversion.Product] = []
+        var missingStoreIds: [String] = []
 
         // Products the store does not know (e.g. Stripe-only ones with no
         // App Store id) stay in the list unenriched — the catalog is
@@ -317,9 +359,21 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         for var product in products {
             if let storeProduct: StoreKit.Product = storeProducts.first(where: { $0.id == product.storeId })?.product {
                 product.enrich(storeProduct: storeProduct)
+            } else if !product.storeId.isEmpty {
+                missingStoreIds.append(product.storeId)
             }
 
             resultProducts.append(product)
+        }
+
+        // The half-enriched list IS cached — the catalog is authoritative and
+        // a product the store refuses to price is a real state. But it is
+        // almost always a misconfiguration (the id does not exist in App Store
+        // Connect, or the agreement is not signed), and it shows up as a
+        // paywall with no price, so it is named rather than left to be
+        // guessed at.
+        if !missingStoreIds.isEmpty {
+            logger.warning("The App Store returned no product for these ids, so they stay unpriced: " + missingStoreIds.joined(separator: ", "))
         }
 
         return resultProducts

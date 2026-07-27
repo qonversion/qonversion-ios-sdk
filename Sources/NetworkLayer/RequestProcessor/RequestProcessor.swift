@@ -18,6 +18,12 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     let retriableRequestKinds: [Request.Kind]
     let requestsStorage: RequestsStorageInterface
     let rateLimiter: RateLimiterInterface
+    private let delayCalculator: IncrementalDelayCalculator
+    private let transportRetryDelayCeiling: TimeInterval
+    /// Shared with the purchases manager: the launch replay and the
+    /// unfinished-transaction sweep run concurrently and must not both post
+    /// the same purchase.
+    let reportsGate: TransactionReportsGate
     private let criticalErrorLock = NSLock()
     private var _criticalError: QonversionError?
 
@@ -34,7 +40,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         }
     }
 
-    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface) {
+    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface, delayCalculator: IncrementalDelayCalculator = IncrementalDelayCalculator(), transportRetryDelayCeiling: TimeInterval = RequestProcessor.defaultTransportRetryDelayCeiling, reportsGate: TransactionReportsGate = TransactionReportsGate()) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
@@ -43,6 +49,9 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         self.retriableRequestKinds = retriableRequestKinds
         self.requestsStorage = requestsStorage
         self.rateLimiter = rateLimiter
+        self.delayCalculator = delayCalculator
+        self.transportRetryDelayCeiling = transportRetryDelayCeiling
+        self.reportsGate = reportsGate
     }
 
     /// Resends requests that failed on transport in previous sessions. A
@@ -68,8 +77,24 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             for stored in requests {
                 guard self.criticalError == nil else { return }
                 guard self.requestsStorage.cleanGeneration == generation else { return }
+                // The snapshot is not the queue: another path (the launch
+                // sweep delivering the same purchase, a live report
+                // superseding a queued copy) may have removed this entry while
+                // the previous ones were in flight.
+                guard self.requestsStorage.fetchRequests().contains(stored) else { continue }
                 guard let url = URL(string: stored.url) else {
                     self.requestsStorage.remove(stored)
+                    continue
+                }
+
+                // A purchase report is owned by whoever takes its transaction
+                // id first — here or in the unfinished-transaction sweep that
+                // initialize() starts alongside this replay. Entries queued by
+                // an older build carry no transaction id; those rely on the
+                // presence check above, which the sweep triggers by evicting
+                // the queued copy when its own report is delivered.
+                let transactionId: String? = stored.transactionId
+                if let transactionId, !self.reportsGate.tryTake(transactionId) {
                     continue
                 }
 
@@ -91,7 +116,14 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     let statusCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
                     if Self.isRetriableStatusCode(statusCode) {
                         self.bumpAttempt(of: stored, ifGenerationIs: generation)
+                        // Not delivered: let the next attempt (or the sweep)
+                        // have the transaction back.
+                        if let transactionId {
+                            self.reportsGate.release(transactionId)
+                        }
                     } else {
+                        // Delivered: the id stays taken so the sweep running
+                        // alongside cannot post it a second time.
                         self.requestsStorage.remove(stored)
                     }
 
@@ -102,6 +134,9 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                 } catch {
                     // Kept in the queue for the next session.
                     self.bumpAttempt(of: stored, ifGenerationIs: generation)
+                    if let transactionId {
+                        self.reportsGate.release(transactionId)
+                    }
                 }
             }
         }
@@ -145,16 +180,25 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             throw QonversionError(type: .invalidRequest)
         }
         headersBuilder.addHeaders(to: &urlRequest)
-        urlRequest.addValue("1", forHTTPHeaderField: Self.attemptHeader)
         if let trigger {
             urlRequest.addValue(trigger.rawValue, forHTTPHeaderField: Self.triggerHeader)
         }
+
+        // The queue any failure of this request lands in belongs to the user
+        // it is being sent for: a clean() while it is in flight (user switch)
+        // must not be undone by re-queueing it afterwards.
+        let generation: Int = requestsStorage.cleanGeneration
+
+        // The in-session retries already burned attempts against this request;
+        // a copy queued afterwards must continue that count, not restart it,
+        // or the Attempt header lies to the backend on every replay.
+        let attemptsMade = AttemptCounter()
 
         let responseBody: Data
         let error: QonversionError?
         let responseCode: Int
         do {
-            let (data, urlResponse) = try await networkProvider.send(request: urlRequest)
+            let (data, urlResponse) = try await sendWithTransportRetries(urlRequest, attemptsMade: attemptsMade)
             error = errorHandler.extractError(from: urlResponse, body: data)
             responseBody = data
             responseCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
@@ -162,14 +206,16 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             // The request never reached the backend — persist retriable ones
             // for the offline replay.
             if retriableRequestKinds.contains(request.kind) {
-                requestsStorage.append(StoredRequest(
+                let stored = StoredRequest(
                     url: urlRequest.url?.absoluteString ?? "",
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
                     trigger: trigger?.rawValue,
+                    attempt: attemptsMade.total,
                     transactionId: request.replayTransactionId
-                ))
+                )
+                requestsStorage.append(stored, ifGenerationIs: generation)
             }
             throw QonversionError(type: .invalidResponse, error: error)
         }
@@ -182,14 +228,16 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             // The backend did not process the request (5xx/429) — persist
             // retriable ones for the offline replay, like transport failures.
             if Self.isRetriableStatusCode(responseCode) && retriableRequestKinds.contains(request.kind) {
-                requestsStorage.append(StoredRequest(
+                let stored = StoredRequest(
                     url: urlRequest.url?.absoluteString ?? "",
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
                     trigger: trigger?.rawValue,
+                    attempt: attemptsMade.total,
                     transactionId: request.replayTransactionId
-                ))
+                )
+                requestsStorage.append(stored, ifGenerationIs: generation)
             }
 
             throw error!
@@ -226,5 +274,100 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         } catch {
             throw QonversionError(type: .invalidResponse, error: error)
         }
+    }
+
+    // MARK: - Transport retries
+
+    /// How many times a connection-class failure is retried inside the call
+    /// that produced it. Matches the ObjC client, which resent up to three
+    /// times (QNAPIClient.m:523-551, `tryCount < 3`) before giving up and
+    /// handing the request to the offline queue.
+    static let maxTransportRetries: Int = 3
+
+    /// The in-session backoff is capped: the caller is usually blocked on this
+    /// request (a purchase report, a paywall load), so a network that is
+    /// genuinely down must fail fast enough to be handled, not hang the flow.
+    /// The ObjC client retried with no delay at all.
+    static let defaultTransportRetryDelayCeiling: TimeInterval = 2
+
+    /// Counts the sends one process() call made, so a request queued after the
+    /// in-session retries continues the true attempt sequence.
+    // @unchecked: the counter is lock-guarded; the retry loop and the caller
+    // touch it from the same task, the lock is belt and braces.
+    final class AttemptCounter: @unchecked Sendable {
+
+        private let lock = NSLock()
+        private var _total: Int = 0
+
+        var total: Int {
+            lock.lock()
+            defer { lock.unlock() }
+            return max(_total, 1)
+        }
+
+        func record(_ attempt: Int) {
+            lock.lock()
+            _total = max(_total, attempt)
+            lock.unlock()
+        }
+    }
+
+    /// A failure with no response at all: the request never reached the
+    /// backend, so resending it cannot duplicate anything. The first five are
+    /// the connection-class URLErrors; the last two are the extra codes the
+    /// ObjC client also treated as "no transport" (QNUtils.m:106-116).
+    static func isTransportFailure(_ error: Error) -> Bool {
+        guard let urlError = error as? URLError else { return false }
+
+        switch urlError.code {
+        case .notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotConnectToHost, .dnsLookupFailed,
+             .callIsActive, .dataNotAllowed:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Retries ONLY when no response was received. Once the backend answered —
+    /// with any status — the request is delivered and resending it would
+    /// duplicate the work; those statuses are handled by the caller and, for
+    /// the retriable kinds, by the offline queue.
+    ///
+    /// The rate limiter and the critical-error latch are deliberately outside
+    /// this loop: a retry is not a new call.
+    private func sendWithTransportRetries(_ request: URLRequest, attemptsMade: AttemptCounter) async throws -> (Data, URLResponse) {
+        var attempt: Int = 1
+        var attemptedRequest: URLRequest = request
+
+        while true {
+            // Like the ObjC client, the backend is told which attempt this is.
+            attemptedRequest.setValue("\(attempt)", forHTTPHeaderField: Self.attemptHeader)
+            attemptsMade.record(attempt)
+
+            do {
+                return try await networkProvider.send(request: attemptedRequest)
+            } catch {
+                guard attempt <= Self.maxTransportRetries, Self.isTransportFailure(error) else { throw error }
+
+                do {
+                    try await waitBeforeRetry(number: attempt)
+                } catch {
+                    // Cancelled while backing off: surface the transport
+                    // failure rather than starting another attempt.
+                    throw error
+                }
+                attempt += 1
+            }
+        }
+    }
+
+    private func waitBeforeRetry(number: Int) async throws {
+        guard transportRetryDelayCeiling > 0 else { return }
+
+        let calculated: Int = delayCalculator.countDelay(minDelay: 0, retriesCount: number)
+        let delay: TimeInterval = min(TimeInterval(calculated), transportRetryDelayCeiling)
+        guard delay > 0 else { return }
+
+        try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
     }
 }

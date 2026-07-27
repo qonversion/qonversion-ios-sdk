@@ -35,6 +35,11 @@ extension Qonversion {
 
 typealias LogLevel = Qonversion.LogLevel
 
+/// Receives every message the SDK emits, in addition to the unified log.
+/// The unified log cannot be read back in-process, so this is how a test
+/// asserts that a diagnostic actually reached the developer.
+typealias LogSink = @Sendable (LogLevel, String) -> Void
+
 // @unchecked: immutable after init; os.Logger is thread-safe.
 final class LoggerWrapper: @unchecked Sendable {
     
@@ -43,16 +48,19 @@ final class LoggerWrapper: @unchecked Sendable {
     let _logger: Any?
     
     let logLevel: LogLevel
-    
+    private let sink: LogSink?
+
     @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
     init(logger: Logger?, logLevel: LogLevel) {
         self._logger = logger
         self.logLevel = logLevel
+        self.sink = nil
     }
-    
-    init() {
+
+    init(logLevel: LogLevel = .verbose, sink: LogSink? = nil) {
         self._logger = nil
-        self.logLevel = .verbose
+        self.logLevel = logLevel
+        self.sink = sink
     }
 
     /// The SDK's logger with the given severity floor. Used by the assembly
@@ -97,7 +105,9 @@ extension LoggerWrapper {
     
     private func log(_ message: String, level: LogLevel) {
         guard logLevel.rawValue <= level.rawValue else { return }
-        
+
+        sink?(level, message)
+
         if #available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *), let logger {
             var osLevel: OSLogType = .info
             switch level {

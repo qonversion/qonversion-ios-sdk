@@ -257,6 +257,8 @@ if let premium = entitlements["premium"], premium.active {
 }
 ```
 
+Call it as often as you need — on every screen, on every appearance. A backend answer is served straight from the cache for five minutes, concurrent calls share a single request, and the cache is refreshed early if it holds an entitlement that has passed its own expiration.
+
 | Field | Meaning |
 |---|---|
 | `active` | Whether the access is currently granted. The only field you need for gating. |
@@ -270,7 +272,7 @@ if let premium = entitlements["premium"], premium.active {
 ```json
 {
     "products": [
-        {"id": "pro_monthly", "apple_product_id": "com.app.pro.monthly"}
+        {"id": "pro_monthly", "store_id": "com.app.pro.monthly"}
     ],
     "products_permissions": {
         "pro_monthly": ["premium"]
@@ -283,6 +285,8 @@ if let premium = entitlements["premium"], premium.active {
     ]
 }
 ```
+
+The App Store id may also be spelled `apple_product_id` — both keys are read, `store_id` first. Sections and rows are parsed independently, so one malformed row costs you that row and nothing else.
 
 The same file also answers `remoteConfig()` calls when the API is unreachable — bundle the configs your launch screens depend on.
 
@@ -362,9 +366,9 @@ The SDK reports these purchases for analytics and never finishes the transaction
 Properties power segmentation in analytics and are passed to integrations (AppsFlyer, Adjust, Firebase, etc.). They are batched and sent with a small delay:
 
 ```swift
-Qonversion.shared.setUserProperty("test@example.com", key: .email)
-Qonversion.shared.setUserProperty("af_id_123", key: .appsFlyerUserId)
-Qonversion.shared.setCustomUserProperty("gold", key: "tier")
+Qonversion.shared.setUserProperty(key: .email, value: "test@example.com")
+Qonversion.shared.setUserProperty(key: .appsFlyerUserId, value: "af_id_123")
+Qonversion.shared.setCustomUserProperty(key: "tier", value: "gold")
 
 let properties = try await Qonversion.shared.userProperties()
 ```

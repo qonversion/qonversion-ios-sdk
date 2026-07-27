@@ -77,9 +77,27 @@ final class MockNetworkProvider: NetworkProviderInterface {
         _sentRequests.append(request)
     }
 
+    /// Errors handed out one per send, before `error`: lets a test make the
+    /// transport fail and then recover.
+    var errorSequence: [Error?] = []
+
     func send(request: URLRequest) async throws -> (Data, URLResponse) {
         record(request)
         await onSend?()
+
+        providerStateLock.lock()
+        var scripted: Error?? = Error??.none
+        if !errorSequence.isEmpty {
+            scripted = Error??.some(errorSequence.removeFirst())
+        }
+        providerStateLock.unlock()
+
+        if let scriptedOutcome: Error? = scripted {
+            if let scriptedError: Error = scriptedOutcome { throw scriptedError }
+
+            return (responseData, response)
+        }
+
         if let error { throw error }
         return (responseData, response)
     }
@@ -196,7 +214,8 @@ final class MockRequestsStorage: RequestsStorageInterface {
     private(set) var cleanCallsCount = 0
     private(set) var cleanGeneration = 0
 
-    func append(_ request: StoredRequest) {
+    func append(_ request: StoredRequest, ifGenerationIs generation: Int) {
+        guard cleanGeneration == generation else { return }
         if let dedupKey = request.dedupKey, storedRequests.contains(where: { $0.dedupKey == dedupKey }) {
             return
         }
@@ -624,6 +643,8 @@ final class MockUserService: UserServiceInterface {
     var userResult: Qonversion.User?
     var createUserResult: Qonversion.User?
     var error: Error?
+    /// Fails user() only, leaving the creation gate healthy.
+    var userError: Error?
     var generatedUserId = "QON_test_generated"
 
     // Identity stubs
@@ -649,6 +670,7 @@ final class MockUserService: UserServiceInterface {
     func user() async throws -> Qonversion.User {
         userCallsCount += 1
         callLog.append("user")
+        if let userError { throw userError }
         if let error { throw error }
         guard let userResult else { throw MockError.noStub }
         return userResult

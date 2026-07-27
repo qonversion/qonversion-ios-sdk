@@ -17,8 +17,15 @@ final class RateLimiter: RateLimiterInterface, @unchecked Sendable {
     // is a read-modify-write over the shared map.
     private let lock = NSLock()
 
-    init(maxRequestsPerSecond: UInt) {
+    /// `now` is injectable so the sliding window can be pinned deterministically
+    /// in tests: asserting "exactly N admissions" against the wall clock turns
+    /// into a race the moment the machine is loaded and the batch straddles a
+    /// window boundary.
+    private let now: @Sendable () -> TimeInterval
+
+    init(maxRequestsPerSecond: UInt, now: @escaping @Sendable () -> TimeInterval = { Date().timeIntervalSince1970 }) {
         self.maxRequestsPerSecond = maxRequestsPerSecond
+        self.now = now
     }
 
     func validateRateLimit(for request: Request) -> QonversionError? {
@@ -44,7 +51,7 @@ final class RateLimiter: RateLimiterInterface, @unchecked Sendable {
 extension RateLimiter {
     
     private func saveRequest(hash: Int) {
-        let timestamp: TimeInterval = Date().timeIntervalSince1970
+        let timestamp: TimeInterval = now()
 
         if requests[hash] == nil {
             requests[hash] = []
@@ -64,7 +71,7 @@ extension RateLimiter {
     private func removeOutdatedRequests(hash: Int) {
         guard let requestTimestamps: [TimeInterval] = requests[hash] else { return }
 
-        let timestamp: TimeInterval = Date().timeIntervalSince1970
+        let timestamp: TimeInterval = now()
         var filteredRequestTimestamps: [TimeInterval] = []
         for requestTimestamp in requestTimestamps.reversed() {
             if timestamp - requestTimestamp < 1 /* sec */ {
@@ -83,12 +90,12 @@ extension RateLimiter {
     /// window. Runs at most once per 10 seconds — the map stays bounded by
     /// the actual request rate instead of the request history.
     private func pruneStaleBucketsIfNeeded() {
-        let now: TimeInterval = Date().timeIntervalSince1970
-        guard now - lastGlobalPrune > 10 else { return }
-        lastGlobalPrune = now
+        let currentTime: TimeInterval = now()
+        guard currentTime - lastGlobalPrune > 10 else { return }
+        lastGlobalPrune = currentTime
 
         for (hash, timestamps) in requests {
-            if (timestamps.last ?? 0) < now - 1 {
+            if (timestamps.last ?? 0) < currentTime - 1 {
                 requests[hash] = nil
             }
         }

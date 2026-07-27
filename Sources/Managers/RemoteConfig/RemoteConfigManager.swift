@@ -70,9 +70,23 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
             let task: Task<Qonversion.RemoteConfig, Error> = joinedLoadTask(for: finalKey, contextKey: contextKey)
             defer { clearLoadTask(task, for: finalKey) }
 
-            return try await task.value
+            do {
+                return try await task.value
+            } catch {
+                // userDidChange cancels the loads of the previous user. A bare
+                // CancellationError is a Swift runtime type: it must never
+                // reach the host through a public API that documents
+                // QonversionError.
+                throw error.classifiedForPublicAPI
+            }
         } catch {
-            guard error.allowsLocalEntitlementsFallback, let fallback: Qonversion.RemoteConfig = fallbackRemoteConfig(for: finalKey) else { throw error }
+            // Cancellation is checked FIRST: a load the SDK abandoned because
+            // the user switched has no answer, and serving the bundled
+            // fallback instead would hand the caller a config for a user that
+            // is no longer current. URLError(.cancelled) satisfies
+            // allowsLocalEntitlementsFallback, so the order matters here.
+            guard !error.isCancellation else { throw error.classifiedForPublicAPI }
+            guard error.allowsLocalEntitlementsFallback, let fallback: Qonversion.RemoteConfig = fallbackRemoteConfig(for: finalKey) else { throw error.classifiedForPublicAPI }
 
             logger.warning("Remote config request failed, using the bundled fallback file: " + error.message)
             return fallback
@@ -95,6 +109,11 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
             // Snapshotted right before the request, like every other loader.
             let generation: Int = self.currentGeneration()
             let remoteConfig: Qonversion.RemoteConfig = try await self.remoteConfigService.loadRemoteConfig(contextKey: contextKey)
+            // Abandoned by a user switch while the request was in flight: this
+            // config was computed for the previous user, so it is neither
+            // cached nor returned. The awaiter gets a classified
+            // QonversionError, never a bare CancellationError.
+            try Task.checkCancellation()
             self.cacheConfig(remoteConfig, for: key, ifGenerationIs: generation)
 
             return remoteConfig
@@ -135,7 +154,8 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
             handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
             return remoteConfigList
         } catch {
-            guard error.allowsLocalEntitlementsFallback, let configs: [Qonversion.RemoteConfig] = fallbackService.obtainFallbackData()?.remoteConfigs else { throw error }
+            guard !error.isCancellation else { throw error.classifiedForPublicAPI }
+            guard error.allowsLocalEntitlementsFallback, let configs: [Qonversion.RemoteConfig] = fallbackService.obtainFallbackData()?.remoteConfigs else { throw error.classifiedForPublicAPI }
 
             logger.warning("Remote config list request failed, using the bundled fallback file: " + error.message)
             return Qonversion.RemoteConfigList(remoteConfigs: configs)
@@ -168,7 +188,8 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
             handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
             return remoteConfigList
         } catch {
-            guard error.allowsLocalEntitlementsFallback, let allConfigs: [Qonversion.RemoteConfig] = fallbackService.obtainFallbackData()?.remoteConfigs else { throw error }
+            guard !error.isCancellation else { throw error.classifiedForPublicAPI }
+            guard error.allowsLocalEntitlementsFallback, let allConfigs: [Qonversion.RemoteConfig] = fallbackService.obtainFallbackData()?.remoteConfigs else { throw error.classifiedForPublicAPI }
 
             logger.warning("Remote config list request failed, using the bundled fallback file: " + error.message)
             let matching: [Qonversion.RemoteConfig] = allConfigs.filter { config in

@@ -43,7 +43,7 @@ final class RequestProcessorTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeProcessor(retriableRequestKinds: [Request.Kind] = []) -> RequestProcessor {
+    private func makeProcessor(retriableRequestKinds: [Request.Kind] = [], reportsGate: TransactionReportsGate = TransactionReportsGate()) -> RequestProcessor {
         RequestProcessor(
             baseURL: baseURL,
             networkProvider: networkProvider,
@@ -52,8 +52,237 @@ final class RequestProcessorTests: XCTestCase {
             decoder: responseDecoder,
             retriableRequestKinds: retriableRequestKinds,
             requestsStorage: requestsStorage,
-            rateLimiter: rateLimiter
+            rateLimiter: rateLimiter,
+            delayCalculator: IncrementalDelayCalculator(),
+            // The backoff itself is proven by IncrementalDelayCalculatorTests;
+            // waiting it out here would only make the suite slow.
+            transportRetryDelayCeiling: 0,
+            reportsGate: reportsGate
         )
+    }
+
+    // MARK: - in-session transport retry (ObjC parity)
+
+    func testAConnectionFailureIsRetriedWithinTheSameCall() async throws {
+        // QNAPIClient.m:523-551 resent the request on a connection error
+        // instead of failing the caller on the first flap.
+        networkProvider.errorSequence = [URLError(.networkConnectionLost), nil]
+        networkProvider.responseData = Data("{\"id\": \"abc\"}".utf8)
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let processor = makeProcessor()
+
+        let result = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        XCTAssertEqual(result, ProcessorTestPayload(id: "abc"))
+        XCTAssertEqual(networkProvider.sentRequests.count, 2)
+    }
+
+    func testEveryConnectionClassErrorIsRetried() async throws {
+        let connectionErrors: [URLError.Code] = [.notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotConnectToHost, .dnsLookupFailed]
+
+        for code in connectionErrors {
+            networkProvider = MockNetworkProvider()
+            networkProvider.errorSequence = [URLError(code), nil]
+            networkProvider.responseData = Data("{\"id\": \"abc\"}".utf8)
+            networkProvider.response = makeHTTPResponse(statusCode: 200)
+            let processor = makeProcessor()
+
+            _ = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+            XCTAssertEqual(networkProvider.sentRequests.count, 2, "\(code) is a connection-class failure")
+        }
+    }
+
+    func testTheRetriesAreBounded() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor()
+
+        do {
+            _ = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+            XCTFail("Expected the transport error to surface")
+        } catch {
+            XCTAssertEqual((error as? QonversionError)?.type, .invalidResponse)
+        }
+
+        XCTAssertEqual(networkProvider.sentRequests.count, RequestProcessor.maxTransportRetries + 1,
+                       "a dead network must not be hammered without a bound")
+    }
+
+    func testEachRetryCarriesItsOwnAttemptNumber() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor()
+
+        _ = try? await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        let attempts: [String?] = networkProvider.sentRequests.map { $0.value(forHTTPHeaderField: "Attempt") }
+        XCTAssertEqual(attempts, ["1", "2", "3", "4"], "the backend counts the attempts, like the ObjC client did")
+    }
+
+    func testANonTransportErrorIsNotRetried() async {
+        networkProvider.error = MockError.stubbed
+        let processor = makeProcessor()
+
+        _ = try? await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 1, "only connection-class failures are retried")
+    }
+
+    func testAnErrorResponseIsNeverRetried() async {
+        // A response was received: the backend has the request, resending it
+        // would duplicate the work.
+        networkProvider.response = makeHTTPResponse(statusCode: 503)
+        errorHandler.errorToReturn = QonversionError(type: .internal)
+        let processor = makeProcessor()
+
+        _ = try? await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 1)
+    }
+
+    func testAnExhaustedRetryStillQueuesARetriableRequestOnce() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1, "the offline queue is fed once, after the retries are spent")
+    }
+
+    func testTheQueuedCopyContinuesTheAttemptSequence() async {
+        // The in-session retries already burned attempts against this request.
+        // Queueing it at attempt 1 would make the next session's replay claim
+        // attempt 2 for what is really the fifth send.
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(networkProvider.sentRequests.count, RequestProcessor.maxTransportRetries + 1)
+        XCTAssertEqual(requestsStorage.storedRequests.first?.attempt, RequestProcessor.maxTransportRetries + 1,
+                       "the replay must continue the true sequence")
+    }
+
+    func testAQueuedCopyWithoutRetriesStaysAtAttemptOne() async {
+        // A non-transport failure is not retried, so the count must not move.
+        networkProvider.response = makeHTTPResponse(statusCode: 503)
+        errorHandler.errorToReturn = QonversionError(type: .internal)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.first?.attempt, 1)
+    }
+
+    func testTheReplayedAttemptHeaderContinuesFromTheStoredCount() async throws {
+        // End to end: the queued attempt count becomes the next session's
+        // Attempt header.
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: body), responseType: EmptyApiResponse.self)
+
+        networkProvider = MockNetworkProvider()
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let replayProcessor = makeProcessor()
+        replayProcessor.processStoredRequests()
+        await waitUntil { !self.networkProvider.sentRequests.isEmpty }
+
+        let sent = try XCTUnwrap(networkProvider.sentRequests.first)
+        XCTAssertEqual(sent.value(forHTTPHeaderField: "Attempt"), "\(RequestProcessor.maxTransportRetries + 2)")
+    }
+
+    func testTheRateLimiterIsConsultedOncePerCallNotPerRetry() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor()
+
+        _ = try? await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        XCTAssertEqual(rateLimiter.validatedRequests.count, 1, "a retry is not a new call")
+    }
+
+    // MARK: - replay vs the concurrent unfinished-transaction sweep
+
+    func testTheReplaySkipsAnEntryRemovedWhileTheSnapshotWasBeingDrained() async {
+        // The snapshot is not the queue: the sweep delivering the same
+        // purchase evicts the queued copy while the previous entry is still
+        // in flight.
+        let first = StoredRequest(url: baseURL + "v4/users/u/purchases", method: "POST", body: nil, dedupKey: "first")
+        let second = StoredRequest(url: baseURL + "v4/users/u/devices", method: "POST", body: nil, dedupKey: "second")
+        requestsStorage.append(first)
+        requestsStorage.append(second)
+        let gate = ProcessorAsyncGate()
+        networkProvider.onSend = { await gate.wait() }
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let processor = makeProcessor()
+
+        processor.processStoredRequests()
+        await waitUntil { self.networkProvider.sentRequests.count == 1 }
+        requestsStorage.remove(second)
+        await gate.open()
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 1, "an entry no longer queued must not be resent")
+    }
+
+    func testTheReplaySkipsAPurchaseTheSweepAlreadyTook() async {
+        let reportsGate = TransactionReportsGate()
+        requestsStorage.append(StoredRequest(
+            url: baseURL + "v4/users/u/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-u-tx1",
+            transactionId: "tx1"
+        ))
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let processor = makeProcessor(reportsGate: reportsGate)
+        // The sweep got there first.
+        XCTAssertTrue(reportsGate.tryTake("tx1"))
+
+        processor.processStoredRequests()
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        XCTAssertTrue(networkProvider.sentRequests.isEmpty, "the sweep owns this transaction")
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1, "the entry stays queued for the sweep to evict on delivery")
+    }
+
+    func testADeliveredReplayKeepsTheTransactionTakenSoTheSweepSkipsIt() async {
+        let reportsGate = TransactionReportsGate()
+        requestsStorage.append(StoredRequest(
+            url: baseURL + "v4/users/u/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-u-tx1",
+            transactionId: "tx1"
+        ))
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let processor = makeProcessor(reportsGate: reportsGate)
+
+        processor.processStoredRequests()
+        await waitUntil { self.requestsStorage.storedRequests.isEmpty }
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 1)
+        XCTAssertFalse(reportsGate.tryTake("tx1"), "the sweep must not post the same purchase again")
+    }
+
+    func testAFailedReplayReleasesTheTransactionForTheSweep() async {
+        let reportsGate = TransactionReportsGate()
+        requestsStorage.append(StoredRequest(
+            url: baseURL + "v4/users/u/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-u-tx1",
+            transactionId: "tx1"
+        ))
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(reportsGate: reportsGate)
+
+        processor.processStoredRequests()
+        await waitUntil { self.requestsStorage.storedRequests.first?.attempt == 2 }
+
+        XCTAssertTrue(reportsGate.tryTake("tx1"), "an undelivered report must not block the sweep")
     }
 
     // MARK: - Attempt and Trigger headers (production parity)
@@ -349,6 +578,48 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(requestsStorage.storedRequests.first?.method, "POST")
         XCTAssertEqual(requestsStorage.storedRequests.first?.dedupKey, "createPurchase-u-t1",
                        "the transaction id keys the dedup so the same purchase never queues twice")
+    }
+
+    func testAFailedLiveRequestIsNotQueuedAfterAUserSwitch() async {
+        // The request left for the PREVIOUS uid; the switch cleaned the queue
+        // while it was in flight. Re-queueing it now would replay the previous
+        // user's purchase in the next session, under the new uid.
+        let gate = ProcessorAsyncGate()
+        networkProvider.onSend = { await gate.wait() }
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        let sending = Task {
+            _ = try? await processor.process(request: .createPurchase(userId: "OLD_UID", body: body), responseType: EmptyApiResponse.self)
+        }
+        await waitUntil { self.networkProvider.sentRequests.count == 1 }
+        requestsStorage.clean()
+        await gate.open()
+        _ = await sending.value
+
+        XCTAssertTrue(requestsStorage.storedRequests.isEmpty, "the entry belongs to the previous user")
+    }
+
+    func testARejectedLiveRequestIsNotQueuedAfterAUserSwitch() async {
+        // Same window, the 5xx branch: the backend answered "not processed"
+        // for a request that belongs to the previous user.
+        let gate = ProcessorAsyncGate()
+        networkProvider.onSend = { await gate.wait() }
+        networkProvider.response = makeHTTPResponse(statusCode: 503)
+        errorHandler.errorToReturn = QonversionError(type: .internal)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        let sending = Task {
+            _ = try? await processor.process(request: .createPurchase(userId: "OLD_UID", body: body), responseType: EmptyApiResponse.self)
+        }
+        await waitUntil { self.networkProvider.sentRequests.count == 1 }
+        requestsStorage.clean()
+        await gate.open()
+        _ = await sending.value
+
+        XCTAssertTrue(requestsStorage.storedRequests.isEmpty, "the entry belongs to the previous user")
     }
 
     func testSamePurchaseFailingTwiceIsQueuedOnce() async {

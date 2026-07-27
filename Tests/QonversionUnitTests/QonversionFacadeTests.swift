@@ -107,9 +107,9 @@ final class QonversionFacadeTests: XCTestCase {
     func testSyncMethodsAreNoOpsWhenUninitialized() {
         Qonversion.shared.collectAppleSearchAdsAttribution()
         Qonversion.shared.collectAdvertisingId()
-        Qonversion.shared.setUserProperty("test@qonversion.io", key: .email)
-        Qonversion.shared.setUserProperty("value", key: .custom)
-        Qonversion.shared.setCustomUserProperty("value", key: "custom_key")
+        Qonversion.shared.setUserProperty(key: .email, value: "test@qonversion.io")
+        Qonversion.shared.setUserProperty(key: .custom, value: "value")
+        Qonversion.shared.setCustomUserProperty(key: "custom_key", value: "value")
     }
 
     // MARK: - purchases guards

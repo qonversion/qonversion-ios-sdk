@@ -263,9 +263,32 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
     }
 
     func clearDelayedProperties() {
+        stateLock.lock()
+        // Nothing pending is owed to anybody any more: stop the delay timer and
+        // the round trip that would post the dropped batch.
+        sendingTask?.cancel()
+        sendingTask = nil
+        sendingInFlight?.cancel()
+        sendPropertiesRetryCount = 0
+        sendPropertiesRetryDelay = Constants.sendPropertiesMinDelaySec.rawValue
+        stateLock.unlock()
+
         propertiesStorage.clear()
     }
 
+}
+
+// MARK: - UserChangedObserver
+
+extension UserPropertiesManager: UserChangedObserver {
+
+    /// The pending batch belongs to the uid that queued it. A logout or an
+    /// identify resolving to another user must not let it be posted under the
+    /// new uid — the batch carries no uid of its own, the request takes
+    /// whatever the provider currently holds.
+    func userDidChange() {
+        clearDelayedProperties()
+    }
 }
 
 // MARK: - Private

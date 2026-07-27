@@ -2,8 +2,10 @@
 //  ResponseDecoderTests.swift
 //  QonversionUnitTests
 //
-//  Tests for the real ResponseDecoder configured like MiscAssembly.jsonDecoder():
-//  JSONDecoder with .secondsSince1970 date decoding strategy.
+//  Tests for the real ResponseDecoder built by the REAL MiscAssembly: pinning
+//  a decoder configured differently from production proves nothing about
+//  production. The date strategy under test is therefore .qonversionTolerant,
+//  which is what the SDK actually ships.
 //
 
 import XCTest
@@ -21,9 +23,9 @@ final class ResponseDecoderTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.dateDecodingStrategy = .secondsSince1970
-        decoder = ResponseDecoder(decoder: jsonDecoder)
+        let internalConfig = InternalConfig(userId: "")
+        let miscAssembly = MiscAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated(), internalConfig: internalConfig)
+        decoder = miscAssembly.responseDecoder() as? ResponseDecoder
     }
 
     override func tearDown() {
@@ -41,6 +43,24 @@ final class ResponseDecoderTests: XCTestCase {
         XCTAssertEqual(result.id, "abc")
         XCTAssertEqual(result.count, 7)
         XCTAssertEqual(result.created, Date(timeIntervalSince1970: 1_700_000_000))
+    }
+
+    func testDecodesRfc3339Dates() throws {
+        // The shape the v4 API actually sends; a .secondsSince1970 decoder
+        // would fail the whole payload on it.
+        let data = Data(#"{"id": "abc", "count": 1, "created": "2023-11-14T22:13:20Z"}"#.utf8)
+
+        let result = try decoder.decode(DecoderTestPayload.self, from: data)
+
+        XCTAssertEqual(result.created, Date(timeIntervalSince1970: 1_700_000_000))
+    }
+
+    func testDecodesRfc3339DatesWithFractionalSeconds() throws {
+        let data = Data(#"{"id": "abc", "count": 1, "created": "2023-11-14T22:13:20.500Z"}"#.utf8)
+
+        let result = try decoder.decode(DecoderTestPayload.self, from: data)
+
+        XCTAssertEqual(result.created.timeIntervalSince1970, 1_700_000_000.5, accuracy: 0.001)
     }
 
     func testDecodesFractionalSecondsDate() throws {
