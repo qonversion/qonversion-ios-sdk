@@ -34,6 +34,7 @@
 		A300000000000000000000B1 /* PurchasesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A1 /* PurchasesManager.swift */; };
 		C600000000000000000000B1 /* SDKVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C600000000000000000000A1 /* SDKVersion.swift */; };
 		CB00000000000000000000B1 /* IntegrationsInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */; };
+		AD00000000000000000000B1 /* AdvertisingIdReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD00000000000000000000A1 /* AdvertisingIdReader.swift */; };
 		C900000000000000000000B1 /* RequestTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C900000000000000000000A1 /* RequestTrigger.swift */; };
 		C800000000000000000000B1 /* IntroEligibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C800000000000000000000A1 /* IntroEligibility.swift */; };
 		C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */; };
@@ -275,6 +276,7 @@
 		A100000000000000000000A1 /* UserManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
 		C600000000000000000000A1 /* SDKVersion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SDKVersion.swift; sourceTree = "<group>"; };
 		CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegrationsInfoCollector.swift; sourceTree = "<group>"; };
+		AD00000000000000000000A1 /* AdvertisingIdReader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AdvertisingIdReader.swift; sourceTree = "<group>"; };
 		C900000000000000000000A1 /* RequestTrigger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestTrigger.swift; sourceTree = "<group>"; };
 		C800000000000000000000A1 /* IntroEligibility.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntroEligibility.swift; sourceTree = "<group>"; };
 		C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseAssociationsStorage.swift; sourceTree = "<group>"; };
@@ -785,6 +787,7 @@
 		70CD92D72BC6E22B0039D65C /* Device */ = {
 			isa = PBXGroup;
 			children = (
+				AD00000000000000000000A1 /* AdvertisingIdReader.swift */,
 				70CD92D32BC6E22B0039D65C /* DeviceInfoCollector.swift */,
 				CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */,
 				70CD92D42BC6E22B0039D65C /* DeviceInfoCollectorInterface.swift */,
@@ -1273,6 +1276,7 @@
 				70B4E9772BDAA7C300EE808C /* RemoteConfigServiceInterface.swift in Sources */,
 				70CD93242BC6E22B0039D65C /* StoreKitMapper.swift in Sources */,
 				70CD931C2BC6E22B0039D65C /* DeviceInfoCollector.swift in Sources */,
+				AD00000000000000000000B1 /* AdvertisingIdReader.swift in Sources */,
 				70CD93112BC6E22B0039D65C /* RequestType.swift in Sources */,
 				70CD92F92BC6E22B0039D65C /* Device.swift in Sources */,
 				70CD93152BC6E22B0039D65C /* RequestsStorageInterface.swift in Sources */,

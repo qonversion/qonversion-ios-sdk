@@ -245,6 +245,41 @@ whole call stack is scanned instead of stopping at the first app frame.
 Nothing is sent for your app's own crashes; a stack with no Qonversion frame is
 ignored.
 
+## IDFA and the Kids Category
+
+**Action required only if your app collects the advertising identifier.**
+
+The Objective-C SDK linked Apple's advertising framework, so every app that
+integrated it carried the reference — which is why the `Qonversion/NoIdfa`
+subspec existed as an opt-*out* for Kids Category apps and anyone else
+declaring no tracking.
+
+This SDK never links that framework. Nothing in the binary references it, and
+there is no separate product or build flag to pick: **kids apps need to do
+nothing at all**, and the `NoIdfa` subspec has no successor because it no longer
+has a job.
+
+Linking is now the opt-*in*, and it lives in your app instead of in the SDK. If
+your app collects the identifier, add the framework to your own target:
+
+- **Xcode:** target → *General* → *Frameworks, Libraries, and Embedded Content*
+  → **+** → `AdSupport.framework`.
+- **Swift Package Manager:** add `.linkedFramework("AdSupport")` to your
+  target's `linkerSettings`.
+
+The SDK picks the framework up at run time and reads the identifier through it.
+No API changed: `collectAdvertisingId()` keeps its signature and its meaning,
+the identifier still respects App Tracking Transparency, and the SDK still
+reports none when the user has not granted the permission. The only difference
+is that with the framework absent the identifier is simply never available —
+silently, with no error and no crash.
+
+| Objective-C SDK | Swift SDK |
+|---|---|
+| `pod 'Qonversion'` linked the advertising framework for you | Never linked — link it in your app target if you want the identifier |
+| `pod 'Qonversion/NoIdfa'` to opt out | Removed — not linking is the default |
+| `collectAdvertisingId()` | Unchanged; a no-op when your app does not link the framework |
+
 ## NoCodes
 
 NoCodes screens are part of this SDK, as a separate `NoCodes` library in the same package — add it to your app target next to `Qonversion` and `import NoCodes`. In the Objective-C SDK the module was compiled into the main framework, so the only integration change is the extra product and import.

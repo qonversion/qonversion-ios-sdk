@@ -8,10 +8,6 @@
 
 import Foundation
 
-#if canImport(AdSupport)
-import AdSupport
-#endif
-
 #if os(iOS)
 import UIKit
 #elseif os(macOS)
@@ -38,6 +34,13 @@ private let OsName = "iOS"
 #endif
 
 final class DeviceInfoCollector: DeviceInfoCollectorInterface {
+
+    private let advertisingIdReader: AdvertisingIdReader
+
+    init() {
+        let advertisingIdReader = AdvertisingIdReader()
+        self.advertisingIdReader = advertisingIdReader
+    }
 
     func deviceInfo() -> Device {
         // Built fresh on every call: advertisingId (ATT grant), locale and
@@ -83,19 +86,11 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         return headerDeviceInfo
     }
 
+    /// Nil unless the host app links Apple's advertising framework itself and
+    /// the user authorised tracking — see `AdvertisingIdReader` for why the SDK
+    /// never links it.
     func advertisingId() -> String? {
-        var result: String? = nil
-
-        #if canImport(AdSupport)
-        let advertisingId: UUID = ASIdentifierManager.shared().advertisingIdentifier
-        result = advertisingId.uuidString
-
-        if result == "00000000-0000-0000-0000-000000000000" {
-            result = nil
-        }
-        #endif
-
-        return result
+        return advertisingIdReader.advertisingId()
     }
 
     private func osVersion() -> String {

@@ -386,6 +386,19 @@ Qonversion.shared.collectAppleSearchAdsAttribution()
 Qonversion.shared.collectAdvertisingId()
 ```
 
+### IDFA and the Kids Category
+
+**The SDK never links Apple's advertising framework.** Nothing in the binary references it, so adding Qonversion does not make your app look like it collects the advertising identifier. Apps for the Kids Category, and any app that declares no tracking, can integrate the SDK as is — there is nothing to disable and nothing to configure.
+
+If you *do* want the advertising identifier collected, link the framework in your own app target:
+
+- **Xcode:** target → *General* → *Frameworks, Libraries, and Embedded Content* → **+** → `AdSupport.framework`.
+- **Swift Package Manager:** add `.linkedFramework("AdSupport")` to your target's `linkerSettings`.
+
+The SDK detects the framework at run time and reads the identifier through it, exactly as before. Nothing else changes: `collectAdvertisingId()` keeps the same signature, the identifier still respects App Tracking Transparency, and when the user has not granted the permission the SDK reports no identifier at all.
+
+> Migrating from the Objective-C SDK? The `Qonversion/NoIdfa` subspec is gone and no longer needed — it was the opt-*out*; not linking the framework is now the default, and linking it is the opt-*in*.
+
 ### Remote config
 
 Remote config delivers JSON payloads controlled from the Dashboard and powers A/B experiments — paywall copy, feature flags, pricing tests:
