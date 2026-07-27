@@ -781,6 +781,31 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(receivedPurchases.first?.transaction.id, "early-1")
     }
 
+    func testALiveEntitlementsSubscriberDoesNotConsumeTheBacklogOfALaterSubscriber() async {
+        // The exact shape the Sample and the README show: the host subscribes
+        // to entitlementsUpdates() first and KEEPS the stream alive, then
+        // subscribes to deferredPurchases() later. The launch backlog must
+        // still be waiting for the second subscription.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        let projection = StreamCollector(manager.entitlementsUpdates())
+        // Let the projection actually attach before the launch emission.
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        manager.transactionUpdated(makeTransaction(id: "early-1"))
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+        await waitUntil { await !projection.received.isEmpty }
+
+        let purchases = StreamCollector(manager.deferredPurchases())
+
+        await waitUntil { await !purchases.received.isEmpty }
+        let received = await purchases.received
+        XCTAssertEqual(received.first?.transaction.id, "early-1")
+        let projectionReceived = await projection.received
+        XCTAssertEqual(projectionReceived.count, 1, "the live subscriber must not be replayed its own value")
+    }
+
     func testAProjectionThatIsNeverIteratedDoesNotConsumeTheBacklog() async {
         manager = makeManager(launchMode: .subscriptionManagement)
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]

@@ -89,11 +89,11 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     /// modes.
     // Buffered: an Ask to Buy approval processed during launch, before the
     // host subscribes, must not be dropped.
-    private let deferredPurchasesMulticast = AsyncMulticast<Qonversion.DeferredPurchase>(buffersWhenNoSubscribers: true)
+    private let deferredPurchasesMulticast = AsyncMulticast<Qonversion.DeferredPurchase>(replaysBacklog: true)
 
     /// Emits App Store promoted-purchase intents. Buffered until the first
     /// subscriber — an intent arriving at app start must not be lost.
-    private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(buffersWhenNoSubscribers: true)
+    private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(replaysBacklog: true)
 
     func deferredPurchases() -> AsyncStream<Qonversion.DeferredPurchase> {
         return deferredPurchasesMulticast.stream()
@@ -103,9 +103,11 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     /// subscription of its own, so both streams stay independent.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
         return AsyncStream { continuation in
-            // Subscribed lazily, inside the closure: building the projection
-            // must not start consuming — a stream created and only iterated
-            // later would otherwise take the launch backlog with it.
+            // The projection attaches while this AsyncStream is being built,
+            // i.e. synchronously from entitlementsUpdates(). That is safe:
+            // AsyncMulticast replays its backlog to every subscriber that
+            // arrives inside the replay window, so taking this subscription
+            // first does not consume what deferredPurchases() is owed.
             let purchases: AsyncStream<Qonversion.DeferredPurchase> = self.deferredPurchasesMulticast.stream()
             let task = Task {
                 for await purchase in purchases {
