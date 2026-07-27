@@ -34,6 +34,16 @@ final class QonversionFacadeTests: XCTestCase {
         }
     }
 
+    // MARK: - Silent no-ops when uninitialized
+
+    func testForceSendPropertiesIsANoOpWhenUninitialized() async {
+        await Qonversion.shared.forceSendProperties()
+    }
+
+    func testIsFallbackFileAccessibleIsFalseWhenUninitialized() {
+        XCTAssertFalse(Qonversion.shared.isFallbackFileAccessible())
+    }
+
     // MARK: - Async methods throw initialization error when uninitialized
 
     func testUserPropertiesThrowsInitializationError() async {

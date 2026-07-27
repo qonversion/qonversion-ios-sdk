@@ -189,6 +189,24 @@ public final class Qonversion: @unchecked Sendable {
         return try await entitlementsManager.entitlements()
     }
 
+    /// Sends all the properties set since the last batch right away, without
+    /// waiting for the batching delay. Delivery failures are retried by the
+    /// SDK automatically.
+    public func forceSendProperties() async {
+        guard let userPropertiesManager else { return }
+
+        try? await userPropertiesManager.sendProperties()
+    }
+
+    /// Whether the bundled fallback file (`qonversion_ios_fallbacks.json`) is
+    /// present in the app bundle and parses. Use in debug builds to verify the
+    /// offline fallback setup.
+    public func isFallbackFileAccessible() -> Bool {
+        guard let productsManager else { return false }
+
+        return productsManager.isFallbackFileAccessible()
+    }
+
     /// Collects Apple Search Ads Attribution data
     /// Available only for iOS 14.3+
     /// See details in the [Apple official documentation](https://developer.apple.com/documentation/iad/setting-up-apple-search-ads-attribution)

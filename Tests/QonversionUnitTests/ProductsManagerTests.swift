@@ -51,6 +51,20 @@ final class ProductsManagerTests: XCTestCase {
         return Qonversion.Product(qonversionId: qonversionId, storeId: storeId, offeringId: nil)
     }
 
+    // MARK: - Fallback file accessibility
+
+    func testFallbackFileAccessibleWhenBundledDataParses() {
+        fallbackService.fallbackData = FallbackData(products: nil, productsPermissions: ["pro": ["premium"]])
+
+        XCTAssertTrue(manager.isFallbackFileAccessible())
+    }
+
+    func testFallbackFileNotAccessibleWithoutBundledData() {
+        fallbackService.fallbackData = nil
+
+        XCTAssertFalse(manager.isFallbackFileAccessible())
+    }
+
     // MARK: - In-memory cache
 
     func testProductsReturnsInMemoryCacheWithoutServiceCall() async throws {

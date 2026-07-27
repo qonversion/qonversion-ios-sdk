@@ -14,4 +14,7 @@ protocol ProductsManagerInterface {
     /// Fetches the product → permissions mapping and refreshes the persistent
     /// cache on every success; on failure the previously cached mapping stays.
     func loadProductPermissions() async
+
+    /// Whether the bundled fallback file is present and parses.
+    func isFallbackFileAccessible() -> Bool
 }

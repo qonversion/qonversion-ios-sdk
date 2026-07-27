@@ -636,6 +636,10 @@ final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
         loadPermissionsCallsCount += 1
     }
 
+    var fallbackFileAccessible = false
+
+    func isFallbackFileAccessible() -> Bool { fallbackFileAccessible }
+
     func cachedProductPermissions() -> [String: [String]]? { cachedMapping }
 
     func cachedProducts() -> [Qonversion.Product] { cachedProductsResult }
