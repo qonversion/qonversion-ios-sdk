@@ -8,8 +8,12 @@
 import Foundation
 import StoreKit
 
-protocol StoreKitWrapperInterface: Sendable {
-    
+protocol StoreKitWrapperInterface: AnyObject, Sendable {
+
+    /// The receiver of promoted-purchase intents. Weak on implementations —
+    /// the delegate (the facade) owns the wrapper.
+    var delegate: StoreKitWrapperDelegate? { get set }
+
     func purchase(product: StoreKit.Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction
     
     func products(for ids:[String]) async throws -> [StoreKit.Product]

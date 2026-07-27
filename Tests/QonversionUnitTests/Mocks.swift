@@ -357,6 +357,8 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
 /// by the test through `emitUpdate`/`finishUpdates`.
 final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
 
+    weak var delegate: StoreKitWrapperDelegate?
+
     // The SDK's detached tasks mutate this mock while the test thread polls
     // it — the hot members are lock-guarded.
     private let stateLock = NSLock()

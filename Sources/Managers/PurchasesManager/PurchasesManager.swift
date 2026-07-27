@@ -168,8 +168,12 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
         }
 
-        // Finish strictly after the backend confirmed the purchase.
-        await storeKitFacade.finish(transaction)
+        // Finish strictly after the backend confirmed the purchase, and only
+        // in subscription-management mode — in Analytics mode the host app
+        // owns the transaction lifecycle.
+        if launchModeProvider.launchMode == .subscriptionManagement {
+            await storeKitFacade.finish(transaction)
+        }
 
         // A reported purchase must not fail because of the entitlements fetch.
         let entitlements: [String: Qonversion.Entitlement]

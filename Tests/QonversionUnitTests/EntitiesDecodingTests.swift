@@ -175,9 +175,9 @@ final class EntitiesDecodingTests: XCTestCase {
 
 
     func testRemoteConfigDecodingWithExperiment() throws {
-        // Fixates current behavior: Experiment has NO custom CodingKeys, so JSON
-        // must use Swift property names ("identifier", not "uid"/snake_case).
-        let experiment = #"{"identifier": "exp_1", "name": "Experiment", "group": {"name": "Control", "identifier": "group_1", "type": "control"}}"#
+        // The backend sends the experiment and its group identifier as "uid",
+        // exactly like the remote config source does.
+        let experiment = #"{"uid": "exp_1", "name": "Experiment", "group": {"name": "Control", "uid": "group_1", "type": "control"}}"#
         let json = remoteConfigJSON(experiment: experiment)
 
         let remoteConfig = try decode(Qonversion.RemoteConfig.self, json)
@@ -200,7 +200,7 @@ final class EntitiesDecodingTests: XCTestCase {
     }
 
     func testUnknownExperimentGroupTypeFallsBackToUnknown() throws {
-        let json = #"{"identifier": "exp_3", "name": "Exp", "group": {"name": "G", "identifier": "g1", "type": "brand_new_group_type"}}"#
+        let json = #"{"uid": "exp_3", "name": "Exp", "group": {"name": "G", "uid": "g1", "type": "brand_new_group_type"}}"#
 
         let experiment = try JSONDecoder.qonversionTest.decode(Qonversion.Experiment.self, from: Data(json.utf8))
 
@@ -210,11 +210,22 @@ final class EntitiesDecodingTests: XCTestCase {
     // MARK: - Experiment
 
     func testExperimentDecodingTreatmentGroup() throws {
-        let json = #"{"identifier": "exp_2", "name": "Exp", "group": {"name": "Treatment", "identifier": "group_2", "type": "treatment"}}"#
+        let json = #"{"uid": "exp_2", "name": "Exp", "group": {"name": "Treatment", "uid": "group_2", "type": "treatment"}}"#
 
         let experiment = try decode(Qonversion.Experiment.self, json)
 
+        XCTAssertEqual(experiment.identifier, "exp_2")
+        XCTAssertEqual(experiment.group.identifier, "group_2")
         XCTAssertEqual(experiment.group.type, .treatment)
+    }
+
+    func testExperimentDecodingRejectsTheSwiftPropertyNameAsKey() {
+        // Regression: "identifier" is a Swift property name, never a wire key —
+        // decoding it would mean the SDK is reading a payload the backend
+        // does not send.
+        let json = #"{"identifier": "exp_4", "name": "Exp", "group": {"name": "G", "identifier": "g", "type": "control"}}"#
+
+        XCTAssertThrowsError(try decode(Qonversion.Experiment.self, json))
     }
 
     // MARK: - RemoteConfigList

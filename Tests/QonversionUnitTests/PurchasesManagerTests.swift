@@ -124,6 +124,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testPurchaseGoesGateStorePurchaseReportFinishAndReturnsEntitlements() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
         facade.purchaseResult = makeTransaction(id: "t1")
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
 
@@ -139,6 +140,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testPurchaseFinishHappensAfterReportNotBefore() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
         facade.purchaseResult = makeTransaction(id: "t1")
         var finishedAtSendTime = false
         service.onSend = { [weak self] in
@@ -149,6 +151,29 @@ final class PurchasesManagerTests: XCTestCase {
 
         XCTAssertFalse(finishedAtSendTime, "the transaction must NOT be finished before the backend report")
         XCTAssertEqual(facade.finishedTransactions.count, 1)
+    }
+
+    func testPurchaseDoesNotFinishTheTransactionInAnalyticsMode() async throws {
+        // In Analytics mode the host app owns the transaction lifecycle —
+        // finishing it here would leave the app unable to process the purchase.
+        manager = makeManager(launchMode: .analytics)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "the purchase is still reported")
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+    }
+
+    func testPurchaseFinishesTheTransactionInSubscriptionManagementMode() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"])
     }
 
     // MARK: - purchase options
@@ -226,6 +251,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testEntitlementsFetchFailureAfterSuccessfulReportFallsBackLocally() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
         facade.purchaseResult = makeTransaction(id: "t1")
         entitlementsManager.entitlementsError = QonversionError(type: .critical)
         entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
@@ -592,6 +618,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testIntentPurchaseRunsTheFullPurchaseFlow() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
         facade.purchaseResult = makeTransaction(id: "t1", productId: "com.app.promo")
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
         let collector = StreamCollector(manager.promoPurchaseIntents())
