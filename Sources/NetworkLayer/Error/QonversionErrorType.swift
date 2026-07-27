@@ -15,7 +15,6 @@ public enum QonversionErrorType: Sendable {
     case authorizationFailed
     case critical
     case rateLimitExceeded
-    case storeKitUnavailable
     case userLoadingFailed
     case userCreationFailed
     case deviceCreationFailed
@@ -40,6 +39,7 @@ public enum QonversionErrorType: Sendable {
     case promoPurchaseIntentAlreadyHandled
     case restoreFailed
     case purchaseCancelled
+    case purchaseInProgress
     case purchasePending
     case purchaseFailed
     case transactionVerificationFailed
@@ -67,6 +67,8 @@ public enum QonversionErrorType: Sendable {
             return "Failed to restore purchases"
         case .purchaseCancelled:
             return "The user canceled the purchase"
+        case .purchaseInProgress:
+            return "A purchase of this product is already in progress"
         case .purchasePending:
             return "The purchase is pending an external action (Ask to Buy / SCA)"
         case .purchaseFailed:

@@ -13,43 +13,12 @@ import XCTest
 
 final class PurchasesServiceTests: XCTestCase {
 
-    private var receiptFetcher: MockReceiptFetcher!
+    // MARK: - proof of purchase
 
-    override func setUp() {
-        super.setUp()
-        receiptFetcher = MockReceiptFetcher()
-    }
-
-    override func tearDown() {
-        receiptFetcher = nil
-        super.tearDown()
-    }
-
-    // MARK: - StoreKit 1 proof of purchase
-
-    func testStoreKitOneReportCarriesTheAppReceipt() async throws {
-        // An SK1 transaction has no jws — the base64 app receipt is the only
-        // proof of purchase the backend can verify.
+    func testReportCarriesTheJwsProof() async throws {
         let processor = MockRequestProcessor()
         processor.results = [PurchaseReportResponse(userId: nil)]
-        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app", receiptFetcher: receiptFetcher)
-        receiptFetcher.receipt = "base64-app-receipt"
-        let transaction = Qonversion.Transaction(id: "t1", originalId: "t1", productId: "com.app.pro", jws: nil)
-
-        try await service.send(transaction, userId: "user_abc", options: nil, trigger: .purchase)
-
-        guard case let .createPurchase(_, _, body, _) = processor.processedRequests[0] else {
-            return XCTFail("Expected a .createPurchase request")
-        }
-        let storeData = body["store_data"] as? RequestBodyDict
-        XCTAssertEqual(storeData?["receipt"] as? String, "base64-app-receipt")
-    }
-
-    func testStoreKitTwoReportPrefersJwsAndSkipsReceiptFetch() async throws {
-        let processor = MockRequestProcessor()
-        processor.results = [PurchaseReportResponse(userId: nil)]
-        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app", receiptFetcher: receiptFetcher)
-        receiptFetcher.receipt = "base64-app-receipt"
+        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
         let transaction = Qonversion.Transaction(id: "t1", originalId: "t1", productId: "com.app.pro", jws: "signed-jws")
 
         try await service.send(transaction, userId: "user_abc", options: nil, trigger: .purchase)
@@ -59,11 +28,10 @@ final class PurchasesServiceTests: XCTestCase {
         }
         let storeData = body["store_data"] as? RequestBodyDict
         XCTAssertEqual(storeData?["receipt"] as? String, "signed-jws")
-        XCTAssertEqual(receiptFetcher.fetchCallsCount, 0)
     }
 
     private func makeService(_ processor: MockRequestProcessor) -> PurchasesService {
-        PurchasesService(requestProcessor: processor, appBundleId: "com.test.app", receiptFetcher: receiptFetcher)
+        PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
     }
 
     private func makeTransaction(
@@ -180,7 +148,7 @@ final class PurchasesServiceTests: XCTestCase {
             nonce: nonce.uuidString,
             timestamp: "1700000000000"
         )]
-        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app", receiptFetcher: receiptFetcher)
+        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
 
         let offer = try await service.promotionalOffer(userId: "QON_buyer", offerId: "offer1", productStoreId: "com.app.pro")
 
@@ -205,7 +173,7 @@ final class PurchasesServiceTests: XCTestCase {
     func testPromotionalOfferWithMalformedSignatureThrows() async {
         let processor = MockRequestProcessor()
         processor.results = [PromoOfferSignatureResponse(keyIdentifier: "KEY123", signature: "%%%", nonce: "not-a-uuid", timestamp: "soon")]
-        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app", receiptFetcher: receiptFetcher)
+        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
 
         do {
             _ = try await service.promotionalOffer(userId: "u", offerId: "o", productStoreId: "p")
@@ -220,7 +188,7 @@ final class PurchasesServiceTests: XCTestCase {
     func testPromotionalOfferWrapsProcessorErrors() async {
         let processor = MockRequestProcessor()
         processor.error = MockError.stubbed
-        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app", receiptFetcher: receiptFetcher)
+        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
 
         do {
             _ = try await service.promotionalOffer(userId: "u", offerId: "o", productStoreId: "p")

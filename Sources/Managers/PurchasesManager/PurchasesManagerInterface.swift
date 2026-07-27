@@ -38,14 +38,23 @@ protocol PurchasesManagerInterface: AnyObject {
     /// NEVER finished by the SDK.
     func startObservingTransactions()
 
+    #if os(iOS) || os(visionOS)
+    /// Presents the system App Store offer code redemption sheet.
+    func presentCodeRedemptionSheet()
+
+    @available(iOS 16.0, *)
+    func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws
+    #endif
+
     /// Reports purchases made by the host app (Analytics mode ingestion).
     /// Verified transactions are reported through the dedup gate and are
     /// NEVER finished — the host app owns their lifecycle.
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async
+    @discardableResult
+    func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async -> Bool
 
     /// Domain-typed core of the ingestion above.
-    func handle(transactions: [Qonversion.Transaction]) async
+    @discardableResult
+    func handle(transactions: [Qonversion.Transaction]) async -> Bool
 
     /// Reports the historical store transactions (latest per product) to the
     /// backend once per install. Never finishes them and never triggers the
@@ -53,9 +62,9 @@ protocol PurchasesManagerInterface: AnyObject {
     func syncHistoricalData() async
 
     /// Re-reports transactions left unfinished by previous sessions and
-    /// finishes them after the backend confirms. Does nothing in Analytics
-    /// mode, where the host app owns the transaction lifecycle. Deduplicated
-    /// against the transaction updates listener.
+    /// finishes them after the backend confirms; in Analytics mode they are
+    /// reported but never finished — the host app owns the transaction
+    /// lifecycle. Deduplicated against the transaction updates listener.
     func processUnfinishedTransactions() async
 }
 

@@ -50,6 +50,10 @@ extension Request {
             // purchases into one — disable dedup instead.
             guard !transactionId.isEmpty else { return nil }
             return "createPurchase-\(userId)-\(transactionId)"
+        case let .createUser(_, body, _):
+            let uid = body["id"] as? String ?? ""
+            guard !uid.isEmpty else { return nil }
+            return "createUser-\(uid)"
         case let .createDevice(userId, _, _, _):
             return "createDevice-\(userId)"
         case let .updateDevice(userId, _, _, _):
@@ -59,6 +63,15 @@ extension Request {
         default:
             return nil
         }
+    }
+
+    /// The transaction id of a purchase report — the stable part of its
+    /// replay dedup key across user switches.
+    var replayTransactionId: String? {
+        guard case let .createPurchase(_, _, body, _) = self else { return nil }
+        let storeData = body["store_data"] as? RequestBodyDict
+        let transactionId = storeData?["transaction_id"] as? String ?? ""
+        return transactionId.isEmpty ? nil : transactionId
     }
 
     var kind: Kind {

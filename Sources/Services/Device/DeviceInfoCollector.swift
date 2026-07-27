@@ -66,6 +66,18 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         return deviceInfo
     }
     
+    func headerDeviceInfo() -> HeaderDeviceInfo {
+        let headerDeviceInfo = HeaderDeviceInfo(
+            appVersion: Bundle.appVersion,
+            country: country(),
+            language: language(),
+            osName: OsName,
+            osVersion: osVersion()
+        )
+
+        return headerDeviceInfo
+    }
+
     func advertisingId() -> String? {
         var result: String? = nil
 

@@ -45,10 +45,54 @@ final class ProductsManagerTests: XCTestCase {
         super.tearDown()
     }
 
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeProduct(qonversionId: String = "q_main", storeId: String = "store_main") -> Qonversion.Product {
         return Qonversion.Product(qonversionId: qonversionId, storeId: storeId, offeringId: nil)
+    }
+
+    func testConcurrentProductsCallsShareOneRound() async throws {
+        productsService.productsResult = [makeProduct()]
+        let gate = ProductsAsyncGate()
+        productsService.onProducts = { await gate.wait() }
+
+        async let first = manager.products()
+        await waitUntil { self.productsService.productsCallsCount >= 1 }
+        async let second = manager.products()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        await gate.open()
+        _ = try await first
+        _ = try await second
+
+        XCTAssertEqual(productsService.productsCallsCount, 1, "N concurrent callers must not issue N API rounds")
+    }
+
+    // MARK: - offline catalog for the local entitlements calculation (A2.5)
+
+    func testCachedProductsFallBackToThePersistedCatalog() async throws {
+        productsService.productsResult = [makeProduct(qonversionId: "q_pro", storeId: "store_pro")]
+        _ = try await manager.products()
+
+        // A fresh launch: the in-memory cache is empty, the persisted catalog answers.
+        let coldManager = makeManager()
+        let products = coldManager.cachedProducts()
+
+        XCTAssertEqual(products.map(\.qonversionId), ["q_pro"], "the offline entitlements calculation must not starve on a cold start")
+    }
+
+    func testCachedProductsFallBackToTheBundledFileWhenNothingWasPersisted() {
+        fallbackService.fallbackData = FallbackData(products: [makeProduct(qonversionId: "q_fb", storeId: "store_fb")], productsPermissions: nil)
+
+        let products = manager.cachedProducts()
+
+        XCTAssertEqual(products.map(\.qonversionId), ["q_fb"])
     }
 
     // MARK: - Fallback file accessibility
@@ -93,32 +137,28 @@ final class ProductsManagerTests: XCTestCase {
 
     // MARK: - Enrichment
 
-    // Fixates current behavior: products without a matching store product are silently
-    // skipped, so when the StoreKit facade returns no matching wrappers the manager
-    // returns an EMPTY array even though the API returned products.
-    func testProductsWithoutStoreMatchesReturnsEmptyArray() async throws {
+    // The catalog is backend-driven: a product the store does not know (e.g.
+    // a Stripe-only product) stays in the result unenriched instead of
+    // disappearing from the paywall.
+    func testProductsWithoutStoreMatchesAreKeptUnenriched() async throws {
         productsService.productsResult = [makeProduct()]
-        // A wrapper with neither a StoreKit 2 product nor an SKProduct has a nil id,
-        // so it can never match any storeId.
-        storeKitFacade.productsResult = [StoreProductWrapper(_product: nil, oldProduct: nil)]
+        storeKitFacade.productsResult = [StoreProductWrapper(product: nil)]
 
         let result = try await manager.products()
 
-        XCTAssertTrue(result.isEmpty)
+        XCTAssertEqual(result.map(\.qonversionId), ["q_main"])
+        XCTAssertFalse(result[0].isStoreProductLinked)
         XCTAssertEqual(productsService.productsCallsCount, 1)
     }
 
-    // Fixates current behavior: an empty enrichment result is assigned to loadedProducts,
-    // which leaves the cache "empty", so the next call hits the service again.
-    func testEmptyEnrichedResultIsNotCached() async throws {
+    func testUnenrichedProductsAreCachedLikeAnyOtherResult() async throws {
         productsService.productsResult = [makeProduct()]
         storeKitFacade.productsResult = []
 
         _ = try await manager.products()
         _ = try await manager.products()
 
-        XCTAssertEqual(productsService.productsCallsCount, 2)
-        XCTAssertEqual(storeKitFacade.requestedProductIds.count, 2)
+        XCTAssertEqual(productsService.productsCallsCount, 1, "the backend answer is authoritative — no refetch loop")
     }
 
     // MARK: - StoreKit error fallback
@@ -283,4 +323,29 @@ final class ProductsManagerTests: XCTestCase {
 
         XCTAssertEqual(manager.cachedProductPermissions(), ["pro": ["premium"]])
     }
+}
+
+/// A reusable async gate: wait() suspends until open() is called.
+private actor ProductsGateStorage {
+    var isOpen = false
+    var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+private final class ProductsAsyncGate: @unchecked Sendable {
+    private let storage = ProductsGateStorage()
+    func open() async { await storage.open() }
+    func wait() async { await storage.wait() }
 }

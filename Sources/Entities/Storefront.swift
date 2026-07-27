@@ -10,7 +10,7 @@ import Foundation
 extension Qonversion {
     
     /// App Store [Storefront](https://developer.apple.com/documentation/storekit/storefront) wrapper.
-    public struct Storefront {
+    public struct Storefront: Sendable {
         
         /// The three-letter code representing the country or region associated with the App Store storefront.
         public let countryCode: String

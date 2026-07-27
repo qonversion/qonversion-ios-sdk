@@ -132,6 +132,30 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(requestsStorage.storedRequests.first?.trigger, "Restore", "the replay must repeat the original flow's trigger")
     }
 
+    func testEmptyBodyOnAnyTwoHundredIsSuccessForNoResponseRequests() async throws {
+        let processor = makeProcessor()
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        networkProvider.responseData = Data()
+
+        let result: EmptyApiResponse? = try? await processor.process(request: Request.detachUserFromExperiment(userId: "u1", experimentId: "e1"), responseType: EmptyApiResponse.self)
+
+        XCTAssertNotNil(result, "an acknowledged no-response request must not fail on an empty body")
+    }
+
+    func testDeliveredPurchaseReportRemovesItsQueuedCopy() async {
+        // The queued copy may sit under the PREVIOUS uid — matching goes by
+        // transaction id, not by the full dedup key.
+        requestsStorage.append(StoredRequest(url: "https://api2.qonversion.io/v4/users/OLD_UID/purchases", method: "POST", body: nil, dedupKey: "createPurchase-OLD_UID-tx42"))
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        networkProvider.responseData = Data("{}".utf8)
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "tx42"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: Request.createPurchase(userId: "NEW_UID", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertTrue(requestsStorage.storedRequests.isEmpty, "replaying the queued copy would double-report the purchase")
+    }
+
     func testLegacyStoredRequestDecodesWithAttemptOne() throws {
         let legacyJson = #"{"url": "https://api2.qonversion.io/v4/users/u1/purchases", "method": "POST"}"#
 

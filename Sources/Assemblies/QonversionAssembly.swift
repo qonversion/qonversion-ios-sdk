@@ -32,6 +32,10 @@ final class QonversionAssembly {
     // Owns the shared pending-properties storage: the remote config manager
     // flushes the same batch the facade fills — one instance SDK-wide.
     private var userPropertiesManagerInstance: UserPropertiesManagerInterface?
+
+    // Consumed by both the facade and the purchases manager — one instance
+    // SDK-wide, and a single user-change observer registration.
+    private var entitlementsManagerInstance: EntitlementsManagerInterface?
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose) {
         let userDefaults: UserDefaults = userDefaults ?? UserDefaults.standard
@@ -42,9 +46,11 @@ final class QonversionAssembly {
 
         // Resolves the anonymous user id (persisted or generated) into InternalConfig.
         _ = servicesAssembly.userService()
+    }
 
-        // Replay requests that failed on transport in previous sessions —
-        // once per initialization.
+    /// Resends requests that failed on transport in previous sessions —
+    /// called once per initialization by the facade, after the graph is built.
+    func replayStoredRequests() {
         servicesAssembly.requestProcessor().processStoredRequests()
     }
     
@@ -86,7 +92,8 @@ final class QonversionAssembly {
         let deviceService: DeviceServiceInterface = servicesAssembly.deviceService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let deviceManager = DeviceManager(deviceInfoCollector: deviceInfoCollector, deviceService: deviceService, logger: logger)
-        
+        miscAssembly.userChangesNotifier().add(observer: deviceManager)
+
         return deviceManager
     }
     
@@ -141,11 +148,16 @@ final class QonversionAssembly {
         // purchases manager.
         storeKitFacade.delegate = purchasesManager
         purchasesManagerInstance = purchasesManager
+        miscAssembly.userChangesNotifier().add(observer: purchasesManager)
 
         return purchasesManager
     }
 
     func entitlementsManager() -> EntitlementsManagerInterface {
+        if let entitlementsManagerInstance {
+            return entitlementsManagerInstance
+        }
+
         let entitlementsService: EntitlementsServiceInterface = servicesAssembly.entitlementsService()
         let storeKitFacade: StoreKitFacadeInterface = servicesAssembly.storeKitFacade()
         let productsDataSource: ProductsDataSource = sharedProductsManager()
@@ -165,6 +177,7 @@ final class QonversionAssembly {
         )
 
         let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
+        entitlementsManagerInstance = entitlementsManager
         userChangesNotifier.add(observer: entitlementsManager)
 
         return entitlementsManager

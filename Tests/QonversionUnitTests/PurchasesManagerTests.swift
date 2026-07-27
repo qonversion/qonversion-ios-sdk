@@ -267,6 +267,111 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(facade.finishedTransactions.isEmpty)
     }
 
+    func testConcurrentPurchaseOfTheSameProductIsRefused() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = [:]
+        let gate = PurchasesAsyncGate()
+        facade.purchaseResult = makeTransaction(id: "slow-1")
+        facade.onPurchase = { await gate.wait() }
+
+        async let first = manager.purchase(makeProduct(), options: nil)
+        await waitUntil { self.facade.purchasedStoreIds.count >= 1 }
+
+        do {
+            _ = try await manager.purchase(makeProduct(), options: nil)
+            XCTFail("Expected the second concurrent purchase to be refused")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseInProgress)
+        }
+
+        await gate.open()
+        _ = try await first
+        XCTAssertEqual(facade.purchasedStoreIds.count, 1, "one payment sheet per product")
+    }
+
+    func testEntitlementsUpdateEmittedBeforeSubscriptionIsBuffered() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        // The out-of-band transaction arrives before the host subscribes.
+        await manager.transactionUpdated(makeTransaction(id: "early-1"))
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+
+        let stream = manager.entitlementsUpdates()
+        let consumer = Task { () -> [String: Qonversion.Entitlement]? in
+            for await update in stream {
+                return update
+            }
+            return nil
+        }
+        let timeout = Task { () -> [String: Qonversion.Entitlement]? in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            consumer.cancel()
+            return nil
+        }
+        let received: [String: Qonversion.Entitlement]? = await consumer.value
+        timeout.cancel()
+
+        XCTAssertEqual(received?.keys.sorted(), ["premium"], "an Ask to Buy approval during launch must not be dropped")
+    }
+
+    // MARK: - report idempotency (review findings)
+
+    func testPurchaseClaimsTheGateBeforeTheReportGoesOut() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "race-1")
+        entitlementsManager.entitlementsResult = [:]
+        let gate = PurchasesAsyncGate()
+        service.onSend = { await gate.wait() }
+
+        async let purchase = manager.purchase(makeProduct(), options: nil)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        // A restore racing the in-flight purchase report must skip the id.
+        facade.restoreResult = [makeTransaction(id: "race-1")]
+        async let restored = manager.restore()
+        // Deterministic: the restore has passed the store call (and its gate
+        // check happens right after) before the purchase report is released.
+        await waitUntil { self.facade.facadeRestoreCallsCount >= 1 }
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        await gate.open()
+        _ = try await purchase
+        _ = try await restored
+
+        XCTAssertEqual(service.sentTransactions.filter { $0.transaction.id == "race-1" }.count, 1,
+                       "the same transaction must never be reported twice")
+    }
+
+    func testFailedPurchaseReportReleasesTheGateForRetries() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "retry-1")
+        service.error = URLError(.notConnectedToInternet)
+        entitlementsManager.localFallbackResult = [:]
+        _ = try await manager.purchase(makeProduct(), options: nil)
+
+        service.error = nil
+        entitlementsManager.entitlementsResult = [:]
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "retry-1")]
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["retry-1", "retry-1"],
+                       "the failed report must stay retriable by the sweep")
+    }
+
+    func testUserChangeResetsTheReportsGate() async throws {
+        entitlementsManager.entitlementsResult = [:]
+        facade.restoreResult = [makeTransaction(id: "shared-tx")]
+        _ = try await manager.restore()
+        XCTAssertEqual(service.sentTransactions.count, 1)
+
+        manager.userDidChange()
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(service.sentTransactions.count, 2,
+                       "after identify/logout the restore must attach the transactions to the new user")
+    }
+
     // MARK: - restore single-flight
 
     func testConcurrentRestoresShareOneStoreRun() async throws {
@@ -275,8 +380,9 @@ final class PurchasesManagerTests: XCTestCase {
         entitlementsManager.entitlementsResult = [:]
 
         async let first: [String: Qonversion.Entitlement] = manager.restore()
+        await waitUntil { self.facade.facadeRestoreCallsCount >= 1 }
         async let second: [String: Qonversion.Entitlement] = manager.restore()
-        try? await Task.sleep(nanoseconds: 100_000_000)
+        try? await Task.sleep(nanoseconds: 50_000_000)
         await gate.open()
         _ = try await first
         _ = try await second
@@ -756,16 +862,17 @@ final class PurchasesManagerTests: XCTestCase {
 
     // MARK: - unfinished transactions sweep at launch
 
-    func testUnfinishedSweepDoesNothingInAnalyticsMode() async {
-        // In Analytics mode the host app owns the transaction lifecycle.
+    func testUnfinishedSweepInAnalyticsModeReportsButNeverFinishes() async {
+        // Production parity: a purchase whose report failed offline must not
+        // be lost in Analytics mode either — it is re-reported, but the host
+        // app still owns the transaction lifecycle.
         manager = makeManager(launchMode: .analytics)
         facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
 
         await manager.processUnfinishedTransactions()
 
-        XCTAssertEqual(facade.unfinishedTransactionsCallsCount, 0)
-        XCTAssertTrue(service.sentTransactions.isEmpty)
-        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "the host app owns the transaction lifecycle in Analytics mode")
     }
 
     func testUnfinishedSweepReportsAndFinishesEachTransaction() async {

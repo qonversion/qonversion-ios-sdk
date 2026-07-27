@@ -56,9 +56,13 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         let requests: [StoredRequest] = requestsStorage.fetchRequests()
         guard !requests.isEmpty else { return }
 
-        Task { [weak self] in
+        // Strong capture on purpose: the caller does not retain this
+        // processor, and a weak capture would let it deallocate before the
+        // task runs — the replay would silently do nothing. The task holds
+        // the processor exactly until the replay finishes.
+        Task {
             for stored in requests {
-                guard let self, self.criticalError == nil else { return }
+                guard self.criticalError == nil else { return }
                 guard let url = URL(string: stored.url) else {
                     self.requestsStorage.remove(stored)
                     continue
@@ -181,10 +185,21 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             throw error!
         }
         
-        if responseCode == ResponseCode.noContent.rawValue && T.self is EmptyApiResponse.Type {
+        // No-response requests tolerate any 2xx with an empty body, exactly
+        // like production: the backend acknowledged, there is nothing to parse.
+        if T.self is EmptyApiResponse.Type && (responseCode == ResponseCode.noContent.rawValue || ((200...299).contains(responseCode) && responseBody.isEmpty)) {
             return EmptyApiResponse() as! T
         }
         
+        // A delivered purchase report supersedes any queued copy of the same
+        // transaction (it may sit under the previous uid) — replaying it on
+        // the next launch would double-report the purchase.
+        if request.kind == .createPurchase, let transactionId: String = request.replayTransactionId {
+            requestsStorage.removeAll { stored in
+                stored.dedupKey?.hasSuffix("-" + transactionId) == true
+            }
+        }
+
         do {
             let result: T = try decoder.decode(responseType, from: responseBody)
 

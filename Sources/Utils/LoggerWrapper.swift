@@ -22,7 +22,7 @@ enum LoggerInfoMessages: String {
 extension Qonversion {
 
     /// Minimal severity the SDK writes to the unified log.
-    public enum LogLevel: Int {
+    public enum LogLevel: Int, Sendable {
         case verbose = 0
         case debug = 1
         case warning = 2

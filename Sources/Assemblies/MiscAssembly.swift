@@ -22,12 +22,20 @@ final class MiscAssembly {
     let apiKey: String
     let userDefaults: UserDefaults
     
-    var servicesAssembly: ServicesAssembly!
+    // Weak: ServicesAssembly holds MiscAssembly strongly; a strong back
+    // reference would leak the whole graph on every initialize.
+    weak var servicesAssembly: ServicesAssembly!
     var internalConfig: InternalConfig
 
     // One instance SDK-wide: the user gate notifies through it, and every
     // user-scoped cache registers with it.
     private let userChangesNotifierInstance = UserChangesNotifier()
+
+    // One instance SDK-wide: every per-service RequestProcessor persists into
+    // the same UserDefaults key — separate instances would race their locks
+    // and lose queued requests.
+    private var requestsStorageInstance: RequestsStorageInterface?
+    private var replayQueueObserver: ReplayQueueUserObserver?
 
     init(apiKey: String, userDefaults: UserDefaults, internalConfig: InternalConfig) {
         self.apiKey = apiKey
@@ -69,10 +77,22 @@ final class MiscAssembly {
     }
     
     func requestsStorage() -> RequestsStorageInterface {
+        if let requestsStorageInstance {
+            return requestsStorageInstance
+        }
+
         // Scoped by apiKey: the replayed requests are stamped with the CURRENT
         // Authorization, so another project's queue must never leak into it.
         let storeKey: String = InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue + "." + apiKey
         let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: storeKey)
+        requestsStorageInstance = requestsStorage
+
+        // Queued requests carry the previous user's uid in their URLs — they
+        // must not be replayed against the account after a logout/identify
+        // switch.
+        let observer = ReplayQueueUserObserver(requestsStorage: requestsStorage)
+        replayQueueObserver = observer
+        userChangesNotifierInstance.add(observer: observer)
 
         return requestsStorage
     }
@@ -130,7 +150,18 @@ final class MiscAssembly {
         return headersBuilder
     }
     
-    func paymentQueue() -> SKPaymentQueue {
-        return SKPaymentQueue.default()
+}
+
+/// Clears the offline replay queue when the SDK switches users.
+private final class ReplayQueueUserObserver: UserChangedObserver {
+
+    private let requestsStorage: RequestsStorageInterface
+
+    init(requestsStorage: RequestsStorageInterface) {
+        self.requestsStorage = requestsStorage
+    }
+
+    func userDidChange() {
+        requestsStorage.clean()
     }
 }

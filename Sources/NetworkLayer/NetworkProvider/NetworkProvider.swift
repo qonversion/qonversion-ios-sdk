@@ -7,7 +7,8 @@
 
 import Foundation
 
-class NetworkProvider: NetworkProviderInterface {
+// @unchecked: URLSession is thread-safe; no mutable state.
+final class NetworkProvider: NetworkProviderInterface, @unchecked Sendable {
     let session: URLSession
     
     init(session: URLSession) {

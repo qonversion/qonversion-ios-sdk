@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol HeadersBuilderInterface {
+protocol HeadersBuilderInterface: Sendable {
     
     func addHeaders(to request: inout URLRequest)
 }

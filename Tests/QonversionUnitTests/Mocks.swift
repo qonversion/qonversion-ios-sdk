@@ -86,16 +86,6 @@ final class MockIntegrationsInfoCollector: IntegrationsInfoCollectorInterface {
     func facebookAnonymousId() -> String? { facebookAnonymousIdResult }
 }
 
-final class MockReceiptFetcher: ReceiptFetcherInterface {
-
-    var receipt: String?
-    private(set) var fetchCallsCount = 0
-
-    func appStoreReceipt() -> String? {
-        fetchCallsCount += 1
-        return receipt
-    }
-}
 
 final class MockUserPropertiesManager: UserPropertiesManagerInterface {
 
@@ -202,6 +192,10 @@ final class MockRequestsStorage: RequestsStorageInterface {
         }
     }
 
+    func removeAll(where shouldRemove: @Sendable (StoredRequest) -> Bool) {
+        storedRequests.removeAll(where: shouldRemove)
+    }
+
     func fetchRequests() -> [StoredRequest] {
         return storedRequests
     }
@@ -276,13 +270,22 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var purchaseError: Error?
     private(set) var purchasedStoreIds: [String] = []
     private(set) var purchasedOptions: [Qonversion.PurchaseOptions] = []
-    private(set) var finishedTransactions: [Qonversion.Transaction] = []
+    private let facadeStateLock = NSLock()
+    private var _finishedTransactions: [Qonversion.Transaction] = []
+    var finishedTransactions: [Qonversion.Transaction] {
+        facadeStateLock.lock()
+        defer { facadeStateLock.unlock() }
+        return _finishedTransactions
+    }
     private(set) var startObservingCallsCount = 0
     private(set) var stopObservingCallsCount = 0
+
+    var onPurchase: (() async -> Void)?
 
     func purchase(storeId: String, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
         purchasedStoreIds.append(storeId)
         purchasedOptions.append(options)
+        await onPurchase?()
         if let purchaseError { throw purchaseError }
         guard let purchaseResult else { throw MockError.noStub }
         return purchaseResult
@@ -327,7 +330,9 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     }
 
     func finish(_ transaction: Qonversion.Transaction) async {
-        finishedTransactions.append(transaction)
+        facadeStateLock.lock()
+        _finishedTransactions.append(transaction)
+        facadeStateLock.unlock()
     }
 
     func startObservingTransactionUpdates() {
@@ -352,13 +357,21 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
 /// by the test through `emitUpdate`/`finishUpdates`.
 final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
 
+    // The SDK's detached tasks mutate this mock while the test thread polls
+    // it — the hot members are lock-guarded.
+    private let stateLock = NSLock()
     var currentEntitlementsResult: [Qonversion.Transaction] = []
     var restoreResult: [Qonversion.Transaction] = []
     var restoreError: Error?
     var fetchAllResult: [Qonversion.Transaction] = []
     var fetchUnfinishedResult: [Qonversion.Transaction] = []
 
-    private(set) var finishedTransactions: [Qonversion.Transaction] = []
+    private var _finishedTransactions: [Qonversion.Transaction] = []
+    var finishedTransactions: [Qonversion.Transaction] {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _finishedTransactions
+    }
     private(set) var restoreCallsCount = 0
     private(set) var transactionUpdatesCallsCount = 0
 
@@ -391,12 +404,16 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
     func fetchUnfinished() async -> [Qonversion.Transaction] { fetchUnfinishedResult }
 
     private(set) var subscribeToPromoPurchasesCallsCount = 0
+    func unsubscribeFromPromoPurchases() { }
+
     func subscribeToPromoPurchases() {
         subscribeToPromoPurchasesCallsCount += 1
     }
 
     func finish(_ transaction: Qonversion.Transaction) async {
-        finishedTransactions.append(transaction)
+        stateLock.lock()
+        _finishedTransactions.append(transaction)
+        stateLock.unlock()
     }
 
     func transactionUpdates() -> AsyncStream<Qonversion.Transaction> {
@@ -414,37 +431,6 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
 
 /// Mock of the legacy StoreKit 1 wrapper. Captures completions so tests can
 /// fire them at a controlled moment (e.g. after the facade is deallocated).
-final class MockStoreKitOldWrapper: StoreKitOldWrapperInterface {
-
-    private(set) var productsCompletions: [StoreKitOldProductsCompletion] = []
-    private(set) var restoreCompletions: [StoreKitOldTransactionsCompletion] = []
-    private(set) var finishedTransactions: [SKPaymentTransaction] = []
-
-    func products(for ids: [String], completion: @escaping StoreKitOldProductsCompletion) {
-        productsCompletions.append(completion)
-    }
-
-    func restore(with completion: @escaping StoreKitOldTransactionsCompletion) {
-        restoreCompletions.append(completion)
-    }
-
-    #if os(iOS) || os(visionOS)
-    @available(iOS 14.0, visionOS 1.0, *)
-    func presentCodeRedemptionSheet() { }
-    #endif
-
-    private(set) var purchasedProducts: [SKProduct] = []
-    private(set) var purchaseCompletions: [StoreKitOldTransactionsCompletion] = []
-
-    func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion) {
-        purchasedProducts.append(product)
-        purchaseCompletions.append(completion)
-    }
-
-    func finish(transaction: SKPaymentTransaction) {
-        finishedTransactions.append(transaction)
-    }
-}
 
 // MARK: - Services
 
@@ -457,8 +443,11 @@ final class MockProductsService: ProductsServiceInterface {
     private(set) var productsCallsCount = 0
     private(set) var productPermissionsCallsCount = 0
 
+    var onProducts: (() async -> Void)?
+
     func products() async throws -> [Qonversion.Product] {
         productsCallsCount += 1
+        await onProducts?()
         if let error { throw error }
         return productsResult
     }
@@ -628,6 +617,12 @@ final class MockUserManager: UserManagerInterface {
         logoutCallsCount += 1
     }
 
+    private(set) var awaitUserStabilityCallsCount = 0
+
+    func awaitUserStability() async {
+        awaitUserStabilityCallsCount += 1
+    }
+
     private(set) var switchedToUserIds: [String] = []
 
     func switchToUser(with uid: String) async throws {
@@ -658,8 +653,19 @@ final class MockPurchasesService: PurchasesServiceInterface {
 
     var error: Error?
     var onSend: (() async -> Void)?
-    private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] = []
-    private(set) var sentTriggers: [RequestTrigger] = []
+    private let serviceStateLock = NSLock()
+    private var _sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] = []
+    var sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] {
+        serviceStateLock.lock()
+        defer { serviceStateLock.unlock() }
+        return _sentTransactions
+    }
+    private var _sentTriggers: [RequestTrigger] = []
+    var sentTriggers: [RequestTrigger] {
+        serviceStateLock.lock()
+        defer { serviceStateLock.unlock() }
+        return _sentTriggers
+    }
 
     var promotionalOfferResult: Qonversion.PromotionalOffer?
     private(set) var promotionalOfferCalls: [(userId: String, offerId: String, productStoreId: String)] = []
@@ -668,8 +674,10 @@ final class MockPurchasesService: PurchasesServiceInterface {
 
     @discardableResult
     func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?, trigger: RequestTrigger) async throws -> String? {
-        sentTransactions.append((transaction, userId, options))
-        sentTriggers.append(trigger)
+        serviceStateLock.lock()
+        _sentTransactions.append((transaction, userId, options))
+        _sentTriggers.append(trigger)
+        serviceStateLock.unlock()
         await onSend?()
         if let error { throw error }
         return reportedOwnerUserId
@@ -769,8 +777,26 @@ final class MockDeviceInfoCollector: DeviceInfoCollectorInterface {
     )
     var advertisingIdValue: String?
 
-    func deviceInfo() -> Device { device }
+    private(set) var deviceInfoCallsCount = 0
+    private(set) var headerDeviceInfoCallsCount = 0
+
+    func deviceInfo() -> Device {
+        deviceInfoCallsCount += 1
+        return device
+    }
+
     func advertisingId() -> String? { advertisingIdValue }
+
+    func headerDeviceInfo() -> HeaderDeviceInfo {
+        headerDeviceInfoCallsCount += 1
+        return HeaderDeviceInfo(
+            appVersion: device.appVersion,
+            country: device.country,
+            language: device.language,
+            osName: device.osName,
+            osVersion: device.osVersion
+        )
+    }
 }
 
 final class MockDeviceService: DeviceServiceInterface {
@@ -783,6 +809,12 @@ final class MockDeviceService: DeviceServiceInterface {
     var currentDeviceError: Error?
 
     private(set) var savedDevices: [Device] = []
+    private(set) var removeStoredDeviceCallsCount = 0
+
+    func removeStoredDevice() {
+        removeStoredDeviceCallsCount += 1
+        current = nil
+    }
     private(set) var createdDevices: [Device] = []
     private(set) var updatedDevices: [Device] = []
 

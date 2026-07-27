@@ -5,7 +5,7 @@
 
 import Foundation
 
-protocol RequestsStorageInterface {
+protocol RequestsStorageInterface: Sendable {
 
     /// Persists a failed retriable request for the offline replay. Skips the
     /// request when one with the same non-nil dedupKey is already queued.
@@ -13,6 +13,8 @@ protocol RequestsStorageInterface {
 
     /// Removes a delivered request from the queue.
     func remove(_ request: StoredRequest)
+
+    func removeAll(where shouldRemove: @Sendable (StoredRequest) -> Bool)
 
     func fetchRequests() -> [StoredRequest]
 

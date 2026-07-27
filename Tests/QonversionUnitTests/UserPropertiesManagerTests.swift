@@ -193,13 +193,22 @@ final class UserPropertiesManagerTests: XCTestCase {
 
     // Fixates current behavior: processor errors are swallowed via `try?` and an empty
     // properties list is returned instead of throwing.
-    func testUserPropertiesReturnsEmptyResultOnProcessorError() async throws {
+    func testUserPropertiesRethrowsTheRequestError() async {
+        // The caller must be able to tell "no properties" from "request failed".
         requestProcessor.error = MockError.stubbed
 
-        let result = try await manager.userProperties()
+        do {
+            _ = try await manager.userProperties()
+            XCTFail("Expected the request error to propagate")
+        } catch {
+            XCTAssertEqual(error as? MockError, .stubbed)
+        }
+    }
 
-        XCTAssertTrue(result.properties.isEmpty)
-        XCTAssertTrue(result.flatPropertiesMap.isEmpty)
+    func testMalformedCustomPropertyKeyIsRejected() {
+        manager.setCustomUserProperty(key: "user name!", value: "v")
+
+        XCTAssertTrue(propertiesStorage.all().isEmpty, "the production key contract rejects invalid keys before the batch")
     }
 
     // MARK: - collectAppleSearchAdsAttribution

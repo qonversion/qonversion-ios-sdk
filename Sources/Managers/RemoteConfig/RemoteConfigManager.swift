@@ -42,6 +42,9 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     /// pending properties batch must reach the backend first. A flush failure
     /// is not fatal — properties retry on their own schedule.
     private func prepareUserForRemoteConfig() async throws {
+        // Production's "user stability" rule: a config requested while an
+        // identify is switching the uid would belong to the previous user.
+        await userManager.awaitUserStability()
         _ = try await userManager.obtainUser()
         try? await userPropertiesManager.sendProperties()
     }
@@ -98,8 +101,18 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     }
 
     func loadRemoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList {
-        let (cachedConfigs, generation) = cachedConfigsAndGeneration(for: contextKeys)
-        if (cachedConfigs.count == contextKeys.count) {
+        // The empty-context config participates in the cache check when
+        // requested; duplicate keys must not fake a full hit.
+        var requestedKeys: [String] = []
+        for key in contextKeys where !requestedKeys.contains(key) {
+            requestedKeys.append(key)
+        }
+        if includeEmptyContextKey && !requestedKeys.contains(Constants.emptyContextKey.rawValue) {
+            requestedKeys.append(Constants.emptyContextKey.rawValue)
+        }
+
+        let (cachedConfigs, generation) = cachedConfigsAndGeneration(for: requestedKeys)
+        if (cachedConfigs.count == requestedKeys.count) {
             return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
         }
 
@@ -126,21 +139,36 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     func attachUserToRemoteConfig(id: String) async throws {
         _ = try await userManager.obtainUser()
         try await remoteConfigService.attachUserToRemoteConfig(id: id)
+        invalidateCache()
     }
 
     func detachUserFromRemoteConfig(id: String) async throws {
         _ = try await userManager.obtainUser()
         try await remoteConfigService.detachUserFromRemoteConfig(id: id)
+        invalidateCache()
     }
 
     func attachUserToExperiment(id: String, groupId: String) async throws {
         _ = try await userManager.obtainUser()
         try await remoteConfigService.attachUserToExperiment(id: id, groupId: groupId)
+        invalidateCache()
     }
 
     func detachUserFromExperiment(id: String) async throws {
         _ = try await userManager.obtainUser()
         try await remoteConfigService.detachUserFromExperiment(id: id)
+        invalidateCache()
+    }
+
+    /// Attach/detach exist to CHANGE the user's configs — serving the cached
+    /// ones afterwards would defeat the call.
+    private func invalidateCache() {
+        lock.lock()
+        defer { lock.unlock() }
+        // The generation bump keeps an in-flight pre-attach response from
+        // repopulating the cache it just cleared.
+        cacheGeneration += 1
+        loadedConfigs = [:]
     }
     
     // MARK: - Private

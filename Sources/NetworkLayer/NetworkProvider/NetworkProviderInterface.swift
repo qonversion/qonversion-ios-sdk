@@ -7,6 +7,6 @@
 
 import Foundation
 
-protocol NetworkProviderInterface {
+protocol NetworkProviderInterface: Sendable {
     func send(request: URLRequest) async throws -> (Data, URLResponse)
 }

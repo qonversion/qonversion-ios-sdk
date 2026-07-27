@@ -74,19 +74,19 @@ final class UserPropertiesStorageTests: XCTestCase {
         storage.save(first)
         storage.save(second)
 
-        // Fixates current behavior: save() appends; duplicate keys are NOT deduplicated.
-        XCTAssertEqual(storage.all(), [first, second])
+        // One value per key, the last write wins — the backend applies a
+        // batch in ITS order, not in the call order.
+        XCTAssertEqual(storage.all(), [second])
     }
 
-    func testSaveAppendsIdenticalPropertyTwice() {
+    func testSavingTheSamePropertyTwiceStoresItOnce() {
         let storage = UserPropertiesStorage()
         let property = Qonversion.UserProperty(key: "key", value: "value")
 
         storage.save(property)
         storage.save(property)
 
-        // Fixates current behavior: identical properties are stored twice.
-        XCTAssertEqual(storage.all(), [property, property])
+        XCTAssertEqual(storage.all(), [property])
     }
 
     func testClearPropertiesRemovesOnlyMatchingProperties() {

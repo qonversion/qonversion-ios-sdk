@@ -18,6 +18,9 @@ final class UserPropertiesStorage: PropertiesStorage, @unchecked Sendable {
     func save(_ userProperty: Qonversion.UserProperty) {
         lock.lock()
         defer { lock.unlock() }
+        // One value per key, the last write wins — a batch with two values
+        // for the same key would apply in backend order, not in call order.
+        userProperties.removeAll { $0.key == userProperty.key }
         userProperties.append(userProperty)
     }
 

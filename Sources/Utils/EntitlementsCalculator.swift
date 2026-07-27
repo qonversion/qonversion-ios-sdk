@@ -51,6 +51,12 @@ enum EntitlementsCalculator {
     /// the approximated subscription period; nil when the product carries no
     /// subscription period (lifetime / consumable / product unknown).
     static func expirationDate(for transaction: Qonversion.Transaction, product: Qonversion.Product?) -> Date? {
+        // The Apple-signed expiration is authoritative: a 7-day trial on an
+        // annual product expires in 7 days, not in the approximated 365.
+        if let signedExpiration: Date = transaction.expirationDate {
+            return signedExpiration
+        }
+
         guard let period = product?.subscription?.subscriptionPeriod else { return nil }
 
         let startDate: Date = transaction.purchaseDate ?? Date()

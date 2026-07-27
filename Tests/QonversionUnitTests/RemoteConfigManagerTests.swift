@@ -143,6 +143,44 @@ final class RemoteConfigManagerTests: XCTestCase {
         XCTAssertEqual(withoutEmpty.remoteConfigs.map { $0.source.identifier }, ["fallback-main"])
     }
 
+    func testAttachInvalidatesTheCachedConfigs() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "before-attach")
+        _ = try await manager.loadRemoteConfig(contextKey: "main")
+
+        try await manager.attachUserToRemoteConfig(id: "rc-1")
+
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "after-attach")
+        let config = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(config.source.identifier, "after-attach", "attach exists to change the config — the cache must not survive it")
+    }
+
+    func testInFlightPreAttachResponseCannotRepopulateTheInvalidatedCache() async throws {
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfig = { await gate.wait() }
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "pre-attach")
+
+        async let staleLoad = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        try await manager.attachUserToRemoteConfig(id: "rc-1")
+        await gate.open()
+        _ = try await staleLoad
+
+        remoteConfigService.onLoadRemoteConfig = nil
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "post-attach")
+        let config = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(config.source.identifier, "post-attach", "the pre-attach response must not survive the invalidation")
+    }
+
+    func testLoadWaitsForUserStability() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
+
+        _ = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(userManager.awaitUserStabilityCallsCount, 1, "a config requested during an identify would belong to the previous user")
+    }
+
     // MARK: - user gate and properties flush (production parity)
 
     func testLoadWaitsForTheUserGateAndFlushesPropertiesFirst() async throws {
@@ -317,20 +355,37 @@ final class RemoteConfigManagerTests: XCTestCase {
         XCTAssertEqual(cachedEmpty.source.identifier, "id-empty")
     }
 
-    // Fixates current behavior: when every requested context key is already cached, the
-    // list is built from the cache and includeEmptyContextKey is silently ignored —
-    // the empty-context-key config is NOT included and the service is not called.
-    func testLoadRemoteConfigListWithContextKeysReturnsCachedWhenAllKeysCached() async throws {
+    func testCachedNamedKeysStillFetchWhenTheEmptyKeyIsRequestedButNotCached() async throws {
+        // Production parity: includeEmptyContextKey participates in the cache
+        // check — a partial cache must not silently drop the empty-key config.
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "a", identifier: "id-a")
         _ = try await manager.loadRemoteConfig(contextKey: "a")
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "b", identifier: "id-b")
         _ = try await manager.loadRemoteConfig(contextKey: "b")
 
+        remoteConfigService.remoteConfigListResult = Qonversion.RemoteConfigList(remoteConfigs: [
+            makeRemoteConfig(contextKey: "a", identifier: "id-a"),
+            makeRemoteConfig(contextKey: "b", identifier: "id-b"),
+            makeRemoteConfig(contextKey: nil, identifier: "id-empty"),
+        ])
+
         let list = try await manager.loadRemoteConfigList(contextKeys: ["a", "b"], includeEmptyContextKey: true)
 
-        XCTAssertTrue(remoteConfigService.loadListContextKeysArgs.isEmpty)
-        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["id-a", "id-b"])
-        XCTAssertNil(list.remoteConfigForEmptyContextKey())
+        XCTAssertEqual(remoteConfigService.loadListContextKeysArgs.count, 1)
+        XCTAssertEqual(list.remoteConfigs.count, 3)
+        XCTAssertNotNil(list.remoteConfigForEmptyContextKey())
+    }
+
+    func testFullyCachedListIncludingTheEmptyKeyIsServedFromCache() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "a", identifier: "id-a")
+        _ = try await manager.loadRemoteConfig(contextKey: "a")
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: nil, identifier: "id-empty")
+        _ = try await manager.loadRemoteConfig(contextKey: nil)
+
+        let list = try await manager.loadRemoteConfigList(contextKeys: ["a", "a"], includeEmptyContextKey: true)
+
+        XCTAssertTrue(remoteConfigService.loadListContextKeysArgs.isEmpty, "duplicate keys must not fake a miss, a full cache serves locally")
+        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["id-a", "id-empty"])
     }
 
     func testLoadRemoteConfigListWithContextKeysForwardsToServiceWhenNotFullyCached() async throws {

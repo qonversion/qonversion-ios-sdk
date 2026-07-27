@@ -26,7 +26,9 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
     }
 
     func stream() -> AsyncStream<Element> {
-        AsyncStream { continuation in
+        // Slow consumers keep only the newest values instead of growing the
+        // buffer without bound.
+        AsyncStream(bufferingPolicy: .bufferingNewest(Self.maxPending)) { continuation in
             let id = UUID()
             lock.lock()
             continuations[id] = continuation

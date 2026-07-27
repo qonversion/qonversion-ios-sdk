@@ -25,7 +25,14 @@ public struct QonversionError: Error, @unchecked Sendable {
     /// Additional failure context.
     public let additionalInfo: [String: Any]?
 
-    init(type: QonversionErrorType, message: String? = nil, error: Error? = nil, additionalInfo: [String : Any]? = nil) {
+    /// The backend error code (e.g. "receipt_validation_error") when the
+    /// failure came from the API — branch on it for API-specific handling.
+    public let apiCode: String?
+
+    /// The backend error class when the failure came from the API.
+    public let apiType: String?
+
+    init(type: QonversionErrorType, message: String? = nil, error: Error? = nil, additionalInfo: [String : Any]? = nil, apiCode: String? = nil, apiType: String? = nil) {
         var errorMessage: String = message ?? type.message()
         if let qonversionError = error as? QonversionError {
             errorMessage += "\n" + qonversionError.message
@@ -37,6 +44,8 @@ public struct QonversionError: Error, @unchecked Sendable {
         self.message = errorMessage
         self.error = error
         self.additionalInfo = additionalInfo
+        self.apiCode = apiCode
+        self.apiType = apiType
     }
     
     static func initializationError() -> QonversionError {

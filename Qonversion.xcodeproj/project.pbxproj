@@ -34,7 +34,6 @@
 		A300000000000000000000B1 /* PurchasesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A1 /* PurchasesManager.swift */; };
 		C600000000000000000000B1 /* SDKVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C600000000000000000000A1 /* SDKVersion.swift */; };
 		CB00000000000000000000B1 /* IntegrationsInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */; };
-		CA00000000000000000000B1 /* ReceiptFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000A1 /* ReceiptFetcher.swift */; };
 		C900000000000000000000B1 /* RequestTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C900000000000000000000A1 /* RequestTrigger.swift */; };
 		C800000000000000000000B1 /* IntroEligibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C800000000000000000000A1 /* IntroEligibility.swift */; };
 		C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */; };
@@ -97,9 +96,6 @@
 		70CD93232BC6E22B0039D65C /* StoreKitFacadeInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */; };
 		70CD93242BC6E22B0039D65C /* StoreKitMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DE2BC6E22B0039D65C /* StoreKitMapper.swift */; };
 		70CD93252BC6E22B0039D65C /* StoreKitMapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DF2BC6E22B0039D65C /* StoreKitMapperInterface.swift */; };
-		70CD93262BC6E22B0039D65C /* StoreKitOldWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92E02BC6E22B0039D65C /* StoreKitOldWrapper.swift */; };
-		70CD93272BC6E22B0039D65C /* StoreKitOldWrapperDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92E12BC6E22B0039D65C /* StoreKitOldWrapperDelegate.swift */; };
-		70CD93282BC6E22B0039D65C /* StoreKitOldWrapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92E22BC6E22B0039D65C /* StoreKitOldWrapperInterface.swift */; };
 		70CD93292BC6E22B0039D65C /* StoreKitWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92E32BC6E22B0039D65C /* StoreKitWrapper.swift */; };
 		70CD932A2BC6E22B0039D65C /* StoreKitWrapperDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92E42BC6E22B0039D65C /* StoreKitWrapperDelegate.swift */; };
 		70CD932B2BC6E22B0039D65C /* StoreKitWrapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92E52BC6E22B0039D65C /* StoreKitWrapperInterface.swift */; };
@@ -115,7 +111,6 @@
 		70CD93352BC6E22B0039D65C /* Qonversion.h in Headers */ = {isa = PBXBuildFile; fileRef = 70CD92F12BC6E22B0039D65C /* Qonversion.h */; };
 		70CD93362BC6E22B0039D65C /* Qonversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92F22BC6E22B0039D65C /* Qonversion.swift */; };
 		70CD93372BC6E22B0039D65C /* StorageConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92F32BC6E22B0039D65C /* StorageConstants.swift */; };
-		70CD93382BC6E22B0039D65C /* TemporaryFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92F42BC6E22B0039D65C /* TemporaryFactory.swift */; };
 		70D876CF2B8634230059AA2B /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70D876CE2B8634230059AA2B /* StoreKit.framework */; };
 		70D877122B8F4E5E0059AA2B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877112B8F4E5E0059AA2B /* AppDelegate.swift */; };
 		70D877142B8F4E5E0059AA2B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D877132B8F4E5E0059AA2B /* SceneDelegate.swift */; };
@@ -194,7 +189,6 @@
 		A100000000000000000000A1 /* UserManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
 		C600000000000000000000A1 /* SDKVersion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SDKVersion.swift; sourceTree = "<group>"; };
 		CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegrationsInfoCollector.swift; sourceTree = "<group>"; };
-		CA00000000000000000000A1 /* ReceiptFetcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReceiptFetcher.swift; sourceTree = "<group>"; };
 		C900000000000000000000A1 /* RequestTrigger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestTrigger.swift; sourceTree = "<group>"; };
 		C800000000000000000000A1 /* IntroEligibility.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntroEligibility.swift; sourceTree = "<group>"; };
 		C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseAssociationsStorage.swift; sourceTree = "<group>"; };
@@ -253,9 +247,6 @@
 		70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitFacadeInterface.swift; sourceTree = "<group>"; };
 		70CD92DE2BC6E22B0039D65C /* StoreKitMapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitMapper.swift; sourceTree = "<group>"; };
 		70CD92DF2BC6E22B0039D65C /* StoreKitMapperInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitMapperInterface.swift; sourceTree = "<group>"; };
-		70CD92E02BC6E22B0039D65C /* StoreKitOldWrapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitOldWrapper.swift; sourceTree = "<group>"; };
-		70CD92E12BC6E22B0039D65C /* StoreKitOldWrapperDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitOldWrapperDelegate.swift; sourceTree = "<group>"; };
-		70CD92E22BC6E22B0039D65C /* StoreKitOldWrapperInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitOldWrapperInterface.swift; sourceTree = "<group>"; };
 		70CD92E32BC6E22B0039D65C /* StoreKitWrapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitWrapper.swift; sourceTree = "<group>"; };
 		70CD92E42BC6E22B0039D65C /* StoreKitWrapperDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitWrapperDelegate.swift; sourceTree = "<group>"; };
 		70CD92E52BC6E22B0039D65C /* StoreKitWrapperInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitWrapperInterface.swift; sourceTree = "<group>"; };
@@ -271,7 +262,6 @@
 		70CD92F12BC6E22B0039D65C /* Qonversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Qonversion.h; sourceTree = "<group>"; };
 		70CD92F22BC6E22B0039D65C /* Qonversion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Qonversion.swift; sourceTree = "<group>"; };
 		70CD92F32BC6E22B0039D65C /* StorageConstants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageConstants.swift; sourceTree = "<group>"; };
-		70CD92F42BC6E22B0039D65C /* TemporaryFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TemporaryFactory.swift; sourceTree = "<group>"; };
 		70CD933B2BC6E2940039D65C /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		70CD937A2BC9298E0039D65C /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; };
 		70D876CE2B8634230059AA2B /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/iOSSupport/System/Library/Frameworks/StoreKit.framework; sourceTree = DEVELOPER_DIR; };
@@ -661,15 +651,11 @@
 			isa = PBXGroup;
 			children = (
 				70CD92DC2BC6E22B0039D65C /* StoreKitFacade.swift */,
-				CA00000000000000000000A1 /* ReceiptFetcher.swift */,
 				A200000000000000000000A1 /* StoreKitPurchaseOutcome.swift */,
 				70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */,
 				70B4E96D2BD92B9C00EE808C /* StoreKitFacadeDelegate.swift */,
 				70CD92DE2BC6E22B0039D65C /* StoreKitMapper.swift */,
 				70CD92DF2BC6E22B0039D65C /* StoreKitMapperInterface.swift */,
-				70CD92E02BC6E22B0039D65C /* StoreKitOldWrapper.swift */,
-				70CD92E12BC6E22B0039D65C /* StoreKitOldWrapperDelegate.swift */,
-				70CD92E22BC6E22B0039D65C /* StoreKitOldWrapperInterface.swift */,
 				70CD92E32BC6E22B0039D65C /* StoreKitWrapper.swift */,
 				70CD92E42BC6E22B0039D65C /* StoreKitWrapperDelegate.swift */,
 				70CD92E52BC6E22B0039D65C /* StoreKitWrapperInterface.swift */,
@@ -710,7 +696,6 @@
 				70CD92F12BC6E22B0039D65C /* Qonversion.h */,
 				70CD92F22BC6E22B0039D65C /* Qonversion.swift */,
 				70CD92F32BC6E22B0039D65C /* StorageConstants.swift */,
-				70CD92F42BC6E22B0039D65C /* TemporaryFactory.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -933,7 +918,6 @@
 				A100000000000000000000B1 /* UserManager.swift in Sources */,
 				C600000000000000000000B1 /* SDKVersion.swift in Sources */,
 				CB00000000000000000000B1 /* IntegrationsInfoCollector.swift in Sources */,
-				CA00000000000000000000B1 /* ReceiptFetcher.swift in Sources */,
 				C900000000000000000000B1 /* RequestTrigger.swift in Sources */,
 				C800000000000000000000B1 /* IntroEligibility.swift in Sources */,
 				C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */,
@@ -993,14 +977,11 @@
 				70CD932F2BC6E22B0039D65C /* Utils.swift in Sources */,
 				70CD93322BC6E22B0039D65C /* LaunchMode.swift in Sources */,
 				70CD92F72BC6E22B0039D65C /* QonversionAssembly.swift in Sources */,
-				70CD93282BC6E22B0039D65C /* StoreKitOldWrapperInterface.swift in Sources */,
-				70CD93272BC6E22B0039D65C /* StoreKitOldWrapperDelegate.swift in Sources */,
 				70CD93092BC6E22B0039D65C /* HeadersBuilderInterface.swift in Sources */,
 				70CD93142BC6E22B0039D65C /* RequestsStorage.swift in Sources */,
 				70CD93182BC6E22B0039D65C /* LocalStorage.swift in Sources */,
 				70CD932B2BC6E22B0039D65C /* StoreKitWrapperInterface.swift in Sources */,
 				70CD93162BC6E22B0039D65C /* ResponseDecoder.swift in Sources */,
-				70CD93262BC6E22B0039D65C /* StoreKitOldWrapper.swift in Sources */,
 				6A840E092BD6AE7C00E5E8E3 /* EmptyApiResponse.swift in Sources */,
 				70B4E9772BDAA7C300EE808C /* RemoteConfigServiceInterface.swift in Sources */,
 				70CD93242BC6E22B0039D65C /* StoreKitMapper.swift in Sources */,
@@ -1011,7 +992,6 @@
 				70CD93292BC6E22B0039D65C /* StoreKitWrapper.swift in Sources */,
 				6A840E0B2BD6AEE500E5E8E3 /* ApiError.swift in Sources */,
 				70CD93132BC6E22B0039D65C /* RequestProcessorInterface.swift in Sources */,
-				70CD93382BC6E22B0039D65C /* TemporaryFactory.swift in Sources */,
 				70CD93052BC6E22B0039D65C /* QonversionError.swift in Sources */,
 				70CD93222BC6E22B0039D65C /* StoreKitFacade.swift in Sources */,
 				A200000000000000000000B1 /* StoreKitPurchaseOutcome.swift in Sources */,
@@ -1161,7 +1141,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -1221,7 +1201,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -1247,7 +1227,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1279,7 +1259,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

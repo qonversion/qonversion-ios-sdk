@@ -10,6 +10,7 @@ import StoreKit
 
 fileprivate enum Constants: String {
     case productPermissionsKey = "qonversion.keys.productsPermissions"
+    case productsKey = "qonversion.keys.products"
 }
 
 // @unchecked: the caches are lock-guarded.
@@ -26,6 +27,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     private let lock = NSLock()
     private var _loadedProducts: [Qonversion.Product] = []
     private var _loadedProductPermissions: [String: [String]]?
+    private var _productsTask: Task<[Qonversion.Product], Error>?
 
     var loadedProducts: [Qonversion.Product] {
         get {
@@ -49,7 +51,18 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     }
     
     func cachedProducts() -> [Qonversion.Product] {
-        return loadedProducts
+        if !loadedProducts.isEmpty {
+            return loadedProducts
+        }
+
+        // The offline cold start is exactly what the local entitlements
+        // calculation exists for — answer from the persisted catalog, then
+        // from the bundled fallback file.
+        if let persisted: [Qonversion.Product] = try? localStorage.object(forKey: Constants.productsKey.rawValue, dataType: [Qonversion.Product].self), !persisted.isEmpty {
+            return persisted
+        }
+
+        return fallbackService.obtainFallbackData()?.products ?? []
     }
 
     func isFallbackFileAccessible() -> Bool {
@@ -99,6 +112,39 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
             return loadedProducts
         }
 
+        // Single-flight: N concurrent callers share one API + StoreKit round.
+        let task: Task<[Qonversion.Product], Error> = joinedProductsTask()
+        defer { clearProductsTask(task) }
+
+        return try await task.value
+    }
+
+    private func joinedProductsTask() -> Task<[Qonversion.Product], Error> {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let inFlight: Task<[Qonversion.Product], Error> = _productsTask {
+            return inFlight
+        }
+
+        let task = Task { [weak self] () throws -> [Qonversion.Product] in
+            guard let self else { return [] }
+            return try await self.loadProducts()
+        }
+        _productsTask = task
+
+        return task
+    }
+
+    private func clearProductsTask(_ task: Task<[Qonversion.Product], Error>) {
+        lock.lock()
+        defer { lock.unlock() }
+        if _productsTask == task {
+            _productsTask = nil
+        }
+    }
+
+    private func loadProducts() async throws -> [Qonversion.Product] {
         let products: [Qonversion.Product]
         do {
             products = try await productsService.products()
@@ -112,6 +158,11 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
             return await enriched(fallbackProducts)
         }
         
+        // Persisted for the offline local entitlements calculation on the
+        // next launches (StoreKit enrichment does not survive encoding —
+        // the wire fields are enough for the calculation).
+        try? localStorage.set(products, forKey: Constants.productsKey.rawValue)
+
         do {
             let resultProducts: [Qonversion.Product] = try await storeEnriched(products)
             loadedProducts = resultProducts
@@ -166,18 +217,17 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     }
 
     private func storeEnriched(_ products: [Qonversion.Product]) async throws -> [Qonversion.Product] {
-        let productIds: [String] = products.map { $0.storeId }
+        let productIds: [String] = products.filter { !$0.storeId.isEmpty }.map { $0.storeId }
         let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
 
         var resultProducts: [Qonversion.Product] = []
 
+        // Products the store does not know (e.g. Stripe-only ones with no
+        // App Store id) stay in the list unenriched — the catalog is
+        // backend-driven.
         for var product in products {
-            guard let storeProductWrapper: StoreProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
-
-            if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeProduct = storeProductWrapper.product {
+            if let storeProduct: StoreKit.Product = storeProducts.first(where: { $0.id == product.storeId })?.product {
                 product.enrich(storeProduct: storeProduct)
-            } else if let storeProduct: SKProduct = storeProductWrapper.oldProduct {
-                product.enrich(skProduct: storeProduct)
             }
 
             resultProducts.append(product)
@@ -195,6 +245,7 @@ extension ProductsManager: UserChangedObserver {
         // Products may be personalized (experiments); the mapping is
         // project-scoped and stays.
         loadedProducts = []
+        localStorage.removeObject(forKey: Constants.productsKey.rawValue)
     }
 }
 

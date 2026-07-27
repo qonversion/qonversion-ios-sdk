@@ -10,7 +10,7 @@ import Foundation
 extension Qonversion {
     
     /// Struct contains all information about the current user properties
-    public struct UserProperties {
+    public struct UserProperties: Sendable {
         
         /// List of all user properties.
         public let properties: [UserProperty]

@@ -82,7 +82,7 @@ final class IntroEligibilityTests: XCTestCase {
 
     func testEligibilityIsNonIntroProductForLinkedProductWithoutIntroOffer() async throws {
         var product: Qonversion.Product = makeProduct(qonversionId: "pro", storeId: "store_pro")
-        product.skProduct = SKProduct()
+        product._storeProduct = FakeLinkedStoreProduct()
         manager.loadedProducts = [product]
 
         let result: [String: Qonversion.IntroEligibilityStatus] = try await manager.checkTrialIntroEligibility(productIds: ["pro"])
@@ -94,11 +94,11 @@ final class IntroEligibilityTests: XCTestCase {
         let period = Qonversion.Product.SubscriptionPeriod(unit: .month, value: 1)
 
         var eligible: Qonversion.Product = makeProduct(qonversionId: "pro", storeId: "store_pro")
-        eligible.skProduct = SKProduct()
+        eligible._storeProduct = FakeLinkedStoreProduct()
         eligible.subscription = Qonversion.Product.SubscriptionInfo(subscriptionGroupId: "group", subscriptionPeriod: period, introductoryOffer: makeIntroOffer())
 
         var ineligible: Qonversion.Product = makeProduct(qonversionId: "lite", storeId: "store_lite")
-        ineligible.skProduct = SKProduct()
+        ineligible._storeProduct = FakeLinkedStoreProduct()
         ineligible.subscription = Qonversion.Product.SubscriptionInfo(subscriptionGroupId: "group", subscriptionPeriod: period, introductoryOffer: makeIntroOffer())
 
         manager.loadedProducts = [eligible, ineligible]
@@ -112,7 +112,7 @@ final class IntroEligibilityTests: XCTestCase {
 
     func testEligibilityIsUnknownWhenTheStoreCannotAnswer() async throws {
         var product: Qonversion.Product = makeProduct(qonversionId: "pro", storeId: "store_pro")
-        product.skProduct = SKProduct()
+        product._storeProduct = FakeLinkedStoreProduct()
         let period = Qonversion.Product.SubscriptionPeriod(unit: .month, value: 1)
         product.subscription = Qonversion.Product.SubscriptionInfo(subscriptionGroupId: "group", subscriptionPeriod: period, introductoryOffer: makeIntroOffer())
         manager.loadedProducts = [product]
@@ -123,3 +123,7 @@ final class IntroEligibilityTests: XCTestCase {
         XCTAssertEqual(result, ["pro": .unknown])
     }
 }
+
+/// Real StoreKit.Product values cannot be constructed in unit tests; linking
+/// is asserted through the internal seam the enrichment writes to.
+private final class FakeLinkedStoreProduct { }

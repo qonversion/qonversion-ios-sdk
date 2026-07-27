@@ -10,7 +10,7 @@ import Foundation
 extension Qonversion {
     
     /// User property info
-    public struct UserProperty : Decodable, Encodable, Equatable, Hashable {
+    public struct UserProperty : Decodable, Encodable, Equatable, Hashable, Sendable {
         
         /// Raw property key
         public let key: String

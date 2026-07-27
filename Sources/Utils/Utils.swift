@@ -40,28 +40,6 @@ extension Locale.Currency {
     }
 }
 
-extension SKProduct {
-    
-    func displayPrice() -> String? {
-        return format(price: price, priceLcale: priceLocale)
-    }
-}
-
-extension SKProductDiscount {
-    
-    func displayPrice() -> String? {
-        return format(price: price, priceLcale: priceLocale)
-    }
-}
-
-private func format(price: NSDecimalNumber, priceLcale: Locale) -> String? {
-    let formatter = NumberFormatter()
-    formatter.formatterBehavior = .behavior10_4
-    formatter.locale = priceLcale
-    
-    return formatter.string(for: price)
-}
-
 // The below decoding implementations are taken from https://adamrackis.dev/blog/swift-codable-any
 struct JSONCodingKeys: CodingKey {
   var stringValue: String

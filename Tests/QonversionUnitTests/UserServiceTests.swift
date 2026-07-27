@@ -118,6 +118,39 @@ final class UserServiceTests: XCTestCase {
 
     // MARK: - createUser
 
+    func testFreshInstallRecordsItsUidAsTheOriginal() {
+        let storage = makeStorage()
+        _ = UserService(requestProcessor: MockRequestProcessor(), localStorage: storage, internalConfig: InternalConfig(userId: ""))
+
+        let uid = storage.string(forKey: UserServiceStorageKeys.userIdKey.rawValue)
+        XCTAssertEqual(storage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue), uid,
+                       "without the original uid, logout degrades to a permanent no-op")
+    }
+
+    func testLegacyMigrationPrefersTheProductionOriginalUidKey() {
+        // An install identified in the ObjC SDK: the current uid is the
+        // IDENTIFIED user; the true original anonymous uid lives in the
+        // production original-user key.
+        let storage = makeStorage()
+        storage.set(string: "QON_identified", forKey: "com.qonversion.keys.storedUserID")
+        storage.set(string: "QON_true_original", forKey: "com.qonversion.keys.originalUserID")
+
+        _ = UserService(requestProcessor: MockRequestProcessor(), localStorage: storage, internalConfig: InternalConfig(userId: ""))
+
+        XCTAssertEqual(storage.string(forKey: UserServiceStorageKeys.userIdKey.rawValue), "QON_identified")
+        XCTAssertEqual(storage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue), "QON_true_original")
+        XCTAssertNil(storage.string(forKey: "com.qonversion.keys.originalUserID"), "the legacy key is consumed")
+    }
+
+    func testLegacyMigrationWithoutTheOriginalKeyFallsBackToTheMigratedUid() {
+        let storage = makeStorage()
+        storage.set(string: "QON_legacy", forKey: "com.qonversion.keys.storedUserID")
+
+        _ = UserService(requestProcessor: MockRequestProcessor(), localStorage: storage, internalConfig: InternalConfig(userId: ""))
+
+        XCTAssertEqual(storage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue), "QON_legacy")
+    }
+
     func testUserRequestsCarryTheInitTrigger() async throws {
         let processor = MockRequestProcessor()
         let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: InternalConfig(userId: "initial"))

@@ -9,7 +9,7 @@ extension Qonversion {
 
     /// How long cached entitlements stay eligible for the local fallback when
     /// the backend is unreachable.
-    public enum EntitlementsCacheLifetime {
+    public enum EntitlementsCacheLifetime: Sendable {
         case week
         case twoWeeks
         case month

@@ -44,10 +44,17 @@ protocol FallbackServiceInterface {
     func obtainFallbackData() -> FallbackData?
 }
 
-final class FallbackService: FallbackServiceInterface {
+// @unchecked: the cached load is lock-guarded; the bundle never changes.
+final class FallbackService: FallbackServiceInterface, @unchecked Sendable {
 
     private let bundle: Bundle
     private let decoder: JSONDecoder
+
+    // The bundled file is immutable for the process lifetime — reading and
+    // decoding it on every call would tax each fallback path.
+    private let lock = NSLock()
+    private var cachedData: FallbackData?
+    private var didLoad = false
 
     init(bundle: Bundle, decoder: JSONDecoder) {
         self.bundle = bundle
@@ -55,11 +62,20 @@ final class FallbackService: FallbackServiceInterface {
     }
 
     func obtainFallbackData() -> FallbackData? {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if didLoad {
+            return cachedData
+        }
+        didLoad = true
+
         guard let url: URL = bundle.url(forResource: Constants.fileName.rawValue, withExtension: Constants.fileExtension.rawValue),
               let data: Data = try? Data(contentsOf: url) else {
             return nil
         }
 
-        return try? decoder.decode(FallbackData.self, from: data)
+        cachedData = try? decoder.decode(FallbackData.self, from: data)
+        return cachedData
     }
 }

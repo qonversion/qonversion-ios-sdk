@@ -10,12 +10,15 @@ import Foundation
 /// Storage keys shared between UserService and the user gate (UserManager).
 enum UserServiceStorageKeys: String {
     case userIdKey = "qonversion.keys.userId"
+    // The install's first anonymous uid — logout returns to it.
+    case originalUserIdKey = "qonversion.keys.originalUserId"
 }
 
 fileprivate enum Constants: String {
     case userIdPrefix = "QON_"
-    // The uid key of the previous production SDK generation.
+    // The uid keys of the previous production SDK generation.
     case legacyUserIdKey = "com.qonversion.keys.storedUserID"
+    case legacyOriginalUserIdKey = "com.qonversion.keys.originalUserID"
 }
 
 // @unchecked: stateless — every dependency is thread-safe on its own.
@@ -107,10 +110,25 @@ extension UserService {
             localStorage.set(string: legacyUserId, forKey: UserServiceStorageKeys.userIdKey.rawValue)
             localStorage.removeObject(forKey: Constants.legacyUserIdKey.rawValue)
             internalConfig.userId = legacyUserId
+            // An install identified in the previous SDK carries the identified
+            // uid as its current one — the TRUE original anonymous uid lives
+            // in the production original-user key.
+            let legacyOriginalUserId: String? = localStorage.string(forKey: Constants.legacyOriginalUserIdKey.rawValue)
+            rememberOriginalUserIdIfNeeded(legacyOriginalUserId?.isEmpty == false ? legacyOriginalUserId! : legacyUserId)
+            localStorage.removeObject(forKey: Constants.legacyOriginalUserIdKey.rawValue)
             return
         }
 
         let userId: String = localStorage.string(forKey: UserServiceStorageKeys.userIdKey.rawValue) ?? generateUserId()
         internalConfig.userId = userId
+        rememberOriginalUserIdIfNeeded(userId)
+    }
+
+    /// The anonymous user this install started with: identity switches move
+    /// the uid away, logout must come back — it owns the pre-identify purchases.
+    private func rememberOriginalUserIdIfNeeded(_ userId: String) {
+        guard localStorage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue) == nil else { return }
+
+        localStorage.set(string: userId, forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
     }
 }

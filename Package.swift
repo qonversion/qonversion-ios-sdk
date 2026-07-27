@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "Qonversion",
     platforms: [
-        .iOS(.v13), .watchOS(.v6), .macOS(.v10_15), .tvOS(.v13)
+        .iOS(.v15), .watchOS(.v8), .macOS(.v12), .tvOS(.v15), .visionOS(.v1)
     ],
     products: [
         .library(

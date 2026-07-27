@@ -10,13 +10,14 @@ import Foundation
 extension Qonversion {
 
     /// Remote configuration, created via Qonversion Dashboard
-    public struct RemoteConfig: Decodable {
+    // @unchecked: the payload dictionary carries JSON plist values only.
+    public struct RemoteConfig: Decodable, @unchecked Sendable {
         
         /// Source of the remote configuration
-        public struct Source: Decodable {
+        public struct Source: Decodable, Sendable {
 
             /// Possible assignment types of the remote configuration
-            public enum AssignmentType: String, Decodable {
+            public enum AssignmentType: String, Decodable, Sendable {
                 
                 /// Unknown assignment type
                 case unknown // todo use as default
@@ -29,7 +30,7 @@ extension Qonversion {
             }
 
             /// Possible source types of the remote configuration
-            public enum SourceType: String, Decodable {
+            public enum SourceType: String, Decodable, Sendable {
                 
                 /// Unknown source type
                 case unknown // todo use as default
@@ -74,7 +75,7 @@ extension Qonversion {
                 // Unknown backend values must not fail the whole config decode.
                 type = SourceType(rawValue: try container.decode(String.self, forKey: .type)) ?? .unknown
                 assignmentType = AssignmentType(rawValue: try container.decode(String.self, forKey: .assignmentType)) ?? .unknown
-                let contextKeyStr: String? = try container.decode(String?.self, forKey: .contextKey)
+                let contextKeyStr: String? = try container.decodeIfPresent(String.self, forKey: .contextKey)
                 contextKey = contextKeyStr?.isEmpty == false ? contextKeyStr : nil
             }
             
@@ -112,7 +113,9 @@ extension Qonversion {
                 payload = nil
             }
 
-            experiment = try container.decode(Experiment?.self, forKey: .experiment)
+            // Absent keys must decode like explicit nulls — a config without
+            // an experiment is the normal shape, not a decode failure.
+            experiment = try container.decodeIfPresent(Experiment.self, forKey: .experiment)
             source = try container.decode(Source.self, forKey: .source)
         }
         

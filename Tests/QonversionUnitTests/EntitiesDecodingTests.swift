@@ -144,12 +144,33 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertNil(remoteConfig.source.contextKey)
     }
 
-    func testRemoteConfigSourceDecodingFailsWhenContextKeyIsMissing() {
-        // Fixates current behavior: Source.init(from:) uses decode(String?.self),
-        // which requires the context_key key to be PRESENT (null is fine, absence is not).
+    func testOneMalformedEntitlementDoesNotNullTheWholeList() throws {
+        let json = """
+        {
+            "object": "list",
+            "data": [
+                {"id": "premium", "is_active": true},
+                {"is_active": true},
+                {"id": "basic", "is_active": false}
+            ]
+        }
+        """
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        let list = try decoder.decode(Qonversion.EntitlementsList.self, from: Data(json.utf8))
+
+        XCTAssertEqual(list.data.map(\.id), ["premium", "basic"], "the malformed element degrades, the user's access list survives")
+    }
+
+    func testRemoteConfigSourceToleratesAMissingContextKey() throws {
+        // An absent key must decode like an explicit null — production
+        // payloads omit optional fields.
         let json = remoteConfigJSON(contextKeyFragment: #""ignored": null"#)
 
-        XCTAssertThrowsError(try decode(Qonversion.RemoteConfig.self, json))
+        let remoteConfig = try decode(Qonversion.RemoteConfig.self, json)
+
+        XCTAssertNil(remoteConfig.source.contextKey)
     }
 
 
@@ -324,7 +345,7 @@ final class EntitiesDecodingTests: XCTestCase {
 
     func testProductDecodingUsesV4Keys() throws {
         // v4 wire keys: id / apple_product_id / offering_id; extra fields are
-        // ignored and skProduct stays nil.
+        // ignored and the store product stays unlinked.
         let json = #"{"id": "main", "apple_product_id": "com.app.main", "offering_id": "offering_1", "type": "subscription", "created_at": "2024-01-01T00:00:00Z"}"#
 
         let product = try decode(Qonversion.Product.self, json)
@@ -332,7 +353,7 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertEqual(product.qonversionId, "main")
         XCTAssertEqual(product.storeId, "com.app.main")
         XCTAssertEqual(product.offeringId, "offering_1")
-        XCTAssertNil(product.skProduct)
+        XCTAssertFalse(product.isStoreProductLinked)
         XCTAssertNil(product.displayName)
         XCTAssertNil(product.price)
         XCTAssertFalse(product.isStoreProductLinked)

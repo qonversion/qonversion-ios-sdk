@@ -32,6 +32,18 @@ final class DeviceManagerTests: XCTestCase {
         super.tearDown()
     }
 
+    func testUserChangeDropsTheStoredDeviceRecord() {
+        deviceService.current = Device(
+            manufacturer: "Apple", osName: "iOS", osVersion: "17.0", model: "iPhone15,2",
+            appVersion: "1.0", country: "US", language: "en", timezone: "UTC",
+            advertisingId: nil, vendorId: "v", installDate: 1
+        )
+
+        manager.userDidChange()
+
+        XCTAssertEqual(deviceService.removeStoredDeviceCallsCount, 1, "the new user needs its own device row on the backend")
+    }
+
     // MARK: - Helpers
 
     private func makeTestDevice(osVersion: String = "17.0", advertisingId: String? = nil) -> Device {

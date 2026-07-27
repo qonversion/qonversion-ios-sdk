@@ -32,6 +32,11 @@ actor UserManager: UserManagerInterface {
     /// call with a different id waits for it to settle and then runs its own.
     private var identifyInFlight: (id: UUID, externalId: String, task: Task<Qonversion.User, Error>)?
 
+    /// Bumped by logout: a pipeline or identity continuation that resumes
+    /// after the bump belongs to the previous session and must not touch
+    /// the state of the new one.
+    private var sessionGeneration = 0
+
     fileprivate struct PipelineOutcome: Sendable {
         let user: Qonversion.User
         /// A pending-identity failure is delivered to the identify caller only;
@@ -56,6 +61,14 @@ actor UserManager: UserManagerInterface {
 
     @discardableResult
     func identify(_ externalId: String) async throws -> Qonversion.User {
+        // Already linked to this external id: answer locally, like production —
+        // an identify on every launch must not cost two requests.
+        if identifyInFlight == nil,
+           let user: Qonversion.User = existingUser(),
+           localStorage.string(forKey: Constants.identityKey.rawValue) == externalId {
+            return user
+        }
+
         while let inFlight = identifyInFlight {
             if inFlight.externalId == externalId {
                 return try await inFlight.task.value
@@ -84,6 +97,12 @@ actor UserManager: UserManagerInterface {
                 if let identityError: Error = outcome.identityError {
                     throw identityError
                 }
+                // A joined pipeline may have passed its identity step before
+                // this registration — the pending id would dangle silently.
+                if self.pendingIdentityExternalId == externalId {
+                    self.pendingIdentityExternalId = nil
+                    _ = try await self.linkIdentity(externalId)
+                }
                 return self.currentUser() ?? outcome.user
             }
         }
@@ -99,15 +118,30 @@ actor UserManager: UserManagerInterface {
     }
 
     func logout() async {
+        // The identity teardown is unconditional: an identify in flight (or
+        // pending) at logout time must never settle afterwards — even when
+        // the uid has not moved yet, which is exactly the first-identify case.
+        sessionGeneration += 1
         pipeline?.cancel()
         pipeline = nil
         pendingIdentityExternalId = nil
-        cachedUser = nil
-        localStorage.removeObject(forKey: Constants.userKey.rawValue)
+        identifyInFlight?.task.cancel()
+        identifyInFlight = nil
         localStorage.removeObject(forKey: Constants.identityKey.rawValue)
 
-        // A fresh anonymous uid; the backend user is created lazily on the next demand.
-        _ = userService.generateUserId()
+        // Production semantics: the uid restore (and the cache wipe it
+        // implies) only happens when the uid actually moved away from the
+        // install's original anonymous user.
+        let originalUid: String? = localStorage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
+        guard let originalUid, !originalUid.isEmpty, originalUid != internalConfig.userId else { return }
+
+        cachedUser = nil
+        localStorage.removeObject(forKey: Constants.userKey.rawValue)
+
+        // Back to the original anonymous user — it owns the purchases made
+        // before identify; minting a fresh uid would orphan them.
+        internalConfig.userId = originalUid
+        localStorage.set(string: originalUid, forKey: UserServiceStorageKeys.userIdKey.rawValue)
 
         userChangesNotifier.notifyUserChanged()
     }
@@ -116,6 +150,20 @@ actor UserManager: UserManagerInterface {
         guard uid != internalConfig.userId else { return }
 
         try await switchUser(to: uid)
+    }
+
+    /// Waits until no identify is in flight and the creation pipeline has
+    /// settled — user-scoped requests (remote config) must not race a uid switch.
+    func awaitUserStability() async {
+        while let inFlight = identifyInFlight {
+            _ = try? await inFlight.task.value
+            if identifyInFlight?.id == inFlight.id {
+                identifyInFlight = nil
+            }
+        }
+        if let pipeline {
+            _ = try? await pipeline.value
+        }
     }
 
     func userInfo() async throws -> Qonversion.User {
@@ -142,11 +190,15 @@ private extension UserManager {
         }
 
         let task = Task<PipelineOutcome, Error> {
+            let generation: Int = self.sessionGeneration
             let user: Qonversion.User
             if let existing: Qonversion.User = existingUser() {
                 user = existing
             } else {
                 user = try await userService.createUser()
+                // A logout landed while the request was in flight — the
+                // created user belongs to the previous session.
+                guard generation == self.sessionGeneration else { throw CancellationError() }
                 cachedUser = user
                 persist(user)
             }
@@ -178,14 +230,20 @@ private extension UserManager {
     /// Links the external id to the current user. When the external id is
     /// already linked to another Qonversion user, switches to that user.
     func linkIdentity(_ externalId: String) async throws -> Qonversion.User {
+        let generation: Int = sessionGeneration
         let currentUid: String = internalConfig.userId
 
         if let linkedUid = try await userService.identity(for: externalId) {
+            // A logout landed mid-flight: applying the link now would silently
+            // re-identify the user the host just logged out.
+            guard generation == sessionGeneration else { throw CancellationError() }
             if linkedUid != currentUid {
                 try await switchUser(to: linkedUid)
             }
         } else {
+            guard generation == sessionGeneration else { throw CancellationError() }
             let resultUid: String = try await userService.createIdentity(externalId: externalId, userId: currentUid)
+            guard generation == sessionGeneration else { throw CancellationError() }
             if resultUid != currentUid {
                 try await switchUser(to: resultUid)
             }
@@ -214,7 +272,10 @@ private extension UserManager {
     }
 
     func currentUser() -> Qonversion.User? {
-        return cachedUser ?? persistedUser()
+        if let cachedUser, cachedUser.id == internalConfig.userId {
+            return cachedUser
+        }
+        return persistedUser()
     }
 
     /// The user is considered created when a persisted user matching the

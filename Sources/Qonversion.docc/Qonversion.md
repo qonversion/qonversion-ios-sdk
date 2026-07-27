@@ -21,7 +21,7 @@ let products = try await Qonversion.shared.products()
 let result = try await Qonversion.shared.purchase(products[0])
 ```
 
-The API is async/await-first. Purchases run on StoreKit 2 (iOS 15+) with an automatic StoreKit 1 fallback; transactions are finished only after Qonversion confirms the purchase, and entitlements keep working through backend outages via the on-device fallback.
+The API is async/await-first. Purchases run natively on StoreKit 2; transactions are finished only after Qonversion confirms the purchase, and entitlements keep working through backend outages via the on-device fallback.
 
 ## Topics
 

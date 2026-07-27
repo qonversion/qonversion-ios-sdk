@@ -26,7 +26,21 @@ public final class Qonversion: @unchecked Sendable {
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
     @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
+        // Re-initializing would rebuild the manager graph under the feet of
+        // the background tasks the first call spawned.
+        initializationLock.lock()
+        defer { initializationLock.unlock() }
+        guard !shared.isInitialized else {
+            shared.logger?.warning("Qonversion.initialize called more than once — the repeated call is ignored.")
+            return shared
+        }
+        shared.isInitialized = true
+
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime, logLevel: configuration.logLevel)
+        Qonversion.shared.assembly = assembly
+        Qonversion.shared.logger = assembly.servicesAssembly.miscAssemblyLogger()
+        // Replay requests that failed on transport in previous sessions.
+        assembly.replayStoredRequests()
         Qonversion.shared.userManager = assembly.userManager()
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
@@ -40,7 +54,7 @@ public final class Qonversion: @unchecked Sendable {
         Qonversion.shared.purchasesManager?.startObservingTransactions()
 
         // Re-report transactions left unfinished by previous sessions
-        // (no-op in Analytics mode).
+        // (reported in both modes; finished only in subscription management).
         Task {
             await Qonversion.shared.purchasesManager?.processUnfinishedTransactions()
         }
@@ -62,11 +76,12 @@ public final class Qonversion: @unchecked Sendable {
             Qonversion.shared.userPropertiesManager?.collectIntegrationsData()
         }
 
-        // Warm up the user gate: create the backend user early so the first
-        // data-sending call doesn't pay for it. Failure is fine — the gate
-        // retries on the next demand.
+        // Warm up the user gate first, then create/refresh the backend
+        // device record — the device row belongs to a user the backend has
+        // seen. Failures are fine: the gate retries on the next demand.
         Task {
-            try? await Qonversion.shared.userManager?.obtainUser()
+            _ = try? await Qonversion.shared.userManager?.obtainUser()
+            await Qonversion.shared.deviceManager?.collectDeviceInfo()
         }
 
         return Qonversion.shared
@@ -108,8 +123,7 @@ public final class Qonversion: @unchecked Sendable {
     }
 
     /// Resolves the user's eligibility for the introductory offers of the
-    /// given Qonversion products. The check runs on the device via StoreKit 2;
-    /// on systems older than iOS 15 the status is `.unknown`.
+    /// given Qonversion products. The check runs on the device via StoreKit 2.
     /// - Parameter productIds: Qonversion product identifiers.
     public func checkTrialIntroEligibility(_ productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
         guard let productsManager else { throw QonversionError.initializationError() }
@@ -135,11 +149,13 @@ public final class Qonversion: @unchecked Sendable {
     /// track them (Analytics mode). Pass the verification results you receive
     /// from `Product.PurchaseResult` or `Transaction.updates`. The SDK never
     /// finishes these transactions — your app owns their lifecycle.
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async {
-        guard let purchasesManager else { return }
+    /// - Returns: true when every purchase was reported to Qonversion;
+    ///   failed reports are retried automatically by the offline queue.
+    @discardableResult
+    public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async -> Bool {
+        guard let purchasesManager else { return false }
 
-        await purchasesManager.handle(purchasedTransactions: verificationResults)
+        return await purchasesManager.handle(purchasedTransactions: verificationResults)
     }
 
     /// Requests a signed promotional offer for the product's subscription
@@ -176,6 +192,21 @@ public final class Qonversion: @unchecked Sendable {
 
         return purchasesManager.entitlementsUpdates()
     }
+
+    #if os(iOS) || os(visionOS)
+    /// Presents the system sheet for redeeming App Store offer codes.
+    public func presentCodeRedemptionSheet() {
+        purchasesManager?.presentCodeRedemptionSheet()
+    }
+
+    /// Presents the App Store offer code redemption sheet in the given scene.
+    @available(iOS 16.0, *)
+    public func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
+        guard let purchasesManager else { throw QonversionError.initializationError() }
+
+        try await purchasesManager.presentOfferCodeRedeemSheet(in: scene)
+    }
+    #endif
 
     /// Sends the historical App Store transactions to Qonversion once per
     /// install. Call it right after the first launch of the app version that
@@ -352,6 +383,13 @@ public final class Qonversion: @unchecked Sendable {
     }
 
     // MARK: - Private
+    private static let initializationLock = NSLock()
+    private var isInitialized = false
+    private var logger: LoggerWrapper?
+    // The facade owns the assembly graph: managers hold their dependencies,
+    // but cross-cutting pieces (user-change observers, the weak assembly
+    // back-references) live only as long as the assemblies do.
+    private var assembly: QonversionAssembly?
     private var userManager: UserManagerInterface?
     private var purchasesManager: PurchasesManagerInterface?
     private var entitlementsManager: EntitlementsManagerInterface?
