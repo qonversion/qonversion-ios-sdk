@@ -226,7 +226,13 @@ final class IntegrationTests: XCTestCase {
         let replayedRequests = nextLaunch.network.recordedRequests("POST", "/v4/users/*/purchases")
         XCTAssertEqual(replayedRequests.count, 1, "the queued report must be delivered exactly once")
         let replayed = try XCTUnwrap(replayedRequests.first)
-        XCTAssertEqual(replayed.value(forHTTPHeaderField: "Attempt"), "2", "the replay reports the true attempt number")
+        // The first session sent this request maxTransportRetries + 1 times
+        // before giving up on the transport; the replay is the one after that.
+        // A hardcoded "2" would have been the count only if the in-session
+        // retries were pretended away.
+        let sendsInTheFirstSession: Int = RequestProcessor.maxTransportRetries + 1
+        XCTAssertEqual(replayed.value(forHTTPHeaderField: "Attempt"), "\(sendsInTheFirstSession + 1)",
+                       "the replay continues the true attempt sequence")
         XCTAssertEqual(replayed.value(forHTTPHeaderField: "Trigger"), "HandleStoreKit2Transactions", "the original flow's trigger survives the queue")
         XCTAssertTrue(nextLaunch.assembly.servicesAssembly.miscAssembly.requestsStorage().fetchRequests().isEmpty, "the delivered request leaves the queue")
     }

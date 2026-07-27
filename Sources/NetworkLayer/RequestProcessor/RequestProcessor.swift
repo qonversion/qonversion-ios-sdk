@@ -189,11 +189,16 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         // must not be undone by re-queueing it afterwards.
         let generation: Int = requestsStorage.cleanGeneration
 
+        // The in-session retries already burned attempts against this request;
+        // a copy queued afterwards must continue that count, not restart it,
+        // or the Attempt header lies to the backend on every replay.
+        let attemptsMade = AttemptCounter()
+
         let responseBody: Data
         let error: QonversionError?
         let responseCode: Int
         do {
-            let (data, urlResponse) = try await sendWithTransportRetries(urlRequest)
+            let (data, urlResponse) = try await sendWithTransportRetries(urlRequest, attemptsMade: attemptsMade)
             error = errorHandler.extractError(from: urlResponse, body: data)
             responseBody = data
             responseCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
@@ -207,6 +212,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
                     trigger: trigger?.rawValue,
+                    attempt: attemptsMade.total,
                     transactionId: request.replayTransactionId
                 )
                 requestsStorage.append(stored, ifGenerationIs: generation)
@@ -228,6 +234,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
                     trigger: trigger?.rawValue,
+                    attempt: attemptsMade.total,
                     transactionId: request.replayTransactionId
                 )
                 requestsStorage.append(stored, ifGenerationIs: generation)
@@ -283,6 +290,28 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     /// The ObjC client retried with no delay at all.
     static let defaultTransportRetryDelayCeiling: TimeInterval = 2
 
+    /// Counts the sends one process() call made, so a request queued after the
+    /// in-session retries continues the true attempt sequence.
+    // @unchecked: the counter is lock-guarded; the retry loop and the caller
+    // touch it from the same task, the lock is belt and braces.
+    final class AttemptCounter: @unchecked Sendable {
+
+        private let lock = NSLock()
+        private var _total: Int = 0
+
+        var total: Int {
+            lock.lock()
+            defer { lock.unlock() }
+            return max(_total, 1)
+        }
+
+        func record(_ attempt: Int) {
+            lock.lock()
+            _total = max(_total, attempt)
+            lock.unlock()
+        }
+    }
+
     /// A failure with no response at all: the request never reached the
     /// backend, so resending it cannot duplicate anything. The first five are
     /// the connection-class URLErrors; the last two are the extra codes the
@@ -306,13 +335,14 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     ///
     /// The rate limiter and the critical-error latch are deliberately outside
     /// this loop: a retry is not a new call.
-    private func sendWithTransportRetries(_ request: URLRequest) async throws -> (Data, URLResponse) {
+    private func sendWithTransportRetries(_ request: URLRequest, attemptsMade: AttemptCounter) async throws -> (Data, URLResponse) {
         var attempt: Int = 1
         var attemptedRequest: URLRequest = request
 
         while true {
             // Like the ObjC client, the backend is told which attempt this is.
             attemptedRequest.setValue("\(attempt)", forHTTPHeaderField: Self.attemptHeader)
+            attemptsMade.record(attempt)
 
             do {
                 return try await networkProvider.send(request: attemptedRequest)

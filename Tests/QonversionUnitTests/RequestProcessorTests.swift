@@ -149,6 +149,51 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(requestsStorage.storedRequests.count, 1, "the offline queue is fed once, after the retries are spent")
     }
 
+    func testTheQueuedCopyContinuesTheAttemptSequence() async {
+        // The in-session retries already burned attempts against this request.
+        // Queueing it at attempt 1 would make the next session's replay claim
+        // attempt 2 for what is really the fifth send.
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(networkProvider.sentRequests.count, RequestProcessor.maxTransportRetries + 1)
+        XCTAssertEqual(requestsStorage.storedRequests.first?.attempt, RequestProcessor.maxTransportRetries + 1,
+                       "the replay must continue the true sequence")
+    }
+
+    func testAQueuedCopyWithoutRetriesStaysAtAttemptOne() async {
+        // A non-transport failure is not retried, so the count must not move.
+        networkProvider.response = makeHTTPResponse(statusCode: 503)
+        errorHandler.errorToReturn = QonversionError(type: .internal)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.first?.attempt, 1)
+    }
+
+    func testTheReplayedAttemptHeaderContinuesFromTheStoredCount() async throws {
+        // End to end: the queued attempt count becomes the next session's
+        // Attempt header.
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: body), responseType: EmptyApiResponse.self)
+
+        networkProvider = MockNetworkProvider()
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let replayProcessor = makeProcessor()
+        replayProcessor.processStoredRequests()
+        await waitUntil { !self.networkProvider.sentRequests.isEmpty }
+
+        let sent = try XCTUnwrap(networkProvider.sentRequests.first)
+        XCTAssertEqual(sent.value(forHTTPHeaderField: "Attempt"), "\(RequestProcessor.maxTransportRetries + 2)")
+    }
+
     func testTheRateLimiterIsConsultedOncePerCallNotPerRetry() async {
         networkProvider.error = URLError(.notConnectedToInternet)
         let processor = makeProcessor()
