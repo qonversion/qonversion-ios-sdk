@@ -297,11 +297,20 @@ final class PurchasesManagerTests: XCTestCase {
         await manager.transactionUpdated(makeTransaction(id: "early-1"))
         await waitUntil { !self.facade.finishedTransactions.isEmpty }
 
-        var received: [String: Qonversion.Entitlement]?
-        for await update in manager.entitlementsUpdates() {
-            received = update
-            break
+        let stream = manager.entitlementsUpdates()
+        let consumer = Task { () -> [String: Qonversion.Entitlement]? in
+            for await update in stream {
+                return update
+            }
+            return nil
         }
+        let timeout = Task { () -> [String: Qonversion.Entitlement]? in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            consumer.cancel()
+            return nil
+        }
+        let received: [String: Qonversion.Entitlement]? = await consumer.value
+        timeout.cancel()
 
         XCTAssertEqual(received?.keys.sorted(), ["premium"], "an Ask to Buy approval during launch must not be dropped")
     }
@@ -321,7 +330,10 @@ final class PurchasesManagerTests: XCTestCase {
         // A restore racing the in-flight purchase report must skip the id.
         facade.restoreResult = [makeTransaction(id: "race-1")]
         async let restored = manager.restore()
-        try? await Task.sleep(nanoseconds: 100_000_000)
+        // Deterministic: the restore has passed the store call (and its gate
+        // check happens right after) before the purchase report is released.
+        await waitUntil { self.facade.facadeRestoreCallsCount >= 1 }
+        try? await Task.sleep(nanoseconds: 50_000_000)
         await gate.open()
         _ = try await purchase
         _ = try await restored
@@ -353,7 +365,6 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.count, 1)
 
         manager.userDidChange()
-        try? await Task.sleep(nanoseconds: 100_000_000)
 
         _ = try await manager.restore()
 
@@ -369,8 +380,9 @@ final class PurchasesManagerTests: XCTestCase {
         entitlementsManager.entitlementsResult = [:]
 
         async let first: [String: Qonversion.Entitlement] = manager.restore()
+        await waitUntil { self.facade.facadeRestoreCallsCount >= 1 }
         async let second: [String: Qonversion.Entitlement] = manager.restore()
-        try? await Task.sleep(nanoseconds: 100_000_000)
+        try? await Task.sleep(nanoseconds: 50_000_000)
         await gate.open()
         _ = try await first
         _ = try await second

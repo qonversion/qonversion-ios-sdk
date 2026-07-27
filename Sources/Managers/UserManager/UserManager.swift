@@ -118,20 +118,25 @@ actor UserManager: UserManagerInterface {
     }
 
     func logout() async {
-        // Production semantics: logging out while already on the install's
-        // original anonymous user is a full no-op.
-        let originalUid: String? = localStorage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
-        guard let originalUid, !originalUid.isEmpty, originalUid != internalConfig.userId else { return }
-
+        // The identity teardown is unconditional: an identify in flight (or
+        // pending) at logout time must never settle afterwards — even when
+        // the uid has not moved yet, which is exactly the first-identify case.
         sessionGeneration += 1
         pipeline?.cancel()
         pipeline = nil
         pendingIdentityExternalId = nil
         identifyInFlight?.task.cancel()
         identifyInFlight = nil
+        localStorage.removeObject(forKey: Constants.identityKey.rawValue)
+
+        // Production semantics: the uid restore (and the cache wipe it
+        // implies) only happens when the uid actually moved away from the
+        // install's original anonymous user.
+        let originalUid: String? = localStorage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
+        guard let originalUid, !originalUid.isEmpty, originalUid != internalConfig.userId else { return }
+
         cachedUser = nil
         localStorage.removeObject(forKey: Constants.userKey.rawValue)
-        localStorage.removeObject(forKey: Constants.identityKey.rawValue)
 
         // Back to the original anonymous user — it owns the purchases made
         // before identify; minting a fresh uid would orphan them.

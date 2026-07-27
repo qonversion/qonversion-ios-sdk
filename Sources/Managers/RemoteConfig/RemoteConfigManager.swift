@@ -165,6 +165,9 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     private func invalidateCache() {
         lock.lock()
         defer { lock.unlock() }
+        // The generation bump keeps an in-flight pre-attach response from
+        // repopulating the cache it just cleared.
+        cacheGeneration += 1
         loadedConfigs = [:]
     }
     

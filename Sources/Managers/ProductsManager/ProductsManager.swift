@@ -245,6 +245,7 @@ extension ProductsManager: UserChangedObserver {
         // Products may be personalized (experiments); the mapping is
         // project-scoped and stays.
         loadedProducts = []
+        localStorage.removeObject(forKey: Constants.productsKey.rawValue)
     }
 }
 

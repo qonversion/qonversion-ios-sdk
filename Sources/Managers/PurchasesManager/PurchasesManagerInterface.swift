@@ -62,9 +62,9 @@ protocol PurchasesManagerInterface: AnyObject {
     func syncHistoricalData() async
 
     /// Re-reports transactions left unfinished by previous sessions and
-    /// finishes them after the backend confirms. Does nothing in Analytics
-    /// mode, where the host app owns the transaction lifecycle. Deduplicated
-    /// against the transaction updates listener.
+    /// finishes them after the backend confirms; in Analytics mode they are
+    /// reported but never finished — the host app owns the transaction
+    /// lifecycle. Deduplicated against the transaction updates listener.
     func processUnfinishedTransactions() async
 }
 

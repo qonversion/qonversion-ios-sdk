@@ -22,6 +22,17 @@ final class RequestsStorageTests: XCTestCase {
         StoredRequest(url: url, method: "POST", body: body, dedupKey: dedupKey)
     }
 
+    func testRemoveAllWherePersistsTheFilteredQueue() {
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        storage.append(StoredRequest(url: "https://a", method: "POST", body: nil, dedupKey: "createPurchase-u1-tx1"))
+        storage.append(StoredRequest(url: "https://b", method: "POST", body: nil, dedupKey: "createPurchase-u2-tx2"))
+
+        storage.removeAll { $0.dedupKey?.hasSuffix("-tx1") == true }
+
+        let remaining: [String?] = storage.fetchRequests().map { $0.dedupKey }
+        XCTAssertEqual(remaining, ["createPurchase-u2-tx2"])
+    }
+
     func testFetchRequestsOnEmptyStorageReturnsEmptyArray() {
         let storage = makeStorage(TestDefaults.makeIsolated())
 

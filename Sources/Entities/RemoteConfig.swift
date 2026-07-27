@@ -14,10 +14,10 @@ extension Qonversion {
     public struct RemoteConfig: Decodable, @unchecked Sendable {
         
         /// Source of the remote configuration
-        public struct Source: Decodable {
+        public struct Source: Decodable, Sendable {
 
             /// Possible assignment types of the remote configuration
-            public enum AssignmentType: String, Decodable {
+            public enum AssignmentType: String, Decodable, Sendable {
                 
                 /// Unknown assignment type
                 case unknown // todo use as default
@@ -30,7 +30,7 @@ extension Qonversion {
             }
 
             /// Possible source types of the remote configuration
-            public enum SourceType: String, Decodable {
+            public enum SourceType: String, Decodable, Sendable {
                 
                 /// Unknown source type
                 case unknown // todo use as default

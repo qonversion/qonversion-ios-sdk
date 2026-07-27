@@ -22,28 +22,37 @@ private final class StubNetworkProvider: NetworkProviderInterface, @unchecked Se
 
     struct Rule {
         let method: String
-        let urlContains: String
+        let pathPattern: String
         var status: Int
         var body: String
         var transportError: Error?
+    }
+
+    /// Segment-exact path matching: "*" matches one segment, counts must be
+    /// equal — "/v4/users" can never swallow "/v4/users/uid/purchases".
+    static func matches(pattern: String, path: String) -> Bool {
+        let patternSegments: [Substring] = pattern.split(separator: "/")
+        let pathSegments: [Substring] = path.split(separator: "/")
+        guard patternSegments.count == pathSegments.count else { return false }
+        return zip(patternSegments, pathSegments).allSatisfy { $0 == "*" || $0 == $1 }
     }
 
     private let lock = NSLock()
     private var rules: [Rule] = []
     private(set) var requests: [URLRequest] = []
 
-    func stub(_ method: String, _ urlContains: String, status: Int = 200, body: String = "{}", transportError: Error? = nil) {
+    func stub(_ method: String, _ pathPattern: String, status: Int = 200, body: String = "{}", transportError: Error? = nil) {
         lock.lock()
         defer { lock.unlock() }
-        // Later stubs win: re-stubbing a route replaces the previous rule.
-        rules.removeAll { $0.method == method && $0.urlContains == urlContains }
-        rules.append(Rule(method: method, urlContains: urlContains, status: status, body: body, transportError: transportError))
+        // Re-stubbing a route replaces the previous rule.
+        rules.removeAll { $0.method == method && $0.pathPattern == pathPattern }
+        rules.append(Rule(method: method, pathPattern: pathPattern, status: status, body: body, transportError: transportError))
     }
 
-    func recordedRequests(_ method: String, _ urlContains: String) -> [URLRequest] {
+    func recordedRequests(_ method: String, _ pathPattern: String) -> [URLRequest] {
         lock.lock()
         defer { lock.unlock() }
-        return requests.filter { $0.httpMethod == method && ($0.url?.absoluteString.contains(urlContains) ?? false) }
+        return requests.filter { $0.httpMethod == method && Self.matches(pattern: pathPattern, path: $0.url?.path ?? "") }
     }
 
     func allRequests() -> [URLRequest] {
@@ -56,7 +65,7 @@ private final class StubNetworkProvider: NetworkProviderInterface, @unchecked Se
         lock.lock()
         requests.append(request)
         let rule: Rule? = rules.last { rule in
-            request.httpMethod == rule.method && (request.url?.absoluteString.contains(rule.urlContains) ?? false)
+            request.httpMethod == rule.method && Self.matches(pattern: rule.pathPattern, path: request.url?.path ?? "")
         }
         lock.unlock()
 
@@ -110,7 +119,7 @@ private struct SdkWorld {
 
     func stubHappyUser() {
         network.stub("POST", "/v4/users", body: #"{"id": "\#(uid)", "created_at": "2026-07-27T10:00:00Z", "environment": "prod"}"#)
-        network.stub("GET", "/v4/users/", body: #"{"id": "\#(uid)", "created_at": "2026-07-27T10:00:00Z", "environment": "prod"}"#)
+        network.stub("GET", "/v4/users/*", body: #"{"id": "\#(uid)", "created_at": "2026-07-27T10:00:00Z", "environment": "prod"}"#)
     }
 }
 
@@ -155,8 +164,8 @@ final class IntegrationTests: XCTestCase {
     func testObservedTransactionIsReportedFinishedAndEmitted() async throws {
         let subMgmt = SdkWorld(userDefaults: TestDefaults.makeIsolated(), launchMode: .subscriptionManagement)
         subMgmt.stubHappyUser()
-        subMgmt.network.stub("POST", "/purchases", body: #"{"object": "purchase"}"#)
-        subMgmt.network.stub("GET", "/entitlements", body: #"{"object": "list", "data": [{"id": "premium", "is_active": true}]}"#)
+        subMgmt.network.stub("POST", "/v4/users/*/purchases", body: #"{"object": "purchase"}"#)
+        subMgmt.network.stub("GET", "/v4/users/*/entitlements", body: #"{"object": "list", "data": [{"id": "premium", "is_active": true}]}"#)
         guard let concreteManager = subMgmt.purchasesManager as? PurchasesManager else {
             return XCTFail("Unexpected manager type")
         }
@@ -169,42 +178,55 @@ final class IntegrationTests: XCTestCase {
             try? await Task.sleep(nanoseconds: 20_000_000)
         }
 
-        let report = try XCTUnwrap(subMgmt.network.recordedRequests("POST", "/purchases").first)
+        let report = try XCTUnwrap(subMgmt.network.recordedRequests("POST", "/v4/users/*/purchases").first)
         XCTAssertEqual(report.value(forHTTPHeaderField: "Trigger"), "Purchase")
         let body = try XCTUnwrap(report.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] })
         let storeData = body["store_data"] as? [String: Any]
         XCTAssertEqual(storeData?["receipt"] as? String, "signed-jws")
         XCTAssertEqual(storeData?["transaction_id"] as? String, "tx-1")
 
-        XCTAssertEqual(subMgmt.storeKit.finishedTransactions.map(\.id), ["tx-1"], "finished strictly after the backend confirmed")
+        XCTAssertEqual(subMgmt.storeKit.finishedTransactions.map(\.id), ["tx-1"])
+
+        // The refreshed entitlements are emitted into the stream (buffered,
+        // so subscribing after the fact still receives them).
+        var received: [String: Qonversion.Entitlement]?
+        for await update in subMgmt.purchasesManager.entitlementsUpdates() {
+            received = update
+            break
+        }
+        XCTAssertEqual(received?.keys.sorted(), ["premium"])
     }
 
     // MARK: - 3. offline report, replayed on the next launch
 
     func testOfflineReportIsReplayedByTheNextLaunch() async throws {
         world.stubHappyUser()
-        world.network.stub("POST", "/purchases", transportError: URLError(.notConnectedToInternet))
+        world.network.stub("POST", "/v4/users/*/purchases", transportError: URLError(.notConnectedToInternet))
         let transaction = Qonversion.Transaction(id: "tx-off", originalId: "tx-off", productId: "com.app.pro", jws: "jws-off")
 
         await world.purchasesManager.handle(transactions: [transaction])
-        XCTAssertTrue(world.storeKit.finishedTransactions.isEmpty)
         XCTAssertEqual(world.assembly.servicesAssembly.miscAssembly.requestsStorage().fetchRequests().count, 1,
                        "the failed report must be queued for the offline replay")
 
         // "Next launch": a fresh assembly over the SAME UserDefaults with a
         // healthy network — the queued report must be delivered exactly once.
         let nextLaunch = SdkWorld(userDefaults: world.userDefaults)
-        nextLaunch.network.stub("POST", "/purchases", body: #"{"object": "purchase"}"#)
+        nextLaunch.network.stub("POST", "/v4/users/*/purchases", body: #"{"object": "purchase"}"#)
         nextLaunch.assembly.replayStoredRequests()
 
         let deadline = Date().addingTimeInterval(3)
-        while nextLaunch.network.recordedRequests("POST", "/purchases").isEmpty && Date() < deadline {
+        while nextLaunch.network.recordedRequests("POST", "/v4/users/*/purchases").isEmpty && Date() < deadline {
             try? await Task.sleep(nanoseconds: 20_000_000)
         }
 
-        let replayed = try XCTUnwrap(nextLaunch.network.recordedRequests("POST", "/purchases").first)
+        // Delivered exactly once, and the queue is drained.
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        let replayedRequests = nextLaunch.network.recordedRequests("POST", "/v4/users/*/purchases")
+        XCTAssertEqual(replayedRequests.count, 1, "the queued report must be delivered exactly once")
+        let replayed = try XCTUnwrap(replayedRequests.first)
         XCTAssertEqual(replayed.value(forHTTPHeaderField: "Attempt"), "2", "the replay reports the true attempt number")
         XCTAssertEqual(replayed.value(forHTTPHeaderField: "Trigger"), "HandleStoreKit2Transactions", "the original flow's trigger survives the queue")
+        XCTAssertTrue(nextLaunch.assembly.servicesAssembly.miscAssembly.requestsStorage().fetchRequests().isEmpty, "the delivered request leaves the queue")
     }
 
     // MARK: - 4. identity switch cascades through the graph
@@ -218,7 +240,7 @@ final class IntegrationTests: XCTestCase {
         world.network.stub("GET", "/v4/products", body: #"{"object": "list", "data": [{"id": "pro", "apple_product_id": "com.app.pro"}]}"#)
         _ = try await world.productsManager.products()
 
-        world.network.stub("GET", "/v4/identities/", status: 404, body: #"{"error": {"code": "not_found", "message": "no identity", "type": "invalid_request"}}"#)
+        world.network.stub("GET", "/v4/identities/*", status: 404, body: #"{"error": {"code": "not_found", "message": "no identity", "type": "invalid_request"}}"#)
         world.network.stub("POST", "/v4/identities", body: #"{"object": "identity", "id": "ext-1", "user_id": "QON_linked_uid"}"#)
         world.network.stub("GET", "/v4/users/QON_linked_uid", body: #"{"id": "QON_linked_uid", "created_at": "2026-07-27T10:00:00Z", "environment": "prod"}"#)
 
@@ -240,7 +262,7 @@ final class IntegrationTests: XCTestCase {
         _ = try await world.userManager.obtainUser()
         let originalUid: String = world.uid
 
-        world.network.stub("GET", "/v4/identities/", status: 404, body: #"{"error": {"code": "not_found", "message": "no identity", "type": "invalid_request"}}"#)
+        world.network.stub("GET", "/v4/identities/*", status: 404, body: #"{"error": {"code": "not_found", "message": "no identity", "type": "invalid_request"}}"#)
         world.network.stub("POST", "/v4/identities", body: #"{"object": "identity", "id": "ext-1", "user_id": "QON_linked_uid"}"#)
         world.network.stub("GET", "/v4/users/QON_linked_uid", body: #"{"id": "QON_linked_uid", "created_at": "2026-07-27T10:00:00Z", "environment": "prod"}"#)
         _ = try await world.userManager.identify("ext-1")
@@ -260,15 +282,15 @@ final class IntegrationTests: XCTestCase {
 
     func testPendingPropertiesReachTheBackendBeforeTheRemoteConfig() async throws {
         world.stubHappyUser()
-        world.network.stub("POST", "/properties", body: #"{"object": "list", "saved_properties": [], "property_errors": []}"#)
+        world.network.stub("POST", "/v4/users/*/properties", body: #"{"object": "list", "saved_properties": [], "property_errors": []}"#)
         world.network.stub("GET", "/v4/remote-config", body: #"{"payload": {"k": "v"}, "source": {"uid": "s1", "name": "main", "type": "remote_configuration", "assignment_type": "auto", "context_key": null}}"#)
 
         world.userPropertiesManager.setUserProperty(key: .email, value: "a@b.com")
         _ = try await world.remoteConfigManager.loadRemoteConfig(contextKey: nil)
 
         let all = world.network.allRequests()
-        let propertiesIndex = all.firstIndex { $0.httpMethod == "POST" && ($0.url?.absoluteString.contains("/properties") ?? false) }
-        let configIndex = all.firstIndex { $0.httpMethod == "GET" && ($0.url?.absoluteString.contains("/remote-config") ?? false) }
+        let propertiesIndex = all.firstIndex { $0.httpMethod == "POST" && ($0.url?.path.hasSuffix("/properties") ?? false) }
+        let configIndex = all.firstIndex { $0.httpMethod == "GET" && ($0.url?.path.hasSuffix("/remote-config") ?? false) }
         let propertiesAt = try XCTUnwrap(propertiesIndex, "the pending batch must be flushed for fresh segmentation")
         let configAt = try XCTUnwrap(configIndex)
         XCTAssertLessThan(propertiesAt, configAt, "segmentation data must reach the backend before the config is computed")
@@ -278,7 +300,7 @@ final class IntegrationTests: XCTestCase {
 
     func testCriticalErrorLatchesOnlyTheAffectedService() async throws {
         world.stubHappyUser()
-        world.network.stub("GET", "/entitlements", status: 401, body: #"{"error": {"code": "unauthorized", "message": "revoked", "type": "auth"}}"#)
+        world.network.stub("GET", "/v4/users/*/entitlements", status: 401, body: #"{"error": {"code": "unauthorized", "message": "revoked", "type": "auth"}}"#)
         world.network.stub("GET", "/v4/products", body: #"{"object": "list", "data": []}"#)
 
         _ = try? await world.entitlementsManager.entitlements()
@@ -286,7 +308,7 @@ final class IntegrationTests: XCTestCase {
 
         // Deliberate design (approved): the latch is per-service — the
         // entitlements processor stops repeating the request...
-        XCTAssertEqual(world.network.recordedRequests("GET", "/entitlements").count, 1, "the latched processor must not hammer the backend")
+        XCTAssertEqual(world.network.recordedRequests("GET", "/v4/users/*/entitlements").count, 1, "the latched processor must not hammer the backend")
 
         // ...while an unrelated service keeps working.
         _ = try await world.productsManager.products()
@@ -301,9 +323,11 @@ final class IntegrationTests: XCTestCase {
 
         let result = try await world.productsManager.checkTrialIntroEligibility(productIds: ["pro", "missing"])
 
-        // Real StoreKit products cannot be fabricated in unit tests, so the
-        // unenriched product resolves to .unknown — the graph wiring (manager
-        // → facade → wrapper) is what this test pins.
+        // Honest scope: real StoreKit products cannot be fabricated here, so
+        // the eligibility resolution itself is unit-tested elsewhere and the
+        // store path belongs to the StoreKitTest layer. This smoke pins only
+        // that the real manager consulted the real backend catalog first.
+        XCTAssertEqual(world.network.recordedRequests("GET", "/v4/products").count, 1)
         XCTAssertEqual(result["pro"], .unknown)
         XCTAssertEqual(result["missing"], .unknown)
     }

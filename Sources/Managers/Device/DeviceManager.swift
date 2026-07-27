@@ -97,8 +97,11 @@ extension DeviceManager {
 extension DeviceManager: UserChangedObserver {
 
     func userDidChange() {
-        // The stored record belongs to the previous user; the new one gets
-        // its own device row on the next collection.
+        // The stored record belongs to the previous user — drop it and
+        // create the new user's device row right away, not on the next launch.
         clearStoredDevice()
+        Task { [weak self] in
+            await self?.collectDeviceInfo()
+        }
     }
 }

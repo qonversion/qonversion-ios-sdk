@@ -198,7 +198,7 @@ final class QonversionFacadeTests: XCTestCase {
         XCTAssertTrue(facade.delegate === (purchasesManager as? PurchasesManager))
     }
 
-    func testLogoutClearsUserScopedCachesAcrossAssembly() async {
+    func testUserSwitchClearsUserScopedCachesAcrossAssembly() async {
         // End-to-end wiring: the user gate must reach the caches created by
         // the assembly, no matter the creation order.
         let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())

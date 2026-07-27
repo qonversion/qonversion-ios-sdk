@@ -45,6 +45,13 @@ final class ProductsManagerTests: XCTestCase {
         super.tearDown()
     }
 
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeProduct(qonversionId: String = "q_main", storeId: String = "store_main") -> Qonversion.Product {
@@ -57,8 +64,9 @@ final class ProductsManagerTests: XCTestCase {
         productsService.onProducts = { await gate.wait() }
 
         async let first = manager.products()
+        await waitUntil { self.productsService.productsCallsCount >= 1 }
         async let second = manager.products()
-        try? await Task.sleep(nanoseconds: 100_000_000)
+        try? await Task.sleep(nanoseconds: 50_000_000)
         await gate.open()
         _ = try await first
         _ = try await second

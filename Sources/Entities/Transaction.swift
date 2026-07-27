@@ -113,7 +113,7 @@ extension Qonversion {
         
         /// Enum describes possible reasons of transaction's revocation.
         /// This enum is a wrapper of StoreKit Transaction's [RevocationReason](https://developer.apple.com/documentation/storekit/transaction/revocationreason)
-        public enum RevocationReason {
+        public enum RevocationReason: Sendable {
             
             /// The user refunded the transaction due to an issue in your app.
             case developerIssue
@@ -136,7 +136,7 @@ extension Qonversion {
         
         /// Transaction ownership type.
         /// StoreKit [OwnershipType](https://developer.apple.com/documentation/storekit/transaction/ownershiptype) wrapper
-        public enum OwnershipType: String {
+        public enum OwnershipType: String, Sendable {
             
             /// The current user is the purchaser of the transaction.
             case purchased
@@ -148,7 +148,7 @@ extension Qonversion {
         
         /// Transaction environment type.
         /// App Store [Environment](https://developer.apple.com/documentation/storekit/appstore/environment) wrapper.
-        public enum Environment: String {
+        public enum Environment: String, Sendable {
             
             /// A value that indicates the production server environment.
             case production
@@ -162,7 +162,7 @@ extension Qonversion {
         }
         
         /// The subscription offers that apply to a transaction.
-        public struct Offer {
+        public struct Offer: @unchecked Sendable {
             
             /// A string that identifies the subscription offer that applies to the transaction.
             public let id: String?
@@ -201,7 +201,7 @@ extension Qonversion {
             // MARK: Nested stucts & enums
             
             /// The types of offers for auto-renewable subscriptions.
-            public enum OfferType: String {
+            public enum OfferType: String, Sendable {
                 
                 /// An introductory offer for an auto-renewable subscription.
                 case introductory
@@ -238,7 +238,7 @@ extension Qonversion {
             }
             
             /// The payment modes for subscription offers that apply to a transaction.
-            public enum PaymentMode: String {
+            public enum PaymentMode: String, Sendable {
                 
                 /// A payment mode of a product discount that indicates a free trial.
                 case freeTrial
@@ -267,7 +267,7 @@ extension Qonversion {
         }
         
         /// A cause of a purchase transaction, indicating whether it’s a customer’s purchase or an auto-renewable subscription renewal that the system initiates.
-        public enum Reason: String {
+        public enum Reason: String, Sendable {
             
             /// A transaction reason that indicates a purchase is initiated by a customer.
             case purchase

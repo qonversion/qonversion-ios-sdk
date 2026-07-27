@@ -155,6 +155,24 @@ final class RemoteConfigManagerTests: XCTestCase {
         XCTAssertEqual(config.source.identifier, "after-attach", "attach exists to change the config — the cache must not survive it")
     }
 
+    func testInFlightPreAttachResponseCannotRepopulateTheInvalidatedCache() async throws {
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfig = { await gate.wait() }
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "pre-attach")
+
+        async let staleLoad = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        try await manager.attachUserToRemoteConfig(id: "rc-1")
+        await gate.open()
+        _ = try await staleLoad
+
+        remoteConfigService.onLoadRemoteConfig = nil
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "post-attach")
+        let config = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(config.source.identifier, "post-attach", "the pre-attach response must not survive the invalidation")
+    }
+
     func testLoadWaitsForUserStability() async throws {
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
 

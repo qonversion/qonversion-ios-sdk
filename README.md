@@ -280,7 +280,8 @@ Task {
 
 Task {
     for await intent in Qonversion.shared.promoPurchaseIntents {
-        // a purchase started from the App Store product page;
+        // a purchase started from the App Store product page
+        // (delivered on iOS 16.4+; a known gap on iOS 15.0-16.3);
         // call purchase() now, or keep the intent and trigger it
         // when the app is ready (e.g. after onboarding)
         let result = try await intent.purchase()
@@ -312,7 +313,9 @@ Keep your own StoreKit 2 purchase code and feed the results to Qonversion:
 // your purchase flow
 let result = try await storeProduct.purchase()
 if case .success(let verificationResult) = result {
-    await Qonversion.shared.handlePurchases([verificationResult])
+    let reported = await Qonversion.shared.handlePurchases([verificationResult])
+    // false — a report failed or a result was unverified; failed reports
+    // are retried automatically by the offline queue
 }
 
 // and your transaction updates listener

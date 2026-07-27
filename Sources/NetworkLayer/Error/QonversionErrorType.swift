@@ -15,7 +15,6 @@ public enum QonversionErrorType: Sendable {
     case authorizationFailed
     case critical
     case rateLimitExceeded
-    case storeKitUnavailable
     case userLoadingFailed
     case userCreationFailed
     case deviceCreationFailed

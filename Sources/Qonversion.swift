@@ -37,6 +37,7 @@ public final class Qonversion: @unchecked Sendable {
         shared.isInitialized = true
 
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime, logLevel: configuration.logLevel)
+        Qonversion.shared.assembly = assembly
         Qonversion.shared.logger = assembly.servicesAssembly.miscAssemblyLogger()
         // Replay requests that failed on transport in previous sessions.
         assembly.replayStoredRequests()
@@ -53,7 +54,7 @@ public final class Qonversion: @unchecked Sendable {
         Qonversion.shared.purchasesManager?.startObservingTransactions()
 
         // Re-report transactions left unfinished by previous sessions
-        // (no-op in Analytics mode).
+        // (reported in both modes; finished only in subscription management).
         Task {
             await Qonversion.shared.purchasesManager?.processUnfinishedTransactions()
         }
@@ -75,17 +76,12 @@ public final class Qonversion: @unchecked Sendable {
             Qonversion.shared.userPropertiesManager?.collectIntegrationsData()
         }
 
-        // Create/refresh the backend device record (model, timezone, IDFV,
-        // install date) — production does this on every launch.
+        // Warm up the user gate first, then create/refresh the backend
+        // device record — the device row belongs to a user the backend has
+        // seen. Failures are fine: the gate retries on the next demand.
         Task {
+            _ = try? await Qonversion.shared.userManager?.obtainUser()
             await Qonversion.shared.deviceManager?.collectDeviceInfo()
-        }
-
-        // Warm up the user gate: create the backend user early so the first
-        // data-sending call doesn't pay for it. Failure is fine — the gate
-        // retries on the next demand.
-        Task {
-            try? await Qonversion.shared.userManager?.obtainUser()
         }
 
         return Qonversion.shared
@@ -127,8 +123,7 @@ public final class Qonversion: @unchecked Sendable {
     }
 
     /// Resolves the user's eligibility for the introductory offers of the
-    /// given Qonversion products. The check runs on the device via StoreKit 2;
-    /// on systems older than iOS 15 the status is `.unknown`.
+    /// given Qonversion products. The check runs on the device via StoreKit 2.
     /// - Parameter productIds: Qonversion product identifiers.
     public func checkTrialIntroEligibility(_ productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
         guard let productsManager else { throw QonversionError.initializationError() }
@@ -391,6 +386,10 @@ public final class Qonversion: @unchecked Sendable {
     private static let initializationLock = NSLock()
     private var isInitialized = false
     private var logger: LoggerWrapper?
+    // The facade owns the assembly graph: managers hold their dependencies,
+    // but cross-cutting pieces (user-change observers, the weak assembly
+    // back-references) live only as long as the assemblies do.
+    private var assembly: QonversionAssembly?
     private var userManager: UserManagerInterface?
     private var purchasesManager: PurchasesManagerInterface?
     private var entitlementsManager: EntitlementsManagerInterface?

@@ -276,6 +276,44 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(observer.userDidChangeCallsCount, 0, "nothing changed — caches must survive")
     }
 
+    func testIdentifyAfterLogoutRunsTheFullFlowAgain() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = try makeUser(id: "QON_other_uid")
+        _ = try await manager.identify("external_1")
+        let identityCallsAfterFirst: Int = service.identityCalls.count
+
+        await manager.logout()
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.identify("external_1")
+
+        XCTAssertGreaterThan(service.identityCalls.count, identityCallsAfterFirst,
+                             "logout cleared the link — the next identify must hit the backend, not the local short-circuit")
+    }
+
+    func testLogoutDuringTheVeryFirstIdentifyPreventsLateIdentification() async throws {
+        // The uid has not moved yet (first identify in flight) — logout must
+        // still cancel it; the stale continuation must not identify the user
+        // after logout returned.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        let gate = AsyncGate()
+        service.onIdentity = { await gate.wait() }
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = try makeUser(id: "QON_other_uid")
+
+        async let raced = manager.identify("external_1")
+        await waitUntil { self.service.identityCalls.count >= 1 }
+        await manager.logout()
+        await gate.open()
+
+        let result = try? await raced
+        XCTAssertNil(result, "the identify the host logged out from must not settle successfully")
+        XCTAssertEqual(config.userId, anonUid)
+        XCTAssertNil(storage.string(forKey: "qonversion.keys.identityExternalId"))
+    }
+
     func testLogoutCancelsAnInFlightIdentify() async throws {
         service.createUserResult = try makeUser(id: anonUid)
         _ = try await manager.obtainUser()

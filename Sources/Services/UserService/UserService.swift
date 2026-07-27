@@ -16,8 +16,9 @@ enum UserServiceStorageKeys: String {
 
 fileprivate enum Constants: String {
     case userIdPrefix = "QON_"
-    // The uid key of the previous production SDK generation.
+    // The uid keys of the previous production SDK generation.
     case legacyUserIdKey = "com.qonversion.keys.storedUserID"
+    case legacyOriginalUserIdKey = "com.qonversion.keys.originalUserID"
 }
 
 // @unchecked: stateless — every dependency is thread-safe on its own.
@@ -109,7 +110,12 @@ extension UserService {
             localStorage.set(string: legacyUserId, forKey: UserServiceStorageKeys.userIdKey.rawValue)
             localStorage.removeObject(forKey: Constants.legacyUserIdKey.rawValue)
             internalConfig.userId = legacyUserId
-            rememberOriginalUserIdIfNeeded(legacyUserId)
+            // An install identified in the previous SDK carries the identified
+            // uid as its current one — the TRUE original anonymous uid lives
+            // in the production original-user key.
+            let legacyOriginalUserId: String? = localStorage.string(forKey: Constants.legacyOriginalUserIdKey.rawValue)
+            rememberOriginalUserIdIfNeeded(legacyOriginalUserId?.isEmpty == false ? legacyOriginalUserId! : legacyUserId)
+            localStorage.removeObject(forKey: Constants.legacyOriginalUserIdKey.rawValue)
             return
         }
 

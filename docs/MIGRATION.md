@@ -29,7 +29,7 @@ Every completion-handler API became `async`. Errors are thrown instead of passed
 | `setDeferredPurchasesListener(listener)` | `for await entitlements in Qonversion.shared.entitlementsUpdates { ... }` |
 | `setEntitlementsUpdateListener(listener)` *(deprecated)* | same stream: `entitlementsUpdates` |
 | `setPromoPurchasesDelegate(delegate)` | `for await intent in Qonversion.shared.promoPurchaseIntents { try await intent.purchase() }` |
-| `handlePurchases([QONStoreKit2PurchaseModel], completion)` | `await handlePurchases([VerificationResult<Transaction>])` — pass StoreKit 2 results directly, no manual model building |
+| `handlePurchases([QONStoreKit2PurchaseModel], completion)` | `await handlePurchases([VerificationResult<Transaction>]) -> Bool` — pass StoreKit 2 results directly; the returned flag replaces the completion |
 | `setUserProperty(key, value)` / `setCustomUserProperty` | unchanged (plus the new `.tenjinAnalyticsInstallationId` key) |
 | `userProperties(completion)` | `try await userProperties()` |
 | `forceSendProperties(completion)` | `await forceSendProperties()` |

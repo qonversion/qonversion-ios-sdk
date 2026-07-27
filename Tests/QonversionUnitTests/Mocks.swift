@@ -192,7 +192,7 @@ final class MockRequestsStorage: RequestsStorageInterface {
         }
     }
 
-    func removeAll(where shouldRemove: (StoredRequest) -> Bool) {
+    func removeAll(where shouldRemove: @Sendable (StoredRequest) -> Bool) {
         storedRequests.removeAll(where: shouldRemove)
     }
 
@@ -270,7 +270,13 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var purchaseError: Error?
     private(set) var purchasedStoreIds: [String] = []
     private(set) var purchasedOptions: [Qonversion.PurchaseOptions] = []
-    private(set) var finishedTransactions: [Qonversion.Transaction] = []
+    private let facadeStateLock = NSLock()
+    private var _finishedTransactions: [Qonversion.Transaction] = []
+    var finishedTransactions: [Qonversion.Transaction] {
+        facadeStateLock.lock()
+        defer { facadeStateLock.unlock() }
+        return _finishedTransactions
+    }
     private(set) var startObservingCallsCount = 0
     private(set) var stopObservingCallsCount = 0
 
@@ -324,7 +330,9 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     }
 
     func finish(_ transaction: Qonversion.Transaction) async {
-        finishedTransactions.append(transaction)
+        facadeStateLock.lock()
+        _finishedTransactions.append(transaction)
+        facadeStateLock.unlock()
     }
 
     func startObservingTransactionUpdates() {
@@ -349,13 +357,21 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
 /// by the test through `emitUpdate`/`finishUpdates`.
 final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
 
+    // The SDK's detached tasks mutate this mock while the test thread polls
+    // it — the hot members are lock-guarded.
+    private let stateLock = NSLock()
     var currentEntitlementsResult: [Qonversion.Transaction] = []
     var restoreResult: [Qonversion.Transaction] = []
     var restoreError: Error?
     var fetchAllResult: [Qonversion.Transaction] = []
     var fetchUnfinishedResult: [Qonversion.Transaction] = []
 
-    private(set) var finishedTransactions: [Qonversion.Transaction] = []
+    private var _finishedTransactions: [Qonversion.Transaction] = []
+    var finishedTransactions: [Qonversion.Transaction] {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _finishedTransactions
+    }
     private(set) var restoreCallsCount = 0
     private(set) var transactionUpdatesCallsCount = 0
 
@@ -395,7 +411,9 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
     }
 
     func finish(_ transaction: Qonversion.Transaction) async {
-        finishedTransactions.append(transaction)
+        stateLock.lock()
+        _finishedTransactions.append(transaction)
+        stateLock.unlock()
     }
 
     func transactionUpdates() -> AsyncStream<Qonversion.Transaction> {
@@ -635,8 +653,19 @@ final class MockPurchasesService: PurchasesServiceInterface {
 
     var error: Error?
     var onSend: (() async -> Void)?
-    private(set) var sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] = []
-    private(set) var sentTriggers: [RequestTrigger] = []
+    private let serviceStateLock = NSLock()
+    private var _sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] = []
+    var sentTransactions: [(transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?)] {
+        serviceStateLock.lock()
+        defer { serviceStateLock.unlock() }
+        return _sentTransactions
+    }
+    private var _sentTriggers: [RequestTrigger] = []
+    var sentTriggers: [RequestTrigger] {
+        serviceStateLock.lock()
+        defer { serviceStateLock.unlock() }
+        return _sentTriggers
+    }
 
     var promotionalOfferResult: Qonversion.PromotionalOffer?
     private(set) var promotionalOfferCalls: [(userId: String, offerId: String, productStoreId: String)] = []
@@ -645,8 +674,10 @@ final class MockPurchasesService: PurchasesServiceInterface {
 
     @discardableResult
     func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?, trigger: RequestTrigger) async throws -> String? {
-        sentTransactions.append((transaction, userId, options))
-        sentTriggers.append(trigger)
+        serviceStateLock.lock()
+        _sentTransactions.append((transaction, userId, options))
+        _sentTriggers.append(trigger)
+        serviceStateLock.unlock()
         await onSend?()
         if let error { throw error }
         return reportedOwnerUserId

@@ -114,7 +114,7 @@ extension Qonversion {
         // MARK: - Nested structures and enums
         
         /// Subscription period details..
-        public struct SubscriptionPeriod {
+        public struct SubscriptionPeriod: Sendable {
             
             /// The unit of time that this period represents.
             public let unit: Qonversion.Product.SubscriptionPeriod.Unit
@@ -135,7 +135,7 @@ extension Qonversion {
             // MARK: Nested structs & enums
             
             /// Unit type of a subscription period.
-            public enum Unit {
+            public enum Unit: Sendable {
                 
                 /// For rare cases when the subscription period unit can't be determined.
                 case unknown
@@ -174,7 +174,7 @@ extension Qonversion {
         }
         
         /// Information about a subscription offer configured in App Store Connect.
-        public struct SubscriptionOffer {
+        public struct SubscriptionOffer: Sendable {
             
             /// The promotional offer identifier.
             ///
@@ -229,7 +229,7 @@ extension Qonversion {
             // MARK: Nested structs & enums
             
             /// The type of the subscription offer.
-            public enum OfferType {
+            public enum OfferType: Sendable {
                 
                 /// In case the offer type can't be determined.
                 case unknown
@@ -255,7 +255,7 @@ extension Qonversion {
             }
             
             /// Payment mode for a product
-            public enum PaymentMode {
+            public enum PaymentMode: Sendable {
                 
                 /// For rare cases when the payment mode can't be determined.
                 case unknown
@@ -289,7 +289,7 @@ extension Qonversion {
         }
         
         /// Information about an auto-renewable subscription, such as its status, period, subscription group, and subscription offer details.
-        public struct SubscriptionInfo {
+        public struct SubscriptionInfo: Sendable {
             
             /// An optional introductory offer that will automatically be applied if the user is eligible.
             public let introductoryOffer: Qonversion.Product.SubscriptionOffer?
@@ -324,7 +324,7 @@ extension Qonversion {
         }
         
         /// The types of in-app purchases.
-        public enum ProductType {
+        public enum ProductType: Sendable {
             
             /// A consumable in-app purchase.
             case consumable
