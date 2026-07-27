@@ -62,9 +62,14 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
 
   func flush() {
     let eventsToSend: [ScreenEvent] = queue.sync(flags: .barrier) {
-      guard !isFlushing else { return [] }
+      // The emptiness check belongs inside the barrier and before the flag is
+      // raised: a flush that finds nothing to send never reaches the code that
+      // lowers it again, so raising it first would latch the service off for
+      // the rest of the process. Screen closes flush unconditionally, so an
+      // empty flush is the common case, not the edge one.
+      guard !isFlushing, !buffer.isEmpty else { return [] }
       isFlushing = true
-      let copy = buffer
+      let copy: [ScreenEvent] = buffer
       buffer.removeAll()
       return copy
     }

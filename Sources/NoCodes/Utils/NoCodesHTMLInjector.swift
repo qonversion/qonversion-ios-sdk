@@ -20,12 +20,14 @@ final class NoCodesHTMLInjector: NoCodesHTMLInjectorInterface, Sendable {
       return html
     }
 
-    let localeScript = "<script>window.noCodesCustomLocale = \"\(locale)\";</script>"
+    let localeLiteral: String = NoCodesJavaScript.stringLiteral(from: locale)
+    let localeScript: String = "<script>window.noCodesCustomLocale = \(localeLiteral);</script>"
     return injectAfterHead(script: localeScript, into: html)
   }
 
   func injectTheme(into html: String, theme: NoCodesTheme) -> String {
-    let themeScript = "<script>window.noCodesTheme = \"\(theme.rawValue)\";</script>"
+    let themeLiteral: String = NoCodesJavaScript.stringLiteral(from: theme.rawValue)
+    let themeScript: String = "<script>window.noCodesTheme = \(themeLiteral);</script>"
     return injectAfterHead(script: themeScript, into: html)
   }
 

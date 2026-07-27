@@ -87,6 +87,8 @@ final class NoCodesViewController: UIViewController {
   // Held here because the user content controller is the only other owner and
   // it must not keep the screen alive through it.
   private let scriptMessageProxy = NoCodesScriptMessageProxy()
+  // Kept so that leaving the screen can cancel a load still in flight.
+  private var screenLoadTask: Task<Void, Never>?
 
   init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, customVariablesDelegate: NoCodesCustomVariablesDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, contextBuilder: NoCodesContextBuilderInterface, htmlInjector: NoCodesHTMLInjectorInterface, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.screenId = screenId
@@ -158,31 +160,8 @@ final class NoCodesViewController: UIViewController {
     webView.setNeedsLayout()
     webView.layoutIfNeeded()
     
-    Task {
-      do {
-        let screen: NoCodesScreen
-        if let screenId = screenId {
-          screen = try await noCodesService.loadScreen(with: screenId)
-        } else if let contextKey = contextKey {
-          screen = try await noCodesService.loadScreen(withContextKey: contextKey)
-        } else {
-          logger.error(LoggerInfoMessages.screenLoadingFailed.rawValue)
-          throw NoCodesError(type: .screenLoadingFailed, message: "No screen id or context key provided")
-        }
-
-        self.screenId = screen.id
-        self.contextKey = screen.contextKey
-        delegate.noCodesHasShownScreen(id: screen.id)
-        trackScreenShownIfNeeded()
-
-        var htmlToLoad = htmlInjector.injectCustomLocale(into: screen.html, locale: customLocale)
-        htmlToLoad = htmlInjector.injectTheme(into: htmlToLoad, theme: theme)
-
-        webView.loadHTMLString(htmlToLoad, baseURL: nil)
-      } catch {
-        delegate.noCodesFailedToLoadScreen(error: error)
-        logger.error(LoggerInfoMessages.screenLoadingFailed.rawValue)
-      }
+    screenLoadTask = Task { [weak self] in
+      await self?.loadAndRenderScreen()
     }
   }
 
@@ -194,12 +173,18 @@ final class NoCodesViewController: UIViewController {
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
 
-    guard let screenId = screenId else { return }
+    let leave: NoCodesScreenLeave = NoCodesScreenLifecycle.leave(isBeingDismissed: isBeingDismissed, isMovingFromParent: isMovingFromParent)
 
-    if isBeingDismissed || isMovingFromParent {
-      // Permanently leaving: track screen_closed
+    switch leave {
+    case .permanent:
+      // Nothing that is still loading can matter now, and its side effects
+      // would land on a screen the user has already left.
+      cancelScreenLoad()
+
+      guard let screenId: String = screenId else { return }
+
       trackScreenClosedIfNeeded(screenId: screenId)
-    } else {
+    case .temporary:
       // Temporarily hidden (e.g. a new screen was pushed on top):
       // reset the flag so screen_shown fires again when this view re-appears
       didTrackScreenShown = false
@@ -313,6 +298,55 @@ extension NoCodesViewController: WKScriptMessageHandler {
 
 extension NoCodesViewController {
 
+  /// Loads the screen this controller was created for and renders it.
+  ///
+  /// Every side effect is gated on the load not having been cancelled: the user
+  /// can leave while a slow screen is still loading, and announcing it then
+  /// would report a screen after the flow already reported itself finished,
+  /// count a `screen_shown` for a screen nobody saw and render markup into a
+  /// web view that is no longer on screen.
+  private func loadAndRenderScreen() async {
+    do {
+      let screen: NoCodesScreen = try await loadScreen()
+
+      guard NoCodesScreenLifecycle.shouldApplyLoadedScreen(isCancelled: Task.isCancelled) else { return }
+
+      screenId = screen.id
+      contextKey = screen.contextKey
+      delegate.noCodesHasShownScreen(id: screen.id)
+      trackScreenShownIfNeeded()
+
+      var htmlToLoad: String = htmlInjector.injectCustomLocale(into: screen.html, locale: customLocale)
+      htmlToLoad = htmlInjector.injectTheme(into: htmlToLoad, theme: theme)
+
+      webView.loadHTMLString(htmlToLoad, baseURL: nil)
+    } catch {
+      guard NoCodesScreenLifecycle.shouldApplyLoadedScreen(isCancelled: Task.isCancelled) else { return }
+
+      delegate.noCodesFailedToLoadScreen(error: error)
+      logger.error(LoggerInfoMessages.screenLoadingFailed.rawValue)
+    }
+  }
+
+  private func loadScreen() async throws -> NoCodesScreen {
+    if let screenId: String = screenId {
+      return try await noCodesService.loadScreen(with: screenId)
+    }
+
+    if let contextKey: String = contextKey {
+      return try await noCodesService.loadScreen(withContextKey: contextKey)
+    }
+
+    logger.error(LoggerInfoMessages.screenLoadingFailed.rawValue)
+
+    throw NoCodesError(type: .screenLoadingFailed, message: "No screen id or context key provided")
+  }
+
+  private func cancelScreenLoad() {
+    screenLoadTask?.cancel()
+    screenLoadTask = nil
+  }
+
   private func trackScreenShownIfNeeded() {
     guard !didTrackScreenShown, let screenId = screenId else { return }
     didTrackScreenShown = true
@@ -336,18 +370,14 @@ extension NoCodesViewController {
   }
 
   private func injectCustomVariables(completion: @escaping () -> Void) {
-    let key = contextKey ?? ""
-    guard let variables = customVariablesDelegate?.customVariables(for: key),
+    let key: String = contextKey ?? ""
+    guard let variables: [String: String] = customVariablesDelegate?.customVariables(for: key),
           !variables.isEmpty else {
       completion()
       return
     }
 
-    let setVariableCalls = variables.map { (name, value) -> String in
-      let escapedName = name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-      let escapedValue = value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-      return "window.noCodesSetVariable?.(\"\(escapedName)\", \"\(escapedValue)\");"
-    }.joined(separator: "\n")
+    let setVariableCalls: String = NoCodesJavaScript.setCustomVariablesScript(for: variables)
 
     webView?.evaluateJavaScript(setVariableCalls) { _, _ in
       completion()
@@ -726,6 +756,10 @@ extension NoCodesViewController {
   }
   
   private func close(action: NoCodesAction?) {
+    // The screen is going away, so a load still in flight has nothing left to
+    // render and no one left to report to.
+    cancelScreenLoad()
+
     if isModalPresentation {
       dismiss(animated: true) { [weak self] in
         self?.delegate?.noCodesFinished()
