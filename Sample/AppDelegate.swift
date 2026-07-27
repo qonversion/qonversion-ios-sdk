@@ -7,6 +7,7 @@
 
 import UIKit
 import Qonversion
+import NoCodes
 
 enum SampleConfig {
     // Replace with your project key from the Qonversion Dashboard.
@@ -19,6 +20,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let configuration = Qonversion.Configuration(apiKey: SampleConfig.projectKey, launchMode: .subscriptionManagement)
         Qonversion.initialize(with: configuration)
+
+        // No-Codes is initialized separately, after the main SDK. The bundled
+        // Sample/nocodes_fallbacks.json backs the screens when the API is
+        // unreachable.
+        let noCodesConfiguration = NoCodesConfiguration(projectKey: SampleConfig.projectKey)
+        NoCodes.initialize(with: noCodesConfiguration)
 
         return true
     }

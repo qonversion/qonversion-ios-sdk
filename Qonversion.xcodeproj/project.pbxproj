@@ -132,6 +132,66 @@
 		70EA735D2BD6B66300B0DFDA /* ProductsManagerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA735C2BD6B66300B0DFDA /* ProductsManagerInterface.swift */; };
 		A700000000000000000000B1 /* ProductsDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A700000000000000000000A1 /* ProductsDataSource.swift */; };
 		70EA735F2BD6B68000B0DFDA /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */; };
+		AC0DE0000000000000000002 /* MiscAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000001 /* MiscAssembly.swift */; };
+		AC0DE0000000000000000004 /* NoCodesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000003 /* NoCodesAssembly.swift */; };
+		AC0DE0000000000000000006 /* NoCodesViewsAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000005 /* NoCodesViewsAssembly.swift */; };
+		AC0DE0000000000000000008 /* ServicesAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000007 /* ServicesAssembly.swift */; };
+		AC0DE000000000000000000A /* Delegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000009 /* Delegate.swift */; };
+		AC0DE000000000000000000C /* DeviceInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000000B /* DeviceInfoCollector.swift */; };
+		AC0DE000000000000000000E /* DeviceInfoCollectorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000000D /* DeviceInfoCollectorInterface.swift */; };
+		AC0DE0000000000000000010 /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000000F /* Device.swift */; };
+		AC0DE0000000000000000012 /* NoCodesAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000011 /* NoCodesAction.swift */; };
+		AC0DE0000000000000000014 /* NoCodesError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000013 /* NoCodesError.swift */; };
+		AC0DE0000000000000000016 /* NoCodesErrorType.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000015 /* NoCodesErrorType.swift */; };
+		AC0DE0000000000000000018 /* NoCodesLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000017 /* NoCodesLoadingView.swift */; };
+		AC0DE000000000000000001A /* NoCodesPresentationConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000019 /* NoCodesPresentationConfiguration.swift */; };
+		AC0DE000000000000000001C /* NoCodesScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000001B /* NoCodesScreen.swift */; };
+		AC0DE000000000000000001E /* NoCodesTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000001D /* NoCodesTheme.swift */; };
+		AC0DE0000000000000000020 /* ScreenEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000001F /* ScreenEvent.swift */; };
+		AC0DE0000000000000000022 /* ScreenEventType.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000021 /* ScreenEventType.swift */; };
+		AC0DE0000000000000000024 /* NoCodesMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000023 /* NoCodesMapper.swift */; };
+		AC0DE0000000000000000026 /* NoCodesMapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000025 /* NoCodesMapperInterface.swift */; };
+		AC0DE0000000000000000028 /* ApiError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000027 /* ApiError.swift */; };
+		AC0DE000000000000000002A /* EmptyApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000029 /* EmptyApiResponse.swift */; };
+		AC0DE000000000000000002C /* ErrorConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000002B /* ErrorConstants.swift */; };
+		AC0DE000000000000000002E /* Header.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000002D /* Header.swift */; };
+		AC0DE0000000000000000030 /* HeadersBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000002F /* HeadersBuilder.swift */; };
+		AC0DE0000000000000000032 /* HeadersBuilderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000031 /* HeadersBuilderInterface.swift */; };
+		AC0DE0000000000000000034 /* NetworkErrorHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000033 /* NetworkErrorHandler.swift */; };
+		AC0DE0000000000000000036 /* NetworkErrorHandlerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000035 /* NetworkErrorHandlerInterface.swift */; };
+		AC0DE0000000000000000038 /* NetworkProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000037 /* NetworkProvider.swift */; };
+		AC0DE000000000000000003A /* NetworkProviderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000039 /* NetworkProviderInterface.swift */; };
+		AC0DE000000000000000003C /* RateLimiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000003B /* RateLimiter.swift */; };
+		AC0DE000000000000000003E /* RateLimiterInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000003D /* RateLimiterInterface.swift */; };
+		AC0DE0000000000000000040 /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000003F /* Request.swift */; };
+		AC0DE0000000000000000042 /* RequestType.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000041 /* RequestType.swift */; };
+		AC0DE0000000000000000044 /* RequestProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000043 /* RequestProcessor.swift */; };
+		AC0DE0000000000000000046 /* RequestProcessorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000045 /* RequestProcessorInterface.swift */; };
+		AC0DE0000000000000000048 /* ResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000047 /* ResponseDecoder.swift */; };
+		AC0DE000000000000000004A /* ResponseDecoderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000049 /* ResponseDecoderInterface.swift */; };
+		AC0DE000000000000000004C /* NoCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000004B /* NoCodes.swift */; };
+		AC0DE000000000000000004E /* NoCodesConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000004D /* NoCodesConfiguration.swift */; };
+		AC0DE0000000000000000050 /* NoCodesFlowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000004F /* NoCodesFlowCoordinator.swift */; };
+		AC0DE0000000000000000052 /* NoCodesNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000051 /* NoCodesNavigationController.swift */; };
+		AC0DE0000000000000000054 /* NoCodesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000053 /* NoCodesViewController.swift */; };
+		AC0DE0000000000000000056 /* FallbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000055 /* FallbackService.swift */; };
+		AC0DE0000000000000000058 /* FallbackServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000057 /* FallbackServiceInterface.swift */; };
+		AC0DE000000000000000005A /* ImagePreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000059 /* ImagePreloader.swift */; };
+		AC0DE000000000000000005C /* ImagePreloaderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000005B /* ImagePreloaderInterface.swift */; };
+		AC0DE000000000000000005E /* NoCodesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000005D /* NoCodesService.swift */; };
+		AC0DE0000000000000000060 /* NoCodesServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000005F /* NoCodesServiceInterface.swift */; };
+		AC0DE0000000000000000062 /* ScreenEventsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000061 /* ScreenEventsService.swift */; };
+		AC0DE0000000000000000064 /* ScreenEventsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000063 /* ScreenEventsServiceInterface.swift */; };
+		AC0DE0000000000000000066 /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000065 /* SkeletonView.swift */; };
+		AC0DE0000000000000000068 /* LoggerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000067 /* LoggerWrapper.swift */; };
+		AC0DE000000000000000006A /* NoCodesContextBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000069 /* NoCodesContextBuilder.swift */; };
+		AC0DE000000000000000006C /* NoCodesHTMLInjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000006B /* NoCodesHTMLInjector.swift */; };
+		AC0DE000000000000000006E /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000006D /* Utils.swift */; };
+		AC0DE000000000000000007B /* NoCodes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000070 /* NoCodes.framework */; };
+		AC0DE000000000000000007C /* NoCodes.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000070 /* NoCodes.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AC0DE000000000000000007E /* NoCodesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000007D /* NoCodesViewController.swift */; };
+		AC0DE0000000000000000080 /* nocodes_fallbacks.json in Resources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000007F /* nocodes_fallbacks.json */; };
+		AC0DE0000000000000000200 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 70CD92EF2BC6E22B0039D65C /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -142,6 +202,20 @@
 			remoteGlobalIDString = 70F163A12B6D0D3D00033BEF;
 			remoteInfo = Qonversion;
 		};
+		AC0DE0000000000000000078 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 70F163992B6D0D3D00033BEF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 70F163A12B6D0D3D00033BEF;
+			remoteInfo = Qonversion;
+		};
+		AC0DE000000000000000007A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 70F163992B6D0D3D00033BEF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AC0DE0000000000000000071;
+			remoteInfo = NoCodes;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -151,6 +225,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				AC0DE000000000000000007C /* NoCodes.framework in Embed Frameworks */,
 				70D877242B8F5B370059AA2B /* Qonversion.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
@@ -297,6 +372,64 @@
 		A700000000000000000000A1 /* ProductsDataSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductsDataSource.swift; sourceTree = "<group>"; };
 		70EA735E2BD6B68000B0DFDA /* ProductsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsManager.swift; sourceTree = "<group>"; };
 		70F163A22B6D0D3D00033BEF /* Qonversion.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Qonversion.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC0DE0000000000000000001 /* MiscAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MiscAssembly.swift; path = Assemblies/MiscAssembly.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000003 /* NoCodesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesAssembly.swift; path = Assemblies/NoCodesAssembly.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000005 /* NoCodesViewsAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesViewsAssembly.swift; path = Assemblies/NoCodesViewsAssembly.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000007 /* ServicesAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ServicesAssembly.swift; path = Assemblies/ServicesAssembly.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000009 /* Delegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Delegate.swift; path = Delegate.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000000B /* DeviceInfoCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DeviceInfoCollector.swift; path = Device/DeviceInfoCollector.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000000D /* DeviceInfoCollectorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DeviceInfoCollectorInterface.swift; path = Device/DeviceInfoCollectorInterface.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000000F /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Device.swift; path = Entities/Device.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000011 /* NoCodesAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesAction.swift; path = Entities/NoCodesAction.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000013 /* NoCodesError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesError.swift; path = Entities/NoCodesError.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000015 /* NoCodesErrorType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesErrorType.swift; path = Entities/NoCodesErrorType.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000017 /* NoCodesLoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesLoadingView.swift; path = Entities/NoCodesLoadingView.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000019 /* NoCodesPresentationConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesPresentationConfiguration.swift; path = Entities/NoCodesPresentationConfiguration.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000001B /* NoCodesScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesScreen.swift; path = Entities/NoCodesScreen.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000001D /* NoCodesTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesTheme.swift; path = Entities/NoCodesTheme.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000001F /* ScreenEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenEvent.swift; path = Entities/ScreenEvent.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000021 /* ScreenEventType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenEventType.swift; path = Entities/ScreenEventType.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000023 /* NoCodesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesMapper.swift; path = Mappers/NoCodesMapper.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000025 /* NoCodesMapperInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesMapperInterface.swift; path = Mappers/NoCodesMapperInterface.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000027 /* ApiError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ApiError.swift; path = NetworkLayer/Entities/ApiError.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000029 /* EmptyApiResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EmptyApiResponse.swift; path = NetworkLayer/Entities/EmptyApiResponse.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000002B /* ErrorConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ErrorConstants.swift; path = NetworkLayer/Error/ErrorConstants.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000002D /* Header.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Header.swift; path = NetworkLayer/HeadersBuilder/Header.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000002F /* HeadersBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HeadersBuilder.swift; path = NetworkLayer/HeadersBuilder/HeadersBuilder.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000031 /* HeadersBuilderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HeadersBuilderInterface.swift; path = NetworkLayer/HeadersBuilder/HeadersBuilderInterface.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000033 /* NetworkErrorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NetworkErrorHandler.swift; path = NetworkLayer/NetworkErrorHandler/NetworkErrorHandler.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000035 /* NetworkErrorHandlerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NetworkErrorHandlerInterface.swift; path = NetworkLayer/NetworkErrorHandler/NetworkErrorHandlerInterface.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000037 /* NetworkProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NetworkProvider.swift; path = NetworkLayer/NetworkProvider/NetworkProvider.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000039 /* NetworkProviderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NetworkProviderInterface.swift; path = NetworkLayer/NetworkProvider/NetworkProviderInterface.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000003B /* RateLimiter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RateLimiter.swift; path = NetworkLayer/RateLimiter/RateLimiter.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000003D /* RateLimiterInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RateLimiterInterface.swift; path = NetworkLayer/RateLimiter/RateLimiterInterface.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000003F /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Request.swift; path = NetworkLayer/Request/Request.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000041 /* RequestType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RequestType.swift; path = NetworkLayer/Request/RequestType.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000043 /* RequestProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RequestProcessor.swift; path = NetworkLayer/RequestProcessor/RequestProcessor.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000045 /* RequestProcessorInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RequestProcessorInterface.swift; path = NetworkLayer/RequestProcessor/RequestProcessorInterface.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000047 /* ResponseDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ResponseDecoder.swift; path = NetworkLayer/ResponseDecoder/ResponseDecoder.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000049 /* ResponseDecoderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ResponseDecoderInterface.swift; path = NetworkLayer/ResponseDecoder/ResponseDecoderInterface.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000004B /* NoCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodes.swift; path = NoCodes.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000004D /* NoCodesConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesConfiguration.swift; path = NoCodesConfiguration.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000004F /* NoCodesFlowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesFlowCoordinator.swift; path = NoCodesFlowCoordinator.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000051 /* NoCodesNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesNavigationController.swift; path = NoCodesNavigationController.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000053 /* NoCodesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesViewController.swift; path = NoCodesViewController.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000055 /* FallbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FallbackService.swift; path = Services/FallbackService.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000057 /* FallbackServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FallbackServiceInterface.swift; path = Services/FallbackServiceInterface.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000059 /* ImagePreloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ImagePreloader.swift; path = Services/ImagePreloader.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000005B /* ImagePreloaderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ImagePreloaderInterface.swift; path = Services/ImagePreloaderInterface.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000005D /* NoCodesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesService.swift; path = Services/NoCodesService.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000005F /* NoCodesServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesServiceInterface.swift; path = Services/NoCodesServiceInterface.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000061 /* ScreenEventsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenEventsService.swift; path = Services/ScreenEventsService.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000063 /* ScreenEventsServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenEventsServiceInterface.swift; path = Services/ScreenEventsServiceInterface.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000065 /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SkeletonView.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000067 /* LoggerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoggerWrapper.swift; path = Utils/LoggerWrapper.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000069 /* NoCodesContextBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesContextBuilder.swift; path = Utils/NoCodesContextBuilder.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000006B /* NoCodesHTMLInjector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesHTMLInjector.swift; path = Utils/NoCodesHTMLInjector.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000006D /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Utils.swift; path = Utils/Utils.swift; sourceTree = "<group>"; };
+		AC0DE0000000000000000070 /* NoCodes.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NoCodes.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC0DE000000000000000007D /* NoCodesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoCodesViewController.swift; sourceTree = "<group>"; };
+		AC0DE000000000000000007F /* nocodes_fallbacks.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = nocodes_fallbacks.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -304,6 +437,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC0DE000000000000000007B /* NoCodes.framework in Frameworks */,
 				70D877232B8F5B370059AA2B /* Qonversion.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -313,6 +447,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				70D876CF2B8634230059AA2B /* StoreKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC0DE0000000000000000073 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -690,6 +831,7 @@
 		70CD92F52BC6E22B0039D65C /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				AC0DE000000000000000006F /* NoCodes */,
 				70CD929E2BC6E22B0039D65C /* Assemblies */,
 				70CD92A52BC6E22B0039D65C /* Entities */,
 				70CD92AD2BC6E22B0039D65C /* Managers */,
@@ -723,6 +865,8 @@
 		70D877102B8F4E5E0059AA2B /* Sample */ = {
 			isa = PBXGroup;
 			children = (
+				AC0DE000000000000000007D /* NoCodesViewController.swift */,
+				AC0DE000000000000000007F /* nocodes_fallbacks.json */,
 				70D877112B8F4E5E0059AA2B /* AppDelegate.swift */,
 				70D877132B8F4E5E0059AA2B /* SceneDelegate.swift */,
 				70D877152B8F4E5E0059AA2B /* ViewController.swift */,
@@ -769,10 +913,73 @@
 		70F163A32B6D0D3D00033BEF /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				AC0DE0000000000000000070 /* NoCodes.framework */,
 				70F163A22B6D0D3D00033BEF /* Qonversion.framework */,
 				70D8770F2B8F4E5E0059AA2B /* Sample.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AC0DE000000000000000006F /* NoCodes */ = {
+			isa = PBXGroup;
+			children = (
+				AC0DE0000000000000000001 /* MiscAssembly.swift */,
+				AC0DE0000000000000000003 /* NoCodesAssembly.swift */,
+				AC0DE0000000000000000005 /* NoCodesViewsAssembly.swift */,
+				AC0DE0000000000000000007 /* ServicesAssembly.swift */,
+				AC0DE0000000000000000009 /* Delegate.swift */,
+				AC0DE000000000000000000B /* DeviceInfoCollector.swift */,
+				AC0DE000000000000000000D /* DeviceInfoCollectorInterface.swift */,
+				AC0DE000000000000000000F /* Device.swift */,
+				AC0DE0000000000000000011 /* NoCodesAction.swift */,
+				AC0DE0000000000000000013 /* NoCodesError.swift */,
+				AC0DE0000000000000000015 /* NoCodesErrorType.swift */,
+				AC0DE0000000000000000017 /* NoCodesLoadingView.swift */,
+				AC0DE0000000000000000019 /* NoCodesPresentationConfiguration.swift */,
+				AC0DE000000000000000001B /* NoCodesScreen.swift */,
+				AC0DE000000000000000001D /* NoCodesTheme.swift */,
+				AC0DE000000000000000001F /* ScreenEvent.swift */,
+				AC0DE0000000000000000021 /* ScreenEventType.swift */,
+				AC0DE0000000000000000023 /* NoCodesMapper.swift */,
+				AC0DE0000000000000000025 /* NoCodesMapperInterface.swift */,
+				AC0DE0000000000000000027 /* ApiError.swift */,
+				AC0DE0000000000000000029 /* EmptyApiResponse.swift */,
+				AC0DE000000000000000002B /* ErrorConstants.swift */,
+				AC0DE000000000000000002D /* Header.swift */,
+				AC0DE000000000000000002F /* HeadersBuilder.swift */,
+				AC0DE0000000000000000031 /* HeadersBuilderInterface.swift */,
+				AC0DE0000000000000000033 /* NetworkErrorHandler.swift */,
+				AC0DE0000000000000000035 /* NetworkErrorHandlerInterface.swift */,
+				AC0DE0000000000000000037 /* NetworkProvider.swift */,
+				AC0DE0000000000000000039 /* NetworkProviderInterface.swift */,
+				AC0DE000000000000000003B /* RateLimiter.swift */,
+				AC0DE000000000000000003D /* RateLimiterInterface.swift */,
+				AC0DE000000000000000003F /* Request.swift */,
+				AC0DE0000000000000000041 /* RequestType.swift */,
+				AC0DE0000000000000000043 /* RequestProcessor.swift */,
+				AC0DE0000000000000000045 /* RequestProcessorInterface.swift */,
+				AC0DE0000000000000000047 /* ResponseDecoder.swift */,
+				AC0DE0000000000000000049 /* ResponseDecoderInterface.swift */,
+				AC0DE000000000000000004B /* NoCodes.swift */,
+				AC0DE000000000000000004D /* NoCodesConfiguration.swift */,
+				AC0DE000000000000000004F /* NoCodesFlowCoordinator.swift */,
+				AC0DE0000000000000000051 /* NoCodesNavigationController.swift */,
+				AC0DE0000000000000000053 /* NoCodesViewController.swift */,
+				AC0DE0000000000000000055 /* FallbackService.swift */,
+				AC0DE0000000000000000057 /* FallbackServiceInterface.swift */,
+				AC0DE0000000000000000059 /* ImagePreloader.swift */,
+				AC0DE000000000000000005B /* ImagePreloaderInterface.swift */,
+				AC0DE000000000000000005D /* NoCodesService.swift */,
+				AC0DE000000000000000005F /* NoCodesServiceInterface.swift */,
+				AC0DE0000000000000000061 /* ScreenEventsService.swift */,
+				AC0DE0000000000000000063 /* ScreenEventsServiceInterface.swift */,
+				AC0DE0000000000000000065 /* SkeletonView.swift */,
+				AC0DE0000000000000000067 /* LoggerWrapper.swift */,
+				AC0DE0000000000000000069 /* NoCodesContextBuilder.swift */,
+				AC0DE000000000000000006B /* NoCodesHTMLInjector.swift */,
+				AC0DE000000000000000006D /* Utils.swift */,
+			);
+			path = NoCodes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -802,6 +1009,7 @@
 			);
 			dependencies = (
 				70D877262B8F5B370059AA2B /* PBXTargetDependency */,
+				AC0DE0000000000000000079 /* PBXTargetDependency */,
 			);
 			name = Sample;
 			productName = Sample;
@@ -824,6 +1032,24 @@
 			name = Qonversion;
 			productName = Qonversion;
 			productReference = 70F163A22B6D0D3D00033BEF /* Qonversion.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		AC0DE0000000000000000071 /* NoCodes */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC0DE0000000000000000074 /* Build configuration list for PBXNativeTarget "NoCodes" */;
+			buildPhases = (
+				AC0DE0000000000000000072 /* Sources */,
+				AC0DE0000000000000000073 /* Frameworks */,
+				AC0DE0000000000000000201 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AC0DE0000000000000000077 /* PBXTargetDependency */,
+			);
+			name = NoCodes;
+			productName = NoCodes;
+			productReference = AC0DE0000000000000000070 /* NoCodes.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -858,6 +1084,7 @@
 			projectRoot = "";
 			targets = (
 				70F163A12B6D0D3D00033BEF /* Qonversion */,
+				AC0DE0000000000000000071 /* NoCodes */,
 				70D8770E2B8F4E5E0059AA2B /* Sample */,
 			);
 		};
@@ -868,6 +1095,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC0DE0000000000000000080 /* nocodes_fallbacks.json in Resources */,
 				70D8771E2B8F4E5F0059AA2B /* LaunchScreen.storyboard in Resources */,
 				70D8771B2B8F4E5F0059AA2B /* Assets.xcassets in Resources */,
 				70D877192B8F4E5E0059AA2B /* Main.storyboard in Resources */,
@@ -882,6 +1110,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AC0DE0000000000000000201 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC0DE0000000000000000200 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -889,6 +1125,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC0DE000000000000000007E /* NoCodesViewController.swift in Sources */,
 				70D877162B8F4E5E0059AA2B /* ViewController.swift in Sources */,
 				70D877122B8F4E5E0059AA2B /* AppDelegate.swift in Sources */,
 				70D877142B8F4E5E0059AA2B /* SceneDelegate.swift in Sources */,
@@ -1016,6 +1253,68 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AC0DE0000000000000000072 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC0DE0000000000000000002 /* MiscAssembly.swift in Sources */,
+				AC0DE0000000000000000004 /* NoCodesAssembly.swift in Sources */,
+				AC0DE0000000000000000006 /* NoCodesViewsAssembly.swift in Sources */,
+				AC0DE0000000000000000008 /* ServicesAssembly.swift in Sources */,
+				AC0DE000000000000000000A /* Delegate.swift in Sources */,
+				AC0DE000000000000000000C /* DeviceInfoCollector.swift in Sources */,
+				AC0DE000000000000000000E /* DeviceInfoCollectorInterface.swift in Sources */,
+				AC0DE0000000000000000010 /* Device.swift in Sources */,
+				AC0DE0000000000000000012 /* NoCodesAction.swift in Sources */,
+				AC0DE0000000000000000014 /* NoCodesError.swift in Sources */,
+				AC0DE0000000000000000016 /* NoCodesErrorType.swift in Sources */,
+				AC0DE0000000000000000018 /* NoCodesLoadingView.swift in Sources */,
+				AC0DE000000000000000001A /* NoCodesPresentationConfiguration.swift in Sources */,
+				AC0DE000000000000000001C /* NoCodesScreen.swift in Sources */,
+				AC0DE000000000000000001E /* NoCodesTheme.swift in Sources */,
+				AC0DE0000000000000000020 /* ScreenEvent.swift in Sources */,
+				AC0DE0000000000000000022 /* ScreenEventType.swift in Sources */,
+				AC0DE0000000000000000024 /* NoCodesMapper.swift in Sources */,
+				AC0DE0000000000000000026 /* NoCodesMapperInterface.swift in Sources */,
+				AC0DE0000000000000000028 /* ApiError.swift in Sources */,
+				AC0DE000000000000000002A /* EmptyApiResponse.swift in Sources */,
+				AC0DE000000000000000002C /* ErrorConstants.swift in Sources */,
+				AC0DE000000000000000002E /* Header.swift in Sources */,
+				AC0DE0000000000000000030 /* HeadersBuilder.swift in Sources */,
+				AC0DE0000000000000000032 /* HeadersBuilderInterface.swift in Sources */,
+				AC0DE0000000000000000034 /* NetworkErrorHandler.swift in Sources */,
+				AC0DE0000000000000000036 /* NetworkErrorHandlerInterface.swift in Sources */,
+				AC0DE0000000000000000038 /* NetworkProvider.swift in Sources */,
+				AC0DE000000000000000003A /* NetworkProviderInterface.swift in Sources */,
+				AC0DE000000000000000003C /* RateLimiter.swift in Sources */,
+				AC0DE000000000000000003E /* RateLimiterInterface.swift in Sources */,
+				AC0DE0000000000000000040 /* Request.swift in Sources */,
+				AC0DE0000000000000000042 /* RequestType.swift in Sources */,
+				AC0DE0000000000000000044 /* RequestProcessor.swift in Sources */,
+				AC0DE0000000000000000046 /* RequestProcessorInterface.swift in Sources */,
+				AC0DE0000000000000000048 /* ResponseDecoder.swift in Sources */,
+				AC0DE000000000000000004A /* ResponseDecoderInterface.swift in Sources */,
+				AC0DE000000000000000004C /* NoCodes.swift in Sources */,
+				AC0DE000000000000000004E /* NoCodesConfiguration.swift in Sources */,
+				AC0DE0000000000000000050 /* NoCodesFlowCoordinator.swift in Sources */,
+				AC0DE0000000000000000052 /* NoCodesNavigationController.swift in Sources */,
+				AC0DE0000000000000000054 /* NoCodesViewController.swift in Sources */,
+				AC0DE0000000000000000056 /* FallbackService.swift in Sources */,
+				AC0DE0000000000000000058 /* FallbackServiceInterface.swift in Sources */,
+				AC0DE000000000000000005A /* ImagePreloader.swift in Sources */,
+				AC0DE000000000000000005C /* ImagePreloaderInterface.swift in Sources */,
+				AC0DE000000000000000005E /* NoCodesService.swift in Sources */,
+				AC0DE0000000000000000060 /* NoCodesServiceInterface.swift in Sources */,
+				AC0DE0000000000000000062 /* ScreenEventsService.swift in Sources */,
+				AC0DE0000000000000000064 /* ScreenEventsServiceInterface.swift in Sources */,
+				AC0DE0000000000000000066 /* SkeletonView.swift in Sources */,
+				AC0DE0000000000000000068 /* LoggerWrapper.swift in Sources */,
+				AC0DE000000000000000006A /* NoCodesContextBuilder.swift in Sources */,
+				AC0DE000000000000000006C /* NoCodesHTMLInjector.swift in Sources */,
+				AC0DE000000000000000006E /* Utils.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -1023,6 +1322,16 @@
 			isa = PBXTargetDependency;
 			target = 70F163A12B6D0D3D00033BEF /* Qonversion */;
 			targetProxy = 70D877252B8F5B370059AA2B /* PBXContainerItemProxy */;
+		};
+		AC0DE0000000000000000077 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 70F163A12B6D0D3D00033BEF /* Qonversion */;
+			targetProxy = AC0DE0000000000000000078 /* PBXContainerItemProxy */;
+		};
+		AC0DE0000000000000000079 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AC0DE0000000000000000071 /* NoCodes */;
+			targetProxy = AC0DE000000000000000007A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1293,6 +1602,66 @@
 			};
 			name = Release;
 		};
+		AC0DE0000000000000000075 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.qonversion.sdk.NoCodes;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_STRICT_CONCURRENCY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AC0DE0000000000000000076 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = 5ZBNSPDUJ2;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.qonversion.sdk.NoCodes;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_STRICT_CONCURRENCY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1319,6 +1688,15 @@
 			buildConfigurations = (
 				70F163AC2B6D0D3D00033BEF /* Debug */,
 				70F163AD2B6D0D3D00033BEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC0DE0000000000000000074 /* Build configuration list for PBXNativeTarget "NoCodes" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC0DE0000000000000000075 /* Debug */,
+				AC0DE0000000000000000076 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
