@@ -26,20 +26,22 @@ jobs:
   # compiles to nothing. That leaves the whole NoCodes presentation layer,
   # around 1700 lines, never built by CI, and files missing from the Xcode
   # target unnoticed.
-  ios:
+  #
+  # Every scheme is listed here: a source file that was never added to its
+  # target still builds under SPM, which reads the file system, and only fails
+  # under Xcode, which reads the target's file list.
+  xcode:
     runs-on: macos-latest
+
+    strategy:
+      # Every scheme reports on its own, so one broken target does not hide
+      # the state of the others.
+      fail-fast: false
+      matrix:
+        scheme: [Qonversion, NoCodes, Sample]
 
     steps:
       - uses: actions/checkout@v4
-      - name: NoCodes iOS build
+      - name: ${{ matrix.scheme }} iOS build
         run: |
-          xcodebuild build -project Qonversion.xcodeproj -scheme NoCodes -destination "generic/platform=iOS" CODE_SIGNING_ALLOWED=NO
-
-  sample:
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Sample iOS build
-        run: |
-          xcodebuild build -project Qonversion.xcodeproj -scheme Sample -destination "generic/platform=iOS" CODE_SIGNING_ALLOWED=NO
+          xcodebuild build -project Qonversion.xcodeproj -scheme ${{ matrix.scheme }} -destination "generic/platform=iOS" CODE_SIGNING_ALLOWED=NO
