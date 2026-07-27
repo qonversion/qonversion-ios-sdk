@@ -167,6 +167,30 @@ final class AsyncMulticastTests: XCTestCase {
         XCTAssertEqual(received, [7])
     }
 
+    func testTheBacklogIsDeliveredBeforeAConcurrentLiveValue() async {
+        // The replay happens under the same lock as the registration: yielding
+        // it afterwards would let a value produced concurrently overtake the
+        // backlog, so the host would see the launch purchase AFTER the live
+        // one.
+        let multicast = AsyncMulticast<Int>(replaysBacklog: true)
+        multicast.yield(1)
+        multicast.yield(2)
+
+        // Kept under the per-subscriber buffer (maxPending) so nothing is
+        // dropped and the ORDER is what the assertion is about.
+        let subscriber = collect(multicast.stream())
+        for value in 3...8 {
+            multicast.yield(value)
+        }
+
+        await waitUntil {
+            let received: [Int] = await subscriber.received
+            return received.last == 8
+        }
+        let received: [Int] = await subscriber.received
+        XCTAssertEqual(received, Array(1...8), "the backlog always precedes the live values")
+    }
+
     // MARK: - backlog bounds
 
     func testTheBacklogIsBoundedByCountAndKeepsTheNewestValues() async {

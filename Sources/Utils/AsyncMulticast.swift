@@ -73,9 +73,7 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
                 return
             }
             let id = UUID()
-            let replay: [Element] = self.register(id: id, continuation: continuation)
-
-            replay.forEach { continuation.yield($0) }
+            self.register(id: id, continuation: continuation)
 
             continuation.onTermination = { [weak self] _ in
                 self?.unregister(id: id)
@@ -101,18 +99,21 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
 
     // MARK: - Private
 
-    /// Registers the subscriber and hands back everything it has missed. Done
-    /// under one lock so a value yielded concurrently is either replayed or
-    /// delivered live, never both and never neither.
-    private func register(id: UUID, continuation: AsyncStream<Element>.Continuation) -> [Element] {
+    /// Registers the subscriber and replays everything it has missed, all
+    /// under one lock. The replay yields INSIDE the critical section on
+    /// purpose: `Continuation.yield` never blocks under `.bufferingNewest`,
+    /// and doing it outside would let a value yielded concurrently reach this
+    /// subscriber BEFORE the backlog it is supposed to follow — the host would
+    /// see the launch purchase after the live one.
+    private func register(id: UUID, continuation: AsyncStream<Element>.Continuation) {
         lock.lock()
         defer { lock.unlock() }
 
         continuations[id] = continuation
-        guard replaysBacklog else { return [] }
+        guard replaysBacklog else { return }
 
         pruneBacklogLocked()
-        return backlog.map { $0.element }
+        backlog.forEach { continuation.yield($0.element) }
     }
 
     private func unregister(id: UUID) {
