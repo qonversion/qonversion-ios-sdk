@@ -521,15 +521,19 @@ final class EntitiesDecodingTests: XCTestCase {
         }
     }
 
-    func testAnAbsentSubscriptionMeansNonRenewable() throws {
+    func testAnAbsentSubscriptionOnAKnownStoreSourceMeansNonRenewable() throws {
         // The backend has no "non_renewable" renew state: it expresses a
         // non-renewable purchase by omitting the subscription object
         // (product_center derivation rule).
-        let withoutSubscription = #"{"id": "lifetime", "is_active": true, "source": "appstore", "product": {"product_id": "pro"}}"#
-        let withoutProduct = #"{"id": "lifetime", "is_active": true, "source": "appstore"}"#
+        let sources: [String] = ["appstore", "playstore", "stripe"]
 
-        XCTAssertEqual(try decode(Qonversion.Entitlement.self, withoutSubscription).renewState, .nonRenewable)
-        XCTAssertEqual(try decode(Qonversion.Entitlement.self, withoutProduct).renewState, .nonRenewable)
+        for source in sources {
+            let withoutSubscription = "{\"id\": \"lifetime\", \"is_active\": true, \"source\": \"\(source)\", \"product\": {\"product_id\": \"pro\"}}"
+            let withoutProduct = "{\"id\": \"lifetime\", \"is_active\": true, \"source\": \"\(source)\"}"
+
+            XCTAssertEqual(try decode(Qonversion.Entitlement.self, withoutSubscription).renewState, .nonRenewable, "source \(source)")
+            XCTAssertEqual(try decode(Qonversion.Entitlement.self, withoutProduct).renewState, .nonRenewable, "source \(source)")
+        }
     }
 
     func testAnAbsentSubscriptionOnAManualGrantMeansUnknown() throws {
@@ -542,15 +546,28 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertEqual(entitlement.renewState, .unknown)
     }
 
-    func testTheInventedNonRenewableWireStringIsNotAccepted() throws {
-        // "non_renewable" never travelled on the wire; a renew_state the SDK
-        // does not know degrades to .unknown like any other unknown value —
-        // the derivation only applies when there is no renew state at all.
-        let json = #"{"id": "lifetime", "is_active": true, "source": "appstore", "product": {"product_id": "pro", "subscription": {"renew_state": "non_renewable"}}}"#
+    func testAnAbsentSubscriptionOnAnUnrecognizedSourceMeansUnknown() throws {
+        // A store this SDK version does not know yet says nothing about
+        // renewal, and no information must not become the affirmative claim
+        // "this purchase never renews".
+        let json = #"{"id": "premium", "is_active": true, "source": "brand_new_store", "product": {"product_id": "pro"}}"#
 
         let entitlement = try decode(Qonversion.Entitlement.self, json)
 
+        XCTAssertEqual(entitlement.source, .unknown)
         XCTAssertEqual(entitlement.renewState, .unknown)
+    }
+
+    func testAnExplicitNonRenewableStateIsHonoredWhereverItComesFrom() throws {
+        // Two reasons to accept it although the current API does not send it:
+        // caches written by an earlier build of this SDK put it into
+        // product.subscription.renew_state, and honoring it beats degrading to
+        // .unknown if the backend ever does name the state.
+        let json = #"{"id": "lifetime", "is_active": true, "source": "manual", "product": {"product_id": "pro", "subscription": {"renew_state": "non_renewable"}}}"#
+
+        let entitlement = try decode(Qonversion.Entitlement.self, json)
+
+        XCTAssertEqual(entitlement.renewState, .nonRenewable, "an explicit state wins over the derivation, which would have said .unknown here")
     }
 
     func testTheDerivedRenewStateSurvivesTheCacheRoundtrip() throws {
@@ -579,6 +596,33 @@ final class EntitiesDecodingTests: XCTestCase {
             XCTAssertEqual(restored.productId, testCase.entitlement.productId, "entitlement \(testCase.entitlement.id)")
             XCTAssertEqual(restored.source, testCase.entitlement.source, "entitlement \(testCase.entitlement.id)")
         }
+    }
+
+    func testTheDerivedStateSurvivesTheRealStorageEncoderAndDecoder() throws {
+        // The round-trip above uses a hand-built encoder. This one goes
+        // through the objects the SDK actually caches entitlements with —
+        // MiscAssembly's encoder/decoder pair and LocalStorage — because a
+        // strategy mismatch there is exactly how a cache field gets lost.
+        let internalConfig = InternalConfig(userId: "")
+        let miscAssembly = MiscAssembly(apiKey: "test-key", userDefaults: TestDefaults.makeIsolated(), internalConfig: internalConfig)
+        let encoder: JSONEncoder = miscAssembly.encoder()
+        let storage: LocalStorage = miscAssembly.localStorage()
+        // A locally calculated entitlement: an App Store source with no renew
+        // state known, which the derivation alone would turn into
+        // .nonRenewable on the way back in.
+        let calculated = Qonversion.Entitlement(id: "premium", active: true, source: .appStore, productId: "pro")
+        let entitlements: [String: Qonversion.Entitlement] = ["premium": calculated]
+
+        try storage.set(entitlements, forKey: "entitlements")
+        let restored = try XCTUnwrap(try storage.object(forKey: "entitlements", dataType: [String: Qonversion.Entitlement].self))
+
+        XCTAssertEqual(restored["premium"]?.renewState, .unknown, "the resolved state, not one re-derived from the source")
+
+        // ...and the key that carries it is really in the encoded bytes.
+        let data: Data = try encoder.encode(calculated)
+        let object = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+        XCTAssertEqual(object["sdk_renew_state"] as? String, "unknown")
     }
 
     func testTheCacheNeverWritesTheNonRenewableStateAsARenewState() throws {

@@ -113,17 +113,20 @@ which of the app's scenes the purchase sheet belongs to. Name it once, the same
 way `presentOfferCodeRedeemSheet(in:)` takes a scene:
 
 ```swift
+Qonversion.initialize(with: configuration)
+
 // visionOS only — the method does not exist on other platforms
 Qonversion.shared.setPurchaseConfirmationScene(windowScene)
 
 let result = try await Qonversion.shared.purchase(product)
 ```
 
-Set it before the first `purchase(_:options:)` and update it when the scene
-your paywall lives in changes. The scene is held weakly, so a discarded scene
-is not kept alive. Purchasing without one throws a `QonversionError` of type
-`.purchaseSceneMissing` instead of crashing. Nothing changes on iOS, macOS,
-tvOS or watchOS.
+Call it **after `Qonversion.initialize(with:)`** and before the first
+`purchase(_:options:)`, and update it when the scene your paywall lives in
+changes. Calling it before `initialize` drops the scene and logs a warning.
+The scene is held weakly, so a discarded scene is not kept alive. Purchasing
+without one throws a `QonversionError` of type `.purchaseSceneMissing` instead
+of crashing. Nothing changes on iOS, macOS, tvOS or watchOS.
 
 ### Purchase result
 

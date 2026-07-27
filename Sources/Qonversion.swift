@@ -242,9 +242,11 @@ public final class Qonversion: @unchecked Sendable {
     ///
     /// visionOS has no scene-less purchase call — StoreKit needs to know which
     /// of the app's scenes the sheet belongs to, and only the app can answer
-    /// that. Set the scene before the first ``purchase(_:options:)``, and
-    /// update it whenever the scene the paywall lives in changes:
+    /// that. Call it after ``initialize(with:)`` and before the first
+    /// ``purchase(_:options:)``, and update it whenever the scene the paywall
+    /// lives in changes:
     ///
+    ///     Qonversion.initialize(with: configuration)
     ///     Qonversion.shared.setPurchaseConfirmationScene(windowScene)
     ///
     /// The scene is held weakly, so a discarded scene is not kept alive.
@@ -255,7 +257,15 @@ public final class Qonversion: @unchecked Sendable {
     /// there, and ``purchase(_:options:)`` needs no scene.
     @MainActor
     public func setPurchaseConfirmationScene(_ scene: UIScene?) {
-        currentManagers()?.purchasesManager.setPurchaseConfirmationScene(scene)
+        guard let managers: Managers = currentManagers() else {
+            // Dropping the scene silently would surface much later as a
+            // .purchaseSceneMissing on the first purchase, with nothing
+            // pointing back at the ordering mistake that caused it.
+            currentLogger().warning("Qonversion.setPurchaseConfirmationScene called before Qonversion.initialize — the scene is ignored. Call it after initializing the SDK, otherwise purchases fail with .purchaseSceneMissing.")
+            return
+        }
+
+        managers.purchasesManager.setPurchaseConfirmationScene(scene)
     }
     #endif
 
@@ -463,6 +473,17 @@ public final class Qonversion: @unchecked Sendable {
         stateLock.lock()
         defer { stateLock.unlock() }
         return managers
+    }
+
+    /// The configured logger, or the SDK's default one when initialize() has
+    /// not run yet: a warning about calling too early is worthless if it only
+    /// prints once the call is no longer too early.
+    private func currentLogger() -> LoggerWrapper {
+        stateLock.lock()
+        let configured: LoggerWrapper? = logger
+        stateLock.unlock()
+
+        return configured ?? LoggerWrapper.make(logLevel: .verbose)
     }
 
     private func requireManagers() throws -> Managers {

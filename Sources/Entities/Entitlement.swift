@@ -83,7 +83,14 @@ extension Qonversion {
             case billingIssue = "billing_issue"
 
             /// The state named by a `renew_state` value, or nil when the value
-            /// is not part of the wire vocabulary.
+            /// is not part of the vocabulary.
+            ///
+            /// `will_renew`, `canceled` and `billing_issue` are the three the
+            /// API sends. "non_renewable" is accepted on top of them for two
+            /// reasons: caches written by an earlier build of this SDK put it
+            /// into `product.subscription.renew_state`, and if the backend ever
+            /// does name the state explicitly, honoring it beats degrading to
+            /// .unknown. It is never written back out — see ``wireValue``.
             init?(wireValue: String) {
                 switch wireValue {
                 case "will_renew":
@@ -92,6 +99,8 @@ extension Qonversion {
                     self = .canceled
                 case "billing_issue":
                     self = .billingIssue
+                case "non_renewable":
+                    self = .nonRenewable
                 default:
                     return nil
                 }
@@ -109,11 +118,20 @@ extension Qonversion {
             }
 
             /// The backend's own rule (product_center) for an entitlement that
-            /// carries no renew state: everything but a manual grant is a
-            /// non-renewable purchase; a manual grant simply has no store
-            /// subscription to report a state for.
+            /// carries no renew state: on a recognized store source it is a
+            /// non-renewable purchase, while a manual grant simply has no
+            /// store subscription to report a state for.
+            ///
+            /// An unrecognized source (a store this SDK version does not know
+            /// yet) is treated like the manual case on purpose: no information
+            /// must not turn into the affirmative claim "this never renews".
             static func derived(from source: Source) -> RenewState {
-                return source == .manual ? .unknown : .nonRenewable
+                switch source {
+                case .manual, .unknown:
+                    return .unknown
+                case .appStore, .playStore, .stripe:
+                    return .nonRenewable
+                }
             }
         }
 
@@ -389,8 +407,15 @@ extension Qonversion {
             case lastPurchase = "last_purchase_timestamp"
             case autoRenewDisable = "auto_renew_disable_timestamp"
             case storeTransactions = "store_transactions"
-            /// Cache-only. The API never sends it: it carries the renew state
-            /// the SDK resolved, which the wire shape alone cannot express.
+            /// Cache-private, in both directions. The API never sends it: it
+            /// carries the renew state the SDK resolved, which the wire shape
+            /// alone cannot express.
+            ///
+            /// It structurally cannot leak into a request either — entitlements
+            /// are never part of a request body, and every body the SDK sends
+            /// is built as a dictionary and serialized with JSONSerialization
+            /// (`Request.httpBody`), not by encoding a Codable entity. The only
+            /// consumer of this key is the entitlements cache in LocalStorage.
             case cachedRenewState = "sdk_renew_state"
         }
     }

@@ -98,13 +98,7 @@ final class MiscAssembly {
     }
     
     func loggerWrapper() -> LoggerWrapper {
-        if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
-            let logger = Logger(subsystem: "io.qonversion.sdk", category: "Internal")
-            
-            return LoggerWrapper(logger: logger, logLevel: internalConfig.logLevel)
-        } else {
-            return LoggerWrapper()
-        }
+        return LoggerWrapper.make(logLevel: internalConfig.logLevel)
     }
     
     func rateLimiter() -> RateLimiterInterface {

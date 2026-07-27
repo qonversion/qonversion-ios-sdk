@@ -52,6 +52,12 @@ The API is async/await-first. Purchases run natively on StoreKit 2; transactions
 - ``Qonversion/Qonversion/PurchaseOptions``
 - ``Qonversion/Qonversion/PurchaseResult``
 - ``Qonversion/Qonversion/EntitlementsSource``
+
+On visionOS, StoreKit has no scene-less purchase call: name the scene the
+purchase sheet is confirmed in with
+``Qonversion/Qonversion/setPurchaseConfirmationScene(_:)`` after
+``Qonversion/Qonversion/initialize(with:)`` and before the first purchase.
+
 - ``Qonversion/Qonversion/setPurchaseConfirmationScene(_:)``
 
 ### Entitlements

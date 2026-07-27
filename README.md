@@ -220,7 +220,9 @@ purchasing; StoreKit has no scene-less purchase call there:
 Qonversion.shared.setPurchaseConfirmationScene(windowScene)   // visionOS only
 ```
 
-Purchasing without it throws `.purchaseSceneMissing` rather than crashing.
+Call it after `Qonversion.initialize(with:)` — earlier and the scene is dropped
+with a warning in the log. Purchasing without it throws `.purchaseSceneMissing`
+rather than crashing.
 
 Attach context to a purchase:
 
