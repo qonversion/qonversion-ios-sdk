@@ -58,6 +58,14 @@ public final class Qonversion: @unchecked Sendable {
         shared.managers = managers
         shared.stateLock.unlock()
 
+        // Capture uncaught exceptions raised inside the SDK from here on, and
+        // ship whatever the previous launch left behind. Chained: the host's
+        // own crash reporter keeps working.
+        assembly.startCrashReporting()
+        Task {
+            await assembly.sendStoredCrashReports()
+        }
+
         // Start consuming out-of-band transaction updates (renewals, refunds,
         // Ask to Buy approvals, purchases on other devices).
         managers.purchasesManager.startObservingTransactions()

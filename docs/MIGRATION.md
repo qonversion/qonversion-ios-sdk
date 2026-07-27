@@ -229,6 +229,22 @@ Every section and every row is read independently: a malformed product row is
 skipped instead of discarding the file, and a broken `products` section no
 longer takes `products_permissions` and `remote_config_list` down with it.
 
+## SDK crash reporting
+
+The Objective-C SDK installed an uncaught-exception handler and captured
+exceptions whose stack ran through Qonversion (`QONExceptionManager`). That is
+back, with the same scope — **NSException only**, no signal handlers, no Mach
+exception ports, so it never competes with the crash reporter your app already
+uses — and the handler that was installed before it is always called
+afterwards.
+
+What changed: the queue of pending reports is hard-bounded (five, oldest
+dropped) instead of unbounded files in the app's Documents directory, and the
+whole call stack is scanned instead of stopping at the first app frame.
+
+Nothing is sent for your app's own crashes; a stack with no Qonversion frame is
+ignored.
+
 ## NoCodes
 
 NoCodes screens are part of this SDK, as a separate `NoCodes` library in the same package — add it to your app target next to `Qonversion` and `import NoCodes`. In the Objective-C SDK the module was compiled into the main framework, so the only integration change is the extra product and import.

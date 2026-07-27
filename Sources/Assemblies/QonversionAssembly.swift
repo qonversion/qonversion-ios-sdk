@@ -40,6 +40,10 @@ final class QonversionAssembly {
     // A weakly held observer: a per-call instance would deregister itself the
     // moment the caller let go of it.
     private var deviceManagerInstance: DeviceManagerInterface?
+
+    // The crash handler and the launch sender must read and write the same
+    // bounded queue — one instance SDK-wide.
+    private var crashReportsStorageInstance: CrashReportsStorage?
     
     required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose, environment: Qonversion.Environment = .production) {
         let userDefaults: UserDefaults = userDefaults ?? UserDefaults.standard
@@ -84,6 +88,37 @@ final class QonversionAssembly {
     /// called once per initialization by the facade, after the graph is built.
     func replayStoredRequests() {
         servicesAssembly.requestProcessor().processStoredRequests()
+    }
+
+    /// Starts capturing uncaught exceptions raised inside the SDK, chaining to
+    /// whatever handler the host already installed.
+    func startCrashReporting() {
+        CrashReporter.shared.install(storage: crashReportsStorage())
+    }
+
+    /// Ships the reports the previous launch left behind. Fails soft — the
+    /// endpoint is a proposal, see ``CrashReporter``.
+    func sendStoredCrashReports() async {
+        let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
+        let sender = CrashReportsSender(
+            storage: crashReportsStorage(),
+            requestProcessor: servicesAssembly.requestProcessor(),
+            userIdProvider: miscAssembly.internalConfig,
+            platform: deviceInfoCollector.headerDeviceInfo().osName
+        )
+
+        await sender.sendStoredReports()
+    }
+
+    private func crashReportsStorage() -> CrashReportsStorage {
+        if let crashReportsStorageInstance {
+            return crashReportsStorageInstance
+        }
+
+        let storage = CrashReportsStorage(localStorage: miscAssembly.localStorage())
+        crashReportsStorageInstance = storage
+
+        return storage
     }
     
     func userManager() -> UserManagerInterface {
