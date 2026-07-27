@@ -176,6 +176,40 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"])
     }
 
+    func testPurchaseResultCarriesTheEntitlementsProvenance() async throws {
+        // A locally computed answer must be distinguishable from a
+        // backend-confirmed one.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        entitlementsManager.entitlementsSource = .localCalculation
+
+        let result = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(result.entitlementsSource, .localCalculation)
+    }
+
+    func testPurchaseResultReportsTheBackendWhenItAnswered() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        entitlementsManager.entitlementsSource = .backend
+
+        let result = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(result.entitlementsSource, .backend)
+    }
+
+    func testAnOfflinePurchaseReportsTheLocalCalculation() async throws {
+        facade.purchaseResult = makeTransaction(id: "t1")
+        service.error = QonversionError(type: .internal)
+        entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
+
+        let result = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(result.entitlementsSource, .localCalculation)
+    }
+
     // MARK: - purchase options
 
     func testPurchaseForwardsOptionsToStoreAndReport() async throws {

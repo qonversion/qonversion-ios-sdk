@@ -35,6 +35,11 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
     private let userManager: UserManagerInterface
     private let integrationsInfoCollector: IntegrationsInfoCollectorInterface
     private let logger: LoggerWrapper
+    private let notificationCenter: NotificationCenter
+
+    /// Kept so the observer can be removed: a token-less registration lives
+    /// as long as the process does, even after the manager is gone.
+    private var backgroundObserver: NSObjectProtocol?
 
     // Mutated from the caller's thread (setProperty) and from the scheduled
     // sending task concurrently.
@@ -53,7 +58,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         userIdProvider: UserIdProvider,
         userManager: UserManagerInterface,
         integrationsInfoCollector: IntegrationsInfoCollectorInterface,
-        logger: LoggerWrapper
+        logger: LoggerWrapper,
+        notificationCenter: NotificationCenter = .default
     ) {
         self.requestProcessor = requestProcessor
         self.propertiesStorage = propertiesStorage
@@ -62,15 +68,22 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         self.userManager = userManager
         self.integrationsInfoCollector = integrationsInfoCollector
         self.logger = logger
+        self.notificationCenter = notificationCenter
 
         subscribeToBackgroundFlush()
+    }
+
+    deinit {
+        if let backgroundObserver {
+            notificationCenter.removeObserver(backgroundObserver)
+        }
     }
 
     /// The pending batch waits on a delay timer that never fires once the
     /// process is suspended — flush it when the app goes to background.
     private func subscribeToBackgroundFlush() {
         #if canImport(UIKit) && !os(watchOS)
-        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: nil) { [weak self] _ in
+        backgroundObserver = notificationCenter.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: nil) { [weak self] _ in
             guard let self else { return }
             Task {
                 try? await self.sendProperties()

@@ -322,10 +322,19 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     }
 
     var introOfferEligibilityResults: [String: Bool] = [:]
-    private(set) var eligibilityRequestedStoreIds: [String] = []
+    private var _eligibilityRequestedStoreIds: [String] = []
+    /// Recorded under the lock: the SDK asks about the products concurrently.
+    var eligibilityRequestedStoreIds: [String] {
+        facadeStateLock.lock()
+        defer { facadeStateLock.unlock() }
+        return _eligibilityRequestedStoreIds
+    }
 
     func isEligibleForIntroOffer(storeId: String) async -> Bool? {
-        eligibilityRequestedStoreIds.append(storeId)
+        facadeStateLock.lock()
+        _eligibilityRequestedStoreIds.append(storeId)
+        facadeStateLock.unlock()
+
         return introOfferEligibilityResults[storeId]
     }
 
@@ -411,27 +420,45 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
         return _finishedTransactions
     }
     private(set) var restoreCallsCount = 0
-    private(set) var transactionUpdatesCallsCount = 0
+    private var _transactionUpdatesCallsCount = 0
+    // The facade subscribes to the transaction and storefront streams from two
+    // concurrent tasks — every shared field here is lock-guarded.
+    var transactionUpdatesCallsCount: Int {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _transactionUpdatesCallsCount
+    }
 
-    private var updatesContinuation: AsyncStream<Qonversion.Transaction>.Continuation?
-    private var storefrontContinuation: AsyncStream<Void>.Continuation?
+    private var _updatesContinuation: AsyncStream<Qonversion.Transaction>.Continuation?
+    private var _storefrontContinuation: AsyncStream<Void>.Continuation?
 
     func emitUpdate(_ transaction: Qonversion.Transaction) {
-        updatesContinuation?.yield(transaction)
+        stateLock.lock()
+        let continuation = _updatesContinuation
+        stateLock.unlock()
+        continuation?.yield(transaction)
     }
 
     func emitStorefrontChange() {
-        storefrontContinuation?.yield(())
+        stateLock.lock()
+        let continuation = _storefrontContinuation
+        stateLock.unlock()
+        continuation?.yield(())
     }
 
     func storefrontUpdates() -> AsyncStream<Void> {
         return AsyncStream { continuation in
-            self.storefrontContinuation = continuation
+            self.stateLock.lock()
+            self._storefrontContinuation = continuation
+            self.stateLock.unlock()
         }
     }
 
     func finishUpdates() {
-        updatesContinuation?.finish()
+        stateLock.lock()
+        let continuation = _updatesContinuation
+        stateLock.unlock()
+        continuation?.finish()
     }
 
     func purchase(product: StoreKit.Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
@@ -466,9 +493,11 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
     }
 
     func transactionUpdates() -> AsyncStream<Qonversion.Transaction> {
-        transactionUpdatesCallsCount += 1
         return AsyncStream { continuation in
-            self.updatesContinuation = continuation
+            self.stateLock.lock()
+            self._updatesContinuation = continuation
+            self._transactionUpdatesCallsCount += 1
+            self.stateLock.unlock()
         }
     }
 

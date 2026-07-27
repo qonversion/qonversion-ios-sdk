@@ -39,6 +39,9 @@ public final class Qonversion: @unchecked Sendable {
         }
 
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime, logLevel: configuration.logLevel, environment: configuration.environment)
+        // Deterministic teardown order for a user switch, independent of the
+        // order the managers happen to be built in.
+        assembly.registerUserChangeObservers()
         // Replay requests that failed on transport in previous sessions.
         assembly.replayStoredRequests()
         let managers = Managers(

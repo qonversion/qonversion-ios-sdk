@@ -7,6 +7,17 @@ import Foundation
 
 extension Qonversion {
 
+    /// Where a set of entitlements came from.
+    public enum EntitlementsSource: Sendable {
+
+        /// The Qonversion backend resolved them.
+        case backend
+
+        /// The backend was unreachable, so the SDK calculated them from the
+        /// local StoreKit data and the cached product mapping.
+        case localCalculation
+    }
+
     /// A purchase that completed outside of a ``Qonversion/Qonversion/purchase(_:options:)``
     /// call: an Ask to Buy or SCA approval, a subscription renewal, a refund,
     /// or a purchase made on another device.
@@ -17,15 +28,7 @@ extension Qonversion {
     public struct DeferredPurchase: Sendable {
 
         /// Where the entitlements of this purchase come from.
-        public enum EntitlementsSource: Sendable {
-
-            /// The Qonversion backend resolved them.
-            case backend
-
-            /// The backend was unreachable, so the SDK calculated them from
-            /// the local StoreKit data and the cached product mapping.
-            case localCalculation
-        }
+        public typealias EntitlementsSource = Qonversion.EntitlementsSource
 
         /// The store transaction behind the purchase.
         public let transaction: Qonversion.Transaction

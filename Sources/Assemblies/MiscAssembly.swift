@@ -163,6 +163,8 @@ private final class ReplayQueueUserObserver: UserChangedObserver {
         self.requestsStorage = requestsStorage
     }
 
+    var userChangeTeardownPriority: Int { UserChangeTeardownPriority.outgoingQueue }
+
     func userDidChange() {
         requestsStorage.clean()
     }

@@ -336,6 +336,60 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(config.userId, anonUid, "the logged-out state must not be re-identified by the stale continuation")
     }
 
+    // MARK: - identity coherence
+
+    func testAFailingUserFetchAfterTheSwitchStillPersistsTheIdentity() async throws {
+        // The uid moved and was persisted; leaving the identity behind would
+        // make the next launch believe the new uid is anonymous.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        service.identityLinkedUid = "QON_other_uid"
+        service.error = MockError.stubbed                                       // the user fetch fails
+
+        do {
+            _ = try await manager.identify("external_1")
+            XCTFail("Expected the failing user fetch to surface")
+        } catch { }
+
+        XCTAssertEqual(storage.string(forKey: UserServiceStorageKeys.userIdKey.rawValue), "QON_other_uid")
+        XCTAssertEqual(storage.string(forKey: "qonversion.keys.identityExternalId"), "external_1",
+                       "the uid and the identity that caused the switch must be persisted together")
+    }
+
+    func testIdentifyFailurePropagatesToTheCaller() async throws {
+        // The public path must always tell the caller the outcome — no branch
+        // may answer with a user while the linking failed.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        service.createIdentityError = MockError.stubbed
+
+        do {
+            _ = try await manager.identify("external_1")
+            XCTFail("Expected identify to throw")
+        } catch {
+            XCTAssertEqual(error as? MockError, .stubbed)
+        }
+    }
+
+    func testLogoutDuringTheUserFetchOfASwitchDoesNotCacheTheUser() async throws {
+        // The switch is in flight when the host logs out: caching its user
+        // would resurrect the session that was just ended.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = try makeUser(id: "QON_other_uid")
+        let gate = AsyncGate()
+        service.onIdentity = { await gate.wait() }
+
+        async let raced: Qonversion.User = manager.identify("external_1")
+        await waitUntil { self.service.identityCalls.count >= 1 }
+        await manager.logout()
+        await gate.open()
+        _ = try? await raced
+
+        XCTAssertEqual(config.userId, anonUid)
+    }
+
     // MARK: - user stability gate
 
     func testAwaitUserStabilityRethrowsTheIdentifyFailure() async throws {

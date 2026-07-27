@@ -12,7 +12,7 @@ import Foundation
 struct ResolvedEntitlements: Sendable {
 
     let entitlements: [String: Qonversion.Entitlement]
-    let source: Qonversion.DeferredPurchase.EntitlementsSource
+    let source: Qonversion.EntitlementsSource
 }
 
 protocol EntitlementsManagerInterface {

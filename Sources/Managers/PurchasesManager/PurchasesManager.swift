@@ -206,13 +206,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             // again would double it. The transaction is finished by the owner;
             // this call still answers with entitlements.
             guard gateTaken else {
-                let entitlements: [String: Qonversion.Entitlement]
-                if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
-                    entitlements = fetched
-                } else {
-                    entitlements = await entitlementsManager.localFallbackEntitlements(for: [transaction])
-                }
-                return Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements)
+                return await purchaseResult(for: transaction)
             }
         } else {
             gateTaken = false
@@ -230,7 +224,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             // The transaction stays unfinished so it can be re-reported later.
             if error.allowsLocalEntitlementsFallback {
                 let entitlements: [String: Qonversion.Entitlement] = await entitlementsManager.localFallbackEntitlements(for: [transaction])
-                return Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements)
+                return Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements, entitlementsSource: .localCalculation)
             }
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
         }
@@ -242,15 +236,19 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             await storeKitFacade.finish(transaction)
         }
 
-        // A reported purchase must not fail because of the entitlements fetch.
-        let entitlements: [String: Qonversion.Entitlement]
-        if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
-            entitlements = fetched
-        } else {
-            entitlements = await entitlementsManager.localFallbackEntitlements(for: [transaction])
+        return await purchaseResult(for: transaction)
+    }
+
+    /// A reported purchase must not fail because of the entitlements fetch —
+    /// and the caller is told which of the two answered.
+    private func purchaseResult(for transaction: Qonversion.Transaction) async -> Qonversion.PurchaseResult {
+        if let resolved: ResolvedEntitlements = try? await entitlementsManager.resolvedEntitlements() {
+            return Qonversion.PurchaseResult(transaction: transaction, entitlements: resolved.entitlements, entitlementsSource: resolved.source)
         }
 
-        return Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements)
+        let entitlements: [String: Qonversion.Entitlement] = await entitlementsManager.localFallbackEntitlements(for: [transaction])
+
+        return Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements, entitlementsSource: .localCalculation)
     }
 
     @discardableResult
@@ -522,6 +520,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 // MARK: - UserChangedObserver
 
 extension PurchasesManager: UserChangedObserver {
+
+    var userChangeTeardownPriority: Int { UserChangeTeardownPriority.purchaseBookkeeping }
 
     func userDidChange() {
         // A restore right after identify/logout must be able to attach the

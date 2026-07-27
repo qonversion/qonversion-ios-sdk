@@ -364,3 +364,44 @@ private final class PropertiesAsyncGate: @unchecked Sendable {
     func open() async { await storage.open() }
     func wait() async { await storage.wait() }
 }
+
+/// Records the observer removals the manager performs on deinit.
+final class SpyNotificationCenter: NotificationCenter, @unchecked Sendable {
+
+    private(set) var removedObservers: [Any] = []
+
+    override func removeObserver(_ observer: Any) {
+        removedObservers.append(observer)
+        super.removeObserver(observer)
+    }
+}
+
+final class UserPropertiesObserverTests: XCTestCase {
+
+    func testTheBackgroundObserverIsRemovedOnDeinit() {
+        // A token-less registration outlives the manager: the closure stays in
+        // the notification center for the life of the process.
+        let center = SpyNotificationCenter()
+        var manager: UserPropertiesManager? = UserPropertiesManager(
+            requestProcessor: MockRequestProcessor(),
+            propertiesStorage: UserPropertiesStorage(),
+            delayCalculator: IncrementalDelayCalculator(),
+            userIdProvider: InternalConfig(userId: "u"),
+            userManager: MockUserManager(),
+            integrationsInfoCollector: MockIntegrationsInfoCollector(),
+            logger: LoggerWrapper(),
+            notificationCenter: center
+        )
+        XCTAssertNotNil(manager)
+
+        manager = nil
+
+        #if canImport(UIKit) && !os(watchOS)
+        XCTAssertEqual(center.removedObservers.count, 1, "the background flush observer must be unregistered")
+        #else
+        // The background flush is a UIKit-only concern, so there is nothing to
+        // register — and nothing to remove — on this platform.
+        XCTAssertTrue(center.removedObservers.isEmpty)
+        #endif
+    }
+}

@@ -71,3 +71,49 @@ final class AssemblySharingTests: XCTestCase {
         XCTAssertTrue(first === second, "two instances would double every user-change invalidation")
     }
 }
+
+// MARK: - user-change observer registration
+
+final class UserChangeObserverOrderTests: XCTestCase {
+
+    func testObserversAreRegisteredInADeterministicOrder() {
+        // Left to lazy graph construction the order is whatever the first
+        // caller happens to build; the teardown of a user switch must not
+        // depend on that.
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+
+        assembly.registerUserChangeObservers()
+
+        let observers = assembly.servicesAssembly.miscAssembly.userChangesNotifier().registeredObservers
+        let types: [String] = observers.map { String(describing: type(of: $0)) }
+        XCTAssertEqual(types.first, "ReplayQueueUserObserver", "the previous user's queued requests stop first")
+        XCTAssertEqual(types.dropFirst().first, "PurchasesManager", "then the purchase bookkeeping")
+        XCTAssertEqual(Set(types.dropFirst(2)), ["EntitlementsManager", "ProductsManager", "RemoteConfigManager", "DeviceManager"],
+                       "every user-scoped cache is registered")
+    }
+
+    func testRegisteringTwiceKeepsOneEntryPerObserver() {
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+
+        assembly.registerUserChangeObservers()
+        assembly.registerUserChangeObservers()
+
+        XCTAssertEqual(assembly.servicesAssembly.miscAssembly.userChangesNotifier().registeredObservers.count, 6)
+    }
+
+    func testTheTeardownOrderDoesNotDependOnTheConstructionOrder() {
+        // Building the caches first must not push the queue teardown behind
+        // them: the order is declared, not emergent.
+        let assembly = QonversionAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated())
+        _ = assembly.remoteConfigManager()
+        _ = assembly.entitlementsManager()
+        _ = assembly.purchasesManager()
+        _ = assembly.deviceManager()
+        _ = assembly.servicesAssembly.miscAssembly.requestsStorage()
+
+        let types: [String] = assembly.servicesAssembly.miscAssembly.userChangesNotifier().registeredObservers.map { String(describing: type(of: $0)) }
+
+        XCTAssertEqual(types.first, "ReplayQueueUserObserver")
+        XCTAssertEqual(types.dropFirst().first, "PurchasesManager")
+    }
+}
