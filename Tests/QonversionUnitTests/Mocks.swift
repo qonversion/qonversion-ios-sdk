@@ -86,16 +86,6 @@ final class MockIntegrationsInfoCollector: IntegrationsInfoCollectorInterface {
     func facebookAnonymousId() -> String? { facebookAnonymousIdResult }
 }
 
-final class MockReceiptFetcher: ReceiptFetcherInterface {
-
-    var receipt: String?
-    private(set) var fetchCallsCount = 0
-
-    func appStoreReceipt() -> String? {
-        fetchCallsCount += 1
-        return receipt
-    }
-}
 
 final class MockUserPropertiesManager: UserPropertiesManagerInterface {
 
@@ -391,6 +381,8 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
     func fetchUnfinished() async -> [Qonversion.Transaction] { fetchUnfinishedResult }
 
     private(set) var subscribeToPromoPurchasesCallsCount = 0
+    func unsubscribeFromPromoPurchases() { }
+
     func subscribeToPromoPurchases() {
         subscribeToPromoPurchasesCallsCount += 1
     }
@@ -414,37 +406,6 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
 
 /// Mock of the legacy StoreKit 1 wrapper. Captures completions so tests can
 /// fire them at a controlled moment (e.g. after the facade is deallocated).
-final class MockStoreKitOldWrapper: StoreKitOldWrapperInterface {
-
-    private(set) var productsCompletions: [StoreKitOldProductsCompletion] = []
-    private(set) var restoreCompletions: [StoreKitOldTransactionsCompletion] = []
-    private(set) var finishedTransactions: [SKPaymentTransaction] = []
-
-    func products(for ids: [String], completion: @escaping StoreKitOldProductsCompletion) {
-        productsCompletions.append(completion)
-    }
-
-    func restore(with completion: @escaping StoreKitOldTransactionsCompletion) {
-        restoreCompletions.append(completion)
-    }
-
-    #if os(iOS) || os(visionOS)
-    @available(iOS 14.0, visionOS 1.0, *)
-    func presentCodeRedemptionSheet() { }
-    #endif
-
-    private(set) var purchasedProducts: [SKProduct] = []
-    private(set) var purchaseCompletions: [StoreKitOldTransactionsCompletion] = []
-
-    func purchase(product: SKProduct, completion: @escaping StoreKitOldTransactionsCompletion) {
-        purchasedProducts.append(product)
-        purchaseCompletions.append(completion)
-    }
-
-    func finish(transaction: SKPaymentTransaction) {
-        finishedTransactions.append(transaction)
-    }
-}
 
 // MARK: - Services
 

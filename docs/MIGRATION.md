@@ -4,9 +4,10 @@ This SDK is a full Swift rewrite with an async/await-first API. Existing install
 
 ## Requirements
 
-- iOS 13.0+ / macOS 10.15+ / tvOS 13.0+ / watchOS 6.0+ / visionOS 1.0+ (previously iOS 9)
+- iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+ / visionOS 1.0+ (previously iOS 9)
 - Swift Package Manager only — CocoaPods and Carthage are not supported anymore
-- Purchases run on StoreKit 2 (iOS 15+) with an automatic StoreKit 1 fallback on older systems
+- Purchases run natively on StoreKit 2; StoreKit 1 is not used
+- App Store promoted purchases surface via `promoPurchaseIntents` on iOS 16.4+ (a known gap on iOS 15.0–16.3)
 
 ## API mapping
 

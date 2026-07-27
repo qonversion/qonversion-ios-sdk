@@ -13,8 +13,5 @@ import StoreKit
 /// are still in hand.
 protocol StoreKitMapperInterface {
 
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     func map(_ transaction: StoreKit.Transaction, jws: String?) -> Qonversion.Transaction
-
-    func map(_ transaction: SKPaymentTransaction, product: SKProduct) -> Qonversion.Transaction
 }

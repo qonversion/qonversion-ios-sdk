@@ -68,37 +68,12 @@ final class ServicesAssembly {
     }
 
     private func makeStoreKitFacade() -> StoreKitFacade {
-        let mapper: StoreKitMapperInterface = storeKitMapper()
-        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) {
-            let wrapper: StoreKitWrapper = storeKitWrapper()
-            
-            let storeKitFacade = StoreKitFacade(storeKitWrapper: wrapper, storeKitMapper: mapper)
-            
-            wrapper.delegate = storeKitFacade
-            
-            return storeKitFacade
-        } else {
-            let wrapper: StoreKitOldWrapper = storeKitOldWrapper()
-            
-            let storeKitFacade = StoreKitFacade(storeKitOldWrapper: wrapper, storeKitMapper: mapper)
-            wrapper.delegate = storeKitFacade
-            
-            return storeKitFacade
-        }
-        
-    }
-    
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    func storeKitWrapper() -> StoreKitWrapper {
-        let storeKitWrapper = StoreKitWrapper(mapper: storeKitMapper())
-        
-        return storeKitWrapper
-    }
-    
-    func storeKitOldWrapper() -> StoreKitOldWrapper {
-        let storeKitOldWrapper = StoreKitOldWrapper(paymentQueue: miscAssembly.paymentQueue())
-        
-        return storeKitOldWrapper
+        let mapper = StoreKitMapper()
+        let wrapper = StoreKitWrapper(mapper: mapper)
+        let storeKitFacade = StoreKitFacade(storeKitWrapper: wrapper, storeKitMapper: mapper)
+        wrapper.delegate = storeKitFacade
+
+        return storeKitFacade
     }
     
     func deviceService() -> DeviceServiceInterface {
@@ -113,8 +88,7 @@ final class ServicesAssembly {
     func purchasesService() -> PurchasesServiceInterface {
         let requestProcessor: RequestProcessorInterface = requestProcessor()
         let appBundleId: String = Bundle.main.bundleIdentifier ?? ""
-        let receiptFetcher = ReceiptFetcher()
-        let purchasesService = PurchasesService(requestProcessor: requestProcessor, appBundleId: appBundleId, receiptFetcher: receiptFetcher)
+        let purchasesService = PurchasesService(requestProcessor: requestProcessor, appBundleId: appBundleId)
 
         return purchasesService
     }

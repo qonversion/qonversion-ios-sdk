@@ -61,12 +61,10 @@ final class PurchasesService: PurchasesServiceInterface {
 
     private let requestProcessor: RequestProcessorInterface
     private let appBundleId: String
-    private let receiptFetcher: ReceiptFetcherInterface
 
-    init(requestProcessor: RequestProcessorInterface, appBundleId: String, receiptFetcher: ReceiptFetcherInterface) {
+    init(requestProcessor: RequestProcessorInterface, appBundleId: String) {
         self.requestProcessor = requestProcessor
         self.appBundleId = appBundleId
-        self.receiptFetcher = receiptFetcher
     }
 
 
@@ -74,19 +72,12 @@ final class PurchasesService: PurchasesServiceInterface {
     func send(_ transaction: Qonversion.Transaction, userId: String, options: Qonversion.PurchaseOptions?, trigger: RequestTrigger) async throws -> String? {
         // The v4 store_data shape for the app_store platform; the signed
         // transaction (jws) travels in the receipt slot, the ids next to it
-        // let the backend resolve and dedupe before verification. StoreKit 1
-        // transactions have no jws — the base64 app receipt is their proof.
-        let proof: String
-        if let jws: String = transaction.jws {
-            proof = jws
-        } else {
-            proof = receiptFetcher.appStoreReceipt() ?? ""
-        }
+        // let the backend resolve and dedupe before verification.
         let storeData: RequestBodyDict = [
             "transaction_id": transaction.id ?? "",
             "original_transaction_id": transaction.originalId ?? "",
             "product_id": transaction.productId,
-            "receipt": proof,
+            "receipt": transaction.jws ?? "",
         ]
         var body: RequestBodyDict = [
             "platform": "app_store",

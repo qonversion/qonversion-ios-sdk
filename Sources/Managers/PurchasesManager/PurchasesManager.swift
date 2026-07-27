@@ -255,7 +255,6 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         storeKitFacade.startObservingTransactionUpdates()
     }
 
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async {
         let transactions: [Qonversion.Transaction] = purchasedTransactions.compactMap { storeKitFacade.map($0) }
 

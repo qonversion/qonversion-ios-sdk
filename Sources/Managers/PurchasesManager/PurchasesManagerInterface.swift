@@ -41,7 +41,6 @@ protocol PurchasesManagerInterface: AnyObject {
     /// Reports purchases made by the host app (Analytics mode ingestion).
     /// Verified transactions are reported through the dedup gate and are
     /// NEVER finished — the host app owns their lifecycle.
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     func handle(purchasedTransactions: [VerificationResult<StoreKit.Transaction>]) async
 
     /// Domain-typed core of the ingestion above.

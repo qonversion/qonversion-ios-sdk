@@ -24,8 +24,8 @@ Qonversion - In-app subscription monetization: implement subscriptions and grow 
 
 ### Requirements
 
-- iOS 13.0+ / macOS 10.15+ / tvOS 13.0+ / watchOS 6.0+ / visionOS 1.0+
-- Purchases run on StoreKit 2 (iOS 15+) with an automatic StoreKit 1 fallback on older systems
+- iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+ / visionOS 1.0+
+- Purchases run natively on StoreKit 2
 - The public API is async/await-first
 - A Qonversion project: sign up at [qonversion.io](https://qonversion.io), create products and entitlements in the Dashboard, and grab the project key from **Settings**
 

@@ -135,7 +135,6 @@ public final class Qonversion: @unchecked Sendable {
     /// track them (Analytics mode). Pass the verification results you receive
     /// from `Product.PurchaseResult` or `Transaction.updates`. The SDK never
     /// finishes these transactions — your app owns their lifecycle.
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
     public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async {
         guard let purchasesManager else { return }
 

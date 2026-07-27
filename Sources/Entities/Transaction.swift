@@ -25,7 +25,6 @@ extension Qonversion {
         public let originalId: String?
 
         /// A unique ID that identifies subscription purchase events across devices, including subscription renewals.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var webOrderLineItemId: String? { storeKitTransaction?.webOrderLineItemID }
 
         /// The product identifier of the in-app purchase.
@@ -35,7 +34,6 @@ extension Qonversion {
         public let subscriptionGroupId: String?
         
         /// The bundle identifier for the app.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var appBundleId: String? { storeKitTransaction?.appBundleID }
 
         /// The date that the App Store charged the user’s account for a purchased or restored product, or for a subscription purchase or renewal after a lapse.
@@ -45,30 +43,24 @@ extension Qonversion {
         public let originalPurchaseDate: Date?
 
         /// The date the subscription expires or renews.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var expirationDate: Date? { storeKitTransaction?.expirationDate }
 
         /// The number of consumable products purchased.
         public let purchasedQuantity: Int
 
         /// A Boolean that indicates whether the user upgraded to another subscription.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var isUpgraded: Bool? { storeKitTransaction?.isUpgraded }
         
         /// The subscription offer that applies to the transaction, including its offer type, payment mode, and ID.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var offer: Qonversion.Transaction.Offer? { _offer }
         
         /// The reason that the App Store refunded the transaction or revoked it from Family Sharing.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var revocationReason: Qonversion.Transaction.RevocationReason? { Qonversion.Transaction.RevocationReason.from(revocataionReason: storeKitTransaction?.revocationReason) }
         
         /// The date that the App Store refunded the transaction or revoked it from Family Sharing.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var revocationDate: Date? { storeKitTransaction?.revocationDate }
         
         /// A UUID that associates the transaction with a user on your own service.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var appAccountToken: UUID? { storeKitTransaction?.appAccountToken }
         
         /// The Apple server environment that generates and signs the transaction.
@@ -95,19 +87,15 @@ extension Qonversion {
         public let storefront: Qonversion.Storefront?
         
         /// The device verification value to use to verify whether the renewal information belongs to the device.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var deviceVerification: Data? { storeKitTransaction?.deviceVerification }
         
         /// The UUID to use to compute the device verification value.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var deviceVerificationNonce: UUID? { storeKitTransaction?.deviceVerificationNonce }
         
         /// The date that the App Store signed the JWS renewal information.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var signedDate: Date? { storeKitTransaction?.signedDate }
         
         /// A value that indicates whether the transaction was purchased by the user, or is made available to them through Family Sharing.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var ownershipType: Qonversion.Transaction.OwnershipType {
             guard let storeKitTransaction = storeKitTransaction,
                   let ownershipType = Qonversion.Transaction.OwnershipType(rawValue: storeKitTransaction.ownershipType.rawValue)
@@ -117,11 +105,9 @@ extension Qonversion {
         }
         
         /// Original StoreKit 2 Transaction.
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         public var storeKitTransaction: StoreKit.Transaction? { _storeKitTransaction as? StoreKit.Transaction }
         
         /// Original old StoreKit Transaction
-        public let skPaymentTransaction: SKPaymentTransaction?
         
         // MARK: - Nested structures and enums
         
@@ -135,7 +121,6 @@ extension Qonversion {
             /// The transaction was revoked for some other reason.
             case other
             
-            @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
             static func from(revocataionReason: StoreKit.Transaction.RevocationReason?) -> Qonversion.Transaction.RevocationReason? {
                 guard let reason: StoreKit.Transaction.RevocationReason = revocataionReason else { return nil }
                 
@@ -199,7 +184,6 @@ extension Qonversion {
             // Workaround to make originalOffer variable available for specific OS versions
             let _offer: Any?
             
-            @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
             init?(with transaction: StoreKit.Transaction) {
                 self.type = Qonversion.Transaction.Offer.OfferType.from(transaction: transaction)
                 
@@ -228,7 +212,6 @@ extension Qonversion {
                 /// An offer with a subscription offer code, for an auto-renewable subscription.
                 case code
                 
-                @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
                 static func from(transaction: StoreKit.Transaction?) -> Qonversion.Transaction.Offer.OfferType? {
                     guard let transaction: StoreKit.Transaction = transaction else { return nil }
                    
@@ -332,37 +315,8 @@ extension Qonversion {
             self.jws = jws
             self._offer = nil
             self._storeKitTransaction = nil
-            self.skPaymentTransaction = nil
         }
 
-        init(transaction: SKPaymentTransaction, product: SKProduct) {
-            self.jsonRepresentation = nil
-            self.jws = nil
-            self.id = transaction.transactionIdentifier
-            self.originalId = transaction.original?.transactionIdentifier
-            self.productId = transaction.payment.productIdentifier
-            self.subscriptionGroupId = product.subscriptionGroupIdentifier
-            self.purchaseDate = transaction.transactionDate
-            self.originalPurchaseDate = transaction.original?.transactionDate
-            self.purchasedQuantity = transaction.payment.quantity
-            self.storefront = Qonversion.Storefront(countryCode: SKPaymentQueue.default().storefront?.countryCode, id: SKPaymentQueue.default().storefront?.identifier)
-            self.price = product.price as Decimal
-            
-            let currencyCode: String?
-            if #available(macOS 13, iOS 16, tvOS 16, watchOS 9, *) {
-                currencyCode = product.priceLocale.currency?.identifier
-            } else {
-                currencyCode = product.priceLocale.currencyCode
-            }
-            
-            self.currency = Qonversion.Currency(identifier: currencyCode, symbol: product.priceLocale.currencySymbol)
-            
-            self._offer = nil
-            self._storeKitTransaction = nil
-            self.skPaymentTransaction = transaction
-        }
-        
-        @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
         init(transaction: StoreKit.Transaction, jws: String? = nil) {
             self.jsonRepresentation = transaction.jsonRepresentation
             self.jws = jws
@@ -387,13 +341,8 @@ extension Qonversion {
                 self.storefront = Qonversion.Storefront(countryCode: transaction.storefrontCountryCode, id: nil)
             }
             
-            if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
-                self._offer = Qonversion.Transaction.Offer(with: transaction)
-            } else {
-                self._offer = nil
-            }
+            self._offer = Qonversion.Transaction.Offer(with: transaction)
             self._storeKitTransaction = transaction
-            self.skPaymentTransaction = nil
         }
     }
 }

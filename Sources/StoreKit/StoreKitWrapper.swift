@@ -8,14 +8,17 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-// @unchecked: the mapper is stateless; the delegate is weak.
+// @unchecked: the mapper is stateless; the delegate is weak; the promo
+// subscription task is lock-guarded.
 final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
 
     // Weak: the delegate (facade) holds the wrapper itself.
     weak var delegate: StoreKitWrapperDelegate?
 
     private let mapper: StoreKitMapperInterface
+
+    private let promoSubscriptionLock = NSLock()
+    private var promoIntentsTask: Task<Void, Never>?
 
     init(mapper: StoreKitMapperInterface) {
         self.mapper = mapper
@@ -113,11 +116,23 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
 
     @available(iOS 16.4, macOS 14.4, *)
     func subscribeToPromoPurchases() {
-        Task.detached {
+        promoSubscriptionLock.lock()
+        defer { promoSubscriptionLock.unlock() }
+        guard promoIntentsTask == nil else { return }
+
+        promoIntentsTask = Task { [weak self] in
             for await purchaseIntent in PurchaseIntent.intents {
+                guard let self, !Task.isCancelled else { return }
                 self.delegate?.promoPurchaseIntent(product: purchaseIntent.product)
             }
         }
+    }
+
+    func unsubscribeFromPromoPurchases() {
+        promoSubscriptionLock.lock()
+        defer { promoSubscriptionLock.unlock() }
+        promoIntentsTask?.cancel()
+        promoIntentsTask = nil
     }
 
     #if os(iOS) || os(visionOS)

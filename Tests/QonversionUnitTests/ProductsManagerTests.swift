@@ -93,32 +93,28 @@ final class ProductsManagerTests: XCTestCase {
 
     // MARK: - Enrichment
 
-    // Fixates current behavior: products without a matching store product are silently
-    // skipped, so when the StoreKit facade returns no matching wrappers the manager
-    // returns an EMPTY array even though the API returned products.
-    func testProductsWithoutStoreMatchesReturnsEmptyArray() async throws {
+    // The catalog is backend-driven: a product the store does not know (e.g.
+    // a Stripe-only product) stays in the result unenriched instead of
+    // disappearing from the paywall.
+    func testProductsWithoutStoreMatchesAreKeptUnenriched() async throws {
         productsService.productsResult = [makeProduct()]
-        // A wrapper with neither a StoreKit 2 product nor an SKProduct has a nil id,
-        // so it can never match any storeId.
-        storeKitFacade.productsResult = [StoreProductWrapper(_product: nil, oldProduct: nil)]
+        storeKitFacade.productsResult = [StoreProductWrapper(product: nil)]
 
         let result = try await manager.products()
 
-        XCTAssertTrue(result.isEmpty)
+        XCTAssertEqual(result.map(\.qonversionId), ["q_main"])
+        XCTAssertFalse(result[0].isStoreProductLinked)
         XCTAssertEqual(productsService.productsCallsCount, 1)
     }
 
-    // Fixates current behavior: an empty enrichment result is assigned to loadedProducts,
-    // which leaves the cache "empty", so the next call hits the service again.
-    func testEmptyEnrichedResultIsNotCached() async throws {
+    func testUnenrichedProductsAreCachedLikeAnyOtherResult() async throws {
         productsService.productsResult = [makeProduct()]
         storeKitFacade.productsResult = []
 
         _ = try await manager.products()
         _ = try await manager.products()
 
-        XCTAssertEqual(productsService.productsCallsCount, 2)
-        XCTAssertEqual(storeKitFacade.requestedProductIds.count, 2)
+        XCTAssertEqual(productsService.productsCallsCount, 1, "the backend answer is authoritative — no refetch loop")
     }
 
     // MARK: - StoreKit error fallback

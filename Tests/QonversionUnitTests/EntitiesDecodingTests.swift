@@ -324,7 +324,7 @@ final class EntitiesDecodingTests: XCTestCase {
 
     func testProductDecodingUsesV4Keys() throws {
         // v4 wire keys: id / apple_product_id / offering_id; extra fields are
-        // ignored and skProduct stays nil.
+        // ignored and the store product stays unlinked.
         let json = #"{"id": "main", "apple_product_id": "com.app.main", "offering_id": "offering_1", "type": "subscription", "created_at": "2024-01-01T00:00:00Z"}"#
 
         let product = try decode(Qonversion.Product.self, json)
@@ -332,7 +332,7 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertEqual(product.qonversionId, "main")
         XCTAssertEqual(product.storeId, "com.app.main")
         XCTAssertEqual(product.offeringId, "offering_1")
-        XCTAssertNil(product.skProduct)
+        XCTAssertFalse(product.isStoreProductLinked)
         XCTAssertNil(product.displayName)
         XCTAssertNil(product.price)
         XCTAssertFalse(product.isStoreProductLinked)

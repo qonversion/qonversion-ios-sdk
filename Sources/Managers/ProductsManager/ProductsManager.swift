@@ -166,18 +166,17 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     }
 
     private func storeEnriched(_ products: [Qonversion.Product]) async throws -> [Qonversion.Product] {
-        let productIds: [String] = products.map { $0.storeId }
+        let productIds: [String] = products.filter { !$0.storeId.isEmpty }.map { $0.storeId }
         let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
 
         var resultProducts: [Qonversion.Product] = []
 
+        // Products the store does not know (e.g. Stripe-only ones with no
+        // App Store id) stay in the list unenriched — the catalog is
+        // backend-driven.
         for var product in products {
-            guard let storeProductWrapper: StoreProductWrapper = storeProducts.first(where: { $0.id == product.storeId }) else { continue }
-
-            if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *), let storeProduct = storeProductWrapper.product {
+            if let storeProduct: StoreKit.Product = storeProducts.first(where: { $0.id == product.storeId })?.product {
                 product.enrich(storeProduct: storeProduct)
-            } else if let storeProduct: SKProduct = storeProductWrapper.oldProduct {
-                product.enrich(skProduct: storeProduct)
             }
 
             resultProducts.append(product)

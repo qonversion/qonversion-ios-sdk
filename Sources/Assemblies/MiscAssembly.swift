@@ -130,7 +130,4 @@ final class MiscAssembly {
         return headersBuilder
     }
     
-    func paymentQueue() -> SKPaymentQueue {
-        return SKPaymentQueue.default()
-    }
 }
