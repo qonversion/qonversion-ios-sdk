@@ -113,6 +113,14 @@ they become `.remoteConfigurationNotAvailable` — the counterpart of the ObjC
 SDK's `QONErrorCodeRemoteConfigurationNotAvailable`. Everywhere else the 404
 family stays `.resourceNotFound`.
 
+A load abandoned because the SDK switched users (a logout, or an identify that
+resolved to another user) fails with `.cancelled` rather than a bare
+`CancellationError` — the call is safe to repeat once the switch is done.
+
+`userInfo()` answers from the persisted user record when the network fetch
+fails, like the Objective-C SDK always did; it throws only when there is no
+user at all.
+
 Remote config failures are no longer flattened into
 `.loadingRemoteConfigFailed`: a classified backend failure reaches you with its
 own `type`, `apiCode` and `apiType`. `.loadingRemoteConfigFailed` and

@@ -643,6 +643,8 @@ final class MockUserService: UserServiceInterface {
     var userResult: Qonversion.User?
     var createUserResult: Qonversion.User?
     var error: Error?
+    /// Fails user() only, leaving the creation gate healthy.
+    var userError: Error?
     var generatedUserId = "QON_test_generated"
 
     // Identity stubs
@@ -668,6 +670,7 @@ final class MockUserService: UserServiceInterface {
     func user() async throws -> Qonversion.User {
         userCallsCount += 1
         callLog.append("user")
+        if let userError { throw userError }
         if let error { throw error }
         guard let userResult else { throw MockError.noStub }
         return userResult

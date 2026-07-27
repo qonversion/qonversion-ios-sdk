@@ -181,7 +181,22 @@ actor UserManager: UserManagerInterface {
     func userInfo() async throws -> Qonversion.User {
         try await obtainUser()
 
-        return try await userService.user()
+        do {
+            let user: Qonversion.User = try await userService.user()
+            persist(user)
+            cachedUser = user
+
+            return user
+        } catch {
+            // The ObjC SDK always answered this locally — the user record is
+            // persisted on the device. Failing a call that needs no network is
+            // a regression the host feels as "who am I?" breaking offline.
+            // The error surfaces only when nothing local exists.
+            guard let local: Qonversion.User = currentUser() else { throw error }
+
+            logger.warning("The user request failed, answering from the persisted user: " + error.message)
+            return local
+        }
     }
 
     /// Cancellation reaches the SDK in more than one shape: a task cancelled

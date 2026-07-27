@@ -556,6 +556,35 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(service.createUserCallsCount, 1, "userInfo must pass the creation gate first")
         XCTAssertEqual(service.userCallsCount, 1)
     }
+
+    func testUserInfoAnswersFromTheCacheWhenTheFetchFails() async throws {
+        // The ObjC SDK always had an answer here — the user record is
+        // persisted locally. Throwing on a network hiccup makes a call that
+        // needs no network at all fail.
+        service.createUserResult = try makeUser(id: anonUid)
+        service.userResult = try makeUser(id: anonUid)
+        _ = try await manager.userInfo()
+        service.userError = QonversionError(type: .internal)
+
+        let user = try await manager.userInfo()
+
+        XCTAssertEqual(user.id, anonUid, "the persisted user answers offline")
+    }
+
+    func testUserInfoThrowsWhenThereIsNoUserAtAll() async throws {
+        // "Nothing local" and "the gate failed" are the same situation: the
+        // gate is what puts a user on the device, so once it has passed there
+        // is always something to answer with. A gate failure must still
+        // surface — the caller has no user.
+        service.error = QonversionError(type: .internal)
+
+        do {
+            _ = try await manager.userInfo()
+            XCTFail("Expected the failure to surface")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .internal)
+        }
+    }
 }
 
 // MARK: - Async helpers
