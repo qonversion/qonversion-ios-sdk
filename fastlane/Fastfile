@@ -20,15 +20,9 @@ end
 lane :bump do |options|
   new_version = options[:version]
 
-  update_plist(
-    plist_path: "Framework/Info.plist",
-    block: proc do |plist|
-      plist[:CFBundleShortVersionString] = new_version
-    end
-  )
-
-  file_path = Dir['../**/QONConfiguration.m'].first
-  update_file(file_path, /NSString \*const kSDKVersion = @".*";/, "NSString *const kSDKVersion = @\"#{new_version}\";")
+  # The SDK version lives in a single Swift constant (sent in request headers).
+  file_path = Dir['../Sources/SDKVersion.swift'].first
+  update_file(file_path, /static let current: String = ".*"/, "static let current: String = \"#{new_version}\"")
 end
 
 def get_tag
