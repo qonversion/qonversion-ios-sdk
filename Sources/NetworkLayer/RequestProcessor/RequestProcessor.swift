@@ -18,6 +18,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     let retriableRequestKinds: [Request.Kind]
     let requestsStorage: RequestsStorageInterface
     let rateLimiter: RateLimiterInterface
+    private let delayCalculator: IncrementalDelayCalculator
+    private let transportRetryDelayCeiling: TimeInterval
     /// Shared with the purchases manager: the launch replay and the
     /// unfinished-transaction sweep run concurrently and must not both post
     /// the same purchase.
@@ -38,7 +40,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         }
     }
 
-    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface, reportsGate: TransactionReportsGate = TransactionReportsGate()) {
+    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface, delayCalculator: IncrementalDelayCalculator = IncrementalDelayCalculator(), transportRetryDelayCeiling: TimeInterval = RequestProcessor.defaultTransportRetryDelayCeiling, reportsGate: TransactionReportsGate = TransactionReportsGate()) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
@@ -47,6 +49,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         self.retriableRequestKinds = retriableRequestKinds
         self.requestsStorage = requestsStorage
         self.rateLimiter = rateLimiter
+        self.delayCalculator = delayCalculator
+        self.transportRetryDelayCeiling = transportRetryDelayCeiling
         self.reportsGate = reportsGate
     }
 
@@ -176,7 +180,6 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             throw QonversionError(type: .invalidRequest)
         }
         headersBuilder.addHeaders(to: &urlRequest)
-        urlRequest.addValue("1", forHTTPHeaderField: Self.attemptHeader)
         if let trigger {
             urlRequest.addValue(trigger.rawValue, forHTTPHeaderField: Self.triggerHeader)
         }
@@ -190,7 +193,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         let error: QonversionError?
         let responseCode: Int
         do {
-            let (data, urlResponse) = try await networkProvider.send(request: urlRequest)
+            let (data, urlResponse) = try await sendWithTransportRetries(urlRequest)
             error = errorHandler.extractError(from: urlResponse, body: data)
             responseBody = data
             responseCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
@@ -264,5 +267,77 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         } catch {
             throw QonversionError(type: .invalidResponse, error: error)
         }
+    }
+
+    // MARK: - Transport retries
+
+    /// How many times a connection-class failure is retried inside the call
+    /// that produced it. Matches the ObjC client, which resent up to three
+    /// times (QNAPIClient.m:523-551, `tryCount < 3`) before giving up and
+    /// handing the request to the offline queue.
+    static let maxTransportRetries: Int = 3
+
+    /// The in-session backoff is capped: the caller is usually blocked on this
+    /// request (a purchase report, a paywall load), so a network that is
+    /// genuinely down must fail fast enough to be handled, not hang the flow.
+    /// The ObjC client retried with no delay at all.
+    static let defaultTransportRetryDelayCeiling: TimeInterval = 2
+
+    /// A failure with no response at all: the request never reached the
+    /// backend, so resending it cannot duplicate anything. The first five are
+    /// the connection-class URLErrors; the last two are the extra codes the
+    /// ObjC client also treated as "no transport" (QNUtils.m:106-116).
+    static func isTransportFailure(_ error: Error) -> Bool {
+        guard let urlError = error as? URLError else { return false }
+
+        switch urlError.code {
+        case .notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotConnectToHost, .dnsLookupFailed,
+             .callIsActive, .dataNotAllowed:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Retries ONLY when no response was received. Once the backend answered —
+    /// with any status — the request is delivered and resending it would
+    /// duplicate the work; those statuses are handled by the caller and, for
+    /// the retriable kinds, by the offline queue.
+    ///
+    /// The rate limiter and the critical-error latch are deliberately outside
+    /// this loop: a retry is not a new call.
+    private func sendWithTransportRetries(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        var attempt: Int = 1
+        var attemptedRequest: URLRequest = request
+
+        while true {
+            // Like the ObjC client, the backend is told which attempt this is.
+            attemptedRequest.setValue("\(attempt)", forHTTPHeaderField: Self.attemptHeader)
+
+            do {
+                return try await networkProvider.send(request: attemptedRequest)
+            } catch {
+                guard attempt <= Self.maxTransportRetries, Self.isTransportFailure(error) else { throw error }
+
+                do {
+                    try await waitBeforeRetry(number: attempt)
+                } catch {
+                    // Cancelled while backing off: surface the transport
+                    // failure rather than starting another attempt.
+                    throw error
+                }
+                attempt += 1
+            }
+        }
+    }
+
+    private func waitBeforeRetry(number: Int) async throws {
+        guard transportRetryDelayCeiling > 0 else { return }
+
+        let calculated: Int = delayCalculator.countDelay(minDelay: 0, retriesCount: number)
+        let delay: TimeInterval = min(TimeInterval(calculated), transportRetryDelayCeiling)
+        guard delay > 0 else { return }
+
+        try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
     }
 }

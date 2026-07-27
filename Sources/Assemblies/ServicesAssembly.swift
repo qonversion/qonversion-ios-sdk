@@ -140,7 +140,7 @@ final class ServicesAssembly {
         
         let reportsGate: TransactionReportsGate = miscAssembly.transactionReportsGate()
 
-        let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestKinds: retriableRequestKinds, requestsStorage: requestsStorage, rateLimiter: rateLimiter, reportsGate: reportsGate)
+        let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestKinds: retriableRequestKinds, requestsStorage: requestsStorage, rateLimiter: rateLimiter, delayCalculator: miscAssembly.delayCalculator(), reportsGate: reportsGate)
         
         return processor
     }

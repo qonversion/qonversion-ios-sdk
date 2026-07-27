@@ -53,8 +53,109 @@ final class RequestProcessorTests: XCTestCase {
             retriableRequestKinds: retriableRequestKinds,
             requestsStorage: requestsStorage,
             rateLimiter: rateLimiter,
+            delayCalculator: IncrementalDelayCalculator(),
+            // The backoff itself is proven by IncrementalDelayCalculatorTests;
+            // waiting it out here would only make the suite slow.
+            transportRetryDelayCeiling: 0,
             reportsGate: reportsGate
         )
+    }
+
+    // MARK: - in-session transport retry (ObjC parity)
+
+    func testAConnectionFailureIsRetriedWithinTheSameCall() async throws {
+        // QNAPIClient.m:523-551 resent the request on a connection error
+        // instead of failing the caller on the first flap.
+        networkProvider.errorSequence = [URLError(.networkConnectionLost), nil]
+        networkProvider.responseData = Data("{\"id\": \"abc\"}".utf8)
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let processor = makeProcessor()
+
+        let result = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        XCTAssertEqual(result, ProcessorTestPayload(id: "abc"))
+        XCTAssertEqual(networkProvider.sentRequests.count, 2)
+    }
+
+    func testEveryConnectionClassErrorIsRetried() async throws {
+        let connectionErrors: [URLError.Code] = [.notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotConnectToHost, .dnsLookupFailed]
+
+        for code in connectionErrors {
+            networkProvider = MockNetworkProvider()
+            networkProvider.errorSequence = [URLError(code), nil]
+            networkProvider.responseData = Data("{\"id\": \"abc\"}".utf8)
+            networkProvider.response = makeHTTPResponse(statusCode: 200)
+            let processor = makeProcessor()
+
+            _ = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+            XCTAssertEqual(networkProvider.sentRequests.count, 2, "\(code) is a connection-class failure")
+        }
+    }
+
+    func testTheRetriesAreBounded() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor()
+
+        do {
+            _ = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+            XCTFail("Expected the transport error to surface")
+        } catch {
+            XCTAssertEqual((error as? QonversionError)?.type, .invalidResponse)
+        }
+
+        XCTAssertEqual(networkProvider.sentRequests.count, RequestProcessor.maxTransportRetries + 1,
+                       "a dead network must not be hammered without a bound")
+    }
+
+    func testEachRetryCarriesItsOwnAttemptNumber() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor()
+
+        _ = try? await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        let attempts: [String?] = networkProvider.sentRequests.map { $0.value(forHTTPHeaderField: "Attempt") }
+        XCTAssertEqual(attempts, ["1", "2", "3", "4"], "the backend counts the attempts, like the ObjC client did")
+    }
+
+    func testANonTransportErrorIsNotRetried() async {
+        networkProvider.error = MockError.stubbed
+        let processor = makeProcessor()
+
+        _ = try? await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 1, "only connection-class failures are retried")
+    }
+
+    func testAnErrorResponseIsNeverRetried() async {
+        // A response was received: the backend has the request, resending it
+        // would duplicate the work.
+        networkProvider.response = makeHTTPResponse(statusCode: 503)
+        errorHandler.errorToReturn = QonversionError(type: .internal)
+        let processor = makeProcessor()
+
+        _ = try? await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 1)
+    }
+
+    func testAnExhaustedRetryStillQueuesARetriableRequestOnce() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1, "the offline queue is fed once, after the retries are spent")
+    }
+
+    func testTheRateLimiterIsConsultedOncePerCallNotPerRetry() async {
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor()
+
+        _ = try? await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        XCTAssertEqual(rateLimiter.validatedRequests.count, 1, "a retry is not a new call")
     }
 
     // MARK: - replay vs the concurrent unfinished-transaction sweep

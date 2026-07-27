@@ -77,9 +77,27 @@ final class MockNetworkProvider: NetworkProviderInterface {
         _sentRequests.append(request)
     }
 
+    /// Errors handed out one per send, before `error`: lets a test make the
+    /// transport fail and then recover.
+    var errorSequence: [Error?] = []
+
     func send(request: URLRequest) async throws -> (Data, URLResponse) {
         record(request)
         await onSend?()
+
+        providerStateLock.lock()
+        var scripted: Error?? = Error??.none
+        if !errorSequence.isEmpty {
+            scripted = Error??.some(errorSequence.removeFirst())
+        }
+        providerStateLock.unlock()
+
+        if let scriptedOutcome: Error? = scripted {
+            if let scriptedError: Error = scriptedOutcome { throw scriptedError }
+
+            return (responseData, response)
+        }
+
         if let error { throw error }
         return (responseData, response)
     }
