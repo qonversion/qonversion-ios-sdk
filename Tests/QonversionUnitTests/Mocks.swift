@@ -71,10 +71,14 @@ final class MockNetworkProvider: NetworkProviderInterface {
         return _sentRequests
     }
 
-    func send(request: URLRequest) async throws -> (Data, URLResponse) {
+    private func record(_ request: URLRequest) {
         providerStateLock.lock()
+        defer { providerStateLock.unlock() }
         _sentRequests.append(request)
-        providerStateLock.unlock()
+    }
+
+    func send(request: URLRequest) async throws -> (Data, URLResponse) {
+        record(request)
         await onSend?()
         if let error { throw error }
         return (responseData, response)
