@@ -60,3 +60,36 @@ extension QonversionError: LocalizedError {
 
     public var errorDescription: String? { message }
 }
+
+extension Error {
+
+    /// Cancellation reaches the SDK in more than one shape: a task cancelled
+    /// while suspended in URLSession surfaces as `URLError(.cancelled)`,
+    /// wrapped in the SDK error of whichever layer failed, while the SDK's own
+    /// generation guards throw `CancellationError` directly.
+    var isCancellation: Bool {
+        if self is CancellationError { return true }
+        if let urlError = self as? URLError, urlError.code == .cancelled { return true }
+        if let qonversionError = self as? QonversionError {
+            if qonversionError.type == .cancelled { return true }
+            if let underlying: Error = qonversionError.error {
+                return underlying.isCancellation
+            }
+        }
+
+        return false
+    }
+
+    /// What a public API is allowed to throw. Every public entry point
+    /// documents ``QonversionError``, so a bare `CancellationError` — a Swift
+    /// runtime type that no `catch let error as QonversionError` can classify
+    /// — must never reach the host. Anything already classified passes
+    /// through untouched.
+    var classifiedForPublicAPI: Error {
+        guard isCancellation else { return self }
+        // Already named for what it is; re-wrapping would only nest messages.
+        if let qonversionError = self as? QonversionError, qonversionError.type == .cancelled { return self }
+
+        return QonversionError(type: .cancelled, message: nil, error: self)
+    }
+}

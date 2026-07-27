@@ -54,9 +54,16 @@ actor UserManager: UserManagerInterface {
 
     @discardableResult
     func obtainUser() async throws -> Qonversion.User {
-        let outcome: PipelineOutcome = try await runPipeline()
+        // The generation guards inside the pipeline throw CancellationError,
+        // a Swift runtime type. This is a public entry point, so it is
+        // classified here — the host is documented to catch QonversionError.
+        do {
+            let outcome: PipelineOutcome = try await runPipeline()
 
-        return currentUser() ?? outcome.user
+            return currentUser() ?? outcome.user
+        } catch {
+            throw error.classifiedForPublicAPI
+        }
     }
 
     @discardableResult
@@ -114,7 +121,11 @@ actor UserManager: UserManagerInterface {
             }
         }
 
-        return try await task.value
+        do {
+            return try await task.value
+        } catch {
+            throw error.classifiedForPublicAPI
+        }
     }
 
     func logout() async {
@@ -149,7 +160,11 @@ actor UserManager: UserManagerInterface {
     func switchToUser(with uid: String) async throws {
         guard uid != internalConfig.userId else { return }
 
-        try await switchUser(to: uid)
+        do {
+            try await switchUser(to: uid)
+        } catch {
+            throw error.classifiedForPublicAPI
+        }
     }
 
     /// Waits until no identify is in flight and the creation pipeline has
@@ -175,7 +190,7 @@ actor UserManager: UserManagerInterface {
             _ = try? await pipeline.value
         }
 
-        if let identifyError { throw identifyError }
+        if let identifyError { throw identifyError.classifiedForPublicAPI }
     }
 
     func userInfo() async throws -> Qonversion.User {
@@ -192,7 +207,11 @@ actor UserManager: UserManagerInterface {
             // persisted on the device. Failing a call that needs no network is
             // a regression the host feels as "who am I?" breaking offline.
             // The error surfaces only when nothing local exists.
-            guard let local: Qonversion.User = currentUser() else { throw error }
+            // A cancelled fetch is not an outage: the SDK abandoned it because
+            // the user switched, so answering from the (now previous user's)
+            // persisted record would be worse than failing.
+            guard !error.isCancellation else { throw error.classifiedForPublicAPI }
+            guard let local: Qonversion.User = currentUser() else { throw error.classifiedForPublicAPI }
 
             logger.warning("The user request failed, answering from the persisted user: " + error.message)
             return local

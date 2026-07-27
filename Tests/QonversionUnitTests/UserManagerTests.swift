@@ -571,6 +571,93 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(user.id, anonUid, "the persisted user answers offline")
     }
 
+    // MARK: - cancellation never escapes unclassified
+
+    func testObtainUserCancelledByLogoutThrowsAQonversionError() async throws {
+        // The pipeline's generation guards throw CancellationError, a Swift
+        // runtime type: no `catch let error as QonversionError` can classify
+        // it, so it must never leave a public entry point.
+        let gate = AsyncGate()
+        service.onCreateUser = { await gate.wait() }
+        service.createUserResult = try makeUser(id: anonUid)
+
+        async let raced: Qonversion.User = manager.obtainUser()
+        await waitUntil { self.service.createUserCallsCount >= 1 }
+        await manager.logout()
+        await gate.open()
+
+        do {
+            _ = try await raced
+            XCTFail("Expected the abandoned pipeline to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
+    func testUserInfoCancelledByLogoutThrowsAQonversionError() async throws {
+        let gate = AsyncGate()
+        service.onCreateUser = { await gate.wait() }
+        service.createUserResult = try makeUser(id: anonUid)
+        service.userResult = try makeUser(id: anonUid)
+
+        async let raced: Qonversion.User = manager.userInfo()
+        await waitUntil { self.service.createUserCallsCount >= 1 }
+        await manager.logout()
+        await gate.open()
+
+        do {
+            _ = try await raced
+            XCTFail("Expected the abandoned call to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
+    func testIdentifyCancelledByLogoutThrowsAQonversionError() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        let gate = AsyncGate()
+        service.onIdentity = { await gate.wait() }
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = try makeUser(id: "QON_other_uid")
+
+        async let raced: Qonversion.User = manager.identify("external_1")
+        await waitUntil { self.service.identityCalls.count >= 1 }
+        await manager.logout()
+        await gate.open()
+
+        do {
+            _ = try await raced
+            XCTFail("Expected the abandoned identify to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
+    func testACancelledUserFetchIsNotAnsweredFromTheStaleCache() async throws {
+        // The offline answer exists for outages. A cancelled fetch is a user
+        // switch, and the persisted record belongs to the PREVIOUS user.
+        service.createUserResult = try makeUser(id: anonUid)
+        service.userResult = try makeUser(id: anonUid)
+        _ = try await manager.userInfo()
+        service.userError = CancellationError()
+
+        do {
+            _ = try await manager.userInfo()
+            XCTFail("Expected the cancelled fetch to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
     func testUserInfoThrowsWhenThereIsNoUserAtAll() async throws {
         // "Nothing local" and "the gate failed" are the same situation: the
         // gate is what puts a user on the device, so once it has passed there
