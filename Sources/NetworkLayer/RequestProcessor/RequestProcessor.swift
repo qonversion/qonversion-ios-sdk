@@ -56,9 +56,13 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         let requests: [StoredRequest] = requestsStorage.fetchRequests()
         guard !requests.isEmpty else { return }
 
-        Task { [weak self] in
+        // Strong capture on purpose: the caller does not retain this
+        // processor, and a weak capture would let it deallocate before the
+        // task runs — the replay would silently do nothing. The task holds
+        // the processor exactly until the replay finishes.
+        Task {
             for stored in requests {
-                guard let self, self.criticalError == nil else { return }
+                guard self.criticalError == nil else { return }
                 guard let url = URL(string: stored.url) else {
                     self.requestsStorage.remove(stored)
                     continue

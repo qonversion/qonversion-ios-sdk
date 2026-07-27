@@ -46,9 +46,11 @@ final class QonversionAssembly {
 
         // Resolves the anonymous user id (persisted or generated) into InternalConfig.
         _ = servicesAssembly.userService()
+    }
 
-        // Replay requests that failed on transport in previous sessions —
-        // once per initialization.
+    /// Resends requests that failed on transport in previous sessions —
+    /// called once per initialization by the facade, after the graph is built.
+    func replayStoredRequests() {
         servicesAssembly.requestProcessor().processStoredRequests()
     }
     

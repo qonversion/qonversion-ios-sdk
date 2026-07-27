@@ -14,7 +14,7 @@ fileprivate enum StringConstants: String {
 final class ServicesAssembly {
     
     private let apiKey: String
-    private let miscAssembly: MiscAssembly
+    let miscAssembly: MiscAssembly
     private let baseURL: String
     
     private var deviceInfoCollectorInstance: DeviceInfoCollector?
@@ -22,6 +22,11 @@ final class ServicesAssembly {
     // Holds the loaded store products cache and the transaction updates task —
     // stateful, one instance SDK-wide.
     private var storeKitFacadeInstance: StoreKitFacade?
+
+    // Test seams: integration tests stub the two process boundaries (HTTP and
+    // StoreKit) while every other component stays real.
+    var networkProviderOverride: NetworkProviderInterface?
+    var storeKitWrapperOverride: StoreKitWrapperInterface?
     
     init(apiKey: String, miscAssembly: MiscAssembly, baseURL: String? = nil) {
         self.apiKey = apiKey
@@ -69,6 +74,10 @@ final class ServicesAssembly {
 
     private func makeStoreKitFacade() -> StoreKitFacade {
         let mapper = StoreKitMapper()
+        if let storeKitWrapperOverride {
+            return StoreKitFacade(storeKitWrapper: storeKitWrapperOverride, storeKitMapper: mapper)
+        }
+
         let wrapper = StoreKitWrapper(mapper: mapper)
         let storeKitFacade = StoreKitFacade(storeKitWrapper: wrapper, storeKitMapper: mapper)
         wrapper.delegate = storeKitFacade
@@ -142,7 +151,7 @@ final class ServicesAssembly {
     
     func networkProvider() -> NetworkProviderInterface {
         let session: URLSession = urlSession()
-        let networkProvider = NetworkProvider(session: session)
+        let networkProvider: NetworkProviderInterface = networkProviderOverride ?? NetworkProvider(session: session)
         
         return networkProvider
     }
