@@ -8,6 +8,14 @@ import StoreKit
 
 fileprivate enum Constants: String {
     case historicalDataSyncedKey = "qonversion.keys.historicalDataSynced"
+    // The transactions the host has already been told about, persisted:
+    // StoreKit re-delivers every unfinished transaction on each cold start.
+    case surfacedTransactionsKey = "qonversion.keys.surfacedTransactions"
+}
+
+fileprivate enum IntConstants: Int {
+    /// Bounds the surfaced-transactions set; the oldest ids are dropped first.
+    case maxSurfacedTransactions = 200
 }
 
 // @unchecked: mutable state lives in the actor gate and lock-guarded storages.
@@ -49,6 +57,34 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     private let reportsGate = TransactionReportsGate()
 
+    // Guards the persisted set of transactions already handed to the host.
+    private let surfacedLock = NSLock()
+
+    /// True when this transaction had not been surfaced yet — and marks it
+    /// surfaced. The set is persisted: StoreKit re-delivers unfinished
+    /// transactions on every launch, and in Analytics mode nothing is ever
+    /// finished, so the host would otherwise see ancient purchases as new
+    /// ones forever.
+    private func markSurfacedIfNew(_ transactionId: String) -> Bool {
+        surfacedLock.lock()
+        defer { surfacedLock.unlock() }
+
+        var surfaced: [String] = storedSurfacedTransactions()
+        guard !surfaced.contains(transactionId) else { return false }
+
+        surfaced.append(transactionId)
+        if surfaced.count > IntConstants.maxSurfacedTransactions.rawValue {
+            surfaced.removeFirst(surfaced.count - IntConstants.maxSurfacedTransactions.rawValue)
+        }
+        try? localStorage.set(surfaced, forKey: Constants.surfacedTransactionsKey.rawValue)
+
+        return true
+    }
+
+    private func storedSurfacedTransactions() -> [String] {
+        return (try? localStorage.object(forKey: Constants.surfacedTransactionsKey.rawValue, dataType: [String].self)) ?? []
+    }
+
     /// Emits every purchase the SDK processes out of band, in both launch
     /// modes.
     // Buffered: an Ask to Buy approval processed during launch, before the
@@ -66,9 +102,11 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     /// The entitlements-only projection of the deferred purchases: one
     /// subscription of its own, so both streams stay independent.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
-        let purchases: AsyncStream<Qonversion.DeferredPurchase> = deferredPurchasesMulticast.stream()
-
         return AsyncStream { continuation in
+            // Subscribed lazily, inside the closure: building the projection
+            // must not start consuming — a stream created and only iterated
+            // later would otherwise take the launch backlog with it.
+            let purchases: AsyncStream<Qonversion.DeferredPurchase> = self.deferredPurchasesMulticast.stream()
             let task = Task {
                 for await purchase in purchases {
                     continuation.yield(purchase.entitlements)
@@ -143,6 +181,13 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 purchaseAssociationsStorage.remove(for: product.storeId)
             }
             throw error
+        }
+
+        // The caller gets this transaction as the purchase result in every
+        // branch below, so it is already surfaced: a later re-delivery through
+        // the updates listener must not repeat it as a deferred purchase.
+        if let id: String = transaction.id {
+            _ = markSurfacedIfNew(id)
         }
 
         // The id is claimed BEFORE the report goes out: a concurrent restore
@@ -544,16 +589,21 @@ extension PurchasesManager: StoreKitFacadeDelegate {
                 await self.storeKitFacade.finish(transaction)
             }
 
+            // Reporting is unaffected by this gate — only what the host sees.
+            if let id: String = transaction.id, !self.markSurfacedIfNew(id) { return }
+
             let deferredPurchase: Qonversion.DeferredPurchase = await self.deferredPurchase(for: transaction, reportFailed: reportFailed)
             self.deferredPurchasesMulticast.yield(deferredPurchase)
         }
     }
 
-    /// The entitlements to report with an out-of-band purchase: from the
-    /// backend when it answered the report, calculated locally otherwise.
+    /// The entitlements to report with an out-of-band purchase. The source is
+    /// taken from the entitlements manager, never inferred from the absence of
+    /// an error: its fault-tolerance path answers successfully with locally
+    /// calculated data.
     private func deferredPurchase(for transaction: Qonversion.Transaction, reportFailed: Bool) async -> Qonversion.DeferredPurchase {
-        if !reportFailed, let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
-            return Qonversion.DeferredPurchase(transaction: transaction, entitlements: fetched, entitlementsSource: .backend)
+        if !reportFailed, let resolved: ResolvedEntitlements = try? await entitlementsManager.resolvedEntitlements() {
+            return Qonversion.DeferredPurchase(transaction: transaction, entitlements: resolved.entitlements, entitlementsSource: resolved.source)
         }
 
         let calculated: [String: Qonversion.Entitlement] = await entitlementsManager.localFallbackEntitlements(for: [transaction])

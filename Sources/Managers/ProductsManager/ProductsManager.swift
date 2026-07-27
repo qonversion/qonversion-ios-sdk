@@ -170,9 +170,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         // Persisted for the offline local entitlements calculation on the
         // next launches (StoreKit enrichment does not survive encoding —
         // the wire fields are enough for the calculation).
-        if isCurrent(generation) {
-            try? localStorage.set(products, forKey: Constants.productsKey.rawValue)
-        }
+        persist(products, ifGenerationIs: generation)
 
         do {
             let resultProducts: [Qonversion.Product] = try await storeEnriched(products)
@@ -194,10 +192,14 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         return cacheGeneration
     }
 
-    private func isCurrent(_ generation: Int) -> Bool {
+    /// The generation check and the write are one step: a user switch landing
+    /// between them would resurrect the previous user's catalog.
+    private func persist(_ products: [Qonversion.Product], ifGenerationIs generation: Int) {
         lock.lock()
         defer { lock.unlock() }
-        return generation == cacheGeneration
+        guard generation == cacheGeneration else { return }
+
+        try? localStorage.set(products, forKey: Constants.productsKey.rawValue)
     }
 
     private func store(_ products: [Qonversion.Product], ifGenerationIs generation: Int) {
@@ -276,13 +278,13 @@ extension ProductsManager: UserChangedObserver {
         // Products may be personalized (experiments); the mapping is
         // project-scoped and stays.
         lock.lock()
+        defer { lock.unlock() }
+
         cacheGeneration += 1
         _loadedProducts = []
         // The in-flight load belongs to the previous user — the next caller
         // must start its own instead of joining it.
         _productsTask = nil
-        lock.unlock()
-
         localStorage.removeObject(forKey: Constants.productsKey.rawValue)
     }
 }

@@ -8,6 +8,11 @@ import Foundation
 fileprivate enum Constants: String {
     case entitlementsKey = "qonversion.keys.entitlements"
     case entitlementsTimestampKey = "qonversion.keys.entitlementsTimestamp"
+    // When the backend last answered. The local fallback persists what it
+    // merged but must NOT touch this key: otherwise a permanently failing
+    // backend would keep refreshing the cache lifetime and a lapsed user
+    // would stay premium forever.
+    case backendTimestampKey = "qonversion.keys.entitlementsBackendTimestamp"
 }
 
 // @unchecked: the generation counter is lock-guarded, every dependency is
@@ -55,6 +60,10 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
     }
 
     func entitlements() async throws -> [String: Qonversion.Entitlement] {
+        return try await resolvedEntitlements().entitlements
+    }
+
+    func resolvedEntitlements() async throws -> ResolvedEntitlements {
         // Snapshotted before the first suspension: a user switch landing while
         // the request is in flight must not let the previous user's
         // entitlements reach the new user's cache.
@@ -65,9 +74,9 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
 
             let list: [Qonversion.Entitlement] = try await entitlementsService.entitlements(userId: userIdProvider.getUserId())
             let entitlements = Dictionary(list.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
-            persist(entitlements, ifGenerationIs: generation)
+            persist(entitlements, ifGenerationIs: generation, isBackendAnswer: true)
 
-            return entitlements
+            return ResolvedEntitlements(entitlements: entitlements, source: .backend)
         } catch {
             // Production fault tolerance: ANY launch failure — including the
             // user gate, auth and rate-limit errors — is answered from the
@@ -77,7 +86,7 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
             let fallback: [String: Qonversion.Entitlement] = localFallbackEntitlements(for: transactions, generation: generation)
             guard !fallback.isEmpty else { throw error }
 
-            return fallback
+            return ResolvedEntitlements(entitlements: fallback, source: .localCalculation)
         }
     }
 }
@@ -87,12 +96,16 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
 extension EntitlementsManager: UserChangedObserver {
 
     func userDidChange() {
+        // The bump and the wipe are one step: a persist that passes the
+        // generation check in between would write the previous user's
+        // entitlements right back.
         lock.lock()
-        cacheGeneration += 1
-        lock.unlock()
+        defer { lock.unlock() }
 
+        cacheGeneration += 1
         localStorage.removeObject(forKey: Constants.entitlementsKey.rawValue)
         localStorage.removeObject(forKey: Constants.entitlementsTimestampKey.rawValue)
+        localStorage.removeObject(forKey: Constants.backendTimestampKey.rawValue)
     }
 }
 
@@ -113,7 +126,7 @@ private extension EntitlementsManager {
             mapping: productsDataSource.cachedProductPermissions() ?? [:]
         )
         let merged = EntitlementsCalculator.merge(calculated, into: cachedEntitlements() ?? [:])
-        persist(merged, ifGenerationIs: generation)
+        persist(merged, ifGenerationIs: generation, isBackendAnswer: false)
 
         return merged
     }
@@ -123,7 +136,12 @@ private extension EntitlementsManager {
             return nil
         }
 
-        let timestamp: TimeInterval = localStorage.double(forKey: Constants.entitlementsTimestampKey.rawValue)
+        // The lifetime runs from the last backend answer. An install that has
+        // never had one holds locally calculated data only, which carries its
+        // own expiration and is filtered below — there the write timestamp is
+        // the best reference available.
+        let backendTimestamp: TimeInterval = localStorage.double(forKey: Constants.backendTimestampKey.rawValue)
+        let timestamp: TimeInterval = backendTimestamp > 0 ? backendTimestamp : localStorage.double(forKey: Constants.entitlementsTimestampKey.rawValue)
         guard timestamp > 0, Date().timeIntervalSince1970 - timestamp <= cacheLifetimeSeconds else {
             return nil
         }
@@ -138,15 +156,20 @@ private extension EntitlementsManager {
         }
     }
 
-    func persist(_ entitlements: [String: Qonversion.Entitlement], ifGenerationIs generation: Int) {
+    /// The generation check and the write are one step: a user switch landing
+    /// between them would resurrect the previous user's entitlements.
+    func persist(_ entitlements: [String: Qonversion.Entitlement], ifGenerationIs generation: Int, isBackendAnswer: Bool) {
         lock.lock()
-        let isCurrent: Bool = generation == cacheGeneration
-        lock.unlock()
-        guard isCurrent else { return }
+        defer { lock.unlock() }
+        guard generation == cacheGeneration else { return }
 
         do {
             try localStorage.set(entitlements, forKey: Constants.entitlementsKey.rawValue)
-            localStorage.set(double: Date().timeIntervalSince1970, forKey: Constants.entitlementsTimestampKey.rawValue)
+            let now: TimeInterval = Date().timeIntervalSince1970
+            localStorage.set(double: now, forKey: Constants.entitlementsTimestampKey.rawValue)
+            if isBackendAnswer {
+                localStorage.set(double: now, forKey: Constants.backendTimestampKey.rawValue)
+            }
         } catch {
             logger.error("Failed to persist entitlements: " + error.message)
         }

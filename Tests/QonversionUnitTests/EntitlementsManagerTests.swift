@@ -73,6 +73,23 @@ final class EntitlementsManagerTests: XCTestCase {
         return (try? await manager.entitlements()) ?? [:]
     }
 
+    /// With nothing at all to serve the call must FAIL — an empty success
+    /// would be indistinguishable from a genuine "no access" answer.
+    private func assertNothingServed(
+        _ expectedType: QonversionErrorType,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async {
+        do {
+            let entitlements: [String: Qonversion.Entitlement] = try await manager.entitlements()
+            XCTFail("Expected the error to surface, got \(entitlements)", file: file, line: line)
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, expectedType, file: file, line: line)
+        } catch {
+            XCTFail("Unexpected error type: \(error)", file: file, line: line)
+        }
+    }
+
     private func setupLocalCalculationContext() {
         // A month subscription bought recently + mapping — the local path can grant "premium".
         var product = Qonversion.Product(qonversionId: "pro", storeId: "com.app.pro", offeringId: nil)
@@ -172,6 +189,82 @@ final class EntitlementsManagerTests: XCTestCase {
         XCTAssertTrue(service.entitlementsCalls.isEmpty)
     }
 
+    // MARK: - cache lifetime is measured from the last backend answer
+
+    func testPermanentFailureCannotKeepTheCacheAliveForever() async throws {
+        // The local fallback persists what it merged; refreshing the lifetime
+        // timestamp there would mean an endlessly failing backend (revoked
+        // key, permanent 401) keeps a lapsed user premium forever.
+        manager = makeManager(cacheLifetime: Qonversion.EntitlementsCacheLifetime.week.seconds)
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+
+        service.error = QonversionError(type: .critical)                        // permanent 401
+        facade.currentEntitlementsResult = []
+
+        // Six days in: still inside the lifetime, so the cached answer is
+        // served — and that very call persists the merge result.
+        let sixDaysAgo: TimeInterval = Date().timeIntervalSince1970 - 6 * 24 * 60 * 60
+        storage.set(double: sixDaysAgo, forKey: "qonversion.keys.entitlementsBackendTimestamp")
+        let served: [String: Qonversion.Entitlement] = await servedEntitlements()
+        XCTAssertTrue(served.keys.contains("premium"))
+
+        // The clock must keep running: serving from the cache is not a
+        // backend answer and may not push the lifetime forward.
+        XCTAssertEqual(storage.double(forKey: "qonversion.keys.entitlementsBackendTimestamp"), sixDaysAgo,
+                       "a failing backend that keeps refreshing the lifetime would keep a lapsed user premium forever")
+
+        // Two days later the lifetime has elapsed and the cache goes cold.
+        storage.set(double: sixDaysAgo - 2 * 24 * 60 * 60, forKey: "qonversion.keys.entitlementsBackendTimestamp")
+
+        await assertNothingServed(.critical)
+    }
+
+    func testBackendSuccessRefreshesTheLifetimeTimestamp() async throws {
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+
+        _ = try await manager.entitlements()
+
+        let backendTimestamp: TimeInterval = storage.double(forKey: "qonversion.keys.entitlementsBackendTimestamp")
+        XCTAssertGreaterThan(backendTimestamp, 0)
+        XCTAssertLessThan(abs(backendTimestamp - Date().timeIntervalSince1970), 5)
+    }
+
+    func testLocalFallbackDoesNotRefreshTheLifetimeTimestamp() async throws {
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+        let afterBackend: TimeInterval = storage.double(forKey: "qonversion.keys.entitlementsBackendTimestamp")
+
+        service.error = QonversionError(type: .internal)
+        setupLocalCalculationContext()
+        _ = await servedEntitlements()
+
+        XCTAssertEqual(storage.double(forKey: "qonversion.keys.entitlementsBackendTimestamp"), afterBackend)
+    }
+
+    // MARK: - provenance of the served entitlements
+
+    func testResolvedEntitlementsReportTheBackendAsTheSource() async throws {
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+
+        let resolved = try await manager.resolvedEntitlements()
+
+        XCTAssertEqual(resolved.source, .backend)
+        XCTAssertEqual(resolved.entitlements.keys.sorted(), ["premium"])
+    }
+
+    func testResolvedEntitlementsReportTheLocalCalculationAsTheSource() async throws {
+        // The fault-tolerance path answers successfully — the caller must
+        // still be able to tell that the backend never spoke.
+        service.error = QonversionError(type: .critical)
+        setupLocalCalculationContext()
+
+        let resolved = try await manager.resolvedEntitlements()
+
+        XCTAssertEqual(resolved.source, .localCalculation)
+        XCTAssertEqual(resolved.entitlements["premium"]?.active, true)
+    }
+
     // MARK: - expired cache revalidation
 
     func testCachedActiveEntitlementPastItsExpirationIsNotServed() async throws {
@@ -188,9 +281,7 @@ final class EntitlementsManagerTests: XCTestCase {
         service.error = QonversionError(type: .internal)
         facade.currentEntitlementsResult = []
 
-        let entitlements: [String: Qonversion.Entitlement] = await servedEntitlements()
-
-        XCTAssertTrue(entitlements.isEmpty, "an entitlement claiming active past its expiration is stale")
+        await assertNothingServed(.internal)
     }
 
     // MARK: - user switch during the fetch
@@ -256,14 +347,14 @@ final class EntitlementsManagerTests: XCTestCase {
         service.entitlementsResult = [serverEntitlement(id: "premium")]
         _ = try await manager.entitlements()
 
-        // Age the cache beyond the configured week.
-        storage.set(double: Date().timeIntervalSince1970 - 8 * 24 * 60 * 60, forKey: "qonversion.keys.entitlementsTimestamp")
+        // Age the cache beyond the configured week: the lifetime runs from
+        // the last backend answer.
+        storage.set(double: Date().timeIntervalSince1970 - 8 * 24 * 60 * 60, forKey: "qonversion.keys.entitlementsBackendTimestamp")
 
         service.error = QonversionError(type: .internal)
         facade.currentEntitlementsResult = []
-        let entitlements: [String: Qonversion.Entitlement] = await servedEntitlements()
 
-        XCTAssertTrue(entitlements.isEmpty)
+        await assertNothingServed(.internal)
     }
 
     func testCacheWithinConfiguredLifetimeIsUsedInFallback() async throws {
@@ -271,7 +362,7 @@ final class EntitlementsManagerTests: XCTestCase {
         service.entitlementsResult = [serverEntitlement(id: "premium")]
         _ = try await manager.entitlements()
 
-        storage.set(double: Date().timeIntervalSince1970 - 6 * 24 * 60 * 60, forKey: "qonversion.keys.entitlementsTimestamp")
+        storage.set(double: Date().timeIntervalSince1970 - 6 * 24 * 60 * 60, forKey: "qonversion.keys.entitlementsBackendTimestamp")
 
         service.error = QonversionError(type: .internal)
         facade.currentEntitlementsResult = []
@@ -292,9 +383,8 @@ final class EntitlementsManagerTests: XCTestCase {
         // user would inherit the previous user's cached entitlements.
         service.error = QonversionError(type: .internal)
         facade.currentEntitlementsResult = []
-        let entitlements: [String: Qonversion.Entitlement] = await servedEntitlements()
 
-        XCTAssertTrue(entitlements.isEmpty)
+        await assertNothingServed(.internal)
     }
 }
 

@@ -461,6 +461,35 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertEqual(entitlement.renewState, .nonRenewable)
     }
 
+    func testMalformedExpirationDegradesTheFieldNotTheList() throws {
+        // expires_at drives the stale-cache filter, and a strict decode of it
+        // would drop the whole entitlement — and the user's access with it.
+        let json = """
+        {
+            "object": "list",
+            "data": [
+                {"id": "premium", "is_active": true, "expires_at": "not-a-date", "started_at": 12},
+                {"id": "basic", "is_active": true}
+            ]
+        }
+        """
+
+        let list = try decoder.decode(Qonversion.EntitlementsList.self, from: Data(json.utf8))
+
+        XCTAssertEqual(list.data.map(\.id), ["premium", "basic"])
+        XCTAssertNil(list.data.first?.expirationDate, "the unreadable date degrades to nil")
+        XCTAssertEqual(list.data.first?.startedDate, Date(timeIntervalSince1970: 12), "a unix timestamp is accepted next to the ISO8601 form")
+    }
+
+    func testMalformedNewFieldsDegradeToTheirDefaults() throws {
+        let json = #"{"id": "premium", "is_active": true, "renews_count": "eighteen", "last_activated_offer_code": 42}"#
+
+        let entitlement = try decode(Qonversion.Entitlement.self, json)
+
+        XCTAssertEqual(entitlement.renewsCount, 0)
+        XCTAssertNil(entitlement.lastActivatedOfferCode)
+    }
+
     func testEntitlementDecodesEpochTimestamps() throws {
         // The keys are inherited from the previous API generation, where the
         // values were unix timestamps — both forms must decode.

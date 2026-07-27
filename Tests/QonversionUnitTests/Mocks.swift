@@ -209,6 +209,12 @@ final class MockRequestsStorage: RequestsStorageInterface {
         }
     }
 
+    func replace(_ request: StoredRequest, with replacement: StoredRequest, ifGenerationIs generation: Int) {
+        guard cleanGeneration == generation, let index = storedRequests.firstIndex(of: request) else { return }
+
+        storedRequests[index] = replacement
+    }
+
     func removeAll(where shouldRemove: @Sendable (StoredRequest) -> Bool) {
         storedRequests.removeAll(where: shouldRemove)
     }
@@ -769,13 +775,19 @@ final class MockEntitlementsManager: EntitlementsManagerInterface {
     var entitlementsResult: [String: Qonversion.Entitlement] = [:]
     var entitlementsError: Error?
     var localFallbackResult: [String: Qonversion.Entitlement] = [:]
+    /// The provenance resolvedEntitlements() reports on success.
+    var entitlementsSource: Qonversion.DeferredPurchase.EntitlementsSource = .backend
     private(set) var entitlementsCallsCount = 0
     private(set) var localFallbackTransactions: [[Qonversion.Transaction]] = []
 
     func entitlements() async throws -> [String: Qonversion.Entitlement] {
+        return try await resolvedEntitlements().entitlements
+    }
+
+    func resolvedEntitlements() async throws -> ResolvedEntitlements {
         entitlementsCallsCount += 1
         if let entitlementsError { throw entitlementsError }
-        return entitlementsResult
+        return ResolvedEntitlements(entitlements: entitlementsResult, source: entitlementsSource)
     }
 
     func localFallbackEntitlements(for transactions: [Qonversion.Transaction]) async -> [String: Qonversion.Entitlement] {

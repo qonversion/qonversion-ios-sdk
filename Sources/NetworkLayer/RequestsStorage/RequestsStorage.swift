@@ -62,6 +62,19 @@ class RequestsStorage: RequestsStorageInterface, @unchecked Sendable {
         persist(requests)
     }
 
+    func replace(_ request: StoredRequest, with replacement: StoredRequest, ifGenerationIs generation: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        guard _cleanGeneration == generation else { return }
+
+        var requests: [StoredRequest] = fetchStoredRequests()
+        guard let index = requests.firstIndex(of: request) else { return }
+
+        requests[index] = replacement
+        persist(requests)
+    }
+
     func remove(_ request: StoredRequest) {
         lock.lock()
         defer { lock.unlock() }

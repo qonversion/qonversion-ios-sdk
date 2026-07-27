@@ -22,6 +22,34 @@ final class RequestsStorageTests: XCTestCase {
         StoredRequest(url: url, method: "POST", body: body, dedupKey: dedupKey)
     }
 
+    // MARK: - atomic replace
+
+    func testReplaceSwapsTheQueuedRequestInPlace() {
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        let original: StoredRequest = makeRequest()
+        storage.append(original)
+        let bumped = StoredRequest(url: original.url, method: original.method, body: original.body, dedupKey: original.dedupKey, trigger: original.trigger, attempt: 2)
+
+        storage.replace(original, with: bumped, ifGenerationIs: storage.cleanGeneration)
+
+        XCTAssertEqual(storage.fetchRequests().map(\.attempt), [2])
+    }
+
+    func testReplaceIsANoOpAfterTheQueueWasCleaned() {
+        // The whole point of the atomic form: a clean() between the check and
+        // the write would otherwise resurrect the previous user's request.
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        let original: StoredRequest = makeRequest()
+        storage.append(original)
+        let generation: Int = storage.cleanGeneration
+        storage.clean()
+        let bumped = StoredRequest(url: original.url, method: original.method, body: original.body, dedupKey: original.dedupKey, trigger: original.trigger, attempt: 2)
+
+        storage.replace(original, with: bumped, ifGenerationIs: generation)
+
+        XCTAssertTrue(storage.fetchRequests().isEmpty, "a cleaned queue must stay clean")
+    }
+
     func testRemoveAllWherePersistsTheFilteredQueue() {
         let storage = makeStorage(TestDefaults.makeIsolated())
         storage.append(StoredRequest(url: "https://a", method: "POST", body: nil, dedupKey: "createPurchase-u1-tx1"))

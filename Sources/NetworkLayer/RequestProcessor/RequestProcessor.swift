@@ -118,9 +118,6 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     /// reports the true attempt number. A queue cleaned while the request was
     /// in flight must stay clean — the entry belongs to the previous user.
     private func bumpAttempt(of stored: StoredRequest, ifGenerationIs generation: Int) {
-        guard requestsStorage.cleanGeneration == generation else { return }
-
-        requestsStorage.remove(stored)
         let updated = StoredRequest(
             url: stored.url,
             method: stored.method,
@@ -129,7 +126,9 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             trigger: stored.trigger,
             attempt: stored.attempt + 1
         )
-        requestsStorage.append(updated)
+        // One atomic step: a check followed by a separate remove and append
+        // leaves two windows for a clean() to be undone.
+        requestsStorage.replace(stored, with: updated, ifGenerationIs: generation)
     }
 
     func process<T>(request: Request, responseType: T.Type, trigger: RequestTrigger?) async throws -> T where T : Decodable {

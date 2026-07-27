@@ -215,8 +215,11 @@ extension Qonversion {
             let rawSource = try container.decodeIfPresent(String.self, forKey: .source)
             source = rawSource.flatMap { Source(rawValue: $0) } ?? .unknown
 
-            startedDate = try container.decodeIfPresent(Date.self, forKey: .started)
-            expirationDate = try container.decodeIfPresent(Date.self, forKey: .expires)
+            // Tolerant like every other field: one malformed date must
+            // degrade that field, not drop the whole entitlement (and with it
+            // the user's access) from the list.
+            startedDate = container.decodeTolerantDate(forKey: .started)
+            expirationDate = container.decodeTolerantDate(forKey: .expires)
 
             let product = try container.decodeIfPresent(EntitlementProduct.self, forKey: .product)
             productId = product?.productId
@@ -228,8 +231,8 @@ extension Qonversion {
             // otherwise is a purchase.
             grantType = rawGrantType.flatMap { GrantType(rawValue: $0) } ?? .purchase
 
-            renewsCount = try container.decodeIfPresent(Int.self, forKey: .renewsCount) ?? 0
-            lastActivatedOfferCode = try container.decodeIfPresent(String.self, forKey: .lastActivatedOfferCode)
+            renewsCount = (try? container.decodeIfPresent(Int.self, forKey: .renewsCount)) ?? 0
+            lastActivatedOfferCode = try? container.decodeIfPresent(String.self, forKey: .lastActivatedOfferCode)
             trialStartDate = container.decodeTolerantDate(forKey: .trialStart)
             firstPurchaseDate = container.decodeTolerantDate(forKey: .firstPurchase)
             lastPurchaseDate = container.decodeTolerantDate(forKey: .lastPurchase)
