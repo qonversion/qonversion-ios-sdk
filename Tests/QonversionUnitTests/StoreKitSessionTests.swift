@@ -277,31 +277,53 @@ final class StoreKitSessionTests: XCTestCase {
         XCTAssertEqual(storeData["transaction_id"] as? String, transactionId)
         XCTAssertEqual(storeData["product_id"] as? String, StoreIds.monthly)
 
-        // purchase() finishes strictly after the backend answered 200, so by
-        // the time it returns the transaction is already gone from the
-        // unfinished set — no polling, an absence that appears late would be
-        // indistinguishable from an absence that was never there.
+        // In subscription-management mode purchase() finishes strictly after
+        // the backend answered 200, so by the time it returns the transaction
+        // is already gone from the unfinished set — no polling, an absence that
+        // appears late would be indistinguishable from an absence that was
+        // never there.
         let unfinished: [Qonversion.Transaction] = await world.storeKitFacade.unfinishedTransactions()
         XCTAssertFalse(unfinished.contains { $0.id == transactionId }, "a reported purchase must be finished with the store")
 
-        // Negative control, and the proof that unfinishedTransactions() can see
-        // anything at all: when the report never reaches the backend, the SDK
-        // must LEAVE the transaction unfinished so it can be re-reported later.
-        // (The launch mode is not the discriminator here — purchase() finishes
-        // in both modes; only observed transactions and the unfinished sweep
-        // are mode-dependent.)
+        // Negative control on the launch mode: Analytics hands the transaction
+        // lifecycle to the host app, so a REPORTED purchase must still be left
+        // unfinished. This is also the positive proof that
+        // unfinishedTransactions() can see anything at all — without it, the
+        // absence asserted above could mean "never visible".
+        let analyticsDefaults: UserDefaults = TestDefaults.makeIsolated()
+        let analyticsWorld = StoreWorld(userDefaults: analyticsDefaults, launchMode: .analytics)
+        analyticsWorld.stubBackend()
+
+        let consumable: Qonversion.Product = try await loadProduct(QonversionIds.consumable, in: analyticsWorld)
+        let analyticsResult: Qonversion.PurchaseResult = try await analyticsWorld.purchasesManager.purchase(consumable, options: nil)
+        let analyticsId: String = try XCTUnwrap(analyticsResult.transaction.id)
+
+        let analyticsNetwork: StubNetworkProvider = analyticsWorld.network
+        XCTAssertNotNil(Self.report(for: analyticsId, in: analyticsNetwork.recordedRequests("POST", "/v4/users/*/purchases")), "an Analytics mode purchase is still reported to the backend")
+
+        let analyticsFacade: StoreKitFacade = analyticsWorld.storeKitFacade
+        await waitUntilAsync("the Analytics mode purchase is visible as unfinished") {
+            let pending: [Qonversion.Transaction] = await analyticsFacade.unfinishedTransactions()
+            return pending.contains { $0.id == analyticsId }
+        }
+        let analyticsUnfinished: [Qonversion.Transaction] = await analyticsFacade.unfinishedTransactions()
+        XCTAssertTrue(analyticsUnfinished.contains { $0.id == analyticsId }, "in Analytics mode the host app owns the lifecycle, so the SDK must not finish the purchase")
+
+        // Second control, orthogonal to the mode: even in subscription
+        // management a purchase whose report never reached the backend must
+        // stay unfinished, so it can be re-reported later.
         let offlineDefaults: UserDefaults = TestDefaults.makeIsolated()
         let offlineWorld = StoreWorld(userDefaults: offlineDefaults)
         offlineWorld.stubBackend()
         let transportError: URLError = URLError(.notConnectedToInternet)
         offlineWorld.network.stub("POST", "/v4/users/*/purchases", transportError: transportError)
 
-        let consumable: Qonversion.Product = try await loadProduct(QonversionIds.consumable, in: offlineWorld)
-        let offlineResult: Qonversion.PurchaseResult = try await offlineWorld.purchasesManager.purchase(consumable, options: nil)
-        let consumableId: String = try XCTUnwrap(offlineResult.transaction.id)
+        let offlineConsumable: Qonversion.Product = try await loadProduct(QonversionIds.consumable, in: offlineWorld)
+        let offlineResult: Qonversion.PurchaseResult = try await offlineWorld.purchasesManager.purchase(offlineConsumable, options: nil)
+        let offlineId: String = try XCTUnwrap(offlineResult.transaction.id)
 
         let stillUnfinished: [Qonversion.Transaction] = await offlineWorld.storeKitFacade.unfinishedTransactions()
-        XCTAssertTrue(stillUnfinished.contains { $0.id == consumableId }, "an unreported purchase must stay unfinished")
+        XCTAssertTrue(stillUnfinished.contains { $0.id == offlineId }, "an unreported purchase must stay unfinished")
     }
 
     // MARK: - c. the signed expiration wins over the local approximation
