@@ -35,7 +35,6 @@ Qonversion - In-app subscription monetization: implement subscriptions and grow 
 |---|---|
 | **Product** | A Qonversion product linked to an App Store product. You operate Qonversion product ids in code, so changing the underlying store product doesn't require an app release. |
 | **Entitlement** | The access level a purchase unlocks (e.g. `premium`). One entitlement can be unlocked by many products across platforms — an Apple subscription and a Stripe payment can grant the same access. Check entitlements, not receipts. |
-| **Offering** | A group of products behind a paywall, in the display order configured in the Dashboard and personalized by A/B experiments. |
 | **User** | Every install gets an anonymous Qonversion user; link it to your own user id with `identify`. Entitlements follow the user across devices and platforms. |
 
 The flow: the app buys a store product → the SDK reports the purchase to Qonversion, which validates it with Apple → the user's entitlements update everywhere (device, other platforms, webhooks, integrations).
@@ -122,7 +121,7 @@ let user = try await Qonversion.shared.identify("your_user_id")
 Two outcomes, both handled for you:
 
 - the id is new → it links to the current anonymous user, purchases made before sign-in stay with the account;
-- the id is already linked to another Qonversion user (sign-in on a second device) → the SDK switches to that user and drops every user-scoped cache, so entitlements, offerings and remote configs are re-fetched for the right account.
+- the id is already linked to another Qonversion user (sign-in on a second device) → the SDK switches to that user and drops every user-scoped cache, so entitlements and remote configs are re-fetched for the right account.
 
 ```swift
 await Qonversion.shared.logout()   // back to a fresh anonymous user; await it before the next identify
@@ -162,19 +161,6 @@ for product in products {
     product.storeProduct       // StoreKit.Product (iOS 15+)
     product.skProduct          // SKProduct (older systems)
 }
-```
-
-### Offerings
-
-Offerings are the recommended way to build paywalls: the set and order of products is controlled from the Dashboard and personalized by A/B experiments — no app release needed to change a paywall.
-
-```swift
-let offerings = try await Qonversion.shared.offerings()
-
-if let main = offerings.main {                      // the offering marked as main
-    show(products: main.products)                   // already in the paywall order
-}
-let onboarding = offerings.offering(for: "onboarding_paywall")
 ```
 
 ### Trial and intro eligibility
