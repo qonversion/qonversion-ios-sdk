@@ -144,6 +144,61 @@ final class RemoteConfigServiceTests: XCTestCase {
         }
     }
 
+    func testAnUnknownUserIsNotDisguisedAsAMissingConfiguration() async {
+        // `user_not_found` also classifies as .resourceNotFound, but it means
+        // the SDK asked about a user the backend does not have — a real error,
+        // not "this user has no config", and the integrator must be able to
+        // tell them apart.
+        let service = makeLiveService(
+            json: #"{"error": {"type": "resource", "code": "user_not_found", "message": "no such user"}}"#,
+            status: 404
+        )
+
+        do {
+            _ = try await service.loadRemoteConfig(contextKey: "main")
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .resourceNotFound)
+            XCTAssertEqual(error.apiCode, "user_not_found")
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testANotFoundOnAttachIsNotAMissingConfiguration() async {
+        // On attach/detach a 404 means the id the CALLER passed is unknown.
+        let service = makeLiveService(
+            json: #"{"error": {"type": "resource", "code": "not_found", "message": "no such remote configuration"}}"#,
+            status: 404
+        )
+
+        do {
+            try await service.attachUserToRemoteConfig(id: "rc_missing")
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .resourceNotFound, "the id the caller passed does not exist")
+            XCTAssertEqual(error.apiCode, "not_found")
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testANotFoundOnExperimentDetachIsNotAMissingConfiguration() async {
+        let service = makeLiveService(
+            json: #"{"error": {"type": "resource", "code": "relation_not_found", "message": "no such experiment"}}"#,
+            status: 404
+        )
+
+        do {
+            try await service.detachUserFromExperiment(id: "exp_missing")
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .resourceNotFound)
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
     func testAClassifiedBackendErrorKeepsItsTypeAndApiFields() async {
         // Rewrapping every failure into .loadingRemoteConfigFailed erased both
         // the classification and the backend code the integrator branches on.
