@@ -51,6 +51,27 @@ final class ProductsManagerTests: XCTestCase {
         return Qonversion.Product(qonversionId: qonversionId, storeId: storeId, offeringId: nil)
     }
 
+    // MARK: - offline catalog for the local entitlements calculation (A2.5)
+
+    func testCachedProductsFallBackToThePersistedCatalog() async throws {
+        productsService.productsResult = [makeProduct(qonversionId: "q_pro", storeId: "store_pro")]
+        _ = try await manager.products()
+
+        // A fresh launch: the in-memory cache is empty, the persisted catalog answers.
+        let coldManager = makeManager()
+        let products = coldManager.cachedProducts()
+
+        XCTAssertEqual(products.map(\.qonversionId), ["q_pro"], "the offline entitlements calculation must not starve on a cold start")
+    }
+
+    func testCachedProductsFallBackToTheBundledFileWhenNothingWasPersisted() {
+        fallbackService.fallbackData = FallbackData(products: [makeProduct(qonversionId: "q_fb", storeId: "store_fb")], productsPermissions: nil)
+
+        let products = manager.cachedProducts()
+
+        XCTAssertEqual(products.map(\.qonversionId), ["q_fb"])
+    }
+
     // MARK: - Fallback file accessibility
 
     func testFallbackFileAccessibleWhenBundledDataParses() {

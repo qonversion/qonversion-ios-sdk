@@ -10,6 +10,7 @@ import StoreKit
 
 fileprivate enum Constants: String {
     case productPermissionsKey = "qonversion.keys.productsPermissions"
+    case productsKey = "qonversion.keys.products"
 }
 
 // @unchecked: the caches are lock-guarded.
@@ -49,7 +50,18 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     }
     
     func cachedProducts() -> [Qonversion.Product] {
-        return loadedProducts
+        if !loadedProducts.isEmpty {
+            return loadedProducts
+        }
+
+        // The offline cold start is exactly what the local entitlements
+        // calculation exists for — answer from the persisted catalog, then
+        // from the bundled fallback file.
+        if let persisted: [Qonversion.Product] = try? localStorage.object(forKey: Constants.productsKey.rawValue, dataType: [Qonversion.Product].self), !persisted.isEmpty {
+            return persisted
+        }
+
+        return fallbackService.obtainFallbackData()?.products ?? []
     }
 
     func isFallbackFileAccessible() -> Bool {
@@ -112,6 +124,11 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
             return await enriched(fallbackProducts)
         }
         
+        // Persisted for the offline local entitlements calculation on the
+        // next launches (StoreKit enrichment does not survive encoding —
+        // the wire fields are enough for the calculation).
+        try? localStorage.set(products, forKey: Constants.productsKey.rawValue)
+
         do {
             let resultProducts: [Qonversion.Product] = try await storeEnriched(products)
             loadedProducts = resultProducts

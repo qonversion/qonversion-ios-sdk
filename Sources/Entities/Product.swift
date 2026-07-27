@@ -12,7 +12,7 @@ extension Qonversion {
     
     // @unchecked: the StoreKit products inside are reference types managed by
     // StoreKit itself.
-    public struct Product: Decodable, @unchecked Sendable {
+    public struct Product: Codable, @unchecked Sendable {
         
         /// The unique Qonversion product identifier.
         public let qonversionId: String
@@ -96,6 +96,15 @@ extension Qonversion {
             offeringId = try container.decodeIfPresent(String.self, forKey: .offeringId)
         }
         
+        /// Only the wire fields round-trip — StoreKit enrichment is runtime
+        /// state and is re-applied after decoding.
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(qonversionId, forKey: .qonversionId)
+            try container.encode(storeId, forKey: .storeId)
+            try container.encodeIfPresent(offeringId, forKey: .offeringId)
+        }
+
         init(qonversionId: String, storeId: String, offeringId: String?) {
             self.qonversionId = qonversionId
             self.storeId = storeId
