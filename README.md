@@ -366,9 +366,9 @@ The SDK reports these purchases for analytics and never finishes the transaction
 Properties power segmentation in analytics and are passed to integrations (AppsFlyer, Adjust, Firebase, etc.). They are batched and sent with a small delay:
 
 ```swift
-Qonversion.shared.setUserProperty("test@example.com", key: .email)
-Qonversion.shared.setUserProperty("af_id_123", key: .appsFlyerUserId)
-Qonversion.shared.setCustomUserProperty("gold", key: "tier")
+Qonversion.shared.setUserProperty(key: .email, value: "test@example.com")
+Qonversion.shared.setUserProperty(key: .appsFlyerUserId, value: "af_id_123")
+Qonversion.shared.setCustomUserProperty(key: "tier", value: "gold")
 
 let properties = try await Qonversion.shared.userProperties()
 ```

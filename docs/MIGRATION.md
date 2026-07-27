@@ -31,7 +31,7 @@ Every completion-handler API became `async`. Errors are thrown instead of passed
 | `setEntitlementsUpdateListener(listener)` *(deprecated)* | `entitlementsUpdates` — the entitlements-only projection of the same stream |
 | `setPromoPurchasesDelegate(delegate)` | `for await intent in Qonversion.shared.promoPurchaseIntents { try await intent.purchase() }` |
 | `handlePurchases([QONStoreKit2PurchaseModel], completion)` | `await handlePurchases([VerificationResult<Transaction>]) -> Bool` — pass StoreKit 2 results directly; the returned flag replaces the completion |
-| `setUserProperty(key, value)` / `setCustomUserProperty` | unchanged (plus the new `.tenjinAnalyticsInstallationId` key) |
+| `setUserProperty:value:` / `setCustomUserProperty:value:` | `setUserProperty(key:value:)` / `setCustomUserProperty(key:value:)` — same key-first order as Objective-C, plus the new `.tenjinAnalyticsInstallationId` key |
 | `userProperties(completion)` | `try await userProperties()` |
 | `forceSendProperties(completion)` | `await forceSendProperties()` |
 | `collectAppleSearchAdsAttribution()` / `collectAdvertisingId()` | unchanged |
