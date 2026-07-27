@@ -270,7 +270,7 @@ if let premium = entitlements["premium"], premium.active {
 ```json
 {
     "products": [
-        {"id": "pro_monthly", "apple_product_id": "com.app.pro.monthly"}
+        {"id": "pro_monthly", "store_id": "com.app.pro.monthly"}
     ],
     "products_permissions": {
         "pro_monthly": ["premium"]
@@ -283,6 +283,8 @@ if let premium = entitlements["premium"], premium.active {
     ]
 }
 ```
+
+The App Store id may also be spelled `apple_product_id` — both keys are read, `store_id` first. Sections and rows are parsed independently, so one malformed row costs you that row and nothing else.
 
 The same file also answers `remoteConfig()` calls when the API is unreachable — bundle the configs your launch screens depend on.
 

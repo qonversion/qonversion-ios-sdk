@@ -149,6 +149,14 @@ final class ProductsManagerTests: XCTestCase {
         XCTAssertEqual(result.map(\.qonversionId), ["q_main"])
         XCTAssertFalse(result[0].isStoreProductLinked)
         XCTAssertEqual(productsService.productsCallsCount, 1)
+        // "not linked" alone would also hold if the join had never run. The
+        // store WAS asked, and — the enrichment-retry seam — the result was
+        // cached, which only a join that SUCCEEDED does: a failed one is left
+        // uncached so the next call retries it.
+        XCTAssertEqual(storeKitFacade.requestedProductIds, [["store_main"]])
+        _ = try await manager.products()
+        XCTAssertEqual(productsService.productsCallsCount, 1, "a successful join caches its result")
+        XCTAssertEqual(storeKitFacade.requestedProductIds.count, 1)
     }
 
     func testUnenrichedProductsAreCachedLikeAnyOtherResult() async throws {
@@ -178,18 +186,60 @@ final class ProductsManagerTests: XCTestCase {
         XCTAssertEqual(result.map { $0.isStoreProductLinked }, [false, false])
     }
 
-    // Fixates current behavior: the unenriched fallback result IS cached in memory,
-    // so a subsequent call does not hit the service or StoreKit again.
-    func testStoreKitErrorFallbackResultIsCached() async throws {
+    // A StoreKit outage is transient. Caching the unenriched products made it
+    // permanent for the whole session: prices and offers never came back
+    // however long the store stayed healthy afterwards.
+    func testAFailedEnrichmentIsNotCachedSoTheNextCallRetriesIt() async throws {
         productsService.productsResult = [makeProduct()]
         storeKitFacade.productsError = MockError.stubbed
 
-        _ = try await manager.products()
-        let second = try await manager.products()
+        let first = try await manager.products()
+        XCTAssertEqual(first.map(\.qonversionId), ["q_main"], "the caller still gets the catalog")
+        XCTAssertTrue(manager.loadedProducts.isEmpty, "an unenriched result must not become the cache")
 
-        XCTAssertEqual(second.count, 1)
-        XCTAssertEqual(productsService.productsCallsCount, 1)
-        XCTAssertEqual(storeKitFacade.requestedProductIds.count, 1)
+        storeKitFacade.productsError = nil
+        storeKitFacade.productsResult = [StoreProductWrapper(product: nil)]
+        _ = try await manager.products()
+
+        XCTAssertEqual(storeKitFacade.requestedProductIds.count, 2, "the enrichment must be retried")
+    }
+
+    func testAProductWithoutAStoreIdIsReportedInTheLog() async throws {
+        // Never silently: an empty storeId means the row carried neither
+        // store_id nor apple_product_id, which is almost always a mistake in
+        // the fallback file rather than a Stripe-only product.
+        let messages = LogCollector()
+        let manager = ProductsManager(
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            fallbackService: fallbackService,
+            logger: LoggerWrapper(sink: { _, message in messages.append(message) })
+        )
+        productsService.productsResult = [makeProduct(qonversionId: "q_ok"), makeProduct(qonversionId: "q_no_store", storeId: "")]
+
+        _ = try await manager.products()
+
+        XCTAssertTrue(messages.all().contains { $0.contains("q_no_store") },
+                      "the developer must be told which product has no App Store id")
+        XCTAssertFalse(messages.all().contains { $0.contains("q_ok") })
+    }
+
+    func testARequestedProductIdAbsentFromTheCatalogIsReportedInTheLog() async throws {
+        let messages = LogCollector()
+        let manager = ProductsManager(
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            fallbackService: fallbackService,
+            logger: LoggerWrapper(sink: { _, message in messages.append(message) })
+        )
+        productsService.productsResult = [makeProduct(qonversionId: "q_main")]
+
+        _ = try await manager.checkTrialIntroEligibility(productIds: ["q_main", "q_typo"])
+
+        XCTAssertTrue(messages.all().contains { $0.contains("q_typo") },
+                      ".unknown alone hides a typo in the product id")
     }
 
     // MARK: - Service error
@@ -197,7 +247,9 @@ final class ProductsManagerTests: XCTestCase {
     // Without a bundled fallback file, a products service error propagates to
     // the caller as-is and the injected local storage is never consulted.
     func testServiceErrorPropagatesWithoutDiskFallback() async {
-        try? localStorage.set(Data([0x01]), forKey: "products")
+        // The REAL key: seeding "products" proved nothing, the manager never
+        // looks there.
+        try? localStorage.set([makeProduct(qonversionId: "q_persisted")], forKey: "qonversion.keys.products")
         productsService.error = QonversionError(type: .productsLoadingFailed)
 
         do {
@@ -477,6 +529,46 @@ final class ProductsStorefrontTests: XCTestCase {
         XCTAssertTrue(manager.loadedProducts.isEmpty, "prices and offers must be refetched for the new storefront")
     }
 
+    func testAnInFlightLoadCannotWriteOldStorefrontPricesBack() async throws {
+        // The load started before the storefront changed: its prices and
+        // offers belong to the old storefront and must never land in the cache
+        // the change just dropped.
+        let gate = ProductsAsyncGate()
+        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s", offeringId: nil)]
+        productsService.onProducts = { await gate.wait() }
+        manager.startObservingStorefrontChanges()
+        await waitUntil { self.storeKitFacade.hasStorefrontSubscriber }
+
+        let loading = Task { try await self.manager.products() }
+        await waitUntil { self.productsService.productsCallsCount == 1 }
+        storeKitFacade.emitStorefrontChange()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        await gate.open()
+        _ = try? await loading.value
+
+        XCTAssertTrue(manager.loadedProducts.isEmpty, "the pre-change catalog must not be cached for the new storefront")
+    }
+
+    func testALoadStartedAfterTheChangeIsNotJoinedToThePreChangeOne() async throws {
+        let gate = ProductsAsyncGate()
+        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s", offeringId: nil)]
+        productsService.onProducts = { await gate.wait() }
+        manager.startObservingStorefrontChanges()
+        await waitUntil { self.storeKitFacade.hasStorefrontSubscriber }
+
+        let loading = Task { try await self.manager.products() }
+        await waitUntil { self.productsService.productsCallsCount == 1 }
+        storeKitFacade.emitStorefrontChange()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let afterChange = Task { try await self.manager.products() }
+        await gate.open()
+        _ = try? await loading.value
+        _ = try? await afterChange.value
+
+        XCTAssertEqual(productsService.productsCallsCount, 2,
+                       "a caller arriving after the change must not be served the pre-change load")
+    }
+
     func testEligibilityChecksRunConcurrentlyAndMapEveryProduct() async {
         // Every product is still asked about — just not one after another.
         let barrier = EligibilityBarrier(expected: 3)
@@ -494,5 +586,26 @@ final class ProductsStorefrontTests: XCTestCase {
         XCTAssertEqual(result["q0"], .eligible)
         XCTAssertEqual(result["q1"], .ineligible)
         XCTAssertEqual(result["q2"], .unknown)
+    }
+}
+
+
+/// Collects every message the SDK logs.
+// @unchecked: the array is lock-guarded.
+final class LogCollector: @unchecked Sendable {
+
+    private let lock = NSLock()
+    private var messages: [String] = []
+
+    func append(_ message: String) {
+        lock.lock()
+        messages.append(message)
+        lock.unlock()
+    }
+
+    func all() -> [String] {
+        lock.lock()
+        defer { lock.unlock() }
+        return messages
     }
 }

@@ -200,6 +200,15 @@ statements port unchanged — only where `.nonRenewable` comes from differs.
 
 The bundled fallback file keeps the same name (`qonversion_ios_fallbacks.json`) and shape: `products`, `products_permissions` and `remote_config_list` are honored when the API is unreachable and no cache exists yet.
 
+A product row's App Store id may be spelled `store_id` (what the Objective-C
+SDK read, and what the files already in your bundle use) or `apple_product_id`
+(the spelling of the `/v4/products` API). `store_id` wins when both are
+present, so an unmodified file from the previous SDK generation keeps working.
+
+Every section and every row is read independently: a malformed product row is
+skipped instead of discarding the file, and a broken `products` section no
+longer takes `products_permissions` and `remote_config_list` down with it.
+
 ## NoCodes
 
 NoCodes screens are part of this SDK, as a separate `NoCodes` library in the same package — add it to your app target next to `Qonversion` and `import NoCodes`. In the Objective-C SDK the module was compiled into the main framework, so the only integration change is the extra product and import.

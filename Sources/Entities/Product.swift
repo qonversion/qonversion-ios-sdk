@@ -90,9 +90,17 @@ extension Qonversion {
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             qonversionId = try container.decode(String.self, forKey: .qonversionId)
-            // Products without an App Store id (e.g. Stripe/Play-only) decode
-            // with an empty storeId instead of failing the whole list.
-            storeId = try container.decodeIfPresent(String.self, forKey: .storeId) ?? ""
+            // Two spellings of the same field: the v4 API answers
+            // `apple_product_id`, the fallback file shipped by the previous SDK
+            // generation writes `store_id` (QNMapper.m) and MIGRATION.md
+            // promises that shape keeps working. `store_id` wins when both are
+            // there — it is the explicit one.
+            // Products without an App Store id at all (e.g. Stripe/Play-only)
+            // decode with an empty storeId instead of failing the whole list;
+            // ProductsManager logs them so it is never silent.
+            let storeIdentifier: String? = try container.decodeIfPresent(String.self, forKey: .legacyStoreId)
+                ?? container.decodeIfPresent(String.self, forKey: .storeId)
+            storeId = storeIdentifier ?? ""
             offeringId = try container.decodeIfPresent(String.self, forKey: .offeringId)
         }
         
@@ -401,6 +409,8 @@ extension Qonversion {
         private enum CodingKeys: String, CodingKey {
             case qonversionId = "id"
             case storeId = "apple_product_id"
+            /// The fallback file's spelling of `storeId` — see init(from:).
+            case legacyStoreId = "store_id"
             case offeringId = "offering_id"
         }
     }
