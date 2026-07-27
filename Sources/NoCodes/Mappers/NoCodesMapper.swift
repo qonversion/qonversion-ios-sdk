@@ -41,6 +41,11 @@ final class NoCodesMapper: NoCodesMapperInterface, Sendable {
     switch introPriceType {
     case .introductory: return "intro"
     case .promotional: return "promo"
+    // The web builder only knows the two values above. A win-back offer is
+    // never the product's introductory offer — the only slot this mapping
+    // feeds — so it travels as "no known type" rather than as a fabricated
+    // discount kind.
+    case .winBack: return ""
     case .unknown: return ""
     }
   }

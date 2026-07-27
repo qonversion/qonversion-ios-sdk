@@ -51,6 +51,9 @@ final class NoCodesMapperTests: XCTestCase {
         XCTAssertEqual(mapper.map(introPriceType: .introductory), "intro")
         XCTAssertEqual(mapper.map(introPriceType: .promotional), "promo")
         XCTAssertEqual(mapper.map(introPriceType: .unknown), "")
+        // The builder knows "intro" and "promo" only, and a win-back offer is
+        // never the introductory offer this value describes.
+        XCTAssertEqual(mapper.map(introPriceType: .winBack), "")
 
         XCTAssertEqual(mapper.map(introPricePaymentType: .freeTrial), "trial")
         XCTAssertEqual(mapper.map(introPricePaymentType: .payUpFront), "pay_up_front")
