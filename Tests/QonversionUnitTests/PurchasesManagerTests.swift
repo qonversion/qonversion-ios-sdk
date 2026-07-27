@@ -578,16 +578,84 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(received.isEmpty)
     }
 
-    func testObservedUpdateInAnalyticsModeDoesNotEmitEntitlements() async {
+    // MARK: - deferred purchases (Ask to Buy / SCA parity)
+
+    func testDeferredPurchaseIsEmittedInAnalyticsModeWithoutFinishing() async {
+        // The approval of a pending purchase must reach the host in BOTH
+        // modes — only the transaction lifecycle differs.
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.transaction.id, "u1")
+        XCTAssertEqual(received.first?.entitlements.keys.sorted(), ["premium"])
+        XCTAssertEqual(received.first?.entitlementsSource, .backend)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "the host app owns the lifecycle in Analytics mode")
+    }
+
+    func testDeferredPurchaseIsEmittedInSubscriptionManagementMode() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.transaction.id, "u1")
+        XCTAssertEqual(received.first?.entitlementsSource, .backend)
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["u1"])
+    }
+
+    func testDeferredPurchaseIsEmittedWithLocalEntitlementsWhenTheReportFails() async {
+        // An unreachable backend must not swallow the approval: production
+        // calculates the entitlements locally and still notifies the host.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        service.error = QonversionError(type: .internal)                       // 5xx
+        entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.entitlements.keys.sorted(), ["premium"])
+        XCTAssertEqual(received.first?.entitlementsSource, .localCalculation)
+        XCTAssertEqual(entitlementsManager.localFallbackTransactions.first?.map(\.id), ["u1"])
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "an unreported transaction stays unfinished")
+    }
+
+    func testDeferredPurchaseOfAConsumableIsIdentifiableWithoutEntitlements() async {
+        // A consumable grants no entitlement: without the transaction in the
+        // signal the host could not tell that anything happened at all.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = [:]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "coins-1", productId: "com.app.coins"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.transaction.id, "coins-1")
+        XCTAssertEqual(received.first?.transaction.productId, "com.app.coins")
+        XCTAssertTrue(received.first?.entitlements.isEmpty ?? false)
+    }
+
+    func testEntitlementsUpdatesProjectsTheDeferredPurchaseEntitlements() async {
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
         let collector = StreamCollector(manager.entitlementsUpdates())
 
         manager.transactionUpdated(makeTransaction(id: "u1"))
 
-        await waitUntil { self.service.sentTransactions.count >= 1 }
-        try? await Task.sleep(nanoseconds: 100_000_000)
-        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+        await waitUntil { await !collector.received.isEmpty }
         let received = await collector.received
-        XCTAssertTrue(received.isEmpty)
+        XCTAssertEqual(received.first?.keys.sorted(), ["premium"])
     }
 
     // MARK: - promotional offer signature

@@ -186,10 +186,26 @@ public final class Qonversion: @unchecked Sendable {
         return managers.purchasesManager.promoPurchaseIntents()
     }
 
-    /// A stream of entitlements refreshed after the SDK processes an
-    /// out-of-band transaction in subscription-management mode (Ask to Buy
-    /// approvals, renewals, purchases on other devices). Like StoreKit's
-    /// `Transaction.updates`, every access returns an independent stream:
+    /// A stream of purchases that completed outside of ``purchase(_:options:)``:
+    /// Ask to Buy and SCA approvals, renewals, refunds and purchases made on
+    /// other devices. Delivered in both launch modes; when the backend was
+    /// unreachable the entitlements are calculated locally and
+    /// ``Qonversion/Qonversion/DeferredPurchase/entitlementsSource`` says so.
+    /// Like StoreKit's `Transaction.updates`, every access returns an
+    /// independent stream, and purchases processed before the first
+    /// subscription are buffered:
+    ///
+    ///     for await purchase in Qonversion.shared.deferredPurchases {
+    ///         grantAccess(with: purchase.entitlements, for: purchase.transaction)
+    ///     }
+    public var deferredPurchases: AsyncStream<Qonversion.DeferredPurchase> {
+        guard let managers: Managers = currentManagers() else { return AsyncStream { $0.finish() } }
+
+        return managers.purchasesManager.deferredPurchases()
+    }
+
+    /// The entitlements-only projection of ``deferredPurchases``, for hosts
+    /// that only refresh their access state:
     ///
     ///     for await entitlements in Qonversion.shared.entitlementsUpdates { ... }
     public var entitlementsUpdates: AsyncStream<[String: Qonversion.Entitlement]> {

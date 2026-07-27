@@ -54,6 +54,8 @@ The API is async/await-first. Purchases run natively on StoreKit 2; transactions
 ### Entitlements
 
 - ``Qonversion/Qonversion/checkEntitlements()``
+- ``Qonversion/Qonversion/deferredPurchases``
+- ``Qonversion/Qonversion/DeferredPurchase``
 - ``Qonversion/Qonversion/entitlementsUpdates``
 - ``Qonversion/Qonversion/Entitlement``
 - ``Qonversion/Qonversion/isFallbackFileAccessible()``

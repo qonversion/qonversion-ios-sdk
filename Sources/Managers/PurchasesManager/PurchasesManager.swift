@@ -49,18 +49,34 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     private let reportsGate = TransactionReportsGate()
 
-    /// Emits fresh entitlements after the SDK processes an observed
-    /// transaction in subscription-management mode.
+    /// Emits every purchase the SDK processes out of band, in both launch
+    /// modes.
     // Buffered: an Ask to Buy approval processed during launch, before the
     // host subscribes, must not be dropped.
-    private let entitlementsUpdatesMulticast = AsyncMulticast<[String: Qonversion.Entitlement]>(buffersWhenNoSubscribers: true)
+    private let deferredPurchasesMulticast = AsyncMulticast<Qonversion.DeferredPurchase>(buffersWhenNoSubscribers: true)
 
     /// Emits App Store promoted-purchase intents. Buffered until the first
     /// subscriber — an intent arriving at app start must not be lost.
     private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(buffersWhenNoSubscribers: true)
 
+    func deferredPurchases() -> AsyncStream<Qonversion.DeferredPurchase> {
+        return deferredPurchasesMulticast.stream()
+    }
+
+    /// The entitlements-only projection of the deferred purchases: one
+    /// subscription of its own, so both streams stay independent.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
-        return entitlementsUpdatesMulticast.stream()
+        let purchases: AsyncStream<Qonversion.DeferredPurchase> = deferredPurchasesMulticast.stream()
+
+        return AsyncStream { continuation in
+            let task = Task {
+                for await purchase in purchases {
+                    continuation.yield(purchase.entitlements)
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
     }
 
     func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent> {
@@ -490,10 +506,9 @@ extension PurchasesManager: StoreKitFacadeDelegate {
 
     func transactionUpdated(_ transaction: Qonversion.Transaction) {
         // Out-of-band update (renewal, refund, Ask to Buy approval, another
-        // device). In Analytics mode it is only reported — the host app owns
-        // the lifecycle. In subscription-management mode the SDK owns it:
-        // finish after the backend ack and emit fresh entitlements to the
-        // update streams.
+        // device). The host is notified in BOTH modes — only the transaction
+        // lifecycle differs: in Analytics mode the app owns it, in
+        // subscription management the SDK finishes it after the backend ack.
         Task { [weak self] in
             guard let self else { return }
             // Transactions without a store id (degraded SK1 mapping) cannot be
@@ -501,6 +516,8 @@ extension PurchasesManager: StoreKitFacadeDelegate {
             if let id: String = transaction.id {
                 guard self.reportsGate.tryTake(id) else { return }
             }
+
+            var reportFailed = false
             do {
                 _ = try await self.userManager.obtainUser()
                 let userId: String = self.userIdProvider.getUserId()
@@ -511,20 +528,34 @@ extension PurchasesManager: StoreKitFacadeDelegate {
                     self.reportsGate.release(id)
                 }
                 self.logger.error("Failed to report an observed transaction: " + error.message)
-                return
+                // Production parity: an unreachable backend must not swallow
+                // the approval — the host still gets it with locally
+                // calculated entitlements. A rejected report stays silent.
+                guard error.allowsLocalEntitlementsFallback else { return }
+
+                reportFailed = true
             }
 
-            guard self.launchModeProvider.launchMode == .subscriptionManagement else { return }
-
-            await self.storeKitFacade.finish(transaction)
-
-            let entitlements: [String: Qonversion.Entitlement]
-            if let fetched: [String: Qonversion.Entitlement] = try? await self.entitlementsManager.entitlements() {
-                entitlements = fetched
-            } else {
-                entitlements = await self.entitlementsManager.localFallbackEntitlements(for: [transaction])
+            // Only a reported transaction may be finished, and only when the
+            // SDK owns the lifecycle.
+            if !reportFailed && self.launchModeProvider.launchMode == .subscriptionManagement {
+                await self.storeKitFacade.finish(transaction)
             }
-            self.entitlementsUpdatesMulticast.yield(entitlements)
+
+            let deferredPurchase: Qonversion.DeferredPurchase = await self.deferredPurchase(for: transaction, reportFailed: reportFailed)
+            self.deferredPurchasesMulticast.yield(deferredPurchase)
         }
+    }
+
+    /// The entitlements to report with an out-of-band purchase: from the
+    /// backend when it answered the report, calculated locally otherwise.
+    private func deferredPurchase(for transaction: Qonversion.Transaction, reportFailed: Bool) async -> Qonversion.DeferredPurchase {
+        if !reportFailed, let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
+            return Qonversion.DeferredPurchase(transaction: transaction, entitlements: fetched, entitlementsSource: .backend)
+        }
+
+        let calculated: [String: Qonversion.Entitlement] = await entitlementsManager.localFallbackEntitlements(for: [transaction])
+
+        return Qonversion.DeferredPurchase(transaction: transaction, entitlements: calculated, entitlementsSource: .localCalculation)
     }
 }

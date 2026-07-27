@@ -26,8 +26,8 @@ Every completion-handler API became `async`. Errors are thrown instead of passed
 | `checkTrialIntroEligibility(productIds, completion)` | `try await checkTrialIntroEligibility(productIds)` |
 | `getPromotionalOfferForProduct(product, discount, completion)` | `try await getPromotionalOffer(for: product, discountId: discountId)` |
 | `syncHistoricalData()` | `syncHistoricalData()` — unchanged, still once per install |
-| `setDeferredPurchasesListener(listener)` | `for await entitlements in Qonversion.shared.entitlementsUpdates { ... }` |
-| `setEntitlementsUpdateListener(listener)` *(deprecated)* | same stream: `entitlementsUpdates` |
+| `setDeferredPurchasesListener(listener)` | `for await purchase in Qonversion.shared.deferredPurchases { ... }` |
+| `setEntitlementsUpdateListener(listener)` *(deprecated)* | `entitlementsUpdates` — the entitlements-only projection of the same stream |
 | `setPromoPurchasesDelegate(delegate)` | `for await intent in Qonversion.shared.promoPurchaseIntents { try await intent.purchase() }` |
 | `handlePurchases([QONStoreKit2PurchaseModel], completion)` | `await handlePurchases([VerificationResult<Transaction>]) -> Bool` — pass StoreKit 2 results directly; the returned flag replaces the completion |
 | `setUserProperty(key, value)` / `setCustomUserProperty` | unchanged (plus the new `.tenjinAnalyticsInstallationId` key) |
@@ -46,8 +46,11 @@ Delegate/listener protocols are gone. Both streams follow the style of StoreKit'
 ```swift
 // before: conforming to QONDeferredPurchasesListener
 Task {
-    for await entitlements in Qonversion.shared.entitlementsUpdates {
-        refreshUI(with: entitlements)
+    for await purchase in Qonversion.shared.deferredPurchases {
+        // purchase.transaction and purchase.entitlements, like QONPurchaseResult;
+        // purchase.entitlementsSource tells whether the backend answered or
+        // the SDK calculated them locally
+        refreshUI(with: purchase.entitlements)
     }
 }
 
@@ -69,7 +72,7 @@ do {
 } catch let error as QonversionError {
     switch error.type {
     case .purchaseCancelled: break            // the user changed their mind — not a failure
-    case .purchasePending: break              // Ask to Buy / SCA: completes later via entitlementsUpdates
+    case .purchasePending: break              // Ask to Buy / SCA: completes later via deferredPurchases
     default: showError(error.message)         // error.error carries the underlying failure
     }
 }
