@@ -249,15 +249,18 @@ ignored.
 
 **Action required only if your app collects the advertising identifier.**
 
-The Objective-C SDK linked Apple's advertising framework, so every app that
-integrated it carried the reference — which is why the `Qonversion/NoIdfa`
-subspec existed as an opt-*out* for Kids Category apps and anyone else
-declaring no tracking.
+The Objective-C SDK linked `AdSupport`, the advertising *identifier* framework,
+so every app that integrated it carried the reference — which is why the
+`Qonversion/NoIdfa` subspec existed as an opt-*out* for Kids Category apps and
+anyone else declaring no tracking.
 
-This SDK never links that framework. Nothing in the binary references it, and
-there is no separate product or build flag to pick: **kids apps need to do
-nothing at all**, and the `NoIdfa` subspec has no successor because it no longer
-has a job.
+This SDK never links `AdSupport`. Nothing in the binary references it, and there
+is no separate product or build flag to pick: **kids apps need to do nothing at
+all**, and the `NoIdfa` subspec has no successor because it no longer has a job.
+
+`AdServices` is a different framework and is still linked — it is what
+`collectAppleSearchAdsAttribution()` reads the Apple Search Ads attribution
+token through, and it exposes no advertising identifier.
 
 Linking is now the opt-*in*, and it lives in your app instead of in the SDK. If
 your app collects the identifier, add the framework to your own target:
@@ -278,7 +281,17 @@ silently, with no error and no crash.
 |---|---|
 | `pod 'Qonversion'` linked the advertising framework for you | Never linked — link it in your app target if you want the identifier |
 | `pod 'Qonversion/NoIdfa'` to opt out | Removed — not linking is the default |
-| `collectAdvertisingId()` | Unchanged; a no-op when your app does not link the framework |
+| `collectAdvertisingId()` | Unchanged; a no-op when your app does not link `AdSupport` |
+
+### One knock-on effect: the Facebook anonymous id
+
+If your app integrates the Facebook SDK, the rule is unchanged in principle —
+the anonymous id is collected **exactly when no usable IDFA exists** — but which
+apps that covers has widened. Previously "no usable IDFA" meant the user had
+denied tracking; now it also covers every app that does not link `AdSupport`.
+So a host app without the framework will start sending `facebook_anon_id` on the
+wire where it previously sent an IDFA instead. Link `AdSupport` if you want the
+old split back; there is nothing to change in your code either way.
 
 ## NoCodes
 

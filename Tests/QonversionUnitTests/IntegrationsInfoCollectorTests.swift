@@ -61,7 +61,11 @@ final class IntegrationsInfoCollectorTests: XCTestCase {
         XCTAssertEqual(collector.appsFlyerUserId(), "af-from-runtime")
     }
 
-    func testFacebookAnonymousIdIsResolvedWhenIdfaIsUnavailable() {
+    // The rule, in one line: the anonymous id is collected exactly when no
+    // usable IDFA exists — tracking denied, or the host app not linking the
+    // advertising identifier framework at all.
+
+    func testFacebookAnonymousIdIsResolvedWithoutAUsableIdfa() {
         deviceInfoCollector.advertisingIdValue = nil
 
         XCTAssertEqual(collector.facebookAnonymousId(), "fb-from-runtime")
@@ -75,9 +79,14 @@ final class IntegrationsInfoCollectorTests: XCTestCase {
         XCTAssertNil(collector.facebookAnonymousId())
     }
 
-    func testFacebookAnonymousIdIsResolvedWithAZeroedIdfa() {
+    func testFacebookAnonymousIdDefersToTheCollectorOnWhatCountsAsAUsableIdfa() {
+        // The zeroed identifier cannot reach here in production: the device
+        // info collector already reports it as nil, which AdvertisingIdReaderTests
+        // pins. So this collector does not second-guess it — a non-nil answer
+        // is a real identifier by definition. Re-adding a zeroed-value check
+        // here would duplicate the rule in a second place and fail this test.
         deviceInfoCollector.advertisingIdValue = "00000000-0000-0000-0000-000000000000"
 
-        XCTAssertEqual(collector.facebookAnonymousId(), "fb-from-runtime")
+        XCTAssertNil(collector.facebookAnonymousId())
     }
 }

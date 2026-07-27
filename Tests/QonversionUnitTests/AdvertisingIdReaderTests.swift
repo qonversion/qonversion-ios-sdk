@@ -87,16 +87,30 @@ final class AdvertisingIdReaderTests: XCTestCase {
     }
 
     func testTheStoredNamesAreNotReadableWithoutDecoding() {
-        // The bytes as compiled must not spell the production names out.
+        // The bytes as compiled must not spell the production names out — not
+        // even as a substring, which is all a binary scanner needs.
         let stored: [String] = [
             String(decoding: AdvertisingIdReader.ObfuscatedNames.identifierProviderClass, as: UTF8.self),
             String(decoding: AdvertisingIdReader.ObfuscatedNames.instanceAccessor, as: UTF8.self),
             String(decoding: AdvertisingIdReader.ObfuscatedNames.identifierAccessor, as: UTF8.self),
         ]
 
-        XCTAssertFalse(stored.contains("ASIdentifierManager"))
-        XCTAssertFalse(stored.contains("sharedManager"))
-        XCTAssertFalse(stored.contains("advertisingIdentifier"))
+        for forbidden in ["AdSupport", "ASIdentifierManager", "sharedManager", "advertisingIdentifier"] {
+            let isReadable: Bool = stored.contains { $0.contains(forbidden) }
+
+            XCTAssertFalse(isReadable, "The stored bytes spell out \"\(forbidden)\"")
+        }
+    }
+
+    /// The one path no CI host can exercise: on a machine without the
+    /// framework, swapping two of these names changes nothing observable, and
+    /// the identifier would just quietly stop being read on device.
+    func testTheProductionLookupIsWiredToTheRightNameInEachPosition() {
+        let names: (className: String, instanceAccessorName: String, identifierAccessorName: String) = AdvertisingIdReader.runtimeNames()
+
+        XCTAssertEqual(names.className, "ASIdentifierManager")
+        XCTAssertEqual(names.instanceAccessorName, "sharedManager")
+        XCTAssertEqual(names.identifierAccessorName, "advertisingIdentifier")
     }
 
     // MARK: - The production lookup in a host that does not link the framework

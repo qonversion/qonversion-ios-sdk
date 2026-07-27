@@ -68,17 +68,29 @@ final class AdvertisingIdReader: Sendable {
 
     // MARK: - The Objective-C runtime lookup
 
-    /// Resolves the system identifier provider by its decoded name.
-    @Sendable
-    static func runtimeIdentifier() -> String? {
+    /// The three decoded names the production lookup runs on.
+    ///
+    /// Kept apart from the lookup so the wiring is assertable: no test host
+    /// links the framework, so nothing else would notice two of these names
+    /// being swapped — the lookup would keep returning nil everywhere except on
+    /// a real device, where it would silently stop reading the identifier.
+    static func runtimeNames() -> (className: String, instanceAccessorName: String, identifierAccessorName: String) {
         let className: String = decoded(ObfuscatedNames.identifierProviderClass)
         let instanceAccessorName: String = decoded(ObfuscatedNames.instanceAccessor)
         let identifierAccessorName: String = decoded(ObfuscatedNames.identifierAccessor)
 
+        return (className, instanceAccessorName, identifierAccessorName)
+    }
+
+    /// Resolves the system identifier provider by its decoded name.
+    @Sendable
+    static func runtimeIdentifier() -> String? {
+        let names: (className: String, instanceAccessorName: String, identifierAccessorName: String) = runtimeNames()
+
         return runtimeIdentifier(
-            className: className,
-            instanceAccessorName: instanceAccessorName,
-            identifierAccessorName: identifierAccessorName
+            className: names.className,
+            instanceAccessorName: names.instanceAccessorName,
+            identifierAccessorName: names.identifierAccessorName
         )
     }
 

@@ -77,10 +77,12 @@ final class IntegrationsInfoCollector: IntegrationsInfoCollectorInterface {
     }
 
     func facebookAnonymousId() -> String? {
-        // With a real IDFA available Facebook attributes by it — the
-        // anonymous id only matters when tracking is denied.
-        let zeroedIdfa = "00000000-0000-0000-0000-000000000000"
-        if let advertisingId: String = deviceInfoCollector.advertisingId(), advertisingId != zeroedIdfa {
+        // With a usable IDFA available Facebook attributes by it — the
+        // anonymous id only matters without one, whether because tracking was
+        // denied or because the host app does not link the framework at all.
+        // The collector already reports the unauthorised identifier as nil, so
+        // a non-nil value here is always a real one.
+        if deviceInfoCollector.advertisingId() != nil {
             return nil
         }
 
