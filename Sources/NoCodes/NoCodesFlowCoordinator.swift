@@ -25,6 +25,7 @@ final class NoCodesFlowCoordinator {
   private let screenEventsService: ScreenEventsServiceInterface
   private let viewsAssembly: ViewsAssembly
   private var currentVC: NoCodesViewController?
+  private var presentationGate = NoCodesPresentationGate()
   private var logger: LoggerWrapper!
   private var customLocale: String?
   private var theme: NoCodesTheme
@@ -82,15 +83,26 @@ final class NoCodesFlowCoordinator {
   }
   
   func close() {
+    // There is no view controller to close until the presentation is well under
+    // way, so a close arriving before that is remembered by the gate and takes
+    // the presentation down instead of being dropped.
+    guard presentationGate.closeRequested() else { return }
+
     currentVC?.close()
   }
-  
+
   @MainActor
   func showScreen(withContextKey contextKey: String) {
+    presentationGate.presentationStarted()
     Task { @MainActor in
       // The screen conditions are evaluated against the server-side user, so
       // any property set just before the call has to reach the backend first.
       await Qonversion.shared.forceSendProperties()
+
+      guard presentationGate.presentationReady() else {
+        logger.info("The screen was closed before it could be presented")
+        return
+      }
 
       let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(contextKey: contextKey) ?? NoCodesPresentationConfiguration.defaultConfiguration()
 
@@ -167,6 +179,10 @@ extension NoCodesFlowCoordinator: NoCodesViewControllerDelegate {
   }
 
   func noCodesFinished() {
+    // The flow is over and the coordinator lives for the whole process, so
+    // holding on to the screen would keep its web view, and the screen markup
+    // inlined into it, alive for just as long.
+    currentVC = nil
     screenEventsService.flush()
     delegate?.noCodesFinished()
   }
