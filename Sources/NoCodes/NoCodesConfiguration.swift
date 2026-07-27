@@ -11,18 +11,23 @@ import Foundation
 #if os(iOS)
 
 /// Configuration struct from No-Codes module
+// Main-actor isolated like everything it carries: the four delegates are
+// main-actor protocols and ``NoCodes/initialize(with:)`` consumes the value
+// there, so building it off the main actor would be a non-Sendable crossing.
+@MainActor
 public struct NoCodesConfiguration {
   /// Your project key from Qonversion Dashboard to setup the SDK
   public let projectKey: String
   
-  /// Delegate
-  public var delegate: NoCodesDelegate?
+  /// Delegate. Held weakly — keep your own strong reference to it.
+  public weak var delegate: NoCodesDelegate?
   
-  /// Screen customization delegate
-  public var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
+  /// Screen customization delegate. Held weakly — keep your own strong reference to it.
+  public weak var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   
   /// Purchase delegate. If provided, it will be used instead of the default Qonversion SDK purchase flow.
-  public var purchaseDelegate: NoCodesPurchaseDelegate?
+  /// Held weakly — keep your own strong reference to it.
+  public weak var purchaseDelegate: NoCodesPurchaseDelegate?
 
   /// Custom variables delegate. If provided, it will be called each time a screen is about to be displayed
   /// to get custom variables for the screen.

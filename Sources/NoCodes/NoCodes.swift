@@ -38,7 +38,10 @@ public final class NoCodes {
     let assembly = NoCodesAssembly(configuration: configuration)
     let flowCoordinator: NoCodesFlowCoordinator = assembly.flowCoordinator()
 
-    // Drop the previous graph before publishing the new one.
+    // Close whatever the previous graph still has on screen: the new
+    // coordinator knows nothing about it, so close() would silently no-op and
+    // the screen would stay up forever.
+    NoCodes.shared.flowCoordinator?.close()
     NoCodes.shared.flowCoordinator = nil
     NoCodes.shared.assembly = assembly
     NoCodes.shared.flowCoordinator = flowCoordinator

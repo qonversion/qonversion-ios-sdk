@@ -24,6 +24,21 @@ enum Constants: String {
   case value
 }
 
+/// WKUserContentController retains its message handlers, and the controller is
+/// reachable from the web view the screen owns. Registering the view controller
+/// directly would close the cycle
+/// (controller -> web view -> configuration -> user content controller -> controller)
+/// and leak every presented screen together with its inlined HTML, so the
+/// registered handler is this proxy, which only points back weakly.
+final class NoCodesScriptMessageProxy: NSObject, WKScriptMessageHandler {
+
+  weak var target: WKScriptMessageHandler?
+
+  func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    target?.userContentController(userContentController, didReceive: message)
+  }
+}
+
 @MainActor
 protocol NoCodesViewControllerDelegate {
 
@@ -58,8 +73,8 @@ final class NoCodesViewController: UIViewController {
   private var logger: LoggerWrapper!
   private var loadingView: NoCodesLoadingView!
   private var presentationConfiguration: NoCodesPresentationConfiguration!
-  private var purchaseDelegate: NoCodesPurchaseDelegate?
-  private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
+  private weak var purchaseDelegate: NoCodesPurchaseDelegate?
+  private weak var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   private weak var customVariablesDelegate: NoCodesCustomVariablesDelegate?
   private var customLocale: String?
   private var theme: NoCodesTheme!
@@ -69,6 +84,9 @@ final class NoCodesViewController: UIViewController {
   private var screenProductIds: [String] = []
   private var contextBuilder: NoCodesContextBuilderInterface!
   private var htmlInjector: NoCodesHTMLInjectorInterface!
+  // Held here because the user content controller is the only other owner and
+  // it must not keep the screen alive through it.
+  private let scriptMessageProxy = NoCodesScriptMessageProxy()
 
   init(screenId: String?, contextKey: String?, delegate: NoCodesViewControllerDelegate, purchaseDelegate: NoCodesPurchaseDelegate?, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?, customVariablesDelegate: NoCodesCustomVariablesDelegate?, noCodesMapper: NoCodesMapperInterface, noCodesService: NoCodesServiceInterface, screenEventsService: ScreenEventsServiceInterface, viewsAssembly: ViewsAssembly, logger: LoggerWrapper, presentationConfiguration: NoCodesPresentationConfiguration, contextBuilder: NoCodesContextBuilderInterface, htmlInjector: NoCodesHTMLInjectorInterface, customLocale: String? = nil, theme: NoCodesTheme = .auto) {
     self.screenId = screenId
@@ -111,7 +129,8 @@ final class NoCodesViewController: UIViewController {
     super.viewDidLoad()
     
     let userContentController = WKUserContentController()
-    userContentController.add(self, name: "noCodesMessageHandler")
+    scriptMessageProxy.target = self
+    userContentController.add(scriptMessageProxy, name: "noCodesMessageHandler")
 
     let configuration = WKWebViewConfiguration()
     configuration.userContentController = userContentController
@@ -695,9 +714,9 @@ extension NoCodesViewController {
       return
     }
 
-    var eventData = params
+    var eventData: [String: Any] = params
     eventData["screen_uid"] = screenId
-    let event = ScreenEvent(data: eventData)
+    let event = ScreenEvent(rawData: eventData)
     screenEventsService.track(event: event)
   }
 

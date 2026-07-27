@@ -15,9 +15,11 @@ import Qonversion
 @MainActor
 final class NoCodesFlowCoordinator {
   
-  private var delegate: NoCodesDelegate?
-  private var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
-  private var purchaseDelegate: NoCodesPurchaseDelegate?
+  // All four are weak: they are host objects (usually view controllers) and
+  // the coordinator lives for the whole process.
+  private weak var delegate: NoCodesDelegate?
+  private weak var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
+  private weak var purchaseDelegate: NoCodesPurchaseDelegate?
   private weak var customVariablesDelegate: NoCodesCustomVariablesDelegate?
   private let noCodesService: NoCodesServiceInterface
   private let screenEventsService: ScreenEventsServiceInterface

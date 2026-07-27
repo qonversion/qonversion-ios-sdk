@@ -22,7 +22,6 @@ final class NoCodesAssembly {
     self.configuration = configuration
     miscAssembly = MiscAssembly(projectKey: configuration.projectKey)
     servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly, fallbackFileName: configuration.fallbackFileName, proxyURL: configuration.proxyURL)
-    miscAssembly.servicesAssembly = servicesAssembly
   }
   
   func flowCoordinator() -> NoCodesFlowCoordinator {

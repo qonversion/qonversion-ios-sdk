@@ -10,8 +10,13 @@ The **Qonversion No-Code Builder SDK** is the fastest way to design and implemen
 
 ## Getting Started
 
-The module ships as a separate `NoCodes` library that depends on `Qonversion`. Initialize the main
-SDK first, then No-Codes with the same project key:
+The module ships as a separate `NoCodes` library that depends on `Qonversion`. It is an iOS-only
+feature: the library resolves on the other platforms so a multi-platform package can depend on it
+unconditionally, but it exposes no entry point there — keep the calls behind `#if os(iOS)`.
+
+`NoCodes` does not re-export the main SDK, so import both wherever you touch a `Qonversion` type
+(a `NoCodesPurchaseDelegate` implementation, for instance). Initialize the main SDK first, then
+No-Codes with the same project key:
 
 ```swift
 import Qonversion
@@ -41,6 +46,10 @@ Four delegates cover the integration surface. Set them during initialization via
 ``NoCodesConfiguration``, or afterwards through the facade. Every callback is delivered on the main
 actor.
 
+All four protocols are class-bound and the SDK holds them **weakly** — keep your own strong reference
+to the object. A delegate created inline and handed to ``NoCodesConfiguration`` is released
+immediately and never hears from the SDK again.
+
 ### NoCodesDelegate
 
 Reports the flow lifecycle and supplies the presentation context.
@@ -56,7 +65,10 @@ Reports the flow lifecycle and supplies the presentation context.
 | ``NoCodesDelegate/noCodesFinished()`` | The flow is over and the screens are closed. |
 | ``NoCodesDelegate/noCodesFailedToLoadScreen(error:)`` | The screen could not be loaded. Close the flow with ``NoCodes/NoCodes/close()``. |
 
-Every method has a default no-op implementation, so implement only what you need.
+Every method has a default no-op implementation, so implement only what you need. That also means a
+misspelled signature compiles and silently receives nothing — in particular
+``NoCodesDelegate/noCodesFailedToExecute(action:error:)``, which is
+`func noCodesFailedToExecute(action: NoCodesAction, error: Error?)`.
 
 ### NoCodesScreenCustomizationDelegate
 

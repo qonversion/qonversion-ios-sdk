@@ -13,6 +13,7 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
 
     private let lock = NSLock()
     private var sentBatches: [[[String: AnyHashable]]] = []
+    private var sentUids: [String] = []
     private var shouldFail = false
 
     var batches: [[[String: AnyHashable]]] {
@@ -28,6 +29,13 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
 
     var lastBatch: [[String: AnyHashable]]? {
         return batches.last
+    }
+
+    var uids: [String] {
+        lock.lock()
+        defer { lock.unlock() }
+
+        return sentUids
     }
 
     func failNextRequests(_ shouldFail: Bool) {
@@ -56,8 +64,9 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
         lock.lock()
         defer { lock.unlock() }
 
-        if case let .sendScreenEvents(_, body, _, _) = request {
+        if case let .sendScreenEvents(uid, body, _, _) = request {
             sentBatches.append(body)
+            sentUids.append(uid)
         }
 
         return shouldFail
@@ -68,9 +77,16 @@ private final class UserIdProviderSpy: @unchecked Sendable {
 
     private let lock = NSLock()
     private var calls = 0
-    private let userId: String
+    private var userId: String
 
     init(userId: String) {
+        self.userId = userId
+    }
+
+    func setUserId(_ userId: String) {
+        lock.lock()
+        defer { lock.unlock() }
+
         self.userId = userId
     }
 
@@ -225,7 +241,7 @@ final class ScreenEventsServiceTests: XCTestCase {
 
     // MARK: - User id
 
-    func testTheUserIdIsResolvedOnceAndReusedForLaterBatches() async throws {
+    func testEveryBatchIsPostedForTheUserResolvedAtFlushTime() async throws {
         let processor = EventsRequestProcessor()
         let userIdProvider = UserIdProviderSpy(userId: "user-1")
         let service: ScreenEventsService = makeService(processor: processor, userIdProvider: userIdProvider)
@@ -235,12 +251,17 @@ final class ScreenEventsServiceTests: XCTestCase {
         service.flush()
         await waitUntil { processor.batchesCount == 1 }
 
+        // The host app identified a different user between the batches.
+        userIdProvider.setUserId("user-2")
         let second: ScreenEvent = makeEvent(index: 1)
         service.track(event: second)
         service.flush()
         await waitUntil { processor.batchesCount == 2 }
 
-        XCTAssertEqual(userIdProvider.callsCount, 1)
+        // Resolved per flush, so the second batch reaches the new user instead
+        // of the one the first batch was posted for.
+        XCTAssertEqual(userIdProvider.callsCount, 2)
+        XCTAssertEqual(processor.uids, ["user-1", "user-2"])
     }
 
     func testAFailingUserIdResolutionKeepsTheEventsForTheNextAttempt() async throws {
@@ -277,7 +298,7 @@ final class ScreenEventsServiceTests: XCTestCase {
     }
 
     private func makeEvent(index: Int) -> ScreenEvent {
-        let data: [String: Any] = [
+        let data: [String: AnyHashable] = [
             "type": "screen_shown",
             "screen_uid": "screen-1",
             "index": index
@@ -305,5 +326,49 @@ final class ScreenEventsServiceTests: XCTestCase {
             lastSeen = current
             try? await Task.sleep(nanoseconds: 10_000_000)
         }
+    }
+}
+
+// MARK: - Event payload
+
+final class ScreenEventTests: XCTestCase {
+
+    func testRawPayloadsKeepEveryHashableValue() {
+        let rawData: [String: Any] = [
+            "type": "screen_cta_tap",
+            "index": 3,
+            "ratio": 1.5,
+            "enabled": true
+        ]
+
+        let event = ScreenEvent(rawData: rawData)
+
+        XCTAssertEqual(event.toMap()["type"] as? String, "screen_cta_tap")
+        XCTAssertEqual(event.toMap()["index"] as? Int, 3)
+        XCTAssertEqual(event.toMap()["ratio"] as? Double, 1.5)
+        XCTAssertEqual(event.toMap()["enabled"] as? Bool, true)
+    }
+
+    func testRawPayloadsDropValuesThatCannotTravelOnTheWire() {
+        let rawData: [String: Any] = [
+            "type": "screen_cta_tap",
+            "callback": { () -> Void in }
+        ]
+
+        let event = ScreenEvent(rawData: rawData)
+
+        XCTAssertEqual(event.toMap().count, 1)
+        XCTAssertNil(event.toMap()["callback"])
+        // The batch has to survive JSON serialization.
+        let body: [String: Any] = ["events": [event.toMap()]]
+        XCTAssertNoThrow(try JSONSerialization.data(withJSONObject: body))
+    }
+
+    func testTheMapIsThePayloadItself() {
+        let data: [String: AnyHashable] = ["type": "screen_shown", "screen_uid": "screen-1"]
+
+        let event = ScreenEvent(data: data)
+
+        XCTAssertEqual(event.toMap(), data)
     }
 }

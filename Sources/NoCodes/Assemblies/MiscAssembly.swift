@@ -18,10 +18,6 @@ final class MiscAssembly {
   
   let projectKey: String
 
-  // Weak: ServicesAssembly holds MiscAssembly strongly; a strong back
-  // reference would leak the whole graph on every initialize.
-  weak var servicesAssembly: ServicesAssembly!
-  
   init(projectKey: String) {
     self.projectKey = projectKey
   }
@@ -67,8 +63,9 @@ final class MiscAssembly {
     return networkErrorHandler
   }
   
-  func headersBuilder() -> HeadersBuilderInterface {
-    let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
+  // The collector is passed in rather than reached for through a back
+  // reference: the assembly that owns it is the one asking for the headers.
+  func headersBuilder(deviceInfoCollector: DeviceInfoCollectorInterface) -> HeadersBuilderInterface {
     let headersBuilder = HeadersBuilder(projectKey: projectKey, deviceInfoCollector: deviceInfoCollector)
     
     return headersBuilder

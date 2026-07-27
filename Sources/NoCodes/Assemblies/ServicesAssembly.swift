@@ -81,7 +81,8 @@ final class ServicesAssembly {
     }
     
     let networkProvider: NetworkProviderInterface = networkProvider()
-    let headersBuilder: HeadersBuilderInterface = miscAssembly.headersBuilder()
+    let deviceInfoCollector: DeviceInfoCollectorInterface = deviceInfoCollector()
+    let headersBuilder: HeadersBuilderInterface = miscAssembly.headersBuilder(deviceInfoCollector: deviceInfoCollector)
     let errorHandler: NetworkErrorHandlerInterface = miscAssembly.errorHandler()
     let decoder: ResponseDecoderInterface = miscAssembly.responseDecoder()
     let rateLimiter: RateLimiterInterface = miscAssembly.rateLimiter()

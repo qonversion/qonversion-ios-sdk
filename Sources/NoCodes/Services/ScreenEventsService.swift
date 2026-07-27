@@ -28,9 +28,6 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
   /// Guard against concurrent flush operations.
   private var isFlushing = false
 
-  /// Cached user ID to avoid resolving on every flush.
-  private var cachedUserId: String?
-
   /// Maximum number of events to accumulate before auto-flushing.
   private static let batchSize = 10
 
@@ -56,7 +53,8 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
       buffer.append(event)
       shouldFlush = buffer.count >= Self.batchSize
     }
-    logger.debug("Tracked screen event: \(event.data["type"] ?? "unknown")")
+    let eventType: String = event.data["type"] as? String ?? "unknown"
+    logger.debug("Tracked screen event: \(eventType)")
     if shouldFlush {
       flush()
     }
@@ -77,14 +75,11 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
 
     Task {
       do {
-        let uid: String
-        if let cached = queue.sync(execute: { cachedUserId }) {
-          uid = cached
-        } else {
-          let resolvedUid: String = try await userIdProvider()
-          uid = resolvedUid
-          queue.sync(flags: .barrier) { cachedUserId = resolvedUid }
-        }
+        // Resolved per flush on purpose: the host app can identify a different
+        // user between batches, and a cached id would keep posting the events
+        // to the previous user. The main SDK answers from its own cache, so
+        // this costs nothing.
+        let uid: String = try await userIdProvider()
 
         let eventDicts: [[String: AnyHashable]] = eventsToSend.map { $0.toMap() }
         let request = Request.sendScreenEvents(uid: uid, body: eventDicts)
