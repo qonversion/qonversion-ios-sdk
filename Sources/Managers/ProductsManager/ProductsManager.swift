@@ -68,7 +68,10 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
             return persisted
         }
 
-        return fallbackService.obtainFallbackData()?.products ?? []
+        let fallbackProducts: [Qonversion.Product] = fallbackService.obtainFallbackData()?.products ?? []
+        reportProductsWithoutStoreId(fallbackProducts)
+
+        return fallbackProducts
     }
 
     func isFallbackFileAccessible() -> Bool {
@@ -165,9 +168,14 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
                 throw error
             }
             logger.warning("Products request failed, using the bundled fallback file: " + error.message)
+            // Reported HERE too, not only on the API path: the fallback file
+            // is precisely where a product row with neither `store_id` nor
+            // `apple_product_id` comes from, and it returns early.
+            reportProductsWithoutStoreId(fallbackProducts)
+
             return await enriched(fallbackProducts)
         }
-        
+
         reportProductsWithoutStoreId(products)
 
         // Persisted for the offline local entitlements calculation on the
@@ -343,6 +351,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         let storeProducts: [StoreProductWrapper] = try await storeKitFacade.products(for: productIds)
 
         var resultProducts: [Qonversion.Product] = []
+        var missingStoreIds: [String] = []
 
         // Products the store does not know (e.g. Stripe-only ones with no
         // App Store id) stay in the list unenriched — the catalog is
@@ -350,9 +359,21 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         for var product in products {
             if let storeProduct: StoreKit.Product = storeProducts.first(where: { $0.id == product.storeId })?.product {
                 product.enrich(storeProduct: storeProduct)
+            } else if !product.storeId.isEmpty {
+                missingStoreIds.append(product.storeId)
             }
 
             resultProducts.append(product)
+        }
+
+        // The half-enriched list IS cached — the catalog is authoritative and
+        // a product the store refuses to price is a real state. But it is
+        // almost always a misconfiguration (the id does not exist in App Store
+        // Connect, or the agreement is not signed), and it shows up as a
+        // paywall with no price, so it is named rather than left to be
+        // guessed at.
+        if !missingStoreIds.isEmpty {
+            logger.warning("The App Store returned no product for these ids, so they stay unpriced: " + missingStoreIds.joined(separator: ", "))
         }
 
         return resultProducts

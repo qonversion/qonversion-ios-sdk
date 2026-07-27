@@ -225,6 +225,67 @@ final class ProductsManagerTests: XCTestCase {
         XCTAssertFalse(messages.all().contains { $0.contains("q_ok") })
     }
 
+    func testAFallbackProductWithoutAStoreIdIsReportedInTheLog() async throws {
+        // The fallback file is exactly where a row with neither `store_id` nor
+        // `apple_product_id` comes from, and that path returns early — the
+        // reporting used to sit below the return and never ran for it.
+        let messages = LogCollector()
+        let manager = ProductsManager(
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            fallbackService: fallbackService,
+            logger: LoggerWrapper(sink: { _, message in messages.append(message) })
+        )
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+        let fallbackProducts: [Qonversion.Product] = [makeProduct(qonversionId: "q_fallback_no_store", storeId: "")]
+        fallbackService.fallbackData = FallbackData(products: fallbackProducts, productsPermissions: nil)
+
+        _ = try await manager.products()
+
+        XCTAssertTrue(messages.all().contains { $0.contains("q_fallback_no_store") },
+                      "a fallback row with no App Store product id must not be admitted silently")
+    }
+
+    func testAStoreIdTheStoreDoesNotKnowIsReportedInTheLog() async throws {
+        // A paywall with no price is the symptom; the id missing from App
+        // Store Connect is the cause, and only the SDK can see it.
+        let messages = LogCollector()
+        let manager = ProductsManager(
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            fallbackService: fallbackService,
+            logger: LoggerWrapper(sink: { _, message in messages.append(message) })
+        )
+        productsService.productsResult = [makeProduct(qonversionId: "q_main", storeId: "com.app.unknown")]
+        storeKitFacade.productsResult = []
+
+        _ = try await manager.products()
+
+        XCTAssertTrue(messages.all().contains { $0.contains("com.app.unknown") },
+                      "an id the store returned nothing for must be named")
+    }
+
+    func testAProductWithNoStoreIdIsNotReportedAsMissingFromTheStore() async throws {
+        // A Stripe-only product is never asked about, so it must not show up
+        // in the "the store returned nothing" list.
+        let messages = LogCollector()
+        let manager = ProductsManager(
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            fallbackService: fallbackService,
+            logger: LoggerWrapper(sink: { _, message in messages.append(message) })
+        )
+        productsService.productsResult = [makeProduct(qonversionId: "q_stripe", storeId: "")]
+        storeKitFacade.productsResult = []
+
+        _ = try await manager.products()
+
+        XCTAssertFalse(messages.all().contains { $0.contains("returned no product for these ids") })
+    }
+
     func testARequestedProductIdAbsentFromTheCatalogIsReportedInTheLog() async throws {
         let messages = LogCollector()
         let manager = ProductsManager(
