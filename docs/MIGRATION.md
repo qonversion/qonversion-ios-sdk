@@ -191,11 +191,12 @@ The bundled fallback file keeps the same name (`qonversion_ios_fallbacks.json`) 
 
 NoCodes screens are part of this SDK, as a separate `NoCodes` library in the same package — add it to your app target next to `Qonversion` and `import NoCodes`. In the Objective-C SDK the module was compiled into the main framework, so the only integration change is the extra product and import.
 
-The API kept its shape: `NoCodes.initialize(with: NoCodesConfiguration(projectKey:))`, `showScreen(withContextKey:)`, `loadScreen(withContextKey:)`, `close()`, `setLocale(_:)`, `setTheme(_:)` and the `NoCodesDelegate` / `NoCodesScreenCustomizationDelegate` / `NoCodesCustomVariablesDelegate` / `NoCodesPurchaseDelegate` set. Two differences to expect:
+The API kept its shape: `NoCodes.initialize(with: NoCodesConfiguration(projectKey:))`, `showScreen(withContextKey:)`, `loadScreen(withContextKey:)`, `close()`, `setLocale(_:)`, `setTheme(_:)` and the `NoCodesDelegate` / `NoCodesScreenCustomizationDelegate` / `NoCodesCustomVariablesDelegate` / `NoCodesPurchaseDelegate` set. Three differences to expect:
 
 | Objective-C SDK | Swift SDK |
 |---|---|
 | `showScreen(with id:)` *(deprecated)* | Removed — screens are addressed by their context key: `showScreen(withContextKey:)` |
+| `NoCodesScreenCustomizationDelegate.presentationConfigurationForScreen(id:)` | Removed together with the id-based entry point that used to call it. Configure the presentation in `presentationConfigurationForScreen(contextKey:)`; screens opened by an in-chain navigation action keep the configuration of the screen that opened them. |
 | Facade and delegates callable from any thread | Main-actor isolated: they present and hand out UIKit objects, so call them from the main actor and mark your delegate implementations `@MainActor` |
 
 The bundled fallback file keeps the same name (`nocodes_fallbacks.json`) and shape.

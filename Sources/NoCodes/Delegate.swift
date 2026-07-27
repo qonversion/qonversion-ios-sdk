@@ -63,11 +63,7 @@ public protocol NoCodesDelegate {
 public protocol NoCodesScreenCustomizationDelegate {
   /// The function should return the screen presentation configuration used to present the first screen in the chain.
   func presentationConfigurationForScreen(contextKey: String) -> NoCodesPresentationConfiguration
-  
-  /// The function should return the screen presentation configuration used to present the first screen in the chain.
-  /// Consider displaying screens using context keys. If so, the delegate method with contextKey will be called.
-  func presentationConfigurationForScreen(id: String) -> NoCodesPresentationConfiguration
-  
+
   /// View for popover presentation style for iPad. A new popover will be presented from this view
   /// Used only for screenPresentationStyle == .popover for iPad.
   /// You can omit implementing this delegate function if you do not support iPad or do not use popover presentation style.
@@ -141,10 +137,6 @@ public extension NoCodesDelegate {
 }
 
 public extension NoCodesScreenCustomizationDelegate {
-  func presentationConfigurationForScreen(id: String) -> NoCodesPresentationConfiguration {
-    return NoCodesPresentationConfiguration.defaultConfiguration()
-  }
-  
   func presentationConfigurationForScreen(contextKey: String) -> NoCodesPresentationConfiguration {
     return NoCodesPresentationConfiguration.defaultConfiguration()
   }
