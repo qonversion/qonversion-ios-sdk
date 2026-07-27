@@ -222,6 +222,27 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(requestsStorage.cleanCallsCount, 0, "the queue must not be dropped wholesale")
     }
 
+    func testCleanDuringReplayStopsTheSendsAndKeepsTheQueueEmpty() async {
+        // The user switched mid-replay: the queue belongs to the previous user
+        // and was just cleaned — the snapshot must not resurrect it, neither by
+        // sending the remaining entries nor by re-queueing a failed one.
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil, dedupKey: "first"))
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/devices", method: "POST", body: nil, dedupKey: "second"))
+        let gate = ProcessorAsyncGate()
+        networkProvider.onSend = { await gate.wait() }
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor()
+
+        processor.processStoredRequests()
+        await waitUntil { self.networkProvider.sentRequests.count == 1 }
+        requestsStorage.clean()
+        await gate.open()
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        XCTAssertTrue(requestsStorage.fetchRequests().isEmpty, "a failed entry must not be re-appended to a cleaned queue")
+        XCTAssertEqual(networkProvider.sentRequests.count, 1, "the remaining snapshot entries belong to the previous user")
+    }
+
     func testProcessStoredRequestsSkipsWhenCriticalErrorLatched() async {
         requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil, dedupKey: nil))
         let processor = makeProcessor()
@@ -495,4 +516,29 @@ final class RequestProcessorTests: XCTestCase {
             XCTAssertTrue(qonversionError?.error is DecodingError)
         }
     }
+}
+
+/// A reusable async gate: wait() suspends until open() is called.
+private actor ProcessorGateStorage {
+    var isOpen = false
+    var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+private final class ProcessorAsyncGate: @unchecked Sendable {
+    private let storage = ProcessorGateStorage()
+    func open() async { await storage.open() }
+    func wait() async { await storage.wait() }
 }

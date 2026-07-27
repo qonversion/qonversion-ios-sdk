@@ -31,7 +31,9 @@ protocol UserManagerInterface {
     func logout() async
 
     /// Waits until no identify is in flight and the user pipeline settled.
-    func awaitUserStability() async
+    /// A failed identify is rethrown: the caller asked for a settled user and
+    /// there is none, so answering for the previous one would be wrong.
+    func awaitUserStability() async throws
 
     /// Switches the SDK to another Qonversion user (e.g. the resolved owner
     /// of restored transactions) and invalidates the user-scoped caches.

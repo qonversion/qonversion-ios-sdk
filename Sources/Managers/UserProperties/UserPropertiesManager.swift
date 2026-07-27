@@ -37,7 +37,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
     private var sendingTask: Task<Void, Error>? = nil
     private var sendPropertiesRetryDelay: Int = Constants.sendPropertiesMinDelaySec.rawValue
     private var sendPropertiesRetryCount: Int = 0
-    private var isSendingInProgress: Bool = false
+    /// The batch round trip currently in flight. Kept as a handle (not a
+    /// flag), so a forced send can await it instead of returning early.
+    private var sendingInFlight: Task<Bool, Never>? = nil
     
     init(
         requestProcessor: RequestProcessorInterface,
@@ -149,16 +151,39 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         scheduleSendingProperties(withDelay: delay)
     }
 
-    func sendProperties() async throws {
-        // Single-flight: a batch already in flight covers the current storage
-        // snapshot; properties added meanwhile are picked up by the trailing
-        // reschedule below.
-        guard beginSendingIfIdle() else { return }
-        defer { endSending() }
+    func sendProperties(force: Bool) async throws {
+        guard force else {
+            // Single-flight: a batch already in flight covers the current
+            // storage snapshot; properties added meanwhile are picked up by
+            // the trailing reschedule in performSend.
+            guard let task: Task<Bool, Never> = startSendingIfIdle() else { return }
 
+            _ = await task.value
+            return
+        }
+
+        // Forceful: production waits out the round trip already in flight and
+        // then sends whatever is still pending, so the caller can rely on the
+        // properties having reached the backend.
+        while true {
+            if let inFlight: Task<Bool, Never> = currentSendingTask() {
+                _ = await inFlight.value
+            }
+
+            guard !propertiesStorage.all().isEmpty else { return }
+            guard let task: Task<Bool, Never> = startSendingIfIdle() else { continue }
+
+            let succeeded: Bool = await task.value
+            guard succeeded else { return }
+        }
+    }
+
+    /// One batch round trip. Returns false when the batch did not reach the
+    /// backend — the properties stay in the storage and a retry is scheduled.
+    private func performSend() async -> Bool {
         let properties: [Qonversion.UserProperty] = propertiesStorage.all()
 
-        guard !properties.isEmpty else { return }
+        guard !properties.isEmpty else { return true }
 
         // The backend user must exist before any data is sent. On failure keep
         // the properties and retry later — the gate itself retries creation on
@@ -168,7 +193,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         } catch {
             logger.warning("Failed to obtain user before sending properties: " + error.message)
             retrySendingProperties()
-            return
+            return false
         }
 
         let items: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
@@ -188,8 +213,11 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             if !propertiesStorage.all().isEmpty {
                 scheduleSendingProperties(withDelay: Constants.sendPropertiesMinDelaySec.rawValue)
             }
+
+            return true
         } catch {
             retrySendingProperties()
+            return false
         }
     }
 
@@ -204,15 +232,24 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 extension UserPropertiesManager {
 
     func processRequest(with token: String) {
-        Task {
+        Task { [weak self] in
+            guard let self else { return }
             do {
-                let request = Request.appleSearchAds(userId: userIdProvider.getUserId(), body: ["token": token])
-                let _ = try await requestProcessor.process(request: request, responseType: String.self)
-                logger.info(LoggerInfoMessages.appleSearchAdsAttributionRequestSucceeded.rawValue)
+                try await self.sendAppleSearchAdsToken(token)
+                self.logger.info(LoggerInfoMessages.appleSearchAdsAttributionRequestSucceeded.rawValue)
             } catch {
-                logger.error("\(LoggerInfoMessages.appleSearchAdsAttributionRequestFailed.rawValue) \(error)")
+                self.logger.error("\(LoggerInfoMessages.appleSearchAdsAttributionRequestFailed.rawValue) \(error)")
             }
         }
+    }
+
+    /// The attribution endpoint acknowledges with an empty body, like every
+    /// other data-sending flow — and, like them, needs the backend user first.
+    func sendAppleSearchAdsToken(_ token: String) async throws {
+        try await userManager.obtainUser()
+
+        let request = Request.appleSearchAds(userId: userIdProvider.getUserId(), body: ["token": token])
+        let _: EmptyApiResponse = try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
     }
     
     private func scheduleSendingProperties(withDelay delaySec: Int) {
@@ -240,22 +277,39 @@ extension UserPropertiesManager {
         sendingTask = nil
     }
 
-    /// True when no send was in progress; marks the flow busy and cancels a
-    /// pending schedule.
-    private func beginSendingIfIdle() -> Bool {
+    /// Starts a batch round trip when none is in flight and cancels the
+    /// pending schedule; nil means another one is already running.
+    private func startSendingIfIdle() -> Task<Bool, Never>? {
         stateLock.lock()
         defer { stateLock.unlock() }
-        guard !isSendingInProgress else { return false }
-        isSendingInProgress = true
+        guard sendingInFlight == nil else { return nil }
+
         sendingTask?.cancel()
         sendingTask = nil
-        return true
+
+        let task = Task<Bool, Never> { [weak self] () -> Bool in
+            guard let self else { return false }
+            // Cleared before the value reaches the awaiters, so a forced send
+            // resuming right after can start the next round.
+            defer { self.clearSendingInFlight() }
+
+            return await self.performSend()
+        }
+        sendingInFlight = task
+
+        return task
     }
 
-    private func endSending() {
+    private func currentSendingTask() -> Task<Bool, Never>? {
         stateLock.lock()
         defer { stateLock.unlock() }
-        isSendingInProgress = false
+        return sendingInFlight
+    }
+
+    private func clearSendingInFlight() {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        sendingInFlight = nil
     }
 
     private func resetRetryState() {

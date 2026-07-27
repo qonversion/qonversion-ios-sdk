@@ -46,6 +46,13 @@ final class UserPropertiesManagerTests: XCTestCase {
         )
     }
 
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
     override func tearDown() {
         // Dropping the manager without awaiting any scheduled sending task (min 5s delay):
         // tests never wait for it to avoid flakiness.
@@ -170,6 +177,49 @@ final class UserPropertiesManagerTests: XCTestCase {
         XCTAssertEqual(requestProcessor.processedRequests.count, 1)
     }
 
+    // MARK: - forceful sending
+
+    func testForceSendPropertiesWaitsOutTheBatchInFlightAndSendsTheRest() async throws {
+        // A silent early return here breaks both forceSendProperties() and the
+        // properties-before-remote-config invariant.
+        propertiesStorage.save(Qonversion.UserProperty(key: "first", value: "1"))
+        let gate = PropertiesAsyncGate()
+        requestProcessor.onProcess = { await gate.wait() }
+        requestProcessor.results = [
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+        ]
+
+        async let batchInFlight: Void = manager.sendProperties()
+        await waitUntil { self.requestProcessor.processedRequests.count == 1 }
+        propertiesStorage.save(Qonversion.UserProperty(key: "second", value: "2"))
+        async let forced: Void = manager.sendProperties(force: true)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        await gate.open()
+        requestProcessor.onProcess = nil
+        _ = try await batchInFlight
+        _ = try await forced
+
+        XCTAssertEqual(requestProcessor.processedRequests.count, 2, "force must send what the in-flight batch did not cover")
+        XCTAssertTrue(propertiesStorage.all().isEmpty)
+    }
+
+    func testForceSendPropertiesReturnsWhenNothingIsPending() async throws {
+        try await manager.sendProperties(force: true)
+
+        XCTAssertTrue(requestProcessor.processedRequests.isEmpty)
+    }
+
+    func testForceSendPropertiesStopsAfterAFailedSend() async throws {
+        propertiesStorage.save(Qonversion.UserProperty(key: "first", value: "1"))
+        requestProcessor.error = MockError.stubbed
+
+        try await manager.sendProperties(force: true)
+
+        XCTAssertEqual(requestProcessor.processedRequests.count, 1, "a failing backend must not be hammered in a loop")
+        XCTAssertEqual(propertiesStorage.all().count, 1)
+    }
+
     // MARK: - userProperties
 
     func testUserPropertiesReturnsPropertiesFromProcessor() async throws {
@@ -219,6 +269,34 @@ final class UserPropertiesManagerTests: XCTestCase {
         manager.collectAppleSearchAdsAttribution()
     }
 
+    func testAppleSearchAdsTokenIsSentAfterTheUserGateAndAcceptsAnEmptyAcknowledgement() async throws {
+        // The endpoint answers with an empty body: decoding it as a String
+        // turned every successful call into an invalidResponse failure.
+        requestProcessor.results = [EmptyApiResponse()]
+
+        try await manager.sendAppleSearchAdsToken("attribution-token")
+
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "no data is sent before the backend user exists")
+        XCTAssertEqual(requestProcessor.processedRequests.count, 1)
+        guard case let .appleSearchAds(userId, _, body, _) = requestProcessor.processedRequests[0] else {
+            return XCTFail("Expected an .appleSearchAds request")
+        }
+        XCTAssertEqual(userId, "test-user-id")
+        XCTAssertEqual(body["token"] as? String, "attribution-token")
+    }
+
+    func testAppleSearchAdsTokenIsNotSentWhenTheUserGateFails() async {
+        userManager.error = MockError.stubbed
+
+        do {
+            try await manager.sendAppleSearchAdsToken("attribution-token")
+            XCTFail("Expected the gate error to propagate")
+        } catch {
+            XCTAssertEqual(error as? MockError, .stubbed)
+        }
+        XCTAssertTrue(requestProcessor.processedRequests.isEmpty)
+    }
+
     // MARK: - user gate
 
     // Data-sending flows must pass the user gate first: the backend user has to
@@ -258,4 +336,29 @@ extension JSONDecoder {
         decoder.dateDecodingStrategy = .iso8601
         return decoder
     }
+}
+
+/// A reusable async gate: wait() suspends until open() is called.
+private actor PropertiesGateStorage {
+    var isOpen = false
+    var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+private final class PropertiesAsyncGate: @unchecked Sendable {
+    private let storage = PropertiesGateStorage()
+    func open() async { await storage.open() }
+    func wait() async { await storage.wait() }
 }

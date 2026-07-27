@@ -62,10 +62,20 @@ final class MockNetworkProvider: NetworkProviderInterface {
     var responseData: Data = Data()
     var response: URLResponse = HTTPURLResponse(url: URL(string: "https://api.qonversion.io")!, statusCode: 200, httpVersion: nil, headerFields: nil)!
     var error: Error?
-    private(set) var sentRequests: [URLRequest] = []
+    var onSend: (() async -> Void)?
+    private let providerStateLock = NSLock()
+    private var _sentRequests: [URLRequest] = []
+    var sentRequests: [URLRequest] {
+        providerStateLock.lock()
+        defer { providerStateLock.unlock() }
+        return _sentRequests
+    }
 
     func send(request: URLRequest) async throws -> (Data, URLResponse) {
-        sentRequests.append(request)
+        providerStateLock.lock()
+        _sentRequests.append(request)
+        providerStateLock.unlock()
+        await onSend?()
         if let error { throw error }
         return (responseData, response)
     }
@@ -92,6 +102,7 @@ final class MockUserPropertiesManager: UserPropertiesManagerInterface {
     var userPropertiesResult: Qonversion.UserProperties?
     var error: Error?
     private(set) var sendPropertiesCallsCount = 0
+    private(set) var sendPropertiesForceFlags: [Bool] = []
     var onSendProperties: (() async -> Void)?
 
     func userProperties() async throws -> Qonversion.UserProperties {
@@ -104,8 +115,9 @@ final class MockUserPropertiesManager: UserPropertiesManagerInterface {
 
     func setCustomUserProperty(key: String, value: String) { }
 
-    func sendProperties() async throws {
+    func sendProperties(force: Bool) async throws {
         sendPropertiesCallsCount += 1
+        sendPropertiesForceFlags.append(force)
         await onSendProperties?()
         if let error { throw error }
     }
@@ -178,6 +190,7 @@ final class MockRequestsStorage: RequestsStorageInterface {
 
     private(set) var storedRequests: [StoredRequest] = []
     private(set) var cleanCallsCount = 0
+    private(set) var cleanGeneration = 0
 
     func append(_ request: StoredRequest) {
         if let dedupKey = request.dedupKey, storedRequests.contains(where: { $0.dedupKey == dedupKey }) {
@@ -202,6 +215,7 @@ final class MockRequestsStorage: RequestsStorageInterface {
 
     func clean() {
         cleanCallsCount += 1
+        cleanGeneration += 1
         storedRequests = []
     }
 }
@@ -620,9 +634,13 @@ final class MockUserManager: UserManagerInterface {
     }
 
     private(set) var awaitUserStabilityCallsCount = 0
+    var awaitUserStabilityError: Error?
+    var onAwaitUserStability: (() async -> Void)?
 
-    func awaitUserStability() async {
+    func awaitUserStability() async throws {
         awaitUserStabilityCallsCount += 1
+        await onAwaitUserStability?()
+        if let awaitUserStabilityError { throw awaitUserStabilityError }
     }
 
     private(set) var switchedToUserIds: [String] = []

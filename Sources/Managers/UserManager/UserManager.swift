@@ -154,16 +154,28 @@ actor UserManager: UserManagerInterface {
 
     /// Waits until no identify is in flight and the creation pipeline has
     /// settled — user-scoped requests (remote config) must not race a uid switch.
-    func awaitUserStability() async {
+    func awaitUserStability() async throws {
+        var identifyError: Error?
         while let inFlight = identifyInFlight {
-            _ = try? await inFlight.task.value
+            do {
+                _ = try await inFlight.task.value
+                identifyError = nil
+            } catch {
+                // A logout cancels the identify on purpose — that is a session
+                // teardown, not a failure the caller has to handle.
+                identifyError = error is CancellationError ? nil : error
+            }
             if identifyInFlight?.id == inFlight.id {
                 identifyInFlight = nil
             }
         }
+        // A pipeline failure is not reported here: every caller passes the
+        // user gate right after and gets it from there.
         if let pipeline {
             _ = try? await pipeline.value
         }
+
+        if let identifyError { throw identifyError }
     }
 
     func userInfo() async throws -> Qonversion.User {

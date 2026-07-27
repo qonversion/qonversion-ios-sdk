@@ -56,6 +56,10 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         let requests: [StoredRequest] = requestsStorage.fetchRequests()
         guard !requests.isEmpty else { return }
 
+        // The snapshot belongs to the user it was fetched for: a clean() in
+        // between (user switch) invalidates every entry still in it.
+        let generation: Int = requestsStorage.cleanGeneration
+
         // Strong capture on purpose: the caller does not retain this
         // processor, and a weak capture would let it deallocate before the
         // task runs — the replay would silently do nothing. The task holds
@@ -63,6 +67,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         Task {
             for stored in requests {
                 guard self.criticalError == nil else { return }
+                guard self.requestsStorage.cleanGeneration == generation else { return }
                 guard let url = URL(string: stored.url) else {
                     self.requestsStorage.remove(stored)
                     continue
@@ -85,7 +90,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     // (resending would duplicate) or permanently rejected.
                     let statusCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
                     if Self.isRetriableStatusCode(statusCode) {
-                        self.bumpAttempt(of: stored)
+                        self.bumpAttempt(of: stored, ifGenerationIs: generation)
                     } else {
                         self.requestsStorage.remove(stored)
                     }
@@ -96,7 +101,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     }
                 } catch {
                     // Kept in the queue for the next session.
-                    self.bumpAttempt(of: stored)
+                    self.bumpAttempt(of: stored, ifGenerationIs: generation)
                 }
             }
         }
@@ -110,8 +115,11 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     static let triggerHeader: String = "Trigger"
 
     /// Records one more failed send of a queued request, so the next replay
-    /// reports the true attempt number.
-    private func bumpAttempt(of stored: StoredRequest) {
+    /// reports the true attempt number. A queue cleaned while the request was
+    /// in flight must stay clean — the entry belongs to the previous user.
+    private func bumpAttempt(of stored: StoredRequest, ifGenerationIs generation: Int) {
+        guard requestsStorage.cleanGeneration == generation else { return }
+
         requestsStorage.remove(stored)
         let updated = StoredRequest(
             url: stored.url,

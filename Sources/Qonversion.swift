@@ -244,7 +244,7 @@ public final class Qonversion: @unchecked Sendable {
     public func forceSendProperties() async {
         guard let userPropertiesManager else { return }
 
-        try? await userPropertiesManager.sendProperties()
+        try? await userPropertiesManager.sendProperties(force: true)
     }
 
     /// Whether the bundled fallback file (`qonversion_ios_fallbacks.json`) is

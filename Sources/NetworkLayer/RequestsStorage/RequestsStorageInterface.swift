@@ -18,5 +18,10 @@ protocol RequestsStorageInterface: Sendable {
 
     func fetchRequests() -> [StoredRequest]
 
+    /// Bumped by every clean(). A replay working from a snapshot compares it
+    /// to tell whether the queue it is draining still belongs to the current
+    /// user.
+    var cleanGeneration: Int { get }
+
     func clean()
 }

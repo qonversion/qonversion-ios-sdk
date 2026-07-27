@@ -223,14 +223,45 @@ final class RemoteConfigManagerTests: XCTestCase {
         XCTAssertEqual(config.source.contextKey, "main")
     }
 
-    func testCachedLoadSkipsTheGateAndTheFlush() async throws {
+    func testCachedLoadStillWaitsForStabilityButSkipsTheGateAndTheFlush() async throws {
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
         _ = try await manager.loadRemoteConfig(contextKey: "main")
 
         _ = try await manager.loadRemoteConfig(contextKey: "main")
 
-        XCTAssertEqual(userManager.obtainUserCallsCount, 1)
+        XCTAssertEqual(userManager.awaitUserStabilityCallsCount, 2, "the stability gate comes before the cache lookup")
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "a stable user with a cached config costs no request")
         XCTAssertEqual(userPropertiesManager.sendPropertiesCallsCount, 1)
+        XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 1)
+    }
+
+    func testCachedConfigIsNotServedWhileAnIdentifyIsStillSwitchingTheUser() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "previous-user-config")
+        _ = try await manager.loadRemoteConfig(contextKey: "main")
+
+        // The identify the stability gate is waiting for moves the uid: the
+        // cached config belongs to the previous user and must not be served.
+        userManager.onAwaitUserStability = { [weak manager] in manager?.userDidChange() }
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "new-user-config")
+
+        let config = try await manager.loadRemoteConfig(contextKey: "main")
+
+        XCTAssertEqual(config.source.identifier, "new-user-config")
+    }
+
+    func testIdentifyFailureDuringTheStabilityGateFailsTheLoad() async {
+        // Production fails the queued remote config completions with the
+        // identify error instead of answering for the wrong user.
+        userManager.awaitUserStabilityError = MockError.stubbed
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
+
+        do {
+            _ = try await manager.loadRemoteConfig(contextKey: "main")
+            XCTFail("Expected the identify error to propagate")
+        } catch {
+            XCTAssertEqual(error as? MockError, .stubbed)
+        }
+        XCTAssertTrue(remoteConfigService.loadRemoteConfigContextKeys.isEmpty)
     }
 
     func testPropertiesFlushHappensStrictlyBeforeTheConfigRequest() async throws {

@@ -37,26 +37,33 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         self.logger = logger
     }
 
+    /// Production's "user stability" rule: a config requested while an
+    /// identify is switching the uid would belong to the previous user, so the
+    /// gate runs before anything is served — the cache included.
+    private func awaitUserStability() async throws {
+        try await userManager.awaitUserStability()
+    }
+
     /// Remote configs are computed per user from fresh segmentation data: the
-    /// user must be settled (identify in flight would change the uid) and the
-    /// pending properties batch must reach the backend first. A flush failure
-    /// is not fatal — properties retry on their own schedule.
+    /// pending properties batch must reach the backend before the config is
+    /// computed. A flush failure is not fatal — properties retry on their own
+    /// schedule.
     private func prepareUserForRemoteConfig() async throws {
-        // Production's "user stability" rule: a config requested while an
-        // identify is switching the uid would belong to the previous user.
-        await userManager.awaitUserStability()
         _ = try await userManager.obtainUser()
-        try? await userPropertiesManager.sendProperties()
+        try? await userPropertiesManager.sendProperties(force: true)
     }
 
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
         let finalKey: String = contextKey ?? Constants.emptyContextKey.rawValue
-        let (cached, generation) = cachedConfigAndGeneration(for: finalKey)
-        if let cached {
-            return cached
-        }
 
         do {
+            try await awaitUserStability()
+
+            let (cached, generation) = cachedConfigAndGeneration(for: finalKey)
+            if let cached {
+                return cached
+            }
+
             try await prepareUserForRemoteConfig()
 
             let remoteConfig: Qonversion.RemoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
@@ -86,6 +93,7 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
 
     func loadRemoteConfigList() async throws -> Qonversion.RemoteConfigList {
         do {
+            try await awaitUserStability()
             try await prepareUserForRemoteConfig()
 
             let generation: Int = currentGeneration()
@@ -111,12 +119,14 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
             requestedKeys.append(Constants.emptyContextKey.rawValue)
         }
 
-        let (cachedConfigs, generation) = cachedConfigsAndGeneration(for: requestedKeys)
-        if (cachedConfigs.count == requestedKeys.count) {
-            return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
-        }
-
         do {
+            try await awaitUserStability()
+
+            let (cachedConfigs, generation) = cachedConfigsAndGeneration(for: requestedKeys)
+            if (cachedConfigs.count == requestedKeys.count) {
+                return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
+            }
+
             try await prepareUserForRemoteConfig()
 
             let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
