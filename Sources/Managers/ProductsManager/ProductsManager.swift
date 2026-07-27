@@ -271,22 +271,19 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     /// The storefront defines prices, availability and offers: everything
     /// enriched from the store must be refetched after a change.
     func startObservingStorefrontChanges() {
+        // The check and the assignment are one step: a concurrent second start
+        // would otherwise leak an observation task.
         lock.lock()
-        let alreadyObserving: Bool = _storefrontTask != nil
-        lock.unlock()
-        guard !alreadyObserving else { return }
+        defer { lock.unlock() }
+        guard _storefrontTask == nil else { return }
 
-        let task = Task { [weak self] in
+        _storefrontTask = Task { [weak self] in
             guard let self else { return }
             for await _ in self.storeKitFacade.storefrontUpdates() {
                 guard !Task.isCancelled else { return }
                 self.dropStoreEnrichment()
             }
         }
-
-        lock.lock()
-        _storefrontTask = task
-        lock.unlock()
     }
 
     private func dropStoreEnrichment() {

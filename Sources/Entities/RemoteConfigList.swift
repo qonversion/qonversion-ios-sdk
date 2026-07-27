@@ -22,7 +22,7 @@ extension Qonversion {
 
         public init(from decoder: Decoder) throws {
             var container = try decoder.container(keyedBy: CodingKeys.self).nestedUnkeyedContainer(forKey: .remoteConfigs)
-            remoteConfigs = LossyArray.decode(RemoteConfig.self, from: &container)
+            remoteConfigs = try LossyArray.decode(RemoteConfig.self, from: &container)
         }
 
         private enum CodingKeys: String, CodingKey {

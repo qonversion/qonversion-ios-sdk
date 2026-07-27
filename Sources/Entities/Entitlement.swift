@@ -308,7 +308,7 @@ extension Qonversion {
             // Production tolerance: one malformed element degrades, it does
             // not null the user's whole access list.
             var container = try decoder.container(keyedBy: CodingKeys.self).nestedUnkeyedContainer(forKey: .data)
-            data = LossyArray.decode(Qonversion.Entitlement.self, from: &container)
+            data = try LossyArray.decode(Qonversion.Entitlement.self, from: &container)
         }
 
         private enum CodingKeys: String, CodingKey {

@@ -75,15 +75,13 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
                 timestamp: promoOffer.timestamp
             ))
         }
-        #if !os(visionOS)
-        if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *) {
+        if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *) {
             // Win-back offers are applied only when the caller passes an offer
             // that came from the store itself.
             if let winBackOffer = options.winBackOffer?.originalOffer {
                 purchaseOptions.insert(.winBackOffer(winBackOffer))
             }
         }
-        #endif
 
         return purchaseOptions
     }

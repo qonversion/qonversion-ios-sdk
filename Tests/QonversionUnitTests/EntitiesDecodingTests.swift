@@ -481,6 +481,22 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertEqual(list.data.first?.startedDate, Date(timeIntervalSince1970: 12), "a unix timestamp is accepted next to the ISO8601 form")
     }
 
+    func testAnAllMalformedListIsASchemaBreakNotAnEmptyList() {
+        // Decoding it as [] would let the caller persist emptiness over its
+        // offline data instead of falling back.
+        let json = """
+        {"object": "list", "data": [{"no": "id"}, {"still": "no id"}]}
+        """
+
+        XCTAssertThrowsError(try decoder.decode(Qonversion.EntitlementsList.self, from: Data(json.utf8)))
+    }
+
+    func testAGenuinelyEmptyListDecodesEmpty() throws {
+        let list = try decoder.decode(Qonversion.EntitlementsList.self, from: Data(#"{"object": "list", "data": []}"#.utf8))
+
+        XCTAssertTrue(list.data.isEmpty)
+    }
+
     func testMalformedNewFieldsDegradeToTheirDefaults() throws {
         let json = #"{"id": "premium", "is_active": true, "renews_count": "eighteen", "last_activated_offer_code": 42}"#
 
@@ -488,6 +504,20 @@ final class EntitiesDecodingTests: XCTestCase {
 
         XCTAssertEqual(entitlement.renewsCount, 0)
         XCTAssertNil(entitlement.lastActivatedOfferCode)
+    }
+
+    func testAZeroTimestampMeansNoDateNotNineteenSeventy() throws {
+        // The previous API generation writes 0 for "never": decoding it as a
+        // real date would make a lifetime entitlement look long expired.
+        // Decoded with the strategy the SDK installs, which accepts epochs.
+        let json = #"{"id": "lifetime", "is_active": true, "expires_at": 0, "trial_start_timestamp": 0}"#
+        let tolerantDecoder = JSONDecoder()
+        tolerantDecoder.dateDecodingStrategy = .qonversionTolerant
+
+        let entitlement = try tolerantDecoder.decode(Qonversion.Entitlement.self, from: Data(json.utf8))
+
+        XCTAssertNil(entitlement.expirationDate)
+        XCTAssertNil(entitlement.trialStartDate)
     }
 
     func testEntitlementDecodesEpochTimestamps() throws {
@@ -676,6 +706,24 @@ final class ToleratedDecodingTests: XCTestCase {
         let list = try sdkDecoder().decode(ListEnvelope<Qonversion.UserProperty>.self, from: Data(json.utf8))
 
         XCTAssertEqual(list.data.map(\.key), ["_q_email", "custom"])
+    }
+
+    func testAnAllMalformedProductsListThrowsInsteadOfEmptyingTheCatalog() {
+        let json = #"{"data": [{"no": "key"}, {"also": "broken"}]}"#
+
+        XCTAssertThrowsError(try sdkDecoder().decode(ListEnvelope<Qonversion.UserProperty>.self, from: Data(json.utf8)))
+    }
+
+    func testAnEmptyDataArrayStillDecodes() throws {
+        let list = try sdkDecoder().decode(ListEnvelope<Qonversion.UserProperty>.self, from: Data(#"{"data": []}"#.utf8))
+
+        XCTAssertTrue(list.data.isEmpty)
+    }
+
+    func testAnAllMalformedRemoteConfigListThrows() {
+        let json = #"{"remoteConfigs": [{"source": {}}, {"source": {}}]}"#
+
+        XCTAssertThrowsError(try sdkDecoder().decode(Qonversion.RemoteConfigList.self, from: Data(json.utf8)))
     }
 
     func testRemoteConfigListSkipsMalformedRows() throws {

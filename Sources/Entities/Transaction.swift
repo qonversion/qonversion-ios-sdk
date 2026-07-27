@@ -239,11 +239,9 @@ extension Qonversion {
                     
                     guard let type: StoreKit.Transaction.OfferType = type else { return nil }
 
-                    #if !os(visionOS)
-                    if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *), type == .winBack {
+                    if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *), type == .winBack {
                         return Qonversion.Transaction.Offer.OfferType.winBack
                     }
-                    #endif
 
                     switch type {
                     case .introductory:

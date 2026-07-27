@@ -470,7 +470,7 @@ final class ProductsStorefrontTests: XCTestCase {
         XCTAssertFalse(manager.loadedProducts.isEmpty)
 
         manager.startObservingStorefrontChanges()
-        try? await Task.sleep(nanoseconds: 50_000_000)
+        await waitUntil { self.storeKitFacade.hasStorefrontSubscriber }
         storeKitFacade.emitStorefrontChange()
 
         await waitUntil { self.manager.loadedProducts.isEmpty }

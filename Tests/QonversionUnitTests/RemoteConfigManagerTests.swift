@@ -516,6 +516,32 @@ final class RemoteConfigManagerTests: XCTestCase {
         XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 2)
     }
 
+    func testACallerArrivingAfterTheSwitchDoesNotJoinThePreviousUsersLoad() async throws {
+        // The generation guard stops the stale response from being CACHED, but
+        // a caller joining the in-flight task would still be handed it.
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "previous-user-config")
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfig = { await gate.wait() }
+
+        async let staleLoad: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        manager.userDidChange()
+
+        // The new user asks while the previous user's request is STILL in
+        // flight — that is the only moment the stale task can be joined.
+        remoteConfigService.onLoadRemoteConfig = nil
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "new-user-config")
+        async let freshLoad: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        await gate.open()
+
+        let fresh: Qonversion.RemoteConfig = try await freshLoad
+        _ = try? await staleLoad
+
+        XCTAssertEqual(fresh.source.identifier, "new-user-config")
+        XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 2, "the new user must start its own request")
+    }
+
     func testUserDidChangeClearsCachedConfigs() async throws {
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
         _ = try await manager.loadRemoteConfig(contextKey: "main")

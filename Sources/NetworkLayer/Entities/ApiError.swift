@@ -25,8 +25,15 @@ struct ApiError : Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         message = try container.decode(String.self, forKey: .message)
         // A body carrying only some of the fields must still yield what it
-        // does carry: the code drives the typed error mapping.
-        code = try? container.decodeIfPresent(String.self, forKey: .code)
+        // does carry: the code drives the typed error mapping. It arrives as
+        // a slug in v4 and as a bare number in the previous generation.
+        if let stringCode = try? container.decodeIfPresent(String.self, forKey: .code) {
+            code = stringCode
+        } else if let numericCode = try? container.decodeIfPresent(Int.self, forKey: .code) {
+            code = String(numericCode)
+        } else {
+            code = nil
+        }
         type = try? container.decodeIfPresent(String.self, forKey: .type)
     }
 

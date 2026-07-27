@@ -284,6 +284,26 @@ final class EntitlementsManagerTests: XCTestCase {
         await assertNothingServed(.internal)
     }
 
+    func testALifetimeEntitlementWithAZeroExpirationSurvivesTheCacheFilter() async throws {
+        // The zero-timestamp sentinel used to decode as 1970, and the
+        // stale-entry filter then dropped a lifetime subscriber's access.
+        let json = #"{"data": [{"id": "premium", "is_active": true, "source": "appstore", "expires_at": 0}]}"#
+        let list = try JSONDecoder.qonversionTolerantTest.decode(Qonversion.EntitlementsList.self, from: Data(json.utf8))
+        let cached: [String: Qonversion.Entitlement] = Dictionary(list.data.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
+        XCTAssertNil(cached["premium"]?.expirationDate)
+
+        try storage.set(cached, forKey: "qonversion.keys.entitlements")
+        storage.set(double: Date().timeIntervalSince1970, forKey: "qonversion.keys.entitlementsTimestamp")
+        storage.set(double: Date().timeIntervalSince1970, forKey: "qonversion.keys.entitlementsBackendTimestamp")
+
+        service.error = QonversionError(type: .internal)
+        facade.currentEntitlementsResult = []
+
+        let entitlements: [String: Qonversion.Entitlement] = await servedEntitlements()
+
+        XCTAssertEqual(entitlements["premium"]?.active, true, "a lifetime entitlement must survive the stale-entry filter")
+    }
+
     // MARK: - user switch during the fetch
 
     func testEntitlementsOfThePreviousUserAreNotPersistedAfterASwitch() async throws {

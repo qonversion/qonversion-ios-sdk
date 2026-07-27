@@ -37,6 +37,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
     private let logger: LoggerWrapper
     private let notificationCenter: NotificationCenter
 
+    private let backgroundNotificationName: Notification.Name
+
     /// Kept so the observer can be removed: a token-less registration lives
     /// as long as the process does, even after the manager is gone.
     private var backgroundObserver: NSObjectProtocol?
@@ -59,7 +61,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         userManager: UserManagerInterface,
         integrationsInfoCollector: IntegrationsInfoCollectorInterface,
         logger: LoggerWrapper,
-        notificationCenter: NotificationCenter = .default
+        notificationCenter: NotificationCenter = .default,
+        backgroundNotificationName: Notification.Name = UserPropertiesManager.backgroundNotificationName
     ) {
         self.requestProcessor = requestProcessor
         self.propertiesStorage = propertiesStorage
@@ -69,6 +72,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         self.integrationsInfoCollector = integrationsInfoCollector
         self.logger = logger
         self.notificationCenter = notificationCenter
+        self.backgroundNotificationName = backgroundNotificationName
 
         subscribeToBackgroundFlush()
     }
@@ -79,17 +83,26 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         }
     }
 
+    /// The notification that means "the app is going to the background".
+    /// UIKit has one; the other platforms do not, so the SDK names its own —
+    /// which also makes the subscription (and its teardown) platform-neutral.
+    static var backgroundNotificationName: Notification.Name {
+        #if canImport(UIKit) && !os(watchOS)
+        return UIApplication.didEnterBackgroundNotification
+        #else
+        return Notification.Name("qonversion.notifications.appDidEnterBackground")
+        #endif
+    }
+
     /// The pending batch waits on a delay timer that never fires once the
     /// process is suspended — flush it when the app goes to background.
     private func subscribeToBackgroundFlush() {
-        #if canImport(UIKit) && !os(watchOS)
-        backgroundObserver = notificationCenter.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: nil) { [weak self] _ in
+        backgroundObserver = notificationCenter.addObserver(forName: backgroundNotificationName, object: nil, queue: nil) { [weak self] _ in
             guard let self else { return }
             Task {
                 try? await self.sendProperties()
             }
         }
-        #endif
     }
 
     func collectIntegrationsData() {

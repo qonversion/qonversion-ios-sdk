@@ -258,11 +258,9 @@ extension Qonversion {
                 static func from(offerType: StoreKit.Product.SubscriptionOffer.OfferType?) -> Qonversion.Product.SubscriptionOffer.OfferType {
                     guard let offerType else { return .unknown }
 
-                    #if !os(visionOS)
-                    if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *), offerType == .winBack {
+                    if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *), offerType == .winBack {
                         return .winBack
                     }
-                    #endif
 
                     switch offerType {
                     case .introductory:
@@ -344,17 +342,13 @@ extension Qonversion {
                 promotionalOffers = originalSubscription.promotionalOffers.compactMap {
                     Qonversion.Product.SubscriptionOffer(originalOffer: $0)
                 }
-                #if !os(visionOS)
-                if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *) {
+                if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *) {
                     winBackOffers = originalSubscription.winBackOffers.compactMap {
                         Qonversion.Product.SubscriptionOffer(originalOffer: $0)
                     }
                 } else {
                     winBackOffers = []
                 }
-                #else
-                winBackOffers = []
-                #endif
                 subscriptionGroupId = originalSubscription.subscriptionGroupID
                 subscriptionPeriod = Qonversion.Product.SubscriptionPeriod(originalPeriod: originalSubscription.subscriptionPeriod)
             }

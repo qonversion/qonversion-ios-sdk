@@ -338,6 +338,13 @@ extension JSONDecoder {
         decoder.dateDecodingStrategy = .iso8601
         return decoder
     }
+
+    /// The strategy the SDK actually installs.
+    static var qonversionTolerantTest: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .qonversionTolerant
+        return decoder
+    }
 }
 
 /// A reusable async gate: wait() suspends until open() is called.
@@ -378,30 +385,53 @@ final class SpyNotificationCenter: NotificationCenter, @unchecked Sendable {
 
 final class UserPropertiesObserverTests: XCTestCase {
 
+    private func makeManager(center: NotificationCenter, name: Notification.Name, processor: MockRequestProcessor = MockRequestProcessor(), storage: UserPropertiesStorage = UserPropertiesStorage()) -> UserPropertiesManager {
+        let userManager = MockUserManager()
+        userManager.user = try? JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(#"{"id": "u", "created_at": "2023-11-14T22:13:20Z"}"#.utf8))
+
+        return UserPropertiesManager(
+            requestProcessor: processor,
+            propertiesStorage: storage,
+            delayCalculator: IncrementalDelayCalculator(),
+            userIdProvider: InternalConfig(userId: "u"),
+            userManager: userManager,
+            integrationsInfoCollector: MockIntegrationsInfoCollector(),
+            logger: LoggerWrapper(),
+            notificationCenter: center,
+            backgroundNotificationName: name
+        )
+    }
+
     func testTheBackgroundObserverIsRemovedOnDeinit() {
         // A token-less registration outlives the manager: the closure stays in
         // the notification center for the life of the process.
         let center = SpyNotificationCenter()
-        var manager: UserPropertiesManager? = UserPropertiesManager(
-            requestProcessor: MockRequestProcessor(),
-            propertiesStorage: UserPropertiesStorage(),
-            delayCalculator: IncrementalDelayCalculator(),
-            userIdProvider: InternalConfig(userId: "u"),
-            userManager: MockUserManager(),
-            integrationsInfoCollector: MockIntegrationsInfoCollector(),
-            logger: LoggerWrapper(),
-            notificationCenter: center
-        )
+        var manager: UserPropertiesManager? = makeManager(center: center, name: Notification.Name("test.background"))
         XCTAssertNotNil(manager)
 
         manager = nil
 
-        #if canImport(UIKit) && !os(watchOS)
         XCTAssertEqual(center.removedObservers.count, 1, "the background flush observer must be unregistered")
-        #else
-        // The background flush is a UIKit-only concern, so there is nothing to
-        // register — and nothing to remove — on this platform.
-        XCTAssertTrue(center.removedObservers.isEmpty)
-        #endif
+    }
+
+    func testTheBackgroundNotificationFlushesThePendingBatch() async {
+        // Proves the subscription is live, on every platform: the batch waits
+        // on a delay timer that never fires once the process is suspended.
+        let center = SpyNotificationCenter()
+        let name = Notification.Name("test.background.flush")
+        let processor = MockRequestProcessor()
+        processor.results = [SendUserPropertiesResult(savedProperties: [], propertyErrors: [])]
+        let storage = UserPropertiesStorage()
+        let manager: UserPropertiesManager = makeManager(center: center, name: name, processor: processor, storage: storage)
+        manager.setCustomUserProperty(key: "k", value: "v")
+
+        center.post(name: name, object: nil)
+
+        let deadline = Date().addingTimeInterval(3)
+        while processor.processedRequests.isEmpty && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+        XCTAssertEqual(processor.processedRequests.count, 1)
+        XCTAssertTrue(storage.all().isEmpty)
     }
 }

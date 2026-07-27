@@ -17,6 +17,15 @@ extension JSONDecoder.DateDecodingStrategy {
             let container = try decoder.singleValueContainer()
 
             if let timestamp: Double = try? container.decode(Double.self) {
+                // A non-positive epoch is the "no date" sentinel of the
+                // previous API generation, NOT 1970: decoding it as a real
+                // date would turn a lifetime entitlement's absent expiration
+                // into an expired one. The tolerant field decoders absorb the
+                // throw and keep the value nil.
+                guard timestamp > 0 else {
+                    throw DecodingError.dataCorruptedError(in: container, debugDescription: "A non-positive unix timestamp means \"no date\"")
+                }
+
                 return Date(timeIntervalSince1970: timestamp)
             }
 
@@ -77,15 +86,28 @@ private final class ISO8601Parser: @unchecked Sendable {
 /// everything the response carried.
 enum LossyArray {
 
-    static func decode<Element: Decodable>(_ elementType: Element.Type, from container: inout UnkeyedDecodingContainer) -> [Element] {
+    /// Throws when EVERY row was malformed: that is a schema break, not an
+    /// empty list, and swallowing it would let the caller persist the empty
+    /// result over its offline data instead of falling back. A genuinely
+    /// empty array decodes to an empty list.
+    static func decode<Element: Decodable>(_ elementType: Element.Type, from container: inout UnkeyedDecodingContainer) throws -> [Element] {
         var elements: [Element] = []
+        var skippedCount = 0
         while !container.isAtEnd {
             if let element: Element = try? container.decode(Element.self) {
                 elements.append(element)
             } else {
                 // Skip the malformed element; the container must still advance.
+                skippedCount += 1
                 _ = try? container.decode(AnyDecodableValue.self)
             }
+        }
+
+        guard elements.isEmpty == false || skippedCount == 0 else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(
+                codingPath: container.codingPath,
+                debugDescription: "Every one of the \(skippedCount) rows failed to decode"
+            ))
         }
 
         return elements

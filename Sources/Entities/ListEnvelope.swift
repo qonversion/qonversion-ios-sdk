@@ -16,7 +16,7 @@ struct ListEnvelope<Element: Decodable>: Decodable {
 
     init(from decoder: Decoder) throws {
         var container = try decoder.container(keyedBy: CodingKeys.self).nestedUnkeyedContainer(forKey: .data)
-        data = LossyArray.decode(Element.self, from: &container)
+        data = try LossyArray.decode(Element.self, from: &container)
     }
 
     private enum CodingKeys: String, CodingKey {

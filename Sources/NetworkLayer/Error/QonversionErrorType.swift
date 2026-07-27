@@ -139,11 +139,21 @@ public enum QonversionErrorType: Sendable {
 
 extension QonversionErrorType {
 
-    /// The backend error codes that carry a meaning of their own. Taken from
-    /// the production error mapper; anything absent keeps the classification
-    /// derived from the HTTP status.
+    /// The backend error codes that carry a meaning of their own; anything
+    /// absent keeps the classification derived from the HTTP status.
+    ///
+    /// v4 answers with snake_case slugs. The numeric codes of the previous API
+    /// generation are kept alongside them, so a proxy or an older deployment
+    /// still maps.
     init?(apiCode: String?) {
-        guard let apiCode, let code = Int(apiCode) else { return nil }
+        guard let apiCode else { return nil }
+
+        if let slugType = QonversionErrorType(apiCodeSlug: apiCode) {
+            self = slugType
+            return
+        }
+
+        guard let code = Int(apiCode) else { return nil }
 
         switch code {
         case 10004, 10005, 20014:
@@ -156,6 +166,29 @@ extension QonversionErrorType {
             self = .projectConfigError
         case 20100, 20102, 20103, 20105, 20107, 20108, 20110, 21099:
             self = .receiptValidationError
+        default:
+            return nil
+        }
+    }
+
+    private init?(apiCodeSlug: String) {
+        switch apiCodeSlug {
+        case "invalid_client_uid":
+            self = .invalidClientUID
+        case "fraud_purchase":
+            self = .fraudPurchase
+        case "feature_not_supported":
+            self = .featureNotSupported
+        case "project_config_error":
+            self = .projectConfigError
+        case "receipt_validation_error":
+            self = .receiptValidationError
+        case "product_not_found":
+            self = .productNotFound
+        case "payment_not_allowed":
+            self = .paymentNotAllowed
+        case "store_product_not_available":
+            self = .storeProductNotAvailable
         default:
             return nil
         }

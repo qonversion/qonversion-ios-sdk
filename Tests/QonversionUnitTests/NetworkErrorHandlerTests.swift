@@ -216,6 +216,47 @@ final class ApiErrorMappingTests: XCTestCase {
         }
     }
 
+    func testV4SlugCodesMapToTypedErrors() throws {
+        // v4 answers with snake_case slugs, not the numeric codes of the
+        // previous API generation.
+        let expectations: [(code: String, type: QonversionErrorType)] = [
+            ("invalid_client_uid", .invalidClientUID),
+            ("fraud_purchase", .fraudPurchase),
+            ("feature_not_supported", .featureNotSupported),
+            ("project_config_error", .projectConfigError),
+            ("receipt_validation_error", .receiptValidationError),
+            ("product_not_found", .productNotFound),
+            ("payment_not_allowed", .paymentNotAllowed),
+            ("store_product_not_available", .storeProductNotAvailable),
+        ]
+
+        for expectation in expectations {
+            let body = Data("{\"error\": {\"code\": \"\(expectation.code)\", \"message\": \"m\"}}".utf8)
+            let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
+
+            XCTAssertEqual(error.type, expectation.type, "code \(expectation.code)")
+        }
+    }
+
+    func testANumericJsonCodeIsStillACode() throws {
+        // Some deployments send the code as a bare number rather than a string.
+        let body = Data(#"{"error": {"code": 20102, "message": "m"}}"#.utf8)
+
+        let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
+
+        XCTAssertEqual(error.apiCode, "20102")
+        XCTAssertEqual(error.type, .receiptValidationError)
+    }
+
+    func testAnUnknownSlugKeepsTheStatusDerivedType() throws {
+        let body = Data(#"{"error": {"code": "brand_new_backend_slug", "message": "m"}}"#.utf8)
+
+        let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
+
+        XCTAssertEqual(error.type, .unknown)
+        XCTAssertEqual(error.apiCode, "brand_new_backend_slug")
+    }
+
     func testAnUnmappedCodeKeepsTheStatusDerivedType() throws {
         let body = Data(#"{"error": {"code": "99999", "message": "m", "type": "t"}}"#.utf8)
 

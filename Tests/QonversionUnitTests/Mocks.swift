@@ -340,15 +340,29 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
 
     func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
 
-    private var storefrontContinuation: AsyncStream<Void>.Continuation?
+    private var _storefrontContinuation: AsyncStream<Void>.Continuation?
+
+    /// True once the SDK's observation task has actually subscribed — the
+    /// subscription happens on another task, so tests wait for it instead of
+    /// sleeping.
+    var hasStorefrontSubscriber: Bool {
+        facadeStateLock.lock()
+        defer { facadeStateLock.unlock() }
+        return _storefrontContinuation != nil
+    }
 
     func emitStorefrontChange() {
-        storefrontContinuation?.yield(())
+        facadeStateLock.lock()
+        let continuation = _storefrontContinuation
+        facadeStateLock.unlock()
+        continuation?.yield(())
     }
 
     func storefrontUpdates() -> AsyncStream<Void> {
         return AsyncStream { continuation in
-            self.storefrontContinuation = continuation
+            self.facadeStateLock.lock()
+            self._storefrontContinuation = continuation
+            self.facadeStateLock.unlock()
         }
     }
 

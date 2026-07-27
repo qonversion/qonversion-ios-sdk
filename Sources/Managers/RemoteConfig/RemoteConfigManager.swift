@@ -256,9 +256,15 @@ extension RemoteConfigManager: UserChangedObserver {
 
     func userDidChange() {
         lock.lock()
-        defer { lock.unlock() }
-
         cacheGeneration += 1
         loadedConfigs = [:]
+        // The in-flight loads belong to the previous user: the generation guard
+        // stops them from CACHING their answer, but a caller joining after the
+        // switch would still be handed it.
+        let abandoned: [Task<Qonversion.RemoteConfig, Error>] = Array(loadTasks.values)
+        loadTasks = [:]
+        lock.unlock()
+
+        abandoned.forEach { $0.cancel() }
     }
 }
