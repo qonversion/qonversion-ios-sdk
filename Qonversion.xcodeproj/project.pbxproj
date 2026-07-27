@@ -35,6 +35,7 @@
 		CB00000000000000000000B1 /* IntegrationsInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */; };
 		CA00000000000000000000B1 /* ReceiptFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000A1 /* ReceiptFetcher.swift */; };
 		C900000000000000000000B1 /* RequestTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C900000000000000000000A1 /* RequestTrigger.swift */; };
+		C800000000000000000000B1 /* IntroEligibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C800000000000000000000A1 /* IntroEligibility.swift */; };
 		C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */; };
 		C400000000000000000000B1 /* ListEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = C400000000000000000000A1 /* ListEnvelope.swift */; };
 		C100000000000000000000B1 /* AsyncMulticast.swift in Sources */ = {isa = PBXBuildFile; fileRef = C100000000000000000000A1 /* AsyncMulticast.swift */; };
@@ -193,6 +194,7 @@
 		CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegrationsInfoCollector.swift; sourceTree = "<group>"; };
 		CA00000000000000000000A1 /* ReceiptFetcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReceiptFetcher.swift; sourceTree = "<group>"; };
 		C900000000000000000000A1 /* RequestTrigger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestTrigger.swift; sourceTree = "<group>"; };
+		C800000000000000000000A1 /* IntroEligibility.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntroEligibility.swift; sourceTree = "<group>"; };
 		C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseAssociationsStorage.swift; sourceTree = "<group>"; };
 		C400000000000000000000A1 /* ListEnvelope.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ListEnvelope.swift; sourceTree = "<group>"; };
 		C100000000000000000000A1 /* AsyncMulticast.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncMulticast.swift; sourceTree = "<group>"; };
@@ -391,6 +393,7 @@
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
 				70CD92A42BC6E22B0039D65C /* UserPropertyKey.swift */,
 				70EA73542BD12CA500B0DFDA /* Product.swift */,
+				C800000000000000000000A1 /* IntroEligibility.swift */,
 				70B4E96F2BD940F700EE808C /* StoreProductWrapper.swift */,
 				6A840DF82BD6ADAD00E5E8E3 /* Experiment.swift */,
 				6A840DFC2BD6ADD700E5E8E3 /* RemoteConfig.swift */,
@@ -928,6 +931,7 @@
 				CB00000000000000000000B1 /* IntegrationsInfoCollector.swift in Sources */,
 				CA00000000000000000000B1 /* ReceiptFetcher.swift in Sources */,
 				C900000000000000000000B1 /* RequestTrigger.swift in Sources */,
+				C800000000000000000000B1 /* IntroEligibility.swift in Sources */,
 				C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */,
 				C400000000000000000000B1 /* ListEnvelope.swift in Sources */,
 				C100000000000000000000B1 /* AsyncMulticast.swift in Sources */,

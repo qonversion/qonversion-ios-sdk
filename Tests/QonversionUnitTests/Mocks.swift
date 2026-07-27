@@ -294,6 +294,14 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
         return productsResult
     }
 
+    var introOfferEligibilityResults: [String: Bool] = [:]
+    private(set) var eligibilityRequestedStoreIds: [String] = []
+
+    func isEligibleForIntroOffer(storeId: String) async -> Bool? {
+        eligibilityRequestedStoreIds.append(storeId)
+        return introOfferEligibilityResults[storeId]
+    }
+
     func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
 
     private(set) var facadeRestoreCallsCount = 0
@@ -708,6 +716,14 @@ final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
     var fallbackFileAccessible = false
 
     func isFallbackFileAccessible() -> Bool { fallbackFileAccessible }
+
+    var eligibilityResult: [String: Qonversion.IntroEligibilityStatus] = [:]
+    private(set) var eligibilityRequestedProductIds: [[String]] = []
+
+    func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
+        eligibilityRequestedProductIds.append(productIds)
+        return eligibilityResult
+    }
 
     func cachedProductPermissions() -> [String: [String]]? { cachedMapping }
 
