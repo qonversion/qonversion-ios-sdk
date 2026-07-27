@@ -103,4 +103,86 @@ final class NoCodesHTMLInjectorTests: XCTestCase {
 
         XCTAssertTrue(result.hasPrefix("<script>window.noCodesTheme = \"light\";</script>"))
     }
+
+    // MARK: - Escaping
+    //
+    // The locale reaches the injector from the host app and from the screen
+    // payload, and the web view it lands in owns the purchase bridge, so a
+    // value that can break out of the string literal is code execution.
+
+    func testAQuoteInTheLocaleCannotCloseTheStringLiteral() throws {
+        let html = "<html><head></head></html>"
+        let hostileLocale = "en\"; window.pwned = true; //"
+
+        let result: String = injector.injectCustomLocale(into: html, locale: hostileLocale)
+
+        // The payload stays one JavaScript token: a single quoted literal whose
+        // own quote is escaped, so nothing after it is ever evaluated.
+        let literal: String = try extractLiteral(from: result, assignedTo: "window.noCodesCustomLocale")
+        XCTAssertEqual(literal, "\"en\\\"; window.pwned = true; \\/\\/\"")
+        // The whole assignment is that one literal and nothing else.
+        XCTAssertTrue(result.contains("<script>window.noCodesCustomLocale = \(literal);</script>"))
+    }
+
+    func testAClosingScriptTagInTheLocaleCannotEndTheScriptElement() {
+        let html = "<html><head></head></html>"
+        let hostileLocale = "en</script><script>window.pwned = true;</script>"
+
+        let result: String = injector.injectCustomLocale(into: html, locale: hostileLocale)
+
+        // Not a single extra tag boundary: the markup keeps only the one script
+        // element the injector opened, so the payload never becomes markup.
+        XCTAssertEqual(result.components(separatedBy: "<script").count - 1, 1)
+        XCTAssertEqual(result.components(separatedBy: "</script").count - 1, 1)
+        XCTAssertFalse(result.contains("<script>window.pwned"))
+    }
+
+    func testEscapedLocaleStillDecodesToTheOriginalValue() throws {
+        let html = "<html><head></head></html>"
+        let hostileLocale = "en</script>\"\n\\"
+
+        let result: String = injector.injectCustomLocale(into: html, locale: hostileLocale)
+
+        // The emitted literal is valid JSON, and parsing it gives back exactly
+        // what the caller passed, so the escaping is lossless rather than a
+        // sanitizing filter.
+        let literal: String = try extractLiteral(from: result, assignedTo: "window.noCodesCustomLocale")
+        let data: Data = try XCTUnwrap("[\(literal)]".data(using: .utf8))
+        let decoded = try JSONSerialization.jsonObject(with: data) as? [String]
+        XCTAssertEqual(decoded?.first, hostileLocale)
+    }
+
+    func testControlCharactersInTheLocaleAreEscaped() throws {
+        let html = "<html><head></head></html>"
+        let hostileLocale = "en\u{2028}\u{0000}"
+
+        let result: String = injector.injectCustomLocale(into: html, locale: hostileLocale)
+
+        let literal: String = try extractLiteral(from: result, assignedTo: "window.noCodesCustomLocale")
+        XCTAssertFalse(literal.contains("\u{0000}"))
+        let data: Data = try XCTUnwrap("[\(literal)]".data(using: .utf8))
+        let decoded = try JSONSerialization.jsonObject(with: data) as? [String]
+        XCTAssertEqual(decoded?.first, hostileLocale)
+    }
+
+    func testTheThemeValueIsEmittedThroughTheSameEscaping() throws {
+        let html = "<html><head></head></html>"
+
+        let result: String = injector.injectTheme(into: html, theme: .dark)
+
+        let literal: String = try extractLiteral(from: result, assignedTo: "window.noCodesTheme")
+        XCTAssertEqual(literal, "\"dark\"")
+    }
+
+    // MARK: - Private
+
+    /// Pulls the right-hand side of `<name> = <literal>;` out of the injected script.
+    private func extractLiteral(from html: String, assignedTo name: String) throws -> String {
+        let prefix: String = "\(name) = "
+        let start: Range<String.Index> = try XCTUnwrap(html.range(of: prefix))
+        let rest: Substring = html[start.upperBound...]
+        let end: Range<Substring.Index> = try XCTUnwrap(rest.range(of: ";</script>"))
+
+        return String(rest[..<end.lowerBound])
+    }
 }
