@@ -150,6 +150,11 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             urlRequest.addValue(trigger.rawValue, forHTTPHeaderField: Self.triggerHeader)
         }
 
+        // The queue any failure of this request lands in belongs to the user
+        // it is being sent for: a clean() while it is in flight (user switch)
+        // must not be undone by re-queueing it afterwards.
+        let generation: Int = requestsStorage.cleanGeneration
+
         let responseBody: Data
         let error: QonversionError?
         let responseCode: Int
@@ -162,14 +167,15 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             // The request never reached the backend — persist retriable ones
             // for the offline replay.
             if retriableRequestKinds.contains(request.kind) {
-                requestsStorage.append(StoredRequest(
+                let stored = StoredRequest(
                     url: urlRequest.url?.absoluteString ?? "",
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
                     trigger: trigger?.rawValue,
                     transactionId: request.replayTransactionId
-                ))
+                )
+                requestsStorage.append(stored, ifGenerationIs: generation)
             }
             throw QonversionError(type: .invalidResponse, error: error)
         }
@@ -182,14 +188,15 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             // The backend did not process the request (5xx/429) — persist
             // retriable ones for the offline replay, like transport failures.
             if Self.isRetriableStatusCode(responseCode) && retriableRequestKinds.contains(request.kind) {
-                requestsStorage.append(StoredRequest(
+                let stored = StoredRequest(
                     url: urlRequest.url?.absoluteString ?? "",
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
                     trigger: trigger?.rawValue,
                     transactionId: request.replayTransactionId
-                ))
+                )
+                requestsStorage.append(stored, ifGenerationIs: generation)
             }
 
             throw error!

@@ -351,6 +351,48 @@ final class RequestProcessorTests: XCTestCase {
                        "the transaction id keys the dedup so the same purchase never queues twice")
     }
 
+    func testAFailedLiveRequestIsNotQueuedAfterAUserSwitch() async {
+        // The request left for the PREVIOUS uid; the switch cleaned the queue
+        // while it was in flight. Re-queueing it now would replay the previous
+        // user's purchase in the next session, under the new uid.
+        let gate = ProcessorAsyncGate()
+        networkProvider.onSend = { await gate.wait() }
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        let sending = Task {
+            _ = try? await processor.process(request: .createPurchase(userId: "OLD_UID", body: body), responseType: EmptyApiResponse.self)
+        }
+        await waitUntil { self.networkProvider.sentRequests.count == 1 }
+        requestsStorage.clean()
+        await gate.open()
+        _ = await sending.value
+
+        XCTAssertTrue(requestsStorage.storedRequests.isEmpty, "the entry belongs to the previous user")
+    }
+
+    func testARejectedLiveRequestIsNotQueuedAfterAUserSwitch() async {
+        // Same window, the 5xx branch: the backend answered "not processed"
+        // for a request that belongs to the previous user.
+        let gate = ProcessorAsyncGate()
+        networkProvider.onSend = { await gate.wait() }
+        networkProvider.response = makeHTTPResponse(statusCode: 503)
+        errorHandler.errorToReturn = QonversionError(type: .internal)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "t1"] as RequestBodyDict]
+
+        let sending = Task {
+            _ = try? await processor.process(request: .createPurchase(userId: "OLD_UID", body: body), responseType: EmptyApiResponse.self)
+        }
+        await waitUntil { self.networkProvider.sentRequests.count == 1 }
+        requestsStorage.clean()
+        await gate.open()
+        _ = await sending.value
+
+        XCTAssertTrue(requestsStorage.storedRequests.isEmpty, "the entry belongs to the previous user")
+    }
+
     func testSamePurchaseFailingTwiceIsQueuedOnce() async {
         networkProvider.error = URLError(.notConnectedToInternet)
         let processor = makeProcessor(retriableRequestKinds: [.createPurchase])

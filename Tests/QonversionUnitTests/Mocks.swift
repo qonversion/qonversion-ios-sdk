@@ -196,7 +196,8 @@ final class MockRequestsStorage: RequestsStorageInterface {
     private(set) var cleanCallsCount = 0
     private(set) var cleanGeneration = 0
 
-    func append(_ request: StoredRequest) {
+    func append(_ request: StoredRequest, ifGenerationIs generation: Int) {
+        guard cleanGeneration == generation else { return }
         if let dedupKey = request.dedupKey, storedRequests.contains(where: { $0.dedupKey == dedupKey }) {
             return
         }
