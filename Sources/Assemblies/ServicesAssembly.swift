@@ -138,7 +138,9 @@ final class ServicesAssembly {
         // interactive flows are excluded — their callers handle failures.
         let retriableRequestKinds: [Request.Kind] = [.createUser, .createPurchase, .createDevice, .updateDevice, .appleSearchAds]
         
-        let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestKinds: retriableRequestKinds, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
+        let reportsGate: TransactionReportsGate = miscAssembly.transactionReportsGate()
+
+        let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestKinds: retriableRequestKinds, requestsStorage: requestsStorage, rateLimiter: rateLimiter, reportsGate: reportsGate)
         
         return processor
     }

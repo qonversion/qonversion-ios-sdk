@@ -170,6 +170,7 @@ final class QonversionAssembly {
             launchModeProvider: miscAssembly.internalConfig,
             purchaseAssociationsStorage: purchaseAssociationsStorage,
             localStorage: localStorage,
+            reportsGate: miscAssembly.transactionReportsGate(),
             logger: logger
         )
 

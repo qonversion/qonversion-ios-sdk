@@ -55,7 +55,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         purchasingStoreIds.remove(storeId)
     }
 
-    private let reportsGate = TransactionReportsGate()
+    private let reportsGate: TransactionReportsGate
 
     // Guards the persisted set of transactions already handed to the host.
     private let surfacedLock = NSLock()
@@ -139,6 +139,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         launchModeProvider: LaunchModeProvider,
         purchaseAssociationsStorage: PurchaseAssociationsStorage,
         localStorage: LocalStorageInterface,
+        reportsGate: TransactionReportsGate,
         logger: LoggerWrapper
     ) {
         self.purchasesService = purchasesService
@@ -149,6 +150,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         self.launchModeProvider = launchModeProvider
         self.purchaseAssociationsStorage = purchaseAssociationsStorage
         self.localStorage = localStorage
+        self.reportsGate = reportsGate
         self.logger = logger
     }
 

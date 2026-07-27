@@ -37,6 +37,11 @@ final class MiscAssembly {
     private var requestsStorageInstance: RequestsStorageInterface?
     private var replayQueueObserver: ReplayQueueUserObserver?
 
+    // One instance SDK-wide: the launch replay of the requests queue and the
+    // unfinished-transaction sweep run concurrently and can hold the same
+    // purchase — they must dedup against the SAME set of taken ids.
+    private let transactionReportsGateInstance = TransactionReportsGate()
+
     init(apiKey: String, userDefaults: UserDefaults, internalConfig: InternalConfig) {
         self.apiKey = apiKey
         self.userDefaults = userDefaults
@@ -45,6 +50,10 @@ final class MiscAssembly {
 
     func userChangesNotifier() -> UserChangesNotifier {
         return userChangesNotifierInstance
+    }
+
+    func transactionReportsGate() -> TransactionReportsGate {
+        return transactionReportsGateInstance
     }
     
     func localStorage() -> LocalStorage {

@@ -317,6 +317,34 @@ final class IntegrationTests: XCTestCase {
         XCTAssertEqual(world.network.recordedRequests("GET", "/v4/products").count, 1)
     }
 
+    // MARK: - 7b. launch replay vs the unfinished-transaction sweep
+
+    func testAQueuedReportAndTheSameUnfinishedTransactionArePostedOnce() async throws {
+        // What initialize() does: the offline replay and the unfinished sweep
+        // start concurrently. Both hold the same purchase — the backend must
+        // see exactly one POST for it.
+        let subMgmt = SdkWorld(userDefaults: TestDefaults.makeIsolated(), launchMode: .subscriptionManagement)
+        subMgmt.stubHappyUser()
+        subMgmt.network.stub("POST", "/v4/users/*/purchases", body: #"{"object": "purchase"}"#)
+        subMgmt.network.stub("GET", "/v4/users/*/entitlements", body: #"{"object": "list", "data": []}"#)
+        let transaction = Qonversion.Transaction(id: "tx-dup", originalId: "tx-dup", productId: "com.app.pro", jws: "signed-jws")
+        subMgmt.storeKit.fetchUnfinishedResult = [transaction]
+        subMgmt.assembly.servicesAssembly.miscAssembly.requestsStorage().append(StoredRequest(
+            url: "https://api2.qonversion.io/v4/users/" + subMgmt.uid + "/purchases",
+            method: "POST",
+            body: Data(#"{"store_data": {"transaction_id": "tx-dup"}}"#.utf8),
+            dedupKey: "createPurchase-" + subMgmt.uid + "-tx-dup",
+            transactionId: "tx-dup"
+        ))
+
+        subMgmt.assembly.replayStoredRequests()
+        await subMgmt.purchasesManager.processUnfinishedTransactions()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertEqual(subMgmt.network.recordedRequests("POST", "/v4/users/*/purchases").count, 1,
+                       "the replay and the sweep must not both report the same transaction")
+    }
+
     // MARK: - 8. intro eligibility over the real facade and manager
 
     func testEligibilityFlowsThroughTheRealGraph() async throws {

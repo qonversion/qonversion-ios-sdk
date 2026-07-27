@@ -43,7 +43,7 @@ final class RequestProcessorTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeProcessor(retriableRequestKinds: [Request.Kind] = []) -> RequestProcessor {
+    private func makeProcessor(retriableRequestKinds: [Request.Kind] = [], reportsGate: TransactionReportsGate = TransactionReportsGate()) -> RequestProcessor {
         RequestProcessor(
             baseURL: baseURL,
             networkProvider: networkProvider,
@@ -52,8 +52,91 @@ final class RequestProcessorTests: XCTestCase {
             decoder: responseDecoder,
             retriableRequestKinds: retriableRequestKinds,
             requestsStorage: requestsStorage,
-            rateLimiter: rateLimiter
+            rateLimiter: rateLimiter,
+            reportsGate: reportsGate
         )
+    }
+
+    // MARK: - replay vs the concurrent unfinished-transaction sweep
+
+    func testTheReplaySkipsAnEntryRemovedWhileTheSnapshotWasBeingDrained() async {
+        // The snapshot is not the queue: the sweep delivering the same
+        // purchase evicts the queued copy while the previous entry is still
+        // in flight.
+        let first = StoredRequest(url: baseURL + "v4/users/u/purchases", method: "POST", body: nil, dedupKey: "first")
+        let second = StoredRequest(url: baseURL + "v4/users/u/devices", method: "POST", body: nil, dedupKey: "second")
+        requestsStorage.append(first)
+        requestsStorage.append(second)
+        let gate = ProcessorAsyncGate()
+        networkProvider.onSend = { await gate.wait() }
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let processor = makeProcessor()
+
+        processor.processStoredRequests()
+        await waitUntil { self.networkProvider.sentRequests.count == 1 }
+        requestsStorage.remove(second)
+        await gate.open()
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 1, "an entry no longer queued must not be resent")
+    }
+
+    func testTheReplaySkipsAPurchaseTheSweepAlreadyTook() async {
+        let reportsGate = TransactionReportsGate()
+        requestsStorage.append(StoredRequest(
+            url: baseURL + "v4/users/u/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-u-tx1",
+            transactionId: "tx1"
+        ))
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let processor = makeProcessor(reportsGate: reportsGate)
+        // The sweep got there first.
+        XCTAssertTrue(reportsGate.tryTake("tx1"))
+
+        processor.processStoredRequests()
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        XCTAssertTrue(networkProvider.sentRequests.isEmpty, "the sweep owns this transaction")
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1, "the entry stays queued for the sweep to evict on delivery")
+    }
+
+    func testADeliveredReplayKeepsTheTransactionTakenSoTheSweepSkipsIt() async {
+        let reportsGate = TransactionReportsGate()
+        requestsStorage.append(StoredRequest(
+            url: baseURL + "v4/users/u/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-u-tx1",
+            transactionId: "tx1"
+        ))
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        let processor = makeProcessor(reportsGate: reportsGate)
+
+        processor.processStoredRequests()
+        await waitUntil { self.requestsStorage.storedRequests.isEmpty }
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 1)
+        XCTAssertFalse(reportsGate.tryTake("tx1"), "the sweep must not post the same purchase again")
+    }
+
+    func testAFailedReplayReleasesTheTransactionForTheSweep() async {
+        let reportsGate = TransactionReportsGate()
+        requestsStorage.append(StoredRequest(
+            url: baseURL + "v4/users/u/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-u-tx1",
+            transactionId: "tx1"
+        ))
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(reportsGate: reportsGate)
+
+        processor.processStoredRequests()
+        await waitUntil { self.requestsStorage.storedRequests.first?.attempt == 2 }
+
+        XCTAssertTrue(reportsGate.tryTake("tx1"), "an undelivered report must not block the sweep")
     }
 
     // MARK: - Attempt and Trigger headers (production parity)

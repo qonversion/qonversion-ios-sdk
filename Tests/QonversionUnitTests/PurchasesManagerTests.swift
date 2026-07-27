@@ -40,7 +40,7 @@ final class PurchasesManagerTests: XCTestCase {
         manager = makeManager()
     }
 
-    private func makeManager(launchMode: Qonversion.LaunchMode = .analytics) -> PurchasesManager {
+    private func makeManager(launchMode: Qonversion.LaunchMode = .analytics, reportsGate: TransactionReportsGate = TransactionReportsGate()) -> PurchasesManager {
         config.launchMode = launchMode
         return PurchasesManager(
             purchasesService: service,
@@ -51,6 +51,7 @@ final class PurchasesManagerTests: XCTestCase {
             launchModeProvider: config,
             purchaseAssociationsStorage: PurchaseAssociationsStorage(localStorage: localStorage),
             localStorage: localStorage,
+            reportsGate: reportsGate,
             logger: LoggerWrapper()
         )
     }

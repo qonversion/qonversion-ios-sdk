@@ -18,6 +18,10 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     let retriableRequestKinds: [Request.Kind]
     let requestsStorage: RequestsStorageInterface
     let rateLimiter: RateLimiterInterface
+    /// Shared with the purchases manager: the launch replay and the
+    /// unfinished-transaction sweep run concurrently and must not both post
+    /// the same purchase.
+    let reportsGate: TransactionReportsGate
     private let criticalErrorLock = NSLock()
     private var _criticalError: QonversionError?
 
@@ -34,7 +38,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         }
     }
 
-    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface) {
+    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface, reportsGate: TransactionReportsGate = TransactionReportsGate()) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
@@ -43,6 +47,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         self.retriableRequestKinds = retriableRequestKinds
         self.requestsStorage = requestsStorage
         self.rateLimiter = rateLimiter
+        self.reportsGate = reportsGate
     }
 
     /// Resends requests that failed on transport in previous sessions. A
@@ -68,8 +73,24 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             for stored in requests {
                 guard self.criticalError == nil else { return }
                 guard self.requestsStorage.cleanGeneration == generation else { return }
+                // The snapshot is not the queue: another path (the launch
+                // sweep delivering the same purchase, a live report
+                // superseding a queued copy) may have removed this entry while
+                // the previous ones were in flight.
+                guard self.requestsStorage.fetchRequests().contains(stored) else { continue }
                 guard let url = URL(string: stored.url) else {
                     self.requestsStorage.remove(stored)
+                    continue
+                }
+
+                // A purchase report is owned by whoever takes its transaction
+                // id first — here or in the unfinished-transaction sweep that
+                // initialize() starts alongside this replay. Entries queued by
+                // an older build carry no transaction id; those rely on the
+                // presence check above, which the sweep triggers by evicting
+                // the queued copy when its own report is delivered.
+                let transactionId: String? = stored.transactionId
+                if let transactionId, !self.reportsGate.tryTake(transactionId) {
                     continue
                 }
 
@@ -91,7 +112,14 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     let statusCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
                     if Self.isRetriableStatusCode(statusCode) {
                         self.bumpAttempt(of: stored, ifGenerationIs: generation)
+                        // Not delivered: let the next attempt (or the sweep)
+                        // have the transaction back.
+                        if let transactionId {
+                            self.reportsGate.release(transactionId)
+                        }
                     } else {
+                        // Delivered: the id stays taken so the sweep running
+                        // alongside cannot post it a second time.
                         self.requestsStorage.remove(stored)
                     }
 
@@ -102,6 +130,9 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                 } catch {
                     // Kept in the queue for the next session.
                     self.bumpAttempt(of: stored, ifGenerationIs: generation)
+                    if let transactionId {
+                        self.reportsGate.release(transactionId)
+                    }
                 }
             }
         }
