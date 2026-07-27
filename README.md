@@ -188,7 +188,19 @@ result.transaction                            // the verified store transaction
 result.entitlements["premium"]?.active        // access right after the purchase
 ```
 
-The transaction is finished **only after Qonversion confirms the purchase** — an unreported purchase is never lost. A user cancellation and a pending purchase (Ask to Buy, SCA) surface as errors; a pending purchase completes later through the out-of-band flow and arrives via `entitlementsUpdates`.
+The transaction is finished **only after Qonversion confirms the purchase** — an unreported purchase is never lost. A user cancellation and a pending purchase (Ask to Buy, SCA) surface as typed errors — react precisely instead of showing a generic failure:
+
+```swift
+do {
+    let result = try await Qonversion.shared.purchase(product)
+} catch let error as QonversionError {
+    switch error.type {
+    case .purchaseCancelled: break     // the user changed their mind — not a failure
+    case .purchasePending: break       // completes later via entitlementsUpdates
+    default: showError(error.message)  // error.error carries the underlying failure
+    }
+}
+```
 
 Attach context to a purchase:
 
@@ -240,9 +252,17 @@ if let premium = entitlements["premium"], premium.active {
     ],
     "products_permissions": {
         "pro_monthly": ["premium"]
-    }
+    },
+    "remote_config_list": [
+        {
+            "payload": {"paywall_title": "Go Pro"},
+            "source": {"uid": "src_1", "name": "main", "type": "remote_configuration", "assignment_type": "auto", "context_key": null}
+        }
+    ]
 }
 ```
+
+The same file also answers `remoteConfig()` calls when the API is unreachable — bundle the configs your launch screens depend on.
 
 ### Listening for updates
 
