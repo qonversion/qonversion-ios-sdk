@@ -50,7 +50,9 @@ final class LegacyEntitlementsMigrationTests: XCTestCase {
     }
 
     private func makeMigration() -> LegacyEntitlementsMigration {
-        return LegacyEntitlementsMigration(localStorage: storage, logger: LoggerWrapper(), legacyDefaults: legacyDefaults)
+        let logger = LoggerWrapper()
+
+        return LegacyEntitlementsMigration(localStorage: storage, logger: logger, legacyDefaults: legacyDefaults)
     }
 
     /// Exactly what `NSKeyedArchiver.archivedDataWithRootObject:` produced:
@@ -289,15 +291,19 @@ final class LegacyEntitlementsMigrationTests: XCTestCase {
         userManager.user = try? JSONDecoder.qonversionTest.decode(
             Qonversion.User.self,
             from: Data(#"{"id": "QON_upgraded", "created_at": "2023-11-14T22:13:20Z", "environment": "prod"}"#.utf8))
+        let storeKitFacade = MockStoreKitFacade()
+        let productsDataSource = MockProductsManager()
+        let userIdProvider = InternalConfig(userId: "QON_upgraded")
+        let logger = LoggerWrapper()
         let manager = EntitlementsManager(
             entitlementsService: service,
-            storeKitFacade: MockStoreKitFacade(),
-            productsDataSource: MockProductsManager(),
+            storeKitFacade: storeKitFacade,
+            productsDataSource: productsDataSource,
             userManager: userManager,
-            userIdProvider: InternalConfig(userId: "QON_upgraded"),
+            userIdProvider: userIdProvider,
             localStorage: storage,
             cacheLifetime: Qonversion.EntitlementsCacheLifetime.month.seconds,
-            logger: LoggerWrapper()
+            logger: logger
         )
 
         let entitlements = try await manager.entitlements()

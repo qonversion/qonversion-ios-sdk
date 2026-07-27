@@ -282,10 +282,12 @@ final class CrashReporterTests: XCTestCase {
     // MARK: - send on the next launch
 
     private func makeSender(processor: RequestProcessorInterface) -> CrashReportsSender {
+        let userIdProvider = InternalConfig(userId: "QON_u")
+
         return CrashReportsSender(
             storage: storage,
             requestProcessor: processor,
-            userIdProvider: InternalConfig(userId: "QON_u"),
+            userIdProvider: userIdProvider,
             platform: "iOS"
         )
     }
