@@ -25,6 +25,9 @@ let package = Package(
         .testTarget(
             name: "QonversionUnitTests",
             dependencies: ["Qonversion"],
-            path: "Tests/QonversionUnitTests"),
+            path: "Tests/QonversionUnitTests",
+            resources: [
+                .copy("Resources/Qonversion.storekit")
+            ]),
     ]
 )

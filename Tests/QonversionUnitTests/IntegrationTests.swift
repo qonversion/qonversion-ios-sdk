@@ -18,7 +18,9 @@ import StoreKit
 // MARK: - HTTP boundary stub
 
 /// Canned responses by URL substring + method; records every real request.
-private final class StubNetworkProvider: NetworkProviderInterface, @unchecked Sendable {
+/// Shared with the StoreKitTest layer, which stubs the same HTTP boundary
+/// while running the REAL StoreKit over an SKTestSession.
+final class StubNetworkProvider: NetworkProviderInterface, @unchecked Sendable {
 
     struct Rule {
         let method: String
