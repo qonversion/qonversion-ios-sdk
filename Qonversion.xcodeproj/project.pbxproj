@@ -41,6 +41,11 @@
 		C100000000000000000000B1 /* AsyncMulticast.swift in Sources */ = {isa = PBXBuildFile; fileRef = C100000000000000000000A1 /* AsyncMulticast.swift */; };
 		D300000000000000000000B1 /* JSONDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = D300000000000000000000A1 /* JSONDecoding.swift */; };
 		D400000000000000000000B1 /* LegacyPurchasesQueueMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D400000000000000000000A1 /* LegacyPurchasesQueueMigration.swift */; };
+		D500000000000000000000B1 /* LegacyEntitlementsMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D500000000000000000000A1 /* LegacyEntitlementsMigration.swift */; };
+		D600000000000000000000B1 /* CrashReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D600000000000000000000A1 /* CrashReport.swift */; };
+		D700000000000000000000B1 /* CrashReportFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D700000000000000000000A1 /* CrashReportFilter.swift */; };
+		D800000000000000000000B1 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D800000000000000000000A1 /* CrashReporter.swift */; };
+		D900000000000000000000B1 /* CrashReportsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D900000000000000000000A1 /* CrashReportsStorage.swift */; };
 		C200000000000000000000B1 /* PromoPurchaseIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C200000000000000000000A1 /* PromoPurchaseIntent.swift */; };
 		C300000000000000000000B1 /* StoredRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C300000000000000000000A1 /* StoredRequest.swift */; };
 		B100000000000000000000B1 /* UserChangesNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B100000000000000000000A1 /* UserChangesNotifier.swift */; };
@@ -275,6 +280,11 @@
 		C100000000000000000000A1 /* AsyncMulticast.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncMulticast.swift; sourceTree = "<group>"; };
 		D300000000000000000000A1 /* JSONDecoding.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONDecoding.swift; sourceTree = "<group>"; };
 		D400000000000000000000A1 /* LegacyPurchasesQueueMigration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LegacyPurchasesQueueMigration.swift; sourceTree = "<group>"; };
+		D500000000000000000000A1 /* LegacyEntitlementsMigration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LegacyEntitlementsMigration.swift; sourceTree = "<group>"; };
+		D600000000000000000000A1 /* CrashReport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReport.swift; sourceTree = "<group>"; };
+		D700000000000000000000A1 /* CrashReportFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReportFilter.swift; sourceTree = "<group>"; };
+		D800000000000000000000A1 /* CrashReporter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
+		D900000000000000000000A1 /* CrashReportsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReportsStorage.swift; sourceTree = "<group>"; };
 		C200000000000000000000A1 /* PromoPurchaseIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromoPurchaseIntent.swift; sourceTree = "<group>"; };
 		C300000000000000000000A1 /* StoredRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoredRequest.swift; sourceTree = "<group>"; };
 		B100000000000000000000A1 /* UserChangesNotifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserChangesNotifier.swift; sourceTree = "<group>"; };
@@ -732,6 +742,7 @@
 			children = (
 				70CD92CC2BC6E22B0039D65C /* LocalStorage.swift */,
 				D400000000000000000000A1 /* LegacyPurchasesQueueMigration.swift */,
+				D500000000000000000000A1 /* LegacyEntitlementsMigration.swift */,
 				70CD92CD2BC6E22B0039D65C /* LocalStorageInterface.swift */,
 			);
 			path = LocalStorage;
@@ -746,9 +757,21 @@
 			path = UserPropertiesStorage;
 			sourceTree = "<group>";
 		};
+		DA00000000000000000000C1 /* CrashReporting */ = {
+			isa = PBXGroup;
+			children = (
+				D600000000000000000000A1 /* CrashReport.swift */,
+				D700000000000000000000A1 /* CrashReportFilter.swift */,
+				D800000000000000000000A1 /* CrashReporter.swift */,
+				D900000000000000000000A1 /* CrashReportsStorage.swift */,
+			);
+			path = CrashReporting;
+			sourceTree = "<group>";
+		};
 		70CD92D22BC6E22B0039D65C /* Other */ = {
 			isa = PBXGroup;
 			children = (
+				DA00000000000000000000C1 /* CrashReporting */,
 				70CD92CE2BC6E22B0039D65C /* LocalStorage */,
 				70CD92D12BC6E22B0039D65C /* UserPropertiesStorage */,
 			);
@@ -1174,6 +1197,11 @@
 				C100000000000000000000B1 /* AsyncMulticast.swift in Sources */,
 				D300000000000000000000B1 /* JSONDecoding.swift in Sources */,
 				D400000000000000000000B1 /* LegacyPurchasesQueueMigration.swift in Sources */,
+				D500000000000000000000B1 /* LegacyEntitlementsMigration.swift in Sources */,
+				D600000000000000000000B1 /* CrashReport.swift in Sources */,
+				D700000000000000000000B1 /* CrashReportFilter.swift in Sources */,
+				D800000000000000000000B1 /* CrashReporter.swift in Sources */,
+				D900000000000000000000B1 /* CrashReportsStorage.swift in Sources */,
 				C200000000000000000000B1 /* PromoPurchaseIntent.swift in Sources */,
 				C300000000000000000000B1 /* StoredRequest.swift in Sources */,
 				B100000000000000000000B1 /* UserChangesNotifier.swift in Sources */,
