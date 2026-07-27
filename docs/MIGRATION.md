@@ -93,6 +93,18 @@ do {
 | `setNotificationsToken` / `handleNotification` | Removed — were deprecated automation APIs |
 | `launchMode` implicit default | `Configuration(apiKey:launchMode:)` requires an explicit mode |
 
+## User fields
+
+`Qonversion.User` exposes `originalAppVersion` — the app version the user
+originally downloaded from the App Store, for grandfathering older installs.
+
+## Purchase and deferred purchase provenance
+
+`PurchaseResult` and `DeferredPurchase` both carry `entitlementsSource`
+(`.backend` / `.localCalculation`), so an integrator can tell an answer the
+Qonversion backend confirmed from one the SDK computed on the device while the
+backend was unreachable.
+
 ## Entitlement fields
 
 `Qonversion.Entitlement` exposes the same information as `QONEntitlement`: next

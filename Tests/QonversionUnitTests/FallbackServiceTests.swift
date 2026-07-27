@@ -103,3 +103,94 @@ final class FallbackServiceTests: XCTestCase {
         XCTAssertEqual(fallback?.productsPermissions, ["pro": ["premium"]])
     }
 }
+
+// MARK: - Documents directory and re-checking
+
+final class FallbackServiceLookupTests: XCTestCase {
+
+    private var bundleDirectory: URL!
+    private var documentsDirectory: URL!
+
+    private let json = """
+    {"products": [{"id": "main", "apple_product_id": "com.app.main"}]}
+    """
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        bundleDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("fallback-bundle-" + UUID().uuidString, isDirectory: true)
+        documentsDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("fallback-docs-" + UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: bundleDirectory, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: documentsDirectory, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: bundleDirectory)
+        try? FileManager.default.removeItem(at: documentsDirectory)
+        bundleDirectory = nil
+        documentsDirectory = nil
+        try super.tearDownWithError()
+    }
+
+    private func makeService() throws -> FallbackService {
+        let bundle = try XCTUnwrap(Bundle(path: bundleDirectory.path))
+
+        return FallbackService(bundle: bundle, decoder: JSONDecoder(), documentsDirectory: documentsDirectory)
+    }
+
+    private func writeFile(to directory: URL, content: String) throws {
+        try Data(content.utf8).write(to: directory.appendingPathComponent("qonversion_ios_fallbacks.json"))
+    }
+
+    func testTheDocumentsCopyIsUsedWhenTheBundleHasNone() throws {
+        // Production looks in the Documents directory too, so a file can be
+        // dropped there at runtime.
+        try writeFile(to: documentsDirectory, content: json)
+        let service = try makeService()
+
+        XCTAssertEqual(service.obtainFallbackData()?.products?.map { $0.qonversionId }, ["main"])
+    }
+
+    func testTheBundleWins() throws {
+        try writeFile(to: bundleDirectory, content: #"{"products": [{"id": "bundled", "apple_product_id": "com.app.b"}]}"#)
+        try writeFile(to: documentsDirectory, content: json)
+        let service = try makeService()
+
+        XCTAssertEqual(service.obtainFallbackData()?.products?.map { $0.qonversionId }, ["bundled"])
+    }
+
+    func testAMissingFileIsRecheckedOnTheNextCall() throws {
+        // The negative outcome must not be cached forever: the file may be
+        // written after the first call.
+        let service = try makeService()
+        XCTAssertNil(service.obtainFallbackData())
+
+        try writeFile(to: documentsDirectory, content: json)
+
+        XCTAssertNotNil(service.obtainFallbackData(), "a file that appeared later must be picked up")
+    }
+
+    func testAnUndecodableFileIsRecheckedOnTheNextCall() throws {
+        try writeFile(to: documentsDirectory, content: "not json")
+        let service = try makeService()
+        XCTAssertNil(service.obtainFallbackData())
+
+        try writeFile(to: documentsDirectory, content: json)
+
+        XCTAssertNotNil(service.obtainFallbackData())
+    }
+
+    func testAccessibilityReflectsTheCurrentState() throws {
+        let productsManager = ProductsManager(
+            productsService: MockProductsService(),
+            storeKitFacade: MockStoreKitFacade(),
+            localStorage: MockLocalStorage(),
+            fallbackService: try makeService(),
+            logger: LoggerWrapper()
+        )
+        XCTAssertFalse(productsManager.isFallbackFileAccessible())
+
+        try writeFile(to: documentsDirectory, content: json)
+
+        XCTAssertTrue(productsManager.isFallbackFileAccessible(), "the debug check must reflect the file that is there now")
+    }
+}

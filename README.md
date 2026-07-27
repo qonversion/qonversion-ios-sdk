@@ -98,6 +98,9 @@ let configuration = Qonversion.Configuration(
 | `logLevel` | Minimal severity written to the unified log: `.verbose`, `.debug`, `.warning`, `.error`, `.critical`, or `.disabled`. |
 | `environment` | The store environment the app runs against: `.production` or `.sandbox`. Set `.sandbox` in TestFlight, Xcode and StoreKit testing builds so the backend keeps that data apart from production. |
 
+The bundled fallback file is looked up in the app bundle first and then in the
+app's Documents directory, so it can also be dropped there at runtime.
+
 ### Launch modes
 
 Pick the mode by who owns the purchase flow — it defines who finishes StoreKit transactions, and finishing them twice or never are both bugs:
