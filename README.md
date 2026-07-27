@@ -402,7 +402,9 @@ Link purchases to the experiment that drove them by passing the same context key
 
 ### No-Codes
 
-No-Codes screens are paywalls and onboarding flows designed in the Qonversion Dashboard and delivered to the app without a release. They ship as a separate `NoCodes` library in the same package — add it to your app target next to `Qonversion`:
+No-Codes screens are paywalls and onboarding flows designed in the Qonversion Dashboard and delivered to the app without a release. The feature is iOS-only: the library resolves on the other platforms so a multi-platform package can depend on it unconditionally, but it exposes no entry point there.
+
+They ship as a separate `NoCodes` library in the same package — add it to your app target next to `Qonversion`:
 
 ```swift
 .product(name: "NoCodes", package: "qonversion-ios-sdk")
@@ -450,6 +452,8 @@ NoCodes.shared.set(delegate: self)
 NoCodes.shared.set(screenCustomizationDelegate: self)
 NoCodes.shared.close()   // dismiss the whole No-Codes flow
 ```
+
+All four delegates are held weakly, like any UIKit delegate — keep your own strong reference to them. Every method has a default implementation, so implement only what you need; watch the signatures, since a misspelled one compiles and silently stops receiving callbacks.
 
 Localization and appearance can be pinned from code, overriding the device defaults:
 
