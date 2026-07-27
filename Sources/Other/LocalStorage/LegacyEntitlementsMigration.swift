@@ -173,8 +173,12 @@ struct LegacyEntitlementsMigration {
         guard let unarchiver = try? NSKeyedUnarchiver(forReadingFrom: data) else { return nil }
 
         unarchiver.requiresSecureCoding = false
-        for (className, replacement) in classMappings {
-            unarchiver.setClass(replacement, forClassName: className)
+        for mapping in classMappings {
+            // Bound explicitly: destructuring the pair infers AnyClass, which
+            // the compiler warns about (and the house style asks for the
+            // annotation anyway).
+            let shimClass: AnyClass = mapping.value
+            unarchiver.setClass(shimClass, forClassName: mapping.key)
         }
 
         let root: Any? = unarchiver.decodeObject(forKey: NSKeyedArchiveRootObjectKey)

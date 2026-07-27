@@ -19,7 +19,11 @@ final class RateLimiterConcurrencyTests: XCTestCase {
         let limit = 5
         let keys = 3
         let attemptsPerKey = 100
-        let limiter = RateLimiter(maxRequestsPerSecond: UInt(limit))
+        // A FROZEN clock: against the wall clock this assertion is a race —
+        // 300 tasks on a loaded machine can straddle a window boundary and
+        // legitimately admit more than the limit.
+        let clock = RateLimiterFrozenClock(now: 1_700_000_000)
+        let limiter = RateLimiter(maxRequestsPerSecond: UInt(limit), now: { clock.now })
         let allowed = RateLimiterAllowanceCounter()
 
         await withTaskGroup(of: Void.self) { group in
@@ -37,6 +41,11 @@ final class RateLimiterConcurrencyTests: XCTestCase {
         XCTAssertEqual(counts, ["user_0": limit, "user_1": limit, "user_2": limit],
                        "the window must admit exactly the limit per key under concurrency")
         XCTAssertNil(limiter.validateRateLimit(for: .getUser(id: "fresh")), "an untouched key is unaffected")
+
+        // ...and the window really does slide: past it the same key is
+        // admitted again.
+        clock.advance(by: 2)
+        XCTAssertNil(limiter.validateRateLimit(for: .getUser(id: "user_0")))
     }
 }
 
@@ -134,5 +143,25 @@ private final class RateLimiterAllowanceCounter: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return allowed
+    }
+}
+
+
+/// A clock the test moves by hand, so the sliding window is deterministic.
+// @unchecked: `current` is only advanced from the test's own serial flow.
+private final class RateLimiterFrozenClock: @unchecked Sendable {
+
+    private var current: TimeInterval
+
+    init(now: TimeInterval) {
+        self.current = now
+    }
+
+    var now: TimeInterval {
+        return current
+    }
+
+    func advance(by interval: TimeInterval) {
+        current += interval
     }
 }
