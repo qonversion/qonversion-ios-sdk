@@ -23,6 +23,7 @@ class ViewController: UIViewController {
             ("Entitlements", { self.run { try await self.checkEntitlements() } }),
             ("Purchase first product", { self.run { try await self.purchaseFirstProduct() } }),
             ("Restore", { self.run { try await self.restore() } }),
+            ("Trial eligibility", { self.run { try await self.checkEligibility() } }),
             ("User info", { self.run { try await self.userInfo() } }),
             ("Identify", { self.run { try await self.identify() } }),
             ("Logout", { self.logout() }),
@@ -106,6 +107,16 @@ class ViewController: UIViewController {
         return format(entitlements)
     }
 
+    private func checkEligibility() async throws -> String {
+        let products = try await Qonversion.shared.products()
+        let productIds = products.map { $0.qonversionId }
+        let eligibility = try await Qonversion.shared.checkTrialIntroEligibility(productIds)
+        guard !eligibility.isEmpty else { return "No products to check" }
+        return eligibility
+            .map { "\($0.key): \($0.value)" }
+            .joined(separator: "\n")
+    }
+
     private func userInfo() async throws -> String {
         let user = try await Qonversion.shared.userInfo()
         return "id: \(user.id)"
@@ -136,6 +147,17 @@ class ViewController: UIViewController {
             do {
                 let result = try await action()
                 self.show(result.isEmpty ? "<empty>" : result)
+            } catch let error as QonversionError {
+                // The public error surface: react precisely instead of
+                // showing a generic failure.
+                switch error.type {
+                case .purchaseCancelled:
+                    self.show("Purchase cancelled by the user")
+                case .purchasePending:
+                    self.show("Purchase is pending approval (Ask to Buy / SCA)")
+                default:
+                    self.show("Error: \(error.message)")
+                }
             } catch {
                 self.show("Error: \(error)")
             }

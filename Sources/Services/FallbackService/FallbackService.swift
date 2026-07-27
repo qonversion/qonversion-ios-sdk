@@ -10,28 +10,33 @@ fileprivate enum Constants: String {
     case fileExtension = "json"
 }
 
-/// A snapshot of project data bundled with the app. Powers products and the
-/// product → permissions mapping when the API is unreachable and no cache
-/// exists yet (e.g. the very first launch without a network connection).
+/// A snapshot of project data bundled with the app. Powers products, the
+/// product → permissions mapping and remote configs when the API is
+/// unreachable and no cache exists yet (e.g. the very first launch without
+/// a network connection).
 struct FallbackData: Decodable {
 
     let products: [Qonversion.Product]?
     let productsPermissions: [String: [String]]?
+    let remoteConfigs: [Qonversion.RemoteConfig]?
 
     private enum CodingKeys: String, CodingKey {
         case products
         case productsPermissions = "products_permissions"
+        case remoteConfigs = "remote_config_list"
     }
 
-    init(products: [Qonversion.Product]?, productsPermissions: [String: [String]]?) {
+    init(products: [Qonversion.Product]?, productsPermissions: [String: [String]]?, remoteConfigs: [Qonversion.RemoteConfig]? = nil) {
         self.products = products
         self.productsPermissions = productsPermissions
+        self.remoteConfigs = remoteConfigs
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         products = try container.decodeIfPresent([Qonversion.Product].self, forKey: .products)
         productsPermissions = try container.decodeIfPresent([String: [String]].self, forKey: .productsPermissions)
+        remoteConfigs = try container.decodeIfPresent([Qonversion.RemoteConfig].self, forKey: .remoteConfigs)
     }
 }
 

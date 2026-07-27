@@ -179,7 +179,8 @@ final class QonversionAssembly {
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let userManager: UserManagerInterface = userManager()
         let userPropertiesManager: UserPropertiesManagerInterface = userPropertiesManager()
-        let remoteConfigManager = RemoteConfigManager(remoteConfigService: remoteConfigService, userManager: userManager, userPropertiesManager: userPropertiesManager, logger: logger)
+        let fallbackService: FallbackServiceInterface = servicesAssembly.fallbackService()
+        let remoteConfigManager = RemoteConfigManager(remoteConfigService: remoteConfigService, userManager: userManager, userPropertiesManager: userPropertiesManager, fallbackService: fallbackService, logger: logger)
 
         let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()
 

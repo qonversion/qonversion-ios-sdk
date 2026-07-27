@@ -55,6 +55,33 @@ final class FallbackServiceTests: XCTestCase {
         XCTAssertEqual(fallback?.productsPermissions, ["pro": ["premium"], "lite": ["basic"]])
     }
 
+    func testDecodesRemoteConfigList() throws {
+        let json = """
+        {
+            "remote_config_list": [
+                {
+                    "payload": {"title": "Fallback title"},
+                    "experiment": null,
+                    "source": {"uid": "src-1", "name": "main-config", "type": "remote_configuration", "assignment_type": "auto", "context_key": "main"}
+                },
+                {
+                    "payload": {"flag": true},
+                    "experiment": null,
+                    "source": {"uid": "src-2", "name": "default-config", "type": "remote_configuration", "assignment_type": "auto", "context_key": null}
+                }
+            ]
+        }
+        """
+        let service = try makeService(fileContent: json)
+
+        let fallback = service.obtainFallbackData()
+
+        XCTAssertEqual(fallback?.remoteConfigs?.count, 2)
+        XCTAssertEqual(fallback?.remoteConfigs?.first?.source.contextKey, "main")
+        XCTAssertEqual(fallback?.remoteConfigs?.first?.payload?["title"] as? String, "Fallback title")
+        XCTAssertNil(fallback?.remoteConfigs?.last?.source.contextKey)
+    }
+
     func testMissingFileReturnsNil() throws {
         let service = try makeService(fileContent: nil)
 

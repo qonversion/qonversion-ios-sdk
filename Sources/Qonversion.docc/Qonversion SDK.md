@@ -1,18 +1,43 @@
-# ``Qonversion``
+# Getting Started
 
-In-App Subscriptions Built for Growth.
-Empowering the best Apps to drive purchases, effectively handle customer data, and maximize revenue across iOS, Android, and web platforms
+Set up the SDK and make the first purchase.
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: override)
+## Initialize
+
+Initialize the SDK as early as possible on app launch. Pick the launch mode by who owns the purchase flow: `.subscriptionManagement` when the SDK processes purchases and finishes transactions, `.analytics` when your own StoreKit code stays in charge and Qonversion only tracks revenue.
+
+```swift
+import Qonversion
+
+let configuration = Qonversion.Configuration(
+    apiKey: "YOUR_PROJECT_KEY",          // Qonversion Dashboard → Settings
+    launchMode: .subscriptionManagement
+)
+Qonversion.initialize(with: configuration)
+```
+
+## Sell and unlock
+
+```swift
+let products = try await Qonversion.shared.products()
+let result = try await Qonversion.shared.purchase(products[0])
+
+let entitlements = try await Qonversion.shared.checkEntitlements()
+if entitlements["premium"]?.active == true {
+    // unlock the feature
 }
+```
 
-## Overview
+## Listen for updates
 
-``Qonversion`` is an entry point to use Qonversion SDK.
+Renewals, Ask to Buy approvals and purchases on other devices arrive out of band:
 
-## Topics
+```swift
+Task {
+    for await entitlements in Qonversion.shared.entitlementsUpdates {
+        // refresh the UI
+    }
+}
+```
 
-### <!--@START_MENU_TOKEN@-->Group<!--@END_MENU_TOKEN@-->
-
-- <!--@START_MENU_TOKEN@-->``Symbol``<!--@END_MENU_TOKEN@-->
+For the complete guide — identity, promo offers, offline behavior, properties and remote config — see the README of the repository and the [official documentation](https://documentation.qonversion.io).

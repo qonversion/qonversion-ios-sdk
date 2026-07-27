@@ -17,6 +17,7 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     private let remoteConfigService: RemoteConfigServiceInterface
     private let userManager: UserManagerInterface
     private let userPropertiesManager: UserPropertiesManagerInterface
+    private let fallbackService: FallbackServiceInterface
     private let logger: LoggerWrapper
 
     // The cache is read/written from concurrent loads and cleared from the
@@ -28,10 +29,11 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     /// must not cache its (stale) response for the new one.
     private var cacheGeneration = 0
 
-    init(remoteConfigService: RemoteConfigServiceInterface, userManager: UserManagerInterface, userPropertiesManager: UserPropertiesManagerInterface, logger: LoggerWrapper) {
+    init(remoteConfigService: RemoteConfigServiceInterface, userManager: UserManagerInterface, userPropertiesManager: UserPropertiesManagerInterface, fallbackService: FallbackServiceInterface, logger: LoggerWrapper) {
         self.remoteConfigService = remoteConfigService
         self.userManager = userManager
         self.userPropertiesManager = userPropertiesManager
+        self.fallbackService = fallbackService
         self.logger = logger
     }
 
@@ -51,12 +53,19 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
             return cached
         }
 
-        try await prepareUserForRemoteConfig()
+        do {
+            try await prepareUserForRemoteConfig()
 
-        let remoteConfig: Qonversion.RemoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
-        cacheConfig(remoteConfig, for: finalKey, ifGenerationIs: generation)
+            let remoteConfig: Qonversion.RemoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
+            cacheConfig(remoteConfig, for: finalKey, ifGenerationIs: generation)
 
-        return remoteConfig
+            return remoteConfig
+        } catch {
+            guard error.allowsLocalEntitlementsFallback, let fallback: Qonversion.RemoteConfig = fallbackRemoteConfig(for: finalKey) else { throw error }
+
+            logger.warning("Remote config request failed, using the bundled fallback file: " + error.message)
+            return fallback
+        }
     }
 
     private func cachedConfigAndGeneration(for key: String) -> (Qonversion.RemoteConfig?, Int) {
@@ -73,12 +82,19 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     }
 
     func loadRemoteConfigList() async throws -> Qonversion.RemoteConfigList {
-        try await prepareUserForRemoteConfig()
+        do {
+            try await prepareUserForRemoteConfig()
 
-        let generation: Int = currentGeneration()
-        let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList()
-        handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
-        return remoteConfigList
+            let generation: Int = currentGeneration()
+            let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList()
+            handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
+            return remoteConfigList
+        } catch {
+            guard error.allowsLocalEntitlementsFallback, let configs: [Qonversion.RemoteConfig] = fallbackService.obtainFallbackData()?.remoteConfigs else { throw error }
+
+            logger.warning("Remote config list request failed, using the bundled fallback file: " + error.message)
+            return Qonversion.RemoteConfigList(remoteConfigs: configs)
+        }
     }
 
     func loadRemoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList {
@@ -86,11 +102,25 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         if (cachedConfigs.count == contextKeys.count) {
             return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
         }
-        try await prepareUserForRemoteConfig()
 
-        let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
-        handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
-        return remoteConfigList
+        do {
+            try await prepareUserForRemoteConfig()
+
+            let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
+            handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
+            return remoteConfigList
+        } catch {
+            guard error.allowsLocalEntitlementsFallback, let allConfigs: [Qonversion.RemoteConfig] = fallbackService.obtainFallbackData()?.remoteConfigs else { throw error }
+
+            logger.warning("Remote config list request failed, using the bundled fallback file: " + error.message)
+            let matching: [Qonversion.RemoteConfig] = allConfigs.filter { config in
+                if let contextKey: String = config.source.contextKey {
+                    return contextKeys.contains(contextKey)
+                }
+                return includeEmptyContextKey
+            }
+            return Qonversion.RemoteConfigList(remoteConfigs: matching)
+        }
     }
 
     func attachUserToRemoteConfig(id: String) async throws {
@@ -114,6 +144,13 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     }
     
     // MARK: - Private
+
+    /// The bundled config for the context key ("" is the empty-key config).
+    private func fallbackRemoteConfig(for key: String) -> Qonversion.RemoteConfig? {
+        guard let configs: [Qonversion.RemoteConfig] = fallbackService.obtainFallbackData()?.remoteConfigs else { return nil }
+
+        return configs.first { ($0.source.contextKey ?? Constants.emptyContextKey.rawValue) == key }
+    }
 
     private func currentGeneration() -> Int {
         lock.lock()
