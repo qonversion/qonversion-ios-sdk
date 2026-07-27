@@ -68,6 +68,7 @@ final class QonversionAssembly {
         _ = productsManager()
         _ = remoteConfigManager()
         _ = deviceManager()
+        _ = userPropertiesManager()
     }
 
     /// Resends requests that failed on transport in previous sessions —
@@ -105,6 +106,7 @@ final class QonversionAssembly {
         let integrationsInfoCollector = IntegrationsInfoCollector(deviceInfoCollector: deviceInfoCollector)
         let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, userManager: userManager, integrationsInfoCollector: integrationsInfoCollector, logger: logger)
         userPropertiesManagerInstance = userPropertiesManager
+        miscAssembly.userChangesNotifier().add(observer: userPropertiesManager)
 
         return userPropertiesManager
     }

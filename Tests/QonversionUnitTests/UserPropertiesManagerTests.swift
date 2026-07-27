@@ -201,7 +201,48 @@ final class UserPropertiesManagerTests: XCTestCase {
         _ = try await forced
 
         XCTAssertEqual(requestProcessor.processedRequests.count, 2, "force must send what the in-flight batch did not cover")
+        // A count alone would also pass if force re-sent the SAME batch: what
+        // is being pinned is that the second request carries the property the
+        // first one could not have covered.
+        XCTAssertEqual(sentPropertyKeys(at: 0), ["first"])
+        XCTAssertEqual(sentPropertyKeys(at: 1), ["second"])
         XCTAssertTrue(propertiesStorage.all().isEmpty)
+    }
+
+    /// The property keys carried by the n-th .sendProperties request body.
+    private func sentPropertyKeys(at index: Int) -> [String] {
+        guard index < requestProcessor.processedRequests.count else {
+            XCTFail("No request at index \(index)")
+            return []
+        }
+        guard case let .sendProperties(_, _, body, _) = requestProcessor.processedRequests[index] else {
+            XCTFail("Expected a .sendProperties request at index \(index)")
+            return []
+        }
+        guard let items: RequestBodyArray = body["properties"] as? RequestBodyArray else {
+            XCTFail("Expected a `properties` array in the body")
+            return []
+        }
+        return items.compactMap { ($0 as? RequestBodyDict)?["key"] as? String }.sorted()
+    }
+
+    // MARK: - user switch
+
+    func testAUserSwitchDropsThePendingPropertiesBatch() async throws {
+        // Properties queued under the previous uid must never be posted under
+        // the new one.
+        manager.setCustomUserProperty(key: "first", value: "1")
+        XCTAssertFalse(propertiesStorage.all().isEmpty, "precondition: the property is pending")
+
+        manager.userDidChange()
+
+        XCTAssertTrue(propertiesStorage.all().isEmpty, "the previous user's batch is dropped")
+        try await manager.sendProperties(force: true)
+        XCTAssertTrue(requestProcessor.processedRequests.isEmpty, "nothing is sent under the new uid")
+    }
+
+    func testThePendingPropertiesBatchIsTornDownWithTheOtherCaches() {
+        XCTAssertEqual(manager.userChangeTeardownPriority, UserChangeTeardownPriority.cache)
     }
 
     func testForceSendPropertiesReturnsWhenNothingIsPending() async throws {
