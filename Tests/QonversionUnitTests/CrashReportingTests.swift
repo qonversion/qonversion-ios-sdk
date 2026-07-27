@@ -42,10 +42,23 @@ final class CrashReportFilterTests: XCTestCase {
         XCTAssertEqual(CrashReportFilter.linkage(ofCallStackSymbols: symbols, appExecutableName: appName), .spm)
     }
 
-    func testADemangledSwiftSymbolInTheHostExecutableIsRecognized() {
-        let symbols: [String] = [frame(0, appName, "Qonversion.PurchasesManager.purchase()")]
+    func testAHostFrameThatMerelyMentionsAnSdkTypeIsNotOurs() {
+        // The hostile shape: the app's own frame, whose only connection to the
+        // SDK is a parameter type. Matching the demangled "Qonversion." would
+        // ship this app's crashes to us.
+        let symbols: [String] = [
+            frame(0, appName, "MyApp.PaywallViewController.show(product: Qonversion.Product) -> ()"),
+            frame(1, appName, "main")
+        ]
 
-        XCTAssertEqual(CrashReportFilter.linkage(ofCallStackSymbols: symbols, appExecutableName: appName), .spm)
+        XCTAssertNil(CrashReportFilter.linkage(ofCallStackSymbols: symbols, appExecutableName: appName))
+    }
+
+    func testAHostFrameReturningAnSdkTypeIsNotOurs() {
+        let symbols: [String] = [frame(0, appName, "$s5MyApp5StoreC8products10QonversionAA7ProductVSayAEGyF")]
+
+        XCTAssertNil(CrashReportFilter.linkage(ofCallStackSymbols: symbols, appExecutableName: appName),
+                     "the SDK module is not the DECLARING module of this frame")
     }
 
     func testAnObjCEraSymbolIsStillRecognized() {

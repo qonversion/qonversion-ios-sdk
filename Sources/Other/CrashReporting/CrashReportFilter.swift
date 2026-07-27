@@ -21,10 +21,11 @@ import Foundation
 ///     image name is the app's and only the symbol tells them apart.
 ///
 /// Two deliberate differences from the ObjC implementation:
-///   * the symbol markers are Swift's, not `-[QON` / `-[QN`: a Swift frame is
-///     either mangled (`$s10Qonversion…`, module-name-length-prefixed) or
-///     demangled (`Qonversion.Type.method`). The ObjC prefixes are kept too so
-///     an ObjC-era frame in a mixed stack still matches;
+///   * the symbol markers are Swift's, not `-[QON` / `-[QN`: an SDK frame in a
+///     Swift build mangles to `$s10Qonversion…`, where the module name is
+///     length-prefixed, so the marker cannot match a frame that merely
+///     mentions an SDK type in its signature. The ObjC prefixes are kept too
+///     so an ObjC-era frame in a mixed stack still matches;
 ///   * the whole stack is scanned. ObjC returned NO the moment it saw an app
 ///     frame whose symbol did not match, which misses every SDK frame sitting
 ///     below an app frame — the common case, since the app is what calls in.
@@ -34,8 +35,17 @@ enum CrashReportFilter {
     static var sdkImageName: String { "Qonversion" }
 
     /// Symbol fragments that identify an SDK frame inside the host executable.
+    ///
+    /// The demangled form is deliberately NOT in this list. "Qonversion." also
+    /// appears in the signature of any host frame that merely takes or returns
+    /// an SDK type — `MyApp.Paywall.show(product: Qonversion.Product)` is the
+    /// app's own frame, and matching it would ship the app's crashes to us.
+    /// The mangled prefix cannot false-positive that way: `$s10Qonversion`
+    /// means the frame's DECLARING module is Qonversion, module names being
+    /// length-prefixed in Swift mangling. The two ObjC-era prefixes are kept
+    /// for a mixed stack and are anchored to the start of a selector.
     static var sdkSymbolMarkers: [String] {
-        return ["$s10Qonversion", "Qonversion.", "-[QON", "-[QN"]
+        return ["$s10Qonversion", "-[QON", "-[QN"]
     }
 
     /// nil when the exception is not the SDK's; otherwise how the SDK was
