@@ -66,6 +66,11 @@ public enum QonversionErrorType: Sendable {
     /// The project is misconfigured in the Qonversion Dashboard — usually a
     /// missing or invalid App Store credential.
     case projectConfigError
+    /// The current user (or the requested context key) has no remote
+    /// configuration. The ObjC SDK's QONErrorCodeRemoteConfigurationNotAvailable:
+    /// it is a normal state of an unconfigured project or a user outside every
+    /// experiment, not a transport or schema failure.
+    case remoteConfigurationNotAvailable
 
     public func message() -> String {
         // handle other errors here
@@ -116,6 +121,8 @@ public enum QonversionErrorType: Sendable {
             return "Failed to validate the purchase with the App Store"
         case .projectConfigError:
             return "The Qonversion project is misconfigured. Check the project settings in the Dashboard."
+        case .remoteConfigurationNotAvailable:
+            return "Remote configuration is not available for the current user or for the provided context key"
         case .deviceCreationFailed:
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:

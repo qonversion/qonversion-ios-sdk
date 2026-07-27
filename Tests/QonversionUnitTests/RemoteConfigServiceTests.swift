@@ -14,7 +14,7 @@ final class RemoteConfigServiceTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func makeService(processor: MockRequestProcessor) -> RemoteConfigService {
+    private func makeService(processor: RequestProcessorInterface) -> RemoteConfigService {
         RemoteConfigService(
             requestProcessor: processor,
             userIdProvider: InternalConfig(userId: userId),
@@ -31,6 +31,163 @@ final class RemoteConfigServiceTests: XCTestCase {
             contextKey: contextKey
         )
         return Qonversion.RemoteConfig(payload: ["key": "value"], experiment: nil, source: source)
+    }
+
+    /// The REAL processor over a stubbed transport. The lossy decoding and the
+    /// backend error classification both live on the wire path, so a mock that
+    /// hands back ready objects cannot prove either.
+    private func makeLiveService(json: String, status: Int = 200) -> RemoteConfigService {
+        let networkProvider = MockNetworkProvider()
+        networkProvider.responseData = Data(json.utf8)
+        networkProvider.response = HTTPURLResponse(
+            url: URL(string: "https://api2.qonversion.io/v4/remote-configs")!,
+            statusCode: status,
+            httpVersion: nil,
+            headerFields: nil
+        )!
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.dateDecodingStrategy = .qonversionTolerant
+        let responseDecoder = ResponseDecoder(decoder: jsonDecoder)
+        let criticalCodes: [ResponseCode] = [.unauthorized, .paymentRequired, .forbidden]
+        let errorHandler = NetworkErrorHandler(criticalErrorCodes: criticalCodes, decoder: responseDecoder)
+        let processor = RequestProcessor(
+            baseURL: "https://api2.qonversion.io/",
+            networkProvider: networkProvider,
+            headersBuilder: MockHeadersBuilder(),
+            errorHandler: errorHandler,
+            decoder: responseDecoder,
+            retriableRequestKinds: [],
+            requestsStorage: MockRequestsStorage(),
+            rateLimiter: MockRateLimiter()
+        )
+        return makeService(processor: processor)
+    }
+
+    private func remoteConfigRow(identifier: String, contextKey: String) -> String {
+        return """
+        {"payload": {"k": "v"}, "experiment": null, "source": {"uid": "\(identifier)", "name": "n", "type": "remote_configuration", "assignment_type": "auto", "context_key": "\(contextKey)"}}
+        """
+    }
+
+    // MARK: - lossy list decoding on the wire path
+
+    func testOneMalformedRowDoesNotKillTheWholeList() async throws {
+        let json = "[\(remoteConfigRow(identifier: "good", contextKey: "a")), {\"source\": {}}, \(remoteConfigRow(identifier: "also-good", contextKey: "b"))]"
+        let service = makeLiveService(json: json)
+
+        let list = try await service.loadRemoteConfigList()
+
+        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["good", "also-good"],
+                       "a single bad row must degrade the list, not null it")
+    }
+
+    func testOneMalformedRowDoesNotKillTheContextKeyedList() async throws {
+        let json = "[{\"source\": {}}, \(remoteConfigRow(identifier: "good", contextKey: "a"))]"
+        let service = makeLiveService(json: json)
+
+        let list = try await service.loadRemoteConfigList(contextKeys: ["a"], includeEmptyContextKey: false)
+
+        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["good"])
+    }
+
+    func testAnAllMalformedListStillFails() async {
+        // A schema break must not be laundered into an empty list — the caller
+        // would persist it over its offline data.
+        let service = makeLiveService(json: #"[{"source": {}}, {"source": {}}]"#)
+
+        do {
+            _ = try await service.loadRemoteConfigList()
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertNotEqual(error.type, .unknown)
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    // MARK: - error granularity
+
+    func testANotFoundOnTheConfigEndpointBecomesRemoteConfigurationNotAvailable() async {
+        // The ObjC SDK had QONErrorCodeRemoteConfigurationNotAvailable for
+        // exactly this: the user (or context key) has no configuration.
+        let service = makeLiveService(
+            json: #"{"error": {"type": "resource", "code": "relation_not_found", "message": "no config"}}"#,
+            status: 404
+        )
+
+        do {
+            _ = try await service.loadRemoteConfig(contextKey: "main")
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .remoteConfigurationNotAvailable)
+            XCTAssertEqual(error.apiCode, "relation_not_found", "the backend code must survive the RC layer")
+            XCTAssertEqual(error.apiType, "resource")
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testANotFoundOnTheListEndpointBecomesRemoteConfigurationNotAvailable() async {
+        let service = makeLiveService(
+            json: #"{"error": {"type": "resource", "code": "not_found", "message": "no configs"}}"#,
+            status: 404
+        )
+
+        do {
+            _ = try await service.loadRemoteConfigList()
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .remoteConfigurationNotAvailable)
+            XCTAssertEqual(error.apiCode, "not_found")
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testAClassifiedBackendErrorKeepsItsTypeAndApiFields() async {
+        // Rewrapping every failure into .loadingRemoteConfigFailed erased both
+        // the classification and the backend code the integrator branches on.
+        let service = makeLiveService(
+            json: #"{"error": {"type": "request", "code": "too_many_requests", "message": "slow down"}}"#,
+            status: 429
+        )
+
+        do {
+            _ = try await service.loadRemoteConfig(contextKey: nil)
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .rateLimitExceeded)
+            XCTAssertEqual(error.apiCode, "too_many_requests")
+            XCTAssertEqual(error.apiType, "request")
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testACriticalErrorIsNotDisguisedAsAConfigFailure() async {
+        let service = makeLiveService(
+            json: #"{"error": {"type": "request", "code": "control_unauthorized", "message": "revoked"}}"#,
+            status: 401
+        )
+
+        do {
+            _ = try await service.loadRemoteConfigList()
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .critical, "a revoked project key must stay critical")
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testAnUnclassifiableFailureStillBecomesLoadingRemoteConfigFailed() async {
+        let processor = MockRequestProcessor()
+        processor.error = MockError.stubbed
+        let service = makeService(processor: processor)
+
+        await assertThrows(.loadingRemoteConfigFailed) {
+            _ = try await service.loadRemoteConfig(contextKey: "main")
+        }
     }
 
     private func assertThrows(
@@ -89,7 +246,8 @@ final class RemoteConfigServiceTests: XCTestCase {
 
     func testLoadRemoteConfigListSendsAllRemoteConfigListRequest() async throws {
         let processor = MockRequestProcessor()
-        processor.results = [[makeRemoteConfig(identifier: "rc_1"), makeRemoteConfig(identifier: "rc_2", contextKey: "extra")]]
+        let configs: [Qonversion.RemoteConfig] = [makeRemoteConfig(identifier: "rc_1"), makeRemoteConfig(identifier: "rc_2", contextKey: "extra")]
+        processor.results = [Qonversion.RemoteConfigList(remoteConfigs: configs)]
         let service = makeService(processor: processor)
 
         let list = try await service.loadRemoteConfigList()
@@ -114,7 +272,8 @@ final class RemoteConfigServiceTests: XCTestCase {
 
     func testLoadRemoteConfigListWithContextKeysSendsRemoteConfigListRequest() async throws {
         let processor = MockRequestProcessor()
-        processor.results = [[makeRemoteConfig(identifier: "rc_a", contextKey: "a")]]
+        let configs: [Qonversion.RemoteConfig] = [makeRemoteConfig(identifier: "rc_a", contextKey: "a")]
+        processor.results = [Qonversion.RemoteConfigList(remoteConfigs: configs)]
         let service = makeService(processor: processor)
 
         let list = try await service.loadRemoteConfigList(contextKeys: ["a", "b"], includeEmptyContextKey: true)

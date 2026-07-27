@@ -106,6 +106,19 @@ keeps the status-derived type and reaches you as `apiCode`:
 come from StoreKit failures (parental controls, a product missing from the
 current storefront).
 
+One mapping is contextual: on the remote config endpoints `not_found` and
+`relation_not_found` mean *this user (or this context key) has no
+configuration*, not "the SDK asked for something that does not exist". There
+they become `.remoteConfigurationNotAvailable` — the counterpart of the ObjC
+SDK's `QONErrorCodeRemoteConfigurationNotAvailable`. Everywhere else the 404
+family stays `.resourceNotFound`.
+
+Remote config failures are no longer flattened into
+`.loadingRemoteConfigFailed`: a classified backend failure reaches you with its
+own `type`, `apiCode` and `apiType`. `.loadingRemoteConfigFailed` and
+`.loadingRemoteConfigListFailed` are now what they say — the failure could not
+be classified.
+
 ### visionOS purchases
 
 visionOS has no scene-less StoreKit purchase call: the system needs to know

@@ -20,7 +20,17 @@ extension Qonversion {
             self.remoteConfigs = remoteConfigs
         }
 
+        /// Lossy on purpose: one malformed configuration must degrade the
+        /// list, not null it. Two shapes are accepted — the bare array the
+        /// `v4/remote-configs` endpoints answer with, and the keyed wrapper
+        /// some payloads carry. An all-malformed list still throws (see
+        /// ``LossyArray``): that is a schema break, not an empty list.
         public init(from decoder: Decoder) throws {
+            if var arrayContainer = try? decoder.unkeyedContainer() {
+                remoteConfigs = try LossyArray.decode(RemoteConfig.self, from: &arrayContainer)
+                return
+            }
+
             var container = try decoder.container(keyedBy: CodingKeys.self).nestedUnkeyedContainer(forKey: .remoteConfigs)
             remoteConfigs = try LossyArray.decode(RemoteConfig.self, from: &container)
         }
