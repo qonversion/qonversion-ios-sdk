@@ -276,6 +276,16 @@ extension Qonversion {
             /// How the user is charged for this offer.
             public let paymentMode: Qonversion.Product.SubscriptionOffer.PaymentMode
             
+            init(id: String?, type: Qonversion.Product.SubscriptionOffer.OfferType, price: Decimal, displayPrice: String, period: Qonversion.Product.SubscriptionPeriod, periodCount: Int, paymentMode: Qonversion.Product.SubscriptionOffer.PaymentMode) {
+                self.id = id
+                self.type = type
+                self.price = price
+                self.displayPrice = displayPrice
+                self.period = period
+                self.periodCount = periodCount
+                self.paymentMode = paymentMode
+            }
+
             @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
             init?(originalOffer: StoreKit.Product.SubscriptionOffer?) {
                 guard let originalOffer else { return nil }

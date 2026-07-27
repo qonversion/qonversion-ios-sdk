@@ -122,6 +122,34 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         return products
     }
 
+    func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
+        let allProducts: [Qonversion.Product] = try await products()
+
+        var result: [String: Qonversion.IntroEligibilityStatus] = [:]
+        for productId in productIds {
+            guard let product: Qonversion.Product = allProducts.first(where: { $0.qonversionId == productId }), product.isStoreProductLinked else {
+                result[productId] = .unknown
+                continue
+            }
+
+            guard product.subscription?.introductoryOffer != nil else {
+                result[productId] = .nonIntroOrTrialProduct
+                continue
+            }
+
+            switch await storeKitFacade.isEligibleForIntroOffer(storeId: product.storeId) {
+            case .some(true):
+                result[productId] = .eligible
+            case .some(false):
+                result[productId] = .ineligible
+            case .none:
+                result[productId] = .unknown
+            }
+        }
+
+        return result
+    }
+
     /// Best-effort StoreKit enrichment that never fails: on a store error the
     /// unenriched products are returned as-is.
     private func enriched(_ products: [Qonversion.Product]) async -> [Qonversion.Product] {
