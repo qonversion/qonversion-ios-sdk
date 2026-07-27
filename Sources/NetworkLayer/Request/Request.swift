@@ -50,6 +50,10 @@ extension Request {
             // purchases into one — disable dedup instead.
             guard !transactionId.isEmpty else { return nil }
             return "createPurchase-\(userId)-\(transactionId)"
+        case let .createUser(_, body, _):
+            let uid = body["id"] as? String ?? ""
+            guard !uid.isEmpty else { return nil }
+            return "createUser-\(uid)"
         case let .createDevice(userId, _, _, _):
             return "createDevice-\(userId)"
         case let .updateDevice(userId, _, _, _):

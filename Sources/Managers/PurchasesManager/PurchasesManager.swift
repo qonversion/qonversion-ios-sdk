@@ -251,6 +251,17 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         return Qonversion.PurchaseOptions(contextKeys: associations.contextKeys, screenUid: associations.screenUid)
     }
 
+    #if os(iOS) || os(visionOS)
+    func presentCodeRedemptionSheet() {
+        storeKitFacade.presentCodeRedemptionSheet()
+    }
+
+    @available(iOS 16.0, *)
+    func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
+        try await storeKitFacade.presentOfferCodeRedeemSheet(in: scene)
+    }
+    #endif
+
     func startObservingTransactions() {
         storeKitFacade.startObservingTransactionUpdates()
     }

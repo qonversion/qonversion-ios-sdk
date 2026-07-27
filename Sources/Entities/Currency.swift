@@ -11,7 +11,7 @@ extension Qonversion {
     
     /// Currency details.
     /// Apple [Currency](https://developer.apple.com/documentation/foundation/decimal/formatstyle/currency) wrapper that is supported by all iOS versions, not only 16.0+ as original Apple Currency struct.
-    public struct Currency {
+    public struct Currency: Sendable {
         
         /// Currency identifier.
         public let identifier: String

@@ -181,7 +181,9 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             throw error!
         }
         
-        if responseCode == ResponseCode.noContent.rawValue && T.self is EmptyApiResponse.Type {
+        // No-response requests tolerate any 2xx with an empty body, exactly
+        // like production: the backend acknowledged, there is nothing to parse.
+        if T.self is EmptyApiResponse.Type && (responseCode == ResponseCode.noContent.rawValue || ((200...299).contains(responseCode) && responseBody.isEmpty)) {
             return EmptyApiResponse() as! T
         }
         

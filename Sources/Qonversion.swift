@@ -26,7 +26,18 @@ public final class Qonversion: @unchecked Sendable {
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
     @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
+        // Re-initializing would rebuild the manager graph under the feet of
+        // the background tasks the first call spawned.
+        initializationLock.lock()
+        defer { initializationLock.unlock() }
+        guard !shared.isInitialized else {
+            shared.logger?.warning("Qonversion.initialize called more than once — the repeated call is ignored.")
+            return shared
+        }
+        shared.isInitialized = true
+
         let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime, logLevel: configuration.logLevel)
+        Qonversion.shared.logger = assembly.servicesAssembly.miscAssemblyLogger()
         Qonversion.shared.userManager = assembly.userManager()
         Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
         Qonversion.shared.deviceManager = assembly.deviceManager()
@@ -175,6 +186,21 @@ public final class Qonversion: @unchecked Sendable {
 
         return purchasesManager.entitlementsUpdates()
     }
+
+    #if os(iOS) || os(visionOS)
+    /// Presents the system sheet for redeeming App Store offer codes.
+    public func presentCodeRedemptionSheet() {
+        purchasesManager?.presentCodeRedemptionSheet()
+    }
+
+    /// Presents the App Store offer code redemption sheet in the given scene.
+    @available(iOS 16.0, *)
+    public func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
+        guard let purchasesManager else { throw QonversionError.initializationError() }
+
+        try await purchasesManager.presentOfferCodeRedeemSheet(in: scene)
+    }
+    #endif
 
     /// Sends the historical App Store transactions to Qonversion once per
     /// install. Call it right after the first launch of the app version that
@@ -351,6 +377,9 @@ public final class Qonversion: @unchecked Sendable {
     }
 
     // MARK: - Private
+    private static let initializationLock = NSLock()
+    private var isInitialized = false
+    private var logger: LoggerWrapper?
     private var userManager: UserManagerInterface?
     private var purchasesManager: PurchasesManagerInterface?
     private var entitlementsManager: EntitlementsManagerInterface?

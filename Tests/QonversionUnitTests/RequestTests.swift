@@ -122,6 +122,13 @@ final class RequestTests: XCTestCase {
         XCTAssertNil(request.httpBody)
     }
 
+    func testCreateUserReplayDedupKeyUsesTheClientUid() {
+        let request = Request.createUser(body: ["id": "QON_abc", "environment": "prod"])
+
+        XCTAssertEqual(request.replayDedupKey, "createUser-QON_abc")
+        XCTAssertNil(Request.createUser(body: [:]).replayDedupKey)
+    }
+
     func testRemoteConfigWithoutContextKey() throws {
         let request = try XCTUnwrap(Request.remoteConfig(userId: "user1", contextKey: nil).convertToURLRequest(baseURL))
         XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/remote-config?user_id=user1")

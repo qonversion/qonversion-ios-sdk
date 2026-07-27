@@ -10,7 +10,8 @@ import Foundation
 // @unchecked: the requests map is lock-guarded.
 final class RateLimiter: RateLimiterInterface, @unchecked Sendable {
     private var maxRequestsPerSecond: UInt
-    private var requests: [Int: [TimeInterval]] = [:]
+    private(set) var requests: [Int: [TimeInterval]] = [:]
+    private var lastGlobalPrune: TimeInterval = 0
 
     // Concurrent requests validate simultaneously; the check-then-save below
     // is a read-modify-write over the shared map.
@@ -23,6 +24,8 @@ final class RateLimiter: RateLimiterInterface, @unchecked Sendable {
     func validateRateLimit(for request: Request) -> QonversionError? {
         lock.lock()
         defer { lock.unlock() }
+
+        pruneStaleBucketsIfNeeded()
 
         let hash: Int = request.hashValue
         let isLimitExceeded: Bool = isRateLimitExceeded(hash: hash)
@@ -71,6 +74,23 @@ extension RateLimiter {
             }
         }
 
-        requests[hash] = filteredRequestTimestamps
+        // An empty bucket must not survive: every distinct body hash mints a
+        // new key, and keeping them would grow the map without bound.
+        requests[hash] = filteredRequestTimestamps.isEmpty ? nil : filteredRequestTimestamps
+    }
+
+    /// Drops buckets whose newest entry is already outside the 1-second
+    /// window. Runs at most once per 10 seconds — the map stays bounded by
+    /// the actual request rate instead of the request history.
+    private func pruneStaleBucketsIfNeeded() {
+        let now: TimeInterval = Date().timeIntervalSince1970
+        guard now - lastGlobalPrune > 10 else { return }
+        lastGlobalPrune = now
+
+        for (hash, timestamps) in requests {
+            if (timestamps.last ?? 0) < now - 1 {
+                requests[hash] = nil
+            }
+        }
     }
 }

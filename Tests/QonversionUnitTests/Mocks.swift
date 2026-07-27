@@ -730,8 +730,26 @@ final class MockDeviceInfoCollector: DeviceInfoCollectorInterface {
     )
     var advertisingIdValue: String?
 
-    func deviceInfo() -> Device { device }
+    private(set) var deviceInfoCallsCount = 0
+    private(set) var headerDeviceInfoCallsCount = 0
+
+    func deviceInfo() -> Device {
+        deviceInfoCallsCount += 1
+        return device
+    }
+
     func advertisingId() -> String? { advertisingIdValue }
+
+    func headerDeviceInfo() -> HeaderDeviceInfo {
+        headerDeviceInfoCallsCount += 1
+        return HeaderDeviceInfo(
+            appVersion: device.appVersion,
+            country: device.country,
+            language: device.language,
+            osName: device.osName,
+            osVersion: device.osVersion
+        )
+    }
 }
 
 final class MockDeviceService: DeviceServiceInterface {

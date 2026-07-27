@@ -38,6 +38,14 @@ protocol PurchasesManagerInterface: AnyObject {
     /// NEVER finished by the SDK.
     func startObservingTransactions()
 
+    #if os(iOS) || os(visionOS)
+    /// Presents the system App Store offer code redemption sheet.
+    func presentCodeRedemptionSheet()
+
+    @available(iOS 16.0, *)
+    func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws
+    #endif
+
     /// Reports purchases made by the host app (Analytics mode ingestion).
     /// Verified transactions are reported through the dedup gate and are
     /// NEVER finished — the host app owns their lifecycle.

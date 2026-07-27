@@ -12,7 +12,7 @@ extension Qonversion {
     /// Qonversion Defined User Property keys.
     ///
     /// We've defined some common case properties and provided API for adding them
-    public enum UserPropertyKey: String {
+    public enum UserPropertyKey: String, Sendable {
         
         /// Email
         case email = "_q_email"

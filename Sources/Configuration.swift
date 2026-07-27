@@ -10,7 +10,8 @@ import Foundation
 extension Qonversion {
     
     /// Struct used to set the SDK main and additional configurations.
-    public struct Configuration {
+    // @unchecked: UserDefaults is thread-safe; everything else is immutable.
+    public struct Configuration: @unchecked Sendable {
         
         /// Your project key from Qonversion Dashboard to setup the SDK
         let apiKey: String
@@ -39,12 +40,15 @@ extension Qonversion {
         ///   - proxyURL: URL of your proxy server which redirects all the requests from the app to our API. Please, check the documentation and contact us before using this feature.
         ///   - entitlementsCacheLifetime: how long cached entitlements stay eligible for the local fallback when the backend is unreachable. The default value is `.month`.
         ///   - logLevel: minimal severity the SDK writes to the unified log. The default value is `.verbose`.
-        public init(apiKey: String, launchMode: LaunchMode, proxyURL: String? = nil, entitlementsCacheLifetime: EntitlementsCacheLifetime = .month, logLevel: LogLevel = .verbose) {
+        ///   - userDefaults: a custom UserDefaults (e.g. an app-group suite) to
+        ///     share the SDK state with app extensions. Defaults to `.standard`.
+        public init(apiKey: String, launchMode: LaunchMode, proxyURL: String? = nil, entitlementsCacheLifetime: EntitlementsCacheLifetime = .month, logLevel: LogLevel = .verbose, userDefaults: UserDefaults? = nil) {
             self.apiKey = apiKey
             self.launchMode = launchMode
             self.baseURL = proxyURL.map(Configuration.normalizedBaseURL)
             self.entitlementsCacheLifetime = entitlementsCacheLifetime
             self.logLevel = logLevel
+            self.userDefaults = userDefaults
         }
 
         private static func normalizedBaseURL(_ url: String) -> String {

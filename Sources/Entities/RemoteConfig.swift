@@ -10,7 +10,8 @@ import Foundation
 extension Qonversion {
 
     /// Remote configuration, created via Qonversion Dashboard
-    public struct RemoteConfig: Decodable {
+    // @unchecked: the payload dictionary carries JSON plist values only.
+    public struct RemoteConfig: Decodable, @unchecked Sendable {
         
         /// Source of the remote configuration
         public struct Source: Decodable {

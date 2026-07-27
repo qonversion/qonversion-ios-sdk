@@ -7,7 +7,8 @@
 
 import Foundation
 
-class NetworkErrorHandler: NetworkErrorHandlerInterface {
+// @unchecked: the decoder and code list are read-only after init.
+final class NetworkErrorHandler: NetworkErrorHandlerInterface, @unchecked Sendable {
     
     let criticalErrorCodes: [ResponseCode]
     let decoder: ResponseDecoderInterface
@@ -50,6 +51,6 @@ class NetworkErrorHandler: NetworkErrorHandlerInterface {
         }
         info[ErrorConstants.statusCodeKey.rawValue] = response.statusCode
 
-        return QonversionError(type: type, message: apiErrorWrapper?.error.message, error: error, additionalInfo: info)
+        return QonversionError(type: type, message: apiErrorWrapper?.error.message, error: error, additionalInfo: info, apiCode: apiErrorWrapper?.error.code, apiType: apiErrorWrapper?.error.type)
     }
 }

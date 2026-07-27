@@ -10,7 +10,7 @@ import Foundation
 extension Qonversion {
     
     /// Enum that describes the SDK launch mode.
-    public enum LaunchMode {
+    public enum LaunchMode: Sendable {
 
         /// Analytics (observer) mode: the host app owns the purchase flow and
         /// the transaction lifecycle; the SDK only observes and reports.

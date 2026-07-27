@@ -132,6 +132,16 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(requestsStorage.storedRequests.first?.trigger, "Restore", "the replay must repeat the original flow's trigger")
     }
 
+    func testEmptyBodyOnAnyTwoHundredIsSuccessForNoResponseRequests() async throws {
+        let processor = makeProcessor()
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        networkProvider.responseData = Data()
+
+        let result: EmptyApiResponse? = try? await processor.process(request: Request.detachUserFromExperiment(userId: "u1", experimentId: "e1"), responseType: EmptyApiResponse.self)
+
+        XCTAssertNotNil(result, "an acknowledged no-response request must not fail on an empty body")
+    }
+
     func testLegacyStoredRequestDecodesWithAttemptOne() throws {
         let legacyJson = #"{"url": "https://api2.qonversion.io/v4/users/u1/purchases", "method": "POST"}"#
 

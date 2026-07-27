@@ -118,13 +118,17 @@ final class ServicesAssembly {
         
         // Data-delivery requests whose loss hurts analytics; GETs and
         // interactive flows are excluded — their callers handle failures.
-        let retriableRequestKinds: [Request.Kind] = [.createPurchase, .createDevice, .updateDevice, .appleSearchAds]
+        let retriableRequestKinds: [Request.Kind] = [.createUser, .createPurchase, .createDevice, .updateDevice, .appleSearchAds]
         
         let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestKinds: retriableRequestKinds, requestsStorage: requestsStorage, rateLimiter: rateLimiter)
         
         return processor
     }
     
+    func miscAssemblyLogger() -> LoggerWrapper {
+        return miscAssembly.loggerWrapper()
+    }
+
     func deviceInfoCollector() -> DeviceInfoCollectorInterface {
         if let deviceInfoCollectorInstance {
             return deviceInfoCollectorInstance

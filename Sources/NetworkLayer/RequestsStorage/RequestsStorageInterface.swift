@@ -5,7 +5,7 @@
 
 import Foundation
 
-protocol RequestsStorageInterface {
+protocol RequestsStorageInterface: Sendable {
 
     /// Persists a failed retriable request for the offline replay. Skips the
     /// request when one with the same non-nil dedupKey is already queued.

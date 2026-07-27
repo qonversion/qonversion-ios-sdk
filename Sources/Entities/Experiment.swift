@@ -10,13 +10,13 @@ import Foundation
 extension Qonversion {
 
     /// Experiment, created via Qonversion Dashboard
-    public struct Experiment: Decodable {
+    public struct Experiment: Decodable, Sendable {
         
         /// Information about the experiment group
-        public struct Group: Decodable {
+        public struct Group: Decodable, Sendable {
 
             /// Possible types of the experiment group
-            public enum GroupType: String, Decodable {
+            public enum GroupType: String, Decodable, Sendable {
                 
                 /// Unknown experiment group type
                 case unknown

@@ -7,7 +7,8 @@
 
 import Foundation
 
-class ResponseDecoder: ResponseDecoderInterface {
+// @unchecked: the JSONDecoder is only read after init.
+final class ResponseDecoder: ResponseDecoderInterface, @unchecked Sendable {
     let decoder: JSONDecoder
     
     init(decoder: JSONDecoder) {

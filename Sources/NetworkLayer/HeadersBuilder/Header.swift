@@ -10,7 +10,7 @@ enum Header: String {
     case appVersion = "app-version"
     case country = "country"
     case authorization = "Authorization"
-    case userLocale = "User-Locale"
+    case userLocale = "User-locale"
     case source = "Source"
     case sourceVersion = "Source-Version"
     case platform = "Platform"

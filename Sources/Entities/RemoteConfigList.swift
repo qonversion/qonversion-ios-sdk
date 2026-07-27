@@ -10,7 +10,8 @@ import Foundation
 extension Qonversion {
 
     /// List of remote configurations. It's a wrapper containing several useful functions in addition to requested remote configurations..
-    public struct RemoteConfigList: Decodable {
+    // @unchecked: RemoteConfig is @unchecked Sendable itself.
+    public struct RemoteConfigList: Decodable, @unchecked Sendable {
         
         /// Reuqested remote configurations
         public let remoteConfigs: [RemoteConfig]
