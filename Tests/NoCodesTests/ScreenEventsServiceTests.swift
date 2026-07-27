@@ -111,8 +111,7 @@ final class ScreenEventsServiceTests: XCTestCase {
             service.track(event: event)
         }
 
-        // Nothing to wait for — the service must not have started a request.
-        try await Task.sleep(nanoseconds: 100_000_000)
+        await waitUntilQuiet(processor)
         XCTAssertEqual(processor.batchesCount, 0)
     }
 
@@ -147,7 +146,7 @@ final class ScreenEventsServiceTests: XCTestCase {
 
         service.flush()
 
-        try await Task.sleep(nanoseconds: 100_000_000)
+        await waitUntilQuiet(processor)
         XCTAssertEqual(processor.batchesCount, 0)
     }
 
@@ -197,17 +196,25 @@ final class ScreenEventsServiceTests: XCTestCase {
         processor.failNextRequests(true)
         let service: ScreenEventsService = makeService(processor: processor)
 
-        // 120 events, flushed in batches of 10 that all fail, so everything
-        // lands back in the retry buffer.
+        // 120 events, whose flushes all fail, so everything lands back in the
+        // retry buffer. Trimming keeps the newest events, so intermediate
+        // trims do not change the final expectation.
         for index in 0..<120 {
             let event: ScreenEvent = makeEvent(index: index)
             service.track(event: event)
         }
-        await waitUntil { processor.batchesCount >= 12 }
+        await waitUntilQuiet(processor)
+
+        // One more failing flush with nothing in flight: it takes the whole
+        // buffer and re-inserts it trimmed to the cap.
+        let batchesBeforeTrim: Int = processor.batchesCount
+        service.flush()
+        await waitUntil { processor.batchesCount > batchesBeforeTrim }
+        await waitUntilQuiet(processor)
 
         processor.failNextRequests(false)
         service.flush()
-        await waitUntil { processor.lastBatch?.count == 100 }
+        await waitUntil { processor.batchesCount > batchesBeforeTrim + 1 }
 
         let retained: [[String: AnyHashable]] = try XCTUnwrap(processor.lastBatch)
         XCTAssertEqual(retained.count, 100)
@@ -247,7 +254,7 @@ final class ScreenEventsServiceTests: XCTestCase {
 
         service.flush()
 
-        try await Task.sleep(nanoseconds: 200_000_000)
+        await waitUntilQuiet(processor)
         XCTAssertEqual(processor.batchesCount, 0, "the batch never reached the transport")
 
         // The events survived: a later flush with a working resolution sends them.
@@ -283,6 +290,20 @@ final class ScreenEventsServiceTests: XCTestCase {
         let deadline: Date = Date().addingTimeInterval(timeout)
         while !condition() && Date() < deadline {
             try? await Task.sleep(nanoseconds: 5_000_000)
+        }
+    }
+
+    /// Polls until no request has been recorded for a few consecutive polls, so
+    /// a negative assertion is not racing an in-flight flush.
+    private func waitUntilQuiet(_ processor: EventsRequestProcessor, timeout: TimeInterval = 3.0) async {
+        let deadline: Date = Date().addingTimeInterval(timeout)
+        var lastSeen: Int = -1
+        var stablePolls = 0
+        while stablePolls < 5 && Date() < deadline {
+            let current: Int = processor.batchesCount
+            stablePolls = current == lastSeen ? stablePolls + 1 : 0
+            lastSeen = current
+            try? await Task.sleep(nanoseconds: 10_000_000)
         }
     }
 }
