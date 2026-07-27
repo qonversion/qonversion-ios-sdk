@@ -347,6 +347,27 @@ final class ProductsManagerTests: XCTestCase {
         XCTAssertEqual(productsService.productsCallsCount, 2, "the new user must not join the previous user's in-flight load")
     }
 
+    func testACallerArrivingAfterTheSwitchGetsFreshProductsNotTheInFlightOnes() async throws {
+        // The load in flight belongs to the previous user; a caller that
+        // arrives after the switch must not be served its result.
+        productsService.productsResult = [makeProduct(qonversionId: "old", storeId: "store_old")]
+        let gate = ProductsAsyncGate()
+        productsService.onProducts = { await gate.wait() }
+
+        async let staleLoad: [Qonversion.Product] = manager.products()
+        await waitUntil { self.productsService.productsCallsCount >= 1 }
+        manager.userDidChange()
+
+        productsService.onProducts = nil
+        productsService.productsResult = [makeProduct(qonversionId: "new", storeId: "store_new")]
+        let fresh: [Qonversion.Product] = try await manager.products()
+        await gate.open()
+        _ = try? await staleLoad
+
+        XCTAssertEqual(fresh.map(\.qonversionId), ["new"])
+        XCTAssertEqual(manager.loadedProducts.map(\.qonversionId), ["new"], "the previous user's response must not overwrite the new user's catalog")
+    }
+
     // The product → permissions mapping is project-scoped, not user-scoped:
     // it stays valid across a user switch and keeps powering the local
     // entitlements fallback.

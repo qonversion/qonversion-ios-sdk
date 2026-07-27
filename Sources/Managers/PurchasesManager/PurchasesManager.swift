@@ -118,7 +118,13 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     }
 
     func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent> {
+        #if os(watchOS)
+        // There are no App Store promoted purchases on watchOS: a stream that
+        // never yields and never finishes would hang `for await` forever.
+        return AsyncStream { $0.finish() }
+        #else
         return promoIntentsMulticast.stream()
+        #endif
     }
 
     init(

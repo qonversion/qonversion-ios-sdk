@@ -336,6 +336,54 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(config.userId, anonUid, "the logged-out state must not be re-identified by the stale continuation")
     }
 
+    // MARK: - user stability gate
+
+    func testAwaitUserStabilityRethrowsTheIdentifyFailure() async throws {
+        // Production fails the queued remote config completions with the
+        // identify error instead of answering for the previous user.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        let gate = AsyncGate()
+        service.onIdentity = { await gate.wait() }
+        service.identityError = MockError.stubbed
+
+        async let failing: Qonversion.User = manager.identify("external_1")
+        await waitUntil { self.service.identityCalls.count >= 1 }
+        async let stability: Void = manager.awaitUserStability()
+        await gate.open()
+        _ = try? await failing
+
+        do {
+            try await stability
+            XCTFail("Expected the identify failure to reach the stability gate")
+        } catch {
+            XCTAssertEqual(error as? MockError, .stubbed)
+        }
+    }
+
+    func testACancelledIdentifyLeavesTheStabilityGateSilent() async throws {
+        // A task cancelled while suspended in URLSession reports
+        // URLError(.cancelled), wrapped by the failing layer. That is a
+        // teardown, not an identify failure the remote config caller must see.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        let gate = AsyncGate()
+        service.onIdentity = { await gate.wait() }
+        service.identityError = QonversionError(type: .identityLoadingFailed, message: nil, error: URLError(.cancelled))
+
+        async let raced: Qonversion.User = manager.identify("external_1")
+        await waitUntil { self.service.identityCalls.count >= 1 }
+        async let stability: Void = manager.awaitUserStability()
+        await gate.open()
+        _ = try? await raced
+
+        do {
+            try await stability
+        } catch {
+            XCTFail("A cancelled identify is a teardown, not a failure: \(error)")
+        }
+    }
+
     // MARK: - identify single-flight
 
     func testConcurrentIdentifyWithSameIdSharesOneRequest() async throws {

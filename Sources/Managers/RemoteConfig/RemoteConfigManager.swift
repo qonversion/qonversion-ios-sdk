@@ -59,13 +59,14 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         do {
             try await awaitUserStability()
 
-            let (cached, generation) = cachedConfigAndGeneration(for: finalKey)
-            if let cached {
+            if let cached: Qonversion.RemoteConfig = cachedConfig(for: finalKey) {
                 return cached
             }
 
             try await prepareUserForRemoteConfig()
 
+            // Snapshotted right before the request, like every other loader.
+            let generation: Int = currentGeneration()
             let remoteConfig: Qonversion.RemoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
             cacheConfig(remoteConfig, for: finalKey, ifGenerationIs: generation)
 
@@ -78,10 +79,10 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         }
     }
 
-    private func cachedConfigAndGeneration(for key: String) -> (Qonversion.RemoteConfig?, Int) {
+    private func cachedConfig(for key: String) -> Qonversion.RemoteConfig? {
         lock.lock()
         defer { lock.unlock() }
-        return (loadedConfigs[key], cacheGeneration)
+        return loadedConfigs[key]
     }
 
     private func cacheConfig(_ config: Qonversion.RemoteConfig, for key: String, ifGenerationIs generation: Int) {
@@ -122,13 +123,14 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         do {
             try await awaitUserStability()
 
-            let (cachedConfigs, generation) = cachedConfigsAndGeneration(for: requestedKeys)
+            let cachedConfigs: [Qonversion.RemoteConfig] = cachedConfigs(for: requestedKeys)
             if (cachedConfigs.count == requestedKeys.count) {
                 return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
             }
 
             try await prepareUserForRemoteConfig()
 
+            let generation: Int = currentGeneration()
             let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
             handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
             return remoteConfigList
@@ -196,10 +198,10 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         return cacheGeneration
     }
 
-    private func cachedConfigsAndGeneration(for contextKeys: [String]) -> ([Qonversion.RemoteConfig], Int) {
+    private func cachedConfigs(for contextKeys: [String]) -> [Qonversion.RemoteConfig] {
         lock.lock()
         defer { lock.unlock() }
-        return (contextKeys.compactMap { loadedConfigs[$0] }, cacheGeneration)
+        return contextKeys.compactMap { loadedConfigs[$0] }
     }
 
     private func handleLoadedRemoteConfigList(_ remoteConfigList: Qonversion.RemoteConfigList, generation: Int) {

@@ -164,14 +164,23 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
         // Forceful: production waits out the round trip already in flight and
         // then sends whatever is still pending, so the caller can rely on the
-        // properties having reached the backend.
+        // properties having reached the backend. Only the batch pending on
+        // entry is owned by this call — properties set while it runs belong to
+        // the next one, and chasing them could loop forever.
+        let ownedKeys: Set<String> = Set(propertiesStorage.all().map { $0.key })
         while true {
             if let inFlight: Task<Bool, Never> = currentSendingTask() {
                 _ = await inFlight.value
             }
 
-            guard !propertiesStorage.all().isEmpty else { return }
-            guard let task: Task<Bool, Never> = startSendingIfIdle() else { continue }
+            let remaining: [Qonversion.UserProperty] = propertiesStorage.all().filter { ownedKeys.contains($0.key) }
+            guard !remaining.isEmpty else { return }
+            guard let task: Task<Bool, Never> = startSendingIfIdle() else {
+                // Another sender took the slot between the two calls. Yield so
+                // this branch can never spin without suspending.
+                await Task.yield()
+                continue
+            }
 
             let succeeded: Bool = await task.value
             guard succeeded else { return }

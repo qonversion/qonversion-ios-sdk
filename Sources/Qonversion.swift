@@ -32,8 +32,9 @@ public final class Qonversion: @unchecked Sendable {
         // is held (the tasks below are spawned, never awaited).
         shared.stateLock.lock()
         guard shared.managers == nil else {
+            let logger: LoggerWrapper? = shared.logger
             shared.stateLock.unlock()
-            shared.logger?.warning("Qonversion.initialize called more than once — the repeated call is ignored.")
+            logger?.warning("Qonversion.initialize called more than once — the repeated call is ignored.")
             return shared
         }
 

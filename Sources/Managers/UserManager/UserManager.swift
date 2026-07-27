@@ -163,7 +163,7 @@ actor UserManager: UserManagerInterface {
             } catch {
                 // A logout cancels the identify on purpose — that is a session
                 // teardown, not a failure the caller has to handle.
-                identifyError = error is CancellationError ? nil : error
+                identifyError = Self.isCancellation(error) ? nil : error
             }
             if identifyInFlight?.id == inFlight.id {
                 identifyInFlight = nil
@@ -182,6 +182,19 @@ actor UserManager: UserManagerInterface {
         try await obtainUser()
 
         return try await userService.user()
+    }
+
+    /// Cancellation reaches the SDK in more than one shape: a task cancelled
+    /// while suspended in URLSession surfaces as URLError(.cancelled), wrapped
+    /// in the SDK error of the failing layer.
+    private static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
+        if let qonversionError = error as? QonversionError, let underlying: Error = qonversionError.error {
+            return isCancellation(underlying)
+        }
+
+        return false
     }
 }
 

@@ -29,6 +29,18 @@ final class AssemblySharingTests: XCTestCase {
         XCTAssertTrue(first === second, "every per-service processor must share the one replay queue — separate locks over the shared UserDefaults key lose requests")
     }
 
+    func testTheOverriddenStoreKitWrapperGetsTheFacadeAsItsDelegate() {
+        // The integration test seam must behave like production wiring:
+        // without the delegate the facade is blind to promo purchase intents.
+        let (_, servicesAssembly) = makeMiscAssembly()
+        let wrapper = MockStoreKit2Wrapper()
+        servicesAssembly.storeKitWrapperOverride = wrapper
+
+        let facade: StoreKitFacade = servicesAssembly.storeKitFacade()
+
+        XCTAssertTrue(wrapper.delegate === facade)
+    }
+
     func testUserSwitchClearsTheReplayQueue() {
         let (miscAssembly, _) = makeMiscAssembly()
         let storage = miscAssembly.requestsStorage()
