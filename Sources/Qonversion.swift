@@ -237,6 +237,28 @@ public final class Qonversion: @unchecked Sendable {
     }
     #endif
 
+    #if os(visionOS)
+    /// Names the scene the App Store purchase sheet is confirmed in.
+    ///
+    /// visionOS has no scene-less purchase call — StoreKit needs to know which
+    /// of the app's scenes the sheet belongs to, and only the app can answer
+    /// that. Set the scene before the first ``purchase(_:options:)``, and
+    /// update it whenever the scene the paywall lives in changes:
+    ///
+    ///     Qonversion.shared.setPurchaseConfirmationScene(windowScene)
+    ///
+    /// The scene is held weakly, so a discarded scene is not kept alive.
+    /// Purchasing without one throws a ``QonversionError`` of type
+    /// ``QonversionErrorType/purchaseSceneMissing``.
+    ///
+    /// Every other platform ignores the concept: this method does not exist
+    /// there, and ``purchase(_:options:)`` needs no scene.
+    @MainActor
+    public func setPurchaseConfirmationScene(_ scene: UIScene?) {
+        currentManagers()?.purchasesManager.setPurchaseConfirmationScene(scene)
+    }
+    #endif
+
     /// Sends the historical App Store transactions to Qonversion once per
     /// install. Call it right after the first launch of the app version that
     /// integrates the SDK, so the existing subscribers' data reaches the

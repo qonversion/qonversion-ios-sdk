@@ -12,14 +12,14 @@ import StoreKit
 // subscription task is lock-guarded.
 final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
 
-    #if !os(watchOS)
+    #if !os(watchOS) && !os(tvOS) && !os(visionOS)
     // Weak: the delegate (facade) holds the wrapper itself.
     weak var delegate: StoreKitWrapperDelegate?
     #endif
 
     private let mapper: StoreKitMapperInterface
 
-    #if !os(watchOS)
+    #if !os(watchOS) && !os(tvOS) && !os(visionOS)
     private let promoSubscriptionLock = NSLock()
     private var promoIntentsTask: Task<Void, Never>?
     #endif
@@ -105,7 +105,11 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
 
         let result: Product.PurchaseResult
         do {
-            result = try await product.purchase(options: purchaseOptions)
+            result = try await buy(product, with: purchaseOptions)
+        } catch let error as QonversionError {
+            // Already an SDK error (the visionOS scene requirement) — mapping
+            // it again would bury it under a generic .purchaseFailed.
+            throw error
         } catch {
             // Raw StoreKit errors must never reach the integrator: a
             // `catch let error as QonversionError` has to cover every failure.
@@ -134,6 +138,35 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         }
         throw outcome.qonversionError() ?? QonversionError(type: .purchaseFailed)
     }
+
+    // visionOS has no `Product.purchase(options:)` at all: the system requires
+    // the purchase sheet to be confirmed in a concrete scene, and only the
+    // host app can name it. Main-actor isolated rather than lock-guarded — the
+    // scene is a UIKit object and StoreKit's purchase call is @MainActor too,
+    // so the reference never crosses an isolation boundary.
+    #if os(visionOS)
+    /// Held weakly: the SDK must never keep a discarded scene alive.
+    @MainActor
+    private weak var purchaseConfirmationScene: UIScene?
+
+    @MainActor
+    func setPurchaseConfirmationScene(_ scene: UIScene?) {
+        purchaseConfirmationScene = scene
+    }
+
+    @MainActor
+    private func buy(_ product: Product, with options: Set<Product.PurchaseOption>) async throws -> Product.PurchaseResult {
+        guard let scene: UIScene = purchaseConfirmationScene else {
+            throw QonversionError(type: .purchaseSceneMissing)
+        }
+
+        return try await product.purchase(confirmIn: scene, options: options)
+    }
+    #else
+    private func buy(_ product: Product, with options: Set<Product.PurchaseOption>) async throws -> Product.PurchaseResult {
+        return try await product.purchase(options: options)
+    }
+    #endif
 
     /// A long-lived stream of verified out-of-band transaction updates.
     /// The stream never finishes transactions itself — the transaction
@@ -169,7 +202,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         }
     }
 
-    #if !os(watchOS)
+    #if !os(watchOS) && !os(tvOS) && !os(visionOS)
     @available(iOS 16.4, macOS 14.4, *)
     func subscribeToPromoPurchases() {
         promoSubscriptionLock.lock()

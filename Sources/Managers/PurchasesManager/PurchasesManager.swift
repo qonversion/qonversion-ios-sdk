@@ -118,9 +118,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     }
 
     func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent> {
-        #if os(watchOS)
-        // There are no App Store promoted purchases on watchOS: a stream that
-        // never yields and never finishes would hang `for await` forever.
+        #if os(watchOS) || os(tvOS) || os(visionOS)
+        // There are no App Store promoted purchases on watchOS, tvOS or
+        // visionOS: a stream that never yields and never finishes would hang
+        // `for await` forever, so the public API stays present but inert.
         return AsyncStream { $0.finish() }
         #else
         return promoIntentsMulticast.stream()
@@ -378,6 +379,13 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     }
     #endif
 
+    #if os(visionOS)
+    @MainActor
+    func setPurchaseConfirmationScene(_ scene: UIScene?) {
+        storeKitFacade.setPurchaseConfirmationScene(scene)
+    }
+    #endif
+
     func startObservingTransactions() {
         storeKitFacade.startObservingTransactionUpdates()
     }
@@ -536,7 +544,7 @@ extension PurchasesManager: UserChangedObserver {
 
 extension PurchasesManager: StoreKitFacadeDelegate {
 
-    #if !os(watchOS)
+    #if !os(watchOS) && !os(tvOS) && !os(visionOS)
     @available(iOS 16.4, macOS 14.4, *)
     func promoPurchaseIntent(product: Product) {
         emitPromoPurchaseIntent(storeProductId: product.id)

@@ -8,8 +8,11 @@
 import Foundation
 import StoreKit
 
-// Promoted purchases do not exist on watchOS.
-#if !os(watchOS)
+// StoreKit's PurchaseIntent is declared unavailable on watchOS, tvOS and
+// visionOS, so the whole promoted-purchase machinery is compiled out there.
+// The public promo API stays present but inert — see
+// PurchasesManager.promoPurchaseIntents().
+#if !os(watchOS) && !os(tvOS) && !os(visionOS)
 protocol StoreKitWrapperDelegate: AnyObject {
 
     @available(iOS 16.4, macOS 14.4, *)

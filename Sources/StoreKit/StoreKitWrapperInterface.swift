@@ -10,9 +10,10 @@ import StoreKit
 
 protocol StoreKitWrapperInterface: AnyObject, Sendable {
 
-    // watchOS has no App Store promoted purchases at all: StoreKit's
-    // PurchaseIntent is unavailable there, so the whole machinery is gated out.
-    #if !os(watchOS)
+    // watchOS, tvOS and visionOS have no App Store promoted purchases at all:
+    // StoreKit's PurchaseIntent is declared unavailable on all three, so the
+    // whole machinery is gated out.
+    #if !os(watchOS) && !os(tvOS) && !os(visionOS)
     /// The receiver of promoted-purchase intents. Weak on implementations —
     /// the delegate (the facade) owns the wrapper.
     var delegate: StoreKitWrapperDelegate? { get set }
@@ -42,7 +43,7 @@ protocol StoreKitWrapperInterface: AnyObject, Sendable {
     /// stale afterwards.
     func storefrontUpdates() -> AsyncStream<Void>
 
-    #if !os(watchOS)
+    #if !os(watchOS) && !os(tvOS) && !os(visionOS)
     /// Starts observing App Store promoted-purchase intents; they are
     /// delivered to the wrapper delegate.
     @available(iOS 16.4, macOS 14.4, *)
@@ -54,5 +55,11 @@ protocol StoreKitWrapperInterface: AnyObject, Sendable {
     #if os(iOS) || os(visionOS)
     @available(iOS 16.0, visionOS 1.0, *)
     func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws
+    #endif
+
+    #if os(visionOS)
+    /// The scene the visionOS purchase sheet is confirmed in.
+    @MainActor
+    func setPurchaseConfirmationScene(_ scene: UIScene?)
     #endif
 }

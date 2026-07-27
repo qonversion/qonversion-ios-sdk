@@ -66,6 +66,14 @@ extension Qonversion {
             case manual
         }
 
+        /// The renew state of the subscription behind the entitlement.
+        ///
+        /// Only ``willRenew``, ``canceled`` and ``billingIssue`` exist as
+        /// values on the wire (inside `product.subscription.renew_state`).
+        /// ``nonRenewable`` and ``unknown`` are derived: the backend expresses
+        /// a non-renewable purchase by sending no subscription object at all.
+        /// The raw values below are the SDK's own identity for the state — the
+        /// API never sends "non_renewable" or "unknown".
         public enum RenewState: String, Codable, Sendable {
             case unknown
             /// A non-renewable purchase (a consumable or a lifetime product).
@@ -73,6 +81,40 @@ extension Qonversion {
             case willRenew = "will_renew"
             case canceled
             case billingIssue = "billing_issue"
+
+            /// The state named by a `renew_state` value, or nil when the value
+            /// is not part of the wire vocabulary.
+            init?(wireValue: String) {
+                switch wireValue {
+                case "will_renew":
+                    self = .willRenew
+                case "canceled":
+                    self = .canceled
+                case "billing_issue":
+                    self = .billingIssue
+                default:
+                    return nil
+                }
+            }
+
+            /// The `renew_state` value for this state, or nil when the state
+            /// is not expressed by one.
+            var wireValue: String? {
+                switch self {
+                case .willRenew, .canceled, .billingIssue:
+                    return rawValue
+                case .nonRenewable, .unknown:
+                    return nil
+                }
+            }
+
+            /// The backend's own rule (product_center) for an entitlement that
+            /// carries no renew state: everything but a manual grant is a
+            /// non-renewable purchase; a manual grant simply has no store
+            /// subscription to report a state for.
+            static func derived(from source: Source) -> RenewState {
+                return source == .manual ? .unknown : .nonRenewable
+            }
         }
 
         /// How the user got the entitlement.
@@ -126,7 +168,20 @@ extension Qonversion {
 
             public enum OwnershipType: String, Codable, Sendable {
                 case owner
-                case familySharing = "family_sharing"
+                case familyShared = "family_shared"
+
+                /// The wire spells family sharing "family_shared" here, while
+                /// ``Qonversion/Qonversion/Entitlement/GrantType`` spells the
+                /// same idea "family_sharing" — accept both so a payload
+                /// normalized to either one keeps its meaning.
+                init?(wireValue: String) {
+                    switch wireValue {
+                    case "family_sharing":
+                        self = .familyShared
+                    default:
+                        self.init(rawValue: wireValue)
+                    }
+                }
             }
 
             public enum TransactionType: String, Codable, Sendable {
@@ -136,7 +191,20 @@ extension Qonversion {
                 case trialStarted = "trial_started"
                 case introStarted = "intro_started"
                 case introRenewed = "intro_renewed"
-                case nonConsumablePurchase = "nonconsumable_purchase"
+                case nonConsumablePurchase = "non_consumable_purchase"
+
+                /// "nonconsumable_purchase" is the spelling this SDK shipped
+                /// with before the contract was read off the backend; keep
+                /// accepting it so a normalizing proxy does not degrade the
+                /// transaction to .unknown.
+                init?(wireValue: String) {
+                    switch wireValue {
+                    case "nonconsumable_purchase":
+                        self = .nonConsumablePurchase
+                    default:
+                        self.init(rawValue: wireValue)
+                    }
+                }
             }
 
             public init(from decoder: Decoder) throws {
@@ -154,9 +222,9 @@ extension Qonversion {
                 let rawEnvironment = try container.decodeIfPresent(String.self, forKey: .environment)
                 environment = rawEnvironment.flatMap { Environment(rawValue: $0) } ?? .production
                 let rawOwnershipType = try container.decodeIfPresent(String.self, forKey: .ownershipType)
-                ownershipType = rawOwnershipType.flatMap { OwnershipType(rawValue: $0) } ?? .owner
+                ownershipType = rawOwnershipType.flatMap { OwnershipType(wireValue: $0) } ?? .owner
                 let rawType = try container.decodeIfPresent(String.self, forKey: .type)
-                type = rawType.flatMap { TransactionType(rawValue: $0) } ?? .unknown
+                type = rawType.flatMap { TransactionType(wireValue: $0) } ?? .unknown
             }
 
             private enum CodingKeys: String, CodingKey {
@@ -223,8 +291,20 @@ extension Qonversion {
 
             let product = try container.decodeIfPresent(EntitlementProduct.self, forKey: .product)
             productId = product?.productId
-            let rawRenewState: String? = product?.subscription?.renewState
-            renewState = rawRenewState.flatMap { RenewState(rawValue: $0) } ?? .unknown
+            let cachedRenewState: String? = try? container.decodeIfPresent(String.self, forKey: .cachedRenewState)
+            if let rawRenewState: String = product?.subscription?.renewState {
+                // A renew state on the wire is authoritative; one the SDK does
+                // not know degrades to .unknown rather than to a derivation
+                // that would contradict it.
+                renewState = RenewState(wireValue: rawRenewState) ?? .unknown
+            } else if let cachedRenewState, let restored: RenewState = RenewState(rawValue: cachedRenewState) {
+                // Reading the SDK's own cache back: the state it resolved when
+                // it wrote the entry, so a locally calculated entitlement is
+                // not re-derived into something it never claimed.
+                renewState = restored
+            } else {
+                renewState = RenewState.derived(from: source)
+            }
 
             let rawGrantType = try container.decodeIfPresent(String.self, forKey: .grantType)
             // Production default: everything the backend does not label
@@ -247,10 +327,21 @@ extension Qonversion {
             try container.encode(source.rawValue, forKey: .source)
             try container.encodeIfPresent(startedDate, forKey: .started)
             try container.encodeIfPresent(expirationDate, forKey: .expires)
-            if productId != nil || renewState != .unknown {
-                let subscription = renewState == .unknown ? nil : EntitlementSubscription(renewState: renewState.rawValue)
-                try container.encode(EntitlementProduct(productId: productId ?? "", subscription: subscription), forKey: .product)
+            // The wire shape is reproduced exactly: only the three real renew
+            // states become a subscription object, and a non-renewable
+            // entitlement has none at all.
+            var subscription: EntitlementSubscription?
+            if let renewStateValue: String = renewState.wireValue {
+                subscription = EntitlementSubscription(renewState: renewStateValue)
             }
+            if productId != nil || subscription != nil {
+                let entitlementProduct = EntitlementProduct(productId: productId, subscription: subscription)
+                try container.encode(entitlementProduct, forKey: .product)
+            }
+            // ...and the resolved state travels next to it under a key the API
+            // never sends, so re-reading the cache yields the same state
+            // instead of re-deriving one from the source.
+            try container.encode(renewState.rawValue, forKey: .cachedRenewState)
             // The entitlements cache round-trips through Codable — everything
             // the SDK exposes has to survive it.
             try container.encode(grantType.rawValue, forKey: .grantType)
@@ -266,7 +357,7 @@ extension Qonversion {
         }
 
         private struct EntitlementProduct: Codable {
-            let productId: String
+            let productId: String?
             var subscription: EntitlementSubscription?
 
             private enum CodingKeys: String, CodingKey {
@@ -298,6 +389,9 @@ extension Qonversion {
             case lastPurchase = "last_purchase_timestamp"
             case autoRenewDisable = "auto_renew_disable_timestamp"
             case storeTransactions = "store_transactions"
+            /// Cache-only. The API never sends it: it carries the renew state
+            /// the SDK resolved, which the wire shape alone cannot express.
+            case cachedRenewState = "sdk_renew_state"
         }
     }
 

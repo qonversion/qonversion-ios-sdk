@@ -25,11 +25,14 @@ public struct QonversionError: Error, @unchecked Sendable {
     /// Additional failure context.
     public let additionalInfo: [String: Any]?
 
-    /// The backend error code (e.g. "receipt_validation_error") when the
-    /// failure came from the API — branch on it for API-specific handling.
+    /// The backend error code (a snake_case slug, e.g. "relation_not_found"
+    /// or "purchase_fraud") when the failure came from the API — branch on it
+    /// for handling more specific than ``type``.
     public let apiCode: String?
 
-    /// The backend error class when the failure came from the API.
+    /// The backend error class when the failure came from the API:
+    /// "internal", "logical", "request" or "resource". Absent on the
+    /// `/v4/web` surface, which sends the envelope without it.
     public let apiType: String?
 
     init(type: QonversionErrorType, message: String? = nil, error: Error? = nil, additionalInfo: [String : Any]? = nil, apiCode: String? = nil, apiType: String? = nil) {

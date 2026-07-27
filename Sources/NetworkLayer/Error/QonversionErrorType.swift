@@ -43,22 +43,29 @@ public enum QonversionErrorType: Sendable {
     case purchasePending
     case purchaseFailed
     case transactionVerificationFailed
-    /// The product is not in the Qonversion catalog.
-    case productNotFound
+    /// visionOS only: a purchase was attempted before the app named the
+    /// `UIScene` its purchase sheet must be confirmed in. Call
+    /// ``Qonversion/Qonversion/setPurchaseConfirmationScene(_:)`` first.
+    case purchaseSceneMissing
+    /// The backend does not know the requested resource: an unknown user id,
+    /// an unknown product, an unknown remote config, an unknown nested id.
+    /// Answers the `not_found`, `relation_not_found` and `user_not_found`
+    /// backend codes (HTTP 404).
+    case resourceNotFound
     /// This device is not allowed to make payments (e.g. parental controls).
+    /// Produced from StoreKit failures only — the backend has no code for it.
     case paymentNotAllowed
-    /// The product is not available in the current storefront.
+    /// The product is not available in the current storefront. Produced from
+    /// StoreKit failures only — the backend has no code for it.
     case storeProductNotAvailable
-    /// The backend rejected the purchase as fraudulent.
+    /// The backend rejected the purchase as fraudulent (`purchase_fraud`).
     case fraudPurchase
-    /// The backend could not validate the purchase with Apple.
+    /// The backend could not turn the purchase into a subscription record:
+    /// the App Store payload did not parse or contradicts a known purchase.
     case receiptValidationError
-    /// The project is misconfigured in the Qonversion Dashboard.
+    /// The project is misconfigured in the Qonversion Dashboard — usually a
+    /// missing or invalid App Store credential.
     case projectConfigError
-    /// The feature is not available on the project's plan.
-    case featureNotSupported
-    /// The backend does not know this user id.
-    case invalidClientUID
 
     public func message() -> String {
         // handle other errors here
@@ -91,8 +98,14 @@ public enum QonversionErrorType: Sendable {
             return "The purchase failed"
         case .transactionVerificationFailed:
             return "The transaction failed StoreKit verification"
-        case .productNotFound:
-            return "The product was not found in the Qonversion product catalog"
+        case .purchaseSceneMissing:
+            return "On visionOS the purchase sheet is confirmed in a scene. Call Qonversion.shared.setPurchaseConfirmationScene(_:) with the UIScene the purchase is made from before purchasing."
+        case .resourceNotFound:
+            return "The requested resource was not found"
+        case .invalidRequest:
+            return "The request was rejected as invalid"
+        case .rateLimitExceeded:
+            return "The request rate limit was exceeded"
         case .paymentNotAllowed:
             return "This device is not allowed to make payments"
         case .storeProductNotAvailable:
@@ -103,10 +116,6 @@ public enum QonversionErrorType: Sendable {
             return "Failed to validate the purchase with the App Store"
         case .projectConfigError:
             return "The Qonversion project is misconfigured. Check the project settings in the Dashboard."
-        case .featureNotSupported:
-            return "The feature is not supported for the current project"
-        case .invalidClientUID:
-            return "The Qonversion user id is unknown to the backend"
         case .deviceCreationFailed:
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:
@@ -142,9 +151,12 @@ extension QonversionErrorType {
     /// The backend error codes that carry a meaning of their own; anything
     /// absent keeps the classification derived from the HTTP status.
     ///
-    /// v4 answers with snake_case slugs. The numeric codes of the previous API
-    /// generation are kept alongside them, so a proxy or an older deployment
-    /// still maps.
+    /// v4 answers `{"error": {"type", "code", "message", "details"}}` where
+    /// `code` is a snake_case slug. The vocabulary below is the one that
+    /// actually reaches a mobile client — every entry was read off the
+    /// api-gateway, userman, purchaseman and receipter sources. A slug that is
+    /// not listed keeps the status-derived type on purpose: guessing a meaning
+    /// for it would send the integrator down the wrong branch.
     init?(apiCode: String?) {
         guard let apiCode else { return nil }
 
@@ -153,19 +165,15 @@ extension QonversionErrorType {
             return
         }
 
+        // The numeric codes belong to the v0/v1 API generation and are kept
+        // only for a proxy or an old deployment still answering with them.
+        // 10008 is the single numeric code a live backend can still emit;
+        // the rest of the old table mapped codes nothing produces anymore.
         guard let code = Int(apiCode) else { return nil }
 
         switch code {
-        case 10004, 10005, 20014:
-            self = .invalidClientUID
         case 10008:
             self = .fraudPurchase
-        case 20005:
-            self = .featureNotSupported
-        case 20011, 20012, 20013:
-            self = .projectConfigError
-        case 20100, 20102, 20103, 20105, 20107, 20108, 20110, 21099:
-            self = .receiptValidationError
         default:
             return nil
         }
@@ -173,23 +181,42 @@ extension QonversionErrorType {
 
     private init?(apiCodeSlug: String) {
         switch apiCodeSlug {
-        case "invalid_client_uid":
-            self = .invalidClientUID
-        case "fraud_purchase":
+        // The request was malformed or failed validation. `invalid_data` and
+        // `invalid_request` come from the gateway, `validation_error` from the
+        // offer-signature service and `invalid_entitlement_data` from userman.
+        case "invalid_data", "invalid_request", "validation_error", "invalid_entitlement_data":
+            self = .invalidRequest
+        // Nothing behind the id. `relation_not_found` is what a nested route
+        // answers for an unknown uid (404); `user_not_found` is the
+        // offer-signature service saying the same thing.
+        case "not_found", "relation_not_found", "user_not_found":
+            self = .resourceNotFound
+        // Throttling. `too_many_requests` is the gateway's slug (429);
+        // `rate_limit_exceeded` is the offer-signature passthrough.
+        case "too_many_requests", "rate_limit_exceeded":
+            self = .rateLimitExceeded
+        // purchaseman rejected the purchase as fraudulent (422).
+        case "purchase_fraud":
             self = .fraudPurchase
-        case "feature_not_supported":
-            self = .featureNotSupported
-        case "project_config_error":
+        // The project has no usable App Store credentials. The first two come
+        // from purchaseman, the rest from the offer-signature service, where
+        // the missing token / secret / settings all mean the same thing:
+        // the Dashboard project is not set up for this operation.
+        case "store_not_configured", "store_creds_failed", "token_not_found", "secrets_not_found", "settings_not_found":
             self = .projectConfigError
-        case "receipt_validation_error":
+        // The purchase-validation family (422): the App Store payload did not
+        // parse into a subscription, carried an unexpected purchase type, or
+        // contradicts a purchase the backend already knows.
+        case "subscription_period_parse_error", "apple_purchase_type_error", "conflicting_purchase_found":
             self = .receiptValidationError
-        case "product_not_found":
-            self = .productNotFound
-        case "payment_not_allowed":
-            self = .paymentNotAllowed
-        case "store_product_not_available":
-            self = .storeProductNotAvailable
         default:
+            // Deliberately unmapped, though they do reach the client:
+            // already_exists, storage_error, network_error, unknown_error,
+            // unexpected_error, entity_persistence_error,
+            // client_canceled_request — they add nothing to the HTTP status.
+            // control_unauthorized / control_forbidden are unmapped too: they
+            // arrive on 401 / 403, which already classify as .critical and
+            // must keep doing so (see the precedence in NetworkErrorHandler).
             return nil
         }
     }

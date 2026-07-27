@@ -7,7 +7,8 @@ This SDK is a full Swift rewrite with an async/await-first API. Existing install
 - iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+ / visionOS 1.0+ (previously iOS 9)
 - Swift Package Manager only — CocoaPods and Carthage are not supported anymore
 - Purchases run natively on StoreKit 2; StoreKit 1 is not used
-- App Store promoted purchases surface via `promoPurchaseIntents` on iOS 16.4+ (a known gap on iOS 15.0–16.3)
+- App Store promoted purchases surface via `promoPurchaseIntents` on iOS 16.4+ and macOS 14.4+ (a known gap on iOS 15.0–16.3). StoreKit declares `PurchaseIntent` unavailable on watchOS, tvOS and visionOS, so there the stream exists but finishes immediately — a `for await` over it is safe and returns at once
+- On visionOS, call `setPurchaseConfirmationScene(_:)` before purchasing — see [visionOS purchases](#visionos-purchases)
 
 ## API mapping
 
@@ -79,6 +80,51 @@ do {
 }
 ```
 
+The numeric `QONErrorCode` is gone. What the backend answered is still available
+unfiltered on `error.apiCode` (a snake_case slug) and `error.apiType`
+(`internal` | `logical` | `request` | `resource`, absent on the `/v4/web`
+surface), so handling more specific than `type` stays possible.
+
+`type` is derived from the HTTP status and then refined by the backend code.
+The refinement never overrides the two classifications the SDK acts on itself:
+401/402/403 stay `.critical` (they latch the revoked-key stop) and 5xx stays
+`.internal` (it drives the offline entitlements fallback).
+
+These are the backend codes that map to a type of their own; anything else
+keeps the status-derived type and reaches you as `apiCode`:
+
+| Backend code | `QonversionErrorType` |
+|---|---|
+| `invalid_data`, `invalid_request`, `validation_error`, `invalid_entitlement_data` | `.invalidRequest` |
+| `not_found`, `relation_not_found`, `user_not_found` | `.resourceNotFound` |
+| `too_many_requests`, `rate_limit_exceeded` | `.rateLimitExceeded` |
+| `purchase_fraud` | `.fraudPurchase` |
+| `store_not_configured`, `store_creds_failed`, `token_not_found`, `secrets_not_found`, `settings_not_found` | `.projectConfigError` |
+| `subscription_period_parse_error`, `apple_purchase_type_error`, `conflicting_purchase_found` | `.receiptValidationError` |
+
+`.paymentNotAllowed` and `.storeProductNotAvailable` have no backend code — they
+come from StoreKit failures (parental controls, a product missing from the
+current storefront).
+
+### visionOS purchases
+
+visionOS has no scene-less StoreKit purchase call: the system needs to know
+which of the app's scenes the purchase sheet belongs to. Name it once, the same
+way `presentOfferCodeRedeemSheet(in:)` takes a scene:
+
+```swift
+// visionOS only — the method does not exist on other platforms
+Qonversion.shared.setPurchaseConfirmationScene(windowScene)
+
+let result = try await Qonversion.shared.purchase(product)
+```
+
+Set it before the first `purchase(_:options:)` and update it when the scene
+your paywall lives in changes. The scene is held weakly, so a discarded scene
+is not kept alive. Purchasing without one throws a `QonversionError` of type
+`.purchaseSceneMissing` instead of crashing. Nothing changes on iOS, macOS,
+tvOS or watchOS.
+
 ### Purchase result
 
 `purchase` returns `PurchaseResult` with the verified store `transaction` and the resulting `entitlements`. The transaction is finished only after Qonversion confirms the purchase; when Qonversion is unreachable, the purchase still succeeds with locally calculated entitlements and the report is retried automatically.
@@ -121,6 +167,18 @@ name, `Qonversion.Transaction`.
 Every one of these fields is optional on the wire: an older backend that does
 not send them yet yields the defaults (`grantType == .purchase`,
 `renewsCount == 0`, nil dates, an empty `transactions` list).
+
+### `renewState` and non-renewable products
+
+The API answers `will_renew`, `canceled` or `billing_issue` — and nothing else.
+A non-renewable purchase (a consumable, a lifetime product) is expressed by
+sending **no subscription object at all**, so `.nonRenewable` is derived, using
+the backend's own rule: no renew state on a non-manual source means
+non-renewable; on a manual grant there is no store subscription to report a
+state for, so it stays `.unknown`.
+
+`QONRenewState` in the Objective-C SDK had the same five cases, so switch
+statements port unchanged — only where `.nonRenewable` comes from differs.
 
 ## Fallback file
 

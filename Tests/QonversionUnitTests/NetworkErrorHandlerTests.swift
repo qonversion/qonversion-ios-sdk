@@ -196,38 +196,33 @@ final class ApiErrorMappingTests: XCTestCase {
         XCTAssertNotEqual(error.errorDescription, QonversionErrorType.unknown.message(), "the integrator must get more than \"Unknown error occurred.\"")
     }
 
-    func testBackendCodesMapToTypedErrors() throws {
+    func testTheLiveV4SlugVocabularyMapsToTypedErrors() throws {
+        // The slugs below are the ones the v4 gateway actually emits to a
+        // mobile client (api-gateway / userman / purchaseman / receipter).
         let expectations: [(code: String, type: QonversionErrorType)] = [
-            ("10004", .invalidClientUID),
-            ("10005", .invalidClientUID),
-            ("20014", .invalidClientUID),
-            ("10008", .fraudPurchase),
-            ("20005", .featureNotSupported),
-            ("20012", .projectConfigError),
-            ("20102", .receiptValidationError),
-            ("21099", .receiptValidationError),
-        ]
-
-        for expectation in expectations {
-            let body = Data("{\"error\": {\"code\": \"\(expectation.code)\", \"message\": \"m\", \"type\": \"t\"}}".utf8)
-            let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
-
-            XCTAssertEqual(error.type, expectation.type, "code \(expectation.code)")
-        }
-    }
-
-    func testV4SlugCodesMapToTypedErrors() throws {
-        // v4 answers with snake_case slugs, not the numeric codes of the
-        // previous API generation.
-        let expectations: [(code: String, type: QonversionErrorType)] = [
-            ("invalid_client_uid", .invalidClientUID),
-            ("fraud_purchase", .fraudPurchase),
-            ("feature_not_supported", .featureNotSupported),
-            ("project_config_error", .projectConfigError),
-            ("receipt_validation_error", .receiptValidationError),
-            ("product_not_found", .productNotFound),
-            ("payment_not_allowed", .paymentNotAllowed),
-            ("store_product_not_available", .storeProductNotAvailable),
+            // request family
+            ("invalid_data", .invalidRequest),
+            ("invalid_request", .invalidRequest),
+            ("validation_error", .invalidRequest),
+            ("invalid_entitlement_data", .invalidRequest),
+            // resource family
+            ("not_found", .resourceNotFound),
+            ("relation_not_found", .resourceNotFound),
+            ("user_not_found", .resourceNotFound),
+            // throttling
+            ("too_many_requests", .rateLimitExceeded),
+            ("rate_limit_exceeded", .rateLimitExceeded),
+            // purchase passthrough
+            ("purchase_fraud", .fraudPurchase),
+            ("store_not_configured", .projectConfigError),
+            ("store_creds_failed", .projectConfigError),
+            ("subscription_period_parse_error", .receiptValidationError),
+            ("apple_purchase_type_error", .receiptValidationError),
+            ("conflicting_purchase_found", .receiptValidationError),
+            // offer-signature passthrough
+            ("token_not_found", .projectConfigError),
+            ("secrets_not_found", .projectConfigError),
+            ("settings_not_found", .projectConfigError),
         ]
 
         for expectation in expectations {
@@ -238,14 +233,94 @@ final class ApiErrorMappingTests: XCTestCase {
         }
     }
 
+    func testSlugsWithoutAMeaningOfTheirOwnKeepTheStatusDerivedType() throws {
+        // These do reach the client, but they say nothing the HTTP status does
+        // not already say — inventing a typed meaning for them would mislead.
+        for code in ["already_exists", "storage_error", "network_error", "unknown_error", "unexpected_error", "entity_persistence_error", "client_canceled_request"] {
+            let body = Data("{\"error\": {\"code\": \"\(code)\", \"message\": \"m\"}}".utf8)
+            let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
+
+            XCTAssertEqual(error.type, .unknown, "code \(code)")
+            XCTAssertEqual(error.apiCode, code, "the raw slug still reaches the integrator")
+        }
+    }
+
+    func testTheSlugsThatNeverExistedAreNotMapped() throws {
+        // These were guessed, not observed: no backend ever emits them.
+        for code in ["receipt_validation_error", "fraud_purchase", "feature_not_supported", "project_config_error", "invalid_client_uid", "product_not_found", "payment_not_allowed", "store_product_not_available", "rate_limited", "not_implemented"] {
+            let body = Data("{\"error\": {\"code\": \"\(code)\", \"message\": \"m\"}}".utf8)
+            let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
+
+            XCTAssertEqual(error.type, .unknown, "code \(code)")
+        }
+    }
+
+    func testAuthorizationSlugsKeepTheirCriticalClassification() throws {
+        // control_unauthorized / control_forbidden arrive on 401 / 403, which
+        // already latch the revoked-key stop.
+        let unauthorized = Data(#"{"error": {"code": "control_unauthorized", "message": "m", "type": "logical"}}"#.utf8)
+        let forbidden = Data(#"{"error": {"code": "control_forbidden", "message": "m", "type": "logical"}}"#.utf8)
+
+        XCTAssertEqual(try XCTUnwrap(handler.extractError(from: response(statusCode: 401), body: unauthorized)).type, .critical)
+        XCTAssertEqual(try XCTUnwrap(handler.extractError(from: response(statusCode: 403), body: forbidden)).type, .critical)
+    }
+
     func testANumericJsonCodeIsStillACode() throws {
         // Some deployments send the code as a bare number rather than a string.
-        let body = Data(#"{"error": {"code": 20102, "message": "m"}}"#.utf8)
+        let body = Data(#"{"error": {"code": 10008, "message": "m"}}"#.utf8)
 
         let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
 
-        XCTAssertEqual(error.apiCode, "20102")
-        XCTAssertEqual(error.type, .receiptValidationError)
+        XCTAssertEqual(error.apiCode, "10008")
+        XCTAssertEqual(error.type, .fraudPurchase)
+    }
+
+    func testTheLegacyNumericTableIsDownToTheOneCodeStillEmitted() throws {
+        // v0/v1 numerics are legacy-only. 10008 is the single one a current
+        // deployment can still answer with; the rest were dead rows.
+        for code in ["10004", "10005", "20005", "20012", "20014", "20102", "21099"] {
+            let body = Data("{\"error\": {\"code\": \"\(code)\", \"message\": \"m\", \"type\": \"t\"}}".utf8)
+            let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
+
+            XCTAssertEqual(error.type, .unknown, "code \(code)")
+        }
+    }
+
+    func testTheV4DetailsArrayIsTolerated() throws {
+        // The v4 envelope is {"error": {type, code, message, details:[{field, message}]}}.
+        let body = Data("""
+        {"error": {"type": "request", "code": "invalid_data", "message": "Validation failed", "details": [{"field": "purchase.product_id", "message": "is required"}]}}
+        """.utf8)
+
+        let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 422), body: body))
+
+        XCTAssertEqual(error.type, .invalidRequest)
+        XCTAssertEqual(error.apiCode, "invalid_data")
+        XCTAssertEqual(error.apiType, "request")
+        XCTAssertTrue(error.message.contains("Validation failed"))
+    }
+
+    func testTheWebEnvelopeWithoutATypeIsTolerated() throws {
+        // The /v4/web surface answers without the "type" member.
+        let body = Data(#"{"error": {"code": "too_many_requests", "message": "Slow down"}}"#.utf8)
+
+        let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 429), body: body))
+
+        XCTAssertEqual(error.type, .rateLimitExceeded)
+        XCTAssertNil(error.apiType)
+        XCTAssertTrue(error.message.contains("Slow down"))
+    }
+
+    func testAMessagelessEnvelopeStillYieldsTheCode() throws {
+        // The code drives the typed mapping: a body that carries only the code
+        // and the details must not lose it to a failed decode.
+        let body = Data(#"{"error": {"code": "relation_not_found", "details": [{"field": "uid", "message": "unknown"}]}}"#.utf8)
+
+        let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 404), body: body))
+
+        XCTAssertEqual(error.type, .resourceNotFound)
+        XCTAssertEqual(error.apiCode, "relation_not_found")
+        XCTAssertEqual(error.message, HTTPURLResponse.localizedString(forStatusCode: 404))
     }
 
     func testAnUnknownSlugKeepsTheStatusDerivedType() throws {
@@ -268,7 +343,7 @@ final class ApiErrorMappingTests: XCTestCase {
     func testCriticalAndServerClassificationsSurviveTheCodeRefinement() throws {
         // 401/402/403 latch the revoked-key stop and 5xx drives the offline
         // fallback: a backend code must not take those meanings away.
-        let body = Data(#"{"error": {"code": "10004", "message": "m", "type": "t"}}"#.utf8)
+        let body = Data(#"{"error": {"code": "purchase_fraud", "message": "m", "type": "logical"}}"#.utf8)
 
         let critical = try XCTUnwrap(handler.extractError(from: response(statusCode: 401), body: body))
         let server = try XCTUnwrap(handler.extractError(from: response(statusCode: 503), body: body))

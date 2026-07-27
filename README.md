@@ -208,6 +208,20 @@ do {
 }
 ```
 
+When the failure came from the Qonversion API, `error.apiCode` carries the
+backend code verbatim (`relation_not_found`, `purchase_fraud`, …) and
+`error.apiType` its class (`internal`, `logical`, `request`, `resource`) — for
+handling more specific than `error.type`.
+
+**On visionOS**, name the scene the purchase sheet is confirmed in before
+purchasing; StoreKit has no scene-less purchase call there:
+
+```swift
+Qonversion.shared.setPurchaseConfirmationScene(windowScene)   // visionOS only
+```
+
+Purchasing without it throws `.purchaseSceneMissing` rather than crashing.
+
 Attach context to a purchase:
 
 ```swift
@@ -245,7 +259,7 @@ if let premium = entitlements["premium"], premium.active {
 |---|---|
 | `active` | Whether the access is currently granted. The only field you need for gating. |
 | `source` | Where the purchase came from: `.appStore`, `.playStore`, `.stripe`, `.manual`. |
-| `renewState` | `.willRenew`, `.canceled` (active until expiration), `.billingIssue` (grace period — worth a payment-update prompt). |
+| `renewState` | `.willRenew`, `.canceled` (active until expiration), `.billingIssue` (grace period — worth a payment-update prompt), `.nonRenewable` (a consumable or lifetime purchase — the API sends no subscription for it), `.unknown` (a manual grant, which has no store subscription). |
 | `startedDate` / `expirationDate` | Period bounds; `expirationDate == nil` means lifetime access. |
 | `productId` | The Qonversion product that granted the access. |
 
@@ -294,7 +308,9 @@ Task {
 Task {
     for await intent in Qonversion.shared.promoPurchaseIntents {
         // a purchase started from the App Store product page
-        // (delivered on iOS 16.4+; a known gap on iOS 15.0-16.3);
+        // (delivered on iOS 16.4+ and macOS 14.4+; a known gap on
+        // iOS 15.0-16.3. StoreKit has no promoted purchases on
+        // watchOS, tvOS or visionOS: there the stream finishes at once);
         // call purchase() now, or keep the intent and trigger it
         // when the app is ready (e.g. after onboarding)
         let result = try await intent.purchase()
