@@ -257,6 +257,8 @@ if let premium = entitlements["premium"], premium.active {
 }
 ```
 
+Call it as often as you need — on every screen, on every appearance. A backend answer is served straight from the cache for five minutes, concurrent calls share a single request, and the cache is refreshed early if it holds an entitlement that has passed its own expiration.
+
 | Field | Meaning |
 |---|---|
 | `active` | Whether the access is currently granted. The only field you need for gating. |

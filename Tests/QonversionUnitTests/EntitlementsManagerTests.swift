@@ -304,6 +304,104 @@ final class EntitlementsManagerTests: XCTestCase {
         XCTAssertEqual(entitlements["premium"]?.active, true, "a lifetime entitlement must survive the stale-entry filter")
     }
 
+    // MARK: - the expiry filter serves, it does not delete
+
+    func testAnExpiredStripeEntitlementSurvivesInStorageAfterAnOfflineCycle() async throws {
+        // The SDK can regenerate App Store entitlements from StoreKit, but
+        // never stripe or manual ones. Persisting the FILTERED merge deleted
+        // them for good the first time the backend was unreachable.
+        let expiredStripe = Qonversion.Entitlement(id: "web_premium", active: true, source: .stripe, startedDate: now, expirationDate: Date().addingTimeInterval(-60))
+        try storage.set(["web_premium": expiredStripe], forKey: "qonversion.keys.entitlements")
+        storage.set(double: Date().timeIntervalSince1970, forKey: "qonversion.keys.entitlementsTimestamp")
+        storage.set(double: Date().timeIntervalSince1970, forKey: "qonversion.keys.entitlementsBackendTimestamp")
+        service.error = QonversionError(type: .internal)
+        setupLocalCalculationContext()
+
+        let served = try await manager.entitlements()
+
+        XCTAssertNil(served["web_premium"], "an expired entitlement is not served")
+        let persisted: [String: Qonversion.Entitlement]? = try storage.object(
+            forKey: "qonversion.keys.entitlements",
+            dataType: [String: Qonversion.Entitlement].self
+        )
+        XCTAssertNotNil(persisted?["web_premium"], "but it must still be there when the backend renews it")
+    }
+
+    // MARK: - the online fresh-cache short-circuit (ObjC parity)
+
+    func testAFreshBackendCacheAnswersWithoutARequest() async throws {
+        // QNProductCenterManager.m:594 answered from the cache while it was
+        // younger than QNUtils' 5-minute default window; every gating check
+        // costing a round trip is what that window exists to prevent.
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+        XCTAssertEqual(service.entitlementsCalls.count, 1)
+
+        let second = try await manager.entitlements()
+
+        XCTAssertEqual(second["premium"]?.active, true)
+        XCTAssertEqual(service.entitlementsCalls.count, 1, "a fresh cache must not cost a request")
+    }
+
+    func testACacheOlderThanTheFreshWindowIsRefreshed() async throws {
+        try storage.set(["premium": serverEntitlement(id: "premium")], forKey: "qonversion.keys.entitlements")
+        let stale: TimeInterval = Date().timeIntervalSince1970 - EntitlementsManager.freshCacheLifetime - 60
+        storage.set(double: stale, forKey: "qonversion.keys.entitlementsTimestamp")
+        storage.set(double: stale, forKey: "qonversion.keys.entitlementsBackendTimestamp")
+        service.entitlementsResult = [serverEntitlement(id: "extra")]
+
+        let result = try await manager.entitlements()
+
+        XCTAssertEqual(service.entitlementsCalls.count, 1, "past the window the backend is authoritative again")
+        XCTAssertEqual(result.keys.sorted(), ["extra"])
+    }
+
+    func testAFreshCacheWithAnExpiredActiveEntryIsRefreshed() async throws {
+        // ObjC's second condition: an entitlement claiming to be active past
+        // its own expiration means the cache no longer describes reality.
+        let expired = Qonversion.Entitlement(id: "premium", active: true, source: .appStore, startedDate: now, expirationDate: Date().addingTimeInterval(-60))
+        try storage.set(["premium": expired], forKey: "qonversion.keys.entitlements")
+        storage.set(double: Date().timeIntervalSince1970, forKey: "qonversion.keys.entitlementsTimestamp")
+        storage.set(double: Date().timeIntervalSince1970, forKey: "qonversion.keys.entitlementsBackendTimestamp")
+        service.entitlementsResult = [serverEntitlement(id: "extra")]
+
+        _ = try await manager.entitlements()
+
+        XCTAssertEqual(service.entitlementsCalls.count, 1, "an expired-but-active entry must force a refresh")
+    }
+
+    func testALocallyCalculatedCacheDoesNotShortCircuitTheBackend() async throws {
+        // Only a BACKEND answer opens the fresh window: a local calculation
+        // must not stop the SDK from asking again.
+        service.error = QonversionError(type: .internal)
+        setupLocalCalculationContext()
+        _ = try await manager.entitlements()
+        service.error = nil
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+
+        _ = try await manager.entitlements()
+
+        XCTAssertEqual(service.entitlementsCalls.count, 2, "the backend is asked again after a local fallback")
+    }
+
+    // MARK: - in-flight coalescing
+
+    func testConcurrentCallsShareOneRequest() async throws {
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        let gate = EntitlementsAsyncGate()
+        service.onEntitlements = { await gate.wait() }
+
+        async let first: [String: Qonversion.Entitlement] = manager.entitlements()
+        async let second: [String: Qonversion.Entitlement] = manager.entitlements()
+        async let third: [String: Qonversion.Entitlement] = manager.entitlements()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        await gate.open()
+        let results: [[String: Qonversion.Entitlement]] = try await [first, second, third]
+
+        XCTAssertEqual(service.entitlementsCalls.count, 1, "N concurrent gating checks must cost one request")
+        XCTAssertEqual(results.map { $0.keys.sorted() }, [["premium"], ["premium"], ["premium"]])
+    }
+
     // MARK: - user switch during the fetch
 
     func testEntitlementsOfThePreviousUserAreNotPersistedAfterASwitch() async throws {
@@ -314,14 +412,18 @@ final class EntitlementsManagerTests: XCTestCase {
         async let staleFetch: [String: Qonversion.Entitlement] = manager.entitlements()
         try? await Task.sleep(nanoseconds: 50_000_000)
         manager.userDidChange()
+        // The re-resolve the rejected persist triggers answers for the NEW
+        // user; the old user's entitlements must reach nobody.
+        service.entitlementsResult = [serverEntitlement(id: "for-the-new-user")]
         await gate.open()
-        _ = try? await staleFetch
+        let returned: [String: Qonversion.Entitlement]? = try? await staleFetch
 
         let persisted: [String: Qonversion.Entitlement]? = try storage.object(
             forKey: "qonversion.keys.entitlements",
             dataType: [String: Qonversion.Entitlement].self
         )
-        XCTAssertNil(persisted, "the previous user's entitlements must not be persisted for the new one")
+        XCTAssertNil(persisted?["premium"], "the previous user's entitlements must not be persisted for the new one")
+        XCTAssertNil(returned?["premium"], "nor returned to the caller as if they were the new user's")
     }
 
     func testLocalFallbackOfThePreviousUserIsNotPersistedAfterASwitch() async throws {
