@@ -86,7 +86,8 @@ let configuration = Qonversion.Configuration(
     launchMode: .subscriptionManagement,
     proxyURL: "your.proxy.domain",       // optional
     entitlementsCacheLifetime: .month,   // default .month
-    logLevel: .warning                   // default .verbose
+    logLevel: .warning,                  // default .verbose
+    environment: .production             // default .production
 )
 ```
 
@@ -95,6 +96,10 @@ let configuration = Qonversion.Configuration(
 | `proxyURL` | Routes all SDK traffic through your server — for regions where the API domain may be unreachable. Contact Qonversion before using it. |
 | `entitlementsCacheLifetime` | How long cached entitlements stay eligible for the offline fallback: `.week`, `.twoWeeks`, `.month`, `.twoMonths`, `.threeMonths`, `.sixMonths`, `.year`, `.unlimited`. |
 | `logLevel` | Minimal severity written to the unified log: `.verbose`, `.debug`, `.warning`, `.error`, `.critical`, or `.disabled`. |
+| `environment` | The store environment the app runs against: `.production` or `.sandbox`. Set `.sandbox` in TestFlight, Xcode and StoreKit testing builds so the backend keeps that data apart from production. |
+
+The bundled fallback file is looked up in the app bundle first and then in the
+app's Documents directory, so it can also be dropped there at runtime.
 
 ### Launch modes
 
@@ -105,7 +110,8 @@ Pick the mode by who owns the purchase flow — it defines who finishes StoreKit
 | Who calls StoreKit | The SDK (`purchase`, `restore`) | Your own code |
 | Who finishes transactions | The SDK — strictly after Qonversion confirms the purchase | Your app; the SDK never touches them |
 | How purchases reach Qonversion | Automatically | You pass them via `handlePurchases` |
-| Out-of-band transactions (renewals, Ask to Buy, other devices) | The SDK reports **and finishes** them, then emits fresh entitlements into `entitlementsUpdates` | The SDK only observes; reporting is up to you |
+| Out-of-band transactions (renewals, Ask to Buy, other devices) | The SDK reports **and finishes** them | The SDK reports them, your app finishes them |
+| Deferred purchase signal | `deferredPurchases` fires in both modes — the transaction plus the resulting entitlements | same |
 | Entitlements | Calculated by Qonversion, with an on-device fallback | Available the same way |
 
 Use `.subscriptionManagement` for a full integration where Qonversion is the source of truth for access. Use `.analytics` when you keep your existing StoreKit code and want revenue analytics, integrations, and the subscribers CRM on top of it.
@@ -196,7 +202,7 @@ do {
 } catch let error as QonversionError {
     switch error.type {
     case .purchaseCancelled: break     // the user changed their mind — not a failure
-    case .purchasePending: break       // completes later via entitlementsUpdates
+    case .purchasePending: break       // completes later via deferredPurchases
     default: showError(error.message)  // error.error carries the underlying failure
     }
 }
@@ -270,10 +276,17 @@ Both streams follow the style of StoreKit's `Transaction.updates`: every access 
 
 ```swift
 Task {
-    for await entitlements in Qonversion.shared.entitlementsUpdates {
+    for await purchase in Qonversion.shared.deferredPurchases {
         // fired after the SDK processes an out-of-band transaction:
-        // renewals, Ask to Buy approvals, purchases on other devices,
-        // offer code redemptions
+        // renewals, Ask to Buy and SCA approvals, purchases on other
+        // devices, offer code redemptions — in BOTH launch modes
+        grantAccess(with: purchase.entitlements, for: purchase.transaction)
+    }
+}
+
+// Only interested in the access state? Use the entitlements-only projection:
+Task {
+    for await entitlements in Qonversion.shared.entitlementsUpdates {
         refreshUI(with: entitlements)
     }
 }

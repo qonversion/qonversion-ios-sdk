@@ -13,6 +13,11 @@ import UIKit
 import AdServices
 #endif
 
+fileprivate enum StringConstants: String {
+    // The provider name the backend expects for AdServices tokens.
+    case appleAdServicesProvider = "apple_adservices_token"
+}
+
 fileprivate enum Constants: Int {
     case sendPropertiesMinDelaySec = 5
     // After this many failed attempts the batch stays in the storage but the
@@ -30,6 +35,13 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
     private let userManager: UserManagerInterface
     private let integrationsInfoCollector: IntegrationsInfoCollectorInterface
     private let logger: LoggerWrapper
+    private let notificationCenter: NotificationCenter
+
+    private let backgroundNotificationName: Notification.Name
+
+    /// Kept so the observer can be removed: a token-less registration lives
+    /// as long as the process does, even after the manager is gone.
+    private var backgroundObserver: NSObjectProtocol?
 
     // Mutated from the caller's thread (setProperty) and from the scheduled
     // sending task concurrently.
@@ -37,7 +49,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
     private var sendingTask: Task<Void, Error>? = nil
     private var sendPropertiesRetryDelay: Int = Constants.sendPropertiesMinDelaySec.rawValue
     private var sendPropertiesRetryCount: Int = 0
-    private var isSendingInProgress: Bool = false
+    /// The batch round trip currently in flight. Kept as a handle (not a
+    /// flag), so a forced send can await it instead of returning early.
+    private var sendingInFlight: Task<Bool, Never>? = nil
     
     init(
         requestProcessor: RequestProcessorInterface,
@@ -46,7 +60,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         userIdProvider: UserIdProvider,
         userManager: UserManagerInterface,
         integrationsInfoCollector: IntegrationsInfoCollectorInterface,
-        logger: LoggerWrapper
+        logger: LoggerWrapper,
+        notificationCenter: NotificationCenter = .default,
+        backgroundNotificationName: Notification.Name = UserPropertiesManager.backgroundNotificationName
     ) {
         self.requestProcessor = requestProcessor
         self.propertiesStorage = propertiesStorage
@@ -55,21 +71,38 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         self.userManager = userManager
         self.integrationsInfoCollector = integrationsInfoCollector
         self.logger = logger
+        self.notificationCenter = notificationCenter
+        self.backgroundNotificationName = backgroundNotificationName
 
         subscribeToBackgroundFlush()
+    }
+
+    deinit {
+        if let backgroundObserver {
+            notificationCenter.removeObserver(backgroundObserver)
+        }
+    }
+
+    /// The notification that means "the app is going to the background".
+    /// UIKit has one; the other platforms do not, so the SDK names its own —
+    /// which also makes the subscription (and its teardown) platform-neutral.
+    static var backgroundNotificationName: Notification.Name {
+        #if canImport(UIKit) && !os(watchOS)
+        return UIApplication.didEnterBackgroundNotification
+        #else
+        return Notification.Name("qonversion.notifications.appDidEnterBackground")
+        #endif
     }
 
     /// The pending batch waits on a delay timer that never fires once the
     /// process is suspended — flush it when the app goes to background.
     private func subscribeToBackgroundFlush() {
-        #if canImport(UIKit) && !os(watchOS)
-        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: nil) { [weak self] _ in
+        backgroundObserver = notificationCenter.addObserver(forName: backgroundNotificationName, object: nil, queue: nil) { [weak self] _ in
             guard let self else { return }
             Task {
                 try? await self.sendProperties()
             }
         }
-        #endif
     }
 
     func collectIntegrationsData() {
@@ -95,9 +128,10 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         #if canImport(AdServices)
         if #available(iOS 14.3, macOS 11.1, visionOS 1.0, *) {
             do {
+                let requestedAt: TimeInterval = Date().timeIntervalSince1970
                 let token: String = try AAAttribution.attributionToken()
 
-                processRequest(with: token)
+                processRequest(with: token, requestedAt: requestedAt)
             } catch {
                 logger.error("\(LoggerInfoMessages.failedToCollectAppleSearchAdsAttribution.rawValue) \(error)")
             }
@@ -149,16 +183,48 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         scheduleSendingProperties(withDelay: delay)
     }
 
-    func sendProperties() async throws {
-        // Single-flight: a batch already in flight covers the current storage
-        // snapshot; properties added meanwhile are picked up by the trailing
-        // reschedule below.
-        guard beginSendingIfIdle() else { return }
-        defer { endSending() }
+    func sendProperties(force: Bool) async throws {
+        guard force else {
+            // Single-flight: a batch already in flight covers the current
+            // storage snapshot; properties added meanwhile are picked up by
+            // the trailing reschedule in performSend.
+            guard let task: Task<Bool, Never> = startSendingIfIdle() else { return }
 
+            _ = await task.value
+            return
+        }
+
+        // Forceful: production waits out the round trip already in flight and
+        // then sends whatever is still pending, so the caller can rely on the
+        // properties having reached the backend. Only the batch pending on
+        // entry is owned by this call — properties set while it runs belong to
+        // the next one, and chasing them could loop forever.
+        let ownedKeys: Set<String> = Set(propertiesStorage.all().map { $0.key })
+        while true {
+            if let inFlight: Task<Bool, Never> = currentSendingTask() {
+                _ = await inFlight.value
+            }
+
+            let remaining: [Qonversion.UserProperty] = propertiesStorage.all().filter { ownedKeys.contains($0.key) }
+            guard !remaining.isEmpty else { return }
+            guard let task: Task<Bool, Never> = startSendingIfIdle() else {
+                // Another sender took the slot between the two calls. Yield so
+                // this branch can never spin without suspending.
+                await Task.yield()
+                continue
+            }
+
+            let succeeded: Bool = await task.value
+            guard succeeded else { return }
+        }
+    }
+
+    /// One batch round trip. Returns false when the batch did not reach the
+    /// backend — the properties stay in the storage and a retry is scheduled.
+    private func performSend() async -> Bool {
         let properties: [Qonversion.UserProperty] = propertiesStorage.all()
 
-        guard !properties.isEmpty else { return }
+        guard !properties.isEmpty else { return true }
 
         // The backend user must exist before any data is sent. On failure keep
         // the properties and retry later — the gate itself retries creation on
@@ -168,7 +234,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         } catch {
             logger.warning("Failed to obtain user before sending properties: " + error.message)
             retrySendingProperties()
-            return
+            return false
         }
 
         let items: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
@@ -188,8 +254,11 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             if !propertiesStorage.all().isEmpty {
                 scheduleSendingProperties(withDelay: Constants.sendPropertiesMinDelaySec.rawValue)
             }
+
+            return true
         } catch {
             retrySendingProperties()
+            return false
         }
     }
 
@@ -203,16 +272,32 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
 extension UserPropertiesManager {
 
-    func processRequest(with token: String) {
-        Task {
+    func processRequest(with token: String, requestedAt: TimeInterval = Date().timeIntervalSince1970) {
+        Task { [weak self] in
+            guard let self else { return }
             do {
-                let request = Request.appleSearchAds(userId: userIdProvider.getUserId(), body: ["token": token])
-                let _ = try await requestProcessor.process(request: request, responseType: String.self)
-                logger.info(LoggerInfoMessages.appleSearchAdsAttributionRequestSucceeded.rawValue)
+                try await self.sendAppleSearchAdsToken(token, requestedAt: requestedAt)
+                self.logger.info(LoggerInfoMessages.appleSearchAdsAttributionRequestSucceeded.rawValue)
             } catch {
-                logger.error("\(LoggerInfoMessages.appleSearchAdsAttributionRequestFailed.rawValue) \(error)")
+                self.logger.error("\(LoggerInfoMessages.appleSearchAdsAttributionRequestFailed.rawValue) \(error)")
             }
         }
+    }
+
+    /// The attribution endpoint acknowledges with an empty body, like every
+    /// other data-sending flow — and, like them, needs the backend user first.
+    /// `requested_at` is the moment the token was obtained, which the backend
+    /// needs to match the attribution window.
+    func sendAppleSearchAdsToken(_ token: String, requestedAt: TimeInterval = Date().timeIntervalSince1970) async throws {
+        try await userManager.obtainUser()
+
+        let body: RequestBodyDict = [
+            "token": token,
+            "requested_at": Int(requestedAt),
+            "provider": StringConstants.appleAdServicesProvider.rawValue
+        ]
+        let request = Request.appleSearchAds(userId: userIdProvider.getUserId(), body: body)
+        let _: EmptyApiResponse = try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
     }
     
     private func scheduleSendingProperties(withDelay delaySec: Int) {
@@ -240,22 +325,39 @@ extension UserPropertiesManager {
         sendingTask = nil
     }
 
-    /// True when no send was in progress; marks the flow busy and cancels a
-    /// pending schedule.
-    private func beginSendingIfIdle() -> Bool {
+    /// Starts a batch round trip when none is in flight and cancels the
+    /// pending schedule; nil means another one is already running.
+    private func startSendingIfIdle() -> Task<Bool, Never>? {
         stateLock.lock()
         defer { stateLock.unlock() }
-        guard !isSendingInProgress else { return false }
-        isSendingInProgress = true
+        guard sendingInFlight == nil else { return nil }
+
         sendingTask?.cancel()
         sendingTask = nil
-        return true
+
+        let task = Task<Bool, Never> { [weak self] () -> Bool in
+            guard let self else { return false }
+            // Cleared before the value reaches the awaiters, so a forced send
+            // resuming right after can start the next round.
+            defer { self.clearSendingInFlight() }
+
+            return await self.performSend()
+        }
+        sendingInFlight = task
+
+        return task
     }
 
-    private func endSending() {
+    private func currentSendingTask() -> Task<Bool, Never>? {
         stateLock.lock()
         defer { stateLock.unlock() }
-        isSendingInProgress = false
+        return sendingInFlight
+    }
+
+    private func clearSendingInFlight() {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        sendingInFlight = nil
     }
 
     private func resetRetryState() {

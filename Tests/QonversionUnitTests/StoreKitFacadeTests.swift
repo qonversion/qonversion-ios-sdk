@@ -39,6 +39,21 @@ final class StoreKitFacadeTests: XCTestCase {
         Qonversion.Transaction(id: id, productId: "product_" + id, jws: jws)
     }
 
+    // MARK: - storefront changes
+
+    func testStorefrontChangeDropsTheLoadedProducts() async {
+        // Prices, availability and offers are per-storefront: keeping the
+        // previous storefront's products would show the wrong prices.
+        facade.startObservingTransactionUpdates()
+        await waitUntil { self.wrapper.transactionUpdatesCallsCount >= 1 }
+        _ = try? await facade.products(for: ["com.app.pro"])
+
+        wrapper.emitStorefrontChange()
+
+        await waitUntil { self.facade.loadedProducts.isEmpty }
+        XCTAssertTrue(facade.loadedProducts.isEmpty)
+    }
+
     private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
         let deadline = Date().addingTimeInterval(timeout)
         while !condition() && Date() < deadline {
@@ -185,5 +200,105 @@ private final class RecordingFacadeDelegate: StoreKitFacadeDelegate {
 
     func transactionUpdated(_ transaction: Qonversion.Transaction) {
         updatedTransactions.append(transaction)
+    }
+}
+
+// MARK: - restore without an unnecessary auth prompt
+
+final class StoreKitRestoreTests: XCTestCase {
+
+    private func transaction(id: String) -> Qonversion.Transaction {
+        Qonversion.Transaction(id: id, productId: "com.app.pro")
+    }
+
+    func testRestoreWithLocalTransactionsNeverSyncs() async throws {
+        // AppStore.sync() shows an App Store authentication prompt: asking for
+        // it when the device already knows the purchases is a UX regression.
+        var syncCallsCount = 0
+        let local: [Qonversion.Transaction] = [transaction(id: "t1")]
+
+        let restored = try await StoreKitWrapper.restoreTransactions(
+            localTransactions: { local },
+            sync: { syncCallsCount += 1 }
+        )
+
+        XCTAssertEqual(restored.map(\.id), ["t1"])
+        XCTAssertEqual(syncCallsCount, 0)
+    }
+
+    func testEmptyStoreFallsBackToSyncOnce() async throws {
+        var syncCallsCount = 0
+        var afterSync: [Qonversion.Transaction] = []
+
+        let restored = try await StoreKitWrapper.restoreTransactions(
+            localTransactions: { afterSync },
+            sync: {
+                syncCallsCount += 1
+                afterSync = [self.transaction(id: "synced-1")]
+            }
+        )
+
+        XCTAssertEqual(syncCallsCount, 1)
+        XCTAssertEqual(restored.map(\.id), ["synced-1"])
+    }
+
+    func testSyncFailurePropagates() async {
+        do {
+            _ = try await StoreKitWrapper.restoreTransactions(
+                localTransactions: { [] },
+                sync: { throw MockError.stubbed }
+            )
+            XCTFail("Expected the store error to propagate")
+        } catch {
+            XCTAssertEqual(error as? MockError, .stubbed)
+        }
+    }
+}
+
+// MARK: - typed purchase failures
+
+final class StoreKitPurchaseFailureMappingTests: XCTestCase {
+
+    func testStoreKitErrorsMapToTypedFailures() {
+        XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKitError.userCancelled), .purchaseCancelled)
+        XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKitError.notAvailableInStorefront), .storeProductNotAvailable)
+        XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKitError.notEntitled), .paymentNotAllowed)
+        XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKitError.networkError(URLError(.timedOut))), .purchaseFailed)
+    }
+
+    func testProductPurchaseErrorsMapToTypedFailures() {
+        XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKit.Product.PurchaseError.productUnavailable), .storeProductNotAvailable)
+        XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKit.Product.PurchaseError.purchaseNotAllowed), .paymentNotAllowed)
+        XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKit.Product.PurchaseError.invalidOfferIdentifier), .purchaseFailed)
+    }
+
+    func testAnUnknownFailureStaysPurchaseFailedAndKeepsTheUnderlyingError() throws {
+        let error = try XCTUnwrap(StoreKitPurchaseOutcome.failed(MockError.stubbed).qonversionError())
+
+        XCTAssertEqual(error.type, .purchaseFailed)
+        XCTAssertEqual(error.error as? MockError, .stubbed, "the underlying store error must stay reachable")
+    }
+
+    func testStoreOptionsCarryQuantityAndPromoOffer() {
+        let promoOffer = Qonversion.PromotionalOffer(offerId: "offer1", keyId: "KEY", nonce: UUID(), signature: Data([0x01]), timestamp: 1)
+        let options = Qonversion.PurchaseOptions(quantity: 3, promoOffer: promoOffer)
+
+        let storeOptions: Set<StoreKit.Product.PurchaseOption> = StoreKitWrapper.storeOptions(for: options)
+
+        XCTAssertTrue(storeOptions.contains(.quantity(3)))
+        XCTAssertEqual(storeOptions.count, 2)
+    }
+
+    func testStoreOptionsIgnoreAWinBackOfferWithoutAStoreObject() {
+        // A hand-built offer carries no StoreKit object, so there is nothing
+        // to hand to the store — and nothing must be invented.
+        let period = Qonversion.Product.SubscriptionPeriod(unit: .month, value: 1)
+        let winBackOffer = Qonversion.Product.SubscriptionOffer(id: "wb1", type: .winBack, price: 1, displayPrice: "$1", period: period, periodCount: 1, paymentMode: .payAsYouGo)
+        let options = Qonversion.PurchaseOptions(winBackOffer: winBackOffer)
+
+        let storeOptions: Set<StoreKit.Product.PurchaseOption> = StoreKitWrapper.storeOptions(for: options)
+
+        XCTAssertTrue(storeOptions.isEmpty)
+        XCTAssertEqual(options.winBackOffer?.type, .winBack)
     }
 }

@@ -156,6 +156,36 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertTrue(requestsStorage.storedRequests.isEmpty, "replaying the queued copy would double-report the purchase")
     }
 
+    func testDeliveredReportDoesNotEvictAnUnrelatedPurchaseOfAHostileUid() async {
+        // A backend-issued uid that ends in "-<transactionId>" must not make a
+        // delivered report evict somebody else's queued purchase.
+        requestsStorage.append(StoredRequest(
+            url: "https://api2.qonversion.io/v4/users/QON_evil-tx42/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-QON_evil-tx42",
+            transactionId: "other-transaction"
+        ))
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        networkProvider.responseData = Data("{}".utf8)
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "tx42"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: Request.createPurchase(userId: "QON_NEW", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1, "an unrelated queued purchase must survive")
+    }
+
+    func testQueuedPurchaseCarriesItsTransactionId() async {
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "tx42"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: Request.createPurchase(userId: "QON_u", body: body), responseType: EmptyApiResponse.self)
+
+        XCTAssertEqual(requestsStorage.storedRequests.first?.transactionId, "tx42")
+    }
+
     func testLegacyStoredRequestDecodesWithAttemptOne() throws {
         let legacyJson = #"{"url": "https://api2.qonversion.io/v4/users/u1/purchases", "method": "POST"}"#
 
@@ -220,6 +250,27 @@ final class RequestProcessorTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertEqual(requestsStorage.fetchRequests().map(\.url), ["https://api.qonversion.io/v3/users/u/purchases"])
         XCTAssertEqual(requestsStorage.cleanCallsCount, 0, "the queue must not be dropped wholesale")
+    }
+
+    func testCleanDuringReplayStopsTheSendsAndKeepsTheQueueEmpty() async {
+        // The user switched mid-replay: the queue belongs to the previous user
+        // and was just cleaned — the snapshot must not resurrect it, neither by
+        // sending the remaining entries nor by re-queueing a failed one.
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil, dedupKey: "first"))
+        requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/devices", method: "POST", body: nil, dedupKey: "second"))
+        let gate = ProcessorAsyncGate()
+        networkProvider.onSend = { await gate.wait() }
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor()
+
+        processor.processStoredRequests()
+        await waitUntil { self.networkProvider.sentRequests.count == 1 }
+        requestsStorage.clean()
+        await gate.open()
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        XCTAssertTrue(requestsStorage.fetchRequests().isEmpty, "a failed entry must not be re-appended to a cleaned queue")
+        XCTAssertEqual(networkProvider.sentRequests.count, 1, "the remaining snapshot entries belong to the previous user")
     }
 
     func testProcessStoredRequestsSkipsWhenCriticalErrorLatched() async {
@@ -495,4 +546,29 @@ final class RequestProcessorTests: XCTestCase {
             XCTAssertTrue(qonversionError?.error is DecodingError)
         }
     }
+}
+
+/// A reusable async gate: wait() suspends until open() is called.
+private actor ProcessorGateStorage {
+    var isOpen = false
+    var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+private final class ProcessorAsyncGate: @unchecked Sendable {
+    private let storage = ProcessorGateStorage()
+    func open() async { await storage.open() }
+    func wait() async { await storage.wait() }
 }

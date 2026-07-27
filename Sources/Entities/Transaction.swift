@@ -185,17 +185,29 @@ extension Qonversion {
             let _offer: Any?
             
             init?(with transaction: StoreKit.Transaction) {
-                self.type = Qonversion.Transaction.Offer.OfferType.from(transaction: transaction)
-                
+                let offerType: Qonversion.Transaction.Offer.OfferType? = Qonversion.Transaction.Offer.OfferType.from(transaction: transaction)
+
                 if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
                     guard let offer = transaction.offer else { return nil }
-                    
+
+                    self.type = offerType
                     self._offer = offer
                     self.id = offer.id
                 } else {
-                    self.id = transaction.offerID
+                    let offerId: String? = transaction.offerID
+                    guard Self.hasLegacyOfferData(id: offerId, type: offerType) else { return nil }
+
+                    self.type = offerType
+                    self.id = offerId
                     self._offer = nil
                 }
+            }
+
+            /// Before iOS 17.2 StoreKit exposes the offer as two flat
+            /// optionals instead of one object: with both absent the
+            /// transaction simply carries no offer.
+            static func hasLegacyOfferData(id: String?, type: Qonversion.Transaction.Offer.OfferType?) -> Bool {
+                return id != nil || type != nil
             }
             
             // MARK: Nested stucts & enums
@@ -211,7 +223,10 @@ extension Qonversion {
                 
                 /// An offer with a subscription offer code, for an auto-renewable subscription.
                 case code
-                
+
+                /// A win-back offer, shown to a lapsed subscriber (iOS 18+).
+                case winBack
+
                 static func from(transaction: StoreKit.Transaction?) -> Qonversion.Transaction.Offer.OfferType? {
                     guard let transaction: StoreKit.Transaction = transaction else { return nil }
                    
@@ -223,7 +238,11 @@ extension Qonversion {
                     }
                     
                     guard let type: StoreKit.Transaction.OfferType = type else { return nil }
-                    
+
+                    if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *), type == .winBack {
+                        return Qonversion.Transaction.Offer.OfferType.winBack
+                    }
+
                     switch type {
                     case .introductory:
                         return Qonversion.Transaction.Offer.OfferType.introductory

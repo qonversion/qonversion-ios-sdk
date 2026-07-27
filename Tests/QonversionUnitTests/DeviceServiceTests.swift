@@ -195,3 +195,48 @@ final class DeviceServiceTests: XCTestCase {
         }
     }
 }
+
+// MARK: - platform reported to the backend
+
+final class DevicePlatformTests: XCTestCase {
+
+    func testThePlatformIsTheOneThisBuildRunsOn() {
+        // The value is part of the v4 contract; visionOS used to report as iOS.
+        let collector = DeviceInfoCollector()
+
+        let osName: String = collector.deviceInfo().osName
+
+        #if targetEnvironment(macCatalyst)
+        XCTAssertEqual(osName, "macCatalyst")
+        #elseif os(macOS)
+        XCTAssertEqual(osName, "macOS")
+        #elseif os(tvOS)
+        XCTAssertEqual(osName, "tvOS")
+        #elseif os(watchOS)
+        XCTAssertEqual(osName, "watchOS")
+        #elseif os(visionOS)
+        XCTAssertEqual(osName, "visionOS")
+        #else
+        XCTAssertEqual(osName, "iOS")
+        #endif
+    }
+
+    func testTheHeaderCarriesTheSamePlatformAsTheDeviceRecord() {
+        let collector = DeviceInfoCollector()
+
+        XCTAssertEqual(collector.headerDeviceInfo().osName, collector.deviceInfo().osName)
+    }
+
+    func testCountryAndLanguageStayIsoIdentifiers() {
+        // Owner decision: ISO country and language codes ARE the v4 contract.
+        let device: Device = DeviceInfoCollector().deviceInfo()
+
+        if let country: String = device.country {
+            XCTAssertEqual(country, country.uppercased())
+            XCTAssertEqual(country.count, 2)
+        }
+        if let language: String = device.language {
+            XCTAssertEqual(language, language.lowercased())
+        }
+    }
+}

@@ -11,6 +11,24 @@ import XCTest
 final class UserServiceTests: XCTestCase {
 
     private let userIdKey = "qonversion.keys.userId"
+    private let originalUserIdKey = "qonversion.keys.originalUserId"
+    private let legacyUserIdKey = "com.qonversion.keys.storedUserID"
+    private let legacyOriginalUserIdKey = "com.qonversion.keys.originalUserID"
+    /// The dedicated suite the previous production SDK generation persisted into.
+    private let legacySuiteName = "qonversion.localstorage.main"
+    private var legacyDefaults: UserDefaults!
+
+    override func setUp() {
+        super.setUp()
+        legacyDefaults = UserDefaults(suiteName: legacySuiteName)
+        legacyDefaults.removePersistentDomain(forName: legacySuiteName)
+    }
+
+    override func tearDown() {
+        legacyDefaults.removePersistentDomain(forName: legacySuiteName)
+        legacyDefaults = nil
+        super.tearDown()
+    }
 
     // MARK: - Helpers
 
@@ -142,6 +160,34 @@ final class UserServiceTests: XCTestCase {
         XCTAssertNil(storage.string(forKey: "com.qonversion.keys.originalUserID"), "the legacy key is consumed")
     }
 
+    func testInitMigratesLegacyUidFromTheProductionSuite() {
+        // The previous SDK generation persisted into its own UserDefaults
+        // suite, never into the configured/standard one — reading only the
+        // configured storage means the migration never fires and an upgrading
+        // install loses its user.
+        legacyDefaults.set("QON_suite_uid", forKey: legacyUserIdKey)
+        let storage = makeStorage()
+        let config = InternalConfig(userId: "")
+
+        _ = UserService(requestProcessor: MockRequestProcessor(), localStorage: storage, internalConfig: config)
+
+        XCTAssertEqual(config.userId, "QON_suite_uid")
+        XCTAssertEqual(storage.string(forKey: userIdKey), "QON_suite_uid")
+        XCTAssertNil(legacyDefaults.string(forKey: legacyUserIdKey), "the legacy suite must be cleaned after migration")
+    }
+
+    func testInitMigratesLegacyOriginalUidFromTheProductionSuite() {
+        legacyDefaults.set("QON_suite_identified", forKey: legacyUserIdKey)
+        legacyDefaults.set("QON_suite_original", forKey: legacyOriginalUserIdKey)
+        let storage = makeStorage()
+
+        _ = UserService(requestProcessor: MockRequestProcessor(), localStorage: storage, internalConfig: InternalConfig(userId: ""))
+
+        XCTAssertEqual(storage.string(forKey: userIdKey), "QON_suite_identified")
+        XCTAssertEqual(storage.string(forKey: originalUserIdKey), "QON_suite_original")
+        XCTAssertNil(legacyDefaults.string(forKey: legacyOriginalUserIdKey), "the legacy suite key is consumed")
+    }
+
     func testLegacyMigrationWithoutTheOriginalKeyFallsBackToTheMigratedUid() {
         let storage = makeStorage()
         storage.set(string: "QON_legacy", forKey: "com.qonversion.keys.storedUserID")
@@ -189,6 +235,22 @@ final class UserServiceTests: XCTestCase {
         XCTAssertEqual(user.id, stubUser.id)
         XCTAssertEqual(user.creationDate, stubUser.creationDate)
         XCTAssertEqual(user.environment, stubUser.environment)
+    }
+
+    func testCreateUserSendsTheSandboxEnvironment() async throws {
+        // The v4 contract separates sandbox data by this body field — the SDK
+        // must pass the configured environment through.
+        let processor = MockRequestProcessor()
+        let config = InternalConfig(userId: "initial", environment: .sandbox)
+        let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: config)
+        processor.results = [try decodeUserStub()]
+
+        _ = try await service.createUser()
+
+        XCTAssertEqual(
+            processor.processedRequests,
+            [Request.createUser(body: ["id": config.userId, "environment": "sandbox"])]
+        )
     }
 
     func testCreateUserGeneratesUidWhenCurrentIsEmpty() async throws {

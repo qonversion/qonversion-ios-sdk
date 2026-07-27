@@ -19,6 +19,9 @@ fileprivate enum Constants: String {
     // The uid keys of the previous production SDK generation.
     case legacyUserIdKey = "com.qonversion.keys.storedUserID"
     case legacyOriginalUserIdKey = "com.qonversion.keys.originalUserID"
+    // That generation persisted everything into its own UserDefaults suite,
+    // never into the standard/configured one — the migration must read there.
+    case legacySuiteName = "qonversion.localstorage.main"
 }
 
 // @unchecked: stateless — every dependency is thread-safe on its own.
@@ -50,9 +53,9 @@ final class UserService: UserServiceInterface, @unchecked Sendable {
         // migrated install gets its existing user back.
         let userId: String = internalConfig.userId.isEmpty ? generateUserId() : internalConfig.userId
         do {
-            // The contract requires the environment field; sandbox/prod
-            // separation is not a client-side concern.
-            let request = Request.createUser(body: ["id": userId, "environment": "prod"])
+            // The contract requires the environment field: it is how the
+            // backend keeps sandbox data apart from production data.
+            let request = Request.createUser(body: ["id": userId, "environment": internalConfig.environment.rawValue])
             let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self, trigger: RequestTrigger.initialization)
             
             return user
@@ -106,22 +109,42 @@ extension UserService {
     private func prepareUserId() {
         // An install updated from the previous SDK generation keeps its user:
         // the legacy uid moves to the new storage and the legacy key is cleaned.
-        if let legacyUserId: String = localStorage.string(forKey: Constants.legacyUserIdKey.rawValue), !legacyUserId.isEmpty {
+        if let legacyUserId: String = consumeLegacyValue(forKey: Constants.legacyUserIdKey.rawValue) {
             localStorage.set(string: legacyUserId, forKey: UserServiceStorageKeys.userIdKey.rawValue)
-            localStorage.removeObject(forKey: Constants.legacyUserIdKey.rawValue)
             internalConfig.userId = legacyUserId
             // An install identified in the previous SDK carries the identified
             // uid as its current one — the TRUE original anonymous uid lives
             // in the production original-user key.
-            let legacyOriginalUserId: String? = localStorage.string(forKey: Constants.legacyOriginalUserIdKey.rawValue)
-            rememberOriginalUserIdIfNeeded(legacyOriginalUserId?.isEmpty == false ? legacyOriginalUserId! : legacyUserId)
-            localStorage.removeObject(forKey: Constants.legacyOriginalUserIdKey.rawValue)
+            let legacyOriginalUserId: String? = consumeLegacyValue(forKey: Constants.legacyOriginalUserIdKey.rawValue)
+            rememberOriginalUserIdIfNeeded(legacyOriginalUserId ?? legacyUserId)
             return
         }
 
         let userId: String = localStorage.string(forKey: UserServiceStorageKeys.userIdKey.rawValue) ?? generateUserId()
         internalConfig.userId = userId
         rememberOriginalUserIdIfNeeded(userId)
+    }
+
+    /// Reads a key of the previous SDK generation and removes it, so the
+    /// migration runs exactly once. The dedicated production suite comes
+    /// first; the configured storage is checked as well, since a host app may
+    /// have pointed the previous SDK at its own UserDefaults.
+    private func consumeLegacyValue(forKey key: String) -> String? {
+        let legacyDefaults: UserDefaults? = UserDefaults(suiteName: Constants.legacySuiteName.rawValue)
+        if let suiteValue: String = legacyDefaults?.string(forKey: key), !suiteValue.isEmpty {
+            legacyDefaults?.removeObject(forKey: key)
+            localStorage.removeObject(forKey: key)
+            return suiteValue
+        }
+
+        if let storageValue: String = localStorage.string(forKey: key), !storageValue.isEmpty {
+            localStorage.removeObject(forKey: key)
+            return storageValue
+        }
+
+        legacyDefaults?.removeObject(forKey: key)
+        localStorage.removeObject(forKey: key)
+        return nil
     }
 
     /// The anonymous user this install started with: identity switches move

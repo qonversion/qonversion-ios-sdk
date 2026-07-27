@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import StoreKit
 
 /// A store-agnostic result of a purchase attempt. Produced by the thin
 /// StoreKit wrappers and mapped into granular integrator-facing errors here,
@@ -36,7 +37,40 @@ enum StoreKitPurchaseOutcome {
         case .unverified(let error):
             return QonversionError(type: .transactionVerificationFailed, error: error)
         case .failed(let error):
-            return QonversionError(type: .purchaseFailed, error: error)
+            return QonversionError(type: Self.failureType(for: error), error: error)
         }
+    }
+
+    /// Maps the store's own failure kinds onto the SDK's error surface, so an
+    /// integrator can branch on `type` instead of digging into the underlying
+    /// StoreKit error.
+    static func failureType(for error: Error?) -> QonversionErrorType {
+        guard let error else { return .purchaseFailed }
+
+        if let storeKitError = error as? StoreKitError {
+            switch storeKitError {
+            case .userCancelled:
+                return .purchaseCancelled
+            case .notAvailableInStorefront:
+                return .storeProductNotAvailable
+            case .notEntitled:
+                return .paymentNotAllowed
+            default:
+                return .purchaseFailed
+            }
+        }
+
+        if let purchaseError = error as? StoreKit.Product.PurchaseError {
+            switch purchaseError {
+            case .productUnavailable:
+                return .storeProductNotAvailable
+            case .purchaseNotAllowed:
+                return .paymentNotAllowed
+            default:
+                return .purchaseFailed
+            }
+        }
+
+        return .purchaseFailed
     }
 }

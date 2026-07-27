@@ -75,12 +75,21 @@ final class ServicesAssembly {
     private func makeStoreKitFacade() -> StoreKitFacade {
         let mapper = StoreKitMapper()
         if let storeKitWrapperOverride {
-            return StoreKitFacade(storeKitWrapper: storeKitWrapperOverride, storeKitMapper: mapper)
+            let overriddenFacade = StoreKitFacade(storeKitWrapper: storeKitWrapperOverride, storeKitMapper: mapper)
+            #if !os(watchOS)
+            // Same wiring as the production branch: without the delegate the
+            // facade never receives promo purchase intents.
+            storeKitWrapperOverride.delegate = overriddenFacade
+            #endif
+
+            return overriddenFacade
         }
 
         let wrapper = StoreKitWrapper(mapper: mapper)
         let storeKitFacade = StoreKitFacade(storeKitWrapper: wrapper, storeKitMapper: mapper)
+        #if !os(watchOS)
         wrapper.delegate = storeKitFacade
+        #endif
 
         return storeKitFacade
     }

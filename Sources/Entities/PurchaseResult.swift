@@ -18,5 +18,9 @@ extension Qonversion {
 
         /// The user's entitlements keyed by entitlement id.
         public let entitlements: [String: Qonversion.Entitlement]
+
+        /// Whether the entitlements are backend-resolved or were calculated
+        /// on the device because the backend was unreachable.
+        public let entitlementsSource: Qonversion.EntitlementsSource
     }
 }

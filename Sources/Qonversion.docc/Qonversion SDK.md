@@ -34,8 +34,9 @@ Renewals, Ask to Buy approvals and purchases on other devices arrive out of band
 
 ```swift
 Task {
-    for await entitlements in Qonversion.shared.entitlementsUpdates {
-        // refresh the UI
+    for await purchase in Qonversion.shared.deferredPurchases {
+        // the transaction and the resulting entitlements
+        refreshUI(with: purchase.entitlements)
     }
 }
 ```

@@ -124,6 +124,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testPurchaseGoesGateStorePurchaseReportFinishAndReturnsEntitlements() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
         facade.purchaseResult = makeTransaction(id: "t1")
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
 
@@ -139,6 +140,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testPurchaseFinishHappensAfterReportNotBefore() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
         facade.purchaseResult = makeTransaction(id: "t1")
         var finishedAtSendTime = false
         service.onSend = { [weak self] in
@@ -149,6 +151,63 @@ final class PurchasesManagerTests: XCTestCase {
 
         XCTAssertFalse(finishedAtSendTime, "the transaction must NOT be finished before the backend report")
         XCTAssertEqual(facade.finishedTransactions.count, 1)
+    }
+
+    func testPurchaseDoesNotFinishTheTransactionInAnalyticsMode() async throws {
+        // In Analytics mode the host app owns the transaction lifecycle —
+        // finishing it here would leave the app unable to process the purchase.
+        manager = makeManager(launchMode: .analytics)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "the purchase is still reported")
+        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+    }
+
+    func testPurchaseFinishesTheTransactionInSubscriptionManagementMode() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"])
+    }
+
+    func testPurchaseResultCarriesTheEntitlementsProvenance() async throws {
+        // A locally computed answer must be distinguishable from a
+        // backend-confirmed one.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        entitlementsManager.entitlementsSource = .localCalculation
+
+        let result = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(result.entitlementsSource, .localCalculation)
+    }
+
+    func testPurchaseResultReportsTheBackendWhenItAnswered() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        entitlementsManager.entitlementsSource = .backend
+
+        let result = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(result.entitlementsSource, .backend)
+    }
+
+    func testAnOfflinePurchaseReportsTheLocalCalculation() async throws {
+        facade.purchaseResult = makeTransaction(id: "t1")
+        service.error = QonversionError(type: .internal)
+        entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
+
+        let result = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(result.entitlementsSource, .localCalculation)
     }
 
     // MARK: - purchase options
@@ -226,6 +285,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testEntitlementsFetchFailureAfterSuccessfulReportFallsBackLocally() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
         facade.purchaseResult = makeTransaction(id: "t1")
         entitlementsManager.entitlementsError = QonversionError(type: .critical)
         entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
@@ -552,16 +612,203 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(received.isEmpty)
     }
 
-    func testObservedUpdateInAnalyticsModeDoesNotEmitEntitlements() async {
+    // MARK: - deferred purchases (Ask to Buy / SCA parity)
+
+    func testDeferredPurchaseIsEmittedInAnalyticsModeWithoutFinishing() async {
+        // The approval of a pending purchase must reach the host in BOTH
+        // modes — only the transaction lifecycle differs.
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.transaction.id, "u1")
+        XCTAssertEqual(received.first?.entitlements.keys.sorted(), ["premium"])
+        XCTAssertEqual(received.first?.entitlementsSource, .backend)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "the host app owns the lifecycle in Analytics mode")
+    }
+
+    func testDeferredPurchaseIsEmittedInSubscriptionManagementMode() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.transaction.id, "u1")
+        XCTAssertEqual(received.first?.entitlementsSource, .backend)
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["u1"])
+    }
+
+    func testDeferredPurchaseIsEmittedWithLocalEntitlementsWhenTheReportFails() async {
+        // An unreachable backend must not swallow the approval: production
+        // calculates the entitlements locally and still notifies the host.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        service.error = QonversionError(type: .internal)                       // 5xx
+        entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.entitlements.keys.sorted(), ["premium"])
+        XCTAssertEqual(received.first?.entitlementsSource, .localCalculation)
+        XCTAssertEqual(entitlementsManager.localFallbackTransactions.first?.map(\.id), ["u1"])
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "an unreported transaction stays unfinished")
+    }
+
+    func testDeferredPurchaseOfAConsumableIsIdentifiableWithoutEntitlements() async {
+        // A consumable grants no entitlement: without the transaction in the
+        // signal the host could not tell that anything happened at all.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = [:]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "coins-1", productId: "com.app.coins"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.transaction.id, "coins-1")
+        XCTAssertEqual(received.first?.transaction.productId, "com.app.coins")
+        XCTAssertTrue(received.first?.entitlements.isEmpty ?? false)
+    }
+
+    func testDeferredPurchaseLabelsLocallyCalculatedEntitlementsAsSuch() async {
+        // The report reached the backend, but the entitlements request did
+        // not: the entitlements manager answers from its fault-tolerance
+        // path, and labelling that as .backend would be a lie.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        entitlementsManager.entitlementsSource = .localCalculation
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.first?.entitlementsSource, .localCalculation)
+    }
+
+    // MARK: - the host sees every purchase exactly once
+
+    func testTransactionAlreadySurfacedInAPreviousSessionIsReportedButNotEmitted() async {
+        // Transaction.updates redelivers every unfinished transaction on each
+        // cold start; in Analytics mode nothing is ever finished, so without
+        // this gate the host would get ancient purchases as fresh ones on
+        // every launch.
+        manager = makeManager(launchMode: .analytics)
+        try? localStorage.set(["old-1"], forKey: "qonversion.keys.surfacedTransactions")
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "old-1"))
+
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["old-1"], "reporting is unchanged")
+        let received = await collector.received
+        XCTAssertTrue(received.isEmpty, "the host has already seen this purchase")
+    }
+
+    func testNewTransactionIsEmittedOnceAndNotAgainOnRedelivery() async {
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "fresh-1"))
+        await waitUntil { await !collector.received.isEmpty }
+
+        // The next cold start re-delivers the same unfinished transaction to
+        // a brand new manager over the same storage.
+        let relaunched: PurchasesManager = makeManager(launchMode: .analytics)
+        let relaunchedCollector = StreamCollector(relaunched.deferredPurchases())
+        relaunched.transactionUpdated(makeTransaction(id: "fresh-1"))
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        let received = await collector.received
+        let receivedAfterRelaunch = await relaunchedCollector.received
+        XCTAssertEqual(received.count, 1)
+        XCTAssertTrue(receivedAfterRelaunch.isEmpty, "a purchase the host already saw must not come back on the next launch")
+    }
+
+    func testSynchronousPurchaseWithAFailedReportIsNotReSurfacedAsDeferred() async throws {
+        // The purchase answered its caller directly; the failed report
+        // releases the dedup gate, so the updates listener may pick the same
+        // transaction up — the host must not be told about it twice.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "p1")
+        service.error = QonversionError(type: .internal)                       // 5xx
+        entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        _ = try await manager.purchase(makeProduct())
+        service.error = nil
+        manager.transactionUpdated(makeTransaction(id: "p1"))
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        let received = await collector.received
+        XCTAssertTrue(received.isEmpty, "the caller already got this transaction as a purchase result")
+    }
+
+    func testTheBufferedLaunchEmissionReachesBothStreams() async {
+        // The backlog exists for hosts that subscribe after launch; the
+        // entitlements projection must not steal it from deferredPurchases.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        manager.transactionUpdated(makeTransaction(id: "early-1"))
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+
+        let projection = StreamCollector(manager.entitlementsUpdates())
+        let purchases = StreamCollector(manager.deferredPurchases())
+
+        await waitUntil {
+            let projectionEmpty = await projection.received.isEmpty
+            let purchasesEmpty = await purchases.received.isEmpty
+            return !projectionEmpty && !purchasesEmpty
+        }
+        let receivedEntitlements = await projection.received
+        let receivedPurchases = await purchases.received
+        XCTAssertEqual(receivedEntitlements.first?.keys.sorted(), ["premium"])
+        XCTAssertEqual(receivedPurchases.first?.transaction.id, "early-1")
+    }
+
+    func testAProjectionThatIsNeverIteratedDoesNotConsumeTheBacklog() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        // Created and dropped without iterating — a host may build the stream
+        // long before it starts consuming it.
+        _ = manager.entitlementsUpdates()
+
+        manager.transactionUpdated(makeTransaction(id: "early-1"))
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+
+        let purchases = StreamCollector(manager.deferredPurchases())
+
+        await waitUntil { await !purchases.received.isEmpty }
+        let received = await purchases.received
+        XCTAssertEqual(received.first?.transaction.id, "early-1")
+    }
+
+    func testEntitlementsUpdatesProjectsTheDeferredPurchaseEntitlements() async {
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
         let collector = StreamCollector(manager.entitlementsUpdates())
 
         manager.transactionUpdated(makeTransaction(id: "u1"))
 
-        await waitUntil { self.service.sentTransactions.count >= 1 }
-        try? await Task.sleep(nanoseconds: 100_000_000)
-        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+        await waitUntil { await !collector.received.isEmpty }
         let received = await collector.received
-        XCTAssertTrue(received.isEmpty)
+        XCTAssertEqual(received.first?.keys.sorted(), ["premium"])
     }
 
     // MARK: - promotional offer signature
@@ -592,6 +839,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testIntentPurchaseRunsTheFullPurchaseFlow() async throws {
+        manager = makeManager(launchMode: .subscriptionManagement)
         facade.purchaseResult = makeTransaction(id: "t1", productId: "com.app.promo")
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
         let collector = StreamCollector(manager.promoPurchaseIntents())

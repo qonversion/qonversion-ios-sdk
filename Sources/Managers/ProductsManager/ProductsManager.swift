@@ -28,6 +28,12 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     private var _loadedProducts: [Qonversion.Product] = []
     private var _loadedProductPermissions: [String: [String]]?
     private var _productsTask: Task<[Qonversion.Product], Error>?
+    private var _storefrontTask: Task<Void, Never>?
+
+    /// Bumped on every user switch: a load that started for the previous user
+    /// must not cache or persist its (possibly personalized) catalog for the
+    /// new one.
+    private var cacheGeneration = 0
 
     var loadedProducts: [Qonversion.Product] {
         get {
@@ -145,6 +151,10 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     }
 
     private func loadProducts() async throws -> [Qonversion.Product] {
+        // Snapshotted before the first suspension: everything below writes
+        // user-scoped state, and a user switch may land mid-request.
+        let generation: Int = currentGeneration()
+
         let products: [Qonversion.Product]
         do {
             products = try await productsService.products()
@@ -161,26 +171,51 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         // Persisted for the offline local entitlements calculation on the
         // next launches (StoreKit enrichment does not survive encoding —
         // the wire fields are enough for the calculation).
-        try? localStorage.set(products, forKey: Constants.productsKey.rawValue)
+        persist(products, ifGenerationIs: generation)
 
         do {
             let resultProducts: [Qonversion.Product] = try await storeEnriched(products)
-            loadedProducts = resultProducts
-            
+            store(resultProducts, ifGenerationIs: generation)
+
             return resultProducts
         } catch {
             logger.error(error.localizedDescription)
         }
-        
-        loadedProducts = products
-        
+
+        store(products, ifGenerationIs: generation)
+
         return products
+    }
+
+    private func currentGeneration() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return cacheGeneration
+    }
+
+    /// The generation check and the write are one step: a user switch landing
+    /// between them would resurrect the previous user's catalog.
+    private func persist(_ products: [Qonversion.Product], ifGenerationIs generation: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard generation == cacheGeneration else { return }
+
+        try? localStorage.set(products, forKey: Constants.productsKey.rawValue)
+    }
+
+    private func store(_ products: [Qonversion.Product], ifGenerationIs generation: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard generation == cacheGeneration else { return }
+
+        _loadedProducts = products
     }
 
     func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
         let allProducts: [Qonversion.Product] = try await products()
 
         var result: [String: Qonversion.IntroEligibilityStatus] = [:]
+        var storeIdsToCheck: [String: String] = [:]
         for productId in productIds {
             guard let product: Qonversion.Product = allProducts.first(where: { $0.qonversionId == productId }), product.isStoreProductLinked else {
                 result[productId] = .unknown
@@ -192,17 +227,71 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
                 continue
             }
 
-            switch await storeKitFacade.isEligibleForIntroOffer(storeId: product.storeId) {
-            case .some(true):
-                result[productId] = .eligible
-            case .some(false):
-                result[productId] = .ineligible
-            case .none:
-                result[productId] = .unknown
-            }
+            storeIdsToCheck[productId] = product.storeId
         }
 
+        let facade: StoreKitFacadeInterface = storeKitFacade
+        let eligibilities: [String: Qonversion.IntroEligibilityStatus] = await Self.introEligibilities(for: storeIdsToCheck) { storeId in
+            await facade.isEligibleForIntroOffer(storeId: storeId)
+        }
+        eligibilities.forEach { result[$0.key] = $0.value }
+
         return result
+    }
+
+    /// Asks the store about every product that needs a check CONCURRENTLY:
+    /// asking one after another made the check as slow as the paywall is long.
+    static func introEligibilities(
+        for storeIdsByProductId: [String: String],
+        check: @escaping @Sendable (String) async -> Bool?
+    ) async -> [String: Qonversion.IntroEligibilityStatus] {
+        return await withTaskGroup(of: (String, Qonversion.IntroEligibilityStatus).self) { group in
+            for (productId, storeId) in storeIdsByProductId {
+                group.addTask {
+                    switch await check(storeId) {
+                    case .some(true):
+                        return (productId, .eligible)
+                    case .some(false):
+                        return (productId, .ineligible)
+                    case .none:
+                        return (productId, .unknown)
+                    }
+                }
+            }
+
+            var collected: [String: Qonversion.IntroEligibilityStatus] = [:]
+            for await eligibility in group {
+                collected[eligibility.0] = eligibility.1
+            }
+
+            return collected
+        }
+    }
+
+    /// The storefront defines prices, availability and offers: everything
+    /// enriched from the store must be refetched after a change.
+    func startObservingStorefrontChanges() {
+        // The check and the assignment are one step: a concurrent second start
+        // would otherwise leak an observation task.
+        lock.lock()
+        defer { lock.unlock() }
+        guard _storefrontTask == nil else { return }
+
+        _storefrontTask = Task { [weak self] in
+            guard let self else { return }
+            for await _ in self.storeKitFacade.storefrontUpdates() {
+                guard !Task.isCancelled else { return }
+                self.dropStoreEnrichment()
+            }
+        }
+    }
+
+    private func dropStoreEnrichment() {
+        lock.lock()
+        defer { lock.unlock() }
+        // The catalog itself is backend-driven and stays; only the enriched
+        // copy dies, so the next products() call refetches the store data.
+        _loadedProducts = []
     }
 
     /// Best-effort StoreKit enrichment that never fails: on a store error the
@@ -244,7 +333,14 @@ extension ProductsManager: UserChangedObserver {
     func userDidChange() {
         // Products may be personalized (experiments); the mapping is
         // project-scoped and stays.
-        loadedProducts = []
+        lock.lock()
+        defer { lock.unlock() }
+
+        cacheGeneration += 1
+        _loadedProducts = []
+        // The in-flight load belongs to the previous user — the next caller
+        // must start its own instead of joining it.
+        _productsTask = nil
         localStorage.removeObject(forKey: Constants.productsKey.rawValue)
     }
 }

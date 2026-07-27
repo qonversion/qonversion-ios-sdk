@@ -62,10 +62,24 @@ final class MockNetworkProvider: NetworkProviderInterface {
     var responseData: Data = Data()
     var response: URLResponse = HTTPURLResponse(url: URL(string: "https://api.qonversion.io")!, statusCode: 200, httpVersion: nil, headerFields: nil)!
     var error: Error?
-    private(set) var sentRequests: [URLRequest] = []
+    var onSend: (() async -> Void)?
+    private let providerStateLock = NSLock()
+    private var _sentRequests: [URLRequest] = []
+    var sentRequests: [URLRequest] {
+        providerStateLock.lock()
+        defer { providerStateLock.unlock() }
+        return _sentRequests
+    }
+
+    private func record(_ request: URLRequest) {
+        providerStateLock.lock()
+        defer { providerStateLock.unlock() }
+        _sentRequests.append(request)
+    }
 
     func send(request: URLRequest) async throws -> (Data, URLResponse) {
-        sentRequests.append(request)
+        record(request)
+        await onSend?()
         if let error { throw error }
         return (responseData, response)
     }
@@ -92,6 +106,7 @@ final class MockUserPropertiesManager: UserPropertiesManagerInterface {
     var userPropertiesResult: Qonversion.UserProperties?
     var error: Error?
     private(set) var sendPropertiesCallsCount = 0
+    private(set) var sendPropertiesForceFlags: [Bool] = []
     var onSendProperties: (() async -> Void)?
 
     func userProperties() async throws -> Qonversion.UserProperties {
@@ -104,8 +119,9 @@ final class MockUserPropertiesManager: UserPropertiesManagerInterface {
 
     func setCustomUserProperty(key: String, value: String) { }
 
-    func sendProperties() async throws {
+    func sendProperties(force: Bool) async throws {
         sendPropertiesCallsCount += 1
+        sendPropertiesForceFlags.append(force)
         await onSendProperties?()
         if let error { throw error }
     }
@@ -178,6 +194,7 @@ final class MockRequestsStorage: RequestsStorageInterface {
 
     private(set) var storedRequests: [StoredRequest] = []
     private(set) var cleanCallsCount = 0
+    private(set) var cleanGeneration = 0
 
     func append(_ request: StoredRequest) {
         if let dedupKey = request.dedupKey, storedRequests.contains(where: { $0.dedupKey == dedupKey }) {
@@ -192,6 +209,12 @@ final class MockRequestsStorage: RequestsStorageInterface {
         }
     }
 
+    func replace(_ request: StoredRequest, with replacement: StoredRequest, ifGenerationIs generation: Int) {
+        guard cleanGeneration == generation, let index = storedRequests.firstIndex(of: request) else { return }
+
+        storedRequests[index] = replacement
+    }
+
     func removeAll(where shouldRemove: @Sendable (StoredRequest) -> Bool) {
         storedRequests.removeAll(where: shouldRemove)
     }
@@ -202,6 +225,7 @@ final class MockRequestsStorage: RequestsStorageInterface {
 
     func clean() {
         cleanCallsCount += 1
+        cleanGeneration += 1
         storedRequests = []
     }
 }
@@ -298,14 +322,49 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     }
 
     var introOfferEligibilityResults: [String: Bool] = [:]
-    private(set) var eligibilityRequestedStoreIds: [String] = []
+    private var _eligibilityRequestedStoreIds: [String] = []
+    /// Recorded under the lock: the SDK asks about the products concurrently.
+    var eligibilityRequestedStoreIds: [String] {
+        facadeStateLock.lock()
+        defer { facadeStateLock.unlock() }
+        return _eligibilityRequestedStoreIds
+    }
 
     func isEligibleForIntroOffer(storeId: String) async -> Bool? {
-        eligibilityRequestedStoreIds.append(storeId)
+        facadeStateLock.lock()
+        _eligibilityRequestedStoreIds.append(storeId)
+        facadeStateLock.unlock()
+
         return introOfferEligibilityResults[storeId]
     }
 
     func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
+
+    private var _storefrontContinuation: AsyncStream<Void>.Continuation?
+
+    /// True once the SDK's observation task has actually subscribed — the
+    /// subscription happens on another task, so tests wait for it instead of
+    /// sleeping.
+    var hasStorefrontSubscriber: Bool {
+        facadeStateLock.lock()
+        defer { facadeStateLock.unlock() }
+        return _storefrontContinuation != nil
+    }
+
+    func emitStorefrontChange() {
+        facadeStateLock.lock()
+        let continuation = _storefrontContinuation
+        facadeStateLock.unlock()
+        continuation?.yield(())
+    }
+
+    func storefrontUpdates() -> AsyncStream<Void> {
+        return AsyncStream { continuation in
+            self.facadeStateLock.lock()
+            self._storefrontContinuation = continuation
+            self.facadeStateLock.unlock()
+        }
+    }
 
     private(set) var facadeRestoreCallsCount = 0
     var onRestore: (() async -> Void)?
@@ -357,6 +416,8 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
 /// by the test through `emitUpdate`/`finishUpdates`.
 final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
 
+    weak var delegate: StoreKitWrapperDelegate?
+
     // The SDK's detached tasks mutate this mock while the test thread polls
     // it — the hot members are lock-guarded.
     private let stateLock = NSLock()
@@ -373,16 +434,45 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
         return _finishedTransactions
     }
     private(set) var restoreCallsCount = 0
-    private(set) var transactionUpdatesCallsCount = 0
+    private var _transactionUpdatesCallsCount = 0
+    // The facade subscribes to the transaction and storefront streams from two
+    // concurrent tasks — every shared field here is lock-guarded.
+    var transactionUpdatesCallsCount: Int {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _transactionUpdatesCallsCount
+    }
 
-    private var updatesContinuation: AsyncStream<Qonversion.Transaction>.Continuation?
+    private var _updatesContinuation: AsyncStream<Qonversion.Transaction>.Continuation?
+    private var _storefrontContinuation: AsyncStream<Void>.Continuation?
 
     func emitUpdate(_ transaction: Qonversion.Transaction) {
-        updatesContinuation?.yield(transaction)
+        stateLock.lock()
+        let continuation = _updatesContinuation
+        stateLock.unlock()
+        continuation?.yield(transaction)
+    }
+
+    func emitStorefrontChange() {
+        stateLock.lock()
+        let continuation = _storefrontContinuation
+        stateLock.unlock()
+        continuation?.yield(())
+    }
+
+    func storefrontUpdates() -> AsyncStream<Void> {
+        return AsyncStream { continuation in
+            self.stateLock.lock()
+            self._storefrontContinuation = continuation
+            self.stateLock.unlock()
+        }
     }
 
     func finishUpdates() {
-        updatesContinuation?.finish()
+        stateLock.lock()
+        let continuation = _updatesContinuation
+        stateLock.unlock()
+        continuation?.finish()
     }
 
     func purchase(product: StoreKit.Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
@@ -417,9 +507,11 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
     }
 
     func transactionUpdates() -> AsyncStream<Qonversion.Transaction> {
-        transactionUpdatesCallsCount += 1
         return AsyncStream { continuation in
-            self.updatesContinuation = continuation
+            self.stateLock.lock()
+            self._updatesContinuation = continuation
+            self._transactionUpdatesCallsCount += 1
+            self.stateLock.unlock()
         }
     }
 
@@ -465,7 +557,14 @@ final class MockRemoteConfigService: RemoteConfigServiceInterface {
     var remoteConfigListResult: Qonversion.RemoteConfigList?
     var error: Error?
 
-    private(set) var loadRemoteConfigContextKeys: [String?] = []
+    // Concurrent callers share one request, so the recording is lock-guarded.
+    private let serviceStateLock = NSLock()
+    private var _loadRemoteConfigContextKeys: [String?] = []
+    var loadRemoteConfigContextKeys: [String?] {
+        serviceStateLock.lock()
+        defer { serviceStateLock.unlock() }
+        return _loadRemoteConfigContextKeys
+    }
     private(set) var loadListCallsCount = 0
     private(set) var loadListContextKeysArgs: [(contextKeys: [String], includeEmpty: Bool)] = []
     private(set) var attachedRemoteConfigIds: [String] = []
@@ -476,7 +575,9 @@ final class MockRemoteConfigService: RemoteConfigServiceInterface {
     var onLoadRemoteConfig: (() async -> Void)?
 
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
-        loadRemoteConfigContextKeys.append(contextKey)
+        serviceStateLock.lock()
+        _loadRemoteConfigContextKeys.append(contextKey)
+        serviceStateLock.unlock()
         await onLoadRemoteConfig?()
         if let error { throw error }
         guard let remoteConfigResult else { throw MockError.noStub }
@@ -618,9 +719,13 @@ final class MockUserManager: UserManagerInterface {
     }
 
     private(set) var awaitUserStabilityCallsCount = 0
+    var awaitUserStabilityError: Error?
+    var onAwaitUserStability: (() async -> Void)?
 
-    func awaitUserStability() async {
+    func awaitUserStability() async throws {
         awaitUserStabilityCallsCount += 1
+        await onAwaitUserStability?()
+        if let awaitUserStabilityError { throw awaitUserStabilityError }
     }
 
     private(set) var switchedToUserIds: [String] = []
@@ -695,10 +800,12 @@ final class MockEntitlementsService: EntitlementsServiceInterface {
 
     var entitlementsResult: [Qonversion.Entitlement] = []
     var error: Error?
+    var onEntitlements: (() async -> Void)?
     private(set) var entitlementsCalls: [String] = []
 
     func entitlements(userId: String) async throws -> [Qonversion.Entitlement] {
         entitlementsCalls.append(userId)
+        await onEntitlements?()
         if let error { throw error }
         return entitlementsResult
     }
@@ -719,6 +826,12 @@ final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
 
     func loadProductPermissions() async {
         loadPermissionsCallsCount += 1
+    }
+
+    private(set) var startObservingStorefrontChangesCallsCount = 0
+
+    func startObservingStorefrontChanges() {
+        startObservingStorefrontChangesCallsCount += 1
     }
 
     var fallbackFileAccessible = false
@@ -743,13 +856,19 @@ final class MockEntitlementsManager: EntitlementsManagerInterface {
     var entitlementsResult: [String: Qonversion.Entitlement] = [:]
     var entitlementsError: Error?
     var localFallbackResult: [String: Qonversion.Entitlement] = [:]
+    /// The provenance resolvedEntitlements() reports on success.
+    var entitlementsSource: Qonversion.DeferredPurchase.EntitlementsSource = .backend
     private(set) var entitlementsCallsCount = 0
     private(set) var localFallbackTransactions: [[Qonversion.Transaction]] = []
 
     func entitlements() async throws -> [String: Qonversion.Entitlement] {
+        return try await resolvedEntitlements().entitlements
+    }
+
+    func resolvedEntitlements() async throws -> ResolvedEntitlements {
         entitlementsCallsCount += 1
         if let entitlementsError { throw entitlementsError }
-        return entitlementsResult
+        return ResolvedEntitlements(entitlements: entitlementsResult, source: entitlementsSource)
     }
 
     func localFallbackEntitlements(for transactions: [Qonversion.Transaction]) async -> [String: Qonversion.Entitlement] {

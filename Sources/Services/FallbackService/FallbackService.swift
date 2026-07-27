@@ -49,33 +49,53 @@ final class FallbackService: FallbackServiceInterface, @unchecked Sendable {
 
     private let bundle: Bundle
     private let decoder: JSONDecoder
+    /// Where a file dropped at runtime is looked for, after the app bundle —
+    /// injected so the location is testable.
+    private let documentsDirectory: URL?
 
-    // The bundled file is immutable for the process lifetime — reading and
-    // decoding it on every call would tax each fallback path.
+    // A successfully decoded file is immutable for the process lifetime;
+    // a MISSING or broken one is not — it may appear later (the Documents
+    // copy is written at runtime), so the negative outcome is never cached.
     private let lock = NSLock()
     private var cachedData: FallbackData?
-    private var didLoad = false
 
-    init(bundle: Bundle, decoder: JSONDecoder) {
+    init(bundle: Bundle, decoder: JSONDecoder, documentsDirectory: URL? = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first) {
         self.bundle = bundle
         self.decoder = decoder
+        self.documentsDirectory = documentsDirectory
     }
 
     func obtainFallbackData() -> FallbackData? {
         lock.lock()
-        defer { lock.unlock() }
-
-        if didLoad {
+        if let cachedData {
+            lock.unlock()
             return cachedData
         }
-        didLoad = true
+        lock.unlock()
 
-        guard let url: URL = bundle.url(forResource: Constants.fileName.rawValue, withExtension: Constants.fileExtension.rawValue),
-              let data: Data = try? Data(contentsOf: url) else {
-            return nil
+        guard let data: Data = fileData() else { return nil }
+
+        guard let decoded: FallbackData = try? decoder.decode(FallbackData.self, from: data) else { return nil }
+
+        lock.lock()
+        cachedData = decoded
+        lock.unlock()
+
+        return decoded
+    }
+
+    /// The app bundle first, like production, then a copy dropped into the
+    /// Documents directory at runtime.
+    private func fileData() -> Data? {
+        if let url: URL = bundle.url(forResource: Constants.fileName.rawValue, withExtension: Constants.fileExtension.rawValue),
+           let data: Data = try? Data(contentsOf: url) {
+            return data
         }
 
-        cachedData = try? decoder.decode(FallbackData.self, from: data)
-        return cachedData
+        guard let documentsDirectory else { return nil }
+
+        let fileUrl: URL = documentsDirectory.appendingPathComponent(Constants.fileName.rawValue + "." + Constants.fileExtension.rawValue)
+
+        return try? Data(contentsOf: fileUrl)
     }
 }

@@ -30,6 +30,9 @@ extension Qonversion {
         /// Minimal severity the SDK writes to the unified log.
         let logLevel: LogLevel
 
+        /// The store environment the app runs against.
+        let environment: Environment
+
         /// Initializer of Configuration.
         /// 
         /// Launch with ``Qonversion/LaunchMode/analytics`` mode to use Qonversion with your existing in-app subscription flow to get comprehensive subscription analytics and user engagement tools, and send the data to the leading marketing, analytics, and engagement platforms.
@@ -40,14 +43,16 @@ extension Qonversion {
         ///   - proxyURL: URL of your proxy server which redirects all the requests from the app to our API. Please, check the documentation and contact us before using this feature.
         ///   - entitlementsCacheLifetime: how long cached entitlements stay eligible for the local fallback when the backend is unreachable. The default value is `.month`.
         ///   - logLevel: minimal severity the SDK writes to the unified log. The default value is `.verbose`.
+        ///   - environment: the store environment the app runs against. Set it to `.sandbox` for TestFlight, Xcode and StoreKit testing builds, so the backend keeps that data apart from production. The default value is `.production`.
         ///   - userDefaults: a custom UserDefaults (e.g. an app-group suite) to
         ///     share the SDK state with app extensions. Defaults to `.standard`.
-        public init(apiKey: String, launchMode: LaunchMode, proxyURL: String? = nil, entitlementsCacheLifetime: EntitlementsCacheLifetime = .month, logLevel: LogLevel = .verbose, userDefaults: UserDefaults? = nil) {
+        public init(apiKey: String, launchMode: LaunchMode, proxyURL: String? = nil, entitlementsCacheLifetime: EntitlementsCacheLifetime = .month, logLevel: LogLevel = .verbose, environment: Environment = .production, userDefaults: UserDefaults? = nil) {
             self.apiKey = apiKey
             self.launchMode = launchMode
             self.baseURL = proxyURL.map(Configuration.normalizedBaseURL)
             self.entitlementsCacheLifetime = entitlementsCacheLifetime
             self.logLevel = logLevel
+            self.environment = environment
             self.userDefaults = userDefaults
         }
 

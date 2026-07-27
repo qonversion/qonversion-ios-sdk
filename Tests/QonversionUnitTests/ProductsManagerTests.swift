@@ -312,6 +312,62 @@ final class ProductsManagerTests: XCTestCase {
         XCTAssertEqual(productsService.productsCallsCount, 1)
     }
 
+    func testProductsLoadedForThePreviousUserDoNotSurviveASwitch() async throws {
+        // The response belongs to the previous user (products may be
+        // personalized) — neither the in-memory cache nor the persisted
+        // catalog may end up holding it under the new uid.
+        productsService.productsResult = [makeProduct()]
+        let gate = ProductsAsyncGate()
+        productsService.onProducts = { await gate.wait() }
+
+        async let staleLoad: [Qonversion.Product] = manager.products()
+        await waitUntil { self.productsService.productsCallsCount >= 1 }
+        manager.userDidChange()
+        await gate.open()
+        _ = try? await staleLoad
+
+        XCTAssertTrue(manager.loadedProducts.isEmpty, "the previous user's products must not stay cached")
+        XCTAssertNil(localStorage.data(forKey: "qonversion.keys.products"), "the previous user's catalog must not be persisted for the new one")
+    }
+
+    func testUserDidChangeInvalidatesTheInFlightProductsTask() async throws {
+        productsService.productsResult = [makeProduct()]
+        let gate = ProductsAsyncGate()
+        productsService.onProducts = { await gate.wait() }
+
+        async let staleLoad: [Qonversion.Product] = manager.products()
+        await waitUntil { self.productsService.productsCallsCount >= 1 }
+        manager.userDidChange()
+        await gate.open()
+        _ = try? await staleLoad
+
+        productsService.onProducts = nil
+        _ = try await manager.products()
+
+        XCTAssertEqual(productsService.productsCallsCount, 2, "the new user must not join the previous user's in-flight load")
+    }
+
+    func testACallerArrivingAfterTheSwitchGetsFreshProductsNotTheInFlightOnes() async throws {
+        // The load in flight belongs to the previous user; a caller that
+        // arrives after the switch must not be served its result.
+        productsService.productsResult = [makeProduct(qonversionId: "old", storeId: "store_old")]
+        let gate = ProductsAsyncGate()
+        productsService.onProducts = { await gate.wait() }
+
+        async let staleLoad: [Qonversion.Product] = manager.products()
+        await waitUntil { self.productsService.productsCallsCount >= 1 }
+        manager.userDidChange()
+
+        productsService.onProducts = nil
+        productsService.productsResult = [makeProduct(qonversionId: "new", storeId: "store_new")]
+        let fresh: [Qonversion.Product] = try await manager.products()
+        await gate.open()
+        _ = try? await staleLoad
+
+        XCTAssertEqual(fresh.map(\.qonversionId), ["new"])
+        XCTAssertEqual(manager.loadedProducts.map(\.qonversionId), ["new"], "the previous user's response must not overwrite the new user's catalog")
+    }
+
     // The product → permissions mapping is project-scoped, not user-scoped:
     // it stays valid across a user switch and keeps powering the local
     // entitlements fallback.
@@ -348,4 +404,95 @@ private final class ProductsAsyncGate: @unchecked Sendable {
     private let storage = ProductsGateStorage()
     func open() async { await storage.open() }
     func wait() async { await storage.wait() }
+}
+
+/// Resumes every waiter only once the expected number of them has arrived.
+private actor EligibilityBarrier {
+
+    private let expected: Int
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    init(expected: Int) {
+        self.expected = expected
+    }
+
+    func arriveAndWait() async {
+        if waiters.count + 1 >= expected {
+            waiters.forEach { $0.resume() }
+            waiters.removeAll()
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
+// MARK: - storefront changes and eligibility fan-out
+
+final class ProductsStorefrontTests: XCTestCase {
+
+    private var productsService: MockProductsService!
+    private var storeKitFacade: MockStoreKitFacade!
+    private var manager: ProductsManager!
+
+    override func setUp() {
+        super.setUp()
+        productsService = MockProductsService()
+        storeKitFacade = MockStoreKitFacade()
+        manager = ProductsManager(
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: MockLocalStorage(),
+            fallbackService: MockFallbackService(),
+            logger: LoggerWrapper()
+        )
+    }
+
+    override func tearDown() {
+        manager = nil
+        storeKitFacade = nil
+        productsService = nil
+        super.tearDown()
+    }
+
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
+    func testStorefrontChangeDropsTheEnrichedCatalog() async throws {
+        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s", offeringId: nil)]
+        _ = try await manager.products()
+        XCTAssertFalse(manager.loadedProducts.isEmpty)
+
+        manager.startObservingStorefrontChanges()
+        await waitUntil { self.storeKitFacade.hasStorefrontSubscriber }
+        storeKitFacade.emitStorefrontChange()
+
+        await waitUntil { self.manager.loadedProducts.isEmpty }
+        XCTAssertTrue(manager.loadedProducts.isEmpty, "prices and offers must be refetched for the new storefront")
+    }
+
+    func testEligibilityChecksRunConcurrentlyAndMapEveryProduct() async {
+        // Every product is still asked about — just not one after another.
+        let barrier = EligibilityBarrier(expected: 3)
+        let answers: [String: Bool?] = ["s0": true, "s1": false, "s2": nil]
+
+        let result: [String: Qonversion.IntroEligibilityStatus] = await ProductsManager.introEligibilities(
+            for: ["q0": "s0", "q1": "s1", "q2": "s2"]
+        ) { storeId in
+            // Resumes only once all three checks are in flight: a sequential
+            // implementation would deadlock here.
+            await barrier.arriveAndWait()
+            return answers[storeId] ?? nil
+        }
+
+        XCTAssertEqual(result["q0"], .eligible)
+        XCTAssertEqual(result["q1"], .ineligible)
+        XCTAssertEqual(result["q2"], .unknown)
+    }
 }

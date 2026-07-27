@@ -26,8 +26,8 @@ Every completion-handler API became `async`. Errors are thrown instead of passed
 | `checkTrialIntroEligibility(productIds, completion)` | `try await checkTrialIntroEligibility(productIds)` |
 | `getPromotionalOfferForProduct(product, discount, completion)` | `try await getPromotionalOffer(for: product, discountId: discountId)` |
 | `syncHistoricalData()` | `syncHistoricalData()` — unchanged, still once per install |
-| `setDeferredPurchasesListener(listener)` | `for await entitlements in Qonversion.shared.entitlementsUpdates { ... }` |
-| `setEntitlementsUpdateListener(listener)` *(deprecated)* | same stream: `entitlementsUpdates` |
+| `setDeferredPurchasesListener(listener)` | `for await purchase in Qonversion.shared.deferredPurchases { ... }` |
+| `setEntitlementsUpdateListener(listener)` *(deprecated)* | `entitlementsUpdates` — the entitlements-only projection of the same stream |
 | `setPromoPurchasesDelegate(delegate)` | `for await intent in Qonversion.shared.promoPurchaseIntents { try await intent.purchase() }` |
 | `handlePurchases([QONStoreKit2PurchaseModel], completion)` | `await handlePurchases([VerificationResult<Transaction>]) -> Bool` — pass StoreKit 2 results directly; the returned flag replaces the completion |
 | `setUserProperty(key, value)` / `setCustomUserProperty` | unchanged (plus the new `.tenjinAnalyticsInstallationId` key) |
@@ -38,6 +38,7 @@ Every completion-handler API became `async`. Errors are thrown instead of passed
 | `attachUserToExperiment` / `detach...` / `...RemoteConfiguration` | unchanged, `async throws` |
 | `presentCodeRedemptionSheet()` | unchanged; plus `presentOfferCodeRedeemSheet(in:)` on iOS 16+ |
 | `isFallbackFileAccessible()` | unchanged |
+| `QONEnvironment` on the configuration | `Configuration(apiKey:launchMode:environment:)` — the same two values, `.production` by default. The environment travels in the user creation body; the `test_` API key prefix of the older API is not used. |
 
 ### Listeners became streams
 
@@ -46,8 +47,11 @@ Delegate/listener protocols are gone. Both streams follow the style of StoreKit'
 ```swift
 // before: conforming to QONDeferredPurchasesListener
 Task {
-    for await entitlements in Qonversion.shared.entitlementsUpdates {
-        refreshUI(with: entitlements)
+    for await purchase in Qonversion.shared.deferredPurchases {
+        // purchase.transaction and purchase.entitlements, like QONPurchaseResult;
+        // purchase.entitlementsSource tells whether the backend answered or
+        // the SDK calculated them locally
+        refreshUI(with: purchase.entitlements)
     }
 }
 
@@ -69,7 +73,7 @@ do {
 } catch let error as QonversionError {
     switch error.type {
     case .purchaseCancelled: break            // the user changed their mind — not a failure
-    case .purchasePending: break              // Ask to Buy / SCA: completes later via entitlementsUpdates
+    case .purchasePending: break              // Ask to Buy / SCA: completes later via deferredPurchases
     default: showError(error.message)         // error.error carries the underlying failure
     }
 }
@@ -89,6 +93,35 @@ do {
 | `setNotificationsToken` / `handleNotification` | Removed — were deprecated automation APIs |
 | `launchMode` implicit default | `Configuration(apiKey:launchMode:)` requires an explicit mode |
 
+## User fields
+
+`Qonversion.User` exposes `originalAppVersion` — the app version the user
+originally downloaded from the App Store, for grandfathering older installs.
+
+## Purchase and deferred purchase provenance
+
+`PurchaseResult` and `DeferredPurchase` both carry `entitlementsSource`
+(`.backend` / `.localCalculation`), so an integrator can tell an answer the
+Qonversion backend confirmed from one the SDK computed on the device while the
+backend was unreachable.
+
+## Entitlement fields
+
+`Qonversion.Entitlement` exposes the same information as `QONEntitlement`: next
+to `id`, `active`, `source`, `renewState`, `startedDate`, `expirationDate` and
+`productId` it carries `grantType`, `renewsCount`, `trialStartDate`,
+`firstPurchaseDate`, `lastPurchaseDate`, `autoRenewDisableDate`,
+`lastActivatedOfferCode` and `transactions`.
+
+`transactions` is a list of `Qonversion.Entitlement.StoreTransaction` — the
+billing history records behind the entitlement (`QONTransaction` in the
+Objective-C SDK). The StoreKit wrapper returned by purchases keeps its own
+name, `Qonversion.Transaction`.
+
+Every one of these fields is optional on the wire: an older backend that does
+not send them yet yields the defaults (`grantType == .purchase`,
+`renewsCount == 0`, nil dates, an empty `transactions` list).
+
 ## Fallback file
 
 The bundled fallback file keeps the same name (`qonversion_ios_fallbacks.json`) and shape: `products`, `products_permissions` and `remote_config_list` are honored when the API is unreachable and no cache exists yet.
@@ -96,3 +129,16 @@ The bundled fallback file keeps the same name (`qonversion_ios_fallbacks.json`) 
 ## NoCodes and Web2App
 
 The NoCodes screens and Web2App redemption flow are not part of this SDK yet. If you rely on them, stay on the Objective-C SDK for now.
+
+## Offline purchase queue of the Objective-C SDK
+
+The previous SDK kept failed purchase reports in its own UserDefaults suite as
+archived `NSURLRequest`s. Those requests target the previous API, so they
+cannot be replayed against v4, and the transaction ids they are keyed by are
+not enough to rebuild a v4 report. The SDK therefore drops that key on the
+first launch.
+
+No purchase is lost by this: the Objective-C SDK never finished a transaction
+whose report had failed, so those purchases are still unfinished in StoreKit
+and the SDK re-reports them on the first launch (and `syncHistoricalData()`
+covers the rest of the history once per install).

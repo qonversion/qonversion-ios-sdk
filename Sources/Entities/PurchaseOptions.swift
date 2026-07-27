@@ -27,11 +27,16 @@ extension Qonversion {
         /// Promo offer details. Use to make a purchase with a promo offer.
         public let promoOffer: PromotionalOffer?
 
-        public init(quantity: Int = 1, contextKeys: [String]? = nil, screenUid: String? = nil, promoOffer: PromotionalOffer? = nil) {
+        /// A win-back offer from ``Qonversion/Qonversion/Product/SubscriptionInfo/winBackOffers``
+        /// to purchase with. Applied on iOS 18 and later; ignored below.
+        public let winBackOffer: Qonversion.Product.SubscriptionOffer?
+
+        public init(quantity: Int = 1, contextKeys: [String]? = nil, screenUid: String? = nil, promoOffer: PromotionalOffer? = nil, winBackOffer: Qonversion.Product.SubscriptionOffer? = nil) {
             self.quantity = quantity
             self.contextKeys = contextKeys
             self.screenUid = screenUid
             self.promoOffer = promoOffer
+            self.winBackOffer = winBackOffer
         }
     }
 

@@ -36,16 +36,38 @@ final class QonversionAssembly {
     // Consumed by both the facade and the purchases manager — one instance
     // SDK-wide, and a single user-change observer registration.
     private var entitlementsManagerInstance: EntitlementsManagerInterface?
+
+    // A weakly held observer: a per-call instance would deregister itself the
+    // moment the caller let go of it.
+    private var deviceManagerInstance: DeviceManagerInterface?
     
-    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose) {
+    required init(apiKey: String, userDefaults: UserDefaults?, launchMode: Qonversion.LaunchMode = .analytics, baseURL: String? = nil, entitlementsCacheLifetime: Qonversion.EntitlementsCacheLifetime = .month, logLevel: Qonversion.LogLevel = .verbose, environment: Qonversion.Environment = .production) {
         let userDefaults: UserDefaults = userDefaults ?? UserDefaults.standard
-        let internalConfig = InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime, logLevel: logLevel)
+        let internalConfig = InternalConfig(userId: "", launchMode: launchMode, entitlementsCacheLifetime: entitlementsCacheLifetime, logLevel: logLevel, environment: environment)
         self.miscAssembly = MiscAssembly(apiKey: apiKey, userDefaults: userDefaults, internalConfig: internalConfig)
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly, baseURL: baseURL)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
 
         // Resolves the anonymous user id (persisted or generated) into InternalConfig.
         _ = servicesAssembly.userService()
+
+        // The previous SDK generation's offline purchase queue cannot be
+        // replayed against v4; the unfinished-transaction sweep covers it.
+        let legacyPurchasesQueueMigration = LegacyPurchasesQueueMigration()
+        legacyPurchasesQueueMigration.run()
+    }
+
+    /// Registers every user-scoped cache with the user gate in a FIXED order,
+    /// instead of letting it emerge from whichever manager happens to be built
+    /// first. The order is the teardown order of a user switch: stop the
+    /// outgoing queue, then the purchase bookkeeping, then the caches.
+    func registerUserChangeObservers() {
+        _ = miscAssembly.requestsStorage()
+        _ = purchasesManager()
+        _ = entitlementsManager()
+        _ = productsManager()
+        _ = remoteConfigManager()
+        _ = deviceManager()
     }
 
     /// Resends requests that failed on transport in previous sessions —
@@ -88,10 +110,15 @@ final class QonversionAssembly {
     }
     
     func deviceManager() -> DeviceManagerInterface {
+        if let deviceManagerInstance {
+            return deviceManagerInstance
+        }
+
         let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
         let deviceService: DeviceServiceInterface = servicesAssembly.deviceService()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let deviceManager = DeviceManager(deviceInfoCollector: deviceInfoCollector, deviceService: deviceService, logger: logger)
+        deviceManagerInstance = deviceManager
         miscAssembly.userChangesNotifier().add(observer: deviceManager)
 
         return deviceManager

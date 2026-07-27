@@ -51,6 +51,15 @@ final class NetworkErrorHandler: NetworkErrorHandlerInterface, @unchecked Sendab
         }
         info[ErrorConstants.statusCodeKey.rawValue] = response.statusCode
 
-        return QonversionError(type: type, message: apiErrorWrapper?.error.message, error: error, additionalInfo: info, apiCode: apiErrorWrapper?.error.code, apiType: apiErrorWrapper?.error.type)
+        // A body without an API message must not degrade to "Unknown error
+        // occurred." — the status reason phrase is what the integrator needs.
+        let apiCode: String? = apiErrorWrapper?.error.code
+        let message: String = apiErrorWrapper?.error.message ?? HTTPURLResponse.localizedString(forStatusCode: response.statusCode)
+        // A specific backend code refines the status-derived classification.
+        // Critical (401/402/403) and server (5xx) types keep their meaning:
+        // they drive the key-revocation latch and the offline fallback.
+        let refinedType: QonversionErrorType = type == .unknown ? (QonversionErrorType(apiCode: apiCode) ?? type) : type
+
+        return QonversionError(type: refinedType, message: message, error: error, additionalInfo: info, apiCode: apiCode, apiType: apiErrorWrapper?.error.type)
     }
 }

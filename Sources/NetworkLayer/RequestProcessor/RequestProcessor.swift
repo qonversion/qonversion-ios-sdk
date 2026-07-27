@@ -56,6 +56,10 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         let requests: [StoredRequest] = requestsStorage.fetchRequests()
         guard !requests.isEmpty else { return }
 
+        // The snapshot belongs to the user it was fetched for: a clean() in
+        // between (user switch) invalidates every entry still in it.
+        let generation: Int = requestsStorage.cleanGeneration
+
         // Strong capture on purpose: the caller does not retain this
         // processor, and a weak capture would let it deallocate before the
         // task runs — the replay would silently do nothing. The task holds
@@ -63,6 +67,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         Task {
             for stored in requests {
                 guard self.criticalError == nil else { return }
+                guard self.requestsStorage.cleanGeneration == generation else { return }
                 guard let url = URL(string: stored.url) else {
                     self.requestsStorage.remove(stored)
                     continue
@@ -85,7 +90,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     // (resending would duplicate) or permanently rejected.
                     let statusCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
                     if Self.isRetriableStatusCode(statusCode) {
-                        self.bumpAttempt(of: stored)
+                        self.bumpAttempt(of: stored, ifGenerationIs: generation)
                     } else {
                         self.requestsStorage.remove(stored)
                     }
@@ -96,7 +101,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     }
                 } catch {
                     // Kept in the queue for the next session.
-                    self.bumpAttempt(of: stored)
+                    self.bumpAttempt(of: stored, ifGenerationIs: generation)
                 }
             }
         }
@@ -110,18 +115,21 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     static let triggerHeader: String = "Trigger"
 
     /// Records one more failed send of a queued request, so the next replay
-    /// reports the true attempt number.
-    private func bumpAttempt(of stored: StoredRequest) {
-        requestsStorage.remove(stored)
+    /// reports the true attempt number. A queue cleaned while the request was
+    /// in flight must stay clean — the entry belongs to the previous user.
+    private func bumpAttempt(of stored: StoredRequest, ifGenerationIs generation: Int) {
         let updated = StoredRequest(
             url: stored.url,
             method: stored.method,
             body: stored.body,
             dedupKey: stored.dedupKey,
             trigger: stored.trigger,
-            attempt: stored.attempt + 1
+            attempt: stored.attempt + 1,
+            transactionId: stored.transactionId
         )
-        requestsStorage.append(updated)
+        // One atomic step: a check followed by a separate remove and append
+        // leaves two windows for a clean() to be undone.
+        requestsStorage.replace(stored, with: updated, ifGenerationIs: generation)
     }
 
     func process<T>(request: Request, responseType: T.Type, trigger: RequestTrigger?) async throws -> T where T : Decodable {
@@ -159,7 +167,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
-                    trigger: trigger?.rawValue
+                    trigger: trigger?.rawValue,
+                    transactionId: request.replayTransactionId
                 ))
             }
             throw QonversionError(type: .invalidResponse, error: error)
@@ -178,7 +187,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     method: urlRequest.httpMethod ?? "POST",
                     body: urlRequest.httpBody,
                     dedupKey: request.replayDedupKey,
-                    trigger: trigger?.rawValue
+                    trigger: trigger?.rawValue,
+                    transactionId: request.replayTransactionId
                 ))
             }
 
@@ -196,7 +206,16 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         // the next launch would double-report the purchase.
         if request.kind == .createPurchase, let transactionId: String = request.replayTransactionId {
             requestsStorage.removeAll { stored in
-                stored.dedupKey?.hasSuffix("-" + transactionId) == true
+                if let storedTransactionId: String = stored.transactionId {
+                    return storedTransactionId == transactionId
+                }
+
+                // Entries queued by an older build carry no transaction id:
+                // fall back to an ANCHORED dedup key match, so a uid that ends
+                // in "-<transactionId>" cannot evict an unrelated purchase.
+                guard let dedupKey: String = stored.dedupKey else { return false }
+
+                return dedupKey.hasPrefix("createPurchase-") && dedupKey.hasSuffix("-" + transactionId)
             }
         }
 

@@ -9,8 +9,8 @@ import Foundation
 import StoreKit
 
 /// An entry point to use Qonversion SDK.
-// @unchecked: the managers are written once in initialize() and the SDK
-// contract requires initialize() before any other call.
+// @unchecked: the manager graph is the only mutable state and every read and
+// write of it goes through stateLock.
 public final class Qonversion: @unchecked Sendable {
     
     // MARK: - Public
@@ -27,44 +27,57 @@ public final class Qonversion: @unchecked Sendable {
     @discardableResult
     public static func initialize(with configuration: Configuration) -> Qonversion {
         // Re-initializing would rebuild the manager graph under the feet of
-        // the background tasks the first call spawned.
-        initializationLock.lock()
-        defer { initializationLock.unlock() }
-        guard !shared.isInitialized else {
-            shared.logger?.warning("Qonversion.initialize called more than once — the repeated call is ignored.")
+        // the background tasks the first call spawned. The same lock guards
+        // every read of the graph — no suspension point is crossed while it
+        // is held (the tasks below are spawned, never awaited).
+        shared.stateLock.lock()
+        guard shared.managers == nil else {
+            let logger: LoggerWrapper? = shared.logger
+            shared.stateLock.unlock()
+            logger?.warning("Qonversion.initialize called more than once — the repeated call is ignored.")
             return shared
         }
-        shared.isInitialized = true
 
-        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime, logLevel: configuration.logLevel)
-        Qonversion.shared.assembly = assembly
-        Qonversion.shared.logger = assembly.servicesAssembly.miscAssemblyLogger()
+        let assembly: QonversionAssembly = QonversionAssembly(apiKey: configuration.apiKey, userDefaults: configuration.userDefaults, launchMode: configuration.launchMode, baseURL: configuration.baseURL, entitlementsCacheLifetime: configuration.entitlementsCacheLifetime, logLevel: configuration.logLevel, environment: configuration.environment)
+        // Deterministic teardown order for a user switch, independent of the
+        // order the managers happen to be built in.
+        assembly.registerUserChangeObservers()
         // Replay requests that failed on transport in previous sessions.
         assembly.replayStoredRequests()
-        Qonversion.shared.userManager = assembly.userManager()
-        Qonversion.shared.userPropertiesManager = assembly.userPropertiesManager()
-        Qonversion.shared.deviceManager = assembly.deviceManager()
-        Qonversion.shared.productsManager = assembly.productsManager()
-        Qonversion.shared.remoteConfigManager = assembly.remoteConfigManager()
-        Qonversion.shared.purchasesManager = assembly.purchasesManager()
-        Qonversion.shared.entitlementsManager = assembly.entitlementsManager()
+        let managers = Managers(
+            assembly: assembly,
+            userManager: assembly.userManager(),
+            purchasesManager: assembly.purchasesManager(),
+            entitlementsManager: assembly.entitlementsManager(),
+            userPropertiesManager: assembly.userPropertiesManager(),
+            deviceManager: assembly.deviceManager(),
+            productsManager: assembly.productsManager(),
+            remoteConfigManager: assembly.remoteConfigManager()
+        )
+        shared.logger = assembly.servicesAssembly.miscAssemblyLogger()
+        shared.managers = managers
+        shared.stateLock.unlock()
 
         // Start consuming out-of-band transaction updates (renewals, refunds,
         // Ask to Buy approvals, purchases on other devices).
-        Qonversion.shared.purchasesManager?.startObservingTransactions()
+        managers.purchasesManager.startObservingTransactions()
 
         // Re-report transactions left unfinished by previous sessions
         // (reported in both modes; finished only in subscription management).
         Task {
-            await Qonversion.shared.purchasesManager?.processUnfinishedTransactions()
+            await managers.purchasesManager.processUnfinishedTransactions()
         }
+
+        // Prices and offers are per-storefront; a change must invalidate the
+        // enriched catalog.
+        managers.productsManager.startObservingStorefrontChanges()
 
         // In subscription-management mode the SDK needs the product →
         // permissions mapping for local entitlements calculation; refresh the
         // persistent cache on every launch.
         if configuration.launchMode == .subscriptionManagement {
             Task {
-                await Qonversion.shared.productsManager?.loadProductPermissions()
+                await managers.productsManager.loadProductPermissions()
             }
         }
 
@@ -73,15 +86,15 @@ public final class Qonversion: @unchecked Sendable {
         // same delay production uses.
         Task {
             try? await Task.sleep(nanoseconds: 5_000_000_000)
-            Qonversion.shared.userPropertiesManager?.collectIntegrationsData()
+            managers.userPropertiesManager.collectIntegrationsData()
         }
 
         // Warm up the user gate first, then create/refresh the backend
         // device record — the device row belongs to a user the backend has
         // seen. Failures are fine: the gate retries on the next demand.
         Task {
-            _ = try? await Qonversion.shared.userManager?.obtainUser()
-            await Qonversion.shared.deviceManager?.collectDeviceInfo()
+            _ = try? await managers.userManager.obtainUser()
+            await managers.deviceManager.collectDeviceInfo()
         }
 
         return Qonversion.shared
@@ -93,42 +106,42 @@ public final class Qonversion: @unchecked Sendable {
     /// - Returns: the current ``Qonversion/Qonversion/User``.
     @discardableResult
     public func identify(_ userId: String) async throws -> Qonversion.User {
-        guard let userManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await userManager.identify(userId)
+        return try await managers.userManager.identify(userId)
     }
 
     /// Unlinks the current user from your unique user id and resets to a
     /// fresh anonymous user. Await the call before the next identify — the
     /// reset is guaranteed to be finished when it returns.
     public func logout() async {
-        guard let userManager else { return }
+        guard let managers: Managers = currentManagers() else { return }
 
-        await userManager.logout()
+        await managers.userManager.logout()
     }
 
     /// Returns information about the current Qonversion user.
     public func userInfo() async throws -> Qonversion.User {
-        guard let userManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await userManager.userInfo()
+        return try await managers.userManager.userInfo()
     }
 
     /// Returns Qonversion products in association with App Store products.
     /// - Throws: Possible error during the products request or Qonversion initialization error.
     public func products() async throws -> [Qonversion.Product] {
-        guard let productsManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await productsManager.products()
+        return try await managers.productsManager.products()
     }
 
     /// Resolves the user's eligibility for the introductory offers of the
     /// given Qonversion products. The check runs on the device via StoreKit 2.
     /// - Parameter productIds: Qonversion product identifiers.
     public func checkTrialIntroEligibility(_ productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
-        guard let productsManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await productsManager.checkTrialIntroEligibility(productIds: productIds)
+        return try await managers.productsManager.checkTrialIntroEligibility(productIds: productIds)
     }
 
     /// Buys the product through the App Store and validates the purchase with
@@ -140,9 +153,9 @@ public final class Qonversion: @unchecked Sendable {
     ///   transaction and the user's entitlements.
     @discardableResult
     public func purchase(_ product: Qonversion.Product, options: Qonversion.PurchaseOptions? = nil) async throws -> Qonversion.PurchaseResult {
-        guard let purchasesManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await purchasesManager.purchase(product, options: options)
+        return try await managers.purchasesManager.purchase(product, options: options)
     }
 
     /// Reports purchases made by your own StoreKit 2 code so Qonversion can
@@ -153,18 +166,18 @@ public final class Qonversion: @unchecked Sendable {
     ///   failed reports are retried automatically by the offline queue.
     @discardableResult
     public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async -> Bool {
-        guard let purchasesManager else { return false }
+        guard let managers: Managers = currentManagers() else { return false }
 
-        return await purchasesManager.handle(purchasedTransactions: verificationResults)
+        return await managers.purchasesManager.handle(purchasedTransactions: verificationResults)
     }
 
     /// Requests a signed promotional offer for the product's subscription
     /// discount. Pass the result to ``purchase(_:options:)`` via
     /// ``PurchaseOptions/promoOffer``.
     public func getPromotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
-        guard let purchasesManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await purchasesManager.promotionalOffer(for: product, discountId: discountId)
+        return try await managers.purchasesManager.promotionalOffer(for: product, discountId: discountId)
     }
 
     /// A stream of purchases promoted in the App Store. Call purchase() on a
@@ -176,35 +189,51 @@ public final class Qonversion: @unchecked Sendable {
     ///         try await intent.purchase()
     ///     }
     public var promoPurchaseIntents: AsyncStream<PromoPurchaseIntent> {
-        guard let purchasesManager else { return AsyncStream { $0.finish() } }
+        guard let managers: Managers = currentManagers() else { return AsyncStream { $0.finish() } }
 
-        return purchasesManager.promoPurchaseIntents()
+        return managers.purchasesManager.promoPurchaseIntents()
     }
 
-    /// A stream of entitlements refreshed after the SDK processes an
-    /// out-of-band transaction in subscription-management mode (Ask to Buy
-    /// approvals, renewals, purchases on other devices). Like StoreKit's
-    /// `Transaction.updates`, every access returns an independent stream:
+    /// A stream of purchases that completed outside of ``purchase(_:options:)``:
+    /// Ask to Buy and SCA approvals, renewals, refunds and purchases made on
+    /// other devices. Delivered in both launch modes; when the backend was
+    /// unreachable the entitlements are calculated locally and
+    /// ``Qonversion/Qonversion/DeferredPurchase/entitlementsSource`` says so.
+    /// Like StoreKit's `Transaction.updates`, every access returns an
+    /// independent stream, and purchases processed before the first
+    /// subscription are buffered:
+    ///
+    ///     for await purchase in Qonversion.shared.deferredPurchases {
+    ///         grantAccess(with: purchase.entitlements, for: purchase.transaction)
+    ///     }
+    public var deferredPurchases: AsyncStream<Qonversion.DeferredPurchase> {
+        guard let managers: Managers = currentManagers() else { return AsyncStream { $0.finish() } }
+
+        return managers.purchasesManager.deferredPurchases()
+    }
+
+    /// The entitlements-only projection of ``deferredPurchases``, for hosts
+    /// that only refresh their access state:
     ///
     ///     for await entitlements in Qonversion.shared.entitlementsUpdates { ... }
     public var entitlementsUpdates: AsyncStream<[String: Qonversion.Entitlement]> {
-        guard let purchasesManager else { return AsyncStream { $0.finish() } }
+        guard let managers: Managers = currentManagers() else { return AsyncStream { $0.finish() } }
 
-        return purchasesManager.entitlementsUpdates()
+        return managers.purchasesManager.entitlementsUpdates()
     }
 
     #if os(iOS) || os(visionOS)
     /// Presents the system sheet for redeeming App Store offer codes.
     public func presentCodeRedemptionSheet() {
-        purchasesManager?.presentCodeRedemptionSheet()
+        currentManagers()?.purchasesManager.presentCodeRedemptionSheet()
     }
 
     /// Presents the App Store offer code redemption sheet in the given scene.
     @available(iOS 16.0, *)
     public func presentOfferCodeRedeemSheet(in scene: UIWindowScene) async throws {
-        guard let purchasesManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        try await purchasesManager.presentOfferCodeRedeemSheet(in: scene)
+        try await managers.purchasesManager.presentOfferCodeRedeemSheet(in: scene)
     }
     #endif
 
@@ -213,10 +242,10 @@ public final class Qonversion: @unchecked Sendable {
     /// integrates the SDK, so the existing subscribers' data reaches the
     /// analytics.
     public func syncHistoricalData() {
-        guard let purchasesManager else { return }
+        guard let managers: Managers = currentManagers() else { return }
 
         Task {
-            await purchasesManager.syncHistoricalData()
+            await managers.purchasesManager.syncHistoricalData()
         }
     }
 
@@ -224,49 +253,49 @@ public final class Qonversion: @unchecked Sendable {
     /// When the backend is unreachable, entitlements are calculated locally.
     @discardableResult
     public func restore() async throws -> [String: Qonversion.Entitlement] {
-        guard let purchasesManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await purchasesManager.restore()
+        return try await managers.purchasesManager.restore()
     }
 
     /// Returns the user's entitlements keyed by entitlement id.
     /// When the backend is unreachable (5xx / connection issues), entitlements
     /// are calculated locally from StoreKit data and the cached mapping.
     public func checkEntitlements() async throws -> [String: Qonversion.Entitlement] {
-        guard let entitlementsManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await entitlementsManager.entitlements()
+        return try await managers.entitlementsManager.entitlements()
     }
 
     /// Sends all the properties set since the last batch right away, without
     /// waiting for the batching delay. Delivery failures are retried by the
     /// SDK automatically.
     public func forceSendProperties() async {
-        guard let userPropertiesManager else { return }
+        guard let managers: Managers = currentManagers() else { return }
 
-        try? await userPropertiesManager.sendProperties()
+        try? await managers.userPropertiesManager.sendProperties(force: true)
     }
 
     /// Whether the bundled fallback file (`qonversion_ios_fallbacks.json`) is
     /// present in the app bundle and parses. Use in debug builds to verify the
     /// offline fallback setup.
     public func isFallbackFileAccessible() -> Bool {
-        guard let productsManager else { return false }
+        guard let managers: Managers = currentManagers() else { return false }
 
-        return productsManager.isFallbackFileAccessible()
+        return managers.productsManager.isFallbackFileAccessible()
     }
 
     /// Collects Apple Search Ads Attribution data
     /// Available only for iOS 14.3+
     /// See details in the [Apple official documentation](https://developer.apple.com/documentation/iad/setting-up-apple-search-ads-attribution)
     public func collectAppleSearchAdsAttribution() {
-        userPropertiesManager?.collectAppleSearchAdsAttribution()
+        currentManagers()?.userPropertiesManager.collectAppleSearchAdsAttribution()
     }
     
     /// Collects advertising ID
     /// On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion if tracking is allowed and IDFA is available.
     public func collectAdvertisingId() {
-        deviceManager?.collectAdvertisingId()
+        currentManagers()?.deviceManager.collectAdvertisingId()
     }
     
     /// Sets Qonversion defined user properties, like email or appsFlyer user ID.
@@ -276,9 +305,9 @@ public final class Qonversion: @unchecked Sendable {
     ///   - userProperty: Property value
     ///   - key: Defined enum key
     public func setUserProperty(_ userProperty: String, key: UserPropertyKey) {
-        guard let userPropertiesManager else { return }
-        
-        userPropertiesManager.setUserProperty(key: key, value: userProperty)
+        guard let managers: Managers = currentManagers() else { return }
+
+        managers.userPropertiesManager.setUserProperty(key: key, value: userProperty)
     }
     
     /// Sets custom user property
@@ -286,9 +315,9 @@ public final class Qonversion: @unchecked Sendable {
     ///   - userProperty: Property value
     ///   - key: Custom property key
     public func setCustomUserProperty(_ userProperty: String, key: String) {
-        guard let userPropertiesManager else { return }
-        
-        userPropertiesManager.setCustomUserProperty(key: key, value: userProperty)
+        guard let managers: Managers = currentManagers() else { return }
+
+        managers.userPropertiesManager.setCustomUserProperty(key: key, value: userProperty)
     }
     
     /// This method returns all the properties, set for the current Qonversion user.
@@ -297,9 +326,9 @@ public final class Qonversion: @unchecked Sendable {
     /// - Returns: ``Qonversion/Qonversion/UserProperties`` that contains all the properties, set for the current Qonversion user.
     /// - Throws: Possible error during the properties request or Qonversion initialization error if the method is called before initialization.
     public func userProperties() async throws -> UserProperties {
-        guard let userPropertiesManager else { throw QonversionError.initializationError() }
-        
-        return try await userPropertiesManager.userProperties()
+        let managers: Managers = try requireManagers()
+
+        return try await managers.userPropertiesManager.userProperties()
     }
     
     /// Returns Qonversion default remote config object or one defined by the context key.
@@ -309,9 +338,9 @@ public final class Qonversion: @unchecked Sendable {
     /// - Returns: ``Qonversion/Qonversion/RemoteConfig`` for the specified context key or default one if no key provided.
     /// - Throws: Possible error during the remote config request or Qonversion initialization error if the method is called before initialization.
     public func remoteConfig(contextKey: String? = nil) async throws -> Qonversion.RemoteConfig {
-        guard let remoteConfigManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await remoteConfigManager.loadRemoteConfig(contextKey: contextKey)
+        return try await managers.remoteConfigManager.loadRemoteConfig(contextKey: contextKey)
     }
     
     /// Returns Qonversion remote config objects for all existing context key (including empty one).
@@ -319,9 +348,9 @@ public final class Qonversion: @unchecked Sendable {
     /// - Returns: ``Qonversion/Qonversion/RemoteConfigList`` with all the remote configs for the current user.
     /// - Throws: Possible error during the remote config request or Qonversion initialization error if the method is called before initialization.
     public func remoteConfigList() async throws -> Qonversion.RemoteConfigList {
-        guard let remoteConfigManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await remoteConfigManager.loadRemoteConfigList()
+        return try await managers.remoteConfigManager.loadRemoteConfigList()
     }
 
     /// Returns Qonversion remote config objects by a list of context keys.
@@ -332,9 +361,9 @@ public final class Qonversion: @unchecked Sendable {
     /// - Returns: ``Qonversion/Qonversion/RemoteConfigList`` with the requested remote configs for the current user.
     /// - Throws: Possible error during the remote config list request or Qonversion initialization error if the method is called before initialization.
     public func remoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList {
-        guard let remoteConfigManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        return try await remoteConfigManager.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
+        return try await managers.remoteConfigManager.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
     }
 
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
@@ -343,9 +372,9 @@ public final class Qonversion: @unchecked Sendable {
     ///   - id: identifier of the remote configuration.
     /// - Throws: Possible error during the attaching process or Qonversion initialization error if the method is called before initialization.
     public func attachUserToRemoteConfiguration(id: String) async throws {
-        guard let remoteConfigManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        try await remoteConfigManager.attachUserToRemoteConfig(id: id)
+        try await managers.remoteConfigManager.attachUserToRemoteConfig(id: id)
     }
 
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
@@ -354,9 +383,9 @@ public final class Qonversion: @unchecked Sendable {
     ///   - id: identifier of the remote configuration.
     /// - Throws: Possible error during the detaching process or Qonversion initialization error if the method is called before initialization.
     public func detachUserFromRemoteConfiguration(id: String) async throws {
-        guard let remoteConfigManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        try await remoteConfigManager.detachUserFromRemoteConfig(id: id)
+        try await managers.remoteConfigManager.detachUserFromRemoteConfig(id: id)
     }
 
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
@@ -366,9 +395,9 @@ public final class Qonversion: @unchecked Sendable {
     ///   - groupId: identifier of the experiment group
     /// - Throws: Possible error during the attaching process or Qonversion initialization error if the method is called before initialization.
     public func attachUserToExperiment(id: String, groupId: String) async throws {
-        guard let remoteConfigManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        try await remoteConfigManager.attachUserToExperiment(id: id, groupId: groupId)
+        try await managers.remoteConfigManager.attachUserToExperiment(id: id, groupId: groupId)
     }
 
     /// This function should be used for the test purposes only. Do not forget to delete the usage of this function before the release.
@@ -377,26 +406,48 @@ public final class Qonversion: @unchecked Sendable {
     ///   - id: identifier of the experiment
     /// - Throws: Possible error during the detaching process or Qonversion initialization error if the method is called before initialization.
     public func detachUserFromExperiment(id: String) async throws {
-        guard let remoteConfigManager else { throw QonversionError.initializationError() }
+        let managers: Managers = try requireManagers()
 
-        try await remoteConfigManager.detachUserFromExperiment(id: id)
+        try await managers.remoteConfigManager.detachUserFromExperiment(id: id)
     }
 
     // MARK: - Private
-    private static let initializationLock = NSLock()
-    private var isInitialized = false
+
+    /// The whole manager graph, written once by initialize() and read as one
+    /// value: a public call either sees the complete graph or none of it.
+    /// The facade owns the assembly: managers hold their dependencies, but
+    /// cross-cutting pieces (user-change observers, the weak assembly
+    /// back-references) live only as long as the assemblies do.
+    // @unchecked: every manager is thread-safe on its own — an actor or a
+    // lock-guarded @unchecked Sendable type.
+    private struct Managers: @unchecked Sendable {
+        let assembly: QonversionAssembly
+        let userManager: UserManagerInterface
+        let purchasesManager: PurchasesManagerInterface
+        let entitlementsManager: EntitlementsManagerInterface
+        let userPropertiesManager: UserPropertiesManagerInterface
+        let deviceManager: DeviceManagerInterface
+        let productsManager: ProductsManagerInterface
+        let remoteConfigManager: RemoteConfigManagerInterface
+    }
+
+    private let stateLock = NSLock()
+    private var managers: Managers?
     private var logger: LoggerWrapper?
-    // The facade owns the assembly graph: managers hold their dependencies,
-    // but cross-cutting pieces (user-change observers, the weak assembly
-    // back-references) live only as long as the assemblies do.
-    private var assembly: QonversionAssembly?
-    private var userManager: UserManagerInterface?
-    private var purchasesManager: PurchasesManagerInterface?
-    private var entitlementsManager: EntitlementsManagerInterface?
-    private var userPropertiesManager: UserPropertiesManagerInterface?
-    private var deviceManager: DeviceManagerInterface?
-    private var productsManager: ProductsManagerInterface?
-    private var remoteConfigManager: RemoteConfigManagerInterface?
-    
+
+    /// A snapshot of the graph taken under the lock. The lock is released
+    /// before the caller awaits anything.
+    private func currentManagers() -> Managers? {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return managers
+    }
+
+    private func requireManagers() throws -> Managers {
+        guard let managers: Managers = currentManagers() else { throw QonversionError.initializationError() }
+
+        return managers
+    }
+
     private init() { }
 }

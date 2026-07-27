@@ -30,6 +30,7 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     // concurrent start cannot double-subscribe.
     private let observationLock = NSLock()
     private var transactionUpdatesTask: Task<Void, Never>?
+    private var storefrontTask: Task<Void, Never>?
 
     init(storeKitWrapper: StoreKitWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
         self.storeKitWrapper = storeKitWrapper
@@ -48,10 +49,19 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     }
 
     func isEligibleForIntroOffer(storeId: String) async -> Bool? {
-        let wrappers: [StoreProductWrapper]? = try? await products(for: [storeId])
-        guard let subscription: StoreKit.Product.SubscriptionInfo = wrappers?.first?.product?.subscription else { return nil }
+        // The catalog is usually already loaded: refetching per product turned
+        // an eligibility check over N products into N store requests.
+        var product: StoreKit.Product? = loadedProducts[storeId]
+        if product == nil {
+            product = (try? await products(for: [storeId]))?.first?.product
+        }
+        guard let subscription: StoreKit.Product.SubscriptionInfo = product?.subscription else { return nil }
 
         return await subscription.isEligibleForIntroOffer
+    }
+
+    func storefrontUpdates() -> AsyncStream<Void> {
+        return storeKitWrapper.storefrontUpdates()
     }
 
     func currentEntitlements() async -> [Qonversion.Transaction] {
@@ -93,6 +103,12 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         await storeKitWrapper.finish(transaction)
     }
 
+    func clearLoadedProducts() {
+        productsLock.lock()
+        defer { productsLock.unlock() }
+        _loadedProducts = [:]
+    }
+
     private func storeLoadedProducts(_ products: [StoreKit.Product]) {
         productsLock.lock()
         defer { productsLock.unlock() }
@@ -119,12 +135,24 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
             }
         }
 
+        // Prices, availability and offers are per-storefront: everything
+        // cached about products dies with the storefront it was loaded for.
+        storefrontTask = Task { [weak self] in
+            for await _ in wrapper.storefrontUpdates() {
+                guard let self, !Task.isCancelled else { return }
+                self.clearLoadedProducts()
+            }
+        }
+
         // Promoted-purchase intents flow to the delegate through the same
         // observation entry point. StoreKit 2 exposes them from iOS 16.4;
-        // on iOS 15.0–16.3 promoted purchases are a known gap.
+        // on iOS 15.0–16.3 promoted purchases are a known gap, and watchOS
+        // has no promoted purchases at all.
+        #if !os(watchOS)
         if #available(iOS 16.4, macOS 14.4, *) {
             storeKitWrapper.subscribeToPromoPurchases()
         }
+        #endif
     }
 
     func stopObservingTransactionUpdates() {
@@ -133,7 +161,11 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
 
         transactionUpdatesTask?.cancel()
         transactionUpdatesTask = nil
+        storefrontTask?.cancel()
+        storefrontTask = nil
+        #if !os(watchOS)
         storeKitWrapper.unsubscribeFromPromoPurchases()
+        #endif
     }
 
     func products(for ids: [String]) async throws -> [StoreProductWrapper] {
@@ -146,6 +178,7 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
 
 // MARK: - StoreKitWrapperDelegate
 
+#if !os(watchOS)
 extension StoreKitFacade: StoreKitWrapperDelegate {
 
     @available(iOS 16.4, macOS 14.4, *)
@@ -153,3 +186,4 @@ extension StoreKitFacade: StoreKitWrapperDelegate {
         delegate?.promoPurchaseIntent(product: product)
     }
 }
+#endif

@@ -154,22 +154,47 @@ actor UserManager: UserManagerInterface {
 
     /// Waits until no identify is in flight and the creation pipeline has
     /// settled — user-scoped requests (remote config) must not race a uid switch.
-    func awaitUserStability() async {
+    func awaitUserStability() async throws {
+        var identifyError: Error?
         while let inFlight = identifyInFlight {
-            _ = try? await inFlight.task.value
+            do {
+                _ = try await inFlight.task.value
+                identifyError = nil
+            } catch {
+                // A logout cancels the identify on purpose — that is a session
+                // teardown, not a failure the caller has to handle.
+                identifyError = Self.isCancellation(error) ? nil : error
+            }
             if identifyInFlight?.id == inFlight.id {
                 identifyInFlight = nil
             }
         }
+        // A pipeline failure is not reported here: every caller passes the
+        // user gate right after and gets it from there.
         if let pipeline {
             _ = try? await pipeline.value
         }
+
+        if let identifyError { throw identifyError }
     }
 
     func userInfo() async throws -> Qonversion.User {
         try await obtainUser()
 
         return try await userService.user()
+    }
+
+    /// Cancellation reaches the SDK in more than one shape: a task cancelled
+    /// while suspended in URLSession surfaces as URLError(.cancelled), wrapped
+    /// in the SDK error of the failing layer.
+    private static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
+        if let qonversionError = error as? QonversionError, let underlying: Error = qonversionError.error {
+            return isCancellation(underlying)
+        }
+
+        return false
     }
 }
 
@@ -219,10 +244,16 @@ private extension UserManager {
         pipeline = task
         do {
             let outcome: PipelineOutcome = try await task.value
-            pipeline = nil
+            // Only ITS OWN task may be cleared: a successor started while this
+            // one was settling must stay the current pipeline.
+            if pipeline == task {
+                pipeline = nil
+            }
             return outcome
         } catch {
-            pipeline = nil
+            if pipeline == task {
+                pipeline = nil
+            }
             throw error
         }
     }
@@ -238,35 +269,53 @@ private extension UserManager {
             // re-identify the user the host just logged out.
             guard generation == sessionGeneration else { throw CancellationError() }
             if linkedUid != currentUid {
-                try await switchUser(to: linkedUid)
+                try await switchUser(to: linkedUid, identityExternalId: externalId)
+                return try currentUserOrFail()
             }
         } else {
             guard generation == sessionGeneration else { throw CancellationError() }
             let resultUid: String = try await userService.createIdentity(externalId: externalId, userId: currentUid)
             guard generation == sessionGeneration else { throw CancellationError() }
             if resultUid != currentUid {
-                try await switchUser(to: resultUid)
+                try await switchUser(to: resultUid, identityExternalId: externalId)
+                return try currentUserOrFail()
             }
         }
 
         localStorage.set(string: externalId, forKey: Constants.identityKey.rawValue)
 
+        return try currentUserOrFail()
+    }
+
+    func currentUserOrFail() throws -> Qonversion.User {
         guard let user = currentUser() else {
             throw QonversionError(type: .userLoadingFailed)
         }
+
         return user
     }
 
-    /// Switches the SDK to another Qonversion user (identity owner).
-    func switchUser(to uid: String) async throws {
+    /// Switches the SDK to another Qonversion user (identity owner). The
+    /// identity that caused the switch is persisted WITH the uid: a throwing
+    /// user fetch must not leave the new uid stored without its identity.
+    func switchUser(to uid: String, identityExternalId: String? = nil) async throws {
+        let generation: Int = sessionGeneration
+
         internalConfig.userId = uid
         localStorage.set(string: uid, forKey: UserServiceStorageKeys.userIdKey.rawValue)
+        if let identityExternalId {
+            localStorage.set(string: identityExternalId, forKey: Constants.identityKey.rawValue)
+        }
 
         // The cleared caches belong to the previous user — clear right after
         // the uid switch, so a failed user fetch cannot leak them to the new uid.
         userChangesNotifier.notifyUserChanged()
 
         let user: Qonversion.User = try await userService.user()
+        // A logout landed while the user was loading: caching it now would
+        // resurrect the session the host just ended.
+        guard generation == sessionGeneration else { throw CancellationError() }
+
         cachedUser = user
         persist(user)
     }

@@ -31,6 +31,7 @@ The API is async/await-first. Purchases run natively on StoreKit 2; transactions
 - ``Qonversion/Qonversion/shared``
 - ``Qonversion/Qonversion/Configuration``
 - ``Qonversion/Qonversion/LaunchMode``
+- ``Qonversion/Qonversion/Environment``
 
 ### User identity
 
@@ -50,10 +51,13 @@ The API is async/await-first. Purchases run natively on StoreKit 2; transactions
 - ``Qonversion/Qonversion/Product``
 - ``Qonversion/Qonversion/PurchaseOptions``
 - ``Qonversion/Qonversion/PurchaseResult``
+- ``Qonversion/Qonversion/EntitlementsSource``
 
 ### Entitlements
 
 - ``Qonversion/Qonversion/checkEntitlements()``
+- ``Qonversion/Qonversion/deferredPurchases``
+- ``Qonversion/Qonversion/DeferredPurchase``
 - ``Qonversion/Qonversion/entitlementsUpdates``
 - ``Qonversion/Qonversion/Entitlement``
 - ``Qonversion/Qonversion/isFallbackFileAccessible()``

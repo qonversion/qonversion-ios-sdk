@@ -53,7 +53,8 @@ extension Qonversion {
 
             private enum CodingKeys: String, CodingKey {
                 case name
-                case identifier
+                // The backend names every entity identifier "uid".
+                case identifier = "uid"
                 case type
             }
         }
@@ -71,6 +72,13 @@ extension Qonversion {
             self.identifier = identifier
             self.name = name
             self.group = group
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            // The backend names every entity identifier "uid".
+            case identifier = "uid"
+            case name
+            case group
         }
     }
 }

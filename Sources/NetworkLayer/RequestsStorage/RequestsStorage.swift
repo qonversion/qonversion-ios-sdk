@@ -23,6 +23,14 @@ class RequestsStorage: RequestsStorageInterface, @unchecked Sendable {
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
+    private var _cleanGeneration = 0
+
+    var cleanGeneration: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _cleanGeneration
+    }
+
     init(userDefaults: UserDefaults, storeKey: String) {
         self.userDefaults = userDefaults
         self.storeKey = storeKey
@@ -54,6 +62,19 @@ class RequestsStorage: RequestsStorageInterface, @unchecked Sendable {
         persist(requests)
     }
 
+    func replace(_ request: StoredRequest, with replacement: StoredRequest, ifGenerationIs generation: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        guard _cleanGeneration == generation else { return }
+
+        var requests: [StoredRequest] = fetchStoredRequests()
+        guard let index = requests.firstIndex(of: request) else { return }
+
+        requests[index] = replacement
+        persist(requests)
+    }
+
     func remove(_ request: StoredRequest) {
         lock.lock()
         defer { lock.unlock() }
@@ -81,6 +102,7 @@ class RequestsStorage: RequestsStorageInterface, @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
+        _cleanGeneration += 1
         userDefaults.removeObject(forKey: storeKey)
     }
 

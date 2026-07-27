@@ -29,6 +29,10 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     /// must not cache its (stale) response for the new one.
     private var cacheGeneration = 0
 
+    /// One in-flight load per context key: N concurrent callers share a single
+    /// request instead of racing each other into the rate limiter.
+    private var loadTasks: [String: Task<Qonversion.RemoteConfig, Error>] = [:]
+
     init(remoteConfigService: RemoteConfigServiceInterface, userManager: UserManagerInterface, userPropertiesManager: UserPropertiesManagerInterface, fallbackService: FallbackServiceInterface, logger: LoggerWrapper) {
         self.remoteConfigService = remoteConfigService
         self.userManager = userManager
@@ -37,32 +41,36 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         self.logger = logger
     }
 
+    /// Production's "user stability" rule: a config requested while an
+    /// identify is switching the uid would belong to the previous user, so the
+    /// gate runs before anything is served — the cache included.
+    private func awaitUserStability() async throws {
+        try await userManager.awaitUserStability()
+    }
+
     /// Remote configs are computed per user from fresh segmentation data: the
-    /// user must be settled (identify in flight would change the uid) and the
-    /// pending properties batch must reach the backend first. A flush failure
-    /// is not fatal — properties retry on their own schedule.
+    /// pending properties batch must reach the backend before the config is
+    /// computed. A flush failure is not fatal — properties retry on their own
+    /// schedule.
     private func prepareUserForRemoteConfig() async throws {
-        // Production's "user stability" rule: a config requested while an
-        // identify is switching the uid would belong to the previous user.
-        await userManager.awaitUserStability()
         _ = try await userManager.obtainUser()
-        try? await userPropertiesManager.sendProperties()
+        try? await userPropertiesManager.sendProperties(force: true)
     }
 
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
         let finalKey: String = contextKey ?? Constants.emptyContextKey.rawValue
-        let (cached, generation) = cachedConfigAndGeneration(for: finalKey)
-        if let cached {
-            return cached
-        }
 
         do {
-            try await prepareUserForRemoteConfig()
+            try await awaitUserStability()
 
-            let remoteConfig: Qonversion.RemoteConfig = try await remoteConfigService.loadRemoteConfig(contextKey: contextKey)
-            cacheConfig(remoteConfig, for: finalKey, ifGenerationIs: generation)
+            if let cached: Qonversion.RemoteConfig = cachedConfig(for: finalKey) {
+                return cached
+            }
 
-            return remoteConfig
+            let task: Task<Qonversion.RemoteConfig, Error> = joinedLoadTask(for: finalKey, contextKey: contextKey)
+            defer { clearLoadTask(task, for: finalKey) }
+
+            return try await task.value
         } catch {
             guard error.allowsLocalEntitlementsFallback, let fallback: Qonversion.RemoteConfig = fallbackRemoteConfig(for: finalKey) else { throw error }
 
@@ -71,10 +79,43 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         }
     }
 
-    private func cachedConfigAndGeneration(for key: String) -> (Qonversion.RemoteConfig?, Int) {
+    private func joinedLoadTask(for key: String, contextKey: String?) -> Task<Qonversion.RemoteConfig, Error> {
         lock.lock()
         defer { lock.unlock() }
-        return (loadedConfigs[key], cacheGeneration)
+
+        if let inFlight: Task<Qonversion.RemoteConfig, Error> = loadTasks[key] {
+            return inFlight
+        }
+
+        let task = Task { [weak self] () throws -> Qonversion.RemoteConfig in
+            guard let self else { throw QonversionError.initializationError() }
+
+            try await self.prepareUserForRemoteConfig()
+
+            // Snapshotted right before the request, like every other loader.
+            let generation: Int = self.currentGeneration()
+            let remoteConfig: Qonversion.RemoteConfig = try await self.remoteConfigService.loadRemoteConfig(contextKey: contextKey)
+            self.cacheConfig(remoteConfig, for: key, ifGenerationIs: generation)
+
+            return remoteConfig
+        }
+        loadTasks[key] = task
+
+        return task
+    }
+
+    private func clearLoadTask(_ task: Task<Qonversion.RemoteConfig, Error>, for key: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        if loadTasks[key] == task {
+            loadTasks[key] = nil
+        }
+    }
+
+    private func cachedConfig(for key: String) -> Qonversion.RemoteConfig? {
+        lock.lock()
+        defer { lock.unlock() }
+        return loadedConfigs[key]
     }
 
     private func cacheConfig(_ config: Qonversion.RemoteConfig, for key: String, ifGenerationIs generation: Int) {
@@ -86,6 +127,7 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
 
     func loadRemoteConfigList() async throws -> Qonversion.RemoteConfigList {
         do {
+            try await awaitUserStability()
             try await prepareUserForRemoteConfig()
 
             let generation: Int = currentGeneration()
@@ -111,14 +153,17 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
             requestedKeys.append(Constants.emptyContextKey.rawValue)
         }
 
-        let (cachedConfigs, generation) = cachedConfigsAndGeneration(for: requestedKeys)
-        if (cachedConfigs.count == requestedKeys.count) {
-            return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
-        }
-
         do {
+            try await awaitUserStability()
+
+            let cachedConfigs: [Qonversion.RemoteConfig] = cachedConfigs(for: requestedKeys)
+            if (cachedConfigs.count == requestedKeys.count) {
+                return Qonversion.RemoteConfigList(remoteConfigs: cachedConfigs)
+            }
+
             try await prepareUserForRemoteConfig()
 
+            let generation: Int = currentGeneration()
             let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
             handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
             return remoteConfigList
@@ -186,10 +231,10 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         return cacheGeneration
     }
 
-    private func cachedConfigsAndGeneration(for contextKeys: [String]) -> ([Qonversion.RemoteConfig], Int) {
+    private func cachedConfigs(for contextKeys: [String]) -> [Qonversion.RemoteConfig] {
         lock.lock()
         defer { lock.unlock() }
-        return (contextKeys.compactMap { loadedConfigs[$0] }, cacheGeneration)
+        return contextKeys.compactMap { loadedConfigs[$0] }
     }
 
     private func handleLoadedRemoteConfigList(_ remoteConfigList: Qonversion.RemoteConfigList, generation: Int) {
@@ -211,9 +256,15 @@ extension RemoteConfigManager: UserChangedObserver {
 
     func userDidChange() {
         lock.lock()
-        defer { lock.unlock() }
-
         cacheGeneration += 1
         loadedConfigs = [:]
+        // The in-flight loads belong to the previous user: the generation guard
+        // stops them from CACHING their answer, but a caller joining after the
+        // switch would still be handed it.
+        let abandoned: [Task<Qonversion.RemoteConfig, Error>] = Array(loadTasks.values)
+        loadTasks = [:]
+        lock.unlock()
+
+        abandoned.forEach { $0.cancel() }
     }
 }

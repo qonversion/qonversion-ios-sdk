@@ -32,8 +32,11 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
             let id = UUID()
             lock.lock()
             continuations[id] = continuation
+            // The backlog is replayed to EVERY subscriber that arrives before
+            // the next live value: first-subscriber-takes-all would let one
+            // stream (e.g. a projection) swallow what another one is waiting
+            // for. It is dropped by the first live delivery below.
             let backlog: [Element] = pending
-            pending = []
             lock.unlock()
 
             backlog.forEach { continuation.yield($0) }
@@ -55,6 +58,10 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
             if pending.count > Self.maxPending {
                 pending.removeFirst(pending.count - Self.maxPending)
             }
+        } else {
+            // Somebody is listening live, so nobody is late anymore: the
+            // replay window has done its job.
+            pending = []
         }
         lock.unlock()
 

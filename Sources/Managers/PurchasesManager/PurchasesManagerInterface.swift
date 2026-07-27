@@ -8,9 +8,13 @@ import StoreKit
 
 protocol PurchasesManagerInterface: AnyObject {
 
-    /// A stream of entitlements refreshed after the SDK processes an observed
-    /// transaction in subscription-management mode. Every call returns an
-    /// independent stream.
+    /// A stream of purchases the SDK processed out of band (Ask to Buy / SCA
+    /// approvals, renewals, refunds, purchases on other devices), in both
+    /// launch modes. Every call returns an independent stream.
+    func deferredPurchases() -> AsyncStream<Qonversion.DeferredPurchase>
+
+    /// The entitlements-only projection of ``deferredPurchases()``. Every call
+    /// returns an independent stream.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]>
 
     /// A stream of App Store promoted-purchase intents; call purchase() on an

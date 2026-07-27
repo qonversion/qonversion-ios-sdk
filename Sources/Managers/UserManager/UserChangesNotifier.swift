@@ -5,10 +5,34 @@
 
 import Foundation
 
+/// The teardown order of a user switch, declared instead of emergent: the
+/// registration order depends on which manager the graph happens to build
+/// first, which is not something the SDK's behavior may rest on.
+enum UserChangeTeardownPriority {
+
+    /// Stop sending the previous user's queued requests first.
+    static let outgoingQueue = 0
+
+    /// Then the purchase bookkeeping, so a restore right after the switch can
+    /// re-report the store transactions.
+    static let purchaseBookkeeping = 10
+
+    /// Then everything that is merely cached.
+    static let cache = 20
+}
+
 /// A cache that must not survive a user switch (logout or identify resolving
 /// to another user) registers itself as an observer.
 protocol UserChangedObserver: AnyObject {
     func userDidChange()
+
+    /// Lower runs first. See ``UserChangeTeardownPriority``.
+    var userChangeTeardownPriority: Int { get }
+}
+
+extension UserChangedObserver {
+
+    var userChangeTeardownPriority: Int { UserChangeTeardownPriority.cache }
 }
 
 protocol UserChangesNotifierInterface {
@@ -35,10 +59,22 @@ final class UserChangesNotifier: UserChangesNotifierInterface, @unchecked Sendab
         boxes.append(WeakBox(observer: observer))
     }
 
-    func notifyUserChanged() {
+    /// The live observers in teardown order: by declared priority, and by
+    /// registration order within one priority (the sort is made stable by the
+    /// index tiebreak — Swift's sort is not).
+    var registeredObservers: [UserChangedObserver] {
         lock.lock()
         let observers: [UserChangedObserver] = boxes.compactMap { $0.observer }
         lock.unlock()
+
+        return observers
+            .enumerated()
+            .sorted { ($0.element.userChangeTeardownPriority, $0.offset) < ($1.element.userChangeTeardownPriority, $1.offset) }
+            .map { $0.element }
+    }
+
+    func notifyUserChanged() {
+        let observers: [UserChangedObserver] = registeredObservers
 
         observers.forEach { $0.userDidChange() }
     }
