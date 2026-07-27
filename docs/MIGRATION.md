@@ -2,6 +2,18 @@
 
 This SDK is a full Swift rewrite with an async/await-first API. Existing installs migrate automatically — the stored Qonversion user id is picked up on the first launch of the new version, so your users keep their identity, purchases and entitlements. No data migration code is needed.
 
+On that first launch the SDK also carries over the Objective-C SDK's local
+caches: the cached entitlements (with their sources, renew states, dates and
+store transactions) and the product → entitlements mapping. That mapping is
+what powers the offline local entitlement calculation, so a user who updates
+the app and opens it without a network keeps their access instead of losing it
+until the first successful request. The old keys are consumed once read.
+
+The one thing that is NOT carried over is the previous SDK's offline purchase
+queue: those requests target the previous API and cannot be replayed. Nothing
+is lost — that SDK never finished a transaction whose report had failed, so the
+unfinished-transaction sweep re-reports them in v4 form.
+
 ## Requirements
 
 - iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+ / visionOS 1.0+ (previously iOS 9)

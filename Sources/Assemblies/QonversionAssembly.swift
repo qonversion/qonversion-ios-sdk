@@ -55,6 +55,15 @@ final class QonversionAssembly {
         // replayed against v4; the unfinished-transaction sweep covers it.
         let legacyPurchasesQueueMigration = LegacyPurchasesQueueMigration()
         legacyPurchasesQueueMigration.run()
+
+        // ...but its entitlements cache and product mapping CAN be carried
+        // over, and must be: without them an upgrading user who opens the app
+        // offline has no access until the first successful request.
+        let legacyEntitlementsMigration = LegacyEntitlementsMigration(
+            localStorage: miscAssembly.localStorage(),
+            logger: miscAssembly.loggerWrapper()
+        )
+        legacyEntitlementsMigration.run()
     }
 
     /// Registers every user-scoped cache with the user gate in a FIXED order,
