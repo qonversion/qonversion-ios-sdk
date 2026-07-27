@@ -25,6 +25,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
     private let delayCalculator: IncrementalDelayCalculator
     private let userIdProvider: UserIdProvider
     private let userManager: UserManagerInterface
+    private let integrationsInfoCollector: IntegrationsInfoCollectorInterface
     private let logger: LoggerWrapper
 
     // Mutated from the caller's thread (setProperty) and from the scheduled
@@ -41,6 +42,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         delayCalculator: IncrementalDelayCalculator,
         userIdProvider: UserIdProvider,
         userManager: UserManagerInterface,
+        integrationsInfoCollector: IntegrationsInfoCollectorInterface,
         logger: LoggerWrapper
     ) {
         self.requestProcessor = requestProcessor
@@ -48,7 +50,27 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         self.delayCalculator = delayCalculator
         self.userIdProvider = userIdProvider
         self.userManager = userManager
+        self.integrationsInfoCollector = integrationsInfoCollector
         self.logger = logger
+    }
+
+    func collectIntegrationsData() {
+        // Watch and vision apps do not ship attribution SDKs — same platform
+        // gate as production.
+        #if !os(watchOS) && !os(visionOS)
+        integrationsInfoCollector.adjustUserId { [weak self] adjustUserId in
+            guard let self, let adjustUserId, !adjustUserId.isEmpty else { return }
+            self.setUserProperty(key: .adjustAdId, value: adjustUserId)
+        }
+        if let appsFlyerUserId: String = integrationsInfoCollector.appsFlyerUserId(), !appsFlyerUserId.isEmpty {
+            setUserProperty(key: .appsFlyerUserId, value: appsFlyerUserId)
+        }
+        if let facebookAnonymousId: String = integrationsInfoCollector.facebookAnonymousId(), !facebookAnonymousId.isEmpty {
+            // The key is intentionally not part of the public UserPropertyKey
+            // enum — mirrors the production contract.
+            setCustomUserProperty(key: "_q_fb_anon_id", value: facebookAnonymousId)
+        }
+        #endif
     }
     
     func collectAppleSearchAdsAttribution() {

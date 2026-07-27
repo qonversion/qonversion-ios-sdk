@@ -73,7 +73,9 @@ final class QonversionAssembly {
         let propertiesStorage: PropertiesStorage = miscAssembly.userPropertiesStorage()
         let logger: LoggerWrapper = miscAssembly.loggerWrapper()
         let userManager: UserManagerInterface = userManager()
-        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, userManager: userManager, logger: logger)
+        let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
+        let integrationsInfoCollector = IntegrationsInfoCollector(deviceInfoCollector: deviceInfoCollector)
+        let userPropertiesManager = UserPropertiesManager(requestProcessor: requestProcessor, propertiesStorage: propertiesStorage, delayCalculator: delayCalculator, userIdProvider: miscAssembly.internalConfig, userManager: userManager, integrationsInfoCollector: integrationsInfoCollector, logger: logger)
         userPropertiesManagerInstance = userPropertiesManager
 
         return userPropertiesManager

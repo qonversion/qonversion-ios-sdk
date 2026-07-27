@@ -54,6 +54,14 @@ public final class Qonversion: @unchecked Sendable {
             }
         }
 
+        // Attribution ids of integrated SDKs (Adjust, AppsFlyer, Facebook)
+        // become available after those SDKs initialize — collect with the
+        // same delay production uses.
+        Task {
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            Qonversion.shared.userPropertiesManager?.collectIntegrationsData()
+        }
+
         // Warm up the user gate: create the backend user early so the first
         // data-sending call doesn't pay for it. Failure is fine — the gate
         // retries on the next demand.

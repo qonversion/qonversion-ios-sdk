@@ -24,6 +24,7 @@ final class UserPropertiesManagerTests: XCTestCase {
 
     private var requestProcessor: MockRequestProcessor!
     private var propertiesStorage: UserPropertiesStorage!
+    private var integrationsCollector: MockIntegrationsInfoCollector!
     private var userManager: MockUserManager!
     private var manager: UserPropertiesManager!
 
@@ -33,12 +34,14 @@ final class UserPropertiesManagerTests: XCTestCase {
         propertiesStorage = UserPropertiesStorage()
         userManager = MockUserManager()
         userManager.user = try? JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(#"{"id": "test-user-id", "created_at": "2023-11-14T22:13:20Z", "environment": "sandbox"}"#.utf8))
+        integrationsCollector = MockIntegrationsInfoCollector()
         manager = UserPropertiesManager(
             requestProcessor: requestProcessor,
             propertiesStorage: propertiesStorage,
             delayCalculator: IncrementalDelayCalculator(),
             userIdProvider: InternalConfig(userId: "test-user-id"),
             userManager: userManager,
+            integrationsInfoCollector: integrationsCollector,
             logger: LoggerWrapper()
         )
     }
@@ -81,6 +84,31 @@ final class UserPropertiesManagerTests: XCTestCase {
         manager.setCustomUserProperty(key: "my_key", value: "my_value")
 
         XCTAssertEqual(propertiesStorage.all(), [Qonversion.UserProperty(key: "my_key", value: "my_value")])
+    }
+
+    // MARK: - integrations data auto-collection (production parity)
+
+    func testCollectIntegrationsDataStoresAvailableIntegrationIds() {
+        integrationsCollector.adjustUserIdResult = "adjust-123"
+        integrationsCollector.appsFlyerUserIdResult = "af-456"
+        integrationsCollector.facebookAnonymousIdResult = "fb-789"
+
+        manager.collectIntegrationsData()
+
+        let stored: [String: String] = Dictionary(propertiesStorage.all().map { ($0.key, $0.value) }, uniquingKeysWith: { first, _ in first })
+        XCTAssertEqual(stored["_q_adjust_adid"], "adjust-123")
+        XCTAssertEqual(stored["_q_appsflyer_user_id"], "af-456")
+        XCTAssertEqual(stored["_q_fb_anon_id"], "fb-789")
+    }
+
+    func testCollectIntegrationsDataSkipsMissingIntegrations() {
+        integrationsCollector.adjustUserIdResult = nil
+        integrationsCollector.appsFlyerUserIdResult = nil
+        integrationsCollector.facebookAnonymousIdResult = nil
+
+        manager.collectIntegrationsData()
+
+        XCTAssertTrue(propertiesStorage.all().isEmpty)
     }
 
     // MARK: - defined property keys

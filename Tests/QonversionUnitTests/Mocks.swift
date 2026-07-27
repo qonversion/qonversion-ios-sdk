@@ -71,6 +71,21 @@ final class MockNetworkProvider: NetworkProviderInterface {
     }
 }
 
+final class MockIntegrationsInfoCollector: IntegrationsInfoCollectorInterface {
+
+    var adjustUserIdResult: String?
+    var appsFlyerUserIdResult: String?
+    var facebookAnonymousIdResult: String?
+
+    func adjustUserId(completion: @escaping @Sendable (String?) -> Void) {
+        completion(adjustUserIdResult)
+    }
+
+    func appsFlyerUserId() -> String? { appsFlyerUserIdResult }
+
+    func facebookAnonymousId() -> String? { facebookAnonymousIdResult }
+}
+
 final class MockReceiptFetcher: ReceiptFetcherInterface {
 
     var receipt: String?
@@ -108,6 +123,12 @@ final class MockUserPropertiesManager: UserPropertiesManagerInterface {
     func clearDelayedProperties() { }
 
     func collectAppleSearchAdsAttribution() { }
+
+    private(set) var collectIntegrationsDataCallsCount = 0
+
+    func collectIntegrationsData() {
+        collectIntegrationsDataCallsCount += 1
+    }
 }
 
 final class MockHeadersBuilder: HeadersBuilderInterface {

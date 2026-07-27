@@ -32,6 +32,7 @@
 		70CD93012BC6E22B0039D65C /* SendUserPropertiesResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92A92BC6E22B0039D65C /* SendUserPropertiesResult.swift */; };
 		70CD93022BC6E22B0039D65C /* UserPropertiesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92AA2BC6E22B0039D65C /* UserPropertiesManager.swift */; };
 		A300000000000000000000B1 /* PurchasesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A300000000000000000000A1 /* PurchasesManager.swift */; };
+		CB00000000000000000000B1 /* IntegrationsInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */; };
 		CA00000000000000000000B1 /* ReceiptFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000A1 /* ReceiptFetcher.swift */; };
 		C900000000000000000000B1 /* RequestTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C900000000000000000000A1 /* RequestTrigger.swift */; };
 		C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */; };
@@ -189,6 +190,7 @@
 		A300000000000000000000A3 /* PurchasesService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesService.swift; sourceTree = "<group>"; };
 		A300000000000000000000A4 /* PurchasesServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchasesServiceInterface.swift; sourceTree = "<group>"; };
 		A100000000000000000000A1 /* UserManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
+		CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegrationsInfoCollector.swift; sourceTree = "<group>"; };
 		CA00000000000000000000A1 /* ReceiptFetcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReceiptFetcher.swift; sourceTree = "<group>"; };
 		C900000000000000000000A1 /* RequestTrigger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestTrigger.swift; sourceTree = "<group>"; };
 		C500000000000000000000A1 /* PurchaseAssociationsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseAssociationsStorage.swift; sourceTree = "<group>"; };
@@ -611,6 +613,7 @@
 			isa = PBXGroup;
 			children = (
 				70CD92D32BC6E22B0039D65C /* DeviceInfoCollector.swift */,
+				CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */,
 				70CD92D42BC6E22B0039D65C /* DeviceInfoCollectorInterface.swift */,
 				70CD92D52BC6E22B0039D65C /* DeviceService.swift */,
 				70CD92D62BC6E22B0039D65C /* DeviceServiceInterface.swift */,
@@ -922,6 +925,7 @@
 				A300000000000000000000B3 /* PurchasesService.swift in Sources */,
 				A300000000000000000000B4 /* PurchasesServiceInterface.swift in Sources */,
 				A100000000000000000000B1 /* UserManager.swift in Sources */,
+				CB00000000000000000000B1 /* IntegrationsInfoCollector.swift in Sources */,
 				CA00000000000000000000B1 /* ReceiptFetcher.swift in Sources */,
 				C900000000000000000000B1 /* RequestTrigger.swift in Sources */,
 				C500000000000000000000B1 /* PurchaseAssociationsStorage.swift in Sources */,
