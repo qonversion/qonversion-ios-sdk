@@ -12,13 +12,17 @@ import StoreKit
 // subscription task is lock-guarded.
 final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
 
+    #if !os(watchOS)
     // Weak: the delegate (facade) holds the wrapper itself.
     weak var delegate: StoreKitWrapperDelegate?
+    #endif
 
     private let mapper: StoreKitMapperInterface
 
+    #if !os(watchOS)
     private let promoSubscriptionLock = NSLock()
     private var promoIntentsTask: Task<Void, Never>?
+    #endif
 
     init(mapper: StoreKitMapperInterface) {
         self.mapper = mapper
@@ -114,6 +118,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         }
     }
 
+    #if !os(watchOS)
     @available(iOS 16.4, macOS 14.4, *)
     func subscribeToPromoPurchases() {
         promoSubscriptionLock.lock()
@@ -134,6 +139,7 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         promoIntentsTask?.cancel()
         promoIntentsTask = nil
     }
+    #endif
 
     #if os(iOS) || os(visionOS)
     @available(iOS 16.0, visionOS 1.0, *)

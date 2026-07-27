@@ -55,6 +55,8 @@
 		A400000000000000000000B1 /* EntitlementDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = A400000000000000000000A1 /* EntitlementDefinition.swift */; };
 		A500000000000000000000B1 /* Entitlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A1 /* Entitlement.swift */; };
 		A600000000000000000000B1 /* PurchaseResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = A600000000000000000000A1 /* PurchaseResult.swift */; };
+		D100000000000000000000B1 /* DeferredPurchase.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000000000000000000A1 /* DeferredPurchase.swift */; };
+		D200000000000000000000B1 /* Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = D200000000000000000000A1 /* Environment.swift */; };
 		A500000000000000000000B2 /* EntitlementsCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A2 /* EntitlementsCalculator.swift */; };
 		A500000000000000000000B3 /* EntitlementsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A3 /* EntitlementsService.swift */; };
 		A500000000000000000000B4 /* EntitlementsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500000000000000000000A4 /* EntitlementsServiceInterface.swift */; };
@@ -206,6 +208,8 @@
 		A400000000000000000000A1 /* EntitlementDefinition.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementDefinition.swift; sourceTree = "<group>"; };
 		A500000000000000000000A1 /* Entitlement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Entitlement.swift; sourceTree = "<group>"; };
 		A600000000000000000000A1 /* PurchaseResult.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PurchaseResult.swift; sourceTree = "<group>"; };
+		D100000000000000000000A1 /* DeferredPurchase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeferredPurchase.swift; sourceTree = "<group>"; };
+		D200000000000000000000A1 /* Environment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Environment.swift; sourceTree = "<group>"; };
 		A500000000000000000000A2 /* EntitlementsCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsCalculator.swift; sourceTree = "<group>"; };
 		A500000000000000000000A3 /* EntitlementsService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsService.swift; sourceTree = "<group>"; };
 		A500000000000000000000A4 /* EntitlementsServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitlementsServiceInterface.swift; sourceTree = "<group>"; };
@@ -381,6 +385,7 @@
 				B300000000000000000000A1 /* PurchaseOptions.swift */,
 				B400000000000000000000A1 /* EntitlementsCacheLifetime.swift */,
 				A600000000000000000000A1 /* PurchaseResult.swift */,
+				D100000000000000000000A1 /* DeferredPurchase.swift */,
 				70CD92A22BC6E22B0039D65C /* UserProperties.swift */,
 				70CD92A32BC6E22B0039D65C /* UserProperty.swift */,
 				70CD92A42BC6E22B0039D65C /* UserPropertyKey.swift */,
@@ -691,6 +696,7 @@
 				C600000000000000000000A1 /* SDKVersion.swift */,
 				70CD92ED2BC6E22B0039D65C /* InternalConfig.swift */,
 				70CD92EE2BC6E22B0039D65C /* LaunchMode.swift */,
+				D200000000000000000000A1 /* Environment.swift */,
 				70CD92EF2BC6E22B0039D65C /* PrivacyInfo.xcprivacy */,
 				70CD92F02BC6E22B0039D65C /* Qonversion.docc */,
 				70CD92F12BC6E22B0039D65C /* Qonversion.h */,
@@ -935,6 +941,7 @@
 				A400000000000000000000B1 /* EntitlementDefinition.swift in Sources */,
 				A500000000000000000000B1 /* Entitlement.swift in Sources */,
 				A600000000000000000000B1 /* PurchaseResult.swift in Sources */,
+				D100000000000000000000B1 /* DeferredPurchase.swift in Sources */,
 				A500000000000000000000B2 /* EntitlementsCalculator.swift in Sources */,
 				A500000000000000000000B3 /* EntitlementsService.swift in Sources */,
 				A500000000000000000000B4 /* EntitlementsServiceInterface.swift in Sources */,
@@ -976,6 +983,7 @@
 				70CD932E2BC6E22B0039D65C /* LoggerWrapper.swift in Sources */,
 				70CD932F2BC6E22B0039D65C /* Utils.swift in Sources */,
 				70CD93322BC6E22B0039D65C /* LaunchMode.swift in Sources */,
+				D200000000000000000000B1 /* Environment.swift in Sources */,
 				70CD92F72BC6E22B0039D65C /* QonversionAssembly.swift in Sources */,
 				70CD93092BC6E22B0039D65C /* HeadersBuilderInterface.swift in Sources */,
 				70CD93142BC6E22B0039D65C /* RequestsStorage.swift in Sources */,

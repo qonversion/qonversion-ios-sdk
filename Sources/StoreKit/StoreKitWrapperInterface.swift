@@ -10,9 +10,13 @@ import StoreKit
 
 protocol StoreKitWrapperInterface: AnyObject, Sendable {
 
+    // watchOS has no App Store promoted purchases at all: StoreKit's
+    // PurchaseIntent is unavailable there, so the whole machinery is gated out.
+    #if !os(watchOS)
     /// The receiver of promoted-purchase intents. Weak on implementations —
     /// the delegate (the facade) owns the wrapper.
     var delegate: StoreKitWrapperDelegate? { get set }
+    #endif
 
     func purchase(product: StoreKit.Product, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction
     
@@ -33,12 +37,14 @@ protocol StoreKitWrapperInterface: AnyObject, Sendable {
     /// (renewals, refunds, Ask to Buy approvals, purchases on other devices).
     func transactionUpdates() -> AsyncStream<Qonversion.Transaction>
 
+    #if !os(watchOS)
     /// Starts observing App Store promoted-purchase intents; they are
     /// delivered to the wrapper delegate.
     @available(iOS 16.4, macOS 14.4, *)
     func subscribeToPromoPurchases()
 
     func unsubscribeFromPromoPurchases()
+    #endif
         
     #if os(iOS) || os(visionOS)
     @available(iOS 16.0, visionOS 1.0, *)

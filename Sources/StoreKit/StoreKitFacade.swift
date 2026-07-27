@@ -121,10 +121,13 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
 
         // Promoted-purchase intents flow to the delegate through the same
         // observation entry point. StoreKit 2 exposes them from iOS 16.4;
-        // on iOS 15.0–16.3 promoted purchases are a known gap.
+        // on iOS 15.0–16.3 promoted purchases are a known gap, and watchOS
+        // has no promoted purchases at all.
+        #if !os(watchOS)
         if #available(iOS 16.4, macOS 14.4, *) {
             storeKitWrapper.subscribeToPromoPurchases()
         }
+        #endif
     }
 
     func stopObservingTransactionUpdates() {
@@ -133,7 +136,9 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
 
         transactionUpdatesTask?.cancel()
         transactionUpdatesTask = nil
+        #if !os(watchOS)
         storeKitWrapper.unsubscribeFromPromoPurchases()
+        #endif
     }
 
     func products(for ids: [String]) async throws -> [StoreProductWrapper] {
@@ -146,6 +151,7 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
 
 // MARK: - StoreKitWrapperDelegate
 
+#if !os(watchOS)
 extension StoreKitFacade: StoreKitWrapperDelegate {
 
     @available(iOS 16.4, macOS 14.4, *)
@@ -153,3 +159,4 @@ extension StoreKitFacade: StoreKitWrapperDelegate {
         delegate?.promoPurchaseIntent(product: product)
     }
 }
+#endif

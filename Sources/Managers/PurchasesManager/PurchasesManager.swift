@@ -485,10 +485,12 @@ extension PurchasesManager: UserChangedObserver {
 
 extension PurchasesManager: StoreKitFacadeDelegate {
 
+    #if !os(watchOS)
     @available(iOS 16.4, macOS 14.4, *)
     func promoPurchaseIntent(product: Product) {
         emitPromoPurchaseIntent(storeProductId: product.id)
     }
+    #endif
 
     /// Hands the promoted-purchase intent to the host through the stream; its
     /// purchase() runs the regular purchase flow. The report keys off the
