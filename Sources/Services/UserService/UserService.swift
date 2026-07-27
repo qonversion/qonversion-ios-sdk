@@ -10,6 +10,8 @@ import Foundation
 /// Storage keys shared between UserService and the user gate (UserManager).
 enum UserServiceStorageKeys: String {
     case userIdKey = "qonversion.keys.userId"
+    // The install's first anonymous uid — logout returns to it.
+    case originalUserIdKey = "qonversion.keys.originalUserId"
 }
 
 fileprivate enum Constants: String {
@@ -107,10 +109,20 @@ extension UserService {
             localStorage.set(string: legacyUserId, forKey: UserServiceStorageKeys.userIdKey.rawValue)
             localStorage.removeObject(forKey: Constants.legacyUserIdKey.rawValue)
             internalConfig.userId = legacyUserId
+            rememberOriginalUserIdIfNeeded(legacyUserId)
             return
         }
 
         let userId: String = localStorage.string(forKey: UserServiceStorageKeys.userIdKey.rawValue) ?? generateUserId()
         internalConfig.userId = userId
+        rememberOriginalUserIdIfNeeded(userId)
+    }
+
+    /// The anonymous user this install started with: identity switches move
+    /// the uid away, logout must come back — it owns the pre-identify purchases.
+    private func rememberOriginalUserIdIfNeeded(_ userId: String) {
+        guard localStorage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue) == nil else { return }
+
+        localStorage.set(string: userId, forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
     }
 }

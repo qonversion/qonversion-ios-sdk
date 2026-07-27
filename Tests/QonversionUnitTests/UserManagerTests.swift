@@ -35,6 +35,7 @@ final class UserManagerTests: XCTestCase {
         notifier = UserChangesNotifier()
         observer = UserChangeObserverSpy()
         notifier.add(observer: observer)
+        storage.set(string: anonUid, forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
         manager = makeManager()
     }
 
@@ -244,20 +245,57 @@ final class UserManagerTests: XCTestCase {
 
     // MARK: - Logout
 
-    func testLogoutResetsToFreshAnonymousUser() async throws {
+    func testLogoutReturnsToTheOriginalAnonymousUser() async throws {
+        // Production semantics: the original anonymous user owns the
+        // pre-identify purchases — logout must come back to it, not mint
+        // a fresh uid that orphans them.
         service.createUserResult = try makeUser(id: anonUid)
         _ = try await manager.obtainUser()
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = try makeUser(id: "QON_other_uid")
         _ = try await manager.identify("external_1")
+        XCTAssertEqual(config.userId, "QON_other_uid")
 
-        service.generatedUserId = "QON_fresh_uid"
         await manager.logout()
 
-        // Next demand creates a NEW backend user for the fresh uid.
-        service.createUserResult = try makeUser(id: "QON_fresh_uid")
-        let user = try await manager.obtainUser()
+        XCTAssertEqual(config.userId, anonUid, "logout returns to the install's original anonymous uid")
 
-        XCTAssertEqual(user.id, "QON_fresh_uid")
-        XCTAssertEqual(service.createUserCallsCount, 2)
+        // Next demand recreates/upserts the original backend user.
+        service.createUserResult = try makeUser(id: anonUid)
+        let user = try await manager.obtainUser()
+        XCTAssertEqual(user.id, anonUid)
+    }
+
+    func testLogoutOnTheOriginalAnonymousUserIsANoOp() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        await manager.logout()
+
+        XCTAssertEqual(config.userId, anonUid)
+        XCTAssertEqual(observer.userDidChangeCallsCount, 0, "nothing changed — caches must survive")
+    }
+
+    func testLogoutCancelsAnInFlightIdentify() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = try makeUser(id: "QON_other_uid")
+        _ = try await manager.identify("external_1")
+
+        // A second identify hangs on the identity request; logout lands mid-flight.
+        let gate = AsyncGate()
+        service.onIdentity = { await gate.wait() }
+        service.identityLinkedUid = "QON_third_uid"
+        async let racedIdentify = manager.identify("external_2")
+        await waitUntil { self.service.identityCalls.count >= 2 }
+
+        await manager.logout()
+        await gate.open()
+
+        let raced = try? await racedIdentify
+        XCTAssertNil(raced, "the identify the host logged out from must not settle successfully")
+        XCTAssertEqual(config.userId, anonUid, "the logged-out state must not be re-identified by the stale continuation")
     }
 
     // MARK: - identify single-flight
@@ -306,10 +344,28 @@ final class UserManagerTests: XCTestCase {
     func testLogoutNotifiesUserChangeObservers() async throws {
         service.createUserResult = try makeUser(id: anonUid)
         _ = try await manager.obtainUser()
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = try makeUser(id: "QON_other_uid")
+        _ = try await manager.identify("external_1")
+        let notificationsAfterSwitch: Int = observer.userDidChangeCallsCount
 
         await manager.logout()
 
-        XCTAssertEqual(observer.userDidChangeCallsCount, 1)
+        XCTAssertEqual(observer.userDidChangeCallsCount, notificationsAfterSwitch + 1)
+    }
+
+    func testRepeatedIdentifyWithTheSameIdAnswersLocally() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        _ = try await manager.identify("external_1")
+        let identityCallsAfterFirst: Int = service.identityCalls.count
+        let createIdentityCallsAfterFirst: Int = service.createIdentityCalls.count
+
+        let user = try await manager.identify("external_1")
+
+        XCTAssertEqual(user.id, config.userId)
+        XCTAssertEqual(service.identityCalls.count, identityCallsAfterFirst, "an identify on every launch must not cost extra requests")
+        XCTAssertEqual(service.createIdentityCalls.count, createIdentityCallsAfterFirst)
     }
 
     func testIdentifySwitchToLinkedUserNotifiesUserChangeObservers() async throws {
