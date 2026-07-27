@@ -52,6 +52,10 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         return loadedProducts
     }
 
+    func isFallbackFileAccessible() -> Bool {
+        return fallbackService.obtainFallbackData() != nil
+    }
+
     func loadProductPermissions() async {
         do {
             let mapping: [String: [String]] = try await productsService.productPermissions()

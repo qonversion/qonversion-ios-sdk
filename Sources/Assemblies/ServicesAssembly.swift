@@ -8,7 +8,7 @@
 import Foundation
 
 fileprivate enum StringConstants: String {
-    case baseURL = "https://api.qonversion.io/"
+    case baseURL = "https://api2.qonversion.io/"
 }
 
 final class ServicesAssembly {
@@ -113,7 +113,8 @@ final class ServicesAssembly {
     func purchasesService() -> PurchasesServiceInterface {
         let requestProcessor: RequestProcessorInterface = requestProcessor()
         let appBundleId: String = Bundle.main.bundleIdentifier ?? ""
-        let purchasesService = PurchasesService(requestProcessor: requestProcessor, appBundleId: appBundleId)
+        let receiptFetcher = ReceiptFetcher()
+        let purchasesService = PurchasesService(requestProcessor: requestProcessor, appBundleId: appBundleId, receiptFetcher: receiptFetcher)
 
         return purchasesService
     }

@@ -50,7 +50,7 @@ final class UserService: UserServiceInterface, @unchecked Sendable {
             // The contract requires the environment field; sandbox/prod
             // separation is not a client-side concern.
             let request = Request.createUser(body: ["id": userId, "environment": "prod"])
-            let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self)
+            let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self, trigger: RequestTrigger.initialization)
             
             return user
         } catch {
@@ -87,7 +87,7 @@ final class UserService: UserServiceInterface, @unchecked Sendable {
     func user() async throws -> Qonversion.User {
         let request = Request.getUser(id: internalConfig.userId)
         do {
-            let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self)
+            let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self, trigger: RequestTrigger.initialization)
             
             return user
         } catch {

@@ -55,6 +55,9 @@ extension Qonversion {
         
         /// AppMetrica user profile ID
         case appMetricaUserProfileId = "_q_appmetrica_user_profile_id"
+
+        /// Tenjin analytics installation ID.
+        case tenjinAnalyticsInstallationId = "_q_tenjin_aiid"
         
         /// Value for custom user property
         /// - Important: Do not pass this value directly. Use ``Qonversion/Qonversion/setCustomUserProperty(_:key:)`` instead.
