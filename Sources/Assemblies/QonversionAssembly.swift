@@ -110,16 +110,15 @@ final class QonversionAssembly {
         #endif
     }
 
-    /// Ships the reports the previous launch left behind. Fails soft — the
-    /// endpoint is a proposal, see ``CrashReporter``.
+    /// Ships the reports the previous launch left behind. Fails soft, and goes
+    /// to the sdk-logs host rather than the API — see ``CrashReportsTransport``.
     func sendStoredCrashReports() async {
-        let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
         let sender = CrashReportsSender(
             storage: crashReportsStorage(),
-            requestProcessor: servicesAssembly.requestProcessor(),
+            transport: servicesAssembly.crashReportsTransport(),
             userIdProvider: miscAssembly.internalConfig,
             userManager: userManager(),
-            platform: deviceInfoCollector.headerDeviceInfo().osName
+            device: servicesAssembly.sdkLogDevice()
         )
 
         await sender.sendStoredReports()

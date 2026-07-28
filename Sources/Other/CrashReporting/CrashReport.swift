@@ -82,20 +82,84 @@ struct CrashReport: Codable, Equatable {
     /// The ObjC SDK defaulted a missing reason to this exact string.
     static var unknownReason: String { "Unknown reason" }
 
-    func requestBody(userId: String, platform: String) -> RequestBodyDict {
+    /// The sdk-logs payload, in the ObjC SDK's key layout — that service has
+    /// received this exact shape for years and is the only consumer.
+    /// `sdk_version` and `occurred_at` are ours and ride inside the crash
+    /// payload, which the service stores as it arrives.
+    func requestBody(device: SdkLogDevice) -> RequestBodyDict {
         let exception: RequestBodyDict = [
+            "rawStackTrace": stackTrace.joined(separator: "\n"),
+            "elements": stackTrace as RequestBodyArray,
             "name": name,
-            "reason": reason,
-            "linkage": linkage.rawValue,
-            "stack_trace": stackTrace as RequestBodyArray
+            "message": reason,
+            "isSpm": linkage == .spm,
+            "title": name + ": " + reason,
+            "userInfo": RequestBodyDict(),
+            "sdk_version": sdkVersion,
+            "occurred_at": Int(occurredAt.timeIntervalSince1970)
         ]
 
         return [
-            "sdk_version": sdkVersion,
-            "platform": platform,
-            "occurred_at": Int(occurredAt.timeIntervalSince1970),
-            "user_id": userId,
+            "device": device.requestBodyValue,
             "exception": exception
+        ]
+    }
+}
+
+/// The envelope every sdk-logs payload carries. Its keys are fixed by the
+/// service, not by this SDK.
+struct SdkLogDevice: Equatable, Sendable {
+
+    private enum SourceOverrideKeys: String {
+        case source = "com.qonversion.keys.source"
+        case sourceVersion = "com.qonversion.keys.sourceVersion"
+    }
+
+    let platform: String
+    let platformVersion: String
+    let source: String
+    let sourceVersion: String
+    let projectKey: String
+    let uid: String
+
+    /// Resolves the source the same way the request headers do — the sdk-logs
+    /// service reads the two the same way, so they must not disagree. A version
+    /// override without a source override is a leftover the Objective-C SDK
+    /// wrote, not a cross-platform wrapper. `uid` is filled in by the sender,
+    /// once the user gate has run.
+    static func make(deviceInfo: HeaderDeviceInfo, projectKey: String, sdkVersion: String, userDefaults: UserDefaults) -> SdkLogDevice {
+        let sourceOverride: String? = userDefaults.string(forKey: SourceOverrideKeys.source.rawValue)
+        let versionOverride: String? = userDefaults.string(forKey: SourceOverrideKeys.sourceVersion.rawValue)
+
+        return SdkLogDevice(
+            platform: deviceInfo.osName,
+            platformVersion: deviceInfo.osVersion,
+            source: sourceOverride ?? "iOS",
+            sourceVersion: sourceOverride == nil ? sdkVersion : (versionOverride ?? sdkVersion),
+            projectKey: projectKey,
+            uid: ""
+        )
+    }
+
+    func withUid(_ uid: String) -> SdkLogDevice {
+        return SdkLogDevice(
+            platform: platform,
+            platformVersion: platformVersion,
+            source: source,
+            sourceVersion: sourceVersion,
+            projectKey: projectKey,
+            uid: uid
+        )
+    }
+
+    var requestBodyValue: RequestBodyDict {
+        return [
+            "platform": platform,
+            "platform_version": platformVersion,
+            "source": source,
+            "source_version": sourceVersion,
+            "project_key": projectKey,
+            "uid": uid
         ]
     }
 }

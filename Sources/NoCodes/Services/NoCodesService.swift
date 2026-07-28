@@ -68,9 +68,9 @@ final class NoCodesService: NoCodesServiceInterface, @unchecked Sendable {
     
     do {
       let request = Request.getScreenByContextKey(contextKey: contextKey)
-      let screens: [NoCodesScreen] = try await requestProcessor.process(request: request, responseType: [NoCodesScreen].self)
+      let list: NoCodesScreenList = try await requestProcessor.process(request: request, responseType: NoCodesScreenList.self)
       
-      guard let screen = screens.first else {
+      guard let screen = list.screens.first else {
         throw NoCodesError(type: .screenNotFound)
       }
 
@@ -97,7 +97,8 @@ final class NoCodesService: NoCodesServiceInterface, @unchecked Sendable {
 
   func preloadScreens() async throws -> [NoCodesScreen] {
     let request = Request.getPreloadScreens()
-    let screens: [NoCodesScreen] = try await requestProcessor.process(request: request, responseType: [NoCodesScreen].self)
+    let list: NoCodesScreenList = try await requestProcessor.process(request: request, responseType: NoCodesScreenList.self)
+    let screens: [NoCodesScreen] = list.screens
     
     // Preload images and replace URLs with base64 data URIs
     let processedScreens = await preloadImagesForScreens(screens)
@@ -153,7 +154,9 @@ final class NoCodesService: NoCodesServiceInterface, @unchecked Sendable {
   private func cacheScreen(_ screen: NoCodesScreen) {
     cacheQueue.async(flags: .barrier) {
       self.screensById[screen.id] = screen
-      self.screensByContextKey[screen.contextKey] = screen
+      if let contextKey: String = screen.contextKey {
+        self.screensByContextKey[contextKey] = screen
+      }
     }
   }
   
@@ -161,7 +164,9 @@ final class NoCodesService: NoCodesServiceInterface, @unchecked Sendable {
     cacheQueue.async(flags: .barrier) {
       screens.forEach { screen in
         self.screensById[screen.id] = screen
-        self.screensByContextKey[screen.contextKey] = screen
+        if let contextKey: String = screen.contextKey {
+          self.screensByContextKey[contextKey] = screen
+        }
       }
     }
   }

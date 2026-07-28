@@ -64,6 +64,80 @@ final class NoCodesScreenDecodingTests: XCTestCase {
         XCTAssertEqual(screen.defaultVariable(forKey: "future")?.value.stringValue, "34")
     }
 
+    // MARK: - nulls the backend can emit
+
+    func testAScreenWithoutABodySkipsItselfOutOfTheList() throws {
+        // Go pointers without omitempty: a screen the builder never published
+        // arrives with `body: null`. It cannot be rendered — but the screens
+        // next to it can, and nulling the whole list loses them too.
+        let json = """
+        [{"id": "broken", "body": null, "context_key": "a"},
+         {"id": "good", "body": "<html>hi</html>", "context_key": "b"}]
+        """
+        let decoder = JSONDecoder()
+
+        let list: NoCodesScreenList = try decoder.decode(NoCodesScreenList.self, from: Data(json.utf8))
+
+        XCTAssertEqual(list.screens.map { $0.id }, ["good"])
+    }
+
+    func testANullEntryInTheListIsSkipped() throws {
+        // One gateway path yields a bare null element.
+        let json = """
+        [null, {"id": "good", "body": "<html>hi</html>", "context_key": "b"}]
+        """
+        let decoder = JSONDecoder()
+
+        let list: NoCodesScreenList = try decoder.decode(NoCodesScreenList.self, from: Data(json.utf8))
+
+        XCTAssertEqual(list.screens.map { $0.id }, ["good"])
+    }
+
+    func testAListOfOnlyBrokenScreensDecodesEmptyInsteadOfThrowing() throws {
+        let json = """
+        [null, {"id": "broken", "body": null, "context_key": "a"}]
+        """
+        let decoder = JSONDecoder()
+
+        let list: NoCodesScreenList = try decoder.decode(NoCodesScreenList.self, from: Data(json.utf8))
+
+        XCTAssertTrue(list.screens.isEmpty)
+    }
+
+    func testANullContextKeyDecodesAsAbsent() throws {
+        let json = """
+        {"id": "screen-5", "body": "<html></html>", "context_key": null}
+        """
+        let decoder = JSONDecoder()
+
+        let screen: NoCodesScreen = try decoder.decode(NoCodesScreen.self, from: Data(json.utf8))
+
+        XCTAssertEqual(screen.id, "screen-5")
+        XCTAssertNil(screen.contextKey)
+    }
+
+    func testAMissingContextKeyDecodesAsAbsent() throws {
+        let json = """
+        {"id": "screen-6", "body": "<html></html>"}
+        """
+        let decoder = JSONDecoder()
+
+        let screen: NoCodesScreen = try decoder.decode(NoCodesScreen.self, from: Data(json.utf8))
+
+        XCTAssertNil(screen.contextKey)
+    }
+
+    func testASingleScreenWithoutABodyStillFailsToDecode() throws {
+        // A screen without HTML is nothing to show: the single-screen fetch has
+        // to surface that, not hand back a blank screen.
+        let json = """
+        {"id": "screen-7", "body": null, "context_key": "a"}
+        """
+        let decoder = JSONDecoder()
+
+        XCTAssertThrowsError(try decoder.decode(NoCodesScreen.self, from: Data(json.utf8)))
+    }
+
     func testDecodesFallbackFileContract() throws {
         let json = """
         {"screens": {"main": {"id": "screen-4", "body": "<html></html>", "context_key": "main", "variables": []}}}

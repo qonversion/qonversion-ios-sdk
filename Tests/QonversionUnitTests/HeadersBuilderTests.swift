@@ -72,8 +72,8 @@ final class HeadersBuilderTests: XCTestCase {
 
     func testEmptyDeviceValuesAreOmittedNotSentAsEmptyStrings() {
         deviceInfoCollector.device = Device(
-            manufacturer: "Apple", osName: "tvOS", osVersion: "17.0", model: nil,
-            appVersion: nil, country: nil, language: nil, timezone: "UTC",
+            osName: "tvOS", osVersion: "17.0", model: nil,
+            appVersion: nil, country: nil, language: nil,
             advertisingId: nil, vendorId: nil, installDate: 0
         )
 

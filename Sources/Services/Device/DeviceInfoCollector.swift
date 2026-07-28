@@ -46,26 +46,22 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         // Built fresh on every call: advertisingId (ATT grant), locale and
         // appVersion change at runtime, and a cached snapshot would keep the
         // device update diff empty forever.
-        let manufacturer = "Apple"
         let appVersion: String? = Bundle.appVersion
         let osVersion: String = osVersion()
         let model: String? = deviceModel()
         let installDate: TimeInterval = installDate()
         let country: String? = country()
         let language: String? = language()
-        let timezone: String = TimeZone.current.identifier
         let advertisingId: String? = advertisingId()
         let vendorId: String? = vendorId()
 
         let deviceInfo = Device(
-            manufacturer: manufacturer,
             osName: OsName,
             osVersion: osVersion,
             model: model,
             appVersion: appVersion,
             country: country,
             language: language,
-            timezone: timezone,
             advertisingId: advertisingId,
             vendorId: vendorId,
             installDate: installDate

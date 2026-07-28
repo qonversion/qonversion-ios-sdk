@@ -143,7 +143,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     /// Requests the SDK emits on its own schedule, which the host cannot spam.
     /// Offer signing is deliberately not here: it is public API, so its rate is
     /// the host's to set.
-    static let rateLimitExemptKinds: [Request.Kind] = [.sendProperties, .sdkCrash]
+    static let rateLimitExemptKinds: [Request.Kind] = [.sendProperties]
 
     static let attemptHeader: String = "Attempt"
     static let triggerHeader: String = "Trigger"

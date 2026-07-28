@@ -36,7 +36,6 @@ extension Request {
         case detachUserFromExperiment
         case attachUserToRemoteConfig
         case detachUserFromRemoteConfig
-        case sdkCrash
     }
 
     /// Identifies the payload for the offline replay dedup: the same failed
@@ -98,7 +97,6 @@ extension Request {
         case .detachUserFromExperiment: return .detachUserFromExperiment
         case .attachUserToRemoteConfig: return .attachUserToRemoteConfig
         case .detachUserFromRemoteConfig: return .detachUserFromRemoteConfig
-        case .sdkCrash: return .sdkCrash
         }
     }
 }
@@ -131,10 +129,6 @@ enum Request : Hashable {
     case detachUserFromExperiment(userId: String, experimentId: String, endpoint: String = "v4/experiments/%@/users/%@", type: RequestType = .delete)
     case attachUserToRemoteConfig(userId: String, remoteConfigId: String, endpoint: String = "v4/remote-configurations/%@/users/%@", type: RequestType = .post)
     case detachUserFromRemoteConfig(userId: String, remoteConfigId: String, endpoint: String = "v4/remote-configurations/%@/users/%@", type: RequestType = .delete)
-    /// A crash inside the SDK, reported on the launch after it happened.
-    /// PROPOSED contract — the endpoint does not exist on the backend yet, so
-    /// the send is expected to fail and must do so softly. See CrashReporter.
-    case sdkCrash(endpoint: String = "v4/sdk-crashes", body: RequestBodyDict, type: RequestType = .post)
 
     func convertToURLRequest(_ baseUrl: String) -> URLRequest? {
         // RFC 3986 unreserved characters: everything else in a dynamic path
@@ -240,9 +234,6 @@ enum Request : Hashable {
         case let .detachUserFromExperiment(userId, experimentId, endpoint, type):
             let urlString = String(format: endpoint, arguments: [escaped(experimentId), escaped(userId)])
             return defaultRequest(urlString: urlString, body: nil, type: type)
-
-        case let .sdkCrash(endpoint, body, type):
-            return defaultRequest(urlString: endpoint, body: body, type: type)
         }
     }
 
@@ -312,11 +303,6 @@ enum Request : Hashable {
         case let .appleSearchAds(userId, endpoint, body, type):
             hasher.combine("appleSearchAds")
             hasher.combine(userId)
-            hasher.combine(endpoint)
-            hasher.combine(body)
-            hasher.combine(type)
-        case let .sdkCrash(endpoint, body, type):
-            hasher.combine("sdkCrash")
             hasher.combine(endpoint)
             hasher.combine(body)
             hasher.combine(type)

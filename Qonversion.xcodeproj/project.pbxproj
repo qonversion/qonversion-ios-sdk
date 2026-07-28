@@ -48,6 +48,7 @@
 		D700000000000000000000B1 /* CrashReportFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D700000000000000000000A1 /* CrashReportFilter.swift */; };
 		D800000000000000000000B1 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D800000000000000000000A1 /* CrashReporter.swift */; };
 		D900000000000000000000B1 /* CrashReportsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D900000000000000000000A1 /* CrashReportsStorage.swift */; };
+		D9CA00000000000000000B1 /* CrashReportsTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9CA00000000000000000A1 /* CrashReportsTransport.swift */; };
 		C200000000000000000000B1 /* PromoPurchaseIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C200000000000000000000A1 /* PromoPurchaseIntent.swift */; };
 		C300000000000000000000B1 /* StoredRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C300000000000000000000A1 /* StoredRequest.swift */; };
 		B100000000000000000000B1 /* UserChangesNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B100000000000000000000A1 /* UserChangesNotifier.swift */; };
@@ -294,6 +295,7 @@
 		D700000000000000000000A1 /* CrashReportFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReportFilter.swift; sourceTree = "<group>"; };
 		D800000000000000000000A1 /* CrashReporter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
 		D900000000000000000000A1 /* CrashReportsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReportsStorage.swift; sourceTree = "<group>"; };
+		D9CA00000000000000000A1 /* CrashReportsTransport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReportsTransport.swift; sourceTree = "<group>"; };
 		C200000000000000000000A1 /* PromoPurchaseIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromoPurchaseIntent.swift; sourceTree = "<group>"; };
 		C300000000000000000000A1 /* StoredRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoredRequest.swift; sourceTree = "<group>"; };
 		B100000000000000000000A1 /* UserChangesNotifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserChangesNotifier.swift; sourceTree = "<group>"; };
@@ -780,6 +782,7 @@
 				D700000000000000000000A1 /* CrashReportFilter.swift */,
 				D800000000000000000000A1 /* CrashReporter.swift */,
 				D900000000000000000000A1 /* CrashReportsStorage.swift */,
+				D9CA00000000000000000A1 /* CrashReportsTransport.swift */,
 			);
 			path = CrashReporting;
 			sourceTree = "<group>";
@@ -1224,6 +1227,7 @@
 				D700000000000000000000B1 /* CrashReportFilter.swift in Sources */,
 				D800000000000000000000B1 /* CrashReporter.swift in Sources */,
 				D900000000000000000000B1 /* CrashReportsStorage.swift in Sources */,
+				D9CA00000000000000000B1 /* CrashReportsTransport.swift in Sources */,
 				C200000000000000000000B1 /* PromoPurchaseIntent.swift in Sources */,
 				C300000000000000000000B1 /* StoredRequest.swift in Sources */,
 				B100000000000000000000B1 /* UserChangesNotifier.swift in Sources */,

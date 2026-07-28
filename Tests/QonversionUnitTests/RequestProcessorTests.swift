@@ -700,15 +700,12 @@ final class RequestProcessorTests: XCTestCase {
     // MARK: - Rate limit exemptions
 
     func testSdkInitiatedRequestsAreExemptFromTheRateLimit() async {
-        // The legacy client rate-limited only what the host can spam. These
-        // two are emitted by the SDK itself — a properties flush, a crash
-        // upload — and dropping them loses data the host never asked for
-        // twice.
+        // The legacy client rate-limited only what the host can spam. A
+        // properties flush is emitted by the SDK itself, and dropping it loses
+        // data the host never asked for twice.
         let propertiesBody: RequestBodyDict = ["key": "value"]
-        let crashBody: RequestBodyDict = ["platform": "iOS"]
         let exempt: [Request] = [
-            .sendProperties(userId: "u", body: propertiesBody),
-            .sdkCrash(body: crashBody)
+            .sendProperties(userId: "u", body: propertiesBody)
         ]
 
         for request in exempt {

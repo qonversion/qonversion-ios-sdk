@@ -103,7 +103,9 @@ private final class StubFallbackService: FallbackServiceInterface, @unchecked Se
         lock.lock()
         defer { lock.unlock() }
 
-        screensByContextKey[screen.contextKey] = screen
+        if let contextKey: String = screen.contextKey {
+          screensByContextKey[contextKey] = screen
+        }
         screensById[screen.id] = screen
     }
 
@@ -275,6 +277,57 @@ final class NoCodesServiceTests: XCTestCase {
         }
 
         XCTAssertEqual(error.type, .screenNotFound)
+    }
+
+    func testAContextKeyFetchSkipsTheUnusableScreensAndServesTheRest() async throws {
+        let processor = SpyRequestProcessor()
+        processor.enqueue(payload: """
+        [null,
+         {"id": "broken", "body": null, "context_key": "main"},
+         {"id": "good", "body": "<html>hi</html>", "context_key": "main"}]
+        """)
+        let service = NoCodesService(requestProcessor: processor)
+
+        let screen: NoCodesScreen = try await service.loadScreen(withContextKey: "main")
+
+        XCTAssertEqual(screen.id, "good")
+    }
+
+    func testAListOfOnlyUnusableScreensIsReportedAsScreenNotFound() async throws {
+        let processor = SpyRequestProcessor()
+        processor.enqueue(payload: #"[{"id": "broken", "body": null, "context_key": "main"}]"#)
+        let service = NoCodesService(requestProcessor: processor)
+
+        let error: NoCodesError = await captureError {
+            _ = try await service.loadScreen(withContextKey: "main")
+        }
+
+        XCTAssertEqual(error.type, .screenNotFound)
+    }
+
+    func testPreloadSkipsTheUnusableScreens() async throws {
+        let processor = SpyRequestProcessor()
+        processor.enqueue(payload: """
+        [{"id": "broken", "body": null, "context_key": "a"},
+         {"id": "good", "body": "<html>hi</html>", "context_key": "b"}]
+        """)
+        let service = NoCodesService(requestProcessor: processor)
+
+        let screens: [NoCodesScreen] = try await service.preloadScreens()
+
+        XCTAssertEqual(screens.map { $0.id }, ["good"])
+    }
+
+    func testAScreenWithoutAContextKeyIsStillServedAndCachedById() async throws {
+        let processor = SpyRequestProcessor()
+        processor.enqueue(payload: #"{"id": "screen-1", "body": "<html>hi</html>", "context_key": null}"#)
+        let service = NoCodesService(requestProcessor: processor)
+
+        let screen: NoCodesScreen = try await service.loadScreen(with: "screen-1")
+        _ = try await service.loadScreen(with: "screen-1")
+
+        XCTAssertNil(screen.contextKey)
+        XCTAssertEqual(processor.processedRequestsCount, 1, "the second load is served from the id cache")
     }
 
     func testOtherFailuresAreWrappedAsScreenLoadingFailed() async throws {

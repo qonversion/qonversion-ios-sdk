@@ -359,14 +359,12 @@ final class EntitiesDecodingTests: XCTestCase {
 
     private func makeDevice(model: String? = "iPhone15,2") -> Device {
         Device(
-            manufacturer: "Apple",
             osName: "iOS",
             osVersion: "17.0",
             model: model,
             appVersion: "1.2.3",
             country: "US",
             language: "en",
-            timezone: "America/New_York",
             advertisingId: nil,
             vendorId: "vendor-id",
             installDate: 1_700_000_000

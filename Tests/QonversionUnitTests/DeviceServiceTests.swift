@@ -33,14 +33,12 @@ final class DeviceServiceTests: XCTestCase {
         installDate: TimeInterval = 1_700_000_000
     ) -> Device {
         Device(
-            manufacturer: "Apple",
             osName: "iOS",
             osVersion: "17.0",
             model: model,
             appVersion: "1.2.3",
             country: "US",
             language: "en",
-            timezone: "America/New_York",
             advertisingId: advertisingId,
             vendorId: "vendor-id",
             installDate: installDate
@@ -95,17 +93,81 @@ final class DeviceServiceTests: XCTestCase {
         XCTAssertEqual(requestUserId, userId)
         XCTAssertEqual(endpoint, "v4/users/%@/device")
         XCTAssertEqual(type, .post)
-        XCTAssertEqual(body["manufacturer"] as? String, "Apple")
-        XCTAssertEqual(body["osName"] as? String, "iOS")
-        XCTAssertEqual(body["osVersion"] as? String, "17.0")
+        XCTAssertEqual(body["os_name"] as? String, "iOS")
+        XCTAssertEqual(body["os_version"] as? String, "17.0")
         XCTAssertEqual(body["model"] as? String, "iPhone15,2")
-        XCTAssertEqual(body["appVersion"] as? String, "1.2.3")
+        XCTAssertEqual(body["app_version"] as? String, "1.2.3")
         XCTAssertEqual(body["country"] as? String, "US")
         XCTAssertEqual(body["language"] as? String, "en")
-        XCTAssertEqual(body["timezone"] as? String, "America/New_York")
-        XCTAssertEqual(body["advertisingId"] as? String, "ad-id")
-        XCTAssertEqual(body["vendorId"] as? String, "vendor-id")
-        XCTAssertEqual(body["installDate"] as? TimeInterval, 1_700_000_000)
+        XCTAssertEqual(body["advertising_id"] as? String, "ad-id")
+        XCTAssertEqual(body["vendor_id"] as? String, "vendor-id")
+        XCTAssertEqual(body["install_date"] as? Int, 1_700_000_000)
+    }
+
+    func testTheWireBodyIsExactlyTheAgreedKeySet() async throws {
+        // The canonical device body. Any key added, renamed or dropped here is
+        // a contract break with the backend, which implements the same set.
+        let processor = MockRequestProcessor()
+        let service = makeService(processor: processor)
+        processor.results = [makeDevice()]
+
+        _ = try await service.create(device: makeDevice(advertisingId: "ad-id"))
+
+        guard case let .createDevice(_, _, body, _) = processor.processedRequests[0] else {
+            return XCTFail("Expected createDevice request")
+        }
+        let expectedKeys: Set<String> = [
+            "os_name",
+            "os_version",
+            "model",
+            "app_version",
+            "country",
+            "language",
+            "advertising_id",
+            "vendor_id",
+            "install_date"
+        ]
+        XCTAssertEqual(Set(body.keys), expectedKeys)
+    }
+
+    func testTheInstallDateTravelsAsUnixSeconds() async throws {
+        let processor = MockRequestProcessor()
+        let service = makeService(processor: processor)
+        processor.results = [makeDevice()]
+
+        _ = try await service.create(device: makeDevice(installDate: 1_700_000_000.75))
+
+        guard case let .createDevice(_, _, body, _) = processor.processedRequests[0] else {
+            return XCTFail("Expected createDevice request")
+        }
+        // An integer, not a fractional double: the backend column is seconds.
+        XCTAssertEqual(body["install_date"] as? Int, 1_700_000_000)
+    }
+
+    func testTheEchoedRecordDecodesFromTheSameKeys() throws {
+        // The endpoint answers with the object it was sent — same keys.
+        let echo = Data("""
+        {"os_name":"iOS","os_version":"17.0","model":"iPhone15,2","app_version":"1.2.3",\
+        "country":"US","language":"en","advertising_id":"ad-id","vendor_id":"vendor-id",\
+        "install_date":1700000000}
+        """.utf8)
+
+        let device: Device = try JSONDecoder().decode(Device.self, from: echo)
+
+        XCTAssertEqual(device.osName, "iOS")
+        XCTAssertEqual(device.advertisingId, "ad-id")
+        XCTAssertEqual(device.installDate, 1_700_000_000)
+    }
+
+    func testATruncatedEchoStillDecodes() throws {
+        // A record the SDK just created must not be lost to a partial answer.
+        let echo = Data(#"{"os_name":"iOS"}"#.utf8)
+
+        let device: Device = try JSONDecoder().decode(Device.self, from: echo)
+
+        XCTAssertEqual(device.osName, "iOS")
+        XCTAssertEqual(device.osVersion, "")
+        XCTAssertNil(device.vendorId)
     }
 
     func testCreateOmitsNilOptionalFieldsFromBody() async throws {
@@ -119,7 +181,7 @@ final class DeviceServiceTests: XCTestCase {
             return XCTFail("Expected createDevice request")
         }
         XCTAssertNil(body["model"])
-        XCTAssertNil(body["advertisingId"])
+        XCTAssertNil(body["advertising_id"])
     }
 
     func testCreateWrapsProcessorErrorIntoDeviceCreationFailed() async {
@@ -156,7 +218,7 @@ final class DeviceServiceTests: XCTestCase {
         XCTAssertEqual(requestUserId, userId)
         XCTAssertEqual(endpoint, "v4/users/%@/device")
         XCTAssertEqual(type, .put)
-        XCTAssertEqual(body["manufacturer"] as? String, "Apple")
+        XCTAssertEqual(body["os_name"] as? String, "iOS")
     }
 
     func testUpdateWrapsProcessorErrorIntoDeviceUpdateFailed() async {
