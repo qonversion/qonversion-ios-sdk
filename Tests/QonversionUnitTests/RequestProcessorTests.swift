@@ -701,15 +701,13 @@ final class RequestProcessorTests: XCTestCase {
 
     func testSdkInitiatedRequestsAreExemptFromTheRateLimit() async {
         // The legacy client rate-limited only what the host can spam. These
-        // three are emitted by the SDK itself — a properties flush, an offer
-        // signature during a purchase, a crash upload — and dropping them
-        // loses data the host never asked for twice.
+        // two are emitted by the SDK itself — a properties flush, a crash
+        // upload — and dropping them loses data the host never asked for
+        // twice.
         let propertiesBody: RequestBodyDict = ["key": "value"]
-        let offerBody: RequestBodyDict = ["product_id": "p"]
         let crashBody: RequestBodyDict = ["platform": "iOS"]
         let exempt: [Request] = [
             .sendProperties(userId: "u", body: propertiesBody),
-            .signPromoOffer(userId: "u", offerId: "o", body: offerBody),
             .sdkCrash(body: crashBody)
         ]
 
@@ -739,6 +737,24 @@ final class RequestProcessorTests: XCTestCase {
             XCTAssertEqual((error as? QonversionError)?.type, .rateLimitExceeded)
         }
         XCTAssertEqual(rateLimiter.validatedRequests.count, 1)
+    }
+
+    func testOfferSigningStaysRateLimited() async {
+        // Qonversion.getPromotionalOffer(for:discountId:) is public API — the
+        // host can call it in a loop, so the 5/s cap applies exactly as it did
+        // in the legacy client.
+        rateLimiter.errorToReturn = QonversionError(type: .rateLimitExceeded)
+        let processor = makeProcessor()
+        let offerBody: RequestBodyDict = ["product_id": "p"]
+
+        do {
+            _ = try await processor.process(request: .signPromoOffer(userId: "u", offerId: "o", body: offerBody), responseType: ProcessorTestPayload.self)
+            XCTFail("Expected rate limit error")
+        } catch {
+            XCTAssertEqual((error as? QonversionError)?.type, .rateLimitExceeded)
+        }
+        XCTAssertEqual(rateLimiter.validatedRequests.count, 1)
+        XCTAssertTrue(networkProvider.sentRequests.isEmpty)
     }
 
     // MARK: - Transport error
@@ -874,6 +890,49 @@ final class RequestProcessorTests: XCTestCase {
 
         XCTAssertTrue(secondNetworkProvider.sentRequests.isEmpty, "the second processor must refuse before the network")
         XCTAssertTrue(secondRateLimiter.validatedRequests.isEmpty, "the latch is checked before the rate limiter")
+    }
+
+    func testALatchedProcessorStillQueuesADataDeliveryRequest() async {
+        // The latch is shared SDK-wide, so an entitlements 401 can latch it
+        // while a purchase is being reported. Refusing the report is right —
+        // the key is dead — but DROPPING it loses money data the store already
+        // charged for. It must go into the offline queue for a later launch,
+        // where the key may work again.
+        let latch = CriticalErrorLatch()
+        latch.latch(QonversionError(type: .critical, message: "unauthorized"))
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase], criticalErrorLatch: latch)
+        let purchaseBody: RequestBodyDict = ["store_data": ["transaction_id": "tx-1"] as RequestBodyDict]
+
+        do {
+            _ = try await processor.process(request: .createPurchase(userId: "u", body: purchaseBody), responseType: ProcessorTestPayload.self)
+            XCTFail("Expected the latched critical error")
+        } catch {
+            XCTAssertEqual((error as? QonversionError)?.type, .critical)
+        }
+
+        XCTAssertTrue(networkProvider.sentRequests.isEmpty, "a revoked key must not reach the network")
+        let stored: [StoredRequest] = requestsStorage.fetchRequests()
+        XCTAssertEqual(stored.count, 1, "the purchase report must be deferred, not lost")
+        XCTAssertEqual(stored.first?.method, "POST")
+        XCTAssertEqual(stored.first?.transactionId, "tx-1")
+        XCTAssertEqual(stored.first?.dedupKey, "createPurchase-u-tx-1")
+        XCTAssertEqual(stored.first?.attempt, 0, "no send was attempted, so the replay must report attempt 1")
+    }
+
+    func testALatchedProcessorQueuesNothingForANonRetriableRequest() async {
+        let latch = CriticalErrorLatch()
+        latch.latch(QonversionError(type: .critical, message: "unauthorized"))
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase], criticalErrorLatch: latch)
+
+        do {
+            _ = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+            XCTFail("Expected the latched critical error")
+        } catch {
+            XCTAssertEqual((error as? QonversionError)?.type, .critical)
+        }
+
+        XCTAssertTrue(requestsStorage.fetchRequests().isEmpty, "a read carries no data to deliver — queueing it would only waste a replay")
+        XCTAssertTrue(networkProvider.sentRequests.isEmpty)
     }
 
     func testTheFirstCriticalErrorWins() async {

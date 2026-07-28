@@ -304,7 +304,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertLessThan(propertiesAt, configAt, "segmentation data must reach the backend before the config is computed")
     }
 
-    // MARK: - 7. the SDK-wide critical latch over per-service processors
+    // MARK: - 7. the critical latch shared over the per-service processors
 
     func testACriticalErrorLatchesEveryService() async throws {
         world.stubHappyUser()

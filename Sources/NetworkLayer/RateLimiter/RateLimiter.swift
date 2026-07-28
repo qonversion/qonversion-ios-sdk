@@ -96,6 +96,16 @@ extension RateLimiter {
     /// the actual request rate instead of the request history.
     private func pruneStaleBucketsIfNeeded() {
         let currentTime: TimeInterval = now()
+
+        // The anchor is a wall-clock reading, which can move BACKWARD (NTP
+        // correction, a manual date change). Past the anchor, the difference
+        // below stays negative forever and the sweep would never be due again
+        // for the limiter's whole lifetime — the map would grow unbounded.
+        // A rollback counts as elapsed: re-anchor and let the next call sweep.
+        if currentTime < lastGlobalPrune {
+            lastGlobalPrune = currentTime
+        }
+
         guard currentTime - lastGlobalPrune > 10 else { return }
         lastGlobalPrune = currentTime
 

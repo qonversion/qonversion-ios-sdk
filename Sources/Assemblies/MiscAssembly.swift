@@ -42,9 +42,10 @@ final class MiscAssembly {
     // purchase — they must dedup against the SAME set of taken ids.
     private let transactionReportsGateInstance = TransactionReportsGate()
 
-    // One instance SDK-wide: the processors are per service on purpose, but a
-    // revoked project key kills every one of them at once — the first to see
-    // a 401/402/403 must stop the rest.
+    // One instance per assembly graph: the Qonversion processors are per
+    // service on purpose, but a revoked project key kills every one of them at
+    // once — the first to see a 401/402/403 must stop the rest. Scoped to this
+    // target; the NoCodes module keeps its own processor and its own lock.
     private let criticalErrorLatchInstance = CriticalErrorLatch()
 
     init(apiKey: String, userDefaults: UserDefaults, internalConfig: InternalConfig) {

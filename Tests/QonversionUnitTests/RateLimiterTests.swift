@@ -131,20 +131,50 @@ final class RateLimiterTests: XCTestCase {
         XCTAssertNotNil(limiter.requests[fresh.hashValue], "the bucket recorded by this very call stays")
     }
 
-    func testTheGlobalPruneDoesNotRunInsideTheGuardWindow() {
+    func testTheGuardWindowGatesRepeatSweeps() {
+        // The guard is what keeps the sweep off the hot path: after one sweep
+        // has run, the next 10 seconds of calls must not sweep again, even
+        // though there is a bucket sitting outside the 1s rate window that a
+        // sweep would happily drop. Removing the guard turns this red.
         let clock = RateLimiterFrozenClock(now: 1_000)
         let limiter = RateLimiter(maxRequestsPerSecond: 5, now: { clock.now })
         let stale = Request.getUser(id: "stale")
         let fresh = Request.getUser(id: "fresh")
 
+        // Due: sweeps (finds nothing to drop) and re-anchors at 1011.
+        clock.advance(by: 11)
         XCTAssertNil(limiter.validateRateLimit(for: stale))
 
-        // The stale bucket is long outside the 1s rate window, but the global
-        // sweep is not due yet.
-        clock.advance(by: 9.9)
+        // 5s later the stale bucket is well outside the 1s window, but the
+        // guard has not elapsed since the last sweep.
+        clock.advance(by: 5)
         XCTAssertNil(limiter.validateRateLimit(for: fresh))
 
-        XCTAssertNotNil(limiter.requests[stale.hashValue], "the sweep must not run before the 10s guard elapses")
+        XCTAssertNotNil(limiter.requests[stale.hashValue], "the sweep must not run again before the 10s guard elapses")
+    }
+
+    func testAClockRolledBackwardDoesNotKillTheGlobalSweepForever() {
+        // The anchor is a non-monotonic wall clock. A device clock moving
+        // BACKWARD past it (NTP correction, manual change, timezone-less date
+        // reset) makes `now - anchor` permanently negative, so without a
+        // rollback guard the sweep is never due again for the limiter's whole
+        // lifetime and the buckets map grows unbounded.
+        let clock = RateLimiterFrozenClock(now: 1_000)
+        let limiter = RateLimiter(maxRequestsPerSecond: 5, now: { clock.now })
+        let stale = Request.getUser(id: "stale")
+        let fresh = Request.getUser(id: "fresh")
+
+        // The clock jumps a day back; a bucket is recorded on the new timeline.
+        clock.advance(by: -86_400)
+        XCTAssertNil(limiter.validateRateLimit(for: stale))
+
+        // Well past the guard window on the new timeline: the sweep must be
+        // due again and drop the stale bucket.
+        clock.advance(by: 11)
+        XCTAssertNil(limiter.validateRateLimit(for: fresh))
+
+        XCTAssertNil(limiter.requests[stale.hashValue], "a backward clock jump must re-anchor the guard, not disable the sweep")
+        XCTAssertNotNil(limiter.requests[fresh.hashValue], "the bucket recorded by this very call stays")
     }
 
     func testWindowExpiryAllowsSameRequestAgain() async throws {

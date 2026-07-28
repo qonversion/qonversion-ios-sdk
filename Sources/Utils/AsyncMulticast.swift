@@ -44,6 +44,12 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
     /// the oldest replayed entry (a lost DeferredPurchase in the worst case).
     /// The multiplier is the headroom for the live values a host can produce
     /// while it wires its streams up.
+    ///
+    /// INVARIANT: strictly greater than ``maxPending``. It holds by
+    /// construction (the multiplier is > 1), which is why no test asserts it —
+    /// a test comparing two literals of this file would prove nothing. What
+    /// the headroom is FOR is covered behaviorally by
+    /// `testAFullBacklogLeavesRoomForLiveValuesBeforeTheSubscriberDrains`.
     static var subscriberBufferSize: Int { maxPending * 4 }
 
     /// How long a value stays replayable to subscribers arriving after it.
@@ -73,8 +79,12 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
         self.now = now
     }
 
-    /// How many subscriptions are currently attached. A terminated subscriber
-    /// is gone from here as soon as its stream's termination callback has run.
+    /// TEST SEAM. How many subscriptions are currently attached; a terminated
+    /// subscriber is gone from here as soon as its stream's termination
+    /// callback has run. Exists only so the tests can observe unregistration,
+    /// which has no other visible effect. Production code must not read it:
+    /// the value is racy by construction (a subscriber can attach or terminate
+    /// between the read and its use), so any behavior keyed off it is a bug.
     var subscriberCount: Int {
         lock.lock()
         defer { lock.unlock() }

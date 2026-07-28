@@ -76,10 +76,14 @@ public enum QonversionErrorType: Sendable {
     /// while it was in flight — its answer would have described a user that is
     /// no longer current. Ask again; the call is safe to repeat.
     case cancelled
-    /// The request never reached the backend: the device is offline, the
-    /// connection dropped or the host could not be resolved. Distinct from
-    /// ``invalidResponse`` — no response arrived at all, so nothing was
-    /// processed and repeating the call once connectivity is back is safe.
+    /// No response arrived: the device is offline, the connection dropped, the
+    /// host could not be resolved or the request timed out. Distinct from
+    /// ``invalidResponse``, where the backend did answer.
+    ///
+    /// The request most likely never reached the backend, so retrying once
+    /// connectivity is back is the right move. A timeout is the one case where
+    /// it may have arrived and been processed anyway — repeating a read is
+    /// always safe, repeating a write may duplicate it.
     case networkConnectionFailed
 
     public func message() -> String {

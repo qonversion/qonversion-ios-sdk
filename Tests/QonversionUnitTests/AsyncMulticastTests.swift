@@ -280,10 +280,6 @@ final class AsyncMulticastTests: XCTestCase {
         let received: [Int] = await subscriber.received
         XCTAssertEqual(received, expected, "a live value must not evict the backlog the subscriber has not drained yet")
     }
-
-    func testTheSubscriberBufferIsStrictlyLargerThanTheBacklog() {
-        XCTAssertGreaterThan(AsyncMulticast<Int>.subscriberBufferSize, AsyncMulticast<Int>.maxPending)
-    }
 }
 
 /// Collects everything a stream emits and reports when it actually attached.

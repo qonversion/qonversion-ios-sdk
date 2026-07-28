@@ -62,9 +62,11 @@ final class AssemblySharingTests: XCTestCase {
         XCTAssertFalse(first === second)
     }
 
-    func testTheCriticalErrorLatchIsOneInstanceSdkWide() {
+    func testTheCriticalErrorLatchIsOneInstanceAcrossTheQonversionAssembly() {
         // The processors stay per service, but the revoked-key stop switch
         // must not: the first service to be rejected has to stop the rest.
+        // Scope is this assembly graph — NoCodes builds its own processor with
+        // its own lock and is deliberately not wired to this latch.
         let (miscAssembly, servicesAssembly) = makeMiscAssembly()
 
         let firstLatch = miscAssembly.criticalErrorLatch()

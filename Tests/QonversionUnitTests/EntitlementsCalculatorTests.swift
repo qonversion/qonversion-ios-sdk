@@ -239,4 +239,28 @@ final class EntitlementsCalculatorTests: XCTestCase {
         XCTAssertEqual(deduped.count, 1)
         XCTAssertEqual(deduped.first?.id, newer.id)
     }
+
+    // MARK: - allowsLocalEntitlementsFallback
+
+    func testAConnectionFailureAllowsTheFallbackWithoutAnUnderlyingUrlError() {
+        // The offline fallback must key off the error TYPE, not off the
+        // accident that the processor happens to attach the URLError: a
+        // .networkConnectionFailed built anywhere else (a re-thrown copy, a
+        // future call site) still means "nothing reached the backend".
+        let error = QonversionError(type: .networkConnectionFailed, error: nil)
+
+        XCTAssertTrue(error.allowsLocalEntitlementsFallback)
+    }
+
+    func testAConnectionFailureCarryingItsUrlErrorStillAllowsTheFallback() {
+        let error = QonversionError(type: .networkConnectionFailed, error: URLError(.notConnectedToInternet))
+
+        XCTAssertTrue(error.allowsLocalEntitlementsFallback)
+    }
+
+    func testAnAuthFailureNeverAllowsTheFallback() {
+        let error = QonversionError(type: .critical, error: nil)
+
+        XCTAssertFalse(error.allowsLocalEntitlementsFallback)
+    }
 }
