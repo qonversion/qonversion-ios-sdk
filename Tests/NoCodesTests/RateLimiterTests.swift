@@ -47,4 +47,91 @@ final class RateLimiterTests: XCTestCase {
         XCTAssertEqual(allowedFirst, 5)
         XCTAssertEqual(allowedSecond, 5)
     }
+
+    // MARK: - Bucket lifetime
+
+    /// Every screen id and context key mints its own bucket. A bucket that
+    /// fell out of the window must go, not stay behind as an empty array under
+    /// a key nothing will ever visit again.
+    func testABucketThatFellOutOfTheWindowIsDropped() {
+        let clock = RateLimiterFrozenClock(now: 1_000)
+        let limiter = RateLimiter(maxRequestsPerSecond: 5, now: { clock.now })
+        let stale = Request.getScreen(id: "screen-stale")
+        let fresh = Request.getScreen(id: "screen-fresh")
+
+        XCTAssertNil(limiter.validateRateLimit(for: stale))
+
+        clock.advance(by: 11)
+        XCTAssertNil(limiter.validateRateLimit(for: fresh))
+
+        XCTAssertNil(limiter.requests[stale.hashValue], "the sweep is due and the stale bucket is gone")
+        XCTAssertNotNil(limiter.requests[fresh.hashValue], "the bucket recorded by this very call stays")
+    }
+
+    /// The sweep must stay off the hot path: once it has run, the next ten
+    /// seconds of calls must not walk the whole map again.
+    func testTheSweepIsGatedByItsGuardWindow() {
+        let clock = RateLimiterFrozenClock(now: 1_000)
+        let limiter = RateLimiter(maxRequestsPerSecond: 5, now: { clock.now })
+        let stale = Request.getScreen(id: "screen-stale")
+        let fresh = Request.getScreen(id: "screen-fresh")
+
+        clock.advance(by: 11)
+        XCTAssertNil(limiter.validateRateLimit(for: stale))
+
+        clock.advance(by: 5)
+        XCTAssertNil(limiter.validateRateLimit(for: fresh))
+
+        XCTAssertNotNil(limiter.requests[stale.hashValue], "the guard has not elapsed since the last sweep")
+    }
+
+    /// A backward clock jump (NTP, a manual date change) must re-anchor the
+    /// guard instead of disabling the sweep for good.
+    func testABackwardClockJumpReAnchorsTheSweepGuard() {
+        let clock = RateLimiterFrozenClock(now: 1_000)
+        let limiter = RateLimiter(maxRequestsPerSecond: 5, now: { clock.now })
+        let stale = Request.getScreen(id: "screen-stale")
+        let fresh = Request.getScreen(id: "screen-fresh")
+
+        clock.advance(by: -86_400)
+        XCTAssertNil(limiter.validateRateLimit(for: stale))
+
+        clock.advance(by: 11)
+        XCTAssertNil(limiter.validateRateLimit(for: fresh))
+
+        XCTAssertNil(limiter.requests[stale.hashValue])
+        XCTAssertNotNil(limiter.requests[fresh.hashValue])
+    }
+
+    /// The window is a sliding one: a second of quiet buys a full new allowance.
+    func testTheAllowanceComesBackAfterTheWindowPasses() {
+        let clock = RateLimiterFrozenClock(now: 1_000)
+        let limiter = RateLimiter(maxRequestsPerSecond: 2, now: { clock.now })
+        let request = Request.getScreen(id: "screen-a")
+
+        XCTAssertNil(limiter.validateRateLimit(for: request))
+        XCTAssertNil(limiter.validateRateLimit(for: request))
+        XCTAssertNotNil(limiter.validateRateLimit(for: request))
+
+        clock.advance(by: 2)
+
+        XCTAssertNil(limiter.validateRateLimit(for: request))
+    }
+}
+
+private final class RateLimiterFrozenClock: @unchecked Sendable {
+
+    private var current: TimeInterval
+
+    init(now: TimeInterval) {
+        current = now
+    }
+
+    var now: TimeInterval {
+        return current
+    }
+
+    func advance(by interval: TimeInterval) {
+        current += interval
+    }
 }

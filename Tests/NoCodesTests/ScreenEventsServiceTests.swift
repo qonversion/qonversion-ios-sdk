@@ -263,6 +263,79 @@ final class ScreenEventsServiceTests: XCTestCase {
         XCTAssertEqual(processor.lastBatch?.first?["index"] as? Int, 1)
     }
 
+    // MARK: - Re-arming after an in-flight flush
+
+    /// A flush arriving while another one is in flight is dropped. Nothing used
+    /// to re-arm it when the running flush came back, so the events sat in the
+    /// buffer until the next `track` happened to cross the batch size — for a
+    /// closing screen, that is never.
+    func testAFlushDroppedBehindAnInFlightOneIsHonouredWhenItReturns() async throws {
+        let processor = EventsRequestProcessor()
+        processor.stallNextRequests(true)
+        let service: ScreenEventsService = makeService(processor: processor)
+
+        // The tenth event starts the flush that hangs.
+        for index in 0..<10 {
+            let event: ScreenEvent = makeEvent(index: index)
+            service.track(event: event)
+        }
+        await waitUntil { processor.batchesCount == 1 }
+
+        for index in 10..<13 {
+            let event: ScreenEvent = makeEvent(index: index)
+            service.track(event: event)
+        }
+        // The screen closing asks for a flush; it lands behind the stalled one.
+        service.flush()
+        await waitUntilQuiet(processor)
+        XCTAssertEqual(processor.batchesCount, 1)
+
+        processor.stallNextRequests(false)
+
+        await waitUntil { processor.batchesCount == 2 }
+        let followUp: [[String: AnyHashable]] = try XCTUnwrap(processor.lastBatch)
+        XCTAssertEqual(followUp.count, 3)
+        XCTAssertEqual(followUp.first?["index"] as? Int, 10)
+        XCTAssertEqual(followUp.last?["index"] as? Int, 12)
+    }
+
+    /// The same for the automatic flush: a full batch that accumulated behind
+    /// a stalled request has to go out once that request returns.
+    func testAFullBatchAccumulatedBehindAStalledFlushIsSentWhenItReturns() async throws {
+        let processor = EventsRequestProcessor()
+        processor.stallNextRequests(true)
+        let service: ScreenEventsService = makeService(processor: processor)
+
+        for index in 0..<20 {
+            let event: ScreenEvent = makeEvent(index: index)
+            service.track(event: event)
+        }
+        await waitUntil { processor.batchesCount == 1 }
+        await waitUntilQuiet(processor)
+        XCTAssertEqual(processor.batchesCount, 1, "the second batch is behind the stalled flush")
+
+        processor.stallNextRequests(false)
+
+        await waitUntil { processor.batchesCount == 2 }
+        let followUp: [[String: AnyHashable]] = try XCTUnwrap(processor.lastBatch)
+        XCTAssertEqual(followUp.count, 10)
+        XCTAssertEqual(followUp.first?["index"] as? Int, 10)
+    }
+
+    /// A successful flush that drains the buffer must not keep flushing.
+    func testASuccessfulFlushThatEmptiesTheBufferSendsNothingMore() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        let event: ScreenEvent = makeEvent(index: 0)
+        service.track(event: event)
+
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 1 }
+        await waitUntilQuiet(processor)
+        XCTAssertEqual(processor.batchesCount, 1)
+    }
+
     // MARK: - Retry buffer
 
     func testFailedEventsAreReinsertedAtTheHeadOfTheBuffer() async throws {

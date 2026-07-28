@@ -74,8 +74,8 @@ final class NoCodesUnpresentableScreenTests: XCTestCase {
     /// on that route — would never fire.
     func testAPresentationThatNeverReachedTheScreenLeavesNothingToClose() {
         var gate = NoCodesPresentationGate()
-        gate.presentationStarted()
-        XCTAssertEqual(gate.presentationReady(), .present)
+        let token: NoCodesPresentationGate.Token = gate.presentationStarted()
+        XCTAssertEqual(gate.presentationReady(token), .present)
 
         // No `screenPresented()`: the coordinator bailed out before presenting.
         XCTAssertEqual(gate.closeRequested(), [])
@@ -86,8 +86,8 @@ final class NoCodesUnpresentableScreenTests: XCTestCase {
     /// own UI on the finish callback waits forever otherwise.
     func testAnUnpresentableScreenIsReportedAndEndsTheFlow() {
         var gate = NoCodesPresentationGate()
-        gate.presentationStarted()
-        let _ = gate.presentationReady()
+        let token: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(token)
 
         XCTAssertEqual(gate.presentationUnavailable(), [.reportFailedToPresent, .reportFinished])
     }
@@ -96,12 +96,12 @@ final class NoCodesUnpresentableScreenTests: XCTestCase {
     /// flow is not over and must not be reported as such.
     func testAnUnpresentableScreenOnTopOfAVisibleOneDoesNotEndTheFlow() {
         var gate = NoCodesPresentationGate()
-        gate.presentationStarted()
-        let _ = gate.presentationReady()
+        let first: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(first)
         gate.screenPresented()
 
-        gate.presentationStarted()
-        let _ = gate.presentationReady()
+        let second: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(second)
 
         XCTAssertEqual(gate.presentationUnavailable(), [.reportFailedToPresent])
     }
@@ -110,12 +110,12 @@ final class NoCodesUnpresentableScreenTests: XCTestCase {
     /// at, so closing still has to reach the visible one.
     func testTheVisibleScreenSurvivesAnUnpresentableOneOnTop() {
         var gate = NoCodesPresentationGate()
-        gate.presentationStarted()
-        let _ = gate.presentationReady()
+        let first: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(first)
         gate.screenPresented()
 
-        gate.presentationStarted()
-        let _ = gate.presentationReady()
+        let second: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(second)
         let _ = gate.presentationUnavailable()
 
         XCTAssertEqual(gate.closeRequested(), [.dismissVisibleScreen])
@@ -123,12 +123,12 @@ final class NoCodesUnpresentableScreenTests: XCTestCase {
 
     func testAScreenPresentedAfterAnUnpresentableOneIsClosedNormally() {
         var gate = NoCodesPresentationGate()
-        gate.presentationStarted()
-        let _ = gate.presentationReady()
+        let failed: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(failed)
         let _ = gate.presentationUnavailable()
 
-        gate.presentationStarted()
-        XCTAssertEqual(gate.presentationReady(), .present)
+        let next: NoCodesPresentationGate.Token = gate.presentationStarted()
+        XCTAssertEqual(gate.presentationReady(next), .present)
         gate.screenPresented()
 
         XCTAssertEqual(gate.closeRequested(), [.dismissVisibleScreen])
@@ -154,14 +154,14 @@ private struct FlowTrace {
         return effects.filter { $0 == .reportFinished }.count
     }
 
-    mutating func showStarted() {
-        gate.presentationStarted()
+    mutating func showStarted() -> NoCodesPresentationGate.Token {
+        return gate.presentationStarted()
     }
 
     /// Returns whether the screen went up.
     @discardableResult
-    mutating func showReady(canPresent: Bool = true) -> Bool {
-        let outcome: NoCodesPresentationOutcome = gate.presentationReady()
+    mutating func showReady(_ token: NoCodesPresentationGate.Token, canPresent: Bool = true) -> Bool {
+        let outcome: NoCodesPresentationOutcome = gate.presentationReady(token)
 
         guard case .present = outcome else {
             if case let .cancelled(cancellationEffects) = outcome {
@@ -203,8 +203,8 @@ final class NoCodesFinishCallbackTests: XCTestCase {
     /// (a) close with a visible screen and nothing in flight.
     func testAVisibleScreenReportsTheFlowFinishedExactlyOnce() {
         var trace = FlowTrace()
-        trace.showStarted()
-        XCTAssertTrue(trace.showReady())
+        let token: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(token))
 
         trace.close()
 
@@ -216,12 +216,12 @@ final class NoCodesFinishCallbackTests: XCTestCase {
     /// reports the flow finished, the cancelled presentation stays quiet.
     func testAVisibleScreenAndAShowInFlightStillReportFinishedOnlyOnce() {
         var trace = FlowTrace()
-        trace.showStarted()
-        XCTAssertTrue(trace.showReady())
-        trace.showStarted()
+        let first: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(first))
+        let second: NoCodesPresentationGate.Token = trace.showStarted()
 
         trace.close()
-        XCTAssertFalse(trace.showReady(), "the presentation was cancelled")
+        XCTAssertFalse(trace.showReady(second), "the presentation was cancelled")
 
         XCTAssertEqual(trace.effects, [.dismissVisibleScreen, .reportFinished])
         XCTAssertEqual(trace.finishCount, 1)
@@ -231,10 +231,10 @@ final class NoCodesFinishCallbackTests: XCTestCase {
     /// so the cancelled presentation is the only thing that can speak.
     func testAShowInFlightAloneReportsTheFlowFinishedWhenItIsCancelled() {
         var trace = FlowTrace()
-        trace.showStarted()
+        let token: NoCodesPresentationGate.Token = trace.showStarted()
 
         trace.close()
-        XCTAssertFalse(trace.showReady())
+        XCTAssertFalse(trace.showReady(token))
 
         XCTAssertEqual(trace.effects, [.reportFinished])
         XCTAssertEqual(trace.finishCount, 1)
@@ -255,9 +255,9 @@ final class NoCodesFinishCallbackTests: XCTestCase {
     /// (e) the show that could not be presented at all.
     func testAScreenThatCouldNotBePresentedReportsTheFlowFinishedExactlyOnce() {
         var trace = FlowTrace()
-        trace.showStarted()
+        let token: NoCodesPresentationGate.Token = trace.showStarted()
 
-        XCTAssertFalse(trace.showReady(canPresent: false))
+        XCTAssertFalse(trace.showReady(token, canPresent: false))
 
         XCTAssertEqual(trace.effects, [.reportFailedToPresent, .reportFinished])
         XCTAssertEqual(trace.finishCount, 1)
@@ -267,20 +267,20 @@ final class NoCodesFinishCallbackTests: XCTestCase {
     /// dismiss, and the failed presentation already reported the flow over.
     func testAClosingAfterAnUnpresentableScreenAddsNoSecondFinish() {
         var trace = FlowTrace()
-        trace.showStarted()
-        XCTAssertFalse(trace.showReady(canPresent: false))
+        let token: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertFalse(trace.showReady(token, canPresent: false))
 
         trace.close()
 
         XCTAssertEqual(trace.finishCount, 1)
     }
 
-    /// The screen ending on its own — the user taps its close button — is the
-    /// same single finish, and a close arriving afterwards adds none.
+    /// (g) the screen ending on its own — the user taps its close button — is
+    /// the same single finish, and a close arriving afterwards adds none.
     func testAScreenThatEndedOnItsOwnReportsTheFlowFinishedExactlyOnce() {
         var trace = FlowTrace()
-        trace.showStarted()
-        XCTAssertTrue(trace.showReady())
+        let token: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(token))
 
         trace.dismissVisibleScreen()
         trace.close()
@@ -289,15 +289,53 @@ final class NoCodesFinishCallbackTests: XCTestCase {
         XCTAssertEqual(trace.finishCount, 1)
     }
 
+    /// (h) the host pops or dismisses the screen itself, without ever calling
+    /// `close()`. The screen still reports the flow over, exactly once, or the
+    /// coordinator keeps believing a screen is visible.
+    func testAHostDrivenDismissalReportsTheFlowFinishedExactlyOnce() {
+        var trace = FlowTrace()
+        let token: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(token))
+
+        // The permanent leave the view controller detects in viewDidDisappear.
+        trace.dismissVisibleScreen()
+
+        XCTAssertEqual(trace.effects, [.reportFinished])
+        XCTAssertEqual(trace.finishCount, 1)
+
+        // A show started afterwards is a new flow with its own finish.
+        let next: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(next))
+        trace.close()
+
+        XCTAssertEqual(trace.finishCount, 2)
+    }
+
+    /// (i) two overlapping shows and a single close: the close ends the flow,
+    /// so neither presentation may reach the screen and the flow is reported
+    /// over exactly once.
+    func testTwoOverlappingShowsAndOneCloseReportTheFlowFinishedExactlyOnce() {
+        var trace = FlowTrace()
+        let first: NoCodesPresentationGate.Token = trace.showStarted()
+        let second: NoCodesPresentationGate.Token = trace.showStarted()
+
+        trace.close()
+
+        XCTAssertFalse(trace.showReady(first), "the host closed the flow")
+        XCTAssertFalse(trace.showReady(second), "the second presentation was cancelled by the same close")
+        XCTAssertEqual(trace.effects, [.reportFinished])
+        XCTAssertEqual(trace.finishCount, 1)
+    }
+
     /// Two screens in a row are two flows, so two finishes.
     func testTwoScreensInARowReportTheFlowFinishedOncePerScreen() {
         var trace = FlowTrace()
-        trace.showStarted()
-        XCTAssertTrue(trace.showReady())
+        let first: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(first))
         trace.close()
 
-        trace.showStarted()
-        XCTAssertTrue(trace.showReady())
+        let second: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(second))
         trace.close()
 
         XCTAssertEqual(trace.finishCount, 2)

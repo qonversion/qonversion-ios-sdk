@@ -244,15 +244,22 @@ final class ImagePreloader: ImagePreloaderInterface, Sendable {
   
   /// Replaces image URLs in HTML with base64 data URIs.
   /// Uses simple string replacement instead of regex to avoid issues with special characters in base64.
-  private func replaceUrls(in html: String, with replacements: [String: String]) -> String {
-    var result = html
-    
-    for (originalUrl, dataUri) in replacements {
-      // Simple string replacement - much safer for base64 data URIs
-      // which may contain special regex characters like +, /, $
+  /// Not private so the replacement order can be pinned by unit tests.
+  func replaceUrls(in html: String, with replacements: [String: String]) -> String {
+    // Longest URL first: thumbnail variants share a prefix ("x.png" and
+    // "x.png?w=200"), and replacing the short one first would rewrite the head
+    // of the long one and leave its query dangling.
+    let orderedUrls: [String] = replacements.keys.sorted { first, second in
+      return first.count == second.count ? first < second : first.count > second.count
+    }
+    var result: String = html
+
+    for originalUrl: String in orderedUrls {
+      guard let dataUri: String = replacements[originalUrl] else { continue }
+
       result = result.replacingOccurrences(of: originalUrl, with: dataUri)
     }
-    
+
     return result
   }
   

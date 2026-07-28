@@ -177,6 +177,7 @@
 		AC0DE0000000000000000048 /* ResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000047 /* ResponseDecoder.swift */; };
 		AC0DE000000000000000004A /* ResponseDecoderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000049 /* ResponseDecoderInterface.swift */; };
 		AC0DE000000000000000004C /* NoCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000004B /* NoCodes.swift */; };
+		AC0DE00000000000000000F2 /* SDKVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE00000000000000000F1 /* SDKVersion.swift */; };
 		AC0DE000000000000000004E /* NoCodesConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000004D /* NoCodesConfiguration.swift */; };
 		AC0DE0000000000000000050 /* NoCodesFlowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE000000000000000004F /* NoCodesFlowCoordinator.swift */; };
 		AC0DE0000000000000000052 /* NoCodesNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0DE0000000000000000051 /* NoCodesNavigationController.swift */; };
@@ -426,6 +427,7 @@
 		AC0DE0000000000000000047 /* ResponseDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ResponseDecoder.swift; path = NetworkLayer/ResponseDecoder/ResponseDecoder.swift; sourceTree = "<group>"; };
 		AC0DE0000000000000000049 /* ResponseDecoderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ResponseDecoderInterface.swift; path = NetworkLayer/ResponseDecoder/ResponseDecoderInterface.swift; sourceTree = "<group>"; };
 		AC0DE000000000000000004B /* NoCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodes.swift; path = NoCodes.swift; sourceTree = "<group>"; };
+		AC0DE00000000000000000F1 /* SDKVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SDKVersion.swift; path = SDKVersion.swift; sourceTree = "<group>"; };
 		AC0DE000000000000000004D /* NoCodesConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesConfiguration.swift; path = NoCodesConfiguration.swift; sourceTree = "<group>"; };
 		AC0DE000000000000000004F /* NoCodesFlowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesFlowCoordinator.swift; path = NoCodesFlowCoordinator.swift; sourceTree = "<group>"; };
 		AC0DE0000000000000000051 /* NoCodesNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoCodesNavigationController.swift; path = NoCodesNavigationController.swift; sourceTree = "<group>"; };
@@ -994,6 +996,7 @@
 				AC0DE0000000000000000047 /* ResponseDecoder.swift */,
 				AC0DE0000000000000000049 /* ResponseDecoderInterface.swift */,
 				AC0DE000000000000000004B /* NoCodes.swift */,
+				AC0DE00000000000000000F1 /* SDKVersion.swift */,
 				AC0DE000000000000000004D /* NoCodesConfiguration.swift */,
 				AC0DE000000000000000004F /* NoCodesFlowCoordinator.swift */,
 				AC0DE0000000000000000051 /* NoCodesNavigationController.swift */,
@@ -1337,6 +1340,7 @@
 				AC0DE0000000000000000048 /* ResponseDecoder.swift in Sources */,
 				AC0DE000000000000000004A /* ResponseDecoderInterface.swift in Sources */,
 				AC0DE000000000000000004C /* NoCodes.swift in Sources */,
+				AC0DE00000000000000000F2 /* SDKVersion.swift in Sources */,
 				AC0DE000000000000000004E /* NoCodesConfiguration.swift in Sources */,
 				AC0DE0000000000000000050 /* NoCodesFlowCoordinator.swift in Sources */,
 				AC0DE0000000000000000052 /* NoCodesNavigationController.swift in Sources */,

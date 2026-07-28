@@ -18,9 +18,9 @@ final class NoCodesAssembly {
   private let servicesAssembly: ServicesAssembly
   private var flowCoordinatorInstance: NoCodesFlowCoordinator?
   
-  required init(configuration: NoCodesConfiguration) {
+  required init(configuration: NoCodesConfiguration, isFirstLaunch: Bool, userDefaults: UserDefaults = .standard) {
     self.configuration = configuration
-    miscAssembly = MiscAssembly(projectKey: configuration.projectKey)
+    miscAssembly = MiscAssembly(projectKey: configuration.projectKey, userDefaults: userDefaults, isFirstLaunch: isFirstLaunch)
     servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly, fallbackFileName: configuration.fallbackFileName, proxyURL: configuration.proxyURL)
   }
   

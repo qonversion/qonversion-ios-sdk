@@ -120,8 +120,7 @@ final class RequestTests: XCTestCase {
 
     func testHeadersCarryTheProjectKeyAsABearerTokenAndTheDeviceContext() {
         let device: Device = makeDevice()
-        let deviceInfoCollector = StubDeviceInfoCollector(device: device)
-        let headersBuilder = HeadersBuilder(projectKey: "project-key", deviceInfoCollector: deviceInfoCollector)
+        let headersBuilder: HeadersBuilder = makeHeadersBuilder(device: device)
         let url = URL(string: "https://api2.qonversion.io/v3/screens/screen-1")!
         var request = URLRequest(url: url)
 
@@ -134,13 +133,12 @@ final class RequestTests: XCTestCase {
         XCTAssertEqual(request.value(forHTTPHeaderField: "User-Locale"), "en")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Platform"), "iOS")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Platform-Version"), "17.4")
-        XCTAssertEqual(request.value(forHTTPHeaderField: "Source"), UserDefaults.source)
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Source"), "iOS")
     }
 
     func testMissingOptionalDeviceValuesBecomeEmptyHeaders() {
         let device: Device = makeDevice(appVersion: nil, country: nil, language: nil)
-        let deviceInfoCollector = StubDeviceInfoCollector(device: device)
-        let headersBuilder = HeadersBuilder(projectKey: "project-key", deviceInfoCollector: deviceInfoCollector)
+        let headersBuilder: HeadersBuilder = makeHeadersBuilder(device: device)
         let url = URL(string: "https://api2.qonversion.io/v3/screens/screen-1")!
         var request = URLRequest(url: url)
 
@@ -151,7 +149,70 @@ final class RequestTests: XCTestCase {
         XCTAssertEqual(request.value(forHTTPHeaderField: "User-Locale"), "")
     }
 
+    // MARK: - Source headers
+
+    /// A clean native install has no override keys at all: the version of the
+    /// No-Codes SDK itself has to travel with every request.
+    func testTheNativeSourceVersionIsSentByDefault() {
+        let headersBuilder: HeadersBuilder = makeHeadersBuilder(sdkVersion: "7.0.0")
+        var request = URLRequest(url: URL(string: "https://api2.qonversion.io/v3/screens/screen-1")!)
+
+        headersBuilder.addHeaders(to: &request)
+
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Source"), "iOS")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Source-Version"), "7.0.0")
+    }
+
+    func testACrossPlatformWrapperOverridesBothSourceHeaders() {
+        let userDefaults: UserDefaults = TestDefaults.makeIsolated()
+        userDefaults.set("flutter", forKey: "com.qonversion.keys.source")
+        userDefaults.set("9.9.9", forKey: "com.qonversion.keys.sourceVersion")
+        let headersBuilder: HeadersBuilder = makeHeadersBuilder(sdkVersion: "7.0.0", userDefaults: userDefaults)
+        var request = URLRequest(url: URL(string: "https://api2.qonversion.io/v3/screens/screen-1")!)
+
+        headersBuilder.addHeaders(to: &request)
+
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Source"), "flutter")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Source-Version"), "9.9.9")
+    }
+
+    /// The production Objective-C SDK persisted its own version into the
+    /// version key. On an install upgraded from it that leftover must not
+    /// shadow the Swift SDK version forever.
+    func testALeftoverVersionOverrideWithoutASourceOverrideIsIgnored() {
+        let userDefaults: UserDefaults = TestDefaults.makeIsolated()
+        userDefaults.set("6.13.1", forKey: "com.qonversion.keys.sourceVersion")
+        let headersBuilder: HeadersBuilder = makeHeadersBuilder(sdkVersion: "7.0.0", userDefaults: userDefaults)
+        var request = URLRequest(url: URL(string: "https://api2.qonversion.io/v3/screens/screen-1")!)
+
+        headersBuilder.addHeaders(to: &request)
+
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Source"), "iOS")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Source-Version"), "7.0.0")
+    }
+
+    /// A wrapper that set only its source still needs a version on the wire.
+    func testASourceOverrideWithoutAVersionFallsBackToTheSdkVersion() {
+        let userDefaults: UserDefaults = TestDefaults.makeIsolated()
+        userDefaults.set("react-native", forKey: "com.qonversion.keys.source")
+        let headersBuilder: HeadersBuilder = makeHeadersBuilder(sdkVersion: "7.0.0", userDefaults: userDefaults)
+        var request = URLRequest(url: URL(string: "https://api2.qonversion.io/v3/screens/screen-1")!)
+
+        headersBuilder.addHeaders(to: &request)
+
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Source"), "react-native")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Source-Version"), "7.0.0")
+    }
+
     // MARK: - Private
+
+    private func makeHeadersBuilder(device: Device? = nil, sdkVersion: String = "7.0.0", userDefaults: UserDefaults? = nil) -> HeadersBuilder {
+        let resolvedDevice: Device = device ?? makeDevice()
+        let deviceInfoCollector = StubDeviceInfoCollector(device: resolvedDevice)
+        let resolvedDefaults: UserDefaults = userDefaults ?? TestDefaults.makeIsolated()
+
+        return HeadersBuilder(projectKey: "project-key", sdkVersion: sdkVersion, deviceInfoCollector: deviceInfoCollector, userDefaults: resolvedDefaults)
+    }
 
     private func makeDevice(appVersion: String? = "1.2.3", country: String? = "US", language: String? = "en") -> Device {
         return Device(

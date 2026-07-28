@@ -31,6 +31,13 @@ enum NoCodesScreenLifecycle {
     return !isCancelled
   }
 
+  /// Whether a screen that is going away ends the whole flow. A host-driven
+  /// pop or dismiss has to end it just like the SDK-driven close, but popping
+  /// the top of a multi-screen flow leaves the one below it on screen.
+  static func reportsFinished(leave: NoCodesScreenLeave, hasRemainingFlowScreen: Bool) -> Bool {
+    return leave == .permanent && !hasRemainingFlowScreen
+  }
+
   /// `nil` for every route UIKit would silently drop, leaving the screen off
   /// screen while the call still looks like it worked.
   static func presentationTarget(style: NoCodesPresentationStyle, hasHost: Bool, hostHasNavigationController: Bool, hostIsAlreadyPresenting: Bool) -> NoCodesPresentationTarget? {
@@ -85,32 +92,44 @@ enum NoCodesPresentationOutcome: Equatable {
 }
 
 /// Remembers a `close` that lands while a screen is still being presented —
-/// that window has no view controller to act on — and cancels the presentation
+/// that window has no view controller to act on — and cancels the presentations
 /// it raced instead of dropping the close.
 struct NoCodesPresentationGate {
 
-  private var isPresenting = false
-  private var closeRequestedWhilePresenting = false
-  private var pendingCloseDismissedAVisibleScreen = false
+  /// Identifies one presentation from its start to its presentation point.
+  /// Two `showScreen` calls can be in flight at once, and a close has to reach
+  /// both of them, not whichever one comes back first.
+  struct Token: Equatable {
+
+    fileprivate let generation: UInt64
+  }
+
+  private var nextGeneration: UInt64 = 0
+  private var inFlightCount: Int = 0
+  /// Every token up to and including this generation was cancelled by a close.
+  private var cancelledThroughGeneration: UInt64?
+  /// The close found nothing on screen to dismiss, so the first cancelled
+  /// presentation is what reports the flow over.
+  private var cancellationOwesFinish = false
   private var hasVisibleScreen = false
 
-  mutating func presentationStarted() {
-    isPresenting = true
-    // A close left over from an abandoned presentation must not take this one down.
-    closeRequestedWhilePresenting = false
-    pendingCloseDismissedAVisibleScreen = false
+  mutating func presentationStarted() -> Token {
+    let generation: UInt64 = nextGeneration
+    nextGeneration += 1
+    inFlightCount += 1
+
+    return Token(generation: generation)
   }
 
   /// Call once the screen is about to be put on screen. Deliberately does not
   /// mark it visible yet — the coordinator still has to find a host.
-  mutating func presentationReady() -> NoCodesPresentationOutcome {
-    isPresenting = false
+  mutating func presentationReady(_ token: Token) -> NoCodesPresentationOutcome {
+    inFlightCount = max(0, inFlightCount - 1)
 
-    guard closeRequestedWhilePresenting else { return .present }
+    guard let cancelledThroughGeneration, token.generation <= cancelledThroughGeneration else { return .present }
 
-    let reportsFinished: Bool = !pendingCloseDismissedAVisibleScreen
-    closeRequestedWhilePresenting = false
-    pendingCloseDismissedAVisibleScreen = false
+    let reportsFinished: Bool = cancellationOwesFinish
+    cancellationOwesFinish = false
 
     return .cancelled(effects: reportsFinished ? [.reportFinished] : [])
   }
@@ -127,15 +146,16 @@ struct NoCodesPresentationGate {
     return hasVisibleScreen ? [.reportFailedToPresent] : [.reportFailedToPresent, .reportFinished]
   }
 
-  /// A close has to reach both the visible screen and any presentation in flight.
+  /// A close has to reach the visible screen and every presentation in flight.
+  /// Presentations started after it are new requests and go ahead.
   mutating func closeRequested() -> [NoCodesFlowEffect] {
     let closesVisibleScreen: Bool = hasVisibleScreen
     hasVisibleScreen = false
 
-    if isPresenting {
-      closeRequestedWhilePresenting = true
-      pendingCloseDismissedAVisibleScreen = closesVisibleScreen
+    if nextGeneration > 0 {
+      cancelledThroughGeneration = nextGeneration - 1
     }
+    cancellationOwesFinish = !closesVisibleScreen && inFlightCount > 0
 
     return closesVisibleScreen ? [.dismissVisibleScreen] : []
   }

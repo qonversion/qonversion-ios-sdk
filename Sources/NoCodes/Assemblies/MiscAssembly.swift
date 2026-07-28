@@ -17,9 +17,13 @@ fileprivate enum IntConstants: UInt {
 final class MiscAssembly {
   
   let projectKey: String
+  let userDefaults: UserDefaults
+  let isFirstLaunch: Bool
 
-  init(projectKey: String) {
+  init(projectKey: String, userDefaults: UserDefaults, isFirstLaunch: Bool = false) {
     self.projectKey = projectKey
+    self.userDefaults = userDefaults
+    self.isFirstLaunch = isFirstLaunch
   }
   
   func loggerWrapper() -> LoggerWrapper {
@@ -66,7 +70,7 @@ final class MiscAssembly {
   // The collector is passed in rather than reached for through a back
   // reference: the assembly that owns it is the one asking for the headers.
   func headersBuilder(deviceInfoCollector: DeviceInfoCollectorInterface) -> HeadersBuilderInterface {
-    let headersBuilder = HeadersBuilder(projectKey: projectKey, deviceInfoCollector: deviceInfoCollector)
+    let headersBuilder = HeadersBuilder(projectKey: projectKey, sdkVersion: SDKVersion.current, deviceInfoCollector: deviceInfoCollector, userDefaults: userDefaults)
     
     return headersBuilder
   }
@@ -76,7 +80,7 @@ final class MiscAssembly {
   }
 
   func contextBuilder() -> NoCodesContextBuilderInterface {
-    return NoCodesContextBuilder()
+    return NoCodesContextBuilder(isFirstLaunch: isFirstLaunch)
   }
 
   func htmlInjector() -> NoCodesHTMLInjectorInterface {

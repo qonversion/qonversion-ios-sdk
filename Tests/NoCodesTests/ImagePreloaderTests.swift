@@ -186,6 +186,52 @@ final class ImagePreloaderTests: XCTestCase {
         XCTAssertFalse(result.contains(second))
     }
 
+    /// Thumbnail variants of the same image differ by a query suffix, so one
+    /// URL is a prefix of the other. Replacing the short one first rewrites the
+    /// long one's head into a data URI and leaves its suffix dangling, and the
+    /// downloaded bytes of the long one never reach the markup.
+    func testAUrlThatIsAPrefixOfAnotherDoesNotCorruptIt() async throws {
+        let short = "https://cdn.qonversion.io/hero.png"
+        let long = "https://cdn.qonversion.io/hero.png?w=200"
+        let shortBytes: Data = pngBytes
+        let longBytes: Data = pngBytes + Data([0x01, 0x02, 0x03])
+        register(url: short, bytes: shortBytes, contentType: "image/png")
+        register(url: long, bytes: longBytes, contentType: "image/png")
+        let preloader: ImagePreloader = makePreloader()
+        let html = "<img src=\"\(short)\"><img src=\"\(long)\">"
+
+        let result: String = await preloader.preloadImages(in: html)
+
+        let expected = "<img src=\"\(dataUri(shortBytes))\"><img src=\"\(dataUri(longBytes))\">"
+        XCTAssertEqual(result, expected)
+    }
+
+    /// The same hazard with a whole chain of prefixes: only one iteration order
+    /// out of every hundred and twenty leaves the markup intact by chance, so
+    /// the replacement order cannot be left to the dictionary.
+    func testAChainOfPrefixUrlsIsReplacedWithoutCorruption() async throws {
+        let base = "https://cdn.qonversion.io/hero.png"
+        let suffixes: [String] = ["", "?w=1", "?w=10", "?w=100", "?w=1000"]
+        var payloads: [String: Data] = [:]
+        for (index, suffix) in suffixes.enumerated() {
+            let url: String = base + suffix
+            let bytes: Data = pngBytes + Data([UInt8(index)])
+            payloads[url] = bytes
+            register(url: url, bytes: bytes, contentType: "image/png")
+        }
+        let preloader: ImagePreloader = makePreloader()
+        let html: String = suffixes.map { "<img src=\"\(base + $0)\">" }.joined()
+
+        let result: String = await preloader.preloadImages(in: html)
+
+        let expected: String = suffixes.map { suffix in
+            let bytes: Data = payloads[base + suffix] ?? Data()
+
+            return "<img src=\"\(dataUri(bytes))\">"
+        }.joined()
+        XCTAssertEqual(result, expected)
+    }
+
     // MARK: - Filtering
 
     func testOnlyHttpAndHttpsSourcesAreDownloaded() async throws {
@@ -375,6 +421,10 @@ final class ImagePreloaderTests: XCTestCase {
         let session = URLSession(configuration: configuration)
 
         return ImagePreloader(urlSession: session, timeout: timeout, maxConcurrentDownloads: 5)
+    }
+
+    private func dataUri(_ bytes: Data) -> String {
+        return "data:image/png;base64," + bytes.base64EncodedString()
     }
 
     private func register(url: String, bytes: Data, contentType: String?, statusCode: Int = 200) {
