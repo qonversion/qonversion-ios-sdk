@@ -57,6 +57,10 @@
 }
 
 - (void)tearDown {
+  // The manager's init schedules collectIntegrationsDataInBackground with a 5s
+  // performSelector that retains it past tearDown — cancel it so the delayed
+  // fire cannot message a stopMocking'd class mock mid-suite.
+  [NSObject cancelPreviousPerformRequestsWithTarget:self.manager];
   [self.mockClient stopMocking];
   self.mockClient = nil;
   self.manager = nil;
