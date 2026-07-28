@@ -33,7 +33,9 @@ enum TestDefaults {
 
 final class MockRequestProcessor: RequestProcessorInterface {
 
-    /// Stubbed results returned in order. Put decoded values of the expected response type here.
+    /// Stubbed results returned in order. Put decoded values of the expected
+    /// response type here; an Error entry is thrown when its turn comes, which
+    /// lets a test fail one request of a sequence and answer the next.
     var results: [Any] = []
     var error: Error?
     var onProcess: (() async -> Void)?
@@ -47,6 +49,7 @@ final class MockRequestProcessor: RequestProcessorInterface {
         if let error { throw error }
         guard !results.isEmpty else { throw MockError.noStub }
         let next = results.removeFirst()
+        if let stubbedError = next as? Error { throw stubbedError }
         guard let typed = next as? T else { throw MockError.typeMismatch }
         return typed
     }

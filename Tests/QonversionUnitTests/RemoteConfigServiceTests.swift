@@ -145,10 +145,10 @@ final class RemoteConfigServiceTests: XCTestCase {
     }
 
     func testAnUnknownUserIsNotDisguisedAsAMissingConfiguration() async {
-        // `user_not_found` also classifies as .resourceNotFound, but it means
-        // the SDK asked about a user the backend does not have — a real error,
-        // not "this user has no config", and the integrator must be able to
-        // tell them apart.
+        // The remap is limited to the two codes that really mean "there is no
+        // configuration here". `user_not_found` is not one of them — and is
+        // not in the SDK's slug vocabulary at all, so it keeps the
+        // endpoint-specific type while carrying the backend code through.
         let service = makeLiveService(
             json: #"{"error": {"type": "resource", "code": "user_not_found", "message": "no such user"}}"#,
             status: 404
@@ -158,7 +158,8 @@ final class RemoteConfigServiceTests: XCTestCase {
             _ = try await service.loadRemoteConfig(contextKey: "main")
             XCTFail("Expected an error")
         } catch let error as QonversionError {
-            XCTAssertEqual(error.type, .resourceNotFound)
+            XCTAssertNotEqual(error.type, .remoteConfigurationNotAvailable)
+            XCTAssertEqual(error.type, .loadingRemoteConfigFailed)
             XCTAssertEqual(error.apiCode, "user_not_found")
         } catch {
             XCTFail("Expected QonversionError, got \(error)")

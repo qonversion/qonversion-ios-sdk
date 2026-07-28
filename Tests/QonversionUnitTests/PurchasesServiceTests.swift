@@ -123,6 +123,69 @@ final class PurchasesServiceTests: XCTestCase {
         XCTAssertNil(body["screen_uid"])
     }
 
+    // MARK: - price / currency
+
+    /// An unknown price must be absent from the body, never an empty string:
+    /// the backend reads "" as a value and would record a zero-cost purchase.
+    func testSendWithoutPriceOmitsThePriceKey() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+
+        try await service.send(makeTransaction(price: nil), userId: "QON_buyer")
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["price"])
+        XCTAssertEqual(body["currency"] as? String, "USD", "a known currency still travels")
+    }
+
+    func testSendWithoutCurrencyOmitsTheCurrencyKey() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+
+        try await service.send(makeTransaction(currencyId: nil), userId: "QON_buyer")
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["currency"])
+        XCTAssertEqual(body["price"] as? String, "9.99", "a known price still travels")
+    }
+
+    /// An identifier that is present but empty is as unknown as a missing one.
+    func testSendWithEmptyCurrencyIdentifierOmitsTheCurrencyKey() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+
+        try await service.send(makeTransaction(currencyId: ""), userId: "QON_buyer")
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["currency"])
+    }
+
+    func testSendWithoutPriceAndCurrencyKeepsTheRestOfTheBody() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+
+        try await service.send(makeTransaction(price: nil, currencyId: nil), userId: "QON_buyer")
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["price"])
+        XCTAssertNil(body["currency"])
+        XCTAssertEqual(body["platform"] as? String, "app_store")
+        XCTAssertEqual(body["purchased_at"] as? String, "2023-11-14T22:13:20Z")
+        XCTAssertNotNil(body["store_data"])
+    }
+
     func testSendWithoutJwsSendsEmptyReceipt() async throws {
         let processor = MockRequestProcessor()
         processor.results = [PurchaseReportResponse(userId: nil)]

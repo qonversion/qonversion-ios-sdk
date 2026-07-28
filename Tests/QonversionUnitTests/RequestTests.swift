@@ -131,14 +131,14 @@ final class RequestTests: XCTestCase {
 
     func testRemoteConfigWithoutContextKey() throws {
         let request = try XCTUnwrap(Request.remoteConfig(userId: "user1", contextKey: nil).convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/remote-config?user_id=user1")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-config?user_id=user1")
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
     }
 
     func testRemoteConfigWithContextKey() throws {
         let request = try XCTUnwrap(Request.remoteConfig(userId: "user1", contextKey: "main").convertToURLRequest(baseURL))
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/remote-config?user_id=user1&context_key=main")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-config?user_id=user1&context_key=main")
         XCTAssertEqual(request.httpMethod, "GET")
     }
 
@@ -149,7 +149,7 @@ final class RequestTests: XCTestCase {
         )
         XCTAssertEqual(
             request.url?.absoluteString,
-            "https://api.qonversion.io/v4/remote-configs?user_id=user1&with_empty_context_key=true&context_key=a&context_key=b"
+            "https://api.qonversion.io/v3/remote-configs?user_id=user1&with_empty_context_key=true&context_key=a&context_key=b"
         )
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
@@ -162,7 +162,7 @@ final class RequestTests: XCTestCase {
         )
         XCTAssertEqual(
             request.url?.absoluteString,
-            "https://api.qonversion.io/v4/remote-configs?user_id=user1&with_empty_context_key=false"
+            "https://api.qonversion.io/v3/remote-configs?user_id=user1&with_empty_context_key=false"
         )
     }
 
@@ -172,7 +172,7 @@ final class RequestTests: XCTestCase {
         // and user_id is appended with "&".
         XCTAssertEqual(
             request.url?.absoluteString,
-            "https://api.qonversion.io/v4/remote-configs?all_context_keys=true&user_id=user1"
+            "https://api.qonversion.io/v3/remote-configs?all_context_keys=true&user_id=user1"
         )
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.httpBody)
@@ -223,7 +223,7 @@ final class RequestTests: XCTestCase {
         let request = try XCTUnwrap(
             Request.signPromoOffer(userId: "user1", offerId: "offer1", body: body).convertToURLRequest(baseURL)
         )
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1/offers/offer1/signatures")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/users/user1/offers/offer1/signatures")
         XCTAssertEqual(request.httpMethod, "POST")
         XCTAssertEqual(try bodyDict(request)["product"] as? String, "com.app.pro")
     }
@@ -242,7 +242,7 @@ final class RequestTests: XCTestCase {
         let request = try XCTUnwrap(
             Request.remoteConfig(userId: "u", contextKey: "a&b").convertToURLRequest(baseURL)
         )
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/remote-config?user_id=u&context_key=a%26b")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/remote-config?user_id=u&context_key=a%26b")
     }
 
     // MARK: - Hashable
