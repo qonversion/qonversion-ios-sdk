@@ -6,6 +6,11 @@
 //
 
 import XCTest
+#if canImport(UIKit) && !os(watchOS)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 @testable import Qonversion
 
 final class IncrementalDelayCalculatorClampTests: XCTestCase {
@@ -413,6 +418,33 @@ private final class PropertiesAsyncGate: @unchecked Sendable {
     func wait() async { await storage.wait() }
 }
 
+/// A one-shot "it finished" marker: lets a test bound an await that would
+/// otherwise hang forever, so a regression fails instead of stalling the suite.
+private actor DoneFlag {
+    private var isDone = false
+
+    func markDone() { isDone = true }
+
+    func value() -> Bool { isDone }
+}
+
+private func waitForCompletion(of flag: DoneFlag, timeout: TimeInterval) async -> Bool {
+    let deadline: Date = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+        if await flag.value() { return true }
+        try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+
+    return await flag.value()
+}
+
+private func pollUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
+    let deadline: Date = Date().addingTimeInterval(timeout)
+    while !condition() && Date() < deadline {
+        try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+}
+
 /// Records the observer removals the manager performs on deinit.
 final class SpyNotificationCenter: NotificationCenter, @unchecked Sendable {
 
@@ -448,7 +480,7 @@ final class UserPropertiesObserverTests: XCTestCase {
         // the notification center for the life of the process.
         let center = SpyNotificationCenter()
         var manager: UserPropertiesManager? = makeManager(center: center, name: Notification.Name("test.background"))
-        XCTAssertNotNil(manager)
+        XCTAssertTrue(center.removedObservers.isEmpty, "the registration must stay live while the manager is alive")
 
         manager = nil
 
@@ -474,5 +506,227 @@ final class UserPropertiesObserverTests: XCTestCase {
         }
         XCTAssertEqual(processor.processedRequests.count, 1)
         XCTAssertTrue(storage.all().isEmpty)
+    }
+
+    func testEveryHostsBackgroundNotificationNameIsMapped() {
+        // Runs on every platform and covers all of them: an #if-guarded
+        // assertion only ever compiles the arm for the platform under test, so
+        // a broken mapping for one of the others ships green. A name nothing
+        // posts silently drops the pending batch on that platform.
+        XCTAssertEqual(
+            UserPropertiesManager.backgroundFlushNotificationName(for: .watchExtension).rawValue,
+            "NSExtensionHostDidEnterBackgroundNotification"
+        )
+        XCTAssertEqual(
+            UserPropertiesManager.backgroundFlushNotificationName(for: .uiKitApplication).rawValue,
+            "UIApplicationDidEnterBackgroundNotification"
+        )
+        XCTAssertEqual(
+            UserPropertiesManager.backgroundFlushNotificationName(for: .appKitApplication).rawValue,
+            "NSApplicationDidResignActiveNotification"
+        )
+        XCTAssertNotEqual(
+            UserPropertiesManager.backgroundFlushNotificationName(for: .watchExtension),
+            UserPropertiesManager.backgroundFlushNotificationName(for: .uiKitApplication),
+            "the watch host must not fall through to the UIKit name — watchOS imports UIKit but has no UIApplication"
+        )
+    }
+
+    func testTheObservedNotificationIsTheOneTheCurrentPlatformPosts() {
+        // The mapping above is spelled with string literals; this pins the
+        // literal for the platform under test to the constant the system
+        // actually posts, so the table cannot drift away from the frameworks.
+        let observed: Notification.Name = UserPropertiesManager.backgroundNotificationName
+
+        #if os(watchOS)
+        XCTAssertEqual(UserPropertiesManager.currentBackgroundFlushHost, .watchExtension)
+        XCTAssertEqual(observed, .NSExtensionHostDidEnterBackground)
+        #elseif canImport(UIKit)
+        XCTAssertEqual(UserPropertiesManager.currentBackgroundFlushHost, .uiKitApplication)
+        XCTAssertEqual(observed, UIApplication.didEnterBackgroundNotification)
+        #elseif canImport(AppKit)
+        XCTAssertEqual(UserPropertiesManager.currentBackgroundFlushHost, .appKitApplication)
+        XCTAssertEqual(observed, NSApplication.didResignActiveNotification)
+        #endif
+    }
+}
+
+/// The pending batch belongs to the uid that queued it: it must reach the
+/// backend under that uid before the switch completes, and it must never be
+/// carried over to the user the SDK switches to.
+final class UserPropertiesUserSwitchTests: XCTestCase {
+
+    private let oldUid = "old-uid"
+    private let newUid = "new-uid"
+
+    private func makeUser(id: String) throws -> Qonversion.User {
+        let json = #"{"id": "\#(id)", "created_at": "2023-11-14T22:13:20Z"}"#
+        return try JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(json.utf8))
+    }
+
+    private struct Graph {
+        let userManager: UserManager
+        let propertiesManager: UserPropertiesManager
+        let propertiesStorage: UserPropertiesStorage
+        let processor: MockRequestProcessor
+        let config: InternalConfig
+        /// The gate the properties manager is wired to. It is a stub, not the
+        /// real UserManager above: the handed-over post is expected to skip the
+        /// gate entirely, and a stub is what makes the call count observable.
+        let propertiesUserManager: MockUserManager
+    }
+
+    private func makeGraph(originalUid: String) throws -> Graph {
+        let config = InternalConfig(userId: oldUid)
+        let storage = MockLocalStorage()
+        storage.set(string: originalUid, forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
+        let userService = MockUserService()
+        let oldUser: Qonversion.User = try makeUser(id: oldUid)
+        userService.createUserResult = oldUser
+        userService.userResult = try makeUser(id: newUid)
+        userService.identityLinkedUid = newUid
+        let notifier = UserChangesNotifier()
+        let logger = LoggerWrapper()
+        let userManager = UserManager(userService: userService, localStorage: storage, internalConfig: config, userChangesNotifier: notifier, logger: logger)
+
+        let processor = MockRequestProcessor()
+        let sendResult = SendUserPropertiesResult(savedProperties: [], propertyErrors: [])
+        processor.results = [sendResult]
+        let propertiesStorage = UserPropertiesStorage()
+        // A stub gate, so "the post never calls obtainUser" is observable as a
+        // call count. It is not a claim that the real gate would misbehave —
+        // UserManager is an actor, a reentrant call would suspend, not
+        // deadlock. The post skips the gate because the outgoing user provably
+        // exists by then, so the call would buy nothing.
+        let propertiesUserManager = MockUserManager()
+        propertiesUserManager.user = oldUser
+        let propertiesManager = UserPropertiesManager(
+            requestProcessor: processor,
+            propertiesStorage: propertiesStorage,
+            delayCalculator: IncrementalDelayCalculator(),
+            userIdProvider: config,
+            userManager: propertiesUserManager,
+            integrationsInfoCollector: MockIntegrationsInfoCollector(),
+            logger: logger
+        )
+        notifier.add(observer: propertiesManager)
+
+        return Graph(userManager: userManager, propertiesManager: propertiesManager, propertiesStorage: propertiesStorage, processor: processor, config: config, propertiesUserManager: propertiesUserManager)
+    }
+
+    private func sentPropertyUserIds(_ processor: MockRequestProcessor) -> [String] {
+        return processor.processedRequests.compactMap { request in
+            guard case let .sendProperties(userId, _, _, _) = request else { return nil }
+            return userId
+        }
+    }
+
+    private func sentPropertyKeys(_ processor: MockRequestProcessor, at index: Int) -> [String] {
+        let bodies: [RequestBodyDict] = processor.processedRequests.compactMap { request in
+            guard case let .sendProperties(_, _, body, _) = request else { return nil }
+            return body
+        }
+        guard index < bodies.count else {
+            XCTFail("No .sendProperties request at index \(index)")
+            return []
+        }
+        guard let items: RequestBodyArray = bodies[index]["properties"] as? RequestBodyArray else {
+            XCTFail("Expected a `properties` array in the body")
+            return []
+        }
+
+        return items.compactMap { ($0 as? RequestBodyDict)?["key"] as? String }.sorted()
+    }
+
+    func testIdentifySendsThePendingBatchUnderTheOldUid() async throws {
+        let graph: Graph = try makeGraph(originalUid: oldUid)
+        _ = try await graph.userManager.obtainUser()
+        graph.propertiesManager.setCustomUserProperty(key: "my_key", value: "my_value")
+
+        _ = try await graph.userManager.identify("external-id")
+
+        XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
+        XCTAssertTrue(graph.propertiesStorage.all().isEmpty, "the new user must start with an empty batch")
+        // The switch no longer implies delivery: the batch is handed to a
+        // background post, so the delivery is awaited here rather than assumed.
+        await pollUntil { !self.sentPropertyUserIds(graph.processor).isEmpty }
+        XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
+        XCTAssertEqual(
+            graph.propertiesUserManager.obtainUserCallsCount,
+            0,
+            "the post goes out under the uid it was handed, without asking the user gate"
+        )
+    }
+
+    func testLogoutSendsThePendingBatchUnderTheIdentifiedUid() async throws {
+        // The uid moved away from the install's anonymous user, so the logout
+        // restores it — the same switch, reached from the other entry point.
+        let graph: Graph = try makeGraph(originalUid: "anon-uid")
+        _ = try await graph.userManager.obtainUser()
+        graph.propertiesManager.setCustomUserProperty(key: "my_key", value: "my_value")
+
+        await graph.userManager.logout()
+
+        XCTAssertEqual(graph.config.userId, "anon-uid", "the logout must have restored the original user")
+        XCTAssertTrue(graph.propertiesStorage.all().isEmpty, "the restored user must start with an empty batch")
+        await pollUntil { !self.sentPropertyUserIds(graph.processor).isEmpty }
+        XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
+        XCTAssertEqual(graph.propertiesUserManager.obtainUserCallsCount, 0, "the post does not go through the user gate")
+    }
+
+    // MARK: - the fire-and-forget handoff
+
+    func testAStalledPropertiesPostDoesNotHoldUpTheUserSwitch() async throws {
+        // The switch used to await the post, and the post awaits the network:
+        // an identify at launch or a logout behind a sign-out button inherited
+        // the request timeout (60s by default, twice that when a round trip was
+        // already in flight). The batch is handed over synchronously now, so
+        // the switch never touches the network at all.
+        let graph: Graph = try makeGraph(originalUid: oldUid)
+        _ = try await graph.userManager.obtainUser()
+        let stall = PropertiesAsyncGate()
+        graph.processor.onProcess = { await stall.wait() }
+        graph.propertiesManager.setCustomUserProperty(key: "my_key", value: "my_value")
+
+        let startedAt: Date = Date()
+        _ = try await graph.userManager.identify("external-id")
+        let elapsed: TimeInterval = Date().timeIntervalSince(startedAt)
+        let batchAfterSwitch: [Qonversion.UserProperty] = graph.propertiesStorage.all()
+        await stall.open()
+
+        XCTAssertLessThan(elapsed, 1, "the user switch must not wait for the properties post at all")
+        XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
+        XCTAssertTrue(batchAfterSwitch.isEmpty, "the batch is handed over before the switch returns; the new user starts clean")
+    }
+
+    func testTheHandedOverBatchIsDeliveredUnderTheOldUidAfterTheSwitch() async throws {
+        // The payoff over waiting: a post that is merely slow still lands, and
+        // it lands under the user that queued it — long after that user stopped
+        // being the current one.
+        let graph: Graph = try makeGraph(originalUid: oldUid)
+        _ = try await graph.userManager.obtainUser()
+        let slowRequest = PropertiesAsyncGate()
+        graph.processor.onProcess = { await slowRequest.wait() }
+        graph.propertiesManager.setCustomUserProperty(key: "old_user_key", value: "1")
+
+        _ = try await graph.userManager.identify("external-id")
+        XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
+        // The new user queues its own property while the handed-over batch is
+        // still on the wire.
+        graph.propertiesManager.setCustomUserProperty(key: "new_user_key", value: "2")
+        await slowRequest.open()
+        await pollUntil { !self.sentPropertyUserIds(graph.processor).isEmpty }
+
+        XCTAssertEqual(
+            sentPropertyUserIds(graph.processor),
+            [oldUid],
+            "the handed-over batch is delivered under the user that queued it, after the switch"
+        )
+        XCTAssertEqual(
+            sentPropertyKeys(graph.processor, at: 0),
+            ["old_user_key"],
+            "the post carries the snapshot it was handed — the new user's property cannot leak into it"
+        )
+        XCTAssertEqual(graph.propertiesUserManager.obtainUserCallsCount, 0, "the post does not go through the user gate")
     }
 }

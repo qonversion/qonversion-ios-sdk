@@ -146,6 +146,10 @@ actor UserManager: UserManagerInterface {
         let originalUid: String? = localStorage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
         guard let originalUid, !originalUid.isEmpty, originalUid != internalConfig.userId else { return }
 
+        // The last moment at which data queued by the user being logged out
+        // can still leave under their uid.
+        await userChangesNotifier.notifyUserWillChange()
+
         cachedUser = nil
         localStorage.removeObject(forKey: Constants.userKey.rawValue)
 
@@ -334,6 +338,13 @@ private extension UserManager {
     /// user fetch must not leave the new uid stored without its identity.
     func switchUser(to uid: String, identityExternalId: String? = nil) async throws {
         let generation: Int = sessionGeneration
+
+        // Data queued under the outgoing uid leaves before the swap; the
+        // request path reads the uid at send time, so afterwards it is too late.
+        await userChangesNotifier.notifyUserWillChange()
+        // A logout landed while the flush was running: the switch belongs to
+        // the session the host just ended.
+        guard generation == sessionGeneration else { throw CancellationError() }
 
         internalConfig.userId = uid
         localStorage.set(string: uid, forKey: UserServiceStorageKeys.userIdKey.rawValue)

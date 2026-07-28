@@ -6,9 +6,6 @@
 //
 
 import Foundation
-#if canImport(UIKit) && !os(watchOS)
-import UIKit
-#endif
 #if canImport(AdServices)
 import AdServices
 #endif
@@ -83,15 +80,49 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         }
     }
 
-    /// The notification that means "the app is going to the background".
-    /// UIKit has one; the other platforms do not, so the SDK names its own —
-    /// which also makes the subscription (and its teardown) platform-neutral.
-    static var backgroundNotificationName: Notification.Name {
-        #if canImport(UIKit) && !os(watchOS)
-        return UIApplication.didEnterBackgroundNotification
+    /// Which app host the SDK is compiled into.
+    enum BackgroundFlushHost {
+        /// The watch app runs as an app extension: there is no UIApplication.
+        case watchExtension
+        /// iOS, tvOS, visionOS and Mac Catalyst.
+        case uiKitApplication
+        /// A Mac app never enters the background.
+        case appKitApplication
+        /// Anything else: nothing posts it, the batch waits for its delay timer.
+        case none
+    }
+
+    /// Raw strings on purpose: the typed constants only exist on the platform
+    /// that declares them, and every mapping has to exist in every build.
+    static func backgroundFlushNotificationName(for host: BackgroundFlushHost) -> Notification.Name {
+        switch host {
+        case .watchExtension:
+            return Notification.Name("NSExtensionHostDidEnterBackgroundNotification")
+        case .uiKitApplication:
+            return Notification.Name("UIApplicationDidEnterBackgroundNotification")
+        case .appKitApplication:
+            // Legacy ObjC parity: a Mac app has no background transition to hook.
+            return Notification.Name("NSApplicationDidResignActiveNotification")
+        case .none:
+            return Notification.Name("qonversion.notifications.appDidEnterBackground")
+        }
+    }
+
+    static var currentBackgroundFlushHost: BackgroundFlushHost {
+        // watchOS imports UIKit but has no UIApplication: match it first.
+        #if os(watchOS)
+        return .watchExtension
+        #elseif canImport(UIKit)
+        return .uiKitApplication
+        #elseif canImport(AppKit)
+        return .appKitApplication
         #else
-        return Notification.Name("qonversion.notifications.appDidEnterBackground")
+        return .none
         #endif
+    }
+
+    static var backgroundNotificationName: Notification.Name {
+        return backgroundFlushNotificationName(for: currentBackgroundFlushHost)
     }
 
     /// The pending batch waits on a delay timer that never fires once the
@@ -194,11 +225,8 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             return
         }
 
-        // Forceful: production waits out the round trip already in flight and
-        // then sends whatever is still pending, so the caller can rely on the
-        // properties having reached the backend. Only the batch pending on
-        // entry is owned by this call — properties set while it runs belong to
-        // the next one, and chasing them could loop forever.
+        // Only the batch pending on entry is owned by this call: chasing
+        // properties set while it runs could loop forever.
         let ownedKeys: Set<String> = Set(propertiesStorage.all().map { $0.key })
         while true {
             if let inFlight: Task<Bool, Never> = currentSendingTask() {
@@ -226,9 +254,7 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
         guard !properties.isEmpty else { return true }
 
-        // The backend user must exist before any data is sent. On failure keep
-        // the properties and retry later — the gate itself retries creation on
-        // the next demand.
+        // The backend user must exist before any data is sent.
         do {
             try await userManager.obtainUser()
         } catch {
@@ -237,9 +263,17 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             return false
         }
 
+        // Read after obtaining the user: that may itself resolve an identity
+        // and move the uid.
+        return await postBatch(properties, userId: userIdProvider.getUserId(), schedulingRetries: true)
+    }
+
+    /// The uid is a parameter, not a read of the provider: the user-switch
+    /// flush may outlive the switch and must post under the queuing user.
+    private func postBatch(_ properties: [Qonversion.UserProperty], userId: String, schedulingRetries: Bool) async -> Bool {
         let items: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
         let body: RequestBodyDict = ["properties": items]
-        let request = Request.sendProperties(userId: userIdProvider.getUserId(), body: body)
+        let request = Request.sendProperties(userId: userId, body: body)
         do {
             let result: SendUserPropertiesResult? = try await requestProcessor.process(request: request, responseType: SendUserPropertiesResult.self)
             result?.propertyErrors.forEach({ propertyError in
@@ -251,13 +285,15 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             propertiesStorage.clear(properties: properties)
 
             // Properties set while the batch was in flight.
-            if !propertiesStorage.all().isEmpty {
+            if schedulingRetries && !propertiesStorage.all().isEmpty {
                 scheduleSendingProperties(withDelay: Constants.sendPropertiesMinDelaySec.rawValue)
             }
 
             return true
         } catch {
-            retrySendingProperties()
+            if schedulingRetries {
+                retrySendingProperties()
+            }
             return false
         }
     }
@@ -282,10 +318,34 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
 extension UserPropertiesManager: UserChangedObserver {
 
-    /// The pending batch belongs to the uid that queued it. A logout or an
-    /// identify resolving to another user must not let it be posted under the
-    /// new uid — the batch carries no uid of its own, the request takes
-    /// whatever the provider currently holds.
+    /// Synchronous handoff, not a flush: the snapshot below owns its uid and
+    /// its batch, so a post arriving arbitrarily late cannot misattribute them.
+    func userWillChange() async {
+        let outgoingUserId: String = userIdProvider.getUserId()
+        let outgoingBatch: [Qonversion.UserProperty] = propertiesStorage.all()
+        guard !outgoingBatch.isEmpty else { return }
+
+        // The new user starts clean; the scheduled sender reads the storage,
+        // never this snapshot, so it cannot post the batch a second time.
+        propertiesStorage.clear(properties: outgoingBatch)
+
+        // Retains self on purpose: this task is the only thing left that can
+        // deliver the batch.
+        Task {
+            // Trade-off: waiting keeps the posts from interleaving, at the cost
+            // of re-sending the overlap — idempotent, same keys and same uid.
+            if let inFlight: Task<Bool, Never> = self.currentSendingTask() {
+                _ = await inFlight.value
+            }
+
+            // No user gate on purpose: both call sites run after user creation.
+            // One attempt on purpose: a retry ladder would outlive its relevance.
+            _ = await self.postBatch(outgoingBatch, userId: outgoingUserId, schedulingRetries: false)
+        }
+    }
+
+    /// Anything queued after the handoff and before the switch completed is
+    /// dropped: it may not be posted under the uid the SDK just switched to.
     func userDidChange() {
         clearDelayedProperties()
     }
@@ -307,10 +367,8 @@ extension UserPropertiesManager {
         }
     }
 
-    /// The attribution endpoint acknowledges with an empty body, like every
-    /// other data-sending flow — and, like them, needs the backend user first.
-    /// `requested_at` is the moment the token was obtained, which the backend
-    /// needs to match the attribution window.
+    /// `requested_at` must be the moment the token was obtained: the backend
+    /// matches it against the attribution window.
     func sendAppleSearchAdsToken(_ token: String, requestedAt: TimeInterval = Date().timeIntervalSince1970) async throws {
         try await userManager.obtainUser()
 
@@ -327,7 +385,7 @@ extension UserPropertiesManager {
         stateLock.lock()
         defer { stateLock.unlock() }
 
-        // Cancel for the case, when the previous task was scheduled via "setProperty" call, but then retry for another request occurred.
+        // A retry supersedes a schedule left over from setProperty.
         sendingTask?.cancel()
 
         sendingTask = Task<Void, Error>.delayed(byTimeInterval: TimeInterval(delaySec)) {
