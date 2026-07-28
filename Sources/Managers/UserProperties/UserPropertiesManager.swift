@@ -8,6 +8,8 @@
 import Foundation
 #if canImport(UIKit) && !os(watchOS)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
 #endif
 #if canImport(AdServices)
 import AdServices
@@ -83,12 +85,18 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         }
     }
 
-    /// The notification that means "the app is going to the background".
-    /// UIKit has one; the other platforms do not, so the SDK names its own —
-    /// which also makes the subscription (and its teardown) platform-neutral.
+    /// The notification that means "the app is leaving the foreground", per
+    /// platform — the watch app runs as an extension and the Mac app never
+    /// enters the background, so both have their own name for it.
     static var backgroundNotificationName: Notification.Name {
-        #if canImport(UIKit) && !os(watchOS)
+        // watchOS imports UIKit too, but has no UIApplication — it must be
+        // matched before the UIKit branch.
+        #if os(watchOS)
+        return .NSExtensionHostDidEnterBackground
+        #elseif canImport(UIKit)
         return UIApplication.didEnterBackgroundNotification
+        #elseif canImport(AppKit)
+        return NSApplication.didResignActiveNotification
         #else
         return Notification.Name("qonversion.notifications.appDidEnterBackground")
         #endif

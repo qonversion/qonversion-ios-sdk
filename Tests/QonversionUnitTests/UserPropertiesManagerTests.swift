@@ -6,6 +6,11 @@
 //
 
 import XCTest
+#if canImport(UIKit) && !os(watchOS)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 @testable import Qonversion
 
 final class IncrementalDelayCalculatorClampTests: XCTestCase {
@@ -474,5 +479,20 @@ final class UserPropertiesObserverTests: XCTestCase {
         }
         XCTAssertEqual(processor.processedRequests.count, 1)
         XCTAssertTrue(storage.all().isEmpty)
+    }
+
+    func testTheObservedNotificationIsThePlatformBackgroundNotification() {
+        // Every platform the SDK ships on has a "the app is leaving the
+        // foreground" notification; a name nothing posts would silently drop
+        // the pending batch on that platform.
+        let observed: Notification.Name = UserPropertiesManager.backgroundNotificationName
+
+        #if os(watchOS)
+        XCTAssertEqual(observed, .NSExtensionHostDidEnterBackground)
+        #elseif canImport(UIKit)
+        XCTAssertEqual(observed, UIApplication.didEnterBackgroundNotification)
+        #elseif canImport(AppKit)
+        XCTAssertEqual(observed, NSApplication.didResignActiveNotification)
+        #endif
     }
 }
