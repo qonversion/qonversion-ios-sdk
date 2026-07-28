@@ -11,8 +11,10 @@ import Foundation
 /// Mach handlers belong to the host app's own crash reporter, so real crashes
 /// (SIGSEGV, a Swift runtime trap) are not captured here.
 ///
-/// `POST v4/sdk-crashes` does not exist yet, so every failure path leaves the
-/// report queued and nothing ever reaches the host.
+/// `POST v4/sdk-crashes` does not exist yet: the send fails on every launch,
+/// and nothing about it ever reaches the host. A failure the backend answered
+/// about the report itself drops it, everything else keeps it queued —
+/// ``CrashReportsSender/outcome(for:)``.
 // @unchecked: the installed state is lock-guarded and the C handler captures nothing.
 final class CrashReporter: @unchecked Sendable {
 
@@ -84,12 +86,14 @@ struct CrashReportsSender {
     private let storage: CrashReportsStorage
     private let requestProcessor: RequestProcessorInterface
     private let userIdProvider: UserIdProvider
+    private let userManager: UserManagerInterface
     private let platform: String
 
-    init(storage: CrashReportsStorage, requestProcessor: RequestProcessorInterface, userIdProvider: UserIdProvider, platform: String) {
+    init(storage: CrashReportsStorage, requestProcessor: RequestProcessorInterface, userIdProvider: UserIdProvider, userManager: UserManagerInterface, platform: String) {
         self.storage = storage
         self.requestProcessor = requestProcessor
         self.userIdProvider = userIdProvider
+        self.userManager = userManager
         self.platform = platform
     }
 
@@ -101,6 +105,15 @@ struct CrashReportsSender {
     func sendStoredReports() async {
         let reports: [CrashReport] = storage.all()
         guard !reports.isEmpty else { return }
+
+        // A crash on the first launch is reported before the user exists: the
+        // uid would be one the backend has never seen, and the 4xx it answers
+        // drops the report.
+        do {
+            try await userManager.obtainUser()
+        } catch {
+            return
+        }
 
         let userId: String = userIdProvider.getUserId()
         for report in reports {

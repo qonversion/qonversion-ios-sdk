@@ -109,6 +109,7 @@ final class QonversionAssembly {
             storage: crashReportsStorage(),
             requestProcessor: servicesAssembly.requestProcessor(),
             userIdProvider: miscAssembly.internalConfig,
+            userManager: userManager(),
             platform: deviceInfoCollector.headerDeviceInfo().osName
         )
 

@@ -31,6 +31,7 @@ final class UserPropertiesManagerTests: XCTestCase {
     private var propertiesStorage: UserPropertiesStorage!
     private var integrationsCollector: MockIntegrationsInfoCollector!
     private var userManager: MockUserManager!
+    private var config: InternalConfig!
     private var manager: UserPropertiesManager!
 
     override func setUp() {
@@ -40,11 +41,12 @@ final class UserPropertiesManagerTests: XCTestCase {
         userManager = MockUserManager()
         userManager.user = try? JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(#"{"id": "test-user-id", "created_at": "2023-11-14T22:13:20Z", "environment": "sandbox"}"#.utf8))
         integrationsCollector = MockIntegrationsInfoCollector()
+        config = InternalConfig(userId: "test-user-id")
         manager = UserPropertiesManager(
             requestProcessor: requestProcessor,
             propertiesStorage: propertiesStorage,
             delayCalculator: IncrementalDelayCalculator(),
-            userIdProvider: InternalConfig(userId: "test-user-id"),
+            userIdProvider: config,
             userManager: userManager,
             integrationsInfoCollector: integrationsCollector,
             logger: LoggerWrapper()
@@ -64,6 +66,7 @@ final class UserPropertiesManagerTests: XCTestCase {
         manager = nil
         propertiesStorage = nil
         requestProcessor = nil
+        config = nil
         super.tearDown()
     }
 
@@ -256,6 +259,110 @@ final class UserPropertiesManagerTests: XCTestCase {
         XCTAssertTrue(requestProcessor.processedRequests.isEmpty)
     }
 
+    func testForceSendReturnsWhenTheOwnedBatchIsRewrittenWithNewValues() async throws {
+        // A host that updates a property on a timer rewrites the same key with
+        // a new value on every round trip. Bounding the drain loop by KEYS lets
+        // that keep the loop alive forever — and NoCodes awaits this call
+        // before showing a screen, so the screen never appears.
+        propertiesStorage.save(Qonversion.UserProperty(key: "ticking", value: "0"))
+        requestProcessor.results = [SendUserPropertiesResult(savedProperties: [], propertyErrors: [])]
+        requestProcessor.onProcess = { [weak self] in
+            guard let self else { return }
+            let round: Int = self.requestProcessor.processedRequests.count
+            self.propertiesStorage.save(Qonversion.UserProperty(key: "ticking", value: "\(round)"))
+            self.requestProcessor.results.append(SendUserPropertiesResult(savedProperties: [], propertyErrors: []))
+        }
+
+        let done = DoneFlag()
+        Task { [manager] in
+            try? await manager?.sendProperties(force: true)
+            await done.markDone()
+        }
+        let finished: Bool = await waitForCompletion(of: done, timeout: 3)
+
+        requestProcessor.onProcess = nil
+        XCTAssertTrue(finished, "a rewritten property must not hold the forced send open forever")
+        XCTAssertLessThanOrEqual(requestProcessor.processedRequests.count, 3, "the forced send owns the batch that existed when it was called")
+    }
+
+    func testForceSendGivesUpAfterItsBoundedNumberOfRounds() async throws {
+        // The pathological shape the key+value snapshot alone cannot bound: the
+        // very same property is pending again after every successful post.
+        let property = Qonversion.UserProperty(key: "ticking", value: "always")
+        let storage = RepopulatingPropertiesStorage(property: property)
+        let processor = MockRequestProcessor()
+        processor.results = Array(repeating: SendUserPropertiesResult(savedProperties: [], propertyErrors: []), count: 10)
+        let boundedManager = UserPropertiesManager(
+            requestProcessor: processor,
+            propertiesStorage: storage,
+            delayCalculator: IncrementalDelayCalculator(),
+            userIdProvider: InternalConfig(userId: "test-user-id"),
+            userManager: userManager,
+            integrationsInfoCollector: integrationsCollector,
+            logger: LoggerWrapper()
+        )
+
+        let done = DoneFlag()
+        Task {
+            try? await boundedManager.sendProperties(force: true)
+            await done.markDone()
+        }
+        let finished: Bool = await waitForCompletion(of: done, timeout: 3)
+
+        XCTAssertTrue(finished, "the forced send must terminate whatever the storage keeps handing back")
+        XCTAssertEqual(processor.processedRequests.count, 3, "the drain loop is capped at three rounds")
+    }
+
+    // MARK: - the batch and the uid it belongs to
+
+    func testAUserSwitchDuringTheUserGateDoesNotPostTheBatchUnderTheNewUid() async throws {
+        // The batch is snapshotted before the gate and the uid was read after
+        // it: a switch landing in that window posts the previous user's
+        // properties under the uid the SDK just moved to.
+        let gatedUserManager = GatedUserManager()
+        gatedUserManager.user = userManager.user
+        let switchConfig = InternalConfig(userId: "old-uid")
+        let storage = UserPropertiesStorage()
+        let processor = MockRequestProcessor()
+        processor.results = [
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+        ]
+        let switchingManager = UserPropertiesManager(
+            requestProcessor: processor,
+            propertiesStorage: storage,
+            delayCalculator: IncrementalDelayCalculator(),
+            userIdProvider: switchConfig,
+            userManager: gatedUserManager,
+            integrationsInfoCollector: integrationsCollector,
+            logger: LoggerWrapper()
+        )
+        storage.save(Qonversion.UserProperty(key: "old_user_key", value: "1"))
+
+        let sending = Task { try? await switchingManager.sendProperties() }
+        await waitUntil { gatedUserManager.obtainUserCalls == 1 }
+        await switchingManager.userWillChange()
+        switchConfig.userId = "new-uid"
+        switchingManager.userDidChange()
+        await gatedUserManager.openGate()
+        _ = await sending.value
+        await pollUntil { !self.sentPropertyUserIds(processor).isEmpty }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(
+            sentPropertyUserIds(processor),
+            ["old-uid"],
+            "the batch leaves under the uid that queued it, and only once — the handoff owns it after the switch"
+        )
+    }
+
+    private func sentPropertyUserIds(_ processor: MockRequestProcessor) -> [String] {
+        return processor.processedRequests.compactMap { request in
+            guard case let .sendProperties(userId, _, _, _) = request else { return nil }
+            return userId
+        }
+    }
+
     func testForceSendPropertiesStopsAfterAFailedSend() async throws {
         propertiesStorage.save(Qonversion.UserProperty(key: "first", value: "1"))
         requestProcessor.error = MockError.stubbed
@@ -416,6 +523,87 @@ private final class PropertiesAsyncGate: @unchecked Sendable {
     private let storage = PropertiesGateStorage()
     func open() async { await storage.open() }
     func wait() async { await storage.wait() }
+}
+
+/// A user gate that suspends until the test opens it, so a test can act while
+/// a send is parked inside `obtainUser`.
+private final class GatedUserManager: UserManagerInterface, @unchecked Sendable {
+
+    var user: Qonversion.User?
+
+    private let gate = PropertiesAsyncGate()
+    private let callsLock = NSLock()
+    private var calls: Int = 0
+
+    var obtainUserCalls: Int {
+        callsLock.lock()
+        defer { callsLock.unlock() }
+        return calls
+    }
+
+    func openGate() async {
+        await gate.open()
+    }
+
+    private func recordCall() {
+        callsLock.lock()
+        calls += 1
+        callsLock.unlock()
+    }
+
+    @discardableResult
+    func obtainUser() async throws -> Qonversion.User {
+        recordCall()
+
+        await gate.wait()
+        guard let user else { throw MockError.noStub }
+        return user
+    }
+
+    @discardableResult
+    func identify(_ externalId: String) async throws -> Qonversion.User {
+        throw MockError.noStub
+    }
+
+    func logout() async {}
+
+    func awaitUserStability() async throws {}
+
+    func switchToUser(with uid: String) async throws {}
+
+    func userInfo() async throws -> Qonversion.User {
+        throw MockError.noStub
+    }
+}
+
+/// Hands the same property back after every clear — what a host re-setting a
+/// property on a timer looks like to the manager.
+private final class RepopulatingPropertiesStorage: PropertiesStorage, @unchecked Sendable {
+
+    private let inner = UserPropertiesStorage()
+    private let property: Qonversion.UserProperty
+
+    init(property: Qonversion.UserProperty) {
+        self.property = property
+        inner.save(property)
+    }
+
+    func save(_ userProperty: Qonversion.UserProperty) {
+        inner.save(userProperty)
+    }
+
+    func clear(properties: [Qonversion.UserProperty]) {
+        inner.clear(properties: properties)
+        inner.save(property)
+    }
+
+    func clear() {
+        inner.clear()
+    }
+
+    func all() -> [Qonversion.UserProperty] {
+        return inner.all()
+    }
 }
 
 /// A one-shot "it finished" marker: lets a test bound an await that would
@@ -697,6 +885,40 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         XCTAssertLessThan(elapsed, 1, "the user switch must not wait for the properties post at all")
         XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
         XCTAssertTrue(batchAfterSwitch.isEmpty, "the batch is handed over before the switch returns; the new user starts clean")
+    }
+
+    func testTheHandedOverPostDoesNotDeleteAnIdenticalPropertyOfTheNewUser() async throws {
+        // The handoff took its batch out of the storage before posting it, so
+        // anything the storage holds when the post lands belongs to the NEW
+        // user. Clearing by key+value there deletes the incoming user's own
+        // property whenever it happens to carry the same value — the ordinary
+        // "set the email, identify, set the email again" sequence.
+        let graph: Graph = try makeGraph(originalUid: oldUid)
+        _ = try await graph.userManager.obtainUser()
+        let handoffPost = PropertiesAsyncGate()
+        graph.processor.onProcess = { await handoffPost.wait() }
+        graph.processor.results = [
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+        ]
+        let sharedProperty = Qonversion.UserProperty(key: "_q_email", value: "same@qonversion.io")
+        graph.propertiesManager.setCustomUserProperty(key: sharedProperty.key, value: sharedProperty.value)
+
+        _ = try await graph.userManager.identify("external-id")
+        XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
+        graph.propertiesManager.setCustomUserProperty(key: sharedProperty.key, value: sharedProperty.value)
+        await handoffPost.open()
+        await pollUntil { graph.processor.results.count == 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(graph.propertiesStorage.all(), [sharedProperty], "the new user's property must survive the handed-over post")
+        graph.processor.onProcess = nil
+        try await graph.propertiesManager.sendProperties(force: true)
+        XCTAssertEqual(
+            sentPropertyUserIds(graph.processor),
+            [oldUid, newUid],
+            "each user's property leaves under its own uid"
+        )
     }
 
     func testTheHandedOverBatchIsDeliveredUnderTheOldUidAfterTheSwitch() async throws {
