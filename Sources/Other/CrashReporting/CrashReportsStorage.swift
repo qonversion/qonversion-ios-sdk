@@ -62,6 +62,21 @@ final class CrashReportsStorage: @unchecked Sendable {
         try? localStorage.set(reports, forKey: Constants.reportsKey.rawValue)
     }
 
+    /// Swaps a stored report for an updated copy of itself, in place. Used to
+    /// persist the attempt counter, so a report the backend keeps refusing is
+    /// eventually given up on instead of taking a slot forever. A report that
+    /// is no longer stored is not resurrected.
+    func replace(_ report: CrashReport, with replacement: CrashReport) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        var reports: [CrashReport] = storedReports()
+        guard let index: Int = reports.firstIndex(where: { $0.id == report.id }) else { return }
+
+        reports[index] = replacement
+        try? localStorage.set(reports, forKey: Constants.reportsKey.rawValue)
+    }
+
     func clear() {
         lock.lock()
         defer { lock.unlock() }

@@ -69,14 +69,31 @@ enum CrashReportFilter {
         return appFrameMatched ? .spm : nil
     }
 
-    /// A frame looks like `2   Qonversion   0x0000000104 symbol + 42`: the
-    /// index, then the binary image name. Same shape the ObjC regex
-    /// (`\S+\s+(\S+)`) captured, without paying for a regex on a crash path.
+    /// The token that opens the address column of a `backtrace_symbols` frame.
+    private static let addressPrefix = "0x"
+
+    /// A frame looks like `2   Qonversion   0x0000000104 symbol + 42`: an
+    /// index, the binary image name, the address, then the symbol.
+    ///
+    /// The image name is everything between the index and the address, NOT the
+    /// second whitespace-separated field: an executable named "My App" is
+    /// ordinary, and taking field 1 truncates it to "My", which matches
+    /// nothing — every SDK crash in such an app would be classified "not ours"
+    /// and silently never reported. (The ObjC regex `\S+\s+(\S+)` had the same
+    /// bug.) The address column is the anchor because it is the first field
+    /// with a fixed shape; a frame without one is malformed, and falling back
+    /// to field 1 keeps such a frame as harmless as it was.
     static func imageName(ofFrame frame: String) -> String? {
         let fields: [Substring] = frame.split(separator: " ", omittingEmptySubsequences: true)
         guard fields.count >= 2 else { return nil }
 
-        return String(fields[1])
+        guard let addressIndex: Int = fields.firstIndex(where: { $0.hasPrefix(addressPrefix) }) else {
+            return String(fields[1])
+        }
+        // An address in field 1 means the frame carries no image name at all.
+        guard addressIndex >= 2 else { return nil }
+
+        return fields[1..<addressIndex].joined(separator: " ")
     }
 
     static func containsSdkSymbol(_ frame: String) -> Bool {
