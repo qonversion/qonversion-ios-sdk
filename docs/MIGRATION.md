@@ -51,7 +51,7 @@ Every completion-handler API became `async`. Errors are thrown instead of passed
 | `attachUserToExperiment` / `detach...` / `...RemoteConfiguration` | unchanged, `async throws` |
 | `presentCodeRedemptionSheet()` | unchanged; plus `presentOfferCodeRedeemSheet(in:)` on iOS 16+ |
 | `isFallbackFileAccessible()` | unchanged |
-| `QONEnvironment` on the configuration | `Configuration(apiKey:launchMode:environment:)` — the same two values, `.production` by default. The environment travels in the user creation body; the `test_` API key prefix of the older API is not used. |
+| `QONEnvironment` on the configuration | Removed — see [The environment flag is gone](#the-environment-flag-is-gone). |
 
 ### Listeners became streams
 
@@ -174,6 +174,25 @@ of crashing. Nothing changes on iOS, macOS, tvOS or watchOS.
 | `attribution(data, fromProvider)` | Removed — was already a deprecated no-op; attribution works automatically |
 | `setNotificationsToken` / `handleNotification` | Removed — were deprecated automation APIs |
 | `launchMode` implicit default | `Configuration(apiKey:launchMode:)` requires an explicit mode |
+| `QONEnvironment` / `environment:` on the configuration | Removed — see below |
+
+### The environment flag is gone
+
+The Objective-C SDK carried a sandbox marker — `QONEnvironment` on the
+configuration — and sent it with every request; the Swift rewrite additionally
+put it in the user creation body. Neither exists any more: this SDK sends no
+environment marker at all, and `Configuration` has no `environment` parameter.
+Drop the argument from your `Configuration(...)` call; there is nothing to pass
+in its place.
+
+The marker was a host-declared claim about the build, not an observed fact, so
+it was wrong whenever a host forgot to flip it — a `.sandbox` value shipped to
+the App Store labelled real production data as test data. Removing it means the
+SDK no longer makes that claim on your behalf.
+
+If environment separation is needed later, it will be reintroduced deliberately,
+with a backend contract behind it. Until then, do not expect the backend to
+split your data by build type on the SDK's word.
 
 ## User fields
 
@@ -282,6 +301,33 @@ silently, with no error and no crash.
 | `pod 'Qonversion'` linked the advertising framework for you | Never linked — link it in your app target if you want the identifier |
 | `pod 'Qonversion/NoIdfa'` to opt out | Removed — not linking is the default |
 | `collectAdvertisingId()` | Unchanged; a no-op when your app does not link `AdSupport` |
+| The identifier also became the `_q_advertising_id` user property | Removed — it travels in the device record only (`advertisingId`) |
+
+### The identifier is no longer a user property
+
+**Action required if you read the IDFA back out of Qonversion, or feed user
+properties into another system.**
+
+`collectAdvertisingId()` used to do two things: attach the identifier to the
+device record *and* set it as the `_q_advertising_id` user property. It now
+attaches it to the device record only, under the wire key `advertisingId`. The
+signature and the meaning of the call are unchanged — this is about where the
+value lands.
+
+The identifier is device data, and it was being stored twice, in two places
+with two lifetimes, from one call. The device record is the one that belongs to
+it.
+
+What you feel:
+
+- `userProperties()` no longer returns `_q_advertising_id`.
+- Integrations fed from user properties no longer receive the identifier
+  through Qonversion. If one of yours relies on it, send it from your app.
+
+`Qonversion.UserPropertyKey.advertisingId` still exists, so an app that wants
+the old behavior can set the property itself with
+`setUserProperty(key: .advertisingId, value:)` — the SDK just no longer does it
+for you.
 
 ### One knock-on effect: the Facebook anonymous id
 
@@ -307,7 +353,7 @@ The API kept its shape: `NoCodes.initialize(with: NoCodesConfiguration(projectKe
 | `NoCodesScreenCustomizationDelegate.presentationConfigurationForScreen(id:)` | Removed together with the id-based entry point that used to call it. Configure the presentation in `presentationConfigurationForScreen(contextKey:)`; screens opened by an in-chain navigation action keep the configuration of the screen that opened them. |
 | Delegates retained by the SDK | Held **weakly**, like any UIKit delegate. All four protocols are class-bound now (`AnyObject`), so keep your own strong reference — a delegate created inline and passed to `NoCodesConfiguration` is released immediately and the callbacks stop arriving. |
 | `import NoCodes` re-exported the main SDK | Import both: `import Qonversion` is required wherever you touch `Qonversion.Product` (for example in a `NoCodesPurchaseDelegate` implementation) — the `@_exported` import is gone now that NoCodes is its own module. |
-| `noCodesFailedToExecute(action:error:)` had to be implemented | It has a default no-op implementation now, like every other `NoCodesDelegate` method. A misspelled signature therefore compiles and silently loses the callbacks — the exact signature is `func noCodesFailedToExecute(action: NoCodesAction, error: Error?)`. |
+| `noCodesFailedToExecute(action:error:)` had no working default | The protocol declared `noCodesFailedToExecute(action:error:)` while the default implementation was written for `noCodesFailedToExecute(action:)` — a different selector, so it never satisfied the requirement and every host had to implement the method. The default now matches the declared signature, like every other `NoCodesDelegate` method. The flip side: a misspelled signature compiles and silently loses the callbacks — the exact signature is `func noCodesFailedToExecute(action: NoCodesAction, error: Error?)`. |
 | Facade and delegates callable from any thread | Main-actor isolated: they present and hand out UIKit objects, so call them from the main actor and mark your delegate implementations `@MainActor`. `NoCodesConfiguration` is main-actor isolated too. |
 
 The bundled fallback file keeps the same name (`nocodes_fallbacks.json`) and shape.
