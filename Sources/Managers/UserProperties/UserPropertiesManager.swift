@@ -22,19 +22,6 @@ fileprivate enum Constants: Int {
     case sendPropertiesMaxRetries = 10
 }
 
-fileprivate enum FlushConstants {
-    /// How long a user switch may be held up by the outgoing user's properties
-    /// flush. The host awaits identify() at launch and logout() behind a
-    /// sign-out button, while the SDK's URLSession waits out the default 60s
-    /// per request — and the flush may await a round trip already in flight
-    /// before posting its own. A healthy round trip finishes well inside a
-    /// second, so this covers the normal case and cuts the pathological one.
-    /// Missing the deadline costs nothing that was not already droppable: the
-    /// batch is dropped at the switch, which is what happened to EVERY pending
-    /// batch before the flush existed.
-    static let userSwitchTimeoutSec: TimeInterval = 5
-}
-
 // @unchecked: mutable state is guarded by stateLock; deps are thread-safe.
 final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked Sendable {
     
@@ -352,105 +339,66 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
 }
 
-// MARK: - Flush deadline
-
-/// A one-shot "whoever gets here first wins" gate for the flush and its
-/// deadline. Written by hand rather than with a task group: a group awaits
-/// every child before it returns, so the losing child — a flush suspended in
-/// URLSession — would keep holding up the very switch this bounds. The waiter
-/// is resumed exactly once; the loser's `settle` is a no-op.
-fileprivate actor FlushRaceSignal {
-
-    private var outcome: Bool?
-    private var waiter: CheckedContinuation<Bool, Never>?
-
-    func settle(completedInTime: Bool) {
-        guard outcome == nil else { return }
-        outcome = completedInTime
-
-        if let waiter {
-            self.waiter = nil
-            waiter.resume(returning: completedInTime)
-        }
-    }
-
-    func wait() async -> Bool {
-        if let outcome { return outcome }
-
-        return await withCheckedContinuation { continuation in
-            waiter = continuation
-        }
-    }
-}
-
 // MARK: - UserChangedObserver
 
 extension UserPropertiesManager: UserChangedObserver {
 
-    /// The pending batch belongs to the uid that queued it, so it is posted
-    /// here, while the outgoing uid is still the current one. The legacy SDK
-    /// posted it after the switch, attributing it to the wrong user.
+    /// The pending batch belongs to the uid that queued it. The legacy SDK
+    /// posted it after the switch, taking whatever uid was current by then and
+    /// attributing the batch to the wrong user.
     ///
-    /// Bounded: the switch waits for this, and the host waits for the switch
-    /// (identify at launch, logout behind a sign-out button). Past the deadline
-    /// the batch is dropped — the same fate every pending batch had before this
-    /// flush existed.
+    /// A synchronous handoff, not a flush: the outgoing uid and the pending
+    /// batch are snapshotted and the storage is emptied before this returns,
+    /// and the network round trip is left to a background task. The switch —
+    /// and therefore identify() at launch and logout() behind a sign-out
+    /// button — waits for no I/O at all.
     func userWillChange() async {
-        // Captured BEFORE anything is awaited. The flush may outlive this call,
-        // and the request must carry the uid that queued the batch — reading
-        // the provider at post time is exactly the misattribution being fixed.
+        // Both snapshots are taken before the method returns, which is before
+        // the caller can move the uid. Nothing read after this point can be the
+        // new user's.
         let outgoingUserId: String = userIdProvider.getUserId()
-        let race = FlushRaceSignal()
+        let outgoingBatch: [Qonversion.UserProperty] = propertiesStorage.all()
+        guard !outgoingBatch.isEmpty else { return }
 
-        let flush = Task<Void, Never> { [weak self] in
-            await self?.flushPendingBatch(underUserId: outgoingUserId)
-            await race.settle(completedInTime: true)
+        // Handed over: the batch belongs to the task below and to nobody else.
+        // The new user starts clean, and the scheduled sender — which reads the
+        // storage, never this snapshot — cannot post it a second time.
+        propertiesStorage.clear(properties: outgoingBatch)
+
+        // Fire and forget, and deliberately retaining self: the batch has been
+        // taken out of the storage, so this task is the only thing that can
+        // still deliver it.
+        Task {
+            // A round trip already in flight carries part of the same batch;
+            // waiting for it keeps the two posts from interleaving. Should it
+            // succeed, the overlap is re-sent — the same keys with the same
+            // values under the same uid, which the backend applies idempotently.
+            if let inFlight: Task<Bool, Never> = self.currentSendingTask() {
+                _ = await inFlight.value
+            }
+
+            // The whole misattribution guarantee, in one sentence: this post
+            // holds its own uid and its own properties, both captured before
+            // the switch, so it cannot read the new user's uid or the new
+            // user's batch no matter how late it runs. No deadline, no
+            // cancellation and no ordering assumption is needed to get that —
+            // which is why there is none.
+            //
+            // Deliberately without the user gate: the user being switched away
+            // from provably exists on the backend — both call sites (identify
+            // and logout) are reached only after the creation pipeline has run
+            // — so the call would buy nothing. It is not a deadlock hazard
+            // either: UserManager is an actor and a reentrant call would simply
+            // suspend. It is skipped because it is pointless.
+            //
+            // One attempt: a retry ladder would outlive its own relevance, and
+            // dropping the batch on failure is the pre-existing policy.
+            _ = await self.postBatch(outgoingBatch, userId: outgoingUserId, schedulingRetries: false)
         }
-        let deadline = Task<Void, Never> {
-            let nanoseconds: UInt64 = UInt64(FlushConstants.userSwitchTimeoutSec * 1_000_000_000)
-            try? await Task<Never, Never>.sleep(nanoseconds: nanoseconds)
-            await race.settle(completedInTime: false)
-        }
-
-        let completedInTime: Bool = await race.wait()
-        deadline.cancel()
-        guard !completedInTime else { return }
-
-        // The cancellation happens-before the uid moves: the caller resumes the
-        // switch only once this method returns. So an abandoned flush is always
-        // cancelled before it can read a storage that belongs to the new user,
-        // and even if it did post, it would post under the captured uid.
-        flush.cancel()
-        logger.warning("The pending user properties did not reach the backend within \(Int(FlushConstants.userSwitchTimeoutSec))s of the user switch; the batch is dropped.")
     }
 
-    /// One last attempt for the outgoing user's batch. Never retries: the
-    /// switch is on a deadline and whatever is left is dropped anyway.
-    private func flushPendingBatch(underUserId userId: String) async {
-        // A round trip already in flight carries the same batch under the same
-        // (still current) uid — waiting for it is the flush.
-        if let inFlight: Task<Bool, Never> = currentSendingTask() {
-            _ = await inFlight.value
-        }
-
-        // Cancelled means the deadline passed and the switch moved on: the
-        // storage from here on belongs to the user the SDK switched to.
-        guard !Task.isCancelled else { return }
-
-        let pending: [Qonversion.UserProperty] = propertiesStorage.all()
-        guard !pending.isEmpty else { return }
-
-        // Deliberately without the user gate: the user being switched away from
-        // provably exists on the backend — both call sites (identify and
-        // logout) are reached only after the creation pipeline has run — so the
-        // gate has nothing to do here except spend part of the deadline. It is
-        // not a deadlock hazard either: UserManager is an actor and a reentrant
-        // call would simply suspend. It is skipped because it is pointless.
-        _ = await postBatch(pending, userId: userId, schedulingRetries: false)
-    }
-
-    /// Whatever the flush could not deliver is dropped: it may not be posted
-    /// under the uid the SDK just switched to.
+    /// Anything queued after the handoff and before the switch completed is
+    /// dropped: it may not be posted under the uid the SDK just switched to.
     func userDidChange() {
         clearDelayedProperties()
     }

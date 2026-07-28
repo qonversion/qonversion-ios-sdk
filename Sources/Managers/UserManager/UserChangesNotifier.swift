@@ -25,13 +25,16 @@ enum UserChangeTeardownPriority {
 /// to another user) registers itself as an observer.
 protocol UserChangedObserver: AnyObject {
     /// The last moment at which the previous user's uid is still the current
-    /// one: data queued under it has to leave the SDK here or never.
+    /// one: data queued under it has to be claimed here or never.
     ///
     /// The switch waits for this to return, and the host waits for the switch
     /// (identify at launch, logout behind a sign-out button), so an observer
-    /// that reaches the network here MUST bound itself: no retries, and a
-    /// deadline after which it gives up. Whatever it could not deliver is
-    /// dropped — which is what happened to all of it before this hook existed.
+    /// MUST NOT block it — no network, no I/O, no deadline to wait out. The
+    /// contract is a synchronous handoff: snapshot whatever belongs to the
+    /// outgoing user (its uid included) and take it out of the shared state
+    /// before returning, then send it from a background task. A post that owns
+    /// its own snapshot can run arbitrarily late and still be attributed
+    /// correctly, because there is nothing current left for it to read.
     func userWillChange() async
 
     func userDidChange()

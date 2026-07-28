@@ -571,8 +571,8 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         let processor: MockRequestProcessor
         let config: InternalConfig
         /// The gate the properties manager is wired to. It is a stub, not the
-        /// real UserManager above: the flush is expected to skip the gate
-        /// entirely, and a stub is what makes the call count observable.
+        /// real UserManager above: the handed-over post is expected to skip the
+        /// gate entirely, and a stub is what makes the call count observable.
         let propertiesUserManager: MockUserManager
     }
 
@@ -593,11 +593,11 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         let sendResult = SendUserPropertiesResult(savedProperties: [], propertyErrors: [])
         processor.results = [sendResult]
         let propertiesStorage = UserPropertiesStorage()
-        // A stub gate, so "the flush never calls obtainUser" is observable as a
+        // A stub gate, so "the post never calls obtainUser" is observable as a
         // call count. It is not a claim that the real gate would misbehave —
         // UserManager is an actor, a reentrant call would suspend, not
-        // deadlock. The flush skips the gate because the outgoing user
-        // provably exists by then, and the switch is on a deadline.
+        // deadlock. The post skips the gate because the outgoing user provably
+        // exists by then, so the call would buy nothing.
         let propertiesUserManager = MockUserManager()
         propertiesUserManager.user = oldUser
         let propertiesManager = UserPropertiesManager(
@@ -621,6 +621,23 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         }
     }
 
+    private func sentPropertyKeys(_ processor: MockRequestProcessor, at index: Int) -> [String] {
+        let bodies: [RequestBodyDict] = processor.processedRequests.compactMap { request in
+            guard case let .sendProperties(_, _, body, _) = request else { return nil }
+            return body
+        }
+        guard index < bodies.count else {
+            XCTFail("No .sendProperties request at index \(index)")
+            return []
+        }
+        guard let items: RequestBodyArray = bodies[index]["properties"] as? RequestBodyArray else {
+            XCTFail("Expected a `properties` array in the body")
+            return []
+        }
+
+        return items.compactMap { ($0 as? RequestBodyDict)?["key"] as? String }.sorted()
+    }
+
     func testIdentifySendsThePendingBatchUnderTheOldUid() async throws {
         let graph: Graph = try makeGraph(originalUid: oldUid)
         _ = try await graph.userManager.obtainUser()
@@ -629,12 +646,15 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         _ = try await graph.userManager.identify("external-id")
 
         XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
-        XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
         XCTAssertTrue(graph.propertiesStorage.all().isEmpty, "the new user must start with an empty batch")
+        // The switch no longer implies delivery: the batch is handed to a
+        // background post, so the delivery is awaited here rather than assumed.
+        await pollUntil { !self.sentPropertyUserIds(graph.processor).isEmpty }
+        XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
         XCTAssertEqual(
             graph.propertiesUserManager.obtainUserCallsCount,
             0,
-            "the flush posts under the uid it was handed and spends none of the switch deadline on the user gate"
+            "the post goes out under the uid it was handed, without asking the user gate"
         )
     }
 
@@ -648,78 +668,65 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         await graph.userManager.logout()
 
         XCTAssertEqual(graph.config.userId, "anon-uid", "the logout must have restored the original user")
-        XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
         XCTAssertTrue(graph.propertiesStorage.all().isEmpty, "the restored user must start with an empty batch")
-        XCTAssertEqual(graph.propertiesUserManager.obtainUserCallsCount, 0, "the flush does not go through the user gate")
+        await pollUntil { !self.sentPropertyUserIds(graph.processor).isEmpty }
+        XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
+        XCTAssertEqual(graph.propertiesUserManager.obtainUserCallsCount, 0, "the post does not go through the user gate")
     }
 
-    // MARK: - the flush deadline
+    // MARK: - the fire-and-forget handoff
 
-    func testAStalledPropertiesFlushDoesNotHoldUpTheUserSwitch() async throws {
-        // The switch awaits the flush and the flush awaits the network. Without
-        // a bound, an identify at launch blocks the host for as long as
-        // URLSession is willing to wait (60s by default, twice that when a
-        // round trip is already in flight).
+    func testAStalledPropertiesPostDoesNotHoldUpTheUserSwitch() async throws {
+        // The switch used to await the post, and the post awaits the network:
+        // an identify at launch or a logout behind a sign-out button inherited
+        // the request timeout (60s by default, twice that when a round trip was
+        // already in flight). The batch is handed over synchronously now, so
+        // the switch never touches the network at all.
         let graph: Graph = try makeGraph(originalUid: oldUid)
         _ = try await graph.userManager.obtainUser()
         let stall = PropertiesAsyncGate()
         graph.processor.onProcess = { await stall.wait() }
         graph.propertiesManager.setCustomUserProperty(key: "my_key", value: "my_value")
 
-        let identifyFinished = DoneFlag()
-        let identify = Task {
-            _ = try? await graph.userManager.identify("external-id")
-            await identifyFinished.markDone()
-        }
-        let finishedInTime: Bool = await waitForCompletion(of: identifyFinished, timeout: 15)
-        let switchedUserId: String = graph.config.userId
+        let startedAt: Date = Date()
+        _ = try await graph.userManager.identify("external-id")
+        let elapsed: TimeInterval = Date().timeIntervalSince(startedAt)
         let batchAfterSwitch: [Qonversion.UserProperty] = graph.propertiesStorage.all()
         await stall.open()
-        _ = await identify.value
 
-        XCTAssertTrue(finishedInTime, "the user switch must not wait out a stalled properties flush")
-        XCTAssertEqual(switchedUserId, newUid, "the switch proceeds once the flush deadline passes")
-        XCTAssertTrue(batchAfterSwitch.isEmpty, "the new user starts with an empty batch")
+        XCTAssertLessThan(elapsed, 1, "the user switch must not wait for the properties post at all")
+        XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
+        XCTAssertTrue(batchAfterSwitch.isEmpty, "the batch is handed over before the switch returns; the new user starts clean")
     }
 
-    func testAFlushThatOutlivesItsDeadlineNeverPostsAfterTheSwitch() async throws {
-        // The flush is suspended on the round trip that was already in flight
-        // when the switch started, so it is still alive after the deadline —
-        // and by then the storage belongs to the user the SDK switched to.
+    func testTheHandedOverBatchIsDeliveredUnderTheOldUidAfterTheSwitch() async throws {
+        // The payoff over waiting: a post that is merely slow still lands, and
+        // it lands under the user that queued it — long after that user stopped
+        // being the current one.
         let graph: Graph = try makeGraph(originalUid: oldUid)
         _ = try await graph.userManager.obtainUser()
-        let stall = PropertiesAsyncGate()
-        graph.processor.onProcess = { await stall.wait() }
-        graph.processor.results = [
-            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
-            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
-        ]
-        graph.propertiesStorage.save(Qonversion.UserProperty(key: "queued", value: "1"))
-        let inFlight = Task { try? await graph.propertiesManager.sendProperties() }
-        await pollUntil { graph.processor.processedRequests.count == 1 }
+        let slowRequest = PropertiesAsyncGate()
+        graph.processor.onProcess = { await slowRequest.wait() }
+        graph.propertiesManager.setCustomUserProperty(key: "old_user_key", value: "1")
 
-        let identifyFinished = DoneFlag()
-        let identify = Task {
-            _ = try? await graph.userManager.identify("external-id")
-            await identifyFinished.markDone()
-        }
-        let finishedInTime: Bool = await waitForCompletion(of: identifyFinished, timeout: 15)
-        let switchedUserId: String = graph.config.userId
-        // The new user queues its own property while the abandoned flush is
-        // still suspended on the previous user's round trip.
+        _ = try await graph.userManager.identify("external-id")
+        XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
+        // The new user queues its own property while the handed-over batch is
+        // still on the wire.
         graph.propertiesManager.setCustomUserProperty(key: "new_user_key", value: "2")
+        await slowRequest.open()
+        await pollUntil { !self.sentPropertyUserIds(graph.processor).isEmpty }
 
-        await stall.open()
-        _ = await inFlight.value
-        _ = await identify.value
-        try? await Task.sleep(nanoseconds: 300_000_000)
-
-        XCTAssertTrue(finishedInTime, "the user switch must not wait out a stalled properties flush")
-        XCTAssertEqual(switchedUserId, newUid)
         XCTAssertEqual(
             sentPropertyUserIds(graph.processor),
             [oldUid],
-            "the abandoned flush may post nothing once the switch has happened — neither under the new uid nor the new user's batch under the old one"
+            "the handed-over batch is delivered under the user that queued it, after the switch"
         )
+        XCTAssertEqual(
+            sentPropertyKeys(graph.processor, at: 0),
+            ["old_user_key"],
+            "the post carries the snapshot it was handed — the new user's property cannot leak into it"
+        )
+        XCTAssertEqual(graph.propertiesUserManager.obtainUserCallsCount, 0, "the post does not go through the user gate")
     }
 }
