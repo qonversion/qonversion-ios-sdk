@@ -93,6 +93,10 @@ static NSString *const kEmptyContextKey = @"";
   }
   
   if (loadingState.loadedConfig) {
+    // The cached config is served as is, but properties set right before this
+    // call must still reach the server — otherwise a cache hit swallows both
+    // the property flush and the request.
+    [self.userPropertiesManager forceSendProperties:nil];
     return completion(loadingState.loadedConfig, nil);
   }
   
@@ -155,6 +159,9 @@ static NSString *const kEmptyContextKey = @"";
   }
 
   if (configs.count == allKeys.count) {
+    // Same as the single-key cache hit: serve the cached list, but flush
+    // pending properties so they are not swallowed by the hit.
+    [self.userPropertiesManager forceSendProperties:nil];
     QONRemoteConfigList *remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:configs];
     return completion(remoteConfigList, nil);
   }
@@ -193,23 +200,34 @@ static NSString *const kEmptyContextKey = @"";
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
-  self.loadingStates[kEmptyContextKey] = nil;
+  [self invalidateLoadedConfigs];
   [self.remoteConfigService attachUserToExperiment:experimentId groupId:groupId completion:completion];
 }
 
 - (void)detachUserFromExperiment:(NSString *)experimentId completion:(QONExperimentAttachCompletionHandler)completion {
-  self.loadingStates[kEmptyContextKey] = nil;
+  [self invalidateLoadedConfigs];
   [self.remoteConfigService detachUserFromExperiment:experimentId completion:completion];
 }
 
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  self.loadingStates[kEmptyContextKey] = nil;
+  [self invalidateLoadedConfigs];
   [self.remoteConfigService attachUserToRemoteConfiguration:remoteConfigurationId completion:completion];
 }
 
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion {
-  self.loadingStates[kEmptyContextKey] = nil;
+  [self invalidateLoadedConfigs];
   [self.remoteConfigService detachUserFromRemoteConfiguration:remoteConfigurationId completion:completion];
+}
+
+// An attach/detach is addressed by experiment/configuration id, and the SDK
+// does not know which context key that entity serves — drop every cached
+// config, not just the empty-key one, or configs under named context keys stay
+// stale until the process restarts. Loading states themselves are kept so
+// pending completions survive.
+- (void)invalidateLoadedConfigs {
+  for (QONRemoteConfigLoadingState *loadingState in self.loadingStates.allValues) {
+    loadingState.loadedConfig = nil;
+  }
 }
 
 - (void)executeRemoteConfigCompletionsWithContextKey:(NSString *)contextKey remoteConfig:(QONRemoteConfig *)remoteConfig error:(NSError *)error {

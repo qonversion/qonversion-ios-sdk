@@ -30,6 +30,7 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 
 @property (atomic, assign, readwrite) BOOL sendingScheduled;
 @property (atomic, assign, readwrite) BOOL updatingCurrently;
+@property (atomic, assign, readwrite) BOOL forceResendRequired;
 @property (nonatomic, assign, readwrite) NSUInteger retryDelay;
 @property (nonatomic, assign, readwrite) NSUInteger retriesCounter;
 
@@ -89,19 +90,28 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 }
 
 - (void)forceSendProperties:(QONUserPropertiesEmptyCompletionHandler)completion {
-  if (self.inMemoryStorage.storageDictionary.count == 0) {
+  BOOL completeImmediately = NO;
+  @synchronized (self) {
+    if (self.inMemoryStorage.storageDictionary.count == 0 && !self.updatingCurrently) {
+      // Nothing pending and nothing in flight — the flush is trivially done.
+      completeImmediately = YES;
+    } else {
+      // Either properties are waiting in the buffer, or the buffer is empty
+      // only because an in-flight POST has already drained it — in both cases
+      // the caller must wait for a real request completion, not race it.
+      if (completion) {
+        [self.completionBlocks addObject:completion];
+      }
+    }
+  }
+
+  if (completeImmediately) {
     if (completion) {
       completion();
     }
     return;
   }
-  
-  @synchronized (self) {
-    if (completion) {
-      [self.completionBlocks addObject:completion];
-    }
-  }
-  
+
   [self sendProperties:YES];
 }
 
@@ -137,18 +147,35 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
   }
   
   @synchronized (self) {
-    if (self.updatingCurrently && !force) {
+    if (self.updatingCurrently) {
+      if (force) {
+        // A force flush arrived while a POST is in flight. Starting a parallel
+        // POST would let the older response drain the shared completion pool
+        // early — mark a follow-up send instead; the in-flight completion
+        // triggers it and keeps the waiters queued until it finishes.
+        self.forceResendRequired = YES;
+      }
       return;
     }
     self.updatingCurrently = YES;
   }
-  
+
   [self runOnBackgroundQueue:^{
     NSDictionary *properties = [self.inMemoryStorage.storageDictionary copy];
-    
+
     if (!properties || ![properties respondsToSelector:@selector(valueForKey:)] || properties.count == 0) {
+      NSArray *completions = @[];
       @synchronized (self) {
         self.updatingCurrently = NO;
+        completions = [self.completionBlocks copy];
+        [self.completionBlocks removeAllObjects];
+      }
+      // Nothing left to send — release any queued force-flush waiters instead
+      // of leaving them stuck until the next request.
+      for (QONUserPropertiesEmptyCompletionHandler storedCompletion in completions) {
+        if (storedCompletion) {
+          storedCompletion();
+        }
       }
       return;
     }
@@ -157,13 +184,23 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
     __block __weak QNUserPropertiesManager *weakSelf = self;
     [self.apiClient sendProperties:properties
                         completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-      
+
       NSArray *completions = @[];
+      BOOL followUpSend = NO;
       @synchronized (self) {
         weakSelf.updatingCurrently = NO;
-        
-        completions = [weakSelf.completionBlocks copy];
-        [weakSelf.completionBlocks removeAllObjects];
+
+        // A force flush was swallowed while this POST was in flight and the
+        // buffer holds properties that were not part of the sent snapshot —
+        // deliver them first and keep the waiters queued until that follow-up
+        // request finishes.
+        followUpSend = weakSelf.forceResendRequired && !error && weakSelf.inMemoryStorage.storageDictionary.count > 0;
+        weakSelf.forceResendRequired = NO;
+
+        if (!followUpSend) {
+          completions = [weakSelf.completionBlocks copy];
+          [weakSelf.completionBlocks removeAllObjects];
+        }
       }
 
       for (QONUserPropertiesEmptyCompletionHandler storedCompletion in completions) {
@@ -171,7 +208,7 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
           storedCompletion();
         }
       }
-      
+
       if (error) {
         // copy of an existing array to prevent erasing properties set while the current request is in progress
         NSMutableDictionary *allProperties = [self.inMemoryStorage.storageDictionary mutableCopy];
@@ -193,6 +230,10 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
       } else {
         weakSelf.retryDelay = kQPropertiesSendingPeriodInSeconds;
         weakSelf.retriesCounter = 0;
+
+        if (followUpSend) {
+          [weakSelf sendProperties:YES];
+        }
       }
     }];
   }];
