@@ -42,6 +42,11 @@ final class MiscAssembly {
     // purchase — they must dedup against the SAME set of taken ids.
     private let transactionReportsGateInstance = TransactionReportsGate()
 
+    // One instance SDK-wide: the processors are per service on purpose, but a
+    // revoked project key kills every one of them at once — the first to see
+    // a 401/402/403 must stop the rest.
+    private let criticalErrorLatchInstance = CriticalErrorLatch()
+
     init(apiKey: String, userDefaults: UserDefaults, internalConfig: InternalConfig) {
         self.apiKey = apiKey
         self.userDefaults = userDefaults
@@ -54,6 +59,10 @@ final class MiscAssembly {
 
     func transactionReportsGate() -> TransactionReportsGate {
         return transactionReportsGateInstance
+    }
+
+    func criticalErrorLatch() -> CriticalErrorLatch {
+        return criticalErrorLatchInstance
     }
     
     func localStorage() -> LocalStorage {

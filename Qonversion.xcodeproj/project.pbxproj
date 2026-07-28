@@ -85,6 +85,7 @@
 		70CD93102BC6E22B0039D65C /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92BF2BC6E22B0039D65C /* Request.swift */; };
 		70CD93112BC6E22B0039D65C /* RequestType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92C02BC6E22B0039D65C /* RequestType.swift */; };
 		70CD93122BC6E22B0039D65C /* RequestProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92C22BC6E22B0039D65C /* RequestProcessor.swift */; };
+		E100000000000000000000B1 /* CriticalErrorLatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000000000000000000A1 /* CriticalErrorLatch.swift */; };
 		70CD93132BC6E22B0039D65C /* RequestProcessorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92C32BC6E22B0039D65C /* RequestProcessorInterface.swift */; };
 		70CD93142BC6E22B0039D65C /* RequestsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92C52BC6E22B0039D65C /* RequestsStorage.swift */; };
 		70CD93152BC6E22B0039D65C /* RequestsStorageInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92C62BC6E22B0039D65C /* RequestsStorageInterface.swift */; };
@@ -322,6 +323,7 @@
 		70CD92BF2BC6E22B0039D65C /* Request.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
 		70CD92C02BC6E22B0039D65C /* RequestType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestType.swift; sourceTree = "<group>"; };
 		70CD92C22BC6E22B0039D65C /* RequestProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestProcessor.swift; sourceTree = "<group>"; };
+		E100000000000000000000A1 /* CriticalErrorLatch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CriticalErrorLatch.swift; sourceTree = "<group>"; };
 		70CD92C32BC6E22B0039D65C /* RequestProcessorInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestProcessorInterface.swift; sourceTree = "<group>"; };
 		70CD92C52BC6E22B0039D65C /* RequestsStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestsStorage.swift; sourceTree = "<group>"; };
 		70CD92C62BC6E22B0039D65C /* RequestsStorageInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestsStorageInterface.swift; sourceTree = "<group>"; };
@@ -700,6 +702,7 @@
 			isa = PBXGroup;
 			children = (
 				70CD92C22BC6E22B0039D65C /* RequestProcessor.swift */,
+				E100000000000000000000A1 /* CriticalErrorLatch.swift */,
 				70CD92C32BC6E22B0039D65C /* RequestProcessorInterface.swift */,
 			);
 			path = RequestProcessor;
@@ -1243,6 +1246,7 @@
 				70CD932A2BC6E22B0039D65C /* StoreKitWrapperDelegate.swift in Sources */,
 				70CD93072BC6E22B0039D65C /* Header.swift in Sources */,
 				70CD93122BC6E22B0039D65C /* RequestProcessor.swift in Sources */,
+				E100000000000000000000B1 /* CriticalErrorLatch.swift in Sources */,
 				70EA73512BD12C7B00B0DFDA /* ProductsServiceInterface.swift in Sources */,
 				70CD93062BC6E22B0039D65C /* QonversionErrorType.swift in Sources */,
 				70CD932D2BC6E22B0039D65C /* IncrementalDelayCalculator.swift in Sources */,

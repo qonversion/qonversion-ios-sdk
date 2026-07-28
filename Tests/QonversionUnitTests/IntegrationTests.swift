@@ -304,9 +304,9 @@ final class IntegrationTests: XCTestCase {
         XCTAssertLessThan(propertiesAt, configAt, "segmentation data must reach the backend before the config is computed")
     }
 
-    // MARK: - 7. per-service critical latch (the fixated design decision)
+    // MARK: - 7. the SDK-wide critical latch over per-service processors
 
-    func testCriticalErrorLatchesOnlyTheAffectedService() async throws {
+    func testACriticalErrorLatchesEveryService() async throws {
         world.stubHappyUser()
         world.network.stub("GET", "/v4/users/*/entitlements", status: 401, body: #"{"error": {"code": "unauthorized", "message": "revoked", "type": "auth"}}"#)
         world.network.stub("GET", "/v4/products", body: #"{"object": "list", "data": []}"#)
@@ -314,13 +314,21 @@ final class IntegrationTests: XCTestCase {
         _ = try? await world.entitlementsManager.entitlements()
         _ = try? await world.entitlementsManager.entitlements()
 
-        // Deliberate design (approved): the latch is per-service — the
-        // entitlements processor stops repeating the request...
         XCTAssertEqual(world.network.recordedRequests("GET", "/v4/users/*/entitlements").count, 1, "the latched processor must not hammer the backend")
 
-        // ...while an unrelated service keeps working.
-        _ = try await world.productsManager.products()
-        XCTAssertEqual(world.network.recordedRequests("GET", "/v4/products").count, 1)
+        // The processors stay per service, the latch does not: a 401 means the
+        // project key itself is revoked, so every other service is dead too —
+        // exactly what the single QNAPIClient of the ObjC SDK did.
+        do {
+            _ = try await world.productsManager.products()
+            XCTFail("Expected the revoked key to stop the products service as well")
+        } catch {
+            // Products wraps the failure in its own type; the latched critical
+            // error is the cause underneath.
+            let underlying = (error as? QonversionError)?.error as? QonversionError
+            XCTAssertEqual(underlying?.type, .critical)
+        }
+        XCTAssertTrue(world.network.recordedRequests("GET", "/v4/products").isEmpty, "a revoked key must stop every service before the network")
     }
 
     // MARK: - 7b. launch replay vs the unfinished-transaction sweep

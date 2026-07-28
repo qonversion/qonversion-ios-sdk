@@ -7,8 +7,8 @@
 
 import Foundation
 
-// @unchecked: criticalError is the only mutable field and is lock-guarded;
-// every dependency is thread-safe on its own.
+// @unchecked: the processor holds no mutable state of its own; every
+// dependency is thread-safe.
 class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     let baseURL: String
     let networkProvider: NetworkProviderInterface
@@ -24,23 +24,15 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     /// unfinished-transaction sweep run concurrently and must not both post
     /// the same purchase.
     let reportsGate: TransactionReportsGate
-    private let criticalErrorLock = NSLock()
-    private var _criticalError: QonversionError?
+    /// Shared with every other processor: a revoked project key is not a
+    /// property of the one service that noticed it.
+    let criticalErrorLatch: CriticalErrorLatch
 
     var criticalError: QonversionError? {
-        get {
-            criticalErrorLock.lock()
-            defer { criticalErrorLock.unlock() }
-            return _criticalError
-        }
-        set {
-            criticalErrorLock.lock()
-            defer { criticalErrorLock.unlock() }
-            _criticalError = newValue
-        }
+        return criticalErrorLatch.error
     }
 
-    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface, delayCalculator: IncrementalDelayCalculator = IncrementalDelayCalculator(), transportRetryDelayCeiling: TimeInterval = RequestProcessor.defaultTransportRetryDelayCeiling, reportsGate: TransactionReportsGate = TransactionReportsGate()) {
+    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface, delayCalculator: IncrementalDelayCalculator = IncrementalDelayCalculator(), transportRetryDelayCeiling: TimeInterval = RequestProcessor.defaultTransportRetryDelayCeiling, reportsGate: TransactionReportsGate = TransactionReportsGate(), criticalErrorLatch: CriticalErrorLatch = CriticalErrorLatch()) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
@@ -52,6 +44,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         self.delayCalculator = delayCalculator
         self.transportRetryDelayCeiling = transportRetryDelayCeiling
         self.reportsGate = reportsGate
+        self.criticalErrorLatch = criticalErrorLatch
     }
 
     /// Resends requests that failed on transport in previous sessions. A
@@ -128,7 +121,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     }
 
                     if let error = self.errorHandler.extractError(from: urlResponse, body: data), error.type == .critical {
-                        self.criticalError = error
+                        self.criticalErrorLatch.latch(error)
                         return
                     }
                 } catch {
@@ -145,6 +138,12 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     static func isRetriableStatusCode(_ statusCode: Int) -> Bool {
         return statusCode >= 500 || statusCode == 429
     }
+
+    /// Requests the SDK emits on its own schedule, which the host cannot spam:
+    /// a user-properties flush, an offer signature taken during a purchase and
+    /// a crash upload. The legacy client rate-limited only host-driven calls —
+    /// throttling these three drops data nobody asked for twice.
+    static let rateLimitExemptKinds: [Request.Kind] = [.sendProperties, .signPromoOffer, .sdkCrash]
 
     static let attemptHeader: String = "Attempt"
     static let triggerHeader: String = "Trigger"
@@ -172,8 +171,10 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             throw error
         }
         
-        if let rateLimitError: QonversionError = rateLimiter.validateRateLimit(for: request) {
-            throw rateLimitError
+        if !Self.rateLimitExemptKinds.contains(request.kind) {
+            if let rateLimitError: QonversionError = rateLimiter.validateRateLimit(for: request) {
+                throw rateLimitError
+            }
         }
 
         guard var urlRequest: URLRequest = request.convertToURLRequest(baseURL) else {
@@ -217,12 +218,16 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                 )
                 requestsStorage.append(stored, ifGenerationIs: generation)
             }
-            throw QonversionError(type: .invalidResponse, error: error)
+            // A connection-class failure is named for what it is: nothing
+            // arrived, so the host can branch on "offline" and repeat the call
+            // later instead of treating it as a broken response.
+            let type: QonversionErrorType = Self.isTransportFailure(error) ? .networkConnectionFailed : .invalidResponse
+            throw QonversionError(type: type, error: error)
         }
 
         guard error == nil else {
-            if error?.type == .critical {
-                criticalError = error
+            if let error, error.type == .critical {
+                criticalErrorLatch.latch(error)
             }
 
             // The backend did not process the request (5xx/429) — persist

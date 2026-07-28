@@ -43,21 +43,25 @@ final class RequestProcessorTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeProcessor(retriableRequestKinds: [Request.Kind] = [], reportsGate: TransactionReportsGate = TransactionReportsGate()) -> RequestProcessor {
-        RequestProcessor(
+    private func makeProcessor(retriableRequestKinds: [Request.Kind] = [], reportsGate: TransactionReportsGate = TransactionReportsGate(), criticalErrorLatch: CriticalErrorLatch = CriticalErrorLatch(), networkProvider: NetworkProviderInterface? = nil, rateLimiter: RateLimiterInterface? = nil) -> RequestProcessor {
+        let provider: NetworkProviderInterface = networkProvider ?? self.networkProvider
+        let limiter: RateLimiterInterface = rateLimiter ?? self.rateLimiter
+
+        return RequestProcessor(
             baseURL: baseURL,
-            networkProvider: networkProvider,
+            networkProvider: provider,
             headersBuilder: headersBuilder,
             errorHandler: errorHandler,
             decoder: responseDecoder,
             retriableRequestKinds: retriableRequestKinds,
             requestsStorage: requestsStorage,
-            rateLimiter: rateLimiter,
+            rateLimiter: limiter,
             delayCalculator: IncrementalDelayCalculator(),
             // The backoff itself is proven by IncrementalDelayCalculatorTests;
             // waiting it out here would only make the suite slow.
             transportRetryDelayCeiling: 0,
-            reportsGate: reportsGate
+            reportsGate: reportsGate,
+            criticalErrorLatch: criticalErrorLatch
         )
     }
 
@@ -101,7 +105,7 @@ final class RequestProcessorTests: XCTestCase {
             _ = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
             XCTFail("Expected the transport error to surface")
         } catch {
-            XCTAssertEqual((error as? QonversionError)?.type, .invalidResponse)
+            XCTAssertEqual((error as? QonversionError)?.type, .networkConnectionFailed)
         }
 
         XCTAssertEqual(networkProvider.sentRequests.count, RequestProcessor.maxTransportRetries + 1,
@@ -504,8 +508,9 @@ final class RequestProcessorTests: XCTestCase {
 
     func testProcessStoredRequestsSkipsWhenCriticalErrorLatched() async {
         requestsStorage.append(StoredRequest(url: "https://api.qonversion.io/v3/users/u/purchases", method: "POST", body: nil, dedupKey: nil))
-        let processor = makeProcessor()
-        processor.criticalError = QonversionError(type: .critical)
+        let latch = CriticalErrorLatch()
+        latch.latch(QonversionError(type: .critical))
+        let processor = makeProcessor(criticalErrorLatch: latch)
 
         processor.processStoredRequests()
 
@@ -692,6 +697,50 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(headersBuilder.callsCount, 0)
     }
 
+    // MARK: - Rate limit exemptions
+
+    func testSdkInitiatedRequestsAreExemptFromTheRateLimit() async {
+        // The legacy client rate-limited only what the host can spam. These
+        // three are emitted by the SDK itself — a properties flush, an offer
+        // signature during a purchase, a crash upload — and dropping them
+        // loses data the host never asked for twice.
+        let propertiesBody: RequestBodyDict = ["key": "value"]
+        let offerBody: RequestBodyDict = ["product_id": "p"]
+        let crashBody: RequestBodyDict = ["platform": "iOS"]
+        let exempt: [Request] = [
+            .sendProperties(userId: "u", body: propertiesBody),
+            .signPromoOffer(userId: "u", offerId: "o", body: offerBody),
+            .sdkCrash(body: crashBody)
+        ]
+
+        for request in exempt {
+            networkProvider = MockNetworkProvider()
+            rateLimiter = MockRateLimiter()
+            rateLimiter.errorToReturn = QonversionError(type: .rateLimitExceeded)
+            networkProvider.response = makeHTTPResponse(statusCode: 200)
+            networkProvider.responseData = Data("{\"id\": \"abc\"}".utf8)
+            let processor = makeProcessor()
+
+            _ = try? await processor.process(request: request, responseType: ProcessorTestPayload.self)
+
+            XCTAssertTrue(rateLimiter.validatedRequests.isEmpty, "\(request.kind) is SDK-initiated and must not be rate limited")
+            XCTAssertEqual(networkProvider.sentRequests.count, 1, "\(request.kind) must reach the network")
+        }
+    }
+
+    func testHostDrivenRequestsStayRateLimited() async {
+        rateLimiter.errorToReturn = QonversionError(type: .rateLimitExceeded)
+        let processor = makeProcessor()
+
+        do {
+            _ = try await processor.process(request: .getProperties(userId: "u"), responseType: ProcessorTestPayload.self)
+            XCTFail("Expected rate limit error")
+        } catch {
+            XCTAssertEqual((error as? QonversionError)?.type, .rateLimitExceeded)
+        }
+        XCTAssertEqual(rateLimiter.validatedRequests.count, 1)
+    }
+
     // MARK: - Transport error
 
     func testTransportErrorIsWrappedIntoInvalidResponse() async {
@@ -705,6 +754,27 @@ final class RequestProcessorTests: XCTestCase {
             let qonversionError = error as? QonversionError
             XCTAssertEqual(qonversionError?.type, .invalidResponse)
             XCTAssertEqual(qonversionError?.error as? MockError, .stubbed)
+        }
+    }
+
+    func testAConnectionFailureSurfacesAsNetworkConnectionFailed() async {
+        // No response ever arrived, so ".invalidResponse" describes a response
+        // that does not exist — and the host has no way to branch on "offline".
+        let connectionErrors: [URLError.Code] = [.notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotConnectToHost, .dnsLookupFailed, .callIsActive, .dataNotAllowed]
+
+        for code in connectionErrors {
+            networkProvider = MockNetworkProvider()
+            networkProvider.error = URLError(code)
+            let processor = makeProcessor()
+
+            do {
+                _ = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+                XCTFail("Expected the connection failure to surface")
+            } catch {
+                let qonversionError = error as? QonversionError
+                XCTAssertEqual(qonversionError?.type, .networkConnectionFailed, "\(code) is a connection failure")
+                XCTAssertEqual((qonversionError?.error as? URLError)?.code, code, "the underlying error stays attached")
+            }
         }
     }
 
@@ -768,6 +838,53 @@ final class RequestProcessorTests: XCTestCase {
         // latched forever (no reset path exists).
         XCTAssertEqual(networkProvider.sentRequests.count, 1)
         XCTAssertEqual(rateLimiter.validatedRequests.count, 1)
+    }
+
+    func testACriticalErrorLatchesEveryProcessorSharingTheLatch() async {
+        // A revoked project key kills the whole SDK, not the one service that
+        // happened to notice: the ObjC client had a single QNAPIClient, so the
+        // latch was global by construction. Here the processors are per
+        // service on purpose, so they must share one latch object.
+        let latch = CriticalErrorLatch()
+        networkProvider.response = makeHTTPResponse(statusCode: 401)
+        errorHandler.errorToReturn = QonversionError(type: .critical, message: "unauthorized")
+        let first = makeProcessor(criticalErrorLatch: latch)
+
+        let secondNetworkProvider = MockNetworkProvider()
+        secondNetworkProvider.response = makeHTTPResponse(statusCode: 200)
+        secondNetworkProvider.responseData = Data("{\"id\": \"abc\"}".utf8)
+        let secondRateLimiter = MockRateLimiter()
+        let second = makeProcessor(criticalErrorLatch: latch, networkProvider: secondNetworkProvider, rateLimiter: secondRateLimiter)
+
+        do {
+            _ = try await first.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+            XCTFail("Expected critical error")
+        } catch {
+            XCTAssertEqual((error as? QonversionError)?.type, .critical)
+        }
+
+        do {
+            _ = try await second.process(request: .getProducts(), responseType: ProcessorTestPayload.self)
+            XCTFail("Expected the latched critical error on the other processor")
+        } catch {
+            let qonversionError = error as? QonversionError
+            XCTAssertEqual(qonversionError?.type, .critical)
+            XCTAssertEqual(qonversionError?.message, "unauthorized")
+        }
+
+        XCTAssertTrue(secondNetworkProvider.sentRequests.isEmpty, "the second processor must refuse before the network")
+        XCTAssertTrue(secondRateLimiter.validatedRequests.isEmpty, "the latch is checked before the rate limiter")
+    }
+
+    func testTheFirstCriticalErrorWins() async {
+        let latch = CriticalErrorLatch()
+        let first = QonversionError(type: .critical, message: "first")
+        let second = QonversionError(type: .critical, message: "second")
+
+        latch.latch(first)
+        latch.latch(second)
+
+        XCTAssertEqual(latch.error?.message, first.message)
     }
 
     // MARK: - 204 No Content + EmptyApiResponse

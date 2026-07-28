@@ -76,6 +76,11 @@ public enum QonversionErrorType: Sendable {
     /// while it was in flight — its answer would have described a user that is
     /// no longer current. Ask again; the call is safe to repeat.
     case cancelled
+    /// The request never reached the backend: the device is offline, the
+    /// connection dropped or the host could not be resolved. Distinct from
+    /// ``invalidResponse`` — no response arrived at all, so nothing was
+    /// processed and repeating the call once connectivity is back is safe.
+    case networkConnectionFailed
 
     public func message() -> String {
         // handle other errors here
@@ -130,6 +135,8 @@ public enum QonversionErrorType: Sendable {
             return "Remote configuration is not available for the current user or for the provided context key"
         case .cancelled:
             return "The request was cancelled because the SDK switched users"
+        case .networkConnectionFailed:
+            return "The request could not reach Qonversion: the network connection failed"
         case .deviceCreationFailed:
             return "Device creation request failed. Unable to create the device."
         case .deviceUpdateFailed:
