@@ -46,18 +46,32 @@ enum StoreKitPurchaseOutcome {
     /// point documents ``QonversionError``, so nothing raw may pass here.
     /// `fallbackType` names the operation for the failures the store does not
     /// classify itself.
+    ///
+    /// Two kinds of "cancelled" reach this call and they are named
+    /// differently, deliberately:
+    /// - the STORE reporting a cancellation — `StoreKitError.userCancelled`
+    ///   from a dismissed App Store sign-in prompt during a restore — keeps
+    ///   the name ``QonversionErrorType/purchaseCancelled`` that
+    ///   ``failureType(for:)`` gives it everywhere else. One store condition,
+    ///   one error type, whichever call ran into it.
+    /// - the SDK ABANDONING the run — a `CancellationError` or a
+    ///   `URLError.cancelled` from a task torn down by a user switch — becomes
+    ///   ``QonversionErrorType/cancelled``: nothing failed, and naming it
+    ///   after the operation would send the host retrying something that was
+    ///   never attempted.
     static func storeError(_ error: Error, fallbackType: QonversionErrorType) -> QonversionError {
         // Already classified: re-wrapping would only nest messages and bury
         // the precise type under a generic one.
         if let qonversionError = error as? QonversionError { return qonversionError }
 
         // .purchaseFailed is what failureType answers for everything it cannot
-        // name — outside a purchase that name would be wrong.
+        // name — outside a purchase that name would be wrong. Everything it
+        // CAN name leaves through the guard below, cancellations included.
         let storeType: QonversionErrorType = failureType(for: error)
         guard storeType == .purchaseFailed else { return QonversionError(type: storeType, error: error) }
 
-        // An abandoned run did not fail; naming it after the operation would
-        // send the host retrying something that was never attempted.
+        // So only an abandoned run reaches this, never a store-reported
+        // cancellation.
         guard !error.isCancellation else { return QonversionError(type: .cancelled, error: error) }
 
         return QonversionError(type: fallbackType, error: error)

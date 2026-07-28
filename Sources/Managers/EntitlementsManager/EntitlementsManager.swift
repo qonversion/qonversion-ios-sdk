@@ -31,6 +31,10 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
     /// request, not N.
     private var _resolutionTask: Task<ResolvedEntitlements, Error>?
 
+    /// Names the run that owns the slot, so a run that ends after the slot
+    /// changed hands releases nothing. Monotonic, issued under `lock`.
+    private var resolutionTicket: UInt64 = 0
+
     /// How long a BACKEND answer is served without asking again. The ObjC SDK
     /// answered checkEntitlements straight from the cache inside this window
     /// (QNUtils.m:18 — `defaultState ? 60.0 * 5.0 : cacheLifetime`, the
@@ -105,23 +109,37 @@ private extension EntitlementsManager {
 
         // The run releases the slot as its own last act, before its value
         // becomes observable: clearing it from the caller instead would leave
-        // a window where a joining call is answered by a finished run. No
-        // identity check is needed — the next run can only be created after
-        // this clear.
+        // a window where a joining call is answered by a finished run.
+        //
+        // The clear is by identity, and the ticket is what carries it — a task
+        // cannot be captured by the closure that defines it. Identity is
+        // required because userDidChange() empties the slot OUT OF BAND while
+        // a run is still going: by the time that run ends the slot may already
+        // hold the run started for the new user, and wiping it would send the
+        // next caller off on a third concurrent resolution.
+        resolutionTicket += 1
+        let ticket: UInt64 = resolutionTicket
         let task = Task { [weak self] () throws -> ResolvedEntitlements in
             guard let self else { throw QonversionError(type: .entitlementsLoadingFailed) }
-            defer { self.clearResolutionTask() }
+            defer { self.clearResolutionTask(ticket: ticket) }
 
             return try await self.resolve(attemptsLeft: 1)
         }
+        // Written under the lock this call still holds, so a run that reaches
+        // its defer immediately waits for it.
         _resolutionTask = task
 
         return task
     }
 
-    func clearResolutionTask() {
+    func clearResolutionTask(ticket: UInt64) {
         lock.lock()
         defer { lock.unlock() }
+        // A later run has taken the slot over — the user switched while this
+        // one was in flight, and evicting its successor here is exactly the
+        // bug the ticket exists to prevent.
+        guard resolutionTicket == ticket else { return }
+
         _resolutionTask = nil
     }
 
@@ -205,7 +223,9 @@ extension EntitlementsManager: UserChangedObserver {
 
         cacheGeneration += 1
         // The resolution in flight belongs to the previous user: the next
-        // caller must start its own instead of joining it.
+        // caller must start its own instead of joining it. The ticket is left
+        // alone on purpose: the run in flight still owns the empty slot, and
+        // only the next caller taking the slot over revokes its claim to it.
         _resolutionTask = nil
         localStorage.removeObject(forKey: Constants.entitlementsKey.rawValue)
         localStorage.removeObject(forKey: Constants.entitlementsTimestampKey.rawValue)
