@@ -936,6 +936,98 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.finishedTransactions.map(\.id), ["p1"])
     }
 
+    // MARK: - revocations (refund, family sharing revocation)
+
+    private func makeRevokedTransaction(id: String, productId: String = "com.app.pro") -> Qonversion.Transaction {
+        let revocationDate = Date(timeIntervalSince1970: 1_700_000_000)
+
+        return Qonversion.Transaction(id: id, productId: productId, purchaseDate: nil, jws: "jws-proof", revocationDate: revocationDate)
+    }
+
+    func testRevokedTransactionEmitsUpdatedEntitlementsEvenWhenItsIdIsAlreadySurfaced() async {
+        // StoreKit delivers a refund as the SAME transaction id that was
+        // reported and surfaced when it was bought — both dedup gates already
+        // hold it, and both would swallow the revocation.
+        let gate = TransactionReportsGate()
+        _ = gate.tryTake("t1")
+        try? localStorage.set(["t1"], forKey: "qonversion.keys.surfacedTransactions")
+        manager = makeManager(launchMode: .subscriptionManagement, reportsGate: gate)
+        entitlementsManager.entitlementsResult = [:]
+        let collector = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeRevokedTransaction(id: "t1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.count, 1)
+        XCTAssertTrue(received.first?.isEmpty ?? false, "the host must learn that the entitlement is gone")
+        XCTAssertTrue(entitlementsManager.calls.contains(.invalidateFreshBackendCache),
+                      "the cached answer predates the revocation")
+    }
+
+    func testRevokedTransactionIsNotReportedAsAPurchase() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = [:]
+        let collector = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeRevokedTransaction(id: "r1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(service.sentTransactions.isEmpty, "the App Store server already told the backend about the refund")
+    }
+
+    func testRevokedTransactionEmitsNoDeferredPurchase() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = [:]
+        let purchases = StreamCollector(manager.deferredPurchases())
+        let updates = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeRevokedTransaction(id: "r1"))
+
+        await waitUntil { await !updates.received.isEmpty }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let received = await purchases.received
+        XCTAssertTrue(received.isEmpty, "a refund is not a purchase")
+    }
+
+    func testRevokedTransactionSeenByTheLaunchSweepEmitsUpdatedEntitlements() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = [:]
+        facade.unfinishedTransactionsResult = [makeRevokedTransaction(id: "r1")]
+        let collector = StreamCollector(manager.entitlementsUpdates())
+
+        await manager.processUnfinishedTransactions()
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received = await collector.received
+        XCTAssertEqual(received.count, 1)
+        XCTAssertTrue(service.sentTransactions.isEmpty, "a revocation is never reported as a purchase")
+    }
+
+    func testRevokedTransactionIsFinishedInSubscriptionManagementMode() async {
+        // An unfinished revocation is re-delivered by the store on every launch.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = [:]
+
+        manager.transactionUpdated(makeRevokedTransaction(id: "r1"))
+
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["r1"])
+    }
+
+    func testRevokedTransactionIsNotFinishedInAnalyticsMode() async {
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = [:]
+        let collector = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeRevokedTransaction(id: "r1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "the host app owns the lifecycle in Analytics mode")
+    }
+
     func testTheBufferedLaunchEmissionReachesBothStreams() async {
         // The backlog exists for hosts that subscribe after launch; the
         // entitlements projection must not steal it from deferredPurchases.
