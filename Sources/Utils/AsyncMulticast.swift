@@ -5,44 +5,49 @@
 
 import Foundation
 
+/// What a multicast does with a value produced while nobody is listening.
+enum MulticastBacklog: Sendable, Equatable {
+
+    /// The value is dropped.
+    case dropped
+
+    /// The value is kept and replayed to EVERY subscriber arriving inside the
+    /// backlog lifetime. For idempotent snapshots, where reading the latest
+    /// state again costs the host nothing.
+    case replayed
+
+    /// The value waits and is handed to the FIRST subscriber that arrives,
+    /// which consumes it: nobody after that receives it. For events the host
+    /// acts on, where a second delivery would repeat the action.
+    case deliveredOnce
+}
+
 /// Fans one sequence of values out to any number of independent AsyncStreams
 /// (StoreKit's Transaction.updates style: every stream() call is a separate
 /// subscription).
 ///
-/// Backlog policy (`replaysBacklog: true`)
-/// --------------------------------------
-/// Every yielded value is kept in a bounded backlog and replayed to EVERY
-/// subscriber that arrives afterwards, independently of whether somebody was
-/// already listening when the value was produced. A subscriber reads the
-/// backlog exactly once — at subscription time, when by definition nothing has
-/// been delivered to it yet — and receives live values from then on, so no
-/// value is ever delivered to the same subscriber twice.
+/// A value produced while subscribers are listening is broadcast to all of
+/// them, whatever the backlog policy is — the policy only decides the fate of
+/// a value produced with nobody listening, see ``MulticastBacklog``.
 ///
-/// This matters because subscriptions are not simultaneous: the projection
-/// built by `entitlementsUpdates()` attaches while the AsyncStream is being
-/// constructed, so a host that subscribes to it first (exactly what the Sample
-/// and the README show) would otherwise consume the launch backlog and starve
-/// the `deferredPurchases()` subscription it creates a moment later.
-///
-/// The backlog is bounded two ways, so it stays a launch-window replay and
-/// never becomes an unbounded event log:
+/// The backlog is bounded two ways, so it never becomes an unbounded event
+/// log:
 ///   * by count — at most `maxPending` values, oldest dropped first;
-///   * by age — a value older than `backlogLifetime` is never replayed.
-///
-/// With `replaysBacklog: false` (the default) values yielded to nobody are
-/// simply dropped.
+///   * by age — a value older than `backlogLifetime` is never delivered. An
+///     infinite lifetime makes a value wait for its subscriber indefinitely,
+///     which is what a value that must not be lost needs.
 // @unchecked: the continuations and the backlog are lock-guarded.
 final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
 
-    /// Bounds the replay backlog; the oldest values are dropped first.
+    /// Bounds the backlog; the oldest values are dropped first.
     static var maxPending: Int { 10 }
 
     /// Bounds each subscriber's own buffer. INVARIANT: strictly greater than
-    /// ``maxPending`` — the whole backlog is replayed before a subscriber
+    /// ``maxPending`` — a whole backlog can be handed over before a subscriber
     /// drains, so the headroom absorbs live values instead of evicting it.
     static var subscriberBufferSize: Int { maxPending * 4 }
 
-    /// How long a value stays replayable to subscribers arriving after it.
+    /// How long a value stays deliverable to subscribers arriving after it.
     /// Sized for "the host finished wiring its streams up", not for the whole
     /// session.
     static var defaultBacklogLifetime: TimeInterval { 300 }
@@ -50,21 +55,24 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
     private struct BacklogEntry {
         let element: Element
         let addedAt: Date
+        // Cleared once it has run: a replayed value must not report a second
+        // delivery.
+        var onDelivery: (@Sendable () -> Void)?
     }
 
-    private let replaysBacklog: Bool
-    private let backlogLifetime: TimeInterval
+    let backlog: MulticastBacklog
+    let backlogLifetime: TimeInterval
     private let now: @Sendable () -> Date
     private let lock = NSLock()
     private var continuations: [UUID: AsyncStream<Element>.Continuation] = [:]
-    private var backlog: [BacklogEntry] = []
+    private var backlogEntries: [BacklogEntry] = []
 
     init(
-        replaysBacklog: Bool = false,
+        backlog: MulticastBacklog = .dropped,
         backlogLifetime: TimeInterval = AsyncMulticast.defaultBacklogLifetime,
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
-        self.replaysBacklog = replaysBacklog
+        self.backlog = backlog
         self.backlogLifetime = backlogLifetime
         self.now = now
     }
@@ -94,39 +102,78 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
         }
     }
 
-    func yield(_ element: Element) {
+    /// Broadcasts to every subscriber listening right now; with none, the
+    /// backlog policy decides what happens to the value. `onDelivery` runs
+    /// once, when the value first reaches a subscriber — never for a value
+    /// that expires or is evicted before that.
+    func yield(_ element: Element, onDelivery: (@Sendable () -> Void)? = nil) {
         lock.lock()
-        if replaysBacklog {
-            pruneBacklogLocked()
-            let entry = BacklogEntry(element: element, addedAt: now())
-            backlog.append(entry)
-            if backlog.count > Self.maxPending {
-                backlog.removeFirst(backlog.count - Self.maxPending)
+        pruneBacklogLocked()
+        let active: [AsyncStream<Element>.Continuation] = Array(continuations.values)
+        let isDelivered: Bool = !active.isEmpty
+        let addedAt: Date = now()
+
+        switch backlog {
+        case .dropped:
+            break
+        case .replayed:
+            let hook: (@Sendable () -> Void)? = isDelivered ? nil : onDelivery
+            let entry = BacklogEntry(element: element, addedAt: addedAt, onDelivery: hook)
+            appendBacklogLocked(entry)
+        case .deliveredOnce:
+            if !isDelivered {
+                let entry = BacklogEntry(element: element, addedAt: addedAt, onDelivery: onDelivery)
+                appendBacklogLocked(entry)
             }
         }
-        let active: [AsyncStream<Element>.Continuation] = Array(continuations.values)
         lock.unlock()
 
         active.forEach { $0.yield(element) }
+        if isDelivered {
+            onDelivery?()
+        }
     }
 
     // MARK: - Private
 
-    /// Registers the subscriber and replays everything it has missed, all
-    /// under one lock. The replay yields INSIDE the critical section on
-    /// purpose: `Continuation.yield` never blocks under `.bufferingNewest`,
-    /// and doing it outside would let a value yielded concurrently reach this
-    /// subscriber BEFORE the backlog it is supposed to follow — the host would
-    /// see the launch purchase after the live one.
+    /// Registers the subscriber and hands it the backlog, all under one lock.
+    /// The yields happen INSIDE the critical section on purpose:
+    /// `Continuation.yield` never blocks under `.bufferingNewest`, and doing
+    /// it outside would let a value yielded concurrently reach this subscriber
+    /// BEFORE the backlog it is supposed to follow — the host would see the
+    /// launch purchase after the live one.
     private func register(id: UUID, continuation: AsyncStream<Element>.Continuation) {
         lock.lock()
-        defer { lock.unlock() }
-
         continuations[id] = continuation
-        guard replaysBacklog else { return }
-
         pruneBacklogLocked()
-        backlog.forEach { continuation.yield($0.element) }
+
+        var hooks: [@Sendable () -> Void] = []
+        switch backlog {
+        case .dropped:
+            break
+        case .replayed:
+            for index in backlogEntries.indices {
+                continuation.yield(backlogEntries[index].element)
+                if let hook = backlogEntries[index].onDelivery {
+                    hooks.append(hook)
+                    backlogEntries[index].onDelivery = nil
+                }
+            }
+        case .deliveredOnce:
+            let handedOver: [BacklogEntry] = backlogEntries
+            backlogEntries.removeAll()
+            handedOver.forEach { entry in
+                continuation.yield(entry.element)
+                if let hook = entry.onDelivery {
+                    hooks.append(hook)
+                }
+            }
+        }
+        lock.unlock()
+
+        // Outside the lock: a delivery hook is caller code and may take locks
+        // or touch storage of its own.
+        hooks.forEach { $0() }
     }
 
     private func unregister(id: UUID) {
@@ -135,10 +182,17 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
         lock.unlock()
     }
 
+    private func appendBacklogLocked(_ entry: BacklogEntry) {
+        backlogEntries.append(entry)
+        if backlogEntries.count > Self.maxPending {
+            backlogEntries.removeFirst(backlogEntries.count - Self.maxPending)
+        }
+    }
+
     private func pruneBacklogLocked() {
         guard backlogLifetime.isFinite else { return }
 
         let deadline: Date = now().addingTimeInterval(-backlogLifetime)
-        backlog.removeAll { $0.addedAt < deadline }
+        backlogEntries.removeAll { $0.addedAt < deadline }
     }
 }

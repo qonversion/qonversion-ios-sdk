@@ -190,8 +190,9 @@ public final class Qonversion: @unchecked Sendable {
 
     /// A stream of purchases promoted in the App Store. Call purchase() on a
     /// received intent to proceed — right away or whenever the app is ready;
-    /// dropping the intent defers the purchase. Intents arriving before the
-    /// first subscription are buffered:
+    /// dropping the intent defers the purchase. An intent arriving before the
+    /// first subscription is buffered and handed to it exactly once, never
+    /// repeated to a stream created later:
     ///
     ///     for await intent in Qonversion.shared.promoPurchaseIntents {
     ///         try await intent.purchase()
@@ -208,8 +209,22 @@ public final class Qonversion: @unchecked Sendable {
     /// unreachable the entitlements are calculated locally and
     /// ``Qonversion/Qonversion/DeferredPurchase/entitlementsSource`` says so.
     /// Like StoreKit's `Transaction.updates`, every access returns an
-    /// independent stream, and purchases processed before the first
-    /// subscription are buffered:
+    /// independent stream. Each purchase is delivered exactly once, so it is
+    /// safe to grant content straight from the loop:
+    ///
+    /// * a purchase produced while one or more streams are being iterated
+    ///   reaches all of them at that moment;
+    /// * a purchase produced while nobody is listening waits — with no
+    ///   deadline — for the next stream and is handed to that one alone;
+    /// * a purchase that has already reached a stream is never repeated to a
+    ///   stream created later, so a screen that re-appears and subscribes
+    ///   again does not grant the content twice;
+    /// * a purchase nobody received before the app was terminated comes back
+    ///   on a later launch, as long as its transaction is still unfinished.
+    ///
+    /// A stream you create and drop without iterating counts as having
+    /// received what was waiting, so build the stream where you consume it —
+    /// and prefer one long-lived subscription for granting content:
     ///
     ///     for await purchase in Qonversion.shared.deferredPurchases {
     ///         grantAccess(with: purchase.entitlements, for: purchase.transaction)
@@ -221,7 +236,11 @@ public final class Qonversion: @unchecked Sendable {
     }
 
     /// The entitlements-only projection of ``deferredPurchases``, for hosts
-    /// that only refresh their access state:
+    /// that only refresh their access state. It also carries the changes no
+    /// purchase describes — a refund or a family-sharing revocation — so it is
+    /// the one stream to follow to keep access in sync. Each value is the
+    /// complete access state, not a delta, and stays readable by a stream
+    /// created later:
     ///
     ///     for await entitlements in Qonversion.shared.entitlementsUpdates { ... }
     public var entitlementsUpdates: AsyncStream<[String: Qonversion.Entitlement]> {

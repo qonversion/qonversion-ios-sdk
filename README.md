@@ -290,7 +290,7 @@ The same file also answers `remoteConfig()` calls when the API is unreachable �
 
 ### Listening for updates
 
-Both streams follow the style of StoreKit's `Transaction.updates`: every access returns an independent stream, so subscribe from as many places as you need. Start the listeners once, right after initialization:
+The streams follow the style of StoreKit's `Transaction.updates`: every access returns an independent stream. Start the listeners once, right after initialization:
 
 ```swift
 Task {
@@ -322,7 +322,9 @@ Task {
 }
 ```
 
-Promo purchase intents arriving before your subscription are buffered — subscribing late (after onboarding) is safe.
+`deferredPurchases` and `promoPurchaseIntents` carry events you act on, so each one is delivered exactly once. An event produced while your loop is running reaches every stream being iterated at that moment; an event produced with nobody listening waits — with no deadline — and goes to the next stream alone, so subscribing late (after onboarding) is safe and a screen that re-appears never grants the same purchase twice. Keep one long-lived loop per event stream, and build the stream where you consume it: a stream you create and drop without iterating counts as having taken what was waiting. A deferred purchase nobody received before the app was terminated comes back on a later launch while its transaction is still unfinished.
+
+`entitlementsUpdates` is the exception: it carries access-state snapshots, so the latest one stays readable by every stream you create afterwards.
 
 ### Restore and historical data
 

@@ -10,15 +10,21 @@ protocol PurchasesManagerInterface: AnyObject {
 
     /// A stream of purchases the SDK processed out of band (Ask to Buy / SCA
     /// approvals, renewals, refunds, purchases on other devices), in both
-    /// launch modes. Every call returns an independent stream.
+    /// launch modes. Every call returns an independent stream, and every
+    /// purchase is delivered exactly once: broadcast to whoever is listening
+    /// when it happens, otherwise kept — with no deadline — for the next
+    /// stream alone.
     func deferredPurchases() -> AsyncStream<Qonversion.DeferredPurchase>
 
-    /// The entitlements-only projection of ``deferredPurchases()``. Every call
-    /// returns an independent stream.
+    /// The entitlements-only projection of ``deferredPurchases()``, plus the
+    /// revocations no deferred purchase can carry. Every call returns an
+    /// independent stream; the snapshot stays readable by streams created
+    /// later, and reading it never consumes a deferred purchase.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]>
 
     /// A stream of App Store promoted-purchase intents; call purchase() on an
-    /// intent to proceed. Every call returns an independent stream.
+    /// intent to proceed. Every call returns an independent stream, and an
+    /// intent waiting for a subscriber is handed to exactly one of them.
     func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent>
 
     /// Buys the product through the store, reports the purchase to the backend

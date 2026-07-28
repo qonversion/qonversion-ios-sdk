@@ -66,75 +66,75 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     private let reportsGate: TransactionReportsGate
 
-    // Guards the persisted set of transactions already handed to the host.
+    // Guards the surfaced bookkeeping below.
     private let surfacedLock = NSLock()
 
-    /// True when this transaction had not been surfaced yet — and marks it
-    /// surfaced. Persisted: StoreKit re-delivers unfinished transactions on
-    /// every launch, and Analytics mode never finishes any.
-    private func markSurfacedIfNew(_ transactionId: String) -> Bool {
+    // Emitted for the host in this launch but not heard by it yet: the claim
+    // keeps a second path from emitting the same transaction, the persisted
+    // record is what survives a relaunch.
+    private var claimedTransactions: Set<String> = []
+
+    /// True when the host has not heard about this transaction yet — and
+    /// claims it for this launch.
+    private func claimForHost(_ transactionId: String) -> Bool {
         surfacedLock.lock()
         defer { surfacedLock.unlock() }
 
+        let surfaced: [String] = storedSurfacedTransactions()
+        guard !claimedTransactions.contains(transactionId), !surfaced.contains(transactionId) else { return false }
+
+        claimedTransactions.insert(transactionId)
+
+        return true
+    }
+
+    /// Records that the host actually received this transaction. Persisted:
+    /// StoreKit re-delivers unfinished transactions on every launch, and
+    /// Analytics mode never finishes any. Recording it only after the delivery
+    /// is what brings an event nobody received back on the next launch.
+    private func markHeardByHost(_ transactionId: String) {
+        surfacedLock.lock()
+        defer { surfacedLock.unlock() }
+
+        claimedTransactions.insert(transactionId)
         var surfaced: [String] = storedSurfacedTransactions()
-        guard !surfaced.contains(transactionId) else { return false }
+        guard !surfaced.contains(transactionId) else { return }
 
         surfaced.append(transactionId)
         if surfaced.count > IntConstants.maxSurfacedTransactions.rawValue {
             surfaced.removeFirst(surfaced.count - IntConstants.maxSurfacedTransactions.rawValue)
         }
         try? localStorage.set(surfaced, forKey: Constants.surfacedTransactionsKey.rawValue)
-
-        return true
     }
 
     private func storedSurfacedTransactions() -> [String] {
         return (try? localStorage.object(forKey: Constants.surfacedTransactionsKey.rawValue, dataType: [String].self)) ?? []
     }
 
-    // Buffered: an approval processed during launch, before the host
-    // subscribes, must not be dropped.
-    private let deferredPurchasesMulticast = AsyncMulticast<Qonversion.DeferredPurchase>(replaysBacklog: true)
+    // An approval processed before the host subscribes waits with no deadline
+    // and is handed to the first subscription only. Internal for the test that
+    // asserts the deadline it must NOT have.
+    let deferredPurchasesMulticast = AsyncMulticast<Qonversion.DeferredPurchase>(backlog: .deliveredOnce, backlogLifetime: .infinity)
 
     // Buffered until the first subscriber — an intent arriving at app start
-    // must not be lost.
-    private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(replaysBacklog: true)
+    // must not be lost, and acting on the same one twice would purchase twice.
+    private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(backlog: .deliveredOnce)
 
-    // The entitlements recalculated after a revocation. A refund is not a
-    // purchase, so no DeferredPurchase describes it — it reaches the host
-    // through entitlementsUpdates() only.
-    private let revocationsMulticast = AsyncMulticast<[String: Qonversion.Entitlement]>(replaysBacklog: true)
+    // Snapshots, not events: a host that re-subscribes may read the latest
+    // access state again. The single access-state channel — a revocation
+    // carries no DeferredPurchase and reaches the host through this one.
+    private let entitlementsMulticast = AsyncMulticast<[String: Qonversion.Entitlement]>(backlog: .replayed)
 
     func deferredPurchases() -> AsyncStream<Qonversion.DeferredPurchase> {
         return deferredPurchasesMulticast.stream()
     }
 
     /// The entitlements-only projection of the deferred purchases, plus the
-    /// revocations no deferred purchase can carry: one subscription of its own
-    /// per source, so every stream stays independent.
+    /// revocations no deferred purchase can carry. Fed alongside them rather
+    /// than derived from a subscription, so reading it never takes a purchase
+    /// away from ``deferredPurchases()``.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
-        // The same bound as the subscription it wraps: a host that stops
-        // reading must not turn the projection into an unbounded queue.
-        return AsyncStream(bufferingPolicy: .bufferingNewest(AsyncMulticast<Qonversion.DeferredPurchase>.subscriberBufferSize)) { continuation in
-            // Subscribing here does not consume what deferredPurchases() is
-            // owed: AsyncMulticast replays its backlog to every subscriber.
-            let purchases: AsyncStream<Qonversion.DeferredPurchase> = self.deferredPurchasesMulticast.stream()
-            let revocations: AsyncStream<[String: Qonversion.Entitlement]> = self.revocationsMulticast.stream()
-            let purchasesTask = Task {
-                for await purchase in purchases {
-                    continuation.yield(purchase.entitlements)
-                }
-            }
-            let revocationsTask = Task {
-                for await entitlements in revocations {
-                    continuation.yield(entitlements)
-                }
-            }
-            continuation.onTermination = { _ in
-                purchasesTask.cancel()
-                revocationsTask.cancel()
-            }
-        }
+        return entitlementsMulticast.stream()
     }
 
     func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent> {
@@ -211,7 +211,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // Already surfaced by this call's result: a later re-delivery through
         // the updates listener must not repeat it as a deferred purchase.
         if let id: String = transaction.id {
-            _ = markSurfacedIfNew(id)
+            markHeardByHost(id)
         }
 
         // The id is claimed BEFORE the report goes out: a concurrent restore
@@ -599,16 +599,24 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
         // Gates what the host sees, not the report: a relaunch re-delivers
         // every unfinished transaction, and the host must hear it once.
-        if let id: String = transaction.id, !markSurfacedIfNew(id) { return }
+        let transactionId: String? = transaction.id
+        if let transactionId, !claimForHost(transactionId) { return }
 
         let deferredPurchase: Qonversion.DeferredPurchase = await self.deferredPurchase(for: transaction, reportFailed: reportFailed)
-        deferredPurchasesMulticast.yield(deferredPurchase)
+        // Marked heard only once it reaches a subscriber: an approval nobody
+        // received must come back after the next launch.
+        deferredPurchasesMulticast.yield(deferredPurchase) { [weak self] in
+            guard let transactionId else { return }
+
+            self?.markHeardByHost(transactionId)
+        }
+        entitlementsMulticast.yield(deferredPurchase.entitlements)
     }
 
     /// A refund or a family-sharing revocation. It is not a purchase: nothing
     /// is reported — the App Store server tells the backend about the refund —
-    /// and no deferred purchase is emitted. The host learns about it through
-    /// the entitlements the revocation leaves behind.
+    /// and no deferred purchase is emitted. The host learns about it from the
+    /// recalculated entitlements published to ``entitlementsUpdates()``.
     private func processRevocation(of transaction: Qonversion.Transaction) async {
         // Finished before the dedup gate below: an unfinished revocation is
         // re-delivered on every launch. In Analytics mode the host app owns
@@ -619,7 +627,12 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
         if let id: String = transaction.id {
             let revocationKey: String = Constants.revokedTransactionPrefix.rawValue + id
-            guard markSurfacedIfNew(revocationKey) else { return }
+            guard claimForHost(revocationKey) else { return }
+
+            // Recorded right away rather than on delivery: the snapshot below
+            // is state a later resolve reproduces, so a revocation nobody
+            // heard has nothing to come back for.
+            markHeardByHost(revocationKey)
         }
 
         // Whatever the fresh window holds was answered before the revocation.
@@ -632,7 +645,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             entitlements = await entitlementsManager.localFallbackEntitlements(for: [transaction])
         }
 
-        revocationsMulticast.yield(entitlements)
+        entitlementsMulticast.yield(entitlements)
     }
 }
 
