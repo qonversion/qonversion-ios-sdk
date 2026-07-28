@@ -22,6 +22,8 @@ fileprivate enum Constants: String {
     // That generation persisted everything into its own UserDefaults suite,
     // never into the standard/configured one — the migration must read there.
     case legacySuiteName = "qonversion.localstorage.main"
+    // The backend's answer (422) to a create carrying a uid it already knows.
+    case alreadyExistsApiCode = "already_exists"
 }
 
 // @unchecked: stateless — every dependency is thread-safe on its own.
@@ -49,16 +51,22 @@ final class UserService: UserServiceInterface, @unchecked Sendable {
     }
     
     func createUser() async throws -> Qonversion.User {
-        // The backend upserts by uid: a fresh install creates the user, a
-        // migrated install gets its existing user back.
         let userId: String = internalConfig.userId.isEmpty ? generateUserId() : internalConfig.userId
         do {
             let request = Request.createUser(body: ["id": userId])
             let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self, trigger: RequestTrigger.initialization)
-            
+
             return user
         } catch {
-            throw QonversionError(type: .userCreationFailed, message: nil, error: error)
+            // The uid is already taken — which is the normal state of an
+            // install upgraded from the previous SDK generation, since it
+            // adopts the uid that generation created. The user exists, so the
+            // pipeline continues with it instead of failing.
+            guard isAlreadyExists(error) else {
+                throw QonversionError(type: .userCreationFailed, message: nil, error: error)
+            }
+
+            return try await user()
         }
     }
     
@@ -103,7 +111,17 @@ final class UserService: UserServiceInterface, @unchecked Sendable {
 // MARK: - Private
 
 extension UserService {
-    
+
+    /// The conflict arrives wrapped by whichever layer failed, so the whole
+    /// error chain is inspected, not only its outermost link.
+    private func isAlreadyExists(_ error: Error) -> Bool {
+        guard let qonversionError = error as? QonversionError else { return false }
+        if qonversionError.apiCode == Constants.alreadyExistsApiCode.rawValue { return true }
+        guard let underlying: Error = qonversionError.error else { return false }
+
+        return isAlreadyExists(underlying)
+    }
+
     private func prepareUserId() {
         // An install updated from the previous SDK generation keeps its user:
         // the legacy uid moves to the new storage and the legacy key is cleaned.

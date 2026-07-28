@@ -112,7 +112,9 @@ enum Request : Hashable {
     case createIdentity(endpoint: String = "v4/identities", body: RequestBodyDict, type: RequestType = .post)
     case entitlements(userId: String, endpoint: String = "v4/users/%@/entitlements", type: RequestType = .get)
     case createPurchase(userId: String, endpoint: String = "v4/users/%@/purchases", body: RequestBodyDict, type: RequestType = .post)
-    case signPromoOffer(userId: String, offerId: String, endpoint: String = "v4/users/%@/offers/%@/signatures", body: RequestBodyDict, type: RequestType = .post)
+    // v3: contract-identical to the v4 shape and already accepting the SDK's
+    // Bearer key — the backend is not porting it.
+    case signPromoOffer(userId: String, offerId: String, endpoint: String = "v3/users/%@/offers/%@/signatures", body: RequestBodyDict, type: RequestType = .post)
     case getProperties(userId: String, endpoint: String = "v4/users/%@/properties", type: RequestType = .get)
     case sendProperties(userId: String, endpoint: String = "v4/users/%@/properties", body: RequestBodyDict, type: RequestType = .post)
     case createDevice(userId: String, endpoint: String = "v4/users/%@/device", body: RequestBodyDict, type: RequestType = .post)
@@ -120,9 +122,11 @@ enum Request : Hashable {
     case appleSearchAds(userId: String, endpoint: String = "v4/users/%@/attribution", body: RequestBodyDict, type: RequestType = .post)
     case getProducts(endpoint: String = "v4/products", type: RequestType = .get)
     case entitlementDefinitions(endpoint: String = "v4/entitlements", type: RequestType = .get)
-    case remoteConfig(userId: String, contextKey: String?, endpoint: String = "v4/remote-config", type: RequestType = .get)
-    case remoteConfigList(userId: String, contextKeys: [String], includeEmptyContextKey: Bool, endpoint: String = "v4/remote-configs", type: RequestType = .get)
-    case allRemoteConfigList(userId: String, endpoint: String = "v4/remote-configs?all_context_keys=true", type: RequestType = .get)
+    // The three remote-config READS stay on v3 for the same reason; the
+    // attach/detach routes below are v4.
+    case remoteConfig(userId: String, contextKey: String?, endpoint: String = "v3/remote-config", type: RequestType = .get)
+    case remoteConfigList(userId: String, contextKeys: [String], includeEmptyContextKey: Bool, endpoint: String = "v3/remote-configs", type: RequestType = .get)
+    case allRemoteConfigList(userId: String, endpoint: String = "v3/remote-configs?all_context_keys=true", type: RequestType = .get)
     case attachUserToExperiment(userId: String, experimentId: String, groupId: String, endpoint: String = "v4/experiments/%@/users/%@", type: RequestType = .post)
     case detachUserFromExperiment(userId: String, experimentId: String, endpoint: String = "v4/experiments/%@/users/%@", type: RequestType = .delete)
     case attachUserToRemoteConfig(userId: String, remoteConfigId: String, endpoint: String = "v4/remote-configurations/%@/users/%@", type: RequestType = .post)

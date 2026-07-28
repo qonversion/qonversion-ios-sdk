@@ -81,10 +81,17 @@ final class PurchasesService: PurchasesServiceInterface {
         ]
         var body: RequestBodyDict = [
             "platform": "app_store",
-            "price": transaction.price.map { "\($0)" } ?? "",
-            "currency": transaction.currency?.identifier ?? "",
             "store_data": storeData,
         ]
+        // An unknown price or currency is omitted, never sent as "": the
+        // backend reads the empty string as a value and would record the
+        // purchase as costing nothing.
+        if let price: Decimal = transaction.price {
+            body["price"] = "\(price)"
+        }
+        if let currency: String = transaction.currency?.identifier, !currency.isEmpty {
+            body["currency"] = currency
+        }
         if let purchaseDate: Date = transaction.purchaseDate {
             // A fresh formatter per call: ISO8601DateFormatter is not Sendable.
             body["purchased_at"] = ISO8601DateFormatter().string(from: purchaseDate)

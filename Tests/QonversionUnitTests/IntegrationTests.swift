@@ -291,7 +291,7 @@ final class IntegrationTests: XCTestCase {
     func testPendingPropertiesReachTheBackendBeforeTheRemoteConfig() async throws {
         world.stubHappyUser()
         world.network.stub("POST", "/v4/users/*/properties", body: #"{"object": "list", "saved_properties": [], "property_errors": []}"#)
-        world.network.stub("GET", "/v4/remote-config", body: #"{"payload": {"k": "v"}, "source": {"uid": "s1", "name": "main", "type": "remote_configuration", "assignment_type": "auto", "context_key": null}}"#)
+        world.network.stub("GET", "/v3/remote-config", body: #"{"payload": {"k": "v"}, "source": {"uid": "s1", "name": "main", "type": "remote_configuration", "assignment_type": "auto", "context_key": null}}"#)
 
         world.userPropertiesManager.setUserProperty(key: .email, value: "a@b.com")
         _ = try await world.remoteConfigManager.loadRemoteConfig(contextKey: nil)

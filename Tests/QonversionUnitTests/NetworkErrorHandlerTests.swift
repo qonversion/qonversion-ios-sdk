@@ -208,10 +208,8 @@ final class ApiErrorMappingTests: XCTestCase {
             // resource family
             ("not_found", .resourceNotFound),
             ("relation_not_found", .resourceNotFound),
-            ("user_not_found", .resourceNotFound),
             // throttling
             ("too_many_requests", .rateLimitExceeded),
-            ("rate_limit_exceeded", .rateLimitExceeded),
             // purchase passthrough
             ("purchase_fraud", .fraudPurchase),
             ("store_not_configured", .projectConfigError),
@@ -221,8 +219,6 @@ final class ApiErrorMappingTests: XCTestCase {
             ("conflicting_purchase_found", .receiptValidationError),
             // offer-signature passthrough
             ("token_not_found", .projectConfigError),
-            ("secrets_not_found", .projectConfigError),
-            ("settings_not_found", .projectConfigError),
         ]
 
         for expectation in expectations {
@@ -230,6 +226,19 @@ final class ApiErrorMappingTests: XCTestCase {
             let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
 
             XCTAssertEqual(error.type, expectation.type, "code \(expectation.code)")
+        }
+    }
+
+    func testSlugsNoBackendEmitsAreNotInTheVocabulary() throws {
+        // Verified against the backend sources: nothing produces these. They
+        // were mapped on an assumption; throttling really arrives as
+        // `too_many_requests`, which stays mapped above.
+        for code in ["user_not_found", "rate_limit_exceeded", "secrets_not_found", "settings_not_found"] {
+            let body = Data("{\"error\": {\"code\": \"\(code)\", \"message\": \"m\"}}".utf8)
+            let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
+
+            XCTAssertEqual(error.type, .unknown, "code \(code) must keep the status-derived type")
+            XCTAssertEqual(error.apiCode, code, "the slug still reaches the integrator")
         }
     }
 

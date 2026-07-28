@@ -49,8 +49,8 @@ public enum QonversionErrorType: Sendable {
     case purchaseSceneMissing
     /// The backend does not know the requested resource: an unknown user id,
     /// an unknown product, an unknown remote config, an unknown nested id.
-    /// Answers the `not_found`, `relation_not_found` and `user_not_found`
-    /// backend codes (HTTP 404).
+    /// Answers the `not_found` and `relation_not_found` backend codes
+    /// (HTTP 404).
     case resourceNotFound
     /// This device is not allowed to make payments (e.g. parental controls).
     /// Produced from StoreKit failures only — the backend has no code for it.
@@ -212,22 +212,19 @@ extension QonversionErrorType {
         case "invalid_data", "invalid_request", "validation_error", "invalid_entitlement_data":
             self = .invalidRequest
         // Nothing behind the id. `relation_not_found` is what a nested route
-        // answers for an unknown uid (404); `user_not_found` is the
-        // offer-signature service saying the same thing.
-        case "not_found", "relation_not_found", "user_not_found":
+        // answers for an unknown uid (404).
+        case "not_found", "relation_not_found":
             self = .resourceNotFound
-        // Throttling. `too_many_requests` is the gateway's slug (429);
-        // `rate_limit_exceeded` is the offer-signature passthrough.
-        case "too_many_requests", "rate_limit_exceeded":
+        // Throttling: the gateway's slug (429).
+        case "too_many_requests":
             self = .rateLimitExceeded
         // purchaseman rejected the purchase as fraudulent (422).
         case "purchase_fraud":
             self = .fraudPurchase
         // The project has no usable App Store credentials. The first two come
-        // from purchaseman, the rest from the offer-signature service, where
-        // the missing token / secret / settings all mean the same thing:
-        // the Dashboard project is not set up for this operation.
-        case "store_not_configured", "store_creds_failed", "token_not_found", "secrets_not_found", "settings_not_found":
+        // from purchaseman, `token_not_found` from the offer-signature
+        // service: the Dashboard project is not set up for this operation.
+        case "store_not_configured", "store_creds_failed", "token_not_found":
             self = .projectConfigError
         // The purchase-validation family (422): the App Store payload did not
         // parse into a subscription, carried an unexpected purchase type, or
@@ -242,6 +239,8 @@ extension QonversionErrorType {
             // control_unauthorized / control_forbidden are unmapped too: they
             // arrive on 401 / 403, which already classify as .critical and
             // must keep doing so (see the precedence in NetworkErrorHandler).
+            // user_not_found, rate_limit_exceeded, secrets_not_found and
+            // settings_not_found are absent on purpose: no backend emits them.
             return nil
         }
     }

@@ -219,8 +219,8 @@ final class UserServiceTests: XCTestCase {
 
         let user = try await service.createUser()
 
-        // The backend upserts by uid, so createUser keeps the current uid:
-        // a migrated install gets its existing user back instead of a new one.
+        // createUser posts the CURRENT uid instead of minting a new one — a
+        // migrated install must keep the user the previous SDK created.
         let idAfterCreate = config.userId
         XCTAssertEqual(idAfterInit, idAfterCreate)
         XCTAssertEqual(storage.string(forKey: userIdKey), idAfterCreate)
@@ -264,6 +264,103 @@ final class UserServiceTests: XCTestCase {
         } catch let error as QonversionError {
             XCTAssertEqual(error.type, .userCreationFailed)
             XCTAssertEqual(error.error as? MockError, .stubbed)
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    // MARK: - createUser: the already_exists conflict
+
+    /// The backend answers a repeated uid with `already_exists` (422). Every
+    /// install upgraded from the previous SDK generation posts a uid the
+    /// backend already knows, so the conflict must resolve to that user.
+    private func alreadyExistsError(nested: Bool = false) -> QonversionError {
+        let apiError = QonversionError(
+            type: .unknown,
+            message: "user already exists",
+            error: nil,
+            additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 422],
+            apiCode: "already_exists",
+            apiType: "logical"
+        )
+        guard nested else { return apiError }
+
+        return QonversionError(type: .internal, message: nil, error: apiError)
+    }
+
+    func testCreateUserFetchesTheExistingUserOnAlreadyExists() async throws {
+        let processor = MockRequestProcessor()
+        let storage = makeStorage()
+        storage.set(string: "QON_migrated_uid", forKey: userIdKey)
+        let config = InternalConfig(userId: "initial")
+        let service = UserService(requestProcessor: processor, localStorage: storage, internalConfig: config)
+
+        let existingUser = try decodeUserStub(id: "QON_migrated_uid", environment: "sandbox")
+        processor.results = [alreadyExistsError(), existingUser]
+
+        let user = try await service.createUser()
+
+        XCTAssertEqual(
+            processor.processedRequests,
+            [Request.createUser(body: ["id": "QON_migrated_uid"]), Request.getUser(id: "QON_migrated_uid")]
+        )
+        XCTAssertEqual(user.id, "QON_migrated_uid")
+        XCTAssertEqual(user.environment, .sandbox)
+        XCTAssertEqual(config.userId, "QON_migrated_uid")
+    }
+
+    /// The conflict arrives wrapped by whichever layer failed — the whole
+    /// error chain has to be inspected, not only its outermost link.
+    func testCreateUserFetchesTheExistingUserOnNestedAlreadyExists() async throws {
+        let processor = MockRequestProcessor()
+        let storage = makeStorage()
+        storage.set(string: "QON_migrated_uid", forKey: userIdKey)
+        let service = UserService(requestProcessor: processor, localStorage: storage, internalConfig: InternalConfig(userId: "initial"))
+
+        processor.results = [alreadyExistsError(nested: true), try decodeUserStub(id: "QON_migrated_uid")]
+
+        let user = try await service.createUser()
+
+        XCTAssertEqual(processor.processedRequests.count, 2)
+        XCTAssertEqual(user.id, "QON_migrated_uid")
+    }
+
+    func testCreateUserKeepsFailingOnAnyOtherApiCode() async {
+        let processor = MockRequestProcessor()
+        let storage = makeStorage()
+        storage.set(string: "QON_uid", forKey: userIdKey)
+        let service = UserService(requestProcessor: processor, localStorage: storage, internalConfig: InternalConfig(userId: "initial"))
+
+        let otherApiError = QonversionError(type: .invalidRequest, message: nil, error: nil, additionalInfo: nil, apiCode: "invalid_data", apiType: "request")
+        processor.results = [otherApiError, try? decodeUserStub(id: "QON_uid")]
+
+        do {
+            _ = try await service.createUser()
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .userCreationFailed)
+            XCTAssertEqual((error.error as? QonversionError)?.apiCode, "invalid_data")
+            // Only the conflict slug recovers: no user fetch was attempted.
+            XCTAssertEqual(processor.processedRequests, [Request.createUser(body: ["id": "QON_uid"])])
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testCreateUserSurfacesTheFetchFailureWhenTheConflictRecoveryFails() async {
+        let processor = MockRequestProcessor()
+        let storage = makeStorage()
+        storage.set(string: "QON_uid", forKey: userIdKey)
+        let service = UserService(requestProcessor: processor, localStorage: storage, internalConfig: InternalConfig(userId: "initial"))
+
+        processor.results = [alreadyExistsError(), MockError.stubbed]
+
+        do {
+            _ = try await service.createUser()
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .userLoadingFailed)
+            XCTAssertEqual(processor.processedRequests.count, 2)
         } catch {
             XCTFail("Expected QonversionError, got \(error)")
         }

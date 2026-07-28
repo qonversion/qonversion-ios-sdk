@@ -162,6 +162,59 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(service.createUserCallsCount, 1)
     }
 
+    // MARK: - Migration from the previous SDK generation
+
+    /// The whole upgrade path over a REAL UserService: the install adopts the
+    /// legacy uid, the backend answers the create with `already_exists` (422),
+    /// and the gate still completes with that existing user.
+    func testObtainUserRecoversFromTheCreateConflictOfAMigratedInstall() async throws {
+        let legacyUid = "QON_legacy_uid"
+        let legacySuiteName = "qonversion.localstorage.main"
+        let legacyDefaults = UserDefaults(suiteName: legacySuiteName)
+        legacyDefaults?.removePersistentDomain(forName: legacySuiteName)
+        defer { legacyDefaults?.removePersistentDomain(forName: legacySuiteName) }
+
+        let migrationStorage = MockLocalStorage()
+        migrationStorage.set(string: legacyUid, forKey: "com.qonversion.keys.storedUserID")
+        let migrationConfig = InternalConfig(userId: "")
+        let processor = MockRequestProcessor()
+        let realService = UserService(requestProcessor: processor, localStorage: migrationStorage, internalConfig: migrationConfig)
+        let migrationManager = UserManager(
+            userService: realService,
+            localStorage: migrationStorage,
+            internalConfig: migrationConfig,
+            userChangesNotifier: notifier,
+            logger: LoggerWrapper()
+        )
+
+        XCTAssertEqual(migrationConfig.userId, legacyUid, "the legacy uid must be adopted before any request")
+
+        let conflict = QonversionError(
+            type: .unknown,
+            message: "user already exists",
+            error: nil,
+            additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 422],
+            apiCode: "already_exists",
+            apiType: "logical"
+        )
+        processor.results = [conflict, try makeUser(id: legacyUid)]
+
+        let user = try await migrationManager.obtainUser()
+
+        XCTAssertEqual(user.id, legacyUid)
+        XCTAssertEqual(
+            processor.processedRequests,
+            [Request.createUser(body: ["id": legacyUid]), Request.getUser(id: legacyUid)]
+        )
+        XCTAssertEqual(migrationConfig.userId, legacyUid)
+
+        // The recovered user is cached: a second demand costs no request.
+        let cached = try await migrationManager.obtainUser()
+
+        XCTAssertEqual(cached.id, legacyUid)
+        XCTAssertEqual(processor.processedRequests.count, 2)
+    }
+
     // MARK: - Identity
 
     func testIdentifyAfterCreationLinksIdentity() async throws {

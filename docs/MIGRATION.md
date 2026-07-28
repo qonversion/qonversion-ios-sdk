@@ -53,6 +53,14 @@ Every completion-handler API became `async`. Errors are thrown instead of passed
 | `isFallbackFileAccessible()` | unchanged |
 | `QONEnvironment` on the configuration | Removed — see [The environment flag is gone](#the-environment-flag-is-gone). |
 
+### `identify` accepts a restricted character set
+
+The external id must match `^[a-zA-Z0-9._-]+$` — the backend validates it as a
+path id. Anything outside that set (an `@` in an email, for example) is
+percent-encoded by the SDK and then rejected by the backend, so map such ids to
+a stable opaque value (a hash or your own internal id) before calling
+`identify`.
+
 ### Listeners became streams
 
 Delegate/listener protocols are gone. Both streams follow the style of StoreKit's `Transaction.updates`: every access returns an independent stream, subscribe from as many places as you need, and promo purchase intents arriving before your first subscription are buffered.
@@ -108,10 +116,10 @@ keeps the status-derived type and reaches you as `apiCode`:
 | Backend code | `QonversionErrorType` |
 |---|---|
 | `invalid_data`, `invalid_request`, `validation_error`, `invalid_entitlement_data` | `.invalidRequest` |
-| `not_found`, `relation_not_found`, `user_not_found` | `.resourceNotFound` |
-| `too_many_requests`, `rate_limit_exceeded` | `.rateLimitExceeded` |
+| `not_found`, `relation_not_found` | `.resourceNotFound` |
+| `too_many_requests` | `.rateLimitExceeded` |
 | `purchase_fraud` | `.fraudPurchase` |
-| `store_not_configured`, `store_creds_failed`, `token_not_found`, `secrets_not_found`, `settings_not_found` | `.projectConfigError` |
+| `store_not_configured`, `store_creds_failed`, `token_not_found` | `.projectConfigError` |
 | `subscription_period_parse_error`, `apple_purchase_type_error`, `conflicting_purchase_found` | `.receiptValidationError` |
 
 `.paymentNotAllowed` and `.storeProductNotAvailable` have no backend code — they
