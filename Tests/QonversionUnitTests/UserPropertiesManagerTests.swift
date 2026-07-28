@@ -418,6 +418,33 @@ private final class PropertiesAsyncGate: @unchecked Sendable {
     func wait() async { await storage.wait() }
 }
 
+/// A one-shot "it finished" marker: lets a test bound an await that would
+/// otherwise hang forever, so a regression fails instead of stalling the suite.
+private actor DoneFlag {
+    private var isDone = false
+
+    func markDone() { isDone = true }
+
+    func value() -> Bool { isDone }
+}
+
+private func waitForCompletion(of flag: DoneFlag, timeout: TimeInterval) async -> Bool {
+    let deadline: Date = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+        if await flag.value() { return true }
+        try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+
+    return await flag.value()
+}
+
+private func pollUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
+    let deadline: Date = Date().addingTimeInterval(timeout)
+    while !condition() && Date() < deadline {
+        try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+}
+
 /// Records the observer removals the manager performs on deinit.
 final class SpyNotificationCenter: NotificationCenter, @unchecked Sendable {
 
@@ -481,17 +508,44 @@ final class UserPropertiesObserverTests: XCTestCase {
         XCTAssertTrue(storage.all().isEmpty)
     }
 
-    func testTheObservedNotificationIsThePlatformBackgroundNotification() {
-        // Every platform the SDK ships on has a "the app is leaving the
-        // foreground" notification; a name nothing posts would silently drop
-        // the pending batch on that platform.
+    func testEveryHostsBackgroundNotificationNameIsMapped() {
+        // Runs on every platform and covers all of them: an #if-guarded
+        // assertion only ever compiles the arm for the platform under test, so
+        // a broken mapping for one of the others ships green. A name nothing
+        // posts silently drops the pending batch on that platform.
+        XCTAssertEqual(
+            UserPropertiesManager.backgroundFlushNotificationName(for: .watchExtension).rawValue,
+            "NSExtensionHostDidEnterBackgroundNotification"
+        )
+        XCTAssertEqual(
+            UserPropertiesManager.backgroundFlushNotificationName(for: .uiKitApplication).rawValue,
+            "UIApplicationDidEnterBackgroundNotification"
+        )
+        XCTAssertEqual(
+            UserPropertiesManager.backgroundFlushNotificationName(for: .appKitApplication).rawValue,
+            "NSApplicationDidResignActiveNotification"
+        )
+        XCTAssertNotEqual(
+            UserPropertiesManager.backgroundFlushNotificationName(for: .watchExtension),
+            UserPropertiesManager.backgroundFlushNotificationName(for: .uiKitApplication),
+            "the watch host must not fall through to the UIKit name — watchOS imports UIKit but has no UIApplication"
+        )
+    }
+
+    func testTheObservedNotificationIsTheOneTheCurrentPlatformPosts() {
+        // The mapping above is spelled with string literals; this pins the
+        // literal for the platform under test to the constant the system
+        // actually posts, so the table cannot drift away from the frameworks.
         let observed: Notification.Name = UserPropertiesManager.backgroundNotificationName
 
         #if os(watchOS)
+        XCTAssertEqual(UserPropertiesManager.currentBackgroundFlushHost, .watchExtension)
         XCTAssertEqual(observed, .NSExtensionHostDidEnterBackground)
         #elseif canImport(UIKit)
+        XCTAssertEqual(UserPropertiesManager.currentBackgroundFlushHost, .uiKitApplication)
         XCTAssertEqual(observed, UIApplication.didEnterBackgroundNotification)
         #elseif canImport(AppKit)
+        XCTAssertEqual(UserPropertiesManager.currentBackgroundFlushHost, .appKitApplication)
         XCTAssertEqual(observed, NSApplication.didResignActiveNotification)
         #endif
     }
@@ -516,6 +570,10 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         let propertiesStorage: UserPropertiesStorage
         let processor: MockRequestProcessor
         let config: InternalConfig
+        /// The gate the properties manager is wired to. It is a stub, not the
+        /// real UserManager above: the flush is expected to skip the gate
+        /// entirely, and a stub is what makes the call count observable.
+        let propertiesUserManager: MockUserManager
     }
 
     private func makeGraph(originalUid: String) throws -> Graph {
@@ -535,8 +593,11 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         let sendResult = SendUserPropertiesResult(savedProperties: [], propertyErrors: [])
         processor.results = [sendResult]
         let propertiesStorage = UserPropertiesStorage()
-        // The properties manager may not reach into the user gate while the
-        // gate itself is mid-switch — a separate stub proves it does not.
+        // A stub gate, so "the flush never calls obtainUser" is observable as a
+        // call count. It is not a claim that the real gate would misbehave —
+        // UserManager is an actor, a reentrant call would suspend, not
+        // deadlock. The flush skips the gate because the outgoing user
+        // provably exists by then, and the switch is on a deadline.
         let propertiesUserManager = MockUserManager()
         propertiesUserManager.user = oldUser
         let propertiesManager = UserPropertiesManager(
@@ -550,7 +611,7 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         )
         notifier.add(observer: propertiesManager)
 
-        return Graph(userManager: userManager, propertiesManager: propertiesManager, propertiesStorage: propertiesStorage, processor: processor, config: config)
+        return Graph(userManager: userManager, propertiesManager: propertiesManager, propertiesStorage: propertiesStorage, processor: processor, config: config, propertiesUserManager: propertiesUserManager)
     }
 
     private func sentPropertyUserIds(_ processor: MockRequestProcessor) -> [String] {
@@ -570,6 +631,11 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
         XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
         XCTAssertTrue(graph.propertiesStorage.all().isEmpty, "the new user must start with an empty batch")
+        XCTAssertEqual(
+            graph.propertiesUserManager.obtainUserCallsCount,
+            0,
+            "the flush posts under the uid it was handed and spends none of the switch deadline on the user gate"
+        )
     }
 
     func testLogoutSendsThePendingBatchUnderTheIdentifiedUid() async throws {
@@ -584,5 +650,76 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         XCTAssertEqual(graph.config.userId, "anon-uid", "the logout must have restored the original user")
         XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
         XCTAssertTrue(graph.propertiesStorage.all().isEmpty, "the restored user must start with an empty batch")
+        XCTAssertEqual(graph.propertiesUserManager.obtainUserCallsCount, 0, "the flush does not go through the user gate")
+    }
+
+    // MARK: - the flush deadline
+
+    func testAStalledPropertiesFlushDoesNotHoldUpTheUserSwitch() async throws {
+        // The switch awaits the flush and the flush awaits the network. Without
+        // a bound, an identify at launch blocks the host for as long as
+        // URLSession is willing to wait (60s by default, twice that when a
+        // round trip is already in flight).
+        let graph: Graph = try makeGraph(originalUid: oldUid)
+        _ = try await graph.userManager.obtainUser()
+        let stall = PropertiesAsyncGate()
+        graph.processor.onProcess = { await stall.wait() }
+        graph.propertiesManager.setCustomUserProperty(key: "my_key", value: "my_value")
+
+        let identifyFinished = DoneFlag()
+        let identify = Task {
+            _ = try? await graph.userManager.identify("external-id")
+            await identifyFinished.markDone()
+        }
+        let finishedInTime: Bool = await waitForCompletion(of: identifyFinished, timeout: 15)
+        let switchedUserId: String = graph.config.userId
+        let batchAfterSwitch: [Qonversion.UserProperty] = graph.propertiesStorage.all()
+        await stall.open()
+        _ = await identify.value
+
+        XCTAssertTrue(finishedInTime, "the user switch must not wait out a stalled properties flush")
+        XCTAssertEqual(switchedUserId, newUid, "the switch proceeds once the flush deadline passes")
+        XCTAssertTrue(batchAfterSwitch.isEmpty, "the new user starts with an empty batch")
+    }
+
+    func testAFlushThatOutlivesItsDeadlineNeverPostsAfterTheSwitch() async throws {
+        // The flush is suspended on the round trip that was already in flight
+        // when the switch started, so it is still alive after the deadline —
+        // and by then the storage belongs to the user the SDK switched to.
+        let graph: Graph = try makeGraph(originalUid: oldUid)
+        _ = try await graph.userManager.obtainUser()
+        let stall = PropertiesAsyncGate()
+        graph.processor.onProcess = { await stall.wait() }
+        graph.processor.results = [
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+        ]
+        graph.propertiesStorage.save(Qonversion.UserProperty(key: "queued", value: "1"))
+        let inFlight = Task { try? await graph.propertiesManager.sendProperties() }
+        await pollUntil { graph.processor.processedRequests.count == 1 }
+
+        let identifyFinished = DoneFlag()
+        let identify = Task {
+            _ = try? await graph.userManager.identify("external-id")
+            await identifyFinished.markDone()
+        }
+        let finishedInTime: Bool = await waitForCompletion(of: identifyFinished, timeout: 15)
+        let switchedUserId: String = graph.config.userId
+        // The new user queues its own property while the abandoned flush is
+        // still suspended on the previous user's round trip.
+        graph.propertiesManager.setCustomUserProperty(key: "new_user_key", value: "2")
+
+        await stall.open()
+        _ = await inFlight.value
+        _ = await identify.value
+        try? await Task.sleep(nanoseconds: 300_000_000)
+
+        XCTAssertTrue(finishedInTime, "the user switch must not wait out a stalled properties flush")
+        XCTAssertEqual(switchedUserId, newUid)
+        XCTAssertEqual(
+            sentPropertyUserIds(graph.processor),
+            [oldUid],
+            "the abandoned flush may post nothing once the switch has happened — neither under the new uid nor the new user's batch under the old one"
+        )
     }
 }

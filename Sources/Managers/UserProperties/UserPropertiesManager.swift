@@ -6,11 +6,6 @@
 //
 
 import Foundation
-#if canImport(UIKit) && !os(watchOS)
-import UIKit
-#elseif canImport(AppKit)
-import AppKit
-#endif
 #if canImport(AdServices)
 import AdServices
 #endif
@@ -25,6 +20,19 @@ fileprivate enum Constants: Int {
     // After this many failed attempts the batch stays in the storage but the
     // scheduling stops; the next setProperty call re-triggers sending.
     case sendPropertiesMaxRetries = 10
+}
+
+fileprivate enum FlushConstants {
+    /// How long a user switch may be held up by the outgoing user's properties
+    /// flush. The host awaits identify() at launch and logout() behind a
+    /// sign-out button, while the SDK's URLSession waits out the default 60s
+    /// per request — and the flush may await a round trip already in flight
+    /// before posting its own. A healthy round trip finishes well inside a
+    /// second, so this covers the normal case and cuts the pathological one.
+    /// Missing the deadline costs nothing that was not already droppable: the
+    /// batch is dropped at the switch, which is what happened to EVERY pending
+    /// batch before the flush existed.
+    static let userSwitchTimeoutSec: TimeInterval = 5
 }
 
 // @unchecked: mutable state is guarded by stateLock; deps are thread-safe.
@@ -85,21 +93,64 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         }
     }
 
+    /// Which app host the SDK is compiled into. Spelled as data rather than as
+    /// a chain of `#if`s around the notification names, so the mapping below
+    /// can be asserted for every platform from a test running on any single one.
+    enum BackgroundFlushHost {
+        /// The watch app runs as an app extension: there is no UIApplication.
+        case watchExtension
+        /// iOS, tvOS, visionOS and Mac Catalyst.
+        case uiKitApplication
+        /// A Mac app never enters the background.
+        case appKitApplication
+        /// Anything else the package compiles for — nothing posts it, the
+        /// pending batch simply waits for its delay timer.
+        case none
+    }
+
     /// The notification that means "the app is leaving the foreground", per
-    /// platform — the watch app runs as an extension and the Mac app never
-    /// enters the background, so both have their own name for it.
-    static var backgroundNotificationName: Notification.Name {
+    /// host. Pure and total: no `#if`, so all four mappings exist in every
+    /// build. Spelled as the raw strings the frameworks register, because the
+    /// typed constants only exist on the platform that declares them; the
+    /// current platform's entry is cross-checked against its typed constant in
+    /// the tests.
+    static func backgroundFlushNotificationName(for host: BackgroundFlushHost) -> Notification.Name {
+        switch host {
+        case .watchExtension:
+            return Notification.Name("NSExtensionHostDidEnterBackgroundNotification")
+        case .uiKitApplication:
+            return Notification.Name("UIApplicationDidEnterBackgroundNotification")
+        case .appKitApplication:
+            // Legacy ObjC parity: the Mac SDK has always flushed on resign
+            // active, because a Mac app has no background transition to hook.
+            // Every cmd-tab posts it, but a flush only reaches the network when
+            // a batch is actually pending, so the chatter is bounded by how
+            // often the host writes properties, not by how often the user
+            // switches windows.
+            return Notification.Name("NSApplicationDidResignActiveNotification")
+        case .none:
+            return Notification.Name("qonversion.notifications.appDidEnterBackground")
+        }
+    }
+
+    /// The single place the compile-time platform is consulted: it picks the
+    /// input, never the outcome.
+    static var currentBackgroundFlushHost: BackgroundFlushHost {
         // watchOS imports UIKit too, but has no UIApplication — it must be
         // matched before the UIKit branch.
         #if os(watchOS)
-        return .NSExtensionHostDidEnterBackground
+        return .watchExtension
         #elseif canImport(UIKit)
-        return UIApplication.didEnterBackgroundNotification
+        return .uiKitApplication
         #elseif canImport(AppKit)
-        return NSApplication.didResignActiveNotification
+        return .appKitApplication
         #else
-        return Notification.Name("qonversion.notifications.appDidEnterBackground")
+        return .none
         #endif
+    }
+
+    static var backgroundNotificationName: Notification.Name {
+        return backgroundFlushNotificationName(for: currentBackgroundFlushHost)
     }
 
     /// The pending batch waits on a delay timer that never fires once the
@@ -245,16 +296,22 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             return false
         }
 
-        return await postBatch(properties, schedulingRetries: true)
+        // Read here, after the user gate: obtaining the user may itself resolve
+        // an identity and move the uid, and this batch belongs to whoever the
+        // SDK is on once it has.
+        return await postBatch(properties, userId: userIdProvider.getUserId(), schedulingRetries: true)
     }
 
-    /// Posts one batch under the uid the provider currently holds. Only the
-    /// scheduled path may follow up with retries — the user-switch path cannot
-    /// wait for them.
-    private func postBatch(_ properties: [Qonversion.UserProperty], schedulingRetries: Bool) async -> Bool {
+    /// Posts one batch under an explicitly named uid. The uid is a parameter,
+    /// not a read of the provider, because the user-switch flush may outlive
+    /// the switch: it has to post under the user that queued the batch, not
+    /// under whoever the provider holds by the time the request is built. Only
+    /// the scheduled path may follow up with retries — the user-switch path
+    /// cannot wait for them.
+    private func postBatch(_ properties: [Qonversion.UserProperty], userId: String, schedulingRetries: Bool) async -> Bool {
         let items: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
         let body: RequestBodyDict = ["properties": items]
-        let request = Request.sendProperties(userId: userIdProvider.getUserId(), body: body)
+        let request = Request.sendProperties(userId: userId, body: body)
         do {
             let result: SendUserPropertiesResult? = try await requestProcessor.process(request: request, responseType: SendUserPropertiesResult.self)
             result?.propertyErrors.forEach({ propertyError in
@@ -295,29 +352,101 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
 }
 
+// MARK: - Flush deadline
+
+/// A one-shot "whoever gets here first wins" gate for the flush and its
+/// deadline. Written by hand rather than with a task group: a group awaits
+/// every child before it returns, so the losing child — a flush suspended in
+/// URLSession — would keep holding up the very switch this bounds. The waiter
+/// is resumed exactly once; the loser's `settle` is a no-op.
+fileprivate actor FlushRaceSignal {
+
+    private var outcome: Bool?
+    private var waiter: CheckedContinuation<Bool, Never>?
+
+    func settle(completedInTime: Bool) {
+        guard outcome == nil else { return }
+        outcome = completedInTime
+
+        if let waiter {
+            self.waiter = nil
+            waiter.resume(returning: completedInTime)
+        }
+    }
+
+    func wait() async -> Bool {
+        if let outcome { return outcome }
+
+        return await withCheckedContinuation { continuation in
+            waiter = continuation
+        }
+    }
+}
+
 // MARK: - UserChangedObserver
 
 extension UserPropertiesManager: UserChangedObserver {
 
-    /// The pending batch belongs to the uid that queued it, and the request
-    /// takes whatever the provider currently holds — so the batch is posted
+    /// The pending batch belongs to the uid that queued it, so it is posted
     /// here, while the outgoing uid is still the current one. The legacy SDK
     /// posted it after the switch, attributing it to the wrong user.
+    ///
+    /// Bounded: the switch waits for this, and the host waits for the switch
+    /// (identify at launch, logout behind a sign-out button). Past the deadline
+    /// the batch is dropped — the same fate every pending batch had before this
+    /// flush existed.
     func userWillChange() async {
+        // Captured BEFORE anything is awaited. The flush may outlive this call,
+        // and the request must carry the uid that queued the batch — reading
+        // the provider at post time is exactly the misattribution being fixed.
+        let outgoingUserId: String = userIdProvider.getUserId()
+        let race = FlushRaceSignal()
+
+        let flush = Task<Void, Never> { [weak self] in
+            await self?.flushPendingBatch(underUserId: outgoingUserId)
+            await race.settle(completedInTime: true)
+        }
+        let deadline = Task<Void, Never> {
+            let nanoseconds: UInt64 = UInt64(FlushConstants.userSwitchTimeoutSec * 1_000_000_000)
+            try? await Task<Never, Never>.sleep(nanoseconds: nanoseconds)
+            await race.settle(completedInTime: false)
+        }
+
+        let completedInTime: Bool = await race.wait()
+        deadline.cancel()
+        guard !completedInTime else { return }
+
+        // The cancellation happens-before the uid moves: the caller resumes the
+        // switch only once this method returns. So an abandoned flush is always
+        // cancelled before it can read a storage that belongs to the new user,
+        // and even if it did post, it would post under the captured uid.
+        flush.cancel()
+        logger.warning("The pending user properties did not reach the backend within \(Int(FlushConstants.userSwitchTimeoutSec))s of the user switch; the batch is dropped.")
+    }
+
+    /// One last attempt for the outgoing user's batch. Never retries: the
+    /// switch is on a deadline and whatever is left is dropped anyway.
+    private func flushPendingBatch(underUserId userId: String) async {
         // A round trip already in flight carries the same batch under the same
         // (still current) uid — waiting for it is the flush.
         if let inFlight: Task<Bool, Never> = currentSendingTask() {
             _ = await inFlight.value
         }
 
+        // Cancelled means the deadline passed and the switch moved on: the
+        // storage from here on belongs to the user the SDK switched to.
+        guard !Task.isCancelled else { return }
+
         let pending: [Qonversion.UserProperty] = propertiesStorage.all()
         guard !pending.isEmpty else { return }
 
-        // One attempt, and deliberately without the user gate: the user being
-        // switched away from exists on the backend already, and the gate is the
-        // actor that is mid-switch — asking it from here would deadlock when
-        // the switch runs inside its own creation pipeline.
-        _ = await postBatch(pending, schedulingRetries: false)
+        // Deliberately without the user gate: the user being switched away from
+        // provably exists on the backend — both call sites (identify and
+        // logout) are reached only after the creation pipeline has run — so the
+        // gate has nothing to do here except spend part of the deadline. It is
+        // not a deadlock hazard either: UserManager is an actor and a reentrant
+        // call would simply suspend. It is skipped because it is pointless.
+        _ = await postBatch(pending, userId: userId, schedulingRetries: false)
     }
 
     /// Whatever the flush could not deliver is dropped: it may not be posted

@@ -12,15 +12,28 @@ import XCTest
 @MainActor
 final class AssemblyWiringTests: XCTestCase {
 
-    func testTheRequestProcessorBuildsWithoutAnAssemblyBackReference() {
+    func testTheBuiltProcessorStampsHeadersWithoutAnAssemblyBackReference() throws {
+        // Before, the headers builder reached back into the services assembly
+        // through a weak implicitly unwrapped property — and it dereferenced
+        // that reference when a request was stamped, not when the graph was
+        // built. So constructing the processor proves nothing; the wiring has
+        // to be exercised the way a real request exercises it.
         let miscAssembly = MiscAssembly(projectKey: "project-key")
         let servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly)
 
-        // Before, the headers builder reached back into the services assembly
-        // through a weak implicitly unwrapped property; the collector is now
-        // handed in by the assembly that owns it. Building the processor is the
-        // assertion — an unset back reference traps inside this call.
-        _ = servicesAssembly.requestProcessor()
+        let processor: RequestProcessorInterface = servicesAssembly.requestProcessor()
+
+        let builtProcessor: RequestProcessor = try XCTUnwrap(processor as? RequestProcessor)
+        XCTAssertEqual(builtProcessor.baseURL, "https://api2.qonversion.io/")
+        var request = URLRequest(url: try XCTUnwrap(URL(string: builtProcessor.baseURL + "v3/screens/screen-1")))
+        builtProcessor.headersBuilder.addHeaders(to: &request)
+
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer project-key")
+        XCTAssertEqual(
+            request.value(forHTTPHeaderField: "Platform-Version"),
+            servicesAssembly.deviceInfoCollector().deviceInfo().osVersion,
+            "the processor's headers builder must reach the collector the assembly owns"
+        )
     }
 
     func testTheSharedServicesAreBuiltOnce() {

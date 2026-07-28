@@ -25,8 +25,13 @@ enum UserChangeTeardownPriority {
 /// to another user) registers itself as an observer.
 protocol UserChangedObserver: AnyObject {
     /// The last moment at which the previous user's uid is still the current
-    /// one: data queued under it has to leave the SDK here or never. The
-    /// switch waits for this to return, so it may not retry indefinitely.
+    /// one: data queued under it has to leave the SDK here or never.
+    ///
+    /// The switch waits for this to return, and the host waits for the switch
+    /// (identify at launch, logout behind a sign-out button), so an observer
+    /// that reaches the network here MUST bound itself: no retries, and a
+    /// deadline after which it gives up. Whatever it could not deliver is
+    /// dropped — which is what happened to all of it before this hook existed.
     func userWillChange() async
 
     func userDidChange()
