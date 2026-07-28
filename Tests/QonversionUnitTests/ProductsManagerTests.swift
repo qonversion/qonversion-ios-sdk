@@ -305,12 +305,9 @@ final class ProductsManagerTests: XCTestCase {
 
     // MARK: - Service error
 
-    // Without a bundled fallback file, a products service error propagates to
-    // the caller as-is and the injected local storage is never consulted.
-    func testServiceErrorPropagatesWithoutDiskFallback() async {
-        // The REAL key: seeding "products" proved nothing, the manager never
-        // looks there.
-        try? localStorage.set([makeProduct(qonversionId: "q_persisted")], forKey: "qonversion.keys.products")
+    // With neither a persisted catalog nor a bundled fallback file there is
+    // nothing left to serve, so the service error reaches the caller as-is.
+    func testServiceErrorPropagatesWithNothingToFallBackOn() async {
         productsService.error = QonversionError(type: .productsLoadingFailed)
 
         do {
@@ -324,6 +321,96 @@ final class ProductsManagerTests: XCTestCase {
 
         XCTAssertTrue(storeKitFacade.requestedProductIds.isEmpty)
         XCTAssertTrue(manager.loadedProducts.isEmpty)
+    }
+
+    // MARK: - persisted catalog fallback (A2-1)
+
+    // An offline cold start must not empty the paywall of every app that does
+    // not ship a fallback file: the catalog of the last successful load is
+    // served instead, exactly as the legacy SDK did.
+    func testServiceErrorFallsBackToThePersistedCatalog() async throws {
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted", storeId: "store_persisted")]
+        try localStorage.set(persisted, forKey: "qonversion.keys.products")
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        let result: [Qonversion.Product] = try await manager.products()
+
+        XCTAssertEqual(result.map(\.qonversionId), ["q_persisted"])
+        // The store WAS asked about them: an unenriched paywall has no prices.
+        XCTAssertEqual(storeKitFacade.requestedProductIds, [["store_persisted"]])
+    }
+
+    // The persisted catalog is what the backend last actually said for THIS
+    // user; the bundled file is a build-time snapshot of the whole project.
+    func testThePersistedCatalogWinsOverTheBundledFile() async throws {
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted", storeId: "store_persisted")]
+        try localStorage.set(persisted, forKey: "qonversion.keys.products")
+        let bundled: [Qonversion.Product] = [makeProduct(qonversionId: "q_fallback", storeId: "store_fallback")]
+        fallbackService.fallbackData = FallbackData(products: bundled, productsPermissions: nil)
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        let result: [Qonversion.Product] = try await manager.products()
+
+        XCTAssertEqual(result.map(\.qonversionId), ["q_persisted"])
+    }
+
+    // Like the bundled file, the persisted catalog answers one call only — it
+    // must not shadow the API, and a store outage during it must not be cached.
+    func testThePersistedCatalogAnswerIsNotCached() async throws {
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted", storeId: "store_persisted")]
+        try localStorage.set(persisted, forKey: "qonversion.keys.products")
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+        storeKitFacade.productsError = MockError.stubbed
+
+        let result: [Qonversion.Product] = try await manager.products()
+
+        XCTAssertEqual(result.map(\.qonversionId), ["q_persisted"], "a store outage must not swallow the catalog")
+        XCTAssertTrue(manager.loadedProducts.isEmpty)
+        _ = try? await manager.products()
+        XCTAssertEqual(productsService.productsCallsCount, 2, "the next call must retry the API")
+    }
+
+    func testASuccessfulLoadOverwritesThePersistedCatalog() async throws {
+        let stale: [Qonversion.Product] = [makeProduct(qonversionId: "q_stale", storeId: "store_stale")]
+        try localStorage.set(stale, forKey: "qonversion.keys.products")
+        productsService.productsResult = [makeProduct(qonversionId: "q_fresh", storeId: "store_fresh")]
+
+        _ = try await manager.products()
+
+        let stored: [Qonversion.Product]? = try localStorage.object(forKey: "qonversion.keys.products", dataType: [Qonversion.Product].self)
+        XCTAssertEqual(stored?.map(\.qonversionId), ["q_fresh"])
+    }
+
+    // Everything that goes through products() inherits the fallback: an
+    // eligibility check offline must answer from the same catalog.
+    func testTrialIntroEligibilityIsAnsweredFromThePersistedCatalog() async throws {
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted", storeId: "store_persisted")]
+        try localStorage.set(persisted, forKey: "qonversion.keys.products")
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        let result: [String: Qonversion.IntroEligibilityStatus] = try await manager.checkTrialIntroEligibility(productIds: ["q_persisted"])
+
+        XCTAssertEqual(result["q_persisted"], .unknown, "an unlinked product is unknown, not a missing-catalog error")
+    }
+
+    func testAPersistedProductWithoutAStoreIdIsReportedInTheLog() async throws {
+        let messages = LogCollector()
+        let sink: LoggerWrapper = LoggerWrapper(sink: { _, message in messages.append(message) })
+        let manager = ProductsManager(
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            fallbackService: fallbackService,
+            logger: sink
+        )
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted_no_store", storeId: "")]
+        try localStorage.set(persisted, forKey: "qonversion.keys.products")
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        _ = try await manager.products()
+
+        XCTAssertTrue(messages.all().contains { $0.contains("q_persisted_no_store") },
+                      "an unpriceable product must be named on every path that serves it")
     }
 
     // MARK: - bundled fallback file

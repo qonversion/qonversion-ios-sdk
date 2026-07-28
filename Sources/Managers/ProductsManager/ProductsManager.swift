@@ -64,7 +64,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         // The offline cold start is exactly what the local entitlements
         // calculation exists for — answer from the persisted catalog, then
         // from the bundled fallback file.
-        if let persisted: [Qonversion.Product] = try? localStorage.object(forKey: Constants.productsKey.rawValue, dataType: [Qonversion.Product].self), !persisted.isEmpty {
+        if let persisted: [Qonversion.Product] = persistedCatalog(), !persisted.isEmpty {
             return persisted
         }
 
@@ -162,15 +162,29 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         do {
             products = try await productsService.products()
         } catch {
-            // The bundled snapshot answers this call only — it must not shadow
-            // the API, so the in-memory cache stays empty and the next call retries.
+            // Neither snapshot answers more than this call — they must not
+            // shadow the API, so the in-memory cache stays empty and the next
+            // call retries.
+            //
+            // Reported on these paths too, not only on the API one: they are
+            // precisely where a product row with neither `store_id` nor
+            // `apple_product_id` comes from, and they return early.
+
+            // The catalog of the last successful load comes first: it is what
+            // the backend actually said for THIS user, and without it an
+            // offline cold start empties the paywall of every app that does
+            // not bundle the fallback file.
+            if let persistedProducts: [Qonversion.Product] = persistedCatalog(), !persistedProducts.isEmpty {
+                logger.warning("Products request failed, using the catalog of the last successful load: " + error.message)
+                reportProductsWithoutStoreId(persistedProducts)
+
+                return await enriched(persistedProducts)
+            }
+
             guard let fallbackProducts: [Qonversion.Product] = fallbackService.obtainFallbackData()?.products, !fallbackProducts.isEmpty else {
                 throw error
             }
             logger.warning("Products request failed, using the bundled fallback file: " + error.message)
-            // Reported HERE too, not only on the API path: the fallback file
-            // is precisely where a product row with neither `store_id` nor
-            // `apple_product_id` comes from, and it returns early.
             reportProductsWithoutStoreId(fallbackProducts)
 
             return await enriched(fallbackProducts)
@@ -210,6 +224,13 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         guard !unlinked.isEmpty else { return }
 
         logger.warning("These products carry no App Store product id and cannot be priced by the store: " + unlinked.joined(separator: ", "))
+    }
+
+    /// The catalog of the last successful load. It is cleared on a user
+    /// switch, so it never carries another user's products, and it is stored
+    /// with no expiry: a stale catalog beats an empty paywall.
+    private func persistedCatalog() -> [Qonversion.Product]? {
+        return try? localStorage.object(forKey: Constants.productsKey.rawValue, dataType: [Qonversion.Product].self)
     }
 
     private func currentGeneration() -> Int {
