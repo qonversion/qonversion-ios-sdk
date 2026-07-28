@@ -12,6 +12,7 @@
 //
 
 import XCTest
+import StoreKit
 @testable import Qonversion
 
 final class PurchasesManagerTests: XCTestCase {
@@ -460,6 +461,20 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.facadeRestoreCallsCount, 2)
     }
 
+    func testARestoreJoiningAFinishedRunStillSyncsWithTheStore() async throws {
+        // Awaiting the run through joinedRestoreTask() — the entry point
+        // restore() itself goes through — instead of through restore(), so the
+        // slot is proven empty by the run's own cleanup rather than by
+        // anything restore() does around it.
+        entitlementsManager.entitlementsResult = [:]
+        let run: Task<[String: Qonversion.Entitlement], Error> = manager.joinedRestoreTask()
+        _ = try await run.value
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(facade.facadeRestoreCallsCount, 2, "restore() must always sync with the store")
+    }
+
     // MARK: - restore
 
     func testRestoreReportsLatestTransactionPerProductAndReturnsEntitlements() async throws {
@@ -759,6 +774,78 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(received.isEmpty, "the caller already got this transaction as a purchase result")
     }
 
+    func testAnObservedTransactionOfAnInFlightPurchaseIsNotDeliveredTwice() async throws {
+        // StoreKit may hand the same transaction to the updates listener while
+        // the purchase call is still inside the payment sheet. The purchase
+        // answers its caller with a PurchaseResult in every branch, so the
+        // listener steps aside — and it steps aside BEFORE touching the
+        // transaction: no report, no finish, nothing claimed while the sheet
+        // is still up.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        let transaction: Qonversion.Transaction = makeTransaction(id: "p1")
+        facade.purchaseResult = transaction
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+        var touchedDuringTheSheet = true
+
+        facade.onPurchase = { [weak self] in
+            guard let self else { return }
+            self.manager.transactionUpdated(transaction)
+            // Long enough for the listener task to have run to completion.
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            touchedDuringTheSheet = !self.facade.finishedTransactions.isEmpty || !self.service.sentTransactions.isEmpty
+        }
+
+        let result: Qonversion.PurchaseResult = try await manager.purchase(makeProduct())
+
+        XCTAssertFalse(touchedDuringTheSheet, "the listener must step aside before reporting or finishing")
+        XCTAssertEqual(result.transaction.id, "p1")
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["p1"], "the purchase reports it exactly once")
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["p1"], "the purchase finishes it exactly once")
+        let received = await collector.received
+        XCTAssertTrue(received.isEmpty, "the caller gets this transaction as the purchase result")
+    }
+
+    func testATransactionSteppedAsideForAFailedPurchaseIsSurfacedOnRedelivery() async {
+        // An Ask to Buy approval for product X lands while purchase(X) is in
+        // flight, and the user then cancels the sheet. The listener stepped
+        // aside, so the approval must still be intact: unreported, unfinished
+        // and unsurfaced — and the store's next delivery of it reaches the
+        // host as a deferred purchase.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        let transaction: Qonversion.Transaction = makeTransaction(id: "p1")
+        facade.purchaseError = QonversionError(type: .purchaseCancelled)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        facade.onPurchase = { [weak self] in
+            guard let self else { return }
+            self.manager.transactionUpdated(transaction)
+            try? await Task.sleep(nanoseconds: 200_000_000)
+        }
+
+        do {
+            _ = try await manager.purchase(makeProduct())
+            XCTFail("Expected the cancelled purchase to throw")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseCancelled)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
+        XCTAssertTrue(service.sentTransactions.isEmpty, "a stepped-aside transaction must stay unreported")
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "a finished transaction never comes back — it must stay unfinished")
+
+        // The store re-delivers it, now with nothing in flight.
+        manager.transactionUpdated(transaction)
+        await waitUntil { await !collector.received.isEmpty }
+
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.map(\.transaction.id), ["p1"], "the approval must still reach the host")
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["p1"])
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["p1"])
+    }
+
     func testTheBufferedLaunchEmissionReachesBothStreams() async {
         // The backlog exists for hosts that subscribe after launch; the
         // entitlements projection must not steal it from deferredPurchases.
@@ -1021,6 +1108,37 @@ final class PurchasesManagerTests: XCTestCase {
             XCTAssertEqual(error.type, .purchaseFailed)
         } catch {
             XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testRestoreNamesARawStoreCancellationWhenTheBackendHasNothing() async {
+        // The public API documents QonversionError: a raw StoreKitError
+        // escaping restore() cannot be classified by the host at all.
+        facade.restoreError = StoreKitError.userCancelled
+        entitlementsManager.entitlementsResult = [:]
+
+        do {
+            _ = try await manager.restore()
+            XCTFail("Expected the store error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseCancelled)
+        } catch {
+            XCTFail("Raw store errors must never reach the integrator: \(error)")
+        }
+    }
+
+    func testRestoreNamesARawTransportFailureWhenTheBackendHasNothing() async {
+        facade.restoreError = URLError(.notConnectedToInternet)
+        entitlementsManager.entitlementsResult = [:]
+
+        do {
+            _ = try await manager.restore()
+            XCTFail("Expected the store error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .restoreFailed)
+            XCTAssertNotNil(error.error as? URLError, "the underlying store error must stay reachable")
+        } catch {
+            XCTFail("Raw store errors must never reach the integrator: \(error)")
         }
     }
 

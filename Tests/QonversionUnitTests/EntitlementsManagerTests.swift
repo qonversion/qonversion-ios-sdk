@@ -402,6 +402,47 @@ final class EntitlementsManagerTests: XCTestCase {
         XCTAssertEqual(results.map { $0.keys.sorted() }, [["premium"], ["premium"], ["premium"]])
     }
 
+    func testAResolutionFinishingAfterAUserSwitchDoesNotEvictTheNewOne() async throws {
+        // ABA on the single-flight slot: userDidChange() empties it out of
+        // band while run A is still going, run B takes the empty slot, and A
+        // then finishes. A must not wipe B out of the slot — a caller arriving
+        // afterwards would start a THIRD concurrent resolution instead of
+        // joining B, which is the single-flight silently degrading on every
+        // identify/logout.
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        let gateA = EntitlementsAsyncGate()
+        let gateB = EntitlementsAsyncGate()
+        service.onEntitlements = { await gateA.wait() }
+
+        async let runA: [String: Qonversion.Entitlement] = manager.entitlements()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        manager.userDidChange()
+        service.onEntitlements = { await gateB.wait() }
+        async let runB: [String: Qonversion.Entitlement] = manager.entitlements()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(service.entitlementsCalls.count, 2, "the user switch must start a run of its own")
+
+        // A fails on its way out: a successful A would be rejected by the
+        // generation guard and re-resolve, adding a request this test does not
+        // measure. What matters is only that A reaches its cleanup.
+        let outdatedRunFailure = QonversionError(type: .internal)
+        service.error = outdatedRunFailure
+        await gateA.open()
+        _ = try? await runA
+        service.error = nil
+
+        // The joining caller: B is still in flight, so this must cost nothing.
+        async let runC: [String: Qonversion.Entitlement] = manager.entitlements()
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        XCTAssertEqual(service.entitlementsCalls.count, 2, "the caller after the switch must join the run in flight, not start a third one")
+
+        await gateB.open()
+        _ = try? await runB
+        _ = try? await runC
+    }
+
     // MARK: - user switch during the fetch
 
     func testEntitlementsOfThePreviousUserAreNotPersistedAfterASwitch() async throws {

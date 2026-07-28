@@ -498,7 +498,12 @@ final class MockStoreKit2Wrapper: StoreKitWrapperInterface {
         throw MockError.noStub
     }
 
-    func products(for ids: [String]) async throws -> [StoreKit.Product] { [] }
+    var productsError: Error?
+
+    func products(for ids: [String]) async throws -> [StoreKit.Product] {
+        if let productsError { throw productsError }
+        return []
+    }
 
     func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
 

@@ -158,15 +158,45 @@ final class StoreKitFacadeTests: XCTestCase {
 
     // MARK: - Purchase
 
-    func testPurchaseThrowsWhenStoreProductCannotBeLoaded() async {
-        // The wrapper returns no products for the requested id.
+    func testPurchaseOfAProductTheStoreDoesNotKnowIsNamedAsSuch() async {
+        // The wrapper returns no products for the requested id: nothing
+        // failed to load — the store has no such product.
         do {
             _ = try await facade.purchase(storeId: "unknown.product")
-            XCTFail("Expected purchase to throw when the store product cannot be loaded")
+            XCTFail("Expected purchase to throw when the store has no such product")
         } catch let error as QonversionError {
-            XCTAssertEqual(error.type, .storeProductsLoadingFailed)
+            XCTAssertEqual(error.type, .storeProductNotAvailable)
         } catch {
             XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testPurchaseMapsAStoreFailureOfTheProductLoad() async {
+        // Product.products(for:) throws raw StoreKit errors; a purchase must
+        // answer with the SDK's own error whatever leg of it failed.
+        wrapper.productsError = StoreKitError.notAvailableInStorefront
+
+        do {
+            _ = try await facade.purchase(storeId: "com.app.pro")
+            XCTFail("Expected purchase to throw when the product load fails")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .storeProductNotAvailable)
+        } catch {
+            XCTFail("Raw store errors must never reach the integrator: \(error)")
+        }
+    }
+
+    func testPurchaseMapsAnUnnamedProductLoadFailure() async {
+        wrapper.productsError = MockError.stubbed
+
+        do {
+            _ = try await facade.purchase(storeId: "com.app.pro")
+            XCTFail("Expected purchase to throw when the product load fails")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .storeProductsLoadingFailed)
+            XCTAssertEqual(error.error as? MockError, .stubbed, "the underlying store error must stay reachable")
+        } catch {
+            XCTFail("Raw store errors must never reach the integrator: \(error)")
         }
     }
 
@@ -242,15 +272,68 @@ final class StoreKitRestoreTests: XCTestCase {
         XCTAssertEqual(restored.map(\.id), ["synced-1"])
     }
 
-    func testSyncFailurePropagates() async {
+    func testSyncFailurePropagatesAsAnSDKError() async {
+        // restore() is a public entry point: a raw store error would defeat
+        // the `catch let error as QonversionError` the SDK documents.
         do {
             _ = try await StoreKitWrapper.restoreTransactions(
                 localTransactions: { [] },
                 sync: { throw MockError.stubbed }
             )
             XCTFail("Expected the store error to propagate")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .restoreFailed)
+            XCTAssertEqual(error.error as? MockError, .stubbed, "the underlying store error must stay reachable")
         } catch {
-            XCTAssertEqual(error as? MockError, .stubbed)
+            XCTFail("Raw store errors must never reach the integrator: \(error)")
+        }
+    }
+
+    func testACancelledSignInIsNamedTheSameWayAsACancelledPurchase() async {
+        // AppStore.sync() shows the App Store authentication prompt; backing
+        // out of it is a cancellation, not a failure.
+        do {
+            _ = try await StoreKitWrapper.restoreTransactions(
+                localTransactions: { [] },
+                sync: { throw StoreKitError.userCancelled }
+            )
+            XCTFail("Expected the cancellation to propagate")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseCancelled)
+        } catch {
+            XCTFail("Raw store errors must never reach the integrator: \(error)")
+        }
+    }
+
+    func testACancelledRunIsNotNamedARestoreFailure() async {
+        // A run abandoned because the SDK switched users did not fail — and a
+        // bare CancellationError no `catch let error as QonversionError` can
+        // classify must never reach the host either.
+        do {
+            _ = try await StoreKitWrapper.restoreTransactions(
+                localTransactions: { [] },
+                sync: { throw CancellationError() }
+            )
+            XCTFail("Expected the cancellation to propagate")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("Raw cancellation must never reach the integrator: \(error)")
+        }
+    }
+
+    func testAnSDKErrorFromTheSyncIsNotWrappedAgain() async {
+        do {
+            _ = try await StoreKitWrapper.restoreTransactions(
+                localTransactions: { [] },
+                sync: { throw QonversionError(type: .purchaseCancelled) }
+            )
+            XCTFail("Expected the error to propagate")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseCancelled)
+            XCTAssertNil(error.error, "an already classified error must pass through untouched")
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
         }
     }
 }

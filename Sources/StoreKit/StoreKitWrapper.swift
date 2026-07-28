@@ -54,7 +54,14 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         let local: [Qonversion.Transaction] = await localTransactions()
         guard local.isEmpty else { return local }
 
-        try await sync()
+        do {
+            try await sync()
+        } catch {
+            // Raw StoreKit errors must never reach the integrator: restore()
+            // is public, and a cancelled sign-in prompt is named the same way
+            // as a cancelled payment sheet.
+            throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .restoreFailed)
+        }
 
         return await localTransactions()
     }
