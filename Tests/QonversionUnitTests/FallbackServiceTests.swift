@@ -261,6 +261,7 @@ final class FallbackServiceLookupTests: XCTestCase {
 
     func testAccessibilityReflectsTheCurrentState() throws {
         let productsManager = ProductsManager(
+            apiKey: "test_api_key",
             productsService: MockProductsService(),
             storeKitFacade: MockStoreKitFacade(),
             localStorage: MockLocalStorage(),
