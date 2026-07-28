@@ -299,6 +299,11 @@ final class CrashReporterTests: XCTestCase {
 
     private var localStorage: LocalStorage!
     private var storage: CrashReportsStorage!
+    private var userManager: MockUserManager!
+    private var gateCallsAtFirstRequest: Int = -1
+    /// The handler the process had before this suite touched it. `uninstall()`
+    /// only restores what `install()` found, which in these tests is a spy.
+    private var originalExceptionHandler: (@convention(c) (NSException) -> Void)?
 
     override func setUp() {
         super.setUp()
@@ -308,10 +313,16 @@ final class CrashReporterTests: XCTestCase {
         decoder.dateDecodingStrategy = .qonversionTolerant
         localStorage = LocalStorage(userDefaults: TestDefaults.makeIsolated(), encoder: encoder, decoder: decoder)
         storage = CrashReportsStorage(localStorage: localStorage)
+        userManager = MockUserManager()
+        userManager.user = try? JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(#"{"id": "QON_u", "created_at": "2023-11-14T22:13:20Z"}"#.utf8))
+        gateCallsAtFirstRequest = -1
+        originalExceptionHandler = NSGetUncaughtExceptionHandler()
     }
 
     override func tearDown() {
         CrashReporter.shared.uninstall()
+        NSSetUncaughtExceptionHandler(originalExceptionHandler)
+        userManager = nil
         storage = nil
         localStorage = nil
         super.tearDown()
@@ -389,6 +400,7 @@ final class CrashReporterTests: XCTestCase {
             storage: storage,
             requestProcessor: processor,
             userIdProvider: userIdProvider,
+            userManager: userManager,
             platform: "iOS"
         )
     }
@@ -413,6 +425,37 @@ final class CrashReporterTests: XCTestCase {
         XCTAssertEqual(type, .post)
         XCTAssertEqual(body["user_id"] as? String, "QON_u")
         XCTAssertTrue(storage.all().isEmpty, "a delivered report is not sent again")
+    }
+
+    func testTheUserGateIsPassedBeforeTheFirstReportIsSent() async {
+        // A crash on the very first launch is reported before createUser ever
+        // ran: the uid on the report is then one the backend has never seen,
+        // and the send is refused with a 4xx that drops the report for good.
+        storage.store(makeReport(id: "r1"))
+        storage.store(makeReport(id: "r2"))
+        let processor = MockRequestProcessor()
+        processor.results = [EmptyApiResponse(), EmptyApiResponse()]
+        processor.onProcess = { [weak self] in
+            guard let self, self.gateCallsAtFirstRequest < 0 else { return }
+            self.gateCallsAtFirstRequest = self.userManager.obtainUserCallsCount
+        }
+
+        await makeSender(processor: processor).sendStoredReports()
+
+        XCTAssertEqual(gateCallsAtFirstRequest, 1, "the backend user must exist before a report carries its uid")
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "one gate pass per launch, not one per report")
+        XCTAssertEqual(processor.processedRequests.count, 2)
+    }
+
+    func testAFailingUserGateKeepsTheReportsForTheNextLaunch() async {
+        storage.store(makeReport(id: "r1"))
+        userManager.error = MockError.stubbed
+        let processor = MockRequestProcessor()
+
+        await makeSender(processor: processor).sendStoredReports()
+
+        XCTAssertTrue(processor.processedRequests.isEmpty, "no report may be sent under a uid the backend does not have")
+        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "a gate failure costs the report nothing")
     }
 
     func testAnEmptyQueueSendsNothing() async {

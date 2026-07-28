@@ -20,6 +20,9 @@ fileprivate enum Constants: Int {
     // After this many failed attempts the batch stays in the storage but the
     // scheduling stops; the next setProperty call re-triggers sending.
     case sendPropertiesMaxRetries = 10
+    // A forced send drains what was pending when it was called; the cap is what
+    // bounds it when the storage keeps handing the same property back.
+    case forceSendMaxRounds = 3
 }
 
 // @unchecked: mutable state is guarded by stateLock; deps are thread-safe.
@@ -225,15 +228,17 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             return
         }
 
-        // Only the batch pending on entry is owned by this call: chasing
-        // properties set while it runs could loop forever.
-        let ownedKeys: Set<String> = Set(propertiesStorage.all().map { $0.key })
-        while true {
+        // Only the exact properties pending on entry are owned by this call:
+        // a key alone is not enough, because a host rewriting its value on a
+        // timer would then keep the loop alive forever.
+        let ownedProperties: Set<Qonversion.UserProperty> = Set(propertiesStorage.all())
+        var round: Int = 0
+        while round < Constants.forceSendMaxRounds.rawValue {
             if let inFlight: Task<Bool, Never> = currentSendingTask() {
                 _ = await inFlight.value
             }
 
-            let remaining: [Qonversion.UserProperty] = propertiesStorage.all().filter { ownedKeys.contains($0.key) }
+            let remaining: [Qonversion.UserProperty] = propertiesStorage.all().filter { ownedProperties.contains($0) }
             guard !remaining.isEmpty else { return }
             guard let task: Task<Bool, Never> = startSendingIfIdle() else {
                 // Another sender took the slot between the two calls. Yield so
@@ -242,15 +247,26 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
                 continue
             }
 
+            round += 1
             let succeeded: Bool = await task.value
             guard succeeded else { return }
         }
+    }
+
+    /// Which sender a post belongs to. The scheduled sender still owns its
+    /// batch in the storage and owns the retry ladder; the user-switch handoff
+    /// owns neither — it took its copy out before the switch and everything
+    /// left behind belongs to the incoming user.
+    private enum BatchOwner {
+        case scheduledSender
+        case userSwitchHandoff
     }
 
     /// One batch round trip. Returns false when the batch did not reach the
     /// backend — the properties stay in the storage and a retry is scheduled.
     private func performSend() async -> Bool {
         let properties: [Qonversion.UserProperty] = propertiesStorage.all()
+        let userId: String = userIdProvider.getUserId()
 
         guard !properties.isEmpty else { return true }
 
@@ -263,14 +279,16 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             return false
         }
 
-        // Read after obtaining the user: that may itself resolve an identity
-        // and move the uid.
-        return await postBatch(properties, userId: userIdProvider.getUserId(), schedulingRetries: true)
+        // The uid only moves through a switch, and a switch claims the pending
+        // batch in userWillChange first: a moved uid means the batch is theirs.
+        guard userIdProvider.getUserId() == userId else { return true }
+
+        return await postBatch(properties, userId: userId, owner: .scheduledSender)
     }
 
     /// The uid is a parameter, not a read of the provider: the user-switch
     /// flush may outlive the switch and must post under the queuing user.
-    private func postBatch(_ properties: [Qonversion.UserProperty], userId: String, schedulingRetries: Bool) async -> Bool {
+    private func postBatch(_ properties: [Qonversion.UserProperty], userId: String, owner: BatchOwner) async -> Bool {
         let items: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
         let body: RequestBodyDict = ["properties": items]
         let request = Request.sendProperties(userId: userId, body: body)
@@ -279,19 +297,21 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             result?.propertyErrors.forEach({ propertyError in
                 logger.error("Failed to save property " + propertyError.key + ": " + propertyError.error)
             })
-            
+
+            guard owner == .scheduledSender else { return true }
+
             resetRetryState()
 
             propertiesStorage.clear(properties: properties)
 
             // Properties set while the batch was in flight.
-            if schedulingRetries && !propertiesStorage.all().isEmpty {
+            if !propertiesStorage.all().isEmpty {
                 scheduleSendingProperties(withDelay: Constants.sendPropertiesMinDelaySec.rawValue)
             }
 
             return true
         } catch {
-            if schedulingRetries {
+            if owner == .scheduledSender {
                 retrySendingProperties()
             }
             return false
@@ -340,7 +360,7 @@ extension UserPropertiesManager: UserChangedObserver {
 
             // No user gate on purpose: both call sites run after user creation.
             // One attempt on purpose: a retry ladder would outlive its relevance.
-            _ = await self.postBatch(outgoingBatch, userId: outgoingUserId, schedulingRetries: false)
+            _ = await self.postBatch(outgoingBatch, userId: outgoingUserId, owner: .userSwitchHandoff)
         }
     }
 
