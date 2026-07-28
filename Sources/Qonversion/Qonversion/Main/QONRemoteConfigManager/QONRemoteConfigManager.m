@@ -27,6 +27,12 @@ static NSString *const kEmptyContextKey = @"";
 @property (nonatomic, strong) NSMutableArray<QONRemoteConfigListRequestData *> *listRequests;
 @property (nonatomic, strong) QONFallbackObject *fallbackData;
 
+// Bumped on every cache invalidation (attach/detach, user change). Loads
+// capture it when they start and skip the cache write if it moved — an
+// in-flight response evaluated before the invalidating event must not be
+// re-cached as fresh. Completions are still delivered either way.
+@property (atomic, assign) NSUInteger cacheGeneration;
+
 @end
 
 @implementation QONRemoteConfigManager
@@ -75,6 +81,7 @@ static NSString *const kEmptyContextKey = @"";
 }
 
 - (void)userHasBeenChanged {
+  self.cacheGeneration += 1;
   self.loadingStates = [NSMutableDictionary new];
 }
 
@@ -101,9 +108,10 @@ static NSString *const kEmptyContextKey = @"";
   }
   
   loadingState.isInProgress = YES;
-  
+  NSUInteger generationAtStart = self.cacheGeneration;
+
   __block __weak QONRemoteConfigManager *weakSelf = self;
-  
+
   [self.userPropertiesManager forceSendProperties:^{
     [weakSelf.remoteConfigService loadRemoteConfig:contextKey completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
       loadingState.isInProgress = NO;
@@ -118,26 +126,31 @@ static NSString *const kEmptyContextKey = @"";
           }
 
           if (remoteConfig) {
-            [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
+            [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart completion:completion];
           } else {
-            [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error completion:completion];
+            [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart completion:completion];
           }
         } else {
-          [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error completion:completion];
+          [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart completion:completion];
         }
       } else {
-        [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil completion:completion];
+        [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart completion:completion];
       }
     }];
   }];
 }
 
-- (void)fireRemoteConfig:(QONRemoteConfig *)remoteConfig contextKey:(NSString *)contextKey loadingState:(QONRemoteConfigLoadingState *)loadingState error:(NSError *)error completion:(QONRemoteConfigCompletionHandler)completion {
+- (void)fireRemoteConfig:(QONRemoteConfig *)remoteConfig contextKey:(NSString *)contextKey loadingState:(QONRemoteConfigLoadingState *)loadingState error:(NSError *)error generation:(NSUInteger)generation completion:(QONRemoteConfigCompletionHandler)completion {
   if (error) {
     [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
     completion(nil, error);
   } else {
-    loadingState.loadedConfig = remoteConfig;
+    if (generation == self.cacheGeneration) {
+      // Cache only when no invalidation happened while the load was in flight —
+      // a pre-attach evaluation must not be re-cached as fresh. The response is
+      // still delivered below either way.
+      loadingState.loadedConfig = remoteConfig;
+    }
     [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
     completion(remoteConfig, nil);
   }
@@ -160,8 +173,12 @@ static NSString *const kEmptyContextKey = @"";
 
   if (configs.count == allKeys.count) {
     // Same as the single-key cache hit: serve the cached list, but flush
-    // pending properties so they are not swallowed by the hit.
-    [self.userPropertiesManager forceSendProperties:nil];
+    // pending properties so they are not swallowed by the hit. Gated on user
+    // stability (parity with the single-key path, which checks stability before
+    // its cache hit) so the flush cannot POST mid-identify to a switching uid.
+    if ([self.productCenterManager isUserStable]) {
+      [self.userPropertiesManager forceSendProperties:nil];
+    }
     QONRemoteConfigList *remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:configs];
     return completion(remoteConfigList, nil);
   }

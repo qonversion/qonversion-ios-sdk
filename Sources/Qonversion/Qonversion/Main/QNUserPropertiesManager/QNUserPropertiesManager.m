@@ -91,17 +91,27 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 
 - (void)forceSendProperties:(QONUserPropertiesEmptyCompletionHandler)completion {
   BOOL completeImmediately = NO;
+  BOOL startSend = NO;
   @synchronized (self) {
-    if (self.inMemoryStorage.storageDictionary.count == 0 && !self.updatingCurrently) {
-      // Nothing pending and nothing in flight — the flush is trivially done.
-      completeImmediately = YES;
-    } else {
-      // Either properties are waiting in the buffer, or the buffer is empty
-      // only because an in-flight POST has already drained it — in both cases
-      // the caller must wait for a real request completion, not race it.
+    if (self.updatingCurrently) {
+      // A POST is in flight (it may have already drained the buffer). The
+      // waiter enqueue and the follow-up intent must be recorded in the SAME
+      // critical section — deciding later would let the in-flight completion
+      // drain this waiter before the intent is visible.
+      self.forceResendRequired = YES;
       if (completion) {
         [self.completionBlocks addObject:completion];
       }
+    } else if (self.inMemoryStorage.storageDictionary.count == 0) {
+      // Nothing pending and nothing in flight — the flush is trivially done.
+      // Property writers do not take this lock, so a concurrent set can still
+      // slip past this check (pre-existing storage race, best effort).
+      completeImmediately = YES;
+    } else {
+      if (completion) {
+        [self.completionBlocks addObject:completion];
+      }
+      startSend = YES;
     }
   }
 
@@ -112,7 +122,9 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
     return;
   }
 
-  [self sendProperties:YES];
+  if (startSend) {
+    [self sendProperties:YES];
+  }
 }
 
 - (void)sendPropertiesWithDelay:(NSUInteger)delay {
@@ -143,6 +155,18 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 - (void)sendProperties:(BOOL)force {
   if ([QNUtils isEmptyString:self.apiClient.apiKey]) {
     QONVERSION_ERROR(@"ERROR: apiKey cannot be nil or empty, set apiKey with launchWithKey:");
+    // No request will ever run — release queued force-flush waiters instead of
+    // leaving them stuck forever.
+    NSArray *completions = @[];
+    @synchronized (self) {
+      completions = [self.completionBlocks copy];
+      [self.completionBlocks removeAllObjects];
+    }
+    for (QONUserPropertiesEmptyCompletionHandler storedCompletion in completions) {
+      if (storedCompletion) {
+        storedCompletion();
+      }
+    }
     return;
   }
   
@@ -165,11 +189,26 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 
     if (!properties || ![properties respondsToSelector:@selector(valueForKey:)] || properties.count == 0) {
       NSArray *completions = @[];
+      BOOL resend = NO;
       @synchronized (self) {
         self.updatingCurrently = NO;
-        completions = [self.completionBlocks copy];
-        [self.completionBlocks removeAllObjects];
+        self.forceResendRequired = NO;
+        // Re-check under the lock: a property stored after the empty snapshot
+        // was taken must trigger a real send instead of releasing the queued
+        // waiters early.
+        if (self.inMemoryStorage.storageDictionary.count > 0) {
+          resend = YES;
+        } else {
+          completions = [self.completionBlocks copy];
+          [self.completionBlocks removeAllObjects];
+        }
       }
+
+      if (resend) {
+        [self sendProperties:YES];
+        return;
+      }
+
       // Nothing left to send — release any queued force-flush waiters instead
       // of leaving them stuck until the next request.
       for (QONUserPropertiesEmptyCompletionHandler storedCompletion in completions) {
@@ -184,22 +223,30 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
     __block __weak QNUserPropertiesManager *weakSelf = self;
     [self.apiClient sendProperties:properties
                         completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      // Explicit strong capture: the lock token and every state access below
+      // must target the same live object (weakSelf alone would silently no-op
+      // the critical section if it ever became nil).
+      QNUserPropertiesManager *strongSelf = weakSelf;
+      if (!strongSelf) {
+        return;
+      }
 
       NSArray *completions = @[];
       BOOL followUpSend = NO;
-      @synchronized (self) {
-        weakSelf.updatingCurrently = NO;
+      @synchronized (strongSelf) {
+        strongSelf.updatingCurrently = NO;
 
         // A force flush was swallowed while this POST was in flight and the
         // buffer holds properties that were not part of the sent snapshot —
         // deliver them first and keep the waiters queued until that follow-up
-        // request finishes.
-        followUpSend = weakSelf.forceResendRequired && !error && weakSelf.inMemoryStorage.storageDictionary.count > 0;
-        weakSelf.forceResendRequired = NO;
+        // request finishes. On error the waiters are released right away (best
+        // effort); the data itself is re-merged below and retried with backoff.
+        followUpSend = strongSelf.forceResendRequired && !error && strongSelf.inMemoryStorage.storageDictionary.count > 0;
+        strongSelf.forceResendRequired = NO;
 
         if (!followUpSend) {
-          completions = [weakSelf.completionBlocks copy];
-          [weakSelf.completionBlocks removeAllObjects];
+          completions = [strongSelf.completionBlocks copy];
+          [strongSelf.completionBlocks removeAllObjects];
         }
       }
 
@@ -211,28 +258,28 @@ static NSString * const kBackgroundQueueName = @"qonversion.background.queue.nam
 
       if (error) {
         // copy of an existing array to prevent erasing properties set while the current request is in progress
-        NSMutableDictionary *allProperties = [self.inMemoryStorage.storageDictionary mutableCopy];
+        NSMutableDictionary *allProperties = [strongSelf.inMemoryStorage.storageDictionary mutableCopy];
         for (NSString *key in properties.allKeys) {
           if (!allProperties[key]) {
             allProperties[key] = properties[key];
           }
         }
-        
-        self.inMemoryStorage.storageDictionary = [allProperties copy];
-        
+
+        strongSelf.inMemoryStorage.storageDictionary = [allProperties copy];
+
         if ([error.domain isEqualToString:QonversionErrorDomain] && error.code == QONErrorCodeInvalidClientUID) {
-          [weakSelf.productCenterManager launchWithTrigger:QONRequestTriggerUserProperties completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+          [strongSelf.productCenterManager launchWithTrigger:QONRequestTriggerUserProperties completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
             [weakSelf retryProperties];
           }];
         } else {
-          [weakSelf retryProperties];
+          [strongSelf retryProperties];
         }
       } else {
-        weakSelf.retryDelay = kQPropertiesSendingPeriodInSeconds;
-        weakSelf.retriesCounter = 0;
+        strongSelf.retryDelay = kQPropertiesSendingPeriodInSeconds;
+        strongSelf.retriesCounter = 0;
 
         if (followUpSend) {
-          [weakSelf sendProperties:YES];
+          [strongSelf sendProperties:YES];
         }
       }
     }];
