@@ -81,8 +81,17 @@ static NSString *const kEmptyContextKey = @"";
 }
 
 - (void)userHasBeenChanged {
-  self.cacheGeneration += 1;
+  [self bumpCacheGeneration];
   self.loadingStates = [NSMutableDictionary new];
+}
+
+// The increment is a read-modify-write: user changes fire from network
+// callback threads while attach/detach invalidations run on the caller
+// thread, so it is taken under the lock to avoid losing a bump.
+- (void)bumpCacheGeneration {
+  @synchronized (self) {
+    self.cacheGeneration += 1;
+  }
 }
 
 - (void)obtainRemoteConfigWithContextKey:(NSString * _Nullable)contextKey completion:(QONRemoteConfigCompletionHandler)completion {
@@ -240,8 +249,10 @@ static NSString *const kEmptyContextKey = @"";
 // does not know which context key that entity serves — drop every cached
 // config, not just the empty-key one, or configs under named context keys stay
 // stale until the process restarts. Loading states themselves are kept so
-// pending completions survive.
+// pending completions survive. The generation bump also stops in-flight loads
+// from re-caching a pre-attach response.
 - (void)invalidateLoadedConfigs {
+  [self bumpCacheGeneration];
   for (QONRemoteConfigLoadingState *loadingState in self.loadingStates.allValues) {
     loadingState.loadedConfig = nil;
   }
@@ -266,9 +277,10 @@ static NSString *const kEmptyContextKey = @"";
 
 - (QONRemoteConfigListCompletionHandler)remoteConfigListCompletionWrapper:(QONRemoteConfigListCompletionHandler)completion contextKeys:(NSArray *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey {
   NSMutableDictionary<NSString *, QONRemoteConfigLoadingState *> *localLoadingStates = self.loadingStates;
+  NSUInteger generationAtStart = self.cacheGeneration;
 
   __block __weak QONRemoteConfigManager *weakSelf = self;
-  
+
   return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
     if (error) {
       [weakSelf actualizeFallbackData];
@@ -284,8 +296,11 @@ static NSString *const kEmptyContextKey = @"";
         return;
       }
     }
-    
-    if (remoteConfigList) {
+
+    if (remoteConfigList && generationAtStart == weakSelf.cacheGeneration) {
+      // Cache only when no invalidation happened while the list load was in
+      // flight — pre-attach evaluations must not be re-cached as fresh. The
+      // list is still delivered below either way.
       for (QONRemoteConfig *remoteConfig in remoteConfigList.remoteConfigs) {
         NSString *contextKey = remoteConfig.source.contextKey ?: kEmptyContextKey;
         QONRemoteConfigLoadingState *loadingState = localLoadingStates[contextKey] ?: [QONRemoteConfigLoadingState new];

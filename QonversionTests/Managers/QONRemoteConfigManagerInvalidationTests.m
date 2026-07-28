@@ -13,6 +13,8 @@
 #import "QNProductCenterManager.h"
 #import "QNUserPropertiesManager.h"
 #import "QONRemoteConfig.h"
+#import "QONRemoteConfigList+Protected.h"
+#import "QONRemoteConfigurationSource.h"
 
 /*
  * Contract tests for the attach/detach cache invalidation (DEV-1231).
@@ -151,6 +153,49 @@
   XCTAssertEqual(deliveredConfig, staleConfig);
   XCTAssertNil(self.manager.loadingStates[@"ctx"].loadedConfig);
   XCTAssertFalse(self.manager.loadingStates[@"ctx"].isInProgress);
+}
+
+- (void)testAttachInvalidationPreventsInFlightListLoadFromReCachingStaleConfigs {
+  // given - the user is stable and a list load is in flight (attach does NOT
+  // replace the states map, so the generation guard is the only barrier here)
+  OCMStub([self.mockProductCenterManager isUserStable]).andReturn(YES);
+  OCMStub([self.mockUserPropertiesManager forceSendProperties:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONUserPropertiesEmptyCompletionHandler flushCompletion = nil;
+    [invocation getArgument:&flushCompletion atIndex:2];
+    if (flushCompletion) {
+      flushCompletion();
+    }
+  });
+
+  __block QONRemoteConfigListCompletionHandler serviceCompletion = nil;
+  OCMStub([self.mockService loadRemoteConfigList:[OCMArg any] includeEmptyContextKey:NO completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONRemoteConfigListCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:4];
+    serviceCompletion = [completion copy];
+  });
+
+  __block QONRemoteConfigList *deliveredList = nil;
+  [self.manager obtainRemoteConfigListWithContextKeys:@[@"ctx"]
+                               includeEmptyContextKey:NO
+                                           completion:^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
+    deliveredList = remoteConfigList;
+  }];
+  XCTAssertNotNil(serviceCompletion, @"the list load must reach the service");
+
+  // when - the attach invalidates mid-flight, then the pre-attach list lands
+  [self.manager attachUserToRemoteConfiguration:@"config_id"
+                                     completion:^(BOOL success, NSError * _Nullable error) {}];
+
+  id staleConfig = OCMClassMock([QONRemoteConfig class]);
+  id staleSource = OCMClassMock([QONRemoteConfigurationSource class]);
+  OCMStub([staleConfig source]).andReturn(staleSource);
+  OCMStub([staleSource contextKey]).andReturn(@"ctx");
+  QONRemoteConfigList *staleList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:@[staleConfig]];
+  serviceCompletion(staleList, nil);
+
+  // then - the list is delivered but nothing from it is cached
+  XCTAssertEqual(deliveredList, staleList);
+  XCTAssertNil(self.manager.loadingStates[@"ctx"].loadedConfig);
 }
 
 @end
