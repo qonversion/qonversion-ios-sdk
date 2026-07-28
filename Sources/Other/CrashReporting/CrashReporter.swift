@@ -106,10 +106,19 @@ struct CrashReportsSender {
         self.platform = platform
     }
 
-    /// Fails soft, one report at a time. A report is dropped only when it was
-    /// delivered or when the backend rejected it in a way a resend cannot fix
-    /// (see ``isPermanentlyRejected(_:)``); anything else keeps it for the next
-    /// launch and stops this one — the next report would hit the same wall.
+    /// How many times one report may be kept by a backend that answered before
+    /// it is given up on. A payload the service chokes on would otherwise sit
+    /// in the queue forever, taking one of the five slots and one POST per
+    /// launch from the reports that could still be delivered.
+    static var maxSendAttempts: Int { 5 }
+
+    /// Fails soft, one report at a time.
+    ///
+    /// Three outcomes per report, see ``outcome(for:)``: delivered or
+    /// permanently rejected → dropped; rejected in a way that is about THIS
+    /// report → kept, its attempt counted, and the queue continues; rejected in
+    /// a way that is about the environment → kept and the launch stops, because
+    /// every following send would hit the same wall.
     func sendStoredReports() async {
         let reports: [CrashReport] = storage.all()
         guard !reports.isEmpty else { return }
@@ -121,37 +130,122 @@ struct CrashReportsSender {
             do {
                 let _: EmptyApiResponse = try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
                 storage.remove(report)
-            } catch let error as QonversionError where Self.isPermanentlyRejected(error) {
-                storage.remove(report)
             } catch {
-                return
+                switch Self.outcome(for: error) {
+                case .drop:
+                    storage.remove(report)
+                case .keepAndStop:
+                    return
+                case .keepAndContinue:
+                    countAttempt(of: report)
+                }
             }
         }
     }
 
-    /// Whether a failed send is worth another launch's attempt.
-    ///
-    /// The default is to KEEP, because most failure kinds say nothing about the
-    /// report: `.critical` is raised by the revoked-key latch before the
-    /// request ever leaves the device, `.rateLimitExceeded` by the local rate
-    /// limiter for the same reason, `.internal` means a 5xx the backend never
-    /// processed, and `.invalidResponse` is transport. Dropping on those
-    /// destroys every stored report on a single launch — one revoked key and
-    /// the whole queue is gone unsent.
-    ///
-    /// Only two kinds are hopeless on a resend: the endpoint or the referenced
-    /// resource is absent (`POST v4/sdk-crashes` DOES NOT EXIST YET — see
-    /// ``CrashReporter`` — and retrying a 404 forever is how the ObjC
-    /// implementation filled the disk), and a request the backend refused as
-    /// malformed, which will be just as malformed next launch. The queue is
-    /// hard-bounded at ``CrashReportsStorage/maxStoredReports``, so keeping is
-    /// cheap and losing a crash report is not.
-    private static func isPermanentlyRejected(_ error: QonversionError) -> Bool {
-        switch error.type {
-        case .resourceNotFound, .invalidRequest:
-            return true
-        default:
-            return false
+    /// Records that the backend answered and kept this report, and gives up on
+    /// it once it has burned its budget.
+    private func countAttempt(of report: CrashReport) {
+        let attempted: CrashReport = report.countingSendAttempt()
+        if attempted.sendAttempts >= Self.maxSendAttempts {
+            storage.remove(report)
+        } else {
+            storage.replace(report, with: attempted)
         }
     }
+
+    /// What to do with a report whose send failed.
+    enum SendOutcome {
+        /// A resend cannot change the answer — stop wasting a launch on it.
+        case drop
+        /// The failure is about this report; the next one is still worth a try.
+        case keepAndContinue
+        /// The failure is about the environment: the key, the connection, the
+        /// throttle. Every following send would fail the same way.
+        case keepAndStop
+    }
+
+    /// Classifies a failed send by what the failure actually CARRIES, not by
+    /// the semantic type alone.
+    ///
+    /// The type is not enough on its own. `POST v4/sdk-crashes` DOES NOT EXIST
+    /// YET (see ``CrashReporter``): an API gateway answers an unrouted path
+    /// with a bare 404 and no application error envelope, so there is no
+    /// `not_found` slug for ``NetworkErrorHandler`` to read and the error
+    /// arrives as `.unknown` — the same type an unrecognized 4xx gets. Deleting
+    /// only on `.resourceNotFound` would leave that queue pinned forever, one
+    /// wasted POST per launch. The HTTP status is on the error already:
+    /// ``NetworkErrorHandler`` puts it in `additionalInfo` under
+    /// ``ErrorConstants/statusCodeKey`` for every answer the backend gives.
+    ///
+    /// The default stays KEEP. A status-less failure proves nothing about the
+    /// report — it was raised before the request left the device (`.critical`
+    /// from the revoked-key latch, `.rateLimitExceeded` from the local limiter,
+    /// `.invalidRequest` from a URL that would not build) or by transport — and
+    /// dropping on those destroys every stored report on a single launch. The
+    /// queue is hard-bounded at ``CrashReportsStorage/maxStoredReports``, so
+    /// keeping is cheap and losing a crash report is not.
+    static func outcome(for error: Error) -> SendOutcome {
+        // Cancellation is the SDK switching users mid-flight: nothing was
+        // decided about the report, and the next send would be cancelled too.
+        guard !error.isCancellation else { return .keepAndStop }
+        guard let qonversionError = error as? QonversionError else { return .keepAndStop }
+
+        switch qonversionError.type {
+        // Raised before the request leaves the device, by state that applies to
+        // every report equally.
+        case .critical, .rateLimitExceeded:
+            return .keepAndStop
+        default:
+            break
+        }
+
+        guard let statusCode: Int = qonversionError.additionalInfo?[ErrorConstants.statusCodeKey.rawValue] as? Int else {
+            // No status means no verdict on the report: transport, the latch,
+            // the limiter, a request that never built.
+            //
+            // `.invalidResponse` lands here from BOTH of its producers, and the
+            // second one is not transport: a 2xx whose body failed to decode
+            // (``RequestProcessor``) — a captive portal or a CDN answering 200
+            // with HTML. The backend may in fact have accepted the report, so
+            // keeping it can duplicate it on the next launch. That is the
+            // deliberate trade: an unproven delivery is resent, because losing
+            // a crash report costs more than a duplicate the backend dedupes.
+            return .keepAndStop
+        }
+
+        // The key or the project is the problem, and it is the problem for
+        // every report — including the ones a fixed key could still deliver.
+        if Self.environmentWideStatusCodes.contains(statusCode) {
+            return .keepAndStop
+        }
+        // The backend refused the report itself: a bad route, a body it will
+        // not accept, a payload too large. Next launch changes none of that.
+        if Self.clientErrorRange.contains(statusCode) {
+            return .drop
+        }
+
+        // The backend answered but did not take it (5xx, or anything else
+        // outside 2xx). It was reachable, so the next report is worth a try —
+        // and this one's attempt is counted, so a payload the service chokes on
+        // cannot live in the queue forever.
+        return .keepAndContinue
+    }
+
+    /// Throttling. ``ResponseCode`` does not name it because no other caller
+    /// branches on it; ``RequestProcessor/isRetriableStatusCode(_:)`` uses the
+    /// same literal for the same reason.
+    private static let tooManyRequestsStatusCode: Int = 429
+
+    /// 401/402/403 drive the revoked-key latch and 429 the throttle: all four
+    /// describe the environment, not the report, and all four are 4xx — which
+    /// is why they have to be carved out of the delete range below.
+    private static let environmentWideStatusCodes: Set<Int> = [
+        ResponseCode.unauthorized.rawValue,
+        ResponseCode.paymentRequired.rawValue,
+        ResponseCode.forbidden.rawValue,
+        tooManyRequestsStatusCode
+    ]
+
+    private static let clientErrorRange: ClosedRange<Int> = 400...499
 }
