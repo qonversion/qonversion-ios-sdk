@@ -148,23 +148,37 @@ final class AsyncMulticastTests: XCTestCase {
     func testATerminatedSubscriberStopsReceivingValues() async {
         let multicast = AsyncMulticast<Int>(replaysBacklog: true)
         let survivor = collect(multicast.stream())
-        var doomed: MulticastCollector<Int>? = collect(multicast.stream())
+        // Kept alive on purpose: the point of the test is what the terminated
+        // collector did NOT receive, which a released collector cannot report.
+        let doomed = collect(multicast.stream())
         await waitUntil {
-            let doomedAttached: Bool = await doomed?.attached ?? false
+            let doomedAttached: Bool = await doomed.attached
             let survivorAttached: Bool = await survivor.attached
             return doomedAttached && survivorAttached
         }
 
-        await doomed?.stop()
-        doomed = nil
         multicast.yield(7)
+        await waitUntil {
+            let doomedReceived: [Int] = await doomed.received
+            let survivorReceived: [Int] = await survivor.received
+            return doomedReceived == [7] && survivorReceived == [7]
+        }
+
+        await doomed.stop()
+        // The unregistration happens on the stream's termination callback,
+        // i.e. after the cancelled iteration unwinds.
+        await waitUntil { multicast.subscriberCount == 1 }
+        multicast.yield(8)
 
         await waitUntil {
             let received: [Int] = await survivor.received
-            return received == [7]
+            return received == [7, 8]
         }
-        let received: [Int] = await survivor.received
-        XCTAssertEqual(received, [7])
+        let survivorReceived: [Int] = await survivor.received
+        let doomedReceived: [Int] = await doomed.received
+        XCTAssertEqual(survivorReceived, [7, 8])
+        XCTAssertEqual(doomedReceived, [7], "a terminated subscriber receives nothing after it stops")
+        XCTAssertEqual(multicast.subscriberCount, 1, "the terminated subscriber is unregistered")
     }
 
     func testTheBacklogIsDeliveredBeforeAConcurrentLiveValue() async {
@@ -235,6 +249,40 @@ final class AsyncMulticastTests: XCTestCase {
 
     func testTheDefaultBacklogLifetimeCoversTheLaunchWindow() {
         XCTAssertEqual(AsyncMulticast<Int>.defaultBacklogLifetime, 300)
+    }
+
+    // MARK: - subscriber buffer headroom
+
+    func testAFullBacklogLeavesRoomForLiveValuesBeforeTheSubscriberDrains() async {
+        // With the per-subscriber buffer sized exactly like the backlog, a
+        // full backlog leaves zero headroom: one live value arriving before
+        // the new subscriber starts draining silently evicts the oldest
+        // replayed entry — in production a lost DeferredPurchase.
+        let multicast = AsyncMulticast<Int>(replaysBacklog: true)
+        let backlogSize: Int = AsyncMulticast<Int>.maxPending
+        for value in 1...backlogSize {
+            multicast.yield(value)
+        }
+
+        // The stream registers (and is replayed) as it is built, but nothing
+        // consumes it yet — the live value below lands in its buffer on top of
+        // the whole replay.
+        let stream: AsyncStream<Int> = multicast.stream()
+        multicast.yield(backlogSize + 1)
+
+        let subscriber = collect(stream)
+        let expected: [Int] = Array(1...(backlogSize + 1))
+        await waitUntil {
+            let received: [Int] = await subscriber.received
+            return received == expected
+        }
+
+        let received: [Int] = await subscriber.received
+        XCTAssertEqual(received, expected, "a live value must not evict the backlog the subscriber has not drained yet")
+    }
+
+    func testTheSubscriberBufferIsStrictlyLargerThanTheBacklog() {
+        XCTAssertGreaterThan(AsyncMulticast<Int>.subscriberBufferSize, AsyncMulticast<Int>.maxPending)
     }
 }
 

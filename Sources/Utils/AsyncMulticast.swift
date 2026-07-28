@@ -37,6 +37,15 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
     /// Bounds the replay backlog; the oldest values are dropped first.
     static var maxPending: Int { 10 }
 
+    /// Bounds each subscriber's own buffer. STRICTLY larger than the backlog:
+    /// a subscriber is replayed the whole backlog at registration and only
+    /// starts draining afterwards, so a buffer merely equal to `maxPending`
+    /// leaves zero headroom — one live value produced in that gap would evict
+    /// the oldest replayed entry (a lost DeferredPurchase in the worst case).
+    /// The multiplier is the headroom for the live values a host can produce
+    /// while it wires its streams up.
+    static var subscriberBufferSize: Int { maxPending * 4 }
+
     /// How long a value stays replayable to subscribers arriving after it.
     /// Sized for "the host finished wiring its streams up", not for the whole
     /// session.
@@ -64,10 +73,18 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
         self.now = now
     }
 
+    /// How many subscriptions are currently attached. A terminated subscriber
+    /// is gone from here as soon as its stream's termination callback has run.
+    var subscriberCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return continuations.count
+    }
+
     func stream() -> AsyncStream<Element> {
         // Slow consumers keep only the newest values instead of growing the
         // buffer without bound.
-        return AsyncStream(bufferingPolicy: .bufferingNewest(Self.maxPending)) { [weak self] continuation in
+        return AsyncStream(bufferingPolicy: .bufferingNewest(Self.subscriberBufferSize)) { [weak self] continuation in
             guard let self else {
                 continuation.finish()
                 return
