@@ -172,7 +172,7 @@ final class NoCodesService: NoCodesServiceInterface, @unchecked Sendable {
       switch noCodesError.type {
       case .invalidRequest, .invalidResponse, .internal, .critical:
         return true
-      case .screenLoadingFailed, .screenNotFound, .productsLoadingFailed, .productNotFound, .authorizationFailed, .rateLimitExceeded, .sdkInitializationError, .clientError:
+      case .screenLoadingFailed, .screenNotFound, .screenPresentationFailed, .productsLoadingFailed, .productNotFound, .authorizationFailed, .rateLimitExceeded, .sdkInitializationError, .clientError:
         return false
       case .unknown:
         return true

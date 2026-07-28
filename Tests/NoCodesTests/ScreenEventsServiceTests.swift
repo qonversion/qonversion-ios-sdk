@@ -15,6 +15,7 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
     private var sentBatches: [[[String: AnyHashable]]] = []
     private var sentUids: [String] = []
     private var shouldFail = false
+    private var shouldStall = false
 
     var batches: [[[String: AnyHashable]]] {
         lock.lock()
@@ -45,8 +46,27 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
         self.shouldFail = shouldFail
     }
 
+    /// Keeps every request suspended, like a transport waiting on its timeout.
+    func stallNextRequests(_ shouldStall: Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        self.shouldStall = shouldStall
+    }
+
+    private var isStalling: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+
+        return shouldStall
+    }
+
     func process<T>(request: Request, responseType: T.Type) async throws -> T where T: Decodable {
         let isFailing: Bool = record(request: request)
+
+        while isStalling {
+            try? await Task.sleep(nanoseconds: 5_000_000)
+        }
 
         if isFailing {
             throw NoCodesError(type: .invalidResponse)
@@ -299,6 +319,39 @@ final class ScreenEventsServiceTests: XCTestCase {
         XCTAssertEqual(retained.last?["index"] as? Int, 119)
     }
 
+    /// A flush that never comes back latches the in-flight guard, so every
+    /// later flush returns at once and only `track` keeps running. Without a
+    /// cap there, a long funnel behind a hanging request grows the buffer for
+    /// as long as the request hangs.
+    func testTrackingDropsTheOldestEventsOnceTheBufferIsFullWhileAFlushIsStalled() async throws {
+        let processor = EventsRequestProcessor()
+        processor.stallNextRequests(true)
+        let service: ScreenEventsService = makeService(processor: processor)
+
+        // The tenth event starts the flush that hangs.
+        for index in 0..<10 {
+            let event: ScreenEvent = makeEvent(index: index)
+            service.track(event: event)
+        }
+        await waitUntil { processor.batchesCount == 1 }
+
+        for index in 10..<210 {
+            let event: ScreenEvent = makeEvent(index: index)
+            service.track(event: event)
+        }
+        await waitUntilQuiet(processor)
+        XCTAssertEqual(processor.batchesCount, 1, "every flush behind the stalled one is a no-op")
+
+        processor.stallNextRequests(false)
+        await flushUntilSent(service, processor, batchesCount: 2)
+
+        let retained: [[String: AnyHashable]] = try XCTUnwrap(processor.lastBatch)
+        XCTAssertEqual(retained.count, 100)
+        // The oldest events were dropped, the newest ones survived.
+        XCTAssertEqual(retained.first?["index"] as? Int, 110)
+        XCTAssertEqual(retained.last?["index"] as? Int, 209)
+    }
+
     // MARK: - User id
 
     func testEveryBatchIsPostedForTheUserResolvedAtFlushTime() async throws {
@@ -373,6 +426,17 @@ final class ScreenEventsServiceTests: XCTestCase {
         let deadline: Date = Date().addingTimeInterval(timeout)
         while !condition() && Date() < deadline {
             try? await Task.sleep(nanoseconds: 5_000_000)
+        }
+    }
+
+    /// The in-flight guard is lowered asynchronously once a stalled request
+    /// finally returns, so a flush issued right after the release can still be
+    /// swallowed and has to be retried.
+    private func flushUntilSent(_ service: ScreenEventsService, _ processor: EventsRequestProcessor, batchesCount: Int) async {
+        await waitUntil {
+            service.flush()
+
+            return processor.batchesCount == batchesCount
         }
     }
 

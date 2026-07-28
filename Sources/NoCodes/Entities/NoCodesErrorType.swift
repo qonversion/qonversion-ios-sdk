@@ -22,6 +22,10 @@ public enum NoCodesErrorType: Sendable {
   case rateLimitExceeded
   case screenNotFound
   case screenLoadingFailed
+  /// The screen was ready but there was nowhere to put it: no view controller
+  /// to present on, no navigation controller to push onto, or a host already
+  /// presenting something else.
+  case screenPresentationFailed
   case clientError
   
   public func message() -> String {
@@ -32,6 +36,8 @@ public enum NoCodesErrorType: Sendable {
       return "SDK is not initialized. Initialize SDK before calling other functions"
     case .screenLoadingFailed:
       return "Failed to load screen."
+    case .screenPresentationFailed:
+      return "Failed to present screen: no view controller available to present it on."
     case .productNotFound:
       return "The product not found."
     case .productsLoadingFailed:
