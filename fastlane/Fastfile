@@ -20,9 +20,10 @@ end
 lane :bump do |options|
   new_version = options[:version]
 
-  # The SDK version lives in a single Swift constant (sent in request headers).
-  file_path = Dir['../Sources/SDKVersion.swift'].first
-  update_file(file_path, /static let current: String = ".*"/, "static let current: String = \"#{new_version}\"")
+  # Each target carries its own SDK version constant (sent in request headers).
+  Dir['../Sources/**/SDKVersion.swift'].each do |file_path|
+    update_file(file_path, /static let current: String = ".*"/, "static let current: String = \"#{new_version}\"")
+  end
 end
 
 def get_tag
