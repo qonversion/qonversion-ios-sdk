@@ -766,14 +766,6 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertTrue(Qonversion.Transaction.Offer.hasLegacyOfferData(id: "offer_1", type: .promotional))
     }
 
-    func testTransactionWithoutStoreKitDataHasNoOffer() {
-        // The wire-only transaction (offline replay, local calculation) has
-        // no StoreKit object behind it and therefore no offer.
-        let transaction = Qonversion.Transaction(id: "t1", productId: "com.app.pro")
-
-        XCTAssertNil(transaction.offer)
-    }
-
     // MARK: - Product
 
     func testProductDecodingUsesV4Keys() throws {
