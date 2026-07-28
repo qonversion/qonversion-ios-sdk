@@ -6,9 +6,8 @@
 import Foundation
 import StoreKit
 
-/// A store-agnostic result of a purchase attempt. Produced by the thin
-/// StoreKit wrappers and mapped into granular integrator-facing errors here,
-/// so the mapping stays unit-testable without real StoreKit objects.
+/// A store-agnostic result of a purchase attempt, mapped into integrator-facing
+/// errors here so the mapping stays testable without real StoreKit objects.
 enum StoreKitPurchaseOutcome {
 
     case success(Qonversion.Transaction)
@@ -42,44 +41,27 @@ enum StoreKitPurchaseOutcome {
     }
 
     /// The integrator-facing error for a store failure raised outside the
-    /// payment sheet (a catalog load, a restore sync). Every public entry
-    /// point documents ``QonversionError``, so nothing raw may pass here.
-    /// `fallbackType` names the operation for the failures the store does not
-    /// classify itself.
+    /// payment sheet; nothing raw may reach a public entry point.
+    /// `fallbackType` names the operation for what the store cannot classify.
     ///
-    /// Two kinds of "cancelled" reach this call and they are named
-    /// differently, deliberately:
-    /// - the STORE reporting a cancellation — `StoreKitError.userCancelled`
-    ///   from a dismissed App Store sign-in prompt during a restore — keeps
-    ///   the name ``QonversionErrorType/purchaseCancelled`` that
-    ///   ``failureType(for:)`` gives it everywhere else. One store condition,
-    ///   one error type, whichever call ran into it.
-    /// - the SDK ABANDONING the run — a `CancellationError` or a
-    ///   `URLError.cancelled` from a task torn down by a user switch — becomes
-    ///   ``QonversionErrorType/cancelled``: nothing failed, and naming it
-    ///   after the operation would send the host retrying something that was
-    ///   never attempted.
+    /// A STORE-reported cancellation stays `.purchaseCancelled`; only the SDK
+    /// abandoning the run becomes `.cancelled` — nothing failed, so the host
+    /// must not retry.
     static func storeError(_ error: Error, fallbackType: QonversionErrorType) -> QonversionError {
-        // Already classified: re-wrapping would only nest messages and bury
-        // the precise type under a generic one.
+        // Re-wrapping would nest messages and bury the precise type.
         if let qonversionError = error as? QonversionError { return qonversionError }
 
-        // .purchaseFailed is what failureType answers for everything it cannot
-        // name — outside a purchase that name would be wrong. Everything it
-        // CAN name leaves through the guard below, cancellations included.
+        // .purchaseFailed is failureType's "cannot name it" answer; everything
+        // it CAN name, cancellations included, leaves through this guard.
         let storeType: QonversionErrorType = failureType(for: error)
         guard storeType == .purchaseFailed else { return QonversionError(type: storeType, error: error) }
 
-        // So only an abandoned run reaches this, never a store-reported
-        // cancellation.
         guard !error.isCancellation else { return QonversionError(type: .cancelled, error: error) }
 
         return QonversionError(type: fallbackType, error: error)
     }
 
-    /// Maps the store's own failure kinds onto the SDK's error surface, so an
-    /// integrator can branch on `type` instead of digging into the underlying
-    /// StoreKit error.
+    /// Maps the store's own failure kinds onto the SDK's error surface.
     static func failureType(for error: Error?) -> QonversionErrorType {
         guard let error else { return .purchaseFailed }
 

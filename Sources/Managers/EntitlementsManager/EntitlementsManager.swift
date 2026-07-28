@@ -8,38 +8,30 @@ import Foundation
 fileprivate enum Constants: String {
     case entitlementsKey = "qonversion.keys.entitlements"
     case entitlementsTimestampKey = "qonversion.keys.entitlementsTimestamp"
-    // When the backend last answered. The local fallback persists what it
-    // merged but must NOT touch this key: otherwise a permanently failing
-    // backend would keep refreshing the cache lifetime and a lapsed user
-    // would stay premium forever.
+    // When the backend last answered. The local fallback must NOT touch this
+    // key, or a permanently failing backend keeps a lapsed user premium forever.
     case backendTimestampKey = "qonversion.keys.entitlementsBackendTimestamp"
 }
 
-// @unchecked: the generation counter is lock-guarded, every dependency is
-// thread-safe on its own.
+// @unchecked: the generation counter is lock-guarded, every dependency is thread-safe.
 final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendable {
 
-    // Read by the fetch flows, bumped from the user-change notification thread.
     private let lock = NSLock()
 
     /// Bumped on every user switch: a fetch that started for the previous user
     /// must not persist its (stale) entitlements for the new one.
     private var cacheGeneration = 0
 
-    /// The resolution currently in flight, joined by every concurrent caller:
-    /// gating checks happen on every screen, and N of them must cost one
-    /// request, not N.
+    /// The resolution in flight, joined by every concurrent caller: N gating
+    /// checks must cost one request.
     private var _resolutionTask: Task<ResolvedEntitlements, Error>?
 
-    /// Names the run that owns the slot, so a run that ends after the slot
-    /// changed hands releases nothing. Monotonic, issued under `lock`.
+    /// Owner of the resolution slot, so a run that ends after the slot changed
+    /// hands releases nothing. Monotonic, issued under `lock`.
     private var resolutionTicket: UInt64 = 0
 
-    /// How long a BACKEND answer is served without asking again. The ObjC SDK
-    /// answered checkEntitlements straight from the cache inside this window
-    /// (QNUtils.m:18 — `defaultState ? 60.0 * 5.0 : cacheLifetime`, the
-    /// configured entitlementsCacheLifetime only applying once the launch had
-    /// failed), and QNProductCenterManager.m:594 is the call site.
+    /// How long a BACKEND answer is served without asking again (ObjC parity:
+    /// QNUtils.m:18, QNProductCenterManager.m:594).
     static var freshCacheLifetime: TimeInterval { 300 }
 
     private let entitlementsService: EntitlementsServiceInterface
@@ -80,15 +72,12 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
     }
 
     func resolvedEntitlements() async throws -> ResolvedEntitlements {
-        // A backend answer that is still inside the fresh window is served as
-        // it is — no user gate, no request. This is the ObjC behavior and the
-        // reason a paywall that checks access on every appearance does not
-        // generate a request per appearance.
+        // Inside the fresh window the cache is served as it is — no user gate,
+        // no request, so a per-appearance gating check costs nothing.
         if let fresh: [String: Qonversion.Entitlement] = freshBackendEntitlements() {
             return ResolvedEntitlements(entitlements: servable(fresh), source: .backend)
         }
 
-        // Single-flight: N concurrent gating checks share one round trip.
         let task: Task<ResolvedEntitlements, Error> = joinedResolutionTask()
 
         return try await task.value
@@ -107,16 +96,8 @@ private extension EntitlementsManager {
             return inFlight
         }
 
-        // The run releases the slot as its own last act, before its value
-        // becomes observable: clearing it from the caller instead would leave
-        // a window where a joining call is answered by a finished run.
-        //
-        // The clear is by identity, and the ticket is what carries it — a task
-        // cannot be captured by the closure that defines it. Identity is
-        // required because userDidChange() empties the slot OUT OF BAND while
-        // a run is still going: by the time that run ends the slot may already
-        // hold the run started for the new user, and wiping it would send the
-        // next caller off on a third concurrent resolution.
+        // The run releases the slot itself, and by ticket: userDidChange()
+        // empties the slot out of band, so a run must never evict its successor.
         resolutionTicket += 1
         let ticket: UInt64 = resolutionTicket
         let task = Task { [weak self] () throws -> ResolvedEntitlements in
@@ -125,8 +106,8 @@ private extension EntitlementsManager {
 
             return try await self.resolve(attemptsLeft: 1)
         }
-        // Written under the lock this call still holds, so a run that reaches
-        // its defer immediately waits for it.
+        // Written under the lock this call still holds, so a run reaching its
+        // defer immediately waits for it.
         _resolutionTask = task
 
         return task
@@ -135,20 +116,15 @@ private extension EntitlementsManager {
     func clearResolutionTask(ticket: UInt64) {
         lock.lock()
         defer { lock.unlock() }
-        // A later run has taken the slot over — the user switched while this
-        // one was in flight, and evicting its successor here is exactly the
-        // bug the ticket exists to prevent.
         guard resolutionTicket == ticket else { return }
 
         _resolutionTask = nil
     }
 
-    /// `attemptsLeft` bounds the re-resolution a user switch triggers: without
-    /// it a host switching users in a loop could keep this recursing.
+    /// `attemptsLeft` bounds the re-resolution a user switch triggers.
     func resolve(attemptsLeft: Int) async throws -> ResolvedEntitlements {
-        // Snapshotted before the first suspension: a user switch landing while
-        // the request is in flight must not let the previous user's
-        // entitlements reach the new user's cache — or the new user's caller.
+        // Snapshotted before the first suspension: a user switch mid-flight
+        // must not leak the previous user's entitlements to the new one.
         let generation: Int = currentGeneration()
 
         do {
@@ -162,16 +138,11 @@ private extension EntitlementsManager {
 
             return ResolvedEntitlements(entitlements: servable(entitlements), source: .backend)
         } catch {
-            // Production fault tolerance: ANY launch failure — including the
-            // user gate, auth and rate-limit errors — is answered from the
-            // cache plus the local StoreKit calculation. The error surfaces
-            // only when there is nothing at all to serve.
+            // Deliberate fault tolerance: ANY failure is answered from cache
+            // plus local calculation; the error surfaces only with nothing to serve.
             let transactions: [Qonversion.Transaction] = await storeKitFacade.currentEntitlements()
-            // A rejected persist means the user changed while this ran: the
-            // merge describes the previous user, so it is neither kept nor
-            // served. Unlike the backend path there is nothing to re-resolve —
-            // the backend is unreachable — so the original failure surfaces
-            // and the new user's next call starts clean.
+            // A rejected persist means the user changed mid-run: the merge
+            // describes the previous user, so the original failure surfaces instead.
             guard let fallback: [String: Qonversion.Entitlement] = localFallbackEntitlements(for: transactions, generation: generation) else { throw error }
             guard !fallback.isEmpty else { throw error }
 
@@ -188,10 +159,8 @@ private extension EntitlementsManager {
     }
 
     /// The cached BACKEND answer while it is still fresh, unfiltered. nil when
-    /// there is none, when it is older than the fresh window, or when it
-    /// contains an entitlement claiming to be active past its own expiration —
-    /// ObjC's second condition (QNProductCenterManager.m:597-605): such a cache
-    /// no longer describes reality, so the backend is asked again.
+    /// there is none, when it is stale, or when it holds an entitlement active
+    /// past its own expiration (ObjC parity: QNProductCenterManager.m:597-605).
     func freshBackendEntitlements() -> [String: Qonversion.Entitlement]? {
         let backendTimestamp: TimeInterval = localStorage.double(forKey: Constants.backendTimestampKey.rawValue)
         guard backendTimestamp > 0, Date().timeIntervalSince1970 - backendTimestamp <= Self.freshCacheLifetime else { return nil }
@@ -215,17 +184,15 @@ private extension EntitlementsManager {
 extension EntitlementsManager: UserChangedObserver {
 
     func userDidChange() {
-        // The bump and the wipe are one step: a persist that passes the
-        // generation check in between would write the previous user's
-        // entitlements right back.
+        // The bump and the wipe are one step: a persist slipping in between
+        // would write the previous user's entitlements right back.
         lock.lock()
         defer { lock.unlock() }
 
         cacheGeneration += 1
         // The resolution in flight belongs to the previous user: the next
-        // caller must start its own instead of joining it. The ticket is left
-        // alone on purpose: the run in flight still owns the empty slot, and
-        // only the next caller taking the slot over revokes its claim to it.
+        // caller must start its own. The ticket is deliberately left alone —
+        // only the next caller taking the slot over revokes the run's claim.
         _resolutionTask = nil
         localStorage.removeObject(forKey: Constants.entitlementsKey.rawValue)
         localStorage.removeObject(forKey: Constants.entitlementsTimestampKey.rawValue)
@@ -243,20 +210,17 @@ private extension EntitlementsManager {
         return cacheGeneration
     }
 
-    /// nil means the persist was rejected because the user changed — the
-    /// result describes somebody else and must not be served.
+    /// nil means the persist was rejected by a user change — the result
+    /// describes somebody else and must not be served.
     func localFallbackEntitlements(for transactions: [Qonversion.Transaction], generation: Int) -> [String: Qonversion.Entitlement]? {
         let calculated = EntitlementsCalculator.calculate(
             transactions: transactions,
             products: productsDataSource.cachedProducts(),
             mapping: productsDataSource.cachedProductPermissions() ?? [:]
         )
-        // Merged into and persisted UNFILTERED. The expiry filter decides what
-        // is served, never what is kept: entitlements the SDK cannot
-        // regenerate locally — stripe, manual, anything not backed by an App
-        // Store transaction — would otherwise be deleted for good the first
-        // time the backend was unreachable, and only a successful backend
-        // answer could ever bring them back.
+        // Persisted UNFILTERED: the expiry filter decides what is served, never
+        // what is kept, or entitlements the SDK cannot regenerate locally
+        // (stripe, manual) would be lost the first time the backend is down.
         let merged = EntitlementsCalculator.merge(calculated, into: storedEntitlements() ?? [:])
         guard persist(merged, ifGenerationIs: generation, isBackendAnswer: false) else { return nil }
 
@@ -270,10 +234,8 @@ private extension EntitlementsManager {
             return nil
         }
 
-        // The lifetime runs from the last backend answer. An install that has
-        // never had one holds locally calculated data only, which carries its
-        // own expiration and is filtered on read — there the write timestamp
-        // is the best reference available.
+        // The lifetime runs from the last backend answer; an install that never
+        // had one falls back to the write timestamp.
         let backendTimestamp: TimeInterval = localStorage.double(forKey: Constants.backendTimestampKey.rawValue)
         let timestamp: TimeInterval = backendTimestamp > 0 ? backendTimestamp : localStorage.double(forKey: Constants.entitlementsTimestampKey.rawValue)
         guard timestamp > 0, Date().timeIntervalSince1970 - timestamp <= cacheLifetimeSeconds else {
@@ -283,9 +245,8 @@ private extension EntitlementsManager {
         return cached
     }
 
-    /// Production rule: an entry that claims active past its own expiration is
-    /// stale — serving it would report access the user no longer has. Applied
-    /// on the way OUT only; see localFallbackEntitlements.
+    /// Drops entries claiming active past their own expiration. Applied on the
+    /// way OUT only; see localFallbackEntitlements.
     func servable(_ entitlements: [String: Qonversion.Entitlement]) -> [String: Qonversion.Entitlement] {
         let now = Date()
 
@@ -296,9 +257,9 @@ private extension EntitlementsManager {
         }
     }
 
-    /// The generation check and the write are one step: a user switch landing
-    /// between them would resurrect the previous user's entitlements. false
-    /// means the write was refused — the caller must not serve the value.
+    /// The generation check and the write are one step: a user switch between
+    /// them would resurrect the previous user's entitlements. false means the
+    /// write was refused — the caller must not serve the value.
     @discardableResult
     func persist(_ entitlements: [String: Qonversion.Entitlement], ifGenerationIs generation: Int, isBackendAnswer: Bool) -> Bool {
         lock.lock()
