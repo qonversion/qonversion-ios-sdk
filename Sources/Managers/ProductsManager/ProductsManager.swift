@@ -21,6 +21,17 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     let localStorage: LocalStorageInterface
     private let fallbackService: FallbackServiceInterface
     private let logger: LoggerWrapper
+
+    /// The key the catalog of the last successful load is persisted under,
+    /// scoped by apiKey exactly like the offline requests queue: products()
+    /// serves this blob publicly, and an app that switches project keys must
+    /// never see the other project's catalog on its paywall.
+    ///
+    /// The blob earlier versions wrote under the unscoped key is ignored
+    /// rather than migrated: it was never served publicly (only the local
+    /// entitlements calculation read it), so the whole cost is one API round
+    /// on the first launch after the update.
+    private let productsKey: String
     
     // Read by the local entitlements calculation and by concurrent products()
     // calls, cleared from the user-change notification thread.
@@ -48,7 +59,8 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         }
     }
     
-    init(productsService: ProductsServiceInterface, storeKitFacade: StoreKitFacadeInterface, localStorage: LocalStorageInterface, fallbackService: FallbackServiceInterface, logger: LoggerWrapper) {
+    init(apiKey: String, productsService: ProductsServiceInterface, storeKitFacade: StoreKitFacadeInterface, localStorage: LocalStorageInterface, fallbackService: FallbackServiceInterface, logger: LoggerWrapper) {
+        self.productsKey = Constants.productsKey.rawValue + "." + apiKey
         self.productsService = productsService
         self.storeKitFacade = storeKitFacade
         self.localStorage = localStorage
@@ -64,7 +76,14 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         // The offline cold start is exactly what the local entitlements
         // calculation exists for — answer from the persisted catalog, then
         // from the bundled fallback file.
-        if let persisted: [Qonversion.Product] = try? localStorage.object(forKey: Constants.productsKey.rawValue, dataType: [Qonversion.Product].self), !persisted.isEmpty {
+        //
+        // Both snapshots report their unpriceable rows, like the failed-load
+        // path does: the rule is that every path serving a catalog names them,
+        // and a row visible here but not there would be reported or not purely
+        // by which call happened to run first.
+        if let persisted: [Qonversion.Product] = persistedCatalog(), !persisted.isEmpty {
+            reportProductsWithoutStoreId(persisted)
+
             return persisted
         }
 
@@ -162,15 +181,37 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         do {
             products = try await productsService.products()
         } catch {
-            // The bundled snapshot answers this call only — it must not shadow
-            // the API, so the in-memory cache stays empty and the next call retries.
+            // Neither snapshot answers more than this call — they must not
+            // shadow the API, so the in-memory cache stays empty and the next
+            // call retries.
+            //
+            // Reported on these paths too, not only on the API one: they are
+            // precisely where a product row with neither `store_id` nor
+            // `apple_product_id` comes from, and they return early.
+
+            // The catalog of the last successful load comes first: it is what
+            // the backend actually said for THIS user, and without it an
+            // offline cold start empties the paywall of every app that does
+            // not bundle the fallback file.
+            //
+            // Two accepted trade-offs, chosen rather than missed:
+            //   * no staleness bound — a catalog persisted months ago is still
+            //     served, because a stale price beats an empty paywall and the
+            //     next successful load overwrites it anyway;
+            //   * it beats the bundled file even when the bundled file is
+            //     newer, because it is the only snapshot the backend produced
+            //     for this project's live configuration.
+            if let persistedProducts: [Qonversion.Product] = persistedCatalog(ifGenerationIs: generation), !persistedProducts.isEmpty {
+                logger.warning("Products request failed, using the catalog of the last successful load: " + error.message)
+                reportProductsWithoutStoreId(persistedProducts)
+
+                return await enriched(persistedProducts)
+            }
+
             guard let fallbackProducts: [Qonversion.Product] = fallbackService.obtainFallbackData()?.products, !fallbackProducts.isEmpty else {
                 throw error
             }
             logger.warning("Products request failed, using the bundled fallback file: " + error.message)
-            // Reported HERE too, not only on the API path: the fallback file
-            // is precisely where a product row with neither `store_id` nor
-            // `apple_product_id` comes from, and it returns early.
             reportProductsWithoutStoreId(fallbackProducts)
 
             return await enriched(fallbackProducts)
@@ -212,6 +253,31 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         logger.warning("These products carry no App Store product id and cannot be priced by the store: " + unlinked.joined(separator: ", "))
     }
 
+    /// The catalog of the last successful load, cleared on a user switch and
+    /// stored with no expiry: a stale catalog beats an empty paywall.
+    ///
+    /// Clearing alone does not make the read safe for a load that SPANS a
+    /// switch — by the time such a load reads back, the new user may have
+    /// persisted its own catalog under the key. Callers holding a generation
+    /// snapshot must use the checked overload below.
+    private func persistedCatalog() -> [Qonversion.Product]? {
+        return try? localStorage.object(forKey: productsKey, dataType: [Qonversion.Product].self)
+    }
+
+    /// The generation check and the read are one step, exactly like persist()
+    /// and store(): a user switch landing between them hands the catalog
+    /// behind the key — by then the OTHER user's — to a caller that started
+    /// under the previous one. On a mismatch the caller falls through to the
+    /// project-scoped bundled file, or gets the error.
+    private func persistedCatalog(ifGenerationIs generation: Int) -> [Qonversion.Product]? {
+        lock.lock()
+        defer { lock.unlock() }
+        guard generation == cacheGeneration else { return nil }
+
+        // Reads under the lock: the read itself never takes it.
+        return persistedCatalog()
+    }
+
     private func currentGeneration() -> Int {
         lock.lock()
         defer { lock.unlock() }
@@ -225,7 +291,7 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         defer { lock.unlock() }
         guard generation == cacheGeneration else { return }
 
-        try? localStorage.set(products, forKey: Constants.productsKey.rawValue)
+        try? localStorage.set(products, forKey: productsKey)
     }
 
     private func store(_ products: [Qonversion.Product], ifGenerationIs generation: Int) {
@@ -395,7 +461,7 @@ extension ProductsManager: UserChangedObserver {
         // The in-flight load belongs to the previous user — the next caller
         // must start its own instead of joining it.
         _productsTask = nil
-        localStorage.removeObject(forKey: Constants.productsKey.rawValue)
+        localStorage.removeObject(forKey: productsKey)
     }
 }
 

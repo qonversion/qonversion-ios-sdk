@@ -26,6 +26,7 @@ final class IntroEligibilityTests: XCTestCase {
         localStorage = MockLocalStorage()
         fallbackService = MockFallbackService()
         manager = ProductsManager(
+            apiKey: "test_api_key",
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,

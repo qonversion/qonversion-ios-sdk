@@ -17,6 +17,11 @@ final class ProductsManagerTests: XCTestCase {
     private var fallbackService: MockFallbackService!
     private var manager: ProductsManager!
 
+    private let apiKey: String = "test_api_key"
+
+    /// The key the manager persists the catalog under — scoped by apiKey.
+    private var productsKey: String { "qonversion.keys.products." + apiKey }
+
     override func setUp() {
         super.setUp()
         productsService = MockProductsService()
@@ -26,8 +31,9 @@ final class ProductsManagerTests: XCTestCase {
         manager = makeManager()
     }
 
-    private func makeManager() -> ProductsManager {
+    private func makeManager(apiKey: String? = nil) -> ProductsManager {
         ProductsManager(
+            apiKey: apiKey ?? self.apiKey,
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,
@@ -85,6 +91,28 @@ final class ProductsManagerTests: XCTestCase {
         let products = coldManager.cachedProducts()
 
         XCTAssertEqual(products.map(\.qonversionId), ["q_pro"], "the offline entitlements calculation must not starve on a cold start")
+    }
+
+    // Every path that serves a catalog names its unpriceable rows — the
+    // bundled branch below always did, and reporting one but not the other
+    // made the warning depend on which call happened to run first.
+    func testCachedProductsReportProductsWithoutAStoreIdFromThePersistedCatalog() throws {
+        let messages = LogCollector()
+        let manager = ProductsManager(
+            apiKey: apiKey,
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            fallbackService: fallbackService,
+            logger: LoggerWrapper(sink: { _, message in messages.append(message) })
+        )
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted_no_store", storeId: "")]
+        try localStorage.set(persisted, forKey: productsKey)
+
+        let products: [Qonversion.Product] = manager.cachedProducts()
+
+        XCTAssertEqual(products.map(\.qonversionId), ["q_persisted_no_store"])
+        XCTAssertTrue(messages.all().contains { $0.contains("q_persisted_no_store") })
     }
 
     func testCachedProductsFallBackToTheBundledFileWhenNothingWasPersisted() {
@@ -210,6 +238,7 @@ final class ProductsManagerTests: XCTestCase {
         // the fallback file rather than a Stripe-only product.
         let messages = LogCollector()
         let manager = ProductsManager(
+            apiKey: apiKey,
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,
@@ -231,6 +260,7 @@ final class ProductsManagerTests: XCTestCase {
         // reporting used to sit below the return and never ran for it.
         let messages = LogCollector()
         let manager = ProductsManager(
+            apiKey: apiKey,
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,
@@ -252,6 +282,7 @@ final class ProductsManagerTests: XCTestCase {
         // Store Connect is the cause, and only the SDK can see it.
         let messages = LogCollector()
         let manager = ProductsManager(
+            apiKey: apiKey,
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,
@@ -272,6 +303,7 @@ final class ProductsManagerTests: XCTestCase {
         // in the "the store returned nothing" list.
         let messages = LogCollector()
         let manager = ProductsManager(
+            apiKey: apiKey,
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,
@@ -289,6 +321,7 @@ final class ProductsManagerTests: XCTestCase {
     func testARequestedProductIdAbsentFromTheCatalogIsReportedInTheLog() async throws {
         let messages = LogCollector()
         let manager = ProductsManager(
+            apiKey: apiKey,
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,
@@ -305,12 +338,29 @@ final class ProductsManagerTests: XCTestCase {
 
     // MARK: - Service error
 
-    // Without a bundled fallback file, a products service error propagates to
-    // the caller as-is and the injected local storage is never consulted.
-    func testServiceErrorPropagatesWithoutDiskFallback() async {
-        // The REAL key: seeding "products" proved nothing, the manager never
-        // looks there.
-        try? localStorage.set([makeProduct(qonversionId: "q_persisted")], forKey: "qonversion.keys.products")
+    // The last rung of the ladder: an EMPTY persisted catalog and an EMPTY
+    // bundled product list are not answers, so the service error still reaches
+    // the caller instead of an empty paywall being presented as a success.
+    func testServiceErrorPropagatesWhenNeitherSnapshotHasProducts() async throws {
+        try localStorage.set([Qonversion.Product](), forKey: productsKey)
+        fallbackService.fallbackData = FallbackData(products: [], productsPermissions: ["pro": ["premium"]])
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        do {
+            let result: [Qonversion.Product] = try await manager.products()
+            XCTFail("Expected products() to rethrow the service error, got \(result.map(\.qonversionId))")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .productsLoadingFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
+        XCTAssertTrue(storeKitFacade.requestedProductIds.isEmpty, "an empty snapshot must not even be taken to the store")
+        XCTAssertTrue(manager.loadedProducts.isEmpty)
+    }
+
+    // The same with nothing stored at all: no persisted blob, no bundled file.
+    func testServiceErrorPropagatesWithNothingToFallBackOn() async {
         productsService.error = QonversionError(type: .productsLoadingFailed)
 
         do {
@@ -324,6 +374,206 @@ final class ProductsManagerTests: XCTestCase {
 
         XCTAssertTrue(storeKitFacade.requestedProductIds.isEmpty)
         XCTAssertTrue(manager.loadedProducts.isEmpty)
+    }
+
+    // MARK: - persisted catalog fallback (A2-1)
+
+    // An offline cold start must not empty the paywall of every app that does
+    // not ship a fallback file: the catalog of the last successful load is
+    // served instead, exactly as the legacy SDK did.
+    func testServiceErrorFallsBackToThePersistedCatalog() async throws {
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted", storeId: "store_persisted")]
+        try localStorage.set(persisted, forKey: productsKey)
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        let result: [Qonversion.Product] = try await manager.products()
+
+        XCTAssertEqual(result.map(\.qonversionId), ["q_persisted"])
+        // The store WAS asked about them: an unenriched paywall has no prices.
+        XCTAssertEqual(storeKitFacade.requestedProductIds, [["store_persisted"]])
+    }
+
+    // The persisted catalog is what the backend last actually said for THIS
+    // user; the bundled file is a build-time snapshot of the whole project.
+    func testThePersistedCatalogWinsOverTheBundledFile() async throws {
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted", storeId: "store_persisted")]
+        try localStorage.set(persisted, forKey: productsKey)
+        let bundled: [Qonversion.Product] = [makeProduct(qonversionId: "q_fallback", storeId: "store_fallback")]
+        fallbackService.fallbackData = FallbackData(products: bundled, productsPermissions: nil)
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        let result: [Qonversion.Product] = try await manager.products()
+
+        XCTAssertEqual(result.map(\.qonversionId), ["q_persisted"])
+    }
+
+    // Like the bundled file, the persisted catalog answers one call only — it
+    // must not shadow the API, and a store outage during it must not be cached.
+    func testThePersistedCatalogAnswerIsNotCached() async throws {
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted", storeId: "store_persisted")]
+        try localStorage.set(persisted, forKey: productsKey)
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+        storeKitFacade.productsError = MockError.stubbed
+
+        let result: [Qonversion.Product] = try await manager.products()
+
+        XCTAssertEqual(result.map(\.qonversionId), ["q_persisted"], "a store outage must not swallow the catalog")
+        XCTAssertTrue(manager.loadedProducts.isEmpty)
+        _ = try? await manager.products()
+        XCTAssertEqual(productsService.productsCallsCount, 2, "the next call must retry the API")
+    }
+
+    // The write itself predates this branch. What is new is that the blob is
+    // now served to callers, so the overwrite has to be followed through to
+    // the fallback: the catalog a later failing load serves must be the fresh
+    // one, never the catalog it replaced.
+    func testASuccessfulLoadOverwritesThePersistedCatalogAndTheFallbackServesTheFreshOne() async throws {
+        let stale: [Qonversion.Product] = [makeProduct(qonversionId: "q_stale", storeId: "store_stale")]
+        try localStorage.set(stale, forKey: productsKey)
+        productsService.productsResult = [makeProduct(qonversionId: "q_fresh", storeId: "store_fresh")]
+
+        _ = try await manager.products()
+
+        let stored: [Qonversion.Product]? = try localStorage.object(forKey: productsKey, dataType: [Qonversion.Product].self)
+        XCTAssertEqual(stored?.map(\.qonversionId), ["q_fresh"])
+
+        // A later launch over the same storage, offline this time.
+        let coldManager: ProductsManager = makeManager()
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+        let served: [Qonversion.Product] = try await coldManager.products()
+
+        XCTAssertEqual(served.map(\.qonversionId), ["q_fresh"])
+    }
+
+    // Everything that goes through products() inherits the fallback: an
+    // eligibility check offline must answer from the same catalog.
+    //
+    // .unknown alone proves nothing — it is also what a product MISSING from
+    // the catalog gets. The two paths are told apart by their side effects:
+    // the served product is taken to the store and is never named as absent
+    // from the catalog.
+    func testTrialIntroEligibilityIsAnsweredFromThePersistedCatalog() async throws {
+        let messages = LogCollector()
+        let manager = ProductsManager(
+            apiKey: apiKey,
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            fallbackService: fallbackService,
+            logger: LoggerWrapper(sink: { _, message in messages.append(message) })
+        )
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted", storeId: "store_persisted")]
+        try localStorage.set(persisted, forKey: productsKey)
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        let result: [String: Qonversion.IntroEligibilityStatus] = try await manager.checkTrialIntroEligibility(productIds: ["q_persisted", "q_absent"])
+
+        XCTAssertEqual(result["q_persisted"], .unknown, "an unlinked product is unknown, not a missing-catalog error")
+        XCTAssertEqual(storeKitFacade.requestedProductIds, [["store_persisted"]],
+                       "the persisted catalog answered: its product went to the store for enrichment")
+        XCTAssertFalse(messages.all().contains { $0.contains("\"q_persisted\"") },
+                       "a product served from the persisted catalog must not be reported as absent from it")
+        // The control: a product that really is absent takes the other path.
+        XCTAssertEqual(result["q_absent"], .unknown)
+        XCTAssertTrue(messages.all().contains { $0.contains("\"q_absent\"") })
+    }
+
+    // MARK: - persisted catalog and the project key
+
+    // products() serves the persisted blob publicly now, so it must be scoped
+    // to the project it came from: an app that switches project keys and whose
+    // first load under the new one fails would otherwise show the OTHER
+    // project's catalog on its paywall.
+    func testACatalogPersistedUnderAnotherProjectKeyIsNotServed() async throws {
+        let firstProjectManager: ProductsManager = makeManager(apiKey: "project_key_1")
+        productsService.productsResult = [makeProduct(qonversionId: "q_project_one", storeId: "store_project_one")]
+        _ = try await firstProjectManager.products()
+
+        let secondProjectManager: ProductsManager = makeManager(apiKey: "project_key_2")
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        do {
+            let result: [Qonversion.Product] = try await secondProjectManager.products()
+            XCTFail("another project's catalog must never reach a paywall, got \(result.map(\.qonversionId))")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .productsLoadingFailed)
+        }
+
+        XCTAssertTrue(secondProjectManager.cachedProducts().isEmpty,
+                      "the local entitlements calculation must not read another project's catalog either")
+    }
+
+    // MARK: - persisted catalog and the user generation
+
+    // The generation snapshot taken before the request covers the persisted
+    // read too. A user switch landing while the request is in flight makes
+    // the catch resume under another user, and the catalog behind the key by
+    // then is that other user's — it must not be served.
+    func testAUserSwitchDuringTheRequestBlocksThePersistedFallback() async throws {
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+        let gate = ProductsAsyncGate()
+        productsService.onProducts = { await gate.wait() }
+
+        async let staleLoad: [Qonversion.Product] = manager.products()
+        await waitUntil { self.productsService.productsCallsCount >= 1 }
+        manager.userDidChange()
+        // The new user's own load persists ITS catalog under the same key
+        // while the previous user's request is still in flight.
+        let otherUsersCatalog: [Qonversion.Product] = [makeProduct(qonversionId: "q_other_user", storeId: "store_other_user")]
+        try localStorage.set(otherUsersCatalog, forKey: productsKey)
+        await gate.open()
+
+        do {
+            let result: [Qonversion.Product] = try await staleLoad
+            XCTFail("a load that started under the previous user must not be answered from another user's catalog, got \(result.map(\.qonversionId))")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .productsLoadingFailed)
+        }
+    }
+
+    // The bundled file is a build-time snapshot of the whole project, not of
+    // one user: skipping the persisted catalog after a switch still leaves it
+    // serveable.
+    func testAUserSwitchDuringTheRequestStillFallsThroughToTheBundledFile() async throws {
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+        fallbackService.fallbackData = FallbackData(
+            products: [makeProduct(qonversionId: "q_fallback", storeId: "store_fallback")],
+            productsPermissions: nil
+        )
+        let gate = ProductsAsyncGate()
+        productsService.onProducts = { await gate.wait() }
+
+        async let staleLoad: [Qonversion.Product] = manager.products()
+        await waitUntil { self.productsService.productsCallsCount >= 1 }
+        manager.userDidChange()
+        let otherUsersCatalog: [Qonversion.Product] = [makeProduct(qonversionId: "q_other_user", storeId: "store_other_user")]
+        try localStorage.set(otherUsersCatalog, forKey: productsKey)
+        await gate.open()
+
+        let result: [Qonversion.Product] = try await staleLoad
+
+        XCTAssertEqual(result.map(\.qonversionId), ["q_fallback"])
+    }
+
+    func testAPersistedProductWithoutAStoreIdIsReportedInTheLog() async throws {
+        let messages = LogCollector()
+        let sink: LoggerWrapper = LoggerWrapper(sink: { _, message in messages.append(message) })
+        let manager = ProductsManager(
+            apiKey: apiKey,
+            productsService: productsService,
+            storeKitFacade: storeKitFacade,
+            localStorage: localStorage,
+            fallbackService: fallbackService,
+            logger: sink
+        )
+        let persisted: [Qonversion.Product] = [makeProduct(qonversionId: "q_persisted_no_store", storeId: "")]
+        try localStorage.set(persisted, forKey: productsKey)
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        _ = try await manager.products()
+
+        XCTAssertTrue(messages.all().contains { $0.contains("q_persisted_no_store") },
+                      "an unpriceable product must be named on every path that serves it")
     }
 
     // MARK: - bundled fallback file
@@ -440,7 +690,7 @@ final class ProductsManagerTests: XCTestCase {
         _ = try? await staleLoad
 
         XCTAssertTrue(manager.loadedProducts.isEmpty, "the previous user's products must not stay cached")
-        XCTAssertNil(localStorage.data(forKey: "qonversion.keys.products"), "the previous user's catalog must not be persisted for the new one")
+        XCTAssertNil(localStorage.data(forKey: productsKey), "the previous user's catalog must not be persisted for the new one")
     }
 
     func testUserDidChangeInvalidatesTheInFlightProductsTask() async throws {
@@ -555,6 +805,7 @@ final class ProductsStorefrontTests: XCTestCase {
         productsService = MockProductsService()
         storeKitFacade = MockStoreKitFacade()
         manager = ProductsManager(
+            apiKey: "test_api_key",
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: MockLocalStorage(),
