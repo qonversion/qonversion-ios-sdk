@@ -101,8 +101,13 @@ final class CrashReportFilterTests: XCTestCase {
     }
 
     func testAnExplicitSdkImageWinsOverAHostExecutableMatch() {
+        // The only input shape where .spm and .framework genuinely compete:
+        // frame 0 is an SDK frame folded into the host executable (a MANGLED
+        // symbol — the demangled form is deliberately not a marker), and a
+        // later frame carries the SDK's own image, which is the more precise
+        // answer.
         let symbols: [String] = [
-            frame(0, appName, "Qonversion.PurchasesManager.purchase()"),
+            frame(0, appName, "$s10Qonversion15PurchasesManagerC8purchaseyyF"),
             frame(1, "Qonversion", "$s10Qonversion15PurchasesManagerC8purchaseyyF")
         ]
 
@@ -122,6 +127,44 @@ final class CrashReportFilterTests: XCTestCase {
     func testTheImageNameIsTheSecondField() {
         XCTAssertEqual(CrashReportFilter.imageName(ofFrame: frame(3, "Qonversion", "sym")), "Qonversion")
         XCTAssertNil(CrashReportFilter.imageName(ofFrame: "onlyonefield"))
+    }
+
+    // MARK: - binary image names containing a space
+
+    func testAnImageNameContainingASpaceIsReadWhole() {
+        // An app whose executable is "My App" is ordinary on the App Store.
+        // Taking the second whitespace-separated field truncates it to "My",
+        // which matches nothing — every SDK crash in such an app is then
+        // classified "not ours" and silently never reported.
+        XCTAssertEqual(CrashReportFilter.imageName(ofFrame: frame(3, "My App", "sym")), "My App")
+    }
+
+    func testASpacedHostExecutableStillMatchesAnSpmFrame() {
+        let spacedAppName = "My App"
+        let symbols: [String] = [
+            frame(0, "CoreFoundation", "__exceptionPreprocess"),
+            frame(1, spacedAppName, "$s10Qonversion15PurchasesManagerC8purchaseyyF")
+        ]
+
+        XCTAssertEqual(CrashReportFilter.linkage(ofCallStackSymbols: symbols, appExecutableName: spacedAppName), .spm)
+    }
+
+    func testASpacedImageNameIsStillComparedAgainstTheSdkImage() {
+        let spacedAppName = "My App"
+        let symbols: [String] = [
+            frame(0, spacedAppName, "$s5MyApp14LoginViewModelC5loginyyF"),
+            frame(1, "Qonversion", "$s10Qonversion15PurchasesManagerC8purchaseyyF")
+        ]
+
+        XCTAssertEqual(CrashReportFilter.linkage(ofCallStackSymbols: symbols, appExecutableName: spacedAppName), .framework)
+    }
+
+    func testASpacedHostExecutableWithoutAnSdkFrameIsStillNotOurs() {
+        let spacedAppName = "My App"
+        let symbols: [String] = [frame(0, spacedAppName, "$s5MyApp14LoginViewModelC5loginyyF")]
+
+        XCTAssertNil(CrashReportFilter.linkage(ofCallStackSymbols: symbols, appExecutableName: spacedAppName),
+                     "reading the whole image name must not turn an app crash into ours")
     }
 }
 
@@ -346,6 +389,61 @@ final class CrashReporterTests: XCTestCase {
         await makeSender(processor: processor).sendStoredReports()
 
         XCTAssertTrue(storage.all().isEmpty, "the backend answered — the report is done")
+    }
+
+    func testARevokedProjectKeyKeepsTheReportForTheNextLaunch() async {
+        // .critical is thrown by the revoked-key latch BEFORE the request ever
+        // leaves the device, so it says nothing about the report. Treating it
+        // as "the backend answered" destroys every stored report on one launch.
+        storage.store(makeReport(id: "r1"))
+        let processor = MockRequestProcessor()
+        processor.error = QonversionError(type: .critical)
+
+        await makeSender(processor: processor).sendStoredReports()
+
+        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "nothing was ever sent — the report is not delivered")
+    }
+
+    func testAThrottledSendKeepsTheReportForTheNextLaunch() async {
+        storage.store(makeReport(id: "r1"))
+        let processor = MockRequestProcessor()
+        processor.error = QonversionError(type: .rateLimitExceeded)
+
+        await makeSender(processor: processor).sendStoredReports()
+
+        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "the rate limiter refused to send it, the backend never saw it")
+    }
+
+    func testAServerFailureKeepsTheReportForTheNextLaunch() async {
+        storage.store(makeReport(id: "r1"))
+        let processor = MockRequestProcessor()
+        processor.error = QonversionError(type: .internal)
+
+        await makeSender(processor: processor).sendStoredReports()
+
+        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "5xx means the backend did not process it")
+    }
+
+    func testARejectedRequestDropsTheReport() async {
+        storage.store(makeReport(id: "r1"))
+        let processor = MockRequestProcessor()
+        processor.error = QonversionError(type: .invalidRequest)
+
+        await makeSender(processor: processor).sendStoredReports()
+
+        XCTAssertTrue(storage.all().isEmpty, "the body will be just as invalid next launch")
+    }
+
+    func testAKeptReportStopsTheLaunchInsteadOfBurningTheWholeQueue() async {
+        storage.store(makeReport(id: "r1"))
+        storage.store(makeReport(id: "r2"))
+        let processor = MockRequestProcessor()
+        processor.error = QonversionError(type: .critical)
+
+        await makeSender(processor: processor).sendStoredReports()
+
+        XCTAssertEqual(processor.processedRequests.count, 1, "one refusal is enough to know the rest will be refused too")
+        XCTAssertEqual(storage.all().map { $0.id }, ["r1", "r2"])
     }
 
     func testATransportFailureKeepsTheReportForTheNextLaunch() async {

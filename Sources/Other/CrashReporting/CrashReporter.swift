@@ -106,10 +106,10 @@ struct CrashReportsSender {
         self.platform = platform
     }
 
-    /// Fails soft, one report at a time. A report the backend answered — with
-    /// any status, including "no such endpoint" — is dropped: retrying it
-    /// forever against a 404 is how the ObjC implementation filled the disk.
-    /// Only a transport failure keeps it for the next launch.
+    /// Fails soft, one report at a time. A report is dropped only when it was
+    /// delivered or when the backend rejected it in a way a resend cannot fix
+    /// (see ``isPermanentlyRejected(_:)``); anything else keeps it for the next
+    /// launch and stops this one — the next report would hit the same wall.
     func sendStoredReports() async {
         let reports: [CrashReport] = storage.all()
         guard !reports.isEmpty else { return }
@@ -121,14 +121,37 @@ struct CrashReportsSender {
             do {
                 let _: EmptyApiResponse = try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
                 storage.remove(report)
-            } catch let error as QonversionError where error.type != .invalidResponse {
-                // The backend answered (even to reject): delivered as far as
-                // this queue is concerned.
+            } catch let error as QonversionError where Self.isPermanentlyRejected(error) {
                 storage.remove(report)
             } catch {
-                // No response at all — keep it for the next launch.
                 return
             }
+        }
+    }
+
+    /// Whether a failed send is worth another launch's attempt.
+    ///
+    /// The default is to KEEP, because most failure kinds say nothing about the
+    /// report: `.critical` is raised by the revoked-key latch before the
+    /// request ever leaves the device, `.rateLimitExceeded` by the local rate
+    /// limiter for the same reason, `.internal` means a 5xx the backend never
+    /// processed, and `.invalidResponse` is transport. Dropping on those
+    /// destroys every stored report on a single launch — one revoked key and
+    /// the whole queue is gone unsent.
+    ///
+    /// Only two kinds are hopeless on a resend: the endpoint or the referenced
+    /// resource is absent (`POST v4/sdk-crashes` DOES NOT EXIST YET — see
+    /// ``CrashReporter`` — and retrying a 404 forever is how the ObjC
+    /// implementation filled the disk), and a request the backend refused as
+    /// malformed, which will be just as malformed next launch. The queue is
+    /// hard-bounded at ``CrashReportsStorage/maxStoredReports``, so keeping is
+    /// cheap and losing a crash report is not.
+    private static func isPermanentlyRejected(_ error: QonversionError) -> Bool {
+        switch error.type {
+        case .resourceNotFound, .invalidRequest:
+            return true
+        default:
+            return false
         }
     }
 }
