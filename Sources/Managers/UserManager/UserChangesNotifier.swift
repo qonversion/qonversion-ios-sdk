@@ -42,7 +42,9 @@ extension UserChangedObserver {
     var userChangeTeardownPriority: Int { UserChangeTeardownPriority.cache }
 }
 
-protocol UserChangesNotifierInterface {
+/// Sendable: the will-change step is awaited from the user gate's actor, which
+/// sends the notifier across that isolation boundary.
+protocol UserChangesNotifierInterface: Sendable {
     func add(observer: UserChangedObserver)
     func notifyUserWillChange() async
     func notifyUserChanged()
