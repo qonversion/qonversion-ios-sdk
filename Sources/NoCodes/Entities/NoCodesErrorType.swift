@@ -22,9 +22,16 @@ public enum NoCodesErrorType: Sendable {
   case rateLimitExceeded
   case screenNotFound
   case screenLoadingFailed
-  /// The screen was ready but there was nowhere to put it: no view controller
-  /// to present on, no navigation controller to push onto, or a host already
-  /// presenting something else.
+  /// The screen loaded, but the SDK found nowhere in your UIKit hierarchy to
+  /// put it: no view controller to present on, no navigation controller for a
+  /// `push` presentation style, or the host is already presenting something
+  /// else.
+  ///
+  /// Delivered to `NoCodesDelegate.noCodesFailedToLoadScreen(error:)` on the
+  /// main actor. Nothing is shown, and `noCodesFinished()` follows as well
+  /// unless a previously shown screen is still visible. Retry from a view
+  /// controller that is on screen and not already presenting, or supply one
+  /// from `NoCodesDelegate.controllerForNavigation()`.
   case screenPresentationFailed
   case clientError
   
