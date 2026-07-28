@@ -65,17 +65,11 @@ extension Qonversion {
         
         /// The Apple server environment that generates and signs the transaction.
         @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, visionOS 1.0, *)
-        public var environment: Qonversion.Transaction.Environment? { Qonversion.Transaction.Environment(rawValue: storeKitTransaction?.environment.rawValue ?? "") }
+        public var environment: Qonversion.Transaction.Environment? { Qonversion.Transaction.Environment.from(environment: storeKitTransaction?.environment) }
         
         /// A cause of a purchase transaction, indicating whether it’s a customer’s purchase or an auto-renewable subscription renewal that the system initiates.
         @available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, *)
-        public var reason: Qonversion.Transaction.Reason {
-            guard let storeKitTransaction = storeKitTransaction,
-                  let reason = Qonversion.Transaction.Reason(rawValue: storeKitTransaction.reason.rawValue)
-            else { return Qonversion.Transaction.Reason.purchase }
-            
-            return reason
-        }
+        public var reason: Qonversion.Transaction.Reason { Qonversion.Transaction.Reason.from(reason: storeKitTransaction?.reason) }
         
         /// The decimal representation of the cost of the product, in local currency.
         public let price: Decimal?
@@ -96,13 +90,7 @@ extension Qonversion {
         public var signedDate: Date? { storeKitTransaction?.signedDate }
         
         /// A value that indicates whether the transaction was purchased by the user, or is made available to them through Family Sharing.
-        public var ownershipType: Qonversion.Transaction.OwnershipType {
-            guard let storeKitTransaction = storeKitTransaction,
-                  let ownershipType = Qonversion.Transaction.OwnershipType(rawValue: storeKitTransaction.ownershipType.rawValue)
-            else { return Qonversion.Transaction.OwnershipType.purchased }
-            
-            return ownershipType
-        }
+        public var ownershipType: Qonversion.Transaction.OwnershipType { Qonversion.Transaction.OwnershipType.from(ownershipType: storeKitTransaction?.ownershipType) }
         
         /// Original StoreKit 2 Transaction.
         public var storeKitTransaction: StoreKit.Transaction? { _storeKitTransaction as? StoreKit.Transaction }
@@ -143,7 +131,19 @@ extension Qonversion {
             
             /// The user has access to this transaction through family sharing.
             case familyShared
-            
+
+            // StoreKit spells these "PURCHASED"/"FAMILY_SHARED", not the case names.
+            static func from(ownershipType: StoreKit.Transaction.OwnershipType?) -> Qonversion.Transaction.OwnershipType {
+                guard let ownershipType: StoreKit.Transaction.OwnershipType = ownershipType else { return Qonversion.Transaction.OwnershipType.purchased }
+
+                switch ownershipType {
+                case .familyShared:
+                    return Qonversion.Transaction.OwnershipType.familyShared
+                default:
+                    return Qonversion.Transaction.OwnershipType.purchased
+                }
+            }
+
         }
         
         /// Transaction environment type.
@@ -158,7 +158,24 @@ extension Qonversion {
             
             /// A value that indicates the StoreKit Testing in Xcode environment.
             case xcode
-            
+
+            // StoreKit spells these "Production"/"Sandbox"/"Xcode", not the case names.
+            @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, visionOS 1.0, *)
+            static func from(environment: StoreKit.AppStore.Environment?) -> Qonversion.Transaction.Environment? {
+                guard let environment: StoreKit.AppStore.Environment = environment else { return nil }
+
+                switch environment {
+                case .production:
+                    return Qonversion.Transaction.Environment.production
+                case .sandbox:
+                    return Qonversion.Transaction.Environment.sandbox
+                case .xcode:
+                    return Qonversion.Transaction.Environment.xcode
+                default:
+                    return nil
+                }
+            }
+
         }
         
         /// The subscription offers that apply to a transaction.
@@ -293,7 +310,20 @@ extension Qonversion {
             
             /// A transaction reason that indicates the App Store server initiated a purchase transaction to renew an auto-renewable subscription.
             case renewal
-            
+
+            // StoreKit spells these "PURCHASE"/"RENEWAL", not the case names.
+            @available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, *)
+            static func from(reason: StoreKit.Transaction.Reason?) -> Qonversion.Transaction.Reason {
+                guard let reason: StoreKit.Transaction.Reason = reason else { return Qonversion.Transaction.Reason.purchase }
+
+                switch reason {
+                case .renewal:
+                    return Qonversion.Transaction.Reason.renewal
+                default:
+                    return Qonversion.Transaction.Reason.purchase
+                }
+            }
+
         }
         
         /// The JWS representation of the signed transaction — the purchase proof
