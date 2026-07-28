@@ -453,7 +453,7 @@ final class UserPropertiesObserverTests: XCTestCase {
         // the notification center for the life of the process.
         let center = SpyNotificationCenter()
         var manager: UserPropertiesManager? = makeManager(center: center, name: Notification.Name("test.background"))
-        XCTAssertNotNil(manager)
+        XCTAssertTrue(center.removedObservers.isEmpty, "the registration must stay live while the manager is alive")
 
         manager = nil
 

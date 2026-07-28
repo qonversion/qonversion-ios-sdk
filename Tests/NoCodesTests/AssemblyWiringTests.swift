@@ -18,10 +18,9 @@ final class AssemblyWiringTests: XCTestCase {
 
         // Before, the headers builder reached back into the services assembly
         // through a weak implicitly unwrapped property; the collector is now
-        // handed in by the assembly that owns it.
-        let processor: RequestProcessorInterface = servicesAssembly.requestProcessor()
-
-        XCTAssertNotNil(processor)
+        // handed in by the assembly that owns it. Building the processor is the
+        // assertion — an unset back reference traps inside this call.
+        _ = servicesAssembly.requestProcessor()
     }
 
     func testTheSharedServicesAreBuiltOnce() {
