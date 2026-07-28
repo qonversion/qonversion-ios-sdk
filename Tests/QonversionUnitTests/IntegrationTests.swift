@@ -154,7 +154,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertEqual(request.value(forHTTPHeaderField: "Trigger"), "Init")
         let body = try XCTUnwrap(request.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] })
         XCTAssertEqual(body["id"] as? String, world.uid)
-        XCTAssertEqual(body["environment"] as? String, "prod")
+        XCTAssertNil(body["environment"], "the SDK no longer signals a store environment")
 
         // The second demand answers from the cache — no extra request.
         _ = try await world.userManager.obtainUser()
