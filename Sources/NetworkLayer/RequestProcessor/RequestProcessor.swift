@@ -24,9 +24,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     /// unfinished-transaction sweep run concurrently and must not both post
     /// the same purchase.
     let reportsGate: TransactionReportsGate
-    /// Shared with every other processor of the Qonversion target (NoCodes
-    /// keeps its own): a revoked project key is not a property of the one
-    /// service that noticed it.
+    /// Shared with every other processor of the Qonversion target; NoCodes
+    /// keeps its own.
     let criticalErrorLatch: CriticalErrorLatch
 
     var criticalError: QonversionError? {
@@ -52,9 +51,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     /// delivered request (an HTTP answer of any status — resending would
     /// duplicate) is removed from the queue one by one; a transport failure
     /// keeps it for the next session. A latched critical error (revoked
-    /// project key) stops the replay before it starts: replaying against a
-    /// dead key would only burn the queue. Nothing is removed on that path, so
-    /// the entries — including the ones `process()` queued while latched —
+    /// project key) stops the replay without removing anything, so the entries
     /// wait for a launch where the key works again.
     func processStoredRequests() {
         guard criticalError == nil else { return }
@@ -143,23 +140,17 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         return statusCode >= 500 || statusCode == 429
     }
 
-    /// Requests the SDK emits on its own schedule, which the host cannot spam:
-    /// a user-properties flush and a crash upload. The legacy client rate-
-    /// limited only host-driven calls — throttling these two drops data nobody
-    /// asked for twice.
-    ///
-    /// Offer signing is deliberately NOT here: `Qonversion.getPromotionalOffer`
-    /// is public, so its rate is the host's to set, not the SDK's.
+    /// Requests the SDK emits on its own schedule, which the host cannot spam.
+    /// Offer signing is deliberately not here: it is public API, so its rate is
+    /// the host's to set.
     static let rateLimitExemptKinds: [Request.Kind] = [.sendProperties, .sdkCrash]
 
     static let attemptHeader: String = "Attempt"
     static let triggerHeader: String = "Trigger"
 
-    /// Persists a retriable request for the offline replay. `attempt` is how
-    /// many sends it has already cost, so the replay continues the true
-    /// Attempt sequence instead of restarting it. `generation` pins the queue
-    /// to the user the request was made for: a clean() (user switch) landing
-    /// in between must not be undone by enqueueing afterwards.
+    /// `attempt` is how many sends the request already cost, so the replay
+    /// continues the Attempt sequence; `generation` pins the entry to the user
+    /// it was made for, so a user switch landing in between is not undone.
     private func queueForReplay(_ request: Request, as urlRequest: URLRequest, trigger: RequestTrigger?, attempt: Int, ifGenerationIs generation: Int) {
         let stored = StoredRequest(
             url: urlRequest.url?.absoluteString ?? "",
@@ -194,12 +185,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
 
     func process<T>(request: Request, responseType: T.Type, trigger: RequestTrigger?) async throws -> T where T : Decodable {
         if let error = criticalError {
-            // The latch is shared, so the error that tripped it may belong to
-            // another service entirely (an entitlements 401 while a purchase
-            // is being reported). Refusing the call is right — the key is dead
-            // — but a retriable kind carries data the store already charged
-            // for: queue it before refusing, so a launch where the key works
-            // again delivers it. Reads carry nothing, so they are just refused.
+            // Queued before refusing, so data the store already charged for
+            // survives a latched key. Reads carry nothing and are just refused.
             if retriableRequestKinds.contains(request.kind), let urlRequest: URLRequest = request.convertToURLRequest(baseURL) {
                 // Nothing was sent, so the replay must report attempt 1.
                 queueForReplay(request, as: urlRequest, trigger: trigger, attempt: 0, ifGenerationIs: requestsStorage.cleanGeneration)
@@ -246,9 +233,8 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             if retriableRequestKinds.contains(request.kind) {
                 queueForReplay(request, as: urlRequest, trigger: trigger, attempt: attemptsMade.total, ifGenerationIs: generation)
             }
-            // A connection-class failure is named for what it is: nothing
-            // arrived, so the host can branch on "offline" and repeat the call
-            // later instead of treating it as a broken response.
+            // Named for what it is, so the host can branch on "offline"
+            // instead of on a broken response.
             let type: QonversionErrorType = Self.isTransportFailure(error) ? .networkConnectionFailed : .invalidResponse
             throw QonversionError(type: type, error: error)
         }

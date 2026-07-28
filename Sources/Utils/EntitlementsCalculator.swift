@@ -19,10 +19,8 @@ extension Error {
         if self is URLError { return true }
         guard let qonversionError = self as? QonversionError else { return false }
         if qonversionError.type == .internal { return true }
-        // Named explicitly, not left to the underlying URLError the processor
-        // happens to attach: the type alone already means "nothing reached the
-        // backend", and a copy built without the cause must not silently lose
-        // the offline fallback.
+        // Named explicitly, so a copy built without the underlying URLError
+        // still keeps the offline fallback.
         if qonversionError.type == .networkConnectionFailed { return true }
         if let underlying = qonversionError.error {
             return underlying.allowsLocalEntitlementsFallback
