@@ -14,7 +14,7 @@ typedef void (^QONUserPropertiesEmptyCompletionHandler)(void) NS_SWIFT_NAME(Qonv
 
 - (void)setUserProperty:(NSString *)property value:(NSString *)value;
 - (void)getUserProperties:(QONUserPropertiesCompletionHandler)completion;
-- (void)forceSendProperties:(QONUserPropertiesEmptyCompletionHandler)completion;
+- (void)forceSendProperties:(nullable QONUserPropertiesEmptyCompletionHandler)completion;
 
 @end
 

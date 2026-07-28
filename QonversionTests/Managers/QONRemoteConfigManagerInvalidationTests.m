@@ -186,8 +186,10 @@
   [self.manager attachUserToRemoteConfiguration:@"config_id"
                                      completion:^(BOOL success, NSError * _Nullable error) {}];
 
-  id staleConfig = OCMClassMock([QONRemoteConfig class]);
-  id staleSource = OCMClassMock([QONRemoteConfigurationSource class]);
+  // Typed receivers: with plain id the compiler cannot disambiguate the many
+  // -source selectors in scope and fails the build.
+  QONRemoteConfig *staleConfig = OCMClassMock([QONRemoteConfig class]);
+  QONRemoteConfigurationSource *staleSource = OCMClassMock([QONRemoteConfigurationSource class]);
   OCMStub([staleConfig source]).andReturn(staleSource);
   OCMStub([staleSource contextKey]).andReturn(@"ctx");
   QONRemoteConfigList *staleList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:@[staleConfig]];
