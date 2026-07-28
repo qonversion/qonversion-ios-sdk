@@ -16,7 +16,7 @@ final class EntitlementsCalculatorTests: XCTestCase {
     private let now = Date(timeIntervalSince1970: 1_700_000_000)
 
     private func makeProduct(qonversionId: String = "pro", storeId: String = "com.app.pro", periodUnit: Qonversion.Product.SubscriptionPeriod.Unit? = .month, periodValue: Int = 1) -> Qonversion.Product {
-        var product = Qonversion.Product(qonversionId: qonversionId, storeId: storeId, offeringId: nil)
+        var product = Qonversion.Product(qonversionId: qonversionId, storeId: storeId)
         if let periodUnit {
             product.subscription = Qonversion.Product.SubscriptionInfo(
                 subscriptionGroupId: "group",
@@ -39,7 +39,7 @@ final class EntitlementsCalculatorTests: XCTestCase {
             id: "t1", productId: "com.app.pro",
             purchaseDate: Date(timeIntervalSince1970: 1_700_000_000)
         )
-        var product = Qonversion.Product(qonversionId: "pro", storeId: "com.app.pro", offeringId: nil)
+        var product = Qonversion.Product(qonversionId: "pro", storeId: "com.app.pro")
         let period = Qonversion.Product.SubscriptionPeriod(unit: .year, value: 1)
         product.subscription = Qonversion.Product.SubscriptionInfo(subscriptionGroupId: "g", subscriptionPeriod: period)
 

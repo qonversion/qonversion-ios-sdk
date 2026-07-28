@@ -600,7 +600,7 @@ extension PurchasesManager: StoreKitFacadeDelegate {
         let intent: Qonversion.PromoPurchaseIntent = Qonversion.PromoPurchaseIntent(productId: storeProductId) { [weak self] options in
             guard let self else { throw QonversionError.initializationError() }
 
-            return try await self.purchase(Qonversion.Product(qonversionId: storeProductId, storeId: storeProductId, offeringId: nil), options: options)
+            return try await self.purchase(Qonversion.Product(qonversionId: storeProductId, storeId: storeProductId), options: options)
         }
 
         promoIntentsMulticast.yield(intent)

@@ -61,7 +61,7 @@ extension Qonversion.RemoteConfigList {
     
     private func findRemoteConfig(for contextKey: String?) -> Qonversion.RemoteConfig? {
         return remoteConfigs.first { config in
-            return (contextKey == nil && config.source.contextKey == nil) || config.source.contextKey == contextKey
+            return (contextKey == nil && config.source?.contextKey == nil) || config.source?.contextKey == contextKey
         }
     }
 }

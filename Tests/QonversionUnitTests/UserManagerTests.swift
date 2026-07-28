@@ -24,6 +24,7 @@ final class UserManagerTests: XCTestCase {
     private var notifier: UserChangesNotifier!
     private var observer: UserChangeObserverSpy!
     private var manager: UserManager!
+    private var appTransactionReader: MockAppTransactionReader!
 
     private let anonUid = "QON_anon_uid"
 
@@ -34,6 +35,7 @@ final class UserManagerTests: XCTestCase {
         config = InternalConfig(userId: anonUid)
         notifier = UserChangesNotifier()
         observer = UserChangeObserverSpy()
+        appTransactionReader = MockAppTransactionReader()
         notifier.add(observer: observer)
         storage.set(string: anonUid, forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
         manager = makeManager()
@@ -41,6 +43,7 @@ final class UserManagerTests: XCTestCase {
 
     override func tearDown() {
         manager = nil
+        appTransactionReader = nil
         observer = nil
         notifier = nil
         config = nil
@@ -50,7 +53,7 @@ final class UserManagerTests: XCTestCase {
     }
 
     private func makeManager() -> UserManager {
-        UserManager(userService: service, localStorage: storage, internalConfig: config, userChangesNotifier: notifier, logger: LoggerWrapper())
+        UserManager(userService: service, localStorage: storage, internalConfig: config, userChangesNotifier: notifier, logger: LoggerWrapper(), appTransactionReader: appTransactionReader)
     }
 
     private func makeUser(id: String, environment: String = "sandbox") throws -> Qonversion.User {
@@ -569,6 +572,53 @@ final class UserManagerTests: XCTestCase {
         let user = try await manager.userInfo()
 
         XCTAssertEqual(user.id, anonUid, "the persisted user answers offline")
+    }
+
+    // MARK: - originalAppVersion
+
+    func testUserInfoStampsTheOriginalAppVersionFromTheStore() async throws {
+        // The backend never serves this field — the SDK resolves it on the
+        // device and stamps it onto the user it hands back.
+        appTransactionReader.originalAppVersionResult = "1.0.3"
+        service.createUserResult = try makeUser(id: anonUid)
+        service.userResult = try makeUser(id: anonUid)
+
+        let user = try await manager.userInfo()
+
+        XCTAssertEqual(user.originalAppVersion, "1.0.3")
+    }
+
+    func testUserInfoLeavesTheOriginalAppVersionNilWhenTheStoreCannotAnswer() async throws {
+        appTransactionReader.originalAppVersionResult = nil
+        service.createUserResult = try makeUser(id: anonUid)
+        service.userResult = try makeUser(id: anonUid)
+
+        let user = try await manager.userInfo()
+
+        XCTAssertNil(user.originalAppVersion)
+    }
+
+    func testUserInfoStampsThePersistedUserWhenTheFetchFails() async throws {
+        appTransactionReader.originalAppVersionResult = "1.0.3"
+        service.createUserResult = try makeUser(id: anonUid)
+        service.userResult = try makeUser(id: anonUid)
+        _ = try await manager.userInfo()
+        service.userError = QonversionError(type: .internal)
+
+        let user = try await manager.userInfo()
+
+        XCTAssertEqual(user.originalAppVersion, "1.0.3", "the cached user carries the version too")
+    }
+
+    func testTheStampedOriginalAppVersionIsPersisted() async throws {
+        appTransactionReader.originalAppVersionResult = "1.0.3"
+        service.createUserResult = try makeUser(id: anonUid)
+        service.userResult = try makeUser(id: anonUid)
+
+        _ = try await manager.userInfo()
+
+        let persisted = try XCTUnwrap(try storage.object(forKey: "qonversion.keys.user", dataType: Qonversion.User.self))
+        XCTAssertEqual(persisted.originalAppVersion, "1.0.3")
     }
 
     // MARK: - cancellation never escapes unclassified

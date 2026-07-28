@@ -20,6 +20,7 @@ actor UserManager: UserManagerInterface {
     private let internalConfig: InternalConfig
     private let userChangesNotifier: UserChangesNotifierInterface
     private let logger: LoggerWrapper
+    private let appTransactionReader: AppTransactionReaderInterface
 
     /// The shared "promise": creation of the backend user plus, when an
     /// identify is pending, the identity request. Waiters await this task and
@@ -44,12 +45,13 @@ actor UserManager: UserManagerInterface {
         let identityError: Error?
     }
 
-    init(userService: UserServiceInterface, localStorage: LocalStorageInterface, internalConfig: InternalConfig, userChangesNotifier: UserChangesNotifierInterface, logger: LoggerWrapper) {
+    init(userService: UserServiceInterface, localStorage: LocalStorageInterface, internalConfig: InternalConfig, userChangesNotifier: UserChangesNotifierInterface, logger: LoggerWrapper, appTransactionReader: AppTransactionReaderInterface = AppTransactionReader()) {
         self.userService = userService
         self.localStorage = localStorage
         self.internalConfig = internalConfig
         self.userChangesNotifier = userChangesNotifier
         self.logger = logger
+        self.appTransactionReader = appTransactionReader
     }
 
     @discardableResult
@@ -201,7 +203,8 @@ actor UserManager: UserManagerInterface {
         try await obtainUser()
 
         do {
-            let user: Qonversion.User = try await userService.user()
+            let fetched: Qonversion.User = try await userService.user()
+            let user: Qonversion.User = await stamped(fetched)
             persist(user)
             cachedUser = user
 
@@ -218,8 +221,18 @@ actor UserManager: UserManagerInterface {
             guard let local: Qonversion.User = currentUser() else { throw error.classifiedForPublicAPI }
 
             logger.warning("The user request failed, answering from the persisted user: " + error.message)
-            return local
+            return await stamped(local)
         }
+    }
+
+    /// The original app version is device-local: the backend never serves it,
+    /// so it is resolved from the store and stamped onto the user on the way
+    /// out. A store that cannot answer leaves whatever the user already
+    /// carries, which is the value persisted by an earlier successful read.
+    private func stamped(_ user: Qonversion.User) async -> Qonversion.User {
+        guard let originalAppVersion: String = await appTransactionReader.originalAppVersion() else { return user }
+
+        return user.with(originalAppVersion: originalAppVersion)
     }
 
     /// Cancellation reaches the SDK in more than one shape: a task cancelled

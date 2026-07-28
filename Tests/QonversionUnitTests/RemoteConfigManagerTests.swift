@@ -75,7 +75,7 @@ final class RemoteConfigManagerTests: XCTestCase {
 
         let config = try await manager.loadRemoteConfig(contextKey: "main")
 
-        XCTAssertEqual(config.source.identifier, "fallback-main")
+        XCTAssertEqual(config.source?.identifier, "fallback-main")
     }
 
     func testFallbackMatchesTheEmptyContextKey() async throws {
@@ -84,7 +84,7 @@ final class RemoteConfigManagerTests: XCTestCase {
 
         let config = try await manager.loadRemoteConfig(contextKey: nil)
 
-        XCTAssertEqual(config.source.identifier, "fallback-empty")
+        XCTAssertEqual(config.source?.identifier, "fallback-empty")
     }
 
     func testNonRetriableLoadFailureIgnoresTheFallbackFile() async {
@@ -120,7 +120,7 @@ final class RemoteConfigManagerTests: XCTestCase {
 
         let config = try await manager.loadRemoteConfig(contextKey: "main")
 
-        XCTAssertEqual(config.source.identifier, "fallback-main")
+        XCTAssertEqual(config.source?.identifier, "fallback-main")
     }
 
     func testListLoadFailureFallsBackToAllBundledConfigs() async throws {
@@ -129,7 +129,7 @@ final class RemoteConfigManagerTests: XCTestCase {
 
         let list = try await manager.loadRemoteConfigList()
 
-        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["fallback-main", "fallback-empty"])
+        XCTAssertEqual(list.remoteConfigs.map { $0.source?.identifier }, ["fallback-main", "fallback-empty"])
     }
 
     func testListWithContextKeysFallsBackFiltered() async throws {
@@ -139,8 +139,8 @@ final class RemoteConfigManagerTests: XCTestCase {
         let withEmpty = try await manager.loadRemoteConfigList(contextKeys: ["main"], includeEmptyContextKey: true)
         let withoutEmpty = try await manager.loadRemoteConfigList(contextKeys: ["main"], includeEmptyContextKey: false)
 
-        XCTAssertEqual(withEmpty.remoteConfigs.map { $0.source.identifier }, ["fallback-main", "fallback-empty"])
-        XCTAssertEqual(withoutEmpty.remoteConfigs.map { $0.source.identifier }, ["fallback-main"])
+        XCTAssertEqual(withEmpty.remoteConfigs.map { $0.source?.identifier }, ["fallback-main", "fallback-empty"])
+        XCTAssertEqual(withoutEmpty.remoteConfigs.map { $0.source?.identifier }, ["fallback-main"])
     }
 
     func testAttachInvalidatesTheCachedConfigs() async throws {
@@ -152,7 +152,7 @@ final class RemoteConfigManagerTests: XCTestCase {
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "after-attach")
         let config = try await manager.loadRemoteConfig(contextKey: "main")
 
-        XCTAssertEqual(config.source.identifier, "after-attach", "attach exists to change the config — the cache must not survive it")
+        XCTAssertEqual(config.source?.identifier, "after-attach", "attach exists to change the config — the cache must not survive it")
     }
 
     func testInFlightPreAttachResponseCannotRepopulateTheInvalidatedCache() async throws {
@@ -170,7 +170,7 @@ final class RemoteConfigManagerTests: XCTestCase {
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "post-attach")
         let config = try await manager.loadRemoteConfig(contextKey: "main")
 
-        XCTAssertEqual(config.source.identifier, "post-attach", "the pre-attach response must not survive the invalidation")
+        XCTAssertEqual(config.source?.identifier, "post-attach", "the pre-attach response must not survive the invalidation")
     }
 
     func testLoadWaitsForUserStability() async throws {
@@ -220,7 +220,7 @@ final class RemoteConfigManagerTests: XCTestCase {
 
         let config = try await manager.loadRemoteConfig(contextKey: "main")
 
-        XCTAssertEqual(config.source.contextKey, "main")
+        XCTAssertEqual(config.source?.contextKey, "main")
     }
 
     func testCachedLoadStillWaitsForStabilityButSkipsTheGateAndTheFlush() async throws {
@@ -246,7 +246,7 @@ final class RemoteConfigManagerTests: XCTestCase {
 
         let config = try await manager.loadRemoteConfig(contextKey: "main")
 
-        XCTAssertEqual(config.source.identifier, "new-user-config")
+        XCTAssertEqual(config.source?.identifier, "new-user-config")
     }
 
     func testIdentifyFailureDuringTheStabilityGateFailsTheLoad() async {
@@ -326,7 +326,7 @@ final class RemoteConfigManagerTests: XCTestCase {
         let results: [Qonversion.RemoteConfig] = try await [first, second, third]
 
         XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 1, "concurrent callers must share one request")
-        XCTAssertEqual(results.map { $0.source.identifier }, ["shared", "shared", "shared"])
+        XCTAssertEqual(results.map { $0.source?.identifier }, ["shared", "shared", "shared"])
     }
 
     func testConcurrentLoadsOfDifferentContextKeysDoNotShareARequest() async throws {
@@ -349,8 +349,8 @@ final class RemoteConfigManagerTests: XCTestCase {
 
         XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 1)
         XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.first, "main")
-        XCTAssertEqual(first.source.identifier, "source-id")
-        XCTAssertEqual(second.source.identifier, "source-id")
+        XCTAssertEqual(first.source?.identifier, "source-id")
+        XCTAssertEqual(second.source?.identifier, "source-id")
     }
 
     func testLoadRemoteConfigCachesNilContextKeyUnderEmptyKey() async throws {
@@ -403,7 +403,7 @@ final class RemoteConfigManagerTests: XCTestCase {
         let list = try await manager.loadRemoteConfigList()
 
         XCTAssertEqual(remoteConfigService.loadListCallsCount, 1)
-        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["id-a", "id-empty"])
+        XCTAssertEqual(list.remoteConfigs.map { $0.source?.identifier }, ["id-a", "id-empty"])
 
         // Loaded list entries are cached by their source contextKey (nil -> ""), so
         // subsequent single loads do not hit the service at all.
@@ -411,8 +411,8 @@ final class RemoteConfigManagerTests: XCTestCase {
         let cachedEmpty = try await manager.loadRemoteConfig(contextKey: nil)
 
         XCTAssertTrue(remoteConfigService.loadRemoteConfigContextKeys.isEmpty)
-        XCTAssertEqual(cachedA.source.identifier, "id-a")
-        XCTAssertEqual(cachedEmpty.source.identifier, "id-empty")
+        XCTAssertEqual(cachedA.source?.identifier, "id-a")
+        XCTAssertEqual(cachedEmpty.source?.identifier, "id-empty")
     }
 
     func testCachedNamedKeysStillFetchWhenTheEmptyKeyIsRequestedButNotCached() async throws {
@@ -445,7 +445,7 @@ final class RemoteConfigManagerTests: XCTestCase {
         let list = try await manager.loadRemoteConfigList(contextKeys: ["a", "a"], includeEmptyContextKey: true)
 
         XCTAssertTrue(remoteConfigService.loadListContextKeysArgs.isEmpty, "duplicate keys must not fake a miss, a full cache serves locally")
-        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["id-a", "id-empty"])
+        XCTAssertEqual(list.remoteConfigs.map { $0.source?.identifier }, ["id-a", "id-empty"])
     }
 
     func testLoadRemoteConfigListWithContextKeysForwardsToServiceWhenNotFullyCached() async throws {
@@ -512,7 +512,7 @@ final class RemoteConfigManagerTests: XCTestCase {
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "new-user-config")
         let fresh = try await manager.loadRemoteConfig(contextKey: "main")
 
-        XCTAssertEqual(fresh.source.identifier, "new-user-config")
+        XCTAssertEqual(fresh.source?.identifier, "new-user-config")
         XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 2)
     }
 
@@ -538,7 +538,7 @@ final class RemoteConfigManagerTests: XCTestCase {
         let fresh: Qonversion.RemoteConfig = try await freshLoad
         _ = try? await staleLoad
 
-        XCTAssertEqual(fresh.source.identifier, "new-user-config")
+        XCTAssertEqual(fresh.source?.identifier, "new-user-config")
         XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 2, "the new user must start its own request")
     }
 

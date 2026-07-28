@@ -193,7 +193,7 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
 
             logger.warning("Remote config list request failed, using the bundled fallback file: " + error.message)
             let matching: [Qonversion.RemoteConfig] = allConfigs.filter { config in
-                if let contextKey: String = config.source.contextKey {
+                if let contextKey: String = config.source?.contextKey {
                     return contextKeys.contains(contextKey)
                 }
                 return includeEmptyContextKey
@@ -243,7 +243,7 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     private func fallbackRemoteConfig(for key: String) -> Qonversion.RemoteConfig? {
         guard let configs: [Qonversion.RemoteConfig] = fallbackService.obtainFallbackData()?.remoteConfigs else { return nil }
 
-        return configs.first { ($0.source.contextKey ?? Constants.emptyContextKey.rawValue) == key }
+        return configs.first { ($0.source?.contextKey ?? Constants.emptyContextKey.rawValue) == key }
     }
 
     private func currentGeneration() -> Int {
@@ -265,7 +265,7 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         guard generation == cacheGeneration else { return }
 
         remoteConfigList.remoteConfigs.forEach { remoteConfig in
-            let contextKey: String = remoteConfig.source.contextKey ?? Constants.emptyContextKey.rawValue
+            let contextKey: String = remoteConfig.source?.contextKey ?? Constants.emptyContextKey.rawValue
             loadedConfigs[contextKey] = remoteConfig
         }
     }

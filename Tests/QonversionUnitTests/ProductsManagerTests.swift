@@ -61,7 +61,7 @@ final class ProductsManagerTests: XCTestCase {
     // MARK: - Helpers
 
     private func makeProduct(qonversionId: String = "q_main", storeId: String = "store_main") -> Qonversion.Product {
-        return Qonversion.Product(qonversionId: qonversionId, storeId: storeId, offeringId: nil)
+        return Qonversion.Product(qonversionId: qonversionId, storeId: storeId)
     }
 
     func testConcurrentProductsCallsShareOneRound() async throws {
@@ -829,7 +829,7 @@ final class ProductsStorefrontTests: XCTestCase {
     }
 
     func testStorefrontChangeDropsTheEnrichedCatalog() async throws {
-        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s", offeringId: nil)]
+        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s")]
         _ = try await manager.products()
         XCTAssertFalse(manager.loadedProducts.isEmpty)
 
@@ -846,7 +846,7 @@ final class ProductsStorefrontTests: XCTestCase {
         // offers belong to the old storefront and must never land in the cache
         // the change just dropped.
         let gate = ProductsAsyncGate()
-        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s", offeringId: nil)]
+        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s")]
         productsService.onProducts = { await gate.wait() }
         manager.startObservingStorefrontChanges()
         await waitUntil { self.storeKitFacade.hasStorefrontSubscriber }
@@ -863,7 +863,7 @@ final class ProductsStorefrontTests: XCTestCase {
 
     func testALoadStartedAfterTheChangeIsNotJoinedToThePreChangeOne() async throws {
         let gate = ProductsAsyncGate()
-        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s", offeringId: nil)]
+        productsService.productsResult = [Qonversion.Product(qonversionId: "q", storeId: "s")]
         productsService.onProducts = { await gate.wait() }
         manager.startObservingStorefrontChanges()
         await waitUntil { self.storeKitFacade.hasStorefrontSubscriber }

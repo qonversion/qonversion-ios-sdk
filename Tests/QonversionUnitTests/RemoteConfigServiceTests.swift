@@ -77,7 +77,7 @@ final class RemoteConfigServiceTests: XCTestCase {
 
         let list = try await service.loadRemoteConfigList()
 
-        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["good", "also-good"],
+        XCTAssertEqual(list.remoteConfigs.map { $0.source?.identifier }, ["good", "also-good"],
                        "a single bad row must degrade the list, not null it")
     }
 
@@ -87,7 +87,7 @@ final class RemoteConfigServiceTests: XCTestCase {
 
         let list = try await service.loadRemoteConfigList(contextKeys: ["a"], includeEmptyContextKey: false)
 
-        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["good"])
+        XCTAssertEqual(list.remoteConfigs.map { $0.source?.identifier }, ["good"])
     }
 
     func testAnAllMalformedListStillFails() async {
@@ -272,8 +272,8 @@ final class RemoteConfigServiceTests: XCTestCase {
         let remoteConfig = try await service.loadRemoteConfig(contextKey: "main")
 
         XCTAssertEqual(processor.processedRequests, [Request.remoteConfig(userId: userId, contextKey: "main")])
-        XCTAssertEqual(remoteConfig.source.identifier, "rc_main")
-        XCTAssertEqual(remoteConfig.source.contextKey, "main")
+        XCTAssertEqual(remoteConfig.source?.identifier, "rc_main")
+        XCTAssertEqual(remoteConfig.source?.contextKey, "main")
         XCTAssertEqual(remoteConfig.payload?["key"] as? String, "value")
     }
 
@@ -309,8 +309,8 @@ final class RemoteConfigServiceTests: XCTestCase {
 
         XCTAssertEqual(processor.processedRequests, [Request.allRemoteConfigList(userId: userId)])
         XCTAssertEqual(list.remoteConfigs.count, 2)
-        XCTAssertEqual(list.remoteConfigs[0].source.identifier, "rc_1")
-        XCTAssertEqual(list.remoteConfigs[1].source.identifier, "rc_2")
+        XCTAssertEqual(list.remoteConfigs[0].source?.identifier, "rc_1")
+        XCTAssertEqual(list.remoteConfigs[1].source?.identifier, "rc_2")
     }
 
     func testLoadRemoteConfigListWrapsErrorIntoLoadingRemoteConfigListFailed() async {
@@ -338,7 +338,7 @@ final class RemoteConfigServiceTests: XCTestCase {
             [Request.remoteConfigList(userId: userId, contextKeys: ["a", "b"], includeEmptyContextKey: true)]
         )
         XCTAssertEqual(list.remoteConfigs.count, 1)
-        XCTAssertEqual(list.remoteConfigs[0].source.contextKey, "a")
+        XCTAssertEqual(list.remoteConfigs[0].source?.contextKey, "a")
     }
 
     func testLoadRemoteConfigListWithContextKeysWrapsErrorIntoLoadingRemoteConfigListFailed() async {

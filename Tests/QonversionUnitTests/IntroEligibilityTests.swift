@@ -47,7 +47,7 @@ final class IntroEligibilityTests: XCTestCase {
     // MARK: - Helpers
 
     private func makeProduct(qonversionId: String, storeId: String) -> Qonversion.Product {
-        return Qonversion.Product(qonversionId: qonversionId, storeId: storeId, offeringId: nil)
+        return Qonversion.Product(qonversionId: qonversionId, storeId: storeId)
     }
 
     private func makeIntroOffer() -> Qonversion.Product.SubscriptionOffer {

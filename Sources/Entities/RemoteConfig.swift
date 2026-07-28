@@ -96,10 +96,10 @@ extension Qonversion {
         /// Experiment info
         public let experiment: Experiment?
 
-        /// Remote configuration source
-        public let source: Source
+        /// Remote configuration source, or nil when the backend reports none.
+        public let source: Source?
 
-        init(payload: [String: String]?, experiment: Experiment?, source: Source) {
+        init(payload: [String: String]?, experiment: Experiment?, source: Source?) {
             self.payload = payload
             self.experiment = experiment
             self.source = source
@@ -116,7 +116,10 @@ extension Qonversion {
             // Absent keys must decode like explicit nulls — a config without
             // an experiment is the normal shape, not a decode failure.
             experiment = try container.decodeIfPresent(Experiment.self, forKey: .experiment)
-            source = try container.decode(Source.self, forKey: .source)
+            // The backend serializes the source from a pointer without
+            // omitempty, so an unassigned config arrives with an explicit
+            // null — that is a config without a source, not a broken payload.
+            source = try container.decodeIfPresent(Source.self, forKey: .source)
         }
         
         // MARK: - Private

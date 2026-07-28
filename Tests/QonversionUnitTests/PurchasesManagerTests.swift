@@ -68,7 +68,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     private func makeProduct(storeId: String = "com.app.pro") -> Qonversion.Product {
-        Qonversion.Product(qonversionId: "pro", storeId: storeId, offeringId: nil)
+        Qonversion.Product(qonversionId: "pro", storeId: storeId)
     }
 
     private func makeTransaction(id: String, productId: String = "com.app.pro", purchaseDate: Date? = nil, jws: String? = "jws-proof") -> Qonversion.Transaction {
