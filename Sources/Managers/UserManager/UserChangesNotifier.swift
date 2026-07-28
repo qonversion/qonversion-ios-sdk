@@ -24,6 +24,11 @@ enum UserChangeTeardownPriority {
 /// A cache that must not survive a user switch (logout or identify resolving
 /// to another user) registers itself as an observer.
 protocol UserChangedObserver: AnyObject {
+    /// The last moment at which the previous user's uid is still the current
+    /// one: data queued under it has to leave the SDK here or never. The
+    /// switch waits for this to return, so it may not retry indefinitely.
+    func userWillChange() async
+
     func userDidChange()
 
     /// Lower runs first. See ``UserChangeTeardownPriority``.
@@ -32,11 +37,14 @@ protocol UserChangedObserver: AnyObject {
 
 extension UserChangedObserver {
 
+    func userWillChange() async {}
+
     var userChangeTeardownPriority: Int { UserChangeTeardownPriority.cache }
 }
 
 protocol UserChangesNotifierInterface {
     func add(observer: UserChangedObserver)
+    func notifyUserWillChange() async
     func notifyUserChanged()
 }
 
@@ -71,6 +79,17 @@ final class UserChangesNotifier: UserChangesNotifierInterface, @unchecked Sendab
             .enumerated()
             .sorted { ($0.element.userChangeTeardownPriority, $0.offset) < ($1.element.userChangeTeardownPriority, $1.offset) }
             .map { $0.element }
+    }
+
+    /// Sequential on purpose: an observer flushing data under the outgoing uid
+    /// must finish before the next one runs, in the same declared order the
+    /// teardown uses.
+    func notifyUserWillChange() async {
+        let observers: [UserChangedObserver] = registeredObservers
+
+        for observer in observers {
+            await observer.userWillChange()
+        }
     }
 
     func notifyUserChanged() {

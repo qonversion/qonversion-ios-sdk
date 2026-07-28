@@ -245,6 +245,13 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             return false
         }
 
+        return await postBatch(properties, schedulingRetries: true)
+    }
+
+    /// Posts one batch under the uid the provider currently holds. Only the
+    /// scheduled path may follow up with retries — the user-switch path cannot
+    /// wait for them.
+    private func postBatch(_ properties: [Qonversion.UserProperty], schedulingRetries: Bool) async -> Bool {
         let items: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
         let body: RequestBodyDict = ["properties": items]
         let request = Request.sendProperties(userId: userIdProvider.getUserId(), body: body)
@@ -259,13 +266,15 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             propertiesStorage.clear(properties: properties)
 
             // Properties set while the batch was in flight.
-            if !propertiesStorage.all().isEmpty {
+            if schedulingRetries && !propertiesStorage.all().isEmpty {
                 scheduleSendingProperties(withDelay: Constants.sendPropertiesMinDelaySec.rawValue)
             }
 
             return true
         } catch {
-            retrySendingProperties()
+            if schedulingRetries {
+                retrySendingProperties()
+            }
             return false
         }
     }
@@ -290,10 +299,29 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
 extension UserPropertiesManager: UserChangedObserver {
 
-    /// The pending batch belongs to the uid that queued it. A logout or an
-    /// identify resolving to another user must not let it be posted under the
-    /// new uid — the batch carries no uid of its own, the request takes
-    /// whatever the provider currently holds.
+    /// The pending batch belongs to the uid that queued it, and the request
+    /// takes whatever the provider currently holds — so the batch is posted
+    /// here, while the outgoing uid is still the current one. The legacy SDK
+    /// posted it after the switch, attributing it to the wrong user.
+    func userWillChange() async {
+        // A round trip already in flight carries the same batch under the same
+        // (still current) uid — waiting for it is the flush.
+        if let inFlight: Task<Bool, Never> = currentSendingTask() {
+            _ = await inFlight.value
+        }
+
+        let pending: [Qonversion.UserProperty] = propertiesStorage.all()
+        guard !pending.isEmpty else { return }
+
+        // One attempt, and deliberately without the user gate: the user being
+        // switched away from exists on the backend already, and the gate is the
+        // actor that is mid-switch — asking it from here would deadlock when
+        // the switch runs inside its own creation pipeline.
+        _ = await postBatch(pending, schedulingRetries: false)
+    }
+
+    /// Whatever the flush could not deliver is dropped: it may not be posted
+    /// under the uid the SDK just switched to.
     func userDidChange() {
         clearDelayedProperties()
     }

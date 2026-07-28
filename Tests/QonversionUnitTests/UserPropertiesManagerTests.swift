@@ -496,3 +496,93 @@ final class UserPropertiesObserverTests: XCTestCase {
         #endif
     }
 }
+
+/// The pending batch belongs to the uid that queued it: it must reach the
+/// backend under that uid before the switch completes, and it must never be
+/// carried over to the user the SDK switches to.
+final class UserPropertiesUserSwitchTests: XCTestCase {
+
+    private let oldUid = "old-uid"
+    private let newUid = "new-uid"
+
+    private func makeUser(id: String) throws -> Qonversion.User {
+        let json = #"{"id": "\#(id)", "created_at": "2023-11-14T22:13:20Z"}"#
+        return try JSONDecoder.qonversionTest.decode(Qonversion.User.self, from: Data(json.utf8))
+    }
+
+    private struct Graph {
+        let userManager: UserManager
+        let propertiesManager: UserPropertiesManager
+        let propertiesStorage: UserPropertiesStorage
+        let processor: MockRequestProcessor
+        let config: InternalConfig
+    }
+
+    private func makeGraph(originalUid: String) throws -> Graph {
+        let config = InternalConfig(userId: oldUid)
+        let storage = MockLocalStorage()
+        storage.set(string: originalUid, forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
+        let userService = MockUserService()
+        let oldUser: Qonversion.User = try makeUser(id: oldUid)
+        userService.createUserResult = oldUser
+        userService.userResult = try makeUser(id: newUid)
+        userService.identityLinkedUid = newUid
+        let notifier = UserChangesNotifier()
+        let logger = LoggerWrapper()
+        let userManager = UserManager(userService: userService, localStorage: storage, internalConfig: config, userChangesNotifier: notifier, logger: logger)
+
+        let processor = MockRequestProcessor()
+        let sendResult = SendUserPropertiesResult(savedProperties: [], propertyErrors: [])
+        processor.results = [sendResult]
+        let propertiesStorage = UserPropertiesStorage()
+        // The properties manager may not reach into the user gate while the
+        // gate itself is mid-switch — a separate stub proves it does not.
+        let propertiesUserManager = MockUserManager()
+        propertiesUserManager.user = oldUser
+        let propertiesManager = UserPropertiesManager(
+            requestProcessor: processor,
+            propertiesStorage: propertiesStorage,
+            delayCalculator: IncrementalDelayCalculator(),
+            userIdProvider: config,
+            userManager: propertiesUserManager,
+            integrationsInfoCollector: MockIntegrationsInfoCollector(),
+            logger: logger
+        )
+        notifier.add(observer: propertiesManager)
+
+        return Graph(userManager: userManager, propertiesManager: propertiesManager, propertiesStorage: propertiesStorage, processor: processor, config: config)
+    }
+
+    private func sentPropertyUserIds(_ processor: MockRequestProcessor) -> [String] {
+        return processor.processedRequests.compactMap { request in
+            guard case let .sendProperties(userId, _, _, _) = request else { return nil }
+            return userId
+        }
+    }
+
+    func testIdentifySendsThePendingBatchUnderTheOldUid() async throws {
+        let graph: Graph = try makeGraph(originalUid: oldUid)
+        _ = try await graph.userManager.obtainUser()
+        graph.propertiesManager.setCustomUserProperty(key: "my_key", value: "my_value")
+
+        _ = try await graph.userManager.identify("external-id")
+
+        XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
+        XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
+        XCTAssertTrue(graph.propertiesStorage.all().isEmpty, "the new user must start with an empty batch")
+    }
+
+    func testLogoutSendsThePendingBatchUnderTheIdentifiedUid() async throws {
+        // The uid moved away from the install's anonymous user, so the logout
+        // restores it — the same switch, reached from the other entry point.
+        let graph: Graph = try makeGraph(originalUid: "anon-uid")
+        _ = try await graph.userManager.obtainUser()
+        graph.propertiesManager.setCustomUserProperty(key: "my_key", value: "my_value")
+
+        await graph.userManager.logout()
+
+        XCTAssertEqual(graph.config.userId, "anon-uid", "the logout must have restored the original user")
+        XCTAssertEqual(sentPropertyUserIds(graph.processor), [oldUid], "the batch belongs to the user that queued it")
+        XCTAssertTrue(graph.propertiesStorage.all().isEmpty, "the restored user must start with an empty batch")
+    }
+}
