@@ -5,9 +5,8 @@
 
 import Foundation
 
-/// The teardown order of a user switch, declared instead of emergent: the
-/// registration order depends on which manager the graph happens to build
-/// first, which is not something the SDK's behavior may rest on.
+/// Teardown order declared rather than emergent: registration order depends on
+/// which manager the graph happens to build first.
 enum UserChangeTeardownPriority {
 
     /// Stop sending the previous user's queued requests first.
@@ -24,17 +23,11 @@ enum UserChangeTeardownPriority {
 /// A cache that must not survive a user switch (logout or identify resolving
 /// to another user) registers itself as an observer.
 protocol UserChangedObserver: AnyObject {
-    /// The last moment at which the previous user's uid is still the current
-    /// one: data queued under it has to be claimed here or never.
-    ///
-    /// The switch waits for this to return, and the host waits for the switch
-    /// (identify at launch, logout behind a sign-out button), so an observer
-    /// MUST NOT block it — no network, no I/O, no deadline to wait out. The
-    /// contract is a synchronous handoff: snapshot whatever belongs to the
-    /// outgoing user (its uid included) and take it out of the shared state
-    /// before returning, then send it from a background task. A post that owns
-    /// its own snapshot can run arbitrarily late and still be attributed
-    /// correctly, because there is nothing current left for it to read.
+    /// The last moment the previous user's uid is still current: data queued
+    /// under it has to be claimed here or never. The switch waits for this to
+    /// return, so MUST NOT block — no network, no I/O. Synchronous handoff:
+    /// snapshot what belongs to the outgoing user (uid included), take it out
+    /// of the shared state before returning, then send it in the background.
     func userWillChange() async
 
     func userDidChange()
@@ -77,9 +70,8 @@ final class UserChangesNotifier: UserChangesNotifierInterface, @unchecked Sendab
         boxes.append(WeakBox(observer: observer))
     }
 
-    /// The live observers in teardown order: by declared priority, and by
-    /// registration order within one priority (the sort is made stable by the
-    /// index tiebreak — Swift's sort is not).
+    /// Teardown order: by priority, then registration order. The index
+    /// tiebreak is what makes it stable — Swift's sort is not.
     var registeredObservers: [UserChangedObserver] {
         lock.lock()
         let observers: [UserChangedObserver] = boxes.compactMap { $0.observer }
@@ -91,9 +83,7 @@ final class UserChangesNotifier: UserChangesNotifierInterface, @unchecked Sendab
             .map { $0.element }
     }
 
-    /// Sequential on purpose: an observer flushing data under the outgoing uid
-    /// must finish before the next one runs, in the same declared order the
-    /// teardown uses.
+    /// Sequential on purpose: each observer must finish before the next runs.
     func notifyUserWillChange() async {
         let observers: [UserChangedObserver] = registeredObservers
 
