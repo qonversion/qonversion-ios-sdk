@@ -53,13 +53,31 @@ final class AssemblySharingTests: XCTestCase {
 
     func testRequestProcessorsStayPerService() {
         // Fixates the deliberate design decision: each service owns its
-        // processor (and with it its rate limiter and critical latch).
+        // processor (and with it its rate limiter).
         let (_, servicesAssembly) = makeMiscAssembly()
 
         let first = servicesAssembly.requestProcessor() as AnyObject
         let second = servicesAssembly.requestProcessor() as AnyObject
 
         XCTAssertFalse(first === second)
+    }
+
+    func testTheCriticalErrorLatchIsOneInstanceAcrossTheQonversionAssembly() {
+        // The processors stay per service, but the revoked-key stop switch
+        // must not: the first service to be rejected has to stop the rest.
+        // Scope is this assembly graph — NoCodes builds its own processor with
+        // its own lock and is deliberately not wired to this latch.
+        let (miscAssembly, servicesAssembly) = makeMiscAssembly()
+
+        let firstLatch = miscAssembly.criticalErrorLatch()
+        let secondLatch = miscAssembly.criticalErrorLatch()
+        XCTAssertTrue(firstLatch === secondLatch)
+
+        let firstProcessor = servicesAssembly.requestProcessor() as? RequestProcessor
+        let secondProcessor = servicesAssembly.requestProcessor() as? RequestProcessor
+        XCTAssertNotNil(firstProcessor)
+        XCTAssertTrue(firstProcessor?.criticalErrorLatch === firstLatch)
+        XCTAssertTrue(secondProcessor?.criticalErrorLatch === firstLatch)
     }
 
     func testEntitlementsManagerIsOneInstanceSdkWide() {

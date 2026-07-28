@@ -11,7 +11,11 @@ import Foundation
 final class RateLimiter: RateLimiterInterface, @unchecked Sendable {
     private var maxRequestsPerSecond: UInt
     private(set) var requests: [Int: [TimeInterval]] = [:]
-    private var lastGlobalPrune: TimeInterval = 0
+    /// Anchored at construction, not at zero: a zero anchor makes the very
+    /// first call of the process due for a sweep (`now - 0 > 10`) and moves
+    /// the anchor to that call's moment, so the guard measures from an
+    /// arbitrary point instead of from the limiter's own lifetime.
+    private var lastGlobalPrune: TimeInterval
 
     // Concurrent requests validate simultaneously; the check-then-save below
     // is a read-modify-write over the shared map.
@@ -26,6 +30,7 @@ final class RateLimiter: RateLimiterInterface, @unchecked Sendable {
     init(maxRequestsPerSecond: UInt, now: @escaping @Sendable () -> TimeInterval = { Date().timeIntervalSince1970 }) {
         self.maxRequestsPerSecond = maxRequestsPerSecond
         self.now = now
+        self.lastGlobalPrune = now()
     }
 
     func validateRateLimit(for request: Request) -> QonversionError? {
@@ -91,6 +96,16 @@ extension RateLimiter {
     /// the actual request rate instead of the request history.
     private func pruneStaleBucketsIfNeeded() {
         let currentTime: TimeInterval = now()
+
+        // The anchor is a wall-clock reading, which can move BACKWARD (NTP
+        // correction, a manual date change). Past the anchor, the difference
+        // below stays negative forever and the sweep would never be due again
+        // for the limiter's whole lifetime — the map would grow unbounded.
+        // A rollback counts as elapsed: re-anchor and let the next call sweep.
+        if currentTime < lastGlobalPrune {
+            lastGlobalPrune = currentTime
+        }
+
         guard currentTime - lastGlobalPrune > 10 else { return }
         lastGlobalPrune = currentTime
 

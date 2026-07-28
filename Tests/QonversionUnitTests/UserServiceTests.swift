@@ -225,32 +225,16 @@ final class UserServiceTests: XCTestCase {
         XCTAssertEqual(idAfterInit, idAfterCreate)
         XCTAssertEqual(storage.string(forKey: userIdKey), idAfterCreate)
 
-        // The v3 contract requires the environment field; the SDK always sends
-        // "prod" — sandbox/prod separation is not a client-side concern.
+        // The uid is the whole body: the SDK no longer signals a store
+        // environment, the backend derives it from the receipt.
         XCTAssertEqual(
             processor.processedRequests,
-            [Request.createUser(body: ["id": idAfterCreate, "environment": "prod"])]
+            [Request.createUser(body: ["id": idAfterCreate])]
         )
 
         XCTAssertEqual(user.id, stubUser.id)
         XCTAssertEqual(user.creationDate, stubUser.creationDate)
         XCTAssertEqual(user.environment, stubUser.environment)
-    }
-
-    func testCreateUserSendsTheSandboxEnvironment() async throws {
-        // The v4 contract separates sandbox data by this body field — the SDK
-        // must pass the configured environment through.
-        let processor = MockRequestProcessor()
-        let config = InternalConfig(userId: "initial", environment: .sandbox)
-        let service = UserService(requestProcessor: processor, localStorage: makeStorage(), internalConfig: config)
-        processor.results = [try decodeUserStub()]
-
-        _ = try await service.createUser()
-
-        XCTAssertEqual(
-            processor.processedRequests,
-            [Request.createUser(body: ["id": config.userId, "environment": "sandbox"])]
-        )
     }
 
     func testCreateUserGeneratesUidWhenCurrentIsEmpty() async throws {

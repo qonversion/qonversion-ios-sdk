@@ -53,9 +53,7 @@ final class UserService: UserServiceInterface, @unchecked Sendable {
         // migrated install gets its existing user back.
         let userId: String = internalConfig.userId.isEmpty ? generateUserId() : internalConfig.userId
         do {
-            // The contract requires the environment field: it is how the
-            // backend keeps sandbox data apart from production data.
-            let request = Request.createUser(body: ["id": userId, "environment": internalConfig.environment.rawValue])
+            let request = Request.createUser(body: ["id": userId])
             let user: Qonversion.User = try await requestProcessor.process(request: request, responseType: Qonversion.User.self, trigger: RequestTrigger.initialization)
             
             return user

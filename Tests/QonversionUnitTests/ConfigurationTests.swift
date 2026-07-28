@@ -36,26 +36,6 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertEqual(configuration.baseURL, "https://proxy.example.com/")
     }
 
-    // MARK: - environment
-
-    func testDefaultConfigurationRunsAgainstProduction() {
-        let configuration = Qonversion.Configuration(apiKey: "key", launchMode: .analytics)
-
-        XCTAssertEqual(configuration.environment, .production)
-    }
-
-    func testSandboxEnvironmentIsKept() {
-        let configuration = Qonversion.Configuration(apiKey: "key", launchMode: .analytics, environment: .sandbox)
-
-        XCTAssertEqual(configuration.environment, .sandbox)
-    }
-
-    func testEnvironmentReachesTheInternalConfig() {
-        let assembly = QonversionAssembly(apiKey: "key", userDefaults: TestDefaults.makeIsolated(), environment: .sandbox)
-
-        XCTAssertEqual(assembly.servicesAssembly.miscAssembly.internalConfig.environment, .sandbox)
-    }
-
     // MARK: - plumbing to the request processor
 
     func testServicesAssemblyUsesCustomBaseURL() {

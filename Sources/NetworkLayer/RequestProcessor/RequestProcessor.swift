@@ -7,8 +7,8 @@
 
 import Foundation
 
-// @unchecked: criticalError is the only mutable field and is lock-guarded;
-// every dependency is thread-safe on its own.
+// @unchecked: the processor holds no mutable state of its own; every
+// dependency is thread-safe.
 class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     let baseURL: String
     let networkProvider: NetworkProviderInterface
@@ -24,23 +24,16 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     /// unfinished-transaction sweep run concurrently and must not both post
     /// the same purchase.
     let reportsGate: TransactionReportsGate
-    private let criticalErrorLock = NSLock()
-    private var _criticalError: QonversionError?
+    /// Shared with every other processor of the Qonversion target (NoCodes
+    /// keeps its own): a revoked project key is not a property of the one
+    /// service that noticed it.
+    let criticalErrorLatch: CriticalErrorLatch
 
     var criticalError: QonversionError? {
-        get {
-            criticalErrorLock.lock()
-            defer { criticalErrorLock.unlock() }
-            return _criticalError
-        }
-        set {
-            criticalErrorLock.lock()
-            defer { criticalErrorLock.unlock() }
-            _criticalError = newValue
-        }
+        return criticalErrorLatch.error
     }
 
-    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface, delayCalculator: IncrementalDelayCalculator = IncrementalDelayCalculator(), transportRetryDelayCeiling: TimeInterval = RequestProcessor.defaultTransportRetryDelayCeiling, reportsGate: TransactionReportsGate = TransactionReportsGate()) {
+    init(baseURL: String, networkProvider: NetworkProviderInterface, headersBuilder: HeadersBuilderInterface, errorHandler: NetworkErrorHandlerInterface, decoder: ResponseDecoderInterface, retriableRequestKinds: [Request.Kind], requestsStorage: RequestsStorageInterface, rateLimiter: RateLimiterInterface, delayCalculator: IncrementalDelayCalculator = IncrementalDelayCalculator(), transportRetryDelayCeiling: TimeInterval = RequestProcessor.defaultTransportRetryDelayCeiling, reportsGate: TransactionReportsGate = TransactionReportsGate(), criticalErrorLatch: CriticalErrorLatch = CriticalErrorLatch()) {
         self.baseURL = baseURL
         self.networkProvider = networkProvider
         self.headersBuilder = headersBuilder
@@ -52,13 +45,17 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         self.delayCalculator = delayCalculator
         self.transportRetryDelayCeiling = transportRetryDelayCeiling
         self.reportsGate = reportsGate
+        self.criticalErrorLatch = criticalErrorLatch
     }
 
     /// Resends requests that failed on transport in previous sessions. A
     /// delivered request (an HTTP answer of any status — resending would
     /// duplicate) is removed from the queue one by one; a transport failure
     /// keeps it for the next session. A latched critical error (revoked
-    /// project key) stops the replay.
+    /// project key) stops the replay before it starts: replaying against a
+    /// dead key would only burn the queue. Nothing is removed on that path, so
+    /// the entries — including the ones `process()` queued while latched —
+    /// wait for a launch where the key works again.
     func processStoredRequests() {
         guard criticalError == nil else { return }
 
@@ -128,7 +125,7 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                     }
 
                     if let error = self.errorHandler.extractError(from: urlResponse, body: data), error.type == .critical {
-                        self.criticalError = error
+                        self.criticalErrorLatch.latch(error)
                         return
                     }
                 } catch {
@@ -146,8 +143,36 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         return statusCode >= 500 || statusCode == 429
     }
 
+    /// Requests the SDK emits on its own schedule, which the host cannot spam:
+    /// a user-properties flush and a crash upload. The legacy client rate-
+    /// limited only host-driven calls — throttling these two drops data nobody
+    /// asked for twice.
+    ///
+    /// Offer signing is deliberately NOT here: `Qonversion.getPromotionalOffer`
+    /// is public, so its rate is the host's to set, not the SDK's.
+    static let rateLimitExemptKinds: [Request.Kind] = [.sendProperties, .sdkCrash]
+
     static let attemptHeader: String = "Attempt"
     static let triggerHeader: String = "Trigger"
+
+    /// Persists a retriable request for the offline replay. `attempt` is how
+    /// many sends it has already cost, so the replay continues the true
+    /// Attempt sequence instead of restarting it. `generation` pins the queue
+    /// to the user the request was made for: a clean() (user switch) landing
+    /// in between must not be undone by enqueueing afterwards.
+    private func queueForReplay(_ request: Request, as urlRequest: URLRequest, trigger: RequestTrigger?, attempt: Int, ifGenerationIs generation: Int) {
+        let stored = StoredRequest(
+            url: urlRequest.url?.absoluteString ?? "",
+            method: urlRequest.httpMethod ?? "POST",
+            body: urlRequest.httpBody,
+            dedupKey: request.replayDedupKey,
+            trigger: trigger?.rawValue,
+            attempt: attempt,
+            transactionId: request.replayTransactionId
+        )
+
+        requestsStorage.append(stored, ifGenerationIs: generation)
+    }
 
     /// Records one more failed send of a queued request, so the next replay
     /// reports the true attempt number. A queue cleaned while the request was
@@ -169,11 +194,24 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
 
     func process<T>(request: Request, responseType: T.Type, trigger: RequestTrigger?) async throws -> T where T : Decodable {
         if let error = criticalError {
+            // The latch is shared, so the error that tripped it may belong to
+            // another service entirely (an entitlements 401 while a purchase
+            // is being reported). Refusing the call is right — the key is dead
+            // — but a retriable kind carries data the store already charged
+            // for: queue it before refusing, so a launch where the key works
+            // again delivers it. Reads carry nothing, so they are just refused.
+            if retriableRequestKinds.contains(request.kind), let urlRequest: URLRequest = request.convertToURLRequest(baseURL) {
+                // Nothing was sent, so the replay must report attempt 1.
+                queueForReplay(request, as: urlRequest, trigger: trigger, attempt: 0, ifGenerationIs: requestsStorage.cleanGeneration)
+            }
+
             throw error
         }
-        
-        if let rateLimitError: QonversionError = rateLimiter.validateRateLimit(for: request) {
-            throw rateLimitError
+
+        if !Self.rateLimitExemptKinds.contains(request.kind) {
+            if let rateLimitError: QonversionError = rateLimiter.validateRateLimit(for: request) {
+                throw rateLimitError
+            }
         }
 
         guard var urlRequest: URLRequest = request.convertToURLRequest(baseURL) else {
@@ -206,38 +244,24 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             // The request never reached the backend — persist retriable ones
             // for the offline replay.
             if retriableRequestKinds.contains(request.kind) {
-                let stored = StoredRequest(
-                    url: urlRequest.url?.absoluteString ?? "",
-                    method: urlRequest.httpMethod ?? "POST",
-                    body: urlRequest.httpBody,
-                    dedupKey: request.replayDedupKey,
-                    trigger: trigger?.rawValue,
-                    attempt: attemptsMade.total,
-                    transactionId: request.replayTransactionId
-                )
-                requestsStorage.append(stored, ifGenerationIs: generation)
+                queueForReplay(request, as: urlRequest, trigger: trigger, attempt: attemptsMade.total, ifGenerationIs: generation)
             }
-            throw QonversionError(type: .invalidResponse, error: error)
+            // A connection-class failure is named for what it is: nothing
+            // arrived, so the host can branch on "offline" and repeat the call
+            // later instead of treating it as a broken response.
+            let type: QonversionErrorType = Self.isTransportFailure(error) ? .networkConnectionFailed : .invalidResponse
+            throw QonversionError(type: type, error: error)
         }
 
         guard error == nil else {
-            if error?.type == .critical {
-                criticalError = error
+            if let error, error.type == .critical {
+                criticalErrorLatch.latch(error)
             }
 
             // The backend did not process the request (5xx/429) — persist
             // retriable ones for the offline replay, like transport failures.
             if Self.isRetriableStatusCode(responseCode) && retriableRequestKinds.contains(request.kind) {
-                let stored = StoredRequest(
-                    url: urlRequest.url?.absoluteString ?? "",
-                    method: urlRequest.httpMethod ?? "POST",
-                    body: urlRequest.httpBody,
-                    dedupKey: request.replayDedupKey,
-                    trigger: trigger?.rawValue,
-                    attempt: attemptsMade.total,
-                    transactionId: request.replayTransactionId
-                )
-                requestsStorage.append(stored, ifGenerationIs: generation)
+                queueForReplay(request, as: urlRequest, trigger: trigger, attempt: attemptsMade.total, ifGenerationIs: generation)
             }
 
             throw error!
