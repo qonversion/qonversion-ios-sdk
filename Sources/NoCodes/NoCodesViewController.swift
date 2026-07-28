@@ -80,6 +80,10 @@ final class NoCodesViewController: UIViewController {
   private var theme: NoCodesTheme!
   private var didTrackScreenShown = false
   private var didTrackScreenClosed = false
+  private var didReportFinished = false
+  // The navigation controller this screen was presented in, captured while it
+  // still has one.
+  private weak var flowNavigationController: UINavigationController?
   private var hasWebPurchaseLoader = false
   private var screenProductIds: [String] = []
   private var contextBuilder: NoCodesContextBuilderInterface!
@@ -167,6 +171,9 @@ final class NoCodesViewController: UIViewController {
 
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
+    // Kept while the screen is on screen: once it is popped, UIKit has already
+    // detached it and the stack behind it can no longer be inspected.
+    flowNavigationController = navigationController
     trackScreenShownIfNeeded()
   }
 
@@ -181,9 +188,15 @@ final class NoCodesViewController: UIViewController {
       // would land on a screen the user has already left.
       cancelScreenLoad()
 
-      guard let screenId: String = screenId else { return }
+      if let screenId: String = screenId {
+        trackScreenClosedIfNeeded(screenId: screenId)
+      }
 
-      trackScreenClosedIfNeeded(screenId: screenId)
+      // A host-driven pop or dismiss ends the flow just like the SDK-driven
+      // close; without this the coordinator keeps believing a screen is up.
+      if NoCodesScreenLifecycle.reportsFinished(leave: leave, hasRemainingFlowScreen: hasRemainingFlowScreen()) {
+        reportFinished()
+      }
     case .temporary:
       // Temporarily hidden (e.g. a new screen was pushed on top):
       // reset the flag so screen_shown fires again when this view re-appears
@@ -562,7 +575,7 @@ extension NoCodesViewController {
          let externalIndex: Int = navigationController?.viewControllers.firstIndex(of: firstExternalViewController),
          let viewControllersCount: Int = navigationController?.viewControllers.count,
          externalIndex == viewControllersCount - 1 {
-        delegate.noCodesFinished()
+        reportFinished()
       }
     } else {
       finishAndClose(action: closeAction)
@@ -762,21 +775,40 @@ extension NoCodesViewController {
 
     if isModalPresentation {
       dismiss(animated: true) { [weak self] in
-        self?.delegate?.noCodesFinished()
+        self?.reportFinished()
       }
     } else {
       guard let externalVC = firstExternalViewController() else {
         // Fallback: dismiss anyway
         dismiss(animated: true) { [weak self] in
-          self?.delegate?.noCodesFinished()
+          self?.reportFinished()
         }
         return
       }
       navigationController?.popToViewController(externalVC, animated: true)
-      delegate?.noCodesFinished()
+      reportFinished()
     }
   }
-  
+
+  /// The single funnel for the flow-finished callback: every route out of the
+  /// screen goes through it, and the host hears it exactly once.
+  private func reportFinished() {
+    guard !didReportFinished else { return }
+
+    didReportFinished = true
+    delegate?.noCodesFinished()
+  }
+
+  private func hasRemainingFlowScreen() -> Bool {
+    // A dismissal takes the whole navigation stack with it; only a pop leaves
+    // the screens below this one on screen.
+    guard !isBeingDismissed else { return false }
+
+    guard let viewControllers: [UIViewController] = flowNavigationController?.viewControllers else { return false }
+
+    return viewControllers.contains { $0 !== self && $0 is NoCodesViewController }
+  }
+
   private func firstExternalViewController() -> UIViewController? {
     let currentViewControllers: [UIViewController]? = navigationController?.viewControllers
     let firstExternalVC: UIViewController? = currentViewControllers?.last(where: { !$0.isKind(of: Self.self) })

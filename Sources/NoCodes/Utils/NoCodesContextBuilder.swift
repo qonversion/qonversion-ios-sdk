@@ -32,16 +32,50 @@ extension NoCodesContextBuilderInterface {
   }
 }
 
-final class NoCodesContextBuilder: NoCodesContextBuilderInterface, Sendable {
+/// The "this install has launched before" flag, and the answer derived from it.
+enum NoCodesFirstLaunch {
 
+  // The production Objective-C SDK wrote this very key, so an upgraded install
+  // keeps its answer instead of looking brand new.
   private static let alreadyLaunchedKey = "io.qonversion.nocodes.alreadyLaunchedBefore"
+
+  /// Latches the flag and answers whether this launch is the first one.
+  /// Resolved once at SDK initialization: doing it per context build made the
+  /// first screen ever shown the only one that could see `true`.
+  static func resolve(storage: UserDefaults, daysSinceInstall: Int) -> Bool {
+    if storage.bool(forKey: alreadyLaunchedKey) {
+      return false
+    }
+
+    storage.set(true, forKey: alreadyLaunchedKey)
+
+    // A missing flag on an app installed days ago is an install that simply
+    // never reached this code, not a first launch.
+    return daysSinceInstall == 0
+  }
+
+  static func daysSinceInstall() -> Int {
+    guard let docsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+          let attrs = try? FileManager.default.attributesOfItem(atPath: docsURL.path),
+          let creationDate = attrs[.creationDate] as? Date else {
+      return 0
+    }
+    let interval = Date().timeIntervalSince(creationDate)
+
+    return max(0, Int(interval / 86400))
+  }
+}
+
+final class NoCodesContextBuilder: NoCodesContextBuilderInterface, Sendable {
 
   /// UIDevice is main-actor isolated, so the OS version is snapshotted at
   /// construction (the assemblies build the graph on the main actor).
   private let osVersion: String
+  private let isFirstLaunch: Bool
 
   @MainActor
-  init() {
+  init(isFirstLaunch: Bool) {
+    self.isFirstLaunch = isFirstLaunch
     osVersion = PlatformConstants.currentOSVersion()
   }
 
@@ -100,23 +134,11 @@ final class NoCodesContextBuilder: NoCodesContextBuilderInterface, Sendable {
   }
 
   func resolveIsFirstLaunch() -> Bool {
-    let daysSinceInstall = calculateDaysSinceInstall()
-    if UserDefaults.standard.bool(forKey: Self.alreadyLaunchedKey) {
-      return false
-    }
-
-    UserDefaults.standard.set(true, forKey: Self.alreadyLaunchedKey)
-    return daysSinceInstall == 0
+    return isFirstLaunch
   }
 
   func calculateDaysSinceInstall() -> Int {
-    guard let docsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
-          let attrs = try? FileManager.default.attributesOfItem(atPath: docsURL.path),
-          let creationDate = attrs[.creationDate] as? Date else {
-      return 0
-    }
-    let interval = Date().timeIntervalSince(creationDate)
-    return max(0, Int(interval / 86400))
+    return NoCodesFirstLaunch.daysSinceInstall()
   }
 }
 
@@ -131,6 +153,8 @@ private enum PlatformConstants {
     return "tvOS"
     #elseif os(watchOS)
     return "watchOS"
+    #elseif os(visionOS)
+    return "visionOS"
     #else
     return "unknown"
     #endif

@@ -28,6 +28,10 @@ public final class NoCodes {
   // releases the previous graph instead of leaking it.
   private var assembly: NoCodesAssembly?
   private var flowCoordinator: NoCodesFlowCoordinator? = nil
+  // Latched for the whole process: every screen of a launch must report the
+  // same answer, and re-initializing must not turn a first launch into a
+  // returning one.
+  private var isFirstLaunch: Bool?
 
   /// Use this function to initialize the No-Codes SDK.
   /// - Parameters:
@@ -35,7 +39,8 @@ public final class NoCodes {
   /// - Returns: ``NoCodes`` instance of the SDK.
   @discardableResult
   public static func initialize(with configuration: NoCodesConfiguration) -> NoCodes {
-    let assembly = NoCodesAssembly(configuration: configuration)
+    let isFirstLaunch: Bool = NoCodes.shared.resolveIsFirstLaunch()
+    let assembly = NoCodesAssembly(configuration: configuration, isFirstLaunch: isFirstLaunch)
     let flowCoordinator: NoCodesFlowCoordinator = assembly.flowCoordinator()
 
     // Close whatever the previous graph still has on screen: the new
@@ -154,7 +159,17 @@ public final class NoCodes {
   public func setTheme(_ theme: NoCodesTheme) {
     flowCoordinator?.setTheme(theme)
   }
-  
+
+  private func resolveIsFirstLaunch() -> Bool {
+    if let isFirstLaunch {
+      return isFirstLaunch
+    }
+
+    let resolved: Bool = NoCodesFirstLaunch.resolve(storage: .standard, daysSinceInstall: NoCodesFirstLaunch.daysSinceInstall())
+    isFirstLaunch = resolved
+
+    return resolved
+  }
 }
 
 #endif

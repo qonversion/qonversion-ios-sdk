@@ -27,6 +27,11 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
   /// Guard against concurrent flush operations.
   private var isFlushing = false
 
+  /// A flush that arrived while another one was in flight. It is honoured once
+  /// that one returns — otherwise the events wait for the next `track` to cross
+  /// the batch size, which for a closing screen never comes.
+  private var isFlushPending = false
+
   /// Maximum number of events to accumulate before auto-flushing.
   private static let batchSize = 10
 
@@ -67,7 +72,11 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
     let eventsToSend: [ScreenEvent] = queue.sync(flags: .barrier) {
       // The emptiness check must precede raising the flag: an empty flush never
       // reaches the code that lowers it again.
-      guard !isFlushing, !buffer.isEmpty else { return [] }
+      guard !buffer.isEmpty else { return [] }
+      guard !isFlushing else {
+        isFlushPending = true
+        return []
+      }
       isFlushing = true
       let copy: [ScreenEvent] = buffer
       buffer.removeAll()
@@ -88,7 +97,16 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
         let request = Request.sendScreenEvents(uid: uid, body: eventDicts)
         try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
         logger.debug(LoggerInfoMessages.screenEventFlushed.rawValue)
-        queue.sync(flags: .barrier) { isFlushing = false }
+        let shouldFlushAgain: Bool = queue.sync(flags: .barrier) {
+          isFlushing = false
+          let isWarranted: Bool = isFlushPending || buffer.count >= Self.batchSize
+          isFlushPending = false
+
+          return isWarranted && !buffer.isEmpty
+        }
+        if shouldFlushAgain {
+          flush()
+        }
       } catch {
         logger.error(LoggerInfoMessages.screenEventTrackingFailed.rawValue)
         // Re-buffer events on failure so they can be retried on next flush
@@ -99,6 +117,9 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
             buffer = Array(buffer.suffix(Self.maxBufferSize))
           }
           isFlushing = false
+          // Deliberately not re-armed: an immediate retry would spin against a
+          // transport that is already failing.
+          isFlushPending = false
         }
       }
     }

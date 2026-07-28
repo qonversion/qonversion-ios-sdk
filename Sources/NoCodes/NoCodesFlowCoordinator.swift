@@ -86,14 +86,15 @@ final class NoCodesFlowCoordinator {
 
   @MainActor
   func showScreen(withContextKey contextKey: String) {
-    presentationGate.presentationStarted()
+    let token: NoCodesPresentationGate.Token = presentationGate.presentationStarted()
     Task { @MainActor in
       // Screen conditions are evaluated server-side, so pending properties must
-      // land first. Bounded only by the request itself — worst case roughly two
-      // minutes (60s property send plus the user-creation round trip).
+      // land first. Bounded only by the requests themselves: each is sent up to
+      // 4 times with a 60s timeout (~4 minutes), and the property send waits for
+      // the user-creation round trip before it — so the worst case is ~8 minutes.
       await Qonversion.shared.forceSendProperties()
 
-      let outcome: NoCodesPresentationOutcome = presentationGate.presentationReady()
+      let outcome: NoCodesPresentationOutcome = presentationGate.presentationReady(token)
       if case let .cancelled(effects) = outcome {
         logger.info("The screen was closed before it could be presented")
         apply(effects)

@@ -16,14 +16,19 @@ import IOKit
 import WatchKit
 #endif
 
-#if os(macOS)
+// The platform the SDK reports to the backend, spelled exactly as the main
+// SDK spells it. macCatalyst is checked before macOS: a Catalyst build
+// matches both.
+#if targetEnvironment(macCatalyst)
+private let OsName = "macCatalyst"
+#elseif os(macOS)
 private let OsName = "macOS"
 #elseif os(tvOS)
-private let OsName = "tvos"
-#elseif targetEnvironment(macCatalyst)
-private let OsName = "macCatalyst"
+private let OsName = "tvOS"
 #elseif os(watchOS)
 private let OsName = "watchOS"
+#elseif os(visionOS)
+private let OsName = "visionOS"
 #else // iOS, simulator, etc.
 private let OsName = "iOS"
 #endif

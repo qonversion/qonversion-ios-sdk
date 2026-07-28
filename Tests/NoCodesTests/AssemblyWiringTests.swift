@@ -18,7 +18,7 @@ final class AssemblyWiringTests: XCTestCase {
         // that reference when a request was stamped, not when the graph was
         // built. So constructing the processor proves nothing; the wiring has
         // to be exercised the way a real request exercises it.
-        let miscAssembly = MiscAssembly(projectKey: "project-key")
+        let miscAssembly = MiscAssembly(projectKey: "project-key", userDefaults: TestDefaults.makeIsolated())
         let servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly)
 
         let processor: RequestProcessorInterface = servicesAssembly.requestProcessor()
@@ -37,7 +37,7 @@ final class AssemblyWiringTests: XCTestCase {
     }
 
     func testTheSharedServicesAreBuiltOnce() {
-        let miscAssembly = MiscAssembly(projectKey: "project-key")
+        let miscAssembly = MiscAssembly(projectKey: "project-key", userDefaults: TestDefaults.makeIsolated())
         let servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly)
 
         let firstProcessor: RequestProcessorInterface = servicesAssembly.requestProcessor()
@@ -53,7 +53,7 @@ final class AssemblyWiringTests: XCTestCase {
     }
 
     func testTheDeviceInfoCollectorIsSharedAndSnapshotted() {
-        let miscAssembly = MiscAssembly(projectKey: "project-key")
+        let miscAssembly = MiscAssembly(projectKey: "project-key", userDefaults: TestDefaults.makeIsolated())
         let servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly)
 
         let first: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
@@ -66,7 +66,7 @@ final class AssemblyWiringTests: XCTestCase {
     }
 
     func testTheHeadersBuilderTakesTheCollectorAsAParameter() {
-        let miscAssembly = MiscAssembly(projectKey: "project-key")
+        let miscAssembly = MiscAssembly(projectKey: "project-key", userDefaults: TestDefaults.makeIsolated())
         let servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly)
         let deviceInfoCollector: DeviceInfoCollectorInterface = servicesAssembly.deviceInfoCollector()
         let headersBuilder: HeadersBuilderInterface = miscAssembly.headersBuilder(deviceInfoCollector: deviceInfoCollector)

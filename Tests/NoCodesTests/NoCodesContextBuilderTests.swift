@@ -11,17 +11,10 @@ import XCTest
 @MainActor
 final class NoCodesContextBuilderTests: XCTestCase {
 
-    private static let alreadyLaunchedKey = "io.qonversion.nocodes.alreadyLaunchedBefore"
-
-    override func tearDown() {
-        UserDefaults.standard.removeObject(forKey: Self.alreadyLaunchedKey)
-        super.tearDown()
-    }
-
     // MARK: - Golden context
 
     func testFullContextCarriesTheDeviceUserAndProductsBlocks() throws {
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
         let productsContext: [String: any Sendable] = [
             "annual": ["hasIntro": "true", "introType": "free_trial"],
             "monthly": ["hasIntro": "false", "introType": ""],
@@ -57,7 +50,7 @@ final class NoCodesContextBuilderTests: XCTestCase {
     }
 
     func testIntroTypesTravelVerbatim() throws {
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
         let productsContext: [String: any Sendable] = [
             "trial": ["hasIntro": "true", "introType": "free_trial"],
             "upfront": ["hasIntro": "true", "introType": "pay_up_front"],
@@ -75,7 +68,7 @@ final class NoCodesContextBuilderTests: XCTestCase {
     }
 
     func testAnEmptyProductsContextLeavesTheProductsBlockOut() throws {
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
 
         let json: String = try XCTUnwrap(builder.buildContextJSON(resolvedTheme: .light, activeEntitlementIds: [], productsContext: [:]))
         let context: [String: Any] = try decodeContext(json)
@@ -84,7 +77,7 @@ final class NoCodesContextBuilderTests: XCTestCase {
     }
 
     func testNoEntitlementsAreReportedAsTheFalseString() throws {
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
 
         let json: String = try XCTUnwrap(builder.buildContextJSON(resolvedTheme: .light, activeEntitlementIds: [], productsContext: [:]))
         let context: [String: Any] = try decodeContext(json)
@@ -95,7 +88,7 @@ final class NoCodesContextBuilderTests: XCTestCase {
     }
 
     func testEmptyUserPropertiesAreOmitted() throws {
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
 
         let json: String = try XCTUnwrap(builder.buildContextJSON(resolvedTheme: .light, activeEntitlementIds: [], productsContext: [:], userProperties: [:]))
         let context: [String: Any] = try decodeContext(json)
@@ -105,7 +98,7 @@ final class NoCodesContextBuilderTests: XCTestCase {
     }
 
     func testResolvedThemeIsReportedVerbatim() throws {
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
 
         let lightJson: String = try XCTUnwrap(builder.buildContextJSON(resolvedTheme: .light, activeEntitlementIds: [], productsContext: [:]))
         let darkJson: String = try XCTUnwrap(builder.buildContextJSON(resolvedTheme: .dark, activeEntitlementIds: [], productsContext: [:]))
@@ -117,7 +110,7 @@ final class NoCodesContextBuilderTests: XCTestCase {
     }
 
     func testTheContextIsWrappedInADataEnvelope() throws {
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
 
         let json: String = try XCTUnwrap(builder.buildContextJSON(resolvedTheme: .light, activeEntitlementIds: [], productsContext: [:]))
 
@@ -128,34 +121,26 @@ final class NoCodesContextBuilderTests: XCTestCase {
 
     // MARK: - First launch
 
-    func testFirstLaunchIsResolvedOnceAndIsFalseAfterwards() {
-        UserDefaults.standard.removeObject(forKey: Self.alreadyLaunchedKey)
-        let builder = NoCodesContextBuilder()
-        let daysSinceInstall: Int = builder.calculateDaysSinceInstall()
+    /// The answer is latched at SDK initialization, not on the first context
+    /// build: every screen of the launch has to see the same value, and the
+    /// builder itself only carries what was decided there.
+    func testTheBuilderReportsTheAnswerItWasBuiltWithOnEveryScreen() throws {
+        let builder = NoCodesContextBuilder(isFirstLaunch: true)
 
-        let first: Bool = builder.resolveIsFirstLaunch()
-        let second: Bool = builder.resolveIsFirstLaunch()
+        XCTAssertTrue(builder.resolveIsFirstLaunch())
+        XCTAssertTrue(builder.resolveIsFirstLaunch(), "a second screen of the same launch sees the same answer")
 
-        // The very first resolution reports a first launch only for an app
-        // installed today; from then on the answer is always false.
-        XCTAssertEqual(first, daysSinceInstall == 0)
-        XCTAssertFalse(second)
-        XCTAssertTrue(UserDefaults.standard.bool(forKey: Self.alreadyLaunchedKey))
-    }
+        let json: String = try XCTUnwrap(builder.buildContextJSON(resolvedTheme: .light, activeEntitlementIds: [], productsContext: [:]))
+        let user: [String: Any] = try XCTUnwrap(try decodeContext(json)["user"] as? [String: Any])
+        XCTAssertEqual(user["isFirstLaunch"] as? String, "true")
 
-    func testTheFirstLaunchFlagIsSharedAcrossBuilderInstances() {
-        UserDefaults.standard.removeObject(forKey: Self.alreadyLaunchedKey)
-        let first = NoCodesContextBuilder()
-        _ = first.resolveIsFirstLaunch()
-
-        let second = NoCodesContextBuilder()
-
-        XCTAssertFalse(second.resolveIsFirstLaunch())
+        let secondJson: String = try XCTUnwrap(builder.buildContextJSON(resolvedTheme: .light, activeEntitlementIds: [], productsContext: [:]))
+        let secondUser: [String: Any] = try XCTUnwrap(try decodeContext(secondJson)["user"] as? [String: Any])
+        XCTAssertEqual(secondUser["isFirstLaunch"] as? String, "true", "the flag is not consumed by the first context build")
     }
 
     func testFirstLaunchIsReportedIntoTheContextAsAString() throws {
-        UserDefaults.standard.set(true, forKey: Self.alreadyLaunchedKey)
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
 
         let json: String = try XCTUnwrap(builder.buildContextJSON(resolvedTheme: .light, activeEntitlementIds: [], productsContext: [:]))
         let context: [String: Any] = try decodeContext(json)
@@ -167,13 +152,13 @@ final class NoCodesContextBuilderTests: XCTestCase {
     // MARK: - Days since install
 
     func testDaysSinceInstallIsNeverNegative() {
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
 
         XCTAssertGreaterThanOrEqual(builder.calculateDaysSinceInstall(), 0)
     }
 
     func testDaysSinceInstallIsStableAcrossCalls() {
-        let builder = NoCodesContextBuilder()
+        let builder = NoCodesContextBuilder(isFirstLaunch: false)
 
         XCTAssertEqual(builder.calculateDaysSinceInstall(), builder.calculateDaysSinceInstall())
     }
@@ -185,5 +170,55 @@ final class NoCodesContextBuilderTests: XCTestCase {
         let wrapper: [String: Any] = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         return try XCTUnwrap(wrapper["data"] as? [String: Any])
+    }
+}
+
+// MARK: - The first-launch flag itself
+
+final class NoCodesFirstLaunchTests: XCTestCase {
+
+    private let storageKey = "io.qonversion.nocodes.alreadyLaunchedBefore"
+
+    func testAnInstallThatNeverLaunchedBeforeIsAFirstLaunch() {
+        let storage: UserDefaults = TestDefaults.makeIsolated()
+
+        XCTAssertTrue(NoCodesFirstLaunch.resolve(storage: storage, daysSinceInstall: 0))
+    }
+
+    func testTheFlagIsLatchedSoLaterLaunchesAreNotFirstLaunches() {
+        let storage: UserDefaults = TestDefaults.makeIsolated()
+
+        XCTAssertTrue(NoCodesFirstLaunch.resolve(storage: storage, daysSinceInstall: 0))
+        XCTAssertFalse(NoCodesFirstLaunch.resolve(storage: storage, daysSinceInstall: 0))
+    }
+
+    /// An app installed days ago that never reached this code is not starting
+    /// for the first time, whatever the missing flag suggests.
+    func testAnOlderInstallIsNotAFirstLaunchEvenWithoutTheFlag() {
+        let storage: UserDefaults = TestDefaults.makeIsolated()
+
+        XCTAssertFalse(NoCodesFirstLaunch.resolve(storage: storage, daysSinceInstall: 3))
+        XCTAssertTrue(storage.bool(forKey: storageKey), "the flag is latched either way")
+    }
+
+    /// The production Objective-C SDK wrote this very key on the first screen
+    /// it built a context for, so an upgraded install must keep its answer.
+    func testALegacyFlagKeepsAnUpgradedInstallOutOfTheFirstLaunch() {
+        let storage: UserDefaults = TestDefaults.makeIsolated()
+        storage.set(true, forKey: storageKey)
+
+        XCTAssertFalse(NoCodesFirstLaunch.resolve(storage: storage, daysSinceInstall: 0))
+    }
+
+    /// The flag belongs to the storage the SDK was given, not to the standard
+    /// domain of the host app.
+    func testTheFlagIsReadAndWrittenThroughTheGivenStorage() {
+        let storage: UserDefaults = TestDefaults.makeIsolated()
+        let other: UserDefaults = TestDefaults.makeIsolated()
+
+        let _ = NoCodesFirstLaunch.resolve(storage: storage, daysSinceInstall: 0)
+
+        XCTAssertTrue(storage.bool(forKey: storageKey))
+        XCTAssertFalse(other.bool(forKey: storageKey))
     }
 }
