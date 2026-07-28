@@ -111,6 +111,42 @@ final class RateLimiterTests: XCTestCase {
         XCTAssertNil(limiter.validateRateLimit(for: second))
     }
 
+    func testTheGlobalPruneRunsOnceTheGuardElapsesSinceConstruction() {
+        // The guard timestamp is anchored at construction, not at zero. With a
+        // zero anchor the FIRST call always sweeps and re-anchors itself to
+        // its own moment, so the next sweep is due 10s after that call instead
+        // of 10s after the limiter was built — the stale bucket below survives.
+        let clock = RateLimiterFrozenClock(now: 1_000)
+        let limiter = RateLimiter(maxRequestsPerSecond: 5, now: { clock.now })
+        let stale = Request.getUser(id: "stale")
+        let fresh = Request.getUser(id: "fresh")
+
+        clock.advance(by: 5)
+        XCTAssertNil(limiter.validateRateLimit(for: stale))
+
+        clock.advance(by: 6)
+        XCTAssertNil(limiter.validateRateLimit(for: fresh))
+
+        XCTAssertNil(limiter.requests[stale.hashValue], "10.1s after construction the sweep is due and drops the stale bucket")
+        XCTAssertNotNil(limiter.requests[fresh.hashValue], "the bucket recorded by this very call stays")
+    }
+
+    func testTheGlobalPruneDoesNotRunInsideTheGuardWindow() {
+        let clock = RateLimiterFrozenClock(now: 1_000)
+        let limiter = RateLimiter(maxRequestsPerSecond: 5, now: { clock.now })
+        let stale = Request.getUser(id: "stale")
+        let fresh = Request.getUser(id: "fresh")
+
+        XCTAssertNil(limiter.validateRateLimit(for: stale))
+
+        // The stale bucket is long outside the 1s rate window, but the global
+        // sweep is not due yet.
+        clock.advance(by: 9.9)
+        XCTAssertNil(limiter.validateRateLimit(for: fresh))
+
+        XCTAssertNotNil(limiter.requests[stale.hashValue], "the sweep must not run before the 10s guard elapses")
+    }
+
     func testWindowExpiryAllowsSameRequestAgain() async throws {
         let limiter = RateLimiter(maxRequestsPerSecond: 1)
         let request = Request.getUser(id: "user1")
