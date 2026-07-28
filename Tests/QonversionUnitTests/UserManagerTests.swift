@@ -27,6 +27,10 @@ final class UserManagerTests: XCTestCase {
     private var appTransactionReader: MockAppTransactionReader!
 
     private let anonUid = "QON_anon_uid"
+    private let identifiedUid = "QON_identified_uid"
+    private let ownerUid = "QON_owner_uid"
+    private let identityStorageKey = "qonversion.keys.identityExternalId"
+    private let userStorageKey = "qonversion.keys.user"
 
     override func setUp() {
         super.setUp()
@@ -410,6 +414,107 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(storage.string(forKey: UserServiceStorageKeys.userIdKey.rawValue), "QON_other_uid")
         XCTAssertEqual(storage.string(forKey: "qonversion.keys.identityExternalId"), "external_1",
                        "the uid and the identity that caused the switch must be persisted together")
+    }
+
+    func testAUidSwitchWithoutAnIdentityClearsTheStoredIdentity() async throws {
+        // The switch was not caused by an external id, so the user it lands on
+        // is not linked to the one the previous user carried.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        _ = try await manager.identify("external_1")
+        service.userResult = try makeUser(id: ownerUid)
+
+        try await manager.switchToUser(with: ownerUid)
+
+        XCTAssertNil(storage.string(forKey: identityStorageKey),
+                     "the previous user's identity must not survive a switch that did not carry one")
+    }
+
+    func testARestoreOwnerSwitchLetsTheNextIdentifyWithTheSameIdRelink() async throws {
+        // Restore hands the SDK the transactions' owner: the uid moves without
+        // an external id. A stale identity left behind would make the host's
+        // next identify with that very id a silent no-op on the new user.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        _ = try await manager.identify("external_1")
+        service.userResult = try makeUser(id: ownerUid)
+        try await manager.switchToUser(with: ownerUid)
+
+        _ = try await manager.identify("external_1")
+
+        XCTAssertEqual(service.identityCalls.count, 2, "the identify must reach the backend, not answer from the previous user's identity")
+        XCTAssertEqual(service.createIdentityCalls.last?.userId, ownerUid, "the external id must be linked to the user the switch landed on")
+        XCTAssertEqual(storage.string(forKey: identityStorageKey), "external_1")
+    }
+
+    func testUserInfoRacingLogoutDoesNotAnswerWithThePreviousIdentitysUser() async throws {
+        // The fetch was built for the identified uid; a logout landing while it
+        // is in flight makes its answer belong to a session that is over — and
+        // persisting it would file that user under the restored uid's storage.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        service.identityLinkedUid = identifiedUid
+        service.userResult = try makeUser(id: identifiedUid)
+        _ = try await manager.identify("external_1")
+        let gate = AsyncGate()
+        service.onUser = { await gate.wait() }
+
+        async let raced: Qonversion.User = manager.userInfo()
+        await waitUntil { self.service.userCallsCount >= 2 }
+        await manager.logout()
+        await gate.open()
+
+        do {
+            _ = try await raced
+            XCTFail("Expected the abandoned fetch to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+
+        XCTAssertEqual(config.userId, anonUid)
+        let persisted: Qonversion.User? = try? storage.object(forKey: userStorageKey, dataType: Qonversion.User.self)
+        XCTAssertNil(persisted, "the previous identity's user must not be persisted under the new uid")
+    }
+
+    func testAnIdentityResumingAfterLogoutIsNotWrittenForTheRestoredUser() async throws {
+        // logout bumps the generation BEFORE the uid reverts, so an identify
+        // starting inside that window captures the already-bumped generation:
+        // the generation alone no longer proves the identity still applies.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        service.identityLinkedUid = identifiedUid
+        service.userResult = try makeUser(id: identifiedUid)
+        _ = try await manager.identify("external_1")
+
+        let willChangeGate = AsyncGate()
+        let willChangeObserver = SuspendingUserChangeObserver(gate: willChangeGate)
+        notifier.add(observer: willChangeObserver)
+        let identityGate = AsyncGate()
+
+        async let loggedOut: Void = manager.logout()
+        await waitUntil { willChangeObserver.didStart }
+        service.onIdentity = { await identityGate.wait() }
+
+        async let raced: Qonversion.User = manager.identify("external_2")
+        await waitUntil { self.service.identityCalls.count >= 2 }
+        await willChangeGate.open()
+        await loggedOut
+        await waitUntil { self.config.userId == self.anonUid }
+        await identityGate.open()
+
+        do {
+            _ = try await raced
+            XCTFail("Expected the abandoned identify to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+
+        XCTAssertNil(storage.string(forKey: identityStorageKey),
+                     "the logged out session's identity must not land on the restored user")
     }
 
     func testIdentifyFailurePropagatesToTheCaller() async throws {
@@ -807,4 +912,34 @@ private final class AsyncGate: @unchecked Sendable {
 private actor Flag {
     private(set) var isSet = false
     func set() { isSet = true }
+}
+
+/// Holds the will-change step open, so a test can park logout inside the window
+/// it opens between the generation bump and the uid revert.
+private final class SuspendingUserChangeObserver: UserChangedObserver, @unchecked Sendable {
+
+    private let gate: AsyncGate
+    private let lock = NSLock()
+    private var started = false
+
+    var didStart: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+
+        return started
+    }
+
+    init(gate: AsyncGate) {
+        self.gate = gate
+    }
+
+    func userWillChange() async {
+        lock.lock()
+        started = true
+        lock.unlock()
+
+        await gate.wait()
+    }
+
+    func userDidChange() {}
 }

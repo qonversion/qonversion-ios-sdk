@@ -669,6 +669,7 @@ final class MockUserService: UserServiceInterface {
     var onCreateUser: (() async -> Void)?
     var onIdentity: (() async -> Void)?
     var onCreateIdentity: (() async -> Void)?
+    var onUser: (() async -> Void)?
 
     private(set) var userCallsCount = 0
     private(set) var createUserCallsCount = 0
@@ -680,6 +681,7 @@ final class MockUserService: UserServiceInterface {
     func user() async throws -> Qonversion.User {
         userCallsCount += 1
         callLog.append("user")
+        await onUser?()
         if let userError { throw userError }
         if let error { throw error }
         guard let userResult else { throw MockError.noStub }

@@ -203,8 +203,14 @@ actor UserManager: UserManagerInterface {
         try await obtainUser()
 
         do {
+            // The request carries the uid read at build time, so its answer is
+            // only about the user it was captured for.
+            let generation: Int = sessionGeneration
+            let currentUid: String = internalConfig.userId
             let fetched: Qonversion.User = try await userService.user()
+            try ensureSameSession(generation: generation, uid: currentUid)
             let user: Qonversion.User = await stamped(fetched)
+            try ensureSameSession(generation: generation, uid: currentUid)
             persist(user)
             cachedUser = user
 
@@ -318,15 +324,15 @@ private extension UserManager {
         if let linkedUid = try await userService.identity(for: externalId) {
             // A logout landed mid-flight: applying the link now would silently
             // re-identify the user the host just logged out.
-            guard generation == sessionGeneration else { throw CancellationError() }
+            try ensureSameSession(generation: generation, uid: currentUid)
             if linkedUid != currentUid {
                 try await switchUser(to: linkedUid, identityExternalId: externalId)
                 return try currentUserOrFail()
             }
         } else {
-            guard generation == sessionGeneration else { throw CancellationError() }
+            try ensureSameSession(generation: generation, uid: currentUid)
             let resultUid: String = try await userService.createIdentity(externalId: externalId, userId: currentUid)
-            guard generation == sessionGeneration else { throw CancellationError() }
+            try ensureSameSession(generation: generation, uid: currentUid)
             if resultUid != currentUid {
                 try await switchUser(to: resultUid, identityExternalId: externalId)
                 return try currentUserOrFail()
@@ -336,6 +342,14 @@ private extension UserManager {
         localStorage.set(string: externalId, forKey: Constants.identityKey.rawValue)
 
         return try currentUserOrFail()
+    }
+
+    /// A suspended call's result may only be applied while it still belongs to
+    /// the session AND the user it was captured for: logout bumps the generation
+    /// before the uid reverts, and a restore owner switch moves the uid without
+    /// touching the generation at all.
+    func ensureSameSession(generation: Int, uid: String) throws {
+        guard generation == sessionGeneration, uid == internalConfig.userId else { throw CancellationError() }
     }
 
     func currentUserOrFail() throws -> Qonversion.User {
@@ -363,6 +377,10 @@ private extension UserManager {
         localStorage.set(string: uid, forKey: UserServiceStorageKeys.userIdKey.rawValue)
         if let identityExternalId {
             localStorage.set(string: identityExternalId, forKey: Constants.identityKey.rawValue)
+        } else {
+            // A switch with no identity of its own (restore following the owner):
+            // the new user is not linked to the previous user's external id.
+            localStorage.removeObject(forKey: Constants.identityKey.rawValue)
         }
 
         // The cleared caches belong to the previous user — clear right after
