@@ -13,10 +13,6 @@ fileprivate enum IntConstants: UInt {
     case maxRequestsPerSecond = 5
 }
 
-fileprivate enum StringConstants: String {
-    case requestsStorageKey = "requests"
-}
-
 final class MiscAssembly {
     
     let apiKey: String
@@ -100,7 +96,7 @@ final class MiscAssembly {
 
         // Scoped by apiKey: the replayed requests are stamped with the CURRENT
         // Authorization, so another project's queue must never leak into it.
-        let storeKey: String = InternalConstants.storagePrefix.rawValue + StringConstants.requestsStorageKey.rawValue + "." + apiKey
+        let storeKey: String = SDKStorageKeys.requests(forApiKey: apiKey)
         let requestsStorage = RequestsStorage(userDefaults: userDefaults, storeKey: storeKey)
         requestsStorageInstance = requestsStorage
 

@@ -361,23 +361,21 @@ final class IntegrationTests: XCTestCase {
 
     // MARK: - 8. intro eligibility over the real facade and manager
 
-    func testEligibilityFlowsThroughTheRealGraph() async throws {
+    func testTheEligibilityCallLoadsTheCatalogAndAnswersForEveryRequestedId() async throws {
+        // Scope, honestly: StoreKit.Product cannot be constructed outside a
+        // real StoreKit session, so no id can resolve past .unknown here. The
+        // resolution itself is pinned in ProductsManagerTests (over the
+        // injectable check seam) and in the StoreKitTest layer over an
+        // SKTestSession. What IS reachable here is that the real manager loads
+        // the real backend catalog once and answers for every requested id,
+        // including one that is not in the catalog at all.
         world.stubHappyUser()
         world.network.stub("GET", "/v4/products", body: #"{"object": "list", "data": [{"id": "pro", "apple_product_id": "com.app.pro"}]}"#)
 
         let result = try await world.productsManager.checkTrialIntroEligibility(productIds: ["pro", "missing"])
 
-        // Honest scope, deliberately left as-is: StoreKit.Product cannot be
-        // constructed outside a real StoreKit session, so over the object
-        // graph both ids can only resolve to .unknown. The eligibility
-        // resolution itself is pinned in ProductsManagerTests (over the
-        // injectable check seam) and in the StoreKitTest layer, which runs the
-        // real StoreKit over an SKTestSession. What this smoke test pins is
-        // the part that IS reachable here: the real manager consulted the real
-        // backend catalog first, and an id absent from it does not fail the
-        // call.
         XCTAssertEqual(world.network.recordedRequests("GET", "/v4/products").count, 1)
-        XCTAssertEqual(result["pro"], .unknown)
-        XCTAssertEqual(result["missing"], .unknown)
+        XCTAssertEqual(Set(result.keys), ["pro", "missing"], "an id the catalog does not know may not be dropped from the answer")
+        XCTAssertNil(result["never_requested"])
     }
 }

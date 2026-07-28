@@ -152,17 +152,14 @@ final class EntitlementsManagerTests: XCTestCase {
         let entitlements = try await manager.entitlements()
 
         XCTAssertEqual(entitlements["premium"]?.active, true)
-        XCTAssertTrue(facade.finishedTransactions.isEmpty)
+        XCTAssertEqual(service.entitlementsCalls, [uid], "the fallback answers a FAILED request — it may not replace it")
     }
 
     func testErrorIsRethrownWhenTheLocalFallbackHasNothingToServe() async {
         service.error = QonversionError(type: .critical)
         facade.currentEntitlementsResult = []
 
-        do {
-            _ = try await manager.entitlements()
-            XCTFail("Expected the error to be rethrown when there is nothing to serve")
-        } catch { }
+        await assertNothingServed(.critical)
     }
 
     func testGateFailureIsAnsweredFromTheLocalFallbackWithoutServiceCall() async throws {
@@ -182,9 +179,11 @@ final class EntitlementsManagerTests: XCTestCase {
         facade.currentEntitlementsResult = []
 
         do {
-            _ = try await manager.entitlements()
-            XCTFail("Expected the gate error to be rethrown")
-        } catch { }
+            let entitlements: [String: Qonversion.Entitlement] = try await manager.entitlements()
+            XCTFail("Expected the gate error to be rethrown, got \(entitlements)")
+        } catch {
+            XCTAssertEqual(error as? MockError, MockError.stubbed, "the gate's own error must reach the caller unwrapped")
+        }
 
         XCTAssertTrue(service.entitlementsCalls.isEmpty)
     }
@@ -237,8 +236,11 @@ final class EntitlementsManagerTests: XCTestCase {
 
         service.error = QonversionError(type: .internal)
         setupLocalCalculationContext()
-        _ = await servedEntitlements()
+        let served: [String: Qonversion.Entitlement] = await servedEntitlements()
 
+        // Without this the test cannot tell "the fallback ran and left the
+        // clock alone" from "the call threw before touching it".
+        XCTAssertEqual(served["premium"]?.active, true)
         XCTAssertEqual(storage.double(forKey: "qonversion.keys.entitlementsBackendTimestamp"), afterBackend)
     }
 

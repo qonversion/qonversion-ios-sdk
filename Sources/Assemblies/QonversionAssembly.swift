@@ -52,6 +52,15 @@ final class QonversionAssembly {
         self.servicesAssembly = ServicesAssembly(apiKey: apiKey, miscAssembly: miscAssembly, baseURL: baseURL)
         self.miscAssembly.servicesAssembly = self.servicesAssembly
 
+        // Strictly before the uid seeding and the legacy migrations below: a
+        // project switch must not be able to resurrect data those steps would
+        // have just written.
+        let apiKeyChangeCleaner = ApiKeyChangeCleaner(
+            localStorage: miscAssembly.localStorage(),
+            logger: miscAssembly.loggerWrapper()
+        )
+        apiKeyChangeCleaner.run(apiKey: apiKey)
+
         // Resolves the anonymous user id (persisted or generated) into InternalConfig.
         _ = servicesAssembly.userService()
 

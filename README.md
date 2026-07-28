@@ -162,8 +162,8 @@ for product in products {
     product.subscription?.promotionalOffers      // promo offers configured in App Store Connect
 
     // The raw store product, when you need the full StoreKit API
-    product.storeProduct       // StoreKit.Product (iOS 15+)
-    product.skProduct          // SKProduct (older systems)
+    product.storeProduct         // StoreKit.Product?, nil until the store answers
+    product.isStoreProductLinked // whether the store product is attached
 }
 ```
 
@@ -178,7 +178,7 @@ switch eligibility["pro_monthly"] {
 case .eligible:                 break // show the trial CTA
 case .ineligible:               break // trial already consumed — show the regular price
 case .nonIntroOrTrialProduct:   break // no intro offer configured
-case .unknown, .none:           break // store can't answer (e.g. iOS < 15)
+case .unknown, .none:           break // the store did not answer, or the id is not in your catalog
 }
 ```
 
