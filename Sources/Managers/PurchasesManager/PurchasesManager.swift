@@ -11,6 +11,9 @@ fileprivate enum Constants: String {
     // The transactions the host has already been told about, persisted:
     // StoreKit re-delivers every unfinished transaction on each cold start.
     case surfacedTransactionsKey = "qonversion.keys.surfacedTransactions"
+    // A revocation carries the id of the purchase it undoes, which that set
+    // already holds; this prefix gives it a namespace of its own.
+    case revokedTransactionPrefix = "revoked:"
 }
 
 fileprivate enum IntConstants: Int {
@@ -97,12 +100,18 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     // must not be lost.
     private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(replaysBacklog: true)
 
+    // The entitlements recalculated after a revocation. A refund is not a
+    // purchase, so no DeferredPurchase describes it — it reaches the host
+    // through entitlementsUpdates() only.
+    private let revocationsMulticast = AsyncMulticast<[String: Qonversion.Entitlement]>(replaysBacklog: true)
+
     func deferredPurchases() -> AsyncStream<Qonversion.DeferredPurchase> {
         return deferredPurchasesMulticast.stream()
     }
 
-    /// The entitlements-only projection of the deferred purchases: one
-    /// subscription of its own, so both streams stay independent.
+    /// The entitlements-only projection of the deferred purchases, plus the
+    /// revocations no deferred purchase can carry: one subscription of its own
+    /// per source, so every stream stays independent.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
         // The same bound as the subscription it wraps: a host that stops
         // reading must not turn the projection into an unbounded queue.
@@ -110,13 +119,21 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             // Subscribing here does not consume what deferredPurchases() is
             // owed: AsyncMulticast replays its backlog to every subscriber.
             let purchases: AsyncStream<Qonversion.DeferredPurchase> = self.deferredPurchasesMulticast.stream()
-            let task = Task {
+            let revocations: AsyncStream<[String: Qonversion.Entitlement]> = self.revocationsMulticast.stream()
+            let purchasesTask = Task {
                 for await purchase in purchases {
                     continuation.yield(purchase.entitlements)
                 }
-                continuation.finish()
             }
-            continuation.onTermination = { _ in task.cancel() }
+            let revocationsTask = Task {
+                for await entitlements in revocations {
+                    continuation.yield(entitlements)
+                }
+            }
+            continuation.onTermination = { _ in
+                purchasesTask.cancel()
+                revocationsTask.cancel()
+            }
         }
     }
 
@@ -520,6 +537,14 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     /// launch mode, one deferred purchase. A nil `userId` makes the funnel pass
     /// the user gate itself, and only once it owns the transaction.
     private func processObservedTransaction(_ transaction: Qonversion.Transaction, userId: String?, trigger: RequestTrigger) async {
+        // Checked before every dedup gate below: a revocation arrives as the
+        // very transaction the purchase already reported and surfaced, so both
+        // gates hold its id and both would swallow it.
+        if transaction.revocationDate != nil {
+            await processRevocation(of: transaction)
+            return
+        }
+
         // A purchase() call owns this product's lifecycle. Step aside BEFORE
         // reporting or finishing: a skipped transaction must stay unfinished so
         // the store re-delivers it.
@@ -578,6 +603,36 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
         let deferredPurchase: Qonversion.DeferredPurchase = await self.deferredPurchase(for: transaction, reportFailed: reportFailed)
         deferredPurchasesMulticast.yield(deferredPurchase)
+    }
+
+    /// A refund or a family-sharing revocation. It is not a purchase: nothing
+    /// is reported — the App Store server tells the backend about the refund —
+    /// and no deferred purchase is emitted. The host learns about it through
+    /// the entitlements the revocation leaves behind.
+    private func processRevocation(of transaction: Qonversion.Transaction) async {
+        // Finished before the dedup gate below: an unfinished revocation is
+        // re-delivered on every launch. In Analytics mode the host app owns
+        // the lifecycle, exactly as for a purchase.
+        if launchModeProvider.launchMode == .subscriptionManagement {
+            await storeKitFacade.finish(transaction)
+        }
+
+        if let id: String = transaction.id {
+            let revocationKey: String = Constants.revokedTransactionPrefix.rawValue + id
+            guard markSurfacedIfNew(revocationKey) else { return }
+        }
+
+        // Whatever the fresh window holds was answered before the revocation.
+        entitlementsManager.invalidateFreshBackendCache()
+
+        let entitlements: [String: Qonversion.Entitlement]
+        if let resolved: ResolvedEntitlements = try? await entitlementsManager.resolvedEntitlements() {
+            entitlements = resolved.entitlements
+        } else {
+            entitlements = await entitlementsManager.localFallbackEntitlements(for: [transaction])
+        }
+
+        revocationsMulticast.yield(entitlements)
     }
 }
 

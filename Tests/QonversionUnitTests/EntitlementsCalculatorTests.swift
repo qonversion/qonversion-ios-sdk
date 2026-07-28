@@ -146,6 +146,75 @@ final class EntitlementsCalculatorTests: XCTestCase {
         XCTAssertTrue(entitlements.isEmpty)
     }
 
+    // MARK: - Revocations (refund, family sharing revocation)
+
+    private func makeRevokedTransaction(productId: String = "com.app.pro", purchasedSecondsAgo: TimeInterval, revokedSecondsAgo: TimeInterval = 0) -> Qonversion.Transaction {
+        let purchaseDate: Date = now.addingTimeInterval(-purchasedSecondsAgo)
+        let revocationDate: Date = now.addingTimeInterval(-revokedSecondsAgo)
+
+        return Qonversion.Transaction(id: UUID().uuidString, productId: productId, purchaseDate: purchaseDate, revocationDate: revocationDate)
+    }
+
+    func testRevokedTransactionGrantsNothingWhileItsPeriodIsStillRunning() {
+        // A refund lands mid-period: the purchase is 10 days into a month, so
+        // the expiration check alone would still call it active.
+        let day: TimeInterval = 24 * 60 * 60
+        let entitlements = EntitlementsCalculator.calculate(
+            transactions: [makeRevokedTransaction(purchasedSecondsAgo: 10 * day)],
+            products: [makeProduct()],
+            mapping: ["pro": ["premium", "extra"]],
+            now: now
+        )
+
+        XCTAssertTrue(entitlements.isEmpty, "a refunded purchase must not grant access for the rest of its period")
+    }
+
+    func testRevokedLifetimePurchaseGrantsNothing() {
+        // No period means no expiration at all: without reading the revocation
+        // a refunded lifetime purchase would grant access forever.
+        let entitlements = EntitlementsCalculator.calculate(
+            transactions: [makeRevokedTransaction(purchasedSecondsAgo: 0)],
+            products: [makeProduct(periodUnit: nil)],
+            mapping: ["pro": ["premium"]],
+            now: now
+        )
+
+        XCTAssertTrue(entitlements.isEmpty)
+    }
+
+    func testRevokedTransactionOfAnAlreadyExpiredPeriodGrantsNothing() {
+        let day: TimeInterval = 24 * 60 * 60
+        let entitlements = EntitlementsCalculator.calculate(
+            transactions: [makeRevokedTransaction(purchasedSecondsAgo: 31 * day)],
+            products: [makeProduct()],
+            mapping: ["pro": ["premium"]],
+            now: now
+        )
+
+        XCTAssertTrue(entitlements.isEmpty)
+    }
+
+    func testRevokedTransactionDoesNotTakeDownAGrantAnotherProductStillHolds() {
+        // Only the revoked purchase loses its grant: a second product mapped to
+        // the same permission keeps granting it.
+        let day: TimeInterval = 24 * 60 * 60
+        let monthly: Qonversion.Product = makeProduct(qonversionId: "monthly", storeId: "com.app.monthly", periodUnit: .month, periodValue: 1)
+        let annual: Qonversion.Product = makeProduct(qonversionId: "annual", storeId: "com.app.annual", periodUnit: .year, periodValue: 1)
+        let revoked: Qonversion.Transaction = makeRevokedTransaction(productId: "com.app.monthly", purchasedSecondsAgo: 0)
+        let active: Qonversion.Transaction = makeTransaction(productId: "com.app.annual", purchasedSecondsAgo: 0)
+
+        let entitlements = EntitlementsCalculator.calculate(
+            transactions: [revoked, active],
+            products: [monthly, annual],
+            mapping: ["monthly": ["premium"], "annual": ["premium"]],
+            now: now
+        )
+
+        XCTAssertEqual(entitlements["premium"]?.active, true)
+        XCTAssertEqual(entitlements["premium"]?.productId, "annual")
+        XCTAssertEqual(entitlements["premium"]?.expirationDate, now.addingTimeInterval(365 * day))
+    }
+
     func testProductWithoutPeriodGrantsLifetimeEntitlement() {
         let entitlements = EntitlementsCalculator.calculate(
             transactions: [makeTransaction(purchasedSecondsAgo: 365 * 24 * 60 * 60)],

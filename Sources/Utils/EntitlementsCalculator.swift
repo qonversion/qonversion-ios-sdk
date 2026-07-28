@@ -71,7 +71,8 @@ enum EntitlementsCalculator {
     ///
     /// Grant rule (production-exact): an entitlement is granted when the
     /// calculated expiration is nil (lifetime) or in the future; expired
-    /// transactions are skipped entirely.
+    /// transactions are skipped entirely. A revoked transaction (refund,
+    /// family-sharing revocation) grants nothing at all.
     static func calculate(
         transactions: [Qonversion.Transaction],
         products: [Qonversion.Product],
@@ -85,6 +86,10 @@ enum EntitlementsCalculator {
 
         var result: [String: Qonversion.Entitlement] = [:]
         for transaction in transactions {
+            // Checked before the expiration: a refunded lifetime purchase has
+            // no expiration to fail, and a mid-period refund has one in the future.
+            guard transaction.revocationDate == nil else { continue }
+
             let product: Qonversion.Product? = productsByStoreId[transaction.productId]
             let expiration: Date? = expirationDate(for: transaction, product: product)
             guard expiration == nil || expiration! > now else { continue }

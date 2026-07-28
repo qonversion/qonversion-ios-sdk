@@ -58,7 +58,8 @@ extension Qonversion {
         public var revocationReason: Qonversion.Transaction.RevocationReason? { Qonversion.Transaction.RevocationReason.from(revocataionReason: storeKitTransaction?.revocationReason) }
         
         /// The date that the App Store refunded the transaction or revoked it from Family Sharing.
-        public var revocationDate: Date? { storeKitTransaction?.revocationDate }
+        /// A non-nil value means the purchase no longer grants access.
+        public let revocationDate: Date?
         
         /// A UUID that associates the transaction with a user on your own service.
         public var appAccountToken: UUID? { storeKitTransaction?.appAccountToken }
@@ -348,10 +349,12 @@ extension Qonversion {
             price: Decimal? = nil,
             currency: Qonversion.Currency? = nil,
             storefront: Qonversion.Storefront? = nil,
-            jws: String? = nil
+            jws: String? = nil,
+            revocationDate: Date? = nil
         ) {
             self.jsonRepresentation = nil
             self.id = id
+            self.revocationDate = revocationDate
             self.originalId = originalId
             self.productId = productId
             self.subscriptionGroupId = subscriptionGroupId
@@ -370,6 +373,7 @@ extension Qonversion {
             self.jsonRepresentation = transaction.jsonRepresentation
             self.jws = jws
             self.id = String(transaction.id)
+            self.revocationDate = transaction.revocationDate
             self.originalId = String(transaction.originalID)
             self.productId = transaction.productID
             self.subscriptionGroupId = transaction.subscriptionGroupID
