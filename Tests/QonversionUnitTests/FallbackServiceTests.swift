@@ -41,7 +41,7 @@ final class FallbackServiceTests: XCTestCase {
         {
             "products": [
                 {"id": "pro", "apple_product_id": "com.app.pro"},
-                {"id": "lite", "apple_product_id": "com.app.lite", "offering_id": "main"}
+                {"id": "lite", "apple_product_id": "com.app.lite"}
             ],
             "products_permissions": {"pro": ["premium"], "lite": ["basic"]}
         }
@@ -51,7 +51,7 @@ final class FallbackServiceTests: XCTestCase {
         let fallback = service.obtainFallbackData()
 
         XCTAssertEqual(fallback?.products?.map(\.qonversionId), ["pro", "lite"])
-        XCTAssertEqual(fallback?.products?.last?.offeringId, "main")
+        XCTAssertEqual(fallback?.products?.last?.storeId, "com.app.lite")
         XCTAssertEqual(fallback?.productsPermissions, ["pro": ["premium"], "lite": ["basic"]])
     }
 
@@ -77,9 +77,9 @@ final class FallbackServiceTests: XCTestCase {
         let fallback = service.obtainFallbackData()
 
         XCTAssertEqual(fallback?.remoteConfigs?.count, 2)
-        XCTAssertEqual(fallback?.remoteConfigs?.first?.source.contextKey, "main")
+        XCTAssertEqual(fallback?.remoteConfigs?.first?.source?.contextKey, "main")
         XCTAssertEqual(fallback?.remoteConfigs?.first?.payload?["title"] as? String, "Fallback title")
-        XCTAssertNil(fallback?.remoteConfigs?.last?.source.contextKey)
+        XCTAssertNil(fallback?.remoteConfigs?.last?.source?.contextKey)
     }
 
     // MARK: - the shipped ObjC contract
@@ -152,7 +152,7 @@ final class FallbackServiceTests: XCTestCase {
         let fallback = service.obtainFallbackData()
 
         XCTAssertEqual(fallback?.products?.map(\.qonversionId), ["pro"])
-        XCTAssertEqual(fallback?.remoteConfigs?.map { $0.source.identifier }, ["src-1"])
+        XCTAssertEqual(fallback?.remoteConfigs?.map { $0.source?.identifier }, ["src-1"])
     }
 
     func testOneMalformedPermissionsRelationDoesNotKillTheOthers() throws {

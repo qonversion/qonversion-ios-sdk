@@ -153,6 +153,13 @@ own `type`, `apiCode` and `apiType`. `.loadingRemoteConfigFailed` and
 `.loadingRemoteConfigListFailed` are now what they say — the failure could not
 be classified.
 
+### Remote config source is optional
+
+`RemoteConfig.source` is now `Source?`. The backend reports no source for an
+unassigned config, and treating that as a malformed payload used to fail the
+whole decode — one sourceless config took the entire list down with it. Unwrap
+it (`config.source?.contextKey`) where you read it.
+
 ### visionOS purchases
 
 visionOS has no scene-less StoreKit purchase call: the system needs to know
@@ -183,7 +190,7 @@ of crashing. Nothing changes on iOS, macOS, tvOS or watchOS.
 
 | API | Replacement |
 |---|---|
-| `offerings(completion)` | Removed — offerings are deprecated product-wide. Manage paywall products with [Remote Configs](https://documentation.qonversion.io/docs/migrate-offerings-to-remote-configs). |
+| `offerings(completion)` and `Product.offeringId` | Removed — offerings are gone product-wide and the backend no longer returns them. Manage paywall products with [Remote Configs](https://documentation.qonversion.io/docs/migrate-offerings-to-remote-configs). |
 | `purchase(productID, completion)` and other deprecated purchase variants | `purchase(_:options:)` with a `Qonversion.Product` |
 | `attribution(data, fromProvider)` | Removed — was already a deprecated no-op; attribution works automatically |
 | `setNotificationsToken` / `handleNotification` | Removed — were deprecated automation APIs |
@@ -212,6 +219,13 @@ split your data by build type on the SDK's word.
 
 `Qonversion.User` exposes `originalAppVersion` — the app version the user
 originally downloaded from the App Store, for grandfathering older installs.
+
+The SDK resolves it on the device from the StoreKit 2 app transaction; the
+backend neither serves nor accepts the field. It is read once per process and
+persisted with the user, so `userInfo()` carries it whether the user came from
+the network or from the local cache. Expect `nil` below iOS 16, macOS 13,
+tvOS 16 or watchOS 9, and whenever the store cannot be reached — a missing
+version is never an error, so plan the grandfathering branch for `nil`.
 
 ## Purchase and deferred purchase provenance
 

@@ -127,7 +127,7 @@ final class QonversionFacadeTests: XCTestCase {
 
     func testPurchaseThrowsInitializationErrorBeforeInitialize() async {
         do {
-            _ = try await Qonversion.shared.purchase(Qonversion.Product(qonversionId: "p", storeId: "s", offeringId: nil))
+            _ = try await Qonversion.shared.purchase(Qonversion.Product(qonversionId: "p", storeId: "s"))
             XCTFail("Expected initialization error")
         } catch let error as QonversionError {
             XCTAssertEqual(error.type, .sdkInitializationError)
@@ -206,7 +206,7 @@ final class QonversionFacadeTests: XCTestCase {
               let userManager = assembly.userManager() as? UserManager else {
             return XCTFail("Unexpected assembly types")
         }
-        productsManager.loadedProducts = [Qonversion.Product(qonversionId: "q", storeId: "s", offeringId: nil)]
+        productsManager.loadedProducts = [Qonversion.Product(qonversionId: "q", storeId: "s")]
 
         // Move away from the original anonymous user first — a logout on the
         // original user is deliberately a no-op.

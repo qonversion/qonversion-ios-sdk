@@ -16,8 +16,8 @@ final class ProductsServiceTests: XCTestCase {
         let service = ProductsService(requestProcessor: processor, internalConfig: config)
 
         let stubProducts: [Qonversion.Product] = [
-            Qonversion.Product(qonversionId: "main", storeId: "com.app.main", offeringId: "offering_1"),
-            Qonversion.Product(qonversionId: "secondary", storeId: "com.app.secondary", offeringId: nil)
+            Qonversion.Product(qonversionId: "main", storeId: "com.app.main"),
+            Qonversion.Product(qonversionId: "secondary", storeId: "com.app.secondary")
         ]
         processor.results = [ListEnvelope<Qonversion.Product>(data: stubProducts)]
 
@@ -27,9 +27,8 @@ final class ProductsServiceTests: XCTestCase {
         XCTAssertEqual(products.count, 2)
         XCTAssertEqual(products[0].qonversionId, "main")
         XCTAssertEqual(products[0].storeId, "com.app.main")
-        XCTAssertEqual(products[0].offeringId, "offering_1")
         XCTAssertEqual(products[1].qonversionId, "secondary")
-        XCTAssertNil(products[1].offeringId)
+        XCTAssertEqual(products[1].storeId, "com.app.secondary")
     }
 
     func testProductsReturnsEmptyArrayFromProcessor() async throws {

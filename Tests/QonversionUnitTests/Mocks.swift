@@ -991,3 +991,16 @@ final class MockDeviceService: DeviceServiceInterface {
         return updateResult ?? device
     }
 }
+
+// MARK: - App transaction
+
+final class MockAppTransactionReader: AppTransactionReaderInterface, @unchecked Sendable {
+
+    var originalAppVersionResult: String?
+    private(set) var callsCount = 0
+
+    func originalAppVersion() async -> String? {
+        callsCount += 1
+        return originalAppVersionResult
+    }
+}

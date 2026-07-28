@@ -19,10 +19,7 @@ extension Qonversion {
         
         /// The AppStore product identifier.
         public let storeId: String
-        
-        /// The Qonversion offering identifier if product linked to an offering or nil.
-        public let offeringId: String?
-        
+
         /// The localized display name of the product, if it exists.
         public var displayName: String? { storeProduct?.displayName }
 
@@ -101,22 +98,19 @@ extension Qonversion {
             let storeIdentifier: String? = try container.decodeIfPresent(String.self, forKey: .legacyStoreId)
                 ?? container.decodeIfPresent(String.self, forKey: .storeId)
             storeId = storeIdentifier ?? ""
-            offeringId = try container.decodeIfPresent(String.self, forKey: .offeringId)
         }
-        
+
         /// Only the wire fields round-trip — StoreKit enrichment is runtime
         /// state and is re-applied after decoding.
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(qonversionId, forKey: .qonversionId)
             try container.encode(storeId, forKey: .storeId)
-            try container.encodeIfPresent(offeringId, forKey: .offeringId)
         }
 
-        init(qonversionId: String, storeId: String, offeringId: String?) {
+        init(qonversionId: String, storeId: String) {
             self.qonversionId = qonversionId
             self.storeId = storeId
-            self.offeringId = offeringId
         }
         
         // MARK: - Nested structures and enums
@@ -411,7 +405,6 @@ extension Qonversion {
             case storeId = "apple_product_id"
             /// The fallback file's spelling of `storeId` — see init(from:).
             case legacyStoreId = "store_id"
-            case offeringId = "offering_id"
         }
     }
 }

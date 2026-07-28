@@ -21,29 +21,24 @@ extension Qonversion {
             case creationDate = "created_at"
             case identityId = "identity_id"
             case environment
-            case appleExtra = "apple_extra"
+            // Written and read by the local store only — the backend neither
+            // serves nor accepts this field.
+            case originalAppVersion = "original_app_version"
         }
 
-        private struct AppleExtra: Codable {
-            let originalApplicationVersion: String?
-
-            private enum CodingKeys: String, CodingKey {
-                case originalApplicationVersion = "original_application_version"
-            }
-        }
-        
         /// Qonversion User ID
         public let id: String
-        
+
         /// Date when the user was created
         public let creationDate: Date?
 
         /// The integrator's identity linked to the user, if any
         public let identityId: String?
 
-        /// The app version the user originally purchased from the App Store —
+        /// The app version the user originally downloaded from the App Store —
         /// useful to grandfather users of older versions. Nil when the store
-        /// has not reported it (yet).
+        /// does not report it: below iOS 16, macOS 13, tvOS 16 or watchOS 9,
+        /// and whenever the store cannot be reached.
         public let originalAppVersion: String?
         
         let environment: User.Environment
@@ -64,8 +59,7 @@ extension Qonversion {
             // Tolerant: an unknown environment value must not fail the decode.
             let rawEnvironment = try container.decodeIfPresent(String.self, forKey: .environment)
             environment = rawEnvironment.flatMap { User.Environment(rawValue: $0) } ?? .production
-            let appleExtra: AppleExtra? = try? container.decodeIfPresent(AppleExtra.self, forKey: .appleExtra)
-            originalAppVersion = appleExtra?.originalApplicationVersion
+            originalAppVersion = try? container.decodeIfPresent(String.self, forKey: .originalAppVersion)
         }
 
         public func encode(to encoder: Encoder) throws {
@@ -74,9 +68,11 @@ extension Qonversion {
             try container.encodeIfPresent(creationDate, forKey: .creationDate)
             try container.encodeIfPresent(identityId, forKey: .identityId)
             try container.encode(environment, forKey: .environment)
-            if let originalAppVersion {
-                try container.encode(AppleExtra(originalApplicationVersion: originalAppVersion), forKey: .appleExtra)
-            }
+            try container.encodeIfPresent(originalAppVersion, forKey: .originalAppVersion)
+        }
+
+        func with(originalAppVersion: String) -> User {
+            User(id: id, creationDate: creationDate, identityId: identityId, environment: environment, originalAppVersion: originalAppVersion)
         }
     }
 }

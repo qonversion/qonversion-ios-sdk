@@ -112,11 +112,31 @@ final class EntitiesDecodingTests: XCTestCase {
         let remoteConfig = try decode(Qonversion.RemoteConfig.self, json)
 
         // "uid" maps to identifier, snake_case fields map to camelCase properties.
-        XCTAssertEqual(remoteConfig.source.identifier, "source_uid")
-        XCTAssertEqual(remoteConfig.source.name, "Source name")
-        XCTAssertEqual(remoteConfig.source.type, .experimentControlGroup)
-        XCTAssertEqual(remoteConfig.source.assignmentType, .manual)
-        XCTAssertEqual(remoteConfig.source.contextKey, "main")
+        XCTAssertEqual(remoteConfig.source?.identifier, "source_uid")
+        XCTAssertEqual(remoteConfig.source?.name, "Source name")
+        XCTAssertEqual(remoteConfig.source?.type, .experimentControlGroup)
+        XCTAssertEqual(remoteConfig.source?.assignmentType, .manual)
+        XCTAssertEqual(remoteConfig.source?.contextKey, "main")
+    }
+
+    func testRemoteConfigDecodesWithANullSource() throws {
+        // The backend serializes source from a pointer without omitempty, so
+        // an unassigned config arrives as an explicit null. That is a config
+        // without a source, never a broken payload.
+        let json = #"{"payload": {"key": "value"}, "experiment": null, "source": null}"#
+
+        let remoteConfig = try decode(Qonversion.RemoteConfig.self, json)
+
+        XCTAssertNil(remoteConfig.source)
+        XCTAssertEqual(remoteConfig.payload?["key"] as? String, "value")
+    }
+
+    func testRemoteConfigDecodesWithAMissingSource() throws {
+        let json = #"{"payload": {"key": "value"}}"#
+
+        let remoteConfig = try decode(Qonversion.RemoteConfig.self, json)
+
+        XCTAssertNil(remoteConfig.source)
     }
 
     func testRemoteConfigDecodingNullPayloadBecomesNil() throws {
@@ -133,7 +153,7 @@ final class EntitiesDecodingTests: XCTestCase {
 
         let remoteConfig = try decode(Qonversion.RemoteConfig.self, json)
 
-        XCTAssertNil(remoteConfig.source.contextKey)
+        XCTAssertNil(remoteConfig.source?.contextKey)
     }
 
     func testRemoteConfigSourceNullContextKeyBecomesNil() throws {
@@ -141,7 +161,7 @@ final class EntitiesDecodingTests: XCTestCase {
 
         let remoteConfig = try decode(Qonversion.RemoteConfig.self, json)
 
-        XCTAssertNil(remoteConfig.source.contextKey)
+        XCTAssertNil(remoteConfig.source?.contextKey)
     }
 
     func testOneMalformedEntitlementDoesNotNullTheWholeList() throws {
@@ -170,7 +190,7 @@ final class EntitiesDecodingTests: XCTestCase {
 
         let remoteConfig = try decode(Qonversion.RemoteConfig.self, json)
 
-        XCTAssertNil(remoteConfig.source.contextKey)
+        XCTAssertNil(remoteConfig.source?.contextKey)
     }
 
 
@@ -195,8 +215,8 @@ final class EntitiesDecodingTests: XCTestCase {
 
         let config = try JSONDecoder.qonversionTest.decode(Qonversion.RemoteConfig.self, from: Data(json.utf8))
 
-        XCTAssertEqual(config.source.type, .unknown)
-        XCTAssertEqual(config.source.assignmentType, .unknown)
+        XCTAssertEqual(config.source?.type, .unknown)
+        XCTAssertEqual(config.source?.assignmentType, .unknown)
     }
 
     func testUnknownExperimentGroupTypeFallsBackToUnknown() throws {
@@ -237,7 +257,7 @@ final class EntitiesDecodingTests: XCTestCase {
         let list = try decode(Qonversion.RemoteConfigList.self, json)
 
         XCTAssertEqual(list.remoteConfigs.count, 1)
-        XCTAssertEqual(list.remoteConfigs[0].source.identifier, "source_uid")
+        XCTAssertEqual(list.remoteConfigs[0].source?.identifier, "source_uid")
     }
 
     func testRemoteConfigListSkipsAMalformedRowOfTheBareArray() throws {
@@ -256,7 +276,7 @@ final class EntitiesDecodingTests: XCTestCase {
         let list = try decode(Qonversion.RemoteConfigList.self, json)
 
         XCTAssertEqual(list.remoteConfigs.count, 1)
-        XCTAssertEqual(list.remoteConfigs[0].source.identifier, "source_uid")
+        XCTAssertEqual(list.remoteConfigs[0].source?.identifier, "source_uid")
     }
 
     func testRemoteConfigListLookupByContextKeyAndEmptyContextKey() {
@@ -267,9 +287,9 @@ final class EntitiesDecodingTests: XCTestCase {
             Qonversion.RemoteConfig(payload: nil, experiment: nil, source: emptySource)
         ])
 
-        XCTAssertEqual(list.remoteConfig(for: "main")?.source.identifier, "rc_main")
+        XCTAssertEqual(list.remoteConfig(for: "main")?.source?.identifier, "rc_main")
         XCTAssertNil(list.remoteConfig(for: "unknown"))
-        XCTAssertEqual(list.remoteConfigForEmptyContextKey()?.source.identifier, "rc_empty")
+        XCTAssertEqual(list.remoteConfigForEmptyContextKey()?.source?.identifier, "rc_empty")
     }
 
     // MARK: - UserProperty
@@ -769,36 +789,32 @@ final class EntitiesDecodingTests: XCTestCase {
     // MARK: - Product
 
     func testProductDecodingUsesV4Keys() throws {
-        // v4 wire keys: id / apple_product_id / offering_id; extra fields are
-        // ignored and the store product stays unlinked.
-        let json = #"{"id": "main", "apple_product_id": "com.app.main", "offering_id": "offering_1", "type": "subscription", "created_at": "2024-01-01T00:00:00Z"}"#
+        // v4 wire keys: id / apple_product_id; extra fields are ignored and the
+        // store product stays unlinked.
+        let json = #"{"id": "main", "apple_product_id": "com.app.main", "type": "subscription", "created_at": "2024-01-01T00:00:00Z"}"#
 
         let product = try decode(Qonversion.Product.self, json)
 
         XCTAssertEqual(product.qonversionId, "main")
         XCTAssertEqual(product.storeId, "com.app.main")
-        XCTAssertEqual(product.offeringId, "offering_1")
         XCTAssertFalse(product.isStoreProductLinked)
         XCTAssertNil(product.displayName)
         XCTAssertNil(product.price)
         XCTAssertFalse(product.isStoreProductLinked)
     }
 
-    func testProductDecodesWithNullOfferingId() throws {
-        // A product outside any offering is valid: offeringId is optional.
-        let json = #"{"id": "main", "apple_product_id": "com.app.main", "offering_id": null}"#
+    func testProductIgnoresAnOfferingIdOnTheWire() throws {
+        // Offerings are gone platform-wide: the backend never answers
+        // offering_id, and a stray one must not reach any SDK surface.
+        let json = #"{"id": "main", "apple_product_id": "com.app.main", "offering_id": "offering_1"}"#
 
         let product = try decode(Qonversion.Product.self, json)
+        let encoded = try JSONEncoder().encode(product)
+        let fields = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
 
-        XCTAssertNil(product.offeringId)
-    }
-
-    func testProductDecodesWithMissingOfferingId() throws {
-        let json = #"{"id": "main", "apple_product_id": "com.app.main"}"#
-
-        let product = try decode(Qonversion.Product.self, json)
-
-        XCTAssertNil(product.offeringId)
+        XCTAssertEqual(product.qonversionId, "main")
+        XCTAssertEqual(product.storeId, "com.app.main")
+        XCTAssertFalse(fields.keys.contains("offering_id"))
     }
 }
 
@@ -854,30 +870,34 @@ final class ToleratedDecodingTests: XCTestCase {
 
     // MARK: - originalAppVersion
 
-    func testUserDecodesTheOriginalAppVersion() throws {
+    func testUserIgnoresAppleExtraOnTheWire() throws {
+        // The backend does not serve apple_extra: originalAppVersion is read
+        // from StoreKit on the device, so a stray field must not feed it.
         let json = #"{"id": "QON_abc", "apple_extra": {"original_application_version": "1.0.3"}}"#
-
-        let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
-
-        XCTAssertEqual(user.originalAppVersion, "1.0.3")
-    }
-
-    func testUserToleratesAMissingAppleExtra() throws {
-        let json = #"{"id": "QON_abc"}"#
 
         let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
 
         XCTAssertNil(user.originalAppVersion)
     }
 
-    func testUserOriginalAppVersionSurvivesTheStorageRoundtrip() throws {
-        let json = #"{"id": "QON_abc", "apple_extra": {"original_application_version": "1.0.3"}}"#
-        let decoder: JSONDecoder = sdkDecoder()
-        let user = try decoder.decode(Qonversion.User.self, from: Data(json.utf8))
+    func testUserEncodingCarriesNoAppleExtra() throws {
+        let user = Qonversion.User(id: "QON_abc", originalAppVersion: "1.0.3")
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
 
-        let restored = try decoder.decode(Qonversion.User.self, from: try encoder.encode(user))
+        let fields = try XCTUnwrap(JSONSerialization.jsonObject(with: try encoder.encode(user)) as? [String: Any])
+
+        XCTAssertFalse(fields.keys.contains("apple_extra"))
+    }
+
+    func testUserOriginalAppVersionSurvivesTheStorageRoundtrip() throws {
+        // The locally resolved version is persisted with the user, so a
+        // cached user carries it without a second StoreKit read.
+        let user = Qonversion.User(id: "QON_abc", originalAppVersion: "1.0.3")
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+
+        let restored = try sdkDecoder().decode(Qonversion.User.self, from: try encoder.encode(user))
 
         XCTAssertEqual(restored.originalAppVersion, "1.0.3")
     }
@@ -916,6 +936,6 @@ final class ToleratedDecodingTests: XCTestCase {
 
         let list = try sdkDecoder().decode(Qonversion.RemoteConfigList.self, from: Data(json.utf8))
 
-        XCTAssertEqual(list.remoteConfigs.map { $0.source.identifier }, ["s1"])
+        XCTAssertEqual(list.remoteConfigs.map { $0.source?.identifier }, ["s1"])
     }
 }

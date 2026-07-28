@@ -92,7 +92,7 @@ final class EntitlementsManagerTests: XCTestCase {
 
     private func setupLocalCalculationContext() {
         // A month subscription bought recently + mapping — the local path can grant "premium".
-        var product = Qonversion.Product(qonversionId: "pro", storeId: "com.app.pro", offeringId: nil)
+        var product = Qonversion.Product(qonversionId: "pro", storeId: "com.app.pro")
         product.subscription = Qonversion.Product.SubscriptionInfo(
             subscriptionGroupId: "g",
             subscriptionPeriod: Qonversion.Product.SubscriptionPeriod(unit: .month, value: 1)

@@ -105,6 +105,8 @@
 		70CD93222BC6E22B0039D65C /* StoreKitFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DC2BC6E22B0039D65C /* StoreKitFacade.swift */; };
 		A200000000000000000000B1 /* StoreKitPurchaseOutcome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000000000000000000A1 /* StoreKitPurchaseOutcome.swift */; };
 		70CD93232BC6E22B0039D65C /* StoreKitFacadeInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */; };
+		A200000000000000000000C2 /* AppTransactionReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000000000000000000C1 /* AppTransactionReader.swift */; };
+		A200000000000000000000D2 /* AppTransactionReaderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000000000000000000D1 /* AppTransactionReaderInterface.swift */; };
 		70CD93242BC6E22B0039D65C /* StoreKitMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DE2BC6E22B0039D65C /* StoreKitMapper.swift */; };
 		70CD93252BC6E22B0039D65C /* StoreKitMapperInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92DF2BC6E22B0039D65C /* StoreKitMapperInterface.swift */; };
 		70CD93292BC6E22B0039D65C /* StoreKitWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92E32BC6E22B0039D65C /* StoreKitWrapper.swift */; };
@@ -345,6 +347,8 @@
 		70CD92DC2BC6E22B0039D65C /* StoreKitFacade.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitFacade.swift; sourceTree = "<group>"; };
 		A200000000000000000000A1 /* StoreKitPurchaseOutcome.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitPurchaseOutcome.swift; sourceTree = "<group>"; };
 		70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitFacadeInterface.swift; sourceTree = "<group>"; };
+		A200000000000000000000C1 /* AppTransactionReader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppTransactionReader.swift; sourceTree = "<group>"; };
+		A200000000000000000000D1 /* AppTransactionReaderInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppTransactionReaderInterface.swift; sourceTree = "<group>"; };
 		70CD92DE2BC6E22B0039D65C /* StoreKitMapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitMapper.swift; sourceTree = "<group>"; };
 		70CD92DF2BC6E22B0039D65C /* StoreKitMapperInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitMapperInterface.swift; sourceTree = "<group>"; };
 		70CD92E32BC6E22B0039D65C /* StoreKitWrapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitWrapper.swift; sourceTree = "<group>"; };
@@ -837,6 +841,8 @@
 		70CD92E62BC6E22B0039D65C /* StoreKit */ = {
 			isa = PBXGroup;
 			children = (
+				A200000000000000000000C1 /* AppTransactionReader.swift */,
+				A200000000000000000000D1 /* AppTransactionReaderInterface.swift */,
 				70CD92DC2BC6E22B0039D65C /* StoreKitFacade.swift */,
 				A200000000000000000000A1 /* StoreKitPurchaseOutcome.swift */,
 				70CD92DD2BC6E22B0039D65C /* StoreKitFacadeInterface.swift */,
@@ -1247,6 +1253,8 @@
 				70CD93202BC6E22B0039D65C /* UserService.swift in Sources */,
 				70EA73552BD12CA500B0DFDA /* Product.swift in Sources */,
 				70CD93232BC6E22B0039D65C /* StoreKitFacadeInterface.swift in Sources */,
+				A200000000000000000000C2 /* AppTransactionReader.swift in Sources */,
+				A200000000000000000000D2 /* AppTransactionReaderInterface.swift in Sources */,
 				70CD93192BC6E22B0039D65C /* LocalStorageInterface.swift in Sources */,
 				70EA735D2BD6B66300B0DFDA /* ProductsManagerInterface.swift in Sources */,
 				A700000000000000000000B1 /* ProductsDataSource.swift in Sources */,
