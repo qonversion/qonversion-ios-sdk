@@ -67,7 +67,12 @@ final class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     }
 
     guard let error else {
-      if responseCode == ResponseCode.noContent.rawValue, let empty = EmptyApiResponse() as? T {
+      // A no-response request tolerates any acknowledged 2xx that carries no
+      // body, not only a 204: the backend took it, there is nothing to parse.
+      // Failing it instead makes the caller re-buffer and re-send the batch.
+      let isSuccess: Bool = (ResponseCode.successMin.rawValue...ResponseCode.successMax.rawValue).contains(responseCode)
+      let isAcknowledgedWithoutBody: Bool = responseCode == ResponseCode.noContent.rawValue || (isSuccess && responseBody.isEmpty)
+      if isAcknowledgedWithoutBody, let empty = EmptyApiResponse() as? T {
         return empty
       }
 

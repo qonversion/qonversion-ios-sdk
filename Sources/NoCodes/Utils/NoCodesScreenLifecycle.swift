@@ -45,37 +45,76 @@ enum NoCodesScreenLifecycle {
 /// until it is well under way, so a close landing in that window has nothing to
 /// act on. Rather than dropping it, the gate remembers it and cancels the
 /// presentation it raced.
+/// What a `close` has to act on.
+struct NoCodesCloseOutcome: Equatable {
+
+  /// A screen is on screen and has to be dismissed.
+  let closesVisibleScreen: Bool
+
+  /// A presentation is in flight and will not reach the screen.
+  let cancelsPendingPresentation: Bool
+}
+
+/// What a presentation that reached its presentation point may do.
+enum NoCodesPresentationOutcome: Equatable {
+
+  case present
+
+  /// The host closed the flow first. `reportsFinished` is false when that same
+  /// close dismissed a visible screen, which reports the flow finished itself.
+  case cancelled(reportsFinished: Bool)
+}
+
 struct NoCodesPresentationGate {
 
   private var isPresenting = false
   private var closeRequestedWhilePresenting = false
+  private var pendingCloseDismissedAVisibleScreen = false
+  private var hasVisibleScreen = false
 
   mutating func presentationStarted() {
     isPresenting = true
     // A close left over from an abandoned presentation must not take this one
     // down with it.
     closeRequestedWhilePresenting = false
+    pendingCloseDismissedAVisibleScreen = false
   }
 
   /// Call once the screen is about to be put on screen.
-  ///
-  /// - Returns: whether the presentation should still happen.
-  mutating func presentationReady() -> Bool {
+  mutating func presentationReady() -> NoCodesPresentationOutcome {
     isPresenting = false
-    let shouldPresent: Bool = !closeRequestedWhilePresenting
-    closeRequestedWhilePresenting = false
 
-    return shouldPresent
+    guard closeRequestedWhilePresenting else {
+      hasVisibleScreen = true
+
+      return .present
+    }
+
+    let reportsFinished: Bool = !pendingCloseDismissedAVisibleScreen
+    closeRequestedWhilePresenting = false
+    pendingCloseDismissedAVisibleScreen = false
+
+    return .cancelled(reportsFinished: reportsFinished)
   }
 
-  /// - Returns: whether the close can be applied to a presented screen now.
-  ///   When it cannot, the gate has recorded it and the presentation in flight
-  ///   will be cancelled instead.
-  mutating func closeRequested() -> Bool {
-    guard isPresenting else { return true }
+  /// A show started while the previous screen is still up raises the very same
+  /// in-flight state, so a close landing there has to reach both: the screen
+  /// the user is looking at and the one on its way.
+  mutating func closeRequested() -> NoCodesCloseOutcome {
+    let closesVisibleScreen: Bool = hasVisibleScreen
+    hasVisibleScreen = false
 
-    closeRequestedWhilePresenting = true
+    if isPresenting {
+      closeRequestedWhilePresenting = true
+      pendingCloseDismissedAVisibleScreen = closesVisibleScreen
+    }
 
-    return false
+    return NoCodesCloseOutcome(closesVisibleScreen: closesVisibleScreen, cancelsPendingPresentation: isPresenting)
+  }
+
+  /// Call when the screen ended on its own, so a later close does not try to
+  /// dismiss a screen that is already gone.
+  mutating func screenFinished() {
+    hasVisibleScreen = false
   }
 }

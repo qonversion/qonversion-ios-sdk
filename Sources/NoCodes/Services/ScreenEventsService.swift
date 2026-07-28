@@ -31,7 +31,7 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
   /// Maximum number of events to accumulate before auto-flushing.
   private static let batchSize = 10
 
-  /// Maximum number of events to keep in the retry buffer.
+  /// Maximum number of events to keep buffered.
   /// Oldest events are dropped when this limit is exceeded.
   private static let maxBufferSize = 100
 
@@ -51,6 +51,12 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
     var shouldFlush = false
     queue.sync(flags: .barrier) {
       buffer.append(event)
+      // A flush that hangs keeps `isFlushing` raised, so every later flush is a
+      // no-op and only this path runs: the cap has to be applied here too, or
+      // the buffer grows for as long as the request does.
+      if buffer.count > Self.maxBufferSize {
+        buffer = Array(buffer.suffix(Self.maxBufferSize))
+      }
       shouldFlush = buffer.count >= Self.batchSize
     }
     let eventType: String = event.data["type"] as? String ?? "unknown"

@@ -85,8 +85,12 @@ final class NoCodesFlowCoordinator {
   func close() {
     // There is no view controller to close until the presentation is well under
     // way, so a close arriving before that is remembered by the gate and takes
-    // the presentation down instead of being dropped.
-    guard presentationGate.closeRequested() else { return }
+    // the presentation down instead of being dropped. A presentation started on
+    // top of a screen the user is still looking at raises the same in-flight
+    // state, and that screen has to be dismissed all the same.
+    let outcome: NoCodesCloseOutcome = presentationGate.closeRequested()
+
+    guard outcome.closesVisibleScreen else { return }
 
     currentVC?.close()
   }
@@ -99,8 +103,16 @@ final class NoCodesFlowCoordinator {
       // any property set just before the call has to reach the backend first.
       await Qonversion.shared.forceSendProperties()
 
-      guard presentationGate.presentationReady() else {
+      let outcome: NoCodesPresentationOutcome = presentationGate.presentationReady()
+      if case let .cancelled(reportsFinished) = outcome {
         logger.info("The screen was closed before it could be presented")
+        // A host that gates its UI on the finish callback waits forever
+        // otherwise. When the same close also dismissed a visible screen, that
+        // dismissal reports the flow finished and this one must stay quiet.
+        if reportsFinished {
+          noCodesFinished()
+        }
+
         return
       }
 
@@ -183,6 +195,7 @@ extension NoCodesFlowCoordinator: NoCodesViewControllerDelegate {
     // holding on to the screen would keep its web view, and the screen markup
     // inlined into it, alive for just as long.
     currentVC = nil
+    presentationGate.screenFinished()
     screenEventsService.flush()
     delegate?.noCodesFinished()
   }

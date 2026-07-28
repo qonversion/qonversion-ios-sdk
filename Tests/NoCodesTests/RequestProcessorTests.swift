@@ -115,7 +115,7 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(sent.value(forHTTPHeaderField: "X-Test"), "stub")
     }
 
-    // MARK: - 204
+    // MARK: - Empty bodies
 
     func testEmptyResponseShortCircuitsDecodingFor204() async throws {
         let networkProvider = StubNetworkProvider()
@@ -125,9 +125,39 @@ final class RequestProcessorTests: XCTestCase {
         let events: [[String: AnyHashable]] = [["type": "screen_shown"]]
         let request = Request.sendScreenEvents(uid: "user-1", body: events)
 
-        let response: EmptyApiResponse = try await processor.process(request: request, responseType: EmptyApiResponse.self)
+        let response: EmptyApiResponse? = try? await processor.process(request: request, responseType: EmptyApiResponse.self)
 
-        XCTAssertNotNil(response)
+        XCTAssertNotNil(response, "a 204 must not be reported as an invalid response")
+    }
+
+    /// The events endpoint answers a delivered batch with a bare 200 and no
+    /// body. Failing it makes `ScreenEventsService` re-buffer the batch, so the
+    /// very same events are re-sent on every later flush.
+    func testEmptyBodyOnAnyTwoHundredIsSuccessForNoResponseRequests() async throws {
+        let networkProvider = StubNetworkProvider()
+        networkProvider.enqueue(statusCode: 200, body: "")
+        let processor: RequestProcessor = makeProcessor(networkProvider: networkProvider)
+        let events: [[String: AnyHashable]] = [["type": "screen_shown"]]
+        let request = Request.sendScreenEvents(uid: "user-1", body: events)
+
+        let response: EmptyApiResponse? = try? await processor.process(request: request, responseType: EmptyApiResponse.self)
+
+        XCTAssertNotNil(response, "an acknowledged no-response request must not fail on an empty body")
+    }
+
+    /// Only a no-response request may be answered with nothing: a request that
+    /// expects a payload and gets an empty 200 is still an invalid response.
+    func testEmptyBodyOnATwoHundredStillFailsARequestThatExpectsAPayload() async throws {
+        let networkProvider = StubNetworkProvider()
+        networkProvider.enqueue(statusCode: 200, body: "")
+        let processor: RequestProcessor = makeProcessor(networkProvider: networkProvider)
+        let request = Request.getScreen(id: "screen-1")
+
+        let error: NoCodesError = await captureError {
+            let _: ProcessorTestPayload = try await processor.process(request: request, responseType: ProcessorTestPayload.self)
+        }
+
+        XCTAssertEqual(error.type, .invalidResponse)
     }
 
     func testSuccessfulResponseWithUndecodableBodyFailsAsInvalidResponse() async throws {
