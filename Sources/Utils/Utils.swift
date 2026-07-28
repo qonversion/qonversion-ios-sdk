@@ -23,20 +23,46 @@ extension Bundle {
 // the resolved currency symbol is deterministic across calls and launches.
 fileprivate let sortedLocaleIdentifiers: [String] = Locale.availableIdentifiers.sorted()
 
+// The scan walks roughly a thousand locales and runs once per mapped transaction,
+// so the answers — misses included — are memoized per currency code.
+// @unchecked: the only mutable state is `symbols`, guarded by `lock` on every access.
+private final class CurrencySymbolCache: @unchecked Sendable {
+
+    static let shared = CurrencySymbolCache()
+
+    private let lock = NSLock()
+    private var symbols: [String: String?] = [:]
+
+    func symbol(for currencyCode: String) -> String? {
+        lock.lock()
+        let cached: String?? = symbols[currencyCode]
+        lock.unlock()
+
+        if let cached {
+            return cached
+        }
+
+        let locale: Locale? = sortedLocaleIdentifiers.lazy.map { Locale(identifier: $0) }.first { $0.currencyCode == currencyCode }
+        let symbol: String? = locale?.currencySymbol
+
+        lock.lock()
+        symbols[currencyCode] = symbol
+        lock.unlock()
+
+        return symbol
+    }
+}
+
 extension String {
     func toCurrencySymbol() -> String? {
-        let locale: Locale? = sortedLocaleIdentifiers.lazy.map { Locale(identifier: $0) }.first { $0.currencyCode == self }
-        
-        return locale?.currencySymbol
+        return CurrencySymbolCache.shared.symbol(for: self)
     }
 }
 
 @available(macOS 13, iOS 16, tvOS 16, watchOS 9, *)
 extension Locale.Currency {
     func currencySymbol() -> String? {
-        let locale: Locale? = sortedLocaleIdentifiers.lazy.map { Locale(identifier: $0) }.first { $0.currencyCode == identifier }
-        
-        return locale?.currencySymbol
+        return CurrencySymbolCache.shared.symbol(for: identifier)
     }
 }
 

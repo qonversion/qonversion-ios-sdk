@@ -127,6 +127,49 @@ final class UtilsTests: XCTestCase {
         XCTAssertNil("ZZZ".toCurrencySymbol())
     }
 
+    func testToCurrencySymbolIsStableAcrossCalls() {
+        let codes: [String] = ["USD", "EUR", "GBP", "JPY", "VND", "ZZZ"]
+
+        let first: [String?] = codes.map { $0.toCurrencySymbol() }
+        let second: [String?] = codes.map { $0.toCurrencySymbol() }
+
+        XCTAssertEqual(first, second)
+    }
+
+    func testToCurrencySymbolMemoizesRepeatedLookups() {
+        // "ZZZ" matches no locale, so an unmemoized lookup walks every available
+        // identifier — roughly a thousand Locale allocations — on every call.
+        let iterations = 2000
+        _ = "ZZZ".toCurrencySymbol()
+
+        let start = Date()
+        for _ in 0..<iterations {
+            _ = "ZZZ".toCurrencySymbol()
+        }
+        let elapsed: TimeInterval = Date().timeIntervalSince(start)
+
+        XCTAssertLessThan(elapsed, 0.2, "\(iterations) repeated lookups took \(elapsed)s — the scan is not memoized")
+    }
+
+    func testToCurrencySymbolMemoizesConcurrentLookups() {
+        let codes: [String] = ["USD", "EUR", "GBP", "JPY", "VND", "ZZZ", "INR", "BRL"]
+        let expected: [String?] = codes.map { $0.toCurrencySymbol() }
+        let results = NSMutableArray()
+        let resultsLock = NSLock()
+
+        DispatchQueue.concurrentPerform(iterations: 64) { iteration in
+            let resolved: [String?] = codes.map { $0.toCurrencySymbol() }
+            resultsLock.lock()
+            results.add(resolved)
+            resultsLock.unlock()
+        }
+
+        XCTAssertEqual(results.count, 64)
+        for element in results {
+            XCTAssertEqual(element as? [String?], expected)
+        }
+    }
+
     // MARK: - Locale.Currency.currencySymbol()
 
     func testLocaleCurrencySymbolMatchesStringHelper() throws {

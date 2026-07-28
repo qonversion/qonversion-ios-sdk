@@ -8,7 +8,7 @@
 
 import Foundation
 
-#if os(iOS)
+#if os(iOS) || os(tvOS) || os(visionOS)
 import UIKit
 #elseif os(macOS)
 import IOKit
@@ -147,7 +147,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
 
     private func vendorId() -> String? {
         var identifier: String? = nil
-        #if os(iOS)
+        #if os(iOS) || os(tvOS) || os(visionOS)
         identifier = UIDevice.current.identifierForVendor?.uuidString
         #elseif os(watchOS)
         identifier = WKInterfaceDevice.current().identifierForVendor?.uuidString
