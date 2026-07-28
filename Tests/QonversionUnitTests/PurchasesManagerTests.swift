@@ -299,6 +299,96 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.finishedTransactions.count, 1)
     }
 
+    // MARK: - a reported purchase invalidates the fresh entitlements window
+
+    func testReportedPurchaseInvalidatesTheFreshWindowBeforeResolvingEntitlements() async throws {
+        // The entitlements manager serves a cached backend answer for five
+        // minutes; without this the result of a purchase made right after a
+        // gating check carries the PRE-purchase entitlements.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        _ = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(entitlementsManager.invalidationCallsCount, 1)
+        XCTAssertEqual(entitlementsManager.calls.first, .invalidateFreshBackendCache,
+                       "the window must be closed before the result is resolved")
+        XCTAssertTrue(entitlementsManager.calls.contains(.resolvedEntitlements))
+    }
+
+    func testFailedPurchaseReportDoesNotInvalidateTheFreshWindow() async throws {
+        // Nothing reached the backend, so nothing there changed — the local
+        // fallback path must stay exactly as it was.
+        facade.purchaseResult = makeTransaction(id: "t1")
+        service.error = QonversionError(type: .internal)
+        entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
+
+        _ = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(entitlementsManager.invalidationCallsCount, 0)
+    }
+
+    func testPurchaseThatDoesNotOwnTheReportDoesNotInvalidateTheFreshWindow() async throws {
+        // Another flow owns the report of this transaction and invalidates
+        // the window itself.
+        let reportsGate = TransactionReportsGate()
+        XCTAssertTrue(reportsGate.tryTake("t1"))
+        manager = makeManager(launchMode: .subscriptionManagement, reportsGate: reportsGate)
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        _ = try await manager.purchase(makeProduct())
+
+        XCTAssertTrue(service.sentTransactions.isEmpty, "the report belongs to the other flow")
+        XCTAssertEqual(entitlementsManager.invalidationCallsCount, 0)
+    }
+
+    func testRestoreInvalidatesTheFreshWindowAfterTheReport() async throws {
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(entitlementsManager.invalidationCallsCount, 1)
+        XCTAssertEqual(entitlementsManager.calls.first, .invalidateFreshBackendCache)
+    }
+
+    func testFailedRestoreReportDoesNotInvalidateTheFreshWindow() async throws {
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.error = QonversionError(type: .internal)
+        entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(entitlementsManager.invalidationCallsCount, 0)
+    }
+
+    func testDeferredPurchaseDeliveryInvalidatesTheFreshWindowAfterTheReport() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        XCTAssertEqual(entitlementsManager.invalidationCallsCount, 1)
+        XCTAssertEqual(entitlementsManager.calls.first, .invalidateFreshBackendCache,
+                       "an Ask to Buy approval must be answered with post-report entitlements")
+    }
+
+    func testFailedDeferredPurchaseReportDoesNotInvalidateTheFreshWindow() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        service.error = QonversionError(type: .internal)
+        entitlementsManager.localFallbackResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        XCTAssertEqual(entitlementsManager.invalidationCallsCount, 0)
+    }
+
     // MARK: - purchase failures
 
     func testPurchaseFailsWhenUserGateFails() async {

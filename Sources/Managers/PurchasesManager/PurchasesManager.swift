@@ -228,6 +228,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
         }
 
+        // The report changed what the backend knows: without this the result
+        // is served from the pre-purchase fresh-cache window.
+        entitlementsManager.invalidateFreshBackendCache()
+
         // Finish strictly after the backend ack, and only when the SDK owns
         // the lifecycle — in Analytics mode the host app does.
         if launchModeProvider.launchMode == .subscriptionManagement {
@@ -335,6 +339,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         }
 
         await switchToOwnerIfNeeded(resolvedOwnerUserId)
+
+        // The store sync reached the backend: the answer restore() returns
+        // must not come from the window opened before it.
+        entitlementsManager.invalidateFreshBackendCache()
 
         if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
             return fetched
@@ -543,6 +551,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         do {
             try await purchasesService.send(transaction, userId: reportUserId, options: reportOptions(for: transaction), trigger: trigger)
             purchaseAssociationsStorage.remove(for: transaction.productId)
+            // The deferred purchase this delivery emits must carry the
+            // entitlements the report produced, not the ones cached before it.
+            entitlementsManager.invalidateFreshBackendCache()
         } catch {
             if let id: String = transaction.id {
                 reportsGate.release(id)
