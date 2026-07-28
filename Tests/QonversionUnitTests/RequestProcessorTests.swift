@@ -935,6 +935,87 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertTrue(networkProvider.sentRequests.isEmpty)
     }
 
+    func testTheRequestThatTripsTheLatchIsQueuedForReplay() async {
+        // The FIRST request answered with a revoked key is the one that latches
+        // it — and it carries data the store already charged for. Every request
+        // after it is queued; dropping this one loses it permanently.
+        networkProvider.response = makeHTTPResponse(statusCode: 401)
+        errorHandler.errorToReturn = QonversionError(type: .critical, message: "unauthorized")
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let purchaseBody: RequestBodyDict = ["store_data": ["transaction_id": "tx-1"] as RequestBodyDict]
+
+        do {
+            _ = try await processor.process(request: .createPurchase(userId: "u", body: purchaseBody), responseType: EmptyApiResponse.self)
+            XCTFail("Expected the critical error")
+        } catch {
+            XCTAssertEqual((error as? QonversionError)?.type, .critical)
+        }
+
+        XCTAssertNotNil(processor.criticalError, "401 latches the revoked key")
+        let stored: [StoredRequest] = requestsStorage.fetchRequests()
+        XCTAssertEqual(stored.count, 1, "the purchase that tripped the latch must be deferred, not lost")
+        XCTAssertEqual(stored.first?.transactionId, "tx-1")
+    }
+
+    func testTheRequestThatTripsTheLatchIsNotQueuedWhenItCarriesNoData() async {
+        networkProvider.response = makeHTTPResponse(statusCode: 401)
+        errorHandler.errorToReturn = QonversionError(type: .critical, message: "unauthorized")
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+
+        do {
+            _ = try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+            XCTFail("Expected the critical error")
+        } catch {
+            XCTAssertEqual((error as? QonversionError)?.type, .critical)
+        }
+
+        XCTAssertNotNil(processor.criticalError)
+        XCTAssertTrue(requestsStorage.fetchRequests().isEmpty, "a read carries nothing to deliver")
+    }
+
+    func testAPermanentlyRejectedPurchaseIsNotQueued() async {
+        networkProvider.response = makeHTTPResponse(statusCode: 400)
+        errorHandler.errorToReturn = QonversionError(type: .invalidRequest, message: "bad request")
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let purchaseBody: RequestBodyDict = ["store_data": ["transaction_id": "tx-1"] as RequestBodyDict]
+
+        _ = try? await processor.process(request: .createPurchase(userId: "u", body: purchaseBody), responseType: EmptyApiResponse.self)
+
+        XCTAssertNil(processor.criticalError)
+        XCTAssertTrue(requestsStorage.fetchRequests().isEmpty, "a rejected request would be rejected again on every replay")
+    }
+
+    func testADeliveredReportDoesNotEvictAQueuedEntryOfTheNextUser() async {
+        // The report left for the PREVIOUS uid; the user switch cleaned the
+        // queue while it was in flight, and the new user queued the same
+        // transaction of its own. The delivery must supersede its own copy,
+        // never the entry that belongs to the queue's new generation.
+        let gate = ProcessorAsyncGate()
+        networkProvider.onSend = { await gate.wait() }
+        networkProvider.response = makeHTTPResponse(statusCode: 200)
+        networkProvider.responseData = Data("{}".utf8)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+        let body: RequestBodyDict = ["store_data": ["transaction_id": "tx42"] as RequestBodyDict]
+
+        let sending = Task {
+            _ = try? await processor.process(request: .createPurchase(userId: "OLD_UID", body: body), responseType: EmptyApiResponse.self)
+        }
+        await waitUntil { self.networkProvider.sentRequests.count == 1 }
+        requestsStorage.clean()
+        requestsStorage.append(StoredRequest(
+            url: "https://api2.qonversion.io/v4/users/NEW_UID/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-NEW_UID-tx42",
+            transactionId: "tx42"
+        ))
+        await gate.open()
+        _ = await sending.value
+
+        XCTAssertEqual(requestsStorage.fetchRequests().count, 1,
+                       "the new user's queued purchase must survive the previous user's delivery")
+    }
+
     func testTheFirstCriticalErrorWins() async {
         let latch = CriticalErrorLatch()
         let first = QonversionError(type: .critical, message: "first")

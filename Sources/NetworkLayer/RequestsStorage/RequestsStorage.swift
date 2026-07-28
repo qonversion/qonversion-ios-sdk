@@ -55,9 +55,11 @@ class RequestsStorage: RequestsStorageInterface, @unchecked Sendable {
         persist(requests)
     }
 
-    func removeAll(where shouldRemove: @Sendable (StoredRequest) -> Bool) {
+    func removeAll(ifGenerationIs generation: Int, where shouldRemove: @Sendable (StoredRequest) -> Bool) {
         lock.lock()
         defer { lock.unlock() }
+
+        guard _cleanGeneration == generation else { return }
 
         var requests: [StoredRequest] = fetchStoredRequests()
         requests.removeAll(where: shouldRemove)

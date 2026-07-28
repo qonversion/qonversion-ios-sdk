@@ -240,13 +240,17 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         }
 
         guard error == nil else {
-            if let error, error.type == .critical {
+            let latchesCriticalError: Bool = error?.type == .critical
+            if let error, latchesCriticalError {
                 criticalErrorLatch.latch(error)
             }
 
             // The backend did not process the request (5xx/429) — persist
             // retriable ones for the offline replay, like transport failures.
-            if Self.isRetriableStatusCode(responseCode) && retriableRequestKinds.contains(request.kind) {
+            // A revoked key (401/402/403) is queued too: every request AFTER
+            // the latch is, and the one that tripped it carries data the store
+            // already charged for.
+            if (Self.isRetriableStatusCode(responseCode) || latchesCriticalError) && retriableRequestKinds.contains(request.kind) {
                 queueForReplay(request, as: urlRequest, trigger: trigger, attempt: attemptsMade.total, ifGenerationIs: generation)
             }
 
@@ -263,7 +267,10 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
         // transaction (it may sit under the previous uid) — replaying it on
         // the next launch would double-report the purchase.
         if request.kind == .createPurchase, let transactionId: String = request.replayTransactionId {
-            requestsStorage.removeAll { stored in
+            // Only within the generation this request was sent for: after a
+            // user switch the queued copy of the same transaction belongs to
+            // the NEW user and this delivery says nothing about it.
+            requestsStorage.removeAll(ifGenerationIs: generation) { stored in
                 if let storedTransactionId: String = stored.transactionId {
                     return storedTransactionId == transactionId
                 }
@@ -288,10 +295,11 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
 
     // MARK: - Transport retries
 
-    /// How many times a connection-class failure is retried inside the call
-    /// that produced it. Matches the ObjC client, which resent up to three
-    /// times (QNAPIClient.m:523-551, `tryCount < 3`) before giving up and
-    /// handing the request to the offline queue.
+    /// How many times a connection-class failure is resent inside the call that
+    /// produced it — four sends in total, the first one included. Matches the
+    /// ObjC client, which resent up to three times (QNAPIClient.m:523-551,
+    /// `tryCount < 3`) before giving up and handing the request to the offline
+    /// queue.
     static let maxTransportRetries: Int = 3
 
     /// The in-session backoff is capped: the caller is usually blocked on this

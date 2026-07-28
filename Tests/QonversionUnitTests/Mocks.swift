@@ -234,7 +234,9 @@ final class MockRequestsStorage: RequestsStorageInterface {
         storedRequests[index] = replacement
     }
 
-    func removeAll(where shouldRemove: @Sendable (StoredRequest) -> Bool) {
+    func removeAll(ifGenerationIs generation: Int, where shouldRemove: @Sendable (StoredRequest) -> Bool) {
+        guard cleanGeneration == generation else { return }
+
         storedRequests.removeAll(where: shouldRemove)
     }
 

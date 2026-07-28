@@ -924,6 +924,30 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(received.first?.keys.sorted(), ["premium"])
     }
 
+    func testTheEntitlementsProjectionIsBoundedLikeItsSubscription() async {
+        // A host that builds the projection and stops reading it must not turn
+        // it into an unbounded queue: the subscription it wraps keeps only the
+        // newest values, and the projection must keep exactly as many.
+        manager = makeManager(launchMode: .analytics)
+        let bufferSize: Int = AsyncMulticast<Qonversion.DeferredPurchase>.subscriberBufferSize
+        let emissions: Int = bufferSize + 5
+        // Subscribed here, iterated only at the end.
+        let projection: AsyncStream<[String: Qonversion.Entitlement]> = manager.entitlementsUpdates()
+        let purchases = StreamCollector(manager.deferredPurchases())
+
+        for index in 0..<emissions {
+            entitlementsManager.entitlementsResult = ["e\(index)": entitlement(id: "e\(index)")]
+            manager.transactionUpdated(makeTransaction(id: "buffered-\(index)"))
+            await waitUntil { await purchases.received.count >= index + 1 }
+        }
+
+        let collector = StreamCollector(projection)
+        await waitUntil { await collector.received.last?.keys.first == "e\(emissions - 1)" }
+
+        let received: [[String: Qonversion.Entitlement]] = await collector.received
+        XCTAssertEqual(received.count, bufferSize, "the projection must drop the oldest values, not queue them all")
+    }
+
     // MARK: - promotional offer signature
 
     func testPromotionalOfferPassesGateAndForwardsToService() async throws {
@@ -1358,6 +1382,109 @@ final class PurchasesManagerTests: XCTestCase {
         await manager.processUnfinishedTransactions()
 
         XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
+    }
+
+    // MARK: - the host hears the transaction whichever path claims it
+
+    func testTheLaunchSweepSurfacesTheTransactionToTheHost() async {
+        // The sweep and the listener race for the same transaction at launch.
+        // Whichever wins, the host must hear the purchase — the sweep also
+        // FINISHES it in subscription management mode, so a transaction it
+        // claimed silently would never come back through the listener.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "swept-1")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        await manager.processUnfinishedTransactions()
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.map(\.transaction.id), ["swept-1"])
+        XCTAssertEqual(received.first?.entitlements.keys.sorted(), ["premium"])
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["swept-1"])
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["swept-1"])
+    }
+
+    func testATransactionSurfacedByTheSweepIsNotEmittedAgainOnTheNextLaunch() async {
+        // Analytics mode never finishes anything, so the store re-delivers the
+        // same transaction on every cold start.
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "swept-2")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        await manager.processUnfinishedTransactions()
+        await waitUntil { await !collector.received.isEmpty }
+
+        // "Next launch": a fresh manager over the same storage, so only the
+        // persisted surfaced-transactions set can stop the second emission.
+        let relaunched: PurchasesManager = makeManager(launchMode: .analytics)
+        let relaunchedCollector = StreamCollector(relaunched.deferredPurchases())
+        relaunched.transactionUpdated(makeTransaction(id: "swept-2"))
+        await waitUntil { self.service.sentTransactions.count >= 2 }
+
+        // A transaction the listener DOES surface, delivered afterwards: its
+        // emission is the marker that the previous one produced none.
+        relaunched.transactionUpdated(makeTransaction(id: "fresh-2", productId: "com.app.lite"))
+        await waitUntil { await !relaunchedCollector.received.isEmpty }
+
+        let receivedAfterRelaunch: [Qonversion.DeferredPurchase] = await relaunchedCollector.received
+        XCTAssertEqual(receivedAfterRelaunch.map(\.transaction.id), ["fresh-2"],
+                       "a purchase the sweep already surfaced must not come back on the next launch")
+    }
+
+    func testTheListenerWinningTheGateKeepsTheSweepFromRepeatingTheOutcome() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let transaction: Qonversion.Transaction = makeTransaction(id: "race-1")
+        facade.unfinishedTransactionsResult = [transaction]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(transaction)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        await manager.processUnfinishedTransactions()
+        await waitUntil { await !collector.received.isEmpty }
+
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.map(\.transaction.id), ["race-1"])
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["race-1"])
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["race-1"])
+    }
+
+    func testTheSweepAndTheListenerRacingOneTransactionProduceOneOutcome() async {
+        // The sweep is already inside its report when the listener picks the
+        // same transaction up: exactly one report, one finish, one emission.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let transaction: Qonversion.Transaction = makeTransaction(id: "race-2")
+        facade.unfinishedTransactionsResult = [transaction]
+        let collector = StreamCollector(manager.deferredPurchases())
+        let sweepIsReporting = PurchasesAsyncGate()
+        let listenerHasArrived = PurchasesAsyncGate()
+        service.onSend = {
+            await sweepIsReporting.open()
+            await listenerHasArrived.wait()
+        }
+
+        let sweep = Task { await self.manager.processUnfinishedTransactions() }
+        await sweepIsReporting.wait()
+        manager.transactionUpdated(transaction)
+        await listenerHasArrived.open()
+        await sweep.value
+
+        await waitUntil { await !collector.received.isEmpty }
+        // The listener may still be running: a transaction it does surface,
+        // delivered now, marks the point where its earlier task is done.
+        service.onSend = nil
+        manager.transactionUpdated(makeTransaction(id: "marker-2", productId: "com.app.lite"))
+        await waitUntil { await collector.received.count >= 2 }
+
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.map(\.transaction.id), ["race-2", "marker-2"])
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["race-2", "marker-2"])
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["race-2", "marker-2"])
     }
 }
 
