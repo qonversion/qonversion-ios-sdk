@@ -86,7 +86,6 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
 
         // Single-flight: N concurrent gating checks share one round trip.
         let task: Task<ResolvedEntitlements, Error> = joinedResolutionTask()
-        defer { clearResolutionTask(task) }
 
         return try await task.value
     }
@@ -104,8 +103,14 @@ private extension EntitlementsManager {
             return inFlight
         }
 
+        // The run releases the slot as its own last act, before its value
+        // becomes observable: clearing it from the caller instead would leave
+        // a window where a joining call is answered by a finished run. No
+        // identity check is needed — the next run can only be created after
+        // this clear.
         let task = Task { [weak self] () throws -> ResolvedEntitlements in
             guard let self else { throw QonversionError(type: .entitlementsLoadingFailed) }
+            defer { self.clearResolutionTask() }
 
             return try await self.resolve(attemptsLeft: 1)
         }
@@ -114,12 +119,10 @@ private extension EntitlementsManager {
         return task
     }
 
-    func clearResolutionTask(_ task: Task<ResolvedEntitlements, Error>) {
+    func clearResolutionTask() {
         lock.lock()
         defer { lock.unlock() }
-        if _resolutionTask == task {
-            _resolutionTask = nil
-        }
+        _resolutionTask = nil
     }
 
     /// `attemptsLeft` bounds the re-resolution a user switch triggers: without

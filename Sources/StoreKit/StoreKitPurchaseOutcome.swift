@@ -41,6 +41,28 @@ enum StoreKitPurchaseOutcome {
         }
     }
 
+    /// The integrator-facing error for a store failure raised outside the
+    /// payment sheet (a catalog load, a restore sync). Every public entry
+    /// point documents ``QonversionError``, so nothing raw may pass here.
+    /// `fallbackType` names the operation for the failures the store does not
+    /// classify itself.
+    static func storeError(_ error: Error, fallbackType: QonversionErrorType) -> QonversionError {
+        // Already classified: re-wrapping would only nest messages and bury
+        // the precise type under a generic one.
+        if let qonversionError = error as? QonversionError { return qonversionError }
+
+        // .purchaseFailed is what failureType answers for everything it cannot
+        // name — outside a purchase that name would be wrong.
+        let storeType: QonversionErrorType = failureType(for: error)
+        guard storeType == .purchaseFailed else { return QonversionError(type: storeType, error: error) }
+
+        // An abandoned run did not fail; naming it after the operation would
+        // send the host retrying something that was never attempted.
+        guard !error.isCancellation else { return QonversionError(type: .cancelled, error: error) }
+
+        return QonversionError(type: fallbackType, error: error)
+    }
+
     /// Maps the store's own failure kinds onto the SDK's error surface, so an
     /// integrator can branch on `type` instead of digging into the underlying
     /// StoreKit error.

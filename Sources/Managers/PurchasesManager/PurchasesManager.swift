@@ -55,6 +55,12 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         purchasingStoreIds.remove(storeId)
     }
 
+    private func isPurchasing(_ storeId: String) -> Bool {
+        purchasingLock.lock()
+        defer { purchasingLock.unlock() }
+        return purchasingStoreIds.contains(storeId)
+    }
+
     private let reportsGate: TransactionReportsGate
 
     // Guards the persisted set of transactions already handed to the host.
@@ -191,7 +197,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             if (error as? QonversionError)?.type != .purchasePending {
                 purchaseAssociationsStorage.remove(for: product.storeId)
             }
-            throw error
+            throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .purchaseFailed)
         }
 
         // The caller gets this transaction as the purchase result in every
@@ -261,12 +267,11 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // Production parity: concurrent restore() calls join one in-flight
         // run instead of syncing with the store twice.
         let task: Task<[String: Qonversion.Entitlement], Error> = joinedRestoreTask()
-        defer { clearRestoreTask(task) }
 
         return try await task.value
     }
 
-    private func joinedRestoreTask() -> Task<[String: Qonversion.Entitlement], Error> {
+    func joinedRestoreTask() -> Task<[String: Qonversion.Entitlement], Error> {
         restoreTaskLock.lock()
         defer { restoreTaskLock.unlock() }
 
@@ -274,8 +279,15 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             return inFlight
         }
 
+        // The run releases the slot as its own last act, before its value
+        // becomes observable: clearing it from the caller instead would leave
+        // a window where a joining call is answered with a finished run's
+        // entitlements without the store sync restore() promises. No identity
+        // check is needed — the next run can only be created after this clear.
         let task = Task { [weak self] () throws -> [String: Qonversion.Entitlement] in
             guard let self else { return [:] }
+            defer { self.clearRestoreTask() }
+
             return try await self.performRestore()
         }
         restoreTask = task
@@ -283,12 +295,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         return task
     }
 
-    private func clearRestoreTask(_ task: Task<[String: Qonversion.Entitlement], Error>) {
+    private func clearRestoreTask() {
         restoreTaskLock.lock()
         defer { restoreTaskLock.unlock() }
-        if restoreTask == task {
-            restoreTask = nil
-        }
+        restoreTask = nil
     }
 
     private func performRestore() async throws -> [String: Qonversion.Entitlement] {
@@ -305,7 +315,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 logger.warning("Store restore failed, returning backend entitlements: " + error.message)
                 return fetched
             }
-            throw error
+            // restore() is public: whatever the injected store layer raised,
+            // the host must be able to classify it as a QonversionError.
+            throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .restoreFailed)
         }
         // Production rule: only the latest transaction per product participates.
         let latest = EntitlementsCalculator.latestTransactionsPerProduct(restored)
@@ -607,7 +619,16 @@ extension PurchasesManager: StoreKitFacadeDelegate {
                 await self.storeKitFacade.finish(transaction)
             }
 
-            // Reporting is unaffected by this gate — only what the host sees.
+            // Reporting is unaffected by these gates — only what the host sees.
+            //
+            // A purchase() call for this product is in flight: it answers its
+            // caller with a PurchaseResult in every branch, and it claims the
+            // transaction id only once the store hands it over — which may be
+            // after this report has already finished. Emitting here would
+            // deliver the same purchase twice. The id stays unclaimed, so a
+            // purchase that never reaches its transaction leaves the next
+            // re-delivery free to surface it.
+            guard !self.isPurchasing(transaction.productId) else { return }
             if let id: String = transaction.id, !self.markSurfacedIfNew(id) { return }
 
             let deferredPurchase: Qonversion.DeferredPurchase = await self.deferredPurchase(for: transaction, reportFailed: reportFailed)

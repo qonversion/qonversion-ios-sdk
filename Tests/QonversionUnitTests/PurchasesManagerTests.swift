@@ -12,6 +12,7 @@
 //
 
 import XCTest
+import StoreKit
 @testable import Qonversion
 
 final class PurchasesManagerTests: XCTestCase {
@@ -460,6 +461,19 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.facadeRestoreCallsCount, 2)
     }
 
+    func testARestoreJoiningAFinishedRunStillSyncsWithTheStore() async throws {
+        // Models the window between a run producing its value and the caller
+        // that started it resuming: joining there would answer a documented
+        // store sync with the finished run's cached entitlements.
+        entitlementsManager.entitlementsResult = [:]
+        let run: Task<[String: Qonversion.Entitlement], Error> = manager.joinedRestoreTask()
+        _ = try await run.value
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(facade.facadeRestoreCallsCount, 2, "restore() must always sync with the store")
+    }
+
     // MARK: - restore
 
     func testRestoreReportsLatestTransactionPerProductAndReturnsEntitlements() async throws {
@@ -759,6 +773,33 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(received.isEmpty, "the caller already got this transaction as a purchase result")
     }
 
+    func testAnObservedTransactionOfAnInFlightPurchaseIsNotDeliveredTwice() async throws {
+        // StoreKit may hand the same transaction to the updates listener while
+        // the purchase call is still inside the payment sheet. The purchase
+        // answers its caller with a PurchaseResult in every branch, so the
+        // listener must not also announce it as a deferred purchase.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        let transaction: Qonversion.Transaction = makeTransaction(id: "p1")
+        facade.purchaseResult = transaction
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        facade.onPurchase = { [weak self] in
+            guard let self else { return }
+            self.manager.transactionUpdated(transaction)
+            // The listener wins the whole round trip: it reports, finishes the
+            // transaction and reaches its own emission point first.
+            await self.waitUntil { !self.facade.finishedTransactions.isEmpty }
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+
+        let result: Qonversion.PurchaseResult = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(result.transaction.id, "p1")
+        let received = await collector.received
+        XCTAssertTrue(received.isEmpty, "the caller gets this transaction as the purchase result")
+    }
+
     func testTheBufferedLaunchEmissionReachesBothStreams() async {
         // The backlog exists for hosts that subscribe after launch; the
         // entitlements projection must not steal it from deferredPurchases.
@@ -1021,6 +1062,37 @@ final class PurchasesManagerTests: XCTestCase {
             XCTAssertEqual(error.type, .purchaseFailed)
         } catch {
             XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testRestoreNamesARawStoreCancellationWhenTheBackendHasNothing() async {
+        // The public API documents QonversionError: a raw StoreKitError
+        // escaping restore() cannot be classified by the host at all.
+        facade.restoreError = StoreKitError.userCancelled
+        entitlementsManager.entitlementsResult = [:]
+
+        do {
+            _ = try await manager.restore()
+            XCTFail("Expected the store error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseCancelled)
+        } catch {
+            XCTFail("Raw store errors must never reach the integrator: \(error)")
+        }
+    }
+
+    func testRestoreNamesARawTransportFailureWhenTheBackendHasNothing() async {
+        facade.restoreError = URLError(.notConnectedToInternet)
+        entitlementsManager.entitlementsResult = [:]
+
+        do {
+            _ = try await manager.restore()
+            XCTFail("Expected the store error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .restoreFailed)
+            XCTAssertNotNil(error.error as? URLError, "the underlying store error must stay reachable")
+        } catch {
+            XCTFail("Raw store errors must never reach the integrator: \(error)")
         }
     }
 

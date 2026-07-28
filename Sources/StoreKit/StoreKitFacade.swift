@@ -39,10 +39,18 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
 
     func purchase(storeId: String, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
         if loadedProducts[storeId] == nil {
-            _ = try await products(for: [storeId])
+            do {
+                _ = try await products(for: [storeId])
+            } catch {
+                // Product.products(for:) throws raw StoreKit errors; a
+                // purchase must answer with the SDK's own error on every leg.
+                throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .storeProductsLoadingFailed)
+            }
         }
+        // The load succeeded and still returned nothing for this id: the store
+        // has no such product, rather than having failed to load it.
         guard let product: StoreKit.Product = loadedProducts[storeId] else {
-            throw QonversionError(type: .storeProductsLoadingFailed)
+            throw QonversionError(type: .storeProductNotAvailable)
         }
 
         return try await storeKitWrapper.purchase(product: product, options: options)
