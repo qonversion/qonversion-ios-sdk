@@ -34,8 +34,8 @@ final class DeviceManagerTests: XCTestCase {
 
     func testUserChangeDropsTheStoredDeviceRecord() {
         deviceService.current = Device(
-            manufacturer: "Apple", osName: "iOS", osVersion: "17.0", model: "iPhone15,2",
-            appVersion: "1.0", country: "US", language: "en", timezone: "UTC",
+            osName: "iOS", osVersion: "17.0", model: "iPhone15,2",
+            appVersion: "1.0", country: "US", language: "en",
             advertisingId: nil, vendorId: "v", installDate: 1
         )
 
@@ -48,14 +48,12 @@ final class DeviceManagerTests: XCTestCase {
 
     private func makeTestDevice(osVersion: String = "17.0", advertisingId: String? = nil) -> Device {
         return Device(
-            manufacturer: "Apple",
             osName: "iOS",
             osVersion: osVersion,
             model: "iPhone15,2",
             appVersion: "1.2.3",
             country: "US",
             language: "en",
-            timezone: "America/New_York",
             advertisingId: advertisingId,
             vendorId: "vendor-id",
             installDate: 1_700_000_000

@@ -11,7 +11,9 @@ import Foundation
 public struct NoCodesScreen: Decodable, Sendable {
   public let id: String
   let html: String
-  public let contextKey: String
+  /// The context key the screen is published under, or `nil` when the backend
+  /// sent none for it.
+  public let contextKey: String?
   /// Typed default variables of the screen configured in the builder: authored custom
   /// variables and product slots. Read them by ``NoCodesScreenVariable/key`` (may be empty).
   public let defaultVariables: [NoCodesScreenVariable]
@@ -36,7 +38,7 @@ public struct NoCodesScreen: Decodable, Sendable {
   }
 
   /// Internal initializer for creating a screen with modified HTML (e.g., with preloaded images).
-  init(id: String, html: String, contextKey: String, defaultVariables: [NoCodesScreenVariable] = []) {
+  init(id: String, html: String, contextKey: String?, defaultVariables: [NoCodesScreenVariable] = []) {
     self.id = id
     self.html = html
     self.contextKey = contextKey
@@ -47,15 +49,17 @@ public struct NoCodesScreen: Decodable, Sendable {
     if var arrayContainer = try? decoder.unkeyedContainer(),
        let screenContainer = try? arrayContainer.nestedContainer(keyedBy: CodingKeys.self) {
       id = try screenContainer.decode(String.self, forKey: .id)
+      // `body` is the screen: a null one is nothing to render, and the decode
+      // has to say so. `context_key` may legitimately be absent.
       html = try screenContainer.decode(String.self, forKey: .body)
-      contextKey = try screenContainer.decode(String.self, forKey: .context_key)
+      contextKey = try screenContainer.decodeIfPresent(String.self, forKey: .context_key)
       // Older payloads and bundled fallbacks may omit `variables`; default to empty.
       defaultVariables = (try? screenContainer.decodeIfPresent([NoCodesScreenVariable].self, forKey: .variables)) ?? []
     } else {
       let container = try decoder.container(keyedBy: ResponseCodingKeys.self)
       id = try container.decode(String.self, forKey: .id)
       html = try container.decode(String.self, forKey: .body)
-      contextKey = try container.decode(String.self, forKey: .context_key)
+      contextKey = try container.decodeIfPresent(String.self, forKey: .context_key)
       defaultVariables = (try? container.decodeIfPresent([NoCodesScreenVariable].self, forKey: .variables)) ?? []
     }
   }
@@ -88,6 +92,38 @@ public struct NoCodesScreen: Decodable, Sendable {
   func withHtml(_ newHtml: String) -> NoCodesScreen {
     return NoCodesScreen(id: id, html: newHtml, contextKey: contextKey, defaultVariables: defaultVariables)
   }
+}
+
+/// A list of screens that survives the rows it cannot use. A screen whose `body`
+/// is null cannot be rendered, and a gateway path can put a bare `null` in the
+/// array — either one would otherwise take every other screen down with it.
+struct NoCodesScreenList: Decodable {
+
+  let screens: [NoCodesScreen]
+
+  init(from decoder: Decoder) throws {
+    var container: UnkeyedDecodingContainer = try decoder.unkeyedContainer()
+    var screens: [NoCodesScreen] = []
+
+    while !container.isAtEnd {
+      if try container.decodeNil() { continue }
+
+      if let screen: NoCodesScreen = try? container.decode(NoCodesScreen.self) {
+        screens.append(screen)
+      } else {
+        // Skip the unusable row; the container must still advance.
+        _ = try? container.decode(SkippedScreen.self)
+      }
+    }
+
+    self.screens = screens
+  }
+}
+
+/// Consumes one arbitrary JSON value so the list can advance past it.
+private struct SkippedScreen: Decodable {
+
+  init(from decoder: Decoder) throws { }
 }
 
 /// A typed default variable of a No-Codes screen, configured in the builder and delivered

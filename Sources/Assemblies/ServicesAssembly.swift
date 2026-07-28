@@ -147,6 +147,23 @@ final class ServicesAssembly {
         return processor
     }
     
+    /// Crash reports go to a different host than everything else, with none of
+    /// the API processor's machinery — see ``CrashReportsTransport``.
+    func crashReportsTransport() -> CrashReportsTransportInterface {
+        return CrashReportsTransport(networkProvider: networkProvider())
+    }
+
+    func sdkLogDevice() -> SdkLogDevice {
+        let deviceInfo: HeaderDeviceInfo = deviceInfoCollector().headerDeviceInfo()
+
+        return SdkLogDevice.make(
+            deviceInfo: deviceInfo,
+            projectKey: apiKey,
+            sdkVersion: SDKVersion.current,
+            userDefaults: miscAssembly.userDefaults
+        )
+    }
+
     func miscAssemblyLogger() -> LoggerWrapper {
         return miscAssembly.loggerWrapper()
     }

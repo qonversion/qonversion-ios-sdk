@@ -11,10 +11,9 @@ import Foundation
 /// Mach handlers belong to the host app's own crash reporter, so real crashes
 /// (SIGSEGV, a Swift runtime trap) are not captured here.
 ///
-/// `POST v4/sdk-crashes` does not exist yet: the send fails on every launch,
-/// and nothing about it ever reaches the host. A failure the backend answered
-/// about the report itself drops it, everything else keeps it queued —
-/// ``CrashReportsSender/outcome(for:)``.
+/// Reports go to the sdk-logs service on the launch after the crash, never to
+/// the main API — see ``CrashReportsTransport``. Nothing about the send ever
+/// reaches the host.
 // @unchecked: the installed state is lock-guarded and the C handler captures nothing.
 final class CrashReporter: @unchecked Sendable {
 
@@ -80,57 +79,53 @@ final class CrashReporter: @unchecked Sendable {
     }
 }
 
-/// Ships the reports the previous launch left behind.
+/// Ships the reports the previous launch left behind to the sdk-logs service.
 struct CrashReportsSender {
 
     private let storage: CrashReportsStorage
-    private let requestProcessor: RequestProcessorInterface
+    private let transport: CrashReportsTransportInterface
     private let userIdProvider: UserIdProvider
     private let userManager: UserManagerInterface
-    private let platform: String
+    private let device: SdkLogDevice
 
-    init(storage: CrashReportsStorage, requestProcessor: RequestProcessorInterface, userIdProvider: UserIdProvider, userManager: UserManagerInterface, platform: String) {
+    init(storage: CrashReportsStorage, transport: CrashReportsTransportInterface, userIdProvider: UserIdProvider, userManager: UserManagerInterface, device: SdkLogDevice) {
         self.storage = storage
-        self.requestProcessor = requestProcessor
+        self.transport = transport
         self.userIdProvider = userIdProvider
         self.userManager = userManager
-        self.platform = platform
+        self.device = device
     }
 
-    /// Attempt budget per report: a payload the backend keeps refusing would
+    /// Attempt budget per report: a payload the service keeps refusing would
     /// otherwise hold a slot and one POST per launch forever.
     static var maxSendAttempts: Int { 5 }
 
-    /// Fails soft, one report at a time; ``outcome(for:)`` decides each verdict.
+    /// Fails soft, one report at a time. The service answers with nothing this
+    /// SDK can read, so the only verdicts are delivered and not delivered.
     func sendStoredReports() async {
         let reports: [CrashReport] = storage.all()
         guard !reports.isEmpty else { return }
 
-        // A crash on the first launch is reported before the user exists: the
-        // uid would be one the backend has never seen, and the 4xx it answers
-        // drops the report.
+        // A crash on the first launch is reported before the user exists, and
+        // the uid on the envelope would be one the backend has never seen.
         do {
             try await userManager.obtainUser()
         } catch {
             return
         }
 
-        let userId: String = userIdProvider.getUserId()
+        // The uid is only knowable once the gate above has run.
+        let device: SdkLogDevice = device.withUid(userIdProvider.getUserId())
         for report in reports {
-            let body: RequestBodyDict = report.requestBody(userId: userId, platform: platform)
-            let request = Request.sdkCrash(body: body)
-            do {
-                let _: EmptyApiResponse = try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
+            switch await transport.send(body: report.requestBody(device: device)) {
+            case .delivered:
                 storage.remove(report)
-            } catch {
-                switch Self.outcome(for: error) {
-                case .drop:
-                    storage.remove(report)
-                case .keepAndStop:
-                    return
-                case .keepAndContinue:
-                    countAttempt(of: report)
-                }
+            case .rejected:
+                countAttempt(of: report)
+            case .notReached:
+                // The network is the problem, not this report: it keeps its
+                // budget, and the rest of the queue keeps its launch.
+                return
             }
         }
     }
@@ -144,69 +139,4 @@ struct CrashReportsSender {
             storage.replace(report, with: attempted)
         }
     }
-
-    /// What to do with a report whose send failed.
-    enum SendOutcome {
-        /// A resend cannot change the answer — stop wasting a launch on it.
-        case drop
-        /// The failure is about this report; the next one is still worth a try.
-        case keepAndContinue
-        /// The failure is about the environment, so every following send would
-        /// fail the same way.
-        case keepAndStop
-    }
-
-    /// Classifies a failed send by the HTTP status carried on the error, not by
-    /// the error type: the endpoint is unrouted today, and an unrouted path
-    /// answers a bare 404 with no error envelope, which arrives as `.unknown`.
-    /// A status-less failure defaults to keep.
-    static func outcome(for error: Error) -> SendOutcome {
-        // Cancellation is a mid-flight user switch: nothing was decided here,
-        // and the next send would be cancelled too.
-        guard !error.isCancellation else { return .keepAndStop }
-        guard let qonversionError = error as? QonversionError else { return .keepAndStop }
-
-        switch qonversionError.type {
-        // Raised before the request leaves the device, by state that applies to
-        // every report equally.
-        case .critical, .rateLimitExceeded:
-            return .keepAndStop
-        default:
-            break
-        }
-
-        guard let statusCode: Int = qonversionError.additionalInfo?[ErrorConstants.statusCodeKey.rawValue] as? Int else {
-            // No status, no verdict. `.invalidResponse` also arrives from a 2xx
-            // whose body failed to decode, so keeping can resend a report the
-            // backend took — deliberate: a duplicate costs less than a loss.
-            return .keepAndStop
-        }
-
-        // The key or the project is the problem, for every report equally.
-        if Self.environmentWideStatusCodes.contains(statusCode) {
-            return .keepAndStop
-        }
-        // The backend refused this report itself; a next launch changes nothing.
-        if Self.clientErrorRange.contains(statusCode) {
-            return .drop
-        }
-
-        // Answered but did not take it (5xx): reachable, so the next report is
-        // worth a try, and this one's attempt is counted.
-        return .keepAndContinue
-    }
-
-    /// ``ResponseCode`` does not name it because no other caller branches on it.
-    private static let tooManyRequestsStatusCode: Int = 429
-
-    /// Environment-wide 4xx — the revoked-key latch (401/402/403) and the
-    /// throttle (429) — carved out of the delete range below.
-    private static let environmentWideStatusCodes: Set<Int> = [
-        ResponseCode.unauthorized.rawValue,
-        ResponseCode.paymentRequired.rawValue,
-        ResponseCode.forbidden.rawValue,
-        tooManyRequestsStatusCode
-    ]
-
-    private static let clientErrorRange: ClosedRange<Int> = 400...499
 }

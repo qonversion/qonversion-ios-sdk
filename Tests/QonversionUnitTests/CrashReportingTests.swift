@@ -279,18 +279,59 @@ final class CrashReportsStorageTests: XCTestCase {
         XCTAssertEqual(storage.all().map { $0.sendAttempts }, [1, 0])
     }
 
-    func testTheRequestBodyMatchesTheProposedContract() throws {
-        let body: RequestBodyDict = makeReport(id: "r1").requestBody(userId: "QON_u", platform: "iOS")
+    func testTheRequestBodyMatchesTheObjCSdkLogsEnvelope() throws {
+        // The receiving service is the one the ObjC SDK has always shipped to,
+        // and its envelope is the ObjC one, key for key.
+        let body: RequestBodyDict = makeReport(id: "r1").requestBody(device: Self.device)
 
-        XCTAssertEqual(body["sdk_version"] as? String, "6.0.0")
-        XCTAssertEqual(body["platform"] as? String, "iOS")
-        XCTAssertEqual(body["user_id"] as? String, "QON_u")
-        XCTAssertEqual(body["occurred_at"] as? Int, 1_700_000_000)
+        XCTAssertEqual(Set(body.keys), ["device", "exception"])
+
+        let device = try XCTUnwrap(body["device"] as? RequestBodyDict)
+        XCTAssertEqual(Set(device.keys), ["platform", "platform_version", "source", "source_version", "project_key", "uid"])
+        XCTAssertEqual(device["platform"] as? String, "iOS")
+        XCTAssertEqual(device["platform_version"] as? String, "17.0")
+        XCTAssertEqual(device["source"] as? String, "iOS")
+        XCTAssertEqual(device["source_version"] as? String, "6.0.0")
+        XCTAssertEqual(device["project_key"] as? String, "test-project-key")
+        XCTAssertEqual(device["uid"] as? String, "QON_u")
+
         let exception = try XCTUnwrap(body["exception"] as? RequestBodyDict)
         XCTAssertEqual(exception["name"] as? String, "NSInvalidArgumentException")
-        XCTAssertEqual(exception["linkage"] as? String, "spm")
-        XCTAssertEqual((exception["stack_trace"] as? RequestBodyArray)?.count, 1)
+        XCTAssertEqual(exception["message"] as? String, "-[NSNull length]: unrecognized selector sent to instance")
+        XCTAssertEqual(exception["title"] as? String, "NSInvalidArgumentException: -[NSNull length]: unrecognized selector sent to instance")
+        XCTAssertEqual(exception["rawStackTrace"] as? String, "0   Qonversion   0x01 sym + 1")
+        XCTAssertEqual(exception["elements"] as? [String], ["0   Qonversion   0x01 sym + 1"])
+        XCTAssertEqual(exception["isSpm"] as? Bool, true)
+        XCTAssertEqual(exception["userInfo"] as? RequestBodyDict, [:])
+        // Ours, carried inside the crash payload the service stores as-is.
+        XCTAssertEqual(exception["sdk_version"] as? String, "6.0.0")
+        XCTAssertEqual(exception["occurred_at"] as? Int, 1_700_000_000)
     }
+
+    func testTheRawStackTraceJoinsTheFramesTheWayObjCDid() throws {
+        let report = CrashReport(
+            id: "r1",
+            name: "NSRangeException",
+            reason: "out of bounds",
+            stackTrace: ["0 Qonversion 0x01 a + 1", "1 MyApp 0x02 b + 2"],
+            linkage: .framework
+        )
+
+        let body: RequestBodyDict = report.requestBody(device: Self.device)
+
+        let exception = try XCTUnwrap(body["exception"] as? RequestBodyDict)
+        XCTAssertEqual(exception["rawStackTrace"] as? String, "0 Qonversion 0x01 a + 1\n1 MyApp 0x02 b + 2")
+        XCTAssertEqual(exception["isSpm"] as? Bool, false)
+    }
+
+    static let device = SdkLogDevice(
+        platform: "iOS",
+        platformVersion: "17.0",
+        source: "iOS",
+        sourceVersion: "6.0.0",
+        projectKey: "test-project-key",
+        uid: "QON_u"
+    )
 }
 
 // MARK: - the handler and the send on the next launch
@@ -393,236 +434,112 @@ final class CrashReporterTests: XCTestCase {
 
     // MARK: - send on the next launch
 
-    private func makeSender(processor: RequestProcessorInterface) -> CrashReportsSender {
+    private func makeSender(transport: CrashReportsTransportInterface) -> CrashReportsSender {
         let userIdProvider = InternalConfig(userId: "QON_u")
 
         return CrashReportsSender(
             storage: storage,
-            requestProcessor: processor,
+            transport: transport,
             userIdProvider: userIdProvider,
             userManager: userManager,
-            platform: "iOS"
+            device: CrashReportsStorageTests.device
         )
+    }
+
+    /// The real transport over a stubbed socket: the URL, the method and the
+    /// status handling are the ones production would use.
+    private func makeTransport(networkProvider: MockNetworkProvider) -> CrashReportsTransport {
+        return CrashReportsTransport(networkProvider: networkProvider)
+    }
+
+    private func makeNetworkProvider(statusCode: Int) -> MockNetworkProvider {
+        let networkProvider = MockNetworkProvider()
+        networkProvider.response = HTTPURLResponse(url: URL(string: "https://sdk-logs.qonversion.io/sdk.log")!, statusCode: statusCode, httpVersion: nil, headerFields: nil)!
+        networkProvider.responseData = Data()
+
+        return networkProvider
     }
 
     private func makeReport(id: String) -> CrashReport {
         return CrashReport(id: id, name: "NSInvalidArgumentException", reason: "boom", stackTrace: ["0 Qonversion 0x01 sym + 1"], linkage: .spm)
     }
 
+    // MARK: - the target
+
+    func testReportsGoToTheSdkLogsServiceNotTheApi() async throws {
+        storage.store(makeReport(id: "r1"))
+        let networkProvider = makeNetworkProvider(statusCode: 200)
+
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
+
+        let request: URLRequest = try XCTUnwrap(networkProvider.sentRequests.first)
+        XCTAssertEqual(request.url?.absoluteString, "https://sdk-logs.qonversion.io/sdk.log")
+        XCTAssertEqual(request.httpMethod, "POST")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
+        // The ObjC client sends Content-Type and nothing else: the project key
+        // travels in the body, not in an Authorization header.
+        XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+    }
+
+    func testTheSentBodyCarriesTheDeviceEnvelopeAndTheCrashPayload() async throws {
+        storage.store(makeReport(id: "r1"))
+        let networkProvider = makeNetworkProvider(statusCode: 200)
+
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
+
+        let body: Data = try XCTUnwrap(networkProvider.sentRequests.first?.httpBody)
+        let decoded = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
+        XCTAssertEqual(Set(decoded.keys), ["device", "exception"])
+        let device = try XCTUnwrap(decoded["device"] as? [String: Any])
+        // The uid is the one the gate resolved, not the placeholder the
+        // assembly built the envelope with.
+        XCTAssertEqual(device["uid"] as? String, "QON_u")
+        XCTAssertEqual(device["project_key"] as? String, "test-project-key")
+        let exception = try XCTUnwrap(decoded["exception"] as? [String: Any])
+        XCTAssertEqual(exception["name"] as? String, "NSInvalidArgumentException")
+    }
+
+    // MARK: - delivered or not, nothing in between
+
     func testStoredReportsAreSentAndDropped() async {
         storage.store(makeReport(id: "r1"))
         storage.store(makeReport(id: "r2"))
-        let processor = MockRequestProcessor()
-        processor.results = [EmptyApiResponse(), EmptyApiResponse()]
+        let networkProvider = makeNetworkProvider(statusCode: 200)
 
-        await makeSender(processor: processor).sendStoredReports()
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
 
-        XCTAssertEqual(processor.processedRequests.count, 2)
-        guard case let .sdkCrash(endpoint, body, type) = processor.processedRequests[0] else {
-            return XCTFail("Expected an .sdkCrash request")
-        }
-        XCTAssertEqual(endpoint, "v4/sdk-crashes")
-        XCTAssertEqual(type, .post)
-        XCTAssertEqual(body["user_id"] as? String, "QON_u")
+        XCTAssertEqual(networkProvider.sentRequests.count, 2)
         XCTAssertTrue(storage.all().isEmpty, "a delivered report is not sent again")
     }
 
-    func testTheUserGateIsPassedBeforeTheFirstReportIsSent() async {
-        // A crash on the very first launch is reported before createUser ever
-        // ran: the uid on the report is then one the backend has never seen,
-        // and the send is refused with a 4xx that drops the report for good.
+    func testAnyTwoHundredCountsAsDelivered() async {
         storage.store(makeReport(id: "r1"))
-        storage.store(makeReport(id: "r2"))
-        let processor = MockRequestProcessor()
-        processor.results = [EmptyApiResponse(), EmptyApiResponse()]
-        processor.onProcess = { [weak self] in
-            guard let self, self.gateCallsAtFirstRequest < 0 else { return }
-            self.gateCallsAtFirstRequest = self.userManager.obtainUserCallsCount
-        }
+        // The service answers 204 as readily as 200, and its body is never
+        // parsed — the status line is the whole verdict.
+        let networkProvider = makeNetworkProvider(statusCode: 204)
 
-        await makeSender(processor: processor).sendStoredReports()
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
 
-        XCTAssertEqual(gateCallsAtFirstRequest, 1, "the backend user must exist before a report carries its uid")
-        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "one gate pass per launch, not one per report")
-        XCTAssertEqual(processor.processedRequests.count, 2)
+        XCTAssertTrue(storage.all().isEmpty)
     }
 
-    func testAFailingUserGateKeepsTheReportsForTheNextLaunch() async {
-        storage.store(makeReport(id: "r1"))
-        userManager.error = MockError.stubbed
-        let processor = MockRequestProcessor()
-
-        await makeSender(processor: processor).sendStoredReports()
-
-        XCTAssertTrue(processor.processedRequests.isEmpty, "no report may be sent under a uid the backend does not have")
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "a gate failure costs the report nothing")
-    }
-
-    func testAnEmptyQueueSendsNothing() async {
-        let processor = MockRequestProcessor()
-
-        await makeSender(processor: processor).sendStoredReports()
-
-        XCTAssertTrue(processor.processedRequests.isEmpty)
-    }
-
-    func testARevokedProjectKeyKeepsTheReportForTheNextLaunch() async {
-        // .critical is thrown by the revoked-key latch BEFORE the request ever
-        // leaves the device, so it says nothing about the report. Treating it
-        // as "the backend answered" destroys every stored report on one launch.
-        storage.store(makeReport(id: "r1"))
-        let processor = MockRequestProcessor()
-        processor.error = QonversionError(type: .critical)
-
-        await makeSender(processor: processor).sendStoredReports()
-
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "nothing was ever sent — the report is not delivered")
-    }
-
-    func testAThrottledSendKeepsTheReportForTheNextLaunch() async {
-        storage.store(makeReport(id: "r1"))
-        let processor = MockRequestProcessor()
-        processor.error = QonversionError(type: .rateLimitExceeded)
-
-        await makeSender(processor: processor).sendStoredReports()
-
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "the rate limiter refused to send it, the backend never saw it")
-    }
-
-    func testAnErrorWithoutAnHttpStatusKeepsTheReport() async {
-        // Nothing here proves the backend saw the report: a status-less
-        // failure is raised before the request leaves the device (a bad URL,
-        // the latch, the local limiter) or by transport. Deleting on the
-        // semantic type alone is what makes such a failure lose crash reports.
-        storage.store(makeReport(id: "r1"))
-        let processor = MockRequestProcessor()
-        processor.error = QonversionError(type: .invalidRequest)
-
-        await makeSender(processor: processor).sendStoredReports()
-
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "no status, no proof of delivery")
-    }
-
-    func testAConnectionFailureKeepsTheReportForTheNextLaunch() async {
-        // .networkConnectionFailed is the network layer's name for a request
-        // that never reached the backend. It is the most ordinary way a crash
-        // report's send fails — the user who crashed was offline — so it must
-        // fall to the KEEP default, never to the drop set.
-        storage.store(makeReport(id: "r1"))
-        let processor = MockRequestProcessor()
-        let connectionError: QonversionError = QonversionError(type: .networkConnectionFailed, error: URLError(.notConnectedToInternet))
-        processor.error = connectionError
-
-        await makeSender(processor: processor).sendStoredReports()
-
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "the request never reached the backend — the report is not delivered")
-    }
-
-    func testAKeptReportStopsTheLaunchInsteadOfBurningTheWholeQueue() async {
-        storage.store(makeReport(id: "r1"))
-        storage.store(makeReport(id: "r2"))
-        let processor = MockRequestProcessor()
-        processor.error = QonversionError(type: .critical)
-
-        await makeSender(processor: processor).sendStoredReports()
-
-        XCTAssertEqual(processor.processedRequests.count, 1, "one refusal is enough to know the rest will be refused too")
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1", "r2"])
-    }
-
-    func testATransportFailureKeepsTheReportForTheNextLaunch() async {
-        storage.store(makeReport(id: "r1"))
-        let processor = MockRequestProcessor()
-        processor.error = QonversionError(type: .invalidResponse, error: URLError(.notConnectedToInternet))
-
-        await makeSender(processor: processor).sendStoredReports()
-
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1"])
-    }
-
-    func testSendingNeverThrowsAtTheCaller() async {
-        storage.store(makeReport(id: "r1"))
-        let processor = MockRequestProcessor()
-        processor.error = MockError.stubbed
-
-        // No `try`: the API itself guarantees the host is never bothered.
-        await makeSender(processor: processor).sendStoredReports()
-
-        XCTAssertNotNil(storage.all().first)
-    }
-
-    // MARK: - the answers the real network layer actually produces
-    //
-    // The classification lives or dies on what a QonversionError CARRIES, not
-    // on what a hand-built one is labelled with. Every case below is driven
-    // through the real RequestProcessor and the real NetworkErrorHandler, so
-    // the type and the status are the ones production would see.
-
-    private func makeRealProcessor(networkProvider: MockNetworkProvider) -> RequestProcessor {
-        let responseDecoder = ResponseDecoder(decoder: JSONDecoder())
-        let criticalErrorCodes: [ResponseCode] = [.unauthorized, .paymentRequired, .forbidden]
-        let networkErrorHandler = NetworkErrorHandler(criticalErrorCodes: criticalErrorCodes, decoder: responseDecoder)
-
-        return RequestProcessor(
-            baseURL: "https://api.qonversion.io/",
-            networkProvider: networkProvider,
-            headersBuilder: MockHeadersBuilder(),
-            errorHandler: networkErrorHandler,
-            decoder: responseDecoder,
-            retriableRequestKinds: [],
-            requestsStorage: MockRequestsStorage(),
-            rateLimiter: MockRateLimiter(),
-            // The backoff is proven elsewhere; waiting it out here would only
-            // make the suite slow.
-            transportRetryDelayCeiling: 0
-        )
-    }
-
-    private func makeCrashResponse(statusCode: Int) -> HTTPURLResponse {
-        let url = URL(string: "https://api.qonversion.io/v4/sdk-crashes")!
-
-        return HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: nil, headerFields: nil)!
-    }
-
-    private func makeNetworkProvider(statusCode: Int, body: Data = Data()) -> MockNetworkProvider {
-        let networkProvider = MockNetworkProvider()
-        networkProvider.response = makeCrashResponse(statusCode: statusCode)
-        networkProvider.responseData = body
-
-        return networkProvider
-    }
-
-    func testAnUnroutedGatewayNotFoundDropsTheReport() async {
-        // The motivating shape: `POST v4/sdk-crashes` does not exist yet, so
-        // the gateway answers 404 with no application error envelope at all.
-        // There is no `not_found` slug to classify it, so it arrives as
-        // .unknown — deleting only on .resourceNotFound leaves the queue
-        // pinned forever, one wasted POST per launch.
-        storage.store(makeReport(id: "r1"))
-        let networkProvider = makeNetworkProvider(statusCode: 404, body: Data("<html><body>404 Not Found</body></html>".utf8))
-
-        await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
-
-        XCTAssertTrue(storage.all().isEmpty, "the gateway answered 404 — resending it every launch changes nothing")
-    }
-
-    func testAMalformedRequestRejectionDropsTheReport() async {
-        storage.store(makeReport(id: "r1"))
-        let body = Data(#"{"error": {"type": "request", "code": "invalid_data", "message": "bad body"}}"#.utf8)
-        let networkProvider = makeNetworkProvider(statusCode: 400, body: body)
-
-        await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
-
-        XCTAssertTrue(storage.all().isEmpty, "the body will be just as invalid next launch")
-    }
-
-    func testAServerFailureFromTheBackendKeepsTheReport() async {
+    func testAnAnswerThatIsNotTwoHundredKeepsTheReport() async {
         storage.store(makeReport(id: "r1"))
         let networkProvider = makeNetworkProvider(statusCode: 500)
 
-        await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
 
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "5xx means the backend did not process it")
+        XCTAssertEqual(storage.all().map { $0.id }, ["r1"])
+        XCTAssertEqual(storage.all().map { $0.sendAttempts }, [1], "the service saw it and refused — that costs an attempt")
+    }
+
+    func testAClientRejectionAlsoKeepsTheReportUntilItsBudgetIsSpent() async {
+        storage.store(makeReport(id: "r1"))
+        let networkProvider = makeNetworkProvider(statusCode: 400)
+
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
+
+        XCTAssertEqual(storage.all().map { $0.sendAttempts }, [1])
     }
 
     func testAnOfflineSendKeepsTheReport() async {
@@ -630,53 +547,42 @@ final class CrashReporterTests: XCTestCase {
         let networkProvider = MockNetworkProvider()
         networkProvider.error = URLError(.notConnectedToInternet)
 
-        await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
 
         XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "no answer at all is not a rejection")
     }
 
-    func testARevokedKeyStatusKeepsTheReport() async {
+    func testAnOfflineLaunchDoesNotBurnTheAttemptBudget() async {
+        // A user offline for a week must not lose the crash report that week:
+        // the failures say nothing about the report, so they cost it nothing.
         storage.store(makeReport(id: "r1"))
-        let networkProvider = makeNetworkProvider(statusCode: 401)
-
-        await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
-
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "the key is the problem, not the report")
-    }
-
-    func testAThrottlingStatusKeepsTheReport() async {
-        storage.store(makeReport(id: "r1"))
-        let networkProvider = makeNetworkProvider(statusCode: 429)
-
-        await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
-
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "429 is a 4xx that says come back later")
-    }
-
-    // MARK: - one bad report must not starve the queue
-
-    func testAPerReportRejectionDoesNotStarveTheRestOfTheQueue() async {
-        // The first report is poison — the backend chokes on it every time.
-        // Stopping the launch there means the healthy second report is never
-        // sent, on this launch or any other.
-        storage.store(makeReport(id: "poison"))
-        storage.store(makeReport(id: "healthy"))
         let networkProvider = MockNetworkProvider()
-        networkProvider.responseData = Data()
-        networkProvider.response = makeCrashResponse(statusCode: 500)
-        networkProvider.onSend = { [weak networkProvider] in
-            guard let networkProvider else { return }
-            let isFirstSend: Bool = networkProvider.sentRequests.count == 1
-            networkProvider.response = self.makeCrashResponse(statusCode: isFirstSend ? 500 : 204)
+        networkProvider.error = URLError(.notConnectedToInternet)
+
+        for _ in 0...CrashReportsSender.maxSendAttempts {
+            await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
         }
 
-        await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
-
-        XCTAssertEqual(networkProvider.sentRequests.count, 2, "the second report deserved its own attempt")
-        XCTAssertEqual(storage.all().map { $0.id }, ["poison"], "the healthy report was delivered and dropped")
+        XCTAssertEqual(storage.all().map { $0.sendAttempts }, [0], "only an answer from the service costs an attempt")
     }
 
-    func testAReportTheBackendKeepsRejectingIsEventuallyGivenUpOn() async {
+    func testAnUnreachableServiceStopsTheLaunch() async {
+        // Every following send would fail the same way, so trying them is
+        // pure waste.
+        storage.store(makeReport(id: "r1"))
+        storage.store(makeReport(id: "r2"))
+        let networkProvider = MockNetworkProvider()
+        networkProvider.error = URLError(.notConnectedToInternet)
+
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 1, "one failure is enough to know the network is down")
+        XCTAssertEqual(storage.all().map { $0.id }, ["r1", "r2"])
+    }
+
+    // MARK: - the attempt budget
+
+    func testAReportTheServiceKeepsRejectingIsEventuallyGivenUpOn() async {
         // A payload the service chokes on answers the same way every launch.
         // Without a budget it would hold one of the five slots and one POST per
         // launch for the lifetime of the install.
@@ -684,44 +590,139 @@ final class CrashReporterTests: XCTestCase {
         let networkProvider = makeNetworkProvider(statusCode: 500)
 
         for launch in 1..<CrashReportsSender.maxSendAttempts {
-            await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
+            await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
 
             XCTAssertEqual(storage.all().map { $0.sendAttempts }, [launch], "launch \(launch) counts against the budget")
         }
-        await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
 
         XCTAssertTrue(storage.all().isEmpty, "the budget is spent — the slot goes back to the reports that can be delivered")
     }
 
-    func testAnOfflineLaunchDoesNotBurnTheAttemptBudget() async {
-        // A user who is offline for a week must not lose the crash report that
-        // week: the failures say nothing about the report, so they cost it
-        // nothing.
-        storage.store(makeReport(id: "r1"))
-        let networkProvider = MockNetworkProvider()
-        networkProvider.error = URLError(.notConnectedToInternet)
-
-        for _ in 0...CrashReportsSender.maxSendAttempts {
-            await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
+    func testAPerReportRejectionDoesNotStarveTheRestOfTheQueue() async {
+        // The first report is poison — the service chokes on it every time.
+        // Stopping the launch there means the healthy second report is never
+        // sent, on this launch or any other.
+        storage.store(makeReport(id: "poison"))
+        storage.store(makeReport(id: "healthy"))
+        let networkProvider = makeNetworkProvider(statusCode: 500)
+        networkProvider.onSend = { [weak networkProvider] in
+            guard let networkProvider else { return }
+            let isFirstSend: Bool = networkProvider.sentRequests.count == 1
+            networkProvider.response = HTTPURLResponse(url: URL(string: "https://sdk-logs.qonversion.io/sdk.log")!, statusCode: isFirstSend ? 500 : 200, httpVersion: nil, headerFields: nil)!
         }
 
-        XCTAssertEqual(storage.all().map { $0.sendAttempts }, [0], "only an answer from the backend costs an attempt")
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
+
+        XCTAssertEqual(networkProvider.sentRequests.count, 2, "the second report deserved its own attempt")
+        XCTAssertEqual(storage.all().map { $0.id }, ["poison"], "the healthy report was delivered and dropped")
     }
 
-    func testAnEnvironmentWideFailureStopsTheLaunch() async {
-        // Offline is not the report's fault and not the report's problem:
-        // every following send would fail the same way, so trying them is
-        // pure waste.
+    // MARK: - the user gate
+
+    func testTheUserGateIsPassedBeforeTheFirstReportIsSent() async {
         storage.store(makeReport(id: "r1"))
         storage.store(makeReport(id: "r2"))
+        let networkProvider = makeNetworkProvider(statusCode: 200)
+        networkProvider.onSend = { [weak self] in
+            guard let self, self.gateCallsAtFirstRequest < 0 else { return }
+            self.gateCallsAtFirstRequest = self.userManager.obtainUserCallsCount
+        }
+
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
+
+        XCTAssertEqual(gateCallsAtFirstRequest, 1, "the backend user must exist before a report carries its uid")
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "one gate pass per launch, not one per report")
+        XCTAssertEqual(networkProvider.sentRequests.count, 2)
+    }
+
+    func testAFailingUserGateKeepsTheReportsForTheNextLaunch() async {
+        storage.store(makeReport(id: "r1"))
+        userManager.error = MockError.stubbed
+        let networkProvider = makeNetworkProvider(statusCode: 200)
+
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
+
+        XCTAssertTrue(networkProvider.sentRequests.isEmpty, "no report may be sent under a uid the backend does not have")
+        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "a gate failure costs the report nothing")
+    }
+
+    func testAnEmptyQueueSendsNothing() async {
+        let networkProvider = makeNetworkProvider(statusCode: 200)
+
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
+
+        XCTAssertTrue(networkProvider.sentRequests.isEmpty)
+    }
+
+    func testSendingNeverThrowsAtTheCaller() async {
+        storage.store(makeReport(id: "r1"))
         let networkProvider = MockNetworkProvider()
-        networkProvider.error = URLError(.notConnectedToInternet)
+        networkProvider.error = MockError.stubbed
 
-        await makeSender(processor: makeRealProcessor(networkProvider: networkProvider)).sendStoredReports()
+        // No `try`: the API itself guarantees the host is never bothered.
+        await makeSender(transport: makeTransport(networkProvider: networkProvider)).sendStoredReports()
 
-        XCTAssertEqual(networkProvider.sentRequests.count, RequestProcessor.maxTransportRetries + 1,
-                       "one report's worth of transport retries, then the launch gives up")
-        XCTAssertEqual(storage.all().map { $0.id }, ["r1", "r2"])
+        XCTAssertNotNil(storage.all().first)
+    }
+}
+
+// MARK: - the source the envelope reports
+
+final class SdkLogDeviceTests: XCTestCase {
+
+    private let deviceInfo = HeaderDeviceInfo(appVersion: "1.2.3", country: "US", language: "en", osName: "iOS", osVersion: "17.0")
+
+    private func makeDevice(userDefaults: UserDefaults) -> SdkLogDevice {
+        return SdkLogDevice.make(deviceInfo: deviceInfo, projectKey: "key", sdkVersion: "6.0.0", userDefaults: userDefaults)
+    }
+
+    func testTheNativeSdkReportsItselfAsTheSource() {
+        let device: SdkLogDevice = makeDevice(userDefaults: TestDefaults.makeIsolated())
+
+        XCTAssertEqual(device.source, "iOS")
+        XCTAssertEqual(device.sourceVersion, "6.0.0")
+    }
+
+    func testACrossPlatformWrapperReportsItsOwnSource() {
+        let defaults: UserDefaults = TestDefaults.makeIsolated()
+        defaults.set("flutter", forKey: "com.qonversion.keys.source")
+        defaults.set("9.9.9", forKey: "com.qonversion.keys.sourceVersion")
+
+        let device: SdkLogDevice = makeDevice(userDefaults: defaults)
+
+        XCTAssertEqual(device.source, "flutter")
+        XCTAssertEqual(device.sourceVersion, "9.9.9")
+    }
+
+    func testALeftoverVersionWithoutASourceIsIgnored() {
+        // The Objective-C SDK persisted its own version under this key.
+        let defaults: UserDefaults = TestDefaults.makeIsolated()
+        defaults.set("5.0.0", forKey: "com.qonversion.keys.sourceVersion")
+
+        let device: SdkLogDevice = makeDevice(userDefaults: defaults)
+
+        XCTAssertEqual(device.source, "iOS")
+        XCTAssertEqual(device.sourceVersion, "6.0.0")
+    }
+
+    func testTheEnvelopeAgreesWithTheRequestHeaders() {
+        // Two implementations of one resolution rule: the sdk-logs service
+        // reads both, and they must never disagree.
+        let defaults: UserDefaults = TestDefaults.makeIsolated()
+        defaults.set("react-native", forKey: "com.qonversion.keys.source")
+        defaults.set("4.4.4", forKey: "com.qonversion.keys.sourceVersion")
+        let collector = MockDeviceInfoCollector()
+        let headersBuilder = HeadersBuilder(apiKey: "key", sdkVersion: "6.0.0", deviceInfoCollector: collector, userDefaults: defaults)
+        var request = URLRequest(url: URL(string: "https://api2.qonversion.io/")!)
+        headersBuilder.addHeaders(to: &request)
+
+        let device: SdkLogDevice = SdkLogDevice.make(deviceInfo: collector.headerDeviceInfo(), projectKey: "key", sdkVersion: "6.0.0", userDefaults: defaults)
+
+        XCTAssertEqual(device.source, request.value(forHTTPHeaderField: "Source"))
+        XCTAssertEqual(device.sourceVersion, request.value(forHTTPHeaderField: "Source-Version"))
+        XCTAssertEqual(device.platform, request.value(forHTTPHeaderField: "Platform"))
+        XCTAssertEqual(device.platformVersion, request.value(forHTTPHeaderField: "Platform-Version"))
     }
 }
 
