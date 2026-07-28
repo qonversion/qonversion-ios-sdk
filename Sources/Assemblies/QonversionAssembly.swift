@@ -93,11 +93,8 @@ final class QonversionAssembly {
     /// Starts capturing uncaught exceptions raised inside the SDK, chaining to
     /// whatever handler the host already installed.
     ///
-    /// Not installed in DEBUG, the same decision the ObjC SDK made
-    /// (QONExceptionManager.m:35-38): an uncaught-exception handler swallows
-    /// the debugger's own break on `@throw`, so an integrator debugging a
-    /// crash would find the SDK standing between them and it. Release builds
-    /// install it and chain as before.
+    /// Not installed in DEBUG: an uncaught-exception handler swallows the
+    /// debugger's own break on `@throw`.
     func startCrashReporting() {
         #if !DEBUG
         CrashReporter.shared.install(storage: crashReportsStorage())
