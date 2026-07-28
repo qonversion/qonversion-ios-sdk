@@ -885,6 +885,14 @@ final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
 
 final class MockEntitlementsManager: EntitlementsManagerInterface {
 
+    /// Recorded in order, so a test can assert that the fresh window was
+    /// invalidated BEFORE the entitlements of the result were resolved.
+    enum Call: Equatable {
+        case resolvedEntitlements
+        case localFallback
+        case invalidateFreshBackendCache
+    }
+
     var entitlementsResult: [String: Qonversion.Entitlement] = [:]
     var entitlementsError: Error?
     var localFallbackResult: [String: Qonversion.Entitlement] = [:]
@@ -892,6 +900,9 @@ final class MockEntitlementsManager: EntitlementsManagerInterface {
     var entitlementsSource: Qonversion.DeferredPurchase.EntitlementsSource = .backend
     private(set) var entitlementsCallsCount = 0
     private(set) var localFallbackTransactions: [[Qonversion.Transaction]] = []
+    private(set) var calls: [Call] = []
+
+    var invalidationCallsCount: Int { calls.filter { $0 == .invalidateFreshBackendCache }.count }
 
     func entitlements() async throws -> [String: Qonversion.Entitlement] {
         return try await resolvedEntitlements().entitlements
@@ -899,13 +910,19 @@ final class MockEntitlementsManager: EntitlementsManagerInterface {
 
     func resolvedEntitlements() async throws -> ResolvedEntitlements {
         entitlementsCallsCount += 1
+        calls.append(.resolvedEntitlements)
         if let entitlementsError { throw entitlementsError }
         return ResolvedEntitlements(entitlements: entitlementsResult, source: entitlementsSource)
     }
 
     func localFallbackEntitlements(for transactions: [Qonversion.Transaction]) async -> [String: Qonversion.Entitlement] {
         localFallbackTransactions.append(transactions)
+        calls.append(.localFallback)
         return localFallbackResult
+    }
+
+    func invalidateFreshBackendCache() {
+        calls.append(.invalidateFreshBackendCache)
     }
 }
 

@@ -71,6 +71,22 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
         return try await resolvedEntitlements().entitlements
     }
 
+    func invalidateFreshBackendCache() {
+        lock.lock()
+        defer { lock.unlock() }
+
+        let backendTimestamp: TimeInterval = localStorage.double(forKey: Constants.backendTimestampKey.rawValue)
+        guard backendTimestamp > 0 else { return }
+
+        // Expired, not removed: the cache LIFETIME is measured from this same
+        // key, and handing that clock to the local fallback — which refreshes
+        // its own timestamp on every failure — would keep a lapsed user premium.
+        let expired: TimeInterval = Date().timeIntervalSince1970 - Self.freshCacheLifetime - 1
+        guard expired < backendTimestamp else { return }
+
+        localStorage.set(double: expired, forKey: Constants.backendTimestampKey.rawValue)
+    }
+
     func resolvedEntitlements() async throws -> ResolvedEntitlements {
         // Inside the fresh window the cache is served as it is — no user gate,
         // no request, so a per-appearance gating check costs nothing.

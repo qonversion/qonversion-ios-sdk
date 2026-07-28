@@ -30,6 +30,12 @@ protocol EntitlementsManagerInterface {
     /// answered or the result was calculated locally.
     func resolvedEntitlements() async throws -> ResolvedEntitlements
 
+    /// Expires the short-lived window during which the last backend answer is
+    /// served without asking again, so the next resolution goes to the network.
+    /// Called by the flows that just reported a purchase — the cached
+    /// entitlements themselves are kept, so a failing fetch still degrades to them.
+    func invalidateFreshBackendCache()
+
     /// The production fault-tolerance path, reusable from the purchase and
     /// restore flows: calculates entitlements locally for the given
     /// transactions, merges them on top of the cached ones, persists the

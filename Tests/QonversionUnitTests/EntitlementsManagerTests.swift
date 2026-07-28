@@ -386,6 +386,70 @@ final class EntitlementsManagerTests: XCTestCase {
         XCTAssertEqual(service.entitlementsCalls.count, 2, "the backend is asked again after a local fallback")
     }
 
+    // MARK: - the fresh window is invalidated by a reported purchase
+
+    func testInvalidatingTheFreshWindowSendsTheNextResolutionToTheBackend() async throws {
+        // A purchase reported seconds after a gating check must not be
+        // answered from the pre-purchase cache.
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+        XCTAssertEqual(service.entitlementsCalls.count, 1)
+
+        manager.invalidateFreshBackendCache()
+        service.entitlementsResult = [serverEntitlement(id: "premium"), serverEntitlement(id: "extra")]
+
+        let refreshed: [String: Qonversion.Entitlement] = try await manager.entitlements()
+
+        XCTAssertEqual(service.entitlementsCalls.count, 2, "the invalidated window must cost a request")
+        XCTAssertEqual(refreshed.keys.sorted(), ["extra", "premium"])
+    }
+
+    func testInvalidationKeepsTheCachedEntitlementsForTheDegradationPath() async throws {
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+
+        manager.invalidateFreshBackendCache()
+        // The follow-up fetch fails and StoreKit grants nothing: only the
+        // kept cache can still answer.
+        service.error = QonversionError(type: .internal)
+        facade.currentEntitlementsResult = []
+
+        let served: [String: Qonversion.Entitlement] = await servedEntitlements()
+
+        XCTAssertEqual(served["premium"]?.active, true, "invalidating the window must not drop the cached entitlements")
+    }
+
+    func testInvalidationDoesNotRestartTheCacheLifetimeClock() async throws {
+        // The lifetime is measured from the last BACKEND answer. Dropping the
+        // marker instead of expiring it would hand the clock to the local
+        // fallback, which refreshes it on every failure — a permanently
+        // failing backend would then keep a lapsed user premium forever.
+        let backendTimestampKey = "qonversion.keys.entitlementsBackendTimestamp"
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+        let afterBackend: TimeInterval = storage.double(forKey: backendTimestampKey)
+
+        manager.invalidateFreshBackendCache()
+
+        let marker: TimeInterval = storage.double(forKey: backendTimestampKey)
+        XCTAssertGreaterThan(marker, 0, "the lifetime must stay anchored to a backend answer")
+        XCTAssertGreaterThan(marker, afterBackend - EntitlementsManager.freshCacheLifetime - 60,
+                             "the cache may only be aged by the width of the fresh window")
+    }
+
+    func testInvalidationLeavesAnAlreadyStaleMarkerAlone() async throws {
+        let backendTimestampKey = "qonversion.keys.entitlementsBackendTimestamp"
+        let sixDaysAgo: TimeInterval = Date().timeIntervalSince1970 - 6 * 24 * 60 * 60
+        try storage.set(["premium": serverEntitlement(id: "premium")], forKey: "qonversion.keys.entitlements")
+        storage.set(double: sixDaysAgo, forKey: "qonversion.keys.entitlementsTimestamp")
+        storage.set(double: sixDaysAgo, forKey: backendTimestampKey)
+
+        manager.invalidateFreshBackendCache()
+
+        XCTAssertEqual(storage.double(forKey: backendTimestampKey), sixDaysAgo,
+                       "an expired window must not be moved forward")
+    }
+
     // MARK: - in-flight coalescing
 
     func testConcurrentCallsShareOneRequest() async throws {
