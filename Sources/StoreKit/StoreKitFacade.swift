@@ -26,8 +26,7 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         return _loadedProducts
     }
 
-    // Started once from initialize, stopped from tests — still guarded so a
-    // concurrent start cannot double-subscribe.
+    // Guarded so a concurrent start cannot double-subscribe.
     private let observationLock = NSLock()
     private var transactionUpdatesTask: Task<Void, Never>?
     private var storefrontTask: Task<Void, Never>?
@@ -42,13 +41,12 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
             do {
                 _ = try await products(for: [storeId])
             } catch {
-                // Product.products(for:) throws raw StoreKit errors; a
-                // purchase must answer with the SDK's own error on every leg.
+                // Product.products(for:) throws raw StoreKit errors.
                 throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .storeProductsLoadingFailed)
             }
         }
-        // The load succeeded and still returned nothing for this id: the store
-        // has no such product, rather than having failed to load it.
+        // The load succeeded and still returned nothing: the store has no such
+        // product, rather than having failed to load it.
         guard let product: StoreKit.Product = loadedProducts[storeId] else {
             throw QonversionError(type: .storeProductNotAvailable)
         }
@@ -57,8 +55,8 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     }
 
     func isEligibleForIntroOffer(storeId: String) async -> Bool? {
-        // The catalog is usually already loaded: refetching per product turned
-        // an eligibility check over N products into N store requests.
+        // Refetching per product would turn a check over N products into N
+        // store requests.
         var product: StoreKit.Product? = loadedProducts[storeId]
         if product == nil {
             product = (try? await products(for: [storeId]))?.first?.product
@@ -138,10 +136,8 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
 
         guard transactionUpdatesTask == nil else { return }
 
-        // Observed transactions are handed to the delegate and NEVER finished
-        // here: in Analytics mode the host app owns the transaction lifecycle,
-        // and in subscription-management mode finishing happens only after the
-        // backend confirms the purchase.
+        // NEVER finished here: Analytics mode leaves the lifecycle to the host,
+        // subscription management finishes only after the backend ack.
         let wrapper: StoreKitWrapperInterface = storeKitWrapper
         transactionUpdatesTask = Task { [weak self] in
             for await transaction in wrapper.transactionUpdates() {
@@ -159,10 +155,8 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
             }
         }
 
-        // Promoted-purchase intents flow to the delegate through the same
-        // observation entry point. StoreKit 2 exposes them from iOS 16.4;
-        // on iOS 15.0–16.3 promoted purchases are a known gap, and watchOS
-        // has no promoted purchases at all.
+        // StoreKit 2 exposes promo intents from iOS 16.4 only; 15.0–16.3 is a
+        // known gap.
         #if !os(watchOS) && !os(tvOS) && !os(visionOS)
         if #available(iOS 16.4, macOS 14.4, *) {
             storeKitWrapper.subscribeToPromoPurchases()

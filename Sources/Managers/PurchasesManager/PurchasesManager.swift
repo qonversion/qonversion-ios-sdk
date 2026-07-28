@@ -36,8 +36,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     private var restoreTask: Task<[String: Qonversion.Entitlement], Error>?
 
     // Products with a payment sheet in flight; a second purchase of the same
-    // product must not present a second sheet (production behavior).
-    // Sync helpers: NSLock must not be locked across suspension points.
+    // product must not present a second sheet. Helpers stay sync: NSLock must
+    // not be held across a suspension point.
     private let purchasingLock = NSLock()
     private var purchasingStoreIds: Set<String> = []
 
@@ -67,10 +67,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     private let surfacedLock = NSLock()
 
     /// True when this transaction had not been surfaced yet — and marks it
-    /// surfaced. The set is persisted: StoreKit re-delivers unfinished
-    /// transactions on every launch, and in Analytics mode nothing is ever
-    /// finished, so the host would otherwise see ancient purchases as new
-    /// ones forever.
+    /// surfaced. Persisted: StoreKit re-delivers unfinished transactions on
+    /// every launch, and Analytics mode never finishes any.
     private func markSurfacedIfNew(_ transactionId: String) -> Bool {
         surfacedLock.lock()
         defer { surfacedLock.unlock() }
@@ -91,14 +89,12 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         return (try? localStorage.object(forKey: Constants.surfacedTransactionsKey.rawValue, dataType: [String].self)) ?? []
     }
 
-    /// Emits every purchase the SDK processes out of band, in both launch
-    /// modes.
-    // Buffered: an Ask to Buy approval processed during launch, before the
-    // host subscribes, must not be dropped.
+    // Buffered: an approval processed during launch, before the host
+    // subscribes, must not be dropped.
     private let deferredPurchasesMulticast = AsyncMulticast<Qonversion.DeferredPurchase>(replaysBacklog: true)
 
-    /// Emits App Store promoted-purchase intents. Buffered until the first
-    /// subscriber — an intent arriving at app start must not be lost.
+    // Buffered until the first subscriber — an intent arriving at app start
+    // must not be lost.
     private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(replaysBacklog: true)
 
     func deferredPurchases() -> AsyncStream<Qonversion.DeferredPurchase> {
@@ -109,11 +105,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     /// subscription of its own, so both streams stay independent.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
         return AsyncStream { continuation in
-            // The projection attaches while this AsyncStream is being built,
-            // i.e. synchronously from entitlementsUpdates(). That is safe:
-            // AsyncMulticast replays its backlog to every subscriber that
-            // arrives inside the replay window, so taking this subscription
-            // first does not consume what deferredPurchases() is owed.
+            // Subscribing here does not consume what deferredPurchases() is
+            // owed: AsyncMulticast replays its backlog to every subscriber.
             let purchases: AsyncStream<Qonversion.DeferredPurchase> = self.deferredPurchasesMulticast.stream()
             let task = Task {
                 for await purchase in purchases {
@@ -127,9 +120,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     func promoPurchaseIntents() -> AsyncStream<Qonversion.PromoPurchaseIntent> {
         #if os(watchOS) || os(tvOS) || os(visionOS)
-        // There are no App Store promoted purchases on watchOS, tvOS or
-        // visionOS: a stream that never yields and never finishes would hang
-        // `for await` forever, so the public API stays present but inert.
+        // No promoted purchases on these platforms; the stream must finish
+        // rather than hang `for await` forever.
         return AsyncStream { $0.finish() }
         #else
         return promoIntentsMulticast.stream()
@@ -171,15 +163,13 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             logger.warning("Making purchases via Qonversion in the Analytics mode can lead to an inconsistent state in the store. Consider switching to the Subscription management mode.")
         }
 
-        // The backend user must exist before the purchase is reported. The
-        // uid is captured HERE: a logout during the payment sheet must not
+        // The uid is captured HERE: a logout during the payment sheet must not
         // reroute the report to the next anonymous user.
         _ = try await userManager.obtainUser()
         let userId: String = userIdProvider.getUserId()
 
-        // Persisted for the whole purchase lifecycle: a report happening
-        // after a relaunch (unfinished sweep, Ask to Buy approval) must still
-        // carry the paywall context of THIS call.
+        // Persisted for the whole lifecycle: a report happening after a
+        // relaunch must still carry the paywall context of THIS call.
         if options?.contextKeys?.isEmpty == false || options?.screenUid != nil {
             purchaseAssociationsStorage.store(
                 PurchaseAssociations(contextKeys: options?.contextKeys, screenUid: options?.screenUid),
@@ -191,30 +181,27 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         do {
             transaction = try await storeKitFacade.purchase(storeId: product.storeId, options: options ?? Qonversion.PurchaseOptions())
         } catch {
-            // A pending purchase (Ask to Buy) arrives later via the listener
-            // and must keep its associations; any other failure means no
-            // transaction will ever match them.
+            // A pending purchase arrives later via the listener and must keep
+            // its associations; any other failure never matches them again.
             if (error as? QonversionError)?.type != .purchasePending {
                 purchaseAssociationsStorage.remove(for: product.storeId)
             }
             throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .purchaseFailed)
         }
 
-        // The caller gets this transaction as the purchase result in every
-        // branch below, so it is already surfaced: a later re-delivery through
+        // Already surfaced by this call's result: a later re-delivery through
         // the updates listener must not repeat it as a deferred purchase.
         if let id: String = transaction.id {
             _ = markSurfacedIfNew(id)
         }
 
         // The id is claimed BEFORE the report goes out: a concurrent restore
-        // or sweep must not report the same transaction while this one is in
-        // flight. A failed report releases the id for retries.
+        // or sweep must not report the same transaction. A failed report
+        // releases the id for retries.
         let gateTaken: Bool
         if let id: String = transaction.id {
             gateTaken = reportsGate.tryTake(id)
-            // Another flow (listener/sweep) already owns the report — sending
-            // again would double it. The transaction is finished by the owner;
+            // Another flow owns the report and will finish the transaction;
             // this call still answers with entitlements.
             guard gateTaken else {
                 return await purchaseResult(for: transaction)
@@ -230,9 +217,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             if gateTaken, let id: String = transaction.id {
                 reportsGate.release(id)
             }
-            // Production fault tolerance: when the backend is unreachable the
-            // purchase still succeeds with locally calculated entitlements.
-            // The transaction stays unfinished so it can be re-reported later.
+            // Deliberate: an unreachable backend still yields a successful
+            // purchase, and the transaction stays unfinished for a re-report.
             if error.allowsLocalEntitlementsFallback {
                 let entitlements: [String: Qonversion.Entitlement] = await entitlementsManager.localFallbackEntitlements(for: [transaction])
                 return Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements, entitlementsSource: .localCalculation)
@@ -240,9 +226,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
         }
 
-        // Finish strictly after the backend confirmed the purchase, and only
-        // in subscription-management mode — in Analytics mode the host app
-        // owns the transaction lifecycle.
+        // Finish strictly after the backend ack, and only when the SDK owns
+        // the lifecycle — in Analytics mode the host app does.
         if launchModeProvider.launchMode == .subscriptionManagement {
             await storeKitFacade.finish(transaction)
         }
@@ -264,8 +249,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     @discardableResult
     func restore() async throws -> [String: Qonversion.Entitlement] {
-        // Production parity: concurrent restore() calls join one in-flight
-        // run instead of syncing with the store twice.
+        // Concurrent restore() calls join one run instead of syncing twice.
         let task: Task<[String: Qonversion.Entitlement], Error> = joinedRestoreTask()
 
         return try await task.value
@@ -279,16 +263,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             return inFlight
         }
 
-        // The run releases the slot as its own last act, before its value
-        // becomes observable: clearing it from the caller instead would leave
-        // a window where a joining call is answered with a finished run's
-        // entitlements without the store sync restore() promises.
-        //
-        // Unlike the entitlements twin this needs no identity check: nothing
-        // empties this slot out of band — userDidChange() below only resets
-        // the reports gate — so the next run can only be created after this
-        // clear, and the slot always holds the run that clears it. Add the
-        // check the moment anything else starts writing to `restoreTask`.
+        // The run releases the slot itself, or a joining call would get a
+        // finished run's entitlements without the store sync restore() promises.
+        // No identity check: nothing empties this slot out of band — add one
+        // the moment anything else starts writing to `restoreTask`.
         let task = Task { [weak self] () throws -> [String: Qonversion.Entitlement] in
             guard let self else { return [:] }
             defer { self.clearRestoreTask() }
@@ -509,9 +487,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     }
 
     func processUnfinishedTransactions() async {
-        // Both modes re-report transactions whose report never reached the
-        // backend; only subscription management may FINISH them afterwards —
-        // in Analytics mode the host app owns the transaction lifecycle.
+        // Both modes re-report; only subscription management may FINISH
+        // afterwards — in Analytics mode the host app owns the lifecycle.
         let finishAfterReport: Bool = launchModeProvider.launchMode == .subscriptionManagement
 
         let transactions: [Qonversion.Transaction] = await storeKitFacade.unfinishedTransactions()
@@ -553,10 +530,8 @@ extension PurchasesManager: UserChangedObserver {
     var userChangeTeardownPriority: Int { UserChangeTeardownPriority.purchaseBookkeeping }
 
     func userDidChange() {
-        // A restore right after identify/logout must be able to attach the
-        // store transactions to the new user — the reported-ids gate belongs
-        // to the previous one. Synchronous: ordered before any call that
-        // follows the user switch.
+        // The reported-ids gate belongs to the previous user. Synchronous, so
+        // it is ordered before any call following the user switch.
         reportsGate.reset()
     }
 }
@@ -572,10 +547,8 @@ extension PurchasesManager: StoreKitFacadeDelegate {
     }
     #endif
 
-    /// Hands the promoted-purchase intent to the host through the stream; its
-    /// purchase() runs the regular purchase flow. The report keys off the
-    /// transaction's store product id, so no Qonversion product mapping is
-    /// required.
+    /// The intent keys off the store product id, so no Qonversion product
+    /// mapping is required.
     func emitPromoPurchaseIntent(storeProductId: String) {
         let intent: Qonversion.PromoPurchaseIntent = Qonversion.PromoPurchaseIntent(productId: storeProductId) { [weak self] options in
             guard let self else { throw QonversionError.initializationError() }
@@ -587,25 +560,14 @@ extension PurchasesManager: StoreKitFacadeDelegate {
     }
 
     func transactionUpdated(_ transaction: Qonversion.Transaction) {
-        // Out-of-band update (renewal, refund, Ask to Buy approval, another
-        // device). The host is notified in BOTH modes — only the transaction
-        // lifecycle differs: in Analytics mode the app owns it, in
-        // subscription management the SDK finishes it after the backend ack.
+        // The host is notified in BOTH modes; only the lifecycle differs — in
+        // Analytics mode the app owns it, otherwise the SDK finishes it.
         Task { [weak self] in
             guard let self else { return }
 
-            // A purchase() call for this product is in flight and owns the
-            // whole lifecycle of whatever the store hands it: it reports, it
-            // finishes, and it answers its caller with a PurchaseResult.
-            // Stepping aside HERE — before the report, before the id is
-            // claimed and before anything is finished — is what makes the
-            // step-aside safe: a finished transaction never reappears in
-            // Transaction.updates or Transaction.unfinished, so touching it
-            // first and skipping the delivery afterwards would lose it for
-            // good whenever that purchase ends in an error instead of this
-            // transaction. Untouched, it stays unfinished and the store
-            // delivers it again — on the next updates emission or on the next
-            // launch — and the branch below surfaces it then.
+            // A purchase() call owns this product's lifecycle. Step aside
+            // BEFORE reporting or finishing: a skipped transaction must stay
+            // unfinished so the store re-delivers it.
             guard !self.isPurchasing(transaction.productId) else { return }
 
             // Transactions without a store id (degraded SK1 mapping) cannot be
@@ -625,9 +587,8 @@ extension PurchasesManager: StoreKitFacadeDelegate {
                     self.reportsGate.release(id)
                 }
                 self.logger.error("Failed to report an observed transaction: " + error.message)
-                // Production parity: an unreachable backend must not swallow
-                // the approval — the host still gets it with locally
-                // calculated entitlements. A rejected report stays silent.
+                // An unreachable backend must not swallow the update; a
+                // rejected report stays silent.
                 guard error.allowsLocalEntitlementsFallback else { return }
 
                 reportFailed = true
@@ -639,10 +600,8 @@ extension PurchasesManager: StoreKitFacadeDelegate {
                 await self.storeKitFacade.finish(transaction)
             }
 
-            // Reporting is unaffected by this gate — only what the host sees.
-            // The transaction may already have been announced by an earlier
-            // delivery of the same id (a relaunch re-delivers everything
-            // unfinished), and the host must hear about it once.
+            // Gates what the host sees, not the report: a relaunch re-delivers
+            // every unfinished transaction, and the host must hear it once.
             if let id: String = transaction.id, !self.markSurfacedIfNew(id) { return }
 
             let deferredPurchase: Qonversion.DeferredPurchase = await self.deferredPurchase(for: transaction, reportFailed: reportFailed)
@@ -650,10 +609,8 @@ extension PurchasesManager: StoreKitFacadeDelegate {
         }
     }
 
-    /// The entitlements to report with an out-of-band purchase. The source is
-    /// taken from the entitlements manager, never inferred from the absence of
-    /// an error: its fault-tolerance path answers successfully with locally
-    /// calculated data.
+    /// The source comes from the entitlements manager, never inferred from the
+    /// absence of an error — its fallback path also answers successfully.
     private func deferredPurchase(for transaction: Qonversion.Transaction, reportFailed: Bool) async -> Qonversion.DeferredPurchase {
         if !reportFailed, let resolved: ResolvedEntitlements = try? await entitlementsManager.resolvedEntitlements() {
             return Qonversion.DeferredPurchase(transaction: transaction, entitlements: resolved.entitlements, entitlementsSource: resolved.source)

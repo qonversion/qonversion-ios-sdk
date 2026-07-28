@@ -17,10 +17,8 @@ final class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
   let decoder: ResponseDecoderInterface
   let rateLimiter: RateLimiterInterface
 
-  // Sticky by design: once the project key is rejected (401/402/403) every
-  // later request would fail the same way, so the processor short-circuits.
-  // Concurrent requests read and latch it, hence the lock — held only around
-  // the property access, never across an await.
+  // Sticky by design: a rejected project key fails every later request too.
+  // The lock is held only around the property access, never across an await.
   private let criticalErrorLock = NSLock()
   private var _criticalError: NoCodesError?
 
@@ -67,9 +65,7 @@ final class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     }
 
     guard let error else {
-      // A no-response request tolerates any acknowledged 2xx that carries no
-      // body, not only a 204: the backend took it, there is nothing to parse.
-      // Failing it instead makes the caller re-buffer and re-send the batch.
+      // Any empty-bodied 2xx counts as acknowledged, not only a 204.
       let isSuccess: Bool = (ResponseCode.successMin.rawValue...ResponseCode.successMax.rawValue).contains(responseCode)
       let isAcknowledgedWithoutBody: Bool = responseCode == ResponseCode.noContent.rawValue || (isSuccess && responseBody.isEmpty)
       if isAcknowledgedWithoutBody, let empty = EmptyApiResponse() as? T {

@@ -6,18 +6,12 @@
 import Foundation
 
 /// Holds SDK crash reports between the launch that produced them and the one
-/// that sends them.
-///
-/// Hard-bounded, unlike the ObjC implementation, which wrote one file per
-/// exception into the app's Documents directory and never removed any of them
-/// unless a send succeeded — an SDK crash loop against an unreachable endpoint
-/// filled the user's storage with files their app also had to list.
+/// that sends them. Hard-bounded, so a crash loop against an unreachable
+/// endpoint cannot grow without limit.
 // @unchecked: the read-modify-write is lock-guarded.
 final class CrashReportsStorage: @unchecked Sendable {
 
-    /// The oldest report is dropped first. Five is a diagnostic sample, not a
-    /// log: the same bug produces the same stack, and the SDK is not a crash
-    /// reporter.
+    /// Oldest dropped first. A diagnostic sample, not a log.
     static var maxStoredReports: Int { 5 }
 
     private enum Constants: String {
@@ -31,8 +25,7 @@ final class CrashReportsStorage: @unchecked Sendable {
         self.localStorage = localStorage
     }
 
-    /// Called from the uncaught-exception handler, so it stays synchronous and
-    /// does the least it can: the process is about to die.
+    /// Called from the uncaught-exception handler, so it stays synchronous.
     func store(_ report: CrashReport) {
         lock.lock()
         defer { lock.unlock() }
@@ -62,10 +55,8 @@ final class CrashReportsStorage: @unchecked Sendable {
         try? localStorage.set(reports, forKey: Constants.reportsKey.rawValue)
     }
 
-    /// Swaps a stored report for an updated copy of itself, in place. Used to
-    /// persist the attempt counter, so a report the backend keeps refusing is
-    /// eventually given up on instead of taking a slot forever. A report that
-    /// is no longer stored is not resurrected.
+    /// Persists the attempt counter in place. A report that is no longer
+    /// stored is not resurrected.
     func replace(_ report: CrashReport, with replacement: CrashReport) {
         lock.lock()
         defer { lock.unlock() }

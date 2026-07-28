@@ -139,8 +139,7 @@ final class ServicesAssembly {
         let retriableRequestKinds: [Request.Kind] = [.createUser, .createPurchase, .createDevice, .updateDevice, .appleSearchAds]
         
         let reportsGate: TransactionReportsGate = miscAssembly.transactionReportsGate()
-        // Shared SDK-wide on purpose, unlike the processor itself: a revoked
-        // project key is not a property of one service.
+        // Shared SDK-wide, unlike the processor itself.
         let criticalErrorLatch: CriticalErrorLatch = miscAssembly.criticalErrorLatch()
 
         let processor = RequestProcessor(baseURL: baseURL, networkProvider: networkProvider, headersBuilder: headersBuilder, errorHandler: errorHandler, decoder: decoder, retriableRequestKinds: retriableRequestKinds, requestsStorage: requestsStorage, rateLimiter: rateLimiter, delayCalculator: miscAssembly.delayCalculator(), reportsGate: reportsGate, criticalErrorLatch: criticalErrorLatch)

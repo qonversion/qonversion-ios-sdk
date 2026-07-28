@@ -15,8 +15,7 @@ import Qonversion
 @MainActor
 final class NoCodesFlowCoordinator {
   
-  // All four are weak: they are host objects (usually view controllers) and
-  // the coordinator lives for the whole process.
+  // Weak: host objects, and the coordinator lives for the whole process.
   private weak var delegate: NoCodesDelegate?
   private weak var screenCustomizationDelegate: NoCodesScreenCustomizationDelegate?
   private weak var purchaseDelegate: NoCodesPurchaseDelegate?
@@ -68,8 +67,7 @@ final class NoCodesFlowCoordinator {
   }
   
   func preloadScreens() {
-    // Use Task.detached to ensure preloading runs on a background thread
-    // and doesn't block the main thread even if called from main
+    // Detached so preloading never blocks the main thread, even when called from it.
     let noCodesService = self.noCodesService
     let logger = self.logger!
     Task.detached(priority: .utility) {
@@ -83,11 +81,6 @@ final class NoCodesFlowCoordinator {
   }
   
   func close() {
-    // There is no view controller to close until the presentation is well under
-    // way, so a close arriving before that is remembered by the gate and takes
-    // the presentation down instead of being dropped. A presentation started on
-    // top of a screen the user is still looking at raises the same in-flight
-    // state, and that screen has to be dismissed all the same.
     apply(presentationGate.closeRequested())
   }
 
@@ -95,25 +88,14 @@ final class NoCodesFlowCoordinator {
   func showScreen(withContextKey contextKey: String) {
     presentationGate.presentationStarted()
     Task { @MainActor in
-      // The screen conditions are evaluated against the server-side user, so
-      // any property set just before the call has to reach the backend first.
-      //
-      // Nothing bounds this wait but the request itself: properties go out over
-      // `URLSession.shared`, whose default request timeout is 60 seconds, and a
-      // stalled send can take the user-creation round trip with it — worst case
-      // roughly two minutes before the screen is either presented or reported
-      // cancelled. A close arriving inside that window is remembered by the
-      // gate and reported the moment the await returns, never dropped, but the
-      // host does wait that long for the answer.
+      // Screen conditions are evaluated server-side, so pending properties must
+      // land first. Bounded only by the request itself — worst case roughly two
+      // minutes (60s property send plus the user-creation round trip).
       await Qonversion.shared.forceSendProperties()
 
       let outcome: NoCodesPresentationOutcome = presentationGate.presentationReady()
       if case let .cancelled(effects) = outcome {
         logger.info("The screen was closed before it could be presented")
-        // A host that gates its UI on the finish callback waits forever
-        // otherwise. When the same close also dismissed a visible screen, that
-        // dismissal reports the flow finished and this one stays quiet — the
-        // gate decides which of the two it is.
         apply(effects)
 
         return
@@ -127,8 +109,7 @@ final class NoCodesFlowCoordinator {
     }
   }
 
-  // Pure data load, no presentation. Deliberately skips forceSendProperties (unlike showScreen)
-  // since nothing is displayed yet.
+  // Pure data load: deliberately skips forceSendProperties, nothing is displayed yet.
   func loadScreen(withContextKey contextKey: String) async throws -> NoCodesScreen {
     return try await noCodesService.loadScreen(withContextKey: contextKey)
   }
@@ -139,9 +120,6 @@ final class NoCodesFlowCoordinator {
     let target: NoCodesPresentationTarget? = NoCodesScreenLifecycle.presentationTarget(style: presentationConfiguration.presentationStyle, hasHost: host != nil, hostHasNavigationController: hostNavigationController != nil, hostIsAlreadyPresenting: host?.presentedViewController != nil)
 
     guard let target, let host else {
-      // The screen is ready and there is nowhere to put it. The gate was never
-      // armed, so nothing believes a screen is up, but the host asked for one
-      // and would otherwise wait for a flow that never starts and never ends.
       logger.error("Failed to present the No-Codes screen: no view controller available to present it on")
       apply(presentationGate.presentationUnavailable())
 
@@ -160,10 +138,8 @@ final class NoCodesFlowCoordinator {
       host.present(navigationController, animated: presentationConfiguration.animated)
     }
 
-    // Only now is there a screen to dismiss and a view controller worth holding
-    // on to. Arming either one earlier leaves a close acting on a screen that
-    // was never presented, whose dismissal — the only thing that reports the
-    // flow finished on that route — never happens.
+    // Arm only after the push or present ran: earlier leaves a close acting on
+    // a screen that was never presented.
     presentationGate.screenPresented()
     currentVC = viewController
   }
@@ -188,9 +164,6 @@ final class NoCodesFlowCoordinator {
     return viewController as? UINavigationController ?? viewController.navigationController
   }
 
-  /// Carries out what the gate decided. Every host callback the flow sends goes
-  /// through here, so the accounting the gate does is the accounting the host
-  /// sees.
   private func apply(_ effects: [NoCodesFlowEffect]) {
     for effect: NoCodesFlowEffect in effects {
       switch effect {
@@ -206,26 +179,20 @@ final class NoCodesFlowCoordinator {
 
   private func dismissVisibleScreen() {
     guard let currentVC else {
-      // The gate has a screen up and the coordinator has none to dismiss, so
-      // nothing would ever come back to report the flow over. The finish
-      // callback is the one thing a host may be blocking its own UI on, so it
-      // is reported here rather than left to a dismissal that cannot happen.
+      // No dismissal will come back, so report the flow over here instead.
       logger.error("Closing the No-Codes flow without a screen to dismiss")
       finishFlow()
 
       return
     }
 
-    // Both of its routes come back through `noCodesFinished()`: a dismissal
-    // completion for a presented screen, a synchronous call for a pushed one.
+    // Both routes come back through `noCodesFinished()`.
     currentVC.close()
   }
 
-  /// The single place the flow reports itself over.
   private func finishFlow() {
-    // The flow is over and the coordinator lives for the whole process, so
-    // holding on to the screen would keep its web view, and the screen markup
-    // inlined into it, alive for just as long.
+    // The coordinator outlives the flow; holding the screen would keep its web
+    // view and inlined markup alive with it.
     currentVC = nil
     screenEventsService.flush()
     delegate?.noCodesFinished()
@@ -271,8 +238,7 @@ extension NoCodesFlowCoordinator: NoCodesViewControllerDelegate {
 extension NoCodesFlowCoordinator {
   
   private func topLevelViewController() -> UIViewController? {
-    // UIApplication.windows is deprecated and undefined for multi-scene apps —
-    // walk the connected foreground scenes instead.
+    // UIApplication.windows is undefined for multi-scene apps.
     let scenes: [UIWindowScene] = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
     let activeScene: UIWindowScene? = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
     let keyWindow: UIWindow? = activeScene?.windows.first { $0.isKeyWindow } ?? activeScene?.windows.first

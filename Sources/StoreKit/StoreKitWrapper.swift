@@ -8,8 +8,7 @@
 import Foundation
 import StoreKit
 
-// @unchecked: the mapper is stateless; the delegate is weak; the promo
-// subscription task is lock-guarded.
+// @unchecked: stateless mapper, weak delegate, lock-guarded promo task.
 final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
 
     #if !os(watchOS) && !os(tvOS) && !os(visionOS)
@@ -57,17 +56,14 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         do {
             try await sync()
         } catch {
-            // Raw StoreKit errors must never reach the integrator: restore()
-            // is public, and a cancelled sign-in prompt is named the same way
-            // as a cancelled payment sheet.
+            // Raw StoreKit errors must never reach the integrator.
             throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .restoreFailed)
         }
 
         return await localTransactions()
     }
 
-    /// The store options a purchase call carries. Extracted so the mapping
-    /// stays testable without a real StoreKit product.
+    /// Extracted so the mapping stays testable without a real StoreKit product.
     static func storeOptions(for options: Qonversion.PurchaseOptions) -> Set<Product.PurchaseOption> {
         var purchaseOptions: Set<Product.PurchaseOption> = []
         if options.quantity > 1 {
@@ -114,12 +110,10 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         do {
             result = try await buy(product, with: purchaseOptions)
         } catch let error as QonversionError {
-            // Already an SDK error (the visionOS scene requirement) — mapping
-            // it again would bury it under a generic .purchaseFailed.
+            // Re-mapping would bury it under a generic .purchaseFailed.
             throw error
         } catch {
-            // Raw StoreKit errors must never reach the integrator: a
-            // `catch let error as QonversionError` has to cover every failure.
+            // Raw StoreKit errors must never reach the integrator.
             throw StoreKitPurchaseOutcome.failed(error).qonversionError() ?? QonversionError(type: .purchaseFailed, error: error)
         }
 
@@ -146,11 +140,9 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         throw outcome.qonversionError() ?? QonversionError(type: .purchaseFailed)
     }
 
-    // visionOS has no `Product.purchase(options:)` at all: the system requires
-    // the purchase sheet to be confirmed in a concrete scene, and only the
-    // host app can name it. Main-actor isolated rather than lock-guarded — the
-    // scene is a UIKit object and StoreKit's purchase call is @MainActor too,
-    // so the reference never crosses an isolation boundary.
+    // visionOS requires the purchase sheet to be confirmed in a scene only the
+    // host can name. Main-actor isolated rather than lock-guarded, so the
+    // UIKit reference never crosses an isolation boundary.
     #if os(visionOS)
     /// Held weakly: the SDK must never keep a discarded scene alive.
     @MainActor
@@ -175,10 +167,8 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
     }
     #endif
 
-    /// A long-lived stream of verified out-of-band transaction updates.
-    /// The stream never finishes transactions itself — the transaction
-    /// lifecycle is owned by the consumer (and, in Analytics mode, by the
-    /// host app).
+    /// Verified out-of-band transaction updates. Never finishes a transaction
+    /// itself — the lifecycle belongs to the consumer.
     func transactionUpdates() -> AsyncStream<Qonversion.Transaction> {
         return AsyncStream { continuation in
             let task: Task<Void, Never> = Task {

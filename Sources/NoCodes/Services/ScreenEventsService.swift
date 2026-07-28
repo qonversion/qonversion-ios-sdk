@@ -9,12 +9,11 @@
 import Foundation
 import Qonversion
 
-// @unchecked: `buffer`, `isFlushing` and `cachedUserId` are only ever touched
-// inside `queue` (barrier writes, sync reads).
+// @unchecked: `buffer` and `isFlushing` are only ever touched inside `queue`
+// (barrier writes, sync reads).
 final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendable {
 
-  /// Resolves the Qonversion user id the events are reported for. Injected so
-  /// the batching logic can be exercised without a live SDK instance.
+  /// Resolves the Qonversion user id the events are reported for.
   typealias UserIdProvider = @Sendable () async throws -> String
 
   private let requestProcessor: RequestProcessorInterface
@@ -51,9 +50,7 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
     var shouldFlush = false
     queue.sync(flags: .barrier) {
       buffer.append(event)
-      // A flush that hangs keeps `isFlushing` raised, so every later flush is a
-      // no-op and only this path runs: the cap has to be applied here too, or
-      // the buffer grows for as long as the request does.
+      // A hung flush latches `isFlushing`, so the cap has to be applied here too.
       if buffer.count > Self.maxBufferSize {
         buffer = Array(buffer.suffix(Self.maxBufferSize))
       }
@@ -68,11 +65,8 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
 
   func flush() {
     let eventsToSend: [ScreenEvent] = queue.sync(flags: .barrier) {
-      // The emptiness check belongs inside the barrier and before the flag is
-      // raised: a flush that finds nothing to send never reaches the code that
-      // lowers it again, so raising it first would latch the service off for
-      // the rest of the process. Screen closes flush unconditionally, so an
-      // empty flush is the common case, not the edge one.
+      // The emptiness check must precede raising the flag: an empty flush never
+      // reaches the code that lowers it again.
       guard !isFlushing, !buffer.isEmpty else { return [] }
       isFlushing = true
       let copy: [ScreenEvent] = buffer
@@ -86,10 +80,8 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
 
     Task {
       do {
-        // Resolved per flush on purpose: the host app can identify a different
-        // user between batches, and a cached id would keep posting the events
-        // to the previous user. The main SDK answers from its own cache, so
-        // this costs nothing.
+        // Resolved per flush on purpose: identify() between batches would
+        // otherwise post the events to the previous user.
         let uid: String = try await userIdProvider()
 
         let eventDicts: [[String: AnyHashable]] = eventsToSend.map { $0.toMap() }

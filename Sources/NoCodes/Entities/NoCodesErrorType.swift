@@ -22,9 +22,9 @@ public enum NoCodesErrorType: Sendable {
   case rateLimitExceeded
   case screenNotFound
   case screenLoadingFailed
-  /// The screen was ready but there was nowhere to put it: no view controller
-  /// to present on, no navigation controller to push onto, or a host already
-  /// presenting something else.
+  /// The screen loaded, but no suitable view controller was available to
+  /// present it on. Reported via `noCodesFailedToLoadScreen(error:)`, followed
+  /// by `noCodesFinished()` unless another screen is still visible.
   case screenPresentationFailed
   case clientError
   
