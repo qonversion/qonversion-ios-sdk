@@ -118,6 +118,12 @@ keeps the status-derived type and reaches you as `apiCode`:
 come from StoreKit failures (parental controls, a product missing from the
 current storefront).
 
+`.networkConnectionFailed` also has no backend code: it means the request never
+reached the backend at all (a connection-class `URLError` after the transport
+retries were exhausted). The legacy SDK surfaced these as raw `NSURLError`s;
+here the underlying failure stays available on `error.error`. A response that
+arrived but could not be read remains `.invalidResponse`.
+
 One mapping is contextual: on the remote config endpoints `not_found` and
 `relation_not_found` mean *this user (or this context key) has no
 configuration*, not "the SDK asked for something that does not exist". There
