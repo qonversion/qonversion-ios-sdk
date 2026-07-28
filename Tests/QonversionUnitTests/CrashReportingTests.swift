@@ -460,6 +460,21 @@ final class CrashReporterTests: XCTestCase {
         XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "no status, no proof of delivery")
     }
 
+    func testAConnectionFailureKeepsTheReportForTheNextLaunch() async {
+        // .networkConnectionFailed is the network layer's name for a request
+        // that never reached the backend. It is the most ordinary way a crash
+        // report's send fails — the user who crashed was offline — so it must
+        // fall to the KEEP default, never to the drop set.
+        storage.store(makeReport(id: "r1"))
+        let processor = MockRequestProcessor()
+        let connectionError: QonversionError = QonversionError(type: .networkConnectionFailed, error: URLError(.notConnectedToInternet))
+        processor.error = connectionError
+
+        await makeSender(processor: processor).sendStoredReports()
+
+        XCTAssertEqual(storage.all().map { $0.id }, ["r1"], "the request never reached the backend — the report is not delivered")
+    }
+
     func testAKeptReportStopsTheLaunchInsteadOfBurningTheWholeQueue() async {
         storage.store(makeReport(id: "r1"))
         storage.store(makeReport(id: "r2"))
