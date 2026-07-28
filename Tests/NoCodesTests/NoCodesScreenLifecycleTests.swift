@@ -57,10 +57,7 @@ final class NoCodesPresentationGateTests: XCTestCase {
     func testACloseWithNothingInFlightAndNothingVisibleHasNothingToActOn() {
         var gate = NoCodesPresentationGate()
 
-        let outcome: NoCodesCloseOutcome = gate.closeRequested()
-
-        XCTAssertFalse(outcome.closesVisibleScreen)
-        XCTAssertFalse(outcome.cancelsPendingPresentation)
+        XCTAssertEqual(gate.closeRequested(), [])
     }
 
     func testAPresentationWithNoInterveningCloseGoesAhead() {
@@ -77,13 +74,10 @@ final class NoCodesPresentationGateTests: XCTestCase {
         var gate = NoCodesPresentationGate()
         gate.presentationStarted()
 
-        let outcome: NoCodesCloseOutcome = gate.closeRequested()
-
-        XCTAssertFalse(outcome.closesVisibleScreen, "there is no screen to close yet")
-        XCTAssertTrue(outcome.cancelsPendingPresentation)
+        XCTAssertEqual(gate.closeRequested(), [], "there is no screen to close yet")
         // Nothing else will report the flow over, so the cancelled presentation
         // has to: a host gating its UI on that callback waits forever otherwise.
-        XCTAssertEqual(gate.presentationReady(), .cancelled(reportsFinished: true))
+        XCTAssertEqual(gate.presentationReady(), .cancelled(effects: [.reportFinished]))
     }
 
     /// A show started while the previous screen is still up raises the same
@@ -93,22 +87,20 @@ final class NoCodesPresentationGateTests: XCTestCase {
         var gate = NoCodesPresentationGate()
         gate.presentationStarted()
         let _ = gate.presentationReady()
+        gate.screenPresented()
         gate.presentationStarted()
 
-        let outcome: NoCodesCloseOutcome = gate.closeRequested()
-
-        XCTAssertTrue(outcome.closesVisibleScreen, "the visible screen stays up otherwise")
-        XCTAssertTrue(outcome.cancelsPendingPresentation)
+        XCTAssertEqual(gate.closeRequested(), [.dismissVisibleScreen], "the visible screen stays up otherwise")
         // Dismissing the visible screen reports the flow finished on its own,
         // so the cancelled presentation must not report it a second time.
-        XCTAssertEqual(gate.presentationReady(), .cancelled(reportsFinished: false))
+        XCTAssertEqual(gate.presentationReady(), .cancelled(effects: []))
     }
 
     func testADeferredCloseIsConsumedOnceAndDoesNotCancelTheNextPresentation() {
         var gate = NoCodesPresentationGate()
         gate.presentationStarted()
         let _ = gate.closeRequested()
-        XCTAssertEqual(gate.presentationReady(), .cancelled(reportsFinished: true))
+        XCTAssertEqual(gate.presentationReady(), .cancelled(effects: [.reportFinished]))
 
         gate.presentationStarted()
 
@@ -119,11 +111,9 @@ final class NoCodesPresentationGateTests: XCTestCase {
         var gate = NoCodesPresentationGate()
         gate.presentationStarted()
         let _ = gate.presentationReady()
+        gate.screenPresented()
 
-        let outcome: NoCodesCloseOutcome = gate.closeRequested()
-
-        XCTAssertTrue(outcome.closesVisibleScreen)
-        XCTAssertFalse(outcome.cancelsPendingPresentation)
+        XCTAssertEqual(gate.closeRequested(), [.dismissVisibleScreen])
     }
 
     func testAStaleDeferredCloseDoesNotSurviveANewPresentation() {
@@ -142,12 +132,10 @@ final class NoCodesPresentationGateTests: XCTestCase {
         var gate = NoCodesPresentationGate()
         gate.presentationStarted()
         let _ = gate.presentationReady()
+        gate.screenPresented()
         let _ = gate.closeRequested()
 
-        let outcome: NoCodesCloseOutcome = gate.closeRequested()
-
-        XCTAssertFalse(outcome.closesVisibleScreen)
-        XCTAssertFalse(outcome.cancelsPendingPresentation)
+        XCTAssertEqual(gate.closeRequested(), [])
     }
 
     /// The screen can also end on its own — the user taps its close button, or
@@ -157,9 +145,10 @@ final class NoCodesPresentationGateTests: XCTestCase {
         var gate = NoCodesPresentationGate()
         gate.presentationStarted()
         let _ = gate.presentationReady()
-        gate.screenFinished()
+        gate.screenPresented()
 
-        XCTAssertFalse(gate.closeRequested().closesVisibleScreen)
+        XCTAssertEqual(gate.screenFinished(), [.reportFinished])
+        XCTAssertEqual(gate.closeRequested(), [])
     }
 
     func testACancelledPresentationLeavesNoVisibleScreenBehind() {
@@ -168,7 +157,7 @@ final class NoCodesPresentationGateTests: XCTestCase {
         let _ = gate.closeRequested()
         let _ = gate.presentationReady()
 
-        XCTAssertFalse(gate.closeRequested().closesVisibleScreen, "the screen never appeared")
+        XCTAssertEqual(gate.closeRequested(), [], "the screen never appeared")
     }
 
     /// The visible screen is dismissed by the same close that cancelled the
@@ -177,14 +166,12 @@ final class NoCodesPresentationGateTests: XCTestCase {
         var gate = NoCodesPresentationGate()
         gate.presentationStarted()
         let _ = gate.presentationReady()
+        gate.screenPresented()
         gate.presentationStarted()
         let _ = gate.closeRequested()
         let _ = gate.presentationReady()
 
-        let outcome: NoCodesCloseOutcome = gate.closeRequested()
-
-        XCTAssertFalse(outcome.closesVisibleScreen)
-        XCTAssertFalse(outcome.cancelsPendingPresentation)
+        XCTAssertEqual(gate.closeRequested(), [])
     }
 
     func testAScreenPresentedAfterACancelledOneIsClosedNormally() {
@@ -195,7 +182,8 @@ final class NoCodesPresentationGateTests: XCTestCase {
 
         gate.presentationStarted()
         XCTAssertEqual(gate.presentationReady(), .present)
+        gate.screenPresented()
 
-        XCTAssertTrue(gate.closeRequested().closesVisibleScreen)
+        XCTAssertEqual(gate.closeRequested(), [.dismissVisibleScreen])
     }
 }

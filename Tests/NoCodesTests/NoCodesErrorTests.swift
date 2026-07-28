@@ -17,6 +17,7 @@ final class NoCodesErrorTests: XCTestCase {
         XCTAssertEqual(NoCodesErrorType.productNotFound.message(), "The product not found.")
         XCTAssertEqual(NoCodesErrorType.productsLoadingFailed.message(), "Failed to load products.")
         XCTAssertEqual(NoCodesErrorType.screenNotFound.message(), "No-Code screen not found.")
+        XCTAssertEqual(NoCodesErrorType.screenPresentationFailed.message(), "Failed to present screen: no view controller available to present it on.")
         XCTAssertEqual(NoCodesErrorType.clientError.message(), "An error occurred in the client code")
     }
 

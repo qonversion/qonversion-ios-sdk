@@ -88,11 +88,7 @@ final class NoCodesFlowCoordinator {
     // the presentation down instead of being dropped. A presentation started on
     // top of a screen the user is still looking at raises the same in-flight
     // state, and that screen has to be dismissed all the same.
-    let outcome: NoCodesCloseOutcome = presentationGate.closeRequested()
-
-    guard outcome.closesVisibleScreen else { return }
-
-    currentVC?.close()
+    apply(presentationGate.closeRequested())
   }
 
   @MainActor
@@ -101,17 +97,24 @@ final class NoCodesFlowCoordinator {
     Task { @MainActor in
       // The screen conditions are evaluated against the server-side user, so
       // any property set just before the call has to reach the backend first.
+      //
+      // Nothing bounds this wait but the request itself: properties go out over
+      // `URLSession.shared`, whose default request timeout is 60 seconds, and a
+      // stalled send can take the user-creation round trip with it — worst case
+      // roughly two minutes before the screen is either presented or reported
+      // cancelled. A close arriving inside that window is remembered by the
+      // gate and reported the moment the await returns, never dropped, but the
+      // host does wait that long for the answer.
       await Qonversion.shared.forceSendProperties()
 
       let outcome: NoCodesPresentationOutcome = presentationGate.presentationReady()
-      if case let .cancelled(reportsFinished) = outcome {
+      if case let .cancelled(effects) = outcome {
         logger.info("The screen was closed before it could be presented")
         // A host that gates its UI on the finish callback waits forever
         // otherwise. When the same close also dismissed a visible screen, that
-        // dismissal reports the flow finished and this one must stay quiet.
-        if reportsFinished {
-          noCodesFinished()
-        }
+        // dismissal reports the flow finished and this one stays quiet — the
+        // gate decides which of the two it is.
+        apply(effects)
 
         return
       }
@@ -119,7 +122,6 @@ final class NoCodesFlowCoordinator {
       let presentationConfiguration: NoCodesPresentationConfiguration = screenCustomizationDelegate?.presentationConfigurationForScreen(contextKey: contextKey) ?? NoCodesPresentationConfiguration.defaultConfiguration()
 
       let viewController: NoCodesViewController = viewsAssembly.viewController(withContextKey: contextKey, delegate: self, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, customVariablesDelegate: customVariablesDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
-      currentVC = viewController
 
       showScreen(viewController, presentationConfiguration)
     }
@@ -132,37 +134,101 @@ final class NoCodesFlowCoordinator {
   }
 
   private func showScreen(_ viewController: NoCodesViewController, _ presentationConfiguration: NoCodesPresentationConfiguration) {
-    guard let presentationViewController: UIViewController = delegate?.controllerForNavigation() ?? topLevelViewController() else { return }
-    
-    if presentationConfiguration.presentationStyle == .push {
-      var navigationController: UINavigationController? = presentationViewController.navigationController
-      if presentationViewController.isKind(of: UINavigationController.self) {
-        navigationController = presentationViewController as? UINavigationController
-      }
-      navigationController?.pushViewController(viewController, animated: presentationConfiguration.animated)
+    let host: UIViewController? = delegate?.controllerForNavigation() ?? topLevelViewController()
+    let hostNavigationController: UINavigationController? = host.flatMap { navigationController(of: $0) }
+    let target: NoCodesPresentationTarget? = NoCodesScreenLifecycle.presentationTarget(style: presentationConfiguration.presentationStyle, hasHost: host != nil, hostHasNavigationController: hostNavigationController != nil, hostIsAlreadyPresenting: host?.presentedViewController != nil)
+
+    guard let target, let host else {
+      // The screen is ready and there is nowhere to put it. The gate was never
+      // armed, so nothing believes a screen is up, but the host asked for one
+      // and would otherwise wait for a flow that never starts and never ends.
+      logger.error("Failed to present the No-Codes screen: no view controller available to present it on")
+      apply(presentationGate.presentationUnavailable())
+
+      return
+    }
+
+    switch target {
+    case .push:
+      hostNavigationController?.pushViewController(viewController, animated: presentationConfiguration.animated)
+    case .popover:
+      present(popover: viewController, on: host, animated: presentationConfiguration.animated)
+    case .modal:
+      let navigationController = NoCodesNavigationController(rootViewController: viewController)
+      navigationController.isNavigationBarHidden = true
+      navigationController.modalPresentationStyle = .fullScreen
+      host.present(navigationController, animated: presentationConfiguration.animated)
+    }
+
+    // Only now is there a screen to dismiss and a view controller worth holding
+    // on to. Arming either one earlier leaves a close acting on a screen that
+    // was never presented, whose dismissal — the only thing that reports the
+    // flow finished on that route — never happens.
+    presentationGate.screenPresented()
+    currentVC = viewController
+  }
+
+  private func present(popover viewController: NoCodesViewController, on host: UIViewController, animated: Bool) {
+    viewController.modalPresentationStyle = .popover
+    let sourceView: UIView? = screenCustomizationDelegate?.viewForPopoverPresentation()
+
+    if let sourceView {
+      viewController.popoverPresentationController?.sourceView = sourceView
+      viewController.popoverPresentationController?.sourceRect = sourceView.bounds
     } else {
-      let presentationStyle: UIModalPresentationStyle = presentationConfiguration.presentationStyle == .popover ? .popover : .fullScreen
-      if presentationStyle == .popover {
-        viewController.modalPresentationStyle = presentationStyle
-        let sourceView: UIView? = screenCustomizationDelegate?.viewForPopoverPresentation()
-        
-        if let sourceView {
-          viewController.popoverPresentationController?.sourceView = sourceView
-          viewController.popoverPresentationController?.sourceRect = sourceView.bounds
-        } else {
-          viewController.popoverPresentationController?.permittedArrowDirections = .up
-          viewController.popoverPresentationController?.sourceRect = CGRect(x: CGRectGetMidX(presentationViewController.view.bounds), y: CGRectGetMidY(presentationViewController.view.bounds), width: 0, height: 0)
-          viewController.popoverPresentationController?.sourceView = presentationViewController.view
-        }
-        
-        presentationViewController.present(viewController, animated: presentationConfiguration.animated)
-      } else {
-        let navigationController = NoCodesNavigationController(rootViewController: viewController)
-        navigationController.isNavigationBarHidden = true
-        navigationController.modalPresentationStyle = presentationStyle
-        presentationViewController.present(navigationController, animated: presentationConfiguration.animated)
+      viewController.popoverPresentationController?.permittedArrowDirections = .up
+      viewController.popoverPresentationController?.sourceRect = CGRect(x: CGRectGetMidX(host.view.bounds), y: CGRectGetMidY(host.view.bounds), width: 0, height: 0)
+      viewController.popoverPresentationController?.sourceView = host.view
+    }
+
+    host.present(viewController, animated: animated)
+  }
+
+  private func navigationController(of viewController: UIViewController) -> UINavigationController? {
+    return viewController as? UINavigationController ?? viewController.navigationController
+  }
+
+  /// Carries out what the gate decided. Every host callback the flow sends goes
+  /// through here, so the accounting the gate does is the accounting the host
+  /// sees.
+  private func apply(_ effects: [NoCodesFlowEffect]) {
+    for effect: NoCodesFlowEffect in effects {
+      switch effect {
+      case .dismissVisibleScreen:
+        dismissVisibleScreen()
+      case .reportFinished:
+        finishFlow()
+      case .reportFailedToPresent:
+        delegate?.noCodesFailedToLoadScreen(error: NoCodesError(type: .screenPresentationFailed))
       }
     }
+  }
+
+  private func dismissVisibleScreen() {
+    guard let currentVC else {
+      // The gate has a screen up and the coordinator has none to dismiss, so
+      // nothing would ever come back to report the flow over. The finish
+      // callback is the one thing a host may be blocking its own UI on, so it
+      // is reported here rather than left to a dismissal that cannot happen.
+      logger.error("Closing the No-Codes flow without a screen to dismiss")
+      finishFlow()
+
+      return
+    }
+
+    // Both of its routes come back through `noCodesFinished()`: a dismissal
+    // completion for a presented screen, a synchronous call for a pushed one.
+    currentVC.close()
+  }
+
+  /// The single place the flow reports itself over.
+  private func finishFlow() {
+    // The flow is over and the coordinator lives for the whole process, so
+    // holding on to the screen would keep its web view, and the screen markup
+    // inlined into it, alive for just as long.
+    currentVC = nil
+    screenEventsService.flush()
+    delegate?.noCodesFinished()
   }
 }
 
@@ -191,13 +257,7 @@ extension NoCodesFlowCoordinator: NoCodesViewControllerDelegate {
   }
 
   func noCodesFinished() {
-    // The flow is over and the coordinator lives for the whole process, so
-    // holding on to the screen would keep its web view, and the screen markup
-    // inlined into it, alive for just as long.
-    currentVC = nil
-    presentationGate.screenFinished()
-    screenEventsService.flush()
-    delegate?.noCodesFinished()
+    apply(presentationGate.screenFinished())
   }
   
   func noCodesFailedToLoadScreen(error: Error?) {
