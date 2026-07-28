@@ -23,7 +23,11 @@ protocol RequestsStorageInterface: Sendable {
     /// between must not be undone by the replacement.
     func replace(_ request: StoredRequest, with replacement: StoredRequest, ifGenerationIs generation: Int)
 
-    func removeAll(where shouldRemove: @Sendable (StoredRequest) -> Bool)
+    /// Drops every queued request the predicate matches, and only while the
+    /// queue still belongs to the same user: entries appended after a clean()
+    /// (user switch) are the new user's and no longer superseded by whatever
+    /// the previous one delivered.
+    func removeAll(ifGenerationIs generation: Int, where shouldRemove: @Sendable (StoredRequest) -> Bool)
 
     func fetchRequests() -> [StoredRequest]
 
@@ -42,5 +46,9 @@ extension RequestsStorageInterface {
     /// user switch could have happened behind their back).
     func append(_ request: StoredRequest) {
         append(request, ifGenerationIs: cleanGeneration)
+    }
+
+    func removeAll(where shouldRemove: @Sendable (StoredRequest) -> Bool) {
+        removeAll(ifGenerationIs: cleanGeneration, where: shouldRemove)
     }
 }

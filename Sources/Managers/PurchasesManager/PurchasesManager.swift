@@ -104,7 +104,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     /// The entitlements-only projection of the deferred purchases: one
     /// subscription of its own, so both streams stay independent.
     func entitlementsUpdates() -> AsyncStream<[String: Qonversion.Entitlement]> {
-        return AsyncStream { continuation in
+        // The same bound as the subscription it wraps: a host that stops
+        // reading must not turn the projection into an unbounded queue.
+        return AsyncStream(bufferingPolicy: .bufferingNewest(AsyncMulticast<Qonversion.DeferredPurchase>.subscriberBufferSize)) { continuation in
             // Subscribing here does not consume what deferredPurchases() is
             // owed: AsyncMulticast replays its backlog to every subscriber.
             let purchases: AsyncStream<Qonversion.DeferredPurchase> = self.deferredPurchasesMulticast.stream()
@@ -487,10 +489,6 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     }
 
     func processUnfinishedTransactions() async {
-        // Both modes re-report; only subscription management may FINISH
-        // afterwards — in Analytics mode the host app owns the lifecycle.
-        let finishAfterReport: Bool = launchModeProvider.launchMode == .subscriptionManagement
-
         let transactions: [Qonversion.Transaction] = await storeKitFacade.unfinishedTransactions()
         guard !transactions.isEmpty else { return }
 
@@ -504,22 +502,71 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         }
 
         for transaction in transactions {
-            if let id: String = transaction.id {
-                guard reportsGate.tryTake(id) else { continue }
-            }
+            await processObservedTransaction(transaction, userId: userId, trigger: .initialization)
+        }
+    }
+
+    /// The single funnel for transactions the SDK did not purchase itself: the
+    /// launch sweep and the updates listener race for the same deliveries, so
+    /// whichever claims one produces the WHOLE outcome — report, finish per
+    /// launch mode, one deferred purchase. A nil `userId` makes the funnel pass
+    /// the user gate itself, and only once it owns the transaction.
+    private func processObservedTransaction(_ transaction: Qonversion.Transaction, userId: String?, trigger: RequestTrigger) async {
+        // A purchase() call owns this product's lifecycle. Step aside BEFORE
+        // reporting or finishing: a skipped transaction must stay unfinished so
+        // the store re-delivers it.
+        guard !isPurchasing(transaction.productId) else { return }
+
+        // Transactions without a store id (degraded SK1 mapping) cannot be
+        // deduplicated and are reported unconditionally.
+        if let id: String = transaction.id {
+            guard reportsGate.tryTake(id) else { return }
+        }
+
+        let reportUserId: String
+        if let userId {
+            reportUserId = userId
+        } else {
             do {
-                try await purchasesService.send(transaction, userId: userId, options: reportOptions(for: transaction), trigger: .initialization)
-                purchaseAssociationsStorage.remove(for: transaction.productId)
-                if finishAfterReport {
-                    await storeKitFacade.finish(transaction)
-                }
+                _ = try await userManager.obtainUser()
+                reportUserId = userIdProvider.getUserId()
             } catch {
                 if let id: String = transaction.id {
                     reportsGate.release(id)
                 }
-                logger.error("Failed to re-report an unfinished transaction: " + error.message)
+                logger.error("Skipping an observed transaction: no backend user: " + error.message)
+                return
             }
         }
+
+        var reportFailed = false
+        do {
+            try await purchasesService.send(transaction, userId: reportUserId, options: reportOptions(for: transaction), trigger: trigger)
+            purchaseAssociationsStorage.remove(for: transaction.productId)
+        } catch {
+            if let id: String = transaction.id {
+                reportsGate.release(id)
+            }
+            logger.error("Failed to report an observed transaction: " + error.message)
+            // An unreachable backend must not swallow the update; a rejected
+            // report stays silent.
+            guard error.allowsLocalEntitlementsFallback else { return }
+
+            reportFailed = true
+        }
+
+        // Only a reported transaction may be finished, and only when the SDK
+        // owns the lifecycle — in Analytics mode the host app does.
+        if !reportFailed && launchModeProvider.launchMode == .subscriptionManagement {
+            await storeKitFacade.finish(transaction)
+        }
+
+        // Gates what the host sees, not the report: a relaunch re-delivers
+        // every unfinished transaction, and the host must hear it once.
+        if let id: String = transaction.id, !markSurfacedIfNew(id) { return }
+
+        let deferredPurchase: Qonversion.DeferredPurchase = await self.deferredPurchase(for: transaction, reportFailed: reportFailed)
+        deferredPurchasesMulticast.yield(deferredPurchase)
     }
 }
 
@@ -565,47 +612,7 @@ extension PurchasesManager: StoreKitFacadeDelegate {
         Task { [weak self] in
             guard let self else { return }
 
-            // A purchase() call owns this product's lifecycle. Step aside
-            // BEFORE reporting or finishing: a skipped transaction must stay
-            // unfinished so the store re-delivers it.
-            guard !self.isPurchasing(transaction.productId) else { return }
-
-            // Transactions without a store id (degraded SK1 mapping) cannot be
-            // deduplicated and are reported unconditionally.
-            if let id: String = transaction.id {
-                guard self.reportsGate.tryTake(id) else { return }
-            }
-
-            var reportFailed = false
-            do {
-                _ = try await self.userManager.obtainUser()
-                let userId: String = self.userIdProvider.getUserId()
-                try await self.purchasesService.send(transaction, userId: userId, options: self.reportOptions(for: transaction), trigger: .purchase)
-                self.purchaseAssociationsStorage.remove(for: transaction.productId)
-            } catch {
-                if let id: String = transaction.id {
-                    self.reportsGate.release(id)
-                }
-                self.logger.error("Failed to report an observed transaction: " + error.message)
-                // An unreachable backend must not swallow the update; a
-                // rejected report stays silent.
-                guard error.allowsLocalEntitlementsFallback else { return }
-
-                reportFailed = true
-            }
-
-            // Only a reported transaction may be finished, and only when the
-            // SDK owns the lifecycle.
-            if !reportFailed && self.launchModeProvider.launchMode == .subscriptionManagement {
-                await self.storeKitFacade.finish(transaction)
-            }
-
-            // Gates what the host sees, not the report: a relaunch re-delivers
-            // every unfinished transaction, and the host must hear it once.
-            if let id: String = transaction.id, !self.markSurfacedIfNew(id) { return }
-
-            let deferredPurchase: Qonversion.DeferredPurchase = await self.deferredPurchase(for: transaction, reportFailed: reportFailed)
-            self.deferredPurchasesMulticast.yield(deferredPurchase)
+            await self.processObservedTransaction(transaction, userId: nil, trigger: .purchase)
         }
     }
 
