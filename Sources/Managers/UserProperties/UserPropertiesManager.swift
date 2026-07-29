@@ -39,6 +39,24 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
     private let backgroundNotificationName: Notification.Name
 
+    /// Reads the AdServices attribution token. Throwing means "not right now"
+    /// — the caller retries; nil means this platform has no token to give.
+    typealias AttributionTokenReader = @Sendable () throws -> String?
+
+    /// When and how often the attribution token is read. ObjC parity: the read
+    /// happens off the caller's thread, a moment after launch, and a transient
+    /// AdServices failure costs a retry rather than the token.
+    struct AppleSearchAdsSchedule: Sendable {
+        let initialDelay: TimeInterval
+        let retryDelay: TimeInterval
+        let maxAttempts: Int
+
+        static let production = AppleSearchAdsSchedule(initialDelay: 5, retryDelay: 5, maxAttempts: 3)
+    }
+
+    private let attributionTokenReader: AttributionTokenReader
+    private let appleSearchAdsSchedule: AppleSearchAdsSchedule
+
     /// Kept so the observer can be removed: a token-less registration lives
     /// as long as the process does, even after the manager is gone.
     private var backgroundObserver: NSObjectProtocol?
@@ -62,8 +80,12 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         integrationsInfoCollector: IntegrationsInfoCollectorInterface,
         logger: LoggerWrapper,
         notificationCenter: NotificationCenter = .default,
-        backgroundNotificationName: Notification.Name = UserPropertiesManager.backgroundNotificationName
+        backgroundNotificationName: Notification.Name = UserPropertiesManager.backgroundNotificationName,
+        attributionTokenReader: @escaping AttributionTokenReader = UserPropertiesManager.adServicesAttributionToken,
+        appleSearchAdsSchedule: AppleSearchAdsSchedule = .production
     ) {
+        self.attributionTokenReader = attributionTokenReader
+        self.appleSearchAdsSchedule = appleSearchAdsSchedule
         self.requestProcessor = requestProcessor
         self.propertiesStorage = propertiesStorage
         self.delayCalculator = delayCalculator
@@ -158,23 +180,29 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         }
     }
     
-    func collectAppleSearchAdsAttribution() {
+    /// The AdServices token of this install, or nil where the framework is not
+    /// available. It is a blocking call that goes to the network.
+    @Sendable
+    static func adServicesAttributionToken() throws -> String? {
         #if canImport(AdServices)
-        if #available(iOS 14.3, macOS 11.1, visionOS 1.0, *) {
-            do {
-                let requestedAt: TimeInterval = Date().timeIntervalSince1970
-                let token: String = try AAAttribution.attributionToken()
+        guard #available(iOS 14.3, macOS 11.1, visionOS 1.0, *) else { return nil }
 
-                processRequest(with: token, requestedAt: requestedAt)
-            } catch {
-                logger.error("\(LoggerInfoMessages.failedToCollectAppleSearchAdsAttribution.rawValue) \(error)")
-            }
-        } else {
-            logger.warning(LoggerInfoMessages.unableToCollectAppleSearchAdsAttribution.rawValue)
-        }
+        return try AAAttribution.attributionToken()
         #else
-        logger.warning(LoggerInfoMessages.unableToCollectAppleSearchAdsAttribution.rawValue)
+        return nil
         #endif
+    }
+
+    func collectAppleSearchAdsAttribution() {
+        let read: AttributionTokenReader = attributionTokenReader
+        let schedule: AppleSearchAdsSchedule = appleSearchAdsSchedule
+
+        // The SDK documents this call for didFinishLaunchingWithOptions, so it
+        // returns at once: the AdServices read is blocking, goes to the
+        // network, and would otherwise stall the launch on the caller's thread.
+        Task { [weak self] in
+            await self?.collectAppleSearchAdsToken(reading: read, on: schedule)
+        }
     }
     
     func userProperties() async throws -> Qonversion.UserProperties {
@@ -375,6 +403,45 @@ extension UserPropertiesManager: UserChangedObserver {
 
 extension UserPropertiesManager {
 
+    /// Waits out the schedule's delay, then reads the token, retrying a
+    /// transient AdServices failure up to the attempt budget. ObjC parity:
+    /// the token is not available the instant the app launches.
+    func collectAppleSearchAdsToken(reading read: @escaping AttributionTokenReader, on schedule: AppleSearchAdsSchedule) async {
+        var delay: TimeInterval = schedule.initialDelay
+        for _ in 0..<max(schedule.maxAttempts, 1) {
+            if delay > 0 {
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            }
+            guard !Task.isCancelled else { return }
+
+            let requestedAt: TimeInterval = Date().timeIntervalSince1970
+            do {
+                guard let token: String = try await readAttributionToken(read), !token.isEmpty else {
+                    return logger.warning(LoggerInfoMessages.unableToCollectAppleSearchAdsAttribution.rawValue)
+                }
+
+                return processRequest(with: token, requestedAt: requestedAt)
+            } catch {
+                logger.error("\(LoggerInfoMessages.failedToCollectAppleSearchAdsAttribution.rawValue) \(error)")
+                delay = schedule.retryDelay
+            }
+        }
+    }
+
+    /// The read blocks for as long as the AdServices request takes, so it runs
+    /// on a background queue instead of a cooperative pool thread.
+    private func readAttributionToken(_ read: @escaping AttributionTokenReader) async throws -> String? {
+        return try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global(qos: .utility).async {
+                do {
+                    continuation.resume(returning: try read())
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
     func processRequest(with token: String, requestedAt: TimeInterval = Date().timeIntervalSince1970) {
         Task { [weak self] in
             guard let self else { return }
@@ -390,13 +457,23 @@ extension UserPropertiesManager {
     /// `requested_at` must be the moment the token was obtained: the backend
     /// matches it against the attribution window.
     func sendAppleSearchAdsToken(_ token: String, requestedAt: TimeInterval = Date().timeIntervalSince1970) async throws {
-        try await userManager.obtainUser()
-
         let body: RequestBodyDict = [
             "token": token,
             "requested_at": Int(requestedAt),
             "provider": StringConstants.appleAdServicesProvider.rawValue
         ]
+
+        do {
+            try await userManager.obtainUser()
+        } catch {
+            // The request is sent anyway. An offline launch is exactly the
+            // attribution window ASA exists for, the token is minted once per
+            // install and is never re-readable, and the only durable place it
+            // can wait is the offline replay queue — which RequestProcessor
+            // fills from requests it could not deliver.
+            logger.warning("Failed to obtain user before sending the Apple Search Ads token: " + error.message)
+        }
+
         let request = Request.appleSearchAds(userId: userIdProvider.getUserId(), body: body)
         let _: EmptyApiResponse = try await requestProcessor.process(request: request, responseType: EmptyApiResponse.self)
     }

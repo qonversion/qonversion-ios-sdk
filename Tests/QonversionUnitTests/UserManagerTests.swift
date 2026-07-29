@@ -303,7 +303,61 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(user.id, anonUid)
     }
 
+    // MARK: - Identity on the returned user
+
+    func testIdentifyCarriesTheLinkedIdentityOnTheUserItReturns() async throws {
+        // The uid does not move on a first identify: the link is created on the
+        // user the SDK already has, whose record was fetched before it existed.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        let user = try await manager.identify("external_1")
+
+        XCTAssertEqual(user.identityId, "external_1")
+    }
+
+    func testTheLinkedIdentityIsServedToEveryLaterReader() async throws {
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        _ = try await manager.identify("external_1")
+
+        let repeated = try await manager.identify("external_1")
+
+        XCTAssertEqual(repeated.identityId, "external_1", "the local short-circuit must answer with the linked user")
+        let persisted = try XCTUnwrap(try storage.object(forKey: userStorageKey, dataType: Qonversion.User.self))
+        XCTAssertEqual(persisted.identityId, "external_1", "the next launch reads the identity from the persisted record")
+    }
+
     // MARK: - Logout
+
+    func testLogoutAfterAnIdentifyThatKeptTheUidTearsTheIdentityDown() async throws {
+        // The most common shape of the very first identify: createIdentity
+        // answers with the same uid, so nothing moves — but the user IS linked,
+        // and logout is documented to undo exactly that.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        _ = try await manager.identify("external_1")
+
+        await manager.logout()
+
+        XCTAssertEqual(config.userId, anonUid, "the uid never moved, so there is nothing to restore")
+        XCTAssertNil(storage.string(forKey: identityStorageKey))
+        XCTAssertEqual(observer.userDidChangeCallsCount, 1, "the identified session's caches belong to the user who logged out")
+        let persisted = try XCTUnwrap(try storage.object(forKey: userStorageKey, dataType: Qonversion.User.self))
+        XCTAssertNil(persisted.identityId, "the host was told the user is anonymous again")
+    }
+
+    func testLogoutWithoutAnyIdentityLeavesTheCachesAlone() async throws {
+        // The counterpart of the test above: notifying here would wipe the
+        // caches of a user who was never identified in the first place.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        await manager.logout()
+
+        XCTAssertEqual(observer.userDidChangeCallsCount, 0)
+        XCTAssertNotNil(try storage.object(forKey: userStorageKey, dataType: Qonversion.User.self))
+    }
 
     func testLogoutReturnsToTheOriginalAnonymousUser() async throws {
         // Production semantics: the original anonymous user owns the
@@ -779,6 +833,23 @@ final class UserManagerTests: XCTestCase {
         XCTAssertEqual(persisted.originalAppVersion, "1.0.3")
     }
 
+    func testAStoreThatCannotAnswerKeepsThePersistedOriginalAppVersion() async throws {
+        // The backend never serves this field, so a user fetched from it
+        // carries none. Persisting that over an earlier successful read means
+        // one offline launch erases the version for good.
+        appTransactionReader.originalAppVersionResult = "1.0.3"
+        service.createUserResult = try makeUser(id: anonUid)
+        service.userResult = try makeUser(id: anonUid)
+        _ = try await manager.userInfo()
+        appTransactionReader.originalAppVersionResult = nil
+
+        let user = try await manager.userInfo()
+
+        XCTAssertEqual(user.originalAppVersion, "1.0.3")
+        let persisted = try XCTUnwrap(try storage.object(forKey: userStorageKey, dataType: Qonversion.User.self))
+        XCTAssertEqual(persisted.originalAppVersion, "1.0.3")
+    }
+
     // MARK: - cancellation never escapes unclassified
 
     func testObtainUserCancelledByLogoutThrowsAQonversionError() async throws {
@@ -864,6 +935,67 @@ final class UserManagerTests: XCTestCase {
         } catch {
             XCTFail("A raw \(type(of: error)) must never reach the host")
         }
+    }
+
+    func testAJoinedIdentifyCancelledByLogoutThrowsAQonversionError() async throws {
+        // A second caller with the same external id joins the in-flight
+        // identify — it leaves through the public API too.
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+        let gate = AsyncGate()
+        service.onIdentity = { await gate.wait() }
+        service.identityLinkedUid = "QON_other_uid"
+        service.userResult = try makeUser(id: "QON_other_uid")
+
+        async let owner: Qonversion.User = manager.identify("external_1")
+        await waitUntil { self.service.identityCalls.count >= 1 }
+        async let joiner: Qonversion.User = manager.identify("external_1")
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        await manager.logout()
+        await gate.open()
+        _ = try? await owner
+
+        do {
+            _ = try await joiner
+            XCTFail("Expected the abandoned identify to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled)
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
+    // MARK: - pending identity
+
+    func testAFailedCreationInsideIdentifyDropsThePendingIdentity() async throws {
+        // The host has already been told the identify failed. Completing it
+        // later, by itself, identifies a user the host believes is anonymous.
+        service.error = QonversionError(type: .internal)
+
+        do {
+            _ = try await manager.identify("external_1")
+            XCTFail("Expected the creation failure to surface")
+        } catch { }
+
+        service.error = nil
+        service.createUserResult = try makeUser(id: anonUid)
+        _ = try await manager.obtainUser()
+
+        XCTAssertEqual(service.identityCalls, [], "the abandoned identify must not run itself later")
+        XCTAssertTrue(service.createIdentityCalls.isEmpty)
+        XCTAssertNil(storage.string(forKey: identityStorageKey))
+    }
+
+    func testAFailedCreationInsideIdentifyStillAllowsAnExplicitRetry() async throws {
+        service.error = QonversionError(type: .internal)
+        _ = try? await manager.identify("external_1")
+        service.error = nil
+        service.createUserResult = try makeUser(id: anonUid)
+
+        let user = try await manager.identify("external_1")
+
+        XCTAssertEqual(user.identityId, "external_1")
     }
 
     func testUserInfoThrowsWhenThereIsNoUserAtAll() async throws {

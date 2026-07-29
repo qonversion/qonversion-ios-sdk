@@ -80,8 +80,49 @@ final class DeviceManagerTests: XCTestCase {
 
         XCTAssertEqual(deviceService.createdDevices, [deviceInfoCollector.device])
         XCTAssertEqual(deviceService.updatedDevices, [])
-        // The device returned by the service (not the collected one) is saved.
-        XCTAssertEqual(deviceService.savedDevices, [backendDevice])
+        // The snapshot that was SENT is what the next diff is judged against —
+        // an echo that differs would make every launch send an update.
+        XCTAssertEqual(deviceService.savedDevices, [deviceInfoCollector.device])
+        XCTAssertNotEqual(backendDevice, deviceInfoCollector.device)
+    }
+
+    func testASecondPassAfterASuccessfulCreateSendsNothing() async {
+        deviceInfoCollector.device = makeTestDevice()
+        deviceService.current = nil
+        // The backend enriches the record it echoes back.
+        deviceService.createResult = makeTestDevice(advertisingId: "server-side-idfa")
+
+        await manager.collectDeviceInfo()
+        await manager.collectDeviceInfo()
+
+        XCTAssertEqual(deviceService.createdDevices.count, 1)
+        XCTAssertEqual(deviceService.updatedDevices, [], "an unchanged device must not cost a request on every launch")
+    }
+
+    func testASecondPassAfterASuccessfulUpdateSendsNothing() async {
+        deviceInfoCollector.device = makeTestDevice(osVersion: "18.0")
+        deviceService.current = makeTestDevice(osVersion: "17.0")
+        deviceService.updateResult = makeTestDevice(osVersion: "18.0", advertisingId: "server-side-idfa")
+
+        await manager.collectDeviceInfo()
+        await manager.collectDeviceInfo()
+
+        XCTAssertEqual(deviceService.updatedDevices.count, 1)
+        XCTAssertEqual(deviceService.createdDevices, [])
+    }
+
+    func testConcurrentPassesCreateTheDeviceOnlyOnce() async {
+        // README-recommended sequence: launch starts a collect pass and the ATT
+        // callback starts another one while the first is still in flight.
+        deviceInfoCollector.device = makeTestDevice()
+        deviceService.current = nil
+        deviceService.onCreate = { try? await Task.sleep(nanoseconds: 50_000_000) }
+
+        async let first: Void = manager.collectDeviceInfo()
+        async let second: Void = manager.collectDeviceInfo()
+        _ = await (first, second)
+
+        XCTAssertEqual(deviceService.createdDevices.count, 1, "two device rows for one device is a duplicate the backend cannot merge")
     }
 
     func testCollectDeviceInfoDoesNothingWhenDeviceUnchanged() async {
@@ -105,7 +146,8 @@ final class DeviceManagerTests: XCTestCase {
 
         XCTAssertEqual(deviceService.createdDevices, [])
         XCTAssertEqual(deviceService.updatedDevices, [deviceInfoCollector.device])
-        XCTAssertEqual(deviceService.savedDevices, [backendDevice])
+        XCTAssertEqual(deviceService.savedDevices, [deviceInfoCollector.device])
+        XCTAssertNotEqual(backendDevice, deviceInfoCollector.device)
     }
 
     // Fixates current behavior: create/update errors are swallowed (only logged) and

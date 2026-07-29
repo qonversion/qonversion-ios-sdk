@@ -130,6 +130,30 @@ final class DeviceServiceTests: XCTestCase {
         XCTAssertEqual(Set(body.keys), expectedKeys)
     }
 
+    func testAFractionalInstallDateIsNormalisedToWholeSeconds() {
+        // APFS reports the Documents creation date with sub-second precision,
+        // while the wire and the storage both carry whole seconds.
+        let collector = DeviceInfoCollector(installDateProvider: { Date(timeIntervalSince1970: 1_700_000_000.75) })
+
+        let device: Device = collector.deviceInfo()
+
+        XCTAssertEqual(device.installDate, 1_700_000_000)
+    }
+
+    func testACollectedSnapshotSurvivesTheStorageRoundTripUnchanged() throws {
+        // The stored snapshot is what "has the device changed?" is judged
+        // against. A value the storage codec cannot return unchanged makes the
+        // diff non-empty forever, so every launch sends a device update.
+        let storage = MockLocalStorage()
+        let service = makeService(storage: storage)
+        let collector = DeviceInfoCollector(installDateProvider: { Date(timeIntervalSince1970: 1_700_000_000.75) })
+        let collected: Device = collector.deviceInfo()
+
+        try service.save(device: collected)
+
+        XCTAssertEqual(try service.currentDevice(), collected)
+    }
+
     func testTheInstallDateTravelsAsUnixSeconds() async throws {
         let processor = MockRequestProcessor()
         let service = makeService(processor: processor)

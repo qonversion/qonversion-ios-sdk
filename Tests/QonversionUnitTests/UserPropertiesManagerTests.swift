@@ -422,6 +422,110 @@ final class UserPropertiesManagerTests: XCTestCase {
         manager.collectAppleSearchAdsAttribution()
     }
 
+    /// Records every attribution token read: how many, and on which thread.
+    private final class AttributionReadRecorder: @unchecked Sendable {
+        private let lock = NSLock()
+        private var count = 0
+        private var onMainThread = 0
+        var expectation: XCTestExpectation?
+
+        func record() {
+            lock.lock()
+            count += 1
+            if Thread.isMainThread { onMainThread += 1 }
+            let fulfilment: XCTestExpectation? = expectation
+            lock.unlock()
+            fulfilment?.fulfill()
+        }
+
+        var reads: Int {
+            lock.lock()
+            defer { lock.unlock() }
+            return count
+        }
+
+        var mainThreadReads: Int {
+            lock.lock()
+            defer { lock.unlock() }
+            return onMainThread
+        }
+    }
+
+    private func makeAppleSearchAdsManager(
+        schedule: UserPropertiesManager.AppleSearchAdsSchedule,
+        reader: @escaping UserPropertiesManager.AttributionTokenReader
+    ) -> UserPropertiesManager {
+        UserPropertiesManager(
+            requestProcessor: requestProcessor,
+            propertiesStorage: propertiesStorage,
+            delayCalculator: IncrementalDelayCalculator(),
+            userIdProvider: config,
+            userManager: userManager,
+            integrationsInfoCollector: integrationsCollector,
+            logger: LoggerWrapper(),
+            attributionTokenReader: reader,
+            appleSearchAdsSchedule: schedule
+        )
+    }
+
+    func testTheAttributionTokenIsReadOffTheCallersThreadAfterADelay() {
+        // The SDK documents this call for application(_:didFinishLaunchingWithOptions:).
+        // AdServices goes to the network, so reading it on that thread stalls
+        // the launch for as long as the request takes to time out.
+        let recorder = AttributionReadRecorder()
+        recorder.expectation = expectation(description: "the attribution token is read")
+        let schedule = UserPropertiesManager.AppleSearchAdsSchedule(initialDelay: 0.05, retryDelay: 0.05, maxAttempts: 3)
+        let asaManager: UserPropertiesManager = makeAppleSearchAdsManager(schedule: schedule) {
+            recorder.record()
+            return "attribution-token"
+        }
+        requestProcessor.results = [EmptyApiResponse()]
+
+        asaManager.collectAppleSearchAdsAttribution()
+
+        XCTAssertEqual(recorder.reads, 0, "the caller must not pay for the read")
+        wait(for: [recorder.expectation!], timeout: 5)
+        XCTAssertEqual(recorder.mainThreadReads, 0)
+    }
+
+    func testATransientAttributionFailureIsRetried() async throws {
+        // Right after a launch AdServices commonly answers with a network
+        // error; a single attempt loses a token that is minted once per install.
+        let recorder = AttributionReadRecorder()
+        let schedule = UserPropertiesManager.AppleSearchAdsSchedule(initialDelay: 0, retryDelay: 0, maxAttempts: 3)
+        let asaManager: UserPropertiesManager = makeAppleSearchAdsManager(schedule: schedule) {
+            recorder.record()
+            guard recorder.reads > 2 else { throw MockError.stubbed }
+            return "attribution-token"
+        }
+        requestProcessor.results = [EmptyApiResponse()]
+
+        asaManager.collectAppleSearchAdsAttribution()
+
+        await waitUntil { self.requestProcessor.processedRequests.count == 1 }
+        XCTAssertEqual(recorder.reads, 3)
+        guard case let .appleSearchAds(_, _, body, _) = try XCTUnwrap(requestProcessor.processedRequests.first) else {
+            return XCTFail("Expected an .appleSearchAds request")
+        }
+        XCTAssertEqual(body["token"] as? String, "attribution-token")
+    }
+
+    func testTheAttributionReadStopsAtItsAttemptBudget() async {
+        let recorder = AttributionReadRecorder()
+        let schedule = UserPropertiesManager.AppleSearchAdsSchedule(initialDelay: 0, retryDelay: 0, maxAttempts: 3)
+        let asaManager: UserPropertiesManager = makeAppleSearchAdsManager(schedule: schedule) {
+            recorder.record()
+            throw MockError.stubbed
+        }
+
+        asaManager.collectAppleSearchAdsAttribution()
+
+        await waitUntil { recorder.reads >= 3 }
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(recorder.reads, 3, "an unbounded retry loop would keep polling AdServices for the whole session")
+        XCTAssertTrue(requestProcessor.processedRequests.isEmpty)
+    }
+
     func testAppleSearchAdsTokenIsSentAfterTheUserGateAndAcceptsAnEmptyAcknowledgement() async throws {
         // The endpoint answers with an empty body: decoding it as a String
         // turned every successful call into an invalidResponse failure.
@@ -440,16 +544,22 @@ final class UserPropertiesManagerTests: XCTestCase {
         XCTAssertEqual(body["requested_at"] as? Int, 1_700_000_000, "the backend matches the attribution window by this timestamp")
     }
 
-    func testAppleSearchAdsTokenIsNotSentWhenTheUserGateFails() async {
+    func testTheAppleSearchAdsTokenIsStillSentWhenTheUserGateFails() async throws {
+        // An offline launch is exactly the attribution window ASA exists for.
+        // The queue that survives it is filled by RequestProcessor from the
+        // requests it could not deliver — a request never built never gets
+        // there, and the token cannot be read a second time.
         userManager.error = MockError.stubbed
+        requestProcessor.results = [EmptyApiResponse()]
 
-        do {
-            try await manager.sendAppleSearchAdsToken("attribution-token")
-            XCTFail("Expected the gate error to propagate")
-        } catch {
-            XCTAssertEqual(error as? MockError, .stubbed)
+        try await manager.sendAppleSearchAdsToken("attribution-token", requestedAt: 1_700_000_000)
+
+        XCTAssertEqual(requestProcessor.processedRequests.count, 1)
+        guard case let .appleSearchAds(userId, _, body, _) = requestProcessor.processedRequests[0] else {
+            return XCTFail("Expected an .appleSearchAds request")
         }
-        XCTAssertTrue(requestProcessor.processedRequests.isEmpty)
+        XCTAssertEqual(userId, "test-user-id")
+        XCTAssertEqual(body["token"] as? String, "attribution-token")
     }
 
     // MARK: - user gate

@@ -7,12 +7,18 @@
 
 import Foundation
 
-// @unchecked: stateless — every dependency is thread-safe on its own.
+// @unchecked: the collect chain is guarded by chainLock; deps are thread-safe.
 final class DeviceManager: DeviceManagerInterface, @unchecked Sendable {
 
     private let deviceInfoCollector: DeviceInfoCollectorInterface
     private let deviceService: DeviceServiceInterface
     private let logger: LoggerWrapper
+
+    private let chainLock = NSLock()
+    /// The last enqueued collect pass. A pass decides create-or-update from a
+    /// snapshot the previous one has not persisted yet, so two of them running
+    /// at once both see "no device" and create the row twice.
+    private var lastCollect: Task<Void, Never>?
 
     init(deviceInfoCollector: DeviceInfoCollectorInterface, deviceService: DeviceServiceInterface, logger: LoggerWrapper) {
         self.deviceInfoCollector = deviceInfoCollector
@@ -21,17 +27,7 @@ final class DeviceManager: DeviceManagerInterface, @unchecked Sendable {
     }
 
     func collectDeviceInfo() async {
-        let deviceInfo: Device = deviceInfoCollector.deviceInfo()
-
-        let currentDevice: Device? = currentDevice()
-
-        if currentDevice == nil {
-            return await create(deviceInfo: deviceInfo)
-        }
-
-        guard deviceInfo != currentDevice else { return }
-
-        return await update(deviceInfo: deviceInfo)
+        await enqueueCollect().value
     }
 
     func clearStoredDevice() {
@@ -61,10 +57,45 @@ final class DeviceManager: DeviceManagerInterface, @unchecked Sendable {
 
 extension DeviceManager {
 
+    /// Chains onto the pass already queued, so the passes run one after
+    /// another and each of them sees what the previous one persisted.
+    private func enqueueCollect() -> Task<Void, Never> {
+        chainLock.lock()
+        defer { chainLock.unlock() }
+
+        let previous: Task<Void, Never>? = lastCollect
+        let task = Task<Void, Never> { [weak self] in
+            await previous?.value
+            await self?.performCollect()
+        }
+        lastCollect = task
+
+        return task
+    }
+
+    private func performCollect() async {
+        let deviceInfo: Device = deviceInfoCollector.deviceInfo()
+
+        let currentDevice: Device? = currentDevice()
+
+        if currentDevice == nil {
+            return await create(deviceInfo: deviceInfo)
+        }
+
+        guard deviceInfo != currentDevice else { return }
+
+        return await update(deviceInfo: deviceInfo)
+    }
+
+    /// Both paths persist the snapshot that was SENT, not the record the
+    /// endpoint echoed back: the stored copy is only ever compared against the
+    /// next local collection, and an echo differing in any field (a
+    /// server-side advertising id, a normalised value, a truncated answer)
+    /// would make that comparison non-empty on every launch from then on.
     private func create(deviceInfo: Device) async {
         do {
-            let device: Device = try await deviceService.create(device: deviceInfo)
-            try deviceService.save(device: device)
+            _ = try await deviceService.create(device: deviceInfo)
+            try deviceService.save(device: deviceInfo)
             return logger.info(LoggerInfoMessages.deviceCreated.rawValue)
         } catch {
             return logger.warning("Failed to create device: " + error.message)
@@ -73,8 +104,8 @@ extension DeviceManager {
 
     private func update(deviceInfo: Device) async {
         do {
-            let device: Device = try await deviceService.update(device: deviceInfo)
-            try deviceService.save(device: device)
+            _ = try await deviceService.update(device: deviceInfo)
+            try deviceService.save(device: deviceInfo)
             return logger.info(LoggerInfoMessages.deviceUpdated.rawValue)
         } catch {
             return logger.warning("Failed to update device: " + error.message)

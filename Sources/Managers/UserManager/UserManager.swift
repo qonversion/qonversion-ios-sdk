@@ -80,7 +80,13 @@ actor UserManager: UserManagerInterface {
 
         while let inFlight = identifyInFlight {
             if inFlight.externalId == externalId {
-                return try await inFlight.task.value
+                // A joiner leaves through the same public entry point as the
+                // owner, so it must be classified the same way.
+                do {
+                    return try await inFlight.task.value
+                } catch {
+                    throw error.classifiedForPublicAPI
+                }
             }
             // A different id: let the in-flight one settle first, then re-check.
             // The settled marker is cleared here as well — awaiting an
@@ -140,25 +146,38 @@ actor UserManager: UserManagerInterface {
         pendingIdentityExternalId = nil
         identifyInFlight?.task.cancel()
         identifyInFlight = nil
+
+        let linkedIdentity: String? = localStorage.string(forKey: Constants.identityKey.rawValue)
         localStorage.removeObject(forKey: Constants.identityKey.rawValue)
 
-        // Production semantics: the uid restore (and the cache wipe it
-        // implies) only happens when the uid actually moved away from the
-        // install's original anonymous user.
+        // The uid only moved if the identity turned out to belong to another
+        // Qonversion user; the far more common first identify keeps it.
         let originalUid: String? = localStorage.string(forKey: UserServiceStorageKeys.originalUserIdKey.rawValue)
-        guard let originalUid, !originalUid.isEmpty, originalUid != internalConfig.userId else { return }
+        let restoresOriginalUid: Bool = originalUid?.isEmpty == false && originalUid != internalConfig.userId
+        let hadLinkedIdentity: Bool = linkedIdentity?.isEmpty == false
+
+        // Notifying wipes every user-scoped cache in the SDK, so it is done
+        // only when there was an identified session to end. A logout on an
+        // anonymous user changes nothing and must cost nothing.
+        guard restoresOriginalUid || hadLinkedIdentity else { return }
 
         // The last moment at which data queued by the user being logged out
         // can still leave under their uid.
         await userChangesNotifier.notifyUserWillChange()
 
-        cachedUser = nil
-        localStorage.removeObject(forKey: Constants.userKey.rawValue)
+        if restoresOriginalUid, let originalUid {
+            cachedUser = nil
+            localStorage.removeObject(forKey: Constants.userKey.rawValue)
 
-        // Back to the original anonymous user — it owns the purchases made
-        // before identify; minting a fresh uid would orphan them.
-        internalConfig.userId = originalUid
-        localStorage.set(string: originalUid, forKey: UserServiceStorageKeys.userIdKey.rawValue)
+            // Back to the original anonymous user — it owns the purchases made
+            // before identify; minting a fresh uid would orphan them.
+            internalConfig.userId = originalUid
+            localStorage.set(string: originalUid, forKey: UserServiceStorageKeys.userIdKey.rawValue)
+        } else {
+            // The uid never moved, so the user record stays — but it is no
+            // longer linked to anything the host identified.
+            unlinkCurrentUser()
+        }
 
         userChangesNotifier.notifyUserChanged()
     }
@@ -236,9 +255,16 @@ actor UserManager: UserManagerInterface {
     /// out. A store that cannot answer leaves whatever the user already
     /// carries, which is the value persisted by an earlier successful read.
     private func stamped(_ user: Qonversion.User) async -> Qonversion.User {
-        guard let originalAppVersion: String = await appTransactionReader.originalAppVersion() else { return user }
+        if let originalAppVersion: String = await appTransactionReader.originalAppVersion() {
+            return user.with(originalAppVersion: originalAppVersion)
+        }
 
-        return user.with(originalAppVersion: originalAppVersion)
+        // A user just fetched from the backend carries no version at all, so
+        // persisting it as-is would erase what an earlier successful read left
+        // behind. "The store cannot answer" is not "there is no version".
+        guard let known: String = currentUser()?.originalAppVersion else { return user }
+
+        return user.with(originalAppVersion: known)
     }
 
     /// Cancellation reaches the SDK in more than one shape: a task cancelled
@@ -273,11 +299,20 @@ private extension UserManager {
 
         let task = Task<PipelineOutcome, Error> {
             let generation: Int = self.sessionGeneration
+            let registeredIdentity: String? = self.pendingIdentityExternalId
             let user: Qonversion.User
             if let existing: Qonversion.User = existingUser() {
                 user = existing
             } else {
-                user = try await userService.createUser()
+                do {
+                    user = try await userService.createUser()
+                } catch {
+                    // The identify that registered this pending id has already
+                    // been told it failed; leaving it set would identify the
+                    // user later, behind the host's back.
+                    self.dropPendingIdentity(registeredIdentity, ifGenerationIs: generation)
+                    throw error
+                }
                 // A logout landed while the request was in flight — the
                 // created user belongs to the previous session.
                 guard generation == self.sessionGeneration else { throw CancellationError() }
@@ -341,7 +376,38 @@ private extension UserManager {
 
         localStorage.set(string: externalId, forKey: Constants.identityKey.rawValue)
 
-        return try currentUserOrFail()
+        return try linkedUser(identityExternalId: externalId)
+    }
+
+    /// The uid did not move, so the user record on hand is the right one — but
+    /// it was fetched before the link existed and still says the user is
+    /// anonymous. Stamping the identity onto it is what makes the caller (and
+    /// every later reader of the persisted record) see the link it just made.
+    func linkedUser(identityExternalId: String) throws -> Qonversion.User {
+        let user: Qonversion.User = try currentUserOrFail()
+        guard user.identityId != identityExternalId else { return user }
+
+        let linked: Qonversion.User = user.with(identityId: identityExternalId)
+        cachedUser = linked
+        persist(linked)
+
+        return linked
+    }
+
+    /// The current user survives a logout that did not move the uid; the link
+    /// the host asked to undo does not.
+    func unlinkCurrentUser() {
+        guard let user: Qonversion.User = currentUser(), user.identityId != nil else { return }
+
+        let anonymous: Qonversion.User = user.with(identityId: nil)
+        cachedUser = anonymous
+        persist(anonymous)
+    }
+
+    func dropPendingIdentity(_ externalId: String?, ifGenerationIs generation: Int) {
+        guard generation == sessionGeneration, pendingIdentityExternalId == externalId else { return }
+
+        pendingIdentityExternalId = nil
     }
 
     /// A suspended call's result may only be applied while it still belongs to

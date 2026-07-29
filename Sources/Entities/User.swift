@@ -54,7 +54,9 @@ extension Qonversion {
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             id = try container.decode(String.self, forKey: .id)
-            creationDate = try container.decodeIfPresent(Date.self, forKey: .creationDate)
+            // Tolerant: the SDK date strategy throws on purpose for values it
+            // calls "no date", and that must not cost the host its user id.
+            creationDate = try? container.decodeIfPresent(Date.self, forKey: .creationDate)
             identityId = try container.decodeIfPresent(String.self, forKey: .identityId)
             // Tolerant: an unknown environment value must not fail the decode.
             let rawEnvironment = try container.decodeIfPresent(String.self, forKey: .environment)
@@ -72,6 +74,10 @@ extension Qonversion {
         }
 
         func with(originalAppVersion: String) -> User {
+            User(id: id, creationDate: creationDate, identityId: identityId, environment: environment, originalAppVersion: originalAppVersion)
+        }
+
+        func with(identityId: String?) -> User {
             User(id: id, creationDate: creationDate, identityId: identityId, environment: environment, originalAppVersion: originalAppVersion)
         }
     }
