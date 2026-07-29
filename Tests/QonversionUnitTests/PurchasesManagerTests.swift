@@ -518,6 +518,25 @@ final class PurchasesManagerTests: XCTestCase {
                        "after identify/logout the restore must attach the transactions to the new user")
     }
 
+    func testUserChangeDropsThePreviousUsersEntitlementsBacklog() async {
+        // A snapshot yielded for the departed user must not survive the owner
+        // switch and replay to a subscriber that arrives afterwards.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        manager.transactionUpdated(makeTransaction(id: "old-user-tx"))
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        manager.userDidChange()
+
+        let collector = StreamCollector(manager.entitlementsUpdates())
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let received = await collector.received
+        XCTAssertTrue(received.isEmpty,
+                      "the previous user's entitlements snapshot must not replay after the owner switch")
+    }
+
     // MARK: - restore single-flight
 
     func testConcurrentRestoresShareOneStoreRun() async throws {

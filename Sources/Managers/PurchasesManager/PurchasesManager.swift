@@ -763,6 +763,7 @@ extension PurchasesManager: UserChangedObserver {
         // The reported-ids gate belongs to the previous user. Synchronous, so
         // it is ordered before any call following the user switch.
         reportsGate.reset()
+        entitlementsMulticast.clearBacklog()
     }
 }
 
