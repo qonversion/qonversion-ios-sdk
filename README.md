@@ -169,7 +169,7 @@ for product in products {
 
 ### Trial and intro eligibility
 
-Show "Start your free trial" only to users who will actually get one. The check runs on the device via StoreKit 2 (subscription group history), no network round-trip:
+Show "Start your free trial" only to users who will actually get one. The eligibility itself is decided on the device by StoreKit 2 (subscription group history); the SDK only needs your product catalog to map a Qonversion id to a store id, and serves that from its cache whenever it has one. A catalog it cannot resolve at all makes the call answer `.unknown` — it never fails:
 
 ```swift
 let eligibility = try await Qonversion.shared.checkTrialIntroEligibility(["pro_monthly", "pro_annual"])

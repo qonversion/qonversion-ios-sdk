@@ -54,6 +54,47 @@ final class StoreKitFacadeTests: XCTestCase {
         XCTAssertTrue(facade.loadedProducts.isEmpty)
     }
 
+    func testProductsLoadedForThePreviousStorefrontDoNotRepopulateTheClearedCache() async {
+        // The paywall opens in the US store and the load hangs in the network;
+        // the user switches to the JP store, the change empties the cache — and
+        // the load then finishes and writes the US products back in.
+        facade.startObservingTransactionUpdates()
+        await waitUntil { self.wrapper.transactionUpdatesCallsCount >= 1 }
+        let generationAtLoadStart: Int = facade.productsCacheGeneration
+
+        wrapper.emitStorefrontChange()
+        await waitUntil { self.facade.productsCacheGeneration != generationAtLoadStart }
+
+        XCTAssertFalse(facade.storeLoadedProducts([], ifGenerationIs: generationAtLoadStart),
+                       "a load started before the storefront change describes a store the user has left")
+        XCTAssertTrue(facade.storeLoadedProducts([], ifGenerationIs: facade.productsCacheGeneration),
+                      "a load started after it is the one that fills the cache")
+    }
+
+    // MARK: - unverified transactions
+
+    func testAnUnverifiedTransactionIsDroppedVisibly() {
+        // Local JWS verification fails for real reasons (a rolled system clock,
+        // an App Store root certificate rotation). The transaction must not be
+        // reported — an unverified proof proves nothing — but a silent drop
+        // leaves a paid purchase unexplained forever.
+        var messages: [String] = []
+        var levels: [Qonversion.LogLevel] = []
+        let logger = LoggerWrapper(sink: { level, message in
+            levels.append(level)
+            messages.append(message)
+        })
+        let loggingFacade = StoreKitFacade(storeKitWrapper: wrapper, storeKitMapper: StoreKitMapper(), logger: logger)
+
+        loggingFacade.reportUnverifiedTransaction(MockError.stubbed, source: "handlePurchases")
+        loggingFacade.reportUnverifiedTransaction(nil, source: "handlePurchases")
+
+        XCTAssertEqual(loggingFacade.unverifiedTransactionsCount, 2)
+        XCTAssertEqual(messages.count, 2)
+        XCTAssertTrue(messages.allSatisfy { $0.contains("handlePurchases") })
+        XCTAssertEqual(levels, [.error, .error])
+    }
+
     private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () -> Bool) async {
         let deadline = Date().addingTimeInterval(timeout)
         while !condition() && Date() < deadline {

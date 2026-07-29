@@ -615,6 +615,56 @@ final class ProductsManagerTests: XCTestCase {
     // unreachable: every successful fetch refreshes the persistent cache; a
     // failed fetch leaves the previously cached mapping intact.
 
+    func testAnEmptyMappingIsLoadedOnDemand() async {
+        // A launch whose refresh failed (or never ran) must not leave the
+        // offline entitlements calculation dead for the whole session.
+        productsService.productPermissionsResult = ["pro": ["premium"]]
+
+        let mapping: [String: [String]] = await manager.productPermissions()
+
+        XCTAssertEqual(mapping, ["pro": ["premium"]])
+        XCTAssertEqual(productsService.productPermissionsCallsCount, 1)
+    }
+
+    func testACachedMappingIsAnsweredWithoutARequest() async {
+        productsService.productPermissionsResult = ["pro": ["premium"]]
+        await manager.loadProductPermissions()
+
+        let mapping: [String: [String]] = await manager.productPermissions()
+
+        XCTAssertEqual(mapping, ["pro": ["premium"]])
+        XCTAssertEqual(productsService.productPermissionsCallsCount, 1, "the cached mapping costs nothing")
+    }
+
+    func testAFailingMappingLoadIsNotRetriedOnEveryCall() async {
+        // The reload is driven by demand: a permanently failing backend would
+        // otherwise turn every entitlements check into a request.
+        productsService.productPermissionsError = MockError.stubbed
+
+        _ = await manager.productPermissions()
+        _ = await manager.productPermissions()
+        _ = await manager.productPermissions()
+
+        XCTAssertEqual(productsService.productPermissionsCallsCount, 1)
+    }
+
+    func testConcurrentMappingLoadsShareOneRequest() async {
+        productsService.productPermissionsResult = ["pro": ["premium"]]
+        let gate = ProductsAsyncGate()
+        productsService.onProductPermissions = { await gate.wait() }
+
+        async let first: [String: [String]] = manager.productPermissions()
+        await waitUntil { self.productsService.productPermissionsCallsCount >= 1 }
+        async let second: [String: [String]] = manager.productPermissions()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        await gate.open()
+
+        let mappings: [[String: [String]]] = await [first, second]
+
+        XCTAssertEqual(mappings, [["pro": ["premium"]], ["pro": ["premium"]]])
+        XCTAssertEqual(productsService.productPermissionsCallsCount, 1)
+    }
+
     func testLoadProductPermissionsCachesMappingOnSuccess() async {
         productsService.productPermissionsResult = ["pro": ["premium"]]
 

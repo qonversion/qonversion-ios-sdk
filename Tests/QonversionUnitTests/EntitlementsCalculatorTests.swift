@@ -155,6 +155,94 @@ final class EntitlementsCalculatorTests: XCTestCase {
         return Qonversion.Transaction(id: UUID().uuidString, productId: productId, purchaseDate: purchaseDate, revocationDate: revocationDate)
     }
 
+    // MARK: - billing grace period
+
+    func testASubscriptionInABillingGracePeriodKeepsItsEntitlement() {
+        // The renewal payment failed and Apple keeps serving the subscription
+        // while it retries. The last PAID transaction expired two days ago, so
+        // the expiration alone says "no access" — and a paying subscriber loses
+        // it the moment the backend is unreachable.
+        let day: TimeInterval = 24 * 60 * 60
+        let graceExpiration: Date = now.addingTimeInterval(14 * day)
+
+        let entitlements = EntitlementsCalculator.calculate(
+            transactions: [makeTransaction(purchasedSecondsAgo: 32 * day)],
+            products: [makeProduct()],
+            mapping: ["pro": ["premium"]],
+            gracePeriodExpirations: ["com.app.pro": graceExpiration],
+            now: now
+        )
+
+        XCTAssertEqual(entitlements["premium"]?.active, true)
+        XCTAssertEqual(entitlements["premium"]?.expirationDate, graceExpiration,
+                       "the grace period, not the lapsed payment, is when the access ends")
+    }
+
+    func testAnElapsedGracePeriodGrantsNothing() {
+        let day: TimeInterval = 24 * 60 * 60
+
+        let entitlements = EntitlementsCalculator.calculate(
+            transactions: [makeTransaction(purchasedSecondsAgo: 32 * day)],
+            products: [makeProduct()],
+            mapping: ["pro": ["premium"]],
+            gracePeriodExpirations: ["com.app.pro": now.addingTimeInterval(-day)],
+            now: now
+        )
+
+        XCTAssertTrue(entitlements.isEmpty)
+    }
+
+    func testAGracePeriodNeverShortensAnAccessThatIsStillPaidFor() {
+        let day: TimeInterval = 24 * 60 * 60
+
+        let entitlements = EntitlementsCalculator.calculate(
+            transactions: [makeTransaction(purchasedSecondsAgo: 10 * day)],
+            products: [makeProduct()],
+            mapping: ["pro": ["premium"]],
+            gracePeriodExpirations: ["com.app.pro": now.addingTimeInterval(day)],
+            now: now
+        )
+
+        XCTAssertEqual(entitlements["premium"]?.expirationDate, now.addingTimeInterval(20 * day),
+                       "the paid period runs longer — the grace date may not cut it short")
+    }
+
+    func testARefundedPurchaseIsNotRescuedByAGracePeriod() {
+        let day: TimeInterval = 24 * 60 * 60
+
+        let entitlements = EntitlementsCalculator.calculate(
+            transactions: [makeRevokedTransaction(purchasedSecondsAgo: 32 * day)],
+            products: [makeProduct()],
+            mapping: ["pro": ["premium"]],
+            gracePeriodExpirations: ["com.app.pro": now.addingTimeInterval(14 * day)],
+            now: now
+        )
+
+        XCTAssertTrue(entitlements.isEmpty)
+    }
+
+    // MARK: - what a revocation contradicts
+
+    func testRevokedEntitlementIdsNamesEveryPermissionTheRefundedProductGranted() {
+        let revoked: Set<String> = EntitlementsCalculator.revokedEntitlementIds(
+            revokedTransactions: [makeRevokedTransaction(purchasedSecondsAgo: 0)],
+            products: [makeProduct()],
+            mapping: ["pro": ["premium", "extra"]]
+        )
+
+        XCTAssertEqual(revoked, ["premium", "extra"])
+    }
+
+    func testRevokedEntitlementIdsIgnoresTransactionsThatWereNotRevoked() {
+        let revoked: Set<String> = EntitlementsCalculator.revokedEntitlementIds(
+            revokedTransactions: [makeTransaction(purchasedSecondsAgo: 0)],
+            products: [makeProduct()],
+            mapping: ["pro": ["premium"]]
+        )
+
+        XCTAssertTrue(revoked.isEmpty)
+    }
+
     func testRevokedTransactionGrantsNothingWhileItsPeriodIsStillRunning() {
         // A refund lands mid-period: the purchase is 10 days into a month, so
         // the expiration check alone would still call it active.

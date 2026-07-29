@@ -66,17 +66,33 @@ enum EntitlementsCalculator {
         return startDate.addingTimeInterval(TimeInterval(periodDays(period) * 24 * 60 * 60))
     }
 
+    /// The date access really ends: a subscription whose renewal payment failed
+    /// keeps it through a billing grace period, past the expiration its last
+    /// paid transaction carries. A nil expiration is a lifetime grant and has
+    /// nothing to extend.
+    static func extended(_ expiration: Date?, byGracePeriod graceExpiration: Date?) -> Date? {
+        guard let expiration else { return nil }
+        guard let graceExpiration, graceExpiration > expiration else { return expiration }
+
+        return graceExpiration
+    }
+
     /// Builds entitlements from local transactions, the loaded products and
     /// the cached product → permissions mapping.
     ///
     /// Grant rule (production-exact): an entitlement is granted when the
     /// calculated expiration is nil (lifetime) or in the future; expired
     /// transactions are skipped entirely. A revoked transaction (refund,
-    /// family-sharing revocation) grants nothing at all.
+    /// family-sharing revocation) grants nothing at all — a grace period does
+    /// not rescue it either, since the purchase itself was undone.
+    ///
+    /// `gracePeriodExpirations` maps a STORE product id to the date the store
+    /// keeps serving it while a failed renewal is retried.
     static func calculate(
         transactions: [Qonversion.Transaction],
         products: [Qonversion.Product],
         mapping: [String: [String]],
+        gracePeriodExpirations: [String: Date] = [:],
         now: Date = Date()
     ) -> [String: Qonversion.Entitlement] {
         var productsByStoreId: [String: Qonversion.Product] = [:]
@@ -91,7 +107,8 @@ enum EntitlementsCalculator {
             guard transaction.revocationDate == nil else { continue }
 
             let product: Qonversion.Product? = productsByStoreId[transaction.productId]
-            let expiration: Date? = expirationDate(for: transaction, product: product)
+            let paidExpiration: Date? = expirationDate(for: transaction, product: product)
+            let expiration: Date? = extended(paidExpiration, byGracePeriod: gracePeriodExpirations[transaction.productId])
             guard expiration == nil || expiration! > now else { continue }
 
             guard let qonversionId = product?.qonversionId,
@@ -113,6 +130,32 @@ enum EntitlementsCalculator {
 
                 result[permissionId] = entitlement
             }
+        }
+
+        return result
+    }
+
+    /// The entitlement ids the given revoked transactions used to grant.
+    ///
+    /// A refund is not something the local calculation can express — it simply
+    /// stops producing the entitlement — so a copy persisted before the refund
+    /// would outlive it in the merge. These ids are what that merge must drop.
+    static func revokedEntitlementIds(
+        revokedTransactions: [Qonversion.Transaction],
+        products: [Qonversion.Product],
+        mapping: [String: [String]]
+    ) -> Set<String> {
+        var productsByStoreId: [String: Qonversion.Product] = [:]
+        for product in products where !product.storeId.isEmpty {
+            productsByStoreId[product.storeId] = product
+        }
+
+        var result: Set<String> = []
+        for transaction in revokedTransactions where transaction.revocationDate != nil {
+            guard let qonversionId: String = productsByStoreId[transaction.productId]?.qonversionId,
+                  let permissionIds: [String] = mapping[qonversionId] else { continue }
+
+            result.formUnion(permissionIds)
         }
 
         return result

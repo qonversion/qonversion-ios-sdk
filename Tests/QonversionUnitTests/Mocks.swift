@@ -364,6 +364,28 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
 
     func currentEntitlements() async -> [Qonversion.Transaction] { currentEntitlementsResult }
 
+    var revokedTransactionsResult: [Qonversion.Transaction] = []
+    private(set) var revokedTransactionsCallsCount = 0
+
+    func revokedTransactions() async -> [Qonversion.Transaction] {
+        facadeStateLock.lock()
+        revokedTransactionsCallsCount += 1
+        facadeStateLock.unlock()
+
+        return revokedTransactionsResult
+    }
+
+    var gracePeriodExpirationsResult: [String: Date] = [:]
+    private(set) var gracePeriodRequestedStoreIds: [[String]] = []
+
+    func gracePeriodExpirations(for storeIds: [String]) async -> [String: Date] {
+        facadeStateLock.lock()
+        gracePeriodRequestedStoreIds.append(storeIds)
+        facadeStateLock.unlock()
+
+        return gracePeriodExpirationsResult.filter { storeIds.contains($0.key) }
+    }
+
     private var _storefrontContinuation: AsyncStream<Void>.Continuation?
 
     /// True once the SDK's observation task has actually subscribed — the
@@ -573,8 +595,11 @@ final class MockProductsService: ProductsServiceInterface {
         return productsResult
     }
 
+    var onProductPermissions: (() async -> Void)?
+
     func productPermissions() async throws -> [String: [String]] {
         productPermissionsCallsCount += 1
+        await onProductPermissions?()
         if let productPermissionsError { throw productPermissionsError }
         return productPermissionsResult
     }
@@ -858,8 +883,23 @@ final class MockProductsManager: ProductsManagerInterface, ProductsDataSource {
         return productsResult
     }
 
+    /// What a successful on-demand load puts in the cache.
+    var mappingAfterLoad: [String: [String]]?
+
     func loadProductPermissions() async {
         loadPermissionsCallsCount += 1
+        if let mappingAfterLoad {
+            cachedMapping = mappingAfterLoad
+        }
+    }
+
+    func productPermissions() async -> [String: [String]] {
+        if let cached: [String: [String]] = cachedMapping, !cached.isEmpty {
+            return cached
+        }
+        await loadProductPermissions()
+
+        return cachedMapping ?? [:]
     }
 
     private(set) var startObservingStorefrontChangesCallsCount = 0

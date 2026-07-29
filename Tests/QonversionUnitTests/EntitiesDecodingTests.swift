@@ -515,6 +515,48 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertTrue(entitlement.transactions.isEmpty)
     }
 
+    func testEntitlementSurvivesATypeMismatchInAnyOfItsFields() throws {
+        // The file's convention: one malformed field degrades that field, it
+        // does not drop the entitlement — and with it the user's access — from
+        // the list. A strict decode here throws out of init(from:), and the
+        // lossy array around it swallows the whole entry.
+        let json = """
+        {
+            "id": "premium",
+            "is_active": "yes",
+            "source": 7,
+            "grant_type": 3,
+            "product": "pro"
+        }
+        """
+
+        let entitlement = try decode(Qonversion.Entitlement.self, json)
+
+        XCTAssertEqual(entitlement.id, "premium")
+        XCTAssertFalse(entitlement.active, "an unreadable flag degrades to the production default")
+        XCTAssertEqual(entitlement.source, .unknown)
+        XCTAssertEqual(entitlement.grantType, .purchase)
+        XCTAssertNil(entitlement.productId)
+    }
+
+    func testEntitlementListKeepsTheEntryWhoseProductIsMalformed() throws {
+        // The whole point of the tolerance: the access itself must reach the
+        // host even when one nested object on the wire is the wrong shape.
+        let json = """
+        {
+            "object": "list",
+            "data": [
+                {"id": "premium", "is_active": true, "product": ["pro"]},
+                {"id": "extra", "is_active": true}
+            ]
+        }
+        """
+
+        let list = try decode(Qonversion.EntitlementsList.self, json)
+
+        XCTAssertEqual(list.data.map(\.id), ["premium", "extra"])
+    }
+
     func testEntitlementUnknownEnumValuesFallBackToTheProductionDefaults() throws {
         let json = """
         {

@@ -17,6 +17,17 @@ protocol StoreKitFacadeInterface: Sendable {
 
     func currentEntitlements() async -> [Qonversion.Transaction]
 
+    /// Transactions the store reports as revoked — refunds and family-sharing
+    /// revocations. They are absent from ``currentEntitlements()``, so they are
+    /// the only way to tell "never granted" from "granted and taken back".
+    func revokedTransactions() async -> [Qonversion.Transaction]
+
+    /// How long the store still serves each of the given store products
+    /// through a billing grace period: a subscription whose renewal payment
+    /// failed keeps access past the expiration its last paid transaction
+    /// carries. Products the store cannot answer for are simply absent.
+    func gracePeriodExpirations(for storeIds: [String]) async -> [String: Date]
+
     /// Whether the user is eligible for the introductory offer of the given
     /// store product; nil when the store cannot answer (product not loaded,
     /// not a subscription, or the system is older than StoreKit 2).

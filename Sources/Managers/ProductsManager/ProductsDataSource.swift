@@ -14,4 +14,9 @@ protocol ProductsDataSource {
 
     /// The last known product → permissions mapping (memory, then persistent cache).
     func cachedProductPermissions() -> [String: [String]]?
+
+    /// The product → permissions mapping, loading it on demand when nothing
+    /// has been cached yet. Without this the offline entitlements calculation
+    /// stays dead for the whole session after a single failed load.
+    func productPermissions() async -> [String: [String]]
 }

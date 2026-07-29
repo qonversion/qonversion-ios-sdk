@@ -123,6 +123,36 @@ final class IntroEligibilityTests: XCTestCase {
 
         XCTAssertEqual(result, ["pro": .unknown])
     }
+
+    // MARK: - the catalog is a lookup, never a reason to fail
+
+    func testEligibilityIsUnknownWhenTheCatalogCannotBeLoaded() async throws {
+        // The documented contract is an on-device check with `.unknown` for
+        // "the store did not answer, or the id is not in your catalog". An
+        // unreachable catalog is exactly that case — it must not turn the whole
+        // call into a thrown error on the paywall.
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+
+        let result: [String: Qonversion.IntroEligibilityStatus] = try await manager.checkTrialIntroEligibility(productIds: ["pro", "lite"])
+
+        XCTAssertEqual(result, ["pro": .unknown, "lite": .unknown])
+    }
+
+    func testEligibilityStillAnswersForTheProductsAlreadyInMemory() async throws {
+        // A failing catalog request may not take the products the SDK already
+        // holds down with it.
+        var product: Qonversion.Product = makeProduct(qonversionId: "pro", storeId: "store_pro")
+        product._storeProduct = FakeLinkedStoreProduct()
+        let period = Qonversion.Product.SubscriptionPeriod(unit: .month, value: 1)
+        product.subscription = Qonversion.Product.SubscriptionInfo(subscriptionGroupId: "group", subscriptionPeriod: period, introductoryOffer: makeIntroOffer())
+        manager.loadedProducts = [product]
+        productsService.error = QonversionError(type: .productsLoadingFailed)
+        storeKitFacade.introOfferEligibilityResults = ["store_pro": true]
+
+        let result: [String: Qonversion.IntroEligibilityStatus] = try await manager.checkTrialIntroEligibility(productIds: ["pro", "missing"])
+
+        XCTAssertEqual(result, ["pro": .eligible, "missing": .unknown])
+    }
 }
 
 /// Real StoreKit.Product values cannot be constructed in unit tests; linking

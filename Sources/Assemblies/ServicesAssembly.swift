@@ -74,8 +74,9 @@ final class ServicesAssembly {
 
     private func makeStoreKitFacade() -> StoreKitFacade {
         let mapper = StoreKitMapper()
+        let logger: LoggerWrapper = miscAssemblyLogger()
         if let storeKitWrapperOverride {
-            let overriddenFacade = StoreKitFacade(storeKitWrapper: storeKitWrapperOverride, storeKitMapper: mapper)
+            let overriddenFacade = StoreKitFacade(storeKitWrapper: storeKitWrapperOverride, storeKitMapper: mapper, logger: logger)
             #if !os(watchOS) && !os(tvOS) && !os(visionOS)
             // Same wiring as the production branch: without the delegate the
             // facade never receives promo purchase intents.
@@ -86,7 +87,10 @@ final class ServicesAssembly {
         }
 
         let wrapper = StoreKitWrapper(mapper: mapper)
-        let storeKitFacade = StoreKitFacade(storeKitWrapper: wrapper, storeKitMapper: mapper)
+        let storeKitFacade = StoreKitFacade(storeKitWrapper: wrapper, storeKitMapper: mapper, logger: logger)
+        // Every observation path accounts for a rejected transaction through
+        // the facade's single counter.
+        wrapper.unverifiedReporter = storeKitFacade
         #if !os(watchOS) && !os(tvOS) && !os(visionOS)
         wrapper.delegate = storeKitFacade
         #endif

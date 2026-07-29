@@ -64,7 +64,10 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
     }
 
     func localFallbackEntitlements(for transactions: [Qonversion.Transaction]) async -> [String: Qonversion.Entitlement] {
-        return localFallbackEntitlements(for: transactions, generation: currentGeneration()) ?? [:]
+        let generation: Int = currentGeneration()
+        let context: LocalCalculationContext = await localCalculationContext(for: transactions)
+
+        return localFallbackEntitlements(for: transactions, context: context, generation: generation) ?? [:]
     }
 
     func entitlements() async throws -> [String: Qonversion.Entitlement] {
@@ -152,14 +155,20 @@ private extension EntitlementsManager {
                 return try await resolveForTheNewUser(attemptsLeft: attemptsLeft)
             }
 
-            return ResolvedEntitlements(entitlements: servable(entitlements), source: .backend)
+            // Served exactly as it arrived: the backend owns `active`, and
+            // re-judging its answer by the device clock loses access whenever
+            // that clock runs ahead. ObjC parity: the expiry check decides
+            // whether to REFETCH (QNProductCenterManager.m:597-605), it never
+            // filters the answer itself.
+            return ResolvedEntitlements(entitlements: entitlements, source: .backend)
         } catch {
             // Deliberate fault tolerance: ANY failure is answered from cache
             // plus local calculation; the error surfaces only with nothing to serve.
             let transactions: [Qonversion.Transaction] = await storeKitFacade.currentEntitlements()
+            let context: LocalCalculationContext = await localCalculationContext(for: transactions)
             // A rejected persist means the user changed mid-run: the merge
             // describes the previous user, so the original failure surfaces instead.
-            guard let fallback: [String: Qonversion.Entitlement] = localFallbackEntitlements(for: transactions, generation: generation) else { throw error }
+            guard let fallback: [String: Qonversion.Entitlement] = localFallbackEntitlements(for: transactions, context: context, generation: generation) else { throw error }
             guard !fallback.isEmpty else { throw error }
 
             return ResolvedEntitlements(entitlements: fallback, source: .localCalculation)
@@ -178,7 +187,7 @@ private extension EntitlementsManager {
     /// there is none, when it is stale, or when it holds an entitlement active
     /// past its own expiration (ObjC parity: QNProductCenterManager.m:597-605).
     func freshBackendEntitlements() -> [String: Qonversion.Entitlement]? {
-        let backendTimestamp: TimeInterval = localStorage.double(forKey: Constants.backendTimestampKey.rawValue)
+        let backendTimestamp: TimeInterval = normalizedTimestamp(forKey: Constants.backendTimestampKey.rawValue)
         guard backendTimestamp > 0, Date().timeIntervalSince1970 - backendTimestamp <= Self.freshCacheLifetime else { return nil }
 
         guard let stored: [String: Qonversion.Entitlement] = storedEntitlements() else { return nil }
@@ -226,18 +235,73 @@ private extension EntitlementsManager {
         return cacheGeneration
     }
 
+    /// Everything the local calculation needs besides the transactions: the
+    /// mapping without which it grants nothing, what the store reports as
+    /// refunded, and which subscriptions it still serves through a billing
+    /// grace period.
+    struct LocalCalculationContext {
+        let mapping: [String: [String]]
+        let gracePeriodExpirations: [String: Date]
+        let revokedTransactions: [Qonversion.Transaction]
+    }
+
+    func localCalculationContext(for transactions: [Qonversion.Transaction]) async -> LocalCalculationContext {
+        // Loaded on demand: a launch that failed to fetch the mapping (or never
+        // tried, as Analytics mode used to) must not leave the offline
+        // calculation dead for the rest of the session.
+        let mapping: [String: [String]] = await productsDataSource.productPermissions()
+
+        let now = Date()
+        let lapsedStoreIds: [String] = transactions.compactMap { transaction in
+            guard let expiration: Date = transaction.expirationDate, expiration <= now else { return nil }
+
+            return transaction.productId
+        }
+        // Asked only about subscriptions whose paid period is already over —
+        // for anything else the grace period cannot change the outcome.
+        let gracePeriodExpirations: [String: Date] = lapsedStoreIds.isEmpty ? [:] : await storeKitFacade.gracePeriodExpirations(for: lapsedStoreIds)
+
+        // A refund can only contradict an entitlement that was persisted before
+        // it; with an empty cache there is nothing to correct.
+        let hasCachedEntitlements: Bool = storedEntitlements()?.isEmpty == false
+        let revokedTransactions: [Qonversion.Transaction] = hasCachedEntitlements ? await storeKitFacade.revokedTransactions() : []
+
+        return LocalCalculationContext(
+            mapping: mapping,
+            gracePeriodExpirations: gracePeriodExpirations,
+            revokedTransactions: revokedTransactions
+        )
+    }
+
     /// nil means the persist was rejected by a user change — the result
     /// describes somebody else and must not be served.
-    func localFallbackEntitlements(for transactions: [Qonversion.Transaction], generation: Int) -> [String: Qonversion.Entitlement]? {
+    func localFallbackEntitlements(
+        for transactions: [Qonversion.Transaction],
+        context: LocalCalculationContext,
+        generation: Int
+    ) -> [String: Qonversion.Entitlement]? {
+        let products: [Qonversion.Product] = productsDataSource.cachedProducts()
         let calculated = EntitlementsCalculator.calculate(
             transactions: transactions,
-            products: productsDataSource.cachedProducts(),
-            mapping: productsDataSource.cachedProductPermissions() ?? [:]
+            products: products,
+            mapping: context.mapping,
+            gracePeriodExpirations: context.gracePeriodExpirations
         )
+        // The local calculation cannot express a refund — it just stops
+        // producing the entitlement — so a copy persisted before the refund
+        // would survive the merge and keep a refunded user premium offline.
+        let revokedIds: Set<String> = EntitlementsCalculator.revokedEntitlementIds(
+            revokedTransactions: context.revokedTransactions,
+            products: products,
+            mapping: context.mapping
+        )
+        let uncontradicted = (storedEntitlements() ?? [:]).filter { !revokedIds.contains($0.key) }
+
         // Persisted UNFILTERED: the expiry filter decides what is served, never
         // what is kept, or entitlements the SDK cannot regenerate locally
         // (stripe, manual) would be lost the first time the backend is down.
-        let merged = EntitlementsCalculator.merge(calculated, into: storedEntitlements() ?? [:])
+        // A re-purchase comes back through `calculated`, which merges on top.
+        let merged = EntitlementsCalculator.merge(calculated, into: uncontradicted)
         guard persist(merged, ifGenerationIs: generation, isBackendAnswer: false) else { return nil }
 
         return servable(merged)
@@ -252,8 +316,8 @@ private extension EntitlementsManager {
 
         // The lifetime runs from the last backend answer; an install that never
         // had one falls back to the write timestamp.
-        let backendTimestamp: TimeInterval = localStorage.double(forKey: Constants.backendTimestampKey.rawValue)
-        let timestamp: TimeInterval = backendTimestamp > 0 ? backendTimestamp : localStorage.double(forKey: Constants.entitlementsTimestampKey.rawValue)
+        let backendTimestamp: TimeInterval = normalizedTimestamp(forKey: Constants.backendTimestampKey.rawValue)
+        let timestamp: TimeInterval = backendTimestamp > 0 ? backendTimestamp : normalizedTimestamp(forKey: Constants.entitlementsTimestampKey.rawValue)
         guard timestamp > 0, Date().timeIntervalSince1970 - timestamp <= cacheLifetimeSeconds else {
             return nil
         }
@@ -261,8 +325,27 @@ private extension EntitlementsManager {
         return cached
     }
 
-    /// Drops entries claiming active past their own expiration. Applied on the
-    /// way OUT only; see localFallbackEntitlements.
+    /// A stored timestamp, with one from the FUTURE rewritten to just outside
+    /// the fresh window. The local clock is the only source of these values, so
+    /// a future one means it was rolled forward and back — and both age checks
+    /// read it as "written moments ago" forever.
+    func normalizedTimestamp(forKey key: String) -> TimeInterval {
+        let stored: TimeInterval = localStorage.double(forKey: key)
+        let now: TimeInterval = Date().timeIntervalSince1970
+        guard stored > now else { return stored }
+
+        // Expired rather than removed, exactly as invalidateFreshBackendCache
+        // does it: the cached entitlements stay usable offline, they just stop
+        // counting as fresh.
+        let expired: TimeInterval = now - Self.freshCacheLifetime - 1
+        localStorage.set(double: expired, forKey: key)
+
+        return expired
+    }
+
+    /// Drops entries claiming active past their own expiration. Applied to
+    /// CACHED data on the way out only — never to what the backend just
+    /// answered, and never to what is persisted; see localFallbackEntitlements.
     func servable(_ entitlements: [String: Qonversion.Entitlement]) -> [String: Qonversion.Entitlement] {
         let now = Date()
 

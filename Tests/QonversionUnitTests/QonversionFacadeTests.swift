@@ -214,4 +214,100 @@ final class QonversionFacadeTests: XCTestCase {
 
         XCTAssertTrue(productsManager.loadedProducts.isEmpty)
     }
+
+    // MARK: - a stream created before its source exists
+
+    func testAStreamCreatedBeforeItsSourceExistsDeliversOnceItAppears() async {
+        // The typical SwiftUI order: App.init() starts `for await` on a stream
+        // and the app delegate calls initialize() afterwards. Handing that loop
+        // an already finished stream ends it before the SDK exists, and every
+        // purchase after that is lost with nothing to notice it by.
+        let sdkIsInitialized = FacadeAsyncGate()
+        let received = ReceivedValues()
+        var sourceContinuation: AsyncStream<Int>.Continuation?
+        let source = AsyncStream<Int> { sourceContinuation = $0 }
+
+        let stream: AsyncStream<Int> = awaitingStream {
+            await sdkIsInitialized.wait()
+
+            return source
+        }
+        let consumer = Task {
+            for await value in stream {
+                await received.append(value)
+            }
+        }
+
+        // Before the source exists the loop must simply be waiting, not over.
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let beforeInitialize: [Int] = await received.values
+        XCTAssertTrue(beforeInitialize.isEmpty)
+
+        await sdkIsInitialized.open()
+        sourceContinuation?.yield(7)
+        await waitUntil { await !received.values.isEmpty }
+
+        let afterInitialize: [Int] = await received.values
+        XCTAssertEqual(afterInitialize, [7], "the loop started before initialize must receive what came after it")
+
+        sourceContinuation?.finish()
+        _ = await consumer.value
+    }
+
+    func testTheStreamGettersDoNotFinishBeforeInitialize() async {
+        // The uninitialized singleton: reading the streams must not hand back
+        // an already finished one. Nothing is delivered here — initialize() is
+        // never called in this process — so the assertion is that the loop is
+        // still waiting when the deadline passes.
+        let received = ReceivedValues()
+        let consumer = Task {
+            for await _ in Qonversion.shared.deferredPurchases {
+                await received.append(1)
+            }
+            await received.append(-1)
+        }
+
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        let values: [Int] = await received.values
+
+        XCTAssertTrue(values.isEmpty, "a finished stream would have appended its terminator")
+        consumer.cancel()
+    }
+
+    private func waitUntil(timeout: TimeInterval = 3.0, _ condition: @escaping () async -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while await !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+}
+
+/// Collects what a stream delivered.
+private actor ReceivedValues {
+
+    private(set) var values: [Int] = []
+
+    func append(_ value: Int) {
+        values.append(value)
+    }
+}
+
+/// wait() suspends until open() is called.
+private actor FacadeAsyncGate {
+
+    private var isOpen = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
 }

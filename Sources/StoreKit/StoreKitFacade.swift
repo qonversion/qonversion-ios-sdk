@@ -9,16 +9,32 @@ import Foundation
 import StoreKit
 
 // @unchecked: the product cache is lock-guarded; the delegate is weak.
-class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
+class StoreKitFacade: StoreKitFacadeInterface, UnverifiedTransactionReporter, @unchecked Sendable {
 
     let storeKitWrapper: StoreKitWrapperInterface
     let storeKitMapper: StoreKitMapperInterface
+    private let logger: LoggerWrapper
     // Weak: the delegate (purchases manager) holds the facade itself.
     weak var delegate: StoreKitFacadeDelegate?
+
+    private let unverifiedLock = NSLock()
+    private var _unverifiedTransactionsCount = 0
+
+    /// How many transactions the local verification rejected in this session.
+    var unverifiedTransactionsCount: Int {
+        unverifiedLock.lock()
+        defer { unverifiedLock.unlock() }
+        return _unverifiedTransactionsCount
+    }
 
     // Written by concurrent products(for:) calls and read by purchase flows.
     private let productsLock = NSLock()
     private var _loadedProducts: [String: StoreKit.Product] = [:]
+
+    /// Bumped by every storefront change. Prices, availability and offers are
+    /// per-storefront, so a load that started before one describes a store the
+    /// user has already left.
+    private var _productsGeneration = 0
 
     var loadedProducts: [String: StoreKit.Product] {
         productsLock.lock()
@@ -26,14 +42,21 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         return _loadedProducts
     }
 
+    var productsCacheGeneration: Int {
+        productsLock.lock()
+        defer { productsLock.unlock() }
+        return _productsGeneration
+    }
+
     // Guarded so a concurrent start cannot double-subscribe.
     private let observationLock = NSLock()
     private var transactionUpdatesTask: Task<Void, Never>?
     private var storefrontTask: Task<Void, Never>?
 
-    init(storeKitWrapper: StoreKitWrapperInterface, storeKitMapper: StoreKitMapperInterface) {
+    init(storeKitWrapper: StoreKitWrapperInterface, storeKitMapper: StoreKitMapperInterface, logger: LoggerWrapper = LoggerWrapper()) {
         self.storeKitWrapper = storeKitWrapper
         self.storeKitMapper = storeKitMapper
+        self.logger = logger
     }
 
     func purchase(storeId: String, options: Qonversion.PurchaseOptions) async throws -> Qonversion.Transaction {
@@ -74,6 +97,34 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         return await storeKitWrapper.currentEntitlements()
     }
 
+    func revokedTransactions() async -> [Qonversion.Transaction] {
+        return await storeKitWrapper.fetchAll().filter { $0.revocationDate != nil }
+    }
+
+    func gracePeriodExpirations(for storeIds: [String]) async -> [String: Date] {
+        // Only products already loaded in this session: resolving one costs a
+        // store round trip, and the offline calculation this feeds cannot make
+        // it anyway.
+        let products: [String: StoreKit.Product] = loadedProducts
+
+        var result: [String: Date] = [:]
+        for storeId in Set(storeIds) {
+            guard let subscription: StoreKit.Product.SubscriptionInfo = products[storeId]?.subscription else { continue }
+            guard let statuses: [StoreKit.Product.SubscriptionInfo.Status] = try? await subscription.status else { continue }
+
+            for status in statuses {
+                guard case .verified(let renewalInfo) = status.renewalInfo,
+                      case .verified(let transaction) = status.transaction,
+                      transaction.productID == storeId,
+                      let graceExpiration: Date = renewalInfo.gracePeriodExpirationDate else { continue }
+
+                result[storeId] = graceExpiration
+            }
+        }
+
+        return result
+    }
+
     func restore() async throws -> [Qonversion.Transaction] {
         return try await storeKitWrapper.restore()
     }
@@ -83,9 +134,35 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     }
 
     func map(_ verificationResult: VerificationResult<StoreKit.Transaction>) -> Qonversion.Transaction? {
-        guard case .verified(let transaction) = verificationResult else { return nil }
+        guard case .verified(let transaction) = verificationResult else {
+            var verificationError: Error?
+            if case .unverified(_, let error) = verificationResult {
+                verificationError = error
+            }
+            reportUnverifiedTransaction(verificationError, source: "handlePurchases")
+
+            return nil
+        }
 
         return storeKitMapper.map(transaction, jws: verificationResult.jwsRepresentation)
+    }
+
+    /// Accounts for a transaction the local StoreKit verification rejected.
+    ///
+    /// The transaction is deliberately dropped rather than reported: an
+    /// unverified JWS proves nothing about the purchase, and a backend that
+    /// accepted it would be accepting a forgery. Local verification does fail
+    /// for honest reasons though — a rolled system clock, an App Store root
+    /// certificate rotation — so the drop is logged and counted instead of
+    /// being silent.
+    func reportUnverifiedTransaction(_ error: Error?, source: String) {
+        unverifiedLock.lock()
+        _unverifiedTransactionsCount += 1
+        let total: Int = _unverifiedTransactionsCount
+        unverifiedLock.unlock()
+
+        let reason: String = error?.message ?? "no reason reported"
+        logger.error("StoreKit could not verify a transaction received through " + source + " — it is dropped, not reported to Qonversion (" + reason + "). Unverified transactions this session: \(total).")
     }
 
     func unfinishedTransactions() async -> [Qonversion.Transaction] {
@@ -120,14 +197,23 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
         productsLock.lock()
         defer { productsLock.unlock() }
         _loadedProducts = [:]
+        _productsGeneration += 1
     }
 
-    private func storeLoadedProducts(_ products: [StoreKit.Product]) {
+    /// Caches a finished load, unless the storefront changed while it was in
+    /// flight — those products describe the previous store, and writing them
+    /// would undo the invalidation the change performed.
+    @discardableResult
+    func storeLoadedProducts(_ products: [StoreKit.Product], ifGenerationIs generation: Int) -> Bool {
         productsLock.lock()
         defer { productsLock.unlock() }
+        guard generation == _productsGeneration else { return false }
+
         products.forEach {
             _loadedProducts[$0.id] = $0
         }
+
+        return true
     }
 
     func startObservingTransactionUpdates() {
@@ -178,8 +264,11 @@ class StoreKitFacade: StoreKitFacadeInterface, @unchecked Sendable {
     }
 
     func products(for ids: [String]) async throws -> [StoreProductWrapper] {
+        // Snapshotted before the suspension: the storefront may change while
+        // the request is in flight.
+        let generation: Int = productsCacheGeneration
         let products: [StoreKit.Product] = try await storeKitWrapper.products(for: ids)
-        storeLoadedProducts(products)
+        storeLoadedProducts(products, ifGenerationIs: generation)
 
         return products.map { StoreProductWrapper(product: $0) }
     }

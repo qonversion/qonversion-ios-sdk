@@ -319,10 +319,12 @@ extension Qonversion {
 
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
+            // The id is the only strict field: an entitlement without one
+            // cannot be keyed, served or matched against anything.
             id = try container.decode(String.self, forKey: .id)
-            active = try container.decodeIfPresent(Bool.self, forKey: .active) ?? false
+            active = (try? container.decodeIfPresent(Bool.self, forKey: .active)) ?? false
 
-            let rawSource = try container.decodeIfPresent(String.self, forKey: .source)
+            let rawSource: String? = try? container.decodeIfPresent(String.self, forKey: .source)
             source = rawSource.flatMap { Source(rawValue: $0) } ?? .unknown
 
             // Tolerant like every other field: one malformed date must
@@ -331,7 +333,7 @@ extension Qonversion {
             startedDate = container.decodeTolerantDate(forKey: .started)
             expirationDate = container.decodeTolerantDate(forKey: .expires)
 
-            let product = try container.decodeIfPresent(EntitlementProduct.self, forKey: .product)
+            let product: EntitlementProduct? = try? container.decodeIfPresent(EntitlementProduct.self, forKey: .product)
             productId = product?.productId
             let cachedRenewState: String? = try? container.decodeIfPresent(String.self, forKey: .cachedRenewState)
             if let rawRenewState: String = product?.subscription?.renewState {
@@ -348,7 +350,7 @@ extension Qonversion {
                 renewState = RenewState.derived(from: source)
             }
 
-            let rawGrantType = try container.decodeIfPresent(String.self, forKey: .grantType)
+            let rawGrantType: String? = try? container.decodeIfPresent(String.self, forKey: .grantType)
             // Production default: everything the backend does not label
             // otherwise is a purchase.
             grantType = rawGrantType.flatMap { GrantType(rawValue: $0) } ?? .purchase
