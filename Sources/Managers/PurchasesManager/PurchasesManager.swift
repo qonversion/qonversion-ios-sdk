@@ -391,7 +391,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         do {
             for transaction in latest {
                 let ownerUserId: String? = try await reportHostInitiated(transaction, userId: userId, trigger: .restore)
-                if let ownerUserId {
+                // An echo of the reporting uid is not an owner resolution and
+                // must not clobber a foreign owner resolved by an earlier report.
+                if let ownerUserId, ownerUserId != userId {
                     resolvedOwnerUserId = ownerUserId
                 }
             }
@@ -587,7 +589,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         for transaction in latest {
             do {
                 let ownerUserId: String? = try await reportHostInitiated(transaction, userId: userId, trigger: .syncHistoricalData)
-                if let ownerUserId {
+                // An echo of the reporting uid is not an owner resolution and
+                // must not clobber a foreign owner resolved by an earlier report.
+                if let ownerUserId, ownerUserId != userId {
                     resolvedOwnerUserId = ownerUserId
                 }
             } catch {

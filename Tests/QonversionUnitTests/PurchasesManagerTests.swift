@@ -1659,6 +1659,27 @@ final class PurchasesManagerTests: XCTestCase {
                        "a resolved owner must survive a later report failure")
     }
 
+    func testAnEchoAfterAForeignOwnerDoesNotCancelTheSwitch() async throws {
+        // The backend resolves t1 to another user, while t2 is the caller's own
+        // purchase and comes back as an echo of the reporting uid. An echo is
+        // not an owner resolution — the foreign owner resolved earlier must
+        // still win, regardless of transaction order in the batch.
+        facade.restoreResult = [makeTransaction(id: "t1", productId: "com.app.one"),
+                                makeTransaction(id: "t2", productId: "com.app.two")]
+        service.reportedOwnerUserId = "QON_owner"
+        service.onSend = { [weak service, weak config] in
+            guard let service, let config else { return }
+            if service.sentTransactions.count >= 2 {
+                service.reportedOwnerUserId = config.userId
+            }
+        }
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"],
+                       "an echo of the reporting uid must not clobber a resolved foreign owner")
+    }
+
     // MARK: - automatic paths never switch the owner (ObjC parity)
 
     func testObservedUpdateNeverSwitchesTheUserEvenWhenTheBackendNamesAnotherOwner() async {
