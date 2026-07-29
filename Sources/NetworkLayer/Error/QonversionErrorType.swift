@@ -222,9 +222,11 @@ extension QonversionErrorType {
         case "purchase_fraud":
             self = .fraudPurchase
         // The project has no usable App Store credentials. The first two come
-        // from purchaseman, `token_not_found` from the offer-signature
-        // service: the Dashboard project is not set up for this operation.
-        case "store_not_configured", "store_creds_failed", "token_not_found":
+        // from purchaseman, `token_not_found` and `secrets_not_found` from the
+        // offer-signature service (the latter on a project without App Store
+        // Connect credentials): the Dashboard project is not set up for this
+        // operation.
+        case "store_not_configured", "store_creds_failed", "token_not_found", "secrets_not_found":
             self = .projectConfigError
         // The purchase-validation family (422): the App Store payload did not
         // parse into a subscription, carried an unexpected purchase type, or
@@ -239,8 +241,8 @@ extension QonversionErrorType {
             // control_unauthorized / control_forbidden are unmapped too: they
             // arrive on 401 / 403, which already classify as .critical and
             // must keep doing so (see the precedence in NetworkErrorHandler).
-            // user_not_found, rate_limit_exceeded, secrets_not_found and
-            // settings_not_found are absent on purpose: no backend emits them.
+            // user_not_found, rate_limit_exceeded and settings_not_found are
+            // absent on purpose: no backend emits them.
             return nil
         }
     }

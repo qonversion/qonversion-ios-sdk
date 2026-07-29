@@ -233,7 +233,7 @@ final class ApiErrorMappingTests: XCTestCase {
         // Verified against the backend sources: nothing produces these. They
         // were mapped on an assumption; throttling really arrives as
         // `too_many_requests`, which stays mapped above.
-        for code in ["user_not_found", "rate_limit_exceeded", "secrets_not_found", "settings_not_found"] {
+        for code in ["user_not_found", "rate_limit_exceeded", "settings_not_found"] {
             let body = Data("{\"error\": {\"code\": \"\(code)\", \"message\": \"m\"}}".utf8)
             let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
 
