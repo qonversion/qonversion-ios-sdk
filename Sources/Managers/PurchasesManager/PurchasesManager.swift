@@ -384,21 +384,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         var resolvedOwnerUserId: String?
         do {
             for transaction in latest {
-                // Skip transactions already reported this session (sweep,
-                // listener or purchase); the failed report releases the id.
-                if let id: String = transaction.id {
-                    guard reportsGate.tryTake(id) else { continue }
-                }
-                do {
-                    let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId, trigger: .restore)
-                    if let ownerUserId, ownerUserId != userId {
-                        resolvedOwnerUserId = ownerUserId
-                    }
-                } catch {
-                    if let id: String = transaction.id {
-                        reportsGate.release(id)
-                    }
-                    throw error
+                let ownerUserId: String? = try await reportHostInitiated(transaction, userId: userId, trigger: .restore)
+                if let ownerUserId, ownerUserId != userId {
+                    resolvedOwnerUserId = ownerUserId
                 }
             }
         } catch {
@@ -420,8 +408,33 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         return await entitlementsManager.localFallbackEntitlements(for: latest)
     }
 
+    /// Reports a transaction on a path the host started itself — restore or the
+    /// historical data sync. The dedup gate is claimed when free, but an id it
+    /// already holds does NOT skip the report: the automatic paths keep their
+    /// ids for the whole session, and the backend answer to this report is the
+    /// only thing that names the owner of the purchase.
+    private func reportHostInitiated(_ transaction: Qonversion.Transaction, userId: String, trigger: RequestTrigger) async throws -> String? {
+        var gateTaken = false
+        if let id: String = transaction.id {
+            gateTaken = reportsGate.tryTake(id)
+        }
+
+        do {
+            return try await purchasesService.send(transaction, userId: userId, trigger: trigger)
+        } catch {
+            // Only an id this call took may be released — the other holder
+            // still owes the rest of that transaction's outcome.
+            if gateTaken, let id: String = transaction.id {
+                reportsGate.release(id)
+            }
+            throw error
+        }
+    }
+
     /// The restored transactions may belong to another Qonversion user — the
-    /// backend resolves the owner and the SDK follows (production parity).
+    /// backend resolves the owner and the SDK follows it (production parity).
+    /// Host-initiated paths only: an automatic report never moves the uid, no
+    /// matter who the backend resolved the purchase to.
     private func switchToOwnerIfNeeded(_ ownerUserId: String?) async {
         guard let ownerUserId else { return }
 
@@ -494,7 +507,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         }
 
         // The host app made these purchases and owns their lifecycle — the
-        // SDK only tracks them, so no transaction is ever finished here.
+        // SDK only tracks them, so no transaction is ever finished here. The
+        // owner the backend resolves is deliberately dropped: an automatic
+        // report must never move the uid behind the host's back.
         var allReported = true
         for transaction in transactions {
             if let id: String = transaction.id {
@@ -542,18 +557,12 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         var hadFailures = false
         var resolvedOwnerUserId: String?
         for transaction in latest {
-            if let id: String = transaction.id {
-                guard reportsGate.tryTake(id) else { continue }
-            }
             do {
-                let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId, trigger: .syncHistoricalData)
+                let ownerUserId: String? = try await reportHostInitiated(transaction, userId: userId, trigger: .syncHistoricalData)
                 if let ownerUserId, ownerUserId != userId {
                     resolvedOwnerUserId = ownerUserId
                 }
             } catch {
-                if let id: String = transaction.id {
-                    reportsGate.release(id)
-                }
                 hadFailures = true
                 logger.error("Failed to report a historical transaction: " + error.message)
             }
@@ -639,6 +648,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         var reportFailed = false
         do {
             if !alreadyReported {
+                // The resolved owner is dropped on purpose: this funnel runs
+                // without the host asking, and only a host-initiated restore
+                // may follow the purchase to another user.
                 try await purchasesService.send(transaction, userId: reportUserId, options: reportOptions(for: transaction), trigger: trigger)
             }
             purchaseAssociationsStorage.remove(for: transaction.productId)

@@ -470,7 +470,8 @@ final class PurchasesManagerTests: XCTestCase {
     // MARK: - report idempotency (review findings)
 
     func testPurchaseClaimsTheGateBeforeTheReportGoesOut() async throws {
-        manager = makeManager(launchMode: .subscriptionManagement)
+        let reportsGate = TransactionReportsGate()
+        manager = makeManager(launchMode: .subscriptionManagement, reportsGate: reportsGate)
         facade.purchaseResult = makeTransaction(id: "race-1")
         entitlementsManager.entitlementsResult = [:]
         let gate = PurchasesAsyncGate()
@@ -479,19 +480,12 @@ final class PurchasesManagerTests: XCTestCase {
         async let purchase = manager.purchase(makeProduct(), options: nil)
         await waitUntil { self.service.sentTransactions.count >= 1 }
 
-        // A restore racing the in-flight purchase report must skip the id.
-        facade.restoreResult = [makeTransaction(id: "race-1")]
-        async let restored = manager.restore()
-        // Deterministic: the restore has passed the store call (and its gate
-        // check happens right after) before the purchase report is released.
-        await waitUntil { self.facade.facadeRestoreCallsCount >= 1 }
-        try? await Task.sleep(nanoseconds: 50_000_000)
+        // The report is still in flight: an automatic path arriving now finds
+        // the id already claimed and never posts it a second time.
+        XCTAssertFalse(reportsGate.tryTake("race-1"), "the id must be claimed before the report goes out")
+
         await gate.open()
         _ = try await purchase
-        _ = try await restored
-
-        XCTAssertEqual(service.sentTransactions.filter { $0.transaction.id == "race-1" }.count, 1,
-                       "the same transaction must never be reported twice")
     }
 
     func testFailedPurchaseReportReleasesTheGateForRetries() async throws {
@@ -643,7 +637,10 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1"])
     }
 
-    func testRestoreSkipsTransactionAlreadyReportedThisSession() async throws {
+    func testRestoreReportsATransactionTheListenerAlreadyTook() async throws {
+        // The listener keeps the id in the dedup gate for the whole session,
+        // and its answer is dropped — the restore report is the only one that
+        // can name the owner of the purchase.
         let transaction = makeTransaction(id: "t1")
         manager.transactionUpdated(transaction)
         await waitUntil { self.service.sentTransactions.count >= 1 }
@@ -652,7 +649,7 @@ final class PurchasesManagerTests: XCTestCase {
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
         let entitlements = try await manager.restore()
 
-        XCTAssertEqual(service.sentTransactions.count, 1, "the backend already has this transaction")
+        XCTAssertEqual(service.sentTriggers, [.purchase, .restore])
         XCTAssertEqual(entitlements.keys.sorted(), ["premium"], "restore still returns entitlements")
     }
 
@@ -1620,7 +1617,9 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t1"], "a failed sync must not latch the once-per-install flag")
     }
 
-    func testSyncHistoricalDataSharesTheDedupGateWithTheListener() async {
+    func testSyncHistoricalDataReportsATransactionTheListenerAlreadyTook() async {
+        // The listener holds the id in the dedup gate for the whole session.
+        // The host asked for this sync, and only its answer names the owner.
         let transaction = makeTransaction(id: "t1")
         manager.transactionUpdated(transaction)
         await waitUntil { self.service.sentTransactions.count >= 1 }
@@ -1628,7 +1627,7 @@ final class PurchasesManagerTests: XCTestCase {
         facade.historicalDataResult = [transaction]
         await manager.syncHistoricalData()
 
-        XCTAssertEqual(service.sentTransactions.count, 1, "an already-reported transaction must not be re-sent")
+        XCTAssertEqual(service.sentTriggers, [.purchase, .syncHistoricalData])
     }
 
     // MARK: - persisted purchase associations (contextKeys / screenUid)
