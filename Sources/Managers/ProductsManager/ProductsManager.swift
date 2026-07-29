@@ -32,6 +32,15 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     private var _loadedProductPermissions: [String: [String]]?
     private var _productsTask: Task<[Qonversion.Product], Error>?
     private var _storefrontTask: Task<Void, Never>?
+    private var _permissionsTask: Task<Void, Never>?
+
+    /// When the last on-demand mapping load was started. The reload is driven
+    /// by demand, so a permanently failing backend would otherwise be asked
+    /// once per entitlements check.
+    private var lastPermissionsLoadAttempt: Date?
+
+    /// Minimum gap between two on-demand mapping loads.
+    private static let permissionsReloadInterval: TimeInterval = 60
 
     /// Bumped on every user switch: a load started for the previous user must
     /// not cache or persist its catalog for the new one.
@@ -84,6 +93,39 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     }
 
     func loadProductPermissions() async {
+        // Single-flight: the launch refresh and an on-demand reload may land
+        // together, and N entitlements checks must cost one request.
+        let task: Task<Void, Never> = joinedPermissionsTask()
+        await task.value
+        clearPermissionsTask(task)
+    }
+
+    private func joinedPermissionsTask() -> Task<Void, Never> {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let inFlight: Task<Void, Never> = _permissionsTask {
+            return inFlight
+        }
+
+        lastPermissionsLoadAttempt = Date()
+        let task = Task { [weak self] () -> Void in
+            await self?.performLoadProductPermissions()
+        }
+        _permissionsTask = task
+
+        return task
+    }
+
+    private func clearPermissionsTask(_ task: Task<Void, Never>) {
+        lock.lock()
+        defer { lock.unlock() }
+        if _permissionsTask == task {
+            _permissionsTask = nil
+        }
+    }
+
+    private func performLoadProductPermissions() async {
         do {
             let mapping: [String: [String]] = try await productsService.productPermissions()
             storeLoadedPermissions(mapping)
@@ -95,10 +137,36 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         }
     }
 
+    private func shouldAwaitPermissionsLoad() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        // A load is already running — joining it costs nothing and answers this
+        // call, so the throttle does not apply.
+        if _permissionsTask != nil { return true }
+        guard let lastPermissionsLoadAttempt else { return true }
+
+        return Date().timeIntervalSince(lastPermissionsLoadAttempt) >= Self.permissionsReloadInterval
+    }
+
     private func storeLoadedPermissions(_ mapping: [String: [String]]) {
         lock.lock()
         defer { lock.unlock() }
         _loadedProductPermissions = mapping
+    }
+
+    func productPermissions() async -> [String: [String]] {
+        if let cached: [String: [String]] = cachedProductPermissions(), !cached.isEmpty {
+            return cached
+        }
+        // Nothing anywhere — not in memory, not persisted, not bundled. The
+        // load is retried on demand rather than once per launch, but not on
+        // every single call: a permanently failing backend must not turn each
+        // entitlements check into a request.
+        guard shouldAwaitPermissionsLoad() else { return [:] }
+
+        await loadProductPermissions()
+
+        return cachedProductPermissions() ?? [:]
     }
 
     func cachedProductPermissions() -> [String: [String]]? {
@@ -259,7 +327,17 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     }
 
     func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
-        let allProducts: [Qonversion.Product] = try await products()
+        // The catalog is a lookup here — it maps a Qonversion id to a store id,
+        // nothing more. An unreachable one is the documented ".unknown" case
+        // ("the store did not answer, or the id is not in your catalog"), not a
+        // reason to fail the whole paywall check.
+        var allProducts: [Qonversion.Product] = (try? await products()) ?? []
+        if allProducts.isEmpty {
+            allProducts = cachedProducts()
+        }
+        if allProducts.isEmpty {
+            logger.warning("Intro eligibility was requested with no products catalog available: every status is .unknown.")
+        }
 
         var result: [String: Qonversion.IntroEligibilityStatus] = [:]
         var storeIdsToCheck: [String: String] = [:]

@@ -8,6 +8,27 @@
 import Foundation
 import StoreKit
 
+/// A stream that stays open until its source exists, then forwards it whole.
+///
+/// A host that starts iterating before ``Qonversion/Qonversion/initialize(with:)``
+/// would otherwise be handed an already finished stream: its `for await` exits
+/// immediately and never runs again, so everything the SDK later produces is
+/// lost with no way for the host to notice. Internal so the behavior is
+/// asserted without initializing the process-wide singleton.
+func awaitingStream<Element: Sendable>(_ source: @escaping @Sendable () async -> AsyncStream<Element>) -> AsyncStream<Element> {
+    return AsyncStream { continuation in
+        let task: Task<Void, Never> = Task {
+            for await element in await source() {
+                continuation.yield(element)
+            }
+            continuation.finish()
+        }
+        continuation.onTermination = { _ in
+            task.cancel()
+        }
+    }
+}
+
 /// An entry point to use Qonversion SDK.
 // @unchecked: the manager graph is the only mutable state and every read and
 // write of it goes through stateLock.
@@ -56,7 +77,12 @@ public final class Qonversion: @unchecked Sendable {
         )
         shared.logger = assembly.servicesAssembly.miscAssemblyLogger()
         shared.managers = managers
+        // Streams handed out before this point are waiting for the graph; they
+        // start delivering from here on. Resumed outside the lock.
+        let waiters: [CheckedContinuation<Managers, Never>] = shared.managersWaiters
+        shared.managersWaiters = []
         shared.stateLock.unlock()
+        waiters.forEach { $0.resume(returning: managers) }
 
         // Capture uncaught exceptions raised inside the SDK from here on, and
         // ship whatever the previous launch left behind. Chained: the host's
@@ -80,13 +106,12 @@ public final class Qonversion: @unchecked Sendable {
         // enriched catalog.
         managers.productsManager.startObservingStorefrontChanges()
 
-        // In subscription-management mode the SDK needs the product →
-        // permissions mapping for local entitlements calculation; refresh the
-        // persistent cache on every launch.
-        if configuration.launchMode == .subscriptionManagement {
-            Task {
-                await managers.productsManager.loadProductPermissions()
-            }
+        // The product → permissions mapping powers the offline entitlements
+        // calculation, which answers in BOTH launch modes — Analytics reaches
+        // it through every deferred purchase. Refreshed on every launch, and
+        // reloaded on demand should this one fail.
+        Task {
+            await managers.productsManager.loadProductPermissions()
         }
 
         // Attribution ids of integrated SDKs (Adjust, AppsFlyer, Facebook)
@@ -123,7 +148,10 @@ public final class Qonversion: @unchecked Sendable {
     /// fresh anonymous user. Await the call before the next identify — the
     /// reset is guaranteed to be finished when it returns.
     public func logout() async {
-        guard let managers: Managers = currentManagers() else { return }
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.logout called before Qonversion.initialize — there is no user to reset yet.")
+            return
+        }
 
         await managers.userManager.logout()
     }
@@ -174,7 +202,10 @@ public final class Qonversion: @unchecked Sendable {
     ///   failed reports are retried automatically by the offline queue.
     @discardableResult
     public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async -> Bool {
-        guard let managers: Managers = currentManagers() else { return false }
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.handlePurchases called before Qonversion.initialize — \(verificationResults.count) purchase(s) were NOT reported. Initialize the SDK first, then hand them over.")
+            return false
+        }
 
         return await managers.purchasesManager.handle(purchasedTransactions: verificationResults)
     }
@@ -198,7 +229,11 @@ public final class Qonversion: @unchecked Sendable {
     ///         try await intent.purchase()
     ///     }
     public var promoPurchaseIntents: AsyncStream<PromoPurchaseIntent> {
-        guard let managers: Managers = currentManagers() else { return AsyncStream { $0.finish() } }
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.promoPurchaseIntents was read before Qonversion.initialize — the stream starts delivering once the SDK is initialized.")
+
+            return pendingStream { $0.purchasesManager.promoPurchaseIntents() }
+        }
 
         return managers.purchasesManager.promoPurchaseIntents()
     }
@@ -230,7 +265,11 @@ public final class Qonversion: @unchecked Sendable {
     ///         grantAccess(with: purchase.entitlements, for: purchase.transaction)
     ///     }
     public var deferredPurchases: AsyncStream<Qonversion.DeferredPurchase> {
-        guard let managers: Managers = currentManagers() else { return AsyncStream { $0.finish() } }
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.deferredPurchases was read before Qonversion.initialize — the stream starts delivering once the SDK is initialized.")
+
+            return pendingStream { $0.purchasesManager.deferredPurchases() }
+        }
 
         return managers.purchasesManager.deferredPurchases()
     }
@@ -244,7 +283,11 @@ public final class Qonversion: @unchecked Sendable {
     ///
     ///     for await entitlements in Qonversion.shared.entitlementsUpdates { ... }
     public var entitlementsUpdates: AsyncStream<[String: Qonversion.Entitlement]> {
-        guard let managers: Managers = currentManagers() else { return AsyncStream { $0.finish() } }
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.entitlementsUpdates was read before Qonversion.initialize — the stream starts delivering once the SDK is initialized.")
+
+            return pendingStream { $0.purchasesManager.entitlementsUpdates() }
+        }
 
         return managers.purchasesManager.entitlementsUpdates()
     }
@@ -252,7 +295,12 @@ public final class Qonversion: @unchecked Sendable {
     #if os(iOS) || os(visionOS)
     /// Presents the system sheet for redeeming App Store offer codes.
     public func presentCodeRedemptionSheet() {
-        currentManagers()?.purchasesManager.presentCodeRedemptionSheet()
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.presentCodeRedemptionSheet called before Qonversion.initialize — no sheet was presented. Call it after initializing the SDK.")
+            return
+        }
+
+        managers.purchasesManager.presentCodeRedemptionSheet()
     }
 
     /// Presents the App Store offer code redemption sheet in the given scene.
@@ -301,7 +349,10 @@ public final class Qonversion: @unchecked Sendable {
     /// integrates the SDK, so the existing subscribers' data reaches the
     /// analytics.
     public func syncHistoricalData() {
-        guard let managers: Managers = currentManagers() else { return }
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.syncHistoricalData called before Qonversion.initialize — nothing was synced. Call it after initializing the SDK.")
+            return
+        }
 
         Task {
             await managers.purchasesManager.syncHistoricalData()
@@ -330,7 +381,10 @@ public final class Qonversion: @unchecked Sendable {
     /// waiting for the batching delay. Delivery failures are retried by the
     /// SDK automatically.
     public func forceSendProperties() async {
-        guard let managers: Managers = currentManagers() else { return }
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.forceSendProperties called before Qonversion.initialize — there are no properties to send yet.")
+            return
+        }
 
         try? await managers.userPropertiesManager.sendProperties(force: true)
     }
@@ -339,7 +393,12 @@ public final class Qonversion: @unchecked Sendable {
     /// present in the app bundle and parses. Use in debug builds to verify the
     /// offline fallback setup.
     public func isFallbackFileAccessible() -> Bool {
-        guard let managers: Managers = currentManagers() else { return false }
+        guard let managers: Managers = currentManagers() else {
+            // false here means "cannot tell", not "no such file" — the two are
+            // indistinguishable to the caller without this line.
+            currentLogger().warning("Qonversion.isFallbackFileAccessible called before Qonversion.initialize — the bundled file was not checked at all.")
+            return false
+        }
 
         return managers.productsManager.isFallbackFileAccessible()
     }
@@ -348,13 +407,23 @@ public final class Qonversion: @unchecked Sendable {
     /// Available only for iOS 14.3+
     /// See details in the [Apple official documentation](https://developer.apple.com/documentation/iad/setting-up-apple-search-ads-attribution)
     public func collectAppleSearchAdsAttribution() {
-        currentManagers()?.userPropertiesManager.collectAppleSearchAdsAttribution()
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.collectAppleSearchAdsAttribution called before Qonversion.initialize — the attribution was not collected. Call it after initializing the SDK.")
+            return
+        }
+
+        managers.userPropertiesManager.collectAppleSearchAdsAttribution()
     }
     
     /// Collects advertising ID
     /// On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion if tracking is allowed and IDFA is available.
     public func collectAdvertisingId() {
-        currentManagers()?.deviceManager.collectAdvertisingId()
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.collectAdvertisingId called before Qonversion.initialize — the advertising id was not collected. Call it after initializing the SDK.")
+            return
+        }
+
+        managers.deviceManager.collectAdvertisingId()
     }
     
     /// Sets Qonversion defined user properties, like email or appsFlyer user ID.
@@ -364,7 +433,10 @@ public final class Qonversion: @unchecked Sendable {
     ///   - key: Defined enum key
     ///   - value: Property value
     public func setUserProperty(key: UserPropertyKey, value: String) {
-        guard let managers: Managers = currentManagers() else { return }
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.setUserProperty called before Qonversion.initialize — the property was dropped. Call it after initializing the SDK.")
+            return
+        }
 
         managers.userPropertiesManager.setUserProperty(key: key, value: value)
     }
@@ -374,7 +446,10 @@ public final class Qonversion: @unchecked Sendable {
     ///   - key: Custom property key
     ///   - value: Property value
     public func setCustomUserProperty(key: String, value: String) {
-        guard let managers: Managers = currentManagers() else { return }
+        guard let managers: Managers = currentManagers() else {
+            currentLogger().warning("Qonversion.setCustomUserProperty called before Qonversion.initialize — the property was dropped. Call it after initializing the SDK.")
+            return
+        }
 
         managers.userPropertiesManager.setCustomUserProperty(key: key, value: value)
     }
@@ -493,6 +568,35 @@ public final class Qonversion: @unchecked Sendable {
     private let stateLock = NSLock()
     private var managers: Managers?
     private var logger: LoggerWrapper?
+
+    /// Streams created before initialize(), waiting for the graph to exist.
+    private var managersWaiters: [CheckedContinuation<Managers, Never>] = []
+
+    /// Suspends until initialize() builds the graph. Never times out: a host
+    /// that subscribes early and initializes later is a supported order, and a
+    /// deadline would turn it back into the silent loss it exists to prevent.
+    private func awaitManagers() async -> Managers {
+        return await withCheckedContinuation { (continuation: CheckedContinuation<Managers, Never>) in
+            stateLock.lock()
+            if let managers {
+                stateLock.unlock()
+                continuation.resume(returning: managers)
+                return
+            }
+            managersWaiters.append(continuation)
+            stateLock.unlock()
+        }
+    }
+
+    /// The stream to hand a caller that arrived before initialize(): it starts
+    /// delivering as soon as the SDK is initialized.
+    private func pendingStream<Element: Sendable>(_ source: @escaping @Sendable (Managers) -> AsyncStream<Element>) -> AsyncStream<Element> {
+        return awaitingStream { [weak self] in
+            guard let self else { return AsyncStream { $0.finish() } }
+
+            return source(await self.awaitManagers())
+        }
+    }
 
     /// A snapshot of the graph taken under the lock. The lock is released
     /// before the caller awaits anything.

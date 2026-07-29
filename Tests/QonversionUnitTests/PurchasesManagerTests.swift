@@ -864,6 +864,70 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(received.isEmpty, "the caller already got this transaction as a purchase result")
     }
 
+    func testAPurchaseWhoseReportWasRejectedIsStillSurfacedOnRedelivery() async {
+        // A rejected report (422 / 400 — nothing the local fallback may
+        // answer) makes purchase() THROW: the host got an exception, not a
+        // PurchaseResult, so it never learned about the transaction. Marking
+        // it surfaced before the report means the store's next delivery of the
+        // same unfinished transaction is swallowed as "already seen".
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "p1")
+        service.error = QonversionError(type: .receiptValidationError)
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        do {
+            _ = try await manager.purchase(makeProduct())
+            XCTFail("Expected the rejected report to throw")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseReportingFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
+        service.error = nil
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        manager.transactionUpdated(makeTransaction(id: "p1"))
+        await waitUntil { await !collector.received.isEmpty }
+
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.map(\.transaction.id), ["p1"], "a purchase the host was never handed must still reach it")
+    }
+
+    func testMoreUnfinishedTransactionsThanTheSurfacedLimitAreNotRepeatedOnTheNextLaunch() async {
+        // Analytics mode finishes nothing, so the store hands the whole
+        // unfinished set back on every cold start. A surfaced set that evicts
+        // its oldest ids at a fixed limit forgets the transactions above it and
+        // re-delivers them as fresh purchases, launch after launch.
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = [:]
+        let total = 250
+        let transactions: [Qonversion.Transaction] = (1...total).map {
+            makeTransaction(id: "t\($0)", productId: "com.app.consumable")
+        }
+        facade.unfinishedTransactionsResult = transactions
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        await manager.processUnfinishedTransactions()
+        await waitUntil(timeout: 20.0) { await collector.received.count >= total }
+        let firstLaunch: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(firstLaunch.count, total, "every unfinished transaction reaches the host once")
+
+        // The next cold start: a fresh manager over the same storage, handed
+        // the very same unfinished set.
+        let relaunched: PurchasesManager = makeManager(launchMode: .analytics)
+        let relaunchedCollector = StreamCollector(relaunched.deferredPurchases())
+
+        await relaunched.processUnfinishedTransactions()
+        // A transaction the listener DOES surface marks the point where the
+        // sweep's emissions, if any, would already have arrived.
+        relaunched.transactionUpdated(makeTransaction(id: "marker", productId: "com.app.lite"))
+        await waitUntil(timeout: 20.0) { await !relaunchedCollector.received.isEmpty }
+
+        let secondLaunch: [Qonversion.DeferredPurchase] = await relaunchedCollector.received
+        XCTAssertEqual(secondLaunch.map(\.transaction.id), ["marker"],
+                       "no purchase the host already saw may come back, however many are unfinished")
+    }
+
     func testAnObservedTransactionOfAnInFlightPurchaseIsNotDeliveredTwice() async throws {
         // StoreKit may hand the same transaction to the updates listener while
         // the purchase call is still inside the payment sheet. The purchase

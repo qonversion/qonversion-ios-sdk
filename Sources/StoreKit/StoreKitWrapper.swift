@@ -8,6 +8,14 @@
 import Foundation
 import StoreKit
 
+/// Accounts for transactions the local StoreKit verification rejected. They
+/// are never reported to the backend — an unverified JWS proves nothing — but
+/// the drop must not be silent either.
+protocol UnverifiedTransactionReporter: AnyObject, Sendable {
+
+    func reportUnverifiedTransaction(_ error: Error?, source: String)
+}
+
 // @unchecked: stateless mapper, weak delegate, lock-guarded promo task.
 final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
 
@@ -17,6 +25,11 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
     #endif
 
     private let mapper: StoreKitMapperInterface
+
+    /// Where a rejected transaction is accounted for, so every observation
+    /// path reports through one counter. Weak: the reporter (the facade) owns
+    /// the wrapper.
+    weak var unverifiedReporter: UnverifiedTransactionReporter?
 
     #if !os(watchOS) && !os(tvOS) && !os(visionOS)
     private let promoSubscriptionLock = NSLock()
@@ -173,8 +186,11 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         return AsyncStream { continuation in
             let task: Task<Void, Never> = Task {
                 for await update in StoreKit.Transaction.updates {
-                    if case .verified(let transaction) = update {
+                    switch update {
+                    case .verified(let transaction):
                         continuation.yield(self.mapper.map(transaction, jws: update.jwsRepresentation))
+                    case .unverified(_, let error):
+                        self.unverifiedReporter?.reportUnverifiedTransaction(error, source: "the transaction updates listener")
                     }
                 }
                 continuation.finish()
@@ -235,8 +251,8 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
             switch transaction {
             case .verified(let verifiedTransaction):
                 transasctions.append(mapper.map(verifiedTransaction, jws: transaction.jwsRepresentation))
-            default:
-                break
+            case .unverified(_, let error):
+                unverifiedReporter?.reportUnverifiedTransaction(error, source: "a store transactions query")
             }
         }
 

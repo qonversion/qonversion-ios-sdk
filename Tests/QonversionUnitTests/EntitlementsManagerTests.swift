@@ -67,6 +67,11 @@ final class EntitlementsManagerTests: XCTestCase {
         Qonversion.Entitlement(id: id, active: active, source: .appStore, startedDate: now, expirationDate: Date().addingTimeInterval(3600))
     }
 
+    /// An entitlement the SDK can never recalculate locally.
+    private func webEntitlement(id: String) -> Qonversion.Entitlement {
+        Qonversion.Entitlement(id: id, active: true, source: .stripe, startedDate: now, expirationDate: Date().addingTimeInterval(3600))
+    }
+
     /// What the SDK actually hands to the host: with nothing to serve the
     /// call throws, which is the same observable outcome as "no access".
     private func servedEntitlements() async -> [String: Qonversion.Entitlement] {
@@ -306,6 +311,28 @@ final class EntitlementsManagerTests: XCTestCase {
         XCTAssertEqual(entitlements["premium"]?.active, true, "a lifetime entitlement must survive the stale-entry filter")
     }
 
+    func testTheFreshBackendAnswerIsNotJudgedByTheDeviceClock() async throws {
+        // The backend owns `active`, and its just-received answer is not a
+        // cache: re-judging it by the local clock loses access whenever the
+        // clock runs ahead of the store's, or whenever the backend keeps a
+        // subscription active past the expiration it sent (billing grace
+        // period). ObjC parity: QNProductCenterManager.m:587-610 filters the
+        // CACHE to decide whether to refetch, and serves the fresh answer as
+        // it came.
+        let gracePeriod = Qonversion.Entitlement(
+            id: "premium",
+            active: true,
+            source: .appStore,
+            startedDate: now,
+            expirationDate: Date().addingTimeInterval(-3600)
+        )
+        service.entitlementsResult = [gracePeriod]
+
+        let entitlements: [String: Qonversion.Entitlement] = try await manager.entitlements()
+
+        XCTAssertEqual(entitlements["premium"]?.active, true, "the backend's own answer must reach the host intact")
+    }
+
     // MARK: - the expiry filter serves, it does not delete
 
     func testAnExpiredStripeEntitlementSurvivesInStorageAfterAnOfflineCycle() async throws {
@@ -327,6 +354,89 @@ final class EntitlementsManagerTests: XCTestCase {
             dataType: [String: Qonversion.Entitlement].self
         )
         XCTAssertNotNil(persisted?["web_premium"], "but it must still be there when the backend renews it")
+    }
+
+    // MARK: - a refund contradicts what the cache holds
+
+    func testARefundedPurchaseIsNotResurrectedFromTheCacheWhileOffline() async throws {
+        // The backend granted "premium" before the refund and the SDK cached
+        // it. Offline afterwards, the local calculation no longer produces it —
+        // but the merge keeps whatever the cache holds, so the refunded
+        // purchase comes back as live access, on this launch and every one
+        // after it.
+        service.entitlementsResult = [serverEntitlement(id: "premium"), webEntitlement(id: "web_premium")]
+        _ = try await manager.entitlements()
+
+        setupLocalCalculationContext()
+        // What PurchasesManager.processRevocation does first: the cached answer
+        // predates the refund.
+        manager.invalidateFreshBackendCache()
+        // A refunded transaction is gone from currentEntitlements(); only the
+        // store's revoked list still names it.
+        facade.currentEntitlementsResult = []
+        facade.revokedTransactionsResult = [
+            Qonversion.Transaction(id: "t1", productId: "com.app.pro", purchaseDate: Date().addingTimeInterval(-3600), revocationDate: Date())
+        ]
+        service.error = QonversionError(type: .internal)
+
+        let entitlements: [String: Qonversion.Entitlement] = try await manager.entitlements()
+
+        XCTAssertNil(entitlements["premium"], "a refunded purchase must not survive in the local fallback")
+        XCTAssertEqual(entitlements["web_premium"]?.active, true, "an entitlement the refund says nothing about must stay")
+    }
+
+    func testARefundedPurchaseStaysGoneAfterARelaunch() async throws {
+        // The pruning has to reach the persisted copy, or the next cold start
+        // merges the pre-refund entitlement straight back in.
+        service.entitlementsResult = [serverEntitlement(id: "premium")]
+        _ = try await manager.entitlements()
+
+        setupLocalCalculationContext()
+        manager.invalidateFreshBackendCache()
+        facade.currentEntitlementsResult = []
+        facade.revokedTransactionsResult = [
+            Qonversion.Transaction(id: "t1", productId: "com.app.pro", purchaseDate: Date().addingTimeInterval(-3600), revocationDate: Date())
+        ]
+        service.error = QonversionError(type: .internal)
+        _ = try? await manager.entitlements()
+
+        let persisted: [String: Qonversion.Entitlement]? = try storage.object(
+            forKey: "qonversion.keys.entitlements",
+            dataType: [String: Qonversion.Entitlement].self
+        )
+
+        XCTAssertNil(persisted?["premium"], "the refund must reach the cache the next launch reads")
+    }
+
+    func testARepurchaseAfterARefundGrantsTheEntitlementAgain() async throws {
+        // The refunded transaction is still in the store's revoked list
+        // forever: it may not veto the entitlement the NEW purchase grants.
+        setupLocalCalculationContext()
+        facade.revokedTransactionsResult = [
+            Qonversion.Transaction(id: "old", productId: "com.app.pro", purchaseDate: Date().addingTimeInterval(-86400), revocationDate: Date().addingTimeInterval(-3600))
+        ]
+        service.error = QonversionError(type: .internal)
+
+        let entitlements: [String: Qonversion.Entitlement] = try await manager.entitlements()
+
+        XCTAssertEqual(entitlements["premium"]?.active, true)
+    }
+
+    // MARK: - the mapping the local calculation needs
+
+    func testTheLocalFallbackLoadsTheProductMappingWhenNothingIsCached() async throws {
+        // Analytics mode never preloads the mapping, and a single failed load
+        // at launch leaves it empty for the whole session: without an on-demand
+        // load the offline calculation grants nothing at all.
+        service.error = QonversionError(type: .internal)
+        setupLocalCalculationContext()
+        productsManager.cachedMapping = nil
+        productsManager.mappingAfterLoad = ["pro": ["premium"]]
+
+        let entitlements: [String: Qonversion.Entitlement] = try await manager.entitlements()
+
+        XCTAssertEqual(productsManager.loadPermissionsCallsCount, 1, "an empty mapping must be loaded on demand")
+        XCTAssertEqual(entitlements["premium"]?.active, true)
     }
 
     // MARK: - the online fresh-cache short-circuit (ObjC parity)
@@ -356,6 +466,42 @@ final class EntitlementsManagerTests: XCTestCase {
 
         XCTAssertEqual(service.entitlementsCalls.count, 1, "past the window the backend is authoritative again")
         XCTAssertEqual(result.keys.sorted(), ["extra"])
+    }
+
+    func testACacheTimestampFromTheFutureDoesNotKeepTheCacheFreshForever() async throws {
+        // The device clock was rolled a year forward (a "free trial forever"
+        // trick, or a plain misconfiguration) and rolled back afterwards. The
+        // persisted timestamp now lies in the future, and an age check that
+        // only looks at the upper bound calls that cache fresh for the whole
+        // year — the SDK would never ask the backend again.
+        try storage.set(["premium": serverEntitlement(id: "premium")], forKey: "qonversion.keys.entitlements")
+        let aYearAhead: TimeInterval = Date().timeIntervalSince1970 + 365 * 24 * 60 * 60
+        storage.set(double: aYearAhead, forKey: "qonversion.keys.entitlementsTimestamp")
+        storage.set(double: aYearAhead, forKey: "qonversion.keys.entitlementsBackendTimestamp")
+        service.entitlementsResult = [serverEntitlement(id: "extra")]
+
+        let result = try await manager.entitlements()
+
+        XCTAssertEqual(service.entitlementsCalls.count, 1, "a cache dated in the future is not a fresh cache")
+        XCTAssertEqual(result.keys.sorted(), ["extra"])
+    }
+
+    func testACacheLifetimeTimestampFromTheFutureIsResetRatherThanTrusted() async throws {
+        // Same rolled-back clock, seen from the other check: the configured
+        // cache lifetime is measured from the same timestamp, so a future one
+        // would also make the stored copy usable forever.
+        try storage.set(["premium": serverEntitlement(id: "premium")], forKey: "qonversion.keys.entitlements")
+        let aYearAhead: TimeInterval = Date().timeIntervalSince1970 + 365 * 24 * 60 * 60
+        storage.set(double: aYearAhead, forKey: "qonversion.keys.entitlementsTimestamp")
+        storage.set(double: aYearAhead, forKey: "qonversion.keys.entitlementsBackendTimestamp")
+        service.error = QonversionError(type: .internal)
+        setupLocalCalculationContext()
+
+        _ = try await manager.entitlements()
+
+        let backendTimestamp: TimeInterval = storage.double(forKey: "qonversion.keys.entitlementsBackendTimestamp")
+        XCTAssertLessThanOrEqual(backendTimestamp, Date().timeIntervalSince1970,
+                                 "a timestamp the local clock cannot have produced must be reset, not kept")
     }
 
     func testAFreshCacheWithAnExpiredActiveEntryIsRefreshed() async throws {

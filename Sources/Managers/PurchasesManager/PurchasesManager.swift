@@ -74,6 +74,48 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     // record is what survives a relaunch.
     private var claimedTransactions: Set<String> = []
 
+    /// Ids the store still holds unfinished, refreshed by every launch sweep.
+    /// They are exactly the deliveries that come back, so the surfaced set may
+    /// not evict them to stay within its size bound.
+    private var protectedTransactionIds: Set<String> = []
+
+    private func protectUnfinished(_ transactionIds: [String]) {
+        surfacedLock.lock()
+        defer { surfacedLock.unlock() }
+
+        protectedTransactionIds = Set(transactionIds)
+    }
+
+    /// Caller holds `surfacedLock`.
+    private func isProtected(_ key: String) -> Bool {
+        let prefix: String = Constants.revokedTransactionPrefix.rawValue
+        let transactionId: String = key.hasPrefix(prefix) ? String(key.dropFirst(prefix.count)) : key
+
+        return protectedTransactionIds.contains(transactionId)
+    }
+
+    /// Trims the surfaced set back to its bound by dropping the OLDEST ids the
+    /// store can no longer re-deliver. An id it still holds unfinished survives
+    /// even over the bound: in Analytics mode nothing is ever finished, so
+    /// forgetting one repeats that purchase to the host on every launch from
+    /// then on. Caller holds `surfacedLock`.
+    private func withinBound(_ surfaced: [String]) -> [String] {
+        var excess: Int = surfaced.count - IntConstants.maxSurfacedTransactions.rawValue
+        guard excess > 0 else { return surfaced }
+
+        var result: [String] = []
+        result.reserveCapacity(surfaced.count)
+        for key in surfaced {
+            if excess > 0, !isProtected(key) {
+                excess -= 1
+                continue
+            }
+            result.append(key)
+        }
+
+        return result
+    }
+
     /// True when the host has not heard about this transaction yet — and
     /// claims it for this launch.
     private func claimForHost(_ transactionId: String) -> Bool {
@@ -101,10 +143,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         guard !surfaced.contains(transactionId) else { return }
 
         surfaced.append(transactionId)
-        if surfaced.count > IntConstants.maxSurfacedTransactions.rawValue {
-            surfaced.removeFirst(surfaced.count - IntConstants.maxSurfacedTransactions.rawValue)
-        }
-        try? localStorage.set(surfaced, forKey: Constants.surfacedTransactionsKey.rawValue)
+        try? localStorage.set(withinBound(surfaced), forKey: Constants.surfacedTransactionsKey.rawValue)
     }
 
     private func storedSurfacedTransactions() -> [String] {
@@ -208,12 +247,6 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .purchaseFailed)
         }
 
-        // Already surfaced by this call's result: a later re-delivery through
-        // the updates listener must not repeat it as a deferred purchase.
-        if let id: String = transaction.id {
-            markHeardByHost(id)
-        }
-
         // The id is claimed BEFORE the report goes out: a concurrent restore
         // or sweep must not report the same transaction. A failed report
         // releases the id for retries.
@@ -223,7 +256,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             // Another flow owns the report and will finish the transaction;
             // this call still answers with entitlements.
             guard gateTaken else {
-                return await purchaseResult(for: transaction)
+                let result: Qonversion.PurchaseResult = await purchaseResult(for: transaction)
+
+                return heard(result)
             }
         } else {
             gateTaken = false
@@ -240,8 +275,12 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             // purchase, and the transaction stays unfinished for a re-report.
             if error.allowsLocalEntitlementsFallback {
                 let entitlements: [String: Qonversion.Entitlement] = await entitlementsManager.localFallbackEntitlements(for: [transaction])
-                return Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements, entitlementsSource: .localCalculation)
+                let result = Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements, entitlementsSource: .localCalculation)
+
+                return heard(result)
             }
+            // Nothing is recorded as heard: the caller gets an exception, not a
+            // result, so it never learned about this purchase.
             throw QonversionError(type: .purchaseReportingFailed, message: nil, error: error)
         }
 
@@ -255,7 +294,21 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             await storeKitFacade.finish(transaction)
         }
 
-        return await purchaseResult(for: transaction)
+        let result: Qonversion.PurchaseResult = await purchaseResult(for: transaction)
+
+        return heard(result)
+    }
+
+    /// Records the purchase as delivered, on the paths that actually hand the
+    /// host a result. A re-delivery through the updates listener must not
+    /// repeat it as a deferred purchase — but a call that THREW told the host
+    /// nothing, and the store's next delivery is its only way to learn.
+    private func heard(_ result: Qonversion.PurchaseResult) -> Qonversion.PurchaseResult {
+        if let id: String = result.transaction.id {
+            markHeardByHost(id)
+        }
+
+        return result
     }
 
     /// A reported purchase must not fail because of the entitlements fetch —
@@ -515,6 +568,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     func processUnfinishedTransactions() async {
         let transactions: [Qonversion.Transaction] = await storeKitFacade.unfinishedTransactions()
+        // The store's own answer to "what can still come back": whatever is in
+        // it must survive in the surfaced set, however large that set gets.
+        protectUnfinished(transactions.compactMap(\.id))
         guard !transactions.isEmpty else { return }
 
         let userId: String
