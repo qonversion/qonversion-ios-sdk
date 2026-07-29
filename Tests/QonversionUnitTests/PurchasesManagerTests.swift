@@ -1540,6 +1540,23 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(userManager.switchedToUserIds.isEmpty)
     }
 
+    func testRestoreDoesNotSwitchWhenTheHostMovedTheUserWhileReportsWereInFlight() async throws {
+        // A6 cluster #7: a lingering restore must not override an identify() the
+        // host completed mid-loop. identify() moves the uid without bumping the
+        // session generation, so only checking that the SDK still sits on the uid
+        // the reports went out under stops the stale owner switch from wiping the
+        // newly identified session (and its identity key).
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.reportedOwnerUserId = "QON_owner"
+        entitlementsManager.entitlementsResult = [:]
+        // The host identifies the user while the report is in flight.
+        service.onSend = { [weak config] in config?.userId = "QON_identified" }
+
+        _ = try await manager.restore()
+
+        XCTAssertTrue(userManager.switchedToUserIds.isEmpty, "a lingering restore must not undo the user the host already switched to")
+    }
+
     func testSyncHistoricalDataSwitchesToTheTransactionsOwner() async {
         facade.historicalDataResult = [makeTransaction(id: "t1")]
         service.reportedOwnerUserId = "QON_owner"

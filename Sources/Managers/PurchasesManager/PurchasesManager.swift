@@ -402,7 +402,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             // A later report failing cannot discard an owner an earlier report
             // already resolved — the switch happens before the error becomes a
             // result (ObjC follows the owner the moment the backend names it).
-            await switchToOwnerIfNeeded(resolvedOwnerUserId)
+            await switchToOwnerIfNeeded(resolvedOwnerUserId, reportedUnder: userId)
             if let fallback {
                 return fallback
             }
@@ -412,7 +412,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // Capture the local fallback before the switch wipes the catalog; only a
         // resolved owner switches, so without one this stays nil and costs nothing.
         let preSwitchFallback: [String: Qonversion.Entitlement]? = resolvedOwnerUserId == nil ? nil : await entitlementsManager.localFallbackEntitlements(for: latest)
-        await switchToOwnerIfNeeded(resolvedOwnerUserId)
+        await switchToOwnerIfNeeded(resolvedOwnerUserId, reportedUnder: userId)
 
         // The store sync reached the backend: the answer restore() returns
         // must not come from the window opened before it.
@@ -454,14 +454,16 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     /// backend resolves the owner and the SDK follows it (production parity).
     /// Host-initiated paths only: an automatic report never moves the uid, no
     /// matter who the backend resolved the purchase to.
-    private func switchToOwnerIfNeeded(_ ownerUserId: String?) async {
+    private func switchToOwnerIfNeeded(_ ownerUserId: String?, reportedUnder reportUserId: String) async {
         // An empty owner id would wipe the session (ObjC guards result.uid.length).
         guard let ownerUserId, !ownerUserId.isEmpty else { return }
 
-        // Compare against the LIVE uid, not the snapshot the report was built
-        // for: a concurrent identify may have moved the uid during the store
-        // call (ObjC reads obtainUserID at handling time, not before).
-        guard ownerUserId != userIdProvider.getUserId() else { return }
+        let currentUserId: String = userIdProvider.getUserId()
+        guard ownerUserId != currentUserId else { return }
+        // The host moved the user while the reports were in flight; identify()
+        // does not bump the session generation, so nothing else would stop this
+        // switch from overriding a decision the host made later.
+        guard currentUserId == reportUserId else { return }
 
         do {
             try await userManager.switchToUser(with: ownerUserId)
@@ -594,7 +596,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             }
         }
 
-        await switchToOwnerIfNeeded(resolvedOwnerUserId)
+        await switchToOwnerIfNeeded(resolvedOwnerUserId, reportedUnder: userId)
 
         if !hadFailures {
             localStorage.set(bool: true, forKey: Constants.historicalDataSyncedKey.rawValue)
