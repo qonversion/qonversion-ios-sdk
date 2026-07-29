@@ -348,6 +348,14 @@ public final class Qonversion: @unchecked Sendable {
     /// install. Call it right after the first launch of the app version that
     /// integrates the SDK, so the existing subscribers' data reaches the
     /// analytics.
+    ///
+    /// The reported transactions may belong to another Qonversion user — the
+    /// App Store account that bought them was known to Qonversion under a
+    /// different id. When the backend resolves them to that owner, the SDK
+    /// switches to it: the current Qonversion user id changes, and the link to
+    /// the identifier passed to ``identify(_:)`` is dropped, since the user the
+    /// SDK now works with is not the one that identifier was attached to. Call
+    /// ``identify(_:)`` again afterwards to restore it.
     public func syncHistoricalData() {
         guard let managers: Managers = currentManagers() else {
             currentLogger().warning("Qonversion.syncHistoricalData called before Qonversion.initialize — nothing was synced. Call it after initializing the SDK.")
@@ -361,6 +369,14 @@ public final class Qonversion: @unchecked Sendable {
 
     /// Restores the user's purchases and returns the entitlements.
     /// When the backend is unreachable, entitlements are calculated locally.
+    ///
+    /// The restored transactions may belong to another Qonversion user — the
+    /// App Store account they were bought with was known to Qonversion under a
+    /// different id. When the backend resolves them to that owner, the SDK
+    /// switches to it: the current Qonversion user id changes, and the link to
+    /// the identifier passed to ``identify(_:)`` is dropped, since the user the
+    /// SDK now works with is not the one that identifier was attached to. Call
+    /// ``identify(_:)`` again afterwards to restore it.
     @discardableResult
     public func restore() async throws -> [String: Qonversion.Entitlement] {
         let managers: Managers = try requireManagers()
