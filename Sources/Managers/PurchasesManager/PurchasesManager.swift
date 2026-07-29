@@ -362,7 +362,6 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     private func performRestore() async throws -> [String: Qonversion.Entitlement] {
         _ = try await userManager.obtainUser()
-        let userId: String = userIdProvider.getUserId()
 
         let restored: [Qonversion.Transaction]
         do {
@@ -378,6 +377,13 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             // the host must be able to classify it as a QonversionError.
             throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .restoreFailed)
         }
+
+        // Read the uid AFTER the store call (ObjC parity): the auth sheet
+        // AppStore.sync() opens is a window in which a concurrent logout/identify
+        // may move the uid — reporting under the pre-sync snapshot would echo a
+        // uid the SDK has already left and resurrect that session.
+        let userId: String = userIdProvider.getUserId()
+
         // Production rule: only the latest transaction per product participates.
         let latest = EntitlementsCalculator.latestTransactionsPerProduct(restored)
 
@@ -543,10 +549,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // retriable on the next call.
         guard !localStorage.bool(forKey: Constants.historicalDataSyncedKey.rawValue) else { return }
 
-        let userId: String
         do {
             _ = try await userManager.obtainUser()
-            userId = userIdProvider.getUserId()
         } catch {
             logger.error("Skipping historical data sync: no backend user: " + error.message)
             return
@@ -561,6 +565,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             logger.error("Failed to fetch historical transactions: " + error.message)
             return
         }
+
+        // Read the uid AFTER fetching history, matching performRestore/ObjC.
+        let userId: String = userIdProvider.getUserId()
 
         let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(history)
 
