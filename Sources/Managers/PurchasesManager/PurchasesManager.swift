@@ -390,6 +390,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 }
             }
         } catch {
+            // A later report failing cannot discard an owner an earlier report
+            // already resolved — the switch happens before the error becomes a
+            // result (ObjC follows the owner the moment the backend names it).
+            await switchToOwnerIfNeeded(resolvedOwnerUserId)
             if error.allowsLocalEntitlementsFallback {
                 return await entitlementsManager.localFallbackEntitlements(for: latest)
             }

@@ -1563,6 +1563,34 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
     }
 
+    func testRestoreSwitchesToTheOwnerEvenWhenALaterReportFails() async throws {
+        // A6 cluster #7: the backend resolves an early restored transaction to
+        // another user, then a later transaction's report is rejected hard
+        // (e.g. a product not configured in the project). The already-resolved
+        // owner must still be followed — a partial batch failure cannot strand
+        // a user on the wrong account, or every retry repeats the same abort.
+        facade.restoreResult = [makeTransaction(id: "t1", productId: "com.app.one"),
+                                makeTransaction(id: "t2", productId: "com.app.two")]
+        service.reportedOwnerUserId = "QON_owner"
+        // The first report succeeds and names the owner; the next one fails.
+        service.onSend = { [weak service] in
+            guard let service else { return }
+            if service.sentTransactions.count >= 2 {
+                service.error = MockError.stubbed
+            }
+        }
+
+        do {
+            _ = try await manager.restore()
+            XCTFail("Expected restore to throw on the non-eligible failure")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .restoreFailed)
+        }
+
+        XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"],
+                       "a resolved owner must survive a later report failure")
+    }
+
     // MARK: - automatic paths never switch the owner (ObjC parity)
 
     func testObservedUpdateNeverSwitchesTheUserEvenWhenTheBackendNamesAnotherOwner() async {
