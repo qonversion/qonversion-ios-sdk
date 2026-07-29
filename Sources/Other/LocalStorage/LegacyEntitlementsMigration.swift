@@ -61,33 +61,43 @@ struct LegacyEntitlementsMigration {
     }
 
     private let legacyDefaults: UserDefaults?
+    private let hostDefaults: UserDefaults?
     private let localStorage: LocalStorageInterface
     private let logger: LoggerWrapper
 
     init(
         localStorage: LocalStorageInterface,
         logger: LoggerWrapper,
-        legacyDefaults: UserDefaults? = UserDefaults(suiteName: LegacyEntitlementsMigration.legacySuiteName)
+        legacyDefaults: UserDefaults? = UserDefaults(suiteName: LegacyEntitlementsMigration.legacySuiteName),
+        hostDefaults: UserDefaults? = nil
     ) {
         self.localStorage = localStorage
         self.logger = logger
         self.legacyDefaults = legacyDefaults
+        self.hostDefaults = hostDefaults
     }
 
     static var legacySuiteName: String { LegacyKeys.suiteName.rawValue }
 
+    /// The host-provided defaults first, mirroring `QNUserDefaultsStorage`,
+    /// which wrote every blob to both and read the custom one first.
+    private var sources: [UserDefaults] {
+        return [hostDefaults, legacyDefaults].compactMap { $0 }
+    }
+
     @discardableResult
     func run() -> Outcome {
-        guard let legacyDefaults else { return Outcome() }
+        let legacySources: [UserDefaults] = sources
+        guard !legacySources.isEmpty else { return Outcome() }
 
         var outcome = Outcome()
-        migrateProductPermissions(from: legacyDefaults, into: &outcome)
-        migrateEntitlements(from: legacyDefaults, into: &outcome)
+        migrateProductPermissions(from: legacySources, into: &outcome)
+        migrateEntitlements(from: legacySources, into: &outcome)
 
-        legacyDefaults.removeObject(forKey: LegacyKeys.productsPermissionsRelation.rawValue)
-        legacyDefaults.removeObject(forKey: LegacyKeys.entitlements.rawValue)
-        legacyDefaults.removeObject(forKey: LegacyKeys.entitlementsTimestamp.rawValue)
-        legacyDefaults.removeObject(forKey: LegacyKeys.entitlementsTransferred.rawValue)
+        LegacyDefaults.remove(LegacyKeys.productsPermissionsRelation.rawValue, from: legacySources)
+        LegacyDefaults.remove(LegacyKeys.entitlements.rawValue, from: legacySources)
+        LegacyDefaults.remove(LegacyKeys.entitlementsTimestamp.rawValue, from: legacySources)
+        LegacyDefaults.remove(LegacyKeys.entitlementsTransferred.rawValue, from: legacySources)
 
         if outcome != Outcome() {
             logger.info("Migrated the previous SDK generation's cache: \(outcome.migratedRelations) product mappings, \(outcome.migratedEntitlements) entitlements.")
@@ -98,8 +108,8 @@ struct LegacyEntitlementsMigration {
 
     // MARK: - Private
 
-    private func migrateProductPermissions(from legacyDefaults: UserDefaults, into outcome: inout Outcome) {
-        guard let data: Data = legacyDefaults.data(forKey: LegacyKeys.productsPermissionsRelation.rawValue) else { return }
+    private func migrateProductPermissions(from sources: [UserDefaults], into outcome: inout Outcome) {
+        guard let data: Data = LegacyDefaults.data(forKey: LegacyKeys.productsPermissionsRelation.rawValue, in: sources) else { return }
         // Never over an answer this SDK already has.
         let existing: [String: [String]]? = try? localStorage.object(forKey: TargetKeys.productPermissions.rawValue, dataType: [String: [String]].self)
         guard existing == nil else { return }
@@ -121,8 +131,8 @@ struct LegacyEntitlementsMigration {
         }
     }
 
-    private func migrateEntitlements(from legacyDefaults: UserDefaults, into outcome: inout Outcome) {
-        guard let data: Data = legacyDefaults.data(forKey: LegacyKeys.entitlements.rawValue) else { return }
+    private func migrateEntitlements(from sources: [UserDefaults], into outcome: inout Outcome) {
+        guard let data: Data = LegacyDefaults.data(forKey: LegacyKeys.entitlements.rawValue, in: sources) else { return }
         let existing: [String: Qonversion.Entitlement]? = try? localStorage.object(forKey: TargetKeys.entitlements.rawValue, dataType: [String: Qonversion.Entitlement].self)
         guard existing == nil else { return }
 
@@ -156,7 +166,7 @@ struct LegacyEntitlementsMigration {
             // timestamp seeds both clocks this SDK keeps. A missing or
             // nonsensical timestamp falls back to "now": the data is real, and
             // the alternative is discarding it.
-            let legacyTimestamp: Double = legacyDefaults.double(forKey: LegacyKeys.entitlementsTimestamp.rawValue)
+            let legacyTimestamp: Double = LegacyDefaults.double(forKey: LegacyKeys.entitlementsTimestamp.rawValue, in: sources)
             let timestamp: Double = legacyTimestamp > 0 ? legacyTimestamp : Date().timeIntervalSince1970
             localStorage.set(double: timestamp, forKey: TargetKeys.entitlementsTimestamp.rawValue)
             localStorage.set(double: timestamp, forKey: TargetKeys.entitlementsBackendTimestamp.rawValue)

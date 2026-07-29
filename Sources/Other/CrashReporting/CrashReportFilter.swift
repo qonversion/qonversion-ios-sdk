@@ -15,14 +15,19 @@ import Foundation
 /// usually sit below the app frame that called in.
 enum CrashReportFilter {
 
-    /// The frames' own image name when the SDK is its own binary.
-    static var sdkImageName: String { "Qonversion" }
+    /// The frames' own image names when the SDK is its own binary. NoCodes is
+    /// a separate module and a separate framework product, and it holds every
+    /// piece of UIKit code in the SDK — the likeliest source of an NSException
+    /// anywhere in it.
+    static var sdkImageNames: [String] {
+        return ["Qonversion", "NoCodes"]
+    }
 
-    /// Mangled and ObjC-era prefixes only: the demangled `Qonversion.` form is
-    /// deliberately absent, since it also appears in host frames that merely
-    /// mention an SDK type in their signature.
+    /// Mangled and ObjC-era prefixes only: the demangled `Qonversion.` and
+    /// `NoCodes.` forms are deliberately absent, since they also appear in host
+    /// frames that merely mention an SDK type in their signature.
     static var sdkSymbolMarkers: [String] {
-        return ["$s10Qonversion", "-[QON", "-[QN"]
+        return ["$s10Qonversion", "$s7NoCodes", "-[QON", "-[QN"]
     }
 
     /// nil when the exception is not the SDK's; otherwise how the SDK was linked.
@@ -32,7 +37,7 @@ enum CrashReportFilter {
         for symbol in symbols {
             guard let imageName: String = imageName(ofFrame: symbol) else { continue }
 
-            if imageName == sdkImageName {
+            if sdkImageNames.contains(imageName) {
                 return .framework
             }
             if imageName == appExecutableName, containsSdkSymbol(symbol) {

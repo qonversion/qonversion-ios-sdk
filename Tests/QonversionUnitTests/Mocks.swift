@@ -29,6 +29,37 @@ enum TestDefaults {
     }
 }
 
+extension JSONEncoder {
+    /// The strategy the SDK actually installs, mirroring `MiscAssembly.encoder()`.
+    static var qonversionTest: JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+
+        return encoder
+    }
+}
+
+// MARK: - Test file container
+
+enum TestFileDirectory {
+    /// Stands in for the SDK's persist directory, per test, so nothing lands in
+    /// the real application-support container.
+    static func makeIsolated(_ name: String = #function) -> URL {
+        let url: URL = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("io.qonversion.tests")
+            .appendingPathComponent(name + "." + UUID().uuidString)
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+
+        return url
+    }
+
+    static func remove(_ url: URL?) {
+        guard let url else { return }
+
+        try? FileManager.default.removeItem(at: url)
+    }
+}
+
 // MARK: - NetworkLayer
 
 final class MockRequestProcessor: RequestProcessorInterface {

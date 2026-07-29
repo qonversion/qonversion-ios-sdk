@@ -17,6 +17,9 @@ import Foundation
 /// re-reports them in v4 form on the first launch.
 ///
 /// The key is therefore consumed, not migrated, so it stops occupying storage.
+/// It is consumed from the host-provided defaults too: the previous SDK wrote
+/// every blob to both its suite and the host's `customUserDefaults`, so with an
+/// app-group suite the dead queue would otherwise sit there forever.
 struct LegacyPurchasesQueueMigration {
 
     private enum Constants: String {
@@ -25,12 +28,15 @@ struct LegacyPurchasesQueueMigration {
     }
 
     private let legacyDefaults: UserDefaults?
+    private let hostDefaults: UserDefaults?
 
-    init(legacyDefaults: UserDefaults? = UserDefaults(suiteName: Constants.suiteName.rawValue)) {
+    init(legacyDefaults: UserDefaults? = UserDefaults(suiteName: Constants.suiteName.rawValue), hostDefaults: UserDefaults? = nil) {
         self.legacyDefaults = legacyDefaults
+        self.hostDefaults = hostDefaults
     }
 
     func run() {
-        legacyDefaults?.removeObject(forKey: Constants.queueKey.rawValue)
+        let sources: [UserDefaults] = [hostDefaults, legacyDefaults].compactMap { $0 }
+        LegacyDefaults.remove(Constants.queueKey.rawValue, from: sources)
     }
 }
