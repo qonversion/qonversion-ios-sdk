@@ -1509,6 +1509,18 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(userManager.switchedToUserIds.isEmpty)
     }
 
+    func testRestoreDoesNotSwitchWhenTheOwnerIsEmpty() async throws {
+        // An empty owner id must never move the uid — switching to "" wipes the
+        // session (ObjC guards result.uid.length == 0).
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.reportedOwnerUserId = ""
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.restore()
+
+        XCTAssertTrue(userManager.switchedToUserIds.isEmpty)
+    }
+
     func testSyncHistoricalDataSwitchesToTheTransactionsOwner() async {
         facade.historicalDataResult = [makeTransaction(id: "t1")]
         service.reportedOwnerUserId = "QON_owner"

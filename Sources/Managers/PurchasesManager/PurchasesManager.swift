@@ -436,7 +436,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     /// Host-initiated paths only: an automatic report never moves the uid, no
     /// matter who the backend resolved the purchase to.
     private func switchToOwnerIfNeeded(_ ownerUserId: String?) async {
-        guard let ownerUserId else { return }
+        // An empty owner id would wipe the session (ObjC guards result.uid.length).
+        guard let ownerUserId, !ownerUserId.isEmpty else { return }
 
         do {
             try await userManager.switchToUser(with: ownerUserId)
