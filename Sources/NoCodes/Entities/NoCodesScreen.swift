@@ -135,9 +135,12 @@ public struct NoCodesScreenVariable: Decodable, Sendable {
   /// Variable name it is addressed by (`variable.<key>` in the builder for custom
   /// variables, the slot name for product slots). May contain spaces.
   public let key: String
-  /// Authored value type: `"boolean"`, `"string"` or `"number"`.
+  /// Authored value type: `"boolean"`, `"string"` or `"number"`, or an empty
+  /// string when the screen was delivered without one.
   public let type: String
   /// The configured default value, preserving its native type.
+  /// ``NoCodesScreenVariableValue/none`` when the screen carries no value for
+  /// it — a draft variable, or one the backend sent as `null`.
   public let value: NoCodesScreenVariableValue
 
   private enum CodingKeys: String, CodingKey {
@@ -164,8 +167,10 @@ public struct NoCodesScreenVariable: Decodable, Sendable {
       kind = .custom
     }
     key = try container.decode(String.self, forKey: .key)
-    type = try container.decode(String.self, forKey: .type)
-    value = try container.decodeIfPresent(NoCodesScreenVariableValue.self, forKey: .value) ?? .none
+    // A draft screen carries variables the builder has not finished: neither a
+    // missing type nor a null value may cost the screen its whole variable list.
+    type = (try? container.decodeIfPresent(String.self, forKey: .type)) ?? ""
+    value = (try? container.decodeIfPresent(NoCodesScreenVariableValue.self, forKey: .value)) ?? .none
   }
 }
 
