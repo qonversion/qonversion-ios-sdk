@@ -64,6 +64,71 @@ final class NoCodesScreenDecodingTests: XCTestCase {
         XCTAssertEqual(screen.defaultVariable(forKey: "future")?.value.stringValue, "34")
     }
 
+    func testANullVariableValueDecodesAsNoneWithoutLosingTheVariable() throws {
+        // Draft/unpublished screens can carry a variable the builder never
+        // gave a default value.
+        let json = """
+        {
+          "id": "screen-draft",
+          "body": "<html></html>",
+          "variables": [
+            {"kind": "custom", "key": "headline", "type": "string", "value": null}
+          ]
+        }
+        """
+        let decoder = JSONDecoder()
+
+        let screen: NoCodesScreen = try decoder.decode(NoCodesScreen.self, from: Data(json.utf8))
+
+        XCTAssertEqual(screen.defaultVariables.count, 1)
+        XCTAssertEqual(screen.defaultVariable(forKey: "headline")?.value, NoCodesScreenVariableValue.none)
+    }
+
+    func testAVariableWithoutATypeDoesNotCostTheScreenItsOtherVariables() throws {
+        // A draft screen can deliver a variable the builder has not finished
+        // authoring: both `type` and `value` come back null. Losing this one
+        // variable must not lose every variable on the screen with it.
+        let json = """
+        {
+          "id": "screen-draft-2",
+          "body": "<html></html>",
+          "variables": [
+            {"kind": "custom", "key": "unfinished", "type": null, "value": null},
+            {"kind": "custom", "key": "flag", "type": "boolean", "value": true}
+          ]
+        }
+        """
+        let decoder = JSONDecoder()
+
+        let screen: NoCodesScreen = try decoder.decode(NoCodesScreen.self, from: Data(json.utf8))
+
+        XCTAssertEqual(screen.defaultVariables.count, 2, "the whole list must not be dropped over one unfinished variable")
+        let unfinished = try XCTUnwrap(screen.defaultVariable(forKey: "unfinished"))
+        XCTAssertEqual(unfinished.type, "")
+        XCTAssertEqual(unfinished.value, .none)
+        XCTAssertEqual(screen.defaultVariable(forKey: "flag")?.value, .bool(true))
+    }
+
+    func testAVariableWithoutATypeKeyAtAllDecodesTheSameAsANullOne() throws {
+        let json = """
+        {
+          "id": "screen-draft-3",
+          "body": "<html></html>",
+          "variables": [
+            {"kind": "custom", "key": "unfinished"},
+            {"kind": "custom", "key": "flag", "type": "boolean", "value": true}
+          ]
+        }
+        """
+        let decoder = JSONDecoder()
+
+        let screen: NoCodesScreen = try decoder.decode(NoCodesScreen.self, from: Data(json.utf8))
+
+        XCTAssertEqual(screen.defaultVariables.count, 2)
+        XCTAssertEqual(screen.defaultVariable(forKey: "unfinished")?.type, "")
+        XCTAssertEqual(screen.defaultVariable(forKey: "unfinished")?.value, NoCodesScreenVariableValue.none)
+    }
+
     // MARK: - nulls the backend can emit
 
     func testAScreenWithoutABodySkipsItselfOutOfTheList() throws {
