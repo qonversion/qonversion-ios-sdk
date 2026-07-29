@@ -16,6 +16,9 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
     private var sentUids: [String] = []
     private var shouldFail = false
     private var shouldStall = false
+    /// nil reproduces the existing transport-failure fixation (no status code
+    /// at all); set it to script a specific HTTP status on the next failures.
+    private var failureStatusCode: Int?
 
     var batches: [[[String: AnyHashable]]] {
         lock.lock()
@@ -39,11 +42,12 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
         return sentUids
     }
 
-    func failNextRequests(_ shouldFail: Bool) {
+    func failNextRequests(_ shouldFail: Bool, statusCode: Int? = nil) {
         lock.lock()
         defer { lock.unlock() }
 
         self.shouldFail = shouldFail
+        self.failureStatusCode = statusCode
     }
 
     /// Keeps every request suspended, like a transport waiting on its timeout.
@@ -62,14 +66,19 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
     }
 
     func process<T>(request: Request, responseType: T.Type) async throws -> T where T: Decodable {
-        let isFailing: Bool = record(request: request)
+        let (isFailing, statusCode): (Bool, Int?) = record(request: request)
 
         while isStalling {
             try? await Task.sleep(nanoseconds: 5_000_000)
         }
 
         if isFailing {
-            throw NoCodesError(type: .invalidResponse)
+            guard let statusCode else {
+                // The existing fixation: a transport-level failure, no HTTP
+                // status attached at all.
+                throw NoCodesError(type: .invalidResponse)
+            }
+            throw NoCodesError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: statusCode])
         }
 
         guard let empty = EmptyApiResponse() as? T else {
@@ -80,7 +89,7 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
     }
 
     /// Kept synchronous so the lock is never held across a suspension point.
-    private func record(request: Request) -> Bool {
+    private func record(request: Request) -> (Bool, Int?) {
         lock.lock()
         defer { lock.unlock() }
 
@@ -89,7 +98,7 @@ private final class EventsRequestProcessor: RequestProcessorInterface, @unchecke
             sentUids.append(uid)
         }
 
-        return shouldFail
+        return (shouldFail, failureStatusCode)
     }
 }
 
@@ -423,6 +432,160 @@ final class ScreenEventsServiceTests: XCTestCase {
         // The oldest events were dropped, the newest ones survived.
         XCTAssertEqual(retained.first?["index"] as? Int, 110)
         XCTAssertEqual(retained.last?["index"] as? Int, 209)
+    }
+
+    // MARK: - Terminal rejection vs retriable failure
+
+    /// The backend validates a batch all-or-nothing: a 4xx (other than 429)
+    /// means the batch itself is unacceptable, not that it was lost in
+    /// transit. Re-buffering it would retry the same rejected payload forever.
+    func testATerminalClientErrorDropsTheRejectedBatchInsteadOfRetrying() async throws {
+        let processor = EventsRequestProcessor()
+        processor.failNextRequests(true, statusCode: 400)
+        let service: ScreenEventsService = makeService(processor: processor)
+        let first: ScreenEvent = makeEvent(index: 0)
+        service.track(event: first)
+        service.flush()
+        await waitUntil { processor.batchesCount == 1 }
+
+        processor.failNextRequests(false)
+        let second: ScreenEvent = makeEvent(index: 1)
+        service.track(event: second)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 2 }
+        let sentAfterRejection: [[String: AnyHashable]] = try XCTUnwrap(processor.lastBatch)
+        // Only the new event: the 400-rejected batch was dropped, not re-sent.
+        XCTAssertEqual(sentAfterRejection.count, 1)
+        XCTAssertEqual(sentAfterRejection.first?["index"] as? Int, 1)
+    }
+
+    func testAServerErrorStillRetriesTheBatch() async throws {
+        let processor = EventsRequestProcessor()
+        processor.failNextRequests(true, statusCode: 500)
+        let service: ScreenEventsService = makeService(processor: processor)
+        let first: ScreenEvent = makeEvent(index: 0)
+        service.track(event: first)
+        service.flush()
+        await waitUntil { processor.batchesCount == 1 }
+
+        processor.failNextRequests(false)
+        let second: ScreenEvent = makeEvent(index: 1)
+        service.track(event: second)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 2 }
+        let retried: [[String: AnyHashable]] = try XCTUnwrap(processor.lastBatch)
+        XCTAssertEqual(retried.count, 2, "5xx means the backend never processed the batch: it must retry")
+        XCTAssertEqual(retried.first?["index"] as? Int, 0)
+    }
+
+    func testTooManyRequestsStillRetriesTheBatch() async throws {
+        let processor = EventsRequestProcessor()
+        processor.failNextRequests(true, statusCode: 429)
+        let service: ScreenEventsService = makeService(processor: processor)
+        let first: ScreenEvent = makeEvent(index: 0)
+        service.track(event: first)
+        service.flush()
+        await waitUntil { processor.batchesCount == 1 }
+
+        processor.failNextRequests(false)
+        let second: ScreenEvent = makeEvent(index: 1)
+        service.track(event: second)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 2 }
+        let retried: [[String: AnyHashable]] = try XCTUnwrap(processor.lastBatch)
+        XCTAssertEqual(retried.count, 2, "429 is throttling, which clears on its own: the batch must retry")
+        XCTAssertEqual(retried.first?["index"] as? Int, 0)
+    }
+
+    // MARK: - Local validation against the backend limits
+
+    func testAnEventWithoutAScreenUidIsDroppedBeforeBuffering() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        let poisoned = ScreenEvent(data: ["type": "screen_shown"])
+        service.track(event: poisoned)
+        let good: ScreenEvent = makeEvent(index: 0)
+        service.track(event: good)
+
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 1 }
+        XCTAssertEqual(processor.lastBatch?.count, 1, "the record missing screen_uid must never reach a batch")
+    }
+
+    func testAnEventWithATooOldHappenedAtIsDroppedBeforeBuffering() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        // Before 2020-01-01, the earliest happened_at the backend accepts.
+        let poisoned = ScreenEvent(data: ["type": "screen_shown", "screen_uid": "screen-1", "happened_at": 1_500_000_000])
+        service.track(event: poisoned)
+        service.flush()
+
+        await waitUntilQuiet(processor)
+        XCTAssertEqual(processor.batchesCount, 0)
+    }
+
+    func testAnEventWithAHappenedAtTooFarInTheFutureIsDroppedBeforeBuffering() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        let tooFar = Int(Date().timeIntervalSince1970) + 200_000
+        let poisoned = ScreenEvent(data: ["type": "screen_shown", "screen_uid": "screen-1", "happened_at": tooFar])
+        service.track(event: poisoned)
+        service.flush()
+
+        await waitUntilQuiet(processor)
+        XCTAssertEqual(processor.batchesCount, 0)
+    }
+
+    func testAScreenPageViewEventWithoutAPageIndexIsDroppedBeforeBuffering() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        let poisoned = ScreenEvent(data: ["type": "screen_page_view", "screen_uid": "screen-1"])
+        service.track(event: poisoned)
+        service.flush()
+
+        await waitUntilQuiet(processor)
+        XCTAssertEqual(processor.batchesCount, 0, "page_index is required on screen_page_view")
+    }
+
+    func testAScreenPageViewEventWithAValidPageIndexIsBuffered() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        let event = ScreenEvent(data: ["type": "screen_page_view", "screen_uid": "screen-1", "page_index": 3])
+        service.track(event: event)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 1 }
+        XCTAssertEqual(processor.lastBatch?.count, 1)
+    }
+
+    func testAnEventWithoutAHappenedAtIsStampedAtTrackTime() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        let before = Int(Date().timeIntervalSince1970)
+        let event = ScreenEvent(data: ["type": "screen_shown", "screen_uid": "screen-1"])
+        service.track(event: event)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 1 }
+        let sent = try XCTUnwrap(processor.lastBatch?.first)
+        let happenedAt = try XCTUnwrap(sent["happened_at"] as? Int)
+        XCTAssertGreaterThanOrEqual(happenedAt, before)
+        XCTAssertLessThanOrEqual(happenedAt, before + 5)
+    }
+
+    func testAnEventWithAnExplicitHappenedAtKeepsIt() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        let event = ScreenEvent(data: ["type": "screen_shown", "screen_uid": "screen-1", "happened_at": 1_700_000_000])
+        service.track(event: event)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 1 }
+        XCTAssertEqual(processor.lastBatch?.first?["happened_at"] as? Int, 1_700_000_000)
     }
 
     // MARK: - User id
