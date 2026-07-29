@@ -70,6 +70,11 @@ public enum QonversionErrorType: Sendable {
     /// configuration. The ObjC SDK's QONErrorCodeRemoteConfigurationNotAvailable:
     /// it is a normal state of an unconfigured project or a user outside every
     /// experiment, not a transport or schema failure.
+    ///
+    /// A user the backend does not know arrives the same way and is not
+    /// distinguishable from it: both are answered with the same code, and there
+    /// will be no separate one. Either way there is nothing to apply, so the
+    /// app falls back to its own defaults.
     case remoteConfigurationNotAvailable
     /// The operation was abandoned before it could answer, because the SDK
     /// switched users (a logout or an identify resolving to another user)
