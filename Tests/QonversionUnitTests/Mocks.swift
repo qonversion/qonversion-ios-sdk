@@ -602,6 +602,7 @@ final class MockRemoteConfigService: RemoteConfigServiceInterface {
     private(set) var detachedExperimentIds: [String] = []
 
     var onLoadRemoteConfig: (() async -> Void)?
+    var onLoadRemoteConfigList: (() async -> Void)?
 
     func loadRemoteConfig(contextKey: String?) async throws -> Qonversion.RemoteConfig {
         serviceStateLock.lock()
@@ -615,6 +616,7 @@ final class MockRemoteConfigService: RemoteConfigServiceInterface {
 
     func loadRemoteConfigList() async throws -> Qonversion.RemoteConfigList {
         loadListCallsCount += 1
+        await onLoadRemoteConfigList?()
         if let error { throw error }
         guard let remoteConfigListResult else { throw MockError.noStub }
         return remoteConfigListResult
@@ -622,6 +624,7 @@ final class MockRemoteConfigService: RemoteConfigServiceInterface {
 
     func loadRemoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList {
         loadListContextKeysArgs.append((contextKeys, includeEmptyContextKey))
+        await onLoadRemoteConfigList?()
         if let error { throw error }
         guard let remoteConfigListResult else { throw MockError.noStub }
         return remoteConfigListResult

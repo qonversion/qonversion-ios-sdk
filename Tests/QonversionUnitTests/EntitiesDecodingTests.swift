@@ -239,13 +239,19 @@ final class EntitiesDecodingTests: XCTestCase {
         XCTAssertEqual(experiment.group.type, .treatment)
     }
 
-    func testExperimentDecodingRejectsTheSwiftPropertyNameAsKey() {
+    func testExperimentDecodingRejectsTheSwiftPropertyNameAsKey() throws {
         // Regression: "identifier" is a Swift property name, never a wire key —
-        // decoding it would mean the SDK is reading a payload the backend
-        // does not send.
+        // reading it would mean the SDK is decoding a payload the backend does
+        // not send. Missing metadata no longer throws (an incomplete experiment
+        // must not cost the host the config that carries it), so the guard is
+        // that the value is not picked up rather than that the decode fails.
         let json = #"{"identifier": "exp_4", "name": "Exp", "group": {"name": "G", "identifier": "g", "type": "control"}}"#
 
-        XCTAssertThrowsError(try decode(Qonversion.Experiment.self, json))
+        let experiment = try decode(Qonversion.Experiment.self, json)
+
+        XCTAssertEqual(experiment.identifier, "", "only \"uid\" carries the experiment identifier")
+        XCTAssertEqual(experiment.group.identifier, "", "only \"uid\" carries the group identifier")
+        XCTAssertEqual(experiment.name, "Exp")
     }
 
     // MARK: - RemoteConfigList

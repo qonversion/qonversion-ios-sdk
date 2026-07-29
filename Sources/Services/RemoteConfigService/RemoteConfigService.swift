@@ -112,6 +112,27 @@ final class RemoteConfigService: RemoteConfigServiceInterface {
     /// the integrator must be able to tell apart.
     private static var notAvailableApiCodes: Set<String> { ["not_found", "relation_not_found"] }
 
+    /// 404 is not in the SDK's `ResponseCode` list, so the network layer types
+    /// it `.unknown` and only the body slug can refine it. A 404 whose body
+    /// carries no slug — an empty body, a proxy page, a partial error envelope
+    /// — therefore reached the host as a generic loading failure. On the
+    /// loading endpoints it means the same thing the slugged 404 does.
+    private static var notFoundStatusCode: Int { 404 }
+
+    private static func isConfigurationMissing(_ apiError: QonversionError) -> Bool {
+        if apiError.type == .resourceNotFound, let apiCode: String = apiError.apiCode {
+            return notAvailableApiCodes.contains(apiCode)
+        }
+
+        // Only when the body named no code at all: a 404 that DID name one the
+        // SDK understands (e.g. `user_not_found`) keeps its own meaning.
+        guard apiError.apiCode == nil else { return false }
+
+        let statusCode: Int? = apiError.additionalInfo?[ErrorConstants.statusCodeKey.rawValue] as? Int
+
+        return statusCode == notFoundStatusCode
+    }
+
     private func remoteConfigError(from error: Error, unclassifiedType: QonversionErrorType, asWarning: Bool = false, remapsNotFound: Bool = true) -> QonversionError {
         let result: QonversionError = classify(error, unclassifiedType: unclassifiedType, remapsNotFound: remapsNotFound)
         if asWarning {
@@ -128,16 +149,13 @@ final class RemoteConfigService: RemoteConfigServiceInterface {
             return QonversionError(type: unclassifiedType, message: nil, error: error)
         }
 
-        if remapsNotFound,
-           apiError.type == .resourceNotFound,
-           let apiCode: String = apiError.apiCode,
-           Self.notAvailableApiCodes.contains(apiCode) {
+        if remapsNotFound, Self.isConfigurationMissing(apiError) {
             return QonversionError(
                 type: .remoteConfigurationNotAvailable,
                 message: nil,
                 error: apiError.error,
                 additionalInfo: apiError.additionalInfo,
-                apiCode: apiCode,
+                apiCode: apiError.apiCode,
                 apiType: apiError.apiType
             )
         }

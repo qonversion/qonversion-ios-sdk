@@ -30,6 +30,24 @@ private struct UtilsTestsArrayContainer: Decodable {
     }
 }
 
+/// Carries a decode result off the background queue it ran on.
+private final class UtilsTestsResultBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: [Any]?
+
+    func store(_ value: [Any]?) {
+        lock.lock()
+        defer { lock.unlock() }
+        stored = value
+    }
+
+    var value: [Any]? {
+        lock.lock()
+        defer { lock.unlock() }
+        return stored
+    }
+}
+
 final class UtilsTests: XCTestCase {
 
     // MARK: - decode(fromObject:)
@@ -114,7 +132,90 @@ final class UtilsTests: XCTestCase {
         XCTAssertNil(result[6] as? Int)
     }
 
+    // MARK: - decode(fromArray:) termination
+
+    /// Decodes on a background queue: a container that refuses to advance
+    /// spins forever, and a hung XCTest run reports nothing useful.
+    private func decodeArrayWithinTimeout(_ json: String, file: StaticString = #filePath, line: UInt = #line) -> [Any]? {
+        let data = Data(json.utf8)
+        let finished = expectation(description: "decode(fromArray:) returned")
+        let resultBox = UtilsTestsResultBox()
+
+        DispatchQueue.global().async {
+            let decoded = try? JSONDecoder().decode(UtilsTestsArrayContainer.self, from: data).value
+            resultBox.store(decoded)
+            finished.fulfill()
+        }
+
+        let outcome = XCTWaiter.wait(for: [finished], timeout: 5)
+        guard outcome == .completed else {
+            XCTFail("decode(fromArray:) never returned — the loop cannot advance past this element", file: file, line: line)
+            return nil
+        }
+
+        return resultBox.value
+    }
+
+    func testDecodeArrayTerminatesOnANumberTooLargeForDoubleOrInt() {
+        // 1e999 is representable in neither Int nor Double, is not a string,
+        // bool, container or null — every branch of the loop declines it.
+        _ = decodeArrayWithinTimeout("[1e999]")
+    }
+
+    func testDecodeArrayTerminatesOnANegativeNumberTooLargeForDoubleOrInt() {
+        _ = decodeArrayWithinTimeout("[-1e999]")
+    }
+
+    func testDecodeArraySkipsTheUnrepresentableElementAndKeepsTheRest() throws {
+        let result = try XCTUnwrap(decodeArrayWithinTimeout(#"[1, 1e999, "a", true, null]"#))
+
+        XCTAssertEqual(result[0] as? Int, 1)
+        XCTAssertEqual(result[1] as? String, "a")
+        XCTAssertEqual(result[2] as? Bool, true)
+        XCTAssertEqual(result.count, 4, "only the unrepresentable element is dropped")
+    }
+
+    func testDecodeArrayStillDecodesOrdinaryArraysInFull() throws {
+        let result = try XCTUnwrap(decodeArrayWithinTimeout(#"[1, "a", true, 2.5, {"k": "v"}, [3], null]"#))
+
+        XCTAssertEqual(result.count, 7)
+        XCTAssertEqual(result[0] as? Int, 1)
+        XCTAssertEqual(result[3] as? Double, 2.5)
+    }
+
+    func testDecodeObjectTerminatesOnANumberTooLargeForDoubleOrInt() throws {
+        // The object decoder iterates the key list rather than advancing a
+        // cursor, so it terminates — the unrepresentable value is dropped.
+        let data = Data(#"{"huge": 1e999, "present": 1}"#.utf8)
+
+        let result = try JSONDecoder().decode(UtilsTestsObjectContainer.self, from: data).value
+
+        XCTAssertEqual(result["present"] as? Int, 1)
+        XCTAssertNil(result["huge"])
+    }
+
     // MARK: - String.toCurrencySymbol()
+
+    func testToCurrencySymbolPrefersTheCurrencysOwnSymbolOverAMinorityLocale() {
+        // Scanning sorted identifiers and taking the first match picked
+        // ba_RU ("RUB"), ain_JP ("JP¥") and csw_CA ("CA$") — deterministic,
+        // but the wrong symbol for a price label.
+        XCTAssertEqual("RUB".toCurrencySymbol(), "\u{20BD}")
+        XCTAssertEqual("JPY".toCurrencySymbol(), "\u{00A5}")
+        XCTAssertEqual("CAD".toCurrencySymbol(), "$")
+    }
+
+    func testToCurrencySymbolKeepsTheAlreadyCorrectMajorCurrencies() {
+        XCTAssertEqual("USD".toCurrencySymbol(), "$")
+        XCTAssertEqual("EUR".toCurrencySymbol(), "\u{20AC}")
+        XCTAssertEqual("GBP".toCurrencySymbol(), "\u{00A3}")
+        XCTAssertEqual("VND".toCurrencySymbol(), "\u{20AB}")
+    }
+
+    func testToCurrencySymbolKeepsTheCodeWhenItIsTheSymbol() {
+        // Every Swiss locale renders CHF as its code — that is the symbol.
+        XCTAssertEqual("CHF".toCurrencySymbol(), "CHF")
+    }
 
     func testToCurrencySymbolForKnownCurrencyReturnsSymbol() {
         let symbol = "USD".toCurrencySymbol()

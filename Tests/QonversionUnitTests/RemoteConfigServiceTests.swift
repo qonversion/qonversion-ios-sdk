@@ -166,6 +166,61 @@ final class RemoteConfigServiceTests: XCTestCase {
         }
     }
 
+    func testANotFoundWithoutASlugStillBecomesRemoteConfigurationNotAvailable() async {
+        // 404 is not in the SDK's ResponseCode list, so the type is derived
+        // from the body slug alone. A 404 body without one used to degrade to
+        // the generic loading failure instead of "this user has no config".
+        let service = makeLiveService(json: #"{"error": {"message": "not found"}}"#, status: 404)
+
+        do {
+            _ = try await service.loadRemoteConfig(contextKey: "main")
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .remoteConfigurationNotAvailable)
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testANotFoundWithAnEmptyBodyStillBecomesRemoteConfigurationNotAvailable() async {
+        let service = makeLiveService(json: "", status: 404)
+
+        do {
+            _ = try await service.loadRemoteConfigList()
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .remoteConfigurationNotAvailable)
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testASlugLessNotFoundOnAttachIsStillNotAMissingConfiguration() async {
+        let service = makeLiveService(json: #"{"error": {"message": "not found"}}"#, status: 404)
+
+        do {
+            try await service.attachUserToRemoteConfig(id: "rc_missing")
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertNotEqual(error.type, .remoteConfigurationNotAvailable, "on attach a 404 means the caller's id is unknown")
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
+    func testAServerErrorWithoutASlugIsNotAMissingConfiguration() async {
+        let service = makeLiveService(json: #"{"error": {"message": "boom"}}"#, status: 500)
+
+        do {
+            _ = try await service.loadRemoteConfig(contextKey: "main")
+            XCTFail("Expected an error")
+        } catch let error as QonversionError {
+            XCTAssertNotEqual(error.type, .remoteConfigurationNotAvailable, "only 404 means there is no configuration")
+        } catch {
+            XCTFail("Expected QonversionError, got \(error)")
+        }
+    }
+
     func testANotFoundOnAttachIsNotAMissingConfiguration() async {
         // On attach/detach a 404 means the id the CALLER passed is unknown.
         let service = makeLiveService(

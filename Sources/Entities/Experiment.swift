@@ -43,12 +43,28 @@ extension Qonversion {
                 self.type = type
             }
 
+            init() {
+                self.name = ""
+                self.identifier = ""
+                self.type = .unknown
+            }
+
             public init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                name = try container.decode(String.self, forKey: .name)
-                identifier = try container.decode(String.self, forKey: .identifier)
+                // None of the known keys means a schema break, not an
+                // incomplete group.
+                guard !container.allKeys.isEmpty else {
+                    let context = DecodingError.Context(codingPath: container.codingPath, debugDescription: "Experiment group carries none of the expected keys")
+                    throw DecodingError.dataCorrupted(context)
+                }
+
+                // A missing key used to fail the group, and a failed group took
+                // the whole remote config — payload included — with it.
+                name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+                identifier = try container.decodeIfPresent(String.self, forKey: .identifier) ?? ""
                 // Unknown backend values must not fail the whole config decode.
-                type = GroupType(rawValue: try container.decode(String.self, forKey: .type)) ?? .unknown
+                let typeStr: String? = try container.decodeIfPresent(String.self, forKey: .type)
+                type = typeStr.flatMap { GroupType(rawValue: $0) } ?? .unknown
             }
 
             private enum CodingKeys: String, CodingKey {
@@ -72,6 +88,23 @@ extension Qonversion {
             self.identifier = identifier
             self.name = name
             self.group = group
+        }
+
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            // None of the known keys means a schema break, not an incomplete
+            // experiment.
+            guard !container.allKeys.isEmpty else {
+                let context = DecodingError.Context(codingPath: container.codingPath, debugDescription: "Experiment carries none of the expected keys")
+                throw DecodingError.dataCorrupted(context)
+            }
+
+            // Same tolerance as Group: incomplete experiment metadata must not
+            // cost the host the remote config that carries it.
+            identifier = try container.decodeIfPresent(String.self, forKey: .identifier) ?? ""
+            name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+            let decodedGroup: Group? = try? container.decodeIfPresent(Group.self, forKey: .group)
+            group = decodedGroup ?? Group()
         }
 
         private enum CodingKeys: String, CodingKey {

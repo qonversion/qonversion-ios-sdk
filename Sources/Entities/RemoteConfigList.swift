@@ -39,16 +39,22 @@ extension Qonversion {
             case remoteConfigs
         }
 
-        /// Searches for remote configuration with the specific context key.
+        /// Searches for the remote configuration with a specific context key.
         /// - Parameters:
-        ///   - contextKey: context key to search remote configuration for.
-        /// - Returns: remote configuration with the specified context key or nil if no matching configuration found.
+        ///   - contextKey: context key to search the remote configuration for.
+        ///   An empty string is treated as "no context key" and is equivalent
+        ///   to calling ``remoteConfigForEmptyContextKey()``.
+        /// - Returns: the remote configuration with the specified context key,
+        /// or nil if no matching configuration was found.
         public func remoteConfig(for contextKey: String) -> RemoteConfig? {
             return findRemoteConfig(for: contextKey)
         }
 
-        /// Searches for remote configuration with empty context key.
-        /// - Returns: remote configuration with empty context key or nil if no matching configuration found.
+        /// Searches for the remote configuration that is not bound to any
+        /// context key. A configuration the backend reports no source for is
+        /// not a match: it is assigned to nothing at all.
+        /// - Returns: the remote configuration without a context key, or nil if
+        /// no matching configuration was found.
         public func remoteConfigForEmptyContextKey() -> RemoteConfig? {
             return findRemoteConfig(for: nil)
         }
@@ -60,8 +66,17 @@ extension Qonversion {
 extension Qonversion.RemoteConfigList {
     
     private func findRemoteConfig(for contextKey: String?) -> Qonversion.RemoteConfig? {
+        // The decoder normalizes an empty context key to nil, so the lookup key
+        // is normalized the same way — otherwise remoteConfig(for: "") could
+        // never match anything.
+        let normalizedKey: String? = contextKey?.isEmpty == false ? contextKey : nil
+
         return remoteConfigs.first { config in
-            return (contextKey == nil && config.source?.contextKey == nil) || config.source?.contextKey == contextKey
+            // A config the backend reports no source for is assigned to no
+            // context key, not to the empty one.
+            guard let source: Qonversion.RemoteConfig.Source = config.source else { return false }
+
+            return source.contextKey == normalizedKey
         }
     }
 }

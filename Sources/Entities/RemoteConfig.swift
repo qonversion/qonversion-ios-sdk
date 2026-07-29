@@ -57,7 +57,11 @@ extension Qonversion {
             /// Remote config assignment type that indicates how the current payload was assigned to the user.
             public let assignmentType: AssignmentType
 
-            /// Remote configuration context key. Empty string if not specified.
+            /// Remote configuration context key, or `nil` when the
+            /// configuration is not bound to one. A context key the backend
+            /// sends as an empty string means the same thing and is normalized
+            /// to `nil`, so a check for `""` never matches — compare against
+            /// `nil`, or use ``Qonversion/RemoteConfigList/remoteConfigForEmptyContextKey()``.
             public let contextKey: String?
 
             init(identifier: String, name: String, type: SourceType, assignmentType: AssignmentType, contextKey: String?) {
@@ -70,11 +74,25 @@ extension Qonversion {
 
             public init(from decoder: Decoder) throws {
                 let container: KeyedDecodingContainer = try decoder.container(keyedBy: CodingKeys.self)
-                identifier = try container.decode(String.self, forKey: .identifier)
-                name = try container.decode(String.self, forKey: .name)
+                // An object carrying none of the known keys is a schema break,
+                // not an incomplete source. Failing here is what still lets the
+                // lossy list drop the row instead of surfacing an empty source.
+                guard !container.allKeys.isEmpty else {
+                    let context = DecodingError.Context(codingPath: container.codingPath, debugDescription: "Remote config source carries none of the expected keys")
+                    throw DecodingError.dataCorrupted(context)
+                }
+
+                // Metadata keys decode leniently: a source missing one of them
+                // used to fail, and a failed source took the whole config —
+                // payload included — with it. The context key still decides
+                // where the config is served from, so the config stays usable.
+                identifier = try container.decodeIfPresent(String.self, forKey: .identifier) ?? ""
+                name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
                 // Unknown backend values must not fail the whole config decode.
-                type = SourceType(rawValue: try container.decode(String.self, forKey: .type)) ?? .unknown
-                assignmentType = AssignmentType(rawValue: try container.decode(String.self, forKey: .assignmentType)) ?? .unknown
+                let typeStr: String? = try container.decodeIfPresent(String.self, forKey: .type)
+                type = typeStr.flatMap { SourceType(rawValue: $0) } ?? .unknown
+                let assignmentTypeStr: String? = try container.decodeIfPresent(String.self, forKey: .assignmentType)
+                assignmentType = assignmentTypeStr.flatMap { AssignmentType(rawValue: $0) } ?? .unknown
                 let contextKeyStr: String? = try container.decodeIfPresent(String.self, forKey: .contextKey)
                 contextKey = contextKeyStr?.isEmpty == false ? contextKeyStr : nil
             }
