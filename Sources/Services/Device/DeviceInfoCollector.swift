@@ -35,11 +35,17 @@ private let OsName = "iOS"
 
 final class DeviceInfoCollector: DeviceInfoCollectorInterface {
 
-    private let advertisingIdReader: AdvertisingIdReader
+    /// The moment this install first appeared on the device. Injectable so the
+    /// normalisation rules can be tested without a file system of a given age.
+    typealias InstallDateProvider = @Sendable () -> Date
 
-    init() {
+    private let advertisingIdReader: AdvertisingIdReader
+    private let installDateProvider: InstallDateProvider
+
+    init(installDateProvider: @escaping InstallDateProvider = DeviceInfoCollector.documentsCreationDate) {
         let advertisingIdReader = AdvertisingIdReader()
         self.advertisingIdReader = advertisingIdReader
+        self.installDateProvider = installDateProvider
     }
 
     func deviceInfo() -> Device {
@@ -115,14 +121,22 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         return modelCode
     }
 
-    private func installDate() -> TimeInterval {
+    @Sendable
+    static func documentsCreationDate() -> Date {
         if let docsURL: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
            let docsAttributes: [FileAttributeKey : Any] = try? FileManager.default.attributesOfItem(atPath: docsURL.path),
            let date = docsAttributes[.creationDate] as? Date {
-            return date.timeIntervalSince1970
+            return date
         }
 
-        return Date().timeIntervalSince1970
+        return Date()
+    }
+
+    /// Whole seconds: the wire and the local snapshot both carry the install
+    /// date as an integer, so a fractional value would never compare equal to
+    /// the record it was stored as.
+    private func installDate() -> TimeInterval {
+        return installDateProvider().timeIntervalSince1970.rounded(.down)
     }
 
     private func country() -> String? {

@@ -860,10 +860,28 @@ final class ToleratedDecodingTests: XCTestCase {
         XCTAssertEqual(user.creationDate, Date(timeIntervalSince1970: 1_785_146_400))
     }
 
-    func testAnUnreadableDateStillFailsThatValue() {
+    func testAnUnreadableDateCostsOnlyThatValue() throws {
+        // The tolerant strategy throws on purpose and the field decoders are
+        // expected to absorb it: a creation date nobody can parse must not
+        // cost the host its user id.
         let json = #"{"id": "QON_abc", "created_at": "yesterday"}"#
 
-        XCTAssertThrowsError(try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8)))
+        let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
+
+        XCTAssertEqual(user.id, "QON_abc")
+        XCTAssertNil(user.creationDate)
+    }
+
+    func testANonPositiveCreationTimestampCostsOnlyThatValue() throws {
+        // The "no date" sentinel of the previous API generation: the strategy
+        // throws for it deliberately.
+        let json = #"{"id": "QON_abc", "created_at": 0, "identity_id": "ext_1"}"#
+
+        let user = try sdkDecoder().decode(Qonversion.User.self, from: Data(json.utf8))
+
+        XCTAssertEqual(user.id, "QON_abc")
+        XCTAssertEqual(user.identityId, "ext_1")
+        XCTAssertNil(user.creationDate)
     }
 
     // MARK: - originalAppVersion

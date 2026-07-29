@@ -27,7 +27,11 @@ protocol UserManagerInterface {
     @discardableResult
     func identify(_ externalId: String) async throws -> Qonversion.User
 
-    /// Unlinks the current identity and resets to a fresh anonymous user.
+    /// Unlinks the current identity and returns the SDK to the install's
+    /// original anonymous user, invalidating every user-scoped cache. When an
+    /// identify moved the uid to another Qonversion user, that uid is restored
+    /// as well — the original user owns the purchases made before the identify.
+    /// A logout on a user that was never identified changes nothing.
     func logout() async
 
     /// Waits until no identify is in flight and the user pipeline settled.

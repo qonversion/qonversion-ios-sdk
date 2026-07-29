@@ -976,6 +976,10 @@ final class MockDeviceService: DeviceServiceInterface {
     var saveError: Error?
     var currentDeviceError: Error?
 
+    // Async hooks — let tests hold a call open to assert sequencing.
+    var onCreate: (() async -> Void)?
+    var onUpdate: (() async -> Void)?
+
     private(set) var savedDevices: [Device] = []
     private(set) var removeStoredDeviceCallsCount = 0
 
@@ -989,6 +993,8 @@ final class MockDeviceService: DeviceServiceInterface {
     func save(device: Device) throws {
         if let saveError { throw saveError }
         savedDevices.append(device)
+        // Models the real storage: what was saved is what currentDevice reads.
+        current = device
     }
 
     func currentDevice() throws -> Device? {
@@ -998,12 +1004,14 @@ final class MockDeviceService: DeviceServiceInterface {
 
     func create(device: Device) async throws -> Device {
         createdDevices.append(device)
+        await onCreate?()
         if let error { throw error }
         return createResult ?? device
     }
 
     func update(device: Device) async throws -> Device {
         updatedDevices.append(device)
+        await onUpdate?()
         if let error { throw error }
         return updateResult ?? device
     }
