@@ -385,7 +385,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         do {
             for transaction in latest {
                 let ownerUserId: String? = try await reportHostInitiated(transaction, userId: userId, trigger: .restore)
-                if let ownerUserId, ownerUserId != userId {
+                if let ownerUserId {
                     resolvedOwnerUserId = ownerUserId
                 }
             }
@@ -442,6 +442,11 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     private func switchToOwnerIfNeeded(_ ownerUserId: String?) async {
         // An empty owner id would wipe the session (ObjC guards result.uid.length).
         guard let ownerUserId, !ownerUserId.isEmpty else { return }
+
+        // Compare against the LIVE uid, not the snapshot the report was built
+        // for: a concurrent identify may have moved the uid during the store
+        // call (ObjC reads obtainUserID at handling time, not before).
+        guard ownerUserId != userIdProvider.getUserId() else { return }
 
         do {
             try await userManager.switchToUser(with: ownerUserId)
@@ -564,7 +569,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         for transaction in latest {
             do {
                 let ownerUserId: String? = try await reportHostInitiated(transaction, userId: userId, trigger: .syncHistoricalData)
-                if let ownerUserId, ownerUserId != userId {
+                if let ownerUserId {
                     resolvedOwnerUserId = ownerUserId
                 }
             } catch {
