@@ -42,14 +42,34 @@ private final class CurrencySymbolCache: @unchecked Sendable {
             return cached
         }
 
-        let locale: Locale? = sortedLocaleIdentifiers.lazy.map { Locale(identifier: $0) }.first { $0.currencyCode == currencyCode }
-        let symbol: String? = locale?.currencySymbol
+        let symbol: String? = Self.resolveSymbol(for: currencyCode)
 
         lock.lock()
         symbols[currencyCode] = symbol
         lock.unlock()
 
         return symbol
+    }
+
+    /// Many locales share a currency, and most of them render it with a
+    /// disambiguating prefix — ba_RU gives "RUB", ain_JP "JP¥", csw_CA "CA$".
+    /// The currency's own locale is the one that needs no prefix, so the
+    /// shortest symbol wins; ties keep the sorted-identifier order, which
+    /// makes the answer stable across calls and launches.
+    private static func resolveSymbol(for currencyCode: String) -> String? {
+        var bestSymbol: String? = nil
+
+        for identifier in sortedLocaleIdentifiers {
+            let locale = Locale(identifier: identifier)
+            guard locale.currencyCode == currencyCode else { continue }
+            guard let symbol: String = locale.currencySymbol, !symbol.isEmpty else { continue }
+
+            if bestSymbol == nil || symbol.count < bestSymbol!.count {
+                bestSymbol = symbol
+            }
+        }
+
+        return bestSymbol
     }
 }
 
@@ -108,6 +128,13 @@ func decode(fromObject container: KeyedDecodingContainer<JSONCodingKeys>) -> [St
   return result
 }
 
+/// Decodes any JSON value, carrying nothing over. Decoding it succeeds for
+/// every element, which is what advances an unkeyed container past a value
+/// none of the typed branches can represent.
+private struct SkippedJSONValue: Decodable {
+  init(from decoder: Decoder) throws {}
+}
+
 func decode(fromArray container: inout UnkeyedDecodingContainer) -> [Any] {
   var result: [Any] = []
 
@@ -126,6 +153,15 @@ func decode(fromArray container: inout UnkeyedDecodingContainer) -> [Any] {
       result.append(decode(fromArray: &nestedArray))
     } else if (try? container.decodeNil()) == true {
       result.append(Any?(nil) as Any)
+    } else if (try? container.decode(SkippedJSONValue.self)) != nil {
+      // Representable in no branch above — e.g. a number larger than Double,
+      // which decodeNil() also declines without moving the cursor. Skipping
+      // the element is what keeps the loop advancing.
+      continue
+    } else {
+      // The container refused to advance at all: stop with what was decoded
+      // rather than spin forever.
+      break
     }
   }
 

@@ -151,6 +151,7 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
 
             let generation: Int = currentGeneration()
             let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList()
+            try checkGenerationUnchanged(generation)
             handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
             return remoteConfigList
         } catch {
@@ -185,6 +186,7 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
 
             let generation: Int = currentGeneration()
             let remoteConfigList: Qonversion.RemoteConfigList = try await remoteConfigService.loadRemoteConfigList(contextKeys: contextKeys, includeEmptyContextKey: includeEmptyContextKey)
+            try checkGenerationUnchanged(generation)
             handleLoadedRemoteConfigList(remoteConfigList, generation: generation)
             return remoteConfigList
         } catch {
@@ -202,25 +204,32 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         }
     }
 
+    /// The stability gate matters as much here as on the loading paths: an
+    /// attach issued while an identify is switching the uid would bind the
+    /// pre-identify user.
     func attachUserToRemoteConfig(id: String) async throws {
+        try await awaitUserStability()
         _ = try await userManager.obtainUser()
         try await remoteConfigService.attachUserToRemoteConfig(id: id)
         invalidateCache()
     }
 
     func detachUserFromRemoteConfig(id: String) async throws {
+        try await awaitUserStability()
         _ = try await userManager.obtainUser()
         try await remoteConfigService.detachUserFromRemoteConfig(id: id)
         invalidateCache()
     }
 
     func attachUserToExperiment(id: String, groupId: String) async throws {
+        try await awaitUserStability()
         _ = try await userManager.obtainUser()
         try await remoteConfigService.attachUserToExperiment(id: id, groupId: groupId)
         invalidateCache()
     }
 
     func detachUserFromExperiment(id: String) async throws {
+        try await awaitUserStability()
         _ = try await userManager.obtainUser()
         try await remoteConfigService.detachUserFromExperiment(id: id)
         invalidateCache()
@@ -230,11 +239,16 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
     /// ones afterwards would defeat the call.
     private func invalidateCache() {
         lock.lock()
-        defer { lock.unlock() }
         // The generation bump keeps an in-flight pre-attach response from
         // repopulating the cache it just cleared.
         cacheGeneration += 1
         loadedConfigs = [:]
+        // Deregistering the in-flight loads stops a post-attach caller from
+        // joining a request that was computed before the attach. Unlike
+        // userDidChange they are not cancelled: the response still belongs to
+        // the SAME user, so the caller that started it keeps its answer.
+        loadTasks = [:]
+        lock.unlock()
     }
     
     // MARK: - Private
@@ -252,6 +266,16 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         return cacheGeneration
     }
 
+    /// A list that came back after a user switch was computed for the previous
+    /// user: it is neither cached nor returned. Throwing cancellation puts it
+    /// on the same path as an abandoned single-config load — the caller gets a
+    /// classified QonversionError and never the bundled fallback.
+    private func checkGenerationUnchanged(_ generation: Int) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard generation == cacheGeneration else { throw CancellationError() }
+    }
+
     private func cachedConfigs(for contextKeys: [String]) -> [Qonversion.RemoteConfig] {
         lock.lock()
         defer { lock.unlock() }
@@ -265,7 +289,12 @@ final class RemoteConfigManager: RemoteConfigManagerInterface, @unchecked Sendab
         guard generation == cacheGeneration else { return }
 
         remoteConfigList.remoteConfigs.forEach { remoteConfig in
-            let contextKey: String = remoteConfig.source?.contextKey ?? Constants.emptyContextKey.rawValue
+            // A config the backend reports no source for is assigned to no
+            // context key at all: caching it under "" would let it shadow the
+            // empty-context-key config that loadRemoteConfig(nil) asks for.
+            guard let source: Qonversion.RemoteConfig.Source = remoteConfig.source else { return }
+
+            let contextKey: String = source.contextKey ?? Constants.emptyContextKey.rawValue
             loadedConfigs[contextKey] = remoteConfig
         }
     }

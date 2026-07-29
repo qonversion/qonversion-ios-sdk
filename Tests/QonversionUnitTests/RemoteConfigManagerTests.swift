@@ -620,6 +620,130 @@ final class RemoteConfigManagerTests: XCTestCase {
         }
     }
 
+    // MARK: - list loads abandoned by a user switch
+
+    func testAListLoadedForThePreviousUserIsNotServed() async throws {
+        // The single-config loader is guarded; the list loader used to hand the
+        // previous user's configs straight to the host.
+        remoteConfigService.remoteConfigListResult = Qonversion.RemoteConfigList(remoteConfigs: [
+            makeRemoteConfig(contextKey: "main", identifier: "previous-user-config"),
+        ])
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfigList = { await gate.wait() }
+
+        async let staleLoad: Qonversion.RemoteConfigList = manager.loadRemoteConfigList()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        manager.userDidChange()
+        await gate.open()
+
+        do {
+            _ = try await staleLoad
+            XCTFail("Expected the abandoned list load to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled, "the previous user's configs must never reach the host")
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
+    func testAContextKeyedListLoadedForThePreviousUserIsNotServed() async throws {
+        remoteConfigService.remoteConfigListResult = Qonversion.RemoteConfigList(remoteConfigs: [
+            makeRemoteConfig(contextKey: "main", identifier: "previous-user-config"),
+        ])
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfigList = { await gate.wait() }
+
+        async let staleLoad: Qonversion.RemoteConfigList = manager.loadRemoteConfigList(contextKeys: ["main"], includeEmptyContextKey: false)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        manager.userDidChange()
+        await gate.open()
+
+        do {
+            _ = try await staleLoad
+            XCTFail("Expected the abandoned list load to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .cancelled, "the previous user's configs must never reach the host")
+        } catch {
+            XCTFail("A raw \(type(of: error)) must never reach the host")
+        }
+    }
+
+    func testAListLoadedWithoutAUserSwitchIsStillServed() async throws {
+        remoteConfigService.remoteConfigListResult = Qonversion.RemoteConfigList(remoteConfigs: [
+            makeRemoteConfig(contextKey: "main", identifier: "current-user-config"),
+        ])
+
+        let list: Qonversion.RemoteConfigList = try await manager.loadRemoteConfigList()
+
+        XCTAssertEqual(list.remoteConfigs.map { $0.source?.identifier }, ["current-user-config"])
+    }
+
+    // MARK: - attach / detach and the user-stability gate
+
+    func testAttachAndDetachWaitForUserStability() async throws {
+        try await manager.attachUserToRemoteConfig(id: "rc-1")
+        try await manager.detachUserFromRemoteConfig(id: "rc-1")
+        try await manager.attachUserToExperiment(id: "exp-1", groupId: "group-1")
+        try await manager.detachUserFromExperiment(id: "exp-1")
+
+        XCTAssertEqual(userManager.awaitUserStabilityCallsCount, 4,
+                       "an attach landing mid-identify would bind the pre-identify user")
+    }
+
+    func testACallerArrivingAfterAttachDoesNotJoinThePreAttachRequest() async throws {
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "pre-attach")
+        let gate = ManagerAsyncGate()
+        remoteConfigService.onLoadRemoteConfig = { await gate.wait() }
+
+        async let staleLoad: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        try await manager.attachUserToRemoteConfig(id: "rc-1")
+
+        // The host redraws right after the successful attach, while the
+        // pre-attach request is still in flight — the only moment it can be
+        // joined.
+        remoteConfigService.onLoadRemoteConfig = nil
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main", identifier: "post-attach")
+        async let freshLoad: Qonversion.RemoteConfig = manager.loadRemoteConfig(contextKey: "main")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        await gate.open()
+
+        let fresh: Qonversion.RemoteConfig = try await freshLoad
+        _ = try? await staleLoad
+
+        XCTAssertEqual(fresh.source?.identifier, "post-attach",
+                       "the post-attach caller must not be answered by the pre-attach request")
+        XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 2)
+    }
+
+    // MARK: - list cache keying
+
+    func testAConfigWithoutASourceDoesNotOccupyTheEmptyContextKeySlot() async throws {
+        let unassigned = Qonversion.RemoteConfig(payload: ["flag": "unassigned"], experiment: nil, source: nil)
+        remoteConfigService.remoteConfigListResult = Qonversion.RemoteConfigList(remoteConfigs: [unassigned])
+
+        _ = try await manager.loadRemoteConfigList(contextKeys: ["paywall"], includeEmptyContextKey: false)
+
+        remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: nil, identifier: "empty-key-config")
+        let config: Qonversion.RemoteConfig = try await manager.loadRemoteConfig(contextKey: nil)
+
+        XCTAssertEqual(config.source?.identifier, "empty-key-config",
+                       "an unassigned config must not shadow the empty context key")
+        XCTAssertEqual(remoteConfigService.loadRemoteConfigContextKeys.count, 1)
+    }
+
+    func testAConfigWithAnEmptyContextKeyStillFillsTheEmptyContextKeySlot() async throws {
+        remoteConfigService.remoteConfigListResult = Qonversion.RemoteConfigList(remoteConfigs: [
+            makeRemoteConfig(contextKey: nil, identifier: "empty-key-config"),
+        ])
+
+        _ = try await manager.loadRemoteConfigList(contextKeys: [], includeEmptyContextKey: true)
+        let config: Qonversion.RemoteConfig = try await manager.loadRemoteConfig(contextKey: nil)
+
+        XCTAssertEqual(config.source?.identifier, "empty-key-config")
+        XCTAssertTrue(remoteConfigService.loadRemoteConfigContextKeys.isEmpty, "the list response must have filled the cache")
+    }
+
     func testUserDidChangeClearsCachedConfigs() async throws {
         remoteConfigService.remoteConfigResult = makeRemoteConfig(contextKey: "main")
         _ = try await manager.loadRemoteConfig(contextKey: "main")
