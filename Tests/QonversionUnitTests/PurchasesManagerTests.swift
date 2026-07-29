@@ -1518,6 +1518,73 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
     }
 
+    func testRestoreSwitchesToTheOwnerEvenWhenTheListenerAlreadyClaimedTheGate() async throws {
+        // A6 cluster #7: the observer keeps a transaction's id in the dedup
+        // gate for the whole session. That used to make an explicit restore()
+        // of the SAME transaction skip its own report — and with it, the only
+        // response able to name the owner.
+        let transaction = makeTransaction(id: "t1")
+        manager.transactionUpdated(transaction)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        facade.restoreResult = [transaction]
+        service.reportedOwnerUserId = "QON_owner"
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(service.sentTriggers, [.purchase, .restore], "restore must still reach the backend")
+        XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
+    }
+
+    func testSyncHistoricalDataSwitchesToTheOwnerEvenWhenTheListenerAlreadyClaimedTheGate() async {
+        let transaction = makeTransaction(id: "t1")
+        manager.transactionUpdated(transaction)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        facade.historicalDataResult = [transaction]
+        service.reportedOwnerUserId = "QON_owner"
+
+        await manager.syncHistoricalData()
+
+        XCTAssertEqual(service.sentTriggers, [.purchase, .syncHistoricalData], "the sync must still reach the backend")
+        XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
+    }
+
+    // MARK: - automatic paths never switch the owner (ObjC parity)
+
+    func testObservedUpdateNeverSwitchesTheUserEvenWhenTheBackendNamesAnotherOwner() async {
+        // Only a host-initiated restore/sync may follow a purchase to another
+        // Qonversion user — the transaction observer never does, no matter
+        // whose uid the backend resolves the purchase to.
+        service.reportedOwnerUserId = "QON_owner"
+
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(userManager.switchedToUserIds.isEmpty, "an automatic report must never move the uid")
+    }
+
+    func testHandleTransactionsNeverSwitchesTheUserEvenWhenTheBackendNamesAnotherOwner() async {
+        service.reportedOwnerUserId = "QON_owner"
+
+        await manager.handle(transactions: [makeTransaction(id: "h1")])
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["h1"], "the report itself must not be blocked by the resolved owner")
+        XCTAssertTrue(userManager.switchedToUserIds.isEmpty)
+    }
+
+    func testUnfinishedSweepNeverSwitchesTheUserEvenWhenTheBackendNamesAnotherOwner() async {
+        service.reportedOwnerUserId = "QON_owner"
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "s1")]
+
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["s1"], "the report itself must not be blocked by the resolved owner")
+        XCTAssertTrue(userManager.switchedToUserIds.isEmpty)
+    }
+
     // MARK: - backend entitlements survive a store failure on restore
 
     func testRestoreReturnsBackendEntitlementsWhenTheStoreFails() async throws {
