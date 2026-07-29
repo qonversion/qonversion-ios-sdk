@@ -1563,6 +1563,38 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
     }
 
+    func testAFailedRestoreReportDoesNotReleaseTheIdTheListenerOwns() async throws {
+        // The listener holds "t1" in the gate for the whole session. A failed
+        // host-initiated report that BYPASSED the gate must not release that id
+        // out from under the listener — the sweep would otherwise re-take it and
+        // report/finish the same transaction a second time.
+        let reportsGate = TransactionReportsGate()
+        manager = makeManager(reportsGate: reportsGate)
+        let transaction = makeTransaction(id: "t1")
+        manager.transactionUpdated(transaction)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        facade.restoreResult = [transaction]
+        service.error = MockError.stubbed
+        _ = try? await manager.restore()
+
+        XCTAssertFalse(reportsGate.tryTake("t1"), "a failed host-initiated report must not hand back an id another path still owns")
+    }
+
+    func testAFailedRestoreReportReleasesOnlyTheIdItClaimedItself() async throws {
+        // The mirror case: a host-initiated report that DID claim the gate for
+        // its own id must release it on failure, or the id stays locked and the
+        // sweep/listener can never finish and surface the transaction.
+        let reportsGate = TransactionReportsGate()
+        manager = makeManager(reportsGate: reportsGate)
+        facade.restoreResult = [makeTransaction(id: "t2")]
+        service.error = MockError.stubbed
+
+        _ = try? await manager.restore()
+
+        XCTAssertTrue(reportsGate.tryTake("t2"), "an id this call claimed must go back so the sweep or the listener can retry it")
+    }
+
     func testRestoreSwitchesToTheOwnerEvenWhenALaterReportFails() async throws {
         // A6 cluster #7: the backend resolves an early restored transaction to
         // another user, then a later transaction's report is rejected hard
