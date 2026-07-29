@@ -396,16 +396,22 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 }
             }
         } catch {
+            // The local catalog is only intact before the switch — a user change
+            // wipes it, so compute the fallback while the products still exist.
+            let fallback: [String: Qonversion.Entitlement]? = error.allowsLocalEntitlementsFallback ? await entitlementsManager.localFallbackEntitlements(for: latest) : nil
             // A later report failing cannot discard an owner an earlier report
             // already resolved — the switch happens before the error becomes a
             // result (ObjC follows the owner the moment the backend names it).
             await switchToOwnerIfNeeded(resolvedOwnerUserId)
-            if error.allowsLocalEntitlementsFallback {
-                return await entitlementsManager.localFallbackEntitlements(for: latest)
+            if let fallback {
+                return fallback
             }
             throw QonversionError(type: .restoreFailed, message: nil, error: error)
         }
 
+        // Capture the local fallback before the switch wipes the catalog; only a
+        // resolved owner switches, so without one this stays nil and costs nothing.
+        let preSwitchFallback: [String: Qonversion.Entitlement]? = resolvedOwnerUserId == nil ? nil : await entitlementsManager.localFallbackEntitlements(for: latest)
         await switchToOwnerIfNeeded(resolvedOwnerUserId)
 
         // The store sync reached the backend: the answer restore() returns
@@ -414,6 +420,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
         if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
             return fetched
+        }
+        if let preSwitchFallback {
+            return preSwitchFallback
         }
         return await entitlementsManager.localFallbackEntitlements(for: latest)
     }
