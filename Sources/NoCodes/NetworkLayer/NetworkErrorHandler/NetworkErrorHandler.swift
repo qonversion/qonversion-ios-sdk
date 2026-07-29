@@ -48,6 +48,9 @@ final class NetworkErrorHandler: NetworkErrorHandlerInterface, Sendable {
         } else {
             info[ErrorConstants.messageKey.rawValue] = HTTPURLResponse.localizedString(forStatusCode: response.statusCode)
         }
+        // Carried so a caller can tell a rejected payload (4xx) from a backend
+        // that did not process the request (5xx).
+        info[ErrorConstants.statusCodeKey.rawValue] = response.statusCode
 
         return NoCodesError(type: type, message: apiErrorWrapper?.error.message, error: error, additionalInfo: info)
     }

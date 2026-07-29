@@ -9,6 +9,7 @@ import Foundation
 
 enum ErrorConstants: String {
     case messageKey = "message"
+    case statusCodeKey = "statusCode"
 }
 
 enum ResponseCode: Int {
@@ -18,7 +19,10 @@ enum ResponseCode: Int {
     case unauthorized = 401
     case paymentRequired = 402
     case forbidden = 403
+    case clientErrorMin = 400
     case notFound = 404
+    case tooManyRequests = 429
+    case clientErrorMax = 499
     case internalErrorMin = 500
     case internalErrorMax = 599
 }
