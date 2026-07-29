@@ -263,6 +263,66 @@ final class PurchasesServiceTests: XCTestCase {
         }
     }
 
+    // MARK: - promotional offer: real request pipeline (v4 route)
+
+    /// The REAL processor over a stubbed transport, exactly like
+    /// EntitlementsServiceTests: proves the request actually leaves for the
+    /// v4 path and that the real error handler's mapping (including
+    /// secrets_not_found) survives the service's own error wrapping.
+    private func makeLivePurchasesService(responseData: Data, statusCode: Int) -> (PurchasesService, MockNetworkProvider) {
+        let networkProvider = MockNetworkProvider()
+        networkProvider.responseData = responseData
+        networkProvider.response = HTTPURLResponse(
+            url: URL(string: "https://api2.qonversion.io/v4/users/QON_buyer/offers/offer1/signatures")!,
+            statusCode: statusCode,
+            httpVersion: nil,
+            headerFields: nil
+        )!
+        let internalConfig = InternalConfig(userId: "QON_buyer")
+        let miscAssembly = MiscAssembly(apiKey: "test", userDefaults: TestDefaults.makeIsolated(), internalConfig: internalConfig)
+        let processor = RequestProcessor(
+            baseURL: "https://api2.qonversion.io/",
+            networkProvider: networkProvider,
+            headersBuilder: MockHeadersBuilder(),
+            errorHandler: miscAssembly.errorHandler(),
+            decoder: miscAssembly.responseDecoder(),
+            retriableRequestKinds: [],
+            requestsStorage: MockRequestsStorage(),
+            rateLimiter: MockRateLimiter()
+        )
+
+        return (PurchasesService(requestProcessor: processor, appBundleId: "com.test.app"), networkProvider)
+    }
+
+    func testPromotionalOfferPostsToTheV4SignaturesRouteAndDecodesTheResponse() async throws {
+        let json = #"{"key_identifier": "KEY123", "nonce": "9E76F7BE-2E9D-4B1B-9A5D-2B1A6B7B0A11", "signature": "AQI=", "timestamp": "1700000000000"}"#
+        let (service, networkProvider) = makeLivePurchasesService(responseData: Data(json.utf8), statusCode: 200)
+
+        let offer = try await service.promotionalOffer(userId: "QON_buyer", offerId: "offer1", productStoreId: "com.app.pro")
+
+        XCTAssertEqual(networkProvider.sentRequests.first?.url?.absoluteString, "https://api2.qonversion.io/v4/users/QON_buyer/offers/offer1/signatures")
+        XCTAssertEqual(networkProvider.sentRequests.first?.httpMethod, "POST")
+        XCTAssertEqual(offer.keyId, "KEY123")
+        XCTAssertEqual(offer.timestamp, 1_700_000_000_000, "timestamp is a millisecond STRING on the wire")
+    }
+
+    func testPromotionalOfferOnTheV4RouteStillMapsSecretsNotFound() async {
+        // The reason for the v4 switch: the project has no App Store Connect
+        // credentials, so the signature service answers 422 secrets_not_found.
+        let json = #"{"error": {"code": "secrets_not_found", "message": "no credentials"}}"#
+        let (service, _) = makeLivePurchasesService(responseData: Data(json.utf8), statusCode: 422)
+
+        do {
+            _ = try await service.promotionalOffer(userId: "QON_buyer", offerId: "offer1", productStoreId: "com.app.pro")
+            XCTFail("Expected a mapping error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .promoOfferSigningFailed, "the service still names its own operation as the failure")
+            XCTAssertEqual(error.apiCode, "secrets_not_found", "the backend slug must survive the service's own error wrapping")
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
     func testSendWrapsErrorsIntoPurchaseReportingFailed() async {
         let processor = MockRequestProcessor()
         processor.error = MockError.stubbed
