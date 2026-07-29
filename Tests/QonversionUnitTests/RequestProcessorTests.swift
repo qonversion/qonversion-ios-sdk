@@ -43,7 +43,7 @@ final class RequestProcessorTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeProcessor(retriableRequestKinds: [Request.Kind] = [], reportsGate: TransactionReportsGate = TransactionReportsGate(), criticalErrorLatch: CriticalErrorLatch = CriticalErrorLatch(), networkProvider: NetworkProviderInterface? = nil, rateLimiter: RateLimiterInterface? = nil) -> RequestProcessor {
+    private func makeProcessor(retriableRequestKinds: [Request.Kind] = [], reportsGate: TransactionReportsGate = TransactionReportsGate(), criticalErrorLatch: CriticalErrorLatch = CriticalErrorLatch(), networkProvider: NetworkProviderInterface? = nil, rateLimiter: RateLimiterInterface? = nil, transportRetryDelayCeiling: TimeInterval = 0) -> RequestProcessor {
         let provider: NetworkProviderInterface = networkProvider ?? self.networkProvider
         let limiter: RateLimiterInterface = rateLimiter ?? self.rateLimiter
 
@@ -59,7 +59,7 @@ final class RequestProcessorTests: XCTestCase {
             delayCalculator: IncrementalDelayCalculator(),
             // The backoff itself is proven by IncrementalDelayCalculatorTests;
             // waiting it out here would only make the suite slow.
-            transportRetryDelayCeiling: 0,
+            transportRetryDelayCeiling: transportRetryDelayCeiling,
             reportsGate: reportsGate,
             criticalErrorLatch: criticalErrorLatch
         )
@@ -252,7 +252,10 @@ final class RequestProcessorTests: XCTestCase {
         XCTAssertEqual(requestsStorage.storedRequests.count, 1, "the entry stays queued for the sweep to evict on delivery")
     }
 
-    func testADeliveredReplayKeepsTheTransactionTakenSoTheSweepSkipsIt() async {
+    func testADeliveredReplayHandsTheTransactionBackToTheSweepAsAlreadyReported() async {
+        // The replay only POSTs — it never finishes the StoreKit transaction
+        // and never surfaces a deferred purchase. Holding the id would strand
+        // the transaction for the whole session.
         let reportsGate = TransactionReportsGate()
         requestsStorage.append(StoredRequest(
             url: baseURL + "v4/users/u/purchases",
@@ -268,7 +271,51 @@ final class RequestProcessorTests: XCTestCase {
         await waitUntil { self.requestsStorage.storedRequests.isEmpty }
 
         XCTAssertEqual(networkProvider.sentRequests.count, 1)
-        XCTAssertFalse(reportsGate.tryTake("tx1"), "the sweep must not post the same purchase again")
+        XCTAssertTrue(reportsGate.wasReported("tx1"), "the delivery must be recorded so nobody posts it twice")
+        XCTAssertTrue(reportsGate.tryTake("tx1"), "the sweep must still be able to finish and surface it")
+    }
+
+    func testAReplayThatTripsTheLatchKeepsItsEntryQueued() async {
+        // The doc contract of processStoredRequests: a latched critical error
+        // stops the replay WITHOUT removing anything.
+        let latch = CriticalErrorLatch()
+        requestsStorage.append(StoredRequest(
+            url: baseURL + "v4/users/u/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-u-tx1",
+            transactionId: "tx1"
+        ))
+        networkProvider.response = makeHTTPResponse(statusCode: 401)
+        errorHandler.errorToReturn = QonversionError(type: .critical)
+        let processor = makeProcessor(criticalErrorLatch: latch)
+
+        processor.processStoredRequests()
+        await waitUntil { latch.error != nil }
+
+        XCTAssertNotNil(latch.error, "a revoked key must latch")
+        XCTAssertEqual(requestsStorage.storedRequests.count, 1, "the entry must wait for a launch where the key works")
+    }
+
+    func testAReplayThatTripsTheLatchReleasesTheTransactionForTheNextLaunch() async {
+        let reportsGate = TransactionReportsGate()
+        let latch = CriticalErrorLatch()
+        requestsStorage.append(StoredRequest(
+            url: baseURL + "v4/users/u/purchases",
+            method: "POST",
+            body: nil,
+            dedupKey: "createPurchase-u-tx1",
+            transactionId: "tx1"
+        ))
+        networkProvider.response = makeHTTPResponse(statusCode: 401)
+        errorHandler.errorToReturn = QonversionError(type: .critical)
+        let processor = makeProcessor(reportsGate: reportsGate, criticalErrorLatch: latch)
+
+        processor.processStoredRequests()
+        await waitUntil { latch.error != nil }
+
+        XCTAssertFalse(reportsGate.wasReported("tx1"), "a rejected report is not a delivery")
+        XCTAssertTrue(reportsGate.tryTake("tx1"), "an undelivered report must not block the sweep")
     }
 
     func testAFailedReplayReleasesTheTransactionForTheSweep() async {
@@ -773,7 +820,7 @@ final class RequestProcessorTests: XCTestCase {
     func testAConnectionFailureSurfacesAsNetworkConnectionFailed() async {
         // No response ever arrived, so ".invalidResponse" describes a response
         // that does not exist — and the host has no way to branch on "offline".
-        let connectionErrors: [URLError.Code] = [.notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotConnectToHost, .dnsLookupFailed, .callIsActive, .dataNotAllowed]
+        let connectionErrors: [URLError.Code] = [.notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotConnectToHost, .dnsLookupFailed, .callIsActive, .dataNotAllowed, .cannotFindHost, .secureConnectionFailed]
 
         for code in connectionErrors {
             networkProvider = MockNetworkProvider()
@@ -788,6 +835,54 @@ final class RequestProcessorTests: XCTestCase {
                 XCTAssertEqual(qonversionError?.type, .networkConnectionFailed, "\(code) is a connection failure")
                 XCTAssertEqual((qonversionError?.error as? URLError)?.code, code, "the underlying error stays attached")
             }
+        }
+    }
+
+    func testAnUnresolvableHostIsRetriedLikeAnyConnectionFailure() async {
+        // CFNetwork reports an offline DNS failure as -1003, not -1006.
+        networkProvider.error = URLError(.cannotFindHost)
+        let processor = makeProcessor()
+
+        _ = try? await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+
+        XCTAssertEqual(networkProvider.sentRequests.count, RequestProcessor.maxTransportRetries + 1)
+    }
+
+    // MARK: - cancellation is not an offline failure
+
+    func testACancelledSendIsNotQueuedForReplay() async {
+        // The request may well have reached the backend — replaying it would
+        // report the same purchase twice.
+        networkProvider.error = URLError(.cancelled)
+        let processor = makeProcessor(retriableRequestKinds: [.createPurchase])
+
+        _ = try? await processor.process(
+            request: .createPurchase(userId: "u", body: ["store_data": ["transaction_id": "t1"] as RequestBodyDict]),
+            responseType: EmptyApiResponse.self
+        )
+
+        XCTAssertTrue(requestsStorage.storedRequests.isEmpty, "a cancelled send must never be queued")
+    }
+
+    func testCancellationDuringTheBackoffStillSurfacesTheTransportFailure() async {
+        // The host branches on .networkConnectionFailed to fall back to local
+        // entitlements; a CancellationError would hide the outage.
+        networkProvider.error = URLError(.notConnectedToInternet)
+        let processor = makeProcessor(transportRetryDelayCeiling: 5)
+
+        let task = Task { () -> ProcessorTestPayload in
+            return try await processor.process(request: .getUser(id: "u"), responseType: ProcessorTestPayload.self)
+        }
+        await waitUntil { self.networkProvider.sentRequests.count >= 1 }
+        task.cancel()
+
+        do {
+            _ = try await task.value
+            XCTFail("Expected the transport failure to surface")
+        } catch {
+            let qonversionError = error as? QonversionError
+            XCTAssertEqual(qonversionError?.type, .networkConnectionFailed)
+            XCTAssertEqual((qonversionError?.error as? URLError)?.code, .notConnectedToInternet, "the original outage must stay attached")
         }
     }
 

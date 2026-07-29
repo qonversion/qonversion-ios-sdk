@@ -572,9 +572,19 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             }
         }
 
+        // The offline replay may have delivered this report already. It cannot
+        // finish or surface a transaction, so the rest of the outcome is still
+        // owed — only the POST must not happen twice.
+        var alreadyReported = false
+        if let id: String = transaction.id {
+            alreadyReported = reportsGate.wasReported(id)
+        }
+
         var reportFailed = false
         do {
-            try await purchasesService.send(transaction, userId: reportUserId, options: reportOptions(for: transaction), trigger: trigger)
+            if !alreadyReported {
+                try await purchasesService.send(transaction, userId: reportUserId, options: reportOptions(for: transaction), trigger: trigger)
+            }
             purchaseAssociationsStorage.remove(for: transaction.productId)
             // The deferred purchase this delivery emits must carry the
             // entitlements the report produced, not the ones cached before it.

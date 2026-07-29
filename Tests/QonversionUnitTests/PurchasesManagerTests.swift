@@ -1756,6 +1756,26 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.finishedTransactions.map(\.id), ["swept-1"])
     }
 
+    func testTheSweepFinishesAndSurfacesATransactionTheReplayAlreadyReported() async {
+        // The offline replay POSTs a queued report but cannot finish a StoreKit
+        // transaction or emit a deferred purchase — the sweep completes the
+        // outcome without posting the purchase a second time.
+        let reportsGate = TransactionReportsGate()
+        reportsGate.markReported("replayed-1")
+        manager = makeManager(launchMode: .subscriptionManagement, reportsGate: reportsGate)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "replayed-1")]
+        let collector = StreamCollector(manager.deferredPurchases())
+
+        await manager.processUnfinishedTransactions()
+
+        await waitUntil { await !collector.received.isEmpty }
+        XCTAssertTrue(service.sentTransactions.isEmpty, "the replay already delivered this report")
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["replayed-1"])
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.map(\.transaction.id), ["replayed-1"])
+    }
+
     func testATransactionSurfacedByTheSweepIsNotEmittedAgainOnTheNextLaunch() async {
         // Analytics mode never finishes anything, so the store re-delivers the
         // same transaction on every cold start.
