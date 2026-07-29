@@ -64,9 +64,13 @@ final class QonversionAssembly {
         // Resolves the anonymous user id (persisted or generated) into InternalConfig.
         _ = servicesAssembly.userService()
 
+        // The previous SDK generation mirrored every blob into the defaults the
+        // host handed it, so every migration below reads and cleans both.
+        let hostDefaults: UserDefaults = miscAssembly.userDefaults
+
         // The previous SDK generation's offline purchase queue cannot be
         // replayed against v4; the unfinished-transaction sweep covers it.
-        let legacyPurchasesQueueMigration = LegacyPurchasesQueueMigration()
+        let legacyPurchasesQueueMigration = LegacyPurchasesQueueMigration(hostDefaults: hostDefaults)
         legacyPurchasesQueueMigration.run()
 
         // ...but its entitlements cache and product mapping CAN be carried
@@ -74,9 +78,20 @@ final class QonversionAssembly {
         // offline has no access until the first successful request.
         let legacyEntitlementsMigration = LegacyEntitlementsMigration(
             localStorage: miscAssembly.localStorage(),
-            logger: miscAssembly.loggerWrapper()
+            logger: miscAssembly.loggerWrapper(),
+            hostDefaults: hostDefaults
         )
         legacyEntitlementsMigration.run()
+
+        // Same launch, and before that sweep runs: the purchase context of an
+        // unfinished transaction, and the flag that keeps syncHistoricalData()
+        // from re-sending the whole history.
+        let legacyPurchaseStateMigration = LegacyPurchaseStateMigration(
+            localStorage: miscAssembly.localStorage(),
+            logger: miscAssembly.loggerWrapper(),
+            hostDefaults: hostDefaults
+        )
+        legacyPurchaseStateMigration.run()
     }
 
     /// Registers every user-scoped cache with the user gate in a FIXED order,
@@ -129,7 +144,12 @@ final class QonversionAssembly {
             return crashReportsStorageInstance
         }
 
-        let storage = CrashReportsStorage(localStorage: miscAssembly.localStorage())
+        let fileStore = CrashReportsFileStore(
+            directory: CrashReportsFileStore.defaultDirectory(),
+            encoder: miscAssembly.encoder(),
+            decoder: miscAssembly.jsonDecoder()
+        )
+        let storage = CrashReportsStorage(localStorage: miscAssembly.localStorage(), fileStore: fileStore)
         crashReportsStorageInstance = storage
 
         return storage

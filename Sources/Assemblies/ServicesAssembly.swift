@@ -16,7 +16,12 @@ final class ServicesAssembly {
     private let apiKey: String
     let miscAssembly: MiscAssembly
     private let baseURL: String
-    
+
+    /// The host's proxy, or nil when the SDK talks to Qonversion directly.
+    /// Kept apart from `baseURL` because the crash transport's own default is a
+    /// different host, and only a configured proxy may displace it.
+    private let proxyBaseURL: String?
+
     private var deviceInfoCollectorInstance: DeviceInfoCollector?
 
     // Holds the loaded store products cache and the transaction updates task —
@@ -32,6 +37,7 @@ final class ServicesAssembly {
         self.apiKey = apiKey
         self.miscAssembly = miscAssembly
         self.baseURL = baseURL ?? StringConstants.baseURL.rawValue
+        self.proxyBaseURL = baseURL
     }
     
     func userService() -> UserServiceInterface {
@@ -149,8 +155,14 @@ final class ServicesAssembly {
     
     /// Crash reports go to a different host than everything else, with none of
     /// the API processor's machinery — see ``CrashReportsTransport``.
+    ///
+    /// A configured proxy still wins: `proxyURL` is documented as redirecting
+    /// all of the SDK's traffic, and hosts adopt it precisely where the
+    /// Qonversion domains are unreachable or disallowed.
     func crashReportsTransport() -> CrashReportsTransportInterface {
-        return CrashReportsTransport(networkProvider: networkProvider())
+        let baseURL: String = proxyBaseURL ?? CrashReportsTransport.defaultBaseURL
+
+        return CrashReportsTransport(networkProvider: networkProvider(), baseURL: baseURL)
     }
 
     func sdkLogDevice() -> SdkLogDevice {
