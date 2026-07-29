@@ -44,6 +44,22 @@ enum NoCodesJavaScript {
       .replacingOccurrences(of: "\u{2029}", with: "\\u2029")
   }
 
+  /// Builds the script that hands a screen the appearance it has to render
+  /// with after the system appearance changed under it.
+  ///
+  /// The theme is the one the SDK resolved, not the one the system reports: a
+  /// host that configured a fixed theme keeps it across a system change.
+  static func themeUpdateScript(resolvedTheme: NoCodesResolvedTheme) -> String {
+    let themeLiteral: String = stringLiteral(from: resolvedTheme.rawValue)
+
+    return """
+    window.noCodesContext = window.noCodesContext || {};
+    window.noCodesContext.device = window.noCodesContext.device || {};
+    window.noCodesContext.device.theme = \(themeLiteral);
+    window.dispatchEvent(new Event("noCodesContextUpdate"));
+    """
+  }
+
   /// Builds the script that hands the host app's custom variables to the screen.
   ///
   /// One statement per variable, in a stable order so the same variables always

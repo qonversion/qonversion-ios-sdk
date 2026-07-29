@@ -149,6 +149,8 @@ private struct FlowTrace {
 
     private(set) var effects: [NoCodesFlowEffect] = []
     private var gate = NoCodesPresentationGate()
+    /// What the coordinator itself put on screen and still holds on to.
+    private var trackedScreens: Int = 0
 
     var finishCount: Int {
         return effects.filter { $0 == .reportFinished }.count
@@ -178,6 +180,7 @@ private struct FlowTrace {
         }
 
         gate.screenPresented()
+        trackedScreens += 1
 
         return true
     }
@@ -186,7 +189,11 @@ private struct FlowTrace {
         let closeEffects: [NoCodesFlowEffect] = gate.closeRequested()
         effects += closeEffects
 
-        if closeEffects.contains(.dismissVisibleScreen) {
+        guard closeEffects.contains(.dismissVisibleScreen) else { return }
+
+        // The coordinator closes every screen it put on screen, and each of
+        // those closes comes back as its own dismissal.
+        while trackedScreens > 0 {
             dismissVisibleScreen()
         }
     }
@@ -194,6 +201,13 @@ private struct FlowTrace {
     /// The dismissal the coordinator asked for came back from the view
     /// controller.
     mutating func dismissVisibleScreen() {
+        trackedScreens = max(0, trackedScreens - 1)
+        effects += gate.screenFinished()
+    }
+
+    /// A screen the coordinator never put on screen itself — one the flow
+    /// pushed on top of another from its own markup — reporting the flow over.
+    mutating func untrackedScreenReportedFinished() {
         effects += gate.screenFinished()
     }
 }
@@ -324,6 +338,74 @@ final class NoCodesFinishCallbackTests: XCTestCase {
         XCTAssertFalse(trace.showReady(first), "the host closed the flow")
         XCTAssertFalse(trace.showReady(second), "the second presentation was cancelled by the same close")
         XCTAssertEqual(trace.effects, [.reportFinished])
+        XCTAssertEqual(trace.finishCount, 1)
+    }
+
+    /// (k) a second `showScreen` while the first screen is still up stacks on
+    /// it. One close has to take the whole stack down, and the host hears the
+    /// flow is over once — after the last screen went away, not after the top
+    /// one, which used to leave an SDK screen on screen behind a finished flow.
+    func testASecondScreenStackedOnTheFirstStillReportsOneFinishForTheFlow() {
+        var trace = FlowTrace()
+        let first: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(first))
+        let second: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(second))
+
+        trace.close()
+
+        XCTAssertEqual(trace.effects, [.dismissVisibleScreen, .reportFinished])
+        XCTAssertEqual(trace.finishCount, 1)
+    }
+
+    /// (l) a flow that pushed screens of its own: closing it tears the whole
+    /// navigation stack down and every screen in it reports the flow over. The
+    /// host still hears it once.
+    func testEveryScreenOfAPushedFlowReportingFinishedIsStillOneFinish() {
+        var trace = FlowTrace()
+        let token: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(token))
+
+        trace.close()
+        // The screen the flow pushed on top of the first one, which the
+        // coordinator never presented itself.
+        trace.untrackedScreenReportedFinished()
+
+        XCTAssertEqual(trace.effects, [.dismissVisibleScreen, .reportFinished])
+        XCTAssertEqual(trace.finishCount, 1)
+    }
+
+    /// (m) the same multi-screen flow taken down by the host itself, without a
+    /// `close()`: both screens report a permanent leave, the host hears one
+    /// finish.
+    func testAHostDrivenTeardownOfAMultiScreenFlowReportsOneFinish() {
+        var trace = FlowTrace()
+        let token: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(token))
+
+        trace.dismissVisibleScreen()
+        trace.untrackedScreenReportedFinished()
+
+        XCTAssertEqual(trace.effects, [.reportFinished])
+        XCTAssertEqual(trace.finishCount, 1)
+    }
+
+    /// (n) the stacked screen closing itself leaves the one underneath on
+    /// screen: the flow is not over until that one goes too.
+    func testTheStackedScreenClosingItselfDoesNotEndTheFlow() {
+        var trace = FlowTrace()
+        let first: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(first))
+        let second: NoCodesPresentationGate.Token = trace.showStarted()
+        XCTAssertTrue(trace.showReady(second))
+
+        trace.dismissVisibleScreen()
+
+        XCTAssertEqual(trace.effects, [], "the first screen is still up")
+
+        trace.close()
+
+        XCTAssertEqual(trace.effects, [.dismissVisibleScreen, .reportFinished])
         XCTAssertEqual(trace.finishCount, 1)
     }
 

@@ -175,6 +175,30 @@ final class NoCodesContextBuilderTests: XCTestCase {
 
 // MARK: - The first-launch flag itself
 
+// MARK: - The appearance a screen renders with
+
+final class NoCodesResolvedThemeTests: XCTestCase {
+
+    func testTheAutomaticThemeFollowsTheSystem() {
+        XCTAssertEqual(NoCodesTheme.auto.resolvedTheme(isSystemDark: true), .dark)
+        XCTAssertEqual(NoCodesTheme.auto.resolvedTheme(isSystemDark: false), .light)
+    }
+
+    /// A host that configured a fixed theme keeps it when the user flips the
+    /// system appearance with the screen open. The system style used to be
+    /// pushed into the screen's context on that change, overriding the
+    /// configured one for as long as the screen stayed up.
+    func testAForcedLightThemeSurvivesASystemThemeChange() {
+        XCTAssertEqual(NoCodesTheme.light.resolvedTheme(isSystemDark: true), .light)
+        XCTAssertEqual(NoCodesTheme.light.resolvedTheme(isSystemDark: false), .light)
+    }
+
+    func testAForcedDarkThemeSurvivesASystemThemeChange() {
+        XCTAssertEqual(NoCodesTheme.dark.resolvedTheme(isSystemDark: false), .dark)
+        XCTAssertEqual(NoCodesTheme.dark.resolvedTheme(isSystemDark: true), .dark)
+    }
+}
+
 final class NoCodesFirstLaunchTests: XCTestCase {
 
     private let storageKey = "io.qonversion.nocodes.alreadyLaunchedBefore"
