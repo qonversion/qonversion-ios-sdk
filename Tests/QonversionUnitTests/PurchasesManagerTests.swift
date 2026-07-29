@@ -1028,6 +1028,49 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(facade.finishedTransactions.isEmpty, "the host app owns the lifecycle in Analytics mode")
     }
 
+    func testARevocationStaysReadableByAStreamCreatedAfterIt() async {
+        // A revocation travels the same snapshot channel as a deferred
+        // purchase's entitlements, and a snapshot is replayed state: a screen
+        // that subscribes later must still read the access that is now gone.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = [:]
+        let first = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeRevokedTransaction(id: "late-1"))
+        await waitUntil { await !first.received.isEmpty }
+
+        let second = StreamCollector(manager.entitlementsUpdates())
+
+        await waitUntil { await !second.received.isEmpty }
+        let received: [[String: Qonversion.Entitlement]] = await second.received
+        XCTAssertEqual(received.count, 1)
+        XCTAssertTrue(received.first?.isEmpty ?? false, "the first subscription must not consume the revocation snapshot")
+    }
+
+    func testARevocationAlreadyAccountedForIsNotProcessedAgainOnTheNextLaunch() async {
+        // Analytics mode never finishes the transaction, so the store hands
+        // the very same revocation over again on every launch.
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = [:]
+        let first = StreamCollector(manager.entitlementsUpdates())
+
+        manager.transactionUpdated(makeRevokedTransaction(id: "twice-1"))
+        await waitUntil { await !first.received.isEmpty }
+
+        let surfaced: [String]? = try? localStorage.object(forKey: "qonversion.keys.surfacedTransactions", dataType: [String].self)
+        XCTAssertEqual(surfaced, ["revoked:twice-1"], "the revocation is recorded under a namespace of its own")
+
+        // "Next launch": a fresh manager over the same storage.
+        let relaunched: PurchasesManager = makeManager(launchMode: .analytics)
+        let second = StreamCollector(relaunched.entitlementsUpdates())
+        relaunched.transactionUpdated(makeRevokedTransaction(id: "twice-1"))
+
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        let received: [[String: Qonversion.Entitlement]] = await second.received
+        XCTAssertTrue(received.isEmpty, "a revocation the SDK already accounted for must not be republished")
+        XCTAssertEqual(entitlementsManager.invalidationCallsCount, 1, "the fresh window is invalidated once, by the launch that saw the refund")
+    }
+
     func testTheBufferedLaunchEmissionReachesBothStreams() async {
         // The backlog exists for hosts that subscribe after launch; the
         // entitlements projection must not steal it from deferredPurchases.
@@ -1128,6 +1171,131 @@ final class PurchasesManagerTests: XCTestCase {
 
         let received: [[String: Qonversion.Entitlement]] = await collector.received
         XCTAssertEqual(received.count, bufferSize, "the projection must drop the oldest values, not queue them all")
+    }
+
+    // MARK: - deferred purchases are delivered exactly once
+
+    func testAPurchaseTheHostReceivedIsNotHandedToALaterSubscription() async {
+        // The documented SwiftUI shape: a screen that re-appears builds a
+        // second subscription. Handing it the same approval again would grant
+        // the content twice.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let first = StreamCollector(manager.deferredPurchases())
+
+        manager.transactionUpdated(makeTransaction(id: "once-1"))
+        await waitUntil { await !first.received.isEmpty }
+
+        let second = StreamCollector(manager.deferredPurchases())
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        let firstReceived: [Qonversion.DeferredPurchase] = await first.received
+        let secondReceived: [Qonversion.DeferredPurchase] = await second.received
+        XCTAssertEqual(firstReceived.map(\.transaction.id), ["once-1"])
+        XCTAssertTrue(secondReceived.isEmpty, "a purchase the host already received must not be repeated")
+    }
+
+    func testABufferedPurchaseGoesToTheFirstSubscriptionOnly() async {
+        // The approval is processed before the host wires anything up: it
+        // waits, and the subscription that takes it consumes it.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        manager.transactionUpdated(makeTransaction(id: "once-2"))
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+
+        let first = StreamCollector(manager.deferredPurchases())
+        await waitUntil { await !first.received.isEmpty }
+        let second = StreamCollector(manager.deferredPurchases())
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        let firstReceived: [Qonversion.DeferredPurchase] = await first.received
+        let secondReceived: [Qonversion.DeferredPurchase] = await second.received
+        XCTAssertEqual(firstReceived.map(\.transaction.id), ["once-2"])
+        XCTAssertTrue(secondReceived.isEmpty, "the buffered purchase was already taken")
+    }
+
+    func testConcurrentSubscriptionsBothReceiveTheSamePurchase() async {
+        // Broadcast, not hand-off: everybody listening at the moment of the
+        // approval hears it.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let first = StreamCollector(manager.deferredPurchases())
+        let second = StreamCollector(manager.deferredPurchases())
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        manager.transactionUpdated(makeTransaction(id: "both-1"))
+
+        await waitUntil {
+            let firstEmpty: Bool = await first.received.isEmpty
+            let secondEmpty: Bool = await second.received.isEmpty
+            return !firstEmpty && !secondEmpty
+        }
+        let firstReceived: [Qonversion.DeferredPurchase] = await first.received
+        let secondReceived: [Qonversion.DeferredPurchase] = await second.received
+        XCTAssertEqual(firstReceived.map(\.transaction.id), ["both-1"])
+        XCTAssertEqual(secondReceived.map(\.transaction.id), ["both-1"])
+    }
+
+    func testAPurchaseNobodyReceivedComesBackOnTheNextLaunch() async {
+        // Ask to Buy approved with the app in the background and no
+        // subscription alive. The event must not be written off as delivered.
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        manager.transactionUpdated(makeTransaction(id: "unheard-1"))
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        // "Next launch": a fresh manager over the same storage, re-delivered
+        // by the store because Analytics mode never finishes anything.
+        let relaunched: PurchasesManager = makeManager(launchMode: .analytics)
+        let collector = StreamCollector(relaunched.deferredPurchases())
+        relaunched.transactionUpdated(makeTransaction(id: "unheard-1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.map(\.transaction.id), ["unheard-1"], "a purchase nobody heard must not be lost")
+    }
+
+    func testAPromoIntentHandedToASubscriptionIsNotRepeatedToTheNextOne() async {
+        // Acting on the same intent twice would run the purchase flow twice.
+        manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
+
+        let first = StreamCollector(manager.promoPurchaseIntents())
+        await waitUntil { await !first.received.isEmpty }
+        let second = StreamCollector(manager.promoPurchaseIntents())
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        let secondReceived: [Qonversion.PromoPurchaseIntent] = await second.received
+        XCTAssertTrue(secondReceived.isEmpty, "the intent was already handed over")
+    }
+
+    func testTheDeferredPurchasesBufferHasNoExpiryDeadline() {
+        // The replay window used to drop an approval the host had not
+        // subscribed for yet; a deadline cannot be caught by waiting it out,
+        // so the wiring itself is the assertion.
+        XCTAssertEqual(manager.deferredPurchasesMulticast.backlog, .deliveredOnce)
+        XCTAssertFalse(manager.deferredPurchasesMulticast.backlogLifetime.isFinite,
+                       "an approval nobody received waits for the host, not for a deadline")
+    }
+
+    func testEntitlementsUpdatesStillReachesEveryLaterSubscription() async {
+        // Unchanged on purpose: an entitlements snapshot is idempotent state,
+        // so a host that re-subscribes must still be able to read the latest.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        manager.transactionUpdated(makeTransaction(id: "snapshot-1"))
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+
+        let first = StreamCollector(manager.entitlementsUpdates())
+        await waitUntil { await !first.received.isEmpty }
+        let second = StreamCollector(manager.entitlementsUpdates())
+
+        await waitUntil { await !second.received.isEmpty }
+        let secondReceived: [[String: Qonversion.Entitlement]] = await second.received
+        XCTAssertEqual(secondReceived.first?.keys.sorted(), ["premium"], "the snapshot stays readable by later subscriptions")
     }
 
     // MARK: - promotional offer signature

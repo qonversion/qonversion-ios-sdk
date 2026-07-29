@@ -5,14 +5,17 @@
 //  Direct contract tests for the fan-out primitive behind deferredPurchases(),
 //  entitlementsUpdates() and promoPurchaseIntents().
 //
-//  Backlog policy under test:
+//  Contract under test:
 //    * every subscriber gets its own independent stream;
-//    * with replaysBacklog, a value is replayed to EVERY subscriber arriving
-//      inside the replay window, whether or not somebody was already listening
-//      when it was produced;
-//    * a subscriber reads the backlog once, at subscription, so a live
-//      subscriber never sees a value twice;
-//    * the backlog is bounded by count and by age.
+//    * a value produced while subscribers are listening is broadcast to all of
+//      them, whatever the backlog policy is;
+//    * .replayed keeps a value for every subscriber arriving inside the
+//      lifetime — idempotent snapshots;
+//    * .deliveredOnce hands a waiting value to the first subscriber that
+//      arrives, and to nobody after it — events the host acts on;
+//    * the delivery hook runs once, when a value first reaches a subscriber;
+//    * the backlog is bounded by count and by age, and an infinite lifetime
+//      makes a waiting value outwait anything.
 //
 
 import XCTest
@@ -76,13 +79,13 @@ final class AsyncMulticastTests: XCTestCase {
             return count == 1
         }
         let received: [Int] = await subscriber.received
-        XCTAssertEqual(received, [2], "no replay was asked for")
+        XCTAssertEqual(received, [2], "no backlog was asked for")
     }
 
-    // MARK: - backlog replay
+    // MARK: - .replayed
 
     func testTheBacklogIsReplayedToASubscriberThatArrivesLater() async {
-        let multicast = AsyncMulticast<Int>(replaysBacklog: true)
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
 
         multicast.yield(1)
         multicast.yield(2)
@@ -96,10 +99,29 @@ final class AsyncMulticastTests: XCTestCase {
         XCTAssertEqual(received, [1, 2])
     }
 
-    func testALiveSubscriberDoesNotConsumeTheBacklogOfALaterOne() async {
-        // The regression: the old implementation cleared the backlog as soon as
-        // any subscriber was live, so the second subscriber got nothing.
-        let multicast = AsyncMulticast<Int>(replaysBacklog: true)
+    func testAReplayedValueReachesEverySubscriberArrivingLater() async {
+        // The point of .replayed: the value is a snapshot, so reading it again
+        // costs nothing and every late subscriber is entitled to it.
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
+        multicast.yield(1)
+
+        let first = collect(multicast.stream())
+        await waitUntil {
+            let count: Int = await first.received.count
+            return count == 1
+        }
+        let second = collect(multicast.stream())
+
+        await waitUntil {
+            let count: Int = await second.received.count
+            return count == 1
+        }
+        let secondReceived: [Int] = await second.received
+        XCTAssertEqual(secondReceived, [1])
+    }
+
+    func testALiveSubscriberDoesNotConsumeTheReplayOfALaterOne() async {
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
         let early = collect(multicast.stream())
         await waitUntil {
             let attached: Bool = await early.attached
@@ -120,12 +142,12 @@ final class AsyncMulticastTests: XCTestCase {
         }
         let lateReceived: [Int] = await late.received
         let earlyReceived: [Int] = await early.received
-        XCTAssertEqual(lateReceived, [1], "the late subscriber is owed the backlog too")
+        XCTAssertEqual(lateReceived, [1], "the late subscriber is owed the replay too")
         XCTAssertEqual(earlyReceived, [1], "the live subscriber must not be replayed its own value")
     }
 
     func testALiveSubscriberIsNeverDeliveredTheSameValueTwice() async {
-        let multicast = AsyncMulticast<Int>(replaysBacklog: true)
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
         let subscriber = collect(multicast.stream())
         await waitUntil {
             let attached: Bool = await subscriber.attached
@@ -146,7 +168,7 @@ final class AsyncMulticastTests: XCTestCase {
     }
 
     func testATerminatedSubscriberStopsReceivingValues() async {
-        let multicast = AsyncMulticast<Int>(replaysBacklog: true)
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
         let survivor = collect(multicast.stream())
         // Kept alive on purpose: the point of the test is what the terminated
         // collector did NOT receive, which a released collector cannot report.
@@ -182,11 +204,11 @@ final class AsyncMulticastTests: XCTestCase {
     }
 
     func testTheBacklogIsDeliveredBeforeAConcurrentLiveValue() async {
-        // The replay happens under the same lock as the registration: yielding
-        // it afterwards would let a value produced concurrently overtake the
-        // backlog, so the host would see the launch purchase AFTER the live
-        // one.
-        let multicast = AsyncMulticast<Int>(replaysBacklog: true)
+        // The hand-over happens under the same lock as the registration:
+        // yielding it afterwards would let a value produced concurrently
+        // overtake the backlog, so the host would see the launch purchase
+        // AFTER the live one.
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
         multicast.yield(1)
         multicast.yield(2)
 
@@ -205,10 +227,216 @@ final class AsyncMulticastTests: XCTestCase {
         XCTAssertEqual(received, Array(1...8), "the backlog always precedes the live values")
     }
 
+    // MARK: - .deliveredOnce
+
+    func testAWaitingValueIsHandedToTheFirstSubscriberAndToNobodyElse() async {
+        let multicast = AsyncMulticast<Int>(backlog: .deliveredOnce)
+        multicast.yield(1)
+
+        let first = collect(multicast.stream())
+        await waitUntil {
+            let count: Int = await first.received.count
+            return count == 1
+        }
+        let second = collect(multicast.stream())
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        let firstReceived: [Int] = await first.received
+        let secondReceived: [Int] = await second.received
+        XCTAssertEqual(firstReceived, [1])
+        XCTAssertEqual(secondReceived, [], "the value was already handed over")
+    }
+
+    func testALiveValueIsBroadcastToEverySubscriberAndNotKeptForLaterOnes() async {
+        // Broadcast is not hand-off: N subscribers listening at the moment of
+        // the value all get it, and it is spent afterwards.
+        let multicast = AsyncMulticast<Int>(backlog: .deliveredOnce)
+        let first = collect(multicast.stream())
+        let second = collect(multicast.stream())
+        await waitUntil {
+            let firstAttached: Bool = await first.attached
+            let secondAttached: Bool = await second.attached
+            return firstAttached && secondAttached
+        }
+
+        multicast.yield(1)
+
+        await waitUntil {
+            let firstCount: Int = await first.received.count
+            let secondCount: Int = await second.received.count
+            return firstCount == 1 && secondCount == 1
+        }
+        let late = collect(multicast.stream())
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        let firstReceived: [Int] = await first.received
+        let secondReceived: [Int] = await second.received
+        let lateReceived: [Int] = await late.received
+        XCTAssertEqual(firstReceived, [1])
+        XCTAssertEqual(secondReceived, [1])
+        XCTAssertEqual(lateReceived, [], "a value that already reached its subscribers is never repeated")
+    }
+
+    func testEachWaitingValueIsHandedOverInOrderExactlyOnce() async {
+        let multicast = AsyncMulticast<Int>(backlog: .deliveredOnce)
+        multicast.yield(1)
+        multicast.yield(2)
+        multicast.yield(3)
+
+        let subscriber = collect(multicast.stream())
+
+        await waitUntil {
+            let count: Int = await subscriber.received.count
+            return count == 3
+        }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let received: [Int] = await subscriber.received
+        XCTAssertEqual(received, [1, 2, 3])
+    }
+
+    func testAValueWaitingWithoutADeadlineOutlivesAnyDelay() async {
+        // The deferred-purchases wiring: an approval processed while nobody
+        // listens must still be there when the host finally subscribes.
+        let clock = MulticastTestClock(start: Date(timeIntervalSince1970: 1_000_000))
+        let multicast = AsyncMulticast<Int>(
+            backlog: .deliveredOnce,
+            backlogLifetime: .infinity,
+            now: { clock.now }
+        )
+
+        multicast.yield(1)
+        clock.advance(by: 86_400)
+        let subscriber = collect(multicast.stream())
+
+        await waitUntil {
+            let count: Int = await subscriber.received.count
+            return count == 1
+        }
+        let received: [Int] = await subscriber.received
+        XCTAssertEqual(received, [1], "a value with no deadline waits for its subscriber")
+    }
+
+    func testAWaitingValueStillExpiresWhenTheLifetimeIsFinite() async {
+        let clock = MulticastTestClock(start: Date(timeIntervalSince1970: 1_000_000))
+        let multicast = AsyncMulticast<Int>(
+            backlog: .deliveredOnce,
+            backlogLifetime: 60,
+            now: { clock.now }
+        )
+
+        multicast.yield(1)
+        clock.advance(by: 61)
+        multicast.yield(2)
+        let subscriber = collect(multicast.stream())
+
+        await waitUntil {
+            let count: Int = await subscriber.received.count
+            return count == 1
+        }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let received: [Int] = await subscriber.received
+        XCTAssertEqual(received, [2], "the expired value must not be handed over")
+    }
+
+    // MARK: - the delivery hook
+
+    func testTheDeliveryHookRunsWhenTheValueIsBroadcastLive() async {
+        let deliveries = MulticastDeliveryCounter()
+        let multicast = AsyncMulticast<Int>(backlog: .deliveredOnce)
+        let subscriber = collect(multicast.stream())
+        await waitUntil {
+            let attached: Bool = await subscriber.attached
+            return attached
+        }
+
+        multicast.yield(1) { deliveries.record() }
+
+        XCTAssertEqual(deliveries.count, 1)
+    }
+
+    func testTheDeliveryHookRunsWhenAWaitingValueIsHandedOver() async {
+        let deliveries = MulticastDeliveryCounter()
+        let multicast = AsyncMulticast<Int>(backlog: .deliveredOnce)
+
+        multicast.yield(1) { deliveries.record() }
+        XCTAssertEqual(deliveries.count, 0, "nobody has received it yet")
+
+        let first = collect(multicast.stream())
+        await waitUntil {
+            let count: Int = await first.received.count
+            return count == 1
+        }
+        _ = collect(multicast.stream())
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(deliveries.count, 1, "the hand-over is reported exactly once")
+    }
+
+    func testTheDeliveryHookNeverRunsForAValueThatExpired() async {
+        let clock = MulticastTestClock(start: Date(timeIntervalSince1970: 1_000_000))
+        let deliveries = MulticastDeliveryCounter()
+        let multicast = AsyncMulticast<Int>(
+            backlog: .deliveredOnce,
+            backlogLifetime: 60,
+            now: { clock.now }
+        )
+
+        multicast.yield(1) { deliveries.record() }
+        clock.advance(by: 61)
+        let subscriber = collect(multicast.stream())
+        await waitUntil {
+            let attached: Bool = await subscriber.attached
+            return attached
+        }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(deliveries.count, 0, "an expired value was never delivered")
+    }
+
+    func testTheDeliveryHookOfAReplayedValueRunsOnlyOnTheFirstDelivery() async {
+        let deliveries = MulticastDeliveryCounter()
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
+
+        multicast.yield(1) { deliveries.record() }
+
+        let first = collect(multicast.stream())
+        await waitUntil {
+            let count: Int = await first.received.count
+            return count == 1
+        }
+        let second = collect(multicast.stream())
+        await waitUntil {
+            let count: Int = await second.received.count
+            return count == 1
+        }
+
+        XCTAssertEqual(deliveries.count, 1, "the replay is not a new delivery")
+    }
+
     // MARK: - backlog bounds
 
     func testTheBacklogIsBoundedByCountAndKeepsTheNewestValues() async {
-        let multicast = AsyncMulticast<Int>(replaysBacklog: true)
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
+        let overflow: Int = AsyncMulticast<Int>.maxPending + 3
+
+        for value in 1...overflow {
+            multicast.yield(value)
+        }
+        let subscriber = collect(multicast.stream())
+
+        await waitUntil {
+            let count: Int = await subscriber.received.count
+            return count == AsyncMulticast<Int>.maxPending
+        }
+        let received: [Int] = await subscriber.received
+        let expected: [Int] = Array(4...overflow)
+        XCTAssertEqual(received, expected, "the oldest values are dropped first")
+    }
+
+    func testTheWaitingValuesAreBoundedByCountToo() async {
+        // No subscriber ever showing up must not turn the buffer into an
+        // unbounded event log.
+        let multicast = AsyncMulticast<Int>(backlog: .deliveredOnce)
         let overflow: Int = AsyncMulticast<Int>.maxPending + 3
 
         for value in 1...overflow {
@@ -228,7 +456,7 @@ final class AsyncMulticastTests: XCTestCase {
     func testABacklogEntryOlderThanTheLifetimeIsNotReplayed() async {
         let clock = MulticastTestClock(start: Date(timeIntervalSince1970: 1_000_000))
         let multicast = AsyncMulticast<Int>(
-            replaysBacklog: true,
+            backlog: .replayed,
             backlogLifetime: 60,
             now: { clock.now }
         )
@@ -257,16 +485,16 @@ final class AsyncMulticastTests: XCTestCase {
         // With the per-subscriber buffer sized exactly like the backlog, a
         // full backlog leaves zero headroom: one live value arriving before
         // the new subscriber starts draining silently evicts the oldest
-        // replayed entry — in production a lost DeferredPurchase.
-        let multicast = AsyncMulticast<Int>(replaysBacklog: true)
+        // handed-over entry — in production a lost DeferredPurchase.
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
         let backlogSize: Int = AsyncMulticast<Int>.maxPending
         for value in 1...backlogSize {
             multicast.yield(value)
         }
 
-        // The stream registers (and is replayed) as it is built, but nothing
+        // The stream registers (and is served) as it is built, but nothing
         // consumes it yet — the live value below lands in its buffer on top of
-        // the whole replay.
+        // the whole backlog.
         let stream: AsyncStream<Int> = multicast.stream()
         multicast.yield(backlogSize + 1)
 
@@ -328,5 +556,25 @@ private final class MulticastTestClock: @unchecked Sendable {
 
     func advance(by interval: TimeInterval) {
         current = current.addingTimeInterval(interval)
+    }
+}
+
+/// Counts delivery-hook calls; the hook can run on any thread.
+// @unchecked: the counter is lock-guarded.
+private final class MulticastDeliveryCounter: @unchecked Sendable {
+
+    private let lock = NSLock()
+    private var calls: Int = 0
+
+    var count: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return calls
+    }
+
+    func record() {
+        lock.lock()
+        calls += 1
+        lock.unlock()
     }
 }
