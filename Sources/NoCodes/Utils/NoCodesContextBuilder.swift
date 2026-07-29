@@ -20,6 +20,23 @@ enum NoCodesResolvedTheme: String {
   case dark
 }
 
+extension NoCodesTheme {
+
+  /// The appearance a screen has to render with. A forced theme wins over the
+  /// system one: a host that configured `.light` must stay light when the user
+  /// flips the system appearance while the screen is open.
+  func resolvedTheme(isSystemDark: Bool) -> NoCodesResolvedTheme {
+    switch self {
+    case .auto:
+      return isSystemDark ? .dark : .light
+    case .light:
+      return .light
+    case .dark:
+      return .dark
+    }
+  }
+}
+
 protocol NoCodesContextBuilderInterface: Sendable {
   func buildContextJSON(resolvedTheme: NoCodesResolvedTheme, activeEntitlementIds: [String], productsContext: [String: any Sendable], userProperties: [String: String]) -> String?
   func resolveIsFirstLaunch() -> Bool
@@ -189,9 +206,7 @@ extension NoCodesTheme {
   }
 
   func resolveTheme(traitCollection: UITraitCollection) -> NoCodesResolvedTheme {
-    let style: UIUserInterfaceStyle = resolveInterfaceStyle(traitCollection: traitCollection)
-
-    return style == .dark ? .dark : .light
+    return resolvedTheme(isSystemDark: traitCollection.userInterfaceStyle == .dark)
   }
 }
 

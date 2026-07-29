@@ -74,6 +74,22 @@ final class NoCodesJavaScriptLiteralTests: XCTestCase {
     }
 }
 
+final class NoCodesThemeUpdateScriptTests: XCTestCase {
+
+    func testTheScriptCarriesTheResolvedThemeAndAnnouncesTheUpdate() {
+        let script: String = NoCodesJavaScript.themeUpdateScript(resolvedTheme: .dark)
+
+        XCTAssertTrue(script.contains("window.noCodesContext.device.theme = \"dark\";"))
+        XCTAssertTrue(script.contains("window.dispatchEvent(new Event(\"noCodesContextUpdate\"));"))
+    }
+
+    func testTheLightThemeIsCarriedTheSameWay() {
+        let script: String = NoCodesJavaScript.themeUpdateScript(resolvedTheme: .light)
+
+        XCTAssertTrue(script.contains("window.noCodesContext.device.theme = \"light\";"))
+    }
+}
+
 final class NoCodesCustomVariablesScriptTests: XCTestCase {
 
     func testNoVariablesProduceNoScript() {

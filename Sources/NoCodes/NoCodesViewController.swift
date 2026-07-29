@@ -78,8 +78,7 @@ final class NoCodesViewController: UIViewController {
   private weak var customVariablesDelegate: NoCodesCustomVariablesDelegate?
   private var customLocale: String?
   private var theme: NoCodesTheme!
-  private var didTrackScreenShown = false
-  private var didTrackScreenClosed = false
+  private var screenSession = NoCodesScreenSession()
   private var didReportFinished = false
   // The navigation controller this screen was presented in, captured while it
   // still has one.
@@ -188,9 +187,7 @@ final class NoCodesViewController: UIViewController {
       // would land on a screen the user has already left.
       cancelScreenLoad()
 
-      if let screenId: String = screenId {
-        trackScreenClosedIfNeeded(screenId: screenId)
-      }
+      trackScreenClosedIfNeeded()
 
       // A host-driven pop or dismiss ends the flow just like the SDK-driven
       // close; without this the coordinator keeps believing a screen is up.
@@ -198,17 +195,18 @@ final class NoCodesViewController: UIViewController {
         reportFinished()
       }
     case .temporary:
-      // Temporarily hidden (e.g. a new screen was pushed on top):
-      // reset the flag so screen_shown fires again when this view re-appears
-      didTrackScreenShown = false
+      // Covered by another screen of the flow. UIKit sends no second
+      // `viewDidDisappear` once the flow is torn down, so the viewing session
+      // has to be closed here; a re-appearance opens a new one.
+      trackScreenClosedIfNeeded()
     }
   }
 
   deinit {
-    // Fallback: if the entire flow was dismissed (e.g. parent nav controller dismissed),
-    // viewDidDisappear may not detect it via isBeingDismissed. Track screen_closed here
-    // if it wasn't already tracked.
-    if let screenId = screenId, !didTrackScreenClosed {
+    // Fallback for a flow torn down without a `viewDidDisappear` — a dismissed
+    // parent navigation controller, for one. Late for the flow's own flush, but
+    // a later one still carries it.
+    if let screenId = screenId, screenSession.trackClosed() {
       let event = ScreenEvent(data: [
         "type": ScreenEventType.screenClosed.rawValue,
         "screen_uid": screenId,
@@ -246,14 +244,10 @@ final class NoCodesViewController: UIViewController {
 
     guard previousTraitCollection?.userInterfaceStyle != traitCollection.userInterfaceStyle else { return }
 
-    let newTheme = traitCollection.userInterfaceStyle == .dark ? "dark" : "light"
-    let js = """
-    window.noCodesContext = window.noCodesContext || {};
-    window.noCodesContext.device = window.noCodesContext.device || {};
-    window.noCodesContext.device.theme = "\(newTheme)";
-    window.dispatchEvent(new Event("noCodesContextUpdate"));
-    """
-    webView?.evaluateJavaScript(js, completionHandler: nil)
+    // Resolved through the configured theme, never straight off the trait: a
+    // host that forced .light or .dark keeps it across a system change.
+    let resolvedTheme: NoCodesResolvedTheme = theme.resolveTheme(traitCollection: traitCollection)
+    webView?.evaluateJavaScript(NoCodesJavaScript.themeUpdateScript(resolvedTheme: resolvedTheme), completionHandler: nil)
   }
 
 }
@@ -272,10 +266,10 @@ extension NoCodesViewController: WKScriptMessageHandler {
       return
     }
     
-    if action.type != .loadProducts && action.type != .screenAnalytics && action.type != .getContext && action.type != .purchaseLoaderPresent {
+    if NoCodesScreenLifecycle.announcesExecution(actionType: action.type) {
       delegate.noCodesStartsExecuting(action: action)
     }
-    
+
     switch action.type {
     case .loadProducts:
       handle(loadProductsAction: action)
@@ -303,7 +297,11 @@ extension NoCodesViewController: WKScriptMessageHandler {
       hasWebPurchaseLoader = true
     case .custom:
       handle(customAction: action)
-    default: break
+    default:
+      // The host was told this one started, so it owes an outcome even though
+      // the SDK has nothing to carry out for it.
+      logger.error("Received an action the SDK cannot handle")
+      report(failureOf: action, error: NoCodesError(type: .unknown))
     }
   }
   
@@ -361,8 +359,8 @@ extension NoCodesViewController {
   }
 
   private func trackScreenShownIfNeeded() {
-    guard !didTrackScreenShown, let screenId = screenId else { return }
-    didTrackScreenShown = true
+    guard let screenId: String = screenId, screenSession.trackShown() else { return }
+
     let event = ScreenEvent(data: [
       "type": ScreenEventType.screenShown.rawValue,
       "screen_uid": screenId,
@@ -371,15 +369,33 @@ extension NoCodesViewController {
     screenEventsService.track(event: event)
   }
 
-  private func trackScreenClosedIfNeeded(screenId: String) {
-    guard !didTrackScreenClosed else { return }
-    didTrackScreenClosed = true
+  private func trackScreenClosedIfNeeded() {
+    guard let screenId: String = screenId, screenSession.trackClosed() else { return }
+
     let event = ScreenEvent(data: [
       "type": ScreenEventType.screenClosed.rawValue,
       "screen_uid": screenId,
       "happened_at": Int(Date().timeIntervalSince1970)
     ])
     screenEventsService.track(event: event)
+  }
+
+  /// Closes the viewing session of every flow screen this close takes off
+  /// screen, this one included.
+  ///
+  /// The flow flushes its events as soon as the close reports finished, which
+  /// on the pop route happens before the animation ends — long before UIKit
+  /// sends `viewDidDisappear` to the screens the pop removed.
+  private func trackClosedForRemovedScreens() {
+    trackScreenClosedIfNeeded()
+
+    guard let viewControllers: [UIViewController] = navigationController?.viewControllers else { return }
+
+    for viewController: UIViewController in viewControllers {
+      guard let screen = viewController as? NoCodesViewController, screen !== self else { continue }
+
+      screen.trackScreenClosedIfNeeded()
+    }
   }
 
   private func injectCustomVariables(completion: @escaping () -> Void) {
@@ -569,6 +585,9 @@ extension NoCodesViewController {
   
   private func handle(closeAction: NoCodesAction) {
     if self.navigationController?.viewControllers.count ?? 0 > 1 {
+      // Only this screen leaves, and the flush that may follow runs before the
+      // pop animation ends.
+      trackScreenClosedIfNeeded()
       navigationController?.popViewController(animated: true)
       delegate.noCodesFinishedExecuting(action: closeAction)
       if let firstExternalViewController: UIViewController = firstExternalViewController(),
@@ -617,33 +636,57 @@ extension NoCodesViewController {
   }
 
   private func handle(urlAction: NoCodesAction) {
-    guard let urlString: String = urlAction.parameters?[Constants.url.rawValue] as? String,
-          let url = URL(string: urlString) else {
+    let urlString: String? = urlAction.parameters?[Constants.url.rawValue] as? String
+
+    switch NoCodesURLRouter.route(urlString: urlString) {
+    case let .inAppBrowser(url):
+      let safariViewController = SFSafariViewController(url: url)
+      // A screen presented as a popover has no navigation controller, and
+      // presenting on `nil` used to drop the browser while reporting a success.
+      let presenter: UIViewController = navigationController ?? self
+      presenter.present(safariViewController, animated: true)
+      delegate.noCodesFinishedExecuting(action: urlAction)
+    case let .system(url):
+      open(url, reporting: urlAction)
+    case .unopenable:
       logger.error(LoggerInfoMessages.urlHandlingFailed.rawValue)
-      return delegate.noCodesFailedToExecute(action: urlAction, error: nil)
+      report(failureOf: urlAction, error: nil)
     }
-    
-    let safariVC = SFSafariViewController(url: url)
-    navigationController?.present(safariVC, animated: true)
-    delegate.noCodesFinishedExecuting(action: urlAction)
   }
-  
+
+  /// Hands a URL the in-app browser cannot show to the system and reports what
+  /// came of it.
+  private func open(_ url: URL, reporting action: NoCodesAction) {
+    UIApplication.shared.open(url, options: [:]) { [weak self] opened in
+      guard let self else { return }
+
+      guard opened else {
+        logger.error(LoggerInfoMessages.urlHandlingFailed.rawValue)
+        report(failureOf: action, error: nil)
+
+        return
+      }
+
+      delegate.noCodesFinishedExecuting(action: action)
+    }
+  }
+
   private func handle(deepLinkAction: NoCodesAction) {
     guard let deepLinkString: String = deepLinkAction.parameters?[Constants.deeplink.rawValue] as? String,
           let url = URL(string: deepLinkString) else {
       logger.error(LoggerInfoMessages.deeplingHandlingFailed.rawValue)
-      return delegate.noCodesFailedToExecute(action: deepLinkAction, error: nil)
+      return report(failureOf: deepLinkAction, error: nil)
     }
-    
+
     if UIApplication.shared.canOpenURL(url) {
-      UIApplication.shared.open(url)
+      open(url, reporting: deepLinkAction)
     } else {
-      delegate.noCodesFailedToExecute(action: deepLinkAction, error: nil)
+      report(failureOf: deepLinkAction, error: nil)
       logger.error(LoggerInfoMessages.deeplingHandlingFailed.rawValue)
       close(action: deepLinkAction)
     }
   }
-  
+
   private func handle(customAction: NoCodesAction) {
     let value: String = customAction.parameters?[Constants.value.rawValue] as? String ?? ""
 
@@ -652,7 +695,12 @@ extension NoCodesViewController {
   }
 
   private func handle(purchaseAction: NoCodesAction) {
-    guard let productId: String = purchaseAction.parameters?[Constants.productId.rawValue] as? String else { return }
+    guard let productId: String = purchaseAction.parameters?[Constants.productId.rawValue] as? String else {
+      logger.error(NoCodesErrorType.productNotFound.message())
+      report(failureOf: purchaseAction, error: NoCodesError(type: .productNotFound, message: "The purchase action carries no product id"))
+
+      return
+    }
 
     if !hasWebPurchaseLoader { activityIndicator.startAnimating() }
     Task {
@@ -735,9 +783,32 @@ extension NoCodesViewController {
     delegate.noCodesFailedToExecute(action: action, error: error)
     await send(event: "failureEvent", data: "{}")
   }
-  
+
+  /// Pairs a start the host already heard with the outcome of an action the SDK
+  /// could not carry out. Every announced action owes the host one of these.
+  private func report(failureOf action: NoCodesAction, error: Error?) {
+    switch NoCodesScreenLifecycle.failureReport(actionType: action.type) {
+    case .host:
+      delegate.noCodesFailedToExecute(action: action, error: error)
+    case .hostAndScreen:
+      Task { await sendFailureEvent(action: action, error: error) }
+    }
+  }
+
   private func handle(navigationAction: NoCodesAction) {
-    guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else { return }
+    guard let screenId: String = navigationAction.parameters?[Constants.screenId.rawValue] as? String else {
+      logger.error(NoCodesErrorType.screenNotFound.message())
+      report(failureOf: navigationAction, error: NoCodesError(type: .screenNotFound, message: "The navigation action carries no screen id"))
+
+      return
+    }
+
+    guard NoCodesScreenLifecycle.canPushFollowUpScreen(hasNavigationController: navigationController != nil) else {
+      logger.error(NoCodesErrorType.screenPresentationFailed.message())
+      report(failureOf: navigationAction, error: NoCodesError(type: .screenPresentationFailed))
+
+      return
+    }
 
     let viewController = viewsAssembly.viewController(with: screenId, delegate: delegate, purchaseDelegate: purchaseDelegate, screenCustomizationDelegate: screenCustomizationDelegate, customVariablesDelegate: customVariablesDelegate, presentationConfiguration: presentationConfiguration, customLocale: customLocale, theme: theme)
     navigationController?.pushViewController(viewController, animated: true)
@@ -772,6 +843,7 @@ extension NoCodesViewController {
     // The screen is going away, so a load still in flight has nothing left to
     // render and no one left to report to.
     cancelScreenLoad()
+    trackClosedForRemovedScreens()
 
     if isModalPresentation {
       dismiss(animated: true) { [weak self] in

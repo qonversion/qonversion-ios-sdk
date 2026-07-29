@@ -37,6 +37,75 @@ final class NoCodesScreenLeaveTests: XCTestCase {
     }
 }
 
+// MARK: - The screen_shown / screen_closed pair
+
+final class NoCodesScreenSessionTests: XCTestCase {
+
+    func testAScreenThatAppearedOwesAShownEvent() {
+        var session = NoCodesScreenSession()
+
+        XCTAssertTrue(session.trackShown())
+    }
+
+    /// `viewDidAppear` and the finished load both announce the screen, and the
+    /// backend must not count it twice.
+    func testAScreenAlreadyCountedAsShownIsNotCountedAgain() {
+        var session = NoCodesScreenSession()
+        XCTAssertTrue(session.trackShown())
+
+        XCTAssertFalse(session.trackShown())
+    }
+
+    func testAShownScreenOwesAClosedEvent() {
+        var session = NoCodesScreenSession()
+        let _ = session.trackShown()
+
+        XCTAssertTrue(session.trackClosed())
+    }
+
+    /// A screen leaves by several routes at once — the deliberate close, then
+    /// `viewDidDisappear`, then `deinit` — and each of them asks.
+    func testTheSeveralRoutesOutOfAScreenProduceOneClosedEvent() {
+        var session = NoCodesScreenSession()
+        let _ = session.trackShown()
+        XCTAssertTrue(session.trackClosed())
+
+        XCTAssertFalse(session.trackClosed(), "viewDidDisappear after the deliberate close")
+        XCTAssertFalse(session.trackClosed(), "deinit")
+    }
+
+    /// A screen whose load never finished has no screen id and was never
+    /// counted as shown, so there is no viewing session to close.
+    func testAScreenThatWasNeverShownOwesNoClosedEvent() {
+        var session = NoCodesScreenSession()
+
+        XCTAssertFalse(session.trackClosed())
+    }
+
+    /// A screen covered by another one of the same flow closes its session
+    /// right away: UIKit sends it no second `viewDidDisappear`, so waiting for
+    /// one left the event to `deinit`, after the flow had already flushed.
+    /// Coming back opens a fresh session that owes its own pair.
+    func testACoveredScreenClosesItsSessionAndOpensANewOneWhenItComesBack() {
+        var session = NoCodesScreenSession()
+        let _ = session.trackShown()
+
+        XCTAssertTrue(session.trackClosed(), "covered by the screen pushed on top")
+        XCTAssertTrue(session.trackShown(), "back on screen after that one popped")
+        XCTAssertTrue(session.trackClosed(), "the flow ended")
+    }
+
+    /// The `deinit` fallback must not add a second event for a screen that
+    /// already closed its session when it was covered.
+    func testACoveredScreenThatNeverCameBackIsNotClosedTwice() {
+        var session = NoCodesScreenSession()
+        let _ = session.trackShown()
+        let _ = session.trackClosed()
+
+        XCTAssertFalse(session.trackClosed(), "deinit, with the flow long gone")
+    }
+}
+
 final class NoCodesScreenLoadGateTests: XCTestCase {
 
     func testALoadThatFinishedInTimeIsApplied() {
@@ -202,6 +271,97 @@ final class NoCodesPresentationGateTests: XCTestCase {
         XCTAssertEqual(gate.closeRequested(), [])
     }
 
+    /// A second `showScreen` on top of a visible one stacks on it. The close
+    /// has to reach both, and the flow is over only once the second of them
+    /// reported back — reporting after the first left an SDK screen on screen
+    /// behind a flow the host had already been told was finished.
+    func testAStackOfScreensIsOnlyFinishedWhenTheLastOneReported() {
+        var gate = NoCodesPresentationGate()
+        let first: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(first)
+        gate.screenPresented()
+        let second: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(second)
+        gate.screenPresented()
+
+        XCTAssertEqual(gate.closeRequested(), [.dismissVisibleScreen])
+        XCTAssertEqual(gate.screenFinished(), [], "the screen underneath is still up")
+        XCTAssertEqual(gate.screenFinished(), [.reportFinished])
+    }
+
+    /// A flow that pushed screens of its own has more screens reporting than
+    /// the coordinator ever presented: the dismissal takes the whole navigation
+    /// stack, and every screen in it announces the flow over.
+    func testAScreenReportingAfterTheFlowEndedIsAnEchoTheHostDoesNotHear() {
+        var gate = NoCodesPresentationGate()
+        let token: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(token)
+        gate.screenPresented()
+        let _ = gate.closeRequested()
+
+        XCTAssertEqual(gate.screenFinished(), [.reportFinished])
+        XCTAssertEqual(gate.screenFinished(), [], "the screen the flow pushed on top")
+    }
+
+    /// A second close while the first one is still tearing the stack down has
+    /// nothing left to ask for, but once the flow ended a later one starts over.
+    func testACloseIsOnlyActedOnOncePerFlow() {
+        var gate = NoCodesPresentationGate()
+        let first: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(first)
+        gate.screenPresented()
+        let second: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(second)
+        gate.screenPresented()
+
+        XCTAssertEqual(gate.closeRequested(), [.dismissVisibleScreen])
+        XCTAssertEqual(gate.closeRequested(), [], "the first close already reached both screens")
+
+        let _ = gate.screenFinished()
+        let _ = gate.screenFinished()
+
+        let next: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(next)
+        gate.screenPresented()
+
+        XCTAssertEqual(gate.closeRequested(), [.dismissVisibleScreen], "a new flow closes normally")
+    }
+
+    /// The coordinator went looking for the screens to dismiss and found none
+    /// left. Nothing will report back, so the report comes from the gate.
+    func testACloseWithTheScreensAlreadyGoneStillEndsTheFlow() {
+        var gate = NoCodesPresentationGate()
+        let token: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(token)
+        gate.screenPresented()
+        let _ = gate.closeRequested()
+
+        XCTAssertEqual(gate.nothingToDismiss(), [.reportFinished])
+        XCTAssertEqual(gate.screenFinished(), [], "no screen is left to report")
+    }
+
+    /// A screen shown while the previous dismissal is still animating is not a
+    /// screen the earlier close could have reached, so it has to stay closable.
+    func testAScreenShownRightAfterACloseIsStillClosable() {
+        var gate = NoCodesPresentationGate()
+        let first: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(first)
+        gate.screenPresented()
+        let _ = gate.closeRequested()
+
+        let second: NoCodesPresentationGate.Token = gate.presentationStarted()
+        let _ = gate.presentationReady(second)
+        gate.screenPresented()
+
+        XCTAssertEqual(gate.closeRequested(), [.dismissVisibleScreen])
+    }
+
+    func testNothingToDismissWithNoFlowRunningReportsNothing() {
+        var gate = NoCodesPresentationGate()
+
+        XCTAssertEqual(gate.nothingToDismiss(), [])
+    }
+
     func testAScreenPresentedAfterACancelledOneIsClosedNormally() {
         var gate = NoCodesPresentationGate()
         let cancelled: NoCodesPresentationGate.Token = gate.presentationStarted()
@@ -237,5 +397,59 @@ final class NoCodesFinishReportingTests: XCTestCase {
     /// screen: the flow continues and must not be reported over.
     func testAPermanentLeaveWithAnotherScreenOfTheFlowStillUpDoesNotEndIt() {
         XCTAssertFalse(NoCodesScreenLifecycle.reportsFinished(leave: .permanent, hasRemainingFlowScreen: true))
+    }
+}
+
+// MARK: - What the host hears about one action
+
+final class NoCodesActionReportingTests: XCTestCase {
+
+    /// The actions the screen runtime uses to talk to the SDK are plumbing, not
+    /// work the host asked about.
+    func testTheRuntimesOwnActionsAreNotAnnouncedToTheHost() {
+        for actionType: NoCodesActionType in [.loadProducts, .screenAnalytics, .getContext, .purchaseLoaderPresent, .showScreen] {
+            XCTAssertFalse(NoCodesScreenLifecycle.announcesExecution(actionType: actionType))
+        }
+    }
+
+    func testEveryActionTheHostCanActOnIsAnnounced() {
+        for actionType: NoCodesActionType in [.url, .deeplink, .navigation, .purchase, .restore, .close, .closeAll, .redeemPromoCode, .custom] {
+            XCTAssertTrue(NoCodesScreenLifecycle.announcesExecution(actionType: actionType))
+        }
+    }
+
+    /// A payload the SDK cannot read is still an action the host was told about,
+    /// so it owes an outcome rather than nothing at all.
+    func testAnUnknownActionIsAnnouncedAndThereforeOwesAnOutcome() {
+        XCTAssertTrue(NoCodesScreenLifecycle.announcesExecution(actionType: .unknown))
+    }
+
+    /// A screen that renders its own purchase loader only takes it down when a
+    /// failure event arrives, so a purchase the SDK could not start has to
+    /// reach the screen as well as the host.
+    func testAFailedPurchaseIsReportedToTheScreenAsWellAsTheHost() {
+        XCTAssertEqual(NoCodesScreenLifecycle.failureReport(actionType: .purchase), .hostAndScreen)
+    }
+
+    func testEveryOtherFailedActionIsReportedToTheHostAlone() {
+        for actionType: NoCodesActionType in [.url, .deeplink, .navigation, .unknown, .custom] {
+            XCTAssertEqual(NoCodesScreenLifecycle.failureReport(actionType: actionType), .host)
+        }
+    }
+}
+
+// MARK: - Where a follow-up screen can go
+
+final class NoCodesFollowUpScreenTests: XCTestCase {
+
+    func testAScreenInANavigationStackCanPushTheNextOne() {
+        XCTAssertTrue(NoCodesScreenLifecycle.canPushFollowUpScreen(hasNavigationController: true))
+    }
+
+    /// A screen presented as a popover is presented on its own, without the
+    /// navigation controller the modal route wraps it in. `pushViewController`
+    /// on `nil` is a silent no-op the host used to hear about as a success.
+    func testAPopoverScreenCannotPushAFollowUpScreen() {
+        XCTAssertFalse(NoCodesScreenLifecycle.canPushFollowUpScreen(hasNavigationController: false))
     }
 }

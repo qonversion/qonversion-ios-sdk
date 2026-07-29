@@ -23,7 +23,13 @@ final class NoCodesFlowCoordinator {
   private let noCodesService: NoCodesServiceInterface
   private let screenEventsService: ScreenEventsServiceInterface
   private let viewsAssembly: ViewsAssembly
-  private var currentVC: NoCodesViewController?
+  /// Every screen this coordinator put on screen, in presentation order. A
+  /// second `showScreen` stacks on the first rather than replacing it, and a
+  /// close has to reach all of them.
+  ///
+  /// Weak: UIKit owns a presented screen, and holding it here would keep its
+  /// web view and inlined markup alive past its dismissal.
+  private var presentedScreens: [WeakScreen] = []
   private var presentationGate = NoCodesPresentationGate()
   private var logger: LoggerWrapper!
   private var customLocale: String?
@@ -142,7 +148,8 @@ final class NoCodesFlowCoordinator {
     // Arm only after the push or present ran: earlier leaves a close acting on
     // a screen that was never presented.
     presentationGate.screenPresented()
-    currentVC = viewController
+    presentedScreens.removeAll { $0.screen == nil }
+    presentedScreens.append(WeakScreen(screen: viewController))
   }
 
   private func present(popover viewController: NoCodesViewController, on host: UIViewController, animated: Bool) {
@@ -179,22 +186,29 @@ final class NoCodesFlowCoordinator {
   }
 
   private func dismissVisibleScreen() {
-    guard let currentVC else {
+    let screens: [NoCodesViewController] = presentedScreens.compactMap { $0.screen }
+    presentedScreens.removeAll()
+
+    guard !screens.isEmpty else {
       // No dismissal will come back, so report the flow over here instead.
       logger.error("Closing the No-Codes flow without a screen to dismiss")
-      finishFlow()
+      apply(presentationGate.nothingToDismiss())
 
       return
     }
 
-    // Both routes come back through `noCodesFinished()`.
-    currentVC.close()
+    // Top down: closing a screen underneath takes the ones stacked on top of it
+    // with it, and their dismissal completions never run.
+    for screen: NoCodesViewController in screens.reversed() {
+      // Every route comes back through `noCodesFinished()`.
+      screen.close()
+    }
   }
 
   private func finishFlow() {
-    // The coordinator outlives the flow; holding the screen would keep its web
-    // view and inlined markup alive with it.
-    currentVC = nil
+    // The coordinator outlives the flow; holding the screens would keep their
+    // web views and inlined markup alive with it.
+    presentedScreens.removeAll()
     screenEventsService.flush()
     delegate?.noCodesFinished()
   }
@@ -236,8 +250,15 @@ extension NoCodesFlowCoordinator: NoCodesViewControllerDelegate {
 
 // MARK: - Private
 
+/// One tracked screen. UIKit owns it while it is up, so the coordinator only
+/// borrows it.
+private struct WeakScreen {
+
+  weak var screen: NoCodesViewController?
+}
+
 extension NoCodesFlowCoordinator {
-  
+
   private func topLevelViewController() -> UIViewController? {
     // UIApplication.windows is undefined for multi-scene apps.
     let scenes: [UIWindowScene] = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
