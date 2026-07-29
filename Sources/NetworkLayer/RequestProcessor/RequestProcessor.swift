@@ -53,6 +53,12 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     /// keeps it for the next session. A latched critical error (revoked
     /// project key) stops the replay without removing anything, so the entries
     /// wait for a launch where the key works again.
+    ///
+    /// A purchase report also passes through the shared reports gate, which the
+    /// replay always hands back: released when the report did not land, marked
+    /// reported when it did. The replay is an HTTP resend with no StoreKit
+    /// context — it cannot finish the transaction or surface a deferred
+    /// purchase, so the launch sweep must still be able to claim it.
     func processStoredRequests() {
         guard criticalError == nil else { return }
 
@@ -103,6 +109,18 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
 
                 do {
                     let (data, urlResponse) = try await self.networkProvider.send(request: urlRequest)
+                    let responseError: QonversionError? = self.errorHandler.extractError(from: urlResponse, body: data)
+
+                    // Checked before the entry is touched: a revoked project key
+                    // stops the replay with the queue intact, so the entries
+                    // wait for a launch where the key works again.
+                    if let responseError, responseError.type == .critical {
+                        if let transactionId {
+                            self.reportsGate.release(transactionId)
+                        }
+                        self.criticalErrorLatch.latch(responseError)
+                        return
+                    }
 
                     // 5xx/429 mean the backend did not process the request —
                     // keep it queued. Everything else counts as delivered
@@ -116,14 +134,14 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
                             self.reportsGate.release(transactionId)
                         }
                     } else {
-                        // Delivered: the id stays taken so the sweep running
-                        // alongside cannot post it a second time.
+                        // Delivered. The replay cannot finish the StoreKit
+                        // transaction nor surface it, so the id goes back to the
+                        // sweep marked as reported — it completes the outcome
+                        // without posting the purchase twice.
+                        if let transactionId {
+                            self.reportsGate.markReported(transactionId)
+                        }
                         self.requestsStorage.remove(stored)
-                    }
-
-                    if let error = self.errorHandler.extractError(from: urlResponse, body: data), error.type == .critical {
-                        self.criticalErrorLatch.latch(error)
-                        return
                     }
                 } catch {
                     // Kept in the queue for the next session.
@@ -228,14 +246,17 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
             responseBody = data
             responseCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? 0
         } catch {
-            // The request never reached the backend — persist retriable ones
-            // for the offline replay.
-            if retriableRequestKinds.contains(request.kind) {
+            // Only a transport failure proves the request never reached the
+            // backend. A cancelled send may well have been processed, so
+            // queueing it would report the same purchase twice (ObjC parity:
+            // QNAPIClient.m queued strictly on [QNUtils isConnectionError:]).
+            let isTransportFailure: Bool = Self.isTransportFailure(error)
+            if isTransportFailure, retriableRequestKinds.contains(request.kind) {
                 queueForReplay(request, as: urlRequest, trigger: trigger, attempt: attemptsMade.total, ifGenerationIs: generation)
             }
             // Named for what it is, so the host can branch on "offline"
             // instead of on a broken response.
-            let type: QonversionErrorType = Self.isTransportFailure(error) ? .networkConnectionFailed : .invalidResponse
+            let type: QonversionErrorType = isTransportFailure ? .networkConnectionFailed : .invalidResponse
             throw QonversionError(type: type, error: error)
         }
 
@@ -331,15 +352,19 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
     }
 
     /// A failure with no response at all: the request never reached the
-    /// backend, so resending it cannot duplicate anything. The first five are
-    /// the connection-class URLErrors; the last two are the extra codes the
-    /// ObjC client also treated as "no transport" (QNUtils.m:106-116).
+    /// backend, so resending it cannot duplicate anything. The connection-class
+    /// URLErrors, plus the extra codes the ObjC client also treated as "no
+    /// transport" (QNUtils.m:106-116).
     static func isTransportFailure(_ error: Error) -> Bool {
         guard let urlError = error as? URLError else { return false }
 
         switch urlError.code {
         case .notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotConnectToHost, .dnsLookupFailed,
-             .callIsActive, .dataNotAllowed:
+             .callIsActive, .dataNotAllowed,
+             // CFNetwork reports an offline name lookup as -1003 far more often
+             // than as -1006, and a TLS handshake that never completed carries
+             // no response either.
+             .cannotFindHost, .secureConnectionFailed:
             return true
         default:
             return false
@@ -364,15 +389,16 @@ class RequestProcessor: RequestProcessorInterface, @unchecked Sendable {
 
             do {
                 return try await networkProvider.send(request: attemptedRequest)
-            } catch {
-                guard attempt <= Self.maxTransportRetries, Self.isTransportFailure(error) else { throw error }
+            } catch let transportError {
+                guard attempt <= Self.maxTransportRetries, Self.isTransportFailure(transportError) else { throw transportError }
 
                 do {
                     try await waitBeforeRetry(number: attempt)
                 } catch {
                     // Cancelled while backing off: surface the transport
-                    // failure rather than starting another attempt.
-                    throw error
+                    // failure rather than the CancellationError, or the host
+                    // loses its "offline" branch and the local fallback.
+                    throw transportError
                 }
                 attempt += 1
             }

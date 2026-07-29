@@ -69,4 +69,44 @@ final class QonversionErrorTests: XCTestCase {
         XCTAssertEqual(error.error as? URLError, underlying)
         XCTAssertTrue(error.message.hasPrefix(QonversionErrorType.productsLoadingFailed.message()))
     }
+
+    // MARK: - the backend classification survives the service wrapping
+
+    func testWrappingABackendErrorKeepsItsApiCodeAndApiType() {
+        // A service names the operation that failed, but the backend's own
+        // classification is what the host branches on.
+        let backendError = QonversionError(type: .fraudPurchase, message: "fraud", apiCode: "purchase_fraud", apiType: "logical")
+
+        let wrapped = QonversionError(type: .purchaseReportingFailed, message: nil, error: backendError)
+
+        XCTAssertEqual(wrapped.type, .purchaseReportingFailed)
+        XCTAssertEqual(wrapped.apiCode, "purchase_fraud")
+        XCTAssertEqual(wrapped.apiType, "logical")
+    }
+
+    func testAnExplicitApiCodeWinsOverTheUnderlyingOne() {
+        let backendError = QonversionError(type: .fraudPurchase, apiCode: "purchase_fraud", apiType: "logical")
+
+        let wrapped = QonversionError(type: .purchaseReportingFailed, error: backendError, apiCode: "explicit", apiType: "request")
+
+        XCTAssertEqual(wrapped.apiCode, "explicit")
+        XCTAssertEqual(wrapped.apiType, "request")
+    }
+
+    func testWrappingANonApiErrorLeavesTheClassificationEmpty() {
+        let wrapped = QonversionError(type: .purchaseReportingFailed, error: URLError(.notConnectedToInternet))
+
+        XCTAssertNil(wrapped.apiCode)
+        XCTAssertNil(wrapped.apiType)
+    }
+
+    func testTheClassificationSurvivesTwoLevelsOfWrapping() {
+        let backendError = QonversionError(type: .fraudPurchase, apiCode: "purchase_fraud", apiType: "logical")
+        let firstWrap = QonversionError(type: .purchaseReportingFailed, error: backendError)
+
+        let secondWrap = QonversionError(type: .productsLoadingFailed, error: firstWrap)
+
+        XCTAssertEqual(secondWrap.apiCode, "purchase_fraud")
+        XCTAssertEqual(secondWrap.apiType, "logical")
+    }
 }

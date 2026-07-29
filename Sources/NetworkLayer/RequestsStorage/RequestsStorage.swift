@@ -43,7 +43,18 @@ class RequestsStorage: RequestsStorageInterface, @unchecked Sendable {
         guard _cleanGeneration == generation else { return }
 
         var requests: [StoredRequest] = fetchStoredRequests()
-        if let dedupKey = request.dedupKey, requests.contains(where: { $0.dedupKey == dedupKey }) {
+        if let dedupKey = request.dedupKey, let index = requests.firstIndex(where: { $0.dedupKey == dedupKey }) {
+            // Device and attribution keys identify the RESOURCE, not the
+            // payload, so a second append under the same key is usually a
+            // fresher state (an IDFA collected after the first failure) that
+            // must supersede the queued one — in place, to keep the send order.
+            // An identical payload is a true duplicate: keep the queued entry,
+            // whose attempt count is the real one.
+            if requests[index].body != request.body {
+                requests[index] = request
+                persist(requests)
+            }
+
             return
         }
 

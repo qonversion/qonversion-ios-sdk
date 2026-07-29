@@ -141,6 +141,45 @@ final class RequestsStorageTests: XCTestCase {
         XCTAssertEqual(storage.fetchRequests().compactMap(\.dedupKey), ["createPurchase-u-t1", "createPurchase-u-t2"])
     }
 
+    func testAFresherPayloadSupersedesTheQueuedOneUnderTheSameKey() {
+        // Device and attribution keys identify the RESOURCE, not the payload:
+        // an IDFA collected after the first failure must not be thrown away.
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        let stale: Data = Data("{\"idfa\": null}".utf8)
+        let fresh: Data = Data("{\"idfa\": \"AAA\"}".utf8)
+
+        storage.append(makeRequest(body: stale, dedupKey: "createDevice-u"))
+        storage.append(makeRequest(body: fresh, dedupKey: "createDevice-u"))
+
+        let queued: [StoredRequest] = storage.fetchRequests()
+        XCTAssertEqual(queued.count, 1, "the resource is still queued once")
+        XCTAssertEqual(queued.first?.body, fresh, "the newest payload is the one worth replaying")
+    }
+
+    func testAnIdenticalPayloadKeepsTheQueuedAttemptCount() {
+        // Re-queueing the same payload is a duplicate, not an update: the
+        // attempt history of the queued entry must survive.
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        let body: Data = Data("{\"idfa\": \"AAA\"}".utf8)
+        let queued = StoredRequest(url: "https://api.qonversion.io/v3/devices", method: "POST", body: body, dedupKey: "createDevice-u", attempt: 4)
+        storage.append(queued)
+
+        storage.append(StoredRequest(url: "https://api.qonversion.io/v3/devices", method: "POST", body: body, dedupKey: "createDevice-u", attempt: 1))
+
+        XCTAssertEqual(storage.fetchRequests().count, 1)
+        XCTAssertEqual(storage.fetchRequests().first?.attempt, 4)
+    }
+
+    func testAFresherPayloadKeepsItsPlaceInTheQueue() {
+        let storage = makeStorage(TestDefaults.makeIsolated())
+        storage.append(makeRequest(dedupKey: "createDevice-u"))
+        storage.append(makeRequest(dedupKey: "createPurchase-u-t1"))
+
+        storage.append(makeRequest(body: Data("{\"fresh\": true}".utf8), dedupKey: "createDevice-u"))
+
+        XCTAssertEqual(storage.fetchRequests().compactMap(\.dedupKey), ["createDevice-u", "createPurchase-u-t1"])
+    }
+
     func testAppendWithoutDedupKeyIsNeverDeduplicated() {
         let storage = makeStorage(TestDefaults.makeIsolated())
 

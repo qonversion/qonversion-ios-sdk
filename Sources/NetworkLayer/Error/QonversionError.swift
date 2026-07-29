@@ -37,8 +37,9 @@ public struct QonversionError: Error, @unchecked Sendable {
 
     init(type: QonversionErrorType, message: String? = nil, error: Error? = nil, additionalInfo: [String : Any]? = nil, apiCode: String? = nil, apiType: String? = nil) {
         var errorMessage: String = message ?? type.message()
-        if let qonversionError = error as? QonversionError {
-            errorMessage += "\n" + qonversionError.message
+        let wrappedError: QonversionError? = error as? QonversionError
+        if let wrappedError {
+            errorMessage += "\n" + wrappedError.message
         } else if let error = error {
             errorMessage += "\n" + error.localizedDescription
         }
@@ -47,8 +48,10 @@ public struct QonversionError: Error, @unchecked Sendable {
         self.message = errorMessage
         self.error = error
         self.additionalInfo = additionalInfo
-        self.apiCode = apiCode
-        self.apiType = apiType
+        // A service names the operation that failed, but only the backend can
+        // classify WHY — that classification must survive the wrapping.
+        self.apiCode = apiCode ?? wrappedError?.apiCode
+        self.apiType = apiType ?? wrappedError?.apiType
     }
     
     static func initializationError() -> QonversionError {
