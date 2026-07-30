@@ -223,7 +223,7 @@ final class RequestTests: XCTestCase {
         let request = try XCTUnwrap(
             Request.signPromoOffer(userId: "user1", offerId: "offer1", body: body).convertToURLRequest(baseURL)
         )
-        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v3/users/user1/offers/offer1/signatures")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.qonversion.io/v4/users/user1/offers/offer1/signatures")
         XCTAssertEqual(request.httpMethod, "POST")
         XCTAssertEqual(try bodyDict(request)["product"] as? String, "com.app.pro")
     }

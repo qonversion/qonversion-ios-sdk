@@ -61,6 +61,18 @@ final class EntitlementsServiceTests: XCTestCase {
         XCTAssertEqual(lifetime?.renewState, .unknown, "no subscription object means non-renewable only on a source the SDK recognizes; an unknown store claims nothing")
     }
 
+    func testEntitlementsDecodesThePaddleSource() async throws {
+        // The backend reports this source for entitlements bought through Paddle.
+        let json = #"{"data": [{"id": "premium", "is_active": true, "started_at": "2023-11-14T22:13:20Z", "source": "paddle"}]}"#
+        let (service, _) = makeLiveService(json: json)
+
+        let entitlements = try await service.entitlements(userId: "QON_x")
+
+        let entitlement = try XCTUnwrap(entitlements.first { $0.id == "premium" })
+        XCTAssertEqual(entitlement.source, .paddle, "paddle must not decode as .unknown")
+        XCTAssertEqual(entitlement.renewState, .nonRenewable, "a recognized store with no subscription object is non-renewable")
+    }
+
     func testEntitlementsWrapsErrors() async {
         let processor = MockRequestProcessor()
         processor.error = MockError.stubbed

@@ -348,6 +348,14 @@ public final class Qonversion: @unchecked Sendable {
     /// install. Call it right after the first launch of the app version that
     /// integrates the SDK, so the existing subscribers' data reaches the
     /// analytics.
+    ///
+    /// The reported transactions may belong to another Qonversion user — the
+    /// App Store account that bought them was known to Qonversion under a
+    /// different id. When the backend resolves them to that owner, the SDK
+    /// switches to it: the current Qonversion user id changes, and the link to
+    /// the identifier passed to ``identify(_:)`` is dropped, since the user the
+    /// SDK now works with is not the one that identifier was attached to. Call
+    /// ``identify(_:)`` again afterwards to restore it.
     public func syncHistoricalData() {
         guard let managers: Managers = currentManagers() else {
             currentLogger().warning("Qonversion.syncHistoricalData called before Qonversion.initialize — nothing was synced. Call it after initializing the SDK.")
@@ -361,6 +369,14 @@ public final class Qonversion: @unchecked Sendable {
 
     /// Restores the user's purchases and returns the entitlements.
     /// When the backend is unreachable, entitlements are calculated locally.
+    ///
+    /// The restored transactions may belong to another Qonversion user — the
+    /// App Store account they were bought with was known to Qonversion under a
+    /// different id. When the backend resolves them to that owner, the SDK
+    /// switches to it: the current Qonversion user id changes, and the link to
+    /// the identifier passed to ``identify(_:)`` is dropped, since the user the
+    /// SDK now works with is not the one that identifier was attached to. Call
+    /// ``identify(_:)`` again afterwards to restore it.
     @discardableResult
     public func restore() async throws -> [String: Qonversion.Entitlement] {
         let managers: Managers = try requireManagers()
@@ -471,6 +487,11 @@ public final class Qonversion: @unchecked Sendable {
     ///   - contextKey: Context key to get remote config for
     /// - Returns: ``Qonversion/Qonversion/RemoteConfig`` for the specified context key or default one if no key provided.
     /// - Throws: Possible error during the remote config request or Qonversion initialization error if the method is called before initialization.
+    ///   ``QonversionErrorType/remoteConfigurationNotAvailable`` covers two
+    ///   situations the backend answers identically and the SDK cannot tell
+    ///   apart: no configuration is published for this user or context key, and
+    ///   the user itself is unknown to the backend. Treat it as "there is
+    ///   nothing to apply" and fall back to the app's own defaults.
     public func remoteConfig(contextKey: String? = nil) async throws -> Qonversion.RemoteConfig {
         let managers: Managers = try requireManagers()
 
@@ -481,6 +502,11 @@ public final class Qonversion: @unchecked Sendable {
     /// Use this function to get the remote configs with specific payload and experiment info.
     /// - Returns: ``Qonversion/Qonversion/RemoteConfigList`` with all the remote configs for the current user.
     /// - Throws: Possible error during the remote config request or Qonversion initialization error if the method is called before initialization.
+    ///   ``QonversionErrorType/remoteConfigurationNotAvailable`` covers two
+    ///   situations the backend answers identically and the SDK cannot tell
+    ///   apart: no configuration is published for this user, and the user itself
+    ///   is unknown to the backend. Treat it as "there is nothing to apply" and
+    ///   fall back to the app's own defaults.
     public func remoteConfigList() async throws -> Qonversion.RemoteConfigList {
         let managers: Managers = try requireManagers()
 
@@ -494,6 +520,11 @@ public final class Qonversion: @unchecked Sendable {
     ///   - includeEmptyContextKey: set to true if you want to include remote config with empty context key to the result.
     /// - Returns: ``Qonversion/Qonversion/RemoteConfigList`` with the requested remote configs for the current user.
     /// - Throws: Possible error during the remote config list request or Qonversion initialization error if the method is called before initialization.
+    ///   ``QonversionErrorType/remoteConfigurationNotAvailable`` covers two
+    ///   situations the backend answers identically and the SDK cannot tell
+    ///   apart: no configuration is published for the requested context keys,
+    ///   and the user itself is unknown to the backend. Treat it as "there is
+    ///   nothing to apply" and fall back to the app's own defaults.
     public func remoteConfigList(contextKeys: [String], includeEmptyContextKey: Bool) async throws -> Qonversion.RemoteConfigList {
         let managers: Managers = try requireManagers()
 

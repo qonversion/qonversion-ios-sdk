@@ -110,9 +110,10 @@ enum Request : Hashable {
     case createIdentity(endpoint: String = "v4/identities", body: RequestBodyDict, type: RequestType = .post)
     case entitlements(userId: String, endpoint: String = "v4/users/%@/entitlements", type: RequestType = .get)
     case createPurchase(userId: String, endpoint: String = "v4/users/%@/purchases", body: RequestBodyDict, type: RequestType = .post)
-    // v3: contract-identical to the v4 shape and already accepting the SDK's
-    // Bearer key — the backend is not porting it.
-    case signPromoOffer(userId: String, offerId: String, endpoint: String = "v3/users/%@/offers/%@/signatures", body: RequestBodyDict, type: RequestType = .post)
+    // The v3 route is unusable for this SDK: it verifies eligibility against a
+    // stored legacy receipt, which a transaction-native SDK never uploads, so
+    // it always answers 422. The v4 route answers the same body shape.
+    case signPromoOffer(userId: String, offerId: String, endpoint: String = "v4/users/%@/offers/%@/signatures", body: RequestBodyDict, type: RequestType = .post)
     case getProperties(userId: String, endpoint: String = "v4/users/%@/properties", type: RequestType = .get)
     case sendProperties(userId: String, endpoint: String = "v4/users/%@/properties", body: RequestBodyDict, type: RequestType = .post)
     case createDevice(userId: String, endpoint: String = "v4/users/%@/device", body: RequestBodyDict, type: RequestType = .post)

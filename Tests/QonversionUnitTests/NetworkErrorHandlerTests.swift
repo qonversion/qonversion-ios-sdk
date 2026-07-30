@@ -74,6 +74,16 @@ final class NetworkErrorHandlerTests: XCTestCase {
         }
     }
 
+    func testEmptyBodied405ProducesAnUnknownNonCriticalError() {
+        // gorilla's methodNotAllowedHandler answers a completely empty body,
+        // bypassing the JSON error envelope every other path uses.
+        let error = handler.extractError(from: httpResponse(statusCode: 405), body: Data())
+
+        XCTAssertEqual(error?.type, .unknown, "405 must not be treated as critical or internal")
+        XCTAssertNil(error?.apiCode)
+        XCTAssertFalse(RequestProcessor.isRetriableStatusCode(405), "405 must not be queued for replay")
+    }
+
     func testInformationalAndRedirectCodesProduceUnknownError() {
         // Fixates current behavior: anything outside 200...299 that is not internal
         // or critical is treated as an error — including 1xx and 3xx responses.
@@ -219,6 +229,7 @@ final class ApiErrorMappingTests: XCTestCase {
             ("conflicting_purchase_found", .receiptValidationError),
             // offer-signature passthrough
             ("token_not_found", .projectConfigError),
+            ("secrets_not_found", .projectConfigError),
         ]
 
         for expectation in expectations {
@@ -233,7 +244,7 @@ final class ApiErrorMappingTests: XCTestCase {
         // Verified against the backend sources: nothing produces these. They
         // were mapped on an assumption; throttling really arrives as
         // `too_many_requests`, which stays mapped above.
-        for code in ["user_not_found", "rate_limit_exceeded", "secrets_not_found", "settings_not_found"] {
+        for code in ["user_not_found", "rate_limit_exceeded", "settings_not_found"] {
             let body = Data("{\"error\": {\"code\": \"\(code)\", \"message\": \"m\"}}".utf8)
             let error = try XCTUnwrap(handler.extractError(from: response(statusCode: 400), body: body))
 

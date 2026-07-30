@@ -59,6 +59,18 @@ final class NetworkErrorHandlerTests: XCTestCase {
         XCTAssertEqual(handler.extractError(from: response, body: body)?.type, .screenNotFound)
     }
 
+    func testEmptyBodied405ProducesAnUnknownNonCriticalError() {
+        // gorilla's methodNotAllowedHandler answers a completely empty body
+        // and no Content-Type, bypassing the JSON NotFoundHandler envelope.
+        let response: HTTPURLResponse = makeResponse(statusCode: 405)
+        let body: Data = Data()
+
+        let error: NoCodesError? = handler.extractError(from: response, body: body)
+
+        XCTAssertEqual(error?.type, .unknown, "405 must not be treated as critical")
+        XCTAssertEqual(error?.additionalInfo?[ErrorConstants.statusCodeKey.rawValue] as? Int, 405)
+    }
+
     func testOtherUnsuccessfulCodesAreUnknown() {
         for statusCode in [301, 418, 429] {
             let response: HTTPURLResponse = makeResponse(statusCode: statusCode)

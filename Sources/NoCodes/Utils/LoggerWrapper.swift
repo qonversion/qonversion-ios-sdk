@@ -15,6 +15,8 @@ enum LoggerInfoMessages: String {
   case urlHandlingFailed = "Failed to handle the URL"
   case screenEventTrackingFailed = "Failed to send screen events"
   case screenEventFlushed = "Screen events flushed successfully"
+  case screenEventRejected = "Screen event does not satisfy the backend limits and was dropped"
+  case screenEventBatchRejected = "The backend rejected the screen events batch — it was dropped instead of retried"
 }
 
 enum LogLevel: Int {

@@ -63,6 +63,7 @@ extension Qonversion {
             case appStore = "appstore"
             case playStore = "playstore"
             case stripe
+            case paddle
             case manual
         }
 
@@ -129,7 +130,7 @@ extension Qonversion {
                 switch source {
                 case .manual, .unknown:
                     return .unknown
-                case .appStore, .playStore, .stripe:
+                case .appStore, .playStore, .stripe, .paddle:
                     return .nonRenewable
                 }
             }
