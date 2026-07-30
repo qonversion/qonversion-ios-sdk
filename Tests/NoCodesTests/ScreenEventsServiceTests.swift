@@ -588,6 +588,33 @@ final class ScreenEventsServiceTests: XCTestCase {
         XCTAssertEqual(processor.lastBatch?.first?["happened_at"] as? Int, 1_700_000_000)
     }
 
+    func testAScreenAuthoredMillisecondTimestampIsConvertedToSeconds() async throws {
+        // A screen's JS reports time the JS way — Date.now(), milliseconds. Sent
+        // as-is the value reads as a date centuries ahead, fails the backend's
+        // window and takes the whole batch with it.
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        let event = ScreenEvent(data: ["type": "screen_shown", "screen_uid": "screen-1", "happened_at": 1_700_000_000_000])
+
+        service.track(event: event)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 1 }
+        XCTAssertEqual(processor.lastBatch?.first?["happened_at"] as? Int, 1_700_000_000)
+    }
+
+    func testAScreenAuthoredMillisecondTimestampAsAStringIsConvertedToSeconds() async throws {
+        let processor = EventsRequestProcessor()
+        let service: ScreenEventsService = makeService(processor: processor)
+        let event = ScreenEvent(data: ["type": "screen_shown", "screen_uid": "screen-1", "happened_at": "1700000000000"])
+
+        service.track(event: event)
+        service.flush()
+
+        await waitUntil { processor.batchesCount == 1 }
+        XCTAssertEqual(processor.lastBatch?.first?["happened_at"] as? Int, 1_700_000_000)
+    }
+
     // MARK: - User id
 
     func testEveryBatchIsPostedForTheUserResolvedAtFlushTime() async throws {

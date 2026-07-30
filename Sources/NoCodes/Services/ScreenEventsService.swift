@@ -164,16 +164,28 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
   /// How far into the future a `happened_at` may point: 24 hours.
   private static let happenedAtLookahead: Int = 86_400
 
+  /// Above this a timestamp cannot be seconds (that would be the year 5138), so
+  /// it is milliseconds — what a screen's JS produces by default.
+  private static let millisecondThreshold: Int = 100_000_000_000
+
   private static let maxScreenUidLength: Int = 255
   private static let maxPageIndex: Int = 10_000
 
   /// Events from the screen runtime carry no timestamp of their own, and the
-  /// backend requires one on every record of the batch.
+  /// backend requires one on every record of the batch. A timestamp the screen
+  /// did author reaches here in whatever unit its JS used, and milliseconds are
+  /// the JS default — left alone they read as a date far in the future and cost
+  /// the event its place in the batch.
   private static func timestamped(_ event: ScreenEvent) -> ScreenEvent {
-    guard event.data[Self.happenedAtKey] == nil else { return event }
-
     var data: [String: AnyHashable] = event.data
-    data[Self.happenedAtKey] = Int(Date().timeIntervalSince1970)
+
+    if let happenedAt = Self.intValue(data[Self.happenedAtKey]) {
+      guard happenedAt >= Self.millisecondThreshold else { return event }
+
+      data[Self.happenedAtKey] = happenedAt / 1000
+    } else {
+      data[Self.happenedAtKey] = Int(Date().timeIntervalSince1970)
+    }
 
     return ScreenEvent(data: data)
   }
