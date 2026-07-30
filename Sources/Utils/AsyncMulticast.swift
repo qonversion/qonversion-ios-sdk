@@ -134,6 +134,14 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
         }
     }
 
+    /// Drops the values kept for future subscribers. A snapshot of a user the
+    /// SDK has left must not be replayed to the next one.
+    func clearBacklog() {
+        lock.lock()
+        defer { lock.unlock() }
+        backlogEntries.removeAll()
+    }
+
     // MARK: - Private
 
     /// Registers the subscriber and hands it the backlog, all under one lock.

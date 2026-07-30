@@ -359,6 +359,69 @@ final class IntegrationTests: XCTestCase {
                        "the replay and the sweep must not both report the same transaction")
     }
 
+    // MARK: - 9. restore owner switch cascades through the graph (A6 cluster #7)
+
+    func testRestoreSwitchesToTheOwnerAndSubsequentRequestsUseTheNewUid() async throws {
+        world.stubHappyUser()
+        _ = try await world.userManager.obtainUser()
+        let originalUid: String = world.uid
+
+        // Warm a user-scoped cache under the original (anonymous) uid.
+        world.network.stub("GET", "/v4/users/" + originalUid + "/entitlements", body: #"{"object": "list", "data": [{"id": "old_premium", "is_active": true}]}"#)
+        let before = try await world.entitlementsManager.entitlements()
+        XCTAssertEqual(before.keys.sorted(), ["old_premium"])
+
+        // The store restore surfaces a transaction the backend resolves to
+        // ANOTHER Qonversion user — ObjC parity: the SDK follows it.
+        world.storeKit.restoreResult = [Qonversion.Transaction(id: "tx-owner", originalId: "tx-owner", productId: "com.app.pro", jws: "jws-owner")]
+        world.network.stub("POST", "/v4/users/*/purchases", body: #"{"object": "purchase", "user_id": "QON_owner"}"#)
+        world.network.stub("GET", "/v4/users/QON_owner", body: #"{"id": "QON_owner", "created_at": "2026-07-27T10:00:00Z", "environment": "prod"}"#)
+        world.network.stub("GET", "/v4/users/QON_owner/entitlements", body: #"{"object": "list", "data": [{"id": "owner_premium", "is_active": true}]}"#)
+
+        let entitlements = try await world.purchasesManager.restore()
+
+        XCTAssertEqual(world.uid, "QON_owner")
+        XCTAssertNotEqual(world.uid, originalUid)
+        XCTAssertEqual(entitlements.keys.sorted(), ["owner_premium"], "restore must answer with the new owner's entitlements, not the stale cache of the previous user")
+
+        // A later request reads the uid restore() left behind, not the one it started with.
+        let userInfo = try await world.userManager.userInfo()
+        XCTAssertEqual(userInfo.id, "QON_owner")
+        XCTAssertFalse(world.network.recordedRequests("GET", "/v4/users/QON_owner").isEmpty, "a later request must be addressed to the owner, not the original uid")
+    }
+
+    func testRestoreReachesTheOwnerEvenThoughTheListenerAlreadyReportedTheSameTransaction() async throws {
+        // The bug cluster #7 closed: the transaction observer holds the dedup
+        // gate for the whole session, which used to make an explicit restore()
+        // of the SAME transaction skip its report entirely — and with it, the
+        // only response able to name the owner.
+        world.stubHappyUser()
+        world.network.stub("POST", "/v4/users/*/purchases", body: #"{"object": "purchase", "user_id": "QON_owner"}"#)
+        world.network.stub("GET", "/v4/users/QON_owner", body: #"{"id": "QON_owner", "created_at": "2026-07-27T10:00:00Z", "environment": "prod"}"#)
+        world.network.stub("GET", "/v4/users/*/entitlements", body: #"{"object": "list", "data": []}"#)
+        guard let concreteManager = world.purchasesManager as? PurchasesManager else {
+            return XCTFail("Unexpected manager type")
+        }
+        let transaction = Qonversion.Transaction(id: "tx-shared", originalId: "tx-shared", productId: "com.app.pro", jws: "jws-shared")
+        let originalUid: String = world.uid
+
+        // The automatic path (StoreKit updates listener) sees it first.
+        concreteManager.transactionUpdated(transaction)
+        let listenerDeadline = Date().addingTimeInterval(3)
+        while world.network.recordedRequests("POST", "/v4/users/*/purchases").isEmpty && Date() < listenerDeadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+        XCTAssertEqual(world.uid, originalUid, "the automatic path alone must not switch the uid, even though the backend named another owner")
+
+        // The host explicitly restores the same purchase afterwards.
+        world.storeKit.restoreResult = [transaction]
+        _ = try await world.purchasesManager.restore()
+
+        XCTAssertEqual(world.network.recordedRequests("POST", "/v4/users/*/purchases").count, 2,
+                       "the host-initiated restore must reach the backend even though the listener already reported this transaction")
+        XCTAssertEqual(world.uid, "QON_owner", "only the restore's own report can resolve and switch to the owner")
+    }
+
     // MARK: - 8. intro eligibility over the real facade and manager
 
     func testTheEligibilityCallLoadsTheCatalogAndAnswersForEveryRequestedId() async throws {

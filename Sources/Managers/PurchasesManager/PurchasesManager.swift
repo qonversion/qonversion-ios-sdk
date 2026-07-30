@@ -362,7 +362,6 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     private func performRestore() async throws -> [String: Qonversion.Entitlement] {
         _ = try await userManager.obtainUser()
-        let userId: String = userIdProvider.getUserId()
 
         let restored: [Qonversion.Transaction]
         do {
@@ -378,37 +377,44 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             // the host must be able to classify it as a QonversionError.
             throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .restoreFailed)
         }
+
+        // Read the uid AFTER the store call (ObjC parity): the auth sheet
+        // AppStore.sync() opens is a window in which a concurrent logout/identify
+        // may move the uid — reporting under the pre-sync snapshot would echo a
+        // uid the SDK has already left and resurrect that session.
+        let userId: String = userIdProvider.getUserId()
+
         // Production rule: only the latest transaction per product participates.
         let latest = EntitlementsCalculator.latestTransactionsPerProduct(restored)
 
         var resolvedOwnerUserId: String?
         do {
             for transaction in latest {
-                // Skip transactions already reported this session (sweep,
-                // listener or purchase); the failed report releases the id.
-                if let id: String = transaction.id {
-                    guard reportsGate.tryTake(id) else { continue }
-                }
-                do {
-                    let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId, trigger: .restore)
-                    if let ownerUserId, ownerUserId != userId {
-                        resolvedOwnerUserId = ownerUserId
-                    }
-                } catch {
-                    if let id: String = transaction.id {
-                        reportsGate.release(id)
-                    }
-                    throw error
+                let ownerUserId: String? = try await reportHostInitiated(transaction, userId: userId, trigger: .restore)
+                // An echo of the reporting uid is not an owner resolution and
+                // must not clobber a foreign owner resolved by an earlier report.
+                if let ownerUserId, ownerUserId != userId {
+                    resolvedOwnerUserId = ownerUserId
                 }
             }
         } catch {
-            if error.allowsLocalEntitlementsFallback {
-                return await entitlementsManager.localFallbackEntitlements(for: latest)
+            // The local catalog is only intact before the switch — a user change
+            // wipes it, so compute the fallback while the products still exist.
+            let fallback: [String: Qonversion.Entitlement]? = error.allowsLocalEntitlementsFallback ? await entitlementsManager.localFallbackEntitlements(for: latest) : nil
+            // A later report failing cannot discard an owner an earlier report
+            // already resolved — the switch happens before the error becomes a
+            // result (ObjC follows the owner the moment the backend names it).
+            await switchToOwnerIfNeeded(resolvedOwnerUserId, reportedUnder: userId)
+            if let fallback {
+                return fallback
             }
             throw QonversionError(type: .restoreFailed, message: nil, error: error)
         }
 
-        await switchToOwnerIfNeeded(resolvedOwnerUserId)
+        // Capture the local fallback before the switch wipes the catalog; only a
+        // resolved owner switches, so without one this stays nil and costs nothing.
+        let preSwitchFallback: [String: Qonversion.Entitlement]? = resolvedOwnerUserId == nil ? nil : await entitlementsManager.localFallbackEntitlements(for: latest)
+        await switchToOwnerIfNeeded(resolvedOwnerUserId, reportedUnder: userId)
 
         // The store sync reached the backend: the answer restore() returns
         // must not come from the window opened before it.
@@ -417,13 +423,49 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         if let fetched: [String: Qonversion.Entitlement] = try? await entitlementsManager.entitlements() {
             return fetched
         }
+        if let preSwitchFallback {
+            return preSwitchFallback
+        }
         return await entitlementsManager.localFallbackEntitlements(for: latest)
     }
 
+    /// Reports a transaction on a path the host started itself — restore or the
+    /// historical data sync. The dedup gate is claimed when free, but an id it
+    /// already holds does NOT skip the report: the automatic paths keep their
+    /// ids for the whole session, and the backend answer to this report is the
+    /// only thing that names the owner of the purchase.
+    private func reportHostInitiated(_ transaction: Qonversion.Transaction, userId: String, trigger: RequestTrigger) async throws -> String? {
+        var gateTaken = false
+        if let id: String = transaction.id {
+            gateTaken = reportsGate.tryTake(id)
+        }
+
+        do {
+            return try await purchasesService.send(transaction, userId: userId, trigger: trigger)
+        } catch {
+            // Only an id this call took may be released — the other holder
+            // still owes the rest of that transaction's outcome.
+            if gateTaken, let id: String = transaction.id {
+                reportsGate.release(id)
+            }
+            throw error
+        }
+    }
+
     /// The restored transactions may belong to another Qonversion user — the
-    /// backend resolves the owner and the SDK follows (production parity).
-    private func switchToOwnerIfNeeded(_ ownerUserId: String?) async {
-        guard let ownerUserId else { return }
+    /// backend resolves the owner and the SDK follows it (production parity).
+    /// Host-initiated paths only: an automatic report never moves the uid, no
+    /// matter who the backend resolved the purchase to.
+    private func switchToOwnerIfNeeded(_ ownerUserId: String?, reportedUnder reportUserId: String) async {
+        // An empty owner id would wipe the session (ObjC guards result.uid.length).
+        guard let ownerUserId, !ownerUserId.isEmpty else { return }
+
+        let currentUserId: String = userIdProvider.getUserId()
+        guard ownerUserId != currentUserId else { return }
+        // The host moved the user while the reports were in flight; identify()
+        // does not bump the session generation, so nothing else would stop this
+        // switch from overriding a decision the host made later.
+        guard currentUserId == reportUserId else { return }
 
         do {
             try await userManager.switchToUser(with: ownerUserId)
@@ -494,7 +536,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         }
 
         // The host app made these purchases and owns their lifecycle — the
-        // SDK only tracks them, so no transaction is ever finished here.
+        // SDK only tracks them, so no transaction is ever finished here. The
+        // owner the backend resolves is deliberately dropped: an automatic
+        // report must never move the uid behind the host's back.
         var allReported = true
         for transaction in transactions {
             if let id: String = transaction.id {
@@ -518,10 +562,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // retriable on the next call.
         guard !localStorage.bool(forKey: Constants.historicalDataSyncedKey.rawValue) else { return }
 
-        let userId: String
         do {
             _ = try await userManager.obtainUser()
-            userId = userIdProvider.getUserId()
         } catch {
             logger.error("Skipping historical data sync: no backend user: " + error.message)
             return
@@ -537,29 +579,28 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             return
         }
 
+        // Read the uid AFTER fetching history, matching performRestore/ObjC.
+        let userId: String = userIdProvider.getUserId()
+
         let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(history)
 
         var hadFailures = false
         var resolvedOwnerUserId: String?
         for transaction in latest {
-            if let id: String = transaction.id {
-                guard reportsGate.tryTake(id) else { continue }
-            }
             do {
-                let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId, trigger: .syncHistoricalData)
+                let ownerUserId: String? = try await reportHostInitiated(transaction, userId: userId, trigger: .syncHistoricalData)
+                // An echo of the reporting uid is not an owner resolution and
+                // must not clobber a foreign owner resolved by an earlier report.
                 if let ownerUserId, ownerUserId != userId {
                     resolvedOwnerUserId = ownerUserId
                 }
             } catch {
-                if let id: String = transaction.id {
-                    reportsGate.release(id)
-                }
                 hadFailures = true
                 logger.error("Failed to report a historical transaction: " + error.message)
             }
         }
 
-        await switchToOwnerIfNeeded(resolvedOwnerUserId)
+        await switchToOwnerIfNeeded(resolvedOwnerUserId, reportedUnder: userId)
 
         if !hadFailures {
             localStorage.set(bool: true, forKey: Constants.historicalDataSyncedKey.rawValue)
@@ -639,6 +680,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         var reportFailed = false
         do {
             if !alreadyReported {
+                // The resolved owner is dropped on purpose: this funnel runs
+                // without the host asking, and only a host-initiated restore
+                // may follow the purchase to another user.
                 try await purchasesService.send(transaction, userId: reportUserId, options: reportOptions(for: transaction), trigger: trigger)
             }
             purchaseAssociationsStorage.remove(for: transaction.productId)
@@ -725,6 +769,7 @@ extension PurchasesManager: UserChangedObserver {
         // The reported-ids gate belongs to the previous user. Synchronous, so
         // it is ordered before any call following the user switch.
         reportsGate.reset()
+        entitlementsMulticast.clearBacklog()
     }
 }
 
