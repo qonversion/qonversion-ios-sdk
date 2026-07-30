@@ -429,6 +429,59 @@
   XCTAssertNil(errorB);
 }
 
+- (void)testStashLeftByUserChangeFailureCannotResurfaceLater {
+  // given - the superseded response arrives while the user is unstable, so
+  // the re-issue can only queue, and the identity change then fails - the
+  // one drain path that bypasses fireRemoteConfig
+  __block BOOL userStable = YES;
+  OCMStub([self.mockProductCenterManager isUserStable]).andDo(^(NSInvocation *invocation) {
+    [invocation setReturnValue:&userStable];
+  });
+  OCMStub([self.mockUserPropertiesManager forceSendProperties:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONUserPropertiesEmptyCompletionHandler flushCompletion = nil;
+    [invocation getArgument:&flushCompletion atIndex:2];
+    if (flushCompletion) {
+      flushCompletion();
+    }
+  });
+  __block QONRemoteConfigCompletionHandler serviceCompletion = nil;
+  OCMStub([self.mockService loadRemoteConfig:[OCMArg any] completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONRemoteConfigCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    serviceCompletion = [completion copy];
+  });
+
+  __block QONRemoteConfig *deliveredA = nil;
+  [self.manager obtainRemoteConfigWithContextKey:@"ctx"
+                                      completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+    deliveredA = remoteConfig;
+  }];
+  [self.manager invalidateRemoteConfigsCache];
+  userStable = NO;
+  QONRemoteConfig *supersededConfig = OCMClassMock([QONRemoteConfig class]);
+  serviceCompletion(supersededConfig, nil);
+  [self.manager userChangingRequestFailedWithError:[NSError errorWithDomain:@"test" code:1 userInfo:nil]];
+
+  // the snapshot belt still serves the original caller with the baseline
+  XCTAssertEqual(deliveredA, supersededConfig);
+
+  // when - the user stabilises and a later load for the same key fails
+  userStable = YES;
+  __block QONRemoteConfig *lateConfig = nil;
+  __block NSError *lateError = nil;
+  [self.manager obtainRemoteConfigWithContextKey:@"ctx"
+                                      completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+    lateConfig = remoteConfig;
+    lateError = error;
+  }];
+  serviceCompletion(nil, [NSError errorWithDomain:@"test" code:400 userInfo:nil]);
+
+  // then - the error surfaces; a leftover stash must not deliver a
+  // long-superseded evaluation as a success
+  XCTAssertNil(lateConfig);
+  XCTAssertNotNil(lateError);
+}
+
 - (void)testUserSwitchMidFlightDoesNotReissue {
   // given - a load is in flight
   [self stubUserStableAndImmediatePropertiesFlush];

@@ -76,6 +76,11 @@ static NSString *const kEmptyContextKey = @"";
   for (NSString *contextKey in self.loadingStates) {
     QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
     if (loadingState) {
+      // The only drain that bypasses fireRemoteConfig — consume the retry
+      // stash here too, or a leftover masks a later unrelated failure as a
+      // stale success. Cleared before the drain so a re-entrant path cannot
+      // re-read it.
+      loadingState.retryBaseline = nil;
       [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
     }
   }
