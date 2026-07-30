@@ -15,4 +15,20 @@
 @property (nonatomic, strong, nonnull) NSMutableArray<QONRemoteConfigCompletionHandler> *completions;
 @property (nonatomic, assign) BOOL isInProgress;
 
+// Last cache generation a superseded in-flight load was re-issued for.
+// Defense-in-depth against a concurrent re-entry: the retry count is bounded
+// structurally by the per-key isInProgress serialisation (one load, hence one
+// superseded response, per invalidation), so this guard is not reachable in
+// the current single-threaded flow. Zero means "never": a moved generation
+// observed by a response is always >= 1, since the counter only increments
+// and the bump precedes the observation.
+@property (nonatomic, assign) NSUInteger reissuedForGeneration;
+
+// The superseded (but valid) evaluation held while its re-issued retry is in
+// flight. A failed retry degrades to it — for everyone, including callers
+// who join during the retry window — and it outranks the static bundled
+// fallback: a real user-specific evaluation seconds old beats
+// shipped-in-binary defaults.
+@property (nonatomic, strong, nullable) QONRemoteConfig *retryBaseline;
+
 @end

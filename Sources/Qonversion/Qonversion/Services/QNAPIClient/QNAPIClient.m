@@ -354,8 +354,12 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 }
 
 - (void)loadRemoteConfig:(NSString * _Nullable)contextKey completion:(QNAPIClientDictCompletionHandler)completion {
+  // The context key must participate in the hash (Android keys its limiter
+  // on the context key): otherwise distinct-key loads share one bucket, and
+  // a post-invalidation refetch burst across several context keys trips the
+  // limiter with a nil-config error.
   [self.rateLimiter validateRateLimit:QONRateLimitedRequestTypeRemoteConfig
-                                 hash:[self.userID hash]
+                                 hash:[[NSString stringWithFormat:@"%@|%@", self.userID ?: @"", contextKey ?: @""] hash]
                            completion:^(NSError *rateLimitError) {
     if (rateLimitError != nil) {
       completion(nil, rateLimitError);

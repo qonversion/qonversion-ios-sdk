@@ -52,6 +52,10 @@ struct RemoteConfigsView: View {
                             await appState.loadRemoteConfig(contextKey: key)
                         }
                     }
+
+                    ActionButton(title: "Invalidate Remote Configs Cache", color: .orange) {
+                        appState.invalidateRemoteConfigsCache()
+                    }
                 }
                 .padding()
                 .background(Color(.systemGray6))

@@ -181,6 +181,11 @@ class AppState: ObservableObject {
         }
     }
     
+    func invalidateRemoteConfigsCache() {
+        Qonversion.shared().invalidateRemoteConfigsCache()
+        successMessage = "Cache invalidated — the next request fetches a fresh evaluation"
+    }
+
     func loadRemoteConfigList(contextKeys: [String]?) async {
         isLoading = true
         errorMessage = nil

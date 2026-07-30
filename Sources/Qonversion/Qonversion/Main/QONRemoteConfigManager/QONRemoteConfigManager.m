@@ -18,6 +18,7 @@
 #import "QONFallbackService.h"
 #import "NSError+Sugare.h"
 #import "QONFallbackObject.h"
+#import "QNUtils.h"
 
 static NSString *const kEmptyContextKey = @"";
 
@@ -75,9 +76,25 @@ static NSString *const kEmptyContextKey = @"";
   for (NSString *contextKey in self.loadingStates) {
     QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
     if (loadingState) {
+      // The only drain that bypasses fireRemoteConfig — consume the retry
+      // stash here too, or a leftover masks a later unrelated failure as a
+      // stale success. Cleared before the drain so a re-entrant path cannot
+      // re-read it.
+      loadingState.retryBaseline = nil;
       [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
     }
   }
+}
+
+// Public cache invalidation seam (DEV-1236 B4). Deliberately synchronous on
+// the caller thread: handlePendingRequests is synchronous too, and the
+// same-uid identify path relies on the invalidate-then-replay order — hopping
+// only this call to the main queue would let the replay hit a still-warm
+// cache and orphan queued completions. The generation bump is taken under the
+// lock; the loadingStates sweep shares the manager's pre-existing
+// unsynchronized access pattern (same as handlePendingRequests).
+- (void)invalidateRemoteConfigsCache {
+  [self invalidateLoadedConfigs];
 }
 
 - (void)userHasBeenChanged {
@@ -113,7 +130,17 @@ static NSString *const kEmptyContextKey = @"";
     // call must still reach the server — otherwise a cache hit swallows both
     // the property flush and the request.
     [self.userPropertiesManager forceSendProperties:nil];
-    return completion(loadingState.loadedConfig, nil);
+    QONRemoteConfig *cachedConfig = loadingState.loadedConfig;
+    // A retry resolved by a warm cache consumes its stashed baseline — a
+    // leftover stash must not resurface on a later, unrelated failure.
+    loadingState.retryBaseline = nil;
+    // Queued completions can be stranded on a warm state (e.g. a list load
+    // re-caches a key whose superseded single-key load was re-issued, or a
+    // completion queued while the user was unstable meets a warm cache on
+    // replay) — drain them together with the direct caller, or they never
+    // fire at all.
+    [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:cachedConfig error:nil];
+    return completion(cachedConfig, nil);
   }
   
   loadingState.isInProgress = YES;
@@ -135,34 +162,99 @@ static NSString *const kEmptyContextKey = @"";
           }
 
           if (remoteConfig) {
-            [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart completion:completion];
+            // The only signal a developer gets that this is not a fresh
+            // targeting evaluation — a silently served bundle would let a
+            // stale-config loop ship unnoticed.
+            QONVERSION_LOG(@"⚠️ Serving the bundled fallback remote config for context key '%@' — not a fresh targeting evaluation (%@)", contextKey ?: @"", error.localizedDescription);
+            [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart isFallback:YES completion:completion];
           } else {
-            [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart completion:completion];
+            [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart isFallback:NO completion:completion];
           }
         } else {
-          [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart completion:completion];
+          [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart isFallback:NO completion:completion];
         }
       } else {
-        [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart completion:completion];
+        [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart isFallback:NO completion:completion];
       }
     }];
   }];
 }
 
-- (void)fireRemoteConfig:(QONRemoteConfig *)remoteConfig contextKey:(NSString *)contextKey loadingState:(QONRemoteConfigLoadingState *)loadingState error:(NSError *)error generation:(NSUInteger)generation completion:(QONRemoteConfigCompletionHandler)completion {
+- (void)fireRemoteConfig:(QONRemoteConfig *)remoteConfig contextKey:(NSString *)contextKey loadingState:(QONRemoteConfigLoadingState *)loadingState error:(NSError *)error generation:(NSUInteger)generation isFallback:(BOOL)isFallback completion:(QONRemoteConfigCompletionHandler)completion {
   if (error) {
+    QONRemoteConfig *baseline = loadingState.retryBaseline;
+    loadingState.retryBaseline = nil;
+    if (baseline) {
+      // A failed retry of a superseded load degrades to the baseline — a
+      // real user-specific evaluation seconds old — for everyone, including
+      // callers who joined during the retry window.
+      [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:baseline error:nil];
+      completion(baseline, nil);
+      return;
+    }
     [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
     completion(nil, error);
-  } else {
-    if (generation == self.cacheGeneration) {
-      // Cache only when no invalidation happened while the load was in flight —
-      // a pre-attach evaluation must not be re-cached as fresh. The response is
-      // still delivered below either way.
-      loadingState.loadedConfig = remoteConfig;
-    }
-    [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
-    completion(remoteConfig, nil);
+    return;
   }
+
+  if (isFallback) {
+    // The bundled fallback is a local last-resort payload, not a fresh
+    // targeting evaluation — deliver it without caching so the next call
+    // retries the network instead of pinning the fallback until the next
+    // invalidation. No re-issue either: the network just failed. A stashed
+    // retry baseline outranks the bundle: a real user-specific evaluation
+    // seconds old beats shipped-in-binary defaults.
+    QONRemoteConfig *baseline = loadingState.retryBaseline;
+    loadingState.retryBaseline = nil;
+    QONRemoteConfig *result = baseline ?: remoteConfig;
+    [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:result error:nil];
+    completion(result, nil);
+    return;
+  }
+
+  // A successful (or delivered-as-is) response supersedes any stashed baseline.
+  loadingState.retryBaseline = nil;
+  NSUInteger currentGeneration = self.cacheGeneration;
+  if (generation == currentGeneration) {
+    // Cache only when no invalidation happened while the load was in flight —
+    // a superseded evaluation must not be re-cached as fresh.
+    loadingState.loadedConfig = remoteConfig;
+  } else if ([self loadingStateForContextKey:contextKey] == loadingState &&
+             loadingState.reissuedForGeneration != currentGeneration) {
+    // The cache was invalidated while this load was in flight, so this
+    // evaluation is already superseded. Re-issue the load once so the waiters
+    // receive a fresh evaluation instead of the stale one. The state must
+    // still be live: a user switch replaces the map, and an orphaned state
+    // must not fire a request nobody awaits. Unlike Android, the initiating
+    // caller's completion is NOT queued in loadingState.completions — it is
+    // the `completion` argument here — so the re-issue is not gated on
+    // completions.count. The queued waiters are snapshotted and carried
+    // through the retry together with the direct completion, keeping the
+    // superseded (but valid) evaluation as a baseline: a failed retry
+    // degrades to the baseline instead of surfacing an error where the
+    // caller previously received a success. The generation cap guards a
+    // concurrent re-entry; the retry count is bounded structurally — one
+    // load, hence one superseded response, per invalidation.
+    loadingState.reissuedForGeneration = currentGeneration;
+    // The stash makes the never-worse guarantee uniform: the retry's failure
+    // handlers prefer it over both the error and the bundled fallback,
+    // reaching late joiners queued during the retry window too.
+    loadingState.retryBaseline = remoteConfig;
+    NSArray<QONRemoteConfigCompletionHandler> *waiters = [loadingState.completions copy];
+    [loadingState.completions removeAllObjects];
+    QONRemoteConfig *baseline = remoteConfig;
+    QONRemoteConfigCompletionHandler deliverToAll = ^(QONRemoteConfig * _Nullable freshConfig, NSError * _Nullable retryError) {
+      QONRemoteConfig *result = freshConfig ?: baseline;
+      for (QONRemoteConfigCompletionHandler waiter in waiters) {
+        waiter(result, nil);
+      }
+      completion(result, nil);
+    };
+    [self obtainRemoteConfigWithContextKey:contextKey completion:deliverToAll];
+    return;
+  }
+  [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
+  completion(remoteConfig, nil);
 }
 
 - (void)obtainRemoteConfigListWithContextKeys:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
@@ -286,15 +378,21 @@ static NSString *const kEmptyContextKey = @"";
       [weakSelf actualizeFallbackData];
       if (weakSelf.fallbackData.remoteConfigList) {
         if (contextKeys) {
-          NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList includeEmptyContextKey:includeEmptyContextKey];
+          // Filter the BUNDLED fallback list — the network list is nil here.
+          NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:weakSelf.fallbackData.remoteConfigList includeEmptyContextKey:includeEmptyContextKey];
           remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:remoteConfigs];
         } else {
           remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:weakSelf.fallbackData.remoteConfigList.remoteConfigs];
         }
+        // The bundled fallback is a local last-resort payload, not a fresh
+        // targeting evaluation — deliver it without caching (see the
+        // single-key path), so the next call retries the network.
+        QONVERSION_LOG(@"⚠️ Serving the bundled fallback remote config list — not a fresh targeting evaluation (%@)", error.localizedDescription);
+        completion(remoteConfigList, nil);
       } else {
         completion(nil, error);
-        return;
       }
+      return;
     }
 
     if (remoteConfigList && generationAtStart == weakSelf.cacheGeneration) {

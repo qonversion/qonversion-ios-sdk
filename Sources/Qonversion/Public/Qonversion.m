@@ -249,6 +249,10 @@ static bool _isInitialized = NO;
   [self.remoteConfigManager obtainRemoteConfigList:completion];
 }
 
+- (void)invalidateRemoteConfigsCache {
+  [self.remoteConfigManager invalidateRemoteConfigsCache];
+}
+
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {
   [self.remoteConfigManager attachUserToExperiment:experimentId groupId:groupId completion:completion];
 }

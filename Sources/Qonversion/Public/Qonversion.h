@@ -111,6 +111,8 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
  To set custom user property, use `setCustomUserProperty` method instead.
  @param key - Defined enum key that will be transformed to string
  @param value - Property value
+ @see invalidateRemoteConfigsCache if your remote config targeting depends on
+ this property and you need the updated evaluation immediately
  */
 - (void)setUserProperty:(QONUserPropertyKey)key value:(NSString *)value;
 
@@ -118,6 +120,8 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
  Sets custom user property
  @param key - Custom property key
  @param value - Property value
+ @see invalidateRemoteConfigsCache if your remote config targeting depends on
+ this property and you need the updated evaluation immediately
  */
 - (void)setCustomUserProperty:(NSString *)key value:(NSString *)value;
 
@@ -304,6 +308,41 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
  @param completion completion block that includes information about the loaded remote configs.
  */
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion;
+
+/**
+ Invalidates the in-memory cache of remote configs so the next remoteConfig or
+ remoteConfigList call fetches a fresh targeting evaluation from the server
+ instead of returning the cached copy.
+
+ This method performs no network request itself and has no completion — it only
+ marks the cached values as stale. A remoteConfig load that is already in
+ flight when this method is called is re-issued once, so its waiting
+ completions receive a fresh evaluation rather than the superseded one (if the
+ re-issued request fails, the superseded evaluation is delivered instead); an
+ in-flight remoteConfigList load completes with the evaluation it started
+ with, and any subsequent call fetches fresh values.
+
+ Call it when the targeting inputs changed and you need the change reflected
+ immediately, for example:
+ - after setting a batch of user properties via setUserProperty: /
+   setCustomUserProperty: that your remote config targeting depends on;
+ - on returning to the foreground in long-living sessions, if the targeting
+   could have changed server-side.
+
+ You do NOT need to call it after identify: — the SDK invalidates the cache on
+ identity changes automatically. You also do not need it to recover from a
+ locally bundled fallback config — fallbacks are never cached, so the next
+ call retries the network automatically.
+
+ @note This method only affects the remoteConfig / remoteConfigList cache.
+ No-Codes screens are cached and shown independently and are not affected.
+ @note Call it from the same thread you use for the other Qonversion calls
+ (typically the main thread).
+
+ @see remoteConfig:completion:
+ @see remoteConfigList:
+ */
+- (void)invalidateRemoteConfigsCache;
 
 /**
  This function should be used for the test purposes only.
