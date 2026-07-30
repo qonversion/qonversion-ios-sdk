@@ -41,7 +41,8 @@ extension Qonversion {
         ///   - entitlementsCacheLifetime: how long cached entitlements stay eligible for the local fallback when the backend is unreachable. The default value is `.month`.
         ///   - logLevel: minimal severity the SDK writes to the unified log. The default value is `.verbose`.
         ///   - userDefaults: a custom UserDefaults (e.g. an app-group suite) to
-        ///     share the SDK state with app extensions. Defaults to `.standard`.
+        ///     share the SDK state with app extensions. When nil, the
+        ///     Qonversion-owned internal suite is used.
         public init(apiKey: String, launchMode: LaunchMode, proxyURL: String? = nil, entitlementsCacheLifetime: EntitlementsCacheLifetime = .month, logLevel: LogLevel = .verbose, userDefaults: UserDefaults? = nil) {
             self.apiKey = apiKey
             self.launchMode = launchMode

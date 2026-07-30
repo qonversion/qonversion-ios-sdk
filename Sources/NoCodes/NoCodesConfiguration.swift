@@ -48,6 +48,10 @@ public struct NoCodesConfiguration {
   /// Controls how screens adapt to light/dark themes.
   /// Defaults to `.auto` which follows device settings.
   public var theme: NoCodesTheme
+
+  /// Custom persistence domain shared with the main Qonversion SDK.
+  /// When nil, the Qonversion-owned internal suite is used.
+  public var userDefaults: UserDefaults?
   
   /// Initializer of NoCodes Configuration.
   ///
@@ -60,7 +64,9 @@ public struct NoCodesConfiguration {
   ///   - proxyURL: Optional proxy URL for API requests. If not provided, uses default API endpoint
   ///   - locale: Optional custom locale for No-Code screens localization. If not provided, uses system default
   ///   - theme: Theme mode for No-Code screens. Defaults to `.auto` which follows device settings
-  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, purchaseDelegate: NoCodesPurchaseDelegate? = nil, customVariablesDelegate: NoCodesCustomVariablesDelegate? = nil, fallbackFileName: String? = nil, proxyURL: String? = nil, locale: String? = nil, theme: NoCodesTheme = .auto) {
+  ///   - userDefaults: Optional custom persistence domain. Use the same
+  ///     instance as the main SDK when both modules are initialized.
+  public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, purchaseDelegate: NoCodesPurchaseDelegate? = nil, customVariablesDelegate: NoCodesCustomVariablesDelegate? = nil, fallbackFileName: String? = nil, proxyURL: String? = nil, locale: String? = nil, theme: NoCodesTheme = .auto, userDefaults: UserDefaults? = nil) {
     self.projectKey = projectKey
     self.delegate = delegate
     self.screenCustomizationDelegate = screenCustomizationDelegate
@@ -70,6 +76,7 @@ public struct NoCodesConfiguration {
     self.proxyURL = proxyURL
     self.locale = locale
     self.theme = theme
+    self.userDefaults = userDefaults
   }
   
 }

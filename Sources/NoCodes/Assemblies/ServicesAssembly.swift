@@ -111,7 +111,7 @@ final class ServicesAssembly {
       return deviceInfoCollectorInstance
     }
     
-    let deviceInfoCollector = DeviceInfoCollector()
+    let deviceInfoCollector = DeviceInfoCollector(userDefaults: miscAssembly.userDefaults)
     deviceInfoCollectorInstance = deviceInfoCollector
     
     return deviceInfoCollector

@@ -12,6 +12,66 @@ import XCTest
 
 final class ConfigurationTests: XCTestCase {
 
+    func testConfigurationKeepsTheCustomDefaultsInstance() {
+        let defaults = TestDefaults.makeIsolated()
+        let configuration = Qonversion.Configuration(
+            apiKey: "key",
+            launchMode: .analytics,
+            userDefaults: defaults
+        )
+
+        XCTAssertTrue(configuration.userDefaults === defaults)
+    }
+
+    func testAssemblyWithoutCustomDefaultsUsesTheSdkSuite() {
+        let suiteName = "io.qonversion.sdk"
+        let sdkDefaults = UserDefaults(suiteName: suiteName)!
+        sdkDefaults.removePersistentDomain(forName: suiteName)
+        defer { sdkDefaults.removePersistentDomain(forName: suiteName) }
+
+        let assembly = QonversionAssembly(apiKey: "key", userDefaults: nil)
+        assembly.servicesAssembly.miscAssembly.userDefaults.set("value", forKey: "test.internal-suite")
+
+        XCTAssertEqual(sdkDefaults.string(forKey: "test.internal-suite"), "value")
+    }
+
+    func testAssemblyMovesSdkOwnedStandardValuesIntoTheInternalSuite() {
+        let suiteName = "io.qonversion.sdk"
+        let sdkDefaults = UserDefaults(suiteName: suiteName)!
+        let fallbackKey = "io.qonversion.sdk.storage.fallbackVendorId"
+        let unrelatedKey = "test.host-setting"
+        sdkDefaults.removePersistentDomain(forName: suiteName)
+        UserDefaults.standard.removeObject(forKey: fallbackKey)
+        UserDefaults.standard.removeObject(forKey: unrelatedKey)
+        defer {
+            sdkDefaults.removePersistentDomain(forName: suiteName)
+            UserDefaults.standard.removeObject(forKey: fallbackKey)
+            UserDefaults.standard.removeObject(forKey: unrelatedKey)
+        }
+        UserDefaults.standard.set("existing-fallback", forKey: fallbackKey)
+        UserDefaults.standard.set("host-value", forKey: unrelatedKey)
+
+        _ = QonversionAssembly(apiKey: "key", userDefaults: nil)
+
+        XCTAssertEqual(sdkDefaults.string(forKey: fallbackKey), "existing-fallback")
+        XCTAssertNil(UserDefaults.standard.object(forKey: fallbackKey))
+        XCTAssertEqual(UserDefaults.standard.string(forKey: unrelatedKey), "host-value")
+        XCTAssertNil(sdkDefaults.object(forKey: unrelatedKey))
+    }
+
+    func testAssemblyDoesNotMigrateStandardValuesIntoCustomDefaults() {
+        let customDefaults = TestDefaults.makeIsolated()
+        let fallbackKey = "io.qonversion.sdk.storage.fallbackVendorId"
+        UserDefaults.standard.removeObject(forKey: fallbackKey)
+        defer { UserDefaults.standard.removeObject(forKey: fallbackKey) }
+        UserDefaults.standard.set("standard-fallback", forKey: fallbackKey)
+
+        _ = QonversionAssembly(apiKey: "key", userDefaults: customDefaults)
+
+        XCTAssertNil(customDefaults.object(forKey: fallbackKey))
+        XCTAssertEqual(UserDefaults.standard.string(forKey: fallbackKey), "standard-fallback")
+    }
+
     func testDefaultConfigurationHasNoCustomBaseURL() {
         let configuration = Qonversion.Configuration(apiKey: "key", launchMode: .analytics)
 

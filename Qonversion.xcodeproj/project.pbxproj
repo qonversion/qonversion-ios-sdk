@@ -96,10 +96,13 @@
 		70CD93162BC6E22B0039D65C /* ResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92C82BC6E22B0039D65C /* ResponseDecoder.swift */; };
 		70CD93172BC6E22B0039D65C /* ResponseDecoderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92C92BC6E22B0039D65C /* ResponseDecoderInterface.swift */; };
 		70CD93182BC6E22B0039D65C /* LocalStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92CC2BC6E22B0039D65C /* LocalStorage.swift */; };
+		F100000000000000000000B1 /* DefaultSuiteMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000000A1 /* DefaultSuiteMigration.swift */; };
+		F100000000000000000000B2 /* QonversionDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000000A2 /* QonversionDefaults.swift */; };
 		70CD93192BC6E22B0039D65C /* LocalStorageInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92CD2BC6E22B0039D65C /* LocalStorageInterface.swift */; };
 		70CD931A2BC6E22B0039D65C /* PropertiesStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92CF2BC6E22B0039D65C /* PropertiesStorage.swift */; };
 		70CD931B2BC6E22B0039D65C /* UserPropertiesStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92D02BC6E22B0039D65C /* UserPropertiesStorage.swift */; };
 		70CD931C2BC6E22B0039D65C /* DeviceInfoCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92D32BC6E22B0039D65C /* DeviceInfoCollector.swift */; };
+		F100000000000000000000B3 /* VendorIdResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000000A3 /* VendorIdResolver.swift */; };
 		70CD931D2BC6E22B0039D65C /* DeviceInfoCollectorInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92D42BC6E22B0039D65C /* DeviceInfoCollectorInterface.swift */; };
 		70CD931E2BC6E22B0039D65C /* DeviceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92D52BC6E22B0039D65C /* DeviceService.swift */; };
 		70CD931F2BC6E22B0039D65C /* DeviceServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD92D62BC6E22B0039D65C /* DeviceServiceInterface.swift */; };
@@ -342,10 +345,13 @@
 		70CD92C82BC6E22B0039D65C /* ResponseDecoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ResponseDecoder.swift; sourceTree = "<group>"; };
 		70CD92C92BC6E22B0039D65C /* ResponseDecoderInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ResponseDecoderInterface.swift; sourceTree = "<group>"; };
 		70CD92CC2BC6E22B0039D65C /* LocalStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalStorage.swift; sourceTree = "<group>"; };
+		F100000000000000000000A1 /* DefaultSuiteMigration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DefaultSuiteMigration.swift; sourceTree = "<group>"; };
+		F100000000000000000000A2 /* QonversionDefaults.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QonversionDefaults.swift; sourceTree = "<group>"; };
 		70CD92CD2BC6E22B0039D65C /* LocalStorageInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalStorageInterface.swift; sourceTree = "<group>"; };
 		70CD92CF2BC6E22B0039D65C /* PropertiesStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertiesStorage.swift; sourceTree = "<group>"; };
 		70CD92D02BC6E22B0039D65C /* UserPropertiesStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserPropertiesStorage.swift; sourceTree = "<group>"; };
 		70CD92D32BC6E22B0039D65C /* DeviceInfoCollector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollector.swift; sourceTree = "<group>"; };
+		F100000000000000000000A3 /* VendorIdResolver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VendorIdResolver.swift; sourceTree = "<group>"; };
 		70CD92D42BC6E22B0039D65C /* DeviceInfoCollectorInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceInfoCollectorInterface.swift; sourceTree = "<group>"; };
 		70CD92D52BC6E22B0039D65C /* DeviceService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceService.swift; sourceTree = "<group>"; };
 		70CD92D62BC6E22B0039D65C /* DeviceServiceInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceServiceInterface.swift; sourceTree = "<group>"; };
@@ -764,6 +770,8 @@
 			isa = PBXGroup;
 			children = (
 				70CD92CC2BC6E22B0039D65C /* LocalStorage.swift */,
+				F100000000000000000000A1 /* DefaultSuiteMigration.swift */,
+				F100000000000000000000A2 /* QonversionDefaults.swift */,
 				D400000000000000000000A1 /* LegacyPurchasesQueueMigration.swift */,
 				D500000000000000000000A1 /* LegacyEntitlementsMigration.swift */,
 				D5PS00000000000000000A1 /* LegacyPurchaseStateMigration.swift */,
@@ -810,6 +818,7 @@
 			children = (
 				AD00000000000000000000A1 /* AdvertisingIdReader.swift */,
 				70CD92D32BC6E22B0039D65C /* DeviceInfoCollector.swift */,
+				F100000000000000000000A3 /* VendorIdResolver.swift */,
 				CB00000000000000000000A1 /* IntegrationsInfoCollector.swift */,
 				70CD92D42BC6E22B0039D65C /* DeviceInfoCollectorInterface.swift */,
 				70CD92D52BC6E22B0039D65C /* DeviceService.swift */,
@@ -1300,12 +1309,15 @@
 				70CD93092BC6E22B0039D65C /* HeadersBuilderInterface.swift in Sources */,
 				70CD93142BC6E22B0039D65C /* RequestsStorage.swift in Sources */,
 				70CD93182BC6E22B0039D65C /* LocalStorage.swift in Sources */,
+				F100000000000000000000B1 /* DefaultSuiteMigration.swift in Sources */,
+				F100000000000000000000B2 /* QonversionDefaults.swift in Sources */,
 				70CD932B2BC6E22B0039D65C /* StoreKitWrapperInterface.swift in Sources */,
 				70CD93162BC6E22B0039D65C /* ResponseDecoder.swift in Sources */,
 				6A840E092BD6AE7C00E5E8E3 /* EmptyApiResponse.swift in Sources */,
 				70B4E9772BDAA7C300EE808C /* RemoteConfigServiceInterface.swift in Sources */,
 				70CD93242BC6E22B0039D65C /* StoreKitMapper.swift in Sources */,
 				70CD931C2BC6E22B0039D65C /* DeviceInfoCollector.swift in Sources */,
+				F100000000000000000000B3 /* VendorIdResolver.swift in Sources */,
 				AD00000000000000000000B1 /* AdvertisingIdReader.swift in Sources */,
 				70CD93112BC6E22B0039D65C /* RequestType.swift in Sources */,
 				70CD92F92BC6E22B0039D65C /* Device.swift in Sources */,

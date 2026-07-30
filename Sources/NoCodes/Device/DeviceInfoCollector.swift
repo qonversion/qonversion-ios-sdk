@@ -7,6 +7,7 @@
 //
 
 import Foundation
+@_spi(QonversionInternal) import Qonversion
 
 #if os(iOS)
 import UIKit
@@ -41,8 +42,8 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface, Sendable {
     private let preparedDevice: Device
 
     @MainActor
-    init() {
-        preparedDevice = DeviceInfoCollector.collectDeviceInfo()
+    init(userDefaults: UserDefaults = .standard) {
+        preparedDevice = DeviceInfoCollector.collectDeviceInfo(userDefaults: userDefaults)
     }
 
     func deviceInfo() -> Device {
@@ -50,8 +51,8 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface, Sendable {
     }
 
     @MainActor
-    private static func collectDeviceInfo() -> Device {
-        let collector = Collector()
+    private static func collectDeviceInfo(userDefaults: UserDefaults) -> Device {
+        let collector = Collector(userDefaults: userDefaults)
 
         return collector.deviceInfo()
     }
@@ -61,6 +62,12 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface, Sendable {
 /// stay in one main-actor-isolated place.
 @MainActor
 private struct Collector {
+
+    private let vendorIdResolver: VendorIdResolver
+
+    init(userDefaults: UserDefaults) {
+        vendorIdResolver = VendorIdResolver(userDefaults: userDefaults)
+    }
 
     func deviceInfo() -> Device {
         let manufacturer = "Apple"
@@ -141,7 +148,7 @@ private struct Collector {
         }
     }
 
-    private func vendorId() -> String? {
+    private func vendorId() -> String {
         var identifier: String? = nil
         #if os(iOS)
         identifier = UIDevice.current.identifierForVendor?.uuidString
@@ -151,7 +158,7 @@ private struct Collector {
         identifier = getMacAddress()
         #endif
 
-        return identifier
+        return vendorIdResolver.resolve(systemVendorId: identifier)
     }
 
     #if os(macOS)

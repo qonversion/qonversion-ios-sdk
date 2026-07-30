@@ -5,6 +5,8 @@
 //  Created by Suren Sarkisyan on 08.02.2024.
 //
 
+import Foundation
+
 enum StorageConstants: String {
     case prefix = "storage.qonversion.io."
     case unprocessedRequests
@@ -43,5 +45,26 @@ enum SDKStorageKeys {
 
     static func requests(forApiKey apiKey: String) -> String {
         return InternalConstants.storagePrefix.rawValue + "requests." + apiKey
+    }
+
+    static func defaultSuiteMigrationKeys(
+        currentApiKey: String,
+        standardDefaults: UserDefaults = .standard
+    ) -> [String] {
+        var keys = unscoped + [
+            apiKey,
+            products(forApiKey: currentApiKey),
+            requests(forApiKey: currentApiKey),
+            VendorIdResolver.storageKey
+        ]
+
+        if let previousApiKey = standardDefaults.string(forKey: apiKey),
+           !previousApiKey.isEmpty,
+           previousApiKey != currentApiKey {
+            keys.append(products(forApiKey: previousApiKey))
+            keys.append(requests(forApiKey: previousApiKey))
+        }
+
+        return keys
     }
 }

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+@_spi(QonversionInternal) import Qonversion
 
 #if os(iOS)
 
@@ -14,12 +15,13 @@ import Foundation
 final class NoCodesAssembly {
   
   let configuration: NoCodesConfiguration
-  private let miscAssembly: MiscAssembly
+  let miscAssembly: MiscAssembly
   private let servicesAssembly: ServicesAssembly
   private var flowCoordinatorInstance: NoCodesFlowCoordinator?
   
-  required init(configuration: NoCodesConfiguration, isFirstLaunch: Bool, userDefaults: UserDefaults = .standard) {
+  required init(configuration: NoCodesConfiguration, isFirstLaunch: Bool) {
     self.configuration = configuration
+    let userDefaults = QonversionDefaults.resolve(configuration.userDefaults)
     miscAssembly = MiscAssembly(projectKey: configuration.projectKey, userDefaults: userDefaults, isFirstLaunch: isFirstLaunch)
     servicesAssembly = ServicesAssembly(miscAssembly: miscAssembly, fallbackFileName: configuration.fallbackFileName, proxyURL: configuration.proxyURL)
   }

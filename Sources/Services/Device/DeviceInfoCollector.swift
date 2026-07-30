@@ -41,11 +41,16 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
 
     private let advertisingIdReader: AdvertisingIdReader
     private let installDateProvider: InstallDateProvider
+    private let vendorIdResolver: VendorIdResolver
 
-    init(installDateProvider: @escaping InstallDateProvider = DeviceInfoCollector.documentsCreationDate) {
+    init(
+        userDefaults: UserDefaults = .standard,
+        installDateProvider: @escaping InstallDateProvider = DeviceInfoCollector.documentsCreationDate
+    ) {
         let advertisingIdReader = AdvertisingIdReader()
         self.advertisingIdReader = advertisingIdReader
         self.installDateProvider = installDateProvider
+        self.vendorIdResolver = VendorIdResolver(userDefaults: userDefaults)
     }
 
     func deviceInfo() -> Device {
@@ -155,7 +160,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         }
     }
 
-    private func vendorId() -> String? {
+    private func vendorId() -> String {
         var identifier: String? = nil
         #if os(iOS) || os(tvOS) || os(visionOS)
         identifier = UIDevice.current.identifierForVendor?.uuidString
@@ -165,7 +170,7 @@ final class DeviceInfoCollector: DeviceInfoCollectorInterface {
         identifier = getMacAddress()
         #endif
 
-        return identifier
+        return vendorIdResolver.resolve(systemVendorId: identifier)
     }
 
     #if os(macOS)

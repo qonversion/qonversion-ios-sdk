@@ -54,7 +54,7 @@ enum NoCodesFirstLaunch {
 
   // The production Objective-C SDK wrote this very key, so an upgraded install
   // keeps its answer instead of looking brand new.
-  private static let alreadyLaunchedKey = "io.qonversion.nocodes.alreadyLaunchedBefore"
+  static let alreadyLaunchedKey = "io.qonversion.nocodes.alreadyLaunchedBefore"
 
   /// Latches the flag and answers whether this launch is the first one.
   /// Resolved once at SDK initialization: doing it per context build made the

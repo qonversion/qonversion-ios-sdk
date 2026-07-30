@@ -7,6 +7,7 @@
 //
 
 import Foundation
+@_spi(QonversionInternal) import Qonversion
 
 #if os(iOS)
 
@@ -39,7 +40,21 @@ public final class NoCodes {
   /// - Returns: ``NoCodes`` instance of the SDK.
   @discardableResult
   public static func initialize(with configuration: NoCodesConfiguration) -> NoCodes {
-    let isFirstLaunch: Bool = NoCodes.shared.resolveIsFirstLaunch()
+    let userDefaults = QonversionDefaults.resolve(configuration.userDefaults)
+    if configuration.userDefaults == nil {
+      QonversionDefaults.moveStandardValues(
+        to: userDefaults,
+        keys: [
+          NoCodesFirstLaunch.alreadyLaunchedKey,
+          VendorIdResolver.storageKey
+        ]
+      )
+      QonversionDefaults.synchronizeStandardValues(
+        to: userDefaults,
+        keys: QonversionDefaults.sourceOverrideKeys
+      )
+    }
+    let isFirstLaunch: Bool = NoCodes.shared.resolveIsFirstLaunch(userDefaults: userDefaults)
     let assembly = NoCodesAssembly(configuration: configuration, isFirstLaunch: isFirstLaunch)
     let flowCoordinator: NoCodesFlowCoordinator = assembly.flowCoordinator()
 
@@ -160,12 +175,12 @@ public final class NoCodes {
     flowCoordinator?.setTheme(theme)
   }
 
-  private func resolveIsFirstLaunch() -> Bool {
+  private func resolveIsFirstLaunch(userDefaults: UserDefaults) -> Bool {
     if let isFirstLaunch {
       return isFirstLaunch
     }
 
-    let resolved: Bool = NoCodesFirstLaunch.resolve(storage: .standard, daysSinceInstall: NoCodesFirstLaunch.daysSinceInstall())
+    let resolved: Bool = NoCodesFirstLaunch.resolve(storage: userDefaults, daysSinceInstall: NoCodesFirstLaunch.daysSinceInstall())
     isFirstLaunch = resolved
 
     return resolved
