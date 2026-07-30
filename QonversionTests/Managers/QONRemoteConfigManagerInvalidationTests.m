@@ -155,6 +155,48 @@
   XCTAssertFalse(self.manager.loadingStates[@"ctx"].isInProgress);
 }
 
+- (void)testRefreshRemoteConfigsDropsCachesNonDestructively {
+  // given - cached configs with a pending completion (DEV-1236 B4: the public
+  // refresh and the same-uid identify path both route here)
+  [self seedCachedConfigs];
+
+  // when
+  [self.manager refreshRemoteConfigs];
+
+  // then - caches dropped, states and completions survive
+  [self assertInvalidatedForEntryPoint:@"refreshRemoteConfigs"];
+}
+
+- (void)testRefreshRemoteConfigsGuardsInFlightLoads {
+  // given - a load is in flight when the refresh lands
+  OCMStub([self.mockProductCenterManager isUserStable]).andReturn(YES);
+  OCMStub([self.mockUserPropertiesManager forceSendProperties:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONUserPropertiesEmptyCompletionHandler flushCompletion = nil;
+    [invocation getArgument:&flushCompletion atIndex:2];
+    if (flushCompletion) {
+      flushCompletion();
+    }
+  });
+
+  __block QONRemoteConfigCompletionHandler serviceCompletion = nil;
+  OCMStub([self.mockService loadRemoteConfig:[OCMArg any] completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONRemoteConfigCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    serviceCompletion = [completion copy];
+  });
+
+  [self.manager obtainRemoteConfigWithContextKey:@"ctx"
+                                      completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {}];
+  XCTAssertNotNil(serviceCompletion);
+
+  // when - refresh mid-flight, then the pre-refresh response lands
+  [self.manager refreshRemoteConfigs];
+  serviceCompletion(OCMClassMock([QONRemoteConfig class]), nil);
+
+  // then - the stale evaluation must not be re-cached
+  XCTAssertNil(self.manager.loadingStates[@"ctx"].loadedConfig);
+}
+
 - (void)testAttachInvalidationPreventsInFlightListLoadFromReCachingStaleConfigs {
   // given - the user is stable and a list load is in flight (attach does NOT
   // replace the states map, so the generation guard is the only barrier here)

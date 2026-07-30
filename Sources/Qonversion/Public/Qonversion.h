@@ -306,6 +306,15 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion;
 
 /**
+ Drops the cached remote configs so the next remoteConfig or remoteConfigList
+ call fetches a fresh targeting evaluation from the server instead of
+ returning the in-memory copy. Call it after changing user properties that
+ participate in remote config targeting when you need the updated evaluation
+ immediately.
+ */
+- (void)refreshRemoteConfigs NS_SWIFT_NAME(refreshRemoteConfigs());
+
+/**
  This function should be used for the test purposes only.
  Do not forget to delete the usage of this function before the release.
  Use this function to attach the user to the remote configuration.

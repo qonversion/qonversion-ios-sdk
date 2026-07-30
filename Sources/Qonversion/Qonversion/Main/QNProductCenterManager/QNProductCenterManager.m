@@ -308,6 +308,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [weakSelf.userInfoService storeCustomIdentityUserID:identityId];
     
     if ([currentUserID isEqualToString:result]) {
+      // The uid did not change, but the identity did — user properties and the
+      // external identity are now attached, so cached configs may no longer
+      // reflect the server-side targeting evaluation. Drop them
+      // (non-destructively) so the next remoteConfig call refetches
+      // (DEV-1236 B4).
+      [weakSelf.remoteConfigManager refreshRemoteConfigs];
       [weakSelf handlePendingRequests:nil];
       [weakSelf fireIdentitySuccess:identityId];
     } else {

@@ -80,6 +80,10 @@ static NSString *const kEmptyContextKey = @"";
   }
 }
 
+- (void)refreshRemoteConfigs {
+  [self invalidateLoadedConfigs];
+}
+
 - (void)userHasBeenChanged {
   [self bumpCacheGeneration];
   self.loadingStates = [NSMutableDictionary new];

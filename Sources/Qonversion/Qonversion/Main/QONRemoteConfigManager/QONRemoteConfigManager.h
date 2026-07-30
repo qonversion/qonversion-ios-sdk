@@ -32,6 +32,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
 - (void)userHasBeenChanged;
 
+/**
+ Drops every cached remote config so the next load fetches a fresh targeting
+ evaluation. Non-destructive: loading states and pending completions survive,
+ and the cache generation bump keeps in-flight loads from re-caching a
+ pre-refresh response (DEV-1236 B4).
+ */
+- (void)refreshRemoteConfigs;
+
 @end
 
 NS_ASSUME_NONNULL_END
