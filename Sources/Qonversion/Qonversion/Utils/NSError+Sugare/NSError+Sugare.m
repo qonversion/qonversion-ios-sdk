@@ -9,6 +9,7 @@
 #import "NSError+Sugare.h"
 #import "QNInternalConstants.h"
 #import "QONErrors.h"
+#import "Qonversion.h"
 
 @implementation NSError (Sugare)
 
@@ -17,9 +18,12 @@
   // bundled payload exists for: no network attempt was made, so serving the
   // fallback beats surfacing a hard error. Matters since fallbacks are no
   // longer cached — offline repeat calls hit the limiter instead of the old
-  // cached-fallback fast path.
+  // cached-fallback fast path. The rate-limit arm is domain-pinned: code 35
+  // collides with unrelated domains (e.g. POSIX EAGAIN).
+  BOOL isRateLimited = [self.domain isEqualToString:QonversionErrorDomain] &&
+      self.code == QONErrorCodeApiRateLimitExceeded;
   if (self.code == NSURLErrorNotConnectedToInternet ||
-      self.code == QONErrorCodeApiRateLimitExceeded ||
+      isRateLimited ||
       (self.code >= kInternalServerErrorFirstCode && self.code <= kInternalServerErrorLastCode)) {
     return YES;
   } else {

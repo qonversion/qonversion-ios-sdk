@@ -18,6 +18,7 @@
 #import "QONFallbackService.h"
 #import "QONFallbackObject.h"
 #import "QONErrors.h"
+#import "Qonversion.h"
 
 /*
  * Contract tests for the cache invalidation seams (DEV-1231 + DEV-1236 B4).
@@ -340,6 +341,94 @@
   XCTAssertNil(self.manager.loadingStates[@"ctx"].loadedConfig);
 }
 
+- (void)testFailedReissuePrefersBaselineOverBundledFallback {
+  // given - a bundled fallback EXISTS for the key, and a load is in flight
+  [self stubUserStableAndImmediatePropertiesFlush];
+  QONRemoteConfig *bundledConfig = OCMClassMock([QONRemoteConfig class]);
+  QONRemoteConfigurationSource *bundledSource = OCMClassMock([QONRemoteConfigurationSource class]);
+  OCMStub([bundledConfig source]).andReturn(bundledSource);
+  OCMStub([bundledSource contextKey]).andReturn(@"ctx");
+  QONFallbackObject *fallbackObject = [QONFallbackObject new];
+  fallbackObject.remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:@[bundledConfig]];
+  OCMStub([self.mockFallbackService obtainFallbackData]).andReturn(fallbackObject);
+
+  __block NSUInteger singleCalls = 0;
+  __block QONRemoteConfigCompletionHandler serviceCompletion = nil;
+  OCMStub([self.mockService loadRemoteConfig:[OCMArg any] completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    singleCalls += 1;
+    __unsafe_unretained QONRemoteConfigCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    serviceCompletion = [completion copy];
+  });
+
+  __block QONRemoteConfig *deliveredConfig = nil;
+  __block NSError *deliveredError = nil;
+  [self.manager obtainRemoteConfigWithContextKey:@"ctx"
+                                      completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+    deliveredConfig = remoteConfig;
+    deliveredError = error;
+  }];
+
+  // when - invalidation mid-flight, the superseded response triggers a
+  // re-issue, and the retry fails in a FALLBACK-ELIGIBLE way
+  [self.manager invalidateRemoteConfigsCache];
+  QONRemoteConfig *supersededConfig = OCMClassMock([QONRemoteConfig class]);
+  QONRemoteConfigCompletionHandler firstServiceCompletion = serviceCompletion;
+  firstServiceCompletion(supersededConfig, nil);
+  XCTAssertEqual(singleCalls, 2);
+  serviceCompletion(nil, [NSError errorWithDomain:NSURLErrorDomain
+                                             code:NSURLErrorNotConnectedToInternet
+                                         userInfo:nil]);
+
+  // then - the real user-specific evaluation seconds old outranks the static
+  // bundled payload
+  XCTAssertEqual(deliveredConfig, supersededConfig);
+  XCTAssertNil(deliveredError);
+  XCTAssertNil(self.manager.loadingStates[@"ctx"].loadedConfig);
+}
+
+- (void)testLateJoinerDuringRetryReceivesBaseline {
+  // given - a load is in flight
+  [self stubUserStableAndImmediatePropertiesFlush];
+  __block QONRemoteConfigCompletionHandler serviceCompletion = nil;
+  OCMStub([self.mockService loadRemoteConfig:[OCMArg any] completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONRemoteConfigCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    serviceCompletion = [completion copy];
+  });
+
+  __block QONRemoteConfig *deliveredA = nil;
+  __block NSError *errorA = nil;
+  [self.manager obtainRemoteConfigWithContextKey:@"ctx"
+                                      completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+    deliveredA = remoteConfig;
+    errorA = error;
+  }];
+
+  // when - invalidation mid-flight, the superseded response triggers a
+  // re-issue, a SECOND caller joins while the retry is flying, and the
+  // retry fails without a fallback (no bundled data)
+  [self.manager invalidateRemoteConfigsCache];
+  QONRemoteConfig *supersededConfig = OCMClassMock([QONRemoteConfig class]);
+  QONRemoteConfigCompletionHandler firstServiceCompletion = serviceCompletion;
+  firstServiceCompletion(supersededConfig, nil);
+  __block QONRemoteConfig *deliveredB = nil;
+  __block NSError *errorB = nil;
+  [self.manager obtainRemoteConfigWithContextKey:@"ctx"
+                                      completion:^(QONRemoteConfig * _Nullable remoteConfig, NSError * _Nullable error) {
+    deliveredB = remoteConfig;
+    errorB = error;
+  }];
+  serviceCompletion(nil, [NSError errorWithDomain:@"test" code:400 userInfo:nil]);
+
+  // then - the never-worse guarantee is uniform: the late joiner gets the
+  // baseline too, not the retry error
+  XCTAssertEqual(deliveredA, supersededConfig);
+  XCTAssertEqual(deliveredB, supersededConfig);
+  XCTAssertNil(errorA);
+  XCTAssertNil(errorB);
+}
+
 - (void)testUserSwitchMidFlightDoesNotReissue {
   // given - a load is in flight
   [self stubUserStableAndImmediatePropertiesFlush];
@@ -394,8 +483,9 @@
   // when - the request is short-circuited by the local rate limiter (since
   // fallbacks are no longer cached, offline repeat calls hit the limiter
   // instead of the old cached-fallback fast path)
-  // shouldFireFallback matches on the code alone, so the domain is irrelevant
-  serviceCompletion(nil, [NSError errorWithDomain:@"test"
+  // The rate-limit arm of shouldFireFallback is domain-pinned (code 35
+  // collides with unrelated domains, e.g. POSIX EAGAIN)
+  serviceCompletion(nil, [NSError errorWithDomain:QonversionErrorDomain
                                              code:QONErrorCodeApiRateLimitExceeded
                                          userInfo:nil]);
 

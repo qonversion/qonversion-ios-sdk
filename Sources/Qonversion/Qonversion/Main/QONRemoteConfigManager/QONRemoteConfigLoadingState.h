@@ -24,4 +24,11 @@
 // and the bump precedes the observation.
 @property (nonatomic, assign) NSUInteger reissuedForGeneration;
 
+// The superseded (but valid) evaluation held while its re-issued retry is in
+// flight. A failed retry degrades to it — for everyone, including callers
+// who join during the retry window — and it outranks the static bundled
+// fallback: a real user-specific evaluation seconds old beats
+// shipped-in-binary defaults.
+@property (nonatomic, strong, nullable) QONRemoteConfig *retryBaseline;
+
 @end
