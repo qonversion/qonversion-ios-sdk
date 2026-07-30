@@ -8,11 +8,19 @@
 
 #import "NSError+Sugare.h"
 #import "QNInternalConstants.h"
+#import "QONErrors.h"
 
 @implementation NSError (Sugare)
 
 - (BOOL)shouldFireFallback {
-  if (self.code == NSURLErrorNotConnectedToInternet || (self.code >= kInternalServerErrorFirstCode && self.code <= kInternalServerErrorLastCode)) {
+  // A locally short-circuited request (rate limiter) is exactly the case the
+  // bundled payload exists for: no network attempt was made, so serving the
+  // fallback beats surfacing a hard error. Matters since fallbacks are no
+  // longer cached — offline repeat calls hit the limiter instead of the old
+  // cached-fallback fast path.
+  if (self.code == NSURLErrorNotConnectedToInternet ||
+      self.code == QONErrorCodeApiRateLimitExceeded ||
+      (self.code >= kInternalServerErrorFirstCode && self.code <= kInternalServerErrorLastCode)) {
     return YES;
   } else {
     return NO;

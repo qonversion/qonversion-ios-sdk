@@ -124,7 +124,14 @@ static NSString *const kEmptyContextKey = @"";
     // call must still reach the server — otherwise a cache hit swallows both
     // the property flush and the request.
     [self.userPropertiesManager forceSendProperties:nil];
-    return completion(loadingState.loadedConfig, nil);
+    QONRemoteConfig *cachedConfig = loadingState.loadedConfig;
+    // Queued completions can be stranded on a warm state (e.g. a list load
+    // re-caches a key whose superseded single-key load was re-issued, or a
+    // completion queued while the user was unstable meets a warm cache on
+    // replay) — drain them together with the direct caller, or they never
+    // fire at all.
+    [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:cachedConfig error:nil];
+    return completion(cachedConfig, nil);
   }
   
   loadingState.isInProgress = YES;
@@ -182,18 +189,34 @@ static NSString *const kEmptyContextKey = @"";
     // Cache only when no invalidation happened while the load was in flight —
     // a superseded evaluation must not be re-cached as fresh.
     loadingState.loadedConfig = remoteConfig;
-  } else if (loadingState.reissuedForGeneration != currentGeneration) {
+  } else if ([self loadingStateForContextKey:contextKey] == loadingState &&
+             loadingState.reissuedForGeneration != currentGeneration) {
     // The cache was invalidated while this load was in flight, so this
-    // evaluation is already superseded. Re-issue the load once per generation
-    // so the waiters receive a fresh evaluation instead of the stale one.
-    // Unlike Android, the initiating caller's completion is NOT queued in
-    // loadingState.completions — it is the `completion` argument here — so the
-    // re-issue must not be gated on completions.count: there is always at
-    // least the direct completion awaiting. If this generation already got its
-    // retry, deliver as-is — an invalidation storm must not turn into a
-    // request loop.
+    // evaluation is already superseded. Re-issue the load once so the waiters
+    // receive a fresh evaluation instead of the stale one. The state must
+    // still be live: a user switch replaces the map, and an orphaned state
+    // must not fire a request nobody awaits. Unlike Android, the initiating
+    // caller's completion is NOT queued in loadingState.completions — it is
+    // the `completion` argument here — so the re-issue is not gated on
+    // completions.count. The queued waiters are snapshotted and carried
+    // through the retry together with the direct completion, keeping the
+    // superseded (but valid) evaluation as a baseline: a failed retry
+    // degrades to the baseline instead of surfacing an error where the
+    // caller previously received a success. The generation cap guards a
+    // concurrent re-entry; the retry count is bounded structurally — one
+    // load, hence one superseded response, per invalidation.
     loadingState.reissuedForGeneration = currentGeneration;
-    [self obtainRemoteConfigWithContextKey:contextKey completion:completion];
+    NSArray<QONRemoteConfigCompletionHandler> *waiters = [loadingState.completions copy];
+    [loadingState.completions removeAllObjects];
+    QONRemoteConfig *baseline = remoteConfig;
+    QONRemoteConfigCompletionHandler deliverToAll = ^(QONRemoteConfig * _Nullable freshConfig, NSError * _Nullable retryError) {
+      QONRemoteConfig *result = freshConfig ?: baseline;
+      for (QONRemoteConfigCompletionHandler waiter in waiters) {
+        waiter(result, nil);
+      }
+      completion(result, nil);
+    };
+    [self obtainRemoteConfigWithContextKey:contextKey completion:deliverToAll];
     return;
   }
   [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];

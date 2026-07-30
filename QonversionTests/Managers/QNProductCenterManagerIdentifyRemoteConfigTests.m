@@ -74,6 +74,11 @@
 
 - (void)tearDown {
   [_mockClient stopMocking];
+  // Class mocks swizzle the class for as long as they live — stop them
+  // explicitly so tests exercising the real classes in the same process
+  // cannot be poisoned by ordering.
+  [_mockIdentityManager stopMocking];
+  [_mockRemoteConfigManager stopMocking];
   _manager = nil;
 
   [super tearDown];

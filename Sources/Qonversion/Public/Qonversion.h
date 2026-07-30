@@ -317,7 +317,8 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
  This method performs no network request itself and has no completion — it only
  marks the cached values as stale. A remoteConfig load that is already in
  flight when this method is called is re-issued once, so its waiting
- completions receive a fresh evaluation rather than the superseded one; an
+ completions receive a fresh evaluation rather than the superseded one (if the
+ re-issued request fails, the superseded evaluation is delivered instead); an
  in-flight remoteConfigList load completes with the evaluation it started
  with, and any subsequent call fetches fresh values.
 
@@ -325,21 +326,20 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
  immediately, for example:
  - after setting a batch of user properties via setUserProperty: /
    setCustomUserProperty: that your remote config targeting depends on;
- - after network connectivity is restored, if a previous call could have
-   returned a locally bundled fallback config;
  - on returning to the foreground in long-living sessions, if the targeting
    could have changed server-side.
 
  You do NOT need to call it after identify: — the SDK invalidates the cache on
- identity changes automatically.
+ identity changes automatically. You also do not need it to recover from a
+ locally bundled fallback config — fallbacks are never cached, so the next
+ call retries the network automatically.
 
  @note This method only affects the remoteConfig / remoteConfigList cache.
  No-Codes screens are cached and shown independently and are not affected.
  @note Call it from the same thread you use for the other Qonversion calls
- (typically the main thread). The staleness marker itself is thread-safe, but
- the cached-state cleanup shares the SDK's regular threading model.
+ (typically the main thread).
 
- @see remoteConfig:
+ @see remoteConfig:completion:
  @see remoteConfigList:
  */
 - (void)invalidateRemoteConfigsCache;
