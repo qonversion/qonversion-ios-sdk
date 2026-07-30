@@ -312,8 +312,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       // external identity are now attached, so cached configs may no longer
       // reflect the server-side targeting evaluation. Drop them
       // (non-destructively) so the next remoteConfig call refetches
-      // (DEV-1236 B4).
-      [weakSelf.remoteConfigManager refreshRemoteConfigs];
+      // (DEV-1236 B4). Invalidate BEFORE handlePendingRequests: the replay
+      // must miss the cache, or queued completions would be served the
+      // pre-identify evaluation and orphaned by the cache-hit path.
+      [weakSelf.remoteConfigManager invalidateRemoteConfigsCache];
       [weakSelf handlePendingRequests:nil];
       [weakSelf fireIdentitySuccess:identityId];
     } else {

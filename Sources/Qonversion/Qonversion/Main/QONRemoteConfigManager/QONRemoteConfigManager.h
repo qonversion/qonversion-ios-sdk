@@ -33,12 +33,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)userHasBeenChanged;
 
 /**
- Drops every cached remote config so the next load fetches a fresh targeting
- evaluation. Non-destructive: loading states and pending completions survive,
- and the cache generation bump keeps in-flight loads from re-caching a
- pre-refresh response (DEV-1236 B4).
+ Marks every cached remote config stale so the next load fetches a fresh
+ targeting evaluation. Non-destructive: loading states and pending completions
+ survive; the cache generation bump keeps in-flight loads from re-caching a
+ superseded response and re-issues an awaited in-flight load once
+ (DEV-1236 B4). Runs synchronously on the caller thread — see the
+ implementation note about ordering with handlePendingRequests.
  */
-- (void)refreshRemoteConfigs;
+- (void)invalidateRemoteConfigsCache;
 
 @end
 

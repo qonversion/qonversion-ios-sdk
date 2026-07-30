@@ -80,7 +80,14 @@ static NSString *const kEmptyContextKey = @"";
   }
 }
 
-- (void)refreshRemoteConfigs {
+// Public cache invalidation seam (DEV-1236 B4). Deliberately synchronous on
+// the caller thread: handlePendingRequests is synchronous too, and the
+// same-uid identify path relies on the invalidate-then-replay order — hopping
+// only this call to the main queue would let the replay hit a still-warm
+// cache and orphan queued completions. The generation bump is taken under the
+// lock; the loadingStates sweep shares the manager's pre-existing
+// unsynchronized access pattern (same as handlePendingRequests).
+- (void)invalidateRemoteConfigsCache {
   [self invalidateLoadedConfigs];
 }
 
@@ -139,34 +146,58 @@ static NSString *const kEmptyContextKey = @"";
           }
 
           if (remoteConfig) {
-            [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart completion:completion];
+            [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart isFallback:YES completion:completion];
           } else {
-            [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart completion:completion];
+            [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart isFallback:NO completion:completion];
           }
         } else {
-          [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart completion:completion];
+          [weakSelf fireRemoteConfig:nil contextKey:contextKey loadingState:loadingState error:error generation:generationAtStart isFallback:NO completion:completion];
         }
       } else {
-        [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart completion:completion];
+        [weakSelf fireRemoteConfig:remoteConfig contextKey:contextKey loadingState:loadingState error:nil generation:generationAtStart isFallback:NO completion:completion];
       }
     }];
   }];
 }
 
-- (void)fireRemoteConfig:(QONRemoteConfig *)remoteConfig contextKey:(NSString *)contextKey loadingState:(QONRemoteConfigLoadingState *)loadingState error:(NSError *)error generation:(NSUInteger)generation completion:(QONRemoteConfigCompletionHandler)completion {
+- (void)fireRemoteConfig:(QONRemoteConfig *)remoteConfig contextKey:(NSString *)contextKey loadingState:(QONRemoteConfigLoadingState *)loadingState error:(NSError *)error generation:(NSUInteger)generation isFallback:(BOOL)isFallback completion:(QONRemoteConfigCompletionHandler)completion {
   if (error) {
     [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:nil error:error];
     completion(nil, error);
-  } else {
-    if (generation == self.cacheGeneration) {
-      // Cache only when no invalidation happened while the load was in flight —
-      // a pre-attach evaluation must not be re-cached as fresh. The response is
-      // still delivered below either way.
-      loadingState.loadedConfig = remoteConfig;
-    }
+    return;
+  }
+
+  if (isFallback) {
+    // The bundled fallback is a local last-resort payload, not a fresh
+    // targeting evaluation — deliver it without caching so the next call
+    // retries the network instead of pinning the fallback until the next
+    // invalidation. No re-issue either: the network just failed.
     [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
     completion(remoteConfig, nil);
+    return;
   }
+
+  NSUInteger currentGeneration = self.cacheGeneration;
+  if (generation == currentGeneration) {
+    // Cache only when no invalidation happened while the load was in flight —
+    // a superseded evaluation must not be re-cached as fresh.
+    loadingState.loadedConfig = remoteConfig;
+  } else if (loadingState.reissuedForGeneration != currentGeneration) {
+    // The cache was invalidated while this load was in flight, so this
+    // evaluation is already superseded. Re-issue the load once per generation
+    // so the waiters receive a fresh evaluation instead of the stale one.
+    // Unlike Android, the initiating caller's completion is NOT queued in
+    // loadingState.completions — it is the `completion` argument here — so the
+    // re-issue must not be gated on completions.count: there is always at
+    // least the direct completion awaiting. If this generation already got its
+    // retry, deliver as-is — an invalidation storm must not turn into a
+    // request loop.
+    loadingState.reissuedForGeneration = currentGeneration;
+    [self obtainRemoteConfigWithContextKey:contextKey completion:completion];
+    return;
+  }
+  [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
+  completion(remoteConfig, nil);
 }
 
 - (void)obtainRemoteConfigListWithContextKeys:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
@@ -290,15 +321,20 @@ static NSString *const kEmptyContextKey = @"";
       [weakSelf actualizeFallbackData];
       if (weakSelf.fallbackData.remoteConfigList) {
         if (contextKeys) {
-          NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:remoteConfigList includeEmptyContextKey:includeEmptyContextKey];
+          // Filter the BUNDLED fallback list — the network list is nil here.
+          NSArray<QONRemoteConfig *> *remoteConfigs = [weakSelf remoteConfigsForContextKeys:contextKeys remoteConfigList:weakSelf.fallbackData.remoteConfigList includeEmptyContextKey:includeEmptyContextKey];
           remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:remoteConfigs];
         } else {
           remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:weakSelf.fallbackData.remoteConfigList.remoteConfigs];
         }
+        // The bundled fallback is a local last-resort payload, not a fresh
+        // targeting evaluation — deliver it without caching (see the
+        // single-key path), so the next call retries the network.
+        completion(remoteConfigList, nil);
       } else {
         completion(nil, error);
-        return;
       }
+      return;
     }
 
     if (remoteConfigList && generationAtStart == weakSelf.cacheGeneration) {

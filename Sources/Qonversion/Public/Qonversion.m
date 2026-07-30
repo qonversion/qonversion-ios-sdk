@@ -241,16 +241,16 @@ static bool _isInitialized = NO;
   [self.remoteConfigManager obtainRemoteConfigWithContextKey:contextKey completion:completion];
 }
 
-- (void)refreshRemoteConfigs {
-  [self.remoteConfigManager refreshRemoteConfigs];
-}
-
 - (void)remoteConfigList:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
   [self.remoteConfigManager obtainRemoteConfigListWithContextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completion];
 }
 
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
   [self.remoteConfigManager obtainRemoteConfigList:completion];
+}
+
+- (void)invalidateRemoteConfigsCache {
+  [self.remoteConfigManager invalidateRemoteConfigsCache];
 }
 
 - (void)attachUserToExperiment:(NSString *)experimentId groupId:(NSString *)groupId completion:(QONExperimentAttachCompletionHandler)completion {

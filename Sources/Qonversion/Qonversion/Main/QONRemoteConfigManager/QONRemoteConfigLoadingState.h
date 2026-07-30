@@ -15,4 +15,10 @@
 @property (nonatomic, strong, nonnull) NSMutableArray<QONRemoteConfigCompletionHandler> *completions;
 @property (nonatomic, assign) BOOL isInProgress;
 
+// Last cache generation an awaited superseded in-flight load was re-issued
+// for — caps the retry at one per invalidation. Zero means "never": a moved
+// generation observed by a response is always >= 1, since the counter only
+// increments and the bump precedes the observation.
+@property (nonatomic, assign) NSUInteger reissuedForGeneration;
+
 @end
