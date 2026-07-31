@@ -75,7 +75,8 @@ protocol PurchasesManagerInterface: AnyObject {
     /// Reports the historical store transactions (latest per product) to the
     /// backend once per install. Never finishes them and never triggers the
     /// App Store sign-in prompt.
-    func syncHistoricalData() async
+    @discardableResult
+    func syncHistoricalData() async -> Bool
 
     /// Re-reports transactions left unfinished by previous sessions and
     /// finishes them after the backend confirms; in Analytics mode they are

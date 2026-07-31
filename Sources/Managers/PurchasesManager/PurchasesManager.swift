@@ -38,6 +38,13 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     private let restoreTaskLock = NSLock()
     private var restoreTask: Task<[String: Qonversion.Entitlement], Error>?
 
+    // Historical sync is also an on-demand prerequisite for promotional-offer
+    // signing. Concurrent public and signing calls must join one store read and
+    // one set of backend reports.
+    private let historicalSyncTaskLock = NSLock()
+    private var historicalSyncTask: Task<Bool, Never>?
+    private var historicalSyncGeneration = 0
+
     // Products with a payment sheet in flight; a second purchase of the same
     // product must not present a second sheet. Helpers stay sync: NSLock must
     // not be held across a suspension point.
@@ -433,6 +440,15 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     }
 
     func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
+        guard await syncHistoricalData() else {
+            throw QonversionError(
+                type: .promoOfferSigningFailed,
+                message: "Failed to synchronize purchase history before checking promotional offer eligibility"
+            )
+        }
+
+        // Historical reports can resolve the transactions to another user.
+        // Pass the gate again and read the id only after that switch completes.
         _ = try await userManager.obtainUser()
         let userId: String = userIdProvider.getUserId()
 
@@ -513,10 +529,48 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         return allReported
     }
 
-    func syncHistoricalData() async {
+    @discardableResult
+    func syncHistoricalData() async -> Bool {
         // Once per install, like the production SDK; a failed attempt stays
         // retriable on the next call.
-        guard !localStorage.bool(forKey: Constants.historicalDataSyncedKey.rawValue) else { return }
+        guard !localStorage.bool(forKey: Constants.historicalDataSyncedKey.rawValue) else { return true }
+
+        let operation = historicalSyncOperation()
+        let result = await operation.task.value
+        clearHistoricalSyncOperation(generation: operation.generation)
+        return result
+    }
+
+    private func historicalSyncOperation() -> (task: Task<Bool, Never>, generation: Int) {
+        historicalSyncTaskLock.lock()
+        defer { historicalSyncTaskLock.unlock() }
+
+        if let historicalSyncTask {
+            return (historicalSyncTask, historicalSyncGeneration)
+        }
+
+        historicalSyncGeneration += 1
+        let generation = historicalSyncGeneration
+        let task = Task { [weak self] in
+            guard let self else { return false }
+            return await self.performHistoricalDataSync()
+        }
+        historicalSyncTask = task
+        return (task, generation)
+    }
+
+    private func clearHistoricalSyncOperation(generation: Int) {
+        historicalSyncTaskLock.lock()
+        defer { historicalSyncTaskLock.unlock() }
+
+        guard historicalSyncGeneration == generation else { return }
+        historicalSyncTask = nil
+    }
+
+    private func performHistoricalDataSync() async -> Bool {
+        // A caller could have completed the once-per-install work immediately
+        // before this operation acquired the single-flight slot.
+        guard !localStorage.bool(forKey: Constants.historicalDataSyncedKey.rawValue) else { return true }
 
         let userId: String
         do {
@@ -524,7 +578,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             userId = userIdProvider.getUserId()
         } catch {
             logger.error("Skipping historical data sync: no backend user: " + error.message)
-            return
+            return false
         }
 
         // Transaction.all, deliberately WITHOUT AppStore.sync(): a background
@@ -534,7 +588,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             history = try await storeKitFacade.historicalData()
         } catch {
             logger.error("Failed to fetch historical transactions: " + error.message)
-            return
+            return false
         }
 
         let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(history)
@@ -564,6 +618,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         if !hadFailures {
             localStorage.set(bool: true, forKey: Constants.historicalDataSyncedKey.rawValue)
         }
+
+        return !hadFailures
     }
 
     func processUnfinishedTransactions() async {

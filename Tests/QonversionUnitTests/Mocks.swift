@@ -343,6 +343,14 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var restoreResult: [Qonversion.Transaction] = []
     var restoreError: Error?
     var historicalDataResult: [Qonversion.Transaction] = []
+    var historicalDataError: Error?
+    var onHistoricalData: (() async -> Void)?
+    private var _historicalDataCallsCount = 0
+    var historicalDataCallsCount: Int {
+        facadeStateLock.lock()
+        defer { facadeStateLock.unlock() }
+        return _historicalDataCallsCount
+    }
     var unfinishedTransactionsResult: [Qonversion.Transaction] = []
     private(set) var unfinishedTransactionsCallsCount = 0
     var purchaseResult: Qonversion.Transaction?
@@ -453,7 +461,14 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
         return restoreResult
     }
 
-    func historicalData() async throws -> [Qonversion.Transaction] { historicalDataResult }
+    func historicalData() async throws -> [Qonversion.Transaction] {
+        facadeStateLock.lock()
+        _historicalDataCallsCount += 1
+        facadeStateLock.unlock()
+        await onHistoricalData?()
+        if let historicalDataError { throw historicalDataError }
+        return historicalDataResult
+    }
 
     func unfinishedTransactions() async -> [Qonversion.Transaction] {
         unfinishedTransactionsCallsCount += 1
@@ -822,10 +837,12 @@ final class MockUserManager: UserManagerInterface {
     }
 
     private(set) var switchedToUserIds: [String] = []
+    var onSwitchToUser: ((String) -> Void)?
 
     func switchToUser(with uid: String) async throws {
         switchedToUserIds.append(uid)
         if let error { throw error }
+        onSwitchToUser?(uid)
     }
 
     func userInfo() async throws -> Qonversion.User {
