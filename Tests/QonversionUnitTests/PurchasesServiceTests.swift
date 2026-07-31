@@ -138,7 +138,7 @@ final class PurchasesServiceTests: XCTestCase {
             return XCTFail("Expected a createPurchase request")
         }
         XCTAssertNil(body["price"])
-        XCTAssertEqual(body["currency"] as? String, "USD", "a known currency still travels")
+        XCTAssertNil(body["currency"], "price and currency are sent only as a complete pair")
     }
 
     func testSendWithoutCurrencyOmitsTheCurrencyKey() async throws {
@@ -152,7 +152,7 @@ final class PurchasesServiceTests: XCTestCase {
             return XCTFail("Expected a createPurchase request")
         }
         XCTAssertNil(body["currency"])
-        XCTAssertEqual(body["price"] as? String, "9.99", "a known price still travels")
+        XCTAssertNil(body["price"], "price and currency are sent only as a complete pair")
     }
 
     /// An identifier that is present but empty is as unknown as a missing one.
@@ -167,6 +167,7 @@ final class PurchasesServiceTests: XCTestCase {
             return XCTFail("Expected a createPurchase request")
         }
         XCTAssertNil(body["currency"])
+        XCTAssertNil(body["price"], "an empty currency makes the whole pair unknown")
     }
 
     func testSendWithoutPriceAndCurrencyKeepsTheRestOfTheBody() async throws {

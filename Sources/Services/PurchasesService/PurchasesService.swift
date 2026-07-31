@@ -83,13 +83,12 @@ final class PurchasesService: PurchasesServiceInterface {
             "platform": "app_store",
             "store_data": storeData,
         ]
-        // An unknown price or currency is omitted, never sent as "": the
-        // backend reads the empty string as a value and would record the
-        // purchase as costing nothing.
-        if let price: Decimal = transaction.price {
+        // Price and currency form one downstream value. Send both only when
+        // both are known; a half-pair is ambiguous and the gateway rejects it.
+        if let price: Decimal = transaction.price,
+           let currency: String = transaction.currency?.identifier,
+           !currency.isEmpty {
             body["price"] = "\(price)"
-        }
-        if let currency: String = transaction.currency?.identifier, !currency.isEmpty {
             body["currency"] = currency
         }
         if let purchaseDate: Date = transaction.purchaseDate {
