@@ -32,8 +32,11 @@
   [description appendFormat:@"promoOfferPeriodNumberOfUnits=%@,\n", self.promoOfferPeriodNumberOfUnits];
   [description appendFormat:@"promoOfferPaymentMode=%@,\n", self.promoOfferPaymentMode];
   [description appendFormat:@"storefrontCountryCode=%@,\n", self.storefrontCountryCode];
+  if (@available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *)) {
+    [description appendFormat:@"commitmentInfo=%@,\n", self.commitmentInfo];
+  }
   [description appendString:@">"];
-  
+
   return [description copy];
 }
 

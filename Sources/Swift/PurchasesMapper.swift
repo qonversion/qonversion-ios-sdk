@@ -67,7 +67,55 @@ final class PurchasesMapper {
     
     purchaseInfo.storefrontCountryCode = await Storefront.current?.countryCode
 
+    if #available(iOS 26.4, macOS 26.4, watchOS 26.4, tvOS 26.4, visionOS 26.4, *) {
+      // The typed `transaction.commitmentInfo` (StoreKit, iOS 26.4+) is not in the build SDK yet
+      // (CI builds against Xcode 26.2), so we read the commitment block out of
+      // `transaction.jsonRepresentation`, which follows the App Store Server API transaction schema.
+      // Swap to the typed property once the build SDK reaches iOS 26.4.
+      purchaseInfo.commitmentInfo = parseCommitmentInfo(from: transaction.jsonRepresentation)
+    }
+
     return purchaseInfo
+  }
+
+  /// Parses Apple's `commitmentInfo` block out of `Transaction.jsonRepresentation`.
+  ///
+  /// Keys and encodings are verified against Apple's `app-store-server-library`
+  /// `TransactionCommitmentInfo` model and its `signedTransaction.json` fixture:
+  /// - `commitmentPrice` is an `Int64` in milliunits of the currency (e.g. 119880 -> 119.88) and is
+  ///   the price of the whole commitment, not a single billing period.
+  /// - `commitmentExpiresDate` is epoch milliseconds and marks when the whole commitment ends.
+  /// The block is absent on pre-26.4 OSes, so this returns nil there.
+  ///
+  /// Intentionally not gated on iOS 26.4: the decode is pure JSON and stays testable on any OS.
+  /// Only the call site that assigns to the availability-gated `commitmentInfo` property is gated.
+  func parseCommitmentInfo(from jsonRepresentation: Data) -> Qonversion.TransactionCommitmentInfo? {
+    guard let envelope = try? JSONDecoder().decode(TransactionEnvelope.self, from: jsonRepresentation),
+          let info = envelope.commitmentInfo
+    else { return nil }
+
+    let commitmentPrice = NSDecimalNumber(value: info.commitmentPrice).dividing(by: NSDecimalNumber(value: 1000))
+    let commitmentExpirationDate = Date(timeIntervalSince1970: info.commitmentExpiresDate / 1000.0)
+
+    return Qonversion.TransactionCommitmentInfo(
+      billingPeriodNumber: UInt(info.billingPeriodNumber),
+      totalBillingPeriods: UInt(info.totalBillingPeriods),
+      commitmentPrice: commitmentPrice,
+      commitmentExpirationDate: commitmentExpirationDate
+    )
+  }
+
+  private struct TransactionEnvelope: Decodable {
+    let commitmentInfo: CommitmentInfoJSON?
+  }
+
+  /// Mirrors Apple's `TransactionCommitmentInfo` JSON (App Store Server API schema).
+  /// `commitmentPrice` is in milliunits of the currency; `commitmentExpiresDate` is epoch milliseconds.
+  private struct CommitmentInfoJSON: Decodable {
+    let billingPeriodNumber: Int
+    let totalBillingPeriods: Int
+    let commitmentPrice: Int64
+    let commitmentExpiresDate: Double
   }
   
   private func convert(paymentMode: Product.SubscriptionOffer.PaymentMode) -> String {

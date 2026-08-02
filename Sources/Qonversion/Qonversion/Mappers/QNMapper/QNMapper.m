@@ -295,7 +295,7 @@
   QONTransactionType transactionType = transactionTypes ? transactionTypeNumber.integerValue : QONTransactionTypeUnknown;
   
   QONTransaction *transaction = [[QONTransaction alloc] initWithOriginalTransactionId:originalTransactionId transactionId:transactionId offerCode:offerCode transactionDate:transactionDate expirationDate:expirationDate transactionRevocationDate:transactionRevocationDate promoOfferId:promoOfferId environment:environment ownershipType:ownershipType type:transactionType];
-  
+
   return transaction;
 }
 

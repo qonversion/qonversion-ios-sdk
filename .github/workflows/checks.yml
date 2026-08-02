@@ -39,6 +39,7 @@ jobs:
       - name: SPM validation
         run: |
           swift build
+          swift test
   
   common-checks:
     runs-on: ubuntu-latest
