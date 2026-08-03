@@ -827,9 +827,16 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // Transactions without a store id (degraded SK1 mapping) cannot be
         // deduplicated and are reported unconditionally.
         if let id: String = transaction.id {
-            // The backend refused this one for good in an earlier session: the
-            // store keeps re-delivering it, the SDK must stop re-posting it.
-            guard !isRejectedTransaction(id) else { return }
+            // The backend refused this one for good, here or in restore, which
+            // does not own the lifecycle: the report cannot succeed, and an
+            // unfinished transaction is re-delivered forever.
+            guard !isRejectedTransaction(id) else {
+                if launchModeProvider.launchMode == .subscriptionManagement {
+                    await storeKitFacade.finish(transaction)
+                }
+
+                return
+            }
             guard reportsGate.tryTake(id) else { return }
         }
 

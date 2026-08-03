@@ -843,6 +843,23 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.count, 1, "a terminally rejected transaction must not be posted again by restore")
     }
 
+    func testTheSweepFinishesATransactionRestoreGotRefusedForGood() async throws {
+        // Restore records the refusal but leaves the transaction unfinished —
+        // it does not own the lifecycle. The sweep does, so it must finish it:
+        // otherwise the store re-delivers it on every launch forever.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.error = rejectedError(statusCode: 422)
+        _ = try await manager.restore()
+
+        service.error = nil
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"])
+        XCTAssertEqual(service.sentTransactions.count, 1, "a report the backend refused for good must not be posted again")
+    }
+
     func testHistoricalSyncSkipsATransactionTheBackendRejectedForGood() async {
         service.error = rejectedError(statusCode: 422)
         manager.transactionUpdated(makeTransaction(id: "rejected-1"))
