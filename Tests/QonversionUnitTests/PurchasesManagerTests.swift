@@ -1752,6 +1752,21 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.promotionalOfferCalls.count, 1)
     }
 
+    func testPromotionalOfferReportsAFailedUserObtainAsASigningFailure() async {
+        userManager.error = QonversionError(type: .networkConnectionFailed)
+
+        do {
+            _ = try await manager.promotionalOffer(for: makeProduct(), discountId: "offer1")
+            XCTFail("Expected the signature request to fail")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .promoOfferSigningFailed, "the host branches on the documented signing failure")
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
+        XCTAssertTrue(service.promotionalOfferCalls.isEmpty, "no signature is asked for without a backend user")
+    }
+
     func testPromotionalOfferKeepsTheCurrentUser() async throws {
         facade.historicalDataResult = [makeTransaction(id: "history-1")]
         service.reportedOwnerUserId = "QON_owner"

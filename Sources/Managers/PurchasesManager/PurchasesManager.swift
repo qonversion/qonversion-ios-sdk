@@ -570,7 +570,11 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // that answer nor be able to gate it — one permanently rejected report
         // would deny every signature from then on, and the paywall would wait
         // out a sequential network pass over the whole history.
-        _ = try await userManager.obtainUser()
+        do {
+            _ = try await userManager.obtainUser()
+        } catch {
+            throw QonversionError(type: .promoOfferSigningFailed, message: nil, error: error)
+        }
         let userId: String = userIdProvider.getUserId()
 
         return try await purchasesService.promotionalOffer(userId: userId, offerId: discountId, productStoreId: product.storeId, appAccountToken: appAccountToken)
