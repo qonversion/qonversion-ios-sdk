@@ -121,6 +121,23 @@ extension Error {
             && statusCode != ResponseCode.notFound.rawValue
     }
 
+    /// The backend refused the PURCHASE, not the request that carried it: a
+    /// fraud verdict or a payload its validation could never accept. No client
+    /// version reports such a transaction successfully, so the SDK may finish
+    /// it — which destroys the store's only copy.
+    ///
+    /// A bare 400 (`invalid_data`, `invalid_request`) and every unmapped 4xx
+    /// stay out: they say the SDK built the body wrong, and a fixed client
+    /// reports the very same purchase successfully.
+    var isUnacceptablePurchase: Bool {
+        guard isRejectedByBackend, let qonversionError = self as? QonversionError else { return false }
+        // The verdict travels in the API code, which survives the wrapping the
+        // layers above add; their own `type` describes the operation instead.
+        guard let verdict: QonversionErrorType = QonversionErrorType(apiCode: qonversionError.apiCode) else { return false }
+
+        return verdict == .fraudPurchase || verdict == .receiptValidationError
+    }
+
     /// What a public API is allowed to throw. Every public entry point
     /// documents ``QonversionError``, so a bare `CancellationError` — a Swift
     /// runtime type that no `catch let error as QonversionError` can classify

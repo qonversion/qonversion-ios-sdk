@@ -378,8 +378,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             }
             // Refused for good: record it so no later call posts it again, and
             // finish it — an unfinished transaction is re-delivered forever,
-            // and the report cannot succeed.
-            if error.isRejectedByBackend, let id: String = transaction.id {
+            // and the report cannot succeed. A refusal of the body the SDK
+            // built is not that: it clears with the next client version, so
+            // the purchase must survive it.
+            if error.isUnacceptablePurchase, let id: String = transaction.id {
                 recordRejectedTransaction(id)
                 if launchModeProvider.launchMode == .subscriptionManagement {
                     await storeKitFacade.finish(transaction)
@@ -920,8 +922,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             guard error.allowsLocalEntitlementsFallback else {
                 // Refused for good: record it so no later launch posts it
                 // again, and finish it — an unfinished transaction is
-                // re-delivered forever, and the report cannot succeed.
-                if error.isRejectedByBackend, let id: String = transaction.id {
+                // re-delivered forever, and the report cannot succeed. A
+                // refusal of the body the SDK built is not that: it clears
+                // with the next client version, so the purchase must survive.
+                if error.isUnacceptablePurchase, let id: String = transaction.id {
                     recordRejectedTransaction(id)
                     if launchModeProvider.launchMode == .subscriptionManagement {
                         await storeKitFacade.finish(transaction)

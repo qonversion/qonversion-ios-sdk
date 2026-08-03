@@ -773,9 +773,67 @@ final class PurchasesManagerTests: XCTestCase {
         QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: statusCode])
     }
 
+    /// The backend's verdict on the purchase itself — no client version ever
+    /// gets it accepted.
+    private func unacceptablePurchaseError() -> QonversionError {
+        QonversionError(type: .fraudPurchase,
+                        additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 422],
+                        apiCode: "purchase_fraud",
+                        apiType: "logical")
+    }
+
+    /// The gateway refused a body the SDK built itself — a fixed client
+    /// reports the very same purchase successfully.
+    private func malformedBodyError() -> QonversionError {
+        QonversionError(type: .invalidRequest,
+                        additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 400],
+                        apiCode: "invalid_data",
+                        apiType: "request")
+    }
+
+    func testAPurchaseTheGatewayRefusedOverTheBodyStaysReportable() async {
+        // 400 invalid_data says the SDK sent a field the gateway would not
+        // take, not that the purchase is bad. Finishing it would destroy the
+        // store's only copy of a purchase the user paid for.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "p1")
+        service.error = malformedBodyError()
+
+        _ = try? await manager.purchase(makeProduct())
+
+        let rejected: [String]? = try? localStorage.object(forKey: "qonversion.keys.rejectedTransactions", dataType: [String].self)
+        XCTAssertNil(rejected, "a body the SDK got wrong must not ban the purchase forever")
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "an unreported transaction must stay unfinished for a re-report")
+
+        service.error = nil
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "p1")]
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["p1", "p1"], "a fixed client must post the transaction again")
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["p1"])
+    }
+
+    func testAnObservedTransactionRefusedOverTheBodyStaysReportable() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        service.error = malformedBodyError()
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "finishing a transaction the SDK never reported loses the purchase for good")
+        let rejected: [String]? = try? localStorage.object(forKey: "qonversion.keys.rejectedTransactions", dataType: [String].self)
+        XCTAssertNil(rejected, "a body the SDK got wrong must not ban the purchase forever")
+
+        service.error = nil
+        manager.transactionUpdated(makeTransaction(id: "u1"))
+
+        await waitUntil { self.service.sentTransactions.count >= 2 }
+        XCTAssertEqual(service.sentTransactions.count, 2, "a fixed client must post the transaction again")
+    }
+
     func testATerminallyRejectedTransactionIsNotFinishedInAnalyticsMode() async {
         manager = makeManager(launchMode: .analytics)
-        service.error = rejectedError()
+        service.error = unacceptablePurchaseError()
 
         manager.transactionUpdated(makeTransaction(id: "rejected-1"))
 
@@ -789,7 +847,7 @@ final class PurchasesManagerTests: XCTestCase {
         // a rejected report cannot ever succeed — it must be finished so the
         // store stops offering it back.
         manager = makeManager(launchMode: .subscriptionManagement)
-        service.error = rejectedError()
+        service.error = unacceptablePurchaseError()
 
         manager.transactionUpdated(makeTransaction(id: "rejected-1"))
 
@@ -799,7 +857,7 @@ final class PurchasesManagerTests: XCTestCase {
 
     func testATerminallyRejectedTransactionIsNotReReportedOnRedelivery() async {
         manager = makeManager(launchMode: .analytics)
-        service.error = rejectedError()
+        service.error = unacceptablePurchaseError()
         manager.transactionUpdated(makeTransaction(id: "rejected-1"))
         await waitUntil { self.service.sentTransactions.count >= 1 }
 
@@ -907,7 +965,7 @@ final class PurchasesManagerTests: XCTestCase {
     func testAPurchaseTheBackendRefusedForGoodIsRecordedAndFinished() async {
         manager = makeManager(launchMode: .subscriptionManagement)
         facade.purchaseResult = makeTransaction(id: "p1")
-        service.error = rejectedError(statusCode: 422)
+        service.error = unacceptablePurchaseError()
 
         do {
             _ = try await manager.purchase(makeProduct())
@@ -959,7 +1017,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testHistoricalSyncSkipsATransactionTheBackendRejectedForGood() async {
-        service.error = rejectedError(statusCode: 422)
+        service.error = unacceptablePurchaseError()
         manager.transactionUpdated(makeTransaction(id: "rejected-1"))
         await waitUntil { self.service.sentTransactions.count >= 1 }
 
@@ -974,7 +1032,7 @@ final class PurchasesManagerTests: XCTestCase {
 
     func testUserChangeForgetsRejectedTransactionsSoTheNewUsersAttemptIsNotSkipped() async {
         manager = makeManager(launchMode: .analytics)
-        service.error = rejectedError()
+        service.error = unacceptablePurchaseError()
         manager.transactionUpdated(makeTransaction(id: "rejected-1"))
         await waitUntil { self.service.sentTransactions.count >= 1 }
 

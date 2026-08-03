@@ -200,4 +200,53 @@ final class QonversionErrorTests: XCTestCase {
 
         XCTAssertTrue(wrapped.isRejectedByBackend, "the status code must be found through the wrapping error too")
     }
+
+    // MARK: - isUnacceptablePurchase
+
+    func testAMalformedBodyIsRejectedButNotAnUnacceptablePurchase() {
+        let error = QonversionError(type: .invalidRequest,
+                                    additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 400],
+                                    apiCode: "invalid_data",
+                                    apiType: "request")
+
+        XCTAssertTrue(error.isRejectedByBackend)
+        XCTAssertFalse(error.isUnacceptablePurchase, "the gateway refused the body the SDK built, not the purchase itself")
+    }
+
+    func testAFraudVerdictIsAnUnacceptablePurchase() {
+        let error = QonversionError(type: .fraudPurchase,
+                                    additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 422],
+                                    apiCode: "purchase_fraud",
+                                    apiType: "logical")
+
+        XCTAssertTrue(error.isUnacceptablePurchase)
+    }
+
+    func testEveryValidationVerdictIsAnUnacceptablePurchase() {
+        let codes: [String] = ["conflicting_purchase_found", "subscription_period_parse_error", "apple_purchase_type_error"]
+        for code in codes {
+            let error = QonversionError(type: .receiptValidationError,
+                                        additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 422],
+                                        apiCode: code,
+                                        apiType: "logical")
+
+            XCTAssertTrue(error.isUnacceptablePurchase, "\(code) is a verdict on the purchase, and no client version changes it")
+        }
+    }
+
+    func testAnUnmappedClientErrorIsNotAnUnacceptablePurchase() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 422])
+
+        XCTAssertFalse(error.isUnacceptablePurchase, "a refusal the SDK cannot read must not destroy the store's copy of the purchase")
+    }
+
+    func testIsUnacceptablePurchaseSurvivesWrapping() {
+        let backendError = QonversionError(type: .fraudPurchase,
+                                           additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 422],
+                                           apiCode: "purchase_fraud",
+                                           apiType: "logical")
+        let wrapped = QonversionError(type: .purchaseReportingFailed, error: backendError)
+
+        XCTAssertTrue(wrapped.isUnacceptablePurchase, "the manager sees the wrapping error, not the backend's own")
+    }
 }
