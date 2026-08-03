@@ -147,8 +147,13 @@ final class PurchasesService: PurchasesServiceInterface {
 
         guard let nonce = UUID(uuidString: response.nonce),
               let signature = Data(base64Encoded: response.signature),
-              let timestamp = Int(response.timestamp) else {
+              let milliseconds = Int64(response.timestamp) else {
             throw QonversionError(type: .promoOfferSigningFailed, message: "Malformed signature response")
+        }
+        // A millisecond timestamp does not fit the 32-bit Int of watchOS, and
+        // StoreKit's own promotional offer option takes an Int.
+        guard let timestamp = Int(exactly: milliseconds) else {
+            throw QonversionError(type: .promoOfferSigningFailed, message: "The signature timestamp does not fit this platform's Int")
         }
 
         return Qonversion.PromotionalOffer(
