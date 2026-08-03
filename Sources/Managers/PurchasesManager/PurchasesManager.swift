@@ -498,10 +498,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             for transaction in reportable {
                 // Skip transactions already reported this session (sweep,
                 // listener or purchase); the failed report releases the id.
+                // A recorded refusal does not skip anything here: the automatic
+                // paths keep it because the store re-delivers on its own, while
+                // a restore the host asked for is the only recovery it has.
                 if let id: String = transaction.id {
-                    // The backend refused this one for good, in this session or
-                    // an earlier one: repeating the report changes nothing.
-                    guard !isRejectedTransaction(id) else { continue }
                     guard claimForReport(id) else { continue }
                 }
                 do {

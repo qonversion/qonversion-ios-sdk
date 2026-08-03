@@ -845,7 +845,9 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(entitlements.keys.sorted(), ["premium"])
     }
 
-    func testRestoreDoesNotRePostATransactionTheBackendRejectedForGood() async throws {
+    func testRestoreRetriesATransactionTheBackendRefusedForGood() async throws {
+        // An explicit restore is the only recovery the host can offer, and the
+        // refusal may have come from an outage the backend has since fixed.
         facade.restoreResult = [makeTransaction(id: "rejected-1")]
         service.error = rejectedError(statusCode: 422)
         _ = try await manager.restore()
@@ -855,7 +857,7 @@ final class PurchasesManagerTests: XCTestCase {
         let relaunched: PurchasesManager = makeManager()
         _ = try await relaunched.restore()
 
-        XCTAssertEqual(service.sentTransactions.count, 1, "a terminally rejected transaction must not be posted again by restore")
+        XCTAssertEqual(service.sentTransactions.count, 2, "a restore the host asked for must report a refused transaction again")
     }
 
     func testTheSweepFinishesATransactionRestoreGotRefusedForGood() async throws {
