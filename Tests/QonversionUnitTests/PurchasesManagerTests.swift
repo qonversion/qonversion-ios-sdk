@@ -1919,6 +1919,51 @@ final class PurchasesManagerTests: XCTestCase {
                       "the history must not be re-posted on the next launch")
     }
 
+    func testSyncHistoricalDataIsIncompleteWhenTheStoreDroppedTransactionsAsUnverified() async {
+        // A rolled clock rejects every transaction locally: the fetch comes
+        // back empty, and an empty history is not a synced history.
+        facade.historicalDataResult = []
+        facade.onHistoricalData = { self.facade.unverifiedTransactionsCount += 1 }
+
+        let synced = await manager.syncHistoricalData()
+
+        XCTAssertFalse(synced, "a fetch that lost transactions to the local verification has not synced the history")
+        XCTAssertFalse(localStorage.bool(forKey: "qonversion.keys.historicalDataSynced"),
+                       "the flag must not latch: the dropped transactions are still unreported")
+    }
+
+    func testSyncHistoricalDataIsIncompleteWhenAnotherHolderTookTheTransactionWithoutDeliveringIt() async {
+        let reportsGate = TransactionReportsGate()
+        manager = makeManager(reportsGate: reportsGate)
+        XCTAssertTrue(reportsGate.tryTake("t1"), "the other path holds the id, its report is not delivered yet")
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+
+        let synced = await manager.syncHistoricalData()
+
+        XCTAssertTrue(service.sentTransactions.isEmpty, "the id is taken: the sync must not post it a second time")
+        XCTAssertFalse(synced, "taking the id is not delivering the report")
+        XCTAssertFalse(localStorage.bool(forKey: "qonversion.keys.historicalDataSynced"),
+                       "the flag must not latch on a transaction nobody delivered")
+    }
+
+    func testSyncHistoricalDataInvalidatesTheFreshBackendCacheAfterReporting() async {
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+
+        await manager.syncHistoricalData()
+
+        XCTAssertTrue(entitlementsManager.calls.contains(.invalidateFreshBackendCache),
+                      "the store history reached the backend: the next answer must not come from the window opened before it")
+    }
+
+    func testSyncHistoricalDataKeepsTheFreshBackendCacheWhenNothingWasReported() async {
+        facade.historicalDataResult = []
+
+        await manager.syncHistoricalData()
+
+        XCTAssertFalse(entitlementsManager.calls.contains(.invalidateFreshBackendCache),
+                       "nothing was reported: the backend has no new answer to give")
+    }
+
     // MARK: - persisted purchase associations (contextKeys / screenUid)
 
     func testSweepAttachesPersistedAssociationsOfTheOriginalPurchase() async {
