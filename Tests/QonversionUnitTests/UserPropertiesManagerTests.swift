@@ -414,6 +414,45 @@ final class UserPropertiesManagerTests: XCTestCase {
         XCTAssertEqual(propertiesStorage.all().count, 1, "a 5xx may still succeed on retry and must not be dropped")
     }
 
+    // The backend refuses a request carrying more than 100 properties, and a
+    // refusal is terminal: an oversized batch posted whole would be dropped in
+    // full instead of delivered.
+    func testABatchLargerThanTheBackendLimitIsSplitIntoRequestsOfAtMostOneHundred() async throws {
+        saveProperties(count: 101)
+        requestProcessor.results = [
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+        ]
+
+        try await manager.sendProperties(force: true)
+
+        XCTAssertEqual(requestProcessor.processedRequests.count, 2)
+        XCTAssertEqual(sentPropertyKeys(at: 0).count, 100)
+        XCTAssertEqual(sentPropertyKeys(at: 1).count, 1)
+        XCTAssertTrue(propertiesStorage.all().isEmpty)
+    }
+
+    func testAnOversizedBatchIsNotDroppedWholesaleWhenOnlyOneChunkIsRefused() async throws {
+        saveProperties(count: 101)
+        let refusal = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 400])
+        requestProcessor.results = [
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+            refusal,
+        ]
+
+        try await manager.sendProperties(force: true)
+
+        XCTAssertEqual(requestProcessor.processedRequests.count, 2)
+        XCTAssertEqual(sentPropertyKeys(at: 0).count, 100, "the properties the backend accepts must reach it even when another chunk is refused")
+        XCTAssertTrue(propertiesStorage.all().isEmpty)
+    }
+
+    private func saveProperties(count: Int) {
+        for index in 0..<count {
+            propertiesStorage.save(Qonversion.UserProperty(key: "key_\(index)", value: "\(index)"))
+        }
+    }
+
     // MARK: - userProperties
 
     func testUserPropertiesReturnsPropertiesFromProcessor() async throws {

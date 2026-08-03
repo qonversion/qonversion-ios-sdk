@@ -27,6 +27,9 @@ fileprivate enum Constants: Int {
     // backend, and a refused batch takes every property in it down with it.
     case maxPropertyKeyBytes = 80
     case maxPropertyValueBytes = 120
+    // Mirrors the gateway's v4MaxPropertiesCount: a request carrying more is
+    // refused as invalid_data, and a refusal is terminal.
+    case maxPropertiesPerBatch = 100
 }
 
 // @unchecked: mutable state is guarded by stateLock; deps are thread-safe.
@@ -333,10 +336,46 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
         return await postBatch(properties, userId: userId, owner: .scheduledSender)
     }
 
+    /// How one chunk's round trip settled.
+    private enum ChunkOutcome {
+        case delivered
+        case rejected
+        case retriable
+    }
+
     /// The uid is a parameter, not a read of the provider: the user-switch
     /// flush may outlive the switch and must post under the queuing user.
     private func postBatch(_ properties: [Qonversion.UserProperty], userId: String, owner: BatchOwner) async -> Bool {
-        let items: RequestBodyArray = properties.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
+        let size: Int = Constants.maxPropertiesPerBatch.rawValue
+        var delivered: Bool = true
+        for start in stride(from: 0, to: properties.count, by: size) {
+            let end: Int = min(start + size, properties.count)
+            let chunk: [Qonversion.UserProperty] = Array(properties[start..<end])
+            let outcome: ChunkOutcome = await postChunk(chunk, userId: userId, owner: owner)
+            if outcome == .rejected {
+                // The other chunks are valid on their own and still owed.
+                delivered = false
+                continue
+            }
+            // The remainder stays in the storage under the retry the chunk
+            // scheduled — resetting the ladder here would undo it.
+            if outcome == .retriable { return false }
+        }
+
+        guard owner == .scheduledSender else { return delivered }
+
+        resetRetryState()
+
+        // Properties set while the batch was in flight.
+        if !propertiesStorage.all().isEmpty {
+            scheduleSendingProperties(withDelay: Constants.sendPropertiesMinDelaySec.rawValue)
+        }
+
+        return delivered
+    }
+
+    private func postChunk(_ chunk: [Qonversion.UserProperty], userId: String, owner: BatchOwner) async -> ChunkOutcome {
+        let items: RequestBodyArray = chunk.map { ["key": $0.key, "value": $0.value] as RequestBodyDict }
         let body: RequestBodyDict = ["properties": items]
         let request = Request.sendProperties(userId: userId, body: body)
         do {
@@ -345,39 +384,31 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
                 logger.error("Failed to save property " + propertyError.key + ": " + propertyError.error)
             })
 
-            guard owner == .scheduledSender else { return true }
+            guard owner == .scheduledSender else { return .delivered }
 
-            resetRetryState()
+            propertiesStorage.clear(properties: chunk)
 
-            propertiesStorage.clear(properties: properties)
-
-            // Properties set while the batch was in flight.
-            if !propertiesStorage.all().isEmpty {
-                scheduleSendingProperties(withDelay: Constants.sendPropertiesMinDelaySec.rawValue)
-            }
-
-            return true
+            return .delivered
         } catch {
             // A refused batch is refused again on every trigger, and it stays
             // in the storage: one value the backend will not take would block
             // every property set afterwards. Drop it instead, and name it.
             if error.isRejectedByBackend {
-                logger.error("Qonversion rejected these user properties, they are dropped: " + properties.map(\.key).joined(separator: ", "))
+                logger.error("Qonversion rejected these user properties, they are dropped: " + chunk.map(\.key).joined(separator: ", "))
                 // Same ownership rule as the success path: after a switch the
                 // storage belongs to the incoming user, and the handoff batch
                 // was taken out of it before the post.
-                guard owner == .scheduledSender else { return false }
+                guard owner == .scheduledSender else { return .rejected }
 
-                propertiesStorage.clear(properties: properties)
-                resetRetryState()
+                propertiesStorage.clear(properties: chunk)
 
-                return false
+                return .rejected
             }
 
             if owner == .scheduledSender {
                 retrySendingProperties()
             }
-            return false
+            return .retriable
         }
     }
 
