@@ -7,7 +7,12 @@ import Foundation
 @_spi(QonversionInternal)
 public enum QonversionDefaults {
 
-    public static let suiteName = "io.qonversion.sdk"
+    /// Per-app on purpose. A non-sandboxed macOS process maps a suite to a file
+    /// in the user's own preferences folder, so a fixed name would be one store
+    /// shared by every Qonversion app the user has installed.
+    public static var suiteName: String { suiteNamePrefix + (Bundle.main.bundleIdentifier ?? "default") }
+
+    private static let suiteNamePrefix = "io.qonversion.sdk."
     public static let sourceOverrideKeys = [
         "com.qonversion.keys.source",
         "com.qonversion.keys.sourceVersion"

@@ -1,5 +1,6 @@
 import XCTest
 @testable import NoCodes
+@_spi(QonversionInternal) import Qonversion
 
 #if os(iOS)
 
@@ -17,7 +18,7 @@ final class ConfigurationTests: XCTestCase {
     }
 
     func testAssemblyWithoutCustomDefaultsUsesTheSdkSuite() {
-        let suiteName = "io.qonversion.sdk"
+        let suiteName = QonversionDefaults.suiteName
         let sdkDefaults = UserDefaults(suiteName: suiteName)!
         sdkDefaults.removePersistentDomain(forName: suiteName)
         defer { sdkDefaults.removePersistentDomain(forName: suiteName) }
