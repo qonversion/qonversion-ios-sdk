@@ -1922,6 +1922,21 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t1"], "a failed sync must not latch the once-per-install flag")
     }
 
+    func testASyncCompletesWhenTheOnlyFailedReportWasRefusedForGood() async {
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+        service.error = rejectedError()
+
+        let synced = await manager.syncHistoricalData()
+
+        XCTAssertTrue(synced, "a permanently refused report must not keep the sync from completing")
+        XCTAssertTrue(localStorage.bool(forKey: "qonversion.keys.historicalDataSynced"),
+                      "the flag must latch: repeating this report gets the same refusal")
+
+        service.error = nil
+        await manager.syncHistoricalData()
+        XCTAssertEqual(service.sentTransactions.count, 1, "the history must not be posted again on the next launch")
+    }
+
     func testAHistoricalSyncThatOutlivesAUserSwitchDoesNotFlagTheNewUsersInstallAsSynced() async {
         // The reports are still in flight for the departing user when the uid
         // moves; the install-global "synced" flag and the owner switch belong
