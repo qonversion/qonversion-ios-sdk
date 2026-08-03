@@ -44,6 +44,44 @@ final class DeviceManagerTests: XCTestCase {
         XCTAssertEqual(deviceService.removeStoredDeviceCallsCount, 1, "the new user needs its own device row on the backend")
     }
 
+    // A pass started for the previous user must still reach the backend, but
+    // its snapshot must not land in storage after a switch already cleared
+    // the record — or the new user's own create() would be overwritten right
+    // back to the departing user's device.
+    func testAPassInFlightWhenTheUserSwitchesDoesNotOverwriteTheNewUsersRecord() async {
+        let previousUserDevice = makeTestDevice(osVersion: "17.0")
+        deviceInfoCollector.device = previousUserDevice
+        deviceService.current = nil
+        deviceService.onCreate = { try? await Task.sleep(nanoseconds: 100_000_000) }
+
+        async let firstPass: Void = manager.collectDeviceInfo()
+        await waitForCondition { self.deviceService.createdDevices.count >= 1 }
+
+        manager.userDidChange()
+        deviceInfoCollector.device = makeTestDevice(osVersion: "18.0")
+        await firstPass
+
+        XCTAssertEqual(deviceService.savedDevices, [], "the previous user's snapshot must not be persisted after the switch cleared the record")
+    }
+
+    func testTheUserSwitchsOwnPassStillPersistsAfterAStalePassCompletes() async {
+        let previousUserDevice = makeTestDevice(osVersion: "17.0")
+        deviceInfoCollector.device = previousUserDevice
+        deviceService.current = nil
+        deviceService.onCreate = { try? await Task.sleep(nanoseconds: 100_000_000) }
+
+        async let firstPass: Void = manager.collectDeviceInfo()
+        await waitForCondition { self.deviceService.createdDevices.count >= 1 }
+
+        manager.userDidChange()
+        let newUserDevice = makeTestDevice(osVersion: "18.0")
+        deviceInfoCollector.device = newUserDevice
+        await firstPass
+        await waitForCondition(timeout: 2.0) { self.deviceService.savedDevices.count >= 1 }
+
+        XCTAssertEqual(deviceService.savedDevices, [newUserDevice], "the new user still gets its own device row persisted")
+    }
+
     // MARK: - Helpers
 
     private func makeTestDevice(osVersion: String = "17.0", advertisingId: String? = nil) -> Device {
