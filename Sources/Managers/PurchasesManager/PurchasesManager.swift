@@ -38,9 +38,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     private let restoreTaskLock = NSLock()
     private var restoreTask: Task<[String: Qonversion.Entitlement], Error>?
 
-    // Historical sync is also an on-demand prerequisite for promotional-offer
-    // signing. Concurrent public and signing calls must join one store read and
-    // one set of backend reports.
+    // Concurrent syncHistoricalData() calls must join one store read and one
+    // set of backend reports.
     private let historicalSyncTaskLock = NSLock()
     private var historicalSyncTask: Task<Bool, Never>?
     private var historicalSyncGeneration = 0
@@ -440,15 +439,12 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     }
 
     func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
-        guard await syncHistoricalData() else {
-            throw QonversionError(
-                type: .promoOfferSigningFailed,
-                message: "Failed to synchronize purchase history before checking promotional offer eligibility"
-            )
-        }
-
-        // Historical reports can resolve the transactions to another user.
-        // Pass the gate again and read the id only after that switch completes.
+        // Eligibility is the backend's answer, decided on the purchase history
+        // it already holds: it replies not_eligible when that history is not
+        // enough. Uploading the store history first would neither be needed for
+        // that answer nor be able to gate it — one permanently rejected report
+        // would deny every signature from then on, and the paywall would wait
+        // out a sequential network pass over the whole history.
         _ = try await userManager.obtainUser()
         let userId: String = userIdProvider.getUserId()
 

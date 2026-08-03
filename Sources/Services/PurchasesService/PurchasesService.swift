@@ -131,6 +131,11 @@ final class PurchasesService: PurchasesServiceInterface {
         do {
             response = try await requestProcessor.process(request: request, responseType: PromoOfferSignatureResponse.self)
         } catch {
+            // "Not eligible" is the backend's verdict on the offer, not a
+            // failure of this call: it must stay distinguishable for the host.
+            if let qonversionError = error as? QonversionError, qonversionError.type == .promoOfferNotEligible {
+                throw qonversionError
+            }
             throw QonversionError(type: .promoOfferSigningFailed, message: nil, error: error)
         }
 

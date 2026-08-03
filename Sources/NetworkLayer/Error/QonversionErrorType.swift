@@ -36,6 +36,9 @@ public enum QonversionErrorType: Sendable {
     case identityCreationFailed
     case purchaseReportingFailed
     case promoOfferSigningFailed
+    /// A normal state, not a failure: the user has no App Store subscription
+    /// history the requested promotional offer applies to. Show the full price.
+    case promoOfferNotEligible
     case promoPurchaseIntentAlreadyHandled
     case restoreFailed
     case purchaseCancelled
@@ -110,6 +113,10 @@ public enum QonversionErrorType: Sendable {
             return "Failed to link user identity"
         case .purchaseReportingFailed:
             return "The purchase succeeded in the store but could not be reported to Qonversion; it will be retried"
+        case .promoOfferSigningFailed:
+            return "Failed to sign the promotional offer"
+        case .promoOfferNotEligible:
+            return "The user is not eligible for this promotional offer"
         case .restoreFailed:
             return "Failed to restore purchases"
         case .purchaseCancelled:
@@ -233,6 +240,10 @@ extension QonversionErrorType {
         // operation.
         case "store_not_configured", "store_creds_failed", "token_not_found", "secrets_not_found":
             self = .projectConfigError
+        // The offer-signature service refuses to sign for a user whose App
+        // Store subscription history the offer does not apply to (422).
+        case "not_eligible":
+            self = .promoOfferNotEligible
         // The purchase-validation family (422): the App Store payload did not
         // parse into a subscription, carried an unexpected purchase type, or
         // contradicts a purchase the backend already knows.

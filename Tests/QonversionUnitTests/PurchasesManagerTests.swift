@@ -1370,55 +1370,42 @@ final class PurchasesManagerTests: XCTestCase {
 
         let offer = try await manager.promotionalOffer(for: makeProduct(storeId: "com.app.pro"), discountId: "offer1")
 
-        XCTAssertEqual(service.sentTriggers, [.syncHistoricalData], "history must reach the backend before the signature request")
-        XCTAssertEqual(userManager.obtainUserCallsCount, 2, "sync and the signature request must each pass the current-user gate")
+        XCTAssertEqual(userManager.obtainUserCallsCount, 1, "the signature request must pass the current-user gate")
         XCTAssertEqual(service.promotionalOfferCalls.first?.userId, uid)
         XCTAssertEqual(service.promotionalOfferCalls.first?.offerId, "offer1")
         XCTAssertEqual(service.promotionalOfferCalls.first?.productStoreId, "com.app.pro")
         XCTAssertEqual(offer.offerId, "offer1")
     }
 
-    func testPromotionalOfferDoesNotRequestSignatureWhenHistoricalSyncFails() async {
+    func testPromotionalOfferDoesNotSyncThePurchaseHistory() async throws {
         facade.historicalDataResult = [makeTransaction(id: "history-1")]
-        service.error = MockError.stubbed
+        service.promotionalOfferResult = Qonversion.PromotionalOffer(offerId: "offer1", keyId: "KEY", nonce: UUID(), signature: Data(), timestamp: 1)
 
-        do {
-            _ = try await manager.promotionalOffer(for: makeProduct(), discountId: "offer1")
-            XCTFail("Expected historical sync failure")
-        } catch let error as QonversionError {
-            XCTAssertEqual(error.type, .promoOfferSigningFailed)
-        } catch {
-            XCTFail("Unexpected error type: \(error)")
-        }
+        _ = try await manager.promotionalOffer(for: makeProduct(), discountId: "offer1")
 
-        XCTAssertTrue(service.promotionalOfferCalls.isEmpty, "a failed sync must not become a terminal backend not_eligible")
+        XCTAssertEqual(facade.historicalDataCallsCount, 0, "signing must not upload the store history")
+        XCTAssertTrue(service.sentTransactions.isEmpty)
     }
 
-    func testPromotionalOfferReadsUserIdAfterHistoricalSyncSwitchesOwner() async throws {
+    func testPromotionalOfferIsSignedWhenTheStoreHistoryIsUnavailable() async throws {
+        facade.historicalDataError = MockError.stubbed
+        service.promotionalOfferResult = Qonversion.PromotionalOffer(offerId: "offer1", keyId: "KEY", nonce: UUID(), signature: Data(), timestamp: 1)
+
+        let offer = try await manager.promotionalOffer(for: makeProduct(), discountId: "offer1")
+
+        XCTAssertEqual(offer.offerId, "offer1", "an unreadable store history must not deny the signature")
+        XCTAssertEqual(service.promotionalOfferCalls.count, 1)
+    }
+
+    func testPromotionalOfferKeepsTheCurrentUser() async throws {
         facade.historicalDataResult = [makeTransaction(id: "history-1")]
         service.reportedOwnerUserId = "QON_owner"
-        userManager.onSwitchToUser = { [weak self] ownerUserId in
-            self?.config.userId = ownerUserId
-        }
         service.promotionalOfferResult = Qonversion.PromotionalOffer(offerId: "offer1", keyId: "KEY", nonce: UUID(), signature: Data(), timestamp: 1)
 
         _ = try await manager.promotionalOffer(for: makeProduct(), discountId: "offer1")
 
-        XCTAssertEqual(userManager.switchedToUserIds, ["QON_owner"])
-        XCTAssertEqual(service.promotionalOfferCalls.first?.userId, "QON_owner")
-    }
-
-    func testPromotionalOfferReusesAlreadyCompletedHistoricalSync() async throws {
-        facade.historicalDataResult = [makeTransaction(id: "history-1")]
-        let synced = await manager.syncHistoricalData()
-        XCTAssertTrue(synced)
-        service.promotionalOfferResult = Qonversion.PromotionalOffer(offerId: "offer1", keyId: "KEY", nonce: UUID(), signature: Data(), timestamp: 1)
-
-        _ = try await manager.promotionalOffer(for: makeProduct(), discountId: "offer1")
-
-        XCTAssertEqual(facade.historicalDataCallsCount, 1)
-        XCTAssertEqual(service.sentTransactions.count, 1)
-        XCTAssertEqual(service.promotionalOfferCalls.count, 1)
+        XCTAssertTrue(userManager.switchedToUserIds.isEmpty, "signing must not switch the Qonversion user")
+        XCTAssertEqual(service.promotionalOfferCalls.first?.userId, uid)
     }
 
     // MARK: - promoted purchases (App Store promo intents)

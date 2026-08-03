@@ -213,6 +213,18 @@ public final class Qonversion: @unchecked Sendable {
     /// Requests a signed promotional offer for the product's subscription
     /// discount. Pass the result to ``purchase(_:options:)`` via
     /// ``PurchaseOptions/promoOffer``.
+    ///
+    /// Eligibility is decided by Qonversion from the purchase history it
+    /// already holds, and "not eligible" is a normal answer, not a failure:
+    /// it arrives as a ``QonversionError`` of type
+    /// ``QonversionErrorType/promoOfferNotEligible`` and means the paywall
+    /// should show the full price. Every other failure is
+    /// ``QonversionErrorType/promoOfferSigningFailed``.
+    ///
+    /// The call neither uploads the App Store purchase history nor changes the
+    /// current Qonversion user. If a subscriber's earlier purchases are not
+    /// known to Qonversion yet, call ``syncHistoricalData()`` or
+    /// ``restore()`` — both document the user switch they may cause.
     public func getPromotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
         let managers: Managers = try requireManagers()
 
