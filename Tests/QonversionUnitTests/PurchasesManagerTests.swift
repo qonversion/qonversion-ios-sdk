@@ -718,6 +718,77 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertTrue(received.isEmpty)
     }
 
+    // MARK: - terminally rejected transactions (backend refused for good)
+
+    private func rejectedError(statusCode: Int = 400) -> QonversionError {
+        QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: statusCode])
+    }
+
+    func testATerminallyRejectedTransactionIsNotFinishedInAnalyticsMode() async {
+        manager = makeManager(launchMode: .analytics)
+        service.error = rejectedError()
+
+        manager.transactionUpdated(makeTransaction(id: "rejected-1"))
+
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "Analytics mode never finishes a transaction the SDK did not purchase")
+    }
+
+    func testATerminallyRejectedTransactionIsFinishedInSubscriptionManagementMode() async {
+        // An unfinished transaction is re-delivered by the store forever, and
+        // a rejected report cannot ever succeed — it must be finished so the
+        // store stops offering it back.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        service.error = rejectedError()
+
+        manager.transactionUpdated(makeTransaction(id: "rejected-1"))
+
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["rejected-1"])
+    }
+
+    func testATerminallyRejectedTransactionIsNotReReportedOnRedelivery() async {
+        manager = makeManager(launchMode: .analytics)
+        service.error = rejectedError()
+        manager.transactionUpdated(makeTransaction(id: "rejected-1"))
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        // The store re-delivers the still-unfinished transaction on the next
+        // launch (or the listener fires again for the same one).
+        manager.transactionUpdated(makeTransaction(id: "rejected-1"))
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "a terminally rejected transaction must not be posted again")
+    }
+
+    func testANonTerminalReportFailureRemainsRetriableUnlikeARejection() async {
+        manager = makeManager(launchMode: .analytics)
+        service.error = URLError(.notConnectedToInternet)
+        manager.transactionUpdated(makeTransaction(id: "offline-1"))
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        service.error = nil
+        manager.transactionUpdated(makeTransaction(id: "offline-1"))
+        await waitUntil { self.service.sentTransactions.count >= 2 }
+
+        XCTAssertEqual(service.sentTransactions.count, 2, "an offline failure must stay retriable, unlike a terminal rejection")
+    }
+
+    func testUserChangeForgetsRejectedTransactionsSoTheNewUsersAttemptIsNotSkipped() async {
+        manager = makeManager(launchMode: .analytics)
+        service.error = rejectedError()
+        manager.transactionUpdated(makeTransaction(id: "rejected-1"))
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        manager.userDidChange()
+        service.error = nil
+        manager.transactionUpdated(makeTransaction(id: "rejected-1"))
+
+        await waitUntil { self.service.sentTransactions.count >= 2 }
+        XCTAssertEqual(service.sentTransactions.count, 2, "the previous user's rejection must not skip the new user's own attempt")
+    }
+
     // MARK: - deferred purchases (Ask to Buy / SCA parity)
 
     func testDeferredPurchaseIsEmittedInAnalyticsModeWithoutFinishing() async {
@@ -1322,6 +1393,52 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(received.map(\.transaction.id), ["unheard-1"], "a purchase nobody heard must not be lost")
     }
 
+    func testUserChangeClearsTheEntitlementsBacklogSoTheNewUserGetsNoStaleSnapshot() async {
+        // A snapshot buffered for the previous user describes access that
+        // belongs to nobody after the uid moves: a new subscriber must not
+        // read it as its own.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        manager.transactionUpdated(makeTransaction(id: "before-switch"))
+        await waitUntil { !self.facade.finishedTransactions.isEmpty }
+
+        manager.userDidChange()
+
+        let collector = StreamCollector(manager.entitlementsUpdates())
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        let received: [[String: Qonversion.Entitlement]] = await collector.received
+        XCTAssertTrue(received.isEmpty, "the previous user's snapshot must not reach the new user's subscriber")
+    }
+
+    func testUserChangeClearsTheDeferredPurchasesBacklogAndUnclaimsItsTransactionForRedelivery() async {
+        // Nobody heard the approval before the switch. It must not be simply
+        // dropped: the transaction is unclaimed so the funnel can emit it
+        // again, recalculated for whoever is the user now — a subscriber that
+        // arrives after the switch must not be handed the stale pre-switch
+        // backlog entry instead.
+        manager = makeManager(launchMode: .analytics)
+        entitlementsManager.entitlementsResult = ["previous_user_entitlement": entitlement(id: "previous_user_entitlement")]
+
+        manager.transactionUpdated(makeTransaction(id: "switch-1"))
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        manager.userDidChange()
+        entitlementsManager.entitlementsResult = ["new_user_entitlement": entitlement(id: "new_user_entitlement")]
+
+        let collector = StreamCollector(manager.deferredPurchases())
+        await waitUntil { self.manager.deferredPurchasesMulticast.subscriberCount >= 1 }
+        manager.transactionUpdated(makeTransaction(id: "switch-1"))
+
+        await waitUntil { await !collector.received.isEmpty }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.count, 1, "the transaction must be surfaced exactly once, not lost and not doubled")
+        XCTAssertEqual(received.first?.transaction.id, "switch-1")
+        XCTAssertEqual(received.first?.entitlements.keys.sorted(), ["new_user_entitlement"],
+                       "the redelivery must carry the NEW user's entitlements, not a replay of the stale pre-switch snapshot")
+    }
+
     func testAPromoIntentHandedToASubscriptionIsNotRepeatedToTheNextOne() async {
         // Acting on the same intent twice would run the purchase flow twice.
         manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
@@ -1342,6 +1459,15 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(manager.deferredPurchasesMulticast.backlog, .deliveredOnce)
         XCTAssertFalse(manager.deferredPurchasesMulticast.backlogLifetime.isFinite,
                        "an approval nobody received waits for the host, not for a deadline")
+    }
+
+    func testThePromoPurchaseIntentsBufferHasNoExpiryDeadline() {
+        // A promo intent processed with the paywall not built yet must wait
+        // for it, however long that takes — 300 seconds contradicted the
+        // documented "no deadline" contract.
+        XCTAssertEqual(manager.promoIntentsMulticast.backlog, .deliveredOnce)
+        XCTAssertFalse(manager.promoIntentsMulticast.backlogLifetime.isFinite,
+                       "a promo intent nobody received waits for the host, not for a deadline")
     }
 
     func testEntitlementsUpdatesStillReachesEveryLaterSubscription() async {
@@ -1667,6 +1793,47 @@ final class PurchasesManagerTests: XCTestCase {
         await manager.syncHistoricalData()
 
         XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["t1", "t1"], "a failed sync must not latch the once-per-install flag")
+    }
+
+    func testAHistoricalSyncThatOutlivesAUserSwitchDoesNotFlagTheNewUsersInstallAsSynced() async {
+        // The reports are still in flight for the departing user when the uid
+        // moves; the install-global "synced" flag and the owner switch belong
+        // to the session that started the run, not to whoever is current when
+        // it finishes.
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+        let gate = PurchasesAsyncGate()
+        service.onSend = { await gate.wait() }
+
+        let sync = Task { await self.manager.syncHistoricalData() }
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        manager.userDidChange()
+        config.userId = "QON_other"
+        await gate.open()
+        let synced = await sync.value
+
+        XCTAssertFalse(synced, "a sync racing a user switch must not report success")
+        XCTAssertFalse(localStorage.bool(forKey: "qonversion.keys.historicalDataSynced"),
+                       "the flag must not be set for a run that raced a user switch")
+    }
+
+    func testSyncHistoricalDataStartsAFreshRunAfterAUserSwitchInvalidatedTheInFlightOne() async {
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+        let gate = PurchasesAsyncGate()
+        service.onSend = { await gate.wait() }
+        let staleRun = Task { await self.manager.syncHistoricalData() }
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        manager.userDidChange()
+        config.userId = "QON_other"
+        let freshRun = Task { await self.manager.syncHistoricalData() }
+        await waitUntil { self.facade.historicalDataCallsCount >= 2 }
+
+        XCTAssertEqual(facade.historicalDataCallsCount, 2,
+                       "a call made after the switch must start its own store fetch, not join the stale run")
+
+        await gate.open()
+        _ = await (staleRun.value, freshRun.value)
     }
 
     func testSyncHistoricalDataSharesTheDedupGateWithTheListener() async {
