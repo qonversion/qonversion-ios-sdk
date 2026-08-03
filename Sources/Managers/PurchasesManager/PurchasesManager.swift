@@ -463,13 +463,16 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .restoreFailed)
         }
         // Production rule: only the latest transaction per product participates.
-        // A revocation is not a purchase, and it must not take its product's
-        // slot away from the transaction that paid for it.
-        let latest = EntitlementsCalculator.latestTransactionsPerProduct(restored.filter { $0.revocationDate == nil })
+        // The revocations stay in: the offline calculation below must see the
+        // refund instead of the paid transaction it replaced.
+        let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(restored)
+        // A revocation is not a purchase — the App Store server tells the
+        // backend about it, the SDK never reports it.
+        let reportable: [Qonversion.Transaction] = latest.filter { $0.revocationDate == nil }
 
         var resolvedOwnerUserId: String?
         do {
-            for transaction in latest {
+            for transaction in reportable {
                 // Skip transactions already reported this session (sweep,
                 // listener or purchase); the failed report releases the id.
                 if let id: String = transaction.id {

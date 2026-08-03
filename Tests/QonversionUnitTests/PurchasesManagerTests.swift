@@ -41,13 +41,17 @@ final class PurchasesManagerTests: XCTestCase {
         manager = makeManager()
     }
 
-    private func makeManager(launchMode: Qonversion.LaunchMode = .analytics, reportsGate: TransactionReportsGate = TransactionReportsGate()) -> PurchasesManager {
+    private func makeManager(
+        launchMode: Qonversion.LaunchMode = .analytics,
+        reportsGate: TransactionReportsGate = TransactionReportsGate(),
+        entitlements: EntitlementsManagerInterface? = nil
+    ) -> PurchasesManager {
         config.launchMode = launchMode
         return PurchasesManager(
             purchasesService: service,
             storeKitFacade: facade,
             userManager: userManager,
-            entitlementsManager: entitlementsManager,
+            entitlementsManager: entitlements ?? entitlementsManager,
             userIdProvider: config,
             launchModeProvider: config,
             purchaseAssociationsStorage: PurchaseAssociationsStorage(localStorage: localStorage),
@@ -592,6 +596,36 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(entitlementsManager.localFallbackTransactions.first?.map(\.id), ["t1"])
     }
 
+    func testRestoreDoesNotResurrectARefundedPurchaseOffline() async throws {
+        // A non-renewing subscription bought twice with the latest purchase
+        // refunded: such a product has no period to expire, so the paid
+        // transaction the refund replaced would read as a lifetime grant.
+        let entitlementsService = MockEntitlementsService()
+        entitlementsService.error = QonversionError(type: .internal)
+        let productsManager = MockProductsManager()
+        productsManager.cachedProductsResult = [makeProduct()]
+        productsManager.cachedMapping = ["pro": ["premium"]]
+        let calculatingEntitlementsManager = EntitlementsManager(
+            entitlementsService: entitlementsService,
+            storeKitFacade: facade,
+            productsDataSource: productsManager,
+            userManager: userManager,
+            userIdProvider: config,
+            localStorage: localStorage,
+            cacheLifetime: Qonversion.EntitlementsCacheLifetime.month.seconds,
+            logger: LoggerWrapper()
+        )
+        manager = makeManager(entitlements: calculatingEntitlementsManager)
+        let paid = makeTransaction(id: "paid", purchaseDate: Date(timeIntervalSince1970: 1_600_000_000))
+        let refunded = makeRevokedTransaction(id: "refunded", purchaseDate: Date(timeIntervalSince1970: 1_700_000_000))
+        facade.restoreResult = [paid, refunded]
+
+        let entitlements: [String: Qonversion.Entitlement] = try await manager.restore()
+
+        XCTAssertNil(entitlements["premium"], "the refunded purchase must not grant access offline")
+        XCTAssertTrue(service.sentTransactions.isEmpty, "a refund is not a purchase, and the transaction it replaced is not the latest one")
+    }
+
     func testRestoreNonEligibleFailureThrows() async {
         facade.restoreResult = [makeTransaction(id: "t1")]
         service.error = MockError.stubbed
@@ -1073,10 +1107,10 @@ final class PurchasesManagerTests: XCTestCase {
 
     // MARK: - revocations (refund, family sharing revocation)
 
-    private func makeRevokedTransaction(id: String, productId: String = "com.app.pro") -> Qonversion.Transaction {
+    private func makeRevokedTransaction(id: String, productId: String = "com.app.pro", purchaseDate: Date? = nil) -> Qonversion.Transaction {
         let revocationDate = Date(timeIntervalSince1970: 1_700_000_000)
 
-        return Qonversion.Transaction(id: id, productId: productId, purchaseDate: nil, jws: "jws-proof", revocationDate: revocationDate)
+        return Qonversion.Transaction(id: id, productId: productId, purchaseDate: purchaseDate, jws: "jws-proof", revocationDate: revocationDate)
     }
 
     func testRevokedTransactionEmitsUpdatedEntitlementsEvenWhenItsIdIsAlreadySurfaced() async {
