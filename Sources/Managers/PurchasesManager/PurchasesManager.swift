@@ -1015,6 +1015,10 @@ extension PurchasesManager: UserChangedObserver {
         // entitlements are rebuilt rather than replayed — the buffered snapshot
         // describes the previous user's access.
         let undelivered: [Qonversion.DeferredPurchase] = deferredPurchasesMulticast.clearBacklog()
+        // The rebuild below runs on the cooperative pool and may start before
+        // the lower-priority observers drop their caches, so the fresh window
+        // is expired here rather than assumed gone.
+        entitlementsManager.invalidateFreshBackendCache()
         var redeliverable: [String] = []
         for purchase in undelivered {
             guard let transactionId: String = purchase.transaction.id else { continue }
@@ -1024,9 +1028,7 @@ extension PurchasesManager: UserChangedObserver {
                 continue
             }
 
-            // Deliberately detached: the observer chain must not be blocked,
-            // and starting after it is what lets the rebuild read the caches
-            // the lower-priority observers have dropped by then.
+            // Deliberately detached: the observer chain must not be blocked.
             let transaction: Qonversion.Transaction = purchase.transaction
             Task { [weak self] in
                 guard let self else { return }

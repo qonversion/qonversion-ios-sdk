@@ -1649,6 +1649,25 @@ final class PurchasesManagerTests: XCTestCase {
                        "the buffered purchase must carry the entitlements of the user it is delivered to")
     }
 
+    func testUserChangeExpiresTheFreshBackendWindowBeforeTheRebuildCanReadIt() async {
+        // The rebuild of a buffered purchase runs on the cooperative pool and
+        // can start before the lower-priority observers drop their caches, so
+        // the previous user's fresh window must be closed synchronously here.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["previous_user_entitlement": entitlement(id: "previous_user_entitlement")]
+
+        manager.transactionUpdated(makeTransaction(id: "finished-1"))
+        await waitUntil { self.facade.finishedTransactions.map(\.id) == ["finished-1"] }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        let before: Int = entitlementsManager.invalidationCallsCount
+        manager.userDidChange()
+        let after: Int = entitlementsManager.invalidationCallsCount
+
+        XCTAssertEqual(after, before + 1,
+                       "the fresh window must be expired by the user switch itself, not by whoever wins the race with the rebuild")
+    }
+
     func testAPromoIntentHandedToASubscriptionIsNotRepeatedToTheNextOne() async {
         // Acting on the same intent twice would run the purchase flow twice.
         manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
