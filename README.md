@@ -78,6 +78,8 @@ Qonversion.initialize(with: configuration)
 
 Initialization is synchronous and never blocks the launch. In the background it warms everything up: creates the backend user, refreshes the product → entitlements mapping, resumes purchase reports left unfinished by previous sessions, and starts observing out-of-band transactions (renewals, Ask to Buy approvals, purchases on other devices, offer code redemptions).
 
+The first call wins: a repeated `initialize(with:)` is ignored in full, and the SDK keeps running with the configuration of the first one. Switching to another project key requires restarting the process — a mismatched repeated call is logged as an error, naming both projects.
+
 All configuration options:
 
 ```swift

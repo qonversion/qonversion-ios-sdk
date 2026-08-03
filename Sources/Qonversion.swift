@@ -43,6 +43,11 @@ public final class Qonversion: @unchecked Sendable {
     
     /// An entry point to use Qonversion SDK. Call to initialize Qonversion SDK with required and extra configs.
     /// The function is the best way to set additional configs you need to use Qonversion SDK.
+    ///
+    /// The first call wins. A repeated one is ignored in full — the SDK keeps
+    /// running with the `apiKey`, `launchMode`, `userDefaults`, `proxyURL` and
+    /// `entitlementsCacheLifetime` of the first call, and returns that same
+    /// instance. Switching to another project requires restarting the process.
     /// - Parameter configuration: a config that contains key SDK settings.
     /// - Returns: Initialized instance of the ``Qonversion`` SDK.
     @discardableResult
@@ -54,8 +59,13 @@ public final class Qonversion: @unchecked Sendable {
         shared.stateLock.lock()
         guard shared.managers == nil else {
             let logger: LoggerWrapper? = shared.logger
+            let active: ActiveConfiguration? = shared.activeConfiguration
             shared.stateLock.unlock()
-            logger?.warning("Qonversion.initialize called more than once — the repeated call is ignored.")
+            if let active, active.apiKey != configuration.apiKey || active.launchMode != configuration.launchMode {
+                logger?.error("Qonversion.initialize ignored: the SDK is already running with project \(active.apiKey) in \(active.launchMode) mode; the passed project \(configuration.apiKey) in \(configuration.launchMode) mode is NOT applied. Restart the process to switch projects.")
+            } else {
+                logger?.warning("Qonversion.initialize called more than once — the repeated call is ignored.")
+            }
             return shared
         }
 
@@ -76,6 +86,7 @@ public final class Qonversion: @unchecked Sendable {
             remoteConfigManager: assembly.remoteConfigManager()
         )
         shared.logger = assembly.servicesAssembly.miscAssemblyLogger()
+        shared.activeConfiguration = ActiveConfiguration(apiKey: configuration.apiKey, launchMode: configuration.launchMode)
         shared.managers = managers
         // Streams handed out before this point are waiting for the graph; they
         // start delivering from here on. Resumed outside the lock.
@@ -613,8 +624,16 @@ public final class Qonversion: @unchecked Sendable {
         let remoteConfigManager: RemoteConfigManagerInterface
     }
 
+    /// What the graph was built with, kept so a repeated initialize() can tell
+    /// a harmless duplicate call from one that meant to switch projects.
+    private struct ActiveConfiguration {
+        let apiKey: String
+        let launchMode: Qonversion.LaunchMode
+    }
+
     private let stateLock = NSLock()
     private var managers: Managers?
+    private var activeConfiguration: ActiveConfiguration?
     private var logger: LoggerWrapper?
 
     /// Streams created before initialize(), waiting for the graph to exist.
