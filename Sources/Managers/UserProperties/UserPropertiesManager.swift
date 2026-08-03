@@ -363,10 +363,13 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             // every property set afterwards. Drop it instead, and name it.
             if error.isRejectedByBackend {
                 logger.error("Qonversion rejected these user properties, they are dropped: " + properties.map(\.key).joined(separator: ", "))
+                // Same ownership rule as the success path: after a switch the
+                // storage belongs to the incoming user, and the handoff batch
+                // was taken out of it before the post.
+                guard owner == .scheduledSender else { return false }
+
                 propertiesStorage.clear(properties: properties)
-                if owner == .scheduledSender {
-                    resetRetryState()
-                }
+                resetRetryState()
 
                 return false
             }

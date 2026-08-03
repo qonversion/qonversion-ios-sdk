@@ -1072,6 +1072,39 @@ final class UserPropertiesUserSwitchTests: XCTestCase {
         )
     }
 
+    func testARejectedHandedOverPostDoesNotDeleteAnIdenticalPropertyOfTheNewUser() async throws {
+        // The same ownership rule as above, on the refusal path: dropping the
+        // refused batch by key+value takes the incoming user's own property
+        // with it, and that property then never reaches the backend.
+        let graph: Graph = try makeGraph(originalUid: oldUid)
+        _ = try await graph.userManager.obtainUser()
+        let handoffPost = PropertiesAsyncGate()
+        graph.processor.onProcess = { await handoffPost.wait() }
+        let refusal = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 400])
+        graph.processor.results = [
+            refusal,
+            SendUserPropertiesResult(savedProperties: [], propertyErrors: []),
+        ]
+        let sharedProperty = Qonversion.UserProperty(key: "_q_email", value: "same@qonversion.io")
+        graph.propertiesManager.setCustomUserProperty(key: sharedProperty.key, value: sharedProperty.value)
+
+        _ = try await graph.userManager.identify("external-id")
+        XCTAssertEqual(graph.config.userId, newUid, "the identify must have switched the user")
+        graph.propertiesManager.setCustomUserProperty(key: sharedProperty.key, value: sharedProperty.value)
+        await handoffPost.open()
+        await pollUntil { graph.processor.results.count == 1 }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(graph.propertiesStorage.all(), [sharedProperty], "the new user's property must survive a refused handed-over post")
+        graph.processor.onProcess = nil
+        try await graph.propertiesManager.sendProperties(force: true)
+        XCTAssertEqual(
+            sentPropertyUserIds(graph.processor),
+            [oldUid, newUid],
+            "the refused batch belongs to the old user; the new user's property still leaves under the new uid"
+        )
+    }
+
     func testTheHandedOverBatchIsDeliveredUnderTheOldUidAfterTheSwitch() async throws {
         // The payoff over waiting: a post that is merely slow still lands, and
         // it lands under the user that queued it — long after that user stopped
