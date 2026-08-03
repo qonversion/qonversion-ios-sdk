@@ -209,8 +209,10 @@ public final class Qonversion: @unchecked Sendable {
     /// track them (Analytics mode). Pass the verification results you receive
     /// from `Product.PurchaseResult` or `Transaction.updates`. The SDK never
     /// finishes these transactions — your app owns their lifecycle.
-    /// - Returns: true when every purchase was reported to Qonversion;
-    ///   failed reports are retried automatically by the offline queue.
+    /// - Returns: true when every purchase was reported to Qonversion. A report
+    ///   that failed for a temporary reason makes it false and is retried
+    ///   automatically by the offline queue; a purchase Qonversion refused for
+    ///   good is never reported again and does not make the answer false.
     @discardableResult
     public func handlePurchases(_ verificationResults: [VerificationResult<StoreKit.Transaction>]) async -> Bool {
         guard let managers: Managers = currentManagers() else {

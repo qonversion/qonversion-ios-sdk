@@ -875,6 +875,57 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.count, 1, "a report the backend refused for good must not be posted again")
     }
 
+    func testPurchaseAnswersWithEntitlementsInsteadOfRePostingARefusedTransaction() async throws {
+        // The store hands the very same transaction back on every re-buy of an
+        // owned non-consumable, and it takes no money for it. Re-posting the
+        // report the backend already refused only throws at the host again.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.error = rejectedError(statusCode: 422)
+        _ = try await manager.restore()
+
+        service.error = nil
+        facade.purchaseResult = makeTransaction(id: "t1")
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        let result: Qonversion.PurchaseResult = try await manager.purchase(makeProduct())
+
+        XCTAssertEqual(result.transaction.id, "t1")
+        XCTAssertEqual(service.sentTransactions.count, 1, "a report the backend refused for good must not be posted again by a purchase")
+    }
+
+    func testAPurchaseTheBackendRefusedForGoodIsRecordedAndFinished() async {
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "p1")
+        service.error = rejectedError(statusCode: 422)
+
+        do {
+            _ = try await manager.purchase(makeProduct())
+            XCTFail("Expected the refused report to throw")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseReportingFailed)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
+        let rejected: [String]? = try? localStorage.object(forKey: "qonversion.keys.rejectedTransactions", dataType: [String].self)
+        XCTAssertEqual(rejected, ["p1"], "the refusal must outlive this launch, or the next one posts it again")
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["p1"], "a transaction whose report can never succeed is re-delivered forever unless it is finished")
+    }
+
+    func testHandleTransactionsNeitherRePostsNorFailsOverARefusedTransaction() async {
+        service.error = rejectedError(statusCode: 422)
+        let firstResult: Bool = await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        // The host hands its transactions over on every launch (Analytics mode).
+        service.error = nil
+        let secondResult: Bool = await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "a transaction the backend refused for good must not be posted again")
+        XCTAssertTrue(firstResult, "a report nothing can make succeed is not a failure the host may retry")
+        XCTAssertTrue(secondResult)
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "the host app owns the transaction lifecycle here")
+    }
+
     func testHistoricalSyncSkipsATransactionTheBackendRejectedForGood() async {
         service.error = rejectedError(statusCode: 422)
         manager.transactionUpdated(makeTransaction(id: "rejected-1"))

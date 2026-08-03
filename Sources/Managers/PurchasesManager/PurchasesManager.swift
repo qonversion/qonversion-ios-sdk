@@ -336,6 +336,14 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // releases the id for retries.
         let gateTaken: Bool
         if let id: String = transaction.id {
+            // The store re-delivered a transaction the backend refused for
+            // good: the report cannot succeed, and entitlements answer the
+            // caller better than an exception on every tap.
+            guard !isRejectedTransaction(id) else {
+                let result: Qonversion.PurchaseResult = await purchaseResult(for: transaction)
+
+                return heard(result)
+            }
             gateTaken = reportsGate.tryTake(id)
             // Another flow owns the report and will finish the transaction;
             // this call still answers with entitlements.
@@ -367,6 +375,15 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 let result = Qonversion.PurchaseResult(transaction: transaction, entitlements: entitlements, entitlementsSource: .localCalculation)
 
                 return heard(result)
+            }
+            // Refused for good: record it so no later call posts it again, and
+            // finish it — an unfinished transaction is re-delivered forever,
+            // and the report cannot succeed.
+            if error.isRejectedByBackend, let id: String = transaction.id {
+                recordRejectedTransaction(id)
+                if launchModeProvider.launchMode == .subscriptionManagement {
+                    await storeKitFacade.finish(transaction)
+                }
             }
             // Nothing is recorded as heard: the caller gets an exception, not a
             // result, so it never learned about this purchase.
@@ -618,6 +635,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         var allReported = true
         for transaction in transactions {
             if let id: String = transaction.id {
+                // Refused for good earlier: the host hands the same
+                // transactions over on every launch, and repeating the report
+                // changes nothing.
+                guard !isRejectedTransaction(id) else { continue }
                 guard claimForReport(id) else { continue }
             }
             do {
@@ -631,7 +652,13 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 if let id: String = transaction.id {
                     reportsGate.release(id)
                 }
-                allReported = false
+                // Only a report that may yet succeed is a failure the host can
+                // act on: a refused one is refused again on every launch.
+                if error.isRejectedByBackend, let id: String = transaction.id {
+                    recordRejectedTransaction(id)
+                } else {
+                    allReported = false
+                }
                 logger.error("Failed to report a handed transaction: " + error.message)
             }
         }
