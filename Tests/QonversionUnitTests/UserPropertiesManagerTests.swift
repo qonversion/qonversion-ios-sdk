@@ -373,6 +373,47 @@ final class UserPropertiesManagerTests: XCTestCase {
         XCTAssertEqual(propertiesStorage.all().count, 1)
     }
 
+    // A terminal (4xx, non-throttling) refusal is answered the same way on
+    // every retry: unlike a transient failure, the batch must not stay in the
+    // storage forever, or it blocks every property set afterwards.
+    func testATerminallyRejectedBatchIsDroppedInsteadOfKeptForRetry() async throws {
+        propertiesStorage.save(Qonversion.UserProperty(key: "poison", value: "1"))
+        requestProcessor.error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 400])
+
+        try await manager.sendProperties(force: true)
+
+        XCTAssertEqual(requestProcessor.processedRequests.count, 1, "a terminal refusal must not be retried")
+        XCTAssertTrue(propertiesStorage.all().isEmpty, "a batch the backend refuses for good must not block every later property")
+    }
+
+    func testANewPropertyCanStillBeSentAfterATerminallyRejectedBatch() async throws {
+        propertiesStorage.save(Qonversion.UserProperty(key: "poison", value: "1"))
+        requestProcessor.error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 400])
+        try await manager.sendProperties(force: true)
+        XCTAssertTrue(propertiesStorage.all().isEmpty)
+
+        requestProcessor.error = nil
+        requestProcessor.results = [SendUserPropertiesResult(savedProperties: [], propertyErrors: [])]
+        propertiesStorage.save(Qonversion.UserProperty(key: "second", value: "2"))
+        try await manager.sendProperties(force: true)
+
+        XCTAssertEqual(requestProcessor.processedRequests.count, 2)
+        XCTAssertTrue(propertiesStorage.all().isEmpty, "a good property must still reach the backend after the previous batch was dropped")
+    }
+
+    // A 5xx / connection failure is NOT a terminal refusal: it may clear on
+    // its own, so the batch must stay for the retry ladder, exactly as it did
+    // before terminal refusals existed.
+    func testANonTerminalFailureIsStillKeptForRetryNotDropped() async throws {
+        propertiesStorage.save(Qonversion.UserProperty(key: "first", value: "1"))
+        requestProcessor.error = QonversionError(type: .internal, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 500])
+
+        try await manager.sendProperties(force: true)
+
+        XCTAssertEqual(requestProcessor.processedRequests.count, 1)
+        XCTAssertEqual(propertiesStorage.all().count, 1, "a 5xx may still succeed on retry and must not be dropped")
+    }
+
     // MARK: - userProperties
 
     func testUserPropertiesReturnsPropertiesFromProcessor() async throws {
