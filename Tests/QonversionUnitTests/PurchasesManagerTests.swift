@@ -2005,6 +2005,24 @@ final class PurchasesManagerTests: XCTestCase {
                       "the history must not be re-posted on the next launch")
     }
 
+    func testSyncHistoricalDataCompletesWhenPurchaseAlreadyDeliveredTheReport() async throws {
+        // purchase() keeps the id of the transaction it reported, so the sync
+        // skips it — but the report did reach the backend, and skipping a
+        // delivered report is not a failed sync.
+        let transaction = makeTransaction(id: "t1")
+        facade.purchaseResult = transaction
+        entitlementsManager.entitlementsResult = [:]
+        _ = try await manager.purchase(makeProduct())
+
+        facade.historicalDataResult = [transaction]
+        let synced = await manager.syncHistoricalData()
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "the purchase already delivered this report")
+        XCTAssertTrue(synced, "the purchase already delivered this report")
+        XCTAssertTrue(localStorage.bool(forKey: "qonversion.keys.historicalDataSynced"),
+                      "the history must not be re-posted on the next launch")
+    }
+
     func testSyncHistoricalDataIsIncompleteWhenTheStoreDroppedTransactionsAsUnverified() async {
         // A rolled clock rejects every transaction locally: the fetch comes
         // back empty, and an empty history is not a synced history.

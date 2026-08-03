@@ -350,6 +350,11 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
         do {
             try await purchasesService.send(transaction, userId: userId, options: options, trigger: .purchase)
+            // The id stays taken — this call finishes and surfaces the
+            // transaction itself — so the gate only records the delivery.
+            if gateTaken, let id: String = transaction.id {
+                reportsGate.markDelivered(id)
+            }
             purchaseAssociationsStorage.remove(for: product.storeId)
         } catch {
             if gateTaken, let id: String = transaction.id {
