@@ -39,6 +39,10 @@ public enum QonversionErrorType: Sendable {
     /// A normal state, not a failure: the user has no App Store subscription
     /// history the requested promotional offer applies to. Show the full price.
     case promoOfferNotEligible
+    /// The App Store refused the promotional offer the purchase was made with:
+    /// its signature, identifier or price did not hold, or the account is not
+    /// eligible for it. The same purchase without the offer may still succeed.
+    case promoOfferRejected
     case promoPurchaseIntentAlreadyHandled
     case restoreFailed
     case purchaseCancelled
@@ -117,6 +121,8 @@ public enum QonversionErrorType: Sendable {
             return "Failed to sign the promotional offer"
         case .promoOfferNotEligible:
             return "The user is not eligible for this promotional offer"
+        case .promoOfferRejected:
+            return "The App Store rejected the promotional offer applied to the purchase"
         case .restoreFailed:
             return "Failed to restore purchases"
         case .purchaseCancelled:

@@ -84,6 +84,8 @@ enum StoreKitPurchaseOutcome {
                 return .storeProductNotAvailable
             case .purchaseNotAllowed:
                 return .paymentNotAllowed
+            case .invalidOfferSignature, .invalidOfferIdentifier, .invalidOfferPrice, .ineligibleForOffer:
+                return .promoOfferRejected
             default:
                 return .purchaseFailed
             }

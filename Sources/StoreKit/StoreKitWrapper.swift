@@ -82,6 +82,9 @@ final class StoreKitWrapper: StoreKitWrapperInterface, @unchecked Sendable {
         if options.quantity > 1 {
             purchaseOptions.insert(.quantity(options.quantity))
         }
+        if let appAccountToken = options.appAccountToken {
+            purchaseOptions.insert(.appAccountToken(appAccountToken))
+        }
         if let promoOffer = options.promoOffer {
             purchaseOptions.insert(.promotionalOffer(
                 offerID: promoOffer.offerId,

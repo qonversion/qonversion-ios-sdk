@@ -225,10 +225,15 @@ public final class Qonversion: @unchecked Sendable {
     /// current Qonversion user. If a subscriber's earlier purchases are not
     /// known to Qonversion yet, call ``syncHistoricalData()`` or
     /// ``restore()`` — both document the user switch they may cause.
-    public func getPromotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
+    ///
+    /// - Parameter appAccountToken: The token the purchase will be made with.
+    /// The App Store checks the signed offer against the purchase's
+    /// `appAccountToken`, so pass here the very value that goes into
+    /// ``PurchaseOptions/appAccountToken``, or the store refuses the offer.
+    public func getPromotionalOffer(for product: Qonversion.Product, discountId: String, appAccountToken: UUID? = nil) async throws -> Qonversion.PromotionalOffer {
         let managers: Managers = try requireManagers()
 
-        return try await managers.purchasesManager.promotionalOffer(for: product, discountId: discountId)
+        return try await managers.purchasesManager.promotionalOffer(for: product, discountId: discountId, appAccountToken: appAccountToken)
     }
 
     /// A stream of purchases promoted in the App Store. Call purchase() on a

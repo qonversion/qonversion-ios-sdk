@@ -40,8 +40,9 @@ protocol PurchasesManagerInterface: AnyObject {
     func restore() async throws -> [String: Qonversion.Entitlement]
 
     /// Requests a backend-signed promotional offer for the product's discount;
-    /// pass the result via ``Qonversion/Qonversion/PurchaseOptions/promoOffer``.
-    func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer
+    /// pass the result via ``Qonversion/Qonversion/PurchaseOptions/promoOffer``,
+    /// together with the app account token the signature was requested with.
+    func promotionalOffer(for product: Qonversion.Product, discountId: String, appAccountToken: UUID?) async throws -> Qonversion.PromotionalOffer
 
     /// Starts consuming out-of-band transaction updates (renewals, refunds,
     /// Ask to Buy approvals): each update is reported to the backend and is
@@ -90,5 +91,9 @@ extension PurchasesManagerInterface {
     @discardableResult
     func purchase(_ product: Qonversion.Product) async throws -> Qonversion.PurchaseResult {
         try await purchase(product, options: nil)
+    }
+
+    func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
+        try await promotionalOffer(for: product, discountId: discountId, appAccountToken: nil)
     }
 }

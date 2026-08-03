@@ -31,12 +31,20 @@ extension Qonversion {
         /// to purchase with. Applied on iOS 18 and later; ignored below.
         public let winBackOffer: Qonversion.Product.SubscriptionOffer?
 
-        public init(quantity: Int = 1, contextKeys: [String]? = nil, screenUid: String? = nil, promoOffer: PromotionalOffer? = nil, winBackOffer: Qonversion.Product.SubscriptionOffer? = nil) {
+        /// The App Store `appAccountToken` to attach to the purchase — your own
+        /// account identifier, which the App Store returns on every transaction
+        /// of this purchase. It is part of what a promotional offer signature
+        /// covers, so it must be the same value the offer was signed with, or
+        /// the App Store refuses the offer.
+        public let appAccountToken: UUID?
+
+        public init(quantity: Int = 1, contextKeys: [String]? = nil, screenUid: String? = nil, promoOffer: PromotionalOffer? = nil, winBackOffer: Qonversion.Product.SubscriptionOffer? = nil, appAccountToken: UUID? = nil) {
             self.quantity = quantity
             self.contextKeys = contextKeys
             self.screenUid = screenUid
             self.promoOffer = promoOffer
             self.winBackOffer = winBackOffer
+            self.appAccountToken = appAccountToken
         }
     }
 

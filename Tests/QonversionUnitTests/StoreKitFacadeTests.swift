@@ -393,7 +393,7 @@ final class StoreKitPurchaseFailureMappingTests: XCTestCase {
     func testProductPurchaseErrorsMapToTypedFailures() {
         XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKit.Product.PurchaseError.productUnavailable), .storeProductNotAvailable)
         XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKit.Product.PurchaseError.purchaseNotAllowed), .paymentNotAllowed)
-        XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKit.Product.PurchaseError.invalidOfferIdentifier), .purchaseFailed)
+        XCTAssertEqual(StoreKitPurchaseOutcome.failureType(for: StoreKit.Product.PurchaseError.invalidOfferIdentifier), .promoOfferRejected)
     }
 
     func testAnUnknownFailureStaysPurchaseFailedAndKeepsTheUnderlyingError() throws {

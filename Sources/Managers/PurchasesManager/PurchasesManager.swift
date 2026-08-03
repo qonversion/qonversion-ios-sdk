@@ -504,7 +504,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         }
     }
 
-    func promotionalOffer(for product: Qonversion.Product, discountId: String) async throws -> Qonversion.PromotionalOffer {
+    func promotionalOffer(for product: Qonversion.Product, discountId: String, appAccountToken: UUID?) async throws -> Qonversion.PromotionalOffer {
         // Eligibility is the backend's answer, decided on the purchase history
         // it already holds: it replies not_eligible when that history is not
         // enough. Uploading the store history first would neither be needed for
@@ -514,7 +514,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         _ = try await userManager.obtainUser()
         let userId: String = userIdProvider.getUserId()
 
-        return try await purchasesService.promotionalOffer(userId: userId, offerId: discountId, productStoreId: product.storeId)
+        return try await purchasesService.promotionalOffer(userId: userId, offerId: discountId, productStoreId: product.storeId, appAccountToken: appAccountToken)
     }
 
     /// Associations of the original SDK-initiated purchase of this product,

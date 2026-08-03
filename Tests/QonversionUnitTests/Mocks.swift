@@ -884,7 +884,7 @@ final class MockPurchasesService: PurchasesServiceInterface {
     }
 
     var promotionalOfferResult: Qonversion.PromotionalOffer?
-    private(set) var promotionalOfferCalls: [(userId: String, offerId: String, productStoreId: String)] = []
+    private(set) var promotionalOfferCalls: [(userId: String, offerId: String, productStoreId: String, appAccountToken: UUID?)] = []
 
     var reportedOwnerUserId: String?
 
@@ -899,8 +899,8 @@ final class MockPurchasesService: PurchasesServiceInterface {
         return reportedOwnerUserId
     }
 
-    func promotionalOffer(userId: String, offerId: String, productStoreId: String) async throws -> Qonversion.PromotionalOffer {
-        promotionalOfferCalls.append((userId, offerId, productStoreId))
+    func promotionalOffer(userId: String, offerId: String, productStoreId: String, appAccountToken: UUID?) async throws -> Qonversion.PromotionalOffer {
+        promotionalOfferCalls.append((userId, offerId, productStoreId, appAccountToken))
         if let error { throw error }
         guard let promotionalOfferResult else { throw MockError.noStub }
         return promotionalOfferResult
