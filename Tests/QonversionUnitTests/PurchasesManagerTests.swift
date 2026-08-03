@@ -831,6 +831,39 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.count, 2, "a fixed client must post the transaction again")
     }
 
+    func testTheSweepReReportsATransactionRestoreLostOverTheBody() async throws {
+        // Restore refuses to fail over one transaction, but a 400 over the
+        // body is not a verdict on it: banning it here would make the sweep
+        // finish it unreported on the next delivery.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        service.error = malformedBodyError()
+        _ = try await manager.restore()
+
+        let rejected: [String]? = try? localStorage.object(forKey: "qonversion.keys.rejectedTransactions", dataType: [String].self)
+        XCTAssertNil(rejected, "a body the SDK got wrong must not ban the purchase forever")
+
+        service.error = nil
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(service.sentTransactions.count, 2, "a fixed client must post the transaction again")
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["t1"], "only a delivered report may finish the transaction")
+    }
+
+    func testHandleTransactionsRePostsATransactionLostOverTheBody() async {
+        service.error = malformedBodyError()
+        let firstResult: Bool = await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        // The host hands its transactions over on every launch (Analytics mode).
+        service.error = nil
+        let secondResult: Bool = await manager.handle(transactions: [makeTransaction(id: "t1")])
+
+        XCTAssertFalse(firstResult, "a report a fixed client can still deliver is a failure the host may retry")
+        XCTAssertTrue(secondResult)
+        XCTAssertEqual(service.sentTransactions.count, 2, "a fixed client must post the transaction again")
+    }
+
     func testATerminallyRejectedTransactionIsNotFinishedInAnalyticsMode() async {
         manager = makeManager(launchMode: .analytics)
         service.error = unacceptablePurchaseError()
@@ -924,7 +957,7 @@ final class PurchasesManagerTests: XCTestCase {
         // otherwise the store re-delivers it on every launch forever.
         manager = makeManager(launchMode: .subscriptionManagement)
         facade.restoreResult = [makeTransaction(id: "t1")]
-        service.error = rejectedError(statusCode: 422)
+        service.error = unacceptablePurchaseError()
         _ = try await manager.restore()
 
         service.error = nil
@@ -943,7 +976,7 @@ final class PurchasesManagerTests: XCTestCase {
         // than the exception the first refusal already gave it.
         manager = makeManager(launchMode: .subscriptionManagement)
         facade.restoreResult = [makeTransaction(id: "t1")]
-        service.error = rejectedError(statusCode: 422)
+        service.error = unacceptablePurchaseError()
         _ = try await manager.restore()
 
         service.error = nil
@@ -1003,7 +1036,7 @@ final class PurchasesManagerTests: XCTestCase {
     }
 
     func testHandleTransactionsNeitherRePostsNorFailsOverARefusedTransaction() async {
-        service.error = rejectedError(statusCode: 422)
+        service.error = unacceptablePurchaseError()
         let firstResult: Bool = await manager.handle(transactions: [makeTransaction(id: "t1")])
 
         // The host hands its transactions over on every launch (Analytics mode).

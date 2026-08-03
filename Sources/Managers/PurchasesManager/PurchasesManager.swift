@@ -526,7 +526,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                     // unfinished — restore does not own its lifecycle.
                     guard !error.isRejectedByBackend else {
                         logger.error("Qonversion refused a restored transaction, it is skipped: " + error.message)
-                        if let id: String = transaction.id {
+                        // Only a verdict on the purchase bans it: the sweep
+                        // finishes what this set holds, and a refusal of the
+                        // body the SDK built clears with the next version.
+                        if error.isUnacceptablePurchase, let id: String = transaction.id {
                             recordRejectedTransaction(id)
                         }
                         continue
@@ -659,8 +662,10 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                     reportsGate.release(id)
                 }
                 // Only a report that may yet succeed is a failure the host can
-                // act on: a refused one is refused again on every launch.
-                if error.isRejectedByBackend, let id: String = transaction.id {
+                // act on: a purchase the backend refused is refused again on
+                // every launch, while a body the SDK built wrong is not — that
+                // one stays reportable, so the host may retry it.
+                if error.isUnacceptablePurchase, let id: String = transaction.id {
                     recordRejectedTransaction(id)
                 } else {
                     allReported = false
