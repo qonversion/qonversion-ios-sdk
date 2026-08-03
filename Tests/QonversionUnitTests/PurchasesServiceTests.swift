@@ -180,6 +180,47 @@ final class PurchasesServiceTests: XCTestCase {
         XCTAssertEqual(body["screen_uid"] as? String, screenUid)
     }
 
+    /// The gateway measures the limit in bytes, so a value that fits in
+    /// characters can still be refused.
+    func testSendOmitsAMultibyteScreenUidLongerThanTheBackendColumnInBytes() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+        let screenUid = String(repeating: "\u{00E9}", count: 200)
+        let options = Qonversion.PurchaseOptions(screenUid: screenUid)
+
+        XCTAssertEqual(screenUid.count, 200)
+        XCTAssertEqual(screenUid.utf8.count, 400)
+
+        try await service.send(makeTransaction(), userId: "QON_buyer", options: options)
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["screen_uid"], "an oversized value must not take the whole report down with it")
+        XCTAssertEqual(body["price"] as? String, "9.99")
+        XCTAssertEqual(body["currency"] as? String, "USD")
+        let storeData = body["store_data"] as? RequestBodyDict
+        XCTAssertEqual(storeData?["receipt"] as? String, "signed-jws")
+    }
+
+    func testSendIncludesAMultibyteScreenUidWithinTheColumnLimitInBytes() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+        let screenUid = String(repeating: "\u{00E9}", count: 127)
+        let options = Qonversion.PurchaseOptions(screenUid: screenUid)
+
+        XCTAssertEqual(screenUid.utf8.count, 254)
+
+        try await service.send(makeTransaction(), userId: "QON_buyer", options: options)
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertEqual(body["screen_uid"] as? String, screenUid)
+    }
+
     func testSendWithoutOptionsOmitsAssociationFields() async throws {
         let processor = MockRequestProcessor()
         processor.results = [PurchaseReportResponse(userId: nil)]

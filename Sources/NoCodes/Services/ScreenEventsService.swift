@@ -168,6 +168,7 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
   /// it is milliseconds — what a screen's JS produces by default.
   private static let millisecondThreshold: Int = 100_000_000_000
 
+  /// Measured in UTF-8 bytes: the backend compares it against Go's `len()`.
   private static let maxScreenUidLength: Int = 255
   private static let maxPageIndex: Int = 10_000
 
@@ -199,7 +200,7 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
   private static func satisfiesBackendLimits(_ event: ScreenEvent) -> Bool {
     guard let screenUid = event.data[Self.screenUidKey] as? String,
           !screenUid.isEmpty,
-          screenUid.count <= Self.maxScreenUidLength else { return false }
+          screenUid.utf8.count <= Self.maxScreenUidLength else { return false }
 
     guard let happenedAt = Self.intValue(event.data[Self.happenedAtKey]),
           happenedAt >= Self.earliestHappenedAt,

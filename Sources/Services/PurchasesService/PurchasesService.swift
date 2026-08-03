@@ -60,6 +60,8 @@ struct PromoOfferSignatureResponse: Decodable {
 final class PurchasesService: PurchasesServiceInterface {
 
     /// The width of the `purchase.screen_uid` column, and the gateway's limit.
+    /// Measured in UTF-8 bytes: the gateway compares it against Go's `len()`,
+    /// however its rejection message words it as characters.
     private static let maxScreenUidLength: Int = 255
 
     private let requestProcessor: RequestProcessorInterface
@@ -109,7 +111,7 @@ final class PurchasesService: PurchasesServiceInterface {
                 body["context_keys"] = keys
             }
         }
-        if let screenUid = options?.screenUid, !screenUid.isEmpty, screenUid.count <= Self.maxScreenUidLength {
+        if let screenUid = options?.screenUid, !screenUid.isEmpty, screenUid.utf8.count <= Self.maxScreenUidLength {
             body["screen_uid"] = screenUid
         }
 
