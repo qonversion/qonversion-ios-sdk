@@ -954,8 +954,9 @@ extension PurchasesManager: UserChangedObserver {
         // its transaction lets the funnel emit it again, with the entitlements
         // recalculated for the new user. One the SDK already finished has no
         // such second delivery, so it keeps waiting for a subscriber: the
-        // purchase happened on this device whoever the user is now, and the
-        // host reads where its entitlements came from off the event itself.
+        // purchase happened on this device whoever the user is now. Its
+        // entitlements are rebuilt rather than replayed — the buffered snapshot
+        // describes the previous user's access.
         let undelivered: [Qonversion.DeferredPurchase] = deferredPurchasesMulticast.clearBacklog()
         var redeliverable: [String] = []
         for purchase in undelivered {
@@ -966,8 +967,17 @@ extension PurchasesManager: UserChangedObserver {
                 continue
             }
 
-            deferredPurchasesMulticast.yield(purchase) { [weak self] in
-                self?.markHeardByHost(transactionId)
+            // Deliberately detached: the observer chain must not be blocked,
+            // and starting after it is what lets the rebuild read the caches
+            // the lower-priority observers have dropped by then.
+            let transaction: Qonversion.Transaction = purchase.transaction
+            Task { [weak self] in
+                guard let self else { return }
+
+                let rebuilt: Qonversion.DeferredPurchase = await self.deferredPurchase(for: transaction, reportFailed: false)
+                self.deferredPurchasesMulticast.yield(rebuilt) { [weak self] in
+                    self?.markHeardByHost(transactionId)
+                }
             }
         }
         unclaim(redeliverable)

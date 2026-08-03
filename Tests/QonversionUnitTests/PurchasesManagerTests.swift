@@ -1495,6 +1495,29 @@ final class PurchasesManagerTests: XCTestCase {
                        "a purchase the SDK already finished cannot come back from the store, so it must stay buffered")
     }
 
+    func testUserChangeRebuildsAnSDKFinishedPurchaseWithTheNewUsersEntitlements() async {
+        // The buffered entry was built while the previous user was current:
+        // replaying that snapshot would grant the previous user's access to
+        // whoever the user is now.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["previous_user_entitlement": entitlement(id: "previous_user_entitlement")]
+
+        manager.transactionUpdated(makeTransaction(id: "finished-1"))
+        await waitUntil { self.facade.finishedTransactions.map(\.id) == ["finished-1"] }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        entitlementsManager.entitlementsResult = ["new_user_entitlement": entitlement(id: "new_user_entitlement")]
+        manager.userDidChange()
+
+        let collector = StreamCollector(manager.deferredPurchases())
+        await waitUntil { await !collector.received.isEmpty }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.map(\.transaction.id), ["finished-1"])
+        XCTAssertEqual(received.first?.entitlements.keys.sorted(), ["new_user_entitlement"],
+                       "the buffered purchase must carry the entitlements of the user it is delivered to")
+    }
+
     func testAPromoIntentHandedToASubscriptionIsNotRepeatedToTheNextOne() async {
         // Acting on the same intent twice would run the purchase flow twice.
         manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
