@@ -32,6 +32,28 @@ final class VendorIdResolverTests: XCTestCase {
         XCTAssertEqual(defaults.string(forKey: VendorIdResolver.storageKey), resolved)
     }
 
+    func testATemporarilyMissingSystemIdentifierIsNotLatched() {
+        let resolver = VendorIdResolver(
+            userDefaults: defaults,
+            uuidProvider: { UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")! }
+        )
+
+        XCTAssertNil(resolver.resolve(systemVendorId: nil, systemIdentityIsFinal: false))
+        XCTAssertNil(defaults.string(forKey: VendorIdResolver.storageKey))
+    }
+
+    func testTheRealIdentifierIsUsedOnceItAppears() {
+        let resolver = VendorIdResolver(
+            userDefaults: defaults,
+            uuidProvider: { UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")! }
+        )
+
+        XCTAssertNil(resolver.resolve(systemVendorId: nil, systemIdentityIsFinal: false))
+
+        XCTAssertEqual(resolver.resolve(systemVendorId: "IDFV", systemIdentityIsFinal: false), "IDFV")
+        XCTAssertNil(defaults.string(forKey: VendorIdResolver.storageKey))
+    }
+
     func testStoredFallbackRemainsStableIfSystemIdentifierAppearsLater() {
         defaults.set("persisted-fallback", forKey: VendorIdResolver.storageKey)
         let resolver = VendorIdResolver(userDefaults: defaults)

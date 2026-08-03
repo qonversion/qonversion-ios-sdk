@@ -20,4 +20,15 @@ final class VendorIdResolverTests: XCTestCase {
         XCTAssertEqual(generated, "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")
         XCTAssertEqual(second.resolve(systemVendorId: nil, systemIdentityIsFinal: true), generated)
     }
+
+    func testATemporarilyMissingSystemIdentifierIsNotLatched() {
+        let defaults = TestDefaults.makeIsolated()
+        let resolver = VendorIdResolver(
+            userDefaults: defaults,
+            uuidProvider: { UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")! }
+        )
+
+        XCTAssertNil(resolver.resolve(systemVendorId: nil, systemIdentityIsFinal: false))
+        XCTAssertNil(defaults.string(forKey: VendorIdResolver.storageKey))
+    }
 }
