@@ -19,6 +19,11 @@ final class DeviceManager: DeviceManagerInterface, @unchecked Sendable {
     /// snapshot the previous one has not persisted yet, so two of them running
     /// at once both see "no device" and create the row twice.
     private var lastCollect: Task<Void, Never>?
+    /// Bumped by every user switch. A pass that started under the previous
+    /// user must still reach the backend — that is the departing user's last
+    /// report — but its snapshot must not be written back over the record the
+    /// switch cleared, or the new user never gets a device row.
+    private var deviceGeneration = 0
 
     init(deviceInfoCollector: DeviceInfoCollectorInterface, deviceService: DeviceServiceInterface, logger: LoggerWrapper) {
         self.deviceInfoCollector = deviceInfoCollector
@@ -74,17 +79,36 @@ extension DeviceManager {
     }
 
     private func performCollect() async {
+        let generation: Int = currentGeneration()
         let deviceInfo: Device = deviceInfoCollector.deviceInfo()
 
         let currentDevice: Device? = currentDevice()
 
         if currentDevice == nil {
-            return await create(deviceInfo: deviceInfo)
+            return await create(deviceInfo: deviceInfo, generation: generation)
         }
 
         guard deviceInfo != currentDevice else { return }
 
-        return await update(deviceInfo: deviceInfo)
+        return await update(deviceInfo: deviceInfo, generation: generation)
+    }
+
+    private func currentGeneration() -> Int {
+        chainLock.lock()
+        defer { chainLock.unlock() }
+
+        return deviceGeneration
+    }
+
+    /// Checks the generation and writes in one step, so a switch landing
+    /// between the two cannot let the write through.
+    private func persist(_ deviceInfo: Device, ifGenerationIs generation: Int) throws {
+        chainLock.lock()
+        defer { chainLock.unlock() }
+
+        guard deviceGeneration == generation else { return }
+
+        try deviceService.save(device: deviceInfo)
     }
 
     /// Both paths persist the snapshot that was SENT, not the record the
@@ -92,20 +116,20 @@ extension DeviceManager {
     /// next local collection, and an echo differing in any field (a
     /// server-side advertising id, a normalised value, a truncated answer)
     /// would make that comparison non-empty on every launch from then on.
-    private func create(deviceInfo: Device) async {
+    private func create(deviceInfo: Device, generation: Int) async {
         do {
             _ = try await deviceService.create(device: deviceInfo)
-            try deviceService.save(device: deviceInfo)
+            try persist(deviceInfo, ifGenerationIs: generation)
             return logger.info(LoggerInfoMessages.deviceCreated.rawValue)
         } catch {
             return logger.warning("Failed to create device: " + error.message)
         }
     }
 
-    private func update(deviceInfo: Device) async {
+    private func update(deviceInfo: Device, generation: Int) async {
         do {
             _ = try await deviceService.update(device: deviceInfo)
-            try deviceService.save(device: deviceInfo)
+            try persist(deviceInfo, ifGenerationIs: generation)
             return logger.info(LoggerInfoMessages.deviceUpdated.rawValue)
         } catch {
             return logger.warning("Failed to update device: " + error.message)
@@ -128,6 +152,10 @@ extension DeviceManager {
 extension DeviceManager: UserChangedObserver {
 
     func userDidChange() {
+        chainLock.lock()
+        deviceGeneration += 1
+        chainLock.unlock()
+
         // The stored record belongs to the previous user — drop it and
         // create the new user's device row right away, not on the next launch.
         clearStoredDevice()
