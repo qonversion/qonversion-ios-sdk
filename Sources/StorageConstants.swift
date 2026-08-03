@@ -31,6 +31,7 @@ enum SDKStorageKeys {
         "qonversion.keys.originalUserId",
         "qonversion.keys.purchaseAssociations",
         "qonversion.keys.surfacedTransactions",
+        "qonversion.keys.rejectedTransactions",
         "qonversion.keys.historicalDataSynced",
         "qonversion.keys.crashReports",
         InternalConstants.storagePrefix.rawValue + "device"

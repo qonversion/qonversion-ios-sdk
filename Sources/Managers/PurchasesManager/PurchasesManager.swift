@@ -14,11 +14,16 @@ fileprivate enum Constants: String {
     // A revocation carries the id of the purchase it undoes, which that set
     // already holds; this prefix gives it a namespace of its own.
     case revokedTransactionPrefix = "revoked:"
+    // The transactions the backend refused for good, persisted: the store
+    // re-delivers them forever, and every re-report gets the same refusal.
+    case rejectedTransactionsKey = "qonversion.keys.rejectedTransactions"
 }
 
-fileprivate enum IntConstants: Int {
+fileprivate enum IntConstants {
     /// Bounds the surfaced-transactions set; the oldest ids are dropped first.
-    case maxSurfacedTransactions = 200
+    static let maxSurfacedTransactions = 200
+    /// Bounds the rejected-transactions set; the oldest ids are dropped first.
+    static let maxRejectedTransactions = 200
 }
 
 // @unchecked: mutable state lives in the actor gate and lock-guarded storages.
@@ -121,7 +126,7 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
     /// forgetting one repeats that purchase to the host on every launch from
     /// then on. Caller holds `surfacedLock`.
     private func withinBound(_ surfaced: [String]) -> [String] {
-        var excess: Int = surfaced.count - IntConstants.maxSurfacedTransactions.rawValue
+        var excess: Int = surfaced.count - IntConstants.maxSurfacedTransactions
         guard excess > 0 else { return surfaced }
 
         var result: [String] = []
@@ -169,6 +174,44 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     private func storedSurfacedTransactions() -> [String] {
         return (try? localStorage.object(forKey: Constants.surfacedTransactionsKey.rawValue, dataType: [String].self)) ?? []
+    }
+
+    // Guards the rejected bookkeeping below.
+    private let rejectedLock = NSLock()
+
+    /// True when the backend refused this transaction in a way no repetition
+    /// can change — a 4xx that is neither throttling nor a timeout.
+    private func isRejectedTransaction(_ transactionId: String) -> Bool {
+        rejectedLock.lock()
+        defer { rejectedLock.unlock() }
+
+        return storedRejectedTransactions().contains(transactionId)
+    }
+
+    private func recordRejectedTransaction(_ transactionId: String) {
+        rejectedLock.lock()
+        defer { rejectedLock.unlock() }
+
+        var rejected: [String] = storedRejectedTransactions()
+        guard !rejected.contains(transactionId) else { return }
+
+        rejected.append(transactionId)
+        let excess: Int = rejected.count - IntConstants.maxRejectedTransactions
+        if excess > 0 {
+            rejected.removeFirst(excess)
+        }
+        try? localStorage.set(rejected, forKey: Constants.rejectedTransactionsKey.rawValue)
+    }
+
+    private func clearRejectedTransactions() {
+        rejectedLock.lock()
+        defer { rejectedLock.unlock() }
+
+        localStorage.removeObject(forKey: Constants.rejectedTransactionsKey.rawValue)
+    }
+
+    private func storedRejectedTransactions() -> [String] {
+        return (try? localStorage.object(forKey: Constants.rejectedTransactionsKey.rawValue, dataType: [String].self)) ?? []
     }
 
     // An approval processed before the host subscribes waits with no deadline
@@ -740,6 +783,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // Transactions without a store id (degraded SK1 mapping) cannot be
         // deduplicated and are reported unconditionally.
         if let id: String = transaction.id {
+            // The backend refused this one for good in an earlier session: the
+            // store keeps re-delivering it, the SDK must stop re-posting it.
+            guard !isRejectedTransaction(id) else { return }
             guard reportsGate.tryTake(id) else { return }
         }
 
@@ -783,7 +829,19 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             logger.error("Failed to report an observed transaction: " + error.message)
             // An unreachable backend must not swallow the update; a rejected
             // report stays silent.
-            guard error.allowsLocalEntitlementsFallback else { return }
+            guard error.allowsLocalEntitlementsFallback else {
+                // Refused for good: record it so no later launch posts it
+                // again, and finish it — an unfinished transaction is
+                // re-delivered forever, and the report cannot succeed.
+                if error.isRejectedByBackend, let id: String = transaction.id {
+                    recordRejectedTransaction(id)
+                    if launchModeProvider.launchMode == .subscriptionManagement {
+                        await storeKitFacade.finish(transaction)
+                    }
+                }
+
+                return
+            }
 
             reportFailed = true
         }
@@ -867,6 +925,10 @@ extension PurchasesManager: UserChangedObserver {
         // recalculated for the new user.
         let undelivered: [Qonversion.DeferredPurchase] = deferredPurchasesMulticast.clearBacklog()
         unclaim(undelivered.compactMap { $0.transaction.id })
+
+        // The refusals were answered for the previous user; the new one gets
+        // its own attempt.
+        clearRejectedTransactions()
     }
 
     private func unclaim(_ transactionIds: [String]) {
