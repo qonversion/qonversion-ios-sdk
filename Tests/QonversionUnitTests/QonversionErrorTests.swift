@@ -176,6 +176,12 @@ final class QonversionErrorTests: XCTestCase {
         XCTAssertFalse(error.isRejectedByBackend, "a misconfigured project clears once the project is fixed")
     }
 
+    func testNotFoundIsNotRejectedByBackend() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 404])
+
+        XCTAssertFalse(error.isRejectedByBackend, "a missing user or product means the entity is not there yet, not that the request was refused")
+    }
+
     func testAServerErrorIsNotRejectedByBackend() {
         let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 500])
 

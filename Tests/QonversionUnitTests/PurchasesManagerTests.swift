@@ -914,6 +914,27 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.finishedTransactions.map(\.id), ["p1"], "a transaction whose report can never succeed is re-delivered forever unless it is finished")
     }
 
+    func testAPurchaseAnsweredWithNotFoundStaysRetriable() async {
+        // The backend answers 404 when the user row is not there yet — the
+        // report is not refused, so nothing may be banned or finished.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        facade.purchaseResult = makeTransaction(id: "p1")
+        service.error = rejectedError(statusCode: 404)
+
+        _ = try? await manager.purchase(makeProduct())
+
+        let rejected: [String]? = try? localStorage.object(forKey: "qonversion.keys.rejectedTransactions", dataType: [String].self)
+        XCTAssertNil(rejected, "a missing user must not ban the transaction forever")
+        XCTAssertTrue(facade.finishedTransactions.isEmpty, "an unreported transaction must stay unfinished for a re-report")
+
+        service.error = nil
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "p1")]
+        await manager.processUnfinishedTransactions()
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["p1", "p1"], "the next launch must post the transaction again")
+        XCTAssertEqual(facade.finishedTransactions.map(\.id), ["p1"])
+    }
+
     func testHandleTransactionsNeitherRePostsNorFailsOverARefusedTransaction() async {
         service.error = rejectedError(statusCode: 422)
         let firstResult: Bool = await manager.handle(transactions: [makeTransaction(id: "t1")])

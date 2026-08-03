@@ -20,6 +20,7 @@ enum ResponseCode: Int {
     case unauthorized = 401
     case paymentRequired = 402
     case forbidden = 403
+    case notFound = 404
     case requestTimeout = 408
     case tooManyRequests = 429
     case clientErrorMax = 499

@@ -102,6 +102,13 @@ extension Error {
     /// revoked key, an overdue account, a misconfigured proxy), not a verdict
     /// on the request, and they clear once the project is fixed. The critical
     /// error latch and the replay queue handle those.
+    ///
+    /// 404 is excluded too: on a nested route it says the user (or the mapped
+    /// product) is not there YET, not that the request was refused — the
+    /// backend answers `not_found`/`relation_not_found` for that, and the SDK
+    /// itself reads a 404 as an absent entity (``UserService/identity(for:)``).
+    /// The report stays retriable: the transaction is neither finished nor
+    /// blacklisted.
     var isRejectedByBackend: Bool {
         guard let statusCode: Int = backendStatusCode else { return false }
 
@@ -111,6 +118,7 @@ extension Error {
             && statusCode != ResponseCode.unauthorized.rawValue
             && statusCode != ResponseCode.paymentRequired.rawValue
             && statusCode != ResponseCode.forbidden.rawValue
+            && statusCode != ResponseCode.notFound.rawValue
     }
 
     /// What a public API is allowed to throw. Every public entry point
