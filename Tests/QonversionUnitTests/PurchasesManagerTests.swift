@@ -809,6 +809,54 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.count, 2, "an offline failure must stay retriable, unlike a terminal rejection")
     }
 
+    func testRestoreReportsTheRemainingTransactionsAfterARejectedOne() async throws {
+        // A product deleted from the dashboard makes the backend refuse one of
+        // the restored transactions for good. That verdict is about that one
+        // transaction — the others still have to reach the backend, and the
+        // host still has to get its entitlements instead of an exception.
+        facade.restoreResult = [makeTransaction(id: "rejected-1", productId: "com.app.gone"),
+                                makeTransaction(id: "kept-1", productId: "com.app.pro")]
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+        service.error = rejectedError(statusCode: 422)
+        service.onSend = { [weak self] in
+            guard let self, self.service.sentTransactions.count > 1 else { return }
+            self.service.error = nil
+        }
+
+        let entitlements: [String: Qonversion.Entitlement] = try await manager.restore()
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["rejected-1", "kept-1"],
+                       "one refused transaction must not cancel the reports that follow it")
+        XCTAssertEqual(entitlements.keys.sorted(), ["premium"])
+    }
+
+    func testRestoreDoesNotRePostATransactionTheBackendRejectedForGood() async throws {
+        facade.restoreResult = [makeTransaction(id: "rejected-1")]
+        service.error = rejectedError(statusCode: 422)
+        _ = try await manager.restore()
+
+        service.error = nil
+        facade.restoreResult = [makeTransaction(id: "rejected-1")]
+        let relaunched: PurchasesManager = makeManager()
+        _ = try await relaunched.restore()
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "a terminally rejected transaction must not be posted again by restore")
+    }
+
+    func testHistoricalSyncSkipsATransactionTheBackendRejectedForGood() async {
+        service.error = rejectedError(statusCode: 422)
+        manager.transactionUpdated(makeTransaction(id: "rejected-1"))
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        service.error = nil
+        facade.historicalDataResult = [makeTransaction(id: "rejected-1")]
+        await manager.syncHistoricalData()
+
+        XCTAssertEqual(service.sentTransactions.count, 1, "the sync must not re-post a report the backend already refused")
+        XCTAssertTrue(localStorage.bool(forKey: "qonversion.keys.historicalDataSynced"),
+                      "skipping a rejected transaction leaves nothing to retry")
+    }
+
     func testUserChangeForgetsRejectedTransactionsSoTheNewUsersAttemptIsNotSkipped() async {
         manager = makeManager(launchMode: .analytics)
         service.error = rejectedError()

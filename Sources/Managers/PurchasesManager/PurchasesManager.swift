@@ -476,6 +476,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 // Skip transactions already reported this session (sweep,
                 // listener or purchase); the failed report releases the id.
                 if let id: String = transaction.id {
+                    // The backend refused this one for good, in this session or
+                    // an earlier one: repeating the report changes nothing.
+                    guard !isRejectedTransaction(id) else { continue }
                     guard claimForReport(id) else { continue }
                 }
                 do {
@@ -491,6 +494,17 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 } catch {
                     if let id: String = transaction.id {
                         reportsGate.release(id)
+                    }
+                    // A verdict on one transaction is not a verdict on the
+                    // restore: the rest still have to be reported, and the host
+                    // still gets its entitlements. The transaction stays
+                    // unfinished — restore does not own its lifecycle.
+                    guard !error.isRejectedByBackend else {
+                        logger.error("Qonversion refused a restored transaction, it is skipped: " + error.message)
+                        if let id: String = transaction.id {
+                            recordRejectedTransaction(id)
+                        }
+                        continue
                     }
                     throw error
                 }
@@ -707,6 +721,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         var resolvedOwnerUserId: String?
         for transaction in latest {
             if let id: String = transaction.id {
+                // Refused for good earlier: nothing to report and nothing left
+                // to retry, so it does not hold the sync back either.
+                guard !isRejectedTransaction(id) else { continue }
                 guard claimForReport(id) else {
                     skippedIds.append(id)
                     continue
