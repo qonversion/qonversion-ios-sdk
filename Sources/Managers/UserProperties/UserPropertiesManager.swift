@@ -23,6 +23,10 @@ fileprivate enum Constants: Int {
     // A forced send drains what was pending when it was called; the cap is what
     // bounds it when the storage keeps handing the same property back.
     case forceSendMaxRounds = 3
+    // The production limits, in bytes: a property over them is refused by the
+    // backend, and a refused batch takes every property in it down with it.
+    case maxPropertyKeyBytes = 80
+    case maxPropertyValueBytes = 120
 }
 
 // @unchecked: mutable state is guarded by stateLock; deps are thread-safe.
@@ -53,6 +57,9 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
         static let production = AppleSearchAdsSchedule(initialDelay: 5, retryDelay: 5, maxAttempts: 3)
     }
+
+    /// The characters the production value contract refuses.
+    private static let forbiddenValueCharacters = CharacterSet(charactersIn: "\n\r\"'")
 
     private let attributionTokenReader: AttributionTokenReader
     private let appleSearchAdsSchedule: AppleSearchAdsSchedule
@@ -232,6 +239,18 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
             logger.warning("Invalid user property key \"" + key + "\" — the property is ignored.")
             return
         }
+        guard key.utf8.count <= Constants.maxPropertyKeyBytes.rawValue else {
+            logger.warning("User property key \"" + key + "\" is longer than \(Constants.maxPropertyKeyBytes.rawValue) bytes — the property is ignored.")
+            return
+        }
+        guard value.utf8.count <= Constants.maxPropertyValueBytes.rawValue else {
+            logger.warning("The value of the user property \"" + key + "\" is longer than \(Constants.maxPropertyValueBytes.rawValue) bytes — the property is ignored.")
+            return
+        }
+        guard value.rangeOfCharacter(from: Self.forbiddenValueCharacters) == nil else {
+            logger.warning("The value of the user property \"" + key + "\" contains a line break or a quote — the property is ignored.")
+            return
+        }
 
         let userProperty = Qonversion.UserProperty(key: key, value: value)
         propertiesStorage.save(userProperty)
@@ -339,6 +358,19 @@ final class UserPropertiesManager : UserPropertiesManagerInterface, @unchecked S
 
             return true
         } catch {
+            // A refused batch is refused again on every trigger, and it stays
+            // in the storage: one value the backend will not take would block
+            // every property set afterwards. Drop it instead, and name it.
+            if error.isRejectedByBackend {
+                logger.error("Qonversion rejected these user properties, they are dropped: " + properties.map(\.key).joined(separator: ", "))
+                propertiesStorage.clear(properties: properties)
+                if owner == .scheduledSender {
+                    resetRetryState()
+                }
+
+                return false
+            }
+
             if owner == .scheduledSender {
                 retrySendingProperties()
             }
