@@ -31,6 +31,7 @@ final class CrashReportsFileStore: @unchecked Sendable {
     private enum Constants: String {
         case directoryName = "Qonversion"
         case fileName = "crash-reports.json"
+        case unknownBundleId = "unknown"
     }
 
     private let fileURL: URL?
@@ -48,10 +49,17 @@ final class CrashReportsFileStore: @unchecked Sendable {
     /// Application Support rather than Caches: the system may evict Caches at
     /// any time, and evicting the only surviving copy of a crash report is the
     /// failure this type exists to prevent.
+    ///
+    /// The bundle identifier is part of the path because Application Support of
+    /// a non-sandboxed macOS process is the user's own folder, shared by every
+    /// app: without it one app would send another vendor's stack traces under
+    /// its own project key, and never send its own.
     static func defaultDirectory() -> URL? {
         guard let base: URL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return nil }
 
-        return base.appendingPathComponent(Constants.directoryName.rawValue)
+        return base
+            .appendingPathComponent(Constants.directoryName.rawValue)
+            .appendingPathComponent(Bundle.main.bundleIdentifier ?? Constants.unknownBundleId.rawValue)
     }
 
     func read() -> [CrashReport] {
