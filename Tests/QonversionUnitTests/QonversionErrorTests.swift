@@ -109,4 +109,71 @@ final class QonversionErrorTests: XCTestCase {
         XCTAssertEqual(secondWrap.apiCode, "purchase_fraud")
         XCTAssertEqual(secondWrap.apiType, "logical")
     }
+
+    // MARK: - not_eligible / promo offer rejection
+
+    func testNotEligibleApiCodeMapsToPromoOfferNotEligible() {
+        let handler = NetworkErrorHandler(
+            criticalErrorCodes: [.unauthorized, .paymentRequired, .forbidden],
+            decoder: ResponseDecoder(decoder: JSONDecoder())
+        )
+        let body = Data(#"{"error": {"code": "not_eligible", "message": "no eligible history"}}"#.utf8)
+        let response = HTTPURLResponse(url: URL(string: "https://api2.qonversion.io/v4/users/u/offers/o/signatures")!, statusCode: 422, httpVersion: nil, headerFields: nil)!
+
+        let error = handler.extractError(from: response, body: body)
+
+        XCTAssertEqual(error?.apiCode, "not_eligible")
+        XCTAssertEqual(error?.type, .promoOfferNotEligible)
+    }
+
+    func testPromoOfferNotEligibleIsANormalAnswerNotAFailureMessage() {
+        // Every other mapped type reads as a failure; this one must not,
+        // since it means "show the full price", not "the call failed".
+        XCTAssertFalse(QonversionErrorType.promoOfferNotEligible.message().lowercased().contains("fail"))
+    }
+
+    // MARK: - isRejectedByBackend
+
+    func testAFourHundredErrorIsRejectedByBackend() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 400])
+
+        XCTAssertTrue(error.isRejectedByBackend)
+    }
+
+    func testAFourTwentyTwoErrorIsRejectedByBackend() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 422])
+
+        XCTAssertTrue(error.isRejectedByBackend)
+    }
+
+    func testTooManyRequestsIsNotRejectedByBackend() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 429])
+
+        XCTAssertFalse(error.isRejectedByBackend, "throttling clears on its own and must stay retriable")
+    }
+
+    func testRequestTimeoutIsNotRejectedByBackend() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 408])
+
+        XCTAssertFalse(error.isRejectedByBackend, "a timeout is not the backend's final answer")
+    }
+
+    func testAServerErrorIsNotRejectedByBackend() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 500])
+
+        XCTAssertFalse(error.isRejectedByBackend, "a 5xx may clear on retry, unlike a 4xx")
+    }
+
+    func testAnErrorWithNoStatusCodeIsNotRejectedByBackend() {
+        let error = QonversionError(type: .unknown)
+
+        XCTAssertFalse(error.isRejectedByBackend)
+    }
+
+    func testIsRejectedByBackendSurvivesOneLevelOfWrapping() {
+        let backendError = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 400])
+        let wrapped = QonversionError(type: .purchaseReportingFailed, error: backendError)
+
+        XCTAssertTrue(wrapped.isRejectedByBackend, "the status code must be found through the wrapping error too")
+    }
 }

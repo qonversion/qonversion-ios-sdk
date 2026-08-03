@@ -109,6 +109,77 @@ final class PurchasesServiceTests: XCTestCase {
         XCTAssertEqual(body["screen_uid"] as? String, "screen_1")
     }
 
+    func testSendFiltersEmptyContextKeysAndOmitsTheFieldWhenNoneAreLeft() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+        let options = Qonversion.PurchaseOptions(contextKeys: ["", "main", ""])
+
+        try await service.send(makeTransaction(), userId: "QON_buyer", options: options)
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertEqual(body["context_keys"] as? [String], ["main"], "a blank context key must not reach the backend")
+    }
+
+    func testSendOmitsContextKeysWhenEveryOneIsEmpty() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+        let options = Qonversion.PurchaseOptions(contextKeys: [""])
+
+        try await service.send(makeTransaction(), userId: "QON_buyer", options: options)
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["context_keys"])
+    }
+
+    func testSendOmitsAnEmptyScreenUid() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+        let options = Qonversion.PurchaseOptions(screenUid: "")
+
+        try await service.send(makeTransaction(), userId: "QON_buyer", options: options)
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["screen_uid"])
+    }
+
+    func testSendOmitsAScreenUidLongerThanTheBackendColumn() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+        let options = Qonversion.PurchaseOptions(screenUid: String(repeating: "a", count: 256))
+
+        try await service.send(makeTransaction(), userId: "QON_buyer", options: options)
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertNil(body["screen_uid"], "an oversized value must not take the whole report down with it")
+    }
+
+    func testSendIncludesAScreenUidAtTheColumnLimit() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PurchaseReportResponse(userId: nil)]
+        let service = makeService(processor)
+        let screenUid = String(repeating: "a", count: 255)
+        let options = Qonversion.PurchaseOptions(screenUid: screenUid)
+
+        try await service.send(makeTransaction(), userId: "QON_buyer", options: options)
+
+        guard case let .createPurchase(_, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a createPurchase request")
+        }
+        XCTAssertEqual(body["screen_uid"] as? String, screenUid)
+    }
+
     func testSendWithoutOptionsOmitsAssociationFields() async throws {
         let processor = MockRequestProcessor()
         processor.results = [PurchaseReportResponse(userId: nil)]
@@ -305,6 +376,61 @@ final class PurchasesServiceTests: XCTestCase {
         XCTAssertEqual(networkProvider.sentRequests.first?.httpMethod, "POST")
         XCTAssertEqual(offer.keyId, "KEY123")
         XCTAssertEqual(offer.timestamp, 1_700_000_000_000, "timestamp is a millisecond STRING on the wire")
+    }
+
+    func testPromotionalOfferForwardsTheLowercasedAppAccountToken() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PromoOfferSignatureResponse(
+            keyIdentifier: "KEY123",
+            signature: Data([0x01, 0x02]).base64EncodedString(),
+            nonce: UUID().uuidString,
+            timestamp: "1700000000000"
+        )]
+        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
+        let token = UUID(uuidString: "9E76F7BE-2E9D-4B1B-9A5D-2B1A6B7B0A11")!
+
+        _ = try await service.promotionalOffer(userId: "u", offerId: "o", productStoreId: "p", appAccountToken: token)
+
+        guard case let .signPromoOffer(_, _, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a signPromoOffer request")
+        }
+        // The App Store checks the signature against the token lowercased, as
+        // it signs its own — an uppercased mismatch would make it refuse the offer.
+        XCTAssertEqual(body["app_account_token"] as? String, "9e76f7be-2e9d-4b1b-9a5d-2b1a6b7b0a11")
+    }
+
+    func testPromotionalOfferWithoutAnAppAccountTokenSendsAnEmptyOne() async throws {
+        let processor = MockRequestProcessor()
+        processor.results = [PromoOfferSignatureResponse(
+            keyIdentifier: "KEY123",
+            signature: Data([0x01, 0x02]).base64EncodedString(),
+            nonce: UUID().uuidString,
+            timestamp: "1700000000000"
+        )]
+        let service = PurchasesService(requestProcessor: processor, appBundleId: "com.test.app")
+
+        _ = try await service.promotionalOffer(userId: "u", offerId: "o", productStoreId: "p", appAccountToken: nil)
+
+        guard case let .signPromoOffer(_, _, _, body, _) = processor.processedRequests.first else {
+            return XCTFail("Expected a signPromoOffer request")
+        }
+        XCTAssertEqual(body["app_account_token"] as? String, "")
+    }
+
+    func testPromotionalOfferNotEligibleIsNotWrappedIntoSigningFailed() async {
+        // "Not eligible" is the backend's verdict on the offer, not a failure
+        // of the call — it must stay distinguishable from every other error.
+        let json = #"{"error": {"code": "not_eligible", "message": "no eligible history"}}"#
+        let (service, _) = makeLivePurchasesService(responseData: Data(json.utf8), statusCode: 422)
+
+        do {
+            _ = try await service.promotionalOffer(userId: "QON_buyer", offerId: "offer1", productStoreId: "com.app.pro")
+            XCTFail("Expected a not_eligible error")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .promoOfferNotEligible)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
     }
 
     func testPromotionalOfferOnTheV4RouteStillMapsSecretsNotFound() async {
