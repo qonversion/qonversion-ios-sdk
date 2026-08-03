@@ -1,9 +1,9 @@
 import Foundation
 
-/// Keeps the device identity stable when Apple cannot provide IDFV (or when a
-/// Mac has no readable built-in interface). A generated identifier is stored
-/// in the host-selected UserDefaults so later launches do not create another
-/// backend device.
+/// Keeps the device identity stable on the platforms that offer no vendor
+/// identifier at all (a Mac with no readable built-in interface). A generated
+/// identifier is stored in the host-selected UserDefaults so later launches do
+/// not create another backend device.
 @_spi(QonversionInternal)
 public final class VendorIdResolver: @unchecked Sendable {
 
@@ -23,7 +23,11 @@ public final class VendorIdResolver: @unchecked Sendable {
         self.uuidProvider = uuidProvider
     }
 
-    public func resolve(systemVendorId: String?) -> String {
+    /// - Parameter systemIdentityIsFinal: whether a missing system identifier
+    ///   means the platform has none at all. Pass false wherever it can appear
+    ///   later — IDFV is nil until the first unlock after a reboot, and a
+    ///   background launch before that must not latch a substitute for it.
+    public func resolve(systemVendorId: String?, systemIdentityIsFinal: Bool) -> String? {
         Self.lock.lock()
         defer { Self.lock.unlock() }
 
@@ -37,6 +41,8 @@ public final class VendorIdResolver: @unchecked Sendable {
         if let systemVendorId, !systemVendorId.isEmpty {
             return systemVendorId
         }
+
+        guard systemIdentityIsFinal else { return nil }
 
         let generated = uuidProvider().uuidString
         userDefaults.set(generated, forKey: Self.storageKey)

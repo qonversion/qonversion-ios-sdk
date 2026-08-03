@@ -11,13 +11,13 @@ final class VendorIdResolverTests: XCTestCase {
             uuidProvider: { UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")! }
         )
 
-        let generated = first.resolve(systemVendorId: nil)
+        let generated = first.resolve(systemVendorId: nil, systemIdentityIsFinal: true)
         let second = VendorIdResolver(
             userDefaults: defaults,
             uuidProvider: { UUID(uuidString: "11111111-2222-3333-4444-555555555555")! }
         )
 
         XCTAssertEqual(generated, "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")
-        XCTAssertEqual(second.resolve(systemVendorId: nil), generated)
+        XCTAssertEqual(second.resolve(systemVendorId: nil, systemIdentityIsFinal: true), generated)
     }
 }

@@ -16,7 +16,7 @@ final class VendorIdResolverTests: XCTestCase {
             uuidProvider: { UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")! }
         )
 
-        XCTAssertEqual(resolver.resolve(systemVendorId: "system-id"), "system-id")
+        XCTAssertEqual(resolver.resolve(systemVendorId: "system-id", systemIdentityIsFinal: false), "system-id")
         XCTAssertNil(defaults.string(forKey: VendorIdResolver.storageKey))
     }
 
@@ -26,7 +26,7 @@ final class VendorIdResolverTests: XCTestCase {
             uuidProvider: { UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")! }
         )
 
-        let resolved = resolver.resolve(systemVendorId: nil)
+        let resolved = resolver.resolve(systemVendorId: nil, systemIdentityIsFinal: true)
 
         XCTAssertEqual(resolved, "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")
         XCTAssertEqual(defaults.string(forKey: VendorIdResolver.storageKey), resolved)
@@ -36,7 +36,7 @@ final class VendorIdResolverTests: XCTestCase {
         defaults.set("persisted-fallback", forKey: VendorIdResolver.storageKey)
         let resolver = VendorIdResolver(userDefaults: defaults)
 
-        XCTAssertEqual(resolver.resolve(systemVendorId: "later-system-id"), "persisted-fallback")
+        XCTAssertEqual(resolver.resolve(systemVendorId: "later-system-id", systemIdentityIsFinal: false), "persisted-fallback")
     }
 
     func testConcurrentResolverInstancesGenerateOnlyOneFallback() {
@@ -45,7 +45,7 @@ final class VendorIdResolverTests: XCTestCase {
         let secondProviderStarted = DispatchSemaphore(value: 0)
         let finished = DispatchGroup()
         let resultsLock = NSLock()
-        var results: [String] = []
+        var results: [String?] = []
 
         let first = VendorIdResolver(
             userDefaults: defaults,
@@ -65,7 +65,7 @@ final class VendorIdResolverTests: XCTestCase {
 
         finished.enter()
         DispatchQueue.global().async {
-            let value = first.resolve(systemVendorId: nil)
+            let value = first.resolve(systemVendorId: nil, systemIdentityIsFinal: true)
             resultsLock.withLock { results.append(value) }
             finished.leave()
         }
@@ -73,7 +73,7 @@ final class VendorIdResolverTests: XCTestCase {
 
         finished.enter()
         DispatchQueue.global().async {
-            let value = second.resolve(systemVendorId: nil)
+            let value = second.resolve(systemVendorId: nil, systemIdentityIsFinal: true)
             resultsLock.withLock { results.append(value) }
             finished.leave()
         }

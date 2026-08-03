@@ -148,17 +148,26 @@ private struct Collector {
         }
     }
 
-    private func vendorId() -> String {
-        var identifier: String? = nil
+    private func vendorId() -> String? {
+        let identifier: String?
+        // Only macOS has no vendor identifier of its own — everywhere else a
+        // missing IDFV means "not yet", not "never".
+        let identityIsFinal: Bool
         #if os(iOS)
         identifier = UIDevice.current.identifierForVendor?.uuidString
+        identityIsFinal = false
         #elseif os(watchOS)
         identifier = WKInterfaceDevice.current().identifierForVendor?.uuidString
+        identityIsFinal = false
         #elseif os(macOS)
         identifier = getMacAddress()
+        identityIsFinal = true
+        #else
+        identifier = nil
+        identityIsFinal = false
         #endif
 
-        return vendorIdResolver.resolve(systemVendorId: identifier)
+        return vendorIdResolver.resolve(systemVendorId: identifier, systemIdentityIsFinal: identityIsFinal)
     }
 
     #if os(macOS)
