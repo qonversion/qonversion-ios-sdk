@@ -42,7 +42,11 @@ extension Qonversion {
         ///   - logLevel: minimal severity the SDK writes to the unified log. The default value is `.verbose`.
         ///   - userDefaults: a custom UserDefaults (e.g. an app-group suite) to
         ///     share the SDK state with app extensions. When nil, the
-        ///     Qonversion-owned internal suite is used.
+        ///     Qonversion-owned internal suite is used. Decide once, before the
+        ///     first release: the SDK state does not move between the two
+        ///     domains, so adding this later starts the install over as a new
+        ///     anonymous user with no entitlements cache. Pass the same
+        ///     instance to ``NoCodes/NoCodesConfiguration``.
         public init(apiKey: String, launchMode: LaunchMode, proxyURL: String? = nil, entitlementsCacheLifetime: EntitlementsCacheLifetime = .month, logLevel: LogLevel = .verbose, userDefaults: UserDefaults? = nil) {
             self.apiKey = apiKey
             self.launchMode = launchMode

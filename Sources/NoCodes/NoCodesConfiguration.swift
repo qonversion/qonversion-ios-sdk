@@ -65,7 +65,9 @@ public struct NoCodesConfiguration {
   ///   - locale: Optional custom locale for No-Code screens localization. If not provided, uses system default
   ///   - theme: Theme mode for No-Code screens. Defaults to `.auto` which follows device settings
   ///   - userDefaults: Optional custom persistence domain. Use the same
-  ///     instance as the main SDK when both modules are initialized.
+  ///     instance as the main SDK when both modules are initialized. Decide
+  ///     once, before the first release: the state does not move between the
+  ///     internal suite and a custom domain.
   public init(projectKey: String, delegate: NoCodesDelegate? = nil, screenCustomizationDelegate: NoCodesScreenCustomizationDelegate? = nil, purchaseDelegate: NoCodesPurchaseDelegate? = nil, customVariablesDelegate: NoCodesCustomVariablesDelegate? = nil, fallbackFileName: String? = nil, proxyURL: String? = nil, locale: String? = nil, theme: NoCodesTheme = .auto, userDefaults: UserDefaults? = nil) {
     self.projectKey = projectKey
     self.delegate = delegate
