@@ -72,7 +72,12 @@ final class QonversionAssembly {
             localStorage: miscAssembly.localStorage(),
             logger: miscAssembly.loggerWrapper()
         )
-        apiKeyChangeCleaner.run(apiKey: apiKey)
+        if apiKeyChangeCleaner.run(apiKey: apiKey) {
+            // The file mirror is the authoritative copy and survives the
+            // defaults wipe, so the previous project's crashes would be sent
+            // under the new project key.
+            crashReportsStorage().clear()
+        }
 
         // Resolves the anonymous user id (persisted or generated) into InternalConfig.
         _ = servicesAssembly.userService()
