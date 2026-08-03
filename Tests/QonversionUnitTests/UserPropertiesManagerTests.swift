@@ -401,6 +401,29 @@ final class UserPropertiesManagerTests: XCTestCase {
         XCTAssertTrue(propertiesStorage.all().isEmpty, "a good property must still reach the backend after the previous batch was dropped")
     }
 
+    // A scheduled batch cancels its own schedule when it starts, so the trailing
+    // reschedule is the only thing left to send a property queued while it was
+    // in flight — a refused batch must not take that property down with it.
+    func testAPropertyQueuedWhileARefusedBatchWasInFlightIsStillSent() async throws {
+        propertiesStorage.save(Qonversion.UserProperty(key: "poison", value: "1"))
+        let refusal = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 400])
+        let acknowledgement = SendUserPropertiesResult(savedProperties: [], propertyErrors: [])
+        requestProcessor.results = [refusal, acknowledgement]
+        let gate = PropertiesAsyncGate()
+        requestProcessor.onProcess = { await gate.wait() }
+
+        async let batchInFlight: Void = manager.sendProperties()
+        await waitUntil { self.requestProcessor.processedRequests.count == 1 }
+        propertiesStorage.save(Qonversion.UserProperty(key: "second", value: "2"))
+        requestProcessor.onProcess = nil
+        await gate.open()
+        _ = try await batchInFlight
+
+        await waitUntil(timeout: 15) { self.requestProcessor.processedRequests.count == 2 }
+        XCTAssertEqual(sentPropertyKeys(at: 1), ["second"], "nothing else is left to send the property queued during the refused batch")
+        XCTAssertTrue(propertiesStorage.all().isEmpty)
+    }
+
     // A 5xx / connection failure is NOT a terminal refusal: it may clear on
     // its own, so the batch must stay for the retry ladder, exactly as it did
     // before terminal refusals existed.
