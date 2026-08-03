@@ -134,6 +134,20 @@ final class AsyncMulticast<Element: Sendable>: @unchecked Sendable {
         }
     }
 
+    /// Drops what is waiting for a future subscriber, without touching the
+    /// values already delivered. Returns the dropped elements so the caller can
+    /// undo the bookkeeping it did when it yielded them.
+    @discardableResult
+    func clearBacklog() -> [Element] {
+        lock.lock()
+        defer { lock.unlock() }
+
+        let dropped: [Element] = backlogEntries.map(\.element)
+        backlogEntries.removeAll()
+
+        return dropped
+    }
+
     // MARK: - Private
 
     /// Registers the subscriber and hands it the backlog, all under one lock.

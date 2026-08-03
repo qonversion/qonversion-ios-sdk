@@ -178,7 +178,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     // Buffered until the first subscriber — an intent arriving at app start
     // must not be lost, and acting on the same one twice would purchase twice.
-    private let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(backlog: .deliveredOnce)
+    // Internal for the test that asserts the deadline it must NOT have.
+    let promoIntentsMulticast = AsyncMulticast<Qonversion.PromoPurchaseIntent>(backlog: .deliveredOnce, backlogLifetime: .infinity)
 
     // Snapshots, not events: a host that re-subscribes may read the latest
     // access state again. The single access-state channel — a revocation
@@ -856,6 +857,24 @@ extension PurchasesManager: UserChangedObserver {
         // it is ordered before any call following the user switch.
         reportsGate.reset()
         invalidateHistoricalSyncOperation()
+
+        // Whatever waits for a future subscriber describes the previous user:
+        // an access snapshot is invalid the moment the uid moves.
+        entitlementsMulticast.clearBacklog()
+
+        // A deferred purchase nobody heard is not simply dropped — unclaiming
+        // its transaction lets the funnel emit it again, with the entitlements
+        // recalculated for the new user.
+        let undelivered: [Qonversion.DeferredPurchase] = deferredPurchasesMulticast.clearBacklog()
+        unclaim(undelivered.compactMap { $0.transaction.id })
+    }
+
+    private func unclaim(_ transactionIds: [String]) {
+        guard !transactionIds.isEmpty else { return }
+
+        surfacedLock.lock()
+        defer { surfacedLock.unlock() }
+        transactionIds.forEach { claimedTransactions.remove($0) }
     }
 }
 
