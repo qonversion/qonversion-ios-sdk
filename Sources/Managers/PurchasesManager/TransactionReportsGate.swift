@@ -58,6 +58,15 @@ final class TransactionReportsGate: @unchecked Sendable {
         takenIds.remove(id)
     }
 
+    /// The report reached the backend, but the id stays taken: for the holder
+    /// that produces the whole outcome itself and never hands the transaction
+    /// over. Only ``wasReported(_:)`` learns anything from it.
+    func markDelivered(_ id: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        reportedIds.insert(id)
+    }
+
     /// True when this transaction's report already reached the backend in this
     /// session — the caller still owes it a finish and a deferred purchase.
     func wasReported(_ id: String) -> Bool {

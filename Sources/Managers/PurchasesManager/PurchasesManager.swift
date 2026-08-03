@@ -817,6 +817,11 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         do {
             if !alreadyReported {
                 try await purchasesService.send(transaction, userId: reportUserId, options: reportOptions(for: transaction), trigger: trigger)
+                // The id stays taken, so a later path only learns from the gate
+                // that this report was delivered, not that it was skipped.
+                if let id: String = transaction.id {
+                    reportsGate.markDelivered(id)
+                }
             }
             purchaseAssociationsStorage.remove(for: transaction.productId)
             // The deferred purchase this delivery emits must carry the

@@ -1847,6 +1847,22 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.count, 1, "an already-reported transaction must not be re-sent")
     }
 
+    func testSyncHistoricalDataCompletesWhenTheFunnelAlreadyDeliveredTheReport() async {
+        // The funnel keeps the id of a transaction it reported, so the sync
+        // skips it — but the report did reach the backend, and skipping a
+        // delivered report is not a failed sync.
+        let transaction = makeTransaction(id: "t1")
+        manager.transactionUpdated(transaction)
+        await waitUntil { self.service.sentTransactions.count >= 1 }
+
+        facade.historicalDataResult = [transaction]
+        let synced = await manager.syncHistoricalData()
+
+        XCTAssertTrue(synced, "the funnel already delivered this report")
+        XCTAssertTrue(localStorage.bool(forKey: "qonversion.keys.historicalDataSynced"),
+                      "the history must not be re-posted on the next launch")
+    }
+
     // MARK: - persisted purchase associations (contextKeys / screenUid)
 
     func testSweepAttachesPersistedAssociationsOfTheOriginalPurchase() async {
