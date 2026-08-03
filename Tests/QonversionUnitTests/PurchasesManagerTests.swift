@@ -2379,6 +2379,7 @@ final class PurchasesManagerTests: XCTestCase {
         // transaction or emit a deferred purchase — the sweep completes the
         // outcome without posting the purchase a second time.
         let reportsGate = TransactionReportsGate()
+        _ = reportsGate.tryTake("replayed-1")
         reportsGate.markReported("replayed-1")
         manager = makeManager(launchMode: .subscriptionManagement, reportsGate: reportsGate)
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
@@ -2392,6 +2393,53 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(facade.finishedTransactions.map(\.id), ["replayed-1"])
         let received: [Qonversion.DeferredPurchase] = await collector.received
         XCTAssertEqual(received.map(\.transaction.id), ["replayed-1"])
+    }
+
+    func testAReportDeliveredAfterAUserSwitchDoesNotKeepTheNewUsersRestoreFromPosting() async {
+        // The sweep's POST is still in flight when identify() resolves another
+        // uid: the delivery it records belongs to the previous user's session,
+        // and the new user's restore still owes the backend this transaction.
+        manager = makeManager(launchMode: .analytics)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+        var switched = false
+        service.onSend = { [weak self] in
+            guard let self, !switched else { return }
+
+            switched = true
+            self.manager.userDidChange()
+            self.config.userId = "QON_switched"
+        }
+
+        await manager.processUnfinishedTransactions()
+
+        facade.restoreResult = [makeTransaction(id: "t1")]
+        _ = try? await manager.restore()
+
+        XCTAssertEqual(service.sentTransactions.count, 2, "the new user's restore must post the transaction under its own uid")
+        XCTAssertEqual(service.sentTransactions.last?.userId, "QON_switched")
+    }
+
+    func testAReportDeliveredAfterAUserSwitchDoesNotFlagTheNewUsersHistoryAsSynced() async {
+        manager = makeManager(launchMode: .analytics)
+        facade.unfinishedTransactionsResult = [makeTransaction(id: "t1")]
+        var switched = false
+        service.onSend = { [weak self] in
+            guard let self, !switched else { return }
+
+            switched = true
+            self.manager.userDidChange()
+            self.config.userId = "QON_switched"
+        }
+
+        await manager.processUnfinishedTransactions()
+
+        facade.historicalDataResult = [makeTransaction(id: "t1")]
+        let synced = await manager.syncHistoricalData()
+
+        XCTAssertEqual(service.sentTransactions.count, 2, "the history of the new user must be posted, not skipped as delivered")
+        XCTAssertEqual(service.sentTransactions.last?.userId, "QON_switched")
+        XCTAssertTrue(synced, "the sync completes only after the report went out under the current uid")
+        XCTAssertTrue(localStorage.bool(forKey: "qonversion.keys.historicalDataSynced"))
     }
 
     func testATransactionSurfacedByTheSweepIsNotEmittedAgainOnTheNextLaunch() async {

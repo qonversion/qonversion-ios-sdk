@@ -25,6 +25,11 @@ import Foundation
 /// A holder that produces the whole outcome itself (the purchases funnel) never
 /// has to release: it keeps the id until ``reset()``.
 ///
+/// ``release(_:)``, ``markReported(_:)`` and ``markDelivered(_:)`` belong to the
+/// holder of the id and to the session it was taken in: after ``reset()`` they
+/// do nothing, so an outcome that lands past a user switch cannot speak for the
+/// new user's session.
+///
 /// One instance SDK-wide — see MiscAssembly.transactionReportsGate().
 // @unchecked: the id sets are lock-guarded; synchronous on purpose — the reset
 // on a user change must be ordered before the next restore call.
@@ -45,6 +50,7 @@ final class TransactionReportsGate: @unchecked Sendable {
     func release(_ id: String) {
         lock.lock()
         defer { lock.unlock() }
+        guard takenIds.contains(id) else { return }
         takenIds.remove(id)
     }
 
@@ -54,6 +60,7 @@ final class TransactionReportsGate: @unchecked Sendable {
     func markReported(_ id: String) {
         lock.lock()
         defer { lock.unlock() }
+        guard takenIds.contains(id) else { return }
         reportedIds.insert(id)
         takenIds.remove(id)
     }
@@ -64,6 +71,7 @@ final class TransactionReportsGate: @unchecked Sendable {
     func markDelivered(_ id: String) {
         lock.lock()
         defer { lock.unlock() }
+        guard takenIds.contains(id) else { return }
         reportedIds.insert(id)
     }
 
