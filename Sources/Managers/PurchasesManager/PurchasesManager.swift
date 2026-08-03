@@ -72,6 +72,21 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
 
     private let reportsGate: TransactionReportsGate
 
+    /// Takes the id for a path that reports a transaction but neither finishes
+    /// nor surfaces it. Such a path hands the id straight back — as delivered
+    /// when it posted the report, as free when it did not — so the path that
+    /// owns the whole outcome can still take it. False means someone else is
+    /// posting this transaction, or already has.
+    private func claimForReport(_ id: String) -> Bool {
+        guard reportsGate.tryTake(id) else { return false }
+        guard !reportsGate.wasReported(id) else {
+            reportsGate.markReported(id)
+            return false
+        }
+
+        return true
+    }
+
     // Guards the surfaced bookkeeping below.
     private let surfacedLock = NSLock()
 
@@ -385,7 +400,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             throw StoreKitPurchaseOutcome.storeError(error, fallbackType: .restoreFailed)
         }
         // Production rule: only the latest transaction per product participates.
-        let latest = EntitlementsCalculator.latestTransactionsPerProduct(restored)
+        // A revocation is not a purchase, and it must not take its product's
+        // slot away from the transaction that paid for it.
+        let latest = EntitlementsCalculator.latestTransactionsPerProduct(restored.filter { $0.revocationDate == nil })
 
         var resolvedOwnerUserId: String?
         do {
@@ -393,10 +410,15 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 // Skip transactions already reported this session (sweep,
                 // listener or purchase); the failed report releases the id.
                 if let id: String = transaction.id {
-                    guard reportsGate.tryTake(id) else { continue }
+                    guard claimForReport(id) else { continue }
                 }
                 do {
                     let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId, trigger: .restore)
+                    // Restore reports but neither finishes nor surfaces the
+                    // transaction: the id goes back for the path that can.
+                    if let id: String = transaction.id {
+                        reportsGate.markReported(id)
+                    }
                     if let ownerUserId, ownerUserId != userId {
                         resolvedOwnerUserId = ownerUserId
                     }
@@ -510,10 +532,15 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         var allReported = true
         for transaction in transactions {
             if let id: String = transaction.id {
-                guard reportsGate.tryTake(id) else { continue }
+                guard claimForReport(id) else { continue }
             }
             do {
                 try await purchasesService.send(transaction, userId: userId, trigger: .handleStoreKit2Transactions)
+                // Reported, but the host owns the lifecycle here: the id goes
+                // back for the path that finishes and surfaces it.
+                if let id: String = transaction.id {
+                    reportsGate.markReported(id)
+                }
             } catch {
                 if let id: String = transaction.id {
                     reportsGate.release(id)
@@ -563,6 +590,17 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         historicalSyncTask = nil
     }
 
+    /// The run in the slot was computed for the previous user: a call made
+    /// after the switch must start its own instead of joining that one.
+    private func invalidateHistoricalSyncOperation() {
+        historicalSyncTaskLock.lock()
+        defer { historicalSyncTaskLock.unlock() }
+
+        historicalSyncGeneration += 1
+        historicalSyncTask?.cancel()
+        historicalSyncTask = nil
+    }
+
     private func performHistoricalDataSync() async -> Bool {
         // A caller could have completed the once-per-install work immediately
         // before this operation acquired the single-flight slot.
@@ -577,6 +615,8 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             return false
         }
 
+        let unverifiedBeforeFetch: Int = storeKitFacade.unverifiedTransactionsCount
+
         // Transaction.all, deliberately WITHOUT AppStore.sync(): a background
         // sync must never trigger the App Store sign-in prompt.
         let history: [Qonversion.Transaction]
@@ -587,16 +627,33 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
             return false
         }
 
-        let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(history)
+        // A revocation is not a purchase, and it must not take its product's
+        // slot away from the transaction that paid for it.
+        let purchased: [Qonversion.Transaction] = history.filter { $0.revocationDate == nil }
+        let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(purchased)
 
-        var hadFailures = false
+        // The local verification drops transactions for honest, temporary
+        // reasons too (a rolled clock, a certificate rotation), so a fetch that
+        // lost some of them has not synced the history.
+        var hadFailures: Bool = storeKitFacade.unverifiedTransactionsCount > unverifiedBeforeFetch
+        var reportedAny = false
+        var skippedIds: [String] = []
         var resolvedOwnerUserId: String?
         for transaction in latest {
             if let id: String = transaction.id {
-                guard reportsGate.tryTake(id) else { continue }
+                guard claimForReport(id) else {
+                    skippedIds.append(id)
+                    continue
+                }
             }
             do {
                 let ownerUserId: String? = try await purchasesService.send(transaction, userId: userId, trigger: .syncHistoricalData)
+                reportedAny = true
+                // The sync neither finishes nor surfaces a transaction, so the
+                // id goes back for the path that can, marked as delivered.
+                if let id: String = transaction.id {
+                    reportsGate.markReported(id)
+                }
                 if let ownerUserId, ownerUserId != userId {
                     resolvedOwnerUserId = ownerUserId
                 }
@@ -604,12 +661,33 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
                 if let id: String = transaction.id {
                     reportsGate.release(id)
                 }
-                hadFailures = true
+                // Only a report that may yet succeed keeps the sync from
+                // completing: a rejected one is rejected again on every launch,
+                // and waiting for it would re-post the whole history forever.
+                if !error.isRejectedByBackend {
+                    hadFailures = true
+                }
                 logger.error("Failed to report a historical transaction: " + error.message)
             }
         }
 
+        // Taking the id is not delivering the report: a holder that failed and
+        // released it leaves the transaction unreported.
+        if skippedIds.contains(where: { !reportsGate.wasReported($0) }) {
+            hadFailures = true
+        }
+
+        // The uid moved while the reports were in flight — the owner switch and
+        // the install-global flag belong to the session that started this run.
+        guard userIdProvider.getUserId() == userId else { return false }
+
         await switchToOwnerIfNeeded(resolvedOwnerUserId)
+
+        // The store sync reached the backend: the next answer must not come
+        // from the window opened before it.
+        if reportedAny {
+            entitlementsManager.invalidateFreshBackendCache()
+        }
 
         if !hadFailures {
             localStorage.set(bool: true, forKey: Constants.historicalDataSyncedKey.rawValue)
@@ -777,6 +855,7 @@ extension PurchasesManager: UserChangedObserver {
         // The reported-ids gate belongs to the previous user. Synchronous, so
         // it is ordered before any call following the user switch.
         reportsGate.reset()
+        invalidateHistoricalSyncOperation()
     }
 }
 

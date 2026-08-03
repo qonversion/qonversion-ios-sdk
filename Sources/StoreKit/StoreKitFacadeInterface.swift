@@ -45,6 +45,11 @@ protocol StoreKitFacadeInterface: Sendable {
     /// its jws proof; unverified results map to nil.
     func map(_ verificationResult: VerificationResult<StoreKit.Transaction>) -> Qonversion.Transaction?
 
+    /// How many transactions the local StoreKit verification rejected in this
+    /// session. A caller that reads it around a fetch learns how many of them
+    /// were silently dropped from the result.
+    var unverifiedTransactionsCount: Int { get }
+
     /// Finishes the transaction with the store it came from. Never called
     /// automatically by the SDK for observed updates.
     func finish(_ transaction: Qonversion.Transaction) async

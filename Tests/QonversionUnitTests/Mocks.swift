@@ -344,6 +344,7 @@ final class MockStoreKitFacade: StoreKitFacadeInterface {
     var restoreError: Error?
     var historicalDataResult: [Qonversion.Transaction] = []
     var historicalDataError: Error?
+    var unverifiedTransactionsCount: Int = 0
     var onHistoricalData: (() async -> Void)?
     private var _historicalDataCallsCount = 0
     var historicalDataCallsCount: Int {

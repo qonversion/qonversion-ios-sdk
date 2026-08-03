@@ -83,6 +83,28 @@ extension Error {
         return false
     }
 
+    /// The status the backend answered with, wherever it sits in the chain of
+    /// errors the layers above wrapped it in.
+    var backendStatusCode: Int? {
+        guard let qonversionError = self as? QonversionError else { return nil }
+        if let statusCode = qonversionError.additionalInfo?[ErrorConstants.statusCodeKey.rawValue] as? Int {
+            return statusCode
+        }
+
+        return qonversionError.error?.backendStatusCode
+    }
+
+    /// The backend refused the request rather than failing to answer it: any
+    /// 4xx but the two that clear on their own. Repeating such a request gets
+    /// the same answer forever, so the caller has to stop instead of retrying.
+    var isRejectedByBackend: Bool {
+        guard let statusCode: Int = backendStatusCode else { return false }
+
+        return (ResponseCode.clientErrorMin.rawValue...ResponseCode.clientErrorMax.rawValue).contains(statusCode)
+            && statusCode != ResponseCode.tooManyRequests.rawValue
+            && statusCode != ResponseCode.requestTimeout.rawValue
+    }
+
     /// What a public API is allowed to throw. Every public entry point
     /// documents ``QonversionError``, so a bare `CancellationError` — a Swift
     /// runtime type that no `catch let error as QonversionError` can classify

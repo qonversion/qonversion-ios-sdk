@@ -16,9 +16,13 @@ enum ResponseCode: Int {
     case successMin = 200
     case noContent = 204
     case successMax = 299
+    case clientErrorMin = 400
     case unauthorized = 401
     case paymentRequired = 402
     case forbidden = 403
+    case requestTimeout = 408
+    case tooManyRequests = 429
+    case clientErrorMax = 499
     case internalErrorMin = 500
     case internalErrorMax = 599
 }
