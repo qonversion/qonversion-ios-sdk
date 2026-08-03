@@ -326,6 +326,19 @@ final class CrashReportsStorageTests: XCTestCase {
         XCTAssertTrue(fileStore.read().isEmpty)
     }
 
+    // Application Support of a non-sandboxed macOS process is the user's own
+    // folder, shared by every app: without the host's own bundle identifier in
+    // the path, one vendor's crash-reports file would be read (and deleted on
+    // delivery) by every other Qonversion app installed on that Mac.
+    func testDefaultDirectoryIsScopedToTheHostBundleIdentifier() {
+        let expectedBundleComponent = Bundle.main.bundleIdentifier ?? "unknown"
+
+        let directory = CrashReportsFileStore.defaultDirectory()
+
+        XCTAssertEqual(directory?.lastPathComponent, expectedBundleComponent)
+        XCTAssertEqual(directory?.deletingLastPathComponent().lastPathComponent, "Qonversion")
+    }
+
     private func makeReport(id: String = UUID().uuidString, name: String = "NSInvalidArgumentException") -> CrashReport {
         return CrashReport(
             id: id,

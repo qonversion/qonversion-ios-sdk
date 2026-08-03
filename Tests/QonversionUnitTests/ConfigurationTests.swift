@@ -23,6 +23,16 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertTrue(configuration.userDefaults === defaults)
     }
 
+    // A fixed suite name maps to one file in a non-sandboxed macOS process's own
+    // preferences folder — shared by every Qonversion app the user has installed.
+    func testSuiteNameIsScopedToTheHostBundleIdentifier() {
+        let expectedBundleComponent = Bundle.main.bundleIdentifier ?? "default"
+
+        XCTAssertTrue(QonversionDefaults.suiteName.hasPrefix("io.qonversion.sdk."))
+        XCTAssertTrue(QonversionDefaults.suiteName.hasSuffix(expectedBundleComponent))
+        XCTAssertNotEqual(QonversionDefaults.suiteName, "io.qonversion.sdk", "the bare suite name is shared by every app on a non-sandboxed Mac")
+    }
+
     func testAssemblyWithoutCustomDefaultsUsesTheSdkSuite() {
         let suiteName = QonversionDefaults.suiteName
         let sdkDefaults = UserDefaults(suiteName: suiteName)!
