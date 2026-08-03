@@ -245,6 +245,16 @@ let options = Qonversion.PurchaseOptions(promoOffer: offer)
 let result = try await Qonversion.shared.purchase(product, options: options)
 ```
 
+Eligibility is Qonversion's answer, and "not eligible" is a normal one: it arrives as a `QonversionError` of type `.promoOfferNotEligible` and means the paywall shows the full price.
+
+If you map purchases to your own accounts with an `appAccountToken`, pass the same value to both calls — the App Store checks the signed offer against the token the purchase carries:
+
+```swift
+let token = UUID()
+let offer = try await Qonversion.shared.getPromotionalOffer(for: product, discountId: "promo_id", appAccountToken: token)
+let options = Qonversion.PurchaseOptions(promoOffer: offer, appAccountToken: token)
+```
+
 **If Qonversion is unreachable at purchase time**, the purchase still succeeds: entitlements are calculated on the device, the report is queued and re-sent on the next launch, and the transaction stays unfinished until the backend confirms it. You never lose a sale to a network hiccup.
 
 ### Checking access
