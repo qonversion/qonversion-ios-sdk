@@ -176,15 +176,18 @@ final class ScreenEventsService: ScreenEventsServiceInterface, @unchecked Sendab
   /// did author reaches here in whatever unit its JS used, and milliseconds are
   /// the JS default — left alone they read as a date far in the future and cost
   /// the event its place in the batch.
+  /// The backend decoder is typed, so a number the screen spelled as a string
+  /// takes the whole batch down; both numeric fields are written back as Int.
   private static func timestamped(_ event: ScreenEvent) -> ScreenEvent {
     var data: [String: AnyHashable] = event.data
 
     if let happenedAt = Self.intValue(data[Self.happenedAtKey]) {
-      guard happenedAt >= Self.millisecondThreshold else { return event }
-
-      data[Self.happenedAtKey] = happenedAt / 1000
+      data[Self.happenedAtKey] = happenedAt >= Self.millisecondThreshold ? happenedAt / 1000 : happenedAt
     } else {
       data[Self.happenedAtKey] = Int(Date().timeIntervalSince1970)
+    }
+    if let pageIndex = Self.intValue(data[Self.pageIndexKey]) {
+      data[Self.pageIndexKey] = pageIndex
     }
 
     return ScreenEvent(data: data)

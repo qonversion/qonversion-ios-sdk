@@ -823,8 +823,10 @@ extension NoCodesViewController {
     guard let params = screenAnalyticsAction.parameters,
           let screenId = screenId else { return }
 
-    guard params["type"] != nil else {
-      logger.warning("screenAnalytics action missing 'type' parameter")
+    // A non-string type fails the backend's typed decoder and takes the whole
+    // batch with it, valid events included.
+    guard params["type"] is String else {
+      logger.warning("screenAnalytics action missing a string 'type' parameter")
       return
     }
 
