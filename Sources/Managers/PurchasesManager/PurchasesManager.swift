@@ -176,6 +176,25 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         return (try? localStorage.object(forKey: Constants.surfacedTransactionsKey.rawValue, dataType: [String].self)) ?? []
     }
 
+    /// Ids the SDK itself finished in this launch. The store re-delivers
+    /// neither through the sweep nor through the updates listener, so nothing
+    /// can produce their deliveries a second time.
+    private var sdkFinishedTransactions: Set<String> = []
+
+    private func recordSDKFinished(_ transactionId: String) {
+        surfacedLock.lock()
+        defer { surfacedLock.unlock() }
+
+        sdkFinishedTransactions.insert(transactionId)
+    }
+
+    private func isFinishedBySDK(_ transactionId: String) -> Bool {
+        surfacedLock.lock()
+        defer { surfacedLock.unlock() }
+
+        return sdkFinishedTransactions.contains(transactionId)
+    }
+
     // Guards the rejected bookkeeping below.
     private let rejectedLock = NSLock()
 
@@ -855,6 +874,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // owns the lifecycle — in Analytics mode the host app does.
         if !reportFailed && launchModeProvider.launchMode == .subscriptionManagement {
             await storeKitFacade.finish(transaction)
+            if let id: String = transaction.id {
+                recordSDKFinished(id)
+            }
         }
 
         // Gates what the host sees, not the report: a relaunch re-delivers
@@ -927,9 +949,25 @@ extension PurchasesManager: UserChangedObserver {
 
         // A deferred purchase nobody heard is not simply dropped — unclaiming
         // its transaction lets the funnel emit it again, with the entitlements
-        // recalculated for the new user.
+        // recalculated for the new user. One the SDK already finished has no
+        // such second delivery, so it keeps waiting for a subscriber: the
+        // purchase happened on this device whoever the user is now, and the
+        // host reads where its entitlements came from off the event itself.
         let undelivered: [Qonversion.DeferredPurchase] = deferredPurchasesMulticast.clearBacklog()
-        unclaim(undelivered.compactMap { $0.transaction.id })
+        var redeliverable: [String] = []
+        for purchase in undelivered {
+            guard let transactionId: String = purchase.transaction.id else { continue }
+
+            guard isFinishedBySDK(transactionId) else {
+                redeliverable.append(transactionId)
+                continue
+            }
+
+            deferredPurchasesMulticast.yield(purchase) { [weak self] in
+                self?.markHeardByHost(transactionId)
+            }
+        }
+        unclaim(redeliverable)
 
         // The refusals were answered for the previous user; the new one gets
         // its own attempt.

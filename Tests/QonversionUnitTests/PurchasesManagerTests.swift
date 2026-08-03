@@ -1439,6 +1439,28 @@ final class PurchasesManagerTests: XCTestCase {
                        "the redelivery must carry the NEW user's entitlements, not a replay of the stale pre-switch snapshot")
     }
 
+    func testUserChangeKeepsAnSDKFinishedPurchaseInTheDeferredBacklog() async {
+        // In Subscription Management mode the SDK finishes the transaction
+        // before it can reach a subscriber, so the store never hands it over
+        // again: dropping the backlog entry on a user switch would lose the
+        // purchase in this session and in every later one.
+        manager = makeManager(launchMode: .subscriptionManagement)
+        entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
+
+        manager.transactionUpdated(makeTransaction(id: "finished-1"))
+        await waitUntil { self.facade.finishedTransactions.map(\.id) == ["finished-1"] }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        manager.userDidChange()
+
+        let collector = StreamCollector(manager.deferredPurchases())
+        await waitUntil { await !collector.received.isEmpty }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let received: [Qonversion.DeferredPurchase] = await collector.received
+        XCTAssertEqual(received.map(\.transaction.id), ["finished-1"],
+                       "a purchase the SDK already finished cannot come back from the store, so it must stay buffered")
+    }
+
     func testAPromoIntentHandedToASubscriptionIsNotRepeatedToTheNextOne() async {
         // Acting on the same intent twice would run the purchase flow twice.
         manager.emitPromoPurchaseIntent(storeProductId: "com.app.promo")
