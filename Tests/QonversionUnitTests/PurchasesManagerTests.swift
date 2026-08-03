@@ -623,7 +623,22 @@ final class PurchasesManagerTests: XCTestCase {
         let entitlements: [String: Qonversion.Entitlement] = try await manager.restore()
 
         XCTAssertNil(entitlements["premium"], "the refunded purchase must not grant access offline")
-        XCTAssertTrue(service.sentTransactions.isEmpty, "a refund is not a purchase, and the transaction it replaced is not the latest one")
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["paid"], "a refund is not a purchase, so the transaction that paid for the product is the one to report")
+    }
+
+    func testRestoreReportsThePaidTransactionARevocationReplaced() async throws {
+        // The backend knows nothing about this user's purchases (a reinstall
+        // makes a new anonymous one), so a product dropped from the report is
+        // a product the user loses access to.
+        let paid = makeTransaction(id: "paid-2024", productId: "com.app.year_access", purchaseDate: Date(timeIntervalSince1970: 1_704_067_200))
+        let refunded = makeRevokedTransaction(id: "refunded-2025", productId: "com.app.year_access", purchaseDate: Date(timeIntervalSince1970: 1_735_689_600))
+        facade.restoreResult = [paid, refunded]
+        entitlementsManager.entitlementsResult = [:]
+
+        _ = try await manager.restore()
+
+        XCTAssertEqual(service.sentTransactions.map(\.transaction.id), ["paid-2024"],
+                       "a revocation must not take its product's slot away from the transaction that paid for it")
     }
 
     func testRestoreNonEligibleFailureThrows() async {

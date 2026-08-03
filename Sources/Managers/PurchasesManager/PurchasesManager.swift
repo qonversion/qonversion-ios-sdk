@@ -472,8 +472,9 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         // refund instead of the paid transaction it replaced.
         let latest: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(restored)
         // A revocation is not a purchase — the App Store server tells the
-        // backend about it, the SDK never reports it.
-        let reportable: [Qonversion.Transaction] = latest.filter { $0.revocationDate == nil }
+        // backend about it — and it must not take its product's slot away from
+        // the transaction that paid for it.
+        let reportable: [Qonversion.Transaction] = EntitlementsCalculator.latestTransactionsPerProduct(restored.filter { $0.revocationDate == nil })
 
         var resolvedOwnerUserId: String?
         do {
