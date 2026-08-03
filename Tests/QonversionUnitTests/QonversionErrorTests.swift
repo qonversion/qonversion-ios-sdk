@@ -158,6 +158,24 @@ final class QonversionErrorTests: XCTestCase {
         XCTAssertFalse(error.isRejectedByBackend, "a timeout is not the backend's final answer")
     }
 
+    func testUnauthorizedIsNotRejectedByBackend() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 401])
+
+        XCTAssertFalse(error.isRejectedByBackend, "a revoked key is a project state, the request itself is fine")
+    }
+
+    func testPaymentRequiredIsNotRejectedByBackend() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 402])
+
+        XCTAssertFalse(error.isRejectedByBackend, "an overdue Qonversion account is a project state, not a verdict on the request")
+    }
+
+    func testForbiddenIsNotRejectedByBackend() {
+        let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 403])
+
+        XCTAssertFalse(error.isRejectedByBackend, "a misconfigured project clears once the project is fixed")
+    }
+
     func testAServerErrorIsNotRejectedByBackend() {
         let error = QonversionError(type: .unknown, additionalInfo: [ErrorConstants.statusCodeKey.rawValue: 500])
 

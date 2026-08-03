@@ -95,14 +95,22 @@ extension Error {
     }
 
     /// The backend refused the request rather than failing to answer it: any
-    /// 4xx but the two that clear on their own. Repeating such a request gets
+    /// 4xx but the ones that clear on their own. Repeating such a request gets
     /// the same answer forever, so the caller has to stop instead of retrying.
+    ///
+    /// 401/402/403 are excluded: they describe the state of the project (a
+    /// revoked key, an overdue account, a misconfigured proxy), not a verdict
+    /// on the request, and they clear once the project is fixed. The critical
+    /// error latch and the replay queue handle those.
     var isRejectedByBackend: Bool {
         guard let statusCode: Int = backendStatusCode else { return false }
 
         return (ResponseCode.clientErrorMin.rawValue...ResponseCode.clientErrorMax.rawValue).contains(statusCode)
             && statusCode != ResponseCode.tooManyRequests.rawValue
             && statusCode != ResponseCode.requestTimeout.rawValue
+            && statusCode != ResponseCode.unauthorized.rawValue
+            && statusCode != ResponseCode.paymentRequired.rawValue
+            && statusCode != ResponseCode.forbidden.rawValue
     }
 
     /// What a public API is allowed to throw. Every public entry point
