@@ -59,6 +59,9 @@ struct PromoOfferSignatureResponse: Decodable {
 
 final class PurchasesService: PurchasesServiceInterface {
 
+    /// The width of the `purchase.screen_uid` column, and the gateway's limit.
+    private static let maxScreenUidLength: Int = 255
+
     private let requestProcessor: RequestProcessorInterface
     private let appBundleId: String
 
@@ -98,10 +101,15 @@ final class PurchasesService: PurchasesServiceInterface {
         // context_keys and screen_uid are not part of the documented v4
         // purchases contract yet — the backend is going to add them; the SDK
         // sends them from day one.
-        if let contextKeys = options?.contextKeys, !contextKeys.isEmpty {
-            body["context_keys"] = contextKeys
+        // Attribution is auxiliary: a value the backend would refuse is left
+        // out rather than allowed to reject the revenue report as a whole.
+        if let contextKeys = options?.contextKeys {
+            let keys: [String] = contextKeys.filter { !$0.isEmpty }
+            if !keys.isEmpty {
+                body["context_keys"] = keys
+            }
         }
-        if let screenUid = options?.screenUid {
+        if let screenUid = options?.screenUid, !screenUid.isEmpty, screenUid.count <= Self.maxScreenUidLength {
             body["screen_uid"] = screenUid
         }
 
