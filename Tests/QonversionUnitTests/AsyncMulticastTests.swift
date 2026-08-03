@@ -508,6 +508,58 @@ final class AsyncMulticastTests: XCTestCase {
         let received: [Int] = await subscriber.received
         XCTAssertEqual(received, expected, "a live value must not evict the backlog the subscriber has not drained yet")
     }
+
+    // MARK: - clearBacklog
+
+    func testClearBacklogDropsAWaitingDeliveredOnceValueAndReturnsIt() async {
+        let multicast = AsyncMulticast<Int>(backlog: .deliveredOnce, backlogLifetime: .infinity)
+        multicast.yield(1)
+
+        let dropped: [Int] = multicast.clearBacklog()
+
+        XCTAssertEqual(dropped, [1])
+        let subscriber = collect(multicast.stream())
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let received: [Int] = await subscriber.received
+        XCTAssertEqual(received, [], "a subscriber arriving after clearBacklog must not receive the dropped value")
+    }
+
+    func testClearBacklogDropsAReplayedValueSoALaterSubscriberGetsNothing() async {
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
+        multicast.yield(1)
+
+        multicast.clearBacklog()
+
+        let subscriber = collect(multicast.stream())
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let received: [Int] = await subscriber.received
+        XCTAssertEqual(received, [], "the cleared snapshot must not be replayed to a later subscriber")
+    }
+
+    func testClearBacklogDoesNotDisturbAValueAlreadyDeliveredToAnActiveSubscriber() async {
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
+        let subscriber = collect(multicast.stream())
+        await waitUntil {
+            let attached: Bool = await subscriber.attached
+            return attached
+        }
+        multicast.yield(1)
+        await waitUntil {
+            let count: Int = await subscriber.received.count
+            return count == 1
+        }
+
+        multicast.clearBacklog()
+
+        let received: [Int] = await subscriber.received
+        XCTAssertEqual(received, [1], "clearing the backlog must not retract a value the subscriber already has")
+    }
+
+    func testClearBacklogOnAnEmptyMulticastReturnsNothing() {
+        let multicast = AsyncMulticast<Int>(backlog: .replayed)
+
+        XCTAssertEqual(multicast.clearBacklog(), [])
+    }
 }
 
 /// Collects everything a stream emits and reports when it actually attached.
