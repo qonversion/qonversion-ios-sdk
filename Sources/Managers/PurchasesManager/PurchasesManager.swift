@@ -337,12 +337,12 @@ final class PurchasesManager: PurchasesManagerInterface, @unchecked Sendable {
         let gateTaken: Bool
         if let id: String = transaction.id {
             // The store re-delivered a transaction the backend refused for
-            // good: the report cannot succeed, and entitlements answer the
-            // caller better than an exception on every tap.
+            // good: the report cannot succeed, so it is not repeated — but a
+            // result here would be indistinguishable from a granted purchase.
             guard !isRejectedTransaction(id) else {
-                let result: Qonversion.PurchaseResult = await purchaseResult(for: transaction)
+                logger.error("Qonversion refused this transaction for good, it is not reported again.")
 
-                return heard(result)
+                throw QonversionError(type: .purchaseReportingFailed)
             }
             gateTaken = reportsGate.tryTake(id)
             // Another flow owns the report and will finish the transaction;

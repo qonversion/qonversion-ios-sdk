@@ -877,10 +877,12 @@ final class PurchasesManagerTests: XCTestCase {
         XCTAssertEqual(service.sentTransactions.count, 1, "a report the backend refused for good must not be posted again")
     }
 
-    func testPurchaseAnswersWithEntitlementsInsteadOfRePostingARefusedTransaction() async throws {
+    func testPurchaseFailsInsteadOfRePostingARefusedTransaction() async throws {
         // The store hands the very same transaction back on every re-buy of an
         // owned non-consumable, and it takes no money for it. Re-posting the
-        // report the backend already refused only throws at the host again.
+        // report the backend already refused cannot succeed — but answering
+        // with a result the host cannot tell from a granted purchase is worse
+        // than the exception the first refusal already gave it.
         manager = makeManager(launchMode: .subscriptionManagement)
         facade.restoreResult = [makeTransaction(id: "t1")]
         service.error = rejectedError(statusCode: 422)
@@ -889,9 +891,16 @@ final class PurchasesManagerTests: XCTestCase {
         service.error = nil
         facade.purchaseResult = makeTransaction(id: "t1")
         entitlementsManager.entitlementsResult = ["premium": entitlement(id: "premium")]
-        let result: Qonversion.PurchaseResult = try await manager.purchase(makeProduct())
 
-        XCTAssertEqual(result.transaction.id, "t1")
+        do {
+            _ = try await manager.purchase(makeProduct())
+            XCTFail("Expected the refused transaction to throw")
+        } catch let error as QonversionError {
+            XCTAssertEqual(error.type, .purchaseReportingFailed, "the host must get the same failure the first refusal gave it")
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+
         XCTAssertEqual(service.sentTransactions.count, 1, "a report the backend refused for good must not be posted again by a purchase")
     }
 
