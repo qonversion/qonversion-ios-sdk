@@ -13,7 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 typedef NS_ENUM(NSInteger, QONRemoteConfigurationAssignmentType) {
   QONRemoteConfigurationAssignmentTypeUnknown = -1,
   QONRemoteConfigurationAssignmentTypeAuto = 0,
-  QONRemoteConfigurationAssignmentTypeManual = 1
+  QONRemoteConfigurationAssignmentTypeManual = 1,
+  QONRemoteConfigurationAssignmentTypeFrozen = 2
 } NS_SWIFT_NAME(Qonversion.RemoteConfigurationAssignmentType);
 
 typedef NS_ENUM(NSInteger, QONRemoteConfigurationSourceType) {
