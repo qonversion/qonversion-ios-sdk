@@ -49,6 +49,9 @@
     
     case QONRemoteConfigurationAssignmentTypeManual:
       result = @"manual"; break;
+
+    case QONRemoteConfigurationAssignmentTypeFrozen:
+      result = @"frozen"; break;
       
     default:
       result = @"unknown"; break;

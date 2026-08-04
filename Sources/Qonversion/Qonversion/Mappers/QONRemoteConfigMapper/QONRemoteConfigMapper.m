@@ -19,6 +19,7 @@ NSString *const kTreatmentGroupType = @"treatment";
 
 NSString *const kRemoteConfigurationAssignmentTypeAuto = @"auto";
 NSString *const kRemoteConfigurationAssignmentTypeManual = @"manual";
+NSString *const kRemoteConfigurationAssignmentTypeFrozen = @"frozen";
 
 NSString *const kRemoteConfigurationSourceTypeControlGroup = @"experiment_control_group";
 NSString *const kRemoteConfigurationSourceTypeTreatmentGroup = @"experiment_treatment_group";
@@ -46,7 +47,8 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
     
     _remoteConfigurationAssignmentTypes = @{
       kRemoteConfigurationAssignmentTypeAuto: @(QONRemoteConfigurationAssignmentTypeAuto),
-      kRemoteConfigurationAssignmentTypeManual: @(QONRemoteConfigurationAssignmentTypeManual)
+      kRemoteConfigurationAssignmentTypeManual: @(QONRemoteConfigurationAssignmentTypeManual),
+      kRemoteConfigurationAssignmentTypeFrozen: @(QONRemoteConfigurationAssignmentTypeFrozen)
     };
     
     _remoteConfigurationSourceTypes = @{

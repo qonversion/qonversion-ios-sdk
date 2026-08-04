@@ -9,6 +9,9 @@
 #import "QONEntitlement.h"
 #import "QONLaunchResult.h"
 #import "QONProduct.h"
+#import "QONRemoteConfig.h"
+#import "QONRemoteConfigMapper.h"
+#import "QONRemoteConfigurationSource.h"
 
 @interface QNMapperTests : XCTestCase
 @property (nonatomic, strong) NSDictionary *userInitSuccess;
@@ -16,6 +19,30 @@
 @end
 
 @implementation QNMapperTests
+
+- (void)testRemoteConfigMapperPreservesFrozenAssignmentProvenance {
+  NSDictionary *data = @{
+    @"payload": @{},
+    @"source": @{
+      @"uid": @"rc-frozen",
+      @"name": @"Frozen config",
+      @"type": @"remote_configuration",
+      @"assignment_type": @"frozen",
+      @"context_key": @""
+    }
+  };
+
+  QONRemoteConfig *config = [[[QONRemoteConfigMapper alloc] init] mapRemoteConfig:data];
+
+  XCTAssertNotNil(config.source);
+  XCTAssertEqual(config.source.assignmentType, QONRemoteConfigurationAssignmentTypeFrozen);
+}
+
+- (void)testRemoteConfigAssignmentTypeKeepsExistingNumericValues {
+  XCTAssertEqual(QONRemoteConfigurationAssignmentTypeUnknown, -1);
+  XCTAssertEqual(QONRemoteConfigurationAssignmentTypeAuto, 0);
+  XCTAssertEqual(QONRemoteConfigurationAssignmentTypeManual, 1);
+}
 
 - (void)setUp {
   [super setUp];
