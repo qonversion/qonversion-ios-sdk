@@ -1913,21 +1913,31 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
 }
 
 - (void)testPersistentLKGRejectsUnknownSemanticEnumValuesAndClearsArchive {
+  QNAPIClient *apiClient = [QNAPIClient new];
+  apiClient.apiKey = @"project-a";
+  apiClient.userID = @"user-a";
+
+  // Keep one matching OCMock stub for the whole table-driven test. Adding the
+  // same stub inside the loop makes OCMock keep invoking the first iteration's
+  // block, leaving the current serviceCompletion nil and crashing the test host.
+  __block QONRemoteConfigCompletionHandler serviceCompletion = nil;
+  OCMStub([self.mockService loadRemoteConfig:[OCMArg any] completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONRemoteConfigCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    serviceCompletion = [completion copy];
+  });
+
   NSArray<NSString *> *corruptionKinds = @[@"source", @"assignment", @"group"];
   for (NSString *corruptionKind in corruptionKinds) {
     QNInMemoryStorage *storage = [QNInMemoryStorage new];
-    QNAPIClient *apiClient = [QNAPIClient new];
-    apiClient.apiKey = @"project-a";
-    apiClient.userID = @"user-a";
     [self usePersistentManagerWithStorage:storage apiClient:apiClient];
 
-    __block QONRemoteConfigCompletionHandler serviceCompletion = nil;
-    OCMStub([self.mockService loadRemoteConfig:[OCMArg any] completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-      __unsafe_unretained QONRemoteConfigCompletionHandler completion = nil;
-      [invocation getArgument:&completion atIndex:3];
-      serviceCompletion = [completion copy];
-    });
+    serviceCompletion = nil;
     [self.manager obtainRemoteConfigWithContextKey:@"ctx" completion:^(QONRemoteConfig * _Nullable config, NSError * _Nullable error) {}];
+    XCTAssertNotNil(serviceCompletion);
+    if (!serviceCompletion) {
+      continue;
+    }
     serviceCompletion(QONTestFrozenExperimentRemoteConfig(@"frozen", @"ctx"), nil);
 
     NSMutableDictionary *root = [[storage loadObjectForKey:kTestRemoteConfigLKGStorageKey] mutableCopy];
@@ -1953,10 +1963,15 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
     [self usePersistentManagerWithStorage:storage apiClient:apiClient];
     __block QONRemoteConfig *deliveredConfig = nil;
     __block NSError *deliveredError = nil;
+    serviceCompletion = nil;
     [self.manager obtainRemoteConfigWithContextKey:@"ctx" completion:^(QONRemoteConfig * _Nullable config, NSError * _Nullable error) {
       deliveredConfig = config;
       deliveredError = error;
     }];
+    XCTAssertNotNil(serviceCompletion);
+    if (!serviceCompletion) {
+      continue;
+    }
     serviceCompletion(nil, [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorCannotConnectToHost userInfo:nil]);
     XCTAssertNil(deliveredConfig, @"unknown %@ enum must never be served from disk", corruptionKind);
     XCTAssertNotNil(deliveredError);
@@ -1965,6 +1980,20 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
 }
 
 - (void)testPersistentLKGRejectsFractionalAndBooleanEnumValuesAndClearsArchive {
+  QNAPIClient *apiClient = [QNAPIClient new];
+  apiClient.apiKey = @"project-a";
+  apiClient.userID = @"user-a";
+
+  // The callback stub must be shared across iterations for the same reason as
+  // the semantic-enum table above: duplicate matching stubs retain stale block
+  // storage and turn a normal assertion failure into a test-host crash.
+  __block QONRemoteConfigCompletionHandler serviceCompletion = nil;
+  OCMStub([self.mockService loadRemoteConfig:[OCMArg any] completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONRemoteConfigCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    serviceCompletion = [completion copy];
+  });
+
   NSArray<NSDictionary *> *corruptions = @[
     @{ @"kind": @"source", @"value": @0.5 },
     @{ @"kind": @"assignment", @"value": @YES },
@@ -1972,18 +2001,14 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
   ];
   for (NSDictionary *corruption in corruptions) {
     QNInMemoryStorage *storage = [QNInMemoryStorage new];
-    QNAPIClient *apiClient = [QNAPIClient new];
-    apiClient.apiKey = @"project-a";
-    apiClient.userID = @"user-a";
     [self usePersistentManagerWithStorage:storage apiClient:apiClient];
 
-    __block QONRemoteConfigCompletionHandler serviceCompletion = nil;
-    OCMStub([self.mockService loadRemoteConfig:[OCMArg any] completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-      __unsafe_unretained QONRemoteConfigCompletionHandler completion = nil;
-      [invocation getArgument:&completion atIndex:3];
-      serviceCompletion = [completion copy];
-    });
+    serviceCompletion = nil;
     [self.manager obtainRemoteConfigWithContextKey:@"ctx" completion:^(QONRemoteConfig * _Nullable config, NSError * _Nullable error) {}];
+    XCTAssertNotNil(serviceCompletion);
+    if (!serviceCompletion) {
+      continue;
+    }
     serviceCompletion(QONTestFrozenExperimentRemoteConfig(@"frozen", @"ctx"), nil);
 
     NSMutableDictionary *root = [[storage loadObjectForKey:kTestRemoteConfigLKGStorageKey] mutableCopy];
@@ -2010,10 +2035,15 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
     [self usePersistentManagerWithStorage:storage apiClient:apiClient];
     __block QONRemoteConfig *deliveredConfig = nil;
     __block NSError *deliveredError = nil;
+    serviceCompletion = nil;
     [self.manager obtainRemoteConfigWithContextKey:@"ctx" completion:^(QONRemoteConfig * _Nullable config, NSError * _Nullable error) {
       deliveredConfig = config;
       deliveredError = error;
     }];
+    XCTAssertNotNil(serviceCompletion);
+    if (!serviceCompletion) {
+      continue;
+    }
     serviceCompletion(nil, [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorCannotConnectToHost userInfo:nil]);
 
     XCTAssertNil(deliveredConfig, @"non-integral %@ enum must never be served from disk", kind);
