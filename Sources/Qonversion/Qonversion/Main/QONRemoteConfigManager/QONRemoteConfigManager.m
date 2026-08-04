@@ -1060,6 +1060,20 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
     }
     loadingState.loadedConfig = remoteConfig;
   } else if ([self loadingStateForContextKey:contextKey] == loadingState &&
+             loadingState.loadedConfig) {
+    // Another current-generation request (most notably a list request) may
+    // have warmed this same state while the superseded single-key response
+    // was in flight. That value has already crossed the current generation
+    // and scope checks, so it is fresher than this response. Serve every
+    // waiter from it instead of issuing a redundant request and leaving the
+    // queue dependent on a network completion nobody needed.
+    loadingState.retryBaseline = nil;
+    self.lastDeliveryOrigin = QONRemoteConfigDeliveryOriginMemory;
+    [self executeRemoteConfigCompletionsWithContextKey:contextKey
+                                          remoteConfig:loadingState.loadedConfig
+                                                 error:nil];
+    return;
+  } else if ([self loadingStateForContextKey:contextKey] == loadingState &&
              loadingState.reissuedForGeneration != currentGeneration) {
     // The cache was invalidated while this load was in flight, so this
     // evaluation is already superseded. Re-issue the load once so the waiters

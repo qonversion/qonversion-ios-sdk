@@ -214,15 +214,25 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
   });
 }
 
-- (void)usePersistentManagerWithStorage:(id<QNLocalStorage>)storage apiClient:(QNAPIClient *)apiClient {
+- (void)usePersistentManagerWithStorage:(id<QNLocalStorage>)storage
+                              apiClient:(QNAPIClient *)apiClient
+               immediatePropertiesFlush:(BOOL)immediatePropertiesFlush {
   self.manager = [[QONRemoteConfigManager alloc] initWithLocalStorage:storage];
   self.manager.remoteConfigService = self.mockService;
   self.manager.productCenterManager = self.mockProductCenterManager;
   self.manager.userPropertiesManager = self.mockUserPropertiesManager;
   self.manager.fallbackService = self.mockFallbackService;
   OCMStub([self.mockService apiClient]).andReturn(apiClient);
-  OCMStub([self.mockFallbackService obtainFallbackData]).andReturn(nil);
-  [self stubUserStableAndImmediatePropertiesFlush];
+  // An unstubbed class mock already returns nil. Do not install a default
+  // fallback stub here: OCMock resolves the first matching stub, so a later
+  // scenario-specific bundled fallback would otherwise be shadowed.
+  if (immediatePropertiesFlush) {
+    [self stubUserStableAndImmediatePropertiesFlush];
+  }
+}
+
+- (void)usePersistentManagerWithStorage:(id<QNLocalStorage>)storage apiClient:(QNAPIClient *)apiClient {
+  [self usePersistentManagerWithStorage:storage apiClient:apiClient immediatePropertiesFlush:YES];
 }
 
 - (void)seedCachedConfigs {
@@ -1110,7 +1120,7 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
   QNAPIClient *apiClient = [QNAPIClient new];
   apiClient.apiKey = @"project-a";
   apiClient.userID = @"old-user";
-  [self usePersistentManagerWithStorage:storage apiClient:apiClient];
+  [self usePersistentManagerWithStorage:storage apiClient:apiClient immediatePropertiesFlush:NO];
 
   OCMStub([self.mockProductCenterManager isUserStable]).andReturn(YES);
   __block NSMutableArray<QONUserPropertiesEmptyCompletionHandler> *propertyFlushes = [NSMutableArray new];
