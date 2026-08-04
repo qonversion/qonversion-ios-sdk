@@ -48,5 +48,12 @@ let package = Package(
             name: "NoCodesTests",
             dependencies: ["NoCodes"],
             path: "Tests/NoCodesTests"),
+        // Talks to a REAL backend over a real socket; every test skips itself
+        // unless QON_CONTRACT_BASE_URL points at one, so an ordinary
+        // `swift test` stays offline.
+        .testTarget(
+            name: "QonversionContractTests",
+            dependencies: ["Qonversion"],
+            path: "Tests/QonversionContractTests"),
     ]
 )
