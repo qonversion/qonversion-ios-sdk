@@ -137,4 +137,27 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
 }
 
+- (void)testThatServerTrustUsesSystemValidation {
+  NSURLProtectionSpace *protectionSpace = [[NSURLProtectionSpace alloc]
+    initWithHost:@"attacker.invalid"
+    port:443
+    protocol:NSURLProtectionSpaceHTTPS
+    realm:nil
+    authenticationMethod:NSURLAuthenticationMethodServerTrust];
+  id challenge = OCMClassMock([NSURLAuthenticationChallenge class]);
+  OCMStub([challenge protectionSpace]).andReturn(protectionSpace);
+
+  __block NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengeUseCredential;
+  __block NSURLCredential *credential = [NSURLCredential credentialWithUser:@"unexpected" password:@"unexpected" persistence:NSURLCredentialPersistenceNone];
+
+  [self.client URLSession:nil didReceiveChallenge:challenge completionHandler:^(NSURLSessionAuthChallengeDisposition receivedDisposition, NSURLCredential *receivedCredential) {
+    disposition = receivedDisposition;
+    credential = receivedCredential;
+  }];
+
+  XCTAssertEqual(disposition, NSURLSessionAuthChallengePerformDefaultHandling);
+  XCTAssertNil(credential);
+  [challenge stopMocking];
+}
+
 @end
