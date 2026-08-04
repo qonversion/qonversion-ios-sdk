@@ -14,7 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface QONRemoteConfig ()
 
-- (instancetype)initWithPayload:(NSDictionary *)payload experiment:(QONExperiment *)experiment source:(QONRemoteConfigurationSource *)source;
+- (instancetype)initWithPayload:(nullable NSDictionary *)payload
+                      experiment:(nullable QONExperiment *)experiment
+                          source:(QONRemoteConfigurationSource *)source;
 
 @end
 

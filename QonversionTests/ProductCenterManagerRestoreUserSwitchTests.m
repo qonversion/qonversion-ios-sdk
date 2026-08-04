@@ -78,6 +78,7 @@
   // Set up reject expectations before the action
   OCMReject([_mockUserInfoService storeIdentity:[OCMArg any]]);
   OCMReject([_mockRemoteConfigManager userHasBeenChanged]);
+  OCMReject([_mockRemoteConfigManager userHasBeenChangedToUserID:[OCMArg any]]);
   
   // When
   [_manager handleUserSwitchIfNeededWithResult:launchResult];
@@ -101,14 +102,15 @@
   
   // Then
   OCMVerify([_mockUserInfoService storeIdentity:originalUserId]);
-  OCMVerify([_mockClient setUserID:originalUserId]);
-  OCMVerify([_mockRemoteConfigManager userHasBeenChanged]);
+  OCMVerify([_mockRemoteConfigManager userHasBeenChangedToUserID:originalUserId]);
+  OCMReject([_mockClient setUserID:[OCMArg any]]);
 }
 
 - (void)testHandleUserSwitch_NilResult_NoSwitch {
   // Given - set up reject expectations before the action
   OCMReject([_mockUserInfoService storeIdentity:[OCMArg any]]);
   OCMReject([_mockRemoteConfigManager userHasBeenChanged]);
+  OCMReject([_mockRemoteConfigManager userHasBeenChangedToUserID:[OCMArg any]]);
   
   // When
   [_manager handleUserSwitchIfNeededWithResult:nil];
@@ -126,6 +128,7 @@
   // Set up reject expectations before the action
   OCMReject([_mockUserInfoService storeIdentity:[OCMArg any]]);
   OCMReject([_mockRemoteConfigManager userHasBeenChanged]);
+  OCMReject([_mockRemoteConfigManager userHasBeenChangedToUserID:[OCMArg any]]);
   
   // When
   [_manager handleUserSwitchIfNeededWithResult:launchResult];

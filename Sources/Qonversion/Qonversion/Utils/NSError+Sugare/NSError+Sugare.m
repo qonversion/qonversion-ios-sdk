@@ -22,9 +22,26 @@
   // collides with unrelated domains (e.g. POSIX EAGAIN).
   BOOL isRateLimited = [self.domain isEqualToString:QonversionErrorDomain] &&
       self.code == QONErrorCodeApiRateLimitExceeded;
-  if (self.code == NSURLErrorNotConnectedToInternet ||
+  BOOL isTransientURLFailure = [self.domain isEqualToString:NSURLErrorDomain] &&
+      (self.code == NSURLErrorNotConnectedToInternet ||
+       self.code == NSURLErrorTimedOut ||
+       self.code == NSURLErrorNetworkConnectionLost ||
+       self.code == NSURLErrorCannotConnectToHost ||
+       self.code == NSURLErrorCannotFindHost ||
+       self.code == NSURLErrorDNSLookupFailed ||
+       self.code == NSURLErrorCallIsActive ||
+       self.code == NSURLErrorDataNotAllowed);
+  BOOL isServerFailure = [self.domain isEqualToString:QonversionErrorDomain] &&
+      self.code >= kInternalServerErrorFirstCode && self.code <= kInternalServerErrorLastCode;
+  // QNAPIClient intentionally normalizes empty bodies, invalid JSON, and
+  // response-shape failures to the public internal-error code. Those failures
+  // say nothing authoritative about the user's assignment, so LKG is safe.
+  BOOL isInternalResponseFailure = [self.domain isEqualToString:QonversionErrorDomain] &&
+      self.code == QONErrorCodeInternalError;
+  if (isTransientURLFailure ||
       isRateLimited ||
-      (self.code >= kInternalServerErrorFirstCode && self.code <= kInternalServerErrorLastCode)) {
+      isServerFailure ||
+      isInternalResponseFailure) {
     return YES;
   } else {
     return NO;

@@ -35,6 +35,8 @@
 @interface QNProductCenterManager (IdentifyRemoteConfigTestPrivate)
 
 @property (nonatomic, assign) BOOL launchingFinished;
+@property (nonatomic, assign) BOOL identityInProgress;
+@property (nonatomic, copy) NSString *pendingIdentityUserID;
 
 - (void)processIdentity:(NSString *)identityId;
 
@@ -96,6 +98,7 @@
 
   // The destructive user-switch path must NOT fire on same-uid
   OCMReject([_mockRemoteConfigManager userHasBeenChanged]);
+  OCMReject([_mockRemoteConfigManager userHasBeenChangedToUserID:[OCMArg any]]);
 
   // When - launchingFinished stays NO, so handlePendingRequests: returns
   // early and fireIdentitySuccess no-ops on the empty pending blocks
@@ -135,6 +138,29 @@
   XCTAssertEqualObjects(order, (@[@"invalidate", @"replay"]));
 }
 
+- (void)testProcessIdentity_SameUid_RemainsUnstableUntilRemoteConfigsAreInvalidated {
+  NSString *identityId = @"login@example.com";
+  NSString *sameUid = @"uid_initial";
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(sameUid);
+  OCMStub(([_mockIdentityManager identify:identityId
+                               completion:[OCMArg invokeBlockWithArgs:sameUid, [NSNull null], nil]]));
+
+  _manager.launchingFinished = YES;
+  _manager.identityInProgress = YES;
+  _manager.pendingIdentityUserID = identityId;
+
+  __block BOOL stableDuringInvalidation = YES;
+  OCMStub([_mockRemoteConfigManager invalidateRemoteConfigsCache]).andDo(^(NSInvocation *invocation) {
+    stableDuringInvalidation = [self.manager isUserStable];
+  });
+
+  [_manager processIdentity:identityId];
+
+  XCTAssertFalse(stableDuringInvalidation,
+                 @"a concurrent Remote Config request must not observe the old warm cache during identity completion");
+  XCTAssertTrue([_manager isUserStable]);
+}
+
 - (void)testProcessIdentity_IdentityError_DoesNotInvalidateRemoteConfigsCache {
   // Given - identify fails
   NSString *identityId = @"login@example.com";
@@ -145,6 +171,7 @@
 
   OCMReject([_mockRemoteConfigManager invalidateRemoteConfigsCache]);
   OCMReject([_mockRemoteConfigManager userHasBeenChanged]);
+  OCMReject([_mockRemoteConfigManager userHasBeenChangedToUserID:[OCMArg any]]);
 
   // When
   [_manager processIdentity:identityId];

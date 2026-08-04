@@ -294,17 +294,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.identityManager identify:identityId completion:^(NSString *result, NSError * _Nullable error) {
-    weakSelf.identityInProgress = NO;
-    
     if (error) {
+      weakSelf.identityInProgress = NO;
       [weakSelf executeEntitlementsBlocksWithError:error];
       [weakSelf.remoteConfigManager userChangingRequestFailedWithError:error];
       [weakSelf fireIdentityError:error identityId:identityId];
       return;
     }
-    
-    weakSelf.pendingIdentityUserID = nil;
-    
+
     [weakSelf.userInfoService storeCustomIdentityUserID:identityId];
     
     if ([currentUserID isEqualToString:result]) {
@@ -316,11 +313,19 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       // must miss the cache, or queued completions would be served the
       // pre-identify evaluation and orphaned by the cache-hit path.
       [weakSelf.remoteConfigManager invalidateRemoteConfigsCache];
+      // Keep isUserStable false through the RC boundary transition. Clearing
+      // these earlier opens a window where a concurrent caller can consume a
+      // pre-identify warm config before invalidation reaches the RC manager.
+      weakSelf.pendingIdentityUserID = nil;
+      weakSelf.identityInProgress = NO;
       [weakSelf handlePendingRequests:nil];
       [weakSelf fireIdentitySuccess:identityId];
     } else {
-      [[QNAPIClient shared] setUserID:result];
-      [weakSelf.remoteConfigManager userHasBeenChanged];
+      [weakSelf.remoteConfigManager userHasBeenChangedToUserID:result];
+      // The API uid and RC loading-state map have now moved atomically. Only
+      // after that transition may Remote Config callers observe a stable user.
+      weakSelf.pendingIdentityUserID = nil;
+      weakSelf.identityInProgress = NO;
 
       [weakSelf resetActualPermissionsCache];
       [weakSelf launchWithTrigger:QONRequestTriggerIdentify completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
@@ -341,9 +346,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   if (isLogoutNeeded) {
     [self.userInfoService storeCustomIdentityUserID:nil];
     self.unhandledLogoutAvailable = YES;
-    [self.remoteConfigManager userHasBeenChanged];
     NSString *userID = [self.userInfoService obtainUserID];
-    [[QNAPIClient shared] setUserID:userID];
+    [self.remoteConfigManager userHasBeenChangedToUserID:userID];
     
     [self resetActualPermissionsCache];
   }
@@ -1302,8 +1306,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   QONVERSION_LOG(@"🔄 Restore: user switch detected from %@ to %@", currentUserID, result.uid);
 
   [self.userInfoService storeIdentity:result.uid];
-  [[QNAPIClient shared] setUserID:result.uid];
-  [self.remoteConfigManager userHasBeenChanged];
+  [self.remoteConfigManager userHasBeenChangedToUserID:result.uid];
   [self resetActualPermissionsCache];
 }
 
