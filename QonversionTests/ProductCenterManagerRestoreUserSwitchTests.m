@@ -385,6 +385,85 @@
   XCTAssertTrue([_manager isUserStable]);
 }
 
+- (void)testInactiveIdentityLaunchDrainsEveryWaiterExactlyOnceAsCancelled {
+  _manager.launchingFinished = YES;
+  OCMStub([_mockUserInfoService obtainCustomIdentityUserID]).andReturn(nil);
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_initial");
+  OCMStub([_mockIdentityManager logoutIfNeeded]).andReturn(NO);
+
+  __block QNIdentityCompletionHandler identityResponse = nil;
+  OCMStub([_mockIdentityManager identify:@"login@example.com" completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QNIdentityCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    identityResponse = [completion copy];
+  });
+
+  __block void (^launchResponse)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+  OCMStub([_mockClient launchRequest:QONRequestTriggerIdentify completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    launchResponse = [completion copy];
+  });
+
+  [_manager identify:@"login@example.com" completion:nil];
+  XCTAssertNotNil(identityResponse);
+  identityResponse(@"user_after_identify", nil);
+  XCTAssertNotNil(launchResponse);
+  XCTAssertFalse(_manager.launchingFinished);
+
+  XCTestExpectation *userExpectation = [self expectationWithDescription:@"user waiter cancelled"];
+  XCTestExpectation *productsExpectation = [self expectationWithDescription:@"products waiter cancelled"];
+  XCTestExpectation *offeringsExpectation = [self expectationWithDescription:@"offerings waiter cancelled"];
+  __block NSUInteger userCallbacks = 0;
+  __block NSUInteger productCallbacks = 0;
+  __block NSUInteger offeringCallbacks = 0;
+  __block NSError *userError = nil;
+  __block NSError *productError = nil;
+  __block NSError *offeringError = nil;
+  [_manager userInfo:^(QONUser *user, NSError *error) {
+    userCallbacks += 1;
+    userError = error;
+    [userExpectation fulfill];
+  }];
+  [_manager products:^(NSDictionary<NSString *, QONProduct *> *products, NSError *error) {
+    productCallbacks += 1;
+    productError = error;
+    [productsExpectation fulfill];
+  }];
+  [_manager offerings:^(QONOfferings *offerings, NSError *error) {
+    offeringCallbacks += 1;
+    offeringError = error;
+    [offeringsExpectation fulfill];
+  }];
+
+  // This logout does not start a replacement launch, but it makes the
+  // in-flight identify request inactive. Its eventual response must therefore
+  // terminate every queue with cancellation instead of reporting false
+  // success or retaining callers forever.
+  [_manager logout];
+  NSDictionary *response = [self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON];
+  launchResponse(response, nil);
+
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+  XCTAssertEqual(userCallbacks, 1);
+  XCTAssertEqual(productCallbacks, 1);
+  XCTAssertEqual(offeringCallbacks, 1);
+  XCTAssertEqualObjects(userError.domain, NSURLErrorDomain);
+  XCTAssertEqualObjects(productError.domain, NSURLErrorDomain);
+  XCTAssertEqualObjects(offeringError.domain, NSURLErrorDomain);
+  XCTAssertEqual(userError.code, NSURLErrorCancelled);
+  XCTAssertEqual(productError.code, NSURLErrorCancelled);
+  XCTAssertEqual(offeringError.code, NSURLErrorCancelled);
+  XCTAssertTrue(_manager.launchingFinished);
+  XCTAssertTrue([_manager isUserStable]);
+
+  // A duplicate terminal action from a broken transport must be harmless.
+  launchResponse(response, nil);
+  XCTAssertEqual(userCallbacks, 1);
+  XCTAssertEqual(productCallbacks, 1);
+  XCTAssertEqual(offeringCallbacks, 1);
+}
+
 - (void)testReceiptRestoreMakesUserUnstableUntilItsTerminalDrain {
   _manager.launchingFinished = YES;
   OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"qonversion_user_id");
