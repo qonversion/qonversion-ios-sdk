@@ -29,11 +29,51 @@
 
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoaded;
-
-@property (nonatomic, copy) NSString *pendingIdentityUserID;
+@property (nonatomic, strong) NSRecursiveLock *identityMutationLock;
 
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)result;
 - (void)actualizeEntitlements:(QONEntitlementsCompletionHandler)completion;
+
+@end
+
+@interface QNLockOrderArray : NSMutableArray
+
+@property (nonatomic, strong) NSMutableArray *storage;
+@property (nonatomic) dispatch_semaphore_t objectAdded;
+
+@end
+
+@implementation QNLockOrderArray
+
+- (instancetype)initWithObjectAddedSemaphore:(dispatch_semaphore_t)objectAdded {
+  self = [super init];
+  if (self) {
+    _storage = [NSMutableArray new];
+    _objectAdded = objectAdded;
+  }
+  return self;
+}
+
+- (NSUInteger)count {
+  return self.storage.count;
+}
+
+- (id)objectAtIndex:(NSUInteger)index {
+  return self.storage[index];
+}
+
+- (void)insertObject:(id)anObject atIndex:(NSUInteger)index {
+  [self.storage insertObject:anObject atIndex:index];
+  dispatch_semaphore_signal(self.objectAdded);
+}
+
+- (void)removeObjectAtIndex:(NSUInteger)index {
+  [self.storage removeObjectAtIndex:index];
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+  return self;
+}
 
 @end
 
@@ -106,6 +146,35 @@
 
   // Then
   [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+}
+
+- (void)testCheckEntitlementsDoesNotInvertIdentityAndCallbackLocks {
+  dispatch_semaphore_t mutationLockHeld = dispatch_semaphore_create(0);
+  dispatch_semaphore_t objectAdded = dispatch_semaphore_create(0);
+  dispatch_semaphore_t checkFinished = dispatch_semaphore_create(0);
+  dispatch_semaphore_t unlockFinished = dispatch_semaphore_create(0);
+  _manager.entitlementsBlocks = (NSMutableArray *)[[QNLockOrderArray alloc]
+      initWithObjectAddedSemaphore:objectAdded];
+
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    [self.manager.identityMutationLock lock];
+    dispatch_semaphore_signal(mutationLockHeld);
+    dispatch_semaphore_wait(objectAdded, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC));
+    @synchronized (self.manager) {
+      [self.manager.identityMutationLock unlock];
+    }
+    dispatch_semaphore_signal(unlockFinished);
+  });
+  XCTAssertEqual(dispatch_semaphore_wait(mutationLockHeld, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0);
+
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    [self.manager checkEntitlements:^(NSDictionary<NSString *, QONEntitlement *> *result, NSError *error) {}];
+    dispatch_semaphore_signal(checkFinished);
+  });
+
+  XCTAssertEqual(dispatch_semaphore_wait(unlockFinished, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0,
+                 @"callback storage must release @synchronized(self) before waiting for identityMutationLock");
+  XCTAssertEqual(dispatch_semaphore_wait(checkFinished, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0);
 }
 
 // MARK: - SUP3-30: actualizeEntitlements must preserve backend entitlements on error

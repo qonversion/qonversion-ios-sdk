@@ -15,7 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, nullable) NSArray<NSString *> *contextKeys;
 @property (nonatomic, assign) BOOL includeEmptyContextKey;
-@property (nonatomic, copy, nonnull) QONRemoteConfigListCompletionHandler completion;
+@property (nonatomic, copy, nullable) QONRemoteConfigListCompletionHandler completion;
+@property (nonatomic, assign, getter=isCompleted) BOOL completed;
 
 - (instancetype)initWithCompletion:(QONRemoteConfigListCompletionHandler)completion;
 

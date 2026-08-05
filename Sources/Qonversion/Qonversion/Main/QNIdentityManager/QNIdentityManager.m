@@ -13,13 +13,11 @@
 @implementation QNIdentityManager
 
 - (void)identify:(NSString *)userID completion:(QNIdentityCompletionHandler)completion {
-  __block __weak QNIdentityManager *weakSelf = self;
-  
   NSString *anonUserID = [self.userInfoService obtainUserID];
   [self.identityService identify:userID anonUserID:anonUserID completion:^(NSString * _Nullable result, NSError * _Nullable error) {
-    if (result.length > 0) {
-      [weakSelf.userInfoService storeIdentity:result];
-    }
+    // The Product Center owns identity-attempt serialization and cancellation.
+    // Persisting here would let a response that arrives after logout silently
+    // restore the canceled user before the owner can reject the callback.
     completion(result, error);
   }];
 }

@@ -108,6 +108,7 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
 
 @property (nonatomic, strong) NSMutableDictionary<NSString *, QONRemoteConfigLoadingState *> *loadingStates;
 @property (nonatomic, strong) NSMutableArray<QONRemoteConfigListRequestData *> *listRequests;
+@property (nonatomic, strong) NSMutableArray<QONRemoteConfigListRequestData *> *activeListRequests;
 @property (nonatomic, strong) QONFallbackObject *fallbackData;
 
 // Bumped on every cache invalidation (attach/detach, user change). Loads
@@ -115,11 +116,9 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
 // in-flight response evaluated before the invalidating event must not be
 // re-cached as fresh. Completions are still delivered either way.
 @property (atomic, assign) NSUInteger cacheGeneration;
-// A terminal identify failure must finish every list request that crossed the
-// unstable-user window, including requests whose async preflight/response
-// reaches the state queue only after the immediate pending-queue drain.
-@property (nonatomic, assign) NSUInteger userChangeFailureGeneration;
-@property (nonatomic, strong, nullable) NSError *lastUserChangeError;
+// Cleared when the next identify attempt starts, so that attempt's requests
+// wait for its own success/failure instead of inheriting the previous error.
+@property (nonatomic, strong, nullable) NSError *pendingUserChangeError;
 @property (nonatomic, strong, nullable) id<QNLocalStorage> localStorage;
 @property (atomic, assign, readwrite) QONRemoteConfigDeliveryOrigin lastDeliveryOrigin;
 @property (nonatomic, strong) dispatch_queue_t stateQueue;
@@ -140,6 +139,7 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
     _remoteConfigService = [QONRemoteConfigService new];
     _loadingStates = [NSMutableDictionary new];
     _listRequests = [NSMutableArray new];
+    _activeListRequests = [NSMutableArray new];
     _fallbackService = [QONFallbackService new];
     _localStorage = localStorage;
     _lastDeliveryOrigin = QONRemoteConfigDeliveryOriginUnknown;
@@ -759,7 +759,7 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
   if ([self.productCenterManager isUserStable]) {
     // A successful identity boundary supersedes the previous terminal error;
     // new requests may now replay against the stable scope.
-    self.lastUserChangeError = nil;
+    self.pendingUserChangeError = nil;
   }
 
   for (NSString *contextKey in self.loadingStates) {
@@ -774,11 +774,17 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
 
   for (QONRemoteConfigListRequestData *listRequest in requestsToSend) {
     if (listRequest.contextKeys) {
-      [self obtainRemoteConfigListWithContextKeys:listRequest.contextKeys includeEmptyContextKey:listRequest.includeEmptyContextKey completion:listRequest.completion];
+      [self processRemoteConfigListRequestWithContextKeys:listRequest];
     } else {
-      [self obtainRemoteConfigList:listRequest.completion];
+      [self processRemoteConfigListRequest:listRequest];
     }
   }
+}
+
+- (void)userChangingRequestStarted {
+  [self performStateSync:^{
+    self.pendingUserChangeError = nil;
+  }];
 }
 
 - (void)userChangingRequestFailedWithError:(NSError *)error {
@@ -789,11 +795,10 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
     return;
   }
 
-  self.userChangeFailureGeneration += 1;
-  self.lastUserChangeError = error;
+  self.pendingUserChangeError = error;
 
-  NSArray<QONRemoteConfigListRequestData *> *pendingListRequests = [self.listRequests copy];
   [self.listRequests removeAllObjects];
+  NSArray<QONRemoteConfigListRequestData *> *activeListRequests = [self.activeListRequests copy];
 
   for (NSString *contextKey in self.loadingStates) {
     QONRemoteConfigLoadingState *loadingState = [self loadingStateForContextKey:contextKey];
@@ -807,10 +812,8 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
     }
   }
 
-  for (QONRemoteConfigListRequestData *listRequest in pendingListRequests) {
-    [self deferUserCallback:^{
-      listRequest.completion(nil, error);
-    }];
+  for (QONRemoteConfigListRequestData *listRequest in activeListRequests) {
+    [self completeRemoteConfigListRequest:listRequest remoteConfigList:nil error:error];
   }
 }
 
@@ -826,7 +829,7 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
 
 - (void)userHasBeenChanged {
   [self performStateSync:^{
-    self.lastUserChangeError = nil;
+    self.pendingUserChangeError = nil;
     [self bumpCacheGeneration];
     [self replaceLoadingStatesPreservingPendingCompletions];
   }];
@@ -834,7 +837,7 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
 
 - (void)userHasBeenChangedToUserID:(NSString *)userID {
   [self performStateSync:^{
-    self.lastUserChangeError = nil;
+    self.pendingUserChangeError = nil;
     // QNAPIClient identity and the manager's scope boundary are one atomic
     // state transition. No response can observe a new API uid with the old
     // loading-state map (or the inverse).
@@ -870,6 +873,14 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
   if (![self isOnStateQueue]) {
     [self performStateSync:^{
       [self obtainRemoteConfigWithContextKey:contextKey completion:completion];
+    }];
+    return;
+  }
+
+  if (![self.productCenterManager isUserStable] && self.pendingUserChangeError) {
+    NSError *error = self.pendingUserChangeError;
+    [self deferUserCallback:^{
+      completion(nil, error);
     }];
     return;
   }
@@ -1121,34 +1132,45 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
   [self executeRemoteConfigCompletionsWithContextKey:contextKey remoteConfig:remoteConfig error:nil];
 }
 
-- (void)enqueueRemoteConfigListRequestWithContextKeys:(NSArray<NSString *> *)contextKeys
-                                includeEmptyContextKey:(BOOL)includeEmptyContextKey
-                                            completion:(QONRemoteConfigListCompletionHandler)completion {
-  QONRemoteConfigListRequestData *requestData = contextKeys
-      ? [[QONRemoteConfigListRequestData alloc] initWithContextKeys:contextKeys
-                                            includeEmptyContextKey:includeEmptyContextKey
-                                                        completion:completion]
-      : [[QONRemoteConfigListRequestData alloc] initWithCompletion:completion];
-  [self.listRequests addObject:requestData];
+- (void)enqueueRemoteConfigListRequest:(QONRemoteConfigListRequestData *)request {
+  if (request.isCompleted || [self.listRequests indexOfObjectIdenticalTo:request] != NSNotFound) {
+    return;
+  }
+  [self.listRequests addObject:request];
 }
 
-- (BOOL)failRemoteConfigListRequestWithLastUserChangeError:(QONRemoteConfigListCompletionHandler)completion {
-  NSError *error = self.lastUserChangeError;
+- (void)completeRemoteConfigListRequest:(QONRemoteConfigListRequestData *)request
+                       remoteConfigList:(QONRemoteConfigList *)remoteConfigList
+                                  error:(NSError *)error {
+  if (![self isOnStateQueue]) {
+    [self performStateSync:^{
+      [self completeRemoteConfigListRequest:request remoteConfigList:remoteConfigList error:error];
+    }];
+    return;
+  }
+  if (request.isCompleted) {
+    return;
+  }
+  request.completed = YES;
+  [self.listRequests removeObjectIdenticalTo:request];
+  [self.activeListRequests removeObjectIdenticalTo:request];
+  QONRemoteConfigListCompletionHandler completion = request.completion;
+  request.completion = nil;
+  if (!completion) {
+    return;
+  }
+  [self deferUserCallback:^{
+    completion(remoteConfigList, error);
+  }];
+}
+
+- (BOOL)failRemoteConfigListRequestWithLastUserChangeError:(QONRemoteConfigListRequestData *)request {
+  NSError *error = self.pendingUserChangeError;
   if (!error) {
     return NO;
   }
-  [self deferUserCallback:^{
-    completion(nil, error);
-  }];
+  [self completeRemoteConfigListRequest:request remoteConfigList:nil error:error];
   return YES;
-}
-
-- (BOOL)failRemoteConfigListRequestIfUserChangeFailedSince:(NSUInteger)failureGeneration
-                                                completion:(QONRemoteConfigListCompletionHandler)completion {
-  if (self.userChangeFailureGeneration == failureGeneration) {
-    return NO;
-  }
-  return [self failRemoteConfigListRequestWithLastUserChangeError:completion];
 }
 
 - (void)obtainRemoteConfigListWithContextKeys:(NSArray<NSString *> *)contextKeys includeEmptyContextKey:(BOOL)includeEmptyContextKey completion:(QONRemoteConfigListCompletionHandler)completion {
@@ -1159,15 +1181,25 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
     return;
   }
 
-  NSUInteger userChangeFailureGenerationAtStart = self.userChangeFailureGeneration;
+  QONRemoteConfigListRequestData *request = [[QONRemoteConfigListRequestData alloc] initWithContextKeys:contextKeys
+                                                                                       includeEmptyContextKey:includeEmptyContextKey
+                                                                                                   completion:completion];
+  [self.activeListRequests addObject:request];
+  [self processRemoteConfigListRequestWithContextKeys:request];
+}
+
+- (void)processRemoteConfigListRequestWithContextKeys:(QONRemoteConfigListRequestData *)request {
+  if (request.isCompleted) {
+    return;
+  }
+  NSArray<NSString *> *contextKeys = request.contextKeys;
+  BOOL includeEmptyContextKey = request.includeEmptyContextKey;
 
   if (![self.productCenterManager isUserStable]) {
-    if ([self failRemoteConfigListRequestWithLastUserChangeError:completion]) {
+    if ([self failRemoteConfigListRequestWithLastUserChangeError:request]) {
       return;
     }
-    [self enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                 includeEmptyContextKey:includeEmptyContextKey
-                                             completion:completion];
+    [self enqueueRemoteConfigListRequest:request];
     return;
   }
 
@@ -1191,23 +1223,17 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
     // stability (parity with the single-key path, which checks stability before
     // its cache hit) so the flush cannot POST mid-identify to a switching uid.
     if (![self.productCenterManager isUserStable]) {
-      [self enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                   includeEmptyContextKey:includeEmptyContextKey
-                                               completion:completion];
+      [self enqueueRemoteConfigListRequest:request];
       return;
     }
     [self.userPropertiesManager forceSendProperties:nil];
     if (![self.productCenterManager isUserStable]) {
-      [self enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                   includeEmptyContextKey:includeEmptyContextKey
-                                               completion:completion];
+      [self enqueueRemoteConfigListRequest:request];
       return;
     }
     self.lastDeliveryOrigin = QONRemoteConfigDeliveryOriginMemory;
     QONRemoteConfigList *remoteConfigList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:configs];
-    [self deferUserCallback:^{
-      completion(remoteConfigList, nil);
-    }];
+    [self completeRemoteConfigListRequest:request remoteConfigList:remoteConfigList error:nil];
     return;
   }
 
@@ -1217,23 +1243,19 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
   
   [self.userPropertiesManager forceSendProperties:^{
     [weakSelf performStateSync:^{
-      if ([weakSelf failRemoteConfigListRequestIfUserChangeFailedSince:userChangeFailureGenerationAtStart completion:completion]) {
+      if (request.isCompleted) {
         return;
       }
       QONRemoteConfigCacheScope *currentScope = [weakSelf currentRemoteConfigCacheScope];
       if (![weakSelf.productCenterManager isUserStable]) {
-        [weakSelf enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                         includeEmptyContextKey:includeEmptyContextKey
-                                                     completion:completion];
+        [weakSelf enqueueRemoteConfigListRequest:request];
         return;
       }
       if (![weakSelf cacheScope:scopeAtStart equalsScope:currentScope] || stateMapAtStart != weakSelf.loadingStates) {
-        [weakSelf obtainRemoteConfigListWithContextKeys:contextKeys
-                                includeEmptyContextKey:includeEmptyContextKey
-                                            completion:completion];
+        [weakSelf processRemoteConfigListRequestWithContextKeys:request];
         return;
       }
-      QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion contextKeys:contextKeys includeEmptyContextKey:includeEmptyContextKey scope:scopeAtStart];
+      QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapperForRequest:request scope:scopeAtStart];
       [weakSelf.remoteConfigService loadRemoteConfigList:contextKeys includeEmptyContextKey:includeEmptyContextKey completion:completionWrapper];
     }];
   }];
@@ -1247,15 +1269,21 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
     return;
   }
 
-  NSUInteger userChangeFailureGenerationAtStart = self.userChangeFailureGeneration;
+  QONRemoteConfigListRequestData *request = [[QONRemoteConfigListRequestData alloc] initWithCompletion:completion];
+  [self.activeListRequests addObject:request];
+  [self processRemoteConfigListRequest:request];
+}
+
+- (void)processRemoteConfigListRequest:(QONRemoteConfigListRequestData *)request {
+  if (request.isCompleted) {
+    return;
+  }
 
   if (![self.productCenterManager isUserStable]) {
-    if ([self failRemoteConfigListRequestWithLastUserChangeError:completion]) {
+    if ([self failRemoteConfigListRequestWithLastUserChangeError:request]) {
       return;
     }
-    [self enqueueRemoteConfigListRequestWithContextKeys:nil
-                                 includeEmptyContextKey:YES
-                                             completion:completion];
+    [self enqueueRemoteConfigListRequest:request];
     return;
   }
   
@@ -1265,21 +1293,19 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
   
   [self.userPropertiesManager forceSendProperties:^{
     [weakSelf performStateSync:^{
-      if ([weakSelf failRemoteConfigListRequestIfUserChangeFailedSince:userChangeFailureGenerationAtStart completion:completion]) {
+      if (request.isCompleted) {
         return;
       }
       QONRemoteConfigCacheScope *currentScope = [weakSelf currentRemoteConfigCacheScope];
       if (![weakSelf.productCenterManager isUserStable]) {
-        [weakSelf enqueueRemoteConfigListRequestWithContextKeys:nil
-                                         includeEmptyContextKey:YES
-                                                     completion:completion];
+        [weakSelf enqueueRemoteConfigListRequest:request];
         return;
       }
       if (![weakSelf cacheScope:scopeAtStart equalsScope:currentScope] || stateMapAtStart != weakSelf.loadingStates) {
-        [weakSelf obtainRemoteConfigList:completion];
+        [weakSelf processRemoteConfigListRequest:request];
         return;
       }
-      QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapper:completion contextKeys:nil includeEmptyContextKey:YES scope:scopeAtStart];
+      QONRemoteConfigListCompletionHandler completionWrapper = [weakSelf remoteConfigListCompletionWrapperForRequest:request scope:scopeAtStart];
       [weakSelf.remoteConfigService loadRemoteConfigList:completionWrapper];
     }];
   }];
@@ -1405,25 +1431,22 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
   return merged;
 }
 
-- (QONRemoteConfigListCompletionHandler)remoteConfigListCompletionWrapper:(QONRemoteConfigListCompletionHandler)completion
-                                                               contextKeys:(NSArray *)contextKeys
-                                                    includeEmptyContextKey:(BOOL)includeEmptyContextKey
-                                                                    scope:(QONRemoteConfigCacheScope *)scopeAtStart {
+- (QONRemoteConfigListCompletionHandler)remoteConfigListCompletionWrapperForRequest:(QONRemoteConfigListRequestData *)request
+                                                                               scope:(QONRemoteConfigCacheScope *)scopeAtStart {
+  NSArray<NSString *> *contextKeys = request.contextKeys;
+  BOOL includeEmptyContextKey = request.includeEmptyContextKey;
   NSMutableDictionary<NSString *, QONRemoteConfigLoadingState *> *localLoadingStates = self.loadingStates;
   NSUInteger generationAtStart = self.cacheGeneration;
-  NSUInteger userChangeFailureGenerationAtStart = self.userChangeFailureGeneration;
 
   __block __weak QONRemoteConfigManager *weakSelf = self;
 
   return ^(QONRemoteConfigList * _Nullable remoteConfigList, NSError * _Nullable error) {
     [weakSelf performStateSync:^{
-      if ([weakSelf failRemoteConfigListRequestIfUserChangeFailedSince:userChangeFailureGenerationAtStart completion:completion]) {
+      if (request.isCompleted) {
         return;
       }
       if (![weakSelf.productCenterManager isUserStable]) {
-        [weakSelf enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                         includeEmptyContextKey:includeEmptyContextKey
-                                                     completion:completion];
+        [weakSelf enqueueRemoteConfigListRequest:request];
         return;
       }
       QONRemoteConfigCacheScope *currentScope = [weakSelf currentRemoteConfigCacheScope];
@@ -1431,18 +1454,14 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
       BOOL stateMapOrphaned = localLoadingStates != weakSelf.loadingStates;
       if (scopeChanged || stateMapOrphaned) {
         if (contextKeys) {
-          [weakSelf obtainRemoteConfigListWithContextKeys:contextKeys
-                                  includeEmptyContextKey:includeEmptyContextKey
-                                              completion:completion];
+          [weakSelf processRemoteConfigListRequestWithContextKeys:request];
         } else {
-          [weakSelf obtainRemoteConfigList:completion];
+          [weakSelf processRemoteConfigListRequest:request];
         }
         return;
       }
       if (![weakSelf.productCenterManager isUserStable]) {
-        [weakSelf enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                         includeEmptyContextKey:includeEmptyContextKey
-                                                     completion:completion];
+        [weakSelf enqueueRemoteConfigListRequest:request];
         return;
       }
 
@@ -1462,9 +1481,7 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
             // network instead of pinning the fallback until invalidation.
             BOOL usedDiskLKG = diskConfigs.count > 0;
             if (![weakSelf.productCenterManager isUserStable]) {
-              [weakSelf enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                               includeEmptyContextKey:includeEmptyContextKey
-                                                           completion:completion];
+              [weakSelf enqueueRemoteConfigListRequest:request];
               return;
             }
             weakSelf.lastDeliveryOrigin = usedDiskLKG
@@ -1472,28 +1489,20 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
                 : QONRemoteConfigDeliveryOriginBundle;
             QONVERSION_LOG(@"⚠️ Serving %@ remote config list after a transient refresh failure (%@)", usedDiskLKG ? @"disk/bundle last-known-good" : @"bundled fallback", error.localizedDescription);
             QONRemoteConfigList *fallbackList = [[QONRemoteConfigList alloc] initWithRemoteConfigs:mergedConfigs];
-            [weakSelf deferUserCallback:^{
-              completion(fallbackList, nil);
-            }];
+            [weakSelf completeRemoteConfigListRequest:request remoteConfigList:fallbackList error:nil];
             return;
           }
         }
         if (![weakSelf.productCenterManager isUserStable]) {
-          [weakSelf enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                           includeEmptyContextKey:includeEmptyContextKey
-                                                       completion:completion];
+          [weakSelf enqueueRemoteConfigListRequest:request];
           return;
         }
-        [weakSelf deferUserCallback:^{
-          completion(nil, error);
-        }];
+        [weakSelf completeRemoteConfigListRequest:request remoteConfigList:nil error:error];
         return;
       }
 
       if (![weakSelf.productCenterManager isUserStable]) {
-        [weakSelf enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                         includeEmptyContextKey:includeEmptyContextKey
-                                                     completion:completion];
+        [weakSelf enqueueRemoteConfigListRequest:request];
         return;
       }
       weakSelf.lastDeliveryOrigin = QONRemoteConfigDeliveryOriginServer;
@@ -1514,14 +1523,10 @@ static BOOL QONRemoteConfigIsExactIntegralNumber(id value) {
       }
 
       if (![weakSelf.productCenterManager isUserStable]) {
-        [weakSelf enqueueRemoteConfigListRequestWithContextKeys:contextKeys
-                                         includeEmptyContextKey:includeEmptyContextKey
-                                                     completion:completion];
+        [weakSelf enqueueRemoteConfigListRequest:request];
         return;
       }
-      [weakSelf deferUserCallback:^{
-        completion(remoteConfigList, nil);
-      }];
+      [weakSelf completeRemoteConfigListRequest:request remoteConfigList:remoteConfigList error:nil];
     }];
   };
 }

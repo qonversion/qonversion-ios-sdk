@@ -37,6 +37,7 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigDeliveryOrigin) {
 
 - (instancetype)initWithLocalStorage:(nullable id<QNLocalStorage>)localStorage;
 
+- (void)userChangingRequestStarted;
 - (void)userChangingRequestFailedWithError:(NSError *)error;
 - (void)handlePendingRequests;
 - (void)obtainRemoteConfigWithContextKey:(NSString * _Nullable)contextKey completion:(QONRemoteConfigCompletionHandler)completion;

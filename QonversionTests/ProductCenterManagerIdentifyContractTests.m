@@ -45,7 +45,6 @@
 @property (nonatomic) NSError *launchError;
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL identityInProgress;
-@property (nonatomic, copy) NSString *pendingIdentityUserID;
 
 - (void)processIdentity:(NSString *)identityId;
 - (void)resetActualPermissionsCache;
@@ -142,11 +141,14 @@
   OCMStub([_mockUserInfoService obtainUserID]).andReturn(currentUid);
   OCMStub([_mockIdentityManager identify:identityId completion:[OCMArg invokeBlockWithArgs:mergedUid, [NSNull null], nil]]);
   OCMStub([_partialManagerMock resetActualPermissionsCache]);
-  OCMStub([_partialManagerMock launchWithTrigger:QONRequestTriggerIdentify completion:[OCMArg any]]);
+  OCMStub([_partialManagerMock launchWithTrigger:QONRequestTriggerIdentify completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONLaunchCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    completion([QONLaunchResult new], nil);
+  });
 
   _manager.launchingFinished = YES;
   _manager.identityInProgress = YES;
-  _manager.pendingIdentityUserID = identityId;
 
   __block BOOL stableDuringUserTransition = YES;
   OCMStub([_mockRemoteConfigManager userHasBeenChangedToUserID:mergedUid]).andDo(^(NSInvocation *invocation) {

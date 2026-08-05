@@ -120,6 +120,7 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
 
 @property (nonatomic, strong) NSMutableDictionary<NSString *, QONRemoteConfigLoadingState *> *loadingStates;
 @property (nonatomic, strong) NSMutableArray<QONRemoteConfigListRequestData *> *listRequests;
+@property (nonatomic, strong) NSMutableArray<QONRemoteConfigListRequestData *> *activeListRequests;
 @property (atomic, assign) NSUInteger cacheGeneration;
 - (QONRemoteConfigLoadingState *)loadingStateForContextKey:(NSString *)contextKey;
 - (BOOL)isOnStateQueue;
@@ -725,8 +726,15 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
   XCTAssertNotNil(propertyFlush);
   userStable = NO;
   [self.manager userChangingRequestFailedWithError:identityError];
-  XCTAssertEqual(deliveries, 0);
+  XCTAssertEqual(deliveries, 1, @"identity failure must terminate an async preflight without waiting for its callback");
+  XCTAssertEqual(deliveredError, identityError);
 
+  // Even if a subsequent identity attempt succeeds before this old preflight
+  // returns, the operation that crossed the first terminal failure must not be
+  // replayed silently under a different outcome.
+  [self.manager userChangingRequestStarted];
+  userStable = YES;
+  [self.manager handlePendingRequests];
   propertyFlush();
 
   XCTAssertEqual(deliveries, 1);
@@ -734,7 +742,7 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
   XCTAssertEqual(self.manager.listRequests.count, 0);
 }
 
-- (void)testSuccessfulIdentityBoundaryClearsLatchedListFailure {
+- (void)testNewUserChangeAttemptClearsLatchedListFailure {
   __block BOOL userStable = NO;
   OCMStub([self.mockProductCenterManager isUserStable]).andDo(^(NSInvocation *invocation) {
     [invocation setReturnValue:&userStable];
@@ -749,9 +757,7 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
   }];
   XCTAssertEqual(failedDeliveries, 1);
 
-  userStable = YES;
-  [self.manager handlePendingRequests];
-  userStable = NO;
+  [self.manager userChangingRequestStarted];
   __block NSUInteger nextAttemptDeliveries = 0;
   [self.manager obtainRemoteConfigList:^(QONRemoteConfigList * _Nullable list, NSError * _Nullable error) {
     nextAttemptDeliveries += 1;
@@ -788,13 +794,52 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
   XCTAssertNotNil(serviceCompletion);
   userStable = NO;
   [self.manager userChangingRequestFailedWithError:identityError];
-  XCTAssertEqual(deliveries, 0);
+  XCTAssertEqual(deliveries, 1, @"identity failure must terminate an in-flight list without waiting for the network callback");
+  XCTAssertEqual(deliveredError, identityError);
 
+  [self.manager userChangingRequestStarted];
+  userStable = YES;
+  [self.manager handlePendingRequests];
   serviceCompletion([[QONRemoteConfigList alloc] initWithRemoteConfigs:@[]], nil);
 
   XCTAssertEqual(deliveries, 1);
   XCTAssertEqual(deliveredError, identityError);
   XCTAssertEqual(self.manager.listRequests.count, 0);
+}
+
+- (void)testSingleRequestAfterFailedUserChangeTerminatesAndNextAttemptUsesItsOwnError {
+  __block BOOL userStable = NO;
+  OCMStub([self.mockProductCenterManager isUserStable]).andDo(^(NSInvocation *invocation) {
+    [invocation setReturnValue:&userStable];
+  });
+  NSError *firstError = [NSError errorWithDomain:@"identity" code:21 userInfo:nil];
+  NSError *secondError = [NSError errorWithDomain:@"identity" code:22 userInfo:nil];
+  [self.manager userChangingRequestFailedWithError:firstError];
+
+  __block NSUInteger firstDeliveries = 0;
+  __block NSError *firstDeliveredError = nil;
+  __block BOOL callbackRanOnStateQueue = YES;
+  [self.manager obtainRemoteConfigWithContextKey:@"ctx" completion:^(QONRemoteConfig * _Nullable config, NSError * _Nullable error) {
+    firstDeliveries += 1;
+    firstDeliveredError = error;
+    callbackRanOnStateQueue = [self.manager isOnStateQueue];
+  }];
+  XCTAssertEqual(firstDeliveries, 1);
+  XCTAssertEqual(firstDeliveredError, firstError);
+  XCTAssertFalse(callbackRanOnStateQueue);
+
+  [self.manager userChangingRequestStarted];
+  __block NSUInteger secondDeliveries = 0;
+  __block NSError *secondDeliveredError = nil;
+  [self.manager obtainRemoteConfigWithContextKey:@"ctx" completion:^(QONRemoteConfig * _Nullable config, NSError * _Nullable error) {
+    secondDeliveries += 1;
+    secondDeliveredError = error;
+  }];
+  XCTAssertEqual(secondDeliveries, 0, @"a request during the next active attempt must wait for that attempt");
+
+  [self.manager userChangingRequestFailedWithError:secondError];
+  XCTAssertEqual(secondDeliveries, 1);
+  XCTAssertEqual(secondDeliveredError, secondError);
 }
 
 - (void)testUnstableUserDuringSinglePreflightDefersAllWaitersUntilOneFreshReplay {
@@ -915,20 +960,54 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
     deliveries += 1;
   }];
   XCTAssertEqual(propertyFlushes.count, 1);
+  XCTAssertEqual(self.manager.activeListRequests.count, 1);
   userStable = NO;
   propertyFlushes[0]();
   XCTAssertEqual(serviceCompletions.count, 0);
   XCTAssertEqual(self.manager.listRequests.count, 1);
+  XCTAssertEqual(self.manager.activeListRequests.count, 1, @"a replay must retain the one external request record");
 
   [self.manager handlePendingRequests];
   XCTAssertEqual(self.manager.listRequests.count, 1, @"unstable replay must not duplicate the queued completion");
+  XCTAssertEqual(self.manager.activeListRequests.count, 1);
   userStable = YES;
   [self.manager handlePendingRequests];
   XCTAssertEqual(propertyFlushes.count, 2);
+  XCTAssertEqual(self.manager.activeListRequests.count, 1);
   propertyFlushes[1]();
   XCTAssertEqual(serviceCompletions.count, 1);
   serviceCompletions[0]([[QONRemoteConfigList alloc] initWithRemoteConfigs:@[QONTestRemoteConfig(@"fresh", @"ctx", @"fresh")]], nil);
   XCTAssertEqual(deliveries, 1);
+  XCTAssertEqual(self.manager.activeListRequests.count, 0);
+}
+
+- (void)testListSuccessIsCommittedBeforeLaterIdentityFailure {
+  [self stubUserStableAndImmediatePropertiesFlush];
+  __block QONRemoteConfigListCompletionHandler serviceCompletion = nil;
+  OCMStub([self.mockService loadRemoteConfigList:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONRemoteConfigListCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:2];
+    serviceCompletion = [completion copy];
+  });
+
+  __block NSUInteger deliveries = 0;
+  __block NSError *deliveredError = nil;
+  __block NSUInteger activeCountSeenByCallback = NSNotFound;
+  [self.manager obtainRemoteConfigList:^(QONRemoteConfigList * _Nullable list, NSError * _Nullable error) {
+    deliveries += 1;
+    deliveredError = error;
+    activeCountSeenByCallback = self.manager.activeListRequests.count;
+  }];
+  XCTAssertEqual(self.manager.activeListRequests.count, 1);
+
+  serviceCompletion([[QONRemoteConfigList alloc] initWithRemoteConfigs:@[]], nil);
+  XCTAssertEqual(deliveries, 1);
+  XCTAssertNil(deliveredError);
+  XCTAssertEqual(activeCountSeenByCallback, 0, @"terminal state must be committed before the user callback runs");
+  XCTAssertEqual(self.manager.activeListRequests.count, 0);
+
+  [self.manager userChangingRequestFailedWithError:[NSError errorWithDomain:@"identity" code:99 userInfo:nil]];
+  XCTAssertEqual(deliveries, 1, @"a later identity failure must not replace an already committed success");
 }
 
 - (void)testUnstableUserAtUnfilteredListResponseMovesCompletionOnceUntilPendingReplay {
