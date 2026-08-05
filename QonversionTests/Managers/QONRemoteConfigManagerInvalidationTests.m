@@ -658,6 +658,145 @@ static NSDictionary *QONTestRemoteConfigResponse(NSString *identifier, NSString 
   XCTAssertNotNil(lateError);
 }
 
+- (void)testFailedUserChangeDrainsQueuedListsExactlyOnceOutsideStateQueue {
+  OCMStub([self.mockProductCenterManager isUserStable]).andReturn(NO);
+  NSError *identityError = [NSError errorWithDomain:@"identity" code:17 userInfo:nil];
+  __block NSUInteger keyedDeliveries = 0;
+  __block NSUInteger unfilteredDeliveries = 0;
+  __block NSUInteger reentrantDeliveries = 0;
+  __block BOOL callbackRanOnStateQueue = YES;
+  __block NSError *keyedError = nil;
+  __block NSError *unfilteredError = nil;
+  __block NSError *reentrantError = nil;
+
+  [self.manager obtainRemoteConfigListWithContextKeys:@[@"ctx"]
+                              includeEmptyContextKey:NO
+                                          completion:^(QONRemoteConfigList * _Nullable list, NSError * _Nullable error) {
+    keyedDeliveries += 1;
+    keyedError = error;
+    callbackRanOnStateQueue = [self.manager isOnStateQueue];
+    [self.manager obtainRemoteConfigList:^(QONRemoteConfigList * _Nullable reentrantList, NSError * _Nullable reentrantRequestError) {
+      reentrantDeliveries += 1;
+      reentrantError = reentrantRequestError;
+    }];
+  }];
+  [self.manager obtainRemoteConfigList:^(QONRemoteConfigList * _Nullable list, NSError * _Nullable error) {
+    unfilteredDeliveries += 1;
+    unfilteredError = error;
+  }];
+  XCTAssertEqual(self.manager.listRequests.count, 2);
+
+  [self.manager userChangingRequestFailedWithError:identityError];
+
+  XCTAssertEqual(keyedDeliveries, 1);
+  XCTAssertEqual(unfilteredDeliveries, 1);
+  XCTAssertEqual(reentrantDeliveries, 1, @"a post-failure list request must terminate instead of joining an orphaned queue");
+  XCTAssertEqual(keyedError, identityError);
+  XCTAssertEqual(unfilteredError, identityError);
+  XCTAssertEqual(reentrantError, identityError);
+  XCTAssertFalse(callbackRanOnStateQueue, @"list callbacks must run after the state transaction is committed");
+  XCTAssertEqual(self.manager.listRequests.count, 0);
+
+  [self.manager userChangingRequestFailedWithError:identityError];
+  XCTAssertEqual(keyedDeliveries, 1);
+  XCTAssertEqual(unfilteredDeliveries, 1);
+  XCTAssertEqual(reentrantDeliveries, 1);
+}
+
+- (void)testListPreflightCrossingFailedUserChangeTerminatesInsteadOfLateEnqueue {
+  __block BOOL userStable = YES;
+  OCMStub([self.mockProductCenterManager isUserStable]).andDo(^(NSInvocation *invocation) {
+    [invocation setReturnValue:&userStable];
+  });
+  __block QONUserPropertiesEmptyCompletionHandler propertyFlush = nil;
+  OCMStub([self.mockUserPropertiesManager forceSendProperties:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONUserPropertiesEmptyCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:2];
+    propertyFlush = [completion copy];
+  });
+  NSError *identityError = [NSError errorWithDomain:@"identity" code:18 userInfo:nil];
+  __block NSUInteger deliveries = 0;
+  __block NSError *deliveredError = nil;
+
+  [self.manager obtainRemoteConfigListWithContextKeys:@[@"ctx"] includeEmptyContextKey:NO completion:^(QONRemoteConfigList * _Nullable list, NSError * _Nullable error) {
+    deliveries += 1;
+    deliveredError = error;
+  }];
+  XCTAssertNotNil(propertyFlush);
+  userStable = NO;
+  [self.manager userChangingRequestFailedWithError:identityError];
+  XCTAssertEqual(deliveries, 0);
+
+  propertyFlush();
+
+  XCTAssertEqual(deliveries, 1);
+  XCTAssertEqual(deliveredError, identityError);
+  XCTAssertEqual(self.manager.listRequests.count, 0);
+}
+
+- (void)testSuccessfulIdentityBoundaryClearsLatchedListFailure {
+  __block BOOL userStable = NO;
+  OCMStub([self.mockProductCenterManager isUserStable]).andDo(^(NSInvocation *invocation) {
+    [invocation setReturnValue:&userStable];
+  });
+  NSError *identityError = [NSError errorWithDomain:@"identity" code:20 userInfo:nil];
+  [self.manager userChangingRequestFailedWithError:identityError];
+
+  __block NSUInteger failedDeliveries = 0;
+  [self.manager obtainRemoteConfigList:^(QONRemoteConfigList * _Nullable list, NSError * _Nullable error) {
+    failedDeliveries += 1;
+    XCTAssertEqual(error, identityError);
+  }];
+  XCTAssertEqual(failedDeliveries, 1);
+
+  userStable = YES;
+  [self.manager handlePendingRequests];
+  userStable = NO;
+  __block NSUInteger nextAttemptDeliveries = 0;
+  [self.manager obtainRemoteConfigList:^(QONRemoteConfigList * _Nullable list, NSError * _Nullable error) {
+    nextAttemptDeliveries += 1;
+  }];
+
+  XCTAssertEqual(nextAttemptDeliveries, 0, @"a new identity window must not inherit the previous attempt's terminal error");
+  XCTAssertEqual(self.manager.listRequests.count, 1);
+}
+
+- (void)testListResponseCrossingFailedUserChangeTerminatesInsteadOfLateEnqueue {
+  __block BOOL userStable = YES;
+  OCMStub([self.mockProductCenterManager isUserStable]).andDo(^(NSInvocation *invocation) {
+    [invocation setReturnValue:&userStable];
+  });
+  OCMStub([self.mockUserPropertiesManager forceSendProperties:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONUserPropertiesEmptyCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:2];
+    if (completion) completion();
+  });
+  __block QONRemoteConfigListCompletionHandler serviceCompletion = nil;
+  OCMStub([self.mockService loadRemoteConfigList:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONRemoteConfigListCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:2];
+    serviceCompletion = [completion copy];
+  });
+  NSError *identityError = [NSError errorWithDomain:@"identity" code:19 userInfo:nil];
+  __block NSUInteger deliveries = 0;
+  __block NSError *deliveredError = nil;
+
+  [self.manager obtainRemoteConfigList:^(QONRemoteConfigList * _Nullable list, NSError * _Nullable error) {
+    deliveries += 1;
+    deliveredError = error;
+  }];
+  XCTAssertNotNil(serviceCompletion);
+  userStable = NO;
+  [self.manager userChangingRequestFailedWithError:identityError];
+  XCTAssertEqual(deliveries, 0);
+
+  serviceCompletion([[QONRemoteConfigList alloc] initWithRemoteConfigs:@[]], nil);
+
+  XCTAssertEqual(deliveries, 1);
+  XCTAssertEqual(deliveredError, identityError);
+  XCTAssertEqual(self.manager.listRequests.count, 0);
+}
+
 - (void)testUnstableUserDuringSinglePreflightDefersAllWaitersUntilOneFreshReplay {
   __block BOOL userStable = YES;
   OCMStub([self.mockProductCenterManager isUserStable]).andDo(^(NSInvocation *invocation) {
