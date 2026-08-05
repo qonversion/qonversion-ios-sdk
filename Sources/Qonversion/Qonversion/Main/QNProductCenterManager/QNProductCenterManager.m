@@ -385,10 +385,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       // Keep isUserStable false through the RC boundary transition. Clearing
       // these earlier opens a window where a concurrent caller can consume a
       // pre-identify warm config before invalidation reaches the RC manager.
+      [weakSelf finishIdentityRequest:request error:nil];
       if (mutationLockHeld) {
         [weakSelf.identityMutationLock unlock];
       }
-      [weakSelf finishIdentityRequest:request error:nil];
     } else {
       [weakSelf.remoteConfigManager userHasBeenChangedToUserID:result];
       if (mutationLockHeld) {
@@ -429,15 +429,26 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   [self.identityStateLock unlock];
 
   BOOL isLogoutNeeded = [self.identityManager logoutIfNeeded];
+  NSString *logoutUserID = nil;
   
   if (isLogoutNeeded) {
     [self.userInfoService storeCustomIdentityUserID:nil];
     [self actualizeUserInfo];
     self.unhandledLogoutAvailable = YES;
-    NSString *userID = [self.userInfoService obtainUserID];
-    [self.remoteConfigManager userHasBeenChangedToUserID:userID];
-    
+    logoutUserID = [self.userInfoService obtainUserID];
     [self resetActualPermissionsCache];
+  }
+
+  if (cancelledRequests.count > 0) {
+    // Drain the cancelled identity's Remote Config window while logout still
+    // owns the mutation boundary. A concurrent identify can only queue here,
+    // so this cancellation can never land in the new attempt's window.
+    [self.remoteConfigManager userChangingRequestFailedWithError:cancellationError];
+  }
+  if (isLogoutNeeded) {
+    // Publish the successful logout scope last: this clears the cancellation
+    // latch and makes the original user the only observable stable scope.
+    [self.remoteConfigManager userHasBeenChangedToUserID:logoutUserID];
   }
 
   [self.identityStateLock lock];
@@ -447,12 +458,6 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
   [self.identityMutationLock unlock];
 
-  if (cancelledRequests.count > 0) {
-    // Pending-only identity work also makes Remote Config unstable. Terminate
-    // every waiter after the logout scope has committed, before user callbacks
-    // can re-enter identify:.
-    [self.remoteConfigManager userChangingRequestFailedWithError:cancellationError];
-  }
   for (QNIdentityRequestData *request in cancelledRequests) {
     [self deliverIdentityRequest:request error:cancellationError];
   }
@@ -504,8 +509,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
   @synchronized (self) {
     [self.entitlementsBlocks addObject:completion];
-    [self handlePendingRequests:nil];
   }
+  [self handlePendingRequests:nil];
 }
 
 - (void)handleLogout {
