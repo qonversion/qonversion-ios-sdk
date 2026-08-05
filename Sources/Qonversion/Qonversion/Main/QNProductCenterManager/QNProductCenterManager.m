@@ -417,6 +417,15 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
                                                userInfo:@{NSLocalizedDescriptionKey: @"The identify request was canceled by logout."}];
   [self.identityMutationLock lock];
   [self.identityStateLock lock];
+  if (self.identityLogoutInProgress) {
+    // A synchronous Remote Config callback may re-enter logout while the
+    // outer call still owns this recursive lock. The outer call has already
+    // unlinked the identity and is the sole owner of cancellation + scope
+    // publication; a nested call must not clear its logical boundary.
+    [self.identityStateLock unlock];
+    [self.identityMutationLock unlock];
+    return;
+  }
   self.identityLogoutInProgress = YES;
   QNIdentityRequestData *activeRequest = self.activeIdentityRequest;
   NSMutableArray<QNIdentityRequestData *> *cancelledRequests = [self.pendingIdentityRequests mutableCopy];
