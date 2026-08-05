@@ -524,6 +524,47 @@
   secondIdentityCompletion(nil, cleanupError);
 }
 
+- (void)testReentrantLogoutCannotReleaseOuterLogoutMutationBoundary {
+  _manager.launchingFinished = YES;
+  OCMStub([_mockUserInfoService obtainCustomIdentityUserID]).andReturn(nil);
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"uid_initial");
+  OCMStub([_mockIdentityManager logoutIfNeeded]).andReturn(YES);
+
+  __block NSUInteger identityCallCount = 0;
+  __block QNIdentityCompletionHandler secondIdentityCompletion = nil;
+  OCMStub([_mockIdentityManager identify:[OCMArg any] completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QNIdentityCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    identityCallCount += 1;
+    if (identityCallCount == 2) {
+      secondIdentityCompletion = [completion copy];
+    }
+  });
+
+  __block BOOL secondIdentityStartedInsideDrain = NO;
+  OCMStub([_mockRemoteConfigManager userChangingRequestFailedWithError:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    // Remote Config can deliver multiple deferred callbacks synchronously.
+    // The first callback re-enters logout; a later callback starts identify.
+    // Neither may release the outer logout's ownership boundary.
+    [self.manager logout];
+    [self.manager identify:@"new@example.com" completion:nil];
+    secondIdentityStartedInsideDrain = identityCallCount > 1;
+  });
+
+  [_manager identify:@"active@example.com" completion:nil];
+  XCTAssertEqual(identityCallCount, 1);
+
+  [_manager logout];
+
+  XCTAssertFalse(secondIdentityStartedInsideDrain,
+                 @"a nested logout must not let identify start before the outer scope is published");
+  XCTAssertEqual(identityCallCount, 2,
+                 @"the queued identify should start after the outer logout finishes");
+
+  NSError *cleanupError = [NSError errorWithDomain:@"test" code:902 userInfo:nil];
+  secondIdentityCompletion(nil, cleanupError);
+}
+
 - (void)testSameUIDTerminalCommitRemainsInsideIdentityMutationBoundary {
   _manager.launchingFinished = YES;
   OCMStub([_mockUserInfoService obtainCustomIdentityUserID]).andReturn(nil);
