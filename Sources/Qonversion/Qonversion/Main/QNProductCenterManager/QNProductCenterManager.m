@@ -109,6 +109,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 @property (atomic, assign) BOOL unhandledLogoutAvailable;
 @property (nonatomic, strong) NSLock *identityStateLock;
 @property (nonatomic, strong) NSRecursiveLock *identityMutationLock;
+@property (nonatomic, strong) NSLock *entitlementsBlocksLock;
+@property (nonatomic, strong) NSLock *userInfoBlocksLock;
 @property (nonatomic, strong, nullable) QNIdentityRequestData *activeIdentityRequest;
 @property (nonatomic, strong) NSMutableArray<QNIdentityRequestData *> *pendingIdentityRequests;
 
@@ -148,6 +150,8 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _userInfoBlocks = [NSMutableArray new];
     _identityStateLock = [NSLock new];
     _identityMutationLock = [NSRecursiveLock new];
+    _entitlementsBlocksLock = [NSLock new];
+    _userInfoBlocksLock = [NSLock new];
     _pendingIdentityRequests = [NSMutableArray new];
   }
   
@@ -496,10 +500,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
+  [self.userInfoBlocksLock lock];
   if (!self.launchingFinished) {
     [self.userInfoBlocks addObject:completion];
+    [self.userInfoBlocksLock unlock];
     return;
   }
+  [self.userInfoBlocksLock unlock];
   
   [self actualizeUserInfo];
   QONUser *user = self.user;
@@ -516,9 +523,9 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
 
-  @synchronized (self) {
-    [self.entitlementsBlocks addObject:completion];
-  }
+  [self.entitlementsBlocksLock lock];
+  [self.entitlementsBlocks addObject:completion];
+  [self.entitlementsBlocksLock unlock];
   [self handlePendingRequests:nil];
 }
 
@@ -756,43 +763,43 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)executeEntitlementsBlocksWithError:(NSError *)error {
-  @synchronized (self) {
-    if (self.entitlementsBlocks.count == 0) {
-      return;
-    }
-    
-    NSMutableArray <QONEntitlementsCompletionHandler> *_blocks = [self.entitlementsBlocks copy];
-    [self.entitlementsBlocks removeAllObjects];
-    
-    if (error) {
-      if ([self hasPendingIdentityRequests]) {
-        [self fireEntitlementsBlocks:[_blocks copy] result:@{} error:error];
-      } else {
-        NSDictionary<NSString *, QONEntitlement *> *cachedEntitlements = [self getActualEntitlementsForDefaultState:NO];
-        cachedEntitlements = cachedEntitlements ?: @{};
-        [self fireEntitlementsBlocks:[_blocks copy] result:cachedEntitlements error:error];
-      }
+  [self.entitlementsBlocksLock lock];
+  NSArray<QONEntitlementsCompletionHandler> *blocks = [self.entitlementsBlocks copy];
+  [self.entitlementsBlocks removeAllObjects];
+  [self.entitlementsBlocksLock unlock];
+  if (blocks.count == 0) {
+    return;
+  }
+
+  if (error) {
+    if ([self hasPendingIdentityRequests]) {
+      [self fireEntitlementsBlocks:blocks result:@{} error:error];
     } else {
-      [self prepareEntitlementsResultWithCompletion:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
-        [self fireEntitlementsBlocks:[_blocks copy] result:result ?: @{} error:error];
-      }];
+      NSDictionary<NSString *, QONEntitlement *> *cachedEntitlements = [self getActualEntitlementsForDefaultState:NO];
+      cachedEntitlements = cachedEntitlements ?: @{};
+      [self fireEntitlementsBlocks:blocks result:cachedEntitlements error:error];
     }
+  } else {
+    [self prepareEntitlementsResultWithCompletion:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable resultError) {
+      [self fireEntitlementsBlocks:blocks result:result ?: @{} error:resultError];
+    }];
   }
 }
 
 - (void)executeUserBlocks {
-  @synchronized (self) {
-    NSArray <QONUserInfoCompletionHandler> *blocks = [self.userInfoBlocks copy];
-    if (blocks.count == 0) {
-      return;
-    }
-    
-    [self.userInfoBlocks removeAllObjects];
-    
-    [self actualizeUserInfo];
-    for (QONUserInfoCompletionHandler block in blocks) {
-      run_block_on_main(block, self.user, self.launchError);
-    }
+  [self.userInfoBlocksLock lock];
+  NSArray<QONUserInfoCompletionHandler> *blocks = [self.userInfoBlocks copy];
+  [self.userInfoBlocks removeAllObjects];
+  [self.userInfoBlocksLock unlock];
+  if (blocks.count == 0) {
+    return;
+  }
+
+  [self actualizeUserInfo];
+  QONUser *user = self.user;
+  NSError *error = self.launchError;
+  for (QONUserInfoCompletionHandler block in blocks) {
+    run_block_on_main(block, user, error);
   }
 }
 
