@@ -13,7 +13,6 @@
 #import "QONFallbackService.h"
 #import "QONRemoteConfigManager.h"
 #import "QONRequestTrigger.h"
-#import "QNTestConstants.h"
 #import "Helpers/XCTestCase+TestJSON.h"
 
 @interface QNProductCenterManager (RestoreTestPrivate)
@@ -23,16 +22,19 @@
 @property (nonatomic) QNAPIClient *apiClient;
 @property (nonatomic) QONLaunchResult *launchResult;
 @property (nonatomic) NSError *launchError;
+@property (nonatomic) QONUser *user;
 @property (nonatomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL receiptRestoreInProgress;
 @property (nonatomic, assign) BOOL restoreInProgress;
 @property (nonatomic, assign) BOOL awaitingRestoreResult;
+@property (nonatomic, assign) BOOL unhandledLogoutAvailable;
 @property (nonatomic, strong) NSRecursiveLock *identityMutationLock;
 
 - (void)handleUserSwitchIfNeededWithResult:(QONLaunchResult *)result;
 - (void)restoreReceipt:(QNRestoreCompletionHandler)completion;
 - (void)restoreTransactions:(QNRestoreCompletionHandler)completion;
 - (void)handleRestoreCompletedTransactionsFinished;
+- (void)actualizeEntitlements:(QONEntitlementsCompletionHandler)completion;
 
 @end
 
@@ -268,6 +270,73 @@
   XCTAssertFalse(publishedLateScope, @"a transaction restore older than logout must not publish its Remote Config scope");
   XCTAssertNotEqualObjects(_manager.launchResult.uid, @"qonversion_user_id");
   XCTAssertEqual(restoreError.code, NSURLErrorCancelled);
+}
+
+- (void)testOrdinaryLaunchResponseCannotOverwriteNewerRestoreScopeState {
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_initial");
+  __block void (^launchCompletion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+  OCMStub([_mockClient launchRequest:QONRequestTriggerActualizePermissions completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    launchCompletion = [completion copy];
+  });
+
+  QONUser *sentinelUser = (QONUser *)[NSObject new];
+  _manager.user = sentinelUser;
+  __block NSError *launchError = nil;
+  [_manager launch:QONRequestTriggerActualizePermissions completion:^(QONLaunchResult *result, NSError *error) {
+    launchError = error;
+  }];
+  XCTAssertNotNil(launchCompletion);
+
+  QONLaunchResult *restoreResult = [[QONLaunchResult alloc] init];
+  restoreResult.uid = @"restored_user";
+  [_manager handleUserSwitchIfNeededWithResult:restoreResult];
+
+  NSDictionary *oldScopeResponse = [self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON];
+  launchCompletion(oldScopeResponse, nil);
+
+  XCTAssertEqual(_manager.user, sentinelUser,
+                 @"an old ordinary launch must be rejected before mapper state is written");
+  XCTAssertEqual(launchError.code, NSURLErrorCancelled);
+}
+
+- (void)testStaleActualizeResponseCannotDisarmPendingLogoutRefresh {
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_initial");
+  OCMStub([_mockIdentityManager logoutIfNeeded]).andReturn(YES);
+  NSDictionary *response = [self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON];
+
+  __block void (^actualizeResponse)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+  OCMStub([_mockClient launchRequest:QONRequestTriggerActualizePermissions completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    actualizeResponse = [completion copy];
+  });
+  __block BOOL logoutRefreshStarted = NO;
+  OCMStub([_mockClient launchRequest:QONRequestTriggerLogout completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    logoutRefreshStarted = YES;
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    completion(response, nil);
+  });
+
+  XCTestExpectation *actualizeExpectation = [self expectationWithDescription:@"stale actualize completes"];
+  __block NSError *actualizeError = nil;
+  [_manager actualizeEntitlements:^(NSDictionary<NSString *, QONEntitlement *> *entitlements, NSError *error) {
+    actualizeError = error;
+    [actualizeExpectation fulfill];
+  }];
+  XCTAssertNotNil(actualizeResponse);
+
+  [_manager logout];
+  XCTAssertTrue(_manager.unhandledLogoutAvailable);
+  actualizeResponse(response, nil);
+
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+  XCTAssertEqual(actualizeError.code, NSURLErrorCancelled);
+  XCTAssertTrue(logoutRefreshStarted,
+                @"the stale actualize callback must not clear the pending logout refresh");
+  XCTAssertFalse(_manager.unhandledLogoutAvailable);
 }
 
 - (void)testHandleUserSwitch_NilResult_NoSwitch {

@@ -120,6 +120,33 @@
   [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
 }
 
+- (void)testLaunchingFinishedWaitsForEveryConcurrentLaunchTicket {
+  __block void (^firstResponse)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+  __block void (^secondResponse)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+  OCMStub([_mockClient launchRequest:QONRequestTriggerInit completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    firstResponse = [completion copy];
+  });
+  OCMStub([_mockClient launchRequest:QONRequestTriggerProducts completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    secondResponse = [completion copy];
+  });
+
+  [_manager launch:QONRequestTriggerInit completion:^(QONLaunchResult *result, NSError *error) {}];
+  [_manager launch:QONRequestTriggerProducts completion:^(QONLaunchResult *result, NSError *error) {}];
+  XCTAssertFalse(_manager.launchingFinished);
+
+  NSDictionary *response = [self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON];
+  firstResponse(response, nil);
+  XCTAssertFalse(_manager.launchingFinished,
+                 @"one response must not make the manager stable while another launch is in flight");
+
+  secondResponse(response, nil);
+  XCTAssertTrue(_manager.launchingFinished);
+}
+
 - (void)testThatCheckPermissionStoreBlocksWhenLaunchingIsActive {
   // Given
   
