@@ -147,6 +147,23 @@
   XCTAssertTrue(_manager.launchingFinished);
 }
 
+- (void)testFinalLaunchTicketDrainsUserInfoQueuedAfterWrapperSnapshot {
+  NSDictionary *response = [self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON];
+  OCMStub([_mockClient launchRequest:QONRequestTriggerInit completion:([OCMArg invokeBlockWithArgs:response, [NSNull null], nil])]);
+  __block NSUInteger userCallbacks = 0;
+
+  [_manager launchWithTrigger:QONRequestTriggerInit completion:^(QONLaunchResult *result, NSError *error) {
+    // The wrapper already performed its first userInfo snapshot, but the
+    // low-level launch ticket has not yet made launchingFinished true.
+    [self.manager userInfo:^(QONUser *user, NSError *userError) {
+      userCallbacks += 1;
+    }];
+  }];
+
+  XCTAssertEqual(userCallbacks, 1);
+  XCTAssertTrue(_manager.launchingFinished);
+}
+
 - (void)testThatCheckPermissionStoreBlocksWhenLaunchingIsActive {
   // Given
   

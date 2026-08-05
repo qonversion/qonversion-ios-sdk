@@ -34,6 +34,7 @@
 - (void)restoreReceipt:(QNRestoreCompletionHandler)completion;
 - (void)restoreTransactions:(QNRestoreCompletionHandler)completion;
 - (void)handleRestoreCompletedTransactionsFinished;
+- (void)handleRestoreCompletedTransactionsFailed:(NSError *)error;
 - (void)actualizeEntitlements:(QONEntitlementsCompletionHandler)completion;
 
 @end
@@ -337,6 +338,89 @@
   XCTAssertTrue(logoutRefreshStarted,
                 @"the stale actualize callback must not clear the pending logout refresh");
   XCTAssertFalse(_manager.unhandledLogoutAvailable);
+}
+
+- (void)testSupersededLaunchDrainsEveryLaunchDependentCallbackQueue {
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_initial");
+  OCMStub([_mockUserInfoService obtainCustomIdentityUserID]).andReturn(nil);
+  OCMStub([_mockIdentityManager logoutIfNeeded]).andReturn(NO);
+
+  __block void (^launchResponse)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+  OCMStub([_mockClient launchRequest:QONRequestTriggerInit completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    launchResponse = [completion copy];
+  });
+
+  __block NSUInteger userCallbacks = 0;
+  __block NSUInteger productCallbacks = 0;
+  __block NSUInteger offeringCallbacks = 0;
+  __block NSError *userError = nil;
+  __block NSError *productError = nil;
+  __block NSError *offeringError = nil;
+  [_manager launchWithTrigger:QONRequestTriggerInit completion:nil];
+  [_manager userInfo:^(QONUser *user, NSError *error) {
+    userCallbacks += 1;
+    userError = error;
+  }];
+  [_manager products:^(NSDictionary<NSString *, QONProduct *> *products, NSError *error) {
+    productCallbacks += 1;
+    productError = error;
+  }];
+  [_manager offerings:^(QONOfferings *offerings, NSError *error) {
+    offeringCallbacks += 1;
+    offeringError = error;
+  }];
+
+  [_manager logout];
+  NSDictionary *response = [self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON];
+  launchResponse(response, nil);
+
+  XCTAssertEqual(userCallbacks, 1);
+  XCTAssertEqual(productCallbacks, 1);
+  XCTAssertEqual(offeringCallbacks, 1);
+  XCTAssertEqual(userError.code, NSURLErrorCancelled);
+  XCTAssertEqual(productError.code, NSURLErrorCancelled);
+  XCTAssertEqual(offeringError.code, NSURLErrorCancelled);
+  XCTAssertTrue([_manager isUserStable]);
+}
+
+- (void)testReceiptRestoreMakesUserUnstableUntilItsTerminalDrain {
+  _manager.launchingFinished = YES;
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"qonversion_user_id");
+
+  __block void (^receiptResponse)(NSString *) = nil;
+  __block void (^launchResponse)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+  OCMStub([_mockStoreKitService receipt:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSString *) = nil;
+    [invocation getArgument:&completion atIndex:2];
+    receiptResponse = [completion copy];
+  });
+  OCMStub([_mockClient launchRequest:QONRequestTriggerRestore completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    launchResponse = [completion copy];
+  });
+
+  [_manager restoreReceipt:nil];
+  XCTAssertFalse([_manager isUserStable]);
+  receiptResponse(@"receipt");
+  XCTAssertFalse([_manager isUserStable]);
+
+  NSDictionary *response = [self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON];
+  launchResponse(response, nil);
+  XCTAssertTrue([_manager isUserStable]);
+}
+
+- (void)testTransactionRestoreMakesUserUnstableUntilItsTerminalDrain {
+  _manager.launchingFinished = YES;
+
+  [_manager restoreTransactions:nil];
+  XCTAssertFalse([_manager isUserStable]);
+
+  NSError *restoreError = [NSError errorWithDomain:@"test" code:903 userInfo:nil];
+  [_manager handleRestoreCompletedTransactionsFailed:restoreError];
+  XCTAssertTrue([_manager isUserStable]);
 }
 
 - (void)testHandleUserSwitch_NilResult_NoSwitch {
