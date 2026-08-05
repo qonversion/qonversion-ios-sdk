@@ -310,6 +310,30 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion;
 
 /**
+ Reads a generated Remote Config default directly from
+ `qonversion_remote_config_defaults.json` in the application bundle.
+
+ This class method is synchronous and can be called before initWithConfig:. It
+ never initializes the SDK and never consults the network, identity, cache, or
+ Documents directory. Returns nil when the key is absent or the complete
+ artifact is missing or invalid. A JSON null is returned as NSNull.
+
+ @param contextKey context key whose bundled default should be returned.
+ */
++ (nullable id)fallbackRemoteConfigValueForContextKey:(NSString *)contextKey
+NS_SWIFT_NAME(fallbackRemoteConfigValue(contextKey:));
+
+/**
+ Instance convenience for the bundled Remote Config default getter. This has
+ the same bundle-only behavior as the class method and does not use instance
+ state.
+
+ @param contextKey context key whose bundled default should be returned.
+ */
+- (nullable id)fallbackRemoteConfigValueForContextKey:(NSString *)contextKey
+NS_SWIFT_NAME(fallbackRemoteConfigValue(contextKey:));
+
+/**
  Invalidates the in-memory cache of remote configs so the next remoteConfig or
  remoteConfigList call fetches a fresh targeting evaluation from the server
  instead of returning the cached copy.

@@ -15,6 +15,7 @@
 #import "QONExceptionManager.h"
 #import "QONUserProperty.h"
 #import "QONFallbackService.h"
+#import "QONRemoteConfigFallbackStore.h"
 #import "QONRedemptionManager.h"
 
 static id shared = nil;
@@ -247,6 +248,19 @@ static bool _isInitialized = NO;
 
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion {
   [self.remoteConfigManager obtainRemoteConfigList:completion];
+}
+
++ (id)fallbackRemoteConfigValueForContextKey:(NSString *)contextKey {
+  static QONRemoteConfigFallbackStore *fallbackStore = nil;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    fallbackStore = [[QONRemoteConfigFallbackStore alloc] initWithBundle:NSBundle.mainBundle];
+  });
+  return [fallbackStore valueForContextKey:contextKey];
+}
+
+- (id)fallbackRemoteConfigValueForContextKey:(NSString *)contextKey {
+  return [Qonversion fallbackRemoteConfigValueForContextKey:contextKey];
 }
 
 - (void)invalidateRemoteConfigsCache {

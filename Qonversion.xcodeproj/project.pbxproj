@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B2F000012F60000100000001 /* QONRemoteConfigFallbackStore.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */; };
+		B2F000022F60000100000002 /* QONRemoteConfigFallbackStore.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */; };
+		B2F000032F60000100000003 /* QONRemoteConfigFallbackStoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F000132F60000100000013 /* QONRemoteConfigFallbackStoreTests.m */; };
+		B2F000042F60000100000004 /* qonversion_remote_config_defaults.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */; };
+		B2F000052F60000100000005 /* qonversion_remote_config_defaults.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */; };
+		B2F000062F60000100000006 /* qonversion_remote_config_defaults_all_types.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000152F60000100000015 /* qonversion_remote_config_defaults_all_types.json */; };
+		B2F000072F60000100000007 /* qonversion_remote_config_defaults_number_boundaries.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000162F60000100000016 /* qonversion_remote_config_defaults_number_boundaries.json */; };
 		0A17440D00C09DABC1E2B1D3 /* QONEntitlementsUpdateListenerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */; };
 		15EE5F2E2F6CBF096CB24CBA /* NoCodesLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */; };
 		176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -350,6 +357,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigFallbackStore.h; sourceTree = "<group>"; };
+		B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigFallbackStore.m; sourceTree = "<group>"; };
+		B2F000132F60000100000013 /* QONRemoteConfigFallbackStoreTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigFallbackStoreTests.m; sourceTree = "<group>"; };
+		B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = qonversion_remote_config_defaults.json; sourceTree = "<group>"; };
+		B2F000152F60000100000015 /* qonversion_remote_config_defaults_all_types.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = qonversion_remote_config_defaults_all_types.json; sourceTree = "<group>"; };
+		B2F000162F60000100000016 /* qonversion_remote_config_defaults_number_boundaries.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = qonversion_remote_config_defaults_number_boundaries.json; sourceTree = "<group>"; };
 		02B82604A89181D262616958 /* NoCodesContextBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesContextBuilder.swift; sourceTree = "<group>"; };
 		0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONEntitlementsUpdateListenerAdapter.m; sourceTree = "<group>"; };
 		1037791CABEE4F1611A8561E /* Pods-Watch Sample Watch App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.release.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.release.xcconfig"; sourceTree = "<group>"; };
@@ -739,6 +752,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B2F000202F60000100000020 /* QONRemoteConfigFallbackStore */ = {
+			isa = PBXGroup;
+			children = (
+				B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */,
+				B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */,
+			);
+			path = QONRemoteConfigFallbackStore;
+			sourceTree = "<group>";
+		};
 		223E7B74704F72F8689D201D /* QONRedemptionManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -929,6 +951,9 @@
 		459DAC0E243E4E530011ECF3 /* Stubs */ = {
 			isa = PBXGroup;
 			children = (
+				B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */,
+				B2F000152F60000100000015 /* qonversion_remote_config_defaults_all_types.json */,
+				B2F000162F60000100000016 /* qonversion_remote_config_defaults_number_boundaries.json */,
 				70893C992B3EC136002C6B82 /* expected_entitlements.json */,
 				45FFA2EC24BEF379007EFB8F /* full_init.json */,
 				45FFA2DF24BE1548007EFB8F /* broken_data.json */,
@@ -1718,6 +1743,7 @@
 		8957326A26DD03A3009507A6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				B2F000202F60000100000020 /* QONRemoteConfigFallbackStore */,
 				7042E7812C1C5DB700C5AECF /* QONFallbackService */,
 				70D05A9029C9FF2C00EA5DDF /* QONRemoteConfigService */,
 				8957326B26DD03A3009507A6 /* QNStoreKitService */,
@@ -1790,6 +1816,7 @@
 		89A192A32604973200C3FCD9 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				B2F000132F60000100000013 /* QONRemoteConfigFallbackStoreTests.m */,
 				89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */,
 				89673C2826F35D29008D209A /* QNIdentityServiceTests.m */,
 			);
@@ -1839,6 +1866,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2F000012F60000100000001 /* QONRemoteConfigFallbackStore.h in Headers */,
 				895732F026DD03A3009507A6 /* QNErrorsMapper.h in Headers */,
 				895732E026DD03A3009507A6 /* QONOfferings+Protected.h in Headers */,
 				895732FD26DD03A3009507A6 /* QNStoreKitService.h in Headers */,
@@ -2098,6 +2126,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2F000052F60000100000005 /* qonversion_remote_config_defaults.json in Resources */,
 				454EF64824E5CC5A0070581E /* Assets.xcassets in Resources */,
 				706AC1FA2E68CE0D00ADA6CB /* nocodes_fallbacks.json in Resources */,
 				70CB7CE42C2DB37A00241FF1 /* qonversion_ios_fallbacks.json in Resources */,
@@ -2124,6 +2153,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2F000042F60000100000004 /* qonversion_remote_config_defaults.json in Resources */,
+				B2F000062F60000100000006 /* qonversion_remote_config_defaults_all_types.json in Resources */,
+				B2F000072F60000100000007 /* qonversion_remote_config_defaults_number_boundaries.json in Resources */,
 				70893C9A2B3EC136002C6B82 /* expected_entitlements.json in Resources */,
 				45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */,
 				456ECD49249CA28300D2BC40 /* init_failed_state.json in Resources */,
@@ -2296,6 +2328,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2F000022F60000100000002 /* QONRemoteConfigFallbackStore.m in Sources */,
 				895732C326DD03A3009507A6 /* QNInMemoryStorage.m in Sources */,
 				8957330326DD03A3009507A6 /* QNIdentityService.m in Sources */,
 				895732C826DD03A3009507A6 /* QNInternalConstants.m in Sources */,
@@ -2429,6 +2462,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2F000032F60000100000003 /* QONRemoteConfigFallbackStoreTests.m in Sources */,
 				89673C2C26F37DC2008D209A /* XCTestCase+Helpers.m in Sources */,
 				45FFA2DE24BE1015007EFB8F /* QNTestConstants.m in Sources */,
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,
