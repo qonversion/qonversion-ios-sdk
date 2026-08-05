@@ -1175,27 +1175,31 @@ expectedIdentityMutationGeneration:nil
  identityRequest:(nullable QNIdentityRequestData *)identityRequest
 expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
     completion:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion {
-  BOOL implicitGenerationLockHeld = NO;
+  [self.identityMutationLock lock];
   NSNumber *ownerGeneration = expectedGeneration;
   if (!identityRequest && !ownerGeneration) {
     // Every response that can write user/launch state belongs to the user
     // generation at request start. This prevents an old products/actualize/
     // init response from overwriting state after identify/logout/restore.
-    [self.identityMutationLock lock];
-    implicitGenerationLockHeld = YES;
     ownerGeneration = @(self.identityMutationGeneration);
   }
 
+  [self.userInfoBlocksLock lock];
   [self.launchStateLock lock];
   self.launchesInFlight += 1;
   self.launchingFinished = NO;
   [self.launchStateLock unlock];
+  [self.userInfoBlocksLock unlock];
 
   __block __weak QNProductCenterManager *weakSelf = self;
   __block BOOL launchTicketReleased = NO;
   void (^releaseLaunchTicket)(NSError * _Nullable) = ^(NSError * _Nullable terminalError) {
     BOOL allLaunchesFinished = NO;
     NSError *errorToDeliver = nil;
+    NSArray<QONUserInfoCompletionHandler> *terminalUserBlocks = nil;
+    QONUser *terminalUser = nil;
+    [weakSelf.identityMutationLock lock];
+    [weakSelf.userInfoBlocksLock lock];
     [weakSelf.launchStateLock lock];
     if (!launchTicketReleased) {
       launchTicketReleased = YES;
@@ -1215,10 +1219,21 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
     [weakSelf.launchStateLock unlock];
 
     if (allLaunchesFinished) {
-      // Close the enqueue-after-first-drain race: launchingFinished becomes
-      // true only here, so a userInfo call could have queued immediately after
-      // the wrapper's earlier snapshot. A second drain is idempotent.
-      [weakSelf executeUserBlocksWithError:errorToDeliver];
+      terminalUserBlocks = [weakSelf.userInfoBlocks copy];
+      [weakSelf.userInfoBlocks removeAllObjects];
+      [weakSelf actualizeUserInfo];
+      terminalUser = weakSelf.user;
+    }
+    [weakSelf.userInfoBlocksLock unlock];
+    [weakSelf.identityMutationLock unlock];
+
+    if (allLaunchesFinished) {
+      // launchingFinished and the terminal userInfo snapshot are published
+      // atomically with launch start. A new launch cannot enqueue its callback
+      // into the ticket that just finished.
+      for (QONUserInfoCompletionHandler block in terminalUserBlocks) {
+        run_block_on_main(block, terminalUser, errorToDeliver);
+      }
       if ([weakSelf isIdentityMutationSupersededError:errorToDeliver]) {
         // A superseded response intentionally skips the normal high-level
         // commit path. Terminate every queue that depended on that launch;
@@ -1308,9 +1323,7 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
       [weakSelf.apiClient processStoredRequests];
     });
   }];
-  if (implicitGenerationLockHeld) {
-    [self.identityMutationLock unlock];
-  }
+  [self.identityMutationLock unlock];
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product error:(NSError *)error {
