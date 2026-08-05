@@ -325,7 +325,7 @@ static BOOL QONRemoteConfigIsUnambiguousJSONData(NSData *data, NSUInteger maxByt
     .offset = 0,
   };
   if (!QONRemoteConfigScanJSONValue(&scanner, 0)) {
-    return nil;
+    return NO;
   }
   QONRemoteConfigSkipJSONWhitespace(&scanner);
   return scanner.offset == scanner.length;
