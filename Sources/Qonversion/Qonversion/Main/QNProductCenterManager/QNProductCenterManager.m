@@ -113,6 +113,9 @@ static NSString * const kIdentityMutationSupersededKey = @"qonversion.identity-m
 @property (nonatomic, strong) NSLock *entitlementsBlocksLock;
 @property (nonatomic, strong) NSLock *userInfoBlocksLock;
 @property (nonatomic, strong) NSLock *restoreBlocksLock;
+@property (nonatomic, strong) NSLock *launchStateLock;
+@property (nonatomic, assign) NSUInteger launchesInFlight;
+@property (nonatomic, strong, nullable) NSError *pendingLaunchTerminalError;
 @property (nonatomic, assign) NSUInteger identityMutationGeneration;
 @property (nonatomic, assign) NSUInteger receiptRestoreIdentityMutationGeneration;
 @property (nonatomic, assign) NSUInteger transactionsRestoreIdentityMutationGeneration;
@@ -171,6 +174,7 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
     _entitlementsBlocksLock = [NSLock new];
     _userInfoBlocksLock = [NSLock new];
     _restoreBlocksLock = [NSLock new];
+    _launchStateLock = [NSLock new];
     _pendingIdentityRequests = [NSMutableArray new];
   }
   
@@ -657,6 +661,10 @@ expectedIdentityMutationGeneration:expectedGeneration
                          completion:(nonnull QONPurchaseResultCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
   [self launchWithTrigger:QONRequestTriggerPurchase completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+    if ([weakSelf isIdentityMutationSupersededError:error]) {
+      [weakSelf handlePurchaseError:error completion:completion];
+      return;
+    }
     NSDictionary<NSString *, QONProduct *> *products = [weakSelf getActualProducts];
     if (error && products.count == 0) {
       [weakSelf handlePurchaseError:error completion:completion];
@@ -810,6 +818,10 @@ expectedIdentityMutationGeneration:@(ownerGeneration)
   __block __weak QNProductCenterManager *weakSelf = self;
 
   [self launchWithTrigger:QONRequestTriggerActualizePermissions completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      if ([weakSelf isIdentityMutationSupersededError:error]) {
+        run_block_on_main(completion, @{}, error);
+        return;
+      }
       weakSelf.unhandledLogoutAvailable = NO;
       NSDictionary<NSString *, QONEntitlement *> *entitlements = result.entitlements;
       NSError *resultError = error;
@@ -1154,33 +1166,70 @@ expectedIdentityMutationGeneration:nil
  identityRequest:(nullable QNIdentityRequestData *)identityRequest
 expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
     completion:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion {
-  _launchingFinished = NO;
-  __block __weak QNProductCenterManager *weakSelf = self;
-  [self.apiClient launchRequest:requestTrigger completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    @synchronized (weakSelf) {
-      weakSelf.launchingFinished = YES;
-      NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:self];
-      [[NSNotificationCenter defaultCenter] postNotification:notification];
-    }
+  BOOL implicitGenerationLockHeld = NO;
+  NSNumber *ownerGeneration = expectedGeneration;
+  if (!identityRequest && !ownerGeneration) {
+    // Every response that can write user/launch state belongs to the user
+    // generation at request start. This prevents an old products/actualize/
+    // init response from overwriting state after identify/logout/restore.
+    [self.identityMutationLock lock];
+    implicitGenerationLockHeld = YES;
+    ownerGeneration = @(self.identityMutationGeneration);
+  }
 
+  [self.launchStateLock lock];
+  self.launchesInFlight += 1;
+  self.launchingFinished = NO;
+  [self.launchStateLock unlock];
+
+  __block __weak QNProductCenterManager *weakSelf = self;
+  __block BOOL launchTicketReleased = NO;
+  void (^releaseLaunchTicket)(NSError * _Nullable) = ^(NSError * _Nullable terminalError) {
+    BOOL allLaunchesFinished = NO;
+    NSError *errorToDeliver = nil;
+    [weakSelf.launchStateLock lock];
+    if (!launchTicketReleased) {
+      launchTicketReleased = YES;
+      // The last finishing launch determines the terminal state seen by work
+      // that was waiting for the whole concurrent launch set to become idle.
+      weakSelf.pendingLaunchTerminalError = terminalError;
+      if (weakSelf.launchesInFlight > 0) {
+        weakSelf.launchesInFlight -= 1;
+      }
+      allLaunchesFinished = weakSelf.launchesInFlight == 0;
+      weakSelf.launchingFinished = allLaunchesFinished;
+      if (allLaunchesFinished) {
+        errorToDeliver = weakSelf.pendingLaunchTerminalError;
+        weakSelf.pendingLaunchTerminalError = nil;
+      }
+    }
+    [weakSelf.launchStateLock unlock];
+
+    if (allLaunchesFinished) {
+      NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:weakSelf];
+      [[NSNotificationCenter defaultCenter] postNotification:notification];
+      [weakSelf handlePendingRequests:errorToDeliver];
+    }
+  };
+
+  [self.apiClient launchRequest:requestTrigger completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
     __block BOOL mutationLockHeld = NO;
-    if (identityRequest || expectedGeneration) {
+    if (identityRequest || ownerGeneration) {
       [weakSelf.identityMutationLock lock];
       mutationLockHeld = YES;
       if (identityRequest && ![weakSelf isActiveIdentityRequest:identityRequest]) {
         [weakSelf.identityMutationLock unlock];
         mutationLockHeld = NO;
-        // The canceled launch still made the manager launch-ready. Wake any
-        // identity that queued while this request was in flight.
-        [weakSelf handlePendingRequests:nil];
+        releaseLaunchTicket(nil);
         return;
       }
-      if (expectedGeneration && weakSelf.identityMutationGeneration != expectedGeneration.unsignedIntegerValue) {
+      if (ownerGeneration && weakSelf.identityMutationGeneration != ownerGeneration.unsignedIntegerValue) {
         NSError *supersededError = [weakSelf identityMutationSupersededError];
         if (completion) {
           completion([[QONLaunchResult alloc] init], supersededError);
         }
         [weakSelf.identityMutationLock unlock];
+        releaseLaunchTicket(supersededError);
         return;
       }
     }
@@ -1193,11 +1242,13 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
         [weakSelf.identityMutationLock unlock];
         mutationLockHeld = NO;
       }
+      releaseLaunchTicket(finishError);
     };
     if (!completion) {
       if (mutationLockHeld) {
         [weakSelf.identityMutationLock unlock];
       }
+      releaseLaunchTicket(error);
       return;
     }
 
@@ -1236,6 +1287,9 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
       [weakSelf.apiClient processStoredRequests];
     });
   }];
+  if (implicitGenerationLockHeld) {
+    [self.identityMutationLock unlock];
+  }
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product error:(NSError *)error {
@@ -1593,7 +1647,7 @@ expectedIdentityMutationGeneration:@(ownerGeneration)
 }
 
 - (void)handleUserSwitchIfNeededWithResult:(QONLaunchResult *)result {
-  if (!result || result.uid.length == 0) {
+  if (!result) {
     return;
   }
 
@@ -1603,6 +1657,10 @@ expectedIdentityMutationGeneration:@(ownerGeneration)
   // generation may update global launch/user state; sibling restores become
   // stale before they can publish a different scope.
   self.identityMutationGeneration += 1;
+  if (result.uid.length == 0) {
+    [self.identityMutationLock unlock];
+    return;
+  }
   NSString *currentUserID = [self.userInfoService obtainUserID];
   if ([currentUserID isEqualToString:result.uid]) {
     [self.identityMutationLock unlock];
