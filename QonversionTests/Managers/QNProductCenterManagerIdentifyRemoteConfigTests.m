@@ -528,8 +528,12 @@
   _manager.launchingFinished = YES;
   OCMStub([_mockUserInfoService obtainCustomIdentityUserID]).andReturn(nil);
   OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"uid_initial");
-  OCMStub(([_mockIdentityManager identify:@"same@example.com"
-                               completion:[OCMArg invokeBlockWithArgs:@"uid_initial", [NSNull null], nil]]));
+  __block QNIdentityCompletionHandler identityCompletion = nil;
+  OCMStub([_mockIdentityManager identify:@"same@example.com" completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QNIdentityCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    identityCompletion = [completion copy];
+  });
 
   QNTrackingRecursiveLock *mutationLock = [QNTrackingRecursiveLock new];
   _manager.identityMutationLock = (NSRecursiveLock *)mutationLock;
@@ -540,6 +544,7 @@
   });
 
   [_manager identify:@"same@example.com" completion:nil];
+  identityCompletion(@"uid_initial", nil);
 
   XCTAssertTrue(lockHeldDuringTerminalCommit,
                 @"logout must not overtake a same-UID identify terminal commit");
