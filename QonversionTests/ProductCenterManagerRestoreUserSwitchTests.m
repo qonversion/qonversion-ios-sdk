@@ -31,6 +31,8 @@
 
 - (void)handleUserSwitchIfNeededWithResult:(QONLaunchResult *)result;
 - (void)restoreReceipt:(QNRestoreCompletionHandler)completion;
+- (void)restoreTransactions:(QNRestoreCompletionHandler)completion;
+- (void)handleRestoreCompletedTransactionsFinished;
 
 @end
 
@@ -224,6 +226,46 @@
   [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
   XCTAssertFalse(storedLateUser, @"a restore older than logout must not rewrite identity storage");
   XCTAssertFalse(publishedLateScope, @"a restore older than logout must not publish its Remote Config scope");
+  XCTAssertNotEqualObjects(_manager.launchResult.uid, @"qonversion_user_id");
+  XCTAssertEqual(restoreError.code, NSURLErrorCancelled);
+}
+
+- (void)testRestoreTransactionsStartedBeforeLogoutCannotApplyLateUserScope {
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_initial");
+  OCMStub([_mockIdentityManager logoutIfNeeded]).andReturn(NO);
+
+  __block void (^launchCompletion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+  OCMStub([_mockClient launchRequest:QONRequestTriggerSyncHistoricalData completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    launchCompletion = [completion copy];
+  });
+
+  __block BOOL storedLateUser = NO;
+  __block BOOL publishedLateScope = NO;
+  OCMStub([_mockUserInfoService storeIdentity:@"qonversion_user_id"]).andDo(^(NSInvocation *invocation) {
+    storedLateUser = YES;
+  });
+  OCMStub([_mockRemoteConfigManager userHasBeenChangedToUserID:@"qonversion_user_id"]).andDo(^(NSInvocation *invocation) {
+    publishedLateScope = YES;
+  });
+
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"stale transaction restore completes"];
+  __block NSError *restoreError = nil;
+  [_manager restoreTransactions:^(NSDictionary<NSString *, QONEntitlement *> *entitlements, NSError *error) {
+    restoreError = error;
+    [completionExpectation fulfill];
+  }];
+  [_manager handleRestoreCompletedTransactionsFinished];
+  XCTAssertNotNil(launchCompletion);
+
+  [_manager logout];
+  NSDictionary *response = [self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON];
+  launchCompletion(response, nil);
+
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+  XCTAssertFalse(storedLateUser, @"a transaction restore older than logout must not rewrite identity storage");
+  XCTAssertFalse(publishedLateScope, @"a transaction restore older than logout must not publish its Remote Config scope");
   XCTAssertNotEqualObjects(_manager.launchResult.uid, @"qonversion_user_id");
   XCTAssertEqual(restoreError.code, NSURLErrorCancelled);
 }
