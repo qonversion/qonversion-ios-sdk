@@ -10,6 +10,7 @@
 #import <CommonCrypto/CommonDigest.h>
 
 #import "QONRemoteConfigFallbackStore.h"
+#import "QONRemoteConfigV2Models.h"
 #import "Qonversion.h"
 
 static NSString *const kRemoteConfigDefaultsFileName = @"qonversion_remote_config_defaults";
@@ -208,6 +209,22 @@ static NSData *QONTestSingleDefaultArtifact(int64_t projectID,
   XCTAssertEqualObjects([store valueForContextKey:@"object"], (@{@"enabled": @YES, @"nested": @"value"}));
   XCTAssertEqualObjects([store valueForContextKey:@"string"], @"hello");
   XCTAssertEqualObjects([store valueForContextKey:@"unicode"], @"Привет 👋");
+}
+
+- (void)testExposesExactRawDefaultsAsOneValidatedFallbackRelease {
+  QONRemoteConfigFallbackStore *store = [self storeWithFixtureNamed:@"qonversion_remote_config_defaults_all_types"];
+  QONRemoteConfigV2Release *release = [store remoteConfigV2FallbackRelease];
+
+  XCTAssertNotNil(release);
+  XCTAssertEqual(store.projectID, 42);
+  XCTAssertEqualObjects(store.environmentUID, @"env-production");
+  XCTAssertEqualObjects(release.releaseUID, @"release-all-json-types");
+  XCTAssertEqualObjects([store rawValueForContextKey:@"string"],
+                        [@"\"hello\"" dataUsingEncoding:NSUTF8StringEncoding]);
+  XCTAssertEqualObjects(release.entries[@"string"].rawData,
+                        [@"\"hello\"" dataUsingEncoding:NSUTF8StringEncoding]);
+  XCTAssertEqual(release.entries[@"string"].applyPolicy,
+                 QONRemoteConfigApplyPolicyOnNextActivate);
 }
 
 - (void)testAcceptsPortableJSONNumberBoundariesFromProducerGolden {

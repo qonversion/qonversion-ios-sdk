@@ -6,6 +6,8 @@
 //
 
 #import "QONRemoteConfigFallbackStore.h"
+#import "QONRemoteConfigJSON.h"
+#import "QONRemoteConfigV2Models.h"
 
 #import <CommonCrypto/CommonDigest.h>
 
@@ -313,7 +315,7 @@ static BOOL QONRemoteConfigScanJSONValue(QONRemoteConfigJSONScanner *scanner,
   }
 }
 
-static BOOL QONRemoteConfigIsUnambiguousJSONData(NSData *data, NSUInteger maxBytes) {
+BOOL QONRemoteConfigIsPortableJSONData(NSData *data, NSUInteger maxBytes) {
   if (data.length == 0 || data.length > maxBytes ||
       ![[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]) {
     return NO;
@@ -331,8 +333,8 @@ static BOOL QONRemoteConfigIsUnambiguousJSONData(NSData *data, NSUInteger maxByt
   return scanner.offset == scanner.length;
 }
 
-static id QONRemoteConfigValidatedJSONObject(NSData *data) {
-  if (!QONRemoteConfigIsUnambiguousJSONData(data, kQONRemoteConfigDefaultsMaxValueBytes)) {
+id QONRemoteConfigPortableJSONObject(NSData *data, NSUInteger maximumBytes) {
+  if (!QONRemoteConfigIsPortableJSONData(data, maximumBytes)) {
     return nil;
   }
 
@@ -569,6 +571,13 @@ static NSString *QONRemoteConfigDefaultsDigest(int64_t projectID,
 
 @property (nonatomic, strong) NSBundle *bundle;
 @property (nonatomic, copy, nullable) NSDictionary<NSString *, id> *values;
+@property (nonatomic, copy, nullable) NSDictionary<NSString *, NSData *> *rawValues;
+@property (nonatomic, copy, nullable) NSDictionary<NSString *, NSString *> *variationUIDs;
+@property (nonatomic, assign) int64_t loadedProjectID;
+@property (nonatomic, copy, nullable) NSString *loadedEnvironmentUID;
+@property (nonatomic, copy, nullable) NSString *loadedReleaseUID;
+@property (nonatomic, assign) int64_t loadedReleaseNumber;
+@property (nonatomic, copy, nullable) NSString *loadedManifestContentHash;
 @property (nonatomic, assign) BOOL didLoad;
 
 @end
@@ -583,16 +592,53 @@ static NSString *QONRemoteConfigDefaultsDigest(int64_t projectID,
   return self;
 }
 
-- (id)valueForContextKey:(NSString *)contextKey {
-  if (!contextKey) {
-    return nil;
-  }
+- (void)ensureLoaded {
   @synchronized (self) {
     if (!self.didLoad) {
       self.values = [self loadValidatedValues];
       self.didLoad = YES;
     }
+  }
+}
+
+- (id)valueForContextKey:(NSString *)contextKey {
+  if (!contextKey) return nil;
+  [self ensureLoaded];
+  @synchronized (self) {
     return self.values[contextKey];
+  }
+}
+
+- (NSData *)rawValueForContextKey:(NSString *)contextKey {
+  if (!contextKey) return nil;
+  [self ensureLoaded];
+  @synchronized (self) { return [self.rawValues[contextKey] copy]; }
+}
+
+- (int64_t)projectID { [self ensureLoaded]; return self.loadedProjectID; }
+- (NSString *)environmentUID { [self ensureLoaded]; return [self.loadedEnvironmentUID copy]; }
+
+- (QONRemoteConfigV2Release *)remoteConfigV2FallbackRelease {
+  [self ensureLoaded];
+  @synchronized (self) {
+    if (!self.values || !self.loadedReleaseUID || !self.loadedManifestContentHash) return nil;
+    NSMutableDictionary *entries = [NSMutableDictionary dictionaryWithCapacity:self.rawValues.count];
+    for (NSString *key in self.rawValues) {
+      NSData *rawData = self.rawValues[key];
+      NSString *variationUID = self.variationUIDs[key];
+      if (!rawData || !variationUID) return nil;
+      QONRemoteConfigV2Entry *entry = [[QONRemoteConfigV2Entry alloc]
+          initWithKey:key rawData:rawData variationUID:variationUID
+          applyPolicy:QONRemoteConfigApplyPolicyOnNextActivate metadata:nil];
+      if (!entry) return nil;
+      entries[key] = entry;
+    }
+    NSString *releaseUID = self.loadedReleaseUID;
+    NSString *manifestContentHash = self.loadedManifestContentHash;
+    if (!releaseUID || !manifestContentHash) return nil;
+    return [[QONRemoteConfigV2Release alloc] initWithReleaseUID:releaseUID
+        releaseNumber:(NSInteger)self.loadedReleaseNumber
+        manifestContentHash:manifestContentHash entries:entries];
   }
 }
 
@@ -611,7 +657,7 @@ static NSString *QONRemoteConfigDefaultsDigest(int64_t projectID,
   }
   NSData *encoded = [NSData dataWithContentsOfURL:url options:NSDataReadingMappedIfSafe error:nil];
   if (encoded.length == 0 || encoded.length > kQONRemoteConfigDefaultsMaxArtifactBytes ||
-      !QONRemoteConfigIsUnambiguousJSONData(encoded, kQONRemoteConfigDefaultsMaxArtifactBytes)) {
+      !QONRemoteConfigIsPortableJSONData(encoded, kQONRemoteConfigDefaultsMaxArtifactBytes)) {
     return nil;
   }
 
@@ -650,6 +696,8 @@ static NSString *QONRemoteConfigDefaultsDigest(int64_t projectID,
   NSMutableArray<NSData *> *variationUIDs = [NSMutableArray arrayWithCapacity:defaults.count];
   NSMutableArray<NSData *> *rawValues = [NSMutableArray arrayWithCapacity:defaults.count];
   NSMutableDictionary<NSString *, id> *values = [NSMutableDictionary dictionaryWithCapacity:defaults.count];
+  NSMutableDictionary<NSString *, NSData *> *rawValuesByKey = [NSMutableDictionary dictionaryWithCapacity:defaults.count];
+  NSMutableDictionary<NSString *, NSString *> *variationUIDsByKey = [NSMutableDictionary dictionaryWithCapacity:defaults.count];
   NSData *previousKey = nil;
 
   for (id entryObject in defaults) {
@@ -657,8 +705,10 @@ static NSString *QONRemoteConfigDefaultsDigest(int64_t projectID,
       return nil;
     }
     NSDictionary *entry = entryObject;
-    NSData *key = QONRemoteConfigValidatedKeyData(entry[@"key"]);
-    NSData *variationUID = QONRemoteConfigValidatedUIDData(entry[@"variationUid"]);
+    id keyObject = entry[@"key"];
+    id variationUIDObject = entry[@"variationUid"];
+    NSData *key = QONRemoteConfigValidatedKeyData(keyObject);
+    NSData *variationUID = QONRemoteConfigValidatedUIDData(variationUIDObject);
     id base64Object = entry[@"valueBase64"];
     if (!key || !variationUID || ![base64Object isKindOfClass:NSString.class] ||
         (previousKey && QONRemoteConfigCompareBytes(previousKey, key) != NSOrderedAscending)) {
@@ -670,21 +720,26 @@ static NSString *QONRemoteConfigDefaultsDigest(int64_t projectID,
         ![[rawValue base64EncodedStringWithOptions:0] isEqualToString:base64]) {
       return nil;
     }
-    id value = QONRemoteConfigValidatedJSONObject(rawValue);
+    id value = QONRemoteConfigPortableJSONObject(rawValue, kQONRemoteConfigDefaultsMaxValueBytes);
     if (!value) {
       return nil;
     }
+    NSString *entryKey = (NSString *)keyObject;
+    NSString *entryVariationUID = (NSString *)variationUIDObject;
 
     [keys addObject:key];
     [variationUIDs addObject:variationUID];
     [rawValues addObject:rawValue];
-    values[entry[@"key"]] = value;
+    values[entryKey] = value;
+    rawValuesByKey[entryKey] = rawValue;
+    variationUIDsByKey[entryKey] = entryVariationUID;
     previousKey = key;
   }
 
   NSString *digest = QONRemoteConfigDefaultsDigest(projectID, environmentUID, releaseUID,
       releaseNumber, manifestContentHash, defaults, keys, variationUIDs, rawValues);
-  if (![digest isEqualToString:root[@"defaultsDigest"]]) {
+  NSString *expectedDigest = root[@"defaultsDigest"];
+  if (![expectedDigest isKindOfClass:NSString.class] || ![digest isEqualToString:expectedDigest]) {
     return nil;
   }
 
@@ -692,6 +747,13 @@ static NSString *QONRemoteConfigDefaultsDigest(int64_t projectID,
   if (![canonical isEqualToData:encoded]) {
     return nil;
   }
+  self.rawValues = [rawValuesByKey copy];
+  self.variationUIDs = [variationUIDsByKey copy];
+  self.loadedProjectID = projectID;
+  self.loadedEnvironmentUID = root[@"environmentUid"];
+  self.loadedReleaseUID = root[@"releaseUid"];
+  self.loadedReleaseNumber = releaseNumber;
+  self.loadedManifestContentHash = root[@"manifestContentHash"];
   return [values copy];
 }
 

@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class QONRemoteConfigV2Release;
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -24,6 +26,15 @@ NS_ASSUME_NONNULL_BEGIN
  complete artifact fails validation. A JSON null is returned as NSNull.
  */
 - (nullable id)valueForContextKey:(nullable NSString *)contextKey;
+
+/** Exact validated JSON bytes retained for deterministic typed decoding. */
+- (nullable NSData *)rawValueForContextKey:(nullable NSString *)contextKey;
+
+/** Whole bundled release; nil when the complete artifact is absent or invalid. */
+- (nullable QONRemoteConfigV2Release *)remoteConfigV2FallbackRelease;
+
+@property (nonatomic, assign, readonly) int64_t projectID;
+@property (nonatomic, copy, nullable, readonly) NSString *environmentUID;
 
 @end
 

@@ -7,20 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B2F000012F60000100000001 /* QONRemoteConfigFallbackStore.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */; };
-		B2F000022F60000100000002 /* QONRemoteConfigFallbackStore.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */; };
-		B2F000032F60000100000003 /* QONRemoteConfigFallbackStoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F000132F60000100000013 /* QONRemoteConfigFallbackStoreTests.m */; };
-		B2F000042F60000100000004 /* qonversion_remote_config_defaults.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */; };
-		B2F000052F60000100000005 /* qonversion_remote_config_defaults.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */; };
-		B2F000062F60000100000006 /* qonversion_remote_config_defaults_all_types.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000152F60000100000015 /* qonversion_remote_config_defaults_all_types.json */; };
-		B2F000072F60000100000007 /* qonversion_remote_config_defaults_number_boundaries.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000162F60000100000016 /* qonversion_remote_config_defaults_number_boundaries.json */; };
+		00379E6044AEA7065E82A15F /* QONRemoteConfigV2ManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 296B5764F9B02F668DEBA22A /* QONRemoteConfigV2ManagerTests.m */; };
+		0260C539214A6A48356042F3 /* QONRemoteConfigSnapshot.m in Sources */ = {isa = PBXBuildFile; fileRef = E06E1B12300B7B060F723462 /* QONRemoteConfigSnapshot.m */; };
+		0721DD7665C511B906263E71 /* QONRemoteConfigV2Models.m in Sources */ = {isa = PBXBuildFile; fileRef = 663D27E868396EE04A7698D5 /* QONRemoteConfigV2Models.m */; };
 		0A17440D00C09DABC1E2B1D3 /* QONEntitlementsUpdateListenerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */; };
+		15619C2C7D8402ED82C085BB /* QONRemoteConfigSnapshotTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6DBD5DF2283CD0649E9B7909 /* QONRemoteConfigSnapshotTests.m */; };
 		15EE5F2E2F6CBF096CB24CBA /* NoCodesLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */; };
 		176D395BD9D9A09A56F417D7 /* QONDeferredPurchasesListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		207A91DAC28DE776D419F8DC /* NoCodesHTMLInjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59914571FB7D583A6205C7A /* NoCodesHTMLInjector.swift */; };
 		218480F803075431AD24186B /* ScreenEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2865A58C95F0B475399053F2 /* ScreenEvent.swift */; };
 		2703EE3FF4BB2D8ABFCE3237 /* ReissueViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434A1D3EE1FD0B5CD342D26A /* ReissueViewController.swift */; };
+		2B1F005A892934909DD29314 /* QONRemoteConfigSnapshot.h in Headers */ = {isa = PBXBuildFile; fileRef = C74EAD189E48417B3732DCCE /* QONRemoteConfigSnapshot.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		2BF67036E25BB95C1B40140F /* QONRemoteConfigV2Store.h in Headers */ = {isa = PBXBuildFile; fileRef = 4DDC15CD05353A25BDD0219B /* QONRemoteConfigV2Store.h */; };
+		2F6875D2E552C466B8E1C9A3 /* QONRemoteConfigV2Store.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B409D30498F93D8C79BBFD9 /* QONRemoteConfigV2Store.m */; };
 		3521C548C169154D45835C38 /* ScreenEventsServiceInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */; };
+		376D4522095E99309960A672 /* QONRemoteConfigV2Manager.h in Headers */ = {isa = PBXBuildFile; fileRef = A640027C629834C825BB849B /* QONRemoteConfigV2Manager.h */; };
+		3A64B8327750874853ACD949 /* QONRemoteConfigV2Manager.m in Sources */ = {isa = PBXBuildFile; fileRef = A320779854CE2BDD63B6BF2A /* QONRemoteConfigV2Manager.m */; };
 		405978D53C69C2F10939A4D4 /* NoCodesContextBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B82604A89181D262616958 /* NoCodesContextBuilder.swift */; };
 		4531CBC6245789D40022C422 /* QDeviceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4531CBC5245789D40022C422 /* QDeviceTests.m */; };
 		4531CBC824578D300022C422 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 4531CBC724578D300022C422 /* Podfile */; };
@@ -49,8 +51,10 @@
 		45FFA2EB24BEEA9A007EFB8F /* ProductCenterManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */; };
 		45FFA2ED24BEF379007EFB8F /* full_init.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FFA2EC24BEF379007EFB8F /* full_init.json */; };
 		48FCBE392ED00F2022C0823A /* ScreenEventsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E55D02AA51A75DD7987D4987 /* ScreenEventsService.swift */; };
+		57DD1304CDDECA1B68CFA807 /* QONRemoteConfigUpdate.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F870444F6E59619AB1DCA65 /* QONRemoteConfigUpdate.m */; };
 		5985EF58D14088663151FE0D /* Pods_Sample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C42E3A6D0397F5923D676DC /* Pods_Sample.framework */; };
 		5A9243B784B722D804CF4294 /* Qonversion+Redemption.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CB75E8682A3EB84527DB3E /* Qonversion+Redemption.swift */; };
+		64F83E8CBC08EE7FE52D2716 /* QONRemoteConfigV2Models.h in Headers */ = {isa = PBXBuildFile; fileRef = 46B3E8F2B8C771F30BB01808 /* QONRemoteConfigV2Models.h */; };
 		6A121DAC2BB445AE0073B330 /* QONRemoteConfigList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */; };
 		6A121DAE2BB446740073B330 /* QONRemoteConfigList.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6A121DB12BBB10370073B330 /* QONRemoteConfigListRequestData.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A121DB02BBB10370073B330 /* QONRemoteConfigListRequestData.h */; };
@@ -85,6 +89,7 @@
 		6A95DEA529E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A95DEA429E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m */; };
 		6ABCBE182B99A79E003DB107 /* QONRemoteConfigLoadingState.h in Headers */ = {isa = PBXBuildFile; fileRef = 6ABCBE162B99A79E003DB107 /* QONRemoteConfigLoadingState.h */; };
 		6ABCBE192B99A79E003DB107 /* QONRemoteConfigLoadingState.m in Sources */ = {isa = PBXBuildFile; fileRef = 6ABCBE172B99A79E003DB107 /* QONRemoteConfigLoadingState.m */; };
+		6BB6F0529E095B2501710063 /* QONRemoteConfigValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9666927C9108B98D46BCB446 /* QONRemoteConfigValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6E63CEE52F28FC32BBFC2C4D /* Pods_Watch_Sample_Watch_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA8940BE5A87EDF644EC7E13 /* Pods_Watch_Sample_Watch_App.framework */; };
 		700636062C11CEF700BB9F9C /* QONFallbackObject.h in Headers */ = {isa = PBXBuildFile; fileRef = 700636042C11CEF700BB9F9C /* QONFallbackObject.h */; };
 		700636072C11CEF700BB9F9C /* QONFallbackObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 700636052C11CEF700BB9F9C /* QONFallbackObject.m */; };
@@ -280,9 +285,6 @@
 		89673C2926F35D29008D209A /* QNIdentityServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2826F35D29008D209A /* QNIdentityServiceTests.m */; };
 		89673C2C26F37DC2008D209A /* XCTestCase+Helpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2B26F37DC2008D209A /* XCTestCase+Helpers.m */; };
 		89673C2F26F49BAA008D209A /* QNIdentityManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89673C2E26F49BA9008D209A /* QNIdentityManagerTests.m */; };
-		A1DEF1231000000000000001 /* QNUserPropertiesManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1DEF1231000000000000002 /* QNUserPropertiesManagerTests.m */; };
-		A1DEF1231000000000000003 /* QONRemoteConfigManagerInvalidationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1DEF1231000000000000004 /* QONRemoteConfigManagerInvalidationTests.m */; };
-		A1DEF1231000000000000005 /* QNProductCenterManagerIdentifyRemoteConfigTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1DEF1231000000000000006 /* QNProductCenterManagerIdentifyRemoteConfigTests.m */; };
 		8981E78825C030DD002310BD /* QonversionFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 45239D6E2517CEB00085D0A8 /* QonversionFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		89A192A52604974800C3FCD9 /* QNUserInfoServiceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */; };
 		89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */ = {isa = PBXBuildFile; fileRef = 89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */; };
@@ -297,11 +299,26 @@
 		A1839D70E9E06E327527B4B9 /* QONUserPropertiesMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = A183991B1D59C14ED8BBBC87 /* QONUserPropertiesMapper.m */; };
 		A1839D7723FB8E18EC0294C9 /* QONExceptionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */; };
 		A1839F56181BFBE72A0DD0DF /* QONUserProperty.h in Headers */ = {isa = PBXBuildFile; fileRef = A1839793226FD80F320A246F /* QONUserProperty.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A1DEF1231000000000000001 /* QNUserPropertiesManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1DEF1231000000000000002 /* QNUserPropertiesManagerTests.m */; };
+		A1DEF1231000000000000003 /* QONRemoteConfigManagerInvalidationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1DEF1231000000000000004 /* QONRemoteConfigManagerInvalidationTests.m */; };
+		A1DEF1231000000000000005 /* QNProductCenterManagerIdentifyRemoteConfigTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1DEF1231000000000000006 /* QNProductCenterManagerIdentifyRemoteConfigTests.m */; };
 		AA0001012D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */; };
 		AABB11242E4A21BC00IMGPRE /* ImagePreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */; };
 		AABB11252E4A21BC00IMGPRE /* ImagePreloaderInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */; };
+		B2F000012F60000100000001 /* QONRemoteConfigFallbackStore.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */; };
+		B2F000022F60000100000002 /* QONRemoteConfigFallbackStore.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */; };
+		B2F000032F60000100000003 /* QONRemoteConfigFallbackStoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F000132F60000100000013 /* QONRemoteConfigFallbackStoreTests.m */; };
+		B2F000042F60000100000004 /* qonversion_remote_config_defaults.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */; };
+		B2F000052F60000100000005 /* qonversion_remote_config_defaults.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */; };
+		B2F000062F60000100000006 /* qonversion_remote_config_defaults_all_types.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000152F60000100000015 /* qonversion_remote_config_defaults_all_types.json */; };
+		B2F000072F60000100000007 /* qonversion_remote_config_defaults_number_boundaries.json in Resources */ = {isa = PBXBuildFile; fileRef = B2F000162F60000100000016 /* qonversion_remote_config_defaults_number_boundaries.json */; };
+		C0DEC0DE0000000000000002 /* QONRemoteConfigJSON.h in Headers */ = {isa = PBXBuildFile; fileRef = C0DEC0DE0000000000000001 /* QONRemoteConfigJSON.h */; };
+		D72FC697AF6B3F5882CDFD6B /* QONRemoteConfigValue.m in Sources */ = {isa = PBXBuildFile; fileRef = 991A4358EC1494C098EFC302 /* QONRemoteConfigValue.m */; };
+		D9C671C7AD41EDCE9D4F0822 /* QONRemoteConfigV2StoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DD35A476B9330A46522A812 /* QONRemoteConfigV2StoreTests.m */; };
+		DFE1EF01074069227192E6F0 /* QONRemoteConfigUpdate.h in Headers */ = {isa = PBXBuildFile; fileRef = D0C5A231720A99E0AAB27281 /* QONRemoteConfigUpdate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F0F13F0F4D4F0701F425E45B /* QONRedemptionResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 71CBCE6DF13D23D9A10C4713 /* QONRedemptionResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F5890274B1E90C6993376869 /* ScreenEventType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34DFDAAB92C9BA2A3321007A /* ScreenEventType.swift */; };
+		FC2C99538CFA4EE0D42F50D7 /* QONRemoteConfigSnapshot+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = F1449137BF0F2FD8E4971FA4 /* QONRemoteConfigSnapshot+Protected.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -357,16 +374,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigFallbackStore.h; sourceTree = "<group>"; };
-		B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigFallbackStore.m; sourceTree = "<group>"; };
-		B2F000132F60000100000013 /* QONRemoteConfigFallbackStoreTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigFallbackStoreTests.m; sourceTree = "<group>"; };
-		B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = qonversion_remote_config_defaults.json; sourceTree = "<group>"; };
-		B2F000152F60000100000015 /* qonversion_remote_config_defaults_all_types.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = qonversion_remote_config_defaults_all_types.json; sourceTree = "<group>"; };
-		B2F000162F60000100000016 /* qonversion_remote_config_defaults_number_boundaries.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = qonversion_remote_config_defaults_number_boundaries.json; sourceTree = "<group>"; };
 		02B82604A89181D262616958 /* NoCodesContextBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesContextBuilder.swift; sourceTree = "<group>"; };
 		0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONEntitlementsUpdateListenerAdapter.m; sourceTree = "<group>"; };
 		1037791CABEE4F1611A8561E /* Pods-Watch Sample Watch App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.release.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.release.xcconfig"; sourceTree = "<group>"; };
 		2865A58C95F0B475399053F2 /* ScreenEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEvent.swift; sourceTree = "<group>"; };
+		296B5764F9B02F668DEBA22A /* QONRemoteConfigV2ManagerTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2ManagerTests.m; sourceTree = "<group>"; };
 		34DFDAAB92C9BA2A3321007A /* ScreenEventType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventType.swift; sourceTree = "<group>"; };
 		35E933FB622433DEC9555DD4 /* Pods_QonversionTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QonversionTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		42BCAF69EE7817634773B8EE /* QONRedemptionManager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRedemptionManager.m; sourceTree = "<group>"; };
@@ -413,8 +425,12 @@
 		45FFA2DF24BE1548007EFB8F /* broken_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = broken_data.json; sourceTree = "<group>"; };
 		45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerTests.m; sourceTree = "<group>"; };
 		45FFA2EC24BEF379007EFB8F /* full_init.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = full_init.json; sourceTree = "<group>"; };
+		46B3E8F2B8C771F30BB01808 /* QONRemoteConfigV2Models.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2Models.h; sourceTree = "<group>"; };
+		4DD35A476B9330A46522A812 /* QONRemoteConfigV2StoreTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2StoreTests.m; sourceTree = "<group>"; };
+		4DDC15CD05353A25BDD0219B /* QONRemoteConfigV2Store.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2Store.h; sourceTree = "<group>"; };
 		5C42E3A6D0397F5923D676DC /* Pods_Sample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		61B460B7A476E7C352C3B615 /* QONDeferredPurchasesListener.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONDeferredPurchasesListener.h; sourceTree = "<group>"; };
+		663D27E868396EE04A7698D5 /* QONRemoteConfigV2Models.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2Models.m; sourceTree = "<group>"; };
 		6A121DAB2BB445AE0073B330 /* QONRemoteConfigList.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigList.m; sourceTree = "<group>"; };
 		6A121DAD2BB446740073B330 /* QONRemoteConfigList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigList.h; sourceTree = "<group>"; };
 		6A121DAF2BB44D7B0073B330 /* QONRemoteConfigList+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigList+Protected.h"; sourceTree = "<group>"; };
@@ -454,6 +470,8 @@
 		6A95DEA429E40F2E00350BD6 /* XCTestCase+IntegrationTestsHelpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+IntegrationTestsHelpers.m"; sourceTree = "<group>"; };
 		6ABCBE162B99A79E003DB107 /* QONRemoteConfigLoadingState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigLoadingState.h; sourceTree = "<group>"; };
 		6ABCBE172B99A79E003DB107 /* QONRemoteConfigLoadingState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigLoadingState.m; sourceTree = "<group>"; };
+		6B409D30498F93D8C79BBFD9 /* QONRemoteConfigV2Store.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2Store.m; sourceTree = "<group>"; };
+		6DBD5DF2283CD0649E9B7909 /* QONRemoteConfigSnapshotTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigSnapshotTests.m; sourceTree = "<group>"; };
 		700636042C11CEF700BB9F9C /* QONFallbackObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONFallbackObject.h; sourceTree = "<group>"; };
 		700636052C11CEF700BB9F9C /* QONFallbackObject.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONFallbackObject.m; sourceTree = "<group>"; };
 		700636122C12125900BB9F9C /* NSError+Sugare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+Sugare.h"; sourceTree = "<group>"; };
@@ -660,14 +678,14 @@
 		89673C2A26F37DC2008D209A /* XCTestCase+Helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+Helpers.h"; sourceTree = "<group>"; };
 		89673C2B26F37DC2008D209A /* XCTestCase+Helpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+Helpers.m"; sourceTree = "<group>"; };
 		89673C2E26F49BA9008D209A /* QNIdentityManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNIdentityManagerTests.m; sourceTree = "<group>"; };
-		A1DEF1231000000000000002 /* QNUserPropertiesManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserPropertiesManagerTests.m; sourceTree = "<group>"; };
-		A1DEF1231000000000000004 /* QONRemoteConfigManagerInvalidationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigManagerInvalidationTests.m; sourceTree = "<group>"; };
-		A1DEF1231000000000000006 /* QNProductCenterManagerIdentifyRemoteConfigTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNProductCenterManagerIdentifyRemoteConfigTests.m; sourceTree = "<group>"; };
 		89713B4625C1B95700A2448E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		89713B4A25C1BA1F00A2448E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/iOSSupport/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		89A192A42604974800C3FCD9 /* QNUserInfoServiceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserInfoServiceTests.m; sourceTree = "<group>"; };
 		89A193242604B99C00C3FCD9 /* XCTestCase+Unmock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "XCTestCase+Unmock.h"; sourceTree = "<group>"; };
 		89A193252604B99C00C3FCD9 /* XCTestCase+Unmock.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "XCTestCase+Unmock.m"; sourceTree = "<group>"; };
+		9666927C9108B98D46BCB446 /* QONRemoteConfigValue.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigValue.h; sourceTree = "<group>"; };
+		991A4358EC1494C098EFC302 /* QONRemoteConfigValue.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigValue.m; sourceTree = "<group>"; };
+		9F870444F6E59619AB1DCA65 /* QONRemoteConfigUpdate.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigUpdate.m; sourceTree = "<group>"; };
 		A06309DBEC210AB940C3045D /* Pods-Watch Sample Watch App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.debug.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.debug.xcconfig"; sourceTree = "<group>"; };
 		A18390C0E9C43E1B5ABC459E /* QONExceptionManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONExceptionManager.m; sourceTree = "<group>"; };
 		A1839295D44BE8B55C48FB2C /* QONUserPropertiesMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUserPropertiesMapper.h; sourceTree = "<group>"; };
@@ -679,18 +697,34 @@
 		A1839DCD5FA33E85193A2684 /* QONUserProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUserProperties.h; sourceTree = "<group>"; };
 		A1839E84DBCF12F2CDC1930D /* QONUserProperty.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONUserProperty.m; sourceTree = "<group>"; };
 		A1839F615CCAF96B67D8A9F2 /* QONUserProperty+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QONUserProperty+Protected.h"; sourceTree = "<group>"; };
+		A1DEF1231000000000000002 /* QNUserPropertiesManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNUserPropertiesManagerTests.m; sourceTree = "<group>"; };
+		A1DEF1231000000000000004 /* QONRemoteConfigManagerInvalidationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigManagerInvalidationTests.m; sourceTree = "<group>"; };
+		A1DEF1231000000000000006 /* QNProductCenterManagerIdentifyRemoteConfigTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNProductCenterManagerIdentifyRemoteConfigTests.m; sourceTree = "<group>"; };
+		A320779854CE2BDD63B6BF2A /* QONRemoteConfigV2Manager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2Manager.m; sourceTree = "<group>"; };
+		A640027C629834C825BB849B /* QONRemoteConfigV2Manager.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2Manager.h; sourceTree = "<group>"; };
 		AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProductCenterManagerRestoreUserSwitchTests.m; sourceTree = "<group>"; };
 		AA8940BE5A87EDF644EC7E13 /* Pods_Watch_Sample_Watch_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Watch_Sample_Watch_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AABB11222E4A21BC00IMGPRE /* ImagePreloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloader.swift; sourceTree = "<group>"; };
 		AABB11232E4A21BC00IMGPRE /* ImagePreloaderInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreloaderInterface.swift; sourceTree = "<group>"; };
+		B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigFallbackStore.h; sourceTree = "<group>"; };
+		B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigFallbackStore.m; sourceTree = "<group>"; };
+		B2F000132F60000100000013 /* QONRemoteConfigFallbackStoreTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigFallbackStoreTests.m; sourceTree = "<group>"; };
+		B2F000142F60000100000014 /* qonversion_remote_config_defaults.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = qonversion_remote_config_defaults.json; sourceTree = "<group>"; };
+		B2F000152F60000100000015 /* qonversion_remote_config_defaults_all_types.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = qonversion_remote_config_defaults_all_types.json; sourceTree = "<group>"; };
+		B2F000162F60000100000016 /* qonversion_remote_config_defaults_number_boundaries.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = qonversion_remote_config_defaults_number_boundaries.json; sourceTree = "<group>"; };
 		BDB8E323ED05D47EC4D71E13 /* Pods-QonversionTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.debug.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.debug.xcconfig"; sourceTree = "<group>"; };
 		BFD0AC628A0DDF7425142814 /* Pods-Sample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.release.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.release.xcconfig"; sourceTree = "<group>"; };
 		C1CB75E8682A3EB84527DB3E /* Qonversion+Redemption.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Qonversion+Redemption.swift"; sourceTree = "<group>"; };
 		C40E96908815EA44B0705E9D /* Pods-Sample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sample.debug.xcconfig"; path = "Target Support Files/Pods-Sample/Pods-Sample.debug.xcconfig"; sourceTree = "<group>"; };
 		C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONEntitlementsUpdateListenerAdapter.h; sourceTree = "<group>"; };
+		C0DEC0DE0000000000000001 /* QONRemoteConfigJSON.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigJSON.h; sourceTree = "<group>"; };
+		C74EAD189E48417B3732DCCE /* QONRemoteConfigSnapshot.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigSnapshot.h; sourceTree = "<group>"; };
 		CB17D0ADC1EB86E558F459FD /* ScreenEventsServiceInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventsServiceInterface.swift; sourceTree = "<group>"; };
+		D0C5A231720A99E0AAB27281 /* QONRemoteConfigUpdate.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigUpdate.h; sourceTree = "<group>"; };
 		DD81381CD052A553AAAAC274 /* QONRedemptionManager.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRedemptionManager.h; sourceTree = "<group>"; };
+		E06E1B12300B7B060F723462 /* QONRemoteConfigSnapshot.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigSnapshot.m; sourceTree = "<group>"; };
 		E55D02AA51A75DD7987D4987 /* ScreenEventsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenEventsService.swift; sourceTree = "<group>"; };
+		F1449137BF0F2FD8E4971FA4 /* QONRemoteConfigSnapshot+Protected.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigSnapshot+Protected.h"; sourceTree = "<group>"; };
 		F40A7683B495F16AD590A5EC /* NoCodesLoadingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesLoadingView.swift; sourceTree = "<group>"; };
 		F538F251781497F893949833 /* Pods-QonversionTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QonversionTests.release.xcconfig"; path = "Target Support Files/Pods-QonversionTests/Pods-QonversionTests.release.xcconfig"; sourceTree = "<group>"; };
 		F59914571FB7D583A6205C7A /* NoCodesHTMLInjector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoCodesHTMLInjector.swift; sourceTree = "<group>"; };
@@ -752,15 +786,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		B2F000202F60000100000020 /* QONRemoteConfigFallbackStore */ = {
-			isa = PBXGroup;
-			children = (
-				B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */,
-				B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */,
-			);
-			path = QONRemoteConfigFallbackStore;
-			sourceTree = "<group>";
-		};
 		223E7B74704F72F8689D201D /* QONRedemptionManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -768,6 +793,18 @@
 				42BCAF69EE7817634773B8EE /* QONRedemptionManager.m */,
 			);
 			path = QONRedemptionManager;
+			sourceTree = "<group>";
+		};
+		3CFBF37E035D2E3A844EF7AC /* QONRemoteConfigV2Manager */ = {
+			isa = PBXGroup;
+			children = (
+				46B3E8F2B8C771F30BB01808 /* QONRemoteConfigV2Models.h */,
+				663D27E868396EE04A7698D5 /* QONRemoteConfigV2Models.m */,
+				A640027C629834C825BB849B /* QONRemoteConfigV2Manager.h */,
+				A320779854CE2BDD63B6BF2A /* QONRemoteConfigV2Manager.m */,
+			);
+			name = QONRemoteConfigV2Manager;
+			path = QONRemoteConfigV2Manager;
 			sourceTree = "<group>";
 		};
 		447A040961B196621A548033 /* Pods */ = {
@@ -787,6 +824,7 @@
 			isa = PBXGroup;
 			children = (
 				454BE21A247C2F0E001FE771 /* QInMemoryStorageTests.m */,
+				4DD35A476B9330A46522A812 /* QONRemoteConfigV2StoreTests.m */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -880,6 +918,7 @@
 				45FFA2DD24BE1015007EFB8F /* QNTestConstants.m */,
 				45FFA2EA24BEEA9A007EFB8F /* ProductCenterManagerTests.m */,
 				AA0001002D5B0A0000000001 /* ProductCenterManagerRestoreUserSwitchTests.m */,
+				F0FA29B0EB3D5BF4E64D341A /* Models */,
 			);
 			path = QonversionTests;
 			sourceTree = "<group>";
@@ -977,6 +1016,16 @@
 				45CC2EF4244085E4005CD107 /* checks.yml */,
 			);
 			path = workflows;
+			sourceTree = "<group>";
+		};
+		5EF70F7176C6CC56EE42B282 /* QONRemoteConfigV2Store */ = {
+			isa = PBXGroup;
+			children = (
+				4DDC15CD05353A25BDD0219B /* QONRemoteConfigV2Store.h */,
+				6B409D30498F93D8C79BBFD9 /* QONRemoteConfigV2Store.m */,
+			);
+			name = QONRemoteConfigV2Store;
+			path = QONRemoteConfigV2Store;
 			sourceTree = "<group>";
 		};
 		6A21BF4A2AB2018C005BDA7C /* QNRateLimiter */ = {
@@ -1443,6 +1492,12 @@
 				70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */,
 				70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */,
 				71CBCE6DF13D23D9A10C4713 /* QONRedemptionResult.h */,
+				9666927C9108B98D46BCB446 /* QONRemoteConfigValue.h */,
+				991A4358EC1494C098EFC302 /* QONRemoteConfigValue.m */,
+				C74EAD189E48417B3732DCCE /* QONRemoteConfigSnapshot.h */,
+				E06E1B12300B7B060F723462 /* QONRemoteConfigSnapshot.m */,
+				D0C5A231720A99E0AAB27281 /* QONRemoteConfigUpdate.h */,
+				9F870444F6E59619AB1DCA65 /* QONRemoteConfigUpdate.m */,
 			);
 			path = Public;
 			sourceTree = "<group>";
@@ -1471,6 +1526,7 @@
 				8957321726DD03A3009507A6 /* QNLocalStorage.h */,
 				8957321826DD03A3009507A6 /* QNInMemoryStorage */,
 				8957321B26DD03A3009507A6 /* QNRequestBuilder */,
+				5EF70F7176C6CC56EE42B282 /* QONRemoteConfigV2Store */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -1541,6 +1597,7 @@
 		8957322526DD03A3009507A6 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				C0DEC0DE0000000000000001 /* QONRemoteConfigJSON.h */,
 				6A4108542D8AAE4A002F902A /* QONRequestTrigger */,
 				7006360D2C1211F000BB9F9C /* NSError+Sugare */,
 				6A21BF4A2AB2018C005BDA7C /* QNRateLimiter */,
@@ -1628,6 +1685,7 @@
 				A18396B586B0A77331A3A346 /* QONUserProperties+Protected.h */,
 				C4DB5F155FE9F52DC87B68F6 /* QONEntitlementsUpdateListenerAdapter.h */,
 				0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */,
+				F1449137BF0F2FD8E4971FA4 /* QONRemoteConfigSnapshot+Protected.h */,
 			);
 			path = Protected;
 			sourceTree = "<group>";
@@ -1699,6 +1757,7 @@
 				8957326326DD03A3009507A6 /* QNProductCenterManager */,
 				8957326626DD03A3009507A6 /* QNIdentityManager */,
 				223E7B74704F72F8689D201D /* QONRedemptionManager */,
+				3CFBF37E035D2E3A844EF7AC /* QONRemoteConfigV2Manager */,
 			);
 			path = Main;
 			sourceTree = "<group>";
@@ -1809,6 +1868,7 @@
 				A1DEF1231000000000000002 /* QNUserPropertiesManagerTests.m */,
 				A1DEF1231000000000000004 /* QONRemoteConfigManagerInvalidationTests.m */,
 				A1DEF1231000000000000006 /* QNProductCenterManagerIdentifyRemoteConfigTests.m */,
+				296B5764F9B02F668DEBA22A /* QONRemoteConfigV2ManagerTests.m */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -1841,6 +1901,15 @@
 			path = QONUserPropertiesMapper;
 			sourceTree = "<group>";
 		};
+		B2F000202F60000100000020 /* QONRemoteConfigFallbackStore */ = {
+			isa = PBXGroup;
+			children = (
+				B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */,
+				B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */,
+			);
+			path = QONRemoteConfigFallbackStore;
+			sourceTree = "<group>";
+		};
 		BB6B3C9FD9EFBC9E1604507D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -1857,6 +1926,15 @@
 				AA8940BE5A87EDF644EC7E13 /* Pods_Watch_Sample_Watch_App.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F0FA29B0EB3D5BF4E64D341A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				6DBD5DF2283CD0649E9B7909 /* QONRemoteConfigSnapshotTests.m */,
+			);
+			name = Models;
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1959,6 +2037,14 @@
 				A183968F7BFAE4D93F96D32D /* QONUserProperties+Protected.h in Headers */,
 				F0F13F0F4D4F0701F425E45B /* QONRedemptionResult.h in Headers */,
 				799CAAB9346375385E5D73EE /* QONRedemptionManager.h in Headers */,
+				6BB6F0529E095B2501710063 /* QONRemoteConfigValue.h in Headers */,
+				2B1F005A892934909DD29314 /* QONRemoteConfigSnapshot.h in Headers */,
+				DFE1EF01074069227192E6F0 /* QONRemoteConfigUpdate.h in Headers */,
+				FC2C99538CFA4EE0D42F50D7 /* QONRemoteConfigSnapshot+Protected.h in Headers */,
+				2BF67036E25BB95C1B40140F /* QONRemoteConfigV2Store.h in Headers */,
+				64F83E8CBC08EE7FE52D2716 /* QONRemoteConfigV2Models.h in Headers */,
+				376D4522095E99309960A672 /* QONRemoteConfigV2Manager.h in Headers */,
+				C0DEC0DE0000000000000002 /* QONRemoteConfigJSON.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2455,6 +2541,12 @@
 				7D28F4C830227602F4BC5BF8 /* QONRedemptionManager.m in Sources */,
 				2703EE3FF4BB2D8ABFCE3237 /* ReissueViewController.swift in Sources */,
 				5A9243B784B722D804CF4294 /* Qonversion+Redemption.swift in Sources */,
+				D72FC697AF6B3F5882CDFD6B /* QONRemoteConfigValue.m in Sources */,
+				0260C539214A6A48356042F3 /* QONRemoteConfigSnapshot.m in Sources */,
+				57DD1304CDDECA1B68CFA807 /* QONRemoteConfigUpdate.m in Sources */,
+				2F6875D2E552C466B8E1C9A3 /* QONRemoteConfigV2Store.m in Sources */,
+				0721DD7665C511B906263E71 /* QONRemoteConfigV2Models.m in Sources */,
+				3A64B8327750874853ACD949 /* QONRemoteConfigV2Manager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2485,6 +2577,9 @@
 				456ECD37249BB68B00D2BC40 /* QRequestBuilderTests.m in Sources */,
 				89A193262604B99C00C3FCD9 /* XCTestCase+Unmock.m in Sources */,
 				459DAC06243E49C20011ECF3 /* QonversionMapperTests.m in Sources */,
+				15619C2C7D8402ED82C085BB /* QONRemoteConfigSnapshotTests.m in Sources */,
+				D9C671C7AD41EDCE9D4F0822 /* QONRemoteConfigV2StoreTests.m in Sources */,
+				00379E6044AEA7065E82A15F /* QONRemoteConfigV2ManagerTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
