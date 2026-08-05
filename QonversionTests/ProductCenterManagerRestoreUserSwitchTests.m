@@ -13,6 +13,8 @@
 #import "QONFallbackService.h"
 #import "QONRemoteConfigManager.h"
 #import "QONRequestTrigger.h"
+#import "QNTestConstants.h"
+#import "Helpers/XCTestCase+TestJSON.h"
 
 @interface QNProductCenterManager (RestoreTestPrivate)
 
@@ -25,8 +27,10 @@
 @property (nonatomic, assign) BOOL receiptRestoreInProgress;
 @property (nonatomic, assign) BOOL restoreInProgress;
 @property (nonatomic, assign) BOOL awaitingRestoreResult;
+@property (nonatomic, strong) NSRecursiveLock *identityMutationLock;
 
 - (void)handleUserSwitchIfNeededWithResult:(QONLaunchResult *)result;
+- (void)restoreReceipt:(QNRestoreCompletionHandler)completion;
 
 @end
 
@@ -34,8 +38,58 @@
 
 @property (nonatomic, strong) id mockClient;
 @property (nonatomic, strong) id mockUserInfoService;
+@property (nonatomic, strong) id mockIdentityManager;
 @property (nonatomic, strong) id mockRemoteConfigManager;
+@property (nonatomic, strong) id mockStoreKitService;
 @property (nonatomic, strong) QNProductCenterManager *manager;
+
+@end
+
+@interface QNRestoreTrackingRecursiveLock : NSObject <NSLocking>
+
+@property (nonatomic, strong) NSRecursiveLock *backingLock;
+@property (nonatomic, strong) NSObject *metadataLock;
+@property (nonatomic, strong, nullable) NSThread *ownerThread;
+@property (nonatomic, assign) NSUInteger recursionDepth;
+
+- (BOOL)isHeldByCurrentThread;
+
+@end
+
+@implementation QNRestoreTrackingRecursiveLock
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _backingLock = [NSRecursiveLock new];
+    _metadataLock = [NSObject new];
+  }
+  return self;
+}
+
+- (void)lock {
+  [self.backingLock lock];
+  @synchronized (self.metadataLock) {
+    self.ownerThread = [NSThread currentThread];
+    self.recursionDepth += 1;
+  }
+}
+
+- (void)unlock {
+  @synchronized (self.metadataLock) {
+    self.recursionDepth -= 1;
+    if (self.recursionDepth == 0) {
+      self.ownerThread = nil;
+    }
+  }
+  [self.backingLock unlock];
+}
+
+- (BOOL)isHeldByCurrentThread {
+  @synchronized (self.metadataLock) {
+    return self.ownerThread == [NSThread currentThread] && self.recursionDepth > 0;
+  }
+}
 
 @end
 
@@ -46,15 +100,18 @@
   OCMStub([_mockClient shared]).andReturn(_mockClient);
   
   _mockUserInfoService = OCMProtocolMock(@protocol(QNUserInfoServiceInterface));
-  id mockIdentityManager = OCMClassMock([QNIdentityManager class]);
+  _mockIdentityManager = OCMClassMock([QNIdentityManager class]);
   id mockLocalStorage = OCMProtocolMock(@protocol(QNLocalStorage));
   id mockFallbackService = OCMClassMock([QONFallbackService class]);
   
   _manager = [[QNProductCenterManager alloc] initWithUserInfoService:_mockUserInfoService
-                                                     identityManager:mockIdentityManager
+                                                     identityManager:_mockIdentityManager
                                                         localStorage:mockLocalStorage
                                                      fallbackService:mockFallbackService];
   [_manager setApiClient:_mockClient];
+
+  _mockStoreKitService = OCMClassMock([QNStoreKitService class]);
+  _manager.storeKitService = _mockStoreKitService;
   
   _mockRemoteConfigManager = OCMClassMock([QONRemoteConfigManager class]);
   _manager.remoteConfigManager = _mockRemoteConfigManager;
@@ -62,6 +119,9 @@
 
 - (void)tearDown {
   [_mockClient stopMocking];
+  [_mockIdentityManager stopMocking];
+  [_mockStoreKitService stopMocking];
+  [_mockRemoteConfigManager stopMocking];
   _manager = nil;
 }
 
@@ -104,6 +164,68 @@
   OCMVerify([_mockUserInfoService storeIdentity:originalUserId]);
   OCMVerify([_mockRemoteConfigManager userHasBeenChangedToUserID:originalUserId]);
   OCMReject([_mockClient setUserID:[OCMArg any]]);
+}
+
+- (void)testHandleUserSwitch_CommitsStorageAndRemoteConfigScopeInsideMutationBoundary {
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_old");
+  QONLaunchResult *launchResult = [[QONLaunchResult alloc] init];
+  launchResult.uid = @"user_new";
+
+  QNRestoreTrackingRecursiveLock *mutationLock = [QNRestoreTrackingRecursiveLock new];
+  _manager.identityMutationLock = (NSRecursiveLock *)mutationLock;
+  __block BOOL scopePublishedInsideMutationBoundary = NO;
+  OCMStub([_mockRemoteConfigManager userHasBeenChangedToUserID:@"user_new"]).andDo(^(NSInvocation *invocation) {
+    scopePublishedInsideMutationBoundary = [mutationLock isHeldByCurrentThread];
+  });
+
+  [_manager handleUserSwitchIfNeededWithResult:launchResult];
+
+  XCTAssertTrue(scopePublishedInsideMutationBoundary,
+                @"storage and Remote Config scope must commit under one identity boundary");
+}
+
+- (void)testRestoreReceiptStartedBeforeLogoutCannotApplyLateUserScope {
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_initial");
+  OCMStub([_mockIdentityManager logoutIfNeeded]).andReturn(NO);
+
+  __block void (^launchCompletion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+  OCMStub([_mockStoreKitService receipt:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^receiptCompletion)(NSString *) = nil;
+    [invocation getArgument:&receiptCompletion atIndex:2];
+    receiptCompletion(@"receipt");
+  });
+  OCMStub([_mockClient launchRequest:QONRequestTriggerRestore completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained void (^completion)(NSDictionary * _Nullable, NSError * _Nullable) = nil;
+    [invocation getArgument:&completion atIndex:3];
+    launchCompletion = [completion copy];
+  });
+
+  __block BOOL storedLateUser = NO;
+  __block BOOL publishedLateScope = NO;
+  OCMStub([_mockUserInfoService storeIdentity:@"qonversion_user_id"]).andDo(^(NSInvocation *invocation) {
+    storedLateUser = YES;
+  });
+  OCMStub([_mockRemoteConfigManager userHasBeenChangedToUserID:@"qonversion_user_id"]).andDo(^(NSInvocation *invocation) {
+    publishedLateScope = YES;
+  });
+
+  XCTestExpectation *completionExpectation = [self expectationWithDescription:@"stale restore completes"];
+  __block NSError *restoreError = nil;
+  [_manager restoreReceipt:^(NSDictionary<NSString *, QONEntitlement *> *entitlements, NSError *error) {
+    restoreError = error;
+    [completionExpectation fulfill];
+  }];
+  XCTAssertNotNil(launchCompletion);
+
+  [_manager logout];
+  NSDictionary *response = [self JSONObjectFromContentsOfFile:keyQNInitFullSuccessJSON];
+  launchCompletion(response, nil);
+
+  [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
+  XCTAssertFalse(storedLateUser, @"a restore older than logout must not rewrite identity storage");
+  XCTAssertFalse(publishedLateScope, @"a restore older than logout must not publish its Remote Config scope");
+  XCTAssertNotEqualObjects(_manager.launchResult.uid, @"qonversion_user_id");
+  XCTAssertEqual(restoreError.code, NSURLErrorCancelled);
 }
 
 - (void)testHandleUserSwitch_NilResult_NoSwitch {

@@ -22,6 +22,7 @@
 
 @property (nonatomic, copy) NSMutableArray *entitlementsBlocks;
 @property (nonatomic, copy) NSMutableArray *productsBlocks;
+@property (nonatomic, copy) NSMutableArray *userInfoBlocks;
 @property (nonatomic) QNAPIClient *apiClient;
 
 @property (nonatomic) QONLaunchResult *launchResult;
@@ -33,6 +34,7 @@
 
 - (void)checkEntitlements:(QONEntitlementsCompletionHandler)result;
 - (void)actualizeEntitlements:(QONEntitlementsCompletionHandler)completion;
+- (void)executeUserBlocks;
 
 @end
 
@@ -175,6 +177,38 @@
   XCTAssertEqual(dispatch_semaphore_wait(unlockFinished, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0,
                  @"callback storage must release @synchronized(self) before waiting for identityMutationLock");
   XCTAssertEqual(dispatch_semaphore_wait(checkFinished, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0);
+}
+
+- (void)testExecuteUserBlocksDoesNotHoldManagerMonitorDuringExternalCallbacks {
+  dispatch_semaphore_t callbackEntered = dispatch_semaphore_create(0);
+  dispatch_semaphore_t allowMonitorAttempt = dispatch_semaphore_create(0);
+  dispatch_semaphore_t monitorAcquired = dispatch_semaphore_create(0);
+  dispatch_semaphore_t backgroundFinished = dispatch_semaphore_create(0);
+  __block BOOL monitorWasAvailableDuringCallback = NO;
+
+  self.manager.userInfoBlocks = [@[^(QONUser *user, NSError *error) {
+    dispatch_semaphore_signal(callbackEntered);
+    dispatch_semaphore_signal(allowMonitorAttempt);
+    monitorWasAvailableDuringCallback = dispatch_semaphore_wait(
+        monitorAcquired, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)) == 0;
+  }] mutableCopy];
+
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    [self.manager.identityMutationLock lock];
+    dispatch_semaphore_wait(callbackEntered, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC));
+    dispatch_semaphore_wait(allowMonitorAttempt, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC));
+    @synchronized (self.manager) {
+      [self.manager.identityMutationLock unlock];
+    }
+    dispatch_semaphore_signal(monitorAcquired);
+    dispatch_semaphore_signal(backgroundFinished);
+  });
+
+  [self.manager executeUserBlocks];
+
+  XCTAssertTrue(monitorWasAvailableDuringCallback,
+                @"external callbacks must run after releasing the manager monitor");
+  XCTAssertEqual(dispatch_semaphore_wait(backgroundFinished, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0);
 }
 
 // MARK: - SUP3-30: actualizeEntitlements must preserve backend entitlements on error
