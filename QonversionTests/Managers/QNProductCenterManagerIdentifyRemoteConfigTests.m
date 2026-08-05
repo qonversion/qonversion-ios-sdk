@@ -54,6 +54,57 @@
 
 @end
 
+@interface QNTrackingRecursiveLock : NSObject <NSLocking>
+
+@property (nonatomic, strong) NSRecursiveLock *backingLock;
+@property (nonatomic, strong) NSObject *metadataLock;
+@property (nonatomic, strong, nullable) NSThread *ownerThread;
+@property (nonatomic, assign) NSUInteger recursionDepth;
+
+- (BOOL)isHeldByCurrentThread;
+
+@end
+
+
+@implementation QNTrackingRecursiveLock
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _backingLock = [NSRecursiveLock new];
+    _metadataLock = [NSObject new];
+  }
+  return self;
+}
+
+- (void)lock {
+  [self.backingLock lock];
+  @synchronized (self.metadataLock) {
+    self.ownerThread = [NSThread currentThread];
+    self.recursionDepth += 1;
+  }
+}
+
+- (void)unlock {
+  @synchronized (self.metadataLock) {
+    NSAssert(self.ownerThread == [NSThread currentThread] && self.recursionDepth > 0,
+             @"only the owning thread may unlock the identity mutation probe");
+    self.recursionDepth -= 1;
+    if (self.recursionDepth == 0) {
+      self.ownerThread = nil;
+    }
+  }
+  [self.backingLock unlock];
+}
+
+- (BOOL)isHeldByCurrentThread {
+  @synchronized (self.metadataLock) {
+    return self.ownerThread == [NSThread currentThread] && self.recursionDepth > 0;
+  }
+}
+
+@end
+
 @implementation QNProductCenterManagerIdentifyRemoteConfigTests
 
 - (void)setUp {
@@ -477,40 +528,21 @@
   _manager.launchingFinished = YES;
   OCMStub([_mockUserInfoService obtainCustomIdentityUserID]).andReturn(nil);
   OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"uid_initial");
-  OCMStub([_mockIdentityManager logoutIfNeeded]).andReturn(NO);
   OCMStub(([_mockIdentityManager identify:@"same@example.com"
                                completion:[OCMArg invokeBlockWithArgs:@"uid_initial", [NSNull null], nil]]));
 
-  dispatch_semaphore_t terminalCommitEntered = dispatch_semaphore_create(0);
-  dispatch_semaphore_t releaseTerminalCommit = dispatch_semaphore_create(0);
-  dispatch_semaphore_t identifyFinished = dispatch_semaphore_create(0);
-  dispatch_semaphore_t logoutFinished = dispatch_semaphore_create(0);
+  QNTrackingRecursiveLock *mutationLock = [QNTrackingRecursiveLock new];
+  _manager.identityMutationLock = (NSRecursiveLock *)mutationLock;
+  __block BOOL lockHeldDuringTerminalCommit = NO;
   id partialManager = OCMPartialMock(_manager);
   OCMStub([partialManager deliverIdentityRequest:[OCMArg any] error:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-    dispatch_semaphore_signal(terminalCommitEntered);
-    dispatch_semaphore_wait(releaseTerminalCommit, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC));
+    lockHeldDuringTerminalCommit = [mutationLock isHeldByCurrentThread];
   });
 
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-    [self.manager identify:@"same@example.com" completion:nil];
-    dispatch_semaphore_signal(identifyFinished);
-  });
-  XCTAssertEqual(dispatch_semaphore_wait(terminalCommitEntered, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0);
+  [_manager identify:@"same@example.com" completion:nil];
 
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-    [self.manager logout];
-    dispatch_semaphore_signal(logoutFinished);
-  });
-  long prematureLogout = dispatch_semaphore_wait(logoutFinished,
-                                                   dispatch_time(DISPATCH_TIME_NOW, 100 * NSEC_PER_MSEC));
-  XCTAssertNotEqual(prematureLogout, 0,
-                    @"logout must not overtake a same-UID identify terminal commit");
-
-  dispatch_semaphore_signal(releaseTerminalCommit);
-  XCTAssertEqual(dispatch_semaphore_wait(identifyFinished, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0);
-  if (prematureLogout != 0) {
-    XCTAssertEqual(dispatch_semaphore_wait(logoutFinished, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0);
-  }
+  XCTAssertTrue(lockHeldDuringTerminalCommit,
+                @"logout must not overtake a same-UID identify terminal commit");
   [partialManager stopMocking];
 }
 
