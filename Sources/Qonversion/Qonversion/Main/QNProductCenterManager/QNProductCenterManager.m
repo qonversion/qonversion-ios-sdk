@@ -1218,7 +1218,7 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
       // Close the enqueue-after-first-drain race: launchingFinished becomes
       // true only here, so a userInfo call could have queued immediately after
       // the wrapper's earlier snapshot. A second drain is idempotent.
-      [weakSelf executeUserBlocksWithError:errorToDeliver ?: weakSelf.launchError];
+      [weakSelf executeUserBlocksWithError:errorToDeliver];
       if ([weakSelf isIdentityMutationSupersededError:errorToDeliver]) {
         // A superseded response intentionally skips the normal high-level
         // commit path. Terminate every queue that depended on that launch;
