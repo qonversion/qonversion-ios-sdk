@@ -1221,8 +1221,14 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
     if (allLaunchesFinished) {
       terminalUserBlocks = [weakSelf.userInfoBlocks copy];
       [weakSelf.userInfoBlocks removeAllObjects];
-      [weakSelf actualizeUserInfo];
-      terminalUser = weakSelf.user;
+      if (terminalUserBlocks.count > 0) {
+        // Preserve the historical no-waiter behavior: a superseded launch
+        // must not rewrite the newer scope's in-memory user merely because
+        // its bookkeeping ticket became terminal. Snapshot user state only
+        // when there are actual userInfo callers to drain.
+        [weakSelf actualizeUserInfo];
+        terminalUser = weakSelf.user;
+      }
     }
     [weakSelf.userInfoBlocksLock unlock];
     [weakSelf.identityMutationLock unlock];
