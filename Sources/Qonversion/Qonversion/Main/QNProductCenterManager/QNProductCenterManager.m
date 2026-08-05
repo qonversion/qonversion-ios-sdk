@@ -103,7 +103,7 @@ static NSString * const kIdentityMutationSupersededKey = @"qonversion.identity-m
 @property (atomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoading;
 @property (atomic, assign) BOOL restoreInProgress;
-@property (nonatomic, assign) BOOL receiptRestoreInProgress;
+@property (atomic, assign) BOOL receiptRestoreInProgress;
 @property (nonatomic, assign) BOOL awaitingRestoreResult;
 @property (atomic, assign) BOOL identityInProgress;
 @property (atomic, assign) BOOL identityLogoutInProgress;
@@ -290,7 +290,13 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
   [self.identityStateLock lock];
   BOOL hasIdentityWork = self.activeIdentityRequest != nil || self.pendingIdentityRequests.count > 0;
   [self.identityStateLock unlock];
-  return self.launchingFinished && !self.identityInProgress && !self.identityLogoutInProgress && !hasIdentityWork && !self.unhandledLogoutAvailable;
+  return self.launchingFinished
+      && !self.identityInProgress
+      && !self.identityLogoutInProgress
+      && !self.restoreInProgress
+      && !self.receiptRestoreInProgress
+      && !hasIdentityWork
+      && !self.unhandledLogoutAvailable;
 }
 
 - (NSError *)identityMutationSupersededError {
@@ -895,6 +901,10 @@ expectedIdentityMutationGeneration:@(ownerGeneration)
 }
 
 - (void)executeUserBlocks {
+  [self executeUserBlocksWithError:self.launchError];
+}
+
+- (void)executeUserBlocksWithError:(nullable NSError *)resultError {
   [self.userInfoBlocksLock lock];
   NSArray<QONUserInfoCompletionHandler> *blocks = [self.userInfoBlocks copy];
   [self.userInfoBlocks removeAllObjects];
@@ -905,9 +915,8 @@ expectedIdentityMutationGeneration:@(ownerGeneration)
 
   [self actualizeUserInfo];
   QONUser *user = self.user;
-  NSError *error = self.launchError;
   for (QONUserInfoCompletionHandler block in blocks) {
-    run_block_on_main(block, user, error);
+    run_block_on_main(block, user, resultError);
   }
 }
 
@@ -1206,6 +1215,18 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
     [weakSelf.launchStateLock unlock];
 
     if (allLaunchesFinished) {
+      // Close the enqueue-after-first-drain race: launchingFinished becomes
+      // true only here, so a userInfo call could have queued immediately after
+      // the wrapper's earlier snapshot. A second drain is idempotent.
+      [weakSelf executeUserBlocksWithError:errorToDeliver ?: weakSelf.launchError];
+      if ([weakSelf isIdentityMutationSupersededError:errorToDeliver]) {
+        // A superseded response intentionally skips the normal high-level
+        // commit path. Terminate every queue that depended on that launch;
+        // otherwise products/offerings can remain retained forever
+        // when no replacement launch is required (for example, no-op logout).
+        [weakSelf executeProductsBlocksWithError:errorToDeliver];
+        [weakSelf executeOfferingsBlocksWithError:errorToDeliver];
+      }
       NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:weakSelf];
       [[NSNotificationCenter defaultCenter] postNotification:notification];
       [weakSelf handlePendingRequests:errorToDeliver];
