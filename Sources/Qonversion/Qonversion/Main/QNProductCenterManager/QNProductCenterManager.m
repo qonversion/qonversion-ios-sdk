@@ -1256,7 +1256,7 @@ expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
       if (identityRequest && ![weakSelf isActiveIdentityRequest:identityRequest]) {
         [weakSelf.identityMutationLock unlock];
         mutationLockHeld = NO;
-        releaseLaunchTicket(nil);
+        releaseLaunchTicket([weakSelf identityMutationSupersededError]);
         return;
       }
       if (ownerGeneration && weakSelf.identityMutationGeneration != ownerGeneration.unsignedIntegerValue) {
