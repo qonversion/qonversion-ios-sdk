@@ -20,12 +20,24 @@
 @property (nonatomic, assign) BOOL failWrites;
 @property (nonatomic, assign) BOOL throwOnWrite;
 @property (nonatomic, assign) NSUInteger readsToFail;
+@property (nonatomic, assign) NSUInteger readCount;
+@property (nonatomic, assign) NSUInteger writeCount;
 @property (nonatomic, copy, nullable) void (^writeObserver)(id object);
+@property (nonatomic, assign) BOOL blockNextWrite;
+@property (nonatomic, strong, nullable) dispatch_semaphore_t writeStarted;
+@property (nonatomic, strong, nullable) dispatch_semaphore_t releaseWrite;
 @end
 
 @implementation QONRemoteConfigFailingStorage
 - (instancetype)init { self = [super init]; if (self) _objects = [NSMutableDictionary new]; return self; }
 - (void)storeObject:(id)object forKey:(NSString *)key {
+  if (self.blockNextWrite) {
+    self.blockNextWrite = NO;
+    dispatch_semaphore_signal(self.writeStarted);
+    dispatch_semaphore_wait(self.releaseWrite,
+                            dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC));
+  }
+  self.writeCount += 1;
   if (self.throwOnWrite) @throw [NSException exceptionWithName:@"WriteFailure" reason:nil userInfo:nil];
   if (!self.failWrites) {
     self.objects[key] = object;
@@ -33,6 +45,7 @@
   }
 }
 - (id)loadObjectForKey:(NSString *)key {
+  self.readCount += 1;
   if (self.readsToFail > 0) {
     self.readsToFail -= 1;
     @throw [NSException exceptionWithName:@"ReadFailure" reason:nil userInfo:nil];
@@ -43,6 +56,40 @@
   completion([self loadObjectForKey:key]);
 }
 - (void)removeObjectForKey:(NSString *)key { [self.objects removeObjectForKey:key]; }
+@end
+
+@interface QONRemoteConfigV2TestScopePreloader : NSObject <QONRemoteConfigV2ScopePreloading>
+@property (nonatomic, strong) QONRemoteConfigV2ReadGuardPreloadResult *result;
+@property (nonatomic, strong) NSDictionary<NSString *, QONRemoteConfigV2ReadGuardPreloadResult *> *resultsByUserID;
+@property (nonatomic, weak) QONRemoteConfigV2Manager *manager;
+@property (nonatomic, copy) NSString *blockedUserID;
+@property (nonatomic, strong) dispatch_semaphore_t blockedCallStarted;
+@property (nonatomic, strong) dispatch_semaphore_t releaseBlockedCall;
+@property (nonatomic, assign) BOOL waitForSupersedingToken;
+@property (nonatomic, assign) BOOL observedMainThread;
+@end
+
+@implementation QONRemoteConfigV2TestScopePreloader
+- (QONRemoteConfigV2ReadGuardPreloadResult *)preloadResultForScope:
+    (QONRemoteConfigV2Scope *)scope {
+  self.observedMainThread = NSThread.isMainThread;
+  if ([scope.canonicalUserID isEqualToString:self.blockedUserID]) {
+    NSUUID *initialToken = [self.manager valueForKey:@"latestReadGuardPreloadToken"];
+    dispatch_semaphore_signal(self.blockedCallStarted);
+    if (self.waitForSupersedingToken) {
+      NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:2];
+      while (deadline.timeIntervalSinceNow > 0) {
+        NSUUID *token = [self.manager valueForKey:@"latestReadGuardPreloadToken"];
+        if (![token isEqual:initialToken]) break;
+        [NSThread sleepForTimeInterval:0.001];
+      }
+    } else {
+      dispatch_semaphore_wait(self.releaseBlockedCall,
+                              dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
+    }
+  }
+  return self.resultsByUserID[scope.canonicalUserID] ?: self.result;
+}
 @end
 
 @interface QONRemoteConfigBlockingEnvelopeDecoder : NSObject <QONRemoteConfigV2EnvelopeDecoding>
@@ -318,6 +365,37 @@
       initWithStore:[[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage]
       fallbackRelease:nil fallbackProjectKey:nil fallbackEnvironment:nil
       envelopeDecoder:decoder callbackExecutor:callbackExecutor];
+}
+
+- (QONRemoteConfigV2Manager *)readGuardManagerWithStorage:(id<QNLocalStorage>)storage
+                                                preloader:(QONRemoteConfigV2TestScopePreloader *)preloader
+                                                     mode:(QONRemoteConfigV2ReadGuardBuildMode)mode
+                                        callbackExecutor:(dispatch_queue_t)callbackExecutor
+                                         assertionHandler:(QONRemoteConfigV2ReadGuardAssertionHandler)assertionHandler
+                                         telemetryHandler:(QONRemoteConfigV2ReadGuardTelemetryHandler)telemetryHandler {
+  return [[QONRemoteConfigV2Manager alloc]
+      initWithStore:[[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage]
+      fallbackRelease:[self release:@"bundle" number:1 values:@{@"key": @"0"} immediate:NO]
+      fallbackProjectKey:@"project" fallbackEnvironment:@"production"
+      envelopeDecoder:[QONRemoteConfigV2EnvelopeParser new]
+      callbackExecutor:callbackExecutor readGuardBuildMode:mode
+      assertionHandler:assertionHandler telemetryHandler:telemetryHandler
+      scopePreloader:preloader];
+}
+
+- (QONRemoteConfigV2ReadGuardPreloadStatus)preloadReadGuardManager:
+    (QONRemoteConfigV2Manager *)manager scope:(QONRemoteConfigV2Scope *)scope {
+  __block QONRemoteConfigV2ReadGuardPreloadStatus status =
+      QONRemoteConfigV2ReadGuardPreloadStatusFailed;
+  dispatch_semaphore_t finished = dispatch_semaphore_create(0);
+  dispatch_async(dispatch_queue_create("io.qonversion.remote-config-v2-tests-preload",
+                                       DISPATCH_QUEUE_SERIAL), ^{
+    status = [manager preloadScopeForReadGuard:scope];
+    dispatch_semaphore_signal(finished);
+  });
+  XCTAssertEqual(dispatch_semaphore_wait(finished,
+      dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC)), 0L);
+  return status;
 }
 
 - (void)testAdmissionTokenIsManagerScopeExpectationAndLatestRequestBound {
@@ -1078,6 +1156,512 @@
   XCTAssertEqual(firstObserverInvocations, 1u);
   XCTAssertEqual(remainingObserverInvocations, 0u);
   XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"");
+}
+
+- (void)testReadGuardReleaseFirstReadAtomicallyUsesPreparedCandidateWithoutGetterIO {
+  QONRemoteConfigFailingStorage *storage = [QONRemoteConfigFailingStorage new];
+  QONRemoteConfigV2TestScopePreloader *preloader = [QONRemoteConfigV2TestScopePreloader new];
+  QONRemoteConfigV2Release *candidate = [[self release:@"candidate" number:2
+      values:@{@"key": @"1"} immediate:NO] releaseBySettingAdmissionOrdinal:2];
+  QONRemoteConfigV2State *candidateState = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:candidate active:nil previous:nil didActivate:NO
+      latestAdmissionOrdinal:2];
+  preloader.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound state:candidateState];
+  dispatch_queue_t callbacks = dispatch_queue_create(
+      "io.qonversion.remote-config-v2-tests-read-guard", DISPATCH_QUEUE_SERIAL);
+  __block NSUInteger misuseEvents = 0, implicitEvents = 0;
+  QONRemoteConfigV2Manager *manager = [self readGuardManagerWithStorage:storage
+      preloader:preloader mode:QONRemoteConfigV2ReadGuardBuildModeRelease
+      callbackExecutor:callbacks assertionHandler:nil
+  telemetryHandler:^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventReadBeforeActivate) misuseEvents += 1;
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation) implicitEvents += 1;
+  }];
+  QONRemoteConfigV2Scope *scope = [self scope:@"user"];
+
+  XCTAssertEqual([self preloadReadGuardManager:manager scope:scope],
+                 QONRemoteConfigV2ReadGuardPreloadStatusFound);
+  XCTAssertFalse(preloader.observedMainThread);
+  [manager setScope:scope];
+  NSUInteger readsBefore = storage.readCount;
+  NSUInteger writesBefore = storage.writeCount;
+  __block NSUInteger wrongSnapshots = 0;
+  dispatch_apply(64, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),
+      ^(__unused size_t index) {
+    if (![manager.currentSnapshot.releaseUID isEqualToString:@"candidate"]) {
+      @synchronized (manager) { wrongSnapshots += 1; }
+    }
+  });
+  dispatch_sync(callbacks, ^{});
+
+  XCTAssertEqual(wrongSnapshots, 0u);
+  XCTAssertEqual(misuseEvents, 1u);
+  XCTAssertEqual(implicitEvents, 1u);
+  XCTAssertEqual(storage.readCount, readsBefore);
+  XCTAssertEqual(storage.writeCount, writesBefore);
+
+  [manager acceptFetchedRelease:[self release:@"later" number:3
+      values:@{@"key": @"2"} immediate:NO] forScope:scope];
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"candidate");
+  XCTAssertEqualObjects(manager.lastFetchedSnapshot.releaseUID, @"later");
+  XCTAssertTrue([manager activate]);
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"later");
+}
+
+- (void)testReadGuardFetchAfterPreloadIsDurablyPreparedForFirstRead {
+  QONRemoteConfigFailingStorage *storage = [QONRemoteConfigFailingStorage new];
+  QONRemoteConfigV2Release *active = [[self release:@"active" number:1
+      values:@{@"key": @"1"} immediate:NO] releaseBySettingAdmissionOrdinal:1];
+  QONRemoteConfigV2State *activeState = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:active active:active previous:nil didActivate:YES
+      latestAdmissionOrdinal:1];
+  QONRemoteConfigV2TestScopePreloader *preloader = [QONRemoteConfigV2TestScopePreloader new];
+  preloader.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound state:activeState];
+  dispatch_queue_t callbacks = dispatch_queue_create(
+      "io.qonversion.remote-config-v2-tests-read-guard-post-preload-fetch",
+      DISPATCH_QUEUE_SERIAL);
+  __block NSUInteger implicitEvents = 0;
+  QONRemoteConfigV2Manager *manager = [self readGuardManagerWithStorage:storage
+      preloader:preloader mode:QONRemoteConfigV2ReadGuardBuildModeRelease
+      callbackExecutor:callbacks assertionHandler:nil
+      telemetryHandler:^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation) {
+      implicitEvents += 1;
+    }
+  }];
+  QONRemoteConfigV2Scope *scope = [self scope:@"user"];
+  XCTAssertEqual([self preloadReadGuardManager:manager scope:scope],
+                 QONRemoteConfigV2ReadGuardPreloadStatusFound);
+  [manager setScope:scope];
+
+  [manager acceptFetchedRelease:[self release:@"fetched" number:2
+      values:@{@"key": @"2"} immediate:NO] forScope:scope];
+  QONRemoteConfigV2State *durable = nil;
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  XCTAssertEqual([store loadStateForScope:scope state:&durable],
+                 QONRemoteConfigV2StoreLoadStatusFound);
+  XCTAssertEqualObjects(durable.active.releaseUID, @"fetched");
+  NSUInteger readsBefore = storage.readCount, writesBefore = storage.writeCount;
+
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"fetched");
+  XCTAssertEqual(storage.readCount, readsBefore);
+  XCTAssertEqual(storage.writeCount, writesBefore);
+  dispatch_sync(callbacks, ^{});
+  XCTAssertEqual(implicitEvents, 1u);
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"fetched");
+}
+
+- (void)testReadGuardRecoveredPersistenceRearmsButImmediateFetchDoesNotReportImplicitActivation {
+  QONRemoteConfigFailingStorage *storage = [QONRemoteConfigFailingStorage new];
+  storage.failWrites = YES;
+  QONRemoteConfigV2Release *active = [[self release:@"active" number:1
+      values:@{@"key": @"1"} immediate:NO] releaseBySettingAdmissionOrdinal:1];
+  QONRemoteConfigV2Release *pending = [[self release:@"pending" number:2
+      values:@{@"key": @"2"} immediate:NO] releaseBySettingAdmissionOrdinal:2];
+  QONRemoteConfigV2TestScopePreloader *preloader = [QONRemoteConfigV2TestScopePreloader new];
+  preloader.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+      state:[[QONRemoteConfigV2State alloc] initWithCandidate:pending active:active
+          previous:nil didActivate:YES latestAdmissionOrdinal:2]];
+  dispatch_queue_t callbacks = dispatch_queue_create(
+      "io.qonversion.remote-config-v2-tests-read-guard-recovery", DISPATCH_QUEUE_SERIAL);
+  __block NSUInteger implicitEvents = 0;
+  QONRemoteConfigV2Manager *manager = [self readGuardManagerWithStorage:storage
+      preloader:preloader mode:QONRemoteConfigV2ReadGuardBuildModeRelease
+      callbackExecutor:callbacks assertionHandler:nil
+      telemetryHandler:^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation) {
+      implicitEvents += 1;
+    }
+  }];
+  QONRemoteConfigV2Scope *scope = [self scope:@"user"];
+  XCTAssertEqual([self preloadReadGuardManager:manager scope:scope],
+                 QONRemoteConfigV2ReadGuardPreloadStatusPersistenceFailed);
+  [manager setScope:scope];
+  storage.failWrites = NO;
+  [manager acceptFetchedRelease:[self release:@"recovered" number:3
+      values:@{@"key": @"3"} immediate:NO] forScope:scope];
+
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"recovered");
+  dispatch_sync(callbacks, ^{});
+  XCTAssertEqual(implicitEvents, 1u);
+
+  QONRemoteConfigV2TestScopePreloader *missing = [QONRemoteConfigV2TestScopePreloader new];
+  missing.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusMissing state:nil];
+  __block NSUInteger immediateImplicitEvents = 0;
+  QONRemoteConfigV2Manager *immediateManager = [self readGuardManagerWithStorage:
+      [QONRemoteConfigFailingStorage new] preloader:missing
+      mode:QONRemoteConfigV2ReadGuardBuildModeRelease callbackExecutor:callbacks
+      assertionHandler:nil telemetryHandler:^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation) {
+      immediateImplicitEvents += 1;
+    }
+  }];
+  QONRemoteConfigV2Scope *immediateScope = [self scope:@"immediate-user"];
+  XCTAssertEqual([self preloadReadGuardManager:immediateManager scope:immediateScope],
+                 QONRemoteConfigV2ReadGuardPreloadStatusMissing);
+  [immediateManager setScope:immediateScope];
+  [immediateManager acceptFetchedRelease:[self release:@"immediate" number:2
+      values:@{@"key": @"4"} immediate:YES] forScope:immediateScope];
+  XCTAssertEqualObjects(immediateManager.currentSnapshot.releaseUID, @"immediate");
+  dispatch_sync(callbacks, ^{});
+  XCTAssertEqual(immediateImplicitEvents, 0u);
+}
+
+- (void)testReadGuardDebugAssertionIsExactAndExplicitActivationRemainsRequired {
+  QONRemoteConfigFailingStorage *storage = [QONRemoteConfigFailingStorage new];
+  QONRemoteConfigV2TestScopePreloader *preloader = [QONRemoteConfigV2TestScopePreloader new];
+  QONRemoteConfigV2Release *candidate = [[self release:@"candidate" number:2
+      values:@{@"key": @"1"} immediate:NO] releaseBySettingAdmissionOrdinal:2];
+  preloader.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+      state:[[QONRemoteConfigV2State alloc] initWithCandidate:candidate active:nil
+          previous:nil didActivate:NO latestAdmissionOrdinal:2]];
+  __block NSMutableArray<NSString *> *assertions = [NSMutableArray new];
+  QONRemoteConfigV2Manager *manager = [self readGuardManagerWithStorage:storage
+      preloader:preloader mode:QONRemoteConfigV2ReadGuardBuildModeDebug
+      callbackExecutor:dispatch_get_main_queue()
+      assertionHandler:^(NSString *message) { [assertions addObject:message]; }
+      telemetryHandler:nil];
+  QONRemoteConfigV2Scope *scope = [self scope:@"user"];
+  XCTAssertEqual([self preloadReadGuardManager:manager scope:scope],
+                 QONRemoteConfigV2ReadGuardPreloadStatusFound);
+  [manager setScope:scope];
+
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"bundle");
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"bundle");
+  XCTAssertEqualObjects(assertions, (@[QONRemoteConfigV2ReadBeforeActivateAssertionMessage]));
+  XCTAssertEqualObjects(assertions.firstObject,
+      @"Remote Config read before activate(). Call activate() during SDK startup before reading currentSnapshot.");
+  XCTAssertTrue([manager activate]);
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"candidate");
+}
+
+- (void)testReadGuardCorruptScopeIsolationAndPreparationFailureFailSafe {
+  dispatch_queue_t callbacks = dispatch_queue_create(
+      "io.qonversion.remote-config-v2-tests-read-guard-fail-safe", DISPATCH_QUEUE_SERIAL);
+  QONRemoteConfigV2TestScopePreloader *corrupt = [QONRemoteConfigV2TestScopePreloader new];
+  corrupt.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusCorrupt state:nil];
+  __block NSUInteger corruptEvents = 0, corruptMisuse = 0, corruptImplicit = 0;
+  QONRemoteConfigV2Manager *corruptManager = [self readGuardManagerWithStorage:
+      [QONRemoteConfigFailingStorage new] preloader:corrupt
+      mode:QONRemoteConfigV2ReadGuardBuildModeRelease callbackExecutor:callbacks
+      assertionHandler:nil telemetryHandler:^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventPreloadCorrupt) corruptEvents += 1;
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventReadBeforeActivate) corruptMisuse += 1;
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation) corruptImplicit += 1;
+  }];
+  QONRemoteConfigV2Scope *scope = [self scope:@"user-a"];
+  XCTAssertEqual([self preloadReadGuardManager:corruptManager scope:scope],
+                 QONRemoteConfigV2ReadGuardPreloadStatusCorrupt);
+  [corruptManager setScope:scope];
+  XCTAssertEqualObjects(corruptManager.currentSnapshot.releaseUID, @"bundle");
+  QONRemoteConfigV2EnvelopeExpectation *sameEnvironmentExpectation =
+      [[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:42
+          environmentUID:@"production"
+          contextFingerprint:[@"a" stringByPaddingToLength:64 withString:@"a"
+              startingAtIndex:0]];
+  XCTAssertNil([corruptManager beginAdmissionForScope:scope
+      expectation:sameEnvironmentExpectation]);
+  dispatch_sync(callbacks, ^{});
+  XCTAssertEqual(corruptEvents, 1u);
+  XCTAssertEqual(corruptMisuse, 1u);
+  XCTAssertEqual(corruptImplicit, 0u);
+
+  QONRemoteConfigFailingStorage *storage = [QONRemoteConfigFailingStorage new];
+  storage.failWrites = YES;
+  QONRemoteConfigV2Release *active = [[self release:@"active" number:1
+      values:@{@"key": @"1"} immediate:NO] releaseBySettingAdmissionOrdinal:1];
+  QONRemoteConfigV2Release *candidate = [[self release:@"candidate" number:2
+      values:@{@"key": @"2"} immediate:NO] releaseBySettingAdmissionOrdinal:2];
+  QONRemoteConfigV2TestScopePreloader *pending = [QONRemoteConfigV2TestScopePreloader new];
+  pending.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+      state:[[QONRemoteConfigV2State alloc] initWithCandidate:candidate active:active
+          previous:nil didActivate:YES latestAdmissionOrdinal:2]];
+  __block NSUInteger persistenceEvents = 0, diskMisuse = 0, diskImplicit = 0;
+  QONRemoteConfigV2Manager *diskFullManager = [self readGuardManagerWithStorage:storage
+      preloader:pending mode:QONRemoteConfigV2ReadGuardBuildModeRelease
+      callbackExecutor:callbacks assertionHandler:nil
+      telemetryHandler:^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventPreparedActivationPersistenceFailed) {
+      persistenceEvents += 1;
+    }
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventReadBeforeActivate) diskMisuse += 1;
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation) diskImplicit += 1;
+  }];
+  XCTAssertEqual([self preloadReadGuardManager:diskFullManager scope:scope],
+                 QONRemoteConfigV2ReadGuardPreloadStatusPersistenceFailed);
+  [diskFullManager setScope:scope];
+  XCTAssertEqualObjects(diskFullManager.currentSnapshot.releaseUID, @"active");
+  dispatch_sync(callbacks, ^{});
+  XCTAssertEqual(persistenceEvents, 1u);
+  XCTAssertEqual(diskMisuse, 1u);
+  XCTAssertEqual(diskImplicit, 0u);
+}
+
+- (void)testReadGuardNewestIssuedPreloadWinsAndScopeSelectionCancelsLateCompletion {
+  QONRemoteConfigV2Release *releaseA = [[self release:@"candidate-a" number:2
+      values:@{@"key": @"1"} immediate:NO] releaseBySettingAdmissionOrdinal:2];
+  QONRemoteConfigV2Release *releaseB = [[self release:@"candidate-b" number:3
+      values:@{@"key": @"2"} immediate:NO] releaseBySettingAdmissionOrdinal:3];
+  QONRemoteConfigV2TestScopePreloader *preloader = [QONRemoteConfigV2TestScopePreloader new];
+  preloader.blockedUserID = @"user-a";
+  preloader.blockedCallStarted = dispatch_semaphore_create(0);
+  preloader.releaseBlockedCall = dispatch_semaphore_create(0);
+  preloader.waitForSupersedingToken = YES;
+  preloader.resultsByUserID = @{
+    @"user-a": [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+        initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+        state:[[QONRemoteConfigV2State alloc] initWithCandidate:releaseA active:nil
+            previous:nil didActivate:NO latestAdmissionOrdinal:2]],
+    @"user-b": [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+        initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+        state:[[QONRemoteConfigV2State alloc] initWithCandidate:releaseB active:nil
+            previous:nil didActivate:NO latestAdmissionOrdinal:3]],
+  };
+  dispatch_queue_t callbacks = dispatch_queue_create(
+      "io.qonversion.remote-config-v2-tests-read-guard-race", DISPATCH_QUEUE_SERIAL);
+  QONRemoteConfigV2Manager *manager = [self readGuardManagerWithStorage:
+      [QONRemoteConfigFailingStorage new] preloader:preloader
+      mode:QONRemoteConfigV2ReadGuardBuildModeRelease callbackExecutor:callbacks
+      assertionHandler:nil telemetryHandler:nil];
+  preloader.manager = manager;
+  QONRemoteConfigV2Scope *userA = [self scope:@"user-a"];
+  QONRemoteConfigV2Scope *userB = [self scope:@"user-b"];
+  dispatch_semaphore_t aFinished = dispatch_semaphore_create(0);
+  dispatch_semaphore_t bFinished = dispatch_semaphore_create(0);
+  __block QONRemoteConfigV2ReadGuardPreloadStatus aStatus =
+      QONRemoteConfigV2ReadGuardPreloadStatusFound;
+  __block QONRemoteConfigV2ReadGuardPreloadStatus bStatus =
+      QONRemoteConfigV2ReadGuardPreloadStatusFailed;
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    aStatus = [manager preloadScopeForReadGuard:userA];
+    dispatch_semaphore_signal(aFinished);
+  });
+  XCTAssertEqual(dispatch_semaphore_wait(preloader.blockedCallStarted,
+      dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC)), 0L);
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    bStatus = [manager preloadScopeForReadGuard:userB];
+    dispatch_semaphore_signal(bFinished);
+  });
+  XCTAssertEqual(dispatch_semaphore_wait(aFinished,
+      dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC)), 0L);
+  XCTAssertEqual(dispatch_semaphore_wait(bFinished,
+      dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC)), 0L);
+  XCTAssertEqual(aStatus, QONRemoteConfigV2ReadGuardPreloadStatusFailed);
+  XCTAssertEqual(bStatus, QONRemoteConfigV2ReadGuardPreloadStatusFound);
+  [manager setScope:userB];
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"candidate-b");
+  [manager setScope:userA];
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"bundle");
+
+  QONRemoteConfigV2TestScopePreloader *late = [QONRemoteConfigV2TestScopePreloader new];
+  late.blockedUserID = @"user-a";
+  late.blockedCallStarted = dispatch_semaphore_create(0);
+  late.releaseBlockedCall = dispatch_semaphore_create(0);
+  late.result = preloader.resultsByUserID[@"user-a"];
+  QONRemoteConfigV2Manager *lateManager = [self readGuardManagerWithStorage:
+      [QONRemoteConfigFailingStorage new] preloader:late
+      mode:QONRemoteConfigV2ReadGuardBuildModeRelease callbackExecutor:callbacks
+      assertionHandler:nil telemetryHandler:nil];
+  late.manager = lateManager;
+  dispatch_semaphore_t lateFinished = dispatch_semaphore_create(0);
+  __block QONRemoteConfigV2ReadGuardPreloadStatus lateStatus =
+      QONRemoteConfigV2ReadGuardPreloadStatusFound;
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    lateStatus = [lateManager preloadScopeForReadGuard:userA];
+    dispatch_semaphore_signal(lateFinished);
+  });
+  XCTAssertEqual(dispatch_semaphore_wait(late.blockedCallStarted,
+      dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC)), 0L);
+  [lateManager setScope:userB];
+  dispatch_semaphore_signal(late.releaseBlockedCall);
+  XCTAssertEqual(dispatch_semaphore_wait(lateFinished,
+      dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC)), 0L);
+  XCTAssertEqual(lateStatus, QONRemoteConfigV2ReadGuardPreloadStatusFailed);
+  [lateManager setScope:userA];
+  XCTAssertEqualObjects(lateManager.currentSnapshot.releaseUID, @"bundle");
+}
+
+- (void)testReadGuardScopeSelectionWaitsForAdmittedSaveAndFencesLateWrites {
+  QONRemoteConfigFailingStorage *storage = [QONRemoteConfigFailingStorage new];
+  storage.blockNextWrite = YES;
+  storage.writeStarted = dispatch_semaphore_create(0);
+  storage.releaseWrite = dispatch_semaphore_create(0);
+  QONRemoteConfigV2Release *candidate = [[self release:@"candidate-a" number:2
+      values:@{@"key": @"1"} immediate:NO] releaseBySettingAdmissionOrdinal:2];
+  QONRemoteConfigV2TestScopePreloader *preloader = [QONRemoteConfigV2TestScopePreloader new];
+  preloader.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+      state:[[QONRemoteConfigV2State alloc] initWithCandidate:candidate active:nil
+          previous:nil didActivate:NO latestAdmissionOrdinal:2]];
+  QONRemoteConfigV2Manager *manager = [self readGuardManagerWithStorage:storage
+      preloader:preloader mode:QONRemoteConfigV2ReadGuardBuildModeRelease
+      callbackExecutor:dispatch_queue_create(
+          "io.qonversion.remote-config-v2-tests-atomic-save", DISPATCH_QUEUE_SERIAL)
+      assertionHandler:nil telemetryHandler:nil];
+  QONRemoteConfigV2Scope *userA = [self scope:@"user-a"];
+  QONRemoteConfigV2Scope *userB = [self scope:@"user-b"];
+  dispatch_semaphore_t preloadFinished = dispatch_semaphore_create(0);
+  dispatch_semaphore_t scopeReturned = dispatch_semaphore_create(0);
+  __block QONRemoteConfigV2ReadGuardPreloadStatus status =
+      QONRemoteConfigV2ReadGuardPreloadStatusFailed;
+  __block NSUInteger writesAtScopeReturn = NSNotFound;
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    status = [manager preloadScopeForReadGuard:userA];
+    dispatch_semaphore_signal(preloadFinished);
+  });
+  XCTAssertEqual(dispatch_semaphore_wait(storage.writeStarted,
+      dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0L);
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    [manager setScope:userB];
+    writesAtScopeReturn = storage.writeCount;
+    dispatch_semaphore_signal(scopeReturned);
+  });
+
+  XCTAssertNotEqual(dispatch_semaphore_wait(scopeReturned,
+      dispatch_time(DISPATCH_TIME_NOW, 100 * NSEC_PER_MSEC)), 0L);
+  dispatch_semaphore_signal(storage.releaseWrite);
+  XCTAssertEqual(dispatch_semaphore_wait(preloadFinished,
+      dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC)), 0L);
+  XCTAssertEqual(dispatch_semaphore_wait(scopeReturned,
+      dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC)), 0L);
+  XCTAssertEqual(status, QONRemoteConfigV2ReadGuardPreloadStatusFound);
+  XCTAssertEqual(storage.writeCount, writesAtScopeReturn);
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"bundle");
+}
+
+- (void)testReadGuardImplicitActivationOpportunityIsOncePerSDKLifetime {
+  QONRemoteConfigFailingStorage *storage = [QONRemoteConfigFailingStorage new];
+  QONRemoteConfigV2TestScopePreloader *preloader = [QONRemoteConfigV2TestScopePreloader new];
+  dispatch_queue_t callbacks = dispatch_queue_create(
+      "io.qonversion.remote-config-v2-tests-lifetime", DISPATCH_QUEUE_SERIAL);
+  __block NSUInteger implicitEvents = 0;
+  QONRemoteConfigV2Manager *manager = [self readGuardManagerWithStorage:storage
+      preloader:preloader mode:QONRemoteConfigV2ReadGuardBuildModeRelease
+      callbackExecutor:callbacks assertionHandler:nil
+      telemetryHandler:^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation) {
+      implicitEvents += 1;
+    }
+  }];
+  QONRemoteConfigV2Release *candidateA = [[self release:@"candidate-a" number:2
+      values:@{@"key": @"1"} immediate:NO] releaseBySettingAdmissionOrdinal:2];
+  preloader.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+      state:[[QONRemoteConfigV2State alloc] initWithCandidate:candidateA active:nil
+          previous:nil didActivate:NO latestAdmissionOrdinal:2]];
+  QONRemoteConfigV2Scope *userA = [self scope:@"user-a"];
+  XCTAssertEqual([self preloadReadGuardManager:manager scope:userA],
+                 QONRemoteConfigV2ReadGuardPreloadStatusFound);
+  [manager setScope:userA];
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"candidate-a");
+  NSUInteger writesAfterFirstActivation = storage.writeCount;
+
+  QONRemoteConfigV2Release *candidateB = [[self release:@"candidate-b" number:3
+      values:@{@"key": @"2"} immediate:NO] releaseBySettingAdmissionOrdinal:3];
+  preloader.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+      state:[[QONRemoteConfigV2State alloc] initWithCandidate:candidateB active:nil
+          previous:nil didActivate:NO latestAdmissionOrdinal:3]];
+  QONRemoteConfigV2Scope *userB = [self scope:@"user-b"];
+  XCTAssertEqual([self preloadReadGuardManager:manager scope:userB],
+                 QONRemoteConfigV2ReadGuardPreloadStatusFound);
+  XCTAssertEqual(storage.writeCount, writesAfterFirstActivation);
+  [manager setScope:userB];
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"bundle");
+  dispatch_sync(callbacks, ^{});
+  XCTAssertEqual(implicitEvents, 1u);
+
+  QONRemoteConfigFailingStorage *explicitStorage = [QONRemoteConfigFailingStorage new];
+  QONRemoteConfigV2TestScopePreloader *explicitPreloader =
+      [QONRemoteConfigV2TestScopePreloader new];
+  __block NSUInteger explicitImplicitEvents = 0;
+  QONRemoteConfigV2Manager *explicitManager = [self
+      readGuardManagerWithStorage:explicitStorage preloader:explicitPreloader
+      mode:QONRemoteConfigV2ReadGuardBuildModeRelease callbackExecutor:callbacks
+      assertionHandler:nil telemetryHandler:^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation) {
+      explicitImplicitEvents += 1;
+    }
+  }];
+  explicitPreloader.result = [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+      initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+      state:[[QONRemoteConfigV2State alloc] initWithCandidate:candidateA active:nil
+          previous:nil didActivate:NO latestAdmissionOrdinal:2]];
+  XCTAssertEqual([self preloadReadGuardManager:explicitManager scope:userA],
+                 QONRemoteConfigV2ReadGuardPreloadStatusFound);
+  [explicitManager setScope:userA];
+  XCTAssertTrue([explicitManager activate]);
+  NSUInteger writesAfterExplicit = explicitStorage.writeCount;
+  explicitPreloader.result = preloader.result;
+  XCTAssertEqual([self preloadReadGuardManager:explicitManager scope:userB],
+                 QONRemoteConfigV2ReadGuardPreloadStatusFound);
+  XCTAssertEqual(explicitStorage.writeCount, writesAfterExplicit);
+  [explicitManager setScope:userB];
+  XCTAssertEqualObjects(explicitManager.currentSnapshot.releaseUID, @"bundle");
+  dispatch_sync(callbacks, ^{});
+  XCTAssertEqual(explicitImplicitEvents, 0u);
+}
+
+- (void)testReadGuardStaleReadDuringPreloadBindWindowCannotConsumeTargetOpportunity {
+  QONRemoteConfigFailingStorage *storage = [QONRemoteConfigFailingStorage new];
+  QONRemoteConfigV2Release *candidate = [[self release:@"candidate-a" number:2
+      values:@{@"key": @"1"} immediate:NO] releaseBySettingAdmissionOrdinal:2];
+  QONRemoteConfigV2TestScopePreloader *preloader = [QONRemoteConfigV2TestScopePreloader new];
+  preloader.blockedUserID = @"user-a";
+  preloader.blockedCallStarted = dispatch_semaphore_create(0);
+  preloader.releaseBlockedCall = dispatch_semaphore_create(0);
+  preloader.resultsByUserID = @{
+    @"user-a": [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+        initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusFound
+        state:[[QONRemoteConfigV2State alloc] initWithCandidate:candidate active:nil
+            previous:nil didActivate:NO latestAdmissionOrdinal:2]],
+    @"user-b": [[QONRemoteConfigV2ReadGuardPreloadResult alloc]
+        initWithStatus:QONRemoteConfigV2ReadGuardPreloadStatusMissing state:nil],
+  };
+  dispatch_queue_t callbacks = dispatch_queue_create(
+      "io.qonversion.remote-config-v2-tests-bind-window", DISPATCH_QUEUE_SERIAL);
+  __block NSUInteger implicitEvents = 0;
+  QONRemoteConfigV2Manager *manager = [self readGuardManagerWithStorage:storage
+      preloader:preloader mode:QONRemoteConfigV2ReadGuardBuildModeRelease
+      callbackExecutor:callbacks assertionHandler:nil
+      telemetryHandler:^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    if (event == QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation) {
+      implicitEvents += 1;
+    }
+  }];
+  preloader.manager = manager;
+  QONRemoteConfigV2Scope *userA = [self scope:@"user-a"];
+  QONRemoteConfigV2Scope *userB = [self scope:@"user-b"];
+  XCTAssertEqual([self preloadReadGuardManager:manager scope:userB],
+                 QONRemoteConfigV2ReadGuardPreloadStatusMissing);
+  [manager setScope:userB];
+
+  dispatch_semaphore_t preloadFinished = dispatch_semaphore_create(0);
+  __block QONRemoteConfigV2ReadGuardPreloadStatus status =
+      QONRemoteConfigV2ReadGuardPreloadStatusFailed;
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    status = [manager preloadScopeForReadGuard:userA];
+    dispatch_semaphore_signal(preloadFinished);
+  });
+  XCTAssertEqual(dispatch_semaphore_wait(preloader.blockedCallStarted,
+      dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0L);
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"bundle");
+  dispatch_semaphore_signal(preloader.releaseBlockedCall);
+  XCTAssertEqual(dispatch_semaphore_wait(preloadFinished,
+      dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC)), 0L);
+  XCTAssertEqual(status, QONRemoteConfigV2ReadGuardPreloadStatusFound);
+
+  [manager setScope:userA];
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"candidate-a");
+  dispatch_sync(callbacks, ^{});
+  XCTAssertEqual(implicitEvents, 1u);
 }
 
 @end

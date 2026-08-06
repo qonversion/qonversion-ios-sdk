@@ -4,6 +4,38 @@
 #import "QONRemoteConfigV2Models.h"
 #import "QONRemoteConfigV2Store.h"
 
+NSString *const QONRemoteConfigV2ReadBeforeActivateAssertionMessage =
+    @"Remote Config read before activate(). Call activate() during SDK startup before reading currentSnapshot.";
+static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
+    &QONRemoteConfigV2ReadGuardPreloadQueueKey;
+
+@implementation QONRemoteConfigV2ReadGuardPreloadResult
+
+- (instancetype)initWithStatus:(QONRemoteConfigV2ReadGuardPreloadStatus)status
+                          state:(QONRemoteConfigV2State *)state {
+  if (status < QONRemoteConfigV2ReadGuardPreloadStatusFound ||
+      status > QONRemoteConfigV2ReadGuardPreloadStatusPersistenceFailed) return nil;
+  if ((status == QONRemoteConfigV2ReadGuardPreloadStatusFound) != (state != nil)) return nil;
+  self = [super init];
+  if (self) {
+    _status = status;
+    _state = state;
+  }
+  return self;
+}
+
+@end
+
+@interface QONRemoteConfigV2ReadGuardPreparedSlot : NSObject
+@property (nonatomic, strong) QONRemoteConfigV2Scope *scope;
+@property (nonatomic, strong) QONRemoteConfigV2State *loadedState;
+@property (nonatomic, strong, nullable) QONRemoteConfigV2State *preparedState;
+@property (nonatomic, assign) QONRemoteConfigV2ReadGuardPreloadStatus status;
+@end
+
+@implementation QONRemoteConfigV2ReadGuardPreparedSlot
+@end
+
 @interface QONRemoteConfigV2Delivery : NSObject
 @property (nonatomic, strong) QONRemoteConfigUpdate *update;
 @property (nonatomic, copy) NSArray<QONRemoteConfigV2UpdateObserver> *observers;
@@ -46,6 +78,23 @@
 @property (nonatomic, strong) dispatch_queue_t callbackExecutor;
 @property (nonatomic, strong) NSObject *callbackExecutorToken;
 @property (nonatomic, assign) BOOL callbackExecutorIsMain;
+@property (nonatomic, assign) BOOL readGuardEnabled;
+@property (nonatomic, assign) QONRemoteConfigV2ReadGuardBuildMode readGuardBuildMode;
+@property (nonatomic, copy, nullable) QONRemoteConfigV2ReadGuardAssertionHandler readGuardAssertionHandler;
+@property (nonatomic, copy, nullable) QONRemoteConfigV2ReadGuardTelemetryHandler readGuardTelemetryHandler;
+@property (nonatomic, strong, nullable) id<QONRemoteConfigV2ScopePreloading> scopePreloader;
+@property (nonatomic, strong, nullable) QONRemoteConfigV2ReadGuardPreparedSlot *preloadedSlot;
+@property (nonatomic, strong, nullable) NSUUID *latestReadGuardPreloadToken;
+@property (nonatomic, assign) NSUInteger readGuardScopeSelectionEpoch;
+@property (nonatomic, strong, nullable) dispatch_queue_t readGuardPreloadQueue;
+@property (nonatomic, strong, nullable) QONRemoteConfigV2State *readGuardBaseState;
+@property (nonatomic, strong, nullable) QONRemoteConfigV2State *readGuardPreparedState;
+@property (nonatomic, assign) BOOL readGuardFirstReadActivationArmed;
+@property (nonatomic, assign) BOOL readGuardFirstReadClaimed;
+@property (nonatomic, assign) BOOL readGuardExplicitActivationCalled;
+@property (nonatomic, assign) BOOL readGuardLifetimeActivationConsumed;
+@property (nonatomic, assign) BOOL readGuardScopeUnavailable;
+@property (nonatomic, assign) BOOL readGuardFailSafeEventClaimed;
 @end
 
 @implementation QONRemoteConfigV2Manager
@@ -103,6 +152,117 @@
   return self;
 }
 
+- (instancetype)initWithStore:(QONRemoteConfigV2Store *)store
+               fallbackRelease:(QONRemoteConfigV2Release *)fallbackRelease
+             fallbackProjectKey:(NSString *)fallbackProjectKey
+            fallbackEnvironment:(NSString *)fallbackEnvironment
+                 envelopeDecoder:(id<QONRemoteConfigV2EnvelopeDecoding>)envelopeDecoder
+                callbackExecutor:(dispatch_queue_t)callbackExecutor
+              readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
+                assertionHandler:(QONRemoteConfigV2ReadGuardAssertionHandler)assertionHandler
+                telemetryHandler:(QONRemoteConfigV2ReadGuardTelemetryHandler)telemetryHandler
+                  scopePreloader:(id<QONRemoteConfigV2ScopePreloading>)scopePreloader {
+  if (!scopePreloader || buildMode < QONRemoteConfigV2ReadGuardBuildModeDebug ||
+      buildMode > QONRemoteConfigV2ReadGuardBuildModeRelease) return nil;
+  self = [self initWithStore:store fallbackRelease:fallbackRelease
+      fallbackProjectKey:fallbackProjectKey fallbackEnvironment:fallbackEnvironment
+      envelopeDecoder:envelopeDecoder callbackExecutor:callbackExecutor];
+  if (self) {
+    _readGuardEnabled = YES;
+    _readGuardBuildMode = buildMode;
+    _readGuardAssertionHandler = [assertionHandler copy];
+    _readGuardTelemetryHandler = [telemetryHandler copy];
+    _scopePreloader = scopePreloader;
+    _readGuardPreloadQueue = dispatch_queue_create(
+        "io.qonversion.remote-config-v2-read-guard-preload", DISPATCH_QUEUE_SERIAL);
+    dispatch_queue_set_specific(_readGuardPreloadQueue,
+        QONRemoteConfigV2ReadGuardPreloadQueueKey,
+        QONRemoteConfigV2ReadGuardPreloadQueueKey, NULL);
+  }
+  return self;
+}
+
+- (QONRemoteConfigV2State *)emptyState {
+  return [[QONRemoteConfigV2State alloc]
+      initWithCandidate:nil active:nil previous:nil didActivate:NO];
+}
+
+- (QONRemoteConfigV2State *)preparedActivationStateFromState:(QONRemoteConfigV2State *)state {
+  QONRemoteConfigV2Release *candidate = state.candidate;
+  if (candidate && !(state.didActivate && [self release:candidate
+      representsSameLocalAdmissionAs:state.active])) {
+    return [[QONRemoteConfigV2State alloc] initWithCandidate:candidate active:candidate
+        previous:state.active didActivate:YES
+        latestAdmissionOrdinal:MAX(state.latestAdmissionOrdinal, candidate.admissionOrdinal)];
+  }
+  if (!state.didActivate) {
+    return [[QONRemoteConfigV2State alloc] initWithCandidate:state.candidate active:state.active
+        previous:state.previous didActivate:YES
+        latestAdmissionOrdinal:state.latestAdmissionOrdinal];
+  }
+  return state;
+}
+
+- (QONRemoteConfigV2ReadGuardPreloadStatus)preloadScopeForReadGuard:
+    (QONRemoteConfigV2Scope *)scope {
+  if (!self.readGuardEnabled || !scope || NSThread.isMainThread ||
+      dispatch_get_specific(QONRemoteConfigV2ReadGuardPreloadQueueKey)) {
+    return QONRemoteConfigV2ReadGuardPreloadStatusFailed;
+  }
+  NSUUID *token = NSUUID.UUID;
+  __block NSUInteger selectionEpoch = 0;
+  dispatch_sync(self.stateQueue, ^{
+    self.latestReadGuardPreloadToken = token;
+    self.preloadedSlot = nil;
+    selectionEpoch = self.readGuardScopeSelectionEpoch;
+  });
+
+  __block QONRemoteConfigV2ReadGuardPreloadStatus status =
+      QONRemoteConfigV2ReadGuardPreloadStatusFailed;
+  dispatch_sync(self.readGuardPreloadQueue, ^{
+    QONRemoteConfigV2ReadGuardPreloadResult *result = nil;
+    @try { result = [self.scopePreloader preloadResultForScope:scope]; }
+    @catch (__unused NSException *exception) {}
+    status = result ? result.status : QONRemoteConfigV2ReadGuardPreloadStatusFailed;
+    QONRemoteConfigV2State *loaded = nil;
+    if (status == QONRemoteConfigV2ReadGuardPreloadStatusFound) {
+      loaded = result.state;
+      if (!loaded) status = QONRemoteConfigV2ReadGuardPreloadStatusCorrupt;
+    } else if (status == QONRemoteConfigV2ReadGuardPreloadStatusMissing) {
+      loaded = [self emptyState];
+    }
+    if (!loaded) loaded = [self emptyState];
+
+    QONRemoteConfigV2ReadGuardPreparedSlot *slot = [QONRemoteConfigV2ReadGuardPreparedSlot new];
+    slot.scope = [scope copy];
+    slot.loadedState = loaded;
+    dispatch_sync(self.stateQueue, ^{
+      if (![self.latestReadGuardPreloadToken isEqual:token] ||
+          self.readGuardScopeSelectionEpoch != selectionEpoch) {
+        status = QONRemoteConfigV2ReadGuardPreloadStatusFailed;
+        return;
+      }
+      QONRemoteConfigV2State *prepared = nil;
+      BOOL canPrepare =
+          self.readGuardBuildMode == QONRemoteConfigV2ReadGuardBuildModeRelease &&
+          !self.readGuardLifetimeActivationConsumed &&
+          (status == QONRemoteConfigV2ReadGuardPreloadStatusFound ||
+           status == QONRemoteConfigV2ReadGuardPreloadStatusMissing);
+      if (canPrepare) {
+        prepared = [self preparedActivationStateFromState:loaded];
+        if (prepared != loaded && ![self.store saveState:prepared forScope:scope]) {
+          prepared = nil;
+          status = QONRemoteConfigV2ReadGuardPreloadStatusPersistenceFailed;
+        }
+      }
+      slot.preparedState = prepared;
+      slot.status = status;
+      self.preloadedSlot = slot;
+    });
+  });
+  return status;
+}
+
 - (QONRemoteConfigV2Release *)fallbackReleaseForCurrentScopeLocked {
   if (!self.fallbackRelease || !self.currentScope) return self.fallbackRelease;
   NSString *projectKey = self.fallbackProjectKey;
@@ -118,9 +278,79 @@
       previousRelease:state.previous fallbackRelease:[self fallbackReleaseForCurrentScopeLocked]];
 }
 
+- (void)emitReadGuardTelemetry:(QONRemoteConfigV2ReadGuardTelemetryEvent)event {
+  QONRemoteConfigV2ReadGuardTelemetryHandler handler = self.readGuardTelemetryHandler;
+  if (!handler) return;
+  dispatch_async(self.callbackExecutor, ^{
+    @try { handler(event); }
+    @catch (__unused NSException *exception) {}
+  });
+}
+
+- (void)scheduleReadGuardDeliveryDrain {
+  dispatch_async(self.callbackExecutor, ^{ [self drainDeliveriesOnCallbackExecutor]; });
+}
+
 - (QONRemoteConfigSnapshot *)currentSnapshot {
   __block QONRemoteConfigSnapshot *snapshot = nil;
-  dispatch_sync(self.stateQueue, ^{ snapshot = [self snapshotForState:self.state]; });
+  __block QONRemoteConfigV2ReadGuardAssertionHandler assertionHandler = nil;
+  __block BOOL emitReadBeforeActivate = NO;
+  __block BOOL emitImplicitActivation = NO;
+  __block BOOL emitPreloadAbsent = NO;
+  __block BOOL drainDeliveries = NO;
+  dispatch_sync(self.stateQueue, ^{
+    BOOL scopeBindingPending = self.latestReadGuardPreloadToken != nil;
+    if (self.readGuardEnabled && !scopeBindingPending &&
+        !self.readGuardExplicitActivationCalled &&
+        !self.readGuardFirstReadClaimed) {
+      self.readGuardFirstReadClaimed = YES;
+      if (self.readGuardBuildMode == QONRemoteConfigV2ReadGuardBuildModeDebug) {
+        assertionHandler = self.readGuardAssertionHandler;
+      } else {
+        emitReadBeforeActivate = YES;
+        BOOL activationArmed = !self.readGuardLifetimeActivationConsumed &&
+            self.readGuardFirstReadActivationArmed;
+        self.readGuardLifetimeActivationConsumed = YES;
+        self.readGuardFirstReadActivationArmed = NO;
+        if (activationArmed && self.readGuardPreparedState &&
+            self.state == self.readGuardBaseState) {
+          emitImplicitActivation = self.readGuardPreparedState != self.readGuardBaseState;
+          QONRemoteConfigSnapshot *oldSnapshot = [self snapshotForState:self.state];
+          self.state = self.readGuardPreparedState;
+          self.nextAdmissionOrdinal = MAX(self.nextAdmissionOrdinal,
+                                           self.state.latestAdmissionOrdinal);
+          QONRemoteConfigUpdate *update = [self updateFromSnapshot:oldSnapshot
+                                                           toState:self.state];
+          if (update.changedKeys.count > 0) {
+            [self enqueueUpdateLocked:update];
+            drainDeliveries = YES;
+          }
+        }
+        self.readGuardBaseState = nil;
+        self.readGuardPreparedState = nil;
+      }
+    }
+    if (self.readGuardEnabled && !self.currentScope &&
+        !self.readGuardFailSafeEventClaimed) {
+      self.readGuardFailSafeEventClaimed = YES;
+      emitPreloadAbsent = YES;
+    }
+    snapshot = [self snapshotForState:self.state];
+  });
+  if (assertionHandler) {
+    @try { assertionHandler(QONRemoteConfigV2ReadBeforeActivateAssertionMessage); }
+    @catch (__unused NSException *exception) {}
+  }
+  if (emitReadBeforeActivate) {
+    [self emitReadGuardTelemetry:QONRemoteConfigV2ReadGuardTelemetryEventReadBeforeActivate];
+  }
+  if (emitImplicitActivation) {
+    [self emitReadGuardTelemetry:QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation];
+  }
+  if (emitPreloadAbsent) {
+    [self emitReadGuardTelemetry:QONRemoteConfigV2ReadGuardTelemetryEventPreloadAbsent];
+  }
+  if (drainDeliveries) [self scheduleReadGuardDeliveryDrain];
   return snapshot;
 }
 
@@ -172,6 +402,84 @@
 }
 
 - (void)applyScopeLocked:(QONRemoteConfigV2Scope *)scope {
+  if (self.readGuardEnabled) {
+    __block BOOL emitFailSafe = NO;
+    __block QONRemoteConfigV2ReadGuardTelemetryEvent failSafeEvent =
+        QONRemoteConfigV2ReadGuardTelemetryEventPreloadAbsent;
+    dispatch_sync(self.stateQueue, ^{
+      self.readGuardScopeSelectionEpoch += 1;
+      self.latestReadGuardPreloadToken = nil;
+      QONRemoteConfigV2ReadGuardPreparedSlot *availableSlot = self.preloadedSlot;
+      self.preloadedSlot = nil;
+      BOOL sameScope = (self.currentScope == nil && scope == nil) ||
+          [self.currentScope isEqual:scope];
+      BOOL hasExactPreload = scope && [availableSlot.scope isEqual:scope];
+      if (sameScope && !hasExactPreload) return;
+
+      if (!sameScope) {
+        self.currentScope = [scope copy];
+        self.state = [self emptyState];
+        self.scopeLoadFailed = NO;
+        self.nextAdmissionOrdinal = 0;
+        self.scopeGeneration += 1;
+      } else if (hasExactPreload) {
+        // A freshly preloaded state starts a new read/observer generation even
+        // when the logical scope is unchanged.
+        self.scopeGeneration += 1;
+      }
+      self.readGuardBaseState = nil;
+      self.readGuardPreparedState = nil;
+      self.readGuardFirstReadActivationArmed = NO;
+      self.readGuardFirstReadClaimed = NO;
+      self.readGuardExplicitActivationCalled = NO;
+      self.readGuardScopeUnavailable = scope != nil;
+      self.readGuardFailSafeEventClaimed = NO;
+
+      if (!scope) return;
+      if (hasExactPreload) {
+        QONRemoteConfigV2ReadGuardPreparedSlot *slot = availableSlot;
+        self.state = slot.loadedState;
+        self.nextAdmissionOrdinal = slot.loadedState.latestAdmissionOrdinal;
+        self.readGuardBaseState = slot.loadedState;
+        self.readGuardPreparedState = slot.preparedState;
+        self.readGuardFirstReadActivationArmed =
+            self.readGuardBuildMode == QONRemoteConfigV2ReadGuardBuildModeRelease &&
+            !self.readGuardLifetimeActivationConsumed &&
+            slot.status != QONRemoteConfigV2ReadGuardPreloadStatusFailed &&
+            slot.status != QONRemoteConfigV2ReadGuardPreloadStatusCorrupt;
+        self.readGuardScopeUnavailable =
+            slot.status == QONRemoteConfigV2ReadGuardPreloadStatusFailed ||
+            slot.status == QONRemoteConfigV2ReadGuardPreloadStatusCorrupt;
+        switch (slot.status) {
+          case QONRemoteConfigV2ReadGuardPreloadStatusFound:
+            break;
+          case QONRemoteConfigV2ReadGuardPreloadStatusMissing:
+            failSafeEvent = QONRemoteConfigV2ReadGuardTelemetryEventPreloadAbsent;
+            emitFailSafe = YES;
+            break;
+          case QONRemoteConfigV2ReadGuardPreloadStatusFailed:
+            failSafeEvent = QONRemoteConfigV2ReadGuardTelemetryEventPreloadFailed;
+            emitFailSafe = YES;
+            break;
+          case QONRemoteConfigV2ReadGuardPreloadStatusCorrupt:
+            failSafeEvent = QONRemoteConfigV2ReadGuardTelemetryEventPreloadCorrupt;
+            emitFailSafe = YES;
+            break;
+          case QONRemoteConfigV2ReadGuardPreloadStatusPersistenceFailed:
+            failSafeEvent =
+                QONRemoteConfigV2ReadGuardTelemetryEventPreparedActivationPersistenceFailed;
+            emitFailSafe = YES;
+            break;
+        }
+      } else {
+        failSafeEvent = QONRemoteConfigV2ReadGuardTelemetryEventPreloadAbsent;
+        emitFailSafe = YES;
+      }
+      if (emitFailSafe) self.readGuardFailSafeEventClaimed = YES;
+    });
+    if (emitFailSafe) [self emitReadGuardTelemetry:failSafeEvent];
+    return;
+  }
   dispatch_sync(self.stateQueue, ^{
     BOOL sameScope = (self.currentScope == nil && scope == nil) || [self.currentScope isEqual:scope];
     if (sameScope && !(scope && self.scopeLoadFailed)) return;
@@ -213,8 +521,36 @@
 }
 
 - (BOOL)ensureCurrentScopeLoadedLocked {
+  if (self.readGuardEnabled) {
+    return self.currentScope != nil && !self.readGuardScopeUnavailable;
+  }
   if (self.currentScope && self.scopeLoadFailed) [self loadScopeStateLocked:self.currentScope];
   return self.currentScope != nil && !self.scopeLoadFailed;
+}
+
+- (void)invalidateReadGuardPreparationLocked {
+  if (!self.readGuardEnabled) return;
+  self.readGuardBaseState = nil;
+  self.readGuardPreparedState = nil;
+  self.readGuardFirstReadActivationArmed = NO;
+}
+
+- (QONRemoteConfigV2State *)durableStateForReadGuardProposedStateLocked:
+    (QONRemoteConfigV2State *)proposedState {
+  if (!self.readGuardEnabled || !self.readGuardFirstReadActivationArmed) {
+    return proposedState;
+  }
+  return [self preparedActivationStateFromState:proposedState];
+}
+
+- (void)didCommitReadGuardProposedStateLocked:(QONRemoteConfigV2State *)proposedState
+                                 durableState:(QONRemoteConfigV2State *)durableState {
+  if (self.readGuardEnabled && self.readGuardFirstReadActivationArmed) {
+    self.readGuardBaseState = proposedState;
+    self.readGuardPreparedState = durableState;
+  } else {
+    [self invalidateReadGuardPreparationLocked];
+  }
 }
 
 - (NSSet<NSString *> *)changedKeysFrom:(QONRemoteConfigSnapshot *)oldSnapshot
@@ -240,8 +576,11 @@
       active:candidate previous:self.state.active didActivate:YES
       latestAdmissionOrdinal:latestAdmissionOrdinal];
   QONRemoteConfigV2Scope *scope = self.currentScope;
-  if (!scope || ![self.store saveState:nextState forScope:scope]) return nil;
+  QONRemoteConfigV2State *durableState =
+      [self durableStateForReadGuardProposedStateLocked:nextState];
+  if (!scope || ![self.store saveState:durableState forScope:scope]) return nil;
   self.state = nextState;
+  [self didCommitReadGuardProposedStateLocked:nextState durableState:durableState];
   QONRemoteConfigSnapshot *newSnapshot = [self snapshotForState:self.state];
   NSSet *changed = [self changedKeysFrom:oldSnapshot to:newSnapshot];
   NSMutableDictionary *metadata = [NSMutableDictionary new];
@@ -412,12 +751,15 @@
                  previous:immediate ? self.state.active : self.state.previous
               didActivate:immediate ? YES : self.state.didActivate
    latestAdmissionOrdinal:admissionToken.ordinal];
-    if (!nextState || !self.currentScope ||
-        ![self.store saveState:nextState forScope:self.currentScope]) {
+    QONRemoteConfigV2State *durableState = nextState ?
+        [self durableStateForReadGuardProposedStateLocked:nextState] : nil;
+    if (!durableState || !self.currentScope ||
+        ![self.store saveState:durableState forScope:self.currentScope]) {
       status = QONRemoteConfigV2TransitionStatusPersistenceFailed;
       return;
     }
     self.state = nextState;
+    [self didCommitReadGuardProposedStateLocked:nextState durableState:durableState];
     if (immediate) {
       QONRemoteConfigUpdate *update = [self updateFromSnapshot:oldSnapshot toState:nextState];
       [self enqueueUpdateLocked:update];
@@ -460,7 +802,12 @@
       update = [self transitionToCandidateLocked:orderedRelease];
     } else {
       QONRemoteConfigV2Scope *currentScope = self.currentScope;
-      if (currentScope && [self.store saveState:nextState forScope:currentScope]) self.state = nextState;
+      QONRemoteConfigV2State *durableState =
+          [self durableStateForReadGuardProposedStateLocked:nextState];
+      if (currentScope && [self.store saveState:durableState forScope:currentScope]) {
+        self.state = nextState;
+        [self didCommitReadGuardProposedStateLocked:nextState durableState:durableState];
+      }
     }
     if (update) [self enqueueUpdateLocked:update];
   });
@@ -471,7 +818,24 @@
   __block BOOL changed = NO;
   __block QONRemoteConfigUpdate *update = nil;
   dispatch_sync(self.stateQueue, ^{
+    if (self.readGuardEnabled) {
+      self.readGuardExplicitActivationCalled = YES;
+      self.readGuardLifetimeActivationConsumed = YES;
+    }
     if (![self ensureCurrentScopeLoadedLocked]) return;
+    if (self.readGuardEnabled && self.readGuardPreparedState &&
+        self.state == self.readGuardBaseState) {
+      QONRemoteConfigSnapshot *oldSnapshot = [self snapshotForState:self.state];
+      self.state = self.readGuardPreparedState;
+      self.nextAdmissionOrdinal = MAX(self.nextAdmissionOrdinal,
+                                       self.state.latestAdmissionOrdinal);
+      update = [self updateFromSnapshot:oldSnapshot toState:self.state];
+      changed = update.changedKeys.count > 0;
+      [self invalidateReadGuardPreparationLocked];
+      if (update) [self enqueueUpdateLocked:update];
+      return;
+    }
+    [self invalidateReadGuardPreparationLocked];
     if (self.state.candidate) {
       if (self.state.didActivate && [self release:self.state.candidate
           representsSameLocalAdmissionAs:self.state.active]) return;

@@ -3,12 +3,54 @@
 #import "QONRemoteConfigUpdate.h"
 
 @class QONRemoteConfigV2AdmissionToken, QONRemoteConfigV2EnvelopeExpectation;
-@class QONRemoteConfigV2Release, QONRemoteConfigV2Scope, QONRemoteConfigV2Store;
+@class QONRemoteConfigV2Release, QONRemoteConfigV2Scope, QONRemoteConfigV2State;
+@class QONRemoteConfigV2Store;
 @protocol QONRemoteConfigV2EnvelopeDecoding;
 
 NS_ASSUME_NONNULL_BEGIN
 
 typedef void (^QONRemoteConfigV2UpdateObserver)(QONRemoteConfigUpdate *update);
+
+FOUNDATION_EXPORT NSString *const QONRemoteConfigV2ReadBeforeActivateAssertionMessage;
+
+typedef NS_ENUM(NSInteger, QONRemoteConfigV2ReadGuardBuildMode) {
+  QONRemoteConfigV2ReadGuardBuildModeDebug,
+  QONRemoteConfigV2ReadGuardBuildModeRelease,
+};
+
+typedef NS_ENUM(NSInteger, QONRemoteConfigV2ReadGuardPreloadStatus) {
+  QONRemoteConfigV2ReadGuardPreloadStatusFound,
+  QONRemoteConfigV2ReadGuardPreloadStatusMissing,
+  QONRemoteConfigV2ReadGuardPreloadStatusFailed,
+  QONRemoteConfigV2ReadGuardPreloadStatusCorrupt,
+  QONRemoteConfigV2ReadGuardPreloadStatusPersistenceFailed,
+};
+
+typedef NS_ENUM(NSInteger, QONRemoteConfigV2ReadGuardTelemetryEvent) {
+  QONRemoteConfigV2ReadGuardTelemetryEventReadBeforeActivate,
+  QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation,
+  QONRemoteConfigV2ReadGuardTelemetryEventPreloadAbsent,
+  QONRemoteConfigV2ReadGuardTelemetryEventPreloadFailed,
+  QONRemoteConfigV2ReadGuardTelemetryEventPreloadCorrupt,
+  QONRemoteConfigV2ReadGuardTelemetryEventPreparedActivationPersistenceFailed,
+};
+
+typedef void (^QONRemoteConfigV2ReadGuardAssertionHandler)(NSString *message);
+typedef void (^QONRemoteConfigV2ReadGuardTelemetryHandler)(
+    QONRemoteConfigV2ReadGuardTelemetryEvent event);
+
+/** Immutable output of an injected, off-main persistent-state preload. */
+@interface QONRemoteConfigV2ReadGuardPreloadResult : NSObject
+@property (nonatomic, assign, readonly) QONRemoteConfigV2ReadGuardPreloadStatus status;
+@property (nonatomic, strong, nullable, readonly) QONRemoteConfigV2State *state;
+- (nullable instancetype)initWithStatus:(QONRemoteConfigV2ReadGuardPreloadStatus)status
+                                  state:(nullable QONRemoteConfigV2State *)state;
+@end
+
+@protocol QONRemoteConfigV2ScopePreloading <NSObject>
+- (QONRemoteConfigV2ReadGuardPreloadResult *)preloadResultForScope:
+    (QONRemoteConfigV2Scope *)scope;
+@end
 
 typedef NS_ENUM(NSInteger, QONRemoteConfigV2TransitionStatus) {
   QONRemoteConfigV2TransitionStatusAccepted,
@@ -46,6 +88,23 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2TransitionStatus) {
             fallbackEnvironment:(nullable NSString *)fallbackEnvironment
                  envelopeDecoder:(id<QONRemoteConfigV2EnvelopeDecoding>)envelopeDecoder
                 callbackExecutor:(dispatch_queue_t)callbackExecutor NS_DESIGNATED_INITIALIZER;
+/** Internal dark-launch seam. Existing initializers leave the guard disabled. */
+- (instancetype)initWithStore:(QONRemoteConfigV2Store *)store
+               fallbackRelease:(nullable QONRemoteConfigV2Release *)fallbackRelease
+             fallbackProjectKey:(nullable NSString *)fallbackProjectKey
+            fallbackEnvironment:(nullable NSString *)fallbackEnvironment
+                 envelopeDecoder:(id<QONRemoteConfigV2EnvelopeDecoding>)envelopeDecoder
+                callbackExecutor:(dispatch_queue_t)callbackExecutor
+              readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
+                assertionHandler:(nullable QONRemoteConfigV2ReadGuardAssertionHandler)assertionHandler
+                telemetryHandler:(nullable QONRemoteConfigV2ReadGuardTelemetryHandler)telemetryHandler
+                  scopePreloader:(id<QONRemoteConfigV2ScopePreloading>)scopePreloader;
+/**
+ Performs all persistent read and durable prepared-activation work synchronously.
+ The SDK bootstrap must call it off main before setScope/readiness.
+ */
+- (QONRemoteConfigV2ReadGuardPreloadStatus)preloadScopeForReadGuard:
+    (QONRemoteConfigV2Scope *)scope;
 /**
  Changes current scope and generation synchronously on the state queue without
  waiting for the callback executor. Queued or not-yet-claimed old-generation
