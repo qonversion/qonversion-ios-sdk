@@ -97,7 +97,7 @@
     if (!rawData) continue;
     NSError *error = nil;
     id value = decoder([rawData copy], &error);
-    if (value) {
+    if (value && !error) {
       return [self resolvedValueForEntry:entry source:[candidate[1] integerValue] value:value];
     }
   }

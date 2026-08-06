@@ -75,6 +75,63 @@
   XCTAssertEqualObjects(bundleOnly.value, @YES);
 }
 
+- (void)testDecoderErrorFallsBackFromCurrentToPreviousEvenWhenDecoderReturnsValue {
+  QONRemoteConfigV2Release *primary = [self release:@"release-2" number:2 values:@{
+    @"key": @"\"current\"",
+  }];
+  QONRemoteConfigV2Release *previous = [self release:@"release-1" number:1 values:@{
+    @"key": @"\"previous\"",
+  }];
+  QONRemoteConfigV2Release *fallback = [self release:@"bundle" number:1 values:@{
+    @"key": @"\"bundle\"",
+  }];
+  QONRemoteConfigSnapshot *snapshot = [[QONRemoteConfigSnapshot alloc]
+      initWithPrimaryRelease:primary previousRelease:previous fallbackRelease:fallback];
+
+  QONRemoteConfigValue *typed = [snapshot valueForKey:@"key" decoder:^id(NSData *data,
+                                                                             NSError **error) {
+    id value = [NSJSONSerialization JSONObjectWithData:data
+        options:NSJSONReadingFragmentsAllowed error:nil];
+    if ([value isEqual:@"current"]) {
+      *error = [NSError errorWithDomain:@"QONRemoteConfigSnapshotTests" code:1 userInfo:nil];
+    }
+    return value;
+  }];
+
+  XCTAssertEqual(typed.source, QONRemoteConfigValueSourceCache);
+  XCTAssertEqualObjects(typed.value, @"previous");
+  QONRemoteConfigValue *raw = [snapshot rawValueForKey:@"key"];
+  XCTAssertEqual(raw.source, QONRemoteConfigValueSourceServer);
+  XCTAssertEqualObjects(raw.value, @"current");
+}
+
+- (void)testDecoderErrorsFallBackFromCurrentAndPreviousToBundleEvenWhenReturningValues {
+  QONRemoteConfigV2Release *primary = [self release:@"release-2" number:2 values:@{
+    @"key": @"\"current\"",
+  }];
+  QONRemoteConfigV2Release *previous = [self release:@"release-1" number:1 values:@{
+    @"key": @"\"previous\"",
+  }];
+  QONRemoteConfigV2Release *fallback = [self release:@"bundle" number:1 values:@{
+    @"key": @"\"bundle\"",
+  }];
+  QONRemoteConfigSnapshot *snapshot = [[QONRemoteConfigSnapshot alloc]
+      initWithPrimaryRelease:primary previousRelease:previous fallbackRelease:fallback];
+
+  QONRemoteConfigValue *typed = [snapshot valueForKey:@"key" decoder:^id(NSData *data,
+                                                                             NSError **error) {
+    id value = [NSJSONSerialization JSONObjectWithData:data
+        options:NSJSONReadingFragmentsAllowed error:nil];
+    if (![value isEqual:@"bundle"]) {
+      *error = [NSError errorWithDomain:@"QONRemoteConfigSnapshotTests" code:2 userInfo:nil];
+    }
+    return value;
+  }];
+
+  XCTAssertEqual(typed.source, QONRemoteConfigValueSourceFallback);
+  XCTAssertEqualObjects(typed.value, @"bundle");
+}
+
 - (void)testSnapshotAndReturnedValuesDoNotObserveCallerMutation {
   NSMutableData *raw = [[self utf8Data:@"{\"enabled\":true}"] mutableCopy];
   QONRemoteConfigV2Entry *entry = [[QONRemoteConfigV2Entry alloc]
