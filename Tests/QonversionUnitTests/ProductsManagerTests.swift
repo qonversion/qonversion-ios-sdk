@@ -31,14 +31,15 @@ final class ProductsManagerTests: XCTestCase {
         manager = makeManager()
     }
 
-    private func makeManager(apiKey: String? = nil) -> ProductsManager {
+    private func makeManager(apiKey: String? = nil, catalogCacheLifetime: TimeInterval = ProductsManager.defaultCatalogCacheLifetime) -> ProductsManager {
         ProductsManager(
             apiKey: apiKey ?? self.apiKey,
             productsService: productsService,
             storeKitFacade: storeKitFacade,
             localStorage: localStorage,
             fallbackService: fallbackService,
-            logger: LoggerWrapper()
+            logger: LoggerWrapper(),
+            catalogCacheLifetime: catalogCacheLifetime
         )
     }
 
@@ -139,15 +140,45 @@ final class ProductsManagerTests: XCTestCase {
 
     // MARK: - In-memory cache
 
-    func testProductsReturnsInMemoryCacheWithoutServiceCall() async throws {
-        manager.loadedProducts = [makeProduct()]
+    // A catalog loaded moments ago is served as it is: a paywall opened three
+    // times in a row costs one request, not three.
+    func testProductsReturnsFreshInMemoryCacheWithoutServiceCall() async throws {
+        productsService.productsResult = [makeProduct()]
 
+        _ = try await manager.products()
         let result = try await manager.products()
 
         XCTAssertEqual(result.count, 1)
         XCTAssertEqual(result.first?.qonversionId, "q_main")
-        XCTAssertEqual(productsService.productsCallsCount, 0)
-        XCTAssertTrue(storeKitFacade.requestedProductIds.isEmpty)
+        XCTAssertEqual(productsService.productsCallsCount, 1, "the second call must be served from memory")
+    }
+
+    // ...but it does not outlive its lifetime. Without this the in-memory
+    // catalog survived for as long as the process did, so a product added in
+    // the dashboard never reached an install that had already loaded once.
+    func testProductsRefreshesAnExpiredInMemoryCache() async throws {
+        let manager = makeManager(catalogCacheLifetime: 0)
+        productsService.productsResult = [makeProduct()]
+
+        _ = try await manager.products()
+        _ = try await manager.products()
+
+        XCTAssertEqual(productsService.productsCallsCount, 2, "an expired catalog must be reloaded")
+    }
+
+    // A refresh that fails must not take the catalog away with it: the caller
+    // gets the last one that loaded, which is what it received before the
+    // expiry existed.
+    func testProductsServesTheStaleCatalogWhenTheRefreshFails() async throws {
+        let manager = makeManager(catalogCacheLifetime: 0)
+        productsService.productsResult = [makeProduct()]
+        _ = try await manager.products()
+
+        productsService.error = QonversionError(type: .invalidResponse, message: nil, error: nil)
+        let result = try await manager.products()
+
+        XCTAssertEqual(result.count, 1, "the previously loaded catalog must still be served")
+        XCTAssertEqual(result.first?.qonversionId, "q_main")
     }
 
     // MARK: - Store products request

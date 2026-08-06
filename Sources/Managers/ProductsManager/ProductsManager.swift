@@ -42,6 +42,28 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     /// Minimum gap between two on-demand mapping loads.
     private static let permissionsReloadInterval: TimeInterval = 60
 
+    /// How long a loaded catalog counts as current.
+    ///
+    /// Without a bound the in-memory catalog outlived the process: a product
+    /// added in the dashboard never reached an install that had already loaded
+    /// once, for as long as the app stayed open. The entitlement mapping had
+    /// the same hole — its reload interval only applied while the cache was
+    /// EMPTY, so a populated one was never refreshed either.
+    ///
+    /// A minute is short enough that a dashboard change shows up while someone
+    /// is still looking at the app, and long enough that a paywall opened
+    /// repeatedly costs one request rather than one per appearance.
+    static let defaultCatalogCacheLifetime: TimeInterval = 60
+
+    /// Injectable so a test can make the catalog expire without waiting a
+    /// minute of wall-clock time.
+    private let catalogCacheLifetime: TimeInterval
+
+    /// When the catalog and the mapping were last loaded SUCCESSFULLY — the
+    /// attempt timestamps above throttle retries and cannot answer freshness.
+    private var lastProductsLoadedAt: Date?
+    private var lastPermissionsLoadedAt: Date?
+
     /// Bumped on every user switch: a load started for the previous user must
     /// not cache or persist its catalog for the new one.
     private var cacheGeneration = 0
@@ -56,16 +78,21 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
             lock.lock()
             defer { lock.unlock() }
             _loadedProducts = newValue
+            // Assigning the catalog declares it current: without this the next
+            // read would find it expired and go back to the backend, throwing
+            // away what was just handed over.
+            lastProductsLoadedAt = newValue.isEmpty ? nil : Date()
         }
     }
     
-    init(apiKey: String, productsService: ProductsServiceInterface, storeKitFacade: StoreKitFacadeInterface, localStorage: LocalStorageInterface, fallbackService: FallbackServiceInterface, logger: LoggerWrapper) {
+    init(apiKey: String, productsService: ProductsServiceInterface, storeKitFacade: StoreKitFacadeInterface, localStorage: LocalStorageInterface, fallbackService: FallbackServiceInterface, logger: LoggerWrapper, catalogCacheLifetime: TimeInterval = ProductsManager.defaultCatalogCacheLifetime) {
         self.productsKey = Constants.productsKey.rawValue + "." + apiKey
         self.productsService = productsService
         self.storeKitFacade = storeKitFacade
         self.localStorage = localStorage
         self.fallbackService = fallbackService
         self.logger = logger
+        self.catalogCacheLifetime = catalogCacheLifetime
     }
     
     func cachedProducts() -> [Qonversion.Product] {
@@ -152,17 +179,25 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         lock.lock()
         defer { lock.unlock() }
         _loadedProductPermissions = mapping
+        lastPermissionsLoadedAt = Date()
     }
 
     func productPermissions() async -> [String: [String]] {
-        if let cached: [String: [String]] = cachedProductPermissions(), !cached.isEmpty {
+        // A populated mapping is served only while it is current. It used to be
+        // served forever, so an entitlement added in the dashboard never
+        // reached an install that had loaded the mapping once.
+        if let cached: [String: [String]] = cachedProductPermissions(), !cached.isEmpty, isPermissionsMappingFresh() {
             return cached
         }
-        // Nothing anywhere — not in memory, not persisted, not bundled. The
+        // Either there is nothing anywhere, or what there is has expired. The
         // load is retried on demand rather than once per launch, but not on
         // every single call: a permanently failing backend must not turn each
         // entitlements check into a request.
-        guard shouldAwaitPermissionsLoad() else { return [:] }
+        //
+        // Throttled: an expired mapping is still served. Returning nothing
+        // instead would silently disable the local entitlements calculation
+        // between retries.
+        guard shouldAwaitPermissionsLoad() else { return cachedProductPermissions() ?? [:] }
 
         await loadProductPermissions()
 
@@ -190,15 +225,28 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
     }
 
     func products() async throws -> [Qonversion.Product] {
-        guard loadedProducts.isEmpty else {
-            return loadedProducts
+        let cached: [Qonversion.Product] = loadedProducts
+        if !cached.isEmpty, isCatalogFresh() {
+            return cached
         }
 
         // Single-flight: N concurrent callers share one API + StoreKit round.
         let task: Task<[Qonversion.Product], Error> = joinedProductsTask()
         defer { clearProductsTask(task) }
 
-        return try await task.value
+        do {
+            return try await task.value
+        } catch {
+            // The refresh of an EXPIRED catalog failed. A stale catalog is still
+            // a catalog: serving it keeps a paywall alive on a flaky network,
+            // which is what the caller got before the expiry existed at all.
+            // Only an install that never loaded one propagates the error.
+            guard !cached.isEmpty else { throw error }
+
+            logger.warning("Products refresh failed, serving the previously loaded catalog: " + error.message)
+
+            return cached
+        }
     }
 
     private func joinedProductsTask() -> Task<[Qonversion.Product], Error> {
@@ -324,6 +372,27 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         guard generation == cacheGeneration else { return }
 
         _loadedProducts = products
+        lastProductsLoadedAt = Date()
+    }
+
+    /// Whether the in-memory catalog may be served without asking the backend.
+    /// A missing timestamp means the catalog came from somewhere other than a
+    /// successful load (a persisted copy or the bundled file), which is exactly
+    /// the case that should refresh.
+    private func isCatalogFresh() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let lastProductsLoadedAt else { return false }
+
+        return Date().timeIntervalSince(lastProductsLoadedAt) < catalogCacheLifetime
+    }
+
+    private func isPermissionsMappingFresh() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let lastPermissionsLoadedAt else { return false }
+
+        return Date().timeIntervalSince(lastPermissionsLoadedAt) < catalogCacheLifetime
     }
 
     func checkTrialIntroEligibility(productIds: [String]) async throws -> [String: Qonversion.IntroEligibilityStatus] {
@@ -427,6 +496,8 @@ final class ProductsManager: ProductsManagerInterface, ProductsDataSource, @unch
         cacheGeneration += 1
         _loadedProducts = []
         _productsTask = nil
+        // An emptied catalog must not read as freshly loaded.
+        lastProductsLoadedAt = nil
     }
 
     /// Best-effort StoreKit enrichment that never fails: on a store error the
@@ -485,6 +556,9 @@ extension ProductsManager: UserChangedObserver {
         // must start its own.
         _productsTask = nil
         localStorage.removeObject(forKey: productsKey)
+        // Freshness belongs to the catalog that just went away.
+        lastProductsLoadedAt = nil
+        lastPermissionsLoadedAt = nil
     }
 }
 
