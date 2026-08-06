@@ -7,6 +7,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 FOUNDATION_EXPORT NSString *const QONRemoteConfigV2StorageKey;
 FOUNDATION_EXPORT NSUInteger const QONRemoteConfigV2MaximumPersistedScopes;
+FOUNDATION_EXPORT NSUInteger const QONRemoteConfigV2MaximumArchiveBytes;
 
 typedef NS_ENUM(NSInteger, QONRemoteConfigV2StoreLoadStatus) {
   QONRemoteConfigV2StoreLoadStatusFound,

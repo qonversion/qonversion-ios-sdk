@@ -2,17 +2,56 @@
 #import "QNLocalStorage.h"
 #import "QONRemoteConfigJSON.h"
 #import "QONRemoteConfigV2Models.h"
+#import <CommonCrypto/CommonDigest.h>
 #import <string.h>
 
 NSString *const QONRemoteConfigV2StorageKey = @"com.qonversion.keys.remote-config-v2-state";
 NSUInteger const QONRemoteConfigV2MaximumPersistedScopes = 16;
 
-static NSInteger const kQONRemoteConfigV2StoreSchema = 1;
-static NSUInteger const kQONRemoteConfigV2MaximumEnvelopeBytes = 32 * 1024 * 1024;
+#define QON_RC_V2_WIRE_LIMIT_BYTES (8u * 1024u * 1024u)
+#define QON_RC_V2_AGGREGATE_LIMIT_BYTES (4u * 1024u * 1024u)
+#define QON_RC_V2_BASE64_BOUND(bytes) ((((bytes) + 2u) / 3u) * 4u)
+#define QON_RC_V2_HISTORY_SLOT_COUNT 3u
+#define QON_RC_V2_ARCHIVE_HEADROOM_BYTES (4u * 1024u * 1024u)
+
+// One release can contain the base64 canonical wire body, base64 entry data,
+// and their bounded identifiers. Three durable history slots plus 4 MiB for
+// plist/scope framing therefore fit by construction without widening ingress.
+NSUInteger const QONRemoteConfigV2MaximumArchiveBytes =
+    QON_RC_V2_HISTORY_SLOT_COUNT *
+        (QON_RC_V2_BASE64_BOUND(QON_RC_V2_WIRE_LIMIT_BYTES) +
+         QON_RC_V2_BASE64_BOUND(QON_RC_V2_AGGREGATE_LIMIT_BYTES) +
+         QON_RC_V2_AGGREGATE_LIMIT_BYTES) +
+    QON_RC_V2_ARCHIVE_HEADROOM_BYTES;
+
+static NSInteger const kQONRemoteConfigV2StoreSchema = 2;
 static NSString *const kSchema = @"schema_version";
 static NSString *const kScopes = @"scopes";
 static NSString *const kScope = @"scope";
 static NSString *const kState = @"state";
+
+@interface QONRemoteConfigV2EnvelopeParser (QONRemoteConfigV2StoreValidation)
+- (nullable QONRemoteConfigV2Envelope *)parseBoundBody:(NSData *)body
+                                             strongETag:(NSString *)strongETag;
+@end
+
+static NSString *QONRemoteConfigV2StoreSHA256Hex(NSData *data) {
+  if (!data || data.length > UINT32_MAX) return nil;
+  uint8_t digest[CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256(data.bytes, (CC_LONG)data.length, digest);
+  NSMutableString *hex = [NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
+  for (NSUInteger index = 0; index < CC_SHA256_DIGEST_LENGTH; index++) {
+    [hex appendFormat:@"%02x", digest[index]];
+  }
+  return [hex copy];
+}
+
+static NSString *QONRemoteConfigV2StateDigest(NSDictionary *payload) {
+  NSError *error = nil;
+  NSData *data = [NSJSONSerialization dataWithJSONObject:payload
+      options:NSJSONWritingSortedKeys error:&error];
+  return data && !error ? QONRemoteConfigV2StoreSHA256Hex(data) : nil;
+}
 
 static BOOL QONRemoteConfigV2ExactInteger(id object, NSInteger *value) {
   if (![object isKindOfClass:NSNumber.class] ||
@@ -28,6 +67,23 @@ static BOOL QONRemoteConfigV2ExactInteger(id object, NSInteger *value) {
     unsigned long long candidate = [object unsignedLongLongValue];
     if (candidate > NSIntegerMax) return NO;
     if (value) *value = (NSInteger)candidate;
+    return YES;
+  }
+  return NO;
+}
+
+static BOOL QONRemoteConfigV2ExactInt64(id object, int64_t *value) {
+  if (![object isKindOfClass:NSNumber.class] ||
+      CFGetTypeID((__bridge CFTypeRef)object) == CFBooleanGetTypeID()) return NO;
+  const char type = [object objCType][0];
+  if (strchr("csiql", type)) {
+    if (value) *value = [object longLongValue];
+    return YES;
+  }
+  if (strchr("CSILQ", type)) {
+    unsigned long long candidate = [object unsignedLongLongValue];
+    if (candidate > INT64_MAX) return NO;
+    if (value) *value = (int64_t)candidate;
     return YES;
   }
   return NO;
@@ -88,10 +144,14 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
 }
 
 - (NSData *)archiveDataForRoot:(NSDictionary *)root {
+  // Fail closed if ingress limits change without a matching durable-budget review.
+  if (QONRemoteConfigV2MaximumEnvelopeBytes != QON_RC_V2_WIRE_LIMIT_BYTES ||
+      QONRemoteConfigV2MaximumTotalValueBytes != QON_RC_V2_AGGREGATE_LIMIT_BYTES) return nil;
   NSError *error = nil;
   NSData *data = [NSPropertyListSerialization dataWithPropertyList:root
       format:NSPropertyListBinaryFormat_v1_0 options:0 error:&error];
-  if (!data || error || data.length == 0 || data.length > kQONRemoteConfigV2MaximumEnvelopeBytes) return nil;
+  if (!data || error || data.length == 0 ||
+      data.length > QONRemoteConfigV2MaximumArchiveBytes) return nil;
   return data;
 }
 
@@ -120,7 +180,7 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
       return nil;
     }
     if (fileSize.unsignedLongLongValue == 0 ||
-        fileSize.unsignedLongLongValue > kQONRemoteConfigV2MaximumEnvelopeBytes) {
+        fileSize.unsignedLongLongValue > QONRemoteConfigV2MaximumArchiveBytes) {
       [self clearArchive];
       if (status) *status = QONRemoteConfigV2StoreLoadStatusMissing;
       return nil;
@@ -131,7 +191,7 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
       if (status) *status = QONRemoteConfigV2StoreLoadStatusFailed;
       return nil;
     }
-    if (data.length == 0 || data.length > kQONRemoteConfigV2MaximumEnvelopeBytes) {
+    if (data.length == 0 || data.length > QONRemoteConfigV2MaximumArchiveBytes) {
       [self clearArchive];
       if (status) *status = QONRemoteConfigV2StoreLoadStatusMissing;
       return nil;
@@ -224,9 +284,7 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
   NSData *rawData = entry.rawData;
   NSString *variationUID = entry.variationUID;
   if (!rawData || !variationUID) return @{};
-  id metadata = entry.metadata;
-  NSData *metadataData = metadata ? [NSJSONSerialization dataWithJSONObject:metadata
-      options:NSJSONWritingFragmentsAllowed error:nil] : nil;
+  NSData *metadataData = entry.metadataData;
   return @{
     @"key": entry.key,
     @"raw": [rawData base64EncodedStringWithOptions:0],
@@ -258,17 +316,18 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
   }
   NSData *raw = [[NSData alloc] initWithBase64EncodedString:encodedRaw options:0];
   if (!raw || ![[raw base64EncodedStringWithOptions:0] isEqualToString:encodedRaw]) return nil;
-  id metadata = nil;
+  NSData *metadataData = nil;
   if (encodedMetadata.length > 0) {
-    NSData *metadataData = [[NSData alloc] initWithBase64EncodedString:encodedMetadata options:0];
+    metadataData = [[NSData alloc] initWithBase64EncodedString:encodedMetadata options:0];
     if (!metadataData || metadataData.length > QONRemoteConfigV2MaximumMetadataBytes ||
         ![[metadataData base64EncodedStringWithOptions:0] isEqualToString:encodedMetadata]) return nil;
-    metadata = QONRemoteConfigPortableJSONObject(metadataData, QONRemoteConfigV2MaximumMetadataBytes);
-    if (!metadata) return nil;
+    if (!QONRemoteConfigPortableJSONObject(metadataData, QONRemoteConfigV2MaximumMetadataBytes)) return nil;
   }
-  return [[QONRemoteConfigV2Entry alloc] initWithKey:key rawData:raw
-      variationUID:variationUID applyPolicy:policy
-      metadata:metadata];
+  return metadataData
+      ? [[QONRemoteConfigV2Entry alloc] initWithKey:key rawData:raw variationUID:variationUID
+          applyPolicy:policy metadataData:metadataData]
+      : [[QONRemoteConfigV2Entry alloc] initWithKey:key rawData:raw variationUID:variationUID
+          applyPolicy:policy metadata:nil];
 }
 
 - (id)releaseDictionary:(QONRemoteConfigV2Release *)release {
@@ -278,58 +337,144 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
     [entries addObject:[self entryDictionary:release.entries[key]]];
   }
   return @{@"uid": release.releaseUID, @"number": @(release.releaseNumber),
-      @"hash": release.manifestContentHash, @"entries": entries};
+      @"hash": release.manifestContentHash, @"entries": entries,
+      @"canonical_body": release.canonicalBody
+          ? [release.canonicalBody base64EncodedStringWithOptions:0] : @"",
+      @"strong_etag": release.strongETag ?: @"",
+      @"project_id": @(release.projectID),
+      @"context_fingerprint": release.contextFingerprint ?: @"",
+      @"admission_ordinal": @(release.admissionOrdinal)};
 }
 
-- (QONRemoteConfigV2Release *)releaseFromObject:(id)object validNull:(BOOL *)validNull {
+- (QONRemoteConfigV2Release *)releaseFromObject:(id)object
+                                      validNull:(BOOL *)validNull
+                                          scope:(QONRemoteConfigV2Scope *)scope {
   if ([object isKindOfClass:NSDictionary.class] && [object count] == 0) {
     if (validNull) *validNull = YES;
     return nil;
   }
   if (![object isKindOfClass:NSDictionary.class]) return nil;
   NSDictionary *dictionary = object;
-  if (dictionary.count != 4 || ![dictionary[@"uid"] isKindOfClass:NSString.class] ||
+  if (dictionary.count != 9 || ![dictionary[@"uid"] isKindOfClass:NSString.class] ||
       ![dictionary[@"hash"] isKindOfClass:NSString.class] ||
-      ![dictionary[@"entries"] isKindOfClass:NSArray.class]) return nil;
+      ![dictionary[@"entries"] isKindOfClass:NSArray.class] ||
+      ![dictionary[@"canonical_body"] isKindOfClass:NSString.class] ||
+      ![dictionary[@"strong_etag"] isKindOfClass:NSString.class] ||
+      ![dictionary[@"context_fingerprint"] isKindOfClass:NSString.class]) return nil;
   NSString *releaseUID = (NSString *)dictionary[@"uid"];
   NSString *manifestContentHash = (NSString *)dictionary[@"hash"];
   NSInteger releaseNumber = 0;
-  if (!QONRemoteConfigV2ExactInteger(dictionary[@"number"], &releaseNumber)) return nil;
+  int64_t admissionOrdinal = 0, projectID = 0;
+  if (!QONRemoteConfigV2ExactInteger(dictionary[@"number"], &releaseNumber) ||
+      !QONRemoteConfigV2ExactInt64(dictionary[@"project_id"], &projectID) ||
+      !QONRemoteConfigV2ExactInt64(dictionary[@"admission_ordinal"], &admissionOrdinal)) return nil;
   NSMutableDictionary *entries = [NSMutableDictionary new];
   for (id entryObject in dictionary[@"entries"]) {
     QONRemoteConfigV2Entry *entry = [self entryFromDictionary:entryObject];
     if (!entry || entries[entry.key]) return nil;
     entries[entry.key] = entry;
   }
-  return [[QONRemoteConfigV2Release alloc] initWithReleaseUID:releaseUID
-      releaseNumber:releaseNumber
-      manifestContentHash:manifestContentHash entries:entries];
+  NSString *encodedBody = dictionary[@"canonical_body"];
+  NSString *strongETag = dictionary[@"strong_etag"];
+  NSString *contextFingerprint = dictionary[@"context_fingerprint"];
+  NSData *canonicalBody = nil;
+  if (encodedBody.length > 0) {
+    canonicalBody = [[NSData alloc] initWithBase64EncodedString:encodedBody options:0];
+    if (!canonicalBody || ![[canonicalBody base64EncodedStringWithOptions:0] isEqualToString:encodedBody] ||
+        strongETag.length == 0) return nil;
+  } else if (strongETag.length > 0) {
+    return nil;
+  }
+  QONRemoteConfigV2Release *storedRelease = [[QONRemoteConfigV2Release alloc]
+      initWithReleaseUID:releaseUID
+      releaseNumber:releaseNumber manifestContentHash:manifestContentHash entries:entries
+      canonicalBody:canonicalBody strongETag:strongETag.length > 0 ? strongETag : nil
+      projectID:projectID contextFingerprint:contextFingerprint.length > 0 ? contextFingerprint : nil
+      admissionOrdinal:admissionOrdinal];
+  if (!storedRelease || !canonicalBody) return storedRelease;
+  if (!scope) return nil;
+
+  QONRemoteConfigV2Envelope *canonicalEnvelope = [[QONRemoteConfigV2EnvelopeParser new]
+      parseBoundBody:canonicalBody strongETag:strongETag];
+  QONRemoteConfigV2Release *canonicalRelease = canonicalEnvelope.snapshotRelease;
+  if (!canonicalEnvelope || !canonicalRelease ||
+      canonicalEnvelope.projectID != storedRelease.projectID ||
+      ![canonicalEnvelope.environmentUID isEqualToString:scope.environment] ||
+      ![canonicalRelease.releaseUID isEqualToString:storedRelease.releaseUID] ||
+      canonicalRelease.releaseNumber != storedRelease.releaseNumber ||
+      ![canonicalRelease.manifestContentHash isEqualToString:storedRelease.manifestContentHash] ||
+      ![canonicalRelease.contextFingerprint isEqualToString:storedRelease.contextFingerprint]) return nil;
+
+  NSUInteger persistedValueCount = 0;
+  for (QONRemoteConfigV2Entry *entry in storedRelease.entries.allValues) {
+    if (entry.isTombstone) continue;
+    persistedValueCount += 1;
+    if (![entry contentEquals:canonicalRelease.entries[entry.key]]) return nil;
+  }
+  if (persistedValueCount != canonicalRelease.entries.count) return nil;
+  return [canonicalRelease releaseBySettingAdmissionOrdinal:admissionOrdinal];
 }
 
-- (NSDictionary *)stateDictionary:(QONRemoteConfigV2State *)state {
+- (NSDictionary *)statePayloadDictionary:(QONRemoteConfigV2State *)state
+                                     scope:(QONRemoteConfigV2Scope *)scope {
   return @{
     @"candidate": [self releaseDictionary:state.candidate],
     @"active": [self releaseDictionary:state.active],
     @"previous": [self releaseDictionary:state.previous],
     @"did_activate": @(state.didActivate),
+    @"latest_admission_ordinal": @(state.latestAdmissionOrdinal),
+    @"scope_binding": [self scopeDictionary:scope],
   };
 }
 
+- (NSDictionary *)stateDictionary:(QONRemoteConfigV2State *)state
+                              scope:(QONRemoteConfigV2Scope *)scope {
+  NSDictionary *payload = [self statePayloadDictionary:state scope:scope];
+  NSMutableDictionary *dictionary = [payload mutableCopy];
+  dictionary[@"state_digest"] = QONRemoteConfigV2StateDigest(payload) ?: @"";
+  return [dictionary copy];
+}
+
 - (QONRemoteConfigV2State *)stateFromDictionary:(id)object
+                                           scope:(QONRemoteConfigV2Scope *)scope
                                  requiresRewrite:(BOOL *)requiresRewrite {
   if (![object isKindOfClass:NSDictionary.class]) return nil;
   NSDictionary *dictionary = object;
-  if (dictionary.count != 4) return nil;
+  if (dictionary.count != 7 || ![dictionary[@"state_digest"] isKindOfClass:NSString.class]) return nil;
+  QONRemoteConfigV2Scope *boundScope = [self scopeFromDictionary:dictionary[@"scope_binding"]];
+  if (!boundScope || !scope || ![boundScope isEqual:scope]) return nil;
+  NSMutableDictionary *storedPayload = [dictionary mutableCopy];
+  NSString *storedDigest = storedPayload[@"state_digest"];
+  [storedPayload removeObjectForKey:@"state_digest"];
+  BOOL digestMatches = storedDigest.length == 64 &&
+      [storedDigest isEqualToString:QONRemoteConfigV2StateDigest(storedPayload)];
+  // The canonical wire body cannot prove which local user/project-key scope it
+  // originally belonged to. Never use it to recover a record whose binding
+  // digest failed: doing so could bless coordinated outer/inner scope damage.
+  if (!digestMatches) return nil;
   BOOL didActivate = NO;
-  if (!QONRemoteConfigV2ExactBoolean(dictionary[@"did_activate"], &didActivate)) return nil;
+  int64_t latestAdmissionOrdinal = 0;
+  if (!QONRemoteConfigV2ExactBoolean(dictionary[@"did_activate"], &didActivate) ||
+      !QONRemoteConfigV2ExactInt64(dictionary[@"latest_admission_ordinal"],
+                                    &latestAdmissionOrdinal)) return nil;
   BOOL candidateNull = NO, activeNull = NO, previousNull = NO;
-  QONRemoteConfigV2Release *candidate = [self releaseFromObject:dictionary[@"candidate"] validNull:&candidateNull];
-  QONRemoteConfigV2Release *active = [self releaseFromObject:dictionary[@"active"] validNull:&activeNull];
-  QONRemoteConfigV2Release *previous = [self releaseFromObject:dictionary[@"previous"] validNull:&previousNull];
+  QONRemoteConfigV2Release *candidate = [self releaseFromObject:dictionary[@"candidate"]
+      validNull:&candidateNull scope:scope];
+  QONRemoteConfigV2Release *active = [self releaseFromObject:dictionary[@"active"]
+      validNull:&activeNull scope:scope];
+  QONRemoteConfigV2Release *previous = [self releaseFromObject:dictionary[@"previous"]
+      validNull:&previousNull scope:scope];
   BOOL rewrite = NO;
   if (!candidate && !candidateNull) rewrite = YES;
   if (!active && !activeNull) rewrite = YES;
   if (!previous && !previousNull) rewrite = YES;
+  int64_t highestSlotOrdinal = MAX(candidate.admissionOrdinal,
+      MAX(active.admissionOrdinal, previous.admissionOrdinal));
+  BOOL usesAdmissionOrdering = highestSlotOrdinal > 0;
+  if (latestAdmissionOrdinal < highestSlotOrdinal) {
+    latestAdmissionOrdinal = highestSlotOrdinal;
+    rewrite = YES;
+  }
   if (!didActivate && active) {
     active = nil;
     previous = nil;
@@ -339,11 +484,15 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
     previous = nil;
     rewrite = YES;
   }
-  if (candidate && active && candidate.releaseNumber < active.releaseNumber) {
+  if (candidate && active &&
+      ((usesAdmissionOrdering && candidate.admissionOrdinal < active.admissionOrdinal) ||
+       (!usesAdmissionOrdering && candidate.releaseNumber < active.releaseNumber))) {
     candidate = nil;
     rewrite = YES;
   }
-  if (candidate && active && candidate.releaseNumber == active.releaseNumber) {
+  if (candidate && active &&
+      ((usesAdmissionOrdering && candidate.admissionOrdinal == active.admissionOrdinal) ||
+       (!usesAdmissionOrdering && candidate.releaseNumber == active.releaseNumber))) {
     if ([candidate contentEquals:active]) {
       candidate = active;
     } else {
@@ -351,14 +500,19 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
       rewrite = YES;
     }
   }
-  if (previous && active && previous.releaseNumber >= active.releaseNumber) {
+  if (previous && active &&
+      ((usesAdmissionOrdering && previous.admissionOrdinal >= active.admissionOrdinal) ||
+       (!usesAdmissionOrdering && previous.releaseNumber >= active.releaseNumber))) {
     previous = nil;
     rewrite = YES;
   }
   if (rewrite && !candidate && !active && !previous && !didActivate) return nil;
   if (requiresRewrite) *requiresRewrite = rewrite;
-  return [[QONRemoteConfigV2State alloc] initWithCandidate:candidate active:active previous:previous
-      didActivate:didActivate];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:candidate active:active previous:previous didActivate:didActivate
+      latestAdmissionOrdinal:latestAdmissionOrdinal];
+  if (!state) return nil;
+  return state;
 }
 
 - (NSArray<NSDictionary *> *)validatedRecordsWithStatus:(QONRemoteConfigV2StoreLoadStatus *)status {
@@ -386,14 +540,14 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
   NSMutableArray<NSDictionary *> *validated = [NSMutableArray new];
   BOOL requiresRewrite = storedRecords.count > QONRemoteConfigV2MaximumPersistedScopes;
   NSUInteger admittedBytes = 0;
-  NSUInteger recordBudget = kQONRemoteConfigV2MaximumEnvelopeBytes - (16 * 1024);
+  NSUInteger recordBudget = QONRemoteConfigV2MaximumArchiveBytes - (16 * 1024);
   for (NSUInteger position = storedRecords.count; position > 0; position--) {
     id recordObject = storedRecords[position - 1];
     if (![recordObject isKindOfClass:NSDictionary.class]) { requiresRewrite = YES; continue; }
     NSDictionary *record = recordObject;
     QONRemoteConfigV2Scope *scope = [self scopeFromDictionary:record[kScope]];
     BOOL stateRequiresRewrite = NO;
-    QONRemoteConfigV2State *state = [self stateFromDictionary:record[kState]
+    QONRemoteConfigV2State *state = [self stateFromDictionary:record[kState] scope:scope
                                                requiresRewrite:&stateRequiresRewrite];
     if (record.count != 2 || !scope || !state || [seenScopes containsObject:scope] ||
         validated.count >= QONRemoteConfigV2MaximumPersistedScopes) {
@@ -402,7 +556,7 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
     }
     [seenScopes addObject:scope];
     NSDictionary *canonical = @{kScope: [self scopeDictionary:scope],
-                                kState: [self stateDictionary:state]};
+                                kState: [self stateDictionary:state scope:scope]};
     NSData *recordData = [self archiveDataForRoot:canonical];
     if (!recordData || recordData.length > recordBudget - MIN(recordBudget, admittedBytes)) {
       requiresRewrite = YES;
@@ -430,7 +584,7 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
 }
 
 - (NSArray<NSDictionary *> *)boundedNewestRecords:(NSArray<NSDictionary *> *)records {
-  NSUInteger recordBudget = kQONRemoteConfigV2MaximumEnvelopeBytes - (16 * 1024);
+  NSUInteger recordBudget = QONRemoteConfigV2MaximumArchiveBytes - (16 * 1024);
   NSUInteger admittedBytes = 0;
   NSMutableArray<NSDictionary *> *bounded = [NSMutableArray new];
   for (NSUInteger position = records.count;
@@ -463,6 +617,7 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
       NSDictionary *record = records[index];
       if ([[self scopeFromDictionary:record[kScope]] isEqual:scope]) {
         QONRemoteConfigV2State *loadedState = [self stateFromDictionary:record[kState]
+                                                            scope:scope
                                                    requiresRewrite:NULL];
         if (index + 1 < records.count) {
           NSMutableArray *promoted = [records mutableCopy];
@@ -492,7 +647,7 @@ static BOOL QONRemoteConfigV2ExactBoolean(id object, BOOL *value) {
     }];
     [records removeObjectsAtIndexes:matches];
     NSDictionary *newRecord = @{kScope: [self scopeDictionary:scope],
-                                kState: [self stateDictionary:state]};
+                                kState: [self stateDictionary:state scope:scope]};
     if (![self archiveDataForRoot:newRecord]) return NO;
     [records addObject:newRecord];
     records = [[self boundedNewestRecords:records] mutableCopy];

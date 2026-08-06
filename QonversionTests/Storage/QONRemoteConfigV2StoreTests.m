@@ -4,6 +4,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <CommonCrypto/CommonDigest.h>
 
 #import "QNInMemoryStorage.h"
 #import "QONRemoteConfigV2Models.h"
@@ -77,9 +78,57 @@
       initWithProjectKey:@"project" environment:@"production" canonicalUserID:userID];
 }
 
+- (NSString *)strongETagForBody:(NSData *)body {
+  uint8_t digest[CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256(body.bytes, (CC_LONG)body.length, digest);
+  NSMutableString *hex = [NSMutableString stringWithString:@"\""];
+  for (NSUInteger index = 0; index < CC_SHA256_DIGEST_LENGTH; index++) {
+    [hex appendFormat:@"%02x", digest[index]];
+  }
+  [hex appendString:@"\""];
+  return [hex copy];
+}
+
+- (void)refreshDigestForMutableState:(NSMutableDictionary *)state {
+  NSMutableDictionary *payload = [state mutableCopy];
+  [payload removeObjectForKey:@"state_digest"];
+  NSData *data = [NSJSONSerialization dataWithJSONObject:payload
+      options:NSJSONWritingSortedKeys error:nil];
+  uint8_t digest[CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256(data.bytes, (CC_LONG)data.length, digest);
+  NSMutableString *hex = [NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
+  for (NSUInteger index = 0; index < CC_SHA256_DIGEST_LENGTH; index++) {
+    [hex appendFormat:@"%02x", digest[index]];
+  }
+  state[@"state_digest"] = hex;
+}
+
+- (QONRemoteConfigV2Release *)wireReleaseWithUID:(NSString *)releaseUID
+                                           number:(NSInteger)releaseNumber
+                                          ordinal:(int64_t)ordinal
+                                              raw:(NSString *)raw
+                                         metadata:(NSString *)metadata {
+  NSString *context = [@"b" stringByPaddingToLength:64 withString:@"b" startingAtIndex:0];
+  NSString *bodyString = [NSString stringWithFormat:
+      @"{\"schema_version\":1,\"project_id\":42,\"environment_uid\":\"production\","
+       "\"release_uid\":\"%@\",\"release_number\":%ld,\"manifest_content_hash\":"
+       "\"05b3abf2579a5eb66403cd78be557fd860633a1fe2103c7642030defe32c657f\","
+       "\"complete_key_set\":true,\"context_fingerprint\":\"%@\",\"values\":{"
+       "\"key\":{\"raw\":%@,\"variation_uid\":\"variation\","
+       "\"apply_policy\":\"on_next_activate\",\"metadata\":%@}}}",
+      releaseUID, (long)releaseNumber, context, raw, metadata];
+  NSData *body = [self utf8Data:bodyString];
+  QONRemoteConfigV2EnvelopeExpectation *expectation = [[QONRemoteConfigV2EnvelopeExpectation alloc]
+      initWithProjectID:42 environmentUID:@"production" contextFingerprint:context];
+  QONRemoteConfigV2Envelope *envelope = [[QONRemoteConfigV2EnvelopeParser new]
+      parseBody:body strongETag:[self strongETagForBody:body] expectation:expectation];
+  XCTAssertNotNil(envelope);
+  return [envelope.snapshotRelease releaseBySettingAdmissionOrdinal:ordinal];
+}
+
 - (QONRemoteConfigV2Release *)largeRelease:(NSString *)uid fill:(unichar)fill {
   NSMutableDictionary *entries = [NSMutableDictionary new];
-  for (NSUInteger index = 0; index < 44; index++) {
+  for (NSUInteger index = 0; index < 61; index++) {
     NSString *prefix = [NSString stringWithFormat:@"%C-%@-%02lu", fill, uid,
         (unsigned long)index];
     NSMutableString *json = [NSMutableString stringWithString:@"\""];
@@ -96,6 +145,289 @@
   return [[QONRemoteConfigV2Release alloc] initWithReleaseUID:uid releaseNumber:1
       manifestContentHash:[@"a" stringByPaddingToLength:64 withString:@"a" startingAtIndex:0]
       entries:entries];
+}
+
+- (QONRemoteConfigV2Release *)wireReleaseWithOrdinal:(int64_t)ordinal {
+  return [self wireReleaseWithUID:@"wire" number:7 ordinal:ordinal
+      raw:@" { \"nested\" : 1 } " metadata:@" { \"reset\" : true } "];
+}
+
+- (QONRemoteConfigV2Release *)maximumAggregateWireReleaseWithOrdinal:(int64_t)ordinal {
+  NSString *releaseUID = @"maximum-wire";
+  NSString *manifestHash = @"05b3abf2579a5eb66403cd78be557fd860633a1fe2103c7642030defe32c657f";
+  NSString *context = [@"c" stringByPaddingToLength:64 withString:@"c" startingAtIndex:0];
+  NSUInteger remaining = QONRemoteConfigV2MaximumTotalValueBytes -
+      [releaseUID lengthOfBytesUsingEncoding:NSUTF8StringEncoding] -
+      [manifestHash lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+  NSMutableArray<NSString *> *items = [NSMutableArray new];
+  for (NSUInteger index = 0; remaining > 0; index++) {
+    NSString *key = [NSString stringWithFormat:@"key-%02lu", (unsigned long)index];
+    NSString *variation = [NSString stringWithFormat:@"v-%02lu", (unsigned long)index];
+    NSUInteger fixedBytes = [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding] +
+        [variation lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 4;
+    XCTAssertGreaterThan(remaining, fixedBytes + 1);
+    NSUInteger rawBytes = MIN(QONRemoteConfigV2MaximumRawValueBytes, remaining - fixedBytes);
+    NSString *raw = [NSString stringWithFormat:@"\"%@\"",
+        [@"x" stringByPaddingToLength:rawBytes - 2 withString:@"x" startingAtIndex:0]];
+    [items addObject:[NSString stringWithFormat:
+        @"\"%@\":{\"raw\":%@,\"variation_uid\":\"%@\","
+         "\"apply_policy\":\"on_next_activate\",\"metadata\":null}",
+        key, raw, variation]];
+    remaining -= fixedBytes + rawBytes;
+  }
+  NSString *bodyString = [NSString stringWithFormat:
+      @"{\"schema_version\":1,\"project_id\":42,\"environment_uid\":\"production\","
+       "\"release_uid\":\"%@\",\"release_number\":7,\"manifest_content_hash\":\"%@\","
+       "\"complete_key_set\":true,\"context_fingerprint\":\"%@\",\"values\":{%@}}",
+      releaseUID, manifestHash, context, [items componentsJoinedByString:@","]];
+  NSData *body = [self utf8Data:bodyString];
+  QONRemoteConfigV2EnvelopeExpectation *expectation = [[QONRemoteConfigV2EnvelopeExpectation alloc]
+      initWithProjectID:42 environmentUID:@"production" contextFingerprint:context];
+  QONRemoteConfigV2Envelope *envelope = [[QONRemoteConfigV2EnvelopeParser new]
+      parseBody:body strongETag:[self strongETagForBody:body] expectation:expectation];
+  XCTAssertNotNil(envelope);
+  return [envelope.snapshotRelease releaseBySettingAdmissionOrdinal:ordinal];
+}
+
+- (void)testWireStateRoundTripsExactBodyETagContextMetadataAndAdmissionHighWater {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2Release *candidate = [self wireReleaseWithOrdinal:5];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:candidate active:nil previous:nil didActivate:NO
+      latestAdmissionOrdinal:7];
+
+  XCTAssertTrue([store saveState:state forScope:[self scopeForUser:@"user"]]);
+  QONRemoteConfigV2State *reloaded = [[[QONRemoteConfigV2Store alloc]
+      initWithLocalStorage:storage] stateForScope:[self scopeForUser:@"user"]];
+
+  XCTAssertEqual(reloaded.latestAdmissionOrdinal, 7);
+  XCTAssertEqual(reloaded.candidate.admissionOrdinal, 5);
+  XCTAssertEqual(reloaded.candidate.projectID, 42);
+  XCTAssertEqualObjects(reloaded.candidate.canonicalBody, candidate.canonicalBody);
+  XCTAssertEqualObjects(reloaded.candidate.strongETag, candidate.strongETag);
+  XCTAssertEqualObjects(reloaded.candidate.contextFingerprint,
+      [@"b" stringByPaddingToLength:64 withString:@"b" startingAtIndex:0]);
+  XCTAssertEqualObjects(reloaded.candidate.entries[@"key"].rawData,
+      [self utf8Data:@" { \"nested\" : 1 } "]);
+  XCTAssertEqualObjects(reloaded.candidate.entries[@"key"].metadataData,
+      [self utf8Data:@" { \"reset\" : true } "]);
+  NSDictionary *archive = [storage loadObjectForKey:QONRemoteConfigV2StorageKey];
+  XCTAssertNotNil(archive[@"scopes"][0][@"state"][@"state_digest"]);
+}
+
+- (void)testDigestMismatchCanonicalReparseRemainsBoundToOriginalProjectExpectation {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2Scope *scope = [self scopeForUser:@"project-bound-user"];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:[self wireReleaseWithOrdinal:5] active:nil previous:nil
+      didActivate:NO latestAdmissionOrdinal:5];
+  XCTAssertTrue([store saveState:state forScope:scope]);
+  NSMutableDictionary *archive = [self mutablePropertyListCopy:
+      [storage loadObjectForKey:QONRemoteConfigV2StorageKey]];
+  NSMutableDictionary *storedCandidate = archive[@"scopes"][0][@"state"][@"candidate"];
+  NSData *originalBody = [[NSData alloc] initWithBase64EncodedString:
+      storedCandidate[@"canonical_body"] options:0];
+  NSString *bodyString = [[NSString alloc] initWithData:originalBody encoding:NSUTF8StringEncoding];
+  NSData *otherProjectBody = [self utf8Data:[bodyString stringByReplacingOccurrencesOfString:
+      @"\"project_id\":42" withString:@"\"project_id\":43"]];
+  storedCandidate[@"canonical_body"] = [otherProjectBody base64EncodedStringWithOptions:0];
+  storedCandidate[@"strong_etag"] = [self strongETagForBody:otherProjectBody];
+  [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
+
+  XCTAssertNil([store stateForScope:scope]);
+  XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+}
+
+- (void)testUserOnlyScopeTamperDiscardsWholeRecordBeforeCanonicalSalvage {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:[self wireReleaseWithOrdinal:5] active:nil previous:nil
+      didActivate:NO latestAdmissionOrdinal:5];
+  XCTAssertTrue([store saveState:state forScope:[self scopeForUser:@"user-a"]]);
+  NSMutableDictionary *archive = [self mutablePropertyListCopy:
+      [storage loadObjectForKey:QONRemoteConfigV2StorageKey]];
+  archive[@"scopes"][0][@"scope"][@"user"] = @"user-b";
+  [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
+
+  XCTAssertNil([store stateForScope:[self scopeForUser:@"user-b"]]);
+  XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+}
+
+- (void)testProjectKeyOnlyScopeTamperDiscardsWholeRecordBeforeCanonicalSalvage {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:[self wireReleaseWithOrdinal:5] active:nil previous:nil
+      didActivate:NO latestAdmissionOrdinal:5];
+  XCTAssertTrue([store saveState:state forScope:[self scopeForUser:@"user"]]);
+  NSMutableDictionary *archive = [self mutablePropertyListCopy:
+      [storage loadObjectForKey:QONRemoteConfigV2StorageKey]];
+  archive[@"scopes"][0][@"scope"][@"project"] = @"other-project";
+  [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
+  QONRemoteConfigV2Scope *tamperedScope = [[QONRemoteConfigV2Scope alloc]
+      initWithProjectKey:@"other-project" environment:@"production" canonicalUserID:@"user"];
+
+  XCTAssertNil([store stateForScope:tamperedScope]);
+  XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+}
+
+- (void)testCoordinatedOuterAndInnerUserTamperStillDiscardsWholeRecord {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:[self wireReleaseWithOrdinal:5] active:nil previous:nil
+      didActivate:NO latestAdmissionOrdinal:5];
+  XCTAssertTrue([store saveState:state forScope:[self scopeForUser:@"user-a"]]);
+  NSMutableDictionary *archive = [self mutablePropertyListCopy:
+      [storage loadObjectForKey:QONRemoteConfigV2StorageKey]];
+  archive[@"scopes"][0][@"scope"][@"user"] = @"user-b";
+  archive[@"scopes"][0][@"state"][@"scope_binding"][@"user"] = @"user-b";
+  [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
+
+  XCTAssertNil([store stateForScope:[self scopeForUser:@"user-b"]]);
+  XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+}
+
+- (void)testCoordinatedOuterAndInnerProjectTamperStillDiscardsWholeRecord {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:[self wireReleaseWithOrdinal:5] active:nil previous:nil
+      didActivate:NO latestAdmissionOrdinal:5];
+  XCTAssertTrue([store saveState:state forScope:[self scopeForUser:@"user"]]);
+  NSMutableDictionary *archive = [self mutablePropertyListCopy:
+      [storage loadObjectForKey:QONRemoteConfigV2StorageKey]];
+  archive[@"scopes"][0][@"scope"][@"project"] = @"other-project";
+  archive[@"scopes"][0][@"state"][@"scope_binding"][@"project"] = @"other-project";
+  [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
+  QONRemoteConfigV2Scope *tamperedScope = [[QONRemoteConfigV2Scope alloc]
+      initWithProjectKey:@"other-project" environment:@"production" canonicalUserID:@"user"];
+
+  XCTAssertNil([store stateForScope:tamperedScope]);
+  XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+}
+
+- (void)testSwappingOtherwiseValidStatesBetweenScopeRecordsDiscardsBothRecords {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2Scope *userA = [self scopeForUser:@"user-a"];
+  QONRemoteConfigV2Scope *userB = [self scopeForUser:@"user-b"];
+  XCTAssertTrue([store saveState:[[QONRemoteConfigV2State alloc]
+      initWithCandidate:[self release:@"release-a" value:@"1"]
+      active:nil previous:nil didActivate:NO] forScope:userA]);
+  XCTAssertTrue([store saveState:[[QONRemoteConfigV2State alloc]
+      initWithCandidate:[self release:@"release-b" value:@"2"]
+      active:nil previous:nil didActivate:NO] forScope:userB]);
+  NSMutableDictionary *archive = [self mutablePropertyListCopy:
+      [storage loadObjectForKey:QONRemoteConfigV2StorageKey]];
+  id firstState = archive[@"scopes"][0][@"state"];
+  archive[@"scopes"][0][@"state"] = archive[@"scopes"][1][@"state"];
+  archive[@"scopes"][1][@"state"] = firstState;
+  [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
+
+  XCTAssertNil([store stateForScope:userA]);
+  XCTAssertNil([store stateForScope:userB]);
+  XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+}
+
+- (void)testDigestConsistentScalarCandidateSlotsFailClosedWithoutDynamicDispatchCrash {
+  NSArray *invalidSlots = @[@"scalar", @42, NSNull.null];
+  for (id invalidSlot in invalidSlots) {
+    QNInMemoryStorage *storage = [QNInMemoryStorage new];
+    QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc]
+        initWithLocalStorage:storage];
+    QONRemoteConfigV2Scope *scope = [self scopeForUser:@"scalar-user"];
+    QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+        initWithCandidate:[self wireReleaseWithOrdinal:5] active:nil previous:nil
+        didActivate:NO latestAdmissionOrdinal:5];
+    XCTAssertTrue([store saveState:state forScope:scope]);
+    NSMutableDictionary *archive = [self mutablePropertyListCopy:
+        [storage loadObjectForKey:QONRemoteConfigV2StorageKey]];
+    NSMutableDictionary *storedState = archive[@"scopes"][0][@"state"];
+    storedState[@"candidate"] = invalidSlot;
+    [self refreshDigestForMutableState:storedState];
+    [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
+
+    XCTAssertNil([store stateForScope:scope], @"%@", invalidSlot);
+    XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+  }
+}
+
+- (void)testDigestMismatchDiscardsWholeRecordEvenWhenCanonicalBodyIsValid {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2Scope *scope = [self scopeForUser:@"user"];
+  QONRemoteConfigV2Release *candidate = [self wireReleaseWithOrdinal:5];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:candidate active:nil previous:nil didActivate:NO
+      latestAdmissionOrdinal:5];
+  XCTAssertTrue([store saveState:state forScope:scope]);
+  NSMutableDictionary *archive = [self mutablePropertyListCopy:
+      [storage loadObjectForKey:QONRemoteConfigV2StorageKey]];
+  NSMutableDictionary *storedCandidate = archive[@"scopes"][0][@"state"][@"candidate"];
+  NSMutableDictionary *storedEntry = storedCandidate[@"entries"][0];
+  NSData *parseValidMutation = [self utf8Data:@" { \"nested\" : 2 } "];
+  storedEntry[@"raw"] = [parseValidMutation base64EncodedStringWithOptions:0];
+  [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
+
+  XCTAssertNil([store stateForScope:scope]);
+  XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+}
+
+- (void)testMaximumAggregateThreeReleaseHistoryProvablyFitsArchiveBudget {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2Release *wire = [self maximumAggregateWireReleaseWithOrdinal:3];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:wire
+      active:[wire releaseBySettingAdmissionOrdinal:2]
+      previous:[wire releaseBySettingAdmissionOrdinal:1]
+      didActivate:YES latestAdmissionOrdinal:3];
+  QONRemoteConfigV2Scope *scope = [self scopeForUser:@"maximum-user"];
+
+  XCTAssertTrue([store saveState:state forScope:scope]);
+  NSDictionary *root = [storage loadObjectForKey:QONRemoteConfigV2StorageKey];
+  NSData *archive = [NSPropertyListSerialization dataWithPropertyList:root
+      format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil];
+  XCTAssertGreaterThan(archive.length, 32 * 1024 * 1024);
+  XCTAssertLessThanOrEqual(archive.length, QONRemoteConfigV2MaximumArchiveBytes);
+  QONRemoteConfigV2State *reloaded = [[[QONRemoteConfigV2Store alloc]
+      initWithLocalStorage:storage] stateForScope:scope];
+  XCTAssertEqual(reloaded.candidate.admissionOrdinal, 3);
+  XCTAssertEqual(reloaded.active.admissionOrdinal, 2);
+  XCTAssertEqual(reloaded.previous.admissionOrdinal, 1);
+}
+
+- (void)testTamperedMaximumAdmissionHighWaterDiscardsWholeRecord {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2State *state = [[QONRemoteConfigV2State alloc]
+      initWithCandidate:[self wireReleaseWithOrdinal:5] active:nil previous:nil
+      didActivate:NO latestAdmissionOrdinal:7];
+  XCTAssertTrue([store saveState:state forScope:[self scopeForUser:@"user"]]);
+  NSMutableDictionary *archive = [self mutablePropertyListCopy:
+      [storage loadObjectForKey:QONRemoteConfigV2StorageKey]];
+  archive[@"scopes"][0][@"state"][@"latest_admission_ordinal"] = @(INT64_MAX);
+  [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
+
+  XCTAssertNil([store stateForScope:[self scopeForUser:@"user"]]);
+  XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+}
+
+- (void)testColdDiscardOfUnshippedSchemaOneDoesNotTouchLegacyRemoteConfigLKG {
+  QNInMemoryStorage *storage = [QNInMemoryStorage new];
+  NSDictionary *legacy = @{@"private": @"still-here"};
+  [storage storeObject:legacy forKey:@"com.qonversion.keys.remote-config-lkg"];
+  [storage storeObject:@{@"schema_version": @1, @"scopes": @[]}
+                 forKey:QONRemoteConfigV2StorageKey];
+  QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
+
+  XCTAssertNil([store stateForScope:[self scopeForUser:@"user"]]);
+  XCTAssertNil([storage loadObjectForKey:QONRemoteConfigV2StorageKey]);
+  XCTAssertEqualObjects([storage loadObjectForKey:@"com.qonversion.keys.remote-config-lkg"], legacy);
 }
 
 - (void)testStoresWholeVersionedStatePerExactPrivacyScopeWithoutTouchingLegacyLKG {
@@ -210,15 +542,17 @@
   [[NSFileManager defaultManager] removeItemAtURL:directory error:nil];
 }
 
-- (void)testCorruptCandidateIsSalvagedWithoutErasingActivePreviousOrOtherScopes {
+- (void)testDigestCorruptionDiscardsAffectedScopeWithoutErasingOtherScopes {
   QNInMemoryStorage *storage = [QNInMemoryStorage new];
   QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
   QONRemoteConfigV2Scope *userA = [self scopeForUser:@"user-a"];
   QONRemoteConfigV2Scope *userB = [self scopeForUser:@"user-b"];
   QONRemoteConfigV2State *stateA = [[QONRemoteConfigV2State alloc]
-      initWithCandidate:[self release:@"three" number:3 value:@"3"]
-      active:[self release:@"two" number:2 value:@"2"]
-      previous:[self release:@"one" number:1 value:@"1"] didActivate:YES];
+      initWithCandidate:[self wireReleaseWithUID:@"three" number:3 ordinal:3
+          raw:@"3" metadata:@"null"]
+      active:[self wireReleaseWithUID:@"two" number:2 ordinal:2 raw:@"2" metadata:@"null"]
+      previous:[self wireReleaseWithUID:@"one" number:1 ordinal:1 raw:@"1" metadata:@"null"]
+      didActivate:YES latestAdmissionOrdinal:3];
   QONRemoteConfigV2State *stateB = [[QONRemoteConfigV2State alloc]
       initWithCandidate:[self release:@"other" number:1 value:@"4"]
       active:nil previous:nil didActivate:NO];
@@ -230,16 +564,12 @@
   candidate[@"uid"] = [@"x" stringByPaddingToLength:37 withString:@"x" startingAtIndex:0];
   [storage storeObject:archive forKey:QONRemoteConfigV2StorageKey];
 
-  QONRemoteConfigV2State *salvaged = [store stateForScope:userA];
-
-  XCTAssertNil(salvaged.candidate);
-  XCTAssertEqualObjects(salvaged.active.releaseUID, @"two");
-  XCTAssertEqualObjects(salvaged.previous.releaseUID, @"one");
+  XCTAssertNil([store stateForScope:userA]);
   XCTAssertEqualObjects([store stateForScope:userB].candidate.releaseUID, @"other");
   QONRemoteConfigV2Store *restarted = [[QONRemoteConfigV2Store alloc]
       initWithLocalStorage:storage];
-  XCTAssertNil([restarted stateForScope:userA].candidate);
-  XCTAssertEqualObjects([restarted stateForScope:userA].active.releaseUID, @"two");
+  XCTAssertNil([restarted stateForScope:userA]);
+  XCTAssertEqualObjects([restarted stateForScope:userB].candidate.releaseUID, @"other");
 }
 
 - (void)testTransientReadFailureIsDistinctFromMissingAndNeverDeletesDurableState {
@@ -303,7 +633,7 @@
   QNInMemoryStorage *storage = [QNInMemoryStorage new];
   QONRemoteConfigV2Store *store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:storage];
   NSMutableArray<QONRemoteConfigV2Scope *> *scopes = [NSMutableArray new];
-  for (NSUInteger index = 0; index < 12; index++) {
+  for (NSUInteger index = 0; index < 14; index++) {
     @autoreleasepool {
       NSString *userID = [NSString stringWithFormat:@"large-user-%02lu", (unsigned long)index];
       NSString *releaseUID = [NSString stringWithFormat:@"large-%02lu", (unsigned long)index];
@@ -319,13 +649,13 @@
   NSData *archive = [NSPropertyListSerialization dataWithPropertyList:root
       format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil];
 
-  XCTAssertLessThanOrEqual(archive.length, 32 * 1024 * 1024);
+  XCTAssertLessThanOrEqual(archive.length, QONRemoteConfigV2MaximumArchiveBytes);
   QONRemoteConfigV2Scope *oldestScope = scopes.firstObject;
   QONRemoteConfigV2Scope *newestScope = scopes.lastObject;
   XCTAssertNotNil(oldestScope);
   XCTAssertNotNil(newestScope);
   XCTAssertNil([store stateForScope:oldestScope]);
-  XCTAssertEqualObjects([store stateForScope:newestScope].candidate.releaseUID, @"large-11");
+  XCTAssertEqualObjects([store stateForScope:newestScope].candidate.releaseUID, @"large-13");
 }
 
 @end

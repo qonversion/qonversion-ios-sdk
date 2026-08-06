@@ -12,6 +12,19 @@
 @implementation QONRemoteConfigV2Delivery
 @end
 
+@interface QONRemoteConfigV2AdmissionToken ()
+@property (nonatomic, strong) NSUUID *ownerNonce;
+@property (nonatomic, assign) int64_t ordinal;
+@property (nonatomic, strong) QONRemoteConfigV2Scope *scope;
+@property (nonatomic, assign) NSUInteger scopeGeneration;
+@property (nonatomic, strong) QONRemoteConfigV2EnvelopeExpectation *expectation;
+- (instancetype)initPrivate;
+@end
+
+@implementation QONRemoteConfigV2AdmissionToken
+- (instancetype)initPrivate { return [super init]; }
+@end
+
 @interface QONRemoteConfigV2Manager ()
 @property (nonatomic, strong) QONRemoteConfigV2Store *store;
 @property (nonatomic, strong, nullable) QONRemoteConfigV2Release *fallbackRelease;
@@ -23,10 +36,15 @@
 @property (nonatomic, strong) NSMutableDictionary<NSUUID *, id> *observers;
 @property (nonatomic, strong) NSMutableArray<NSUUID *> *observerOrder;
 @property (nonatomic, strong) NSMutableArray<QONRemoteConfigV2Delivery *> *pendingDeliveries;
-@property (nonatomic, strong) NSRecursiveLock *deliveryLock;
 @property (nonatomic, assign) BOOL isDrainingDeliveries;
 @property (nonatomic, assign) BOOL scopeLoadFailed;
 @property (nonatomic, assign) NSUInteger scopeGeneration;
+@property (nonatomic, assign) int64_t nextAdmissionOrdinal;
+@property (nonatomic, strong) NSUUID *admissionOwnerNonce;
+@property (nonatomic, strong) id<QONRemoteConfigV2EnvelopeDecoding> envelopeDecoder;
+@property (nonatomic, strong) dispatch_queue_t callbackExecutor;
+@property (nonatomic, strong) NSObject *callbackExecutorToken;
+@property (nonatomic, assign) BOOL callbackExecutorIsMain;
 @end
 
 @implementation QONRemoteConfigV2Manager
@@ -35,7 +53,30 @@
                fallbackRelease:(QONRemoteConfigV2Release *)fallbackRelease
              fallbackProjectKey:(NSString *)fallbackProjectKey
             fallbackEnvironment:(NSString *)fallbackEnvironment {
-  if (!store || (fallbackRelease && (!fallbackProjectKey || !fallbackEnvironment))) return nil;
+  return [self initWithStore:store fallbackRelease:fallbackRelease
+      fallbackProjectKey:fallbackProjectKey fallbackEnvironment:fallbackEnvironment
+      envelopeDecoder:[QONRemoteConfigV2EnvelopeParser new]
+      callbackExecutor:dispatch_get_main_queue()];
+}
+
+- (instancetype)initWithStore:(QONRemoteConfigV2Store *)store
+               fallbackRelease:(QONRemoteConfigV2Release *)fallbackRelease
+             fallbackProjectKey:(NSString *)fallbackProjectKey
+            fallbackEnvironment:(NSString *)fallbackEnvironment
+                 envelopeDecoder:(id<QONRemoteConfigV2EnvelopeDecoding>)envelopeDecoder {
+  return [self initWithStore:store fallbackRelease:fallbackRelease
+      fallbackProjectKey:fallbackProjectKey fallbackEnvironment:fallbackEnvironment
+      envelopeDecoder:envelopeDecoder callbackExecutor:dispatch_get_main_queue()];
+}
+
+- (instancetype)initWithStore:(QONRemoteConfigV2Store *)store
+               fallbackRelease:(QONRemoteConfigV2Release *)fallbackRelease
+             fallbackProjectKey:(NSString *)fallbackProjectKey
+            fallbackEnvironment:(NSString *)fallbackEnvironment
+                 envelopeDecoder:(id<QONRemoteConfigV2EnvelopeDecoding>)envelopeDecoder
+                callbackExecutor:(dispatch_queue_t)callbackExecutor {
+  if (!store || !envelopeDecoder || !callbackExecutor ||
+      (fallbackRelease && (!fallbackProjectKey || !fallbackEnvironment))) return nil;
   if (fallbackRelease && ![[QONRemoteConfigV2Scope alloc]
       initWithProjectKey:fallbackProjectKey environment:fallbackEnvironment
       canonicalUserID:@"bundle-scope-validation"]) return nil;
@@ -50,7 +91,13 @@
     _observers = [NSMutableDictionary new];
     _observerOrder = [NSMutableArray new];
     _pendingDeliveries = [NSMutableArray new];
-    _deliveryLock = [NSRecursiveLock new];
+    _admissionOwnerNonce = NSUUID.UUID;
+    _envelopeDecoder = envelopeDecoder;
+    _callbackExecutor = callbackExecutor;
+    _callbackExecutorToken = [NSObject new];
+    _callbackExecutorIsMain = callbackExecutor == dispatch_get_main_queue();
+    const void *key = (__bridge const void *)_callbackExecutorToken;
+    dispatch_queue_set_specific(callbackExecutor, key, (void *)key, NULL);
   }
   return self;
 }
@@ -76,11 +123,21 @@
   return snapshot;
 }
 
+- (BOOL)release:(QONRemoteConfigV2Release *)release
+    representsSameLocalAdmissionAs:(QONRemoteConfigV2Release *)other {
+  if (!release || !other) return NO;
+  if (release.admissionOrdinal > 0 || other.admissionOrdinal > 0) {
+    return release.admissionOrdinal > 0 && release.admissionOrdinal == other.admissionOrdinal;
+  }
+  return [release contentEquals:other];
+}
+
 - (QONRemoteConfigSnapshot *)lastFetchedSnapshot {
   __block QONRemoteConfigSnapshot *snapshot = nil;
   dispatch_sync(self.stateQueue, ^{
     if (self.state.candidate) {
-      QONRemoteConfigV2Release *previous = [self.state.candidate contentEquals:self.state.active]
+      QONRemoteConfigV2Release *previous = [self release:self.state.candidate
+          representsSameLocalAdmissionAs:self.state.active]
           ? self.state.previous : self.state.active;
       snapshot = [[QONRemoteConfigSnapshot alloc] initWithPrimaryRelease:self.state.candidate
           previousRelease:previous fallbackRelease:[self fallbackReleaseForCurrentScopeLocked]];
@@ -89,8 +146,7 @@
   return snapshot;
 }
 
-- (void)setScope:(QONRemoteConfigV2Scope *)scope {
-  [self.deliveryLock lock];
+- (void)applyScopeLocked:(QONRemoteConfigV2Scope *)scope {
   dispatch_sync(self.stateQueue, ^{
     BOOL sameScope = (self.currentScope == nil && scope == nil) || [self.currentScope isEqual:scope];
     if (sameScope && !(scope && self.scopeLoadFailed)) return;
@@ -99,11 +155,15 @@
       self.state = [[QONRemoteConfigV2State alloc]
           initWithCandidate:nil active:nil previous:nil didActivate:NO];
       self.scopeLoadFailed = NO;
+      self.nextAdmissionOrdinal = 0;
       self.scopeGeneration += 1;
     }
     if (scope) [self loadScopeStateLocked:scope];
   });
-  [self.deliveryLock unlock];
+}
+
+- (void)setScope:(QONRemoteConfigV2Scope *)scope {
+  [self applyScopeLocked:[scope copy]];
 }
 
 - (void)loadScopeStateLocked:(QONRemoteConfigV2Scope *)scope {
@@ -112,11 +172,13 @@
   switch (status) {
     case QONRemoteConfigV2StoreLoadStatusFound:
       self.state = loadedState;
+      self.nextAdmissionOrdinal = loadedState.latestAdmissionOrdinal;
       self.scopeLoadFailed = NO;
       break;
     case QONRemoteConfigV2StoreLoadStatusMissing:
       self.state = [[QONRemoteConfigV2State alloc]
           initWithCandidate:nil active:nil previous:nil didActivate:NO];
+      self.nextAdmissionOrdinal = 0;
       self.scopeLoadFailed = NO;
       break;
     case QONRemoteConfigV2StoreLoadStatusFailed:
@@ -147,8 +209,11 @@
 - (QONRemoteConfigUpdate *)transitionToCandidateLocked:(QONRemoteConfigV2Release *)candidate {
   QONRemoteConfigSnapshot *oldSnapshot = [self snapshotForState:self.state];
   if (!candidate) return nil;
+  int64_t latestAdmissionOrdinal = MAX(self.state.latestAdmissionOrdinal,
+                                       candidate.admissionOrdinal);
   QONRemoteConfigV2State *nextState = [[QONRemoteConfigV2State alloc] initWithCandidate:candidate
-      active:candidate previous:self.state.active didActivate:YES];
+      active:candidate previous:self.state.active didActivate:YES
+      latestAdmissionOrdinal:latestAdmissionOrdinal];
   QONRemoteConfigV2Scope *scope = self.currentScope;
   if (!scope || ![self.store saveState:nextState forScope:scope]) return nil;
   self.state = nextState;
@@ -180,29 +245,36 @@
   [self.pendingDeliveries addObject:delivery];
 }
 
-- (void)drainDeliveries {
-  [self.deliveryLock lock];
-  if (self.isDrainingDeliveries) {
-    [self.deliveryLock unlock];
-    return;
-  }
+- (BOOL)isOnCallbackExecutor {
+  if (self.callbackExecutorIsMain && NSThread.isMainThread) return YES;
+  const void *key = (__bridge const void *)self.callbackExecutorToken;
+  return dispatch_get_specific(key) == key;
+}
+
+- (void)drainDeliveriesOnCallbackExecutor {
+  NSAssert([self isOnCallbackExecutor], @"Remote Config callback executor must be serial");
+  if (self.isDrainingDeliveries) return;
   self.isDrainingDeliveries = YES;
   @try {
     while (YES) {
       __block QONRemoteConfigV2Delivery *delivery = nil;
       dispatch_sync(self.stateQueue, ^{
-        if (self.pendingDeliveries.count > 0) {
-          delivery = self.pendingDeliveries.firstObject;
+        while (self.pendingDeliveries.count > 0 && !delivery) {
+          QONRemoteConfigV2Delivery *candidate = self.pendingDeliveries.firstObject;
           [self.pendingDeliveries removeObjectAtIndex:0];
+          if (candidate.scopeGeneration == self.scopeGeneration) delivery = candidate;
         }
       });
-      if (!delivery) break;
+      if (!delivery) return;
+
       for (QONRemoteConfigV2UpdateObserver observer in delivery.observers) {
-        __block BOOL isCurrent = NO;
+        // The generation check is the atomic claim point. setScope may return
+        // after this point while this one callback is still executing.
+        __block BOOL claimed = NO;
         dispatch_sync(self.stateQueue, ^{
-          isCurrent = delivery.scopeGeneration == self.scopeGeneration;
+          claimed = delivery.scopeGeneration == self.scopeGeneration;
         });
-        if (!isCurrent) break;
+        if (!claimed) break;
         @try {
           observer(delivery.update);
         } @catch (__unused NSException *exception) {
@@ -212,17 +284,136 @@
     }
   } @finally {
     self.isDrainingDeliveries = NO;
-    [self.deliveryLock unlock];
   }
+}
+
+- (void)drainDeliveries {
+  if ([self isOnCallbackExecutor]) {
+    [self drainDeliveriesOnCallbackExecutor];
+  } else {
+    dispatch_async(self.callbackExecutor, ^{
+      [self drainDeliveriesOnCallbackExecutor];
+    });
+  }
+}
+
+- (QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope
+                                                expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation {
+  if (!scope || !expectation || ![scope.environment isEqualToString:expectation.environmentUID]) return nil;
+  __block QONRemoteConfigV2AdmissionToken *token = nil;
+  dispatch_sync(self.stateQueue, ^{
+    if (![self.currentScope isEqual:scope] || ![self ensureCurrentScopeLoadedLocked] ||
+        self.nextAdmissionOrdinal == INT64_MAX) return;
+    self.nextAdmissionOrdinal += 1;
+    token = [[QONRemoteConfigV2AdmissionToken alloc] initPrivate];
+    token.ownerNonce = self.admissionOwnerNonce;
+    token.ordinal = self.nextAdmissionOrdinal;
+    token.scope = [scope copy];
+    token.scopeGeneration = self.scopeGeneration;
+    token.expectation = [expectation copy];
+  });
+  return token;
+}
+
+- (BOOL)admissionTokenIsCurrentLocked:(QONRemoteConfigV2AdmissionToken *)token {
+  return token && [token.ownerNonce isEqual:self.admissionOwnerNonce] &&
+      [token.scope isEqual:self.currentScope] && token.scopeGeneration == self.scopeGeneration &&
+      token.ordinal == self.nextAdmissionOrdinal &&
+      token.ordinal > self.state.latestAdmissionOrdinal;
+}
+
+- (QONRemoteConfigV2Release *)releaseByTombstoningMissingActiveKeys:
+    (QONRemoteConfigV2Release *)release {
+  if (!self.state.active) return release;
+  NSMutableDictionary *entries = [release.entries mutableCopy];
+  for (NSString *key in self.state.active.entries) {
+    QONRemoteConfigV2Entry *activeEntry = self.state.active.entries[key];
+    if (!activeEntry.isTombstone && !entries[key]) {
+      QONRemoteConfigV2Entry *tombstone = [[QONRemoteConfigV2Entry alloc] initWithTombstoneKey:key];
+      if (!tombstone) return nil;
+      entries[key] = tombstone;
+    }
+  }
+  if (entries.count == release.entries.count) return release;
+  return [[QONRemoteConfigV2Release alloc] initWithReleaseUID:release.releaseUID
+      releaseNumber:release.releaseNumber manifestContentHash:release.manifestContentHash
+      entries:entries canonicalBody:release.canonicalBody strongETag:release.strongETag
+      projectID:release.projectID contextFingerprint:release.contextFingerprint
+      admissionOrdinal:release.admissionOrdinal];
+}
+
+- (QONRemoteConfigUpdate *)updateFromSnapshot:(QONRemoteConfigSnapshot *)oldSnapshot
+                                     toState:(QONRemoteConfigV2State *)state {
+  QONRemoteConfigSnapshot *newSnapshot = [self snapshotForState:state];
+  NSSet *changed = [self changedKeysFrom:oldSnapshot to:newSnapshot];
+  NSMutableDictionary *metadata = [NSMutableDictionary new];
+  for (NSString *key in changed) {
+    id value = [newSnapshot metadataForKey:key];
+    if (value) metadata[key] = value;
+  }
+  return [[QONRemoteConfigUpdate alloc] initWithSnapshot:newSnapshot
+      changedKeys:changed metadataByKey:metadata];
+}
+
+- (QONRemoteConfigV2TransitionStatus)admitBody:(NSData *)body
+                                   strongETag:(NSString *)strongETag
+                               admissionToken:(QONRemoteConfigV2AdmissionToken *)admissionToken {
+  if (!body || !strongETag || !admissionToken) return QONRemoteConfigV2TransitionStatusRejected;
+  __block BOOL tokenWasCurrent = NO;
+  dispatch_sync(self.stateQueue, ^{
+    tokenWasCurrent = [self admissionTokenIsCurrentLocked:admissionToken];
+  });
+  if (!tokenWasCurrent) return QONRemoteConfigV2TransitionStatusRejected;
+  QONRemoteConfigV2Envelope *envelope = [self.envelopeDecoder parseBody:body
+      strongETag:strongETag expectation:admissionToken.expectation];
+  if (!envelope) return QONRemoteConfigV2TransitionStatusRejected;
+
+  __block QONRemoteConfigV2TransitionStatus status = QONRemoteConfigV2TransitionStatusRejected;
+  dispatch_sync(self.stateQueue, ^{
+    if (![self admissionTokenIsCurrentLocked:admissionToken] ||
+        ![self ensureCurrentScopeLoadedLocked]) return;
+    NSInteger releaseFloor = MAX(self.state.candidate.releaseNumber,
+                                 self.state.active.releaseNumber);
+    if (envelope.snapshotRelease.releaseNumber < releaseFloor) return;
+    QONRemoteConfigV2Release *tokenized = [envelope.snapshotRelease
+        releaseBySettingAdmissionOrdinal:admissionToken.ordinal];
+    QONRemoteConfigV2Release *admitted = [self releaseByTombstoningMissingActiveKeys:tokenized];
+    if (!admitted) return;
+    QONRemoteConfigSnapshot *oldSnapshot = [self snapshotForState:self.state];
+    BOOL immediate = admitted.containsImmediateEntry;
+    QONRemoteConfigV2State *nextState = [[QONRemoteConfigV2State alloc]
+        initWithCandidate:admitted
+                   active:immediate ? admitted : self.state.active
+                 previous:immediate ? self.state.active : self.state.previous
+              didActivate:immediate ? YES : self.state.didActivate
+   latestAdmissionOrdinal:admissionToken.ordinal];
+    if (!nextState || !self.currentScope ||
+        ![self.store saveState:nextState forScope:self.currentScope]) {
+      status = QONRemoteConfigV2TransitionStatusPersistenceFailed;
+      return;
+    }
+    self.state = nextState;
+    if (immediate) {
+      QONRemoteConfigUpdate *update = [self updateFromSnapshot:oldSnapshot toState:nextState];
+      [self enqueueUpdateLocked:update];
+      status = QONRemoteConfigV2TransitionStatusActivated;
+    } else {
+      status = QONRemoteConfigV2TransitionStatusAccepted;
+    }
+  });
+  [self drainDeliveries];
+  return status;
 }
 
 - (void)acceptFetchedRelease:(QONRemoteConfigV2Release *)release
                      forScope:(QONRemoteConfigV2Scope *)scope {
   if (!release || !scope) return;
   __block QONRemoteConfigUpdate *update = nil;
+  __block int64_t admissionOrdinal = 0;
   dispatch_sync(self.stateQueue, ^{
     if (!self.currentScope || ![self.currentScope isEqual:scope]) return;
     if (![self ensureCurrentScopeLoadedLocked]) return;
+    if (self.nextAdmissionOrdinal == INT64_MAX) return;
     QONRemoteConfigV2Release *latest = self.state.candidate;
     if (!latest || self.state.active.releaseNumber > latest.releaseNumber) latest = self.state.active;
     if (latest && release.releaseNumber <= latest.releaseNumber) {
@@ -231,11 +422,17 @@
       // older late response must never replace the freshest durable candidate.
       return;
     }
+    self.nextAdmissionOrdinal += 1;
+    admissionOrdinal = self.nextAdmissionOrdinal;
+    QONRemoteConfigV2Release *orderedRelease = [release
+        releaseBySettingAdmissionOrdinal:admissionOrdinal];
+    if (!orderedRelease) return;
     QONRemoteConfigV2State *nextState = [[QONRemoteConfigV2State alloc]
-        initWithCandidate:release active:self.state.active
-        previous:self.state.previous didActivate:self.state.didActivate];
-    if ([release containsImmediateEntry]) {
-      update = [self transitionToCandidateLocked:release];
+        initWithCandidate:orderedRelease active:self.state.active
+        previous:self.state.previous didActivate:self.state.didActivate
+        latestAdmissionOrdinal:admissionOrdinal];
+    if ([orderedRelease containsImmediateEntry]) {
+      update = [self transitionToCandidateLocked:orderedRelease];
     } else {
       QONRemoteConfigV2Scope *currentScope = self.currentScope;
       if (currentScope && [self.store saveState:nextState forScope:currentScope]) self.state = nextState;
@@ -251,7 +448,8 @@
   dispatch_sync(self.stateQueue, ^{
     if (![self ensureCurrentScopeLoadedLocked]) return;
     if (self.state.candidate) {
-      if (self.state.didActivate && [self.state.candidate contentEquals:self.state.active]) return;
+      if (self.state.didActivate && [self release:self.state.candidate
+          representsSameLocalAdmissionAs:self.state.active]) return;
       update = [self transitionToCandidateLocked:self.state.candidate];
       changed = update.changedKeys.count > 0;
     } else if (!self.state.didActivate) {
