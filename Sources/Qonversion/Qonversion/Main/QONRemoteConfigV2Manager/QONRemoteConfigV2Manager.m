@@ -1,5 +1,6 @@
 #import "QONRemoteConfigV2Manager.h"
 #import "QONRemoteConfigSnapshot+Protected.h"
+#import "QONRemoteConfigV2FetchCoordinator.h"
 #import "QONRemoteConfigV2Models.h"
 #import "QONRemoteConfigV2Store.h"
 
@@ -144,6 +145,30 @@
     }
   });
   return snapshot;
+}
+
+- (QONRemoteConfigV2ConditionalRequestValidator *)conditionalRequestValidatorForHeadLocked {
+  QONRemoteConfigV2Release *head = self.state.candidate ?: self.state.active;
+  if (!head.canonicalBody || head.strongETag.length != 66 || head.admissionOrdinal <= 0) return nil;
+  NSString *bodyDigest = [head.strongETag substringWithRange:NSMakeRange(1, 64)];
+  return [[QONRemoteConfigV2ConditionalRequestValidator alloc]
+      initWithStrongETag:head.strongETag bodyDigest:bodyDigest
+      headAdmissionOrdinal:head.admissionOrdinal];
+}
+
+- (QONRemoteConfigV2ConditionalRequestValidator *)conditionalRequestValidator {
+  __block QONRemoteConfigV2ConditionalRequestValidator *validator = nil;
+  dispatch_sync(self.stateQueue, ^{ validator = [self conditionalRequestValidatorForHeadLocked]; });
+  return validator;
+}
+
+- (BOOL)isConditionalRequestValidatorCurrent:(QONRemoteConfigV2ConditionalRequestValidator *)validator {
+  if (!validator) return NO;
+  __block BOOL current = NO;
+  dispatch_sync(self.stateQueue, ^{
+    current = [[self conditionalRequestValidatorForHeadLocked] isEqual:validator];
+  });
+  return current;
 }
 
 - (void)applyScopeLocked:(QONRemoteConfigV2Scope *)scope {

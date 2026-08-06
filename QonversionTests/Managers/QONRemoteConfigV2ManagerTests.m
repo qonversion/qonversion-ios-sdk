@@ -10,6 +10,7 @@
 #import "QNInMemoryStorage.h"
 #import "QNLocalStorage.h"
 #import "QONRemoteConfigSnapshot.h"
+#import "QONRemoteConfigV2FetchCoordinator.h"
 #import "QONRemoteConfigV2Manager.h"
 #import "QONRemoteConfigV2Models.h"
 #import "QONRemoteConfigV2Store.h"
@@ -457,6 +458,44 @@
 
   XCTAssertEqualObjects(observed, (@[@"blocking", @"release"]));
   XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"release");
+}
+
+- (void)testConditionalValidatorIsBoundToExactCurrentCanonicalHeadAdmission {
+  QONRemoteConfigV2Manager *manager = [self managerWithStorage:[QNInMemoryStorage new]
+      decoder:[QONRemoteConfigV2EnvelopeParser new]];
+  QONRemoteConfigV2Scope *scope = [self wireScope:@"user"];
+  [manager setScope:scope];
+  NSString *firstString = [self wireBodyWithValues:[NSString stringWithFormat:@"\"only\":%@",
+      [self wireItemWithRaw:@"1" metadata:@"null" variationUID:@"variation-1"
+      policy:@"on_next_activate"]]];
+  NSData *firstBody = [self utf8Data:firstString];
+  QONRemoteConfigV2AdmissionToken *firstToken = [manager beginAdmissionForScope:scope
+      expectation:[self wireExpectation]];
+  XCTAssertEqual([manager admitBody:firstBody strongETag:[self strongETagForBody:firstBody]
+      admissionToken:firstToken], QONRemoteConfigV2TransitionStatusAccepted);
+  QONRemoteConfigV2ConditionalRequestValidator *first = manager.conditionalRequestValidator;
+  XCTAssertNotNil(first);
+  XCTAssertTrue([manager isConditionalRequestValidatorCurrent:first]);
+
+  NSString *secondString = [[self wireBodyWithValues:[NSString stringWithFormat:@"\"only\":%@",
+      [self wireItemWithRaw:@"2" metadata:@"null" variationUID:@"variation-2"
+      policy:@"on_next_activate"]]] stringByReplacingOccurrencesOfString:
+      @"\"release_number\":7" withString:@"\"release_number\":8"];
+  NSData *secondBody = [self utf8Data:secondString];
+  QONRemoteConfigV2AdmissionToken *secondToken = [manager beginAdmissionForScope:scope
+      expectation:[self wireExpectation]];
+  XCTAssertEqual([manager admitBody:secondBody strongETag:[self strongETagForBody:secondBody]
+      admissionToken:secondToken], QONRemoteConfigV2TransitionStatusAccepted);
+  QONRemoteConfigV2ConditionalRequestValidator *second = manager.conditionalRequestValidator;
+  XCTAssertNotEqualObjects(first, second);
+  XCTAssertFalse([manager isConditionalRequestValidatorCurrent:first]);
+  XCTAssertTrue([manager isConditionalRequestValidatorCurrent:second]);
+
+  XCTAssertTrue([manager activate]);
+  [manager acceptFetchedRelease:[self release:@"local-candidate" number:9
+      values:@{@"only": @"3"} immediate:NO] forScope:scope];
+  XCTAssertNil(manager.conditionalRequestValidator,
+      @"A non-canonical Candidate must suppress the older Active ETag instead of falling back to it");
 }
 
 - (NSData *)utf8Data:(NSString *)string {
