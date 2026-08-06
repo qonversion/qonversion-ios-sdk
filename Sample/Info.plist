@@ -2,13 +2,28 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- The sample can be pointed at a local stack from the configuration
-	     dialog (tap the logo five times). Such a stack serves plain HTTP,
-	     which App Transport Security refuses by default. -->
+	<!-- The sample can be pointed at a local stack or at staging from the
+	     configuration dialog (tap the logo five times). Both serve plain HTTP,
+	     which App Transport Security refuses by default.
+
+	     TEMPORARY — REVERT THE qmoons.me EXCEPTION BEFORE RELEASE, together
+	     with the staging defaults in ConfigurationManager. Staging is reached
+	     over HTTP because its ingress serves the Kubernetes "Fake Certificate";
+	     no ATS key waives certificate validation, only the TLS requirement. -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>qmoons.me</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
 	</dict>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

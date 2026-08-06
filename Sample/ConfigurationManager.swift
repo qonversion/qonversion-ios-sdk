@@ -19,7 +19,22 @@ enum ConfigurationManager {
     private static let projectKeyKey = "project_key"
     private static let apiUrlKey = "api_url"
 
-    static let defaultProjectKey = "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2"
+    // TEMPORARY — REVERT BEFORE RELEASE.
+    //
+    // Pointed at the api-gateway PR environment of feat/v4-sdk-support, which
+    // is the only place the /v4 SDK surface is deployed: it does not exist on
+    // main, so production answers every v4 call from the not-found handler.
+    // That environment is torn down when the PR merges.
+    //
+    // Production values to restore:
+    //   defaultProjectKey = "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2"
+    //   defaultApiUrl     = nil
+    static let defaultProjectKey = "8aa76234e3cac3f4dee02a7aace44e335e2e8f08da293dcdab897ac2d7da387e"
+
+    /// Plain HTTP on purpose: the staging ingress serves the Kubernetes
+    /// "Fake Certificate", which iOS refuses outright — and no ATS exception
+    /// waives certificate validation, only the requirement to use TLS.
+    static let defaultApiUrl: String? = "http://feat-v4-sdk-support.api-gateway.stage.qmoons.me"
 
     private static var userDefaults: UserDefaults { .standard }
 
@@ -31,9 +46,24 @@ enum ConfigurationManager {
         return stored
     }
 
-    /// nil means production — the SDK's own default host.
+    /// The configured endpoint, or the default one. A value stored through the
+    /// dialog always wins, so the default can be overridden without a rebuild.
     static func getApiUrl() -> String? {
-        return userDefaults.string(forKey: apiUrlKey)
+        guard let stored: String = userDefaults.string(forKey: apiUrlKey), !stored.isEmpty else {
+            return defaultApiUrl
+        }
+
+        return stored
+    }
+
+    /// Only what the dialog stored, with no default substituted — the dialog
+    /// needs to know whether an override exists, not which endpoint is in use.
+    static func storedApiUrl() -> String? {
+        guard let stored: String = userDefaults.string(forKey: apiUrlKey), !stored.isEmpty else {
+            return nil
+        }
+
+        return stored
     }
 
     static func storeConfiguration(projectKey: String, apiUrl: String?) {

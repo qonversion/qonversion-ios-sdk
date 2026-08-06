@@ -159,7 +159,7 @@ struct HomeView: View {
 
     private func showConfigurationDialogWithCurrentValues() {
         projectKeyInput = ConfigurationManager.getProjectKey()
-        if let apiUrl: String = ConfigurationManager.getApiUrl() {
+        if let apiUrl: String = ConfigurationManager.storedApiUrl() {
             useCustomUrl = true
             customUrlInput = apiUrl
         } else {
@@ -271,7 +271,7 @@ struct ConfigurationDialogView: View {
 
                 Section(header: Text("API Endpoint")) {
                     Picker("Endpoint", selection: $useCustomUrl) {
-                        Text("Production (default)").tag(false)
+                        Text("Default").tag(false)
                         Text("Custom URL").tag(true)
                     }
                     .pickerStyle(.segmented)
@@ -281,10 +281,14 @@ struct ConfigurationDialogView: View {
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
                             .keyboardType(.URL)
+                    } else {
+                        Text(ConfigurationManager.defaultApiUrl ?? "Production")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
 
-                Section(footer: Text("Both the main SDK and No-Codes are pointed at this endpoint. The app will be closed after applying changes — reopen it manually.")) {
+                Section(footer: Text("Both the main SDK and No-Codes are pointed at this endpoint. Reset restores the built-in default. The app will be closed after applying changes — reopen it manually.")) {
                     EmptyView()
                 }
             }
