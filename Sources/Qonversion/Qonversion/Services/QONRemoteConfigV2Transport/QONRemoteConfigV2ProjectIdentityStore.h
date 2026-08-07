@@ -31,12 +31,19 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2ProjectIdentityOutcome) {
 /**
  The device's memory of the numeric `project_id` the gateway bootstrap stated.
 
- Deliberately keyed by project key and environment only, never by the identity:
- a `project_id` is a property of the project, not of the user, so keying it per
- identity would let a logout and a fresh login launder a conflicting id past the
- check above. It also outlives the session record on purpose — a 401 drops the
- session token and re-bootstraps, and that is exactly the moment the previously
- learned id must still be there to compare against.
+ Deliberately keyed without the identity: a `project_id` is a property of the
+ project, not of the user, so keying it per identity would let a logout and a
+ fresh login launder a conflicting id past the check above. It also outlives the
+ session record on purpose — a 401 drops the session token and re-bootstraps,
+ and that is exactly the moment the previously learned id must still be there to
+ compare against.
+
+ It is keyed by everything that decides *which* project the gateway will answer
+ for: the base URL and the project token as well as the project key and the
+ environment. Two deployments of one project key — a staging gateway and a
+ production one, or a token swap — legitimately carry different numeric ids, and
+ a conflict is terminal, so a key that could not tell them apart would brick the
+ surface on a routine environment switch.
  */
 @protocol QONRemoteConfigV2ProjectIdentityStoring <NSObject>
 /** The learned id, or 0 when nothing is known for this project and environment. */
@@ -47,9 +54,12 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2ProjectIdentityOutcome) {
 
 @interface QONRemoteConfigV2ProjectIdentityStore : NSObject <QONRemoteConfigV2ProjectIdentityStoring>
 - (instancetype)init NS_UNAVAILABLE;
+/** baseURL and projectToken must be the ones the transport fetches with. */
 - (nullable instancetype)initWithLocalStorage:(id<QNLocalStorage>)localStorage
+                                       baseURL:(NSURL *)baseURL
+                                  projectToken:(NSString *)projectToken
     NS_DESIGNATED_INITIALIZER;
-+ (NSString *)storageKeyForScope:(QONRemoteConfigV2Scope *)scope;
+- (NSString *)storageKeyForScope:(QONRemoteConfigV2Scope *)scope;
 @end
 
 NS_ASSUME_NONNULL_END

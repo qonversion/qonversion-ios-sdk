@@ -354,9 +354,13 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
 #pragma mark - Project identity
 
 /**
- Reconciles the `project_id` a session states with what this installation
- already learned, and reports the outcome as a typed failure when it cannot be
- used. Returns YES when the caller may proceed with `session.projectID`.
+ Reconciles the `project_id` a freshly bootstrapped session states with what this
+ installation already learned, and reports the outcome as a typed failure when it
+ cannot be used. Returns YES when the caller may proceed with `session.projectID`.
+
+ Only the bootstrap path calls this: a live bootstrap response is the one thing
+ allowed to establish the id. A stored session is checked against the ledger
+ instead, in validSessionForScope:, and dropped when it disagrees.
  */
 - (BOOL)confirmProjectIdentityForSession:(QONRemoteConfigV2GatewaySession *)session
                                    scope:(QONRemoteConfigV2Scope *)scope
@@ -414,6 +418,23 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
     return nil;
   }
   if (!session) return nil;
+
+  // A stored session is not a source of truth for the project id — only a live
+  // bootstrap is. If the ledger does not already agree with it, the session is
+  // dropped so the fetch bootstraps and learns (or conflicts) honestly.
+  int64_t learned = 0;
+  @try {
+    learned = [self.projectIdentityStore projectIDForScope:scope];
+  } @catch (__unused NSException *exception) {
+    learned = 0;
+  }
+  if (learned != session.projectID) {
+    @try {
+      [self.sessionStore removeSessionForScope:scope];
+    } @catch (__unused NSException *exception) {}
+    return nil;
+  }
+
   if (session.expiresAtSeconds <= 0) return session;
 
   int64_t nowMilliseconds = 0;
@@ -560,9 +581,8 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
                     ifNoneMatch:(NSString *)ifNoneMatch
                allowReBootstrap:(BOOL)allowReBootstrap
                         respond:(QONRemoteConfigV2FetchTransportCompletion)respond {
-  // Also on the reuse path: a stored session predates the ledger's current
-  // contents only if something rewrote one of them, and that must not fetch.
-  if (![self confirmProjectIdentityForSession:session scope:scope respond:respond]) return;
+  // Reconciled already: a fresh session by the bootstrap that created it, a
+  // reused one by validSessionForScope:. Neither reaches here unconfirmed.
   int64_t projectID = session.projectID;
 
   NSURLRequest *request = [self requestWithPath:QONRemoteConfigV2GatewaySnapshotPath

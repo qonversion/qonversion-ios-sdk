@@ -297,7 +297,9 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
   QONRemoteConfigV2GatewaySessionStore *sessionStore =
       [[QONRemoteConfigV2GatewaySessionStore alloc] initWithLocalStorage:localStorage];
   QONRemoteConfigV2ProjectIdentityStore *projectIdentityStore =
-      [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:localStorage];
+      [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:localStorage
+                                                                  baseURL:baseURL
+                                                             projectToken:projectToken];
   QONRemoteConfigV2GatewayTransport *transport = [[QONRemoteConfigV2GatewayTransport alloc]
       initWithBaseURL:baseURL
       projectToken:projectToken

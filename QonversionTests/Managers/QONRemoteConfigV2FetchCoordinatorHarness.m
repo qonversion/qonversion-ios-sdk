@@ -9,7 +9,8 @@ id QONRemoteConfigPortableJSONObject(__unused NSData *data, __unused NSUInteger 
 }
 
 static NSUInteger failures = 0;
-#define QON_CHECK(condition, message) do { if (!(condition)) { \
+static NSUInteger checks = 0;
+#define QON_CHECK(condition, message) do { checks += 1; if (!(condition)) { \
   failures += 1; fprintf(stderr, "FAIL: %s\n", message); } } while (0)
 
 @interface HarnessTask : NSObject <QONRemoteConfigV2FetchScheduledTask>
@@ -183,6 +184,41 @@ static void TestCoalescingAndCallbackIsolation(void) {
   Drain(callbacks);
   QON_CHECK(delivered == 2, "throwing callback must not starve the next waiter");
   QON_CHECK(core.admissions == 1 && core.admittedBodies == 1, "coalesced operation admits once");
+}
+
+// A success that states no project id has no envelope boundary to be checked
+// against, so the coordinator must never hand it to the core.
+static void TestASuccessWithoutAProjectIDIsNeverAdmitted(void) {
+  HarnessCore *core = [HarnessCore new];
+  core.transitionStatus = QONRemoteConfigV2TransitionStatusAccepted;
+  HarnessTransport *transport = [HarnessTransport new]; HarnessStore *store = [HarnessStore new];
+  HarnessClock *clock = [HarnessClock new]; HarnessRandom *random = [HarnessRandom new];
+  HarnessScheduler *scheduler = [HarnessScheduler new];
+  dispatch_queue_t callbacks = dispatch_queue_create("fetch.harness.noproject",
+                                                     DISPATCH_QUEUE_SERIAL);
+  QONRemoteConfigV2FetchCoordinator *coordinator = Coordinator(core, transport, store, clock,
+      random, scheduler, Policy(0, nil), callbacks, nil);
+  [coordinator transitionToBinding:Binding(@"a")];
+
+  __block QONRemoteConfigV2FetchResult *result = nil;
+  [coordinator fetchWithForceReason:QONRemoteConfigV2FetchForceReasonNone
+                         completion:^(QONRemoteConfigV2FetchResult *value) { result = value; }];
+  [transport complete:0 response:[QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
+      strongETag:@"etag" projectID:0]];
+  Drain(callbacks);
+  QON_CHECK(core.admittedBodies == 0, "a success without a project id must not reach the core");
+  QON_CHECK(result.transitionStatus == QONRemoteConfigV2TransitionStatusRejected,
+            "it must be reported as rejected, not as an admitted release");
+
+  // The same bytes with a stated id are admitted, so the refusal is about the
+  // missing boundary and nothing else.
+  [coordinator fetchWithForceReason:QONRemoteConfigV2FetchForceReasonBuild
+                         completion:^(__unused id value) {}];
+  [transport complete:1 response:[QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
+      strongETag:@"etag" projectID:42]];
+  Drain(callbacks);
+  QON_CHECK(core.admittedBodies == 1 && core.lastAdmittedProjectID == 42,
+            "a stated project id must reach the core verbatim");
 }
 
 static void TestBackoffScopeAndForce(void) {
@@ -650,6 +686,7 @@ static void TestOnlyExplicitNon429ClientErrorsAreNonRetryable(void) {
 int main(void) {
   @autoreleasepool {
     TestCoalescingAndCallbackIsolation();
+    TestASuccessWithoutAProjectIDIsNeverAdmitted();
     TestBackoffScopeAndForce();
     TestMinimumIntervalForceOnly();
     TestTimeoutAndZombieFence();
@@ -666,6 +703,7 @@ int main(void) {
     TestCorruptPolicyFailsClosedWithoutSilentDeletion();
     TestOnlyExplicitNon429ClientErrorsAreNonRetryable();
   }
-  if (failures == 0) fprintf(stdout, "QONRemoteConfigV2FetchCoordinatorHarness: 16/16 passed\n");
+  fprintf(stdout, "QONRemoteConfigV2FetchCoordinatorHarness: %lu/%lu passed\n",
+          (unsigned long)(checks - failures), (unsigned long)checks);
   return failures == 0 ? 0 : 1;
 }

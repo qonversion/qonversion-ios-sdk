@@ -48,8 +48,10 @@ static NSUInteger checks = 0;
     _executor = [QONRCV2FakeHTTPExecutor new];
     _storage = [QONRCV2FakeLocalStorage new];
     _sessionStore = [[QONRemoteConfigV2GatewaySessionStore alloc] initWithLocalStorage:_storage];
-    _projectIdentityStore =
-        [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:_storage];
+    _projectIdentityStore = [[QONRemoteConfigV2ProjectIdentityStore alloc]
+        initWithLocalStorage:_storage
+                     baseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
+                projectToken:QONRCV2TestProjectToken];
     _clock = [QONRCV2FakeClock new];
     _clock.now = 1000000000000;
     _installDateProvider = [QONRCV2FakeInstallDateProvider new];
@@ -84,9 +86,16 @@ static NSUInteger checks = 0;
 
 - (void)seedStoredSessionWithToken:(NSString *)token {
   QONRemoteConfigV2GatewaySession *session = [[QONRemoteConfigV2GatewaySession alloc]
-      initWithSessionToken:token projectID:42 environment:@"production" expiresAtSeconds:0];
+      initWithSessionToken:token projectID:QONRCV2TestProjectID environment:@"production"
+          expiresAtSeconds:0];
   QON_CHECK([self.sessionStore storeSession:session forScope:QONRCV2Scope(QONRCV2TestAnonUID)],
             "seeded session stored");
+  // A stored session is only reusable while the ledger agrees with it, so a
+  // seeded install must carry the id it would have learned.
+  QON_CHECK([self.projectIdentityStore establishProjectID:QONRCV2TestProjectID
+                                                 forScope:QONRCV2Scope(QONRCV2TestAnonUID)] !=
+                QONRemoteConfigV2ProjectIdentityOutcomeConflict,
+            "seeded project identity established");
 }
 
 - (void)enqueueBootstrapWithToken:(NSString *)token {
@@ -610,7 +619,10 @@ static void TestTheLearnedProjectIDSurvivesStoreRecreation(void) {
 
   // Same storage, a brand new store object: the restart case.
   QONRemoteConfigV2ProjectIdentityStore *reopened =
-      [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:env.storage];
+      [[QONRemoteConfigV2ProjectIdentityStore alloc]
+          initWithLocalStorage:env.storage
+                       baseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
+                  projectToken:QONRCV2TestProjectToken];
   QON_CHECK([reopened projectIDForScope:scope] == QONRCV2TestProjectID,
             "a re-created store must still know the learned id");
   QON_CHECK([reopened establishProjectID:QONRCV2TestProjectID forScope:scope] ==
@@ -626,15 +638,49 @@ static void TestTheLearnedProjectIDSurvivesStoreRecreation(void) {
 static void TestProjectIdentityIsKeyedWithoutTheIdentity(void) {
   QONRemoteConfigV2Scope *anonymous = QONRCV2Scope(QONRCV2TestAnonUID);
   QONRemoteConfigV2Scope *identified = QONRCV2Scope(@"identified-uid");
+  QONRCV2FakeLocalStorage *storage = [QONRCV2FakeLocalStorage new];
+  QONRemoteConfigV2ProjectIdentityStore *store =
+      [[QONRemoteConfigV2ProjectIdentityStore alloc]
+          initWithLocalStorage:storage
+                       baseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
+                  projectToken:QONRCV2TestProjectToken];
   // Deliberate: a project id belongs to the project, not to the user, so a
   // logout and a fresh login must not launder a conflicting id past the check.
-  QON_CHECK([[QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:anonymous]
-                isEqualToString:
-                    [QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:identified]],
+  QON_CHECK([[store storageKeyForScope:anonymous]
+                isEqualToString:[store storageKeyForScope:identified]],
             "two identities of one project must share the project identity key");
   QON_CHECK(![[QONRemoteConfigV2GatewaySessionStore storageKeyForScope:anonymous]
                 isEqualToString:[QONRemoteConfigV2GatewaySessionStore storageKeyForScope:identified]],
             "session tokens must still be keyed per identity");
+
+  // A conflict is terminal, so the key must separate what legitimately carries
+  // different numeric ids: another gateway, or another project token.
+  QONRemoteConfigV2ProjectIdentityStore *otherGateway =
+      [[QONRemoteConfigV2ProjectIdentityStore alloc]
+          initWithLocalStorage:storage
+                       baseURL:[NSURL URLWithString:@"https://staging.gateway.test.example/"]
+                  projectToken:QONRCV2TestProjectToken];
+  QONRemoteConfigV2ProjectIdentityStore *otherToken =
+      [[QONRemoteConfigV2ProjectIdentityStore alloc]
+          initWithLocalStorage:storage
+                       baseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
+                  projectToken:@"another-project-token"];
+  QON_CHECK(![[store storageKeyForScope:anonymous]
+                isEqualToString:[otherGateway storageKeyForScope:anonymous]],
+            "another gateway must not share the project identity key");
+  QON_CHECK(![[store storageKeyForScope:anonymous]
+                isEqualToString:[otherToken storageKeyForScope:anonymous]],
+            "another project token must not share the project identity key");
+  QON_CHECK([store establishProjectID:QONRCV2TestProjectID forScope:anonymous] ==
+                    QONRemoteConfigV2ProjectIdentityOutcomeEstablished &&
+                [otherGateway establishProjectID:QONRCV2TestProjectID + 1 forScope:anonymous] ==
+                    QONRemoteConfigV2ProjectIdentityOutcomeEstablished,
+            "a staging deployment must establish its own id, not conflict");
+  NSURL *noURL = nil;
+  NSString *noToken = nil;
+  QON_CHECK([[QONRemoteConfigV2ProjectIdentityStore alloc]
+                 initWithLocalStorage:storage baseURL:noURL projectToken:noToken] == nil,
+            "a store without a deployment to key by must refuse to exist");
 
   QONRCV2HarnessEnvironment *env = [QONRCV2HarnessEnvironment new];
   [env enqueueBootstrapWithToken:@"session-token-1"];
@@ -680,6 +726,69 @@ static void TestProjectIdentityPersistenceAndRange(void) {
                 [oversized.failureKinds.lastObject
                     isEqual:@(QONRemoteConfigV2TransportFailureKindBootstrapMalformed)],
             "a project id beyond the safe integer range must be refused");
+  // Two distinct refusals share that one outcome, so pin each at its own layer:
+  // the session never forms, and the store would refuse the id independently.
+  QON_CHECK([[QONRemoteConfigV2GatewaySession alloc]
+                 initWithSessionToken:@"session-token-1" projectID:INT64_MAX
+                          environment:@"production" expiresAtSeconds:0] == nil,
+            "a session must not form around an uncheckable project id");
+  QON_CHECK([oversized.projectIdentityStore projectIDForScope:QONRCV2Scope(QONRCV2TestAnonUID)] == 0,
+            "a refused bootstrap must learn nothing");
+  QON_CHECK([oversized.projectIdentityStore establishProjectID:INT64_MAX
+                                                      forScope:QONRCV2Scope(QONRCV2TestAnonUID)] ==
+                QONRemoteConfigV2ProjectIdentityOutcomeUnusable,
+            "the store must refuse an out-of-range id on its own");
+  QON_CHECK([oversized.projectIdentityStore establishProjectID:0
+                                                      forScope:QONRCV2Scope(QONRCV2TestAnonUID)] ==
+                QONRemoteConfigV2ProjectIdentityOutcomeUnusable,
+            "zero is not a project id the store will keep");
+}
+
+// A stored session is a token, not an authority on which project answers. Only a
+// live bootstrap establishes the id, so a session the ledger cannot vouch for is
+// dropped rather than fetched with.
+static void TestAStoredSessionTheLedgerCannotVouchForIsDropped(void) {
+  QONRCV2HarnessEnvironment *env = [QONRCV2HarnessEnvironment new];
+  QONRemoteConfigV2Scope *scope = QONRCV2Scope(QONRCV2TestAnonUID);
+  QONRemoteConfigV2GatewaySession *session = [[QONRemoteConfigV2GatewaySession alloc]
+      initWithSessionToken:@"orphan-token" projectID:QONRCV2TestProjectID
+               environment:@"production" expiresAtSeconds:0];
+  QON_CHECK([env.sessionStore storeSession:session forScope:scope],
+            "the orphan session must be stored");
+  QON_CHECK([env.projectIdentityStore projectIDForScope:scope] == 0,
+            "the ledger must know nothing about it");
+
+  [env enqueueBootstrapWithToken:@"session-token-1"];
+  [env enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QONRemoteConfigV2FetchResponse *response = [env fetchWithIfNoneMatch:nil];
+
+  QON_CHECK(response.kind == QONRemoteConfigV2FetchResponseKindSuccess,
+            "the fetch must recover by bootstrapping");
+  QON_CHECK(env.executor.requests.count == 2,
+            "an unvouched session must not be reused");
+  QON_CHECK([QONRCV2Header(env.executor.requests[1], QONRemoteConfigV2GatewaySessionHeader)
+                isEqualToString:@"session-token-1"],
+            "the snapshot must use the freshly bootstrapped token");
+  QON_CHECK([env.projectIdentityStore projectIDForScope:scope] == QONRCV2TestProjectID,
+            "the id must be established by the bootstrap, never by the stored session");
+
+  // Same rule when the session disagrees rather than being unknown: it is
+  // dropped, and the bootstrap that replaces it decides.
+  QONRCV2HarnessEnvironment *rewritten = [QONRCV2HarnessEnvironment new];
+  [rewritten seedStoredSessionWithToken:@"legitimate-token"];
+  QONRemoteConfigV2GatewaySession *foreign = [[QONRemoteConfigV2GatewaySession alloc]
+      initWithSessionToken:@"rewritten-token" projectID:QONRCV2TestProjectID + 1
+               environment:@"production" expiresAtSeconds:0];
+  QON_CHECK([rewritten.sessionStore storeSession:foreign forScope:scope],
+            "the rewritten session must be stored");
+  [rewritten enqueueBootstrapWithToken:@"session-token-1"];
+  [rewritten enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QONRemoteConfigV2FetchResponse *recovered = [rewritten fetchWithIfNoneMatch:nil];
+  QON_CHECK(recovered.kind == QONRemoteConfigV2FetchResponseKindSuccess &&
+                recovered.projectID == QONRCV2TestProjectID,
+            "a rewritten session must not carry its own project id into admission");
+  QON_CHECK(rewritten.executor.requests.count == 2,
+            "the rewritten session must be replaced, not reused");
 }
 
 int main(void) {
@@ -703,6 +812,7 @@ int main(void) {
     TestTheLearnedProjectIDSurvivesStoreRecreation();
     TestProjectIdentityIsKeyedWithoutTheIdentity();
     TestProjectIdentityPersistenceAndRange();
+    TestAStoredSessionTheLedgerCannotVouchForIsDropped();
 
     fprintf(stdout, "QONRemoteConfigV2GatewayTransportHarness: %lu/%lu passed\n",
             (unsigned long)(checks - failures), (unsigned long)checks);

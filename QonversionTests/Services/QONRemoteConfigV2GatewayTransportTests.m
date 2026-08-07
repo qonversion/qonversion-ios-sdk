@@ -23,8 +23,10 @@
   self.executor = [QONRCV2FakeHTTPExecutor new];
   self.storage = [QONRCV2FakeLocalStorage new];
   self.sessionStore = [[QONRemoteConfigV2GatewaySessionStore alloc] initWithLocalStorage:self.storage];
-  self.projectIdentityStore =
-      [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:self.storage];
+  self.projectIdentityStore = [[QONRemoteConfigV2ProjectIdentityStore alloc]
+      initWithLocalStorage:self.storage
+                   baseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
+              projectToken:QONRCV2TestProjectToken];
   self.clock = [QONRCV2FakeClock new];
   self.clock.now = 1000000000000;
   self.installDateProvider = [QONRCV2FakeInstallDateProvider new];
@@ -61,8 +63,14 @@
 
 - (void)seedStoredSessionWithToken:(NSString *)token {
   QONRemoteConfigV2GatewaySession *session = [[QONRemoteConfigV2GatewaySession alloc]
-      initWithSessionToken:token projectID:42 environment:@"production" expiresAtSeconds:0];
+      initWithSessionToken:token projectID:QONRCV2TestProjectID environment:@"production"
+          expiresAtSeconds:0];
   XCTAssertTrue([self.sessionStore storeSession:session forScope:QONRCV2Scope(QONRCV2TestAnonUID)]);
+  // A stored session is only reusable while the ledger agrees with it, so a
+  // seeded install must carry the id it would have learned.
+  XCTAssertNotEqual([self.projectIdentityStore establishProjectID:QONRCV2TestProjectID
+                                                         forScope:QONRCV2Scope(QONRCV2TestAnonUID)],
+                    QONRemoteConfigV2ProjectIdentityOutcomeConflict);
 }
 
 - (void)enqueueBootstrapWithToken:(NSString *)token {
@@ -297,6 +305,40 @@
   XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindFailure);
   XCTAssertEqualObjects(self.failureKinds.lastObject,
                         @(QONRemoteConfigV2TransportFailureKindBootstrapMalformed));
+  // Two distinct refusals share that one outcome, so pin each at its own layer.
+  XCTAssertNil([[QONRemoteConfigV2GatewaySession alloc]
+                   initWithSessionToken:@"session-token-1" projectID:INT64_MAX
+                            environment:@"production" expiresAtSeconds:0]);
+  XCTAssertEqual([self.projectIdentityStore projectIDForScope:QONRCV2Scope(QONRCV2TestAnonUID)], 0);
+  XCTAssertEqual([self.projectIdentityStore establishProjectID:INT64_MAX
+                                                      forScope:QONRCV2Scope(QONRCV2TestAnonUID)],
+                 QONRemoteConfigV2ProjectIdentityOutcomeUnusable);
+  XCTAssertEqual([self.projectIdentityStore establishProjectID:0
+                                                      forScope:QONRCV2Scope(QONRCV2TestAnonUID)],
+                 QONRemoteConfigV2ProjectIdentityOutcomeUnusable);
+}
+
+// A stored session is a token, not an authority on which project answers. Only a
+// live bootstrap establishes the id, so a session the ledger cannot vouch for is
+// dropped rather than fetched with.
+- (void)testAStoredSessionTheLedgerCannotVouchForIsDropped {
+  QONRemoteConfigV2Scope *scope = QONRCV2Scope(QONRCV2TestAnonUID);
+  QONRemoteConfigV2GatewaySession *session = [[QONRemoteConfigV2GatewaySession alloc]
+      initWithSessionToken:@"orphan-token" projectID:QONRCV2TestProjectID
+               environment:@"production" expiresAtSeconds:0];
+  XCTAssertTrue([self.sessionStore storeSession:session forScope:scope]);
+  XCTAssertEqual([self.projectIdentityStore projectIDForScope:scope], 0);
+
+  [self enqueueBootstrapWithToken:@"session-token-1"];
+  [self enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+
+  XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindSuccess);
+  XCTAssertEqual(self.executor.requests.count, 2u);
+  XCTAssertEqualObjects(
+      QONRCV2Header(self.executor.requests[1], QONRemoteConfigV2GatewaySessionHeader),
+      @"session-token-1");
+  XCTAssertEqual([self.projectIdentityStore projectIDForScope:scope], QONRCV2TestProjectID);
 }
 
 - (void)testBootstrapForAnotherEnvironmentIsRejected {
@@ -637,7 +679,10 @@
                  QONRemoteConfigV2FetchResponseKindSuccess);
 
   QONRemoteConfigV2ProjectIdentityStore *reopened =
-      [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:self.storage];
+      [[QONRemoteConfigV2ProjectIdentityStore alloc]
+          initWithLocalStorage:self.storage
+                       baseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
+                  projectToken:QONRCV2TestProjectToken];
   XCTAssertEqual([reopened projectIDForScope:scope], QONRCV2TestProjectID);
   XCTAssertEqual([reopened establishProjectID:QONRCV2TestProjectID forScope:scope],
                  QONRemoteConfigV2ProjectIdentityOutcomeConfirmed);
@@ -651,10 +696,31 @@
   QONRemoteConfigV2Scope *identified = QONRCV2Scope(@"identified-uid");
   // Deliberate: a project id belongs to the project, not to the user, so a
   // logout and a fresh login must not launder a conflicting id past the check.
-  XCTAssertEqualObjects([QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:anonymous],
-                        [QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:identified]);
+  XCTAssertEqualObjects([self.projectIdentityStore storageKeyForScope:anonymous],
+                        [self.projectIdentityStore storageKeyForScope:identified]);
   XCTAssertNotEqualObjects([QONRemoteConfigV2GatewaySessionStore storageKeyForScope:anonymous],
                            [QONRemoteConfigV2GatewaySessionStore storageKeyForScope:identified]);
+
+  // A conflict is terminal, so the key must separate what legitimately carries
+  // different numeric ids: another gateway, or another project token.
+  QONRemoteConfigV2ProjectIdentityStore *otherGateway =
+      [[QONRemoteConfigV2ProjectIdentityStore alloc]
+          initWithLocalStorage:self.storage
+                       baseURL:[NSURL URLWithString:@"https://staging.gateway.test.example/"]
+                  projectToken:QONRCV2TestProjectToken];
+  QONRemoteConfigV2ProjectIdentityStore *otherToken =
+      [[QONRemoteConfigV2ProjectIdentityStore alloc]
+          initWithLocalStorage:self.storage
+                       baseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
+                  projectToken:@"another-project-token"];
+  XCTAssertNotEqualObjects([self.projectIdentityStore storageKeyForScope:anonymous],
+                           [otherGateway storageKeyForScope:anonymous]);
+  XCTAssertNotEqualObjects([self.projectIdentityStore storageKeyForScope:anonymous],
+                           [otherToken storageKeyForScope:anonymous]);
+  NSURL *noURL = nil;
+  NSString *noToken = nil;
+  XCTAssertNil([[QONRemoteConfigV2ProjectIdentityStore alloc]
+                   initWithLocalStorage:self.storage baseURL:noURL projectToken:noToken]);
 
   [self enqueueBootstrapWithToken:@"session-token-1"];
   [self enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];

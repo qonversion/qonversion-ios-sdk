@@ -164,6 +164,47 @@
   XCTAssertEqual(core.admissions, 1u);
 }
 
+// A success that states no project id has no envelope boundary to be checked
+// against, so the coordinator must never hand it to the core.
+- (void)testASuccessWithoutAProjectIDIsNeverAdmitted {
+  QONRemoteConfigV2FetchTestCore *core = [QONRemoteConfigV2FetchTestCore new];
+  core.transitionStatus = QONRemoteConfigV2TransitionStatusAccepted;
+  QONRemoteConfigV2FetchTestTransport *transport = [QONRemoteConfigV2FetchTestTransport new];
+  QONRemoteConfigV2FetchTestPolicyStore *store = [QONRemoteConfigV2FetchTestPolicyStore new];
+  QONRemoteConfigV2FetchTestClock *clock = [QONRemoteConfigV2FetchTestClock new];
+  QONRemoteConfigV2FetchTestScheduler *scheduler = [QONRemoteConfigV2FetchTestScheduler new];
+  dispatch_queue_t callbacks = dispatch_queue_create("io.qonversion.fetch-noproject-tests",
+                                                     DISPATCH_QUEUE_SERIAL);
+  QONRemoteConfigV2FetchPolicy *policy = [[QONRemoteConfigV2FetchPolicy alloc]
+      initWithMinimumFetchIntervalMilliseconds:0 timeoutMilliseconds:nil
+      initialBackoffMilliseconds:1000 maximumBackoffMilliseconds:60000];
+  QONRemoteConfigV2FetchCoordinator *coordinator = [[QONRemoteConfigV2FetchCoordinator alloc]
+      initWithCore:core transport:transport policyStore:store clock:clock
+      random:[QONRemoteConfigV2FetchTestRandom new] scheduler:scheduler policy:policy
+      callbackExecutor:callbacks policyPersistenceFailureObserver:nil];
+  [coordinator transitionToBinding:[self bindingForUser:@"user"]];
+
+  XCTestExpectation *rejected = [self expectationWithDescription:@"unstated project id rejected"];
+  [coordinator fetchWithForceReason:QONRemoteConfigV2FetchForceReasonNone
+      completion:^(QONRemoteConfigV2FetchResult *result) {
+    XCTAssertEqual(result.transitionStatus, QONRemoteConfigV2TransitionStatusRejected);
+    [rejected fulfill];
+  }];
+  transport.completions[0]([QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
+      strongETag:@"etag" projectID:0]);
+  [self waitForExpectations:@[rejected] timeout:2];
+  XCTAssertEqual(core.admittedBodies, 0u);
+
+  XCTestExpectation *admitted = [self expectationWithDescription:@"stated project id admitted"];
+  [coordinator fetchWithForceReason:QONRemoteConfigV2FetchForceReasonBuild
+      completion:^(__unused QONRemoteConfigV2FetchResult *result) { [admitted fulfill]; }];
+  transport.completions[1]([QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
+      strongETag:@"etag" projectID:42]);
+  [self waitForExpectations:@[admitted] timeout:2];
+  XCTAssertEqual(core.admittedBodies, 1u);
+  XCTAssertEqual(core.lastAdmittedProjectID, 42);
+}
+
 - (void)testRetryAfterBackoffPersistsAcrossIdentityAndLifecycleForceCannotBypassIt {
   QONRemoteConfigV2FetchTestCore *core = [QONRemoteConfigV2FetchTestCore new];
   QONRemoteConfigV2FetchTestTransport *transport = [QONRemoteConfigV2FetchTestTransport new];

@@ -12,11 +12,12 @@ static BOOL QONRemoteConfigV2IdentityExactInt64(id object, int64_t *value) {
   if (![object isKindOfClass:NSNumber.class] ||
       CFGetTypeID((__bridge CFTypeRef)object) == CFBooleanGetTypeID()) return NO;
   const char type = [object objCType][0];
-  if (strchr("csiql", type)) {
+  // strchr matches the terminator, so an empty type encoding must not read as signed.
+  if (type && strchr("csiql", type)) {
     if (value) *value = [object longLongValue];
     return YES;
   }
-  if (strchr("CSILQ", type)) {
+  if (type && strchr("CSILQ", type)) {
     unsigned long long candidate = [object unsignedLongLongValue];
     if (candidate > INT64_MAX) return NO;
     if (value) *value = (int64_t)candidate;
@@ -43,22 +44,38 @@ static NSString *QONRemoteConfigV2IdentitySHA256(NSData *data) {
 
 @interface QONRemoteConfigV2ProjectIdentityStore ()
 @property (nonatomic, strong) id<QNLocalStorage> localStorage;
+/** Framed into every key: which gateway and which token this record was learned from. */
+@property (nonatomic, copy) NSString *deploymentTag;
 @end
 
 @implementation QONRemoteConfigV2ProjectIdentityStore
 
-- (instancetype)initWithLocalStorage:(id<QNLocalStorage>)localStorage {
-  if (!localStorage) return nil;
+- (instancetype)initWithLocalStorage:(id<QNLocalStorage>)localStorage
+                              baseURL:(NSURL *)baseURL
+                         projectToken:(NSString *)projectToken {
+  if (!localStorage || baseURL.absoluteString.length == 0 || projectToken.length == 0) return nil;
   self = [super init];
-  if (self) _localStorage = localStorage;
+  if (self) {
+    _localStorage = localStorage;
+    // Reduced to a digest once, so the token is never held alongside the record
+    // it keys and never framed again at call time.
+    NSMutableData *deployment = [NSMutableData new];
+    QONRemoteConfigV2IdentityAppendFramed(deployment,
+        [baseURL.absoluteString dataUsingEncoding:NSUTF8StringEncoding] ?: [NSData data]);
+    QONRemoteConfigV2IdentityAppendFramed(deployment,
+        [projectToken dataUsingEncoding:NSUTF8StringEncoding] ?: [NSData data]);
+    _deploymentTag = QONRemoteConfigV2IdentitySHA256(deployment);
+  }
   return self;
 }
 
 /** Identity-free by construction: the canonical user id never enters the framing. */
-+ (NSString *)storageKeyForScope:(QONRemoteConfigV2Scope *)scope {
+- (NSString *)storageKeyForScope:(QONRemoteConfigV2Scope *)scope {
   NSMutableData *framing = [NSMutableData new];
   QONRemoteConfigV2IdentityAppendFramed(framing,
-      [@"remote-config-v2-project-identity-v1" dataUsingEncoding:NSUTF8StringEncoding]);
+      [@"remote-config-v2-project-identity-v2" dataUsingEncoding:NSUTF8StringEncoding]);
+  QONRemoteConfigV2IdentityAppendFramed(framing,
+      [self.deploymentTag dataUsingEncoding:NSUTF8StringEncoding]);
   QONRemoteConfigV2IdentityAppendFramed(framing,
       [scope.projectKey dataUsingEncoding:NSUTF8StringEncoding]);
   QONRemoteConfigV2IdentityAppendFramed(framing,
@@ -101,8 +118,7 @@ static NSString *QONRemoteConfigV2IdentitySHA256(NSData *data) {
 - (int64_t)projectIDForScope:(QONRemoteConfigV2Scope *)scope {
   if (!scope) return 0;
   @synchronized (self) {
-    return [self projectIDForStorageKeyLocked:
-        [QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:scope]];
+    return [self projectIDForStorageKeyLocked:[self storageKeyForScope:scope]];
   }
 }
 
@@ -111,7 +127,7 @@ static NSString *QONRemoteConfigV2IdentitySHA256(NSData *data) {
   if (!scope || projectID <= 0 || projectID > QONRemoteConfigV2MaximumSafeInteger) {
     return QONRemoteConfigV2ProjectIdentityOutcomeUnusable;
   }
-  NSString *key = [QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:scope];
+  NSString *key = [self storageKeyForScope:scope];
   @synchronized (self) {
     int64_t known = [self projectIDForStorageKeyLocked:key];
     if (known == projectID) return QONRemoteConfigV2ProjectIdentityOutcomeConfirmed;

@@ -11,7 +11,8 @@ id QONRemoteConfigPortableJSONObject(NSData *data, NSUInteger maximumBytes) {
 }
 
 static NSUInteger failures = 0;
-#define QON_CHECK(condition, message) do { if (!(condition)) { \
+static NSUInteger checks = 0;
+#define QON_CHECK(condition, message) do { checks += 1; if (!(condition)) { \
   failures += 1; fprintf(stderr, "FAIL: %s\n", message); } } while (0)
 
 @interface GuardStorage : NSObject <QNLocalStorage>
@@ -776,6 +777,7 @@ int main(void) {
     TestImplicitActivationOpportunityIsOncePerSDKLifetime();
     TestReadDuringPreloadBindWindowCannotConsumeTargetOpportunity();
   }
-  if (failures == 0) fprintf(stdout, "QONRemoteConfigV2ReadGuardHarness: 13/13 passed\n");
+  fprintf(stdout, "QONRemoteConfigV2ReadGuardHarness: %lu/%lu passed\n",
+          (unsigned long)(checks - failures), (unsigned long)checks);
   return failures == 0 ? 0 : 1;
 }
