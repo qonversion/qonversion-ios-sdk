@@ -115,7 +115,8 @@ typedef void (^QONRemoteConfigV2TransportFailureObserver)(
     NS_DESIGNATED_INITIALIZER;
 /**
  Must be driven with the same scope the coordinator binds. Passing nil unbinds
- the adapter; every in-flight request bound to the previous scope is abandoned.
+ the adapter; every in-flight request bound to the previous scope is abandoned
+ and the retired scope's stored session token is dropped.
  */
 - (void)updateScope:(nullable QONRemoteConfigV2Scope *)scope;
 @end

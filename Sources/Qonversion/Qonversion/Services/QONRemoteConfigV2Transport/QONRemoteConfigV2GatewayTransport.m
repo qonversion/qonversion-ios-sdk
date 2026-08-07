@@ -222,8 +222,10 @@ static BOOL QONRemoteConfigV2GatewayScopesEqual(QONRemoteConfigV2Scope *left,
           clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
                           clock:(id<QONRemoteConfigV2FetchClock>)clock
                 failureObserver:(QONRemoteConfigV2TransportFailureObserver)failureObserver {
-  if (!baseURL.scheme.length || !baseURL.host.length || ![projectToken isKindOfClass:NSString.class] ||
-      projectToken.length == 0 || !httpExecutor || !sessionStore || !clientContextProvider || !clock) {
+  if (!baseURL.scheme.length || !baseURL.host.length || !httpExecutor || !sessionStore ||
+      !clientContextProvider || !clock ||
+      !QONRemoteConfigV2GatewayValidHeaderValue(
+          projectToken, QONRemoteConfigV2GatewaySessionMaximumTokenBytes)) {
     return nil;
   }
   self = [super init];
@@ -240,9 +242,19 @@ static BOOL QONRemoteConfigV2GatewayScopesEqual(QONRemoteConfigV2Scope *left,
 }
 
 - (void)updateScope:(QONRemoteConfigV2Scope *)scope {
+  QONRemoteConfigV2Scope *retired = nil;
   @synchronized (self) {
+    if (QONRemoteConfigV2GatewayScopesEqual(self.scope, scope)) return;
+    retired = self.scope;
     self.scope = scope;
     self.generation += 1;
+  }
+  // The retired identity's bearer token is unusable from here on; dropping it
+  // keeps it from lingering at rest for the lifetime of the installation.
+  if (retired) {
+    @try {
+      [self.sessionStore removeSessionForScope:retired];
+    } @catch (__unused NSException *exception) {}
   }
 }
 
@@ -393,6 +405,10 @@ static BOOL QONRemoteConfigV2GatewayScopesEqual(QONRemoteConfigV2Scope *left,
     }
 
     QONRemoteConfigV2GatewaySession *session = [self sessionFromBootstrapBody:data];
+    // A session issued for another environment would be stored under this
+    // scope's key and then rejected at admission on every fetch, with no
+    // diagnosable signal. Refuse it here instead.
+    if (session && ![session.environment isEqualToString:scope.environment]) session = nil;
     if (!session) {
       [self failRespond:respond
                    kind:QONRemoteConfigV2TransportFailureKindBootstrapMalformed
@@ -514,6 +530,15 @@ static BOOL QONRemoteConfigV2GatewayScopesEqual(QONRemoteConfigV2Scope *left,
     }
 
     if (status == 304) {
+      // A 304 answering an unconditional request is a protocol violation: there
+      // is no validator to recover from, so it must not look like a hit.
+      if (ifNoneMatch.length == 0) {
+        [self failRespond:respond
+                     kind:QONRemoteConfigV2TransportFailureKindSnapshotMalformed
+               statusCode:@(status)
+                   retryAfterMilliseconds:nil];
+        return;
+      }
       NSString *validator = QONRemoteConfigV2GatewayStrongETagShape(eTag) ? eTag : ifNoneMatch;
       respond([QONRemoteConfigV2FetchResponse notModifiedWithStrongETag:validator]);
       return;
@@ -570,10 +595,18 @@ static BOOL QONRemoteConfigV2GatewayScopesEqual(QONRemoteConfigV2Scope *left,
                                       body:(NSData *)body
                               sessionToken:(nullable NSString *)sessionToken
                                ifNoneMatch:(nullable NSString *)ifNoneMatch {
-  NSString *base = self.baseURL.absoluteString;
-  if (![base hasSuffix:@"/"]) base = [base stringByAppendingString:@"/"];
-  NSURL *url = [NSURL URLWithString:[base stringByAppendingString:path]];
-  if (!url || !body) return nil;
+  // Built through NSURLComponents so a base URL carrying a query or fragment
+  // cannot swallow the route path.
+  NSURLComponents *components = [NSURLComponents componentsWithURL:self.baseURL
+                                          resolvingAgainstBaseURL:YES];
+  if (!components || !body) return nil;
+  NSString *basePath = components.percentEncodedPath ?: @"";
+  if (![basePath hasSuffix:@"/"]) basePath = [basePath stringByAppendingString:@"/"];
+  components.percentEncodedPath = [basePath stringByAppendingString:path];
+  components.percentEncodedQuery = nil;
+  components.percentEncodedFragment = nil;
+  NSURL *url = components.URL;
+  if (!url) return nil;
 
   NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
   request.HTTPMethod = @"POST";
@@ -618,7 +651,9 @@ static BOOL QONRemoteConfigV2GatewayScopesEqual(QONRemoteConfigV2Scope *left,
   if (value.length == 0) return nil;
   NSScanner *scanner = [NSScanner scannerWithString:value];
   long long seconds = 0;
-  if (![scanner scanLongLong:&seconds] || !scanner.isAtEnd || seconds < 0) return nil;
+  // The coordinator lets Retry-After override its own backoff unconditionally,
+  // so a zero delay must read as "absent" rather than "retry immediately".
+  if (![scanner scanLongLong:&seconds] || !scanner.isAtEnd || seconds <= 0) return nil;
   if (seconds > QONRemoteConfigV2GatewayMaximumRetryAfterMilliseconds / 1000) {
     return @(QONRemoteConfigV2GatewayMaximumRetryAfterMilliseconds);
   }

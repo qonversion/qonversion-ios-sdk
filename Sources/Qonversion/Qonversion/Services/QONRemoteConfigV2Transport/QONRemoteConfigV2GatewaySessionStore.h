@@ -7,6 +7,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 FOUNDATION_EXPORT NSUInteger const QONRemoteConfigV2GatewaySessionMaximumTokenBytes;
 
+/**
+ A header field value must be visible ASCII (optionally spaced), otherwise
+ CFNetwork drops the header silently and the request goes out unauthenticated.
+ */
+FOUNDATION_EXPORT BOOL QONRemoteConfigV2GatewayValidHeaderValue(NSString *_Nullable value,
+                                                                NSUInteger maximumBytes);
+
 /** Bootstrap result for one identity scope. Tokens are never logged. */
 @interface QONRemoteConfigV2GatewaySession : NSObject <NSCopying>
 @property (nonatomic, copy, readonly) NSString *sessionToken;

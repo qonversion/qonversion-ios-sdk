@@ -43,15 +43,26 @@ static NSString *QONRemoteConfigV2SessionSHA256(NSData *data) {
   return [hex copy];
 }
 
+BOOL QONRemoteConfigV2GatewayValidHeaderValue(NSString *value, NSUInteger maximumBytes) {
+  if (![value isKindOfClass:NSString.class] || value.length == 0) return NO;
+  NSData *bytes = [value dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:NO];
+  if (!bytes || bytes.length == 0 || bytes.length > maximumBytes) return NO;
+  const unsigned char *raw = bytes.bytes;
+  for (NSUInteger index = 0; index < bytes.length; index++) {
+    // Visible ASCII only: CFNetwork silently drops a header carrying anything else.
+    if (raw[index] < 0x21 || raw[index] > 0x7E) return NO;
+  }
+  return YES;
+}
+
 @implementation QONRemoteConfigV2GatewaySession
 
 - (instancetype)initWithSessionToken:(NSString *)sessionToken
                            projectID:(int64_t)projectID
                          environment:(NSString *)environment
                     expiresAtSeconds:(int64_t)expiresAtSeconds {
-  if (![sessionToken isKindOfClass:NSString.class] || sessionToken.length == 0 ||
-      [sessionToken lengthOfBytesUsingEncoding:NSUTF8StringEncoding] >
-          QONRemoteConfigV2GatewaySessionMaximumTokenBytes ||
+  if (!QONRemoteConfigV2GatewayValidHeaderValue(
+          sessionToken, QONRemoteConfigV2GatewaySessionMaximumTokenBytes) ||
       ![environment isKindOfClass:NSString.class] || environment.length == 0 ||
       [environment lengthOfBytesUsingEncoding:NSUTF8StringEncoding] >
           QONRemoteConfigV2MaximumScopeComponentBytes ||

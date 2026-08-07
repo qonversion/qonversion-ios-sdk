@@ -174,7 +174,8 @@
   [self.executor enqueue:[QONRCV2ScriptedHTTPResponse status:304
                                                         body:nil
                                                      headers:@{@"ETag": QONRCV2TestStrongETag}]];
-  QONRemoteConfigV2FetchResponse *headerValidated = [self fetchWithIfNoneMatch:nil];
+  QONRemoteConfigV2FetchResponse *headerValidated =
+      [self fetchWithIfNoneMatch:@"\"0000000000000000000000000000000000000000000000000000000000000002\""];
   XCTAssertEqual(headerValidated.kind, QONRemoteConfigV2FetchResponseKindNotModified);
   XCTAssertEqualObjects(headerValidated.strongETag, QONRCV2TestStrongETag);
 }
@@ -294,6 +295,102 @@
                         @(QONRemoteConfigV2TransportFailureKindBootstrapMalformed));
 }
 
+- (void)testBootstrapForAnotherEnvironmentIsRejected {
+  [self.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:[@"{\"session_token\":\"t\",\"project_id\":42,\"environment\":\"sandbox\"}"
+                 dataUsingEncoding:NSUTF8StringEncoding]
+     headers:nil]];
+
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+
+  XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindFailure);
+  XCTAssertEqual(self.executor.requests.count, 1u);
+  XCTAssertNil([self.sessionStore sessionForScope:QONRCV2Scope(QONRCV2TestAnonUID)]);
+  XCTAssertEqualObjects(self.failureKinds.lastObject,
+                        @(QONRemoteConfigV2TransportFailureKindBootstrapMalformed));
+}
+
+- (void)testBootstrapTokenThatCannotBeSentAsAHeaderIsRejected {
+  [self.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:[@"{\"session_token\":\"bad\\r\\ntoken\",\"project_id\":42,"
+               "\"environment\":\"production\"}" dataUsingEncoding:NSUTF8StringEncoding]
+     headers:nil]];
+
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+
+  XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindFailure);
+  XCTAssertEqual(self.executor.requests.count, 1u);
+  XCTAssertEqualObjects(self.failureKinds.lastObject,
+                        @(QONRemoteConfigV2TransportFailureKindBootstrapMalformed));
+}
+
+- (void)testZeroRetryAfterDoesNotDefeatBackoff {
+  [self seedStoredSessionWithToken:@"session-token-1"];
+  [self.executor enqueue:[QONRCV2ScriptedHTTPResponse status:503
+                                                        body:nil
+                                                     headers:@{@"Retry-After": @"0"}]];
+
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+
+  XCTAssertEqualObjects(response.statusCode, @503);
+  XCTAssertNil(response.retryAfterMilliseconds);
+}
+
+- (void)testNotModifiedWithoutAValidatorIsMalformed {
+  [self seedStoredSessionWithToken:@"session-token-1"];
+  [self.executor enqueue:[QONRCV2ScriptedHTTPResponse status:304 body:nil headers:nil]];
+
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+
+  XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindFailure);
+  XCTAssertEqualObjects(self.failureKinds.lastObject,
+                        @(QONRemoteConfigV2TransportFailureKindSnapshotMalformed));
+}
+
+- (void)testRoutePathSurvivesAwkwardBaseURLs {
+  NSArray<NSArray<NSString *> *> *cases = @[
+    @[@"https://gateway.test.example", @"https://gateway.test.example/v3/remote-config-v2/session"],
+    @[@"https://gateway.test.example/api",
+      @"https://gateway.test.example/api/v3/remote-config-v2/session"],
+    @[@"https://gateway.test.example/?trace=1",
+      @"https://gateway.test.example/v3/remote-config-v2/session"],
+    @[@"https://gateway.test.example/api#frag",
+      @"https://gateway.test.example/api/v3/remote-config-v2/session"],
+  ];
+  for (NSArray<NSString *> *testCase in cases) {
+    QONRCV2FakeHTTPExecutor *executor = [QONRCV2FakeHTTPExecutor new];
+    QONRemoteConfigV2GatewayTransport *transport = [[QONRemoteConfigV2GatewayTransport alloc]
+         initWithBaseURL:[NSURL URLWithString:testCase[0]]
+            projectToken:QONRCV2TestProjectToken
+            httpExecutor:executor
+            sessionStore:self.sessionStore
+   clientContextProvider:QONRCV2ContextProvider(self.installDateProvider)
+                   clock:self.clock
+         failureObserver:nil];
+    [transport updateScope:QONRCV2Scope(QONRCV2TestAnonUID)];
+    [executor enqueue:[QONRCV2ScriptedHTTPResponse status:503 body:nil headers:nil]];
+
+    [transport fetchRequest:[[QONRemoteConfigV2FetchRequest alloc] initWithIfNoneMatch:nil]
+                 completion:^(QONRemoteConfigV2FetchResponse *response) {}];
+
+    XCTAssertEqual(executor.requests.count, 1u);
+    XCTAssertEqualObjects(executor.requests[0].URL.absoluteString, testCase[1]);
+  }
+}
+
+- (void)testProjectTokenThatCannotBeSentAsAHeaderIsRefusedAtConstruction {
+  XCTAssertNil([[QONRemoteConfigV2GatewayTransport alloc]
+       initWithBaseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
+          projectToken:@"bad\r\ntoken"
+          httpExecutor:self.executor
+          sessionStore:self.sessionStore
+ clientContextProvider:QONRCV2ContextProvider(self.installDateProvider)
+                 clock:self.clock
+       failureObserver:nil]);
+}
+
 - (void)testTransportErrorIsRetryableFailureWithoutStatusCode {
   [self seedStoredSessionWithToken:@"session-token-1"];
   [self.executor enqueue:[QONRCV2ScriptedHTTPResponse transportError]];
@@ -342,7 +439,26 @@
                                       QONRemoteConfigV2GatewaySessionHeader), @"identified-token");
   XCTAssertEqualObjects([self.sessionStore sessionForScope:identified].sessionToken,
                         @"identified-token");
-  XCTAssertEqualObjects([self.sessionStore sessionForScope:anonymous].sessionToken, @"anon-token");
+  XCTAssertNil([self.sessionStore sessionForScope:anonymous]);
+}
+
+- (void)testIdentityChangeDropsTheRetiredSessionImmediately {
+  [self seedStoredSessionWithToken:@"anon-token"];
+  QONRemoteConfigV2Scope *anonymous = QONRCV2Scope(QONRCV2TestAnonUID);
+
+  [self.transport updateScope:QONRCV2Scope(@"identified-uid")];
+
+  XCTAssertNil([self.sessionStore sessionForScope:anonymous]);
+  XCTAssertEqual(self.executor.requests.count, 0u);
+}
+
+- (void)testRebindingTheSameScopeKeepsTheSession {
+  [self seedStoredSessionWithToken:@"anon-token"];
+
+  [self.transport updateScope:QONRCV2Scope(QONRCV2TestAnonUID)];
+
+  XCTAssertEqualObjects([self.sessionStore sessionForScope:QONRCV2Scope(QONRCV2TestAnonUID)]
+                            .sessionToken, @"anon-token");
 }
 
 - (void)testExpiredSessionTriggersBootstrapBeforeSnapshot {

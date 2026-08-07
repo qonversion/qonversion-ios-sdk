@@ -8,6 +8,7 @@
 //      QonversionTests/Services/QONRemoteConfigV2GatewayTransportHarness.m \
 //      Sources/Qonversion/Qonversion/Services/QONRemoteConfigV2Transport/*.m \
 //      Sources/Qonversion/Qonversion/Main/QONRemoteConfigV2Manager/QONRemoteConfigV2Models.m \
+//      Sources/Qonversion/Qonversion/Main/QONRemoteConfigV2Manager/QONRemoteConfigV2FetchCoordinator.m \
 //      $(find Sources -type d | sed 's/^/-I/') -framework Foundation
 //
 
@@ -186,11 +187,22 @@ static void TestNotModified(void) {
   [env.executor enqueue:[QONRCV2ScriptedHTTPResponse status:304
                                                        body:nil
                                                     headers:@{@"ETag": QONRCV2TestStrongETag}]];
-  QONRemoteConfigV2FetchResponse *headerValidated = [env fetchWithIfNoneMatch:nil];
+  QONRemoteConfigV2FetchResponse *headerValidated = [env fetchWithIfNoneMatch:
+      @"\"0000000000000000000000000000000000000000000000000000000000000002\""];
   QON_CHECK(headerValidated.kind == QONRemoteConfigV2FetchResponseKindNotModified,
             "304 kind from header");
   QON_CHECK([headerValidated.strongETag isEqualToString:QONRCV2TestStrongETag],
             "304 validator from header");
+
+  QONRCV2HarnessEnvironment *unconditional = [QONRCV2HarnessEnvironment new];
+  [unconditional seedStoredSessionWithToken:@"session-token-1"];
+  [unconditional.executor enqueue:[QONRCV2ScriptedHTTPResponse status:304 body:nil headers:nil]];
+  QONRemoteConfigV2FetchResponse *bogus = [unconditional fetchWithIfNoneMatch:nil];
+  QON_CHECK(bogus.kind == QONRemoteConfigV2FetchResponseKindFailure,
+            "304 without a validator is malformed");
+  QON_CHECK([unconditional.failureKinds.lastObject
+                isEqual:@(QONRemoteConfigV2TransportFailureKindSnapshotMalformed)],
+            "typed malformed 304");
 }
 
 static void TestReBootstrapOnce(void) {
@@ -336,14 +348,21 @@ static void TestSessionScoping(void) {
                 isEqual:@{@"user_uid": @"identified-uid"}], "bootstrap uses the new uid");
   QON_CHECK([QONRCV2Header(env.executor.requests[3], QONRemoteConfigV2GatewaySessionHeader)
                 isEqualToString:@"identified-token"], "old token never reused");
-  QON_CHECK([[env.sessionStore sessionForScope:anonymous].sessionToken
-                isEqualToString:@"anon-token"], "anonymous token untouched");
+  QON_CHECK([env.sessionStore sessionForScope:anonymous] == nil,
+            "retired identity token dropped");
+
+  QONRCV2HarnessEnvironment *rebind = [QONRCV2HarnessEnvironment new];
+  [rebind seedStoredSessionWithToken:@"anon-token"];
+  [rebind.transport updateScope:QONRCV2Scope(QONRCV2TestAnonUID)];
+  QON_CHECK([[rebind.sessionStore sessionForScope:anonymous].sessionToken
+                isEqualToString:@"anon-token"], "rebinding the same scope keeps the session");
 
   NSString *anonymousKey = [QONRemoteConfigV2GatewaySessionStore storageKeyForScope:anonymous];
   NSString *identifiedKey = [QONRemoteConfigV2GatewaySessionStore storageKeyForScope:identified];
   QON_CHECK(![anonymousKey isEqualToString:identifiedKey], "scoped storage keys differ");
-  env.storage.objects[identifiedKey] = env.storage.objects[anonymousKey];
-  QON_CHECK([env.sessionStore sessionForScope:identified] == nil,
+  rebind.storage.objects[identifiedKey] = rebind.storage.objects[anonymousKey];
+  QON_CHECK(rebind.storage.objects[identifiedKey] != nil, "replay fixture in place");
+  QON_CHECK([rebind.sessionStore sessionForScope:identified] == nil,
             "a replayed record is rejected under another identity");
 }
 
@@ -424,6 +443,82 @@ static void TestDeviceInstallDate(void) {
             "unknown install date is omitted");
 }
 
+static void TestContractHardening(void) {
+  QONRCV2HarnessEnvironment *wrongEnvironment = [QONRCV2HarnessEnvironment new];
+  [wrongEnvironment.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:[@"{\"session_token\":\"t\",\"project_id\":42,\"environment\":\"sandbox\"}"
+                 dataUsingEncoding:NSUTF8StringEncoding]
+     headers:nil]];
+  QONRemoteConfigV2FetchResponse *response = [wrongEnvironment fetchWithIfNoneMatch:nil];
+  QON_CHECK(response.kind == QONRemoteConfigV2FetchResponseKindFailure,
+            "cross-environment session rejected");
+  QON_CHECK(wrongEnvironment.executor.requests.count == 1, "snapshot skipped for wrong env");
+  QON_CHECK([wrongEnvironment.sessionStore sessionForScope:QONRCV2Scope(QONRCV2TestAnonUID)] == nil,
+            "cross-environment session not stored");
+
+  QONRCV2HarnessEnvironment *badToken = [QONRCV2HarnessEnvironment new];
+  [badToken.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:[@"{\"session_token\":\"bad\\r\\ntoken\",\"project_id\":42,"
+               "\"environment\":\"production\"}" dataUsingEncoding:NSUTF8StringEncoding]
+     headers:nil]];
+  QONRemoteConfigV2FetchResponse *badTokenResponse = [badToken fetchWithIfNoneMatch:nil];
+  QON_CHECK(badTokenResponse.kind == QONRemoteConfigV2FetchResponseKindFailure,
+            "unsendable token rejected");
+  QON_CHECK([badToken.failureKinds.lastObject
+                isEqual:@(QONRemoteConfigV2TransportFailureKindBootstrapMalformed)],
+            "typed malformed token");
+
+  QONRCV2HarnessEnvironment *zeroRetry = [QONRCV2HarnessEnvironment new];
+  [zeroRetry seedStoredSessionWithToken:@"session-token-1"];
+  [zeroRetry.executor enqueue:[QONRCV2ScriptedHTTPResponse status:503
+                                                             body:nil
+                                                          headers:@{@"Retry-After": @"0"}]];
+  QONRemoteConfigV2FetchResponse *zeroRetryResponse = [zeroRetry fetchWithIfNoneMatch:nil];
+  QON_CHECK(zeroRetryResponse.retryAfterMilliseconds == nil,
+            "zero retry-after does not defeat backoff");
+
+  NSArray<NSArray<NSString *> *> *urlCases = @[
+    @[@"https://gateway.test.example", @"https://gateway.test.example/v3/remote-config-v2/session"],
+    @[@"https://gateway.test.example/api",
+      @"https://gateway.test.example/api/v3/remote-config-v2/session"],
+    @[@"https://gateway.test.example/?trace=1",
+      @"https://gateway.test.example/v3/remote-config-v2/session"],
+    @[@"https://gateway.test.example/api#frag",
+      @"https://gateway.test.example/api/v3/remote-config-v2/session"],
+  ];
+  for (NSArray<NSString *> *testCase in urlCases) {
+    QONRCV2HarnessEnvironment *env = [QONRCV2HarnessEnvironment new];
+    QONRemoteConfigV2GatewayTransport *transport = [[QONRemoteConfigV2GatewayTransport alloc]
+         initWithBaseURL:[NSURL URLWithString:testCase[0]]
+            projectToken:QONRCV2TestProjectToken
+            httpExecutor:env.executor
+            sessionStore:env.sessionStore
+   clientContextProvider:QONRCV2ContextProvider(env.installDateProvider)
+                   clock:env.clock
+         failureObserver:nil];
+    [transport updateScope:QONRCV2Scope(QONRCV2TestAnonUID)];
+    [env.executor enqueue:[QONRCV2ScriptedHTTPResponse status:503 body:nil headers:nil]];
+    [transport fetchRequest:[[QONRemoteConfigV2FetchRequest alloc] initWithIfNoneMatch:nil]
+                 completion:^(QONRemoteConfigV2FetchResponse *ignored) {}];
+    QON_CHECK(env.executor.requests.count == 1, "route request issued");
+    QON_CHECK([env.executor.requests[0].URL.absoluteString isEqualToString:testCase[1]],
+              "route path survives the base url");
+  }
+
+  QONRCV2HarnessEnvironment *env = [QONRCV2HarnessEnvironment new];
+  QON_CHECK([[QONRemoteConfigV2GatewayTransport alloc]
+       initWithBaseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
+          projectToken:@"bad\r\ntoken"
+          httpExecutor:env.executor
+          sessionStore:env.sessionStore
+ clientContextProvider:QONRCV2ContextProvider(env.installDateProvider)
+                 clock:env.clock
+       failureObserver:nil] == nil,
+            "unsendable project token refused at construction");
+}
+
 static void TestSecretHygiene(void) {
   QONRemoteConfigV2GatewaySession *session = [[QONRemoteConfigV2GatewaySession alloc]
       initWithSessionToken:@"super-secret-token" projectID:42 environment:@"production"
@@ -448,6 +543,7 @@ int main(void) {
     TestSessionScoping();
     TestExpiredSession();
     TestDeviceInstallDate();
+    TestContractHardening();
     TestSecretHygiene();
 
     fprintf(stdout, "QONRemoteConfigV2GatewayTransportHarness: %lu/%lu passed\n",
