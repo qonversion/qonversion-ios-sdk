@@ -16,6 +16,7 @@
 #import "QONUserProperty.h"
 #import "QONFallbackService.h"
 #import "QONRemoteConfigFallbackStore.h"
+#import "QONRemoteConfigController+Protected.h"
 #import "QONRedemptionManager.h"
 
 static id shared = nil;
@@ -129,15 +130,35 @@ static bool _isInitialized = NO;
 }
 
 - (void)identify:(NSString *)userID {
-  [self.productCenterManager identify:userID completion:nil];
+  [self identify:userID remoteConfigAwareCompletion:nil];
 }
 
 - (void)identify:(NSString *)userID completion:(QONUserInfoCompletionHandler)completion {
-  [self.productCenterManager identify:userID completion:completion];
+  [self identify:userID remoteConfigAwareCompletion:completion];
+}
+
+- (void)identify:(NSString *)userID
+    remoteConfigAwareCompletion:(QONUserInfoCompletionHandler _Nullable)completion {
+  QONRemoteConfigController *controller = self.experimentalRemoteConfig;
+  if (!controller.isConfigured) {
+    [self.productCenterManager identify:userID completion:completion];
+    return;
+  }
+  __weak typeof(self) weakSelf = self;
+  [self.productCenterManager identify:userID completion:^(QONUser *user, NSError *error) {
+    [controller switchToCanonicalUserID:[weakSelf.userInfoService obtainUserID]
+                                 change:QONRemoteConfigControllerIdentityChangeIdentify];
+    if (completion) completion(user, error);
+  }];
 }
 
 - (void)logout {
   [self.productCenterManager logout];
+  QONRemoteConfigController *controller = self.experimentalRemoteConfig;
+  if (controller.isConfigured) {
+    [controller switchToCanonicalUserID:[self.userInfoService obtainUserID]
+                                 change:QONRemoteConfigControllerIdentityChangeLogout];
+  }
 }
 
 - (void)presentCodeRedemptionSheet {
@@ -339,6 +360,12 @@ static bool _isInitialized = NO;
     _redemptionManager = [QONRedemptionManager new];
     _redemptionManager.productCenterManager = _productCenterManager;
     _redemptionManager.userInfoService = _userInfoService;
+
+    // Constructed for real, but dormant: without an explicit configuration call
+    // it owns no store, no transport and no identity binding.
+    _experimentalRemoteConfig = [[QONRemoteConfigController alloc]
+        initWithFallbackStore:[[QONRemoteConfigFallbackStore alloc] initWithBundle:NSBundle.mainBundle]
+             callbackExecutor:dispatch_get_main_queue()];
 
     _productCenterManager.remoteConfigManager = _remoteConfigManager;
     _remoteConfigManager.productCenterManager = _productCenterManager;

@@ -69,6 +69,14 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2TransitionStatus) {
 @interface QONRemoteConfigV2Manager : NSObject
 
 @property (nonatomic, strong, readonly) QONRemoteConfigSnapshot *currentSnapshot;
+/**
+ The same snapshot without touching the read guard.
+
+ Only for SDK-internal delivery, where the SDK — not the app — is the one
+ reading. It never asserts and never consumes the one-time implicit activation,
+ so it must not be used to answer a public `current` read.
+ */
+@property (nonatomic, strong, readonly) QONRemoteConfigSnapshot *unguardedSnapshot;
 @property (nonatomic, strong, nullable, readonly) QONRemoteConfigSnapshot *lastFetchedSnapshot;
 
 - (instancetype)init NS_UNAVAILABLE;

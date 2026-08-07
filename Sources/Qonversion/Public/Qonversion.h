@@ -16,6 +16,8 @@
 #import "QONRemoteConfigValue.h"
 #import "QONRemoteConfigSnapshot.h"
 #import "QONRemoteConfigUpdate.h"
+#import "QONRemoteConfigFetchResult.h"
+#import "QONRemoteConfigController.h"
 #import "QONUser.h"
 #import "QONErrors.h"
 #import "QONStoreKitSugare.h"
@@ -40,6 +42,18 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
  Use `initWithConfig` instead.
  */
 - (instancetype)init NS_UNAVAILABLE;
+
+/**
+ Experimental fetch/activate Remote Config surface.
+
+ The controller always exists so bundled defaults can be read before the SDK
+ does anything, but it stays dormant — no network, no persistence, no identity
+ work — until the SDK is explicitly configured for this surface. It does not
+ replace `remoteConfig:completion:`; both can coexist.
+
+ @see QONRemoteConfigController
+ */
+@property (nonatomic, strong, readonly) QONRemoteConfigController *experimentalRemoteConfig QON_EXPERIMENTAL;
 
 /**
  An entry point to use Qonversion SDK. Call to initialize Qonversion SDK with required and extra configs.

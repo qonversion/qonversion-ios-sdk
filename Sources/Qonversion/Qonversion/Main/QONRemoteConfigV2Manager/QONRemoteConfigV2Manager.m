@@ -354,6 +354,12 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
   return snapshot;
 }
 
+- (QONRemoteConfigSnapshot *)unguardedSnapshot {
+  __block QONRemoteConfigSnapshot *snapshot = nil;
+  dispatch_sync(self.stateQueue, ^{ snapshot = [self snapshotForState:self.state]; });
+  return snapshot;
+}
+
 - (BOOL)release:(QONRemoteConfigV2Release *)release
     representsSameLocalAdmissionAs:(QONRemoteConfigV2Release *)other {
   if (!release || !other) return NO;
