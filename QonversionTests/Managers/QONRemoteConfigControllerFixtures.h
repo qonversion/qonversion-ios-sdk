@@ -14,6 +14,7 @@
 #import "QONRemoteConfigController+Protected.h"
 #import "QONRemoteConfigFallbackStore.h"
 #import "QONRemoteConfigV2FetchPolicyStore.h"
+#import "QONRemoteConfigV2GatewayTransport.h"
 #import "QONRemoteConfigV2Store.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -171,6 +172,23 @@ static int64_t const QONRCPubProjectID = 42;
   self.heldCompletion = nil;
   completion([QONRemoteConfigV2FetchResponse successWithBody:body strongETag:strongETag]);
   return YES;
+}
+@end
+
+#pragma mark - Client context
+
+@interface QONRCPubContextProvider : NSObject <QONRemoteConfigV2ClientContextProviding>
+@end
+
+@implementation QONRCPubContextProvider
+- (QONRemoteConfigV2ClientContext *_Nullable)currentClientContext {
+  return [[QONRemoteConfigV2ClientContext alloc] initWithPlatform:@"iOS"
+                                                       appVersion:@"1.2.3"
+                                                        osVersion:@"17.4"
+                                                       sdkVersion:@"9.9.9"
+                                                           locale:@"en_US"
+                                                      deviceModel:@"iPhone15,2"
+                                         deviceInstalledAtSeconds:@(1500000000)];
 }
 @end
 

@@ -579,6 +579,8 @@ static NSString *QONRemoteConfigDefaultsDigest(int64_t projectID,
 @property (nonatomic, assign) int64_t loadedReleaseNumber;
 @property (nonatomic, copy, nullable) NSString *loadedManifestContentHash;
 @property (nonatomic, assign) BOOL didLoad;
+@property (nonatomic, strong, nullable) QONRemoteConfigV2Release *cachedRelease;
+@property (nonatomic, assign) BOOL didBuildRelease;
 
 @end
 
@@ -621,25 +623,34 @@ static NSString *QONRemoteConfigDefaultsDigest(int64_t projectID,
 - (QONRemoteConfigV2Release *)remoteConfigV2FallbackRelease {
   [self ensureLoaded];
   @synchronized (self) {
-    if (!self.values || !self.loadedReleaseUID || !self.loadedManifestContentHash) return nil;
-    NSMutableDictionary *entries = [NSMutableDictionary dictionaryWithCapacity:self.rawValues.count];
-    for (NSString *key in self.rawValues) {
-      NSData *rawData = self.rawValues[key];
-      NSString *variationUID = self.variationUIDs[key];
-      if (!rawData || !variationUID) return nil;
-      QONRemoteConfigV2Entry *entry = [[QONRemoteConfigV2Entry alloc]
-          initWithKey:key rawData:rawData variationUID:variationUID
-          applyPolicy:QONRemoteConfigApplyPolicyOnNextActivate metadata:nil];
-      if (!entry) return nil;
-      entries[key] = entry;
-    }
-    NSString *releaseUID = self.loadedReleaseUID;
-    NSString *manifestContentHash = self.loadedManifestContentHash;
-    if (!releaseUID || !manifestContentHash) return nil;
-    return [[QONRemoteConfigV2Release alloc] initWithReleaseUID:releaseUID
-        releaseNumber:(NSInteger)self.loadedReleaseNumber
-        manifestContentHash:manifestContentHash entries:entries];
+    // The release is immutable and rebuilt on every pre-activation read
+    // otherwise, including reads the app makes before the SDK is configured.
+    if (self.didBuildRelease) return self.cachedRelease;
+    self.didBuildRelease = YES;
+    self.cachedRelease = [self buildRemoteConfigV2FallbackReleaseLocked];
+    return self.cachedRelease;
   }
+}
+
+- (QONRemoteConfigV2Release *)buildRemoteConfigV2FallbackReleaseLocked {
+  if (!self.values || !self.loadedReleaseUID || !self.loadedManifestContentHash) return nil;
+  NSMutableDictionary *entries = [NSMutableDictionary dictionaryWithCapacity:self.rawValues.count];
+  for (NSString *key in self.rawValues) {
+    NSData *rawData = self.rawValues[key];
+    NSString *variationUID = self.variationUIDs[key];
+    if (!rawData || !variationUID) return nil;
+    QONRemoteConfigV2Entry *entry = [[QONRemoteConfigV2Entry alloc]
+        initWithKey:key rawData:rawData variationUID:variationUID
+        applyPolicy:QONRemoteConfigApplyPolicyOnNextActivate metadata:nil];
+    if (!entry) return nil;
+    entries[key] = entry;
+  }
+  NSString *releaseUID = self.loadedReleaseUID;
+  NSString *manifestContentHash = self.loadedManifestContentHash;
+  if (!releaseUID || !manifestContentHash) return nil;
+  return [[QONRemoteConfigV2Release alloc] initWithReleaseUID:releaseUID
+      releaseNumber:(NSInteger)self.loadedReleaseNumber
+      manifestContentHash:manifestContentHash entries:entries];
 }
 
 - (NSDictionary<NSString *, id> *)loadValidatedValues {

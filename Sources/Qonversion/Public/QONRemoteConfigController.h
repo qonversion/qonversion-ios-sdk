@@ -36,6 +36,10 @@ typedef void (^QONRemoteConfigUpdateHandler)(QONRemoteConfigUpdate *update)
  - `current` is an immutable snapshot. Holding it gives a consistent view of
    every key even while a newer release is activated on another thread.
 
+ Changing identity (identify or logout) retires the previous identity's
+ configuration immediately and publishes whatever the new identity already has
+ stored, so a read right after the change is never a read-before-activate.
+
  All completions and update handlers run on the main queue.
  */
 NS_SWIFT_NAME(Qonversion.RemoteConfigController)
@@ -67,7 +71,9 @@ QON_EXPERIMENTAL
  (`server`, `cache` or `fallback`). Timing out never activates anything, and it
  never raises the read-before-activate assertion.
 
- Pass a non-positive `timeout` to let the SDK's own fetch policy decide.
+ Pass a non-positive `timeout` to let the SDK's own fetch policy decide. The
+ policy also has its own upper bound, so a `timeout` longer than that bound
+ completes on the policy's schedule instead of the caller's.
 
  @param timeout    Seconds to wait before completing with the best available
                    configuration.
@@ -160,8 +166,11 @@ QON_EXPERIMENTAL
  and also without one when the server marked a release for immediate apply — in
  that case the whole release is swapped atomically, never a single key.
 
+ Subscribing before the SDK is configured is allowed: the handler is kept and
+ starts receiving updates as soon as the surface is configured.
+
  @param handler Called on the main queue.
- @return An opaque token to pass to `unsubscribe:`.
+ @return An opaque token to pass to `unsubscribe:`, or nil for a nil handler.
  */
 - (nullable id)subscribeOnConfigUpdate:(QONRemoteConfigUpdateHandler)handler
     NS_SWIFT_NAME(subscribeOnConfigUpdate(_:));

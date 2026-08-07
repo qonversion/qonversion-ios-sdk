@@ -120,7 +120,7 @@ static NSUInteger failures = 0;
 @end
 @implementation HarnessCore
 - (void)setScope:(QONRemoteConfigV2Scope *)scope { _scope = scope; }
-- (QONRemoteConfigSnapshot *)currentSnapshot { return self.snapshot; }
+- (QONRemoteConfigSnapshot *)unguardedSnapshot { return self.snapshot; }
 - (QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(__unused QONRemoteConfigV2Scope *)scope
                                                 expectation:(__unused QONRemoteConfigV2EnvelopeExpectation *)expectation {
   self.admissions += 1; return (id)[NSObject new];

@@ -585,7 +585,7 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2NotModifiedDisposition) {
     [operation.waiters removeObject:waiter];
     waiter.terminalClaimed = YES;
     QONRemoteConfigV2FetchResult *result = [self resultWithKind:QONRemoteConfigV2FetchResultKindTimedOut];
-    result.snapshot = [self.core currentSnapshot];
+    result.snapshot = [self.core unguardedSnapshot];
     QONRemoteConfigV2FetchDelivery *delivery = [QONRemoteConfigV2FetchDelivery new];
     delivery.generation = operation.generation;
     delivery.waiter = waiter;

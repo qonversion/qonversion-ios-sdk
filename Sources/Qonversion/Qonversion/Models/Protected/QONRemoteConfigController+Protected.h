@@ -89,12 +89,17 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
  Assembles the real engine against the gateway routes and installs it. Nothing
  in the SDK calls this by default: the surface stays dormant until a caller
  supplies a base URL explicitly.
+
+ buildMode is a caller decision on purpose. Deriving it from the SDK's own
+ compile flavour would be wrong for a binary distribution, where it describes
+ how the SDK was built rather than how the app was.
  */
 - (BOOL)configureWithBaseURL:(NSURL *)baseURL
                 projectToken:(NSString *)projectToken
                   projectKey:(NSString *)projectKey
                  environment:(NSString *)environment
              canonicalUserID:(nullable NSString *)canonicalUserID
+          readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 localStorage:(id<QNLocalStorage>)localStorage
        clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
              bindingProvider:(QONRemoteConfigBindingProvider)bindingProvider;

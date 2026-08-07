@@ -98,7 +98,7 @@
   XCTAssertFalse(result.changed);
   XCTAssertFalse(result.hasPendingActivation);
   XCTAssertNotNil(result.snapshot);
-  XCTAssertNil([controller subscribeOnConfigUpdate:^(__unused QONRemoteConfigUpdate *update) {}]);
+  XCTAssertNotNil([controller subscribeOnConfigUpdate:^(__unused QONRemoteConfigUpdate *update) {}]);
   XCTAssertFalse(controller.activate);
 }
 
@@ -325,6 +325,7 @@
 
   [environment settleIdentity];
   XCTAssertEqual(environment.transport.requests.count, requestsBefore + 1);
+  XCTAssertEqual(environment.readGuardAssertions, 0u);
   XCTAssertTrue(controller.activate);
   XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-b");
 
@@ -361,7 +362,9 @@
   XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-c");
 }
 
-- (void)testDeviceInstallDateSurvivesAnIdentityChange {
+// The controller never touches the install date itself: the transport owns it.
+// This pins the device-scoped storage contract the identity switch relies on.
+- (void)testDeviceInstallDateIsDeviceScopedAcrossIdentities {
   QONRCPubStorage *storage = [QONRCPubStorage new];
   QONRCPubClock *clock = [QONRCPubClock new];
   clock.now = 1700000000000;
@@ -376,6 +379,96 @@
       [[QONRemoteConfigV2DeviceInstallDateProvider alloc]
           initWithLocalStorage:storage systemInstallDateSeconds:@(1690000000) clock:clock];
   XCTAssertEqualObjects([afterLogout deviceInstalledAtSeconds], first);
+}
+
+#pragma mark - Subscriptions across configuration
+
+- (void)testASubscriptionMadeWhileDormantIsReplayedAfterConfiguration {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSMutableArray<QONRemoteConfigUpdate *> *kept = [NSMutableArray new];
+  NSMutableArray<QONRemoteConfigUpdate *> *dropped = [NSMutableArray new];
+  id keptToken = [controller subscribeOnConfigUpdate:^(QONRemoteConfigUpdate *update) {
+    [kept addObject:update];
+  }];
+  id droppedToken = [controller subscribeOnConfigUpdate:^(QONRemoteConfigUpdate *update) {
+    [dropped addObject:update];
+  }];
+  XCTAssertNotNil(keptToken);
+  XCTAssertNotNil(droppedToken);
+  XCTAssertNotEqualObjects(keptToken, droppedToken);
+  [controller unsubscribe:droppedToken];
+
+  XCTAssertTrue(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+  [self enqueueRelease:environment releaseUID:@"release-1" number:1
+                values:[self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"
+                                  policy:@"immediate"]];
+  [self runFetch:environment activate:NO deliveries:NULL];
+  XCTAssertEqual(kept.count, 1u);
+  XCTAssertEqual(dropped.count, 0u);
+
+  [controller unsubscribe:keptToken];
+  [controller unsubscribe:@"not-a-token"];
+  [self enqueueRelease:environment releaseUID:@"release-2" number:2
+                values:[self alphaValues:@"\"server-alpha-2\"" variation:@"variation-a2"
+                                  policy:@"immediate"]];
+  [self runFetch:environment activate:NO deliveries:NULL];
+  XCTAssertEqual(kept.count, 1u);
+}
+
+#pragma mark - Real assembly
+
+- (void)testTheRealAssemblyInstallsWithoutTouchingTheNetwork {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  QONRemoteConfigController *controller = environment.controller;
+  QONRCPubStorage *storage = [QONRCPubStorage new];
+  __block NSUInteger bindingRequests = 0;
+
+  // A binding provider that supplies nothing keeps the coordinator unbound, so
+  // the real assembly is exercised end to end with no request ever leaving.
+  QONRemoteConfigBindingProvider provider = ^QONRemoteConfigV2FetchBinding *(
+      __unused QONRemoteConfigV2Scope *scope) {
+    bindingRequests += 1;
+    return nil;
+  };
+  BOOL configured = [controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
+                                        projectToken:@"project-token"
+                                          projectKey:QONRCPubProjectKey
+                                         environment:QONRCPubEnvironmentUID
+                                     canonicalUserID:@"user-a"
+                                  readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+                                        localStorage:storage
+                               clientContextProvider:[QONRCPubContextProvider new]
+                                     bindingProvider:provider];
+  XCTAssertTrue(configured);
+  XCTAssertTrue(controller.isConfigured);
+
+  // configureWithBaseURL: owns its own identity queue, so wait on the effect.
+  XCTestExpectation *bound = [self expectationWithDescription:@"scope bound"];
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                 dispatch_get_main_queue(), ^{ [bound fulfill]; });
+  [self waitForExpectationsWithTimeout:2 handler:nil];
+  XCTAssertEqual(bindingRequests, 1u);
+
+  XCTAssertFalse([controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
+                                     projectToken:@"project-token"
+                                       projectKey:QONRCPubProjectKey
+                                      environment:QONRCPubEnvironmentUID
+                                  canonicalUserID:@"user-a"
+                               readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+                                     localStorage:storage
+                            clientContextProvider:[QONRCPubContextProvider new]
+                                  bindingProvider:provider]);
+
+  XCTAssertEqual([controller rawValueForKey:@"alpha"].source,
+                 QONRemoteConfigValueSourceFallback);
+  NSUInteger deliveries = 0;
+  QONRemoteConfigFetchResult *result = [self runFetch:environment activate:NO
+                                          deliveries:&deliveries];
+  XCTAssertEqual(deliveries, 1u);
+  XCTAssertEqual(result.status, QONRemoteConfigFetchStatusFailed);
 }
 
 #pragma mark - Read guard

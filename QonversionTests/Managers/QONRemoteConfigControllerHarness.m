@@ -40,6 +40,16 @@ static NSData *ReleaseBody(NSString *releaseUID, NSInteger number, NSString *val
   return QONRCPubSnapshotBody(releaseUID, number, values);
 }
 
+/** Spins until the condition holds or the deadline passes. */
+static BOOL WaitUntil(BOOL (^condition)(void)) {
+  NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:2.0];
+  while (!condition()) {
+    if ([NSDate.date compare:deadline] == NSOrderedDescending) return NO;
+    [NSThread sleepForTimeInterval:0.005];
+  }
+  return YES;
+}
+
 /** Runs one fetch and returns its result, or nil when nothing was delivered. */
 static QONRemoteConfigFetchResult *RunFetch(QONRCPubEnvironment *environment,
                                             NSTimeInterval timeout,
@@ -90,8 +100,8 @@ static void TestDormantSurfaceServesBundledDefaultsAndRefusesToFetch(void) {
             "a dormant fetch must complete once as unavailable");
   QON_CHECK(!result.changed && !result.hasPendingActivation && result.snapshot != nil,
             "a dormant fetch result must still carry a readable snapshot");
-  QON_CHECK([controller subscribeOnConfigUpdate:^(__unused QONRemoteConfigUpdate *update) {}] == nil,
-            "a dormant subscribe must return no token");
+  QON_CHECK([controller subscribeOnConfigUpdate:^(__unused QONRemoteConfigUpdate *update) {}] != nil,
+            "a dormant subscribe must be kept rather than silently dropped");
   QON_CHECK(!controller.activate, "a dormant activate must report no change");
 }
 
@@ -318,6 +328,44 @@ static void TestSubscribeReportsChangedKeysAndImmediateSwapsTheWholeRelease(void
   QON_CHECK(updates.count == 1, "an unsubscribed handler must stop receiving updates");
 }
 
+static void TestASubscriptionMadeWhileDormantIsReplayedAfterConfiguration(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSMutableArray<QONRemoteConfigUpdate *> *kept = [NSMutableArray new];
+  NSMutableArray<QONRemoteConfigUpdate *> *dropped = [NSMutableArray new];
+  id keptToken = [controller subscribeOnConfigUpdate:^(QONRemoteConfigUpdate *update) {
+    [kept addObject:update];
+  }];
+  id droppedToken = [controller subscribeOnConfigUpdate:^(QONRemoteConfigUpdate *update) {
+    [dropped addObject:update];
+  }];
+  QON_CHECK(keptToken != nil && droppedToken != nil && keptToken != droppedToken,
+            "each dormant subscription must get its own token");
+  [controller unsubscribe:droppedToken];
+
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install for the replay scenario");
+  NSData *body = ReleaseBody(@"release-1", 1, [NSString stringWithFormat:@"\"alpha\":%@",
+      QONRCPubItem(@"\"server-alpha-1\"", @"variation-a1", @"immediate", @"null")]);
+  [environment.transport enqueueBody:body strongETag:QONRCPubStrongETag(body)];
+  RunFetch(environment, 0, NO, NULL);
+
+  QON_CHECK(kept.count == 1,
+            "a subscription made while dormant must receive updates after configuration");
+  QON_CHECK(dropped.count == 0,
+            "a subscription cancelled while dormant must never be replayed");
+
+  [controller unsubscribe:keptToken];
+  [controller unsubscribe:@"not-a-token"];
+  NSData *second = ReleaseBody(@"release-2", 2, [NSString stringWithFormat:@"\"alpha\":%@",
+      QONRCPubItem(@"\"server-alpha-2\"", @"variation-a2", @"immediate", @"null")]);
+  [environment.transport enqueueBody:second strongETag:QONRCPubStrongETag(second)];
+  RunFetch(environment, 0, NO, NULL);
+  QON_CHECK(kept.count == 1, "a replayed subscription must still be cancellable");
+}
+
 static void TestIdentitySwitchDropsTheOldScopeImmediatelyAndForcesAFetch(void) {
   QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
   // A long minimum interval: only a forced fetch can reach the transport again.
@@ -352,6 +400,8 @@ static void TestIdentitySwitchDropsTheOldScopeImmediatelyAndForcesAFetch(void) {
   [environment settleIdentity];
   QON_CHECK(environment.transport.requests.count == requestsBefore + 1,
             "an identity change must force a fetch through the minimum-interval gate");
+  QON_CHECK(environment.readGuardAssertions == 0,
+            "an identity change must not accuse an app that already activated");
   QON_CHECK(controller.activate, "the new identity's release must activate");
   QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-b"],
             "the new identity must read its own release");
@@ -396,7 +446,9 @@ static void TestASupersededIdentitySwitchCanNeverRebindItsScope(void) {
             "only the newest identity may end up bound");
 }
 
-static void TestDeviceInstallDateSurvivesAnIdentityChange(void) {
+// The controller never touches the install date itself: the transport owns it.
+// This pins the device-scoped storage contract the identity switch relies on.
+static void TestDeviceInstallDateIsDeviceScopedAcrossIdentities(void) {
   QONRCPubStorage *storage = [QONRCPubStorage new];
   QONRCPubClock *clock = [QONRCPubClock new];
   clock.now = 1700000000000;
@@ -455,6 +507,54 @@ static void TestReleaseBuildActivatesOnceSilentlyOnAFirstRead(void) {
             "the silent activation must consume the candidate exactly once");
 }
 
+static void TestTheRealAssemblyInstallsWithoutTouchingTheNetwork(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QONRemoteConfigController *controller = environment.controller;
+  QONRCPubStorage *storage = [QONRCPubStorage new];
+  __block NSUInteger bindingRequests = 0;
+
+  // A binding provider that supplies nothing keeps the coordinator unbound, so
+  // the real assembly is exercised end to end with no request ever leaving.
+  BOOL configured = [controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
+                                        projectToken:@"project-token"
+                                          projectKey:QONRCPubProjectKey
+                                         environment:QONRCPubEnvironmentUID
+                                     canonicalUserID:@"user-a"
+                                  readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+                                        localStorage:storage
+                               clientContextProvider:[QONRCPubContextProvider new]
+                                     bindingProvider:^QONRemoteConfigV2FetchBinding *(
+                                         __unused QONRemoteConfigV2Scope *scope) {
+                                       bindingRequests += 1;
+                                       return nil;
+                                     }];
+  QON_CHECK(configured && controller.isConfigured,
+            "the real assembly must build and install its engine");
+  // configureWithBaseURL: owns its own identity queue, so wait on the effect.
+  QON_CHECK(WaitUntil(^BOOL { return bindingRequests == 1; }),
+            "installing must bind exactly one scope");
+
+  QON_CHECK(![controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
+                                 projectToken:@"project-token"
+                                   projectKey:QONRCPubProjectKey
+                                  environment:QONRCPubEnvironmentUID
+                              canonicalUserID:@"user-a"
+                           readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+                                 localStorage:storage
+                        clientContextProvider:[QONRCPubContextProvider new]
+                              bindingProvider:^QONRemoteConfigV2FetchBinding *(
+                                  __unused QONRemoteConfigV2Scope *scope) { return nil; }],
+            "configuring twice must be refused");
+
+  QONRemoteConfigValue *value = [controller rawValueForKey:@"alpha"];
+  QON_CHECK(value.source == QONRemoteConfigValueSourceFallback,
+            "an unbindable scope must still read its bundled defaults");
+  NSUInteger deliveries = 0;
+  QONRemoteConfigFetchResult *result = RunFetch(environment, 0, NO, &deliveries);
+  QON_CHECK(deliveries == 1 && result.status == QONRemoteConfigFetchStatusFailed,
+            "a fetch on an unbound coordinator must fail rather than hang");
+}
+
 int main(void) {
   @autoreleasepool {
     TestDormantSurfaceServesBundledDefaultsAndRefusesToFetch();
@@ -463,10 +563,12 @@ int main(void) {
     TestTimeoutCompletesOnBestAvailableWhileTheRequestKeepsRunning();
     TestFetchAndActivatePublishesInOneCall();
     TestSubscribeReportsChangedKeysAndImmediateSwapsTheWholeRelease();
+    TestASubscriptionMadeWhileDormantIsReplayedAfterConfiguration();
     TestIdentitySwitchDropsTheOldScopeImmediatelyAndForcesAFetch();
     TestASupersededIdentitySwitchCanNeverRebindItsScope();
-    TestDeviceInstallDateSurvivesAnIdentityChange();
+    TestDeviceInstallDateIsDeviceScopedAcrossIdentities();
     TestReleaseBuildActivatesOnceSilentlyOnAFirstRead();
+    TestTheRealAssemblyInstallsWithoutTouchingTheNetwork();
   }
   if (failures == 0) {
     fprintf(stdout, "QONRemoteConfigControllerHarness: %lu/%lu passed\n",

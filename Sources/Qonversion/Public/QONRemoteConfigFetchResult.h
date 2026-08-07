@@ -18,7 +18,9 @@ NS_ASSUME_NONNULL_BEGIN
  any release without a deprecation cycle. The marker is intentionally a no-op
  macro so it costs nothing at the call site and stays greppable.
  */
+#ifndef QON_EXPERIMENTAL
 #define QON_EXPERIMENTAL
+#endif
 
 /**
  Outcome of one Remote Config fetch call.
@@ -63,9 +65,10 @@ QON_EXPERIMENTAL
 @property (nonatomic, assign, readonly) BOOL changed;
 
 /**
- YES when a newly fetched release is waiting for `activate`. It is always NO for
- a timed-out call, because the fetch that may still admit a release has not
- finished yet.
+ YES when this very call fetched a release that is now waiting for `activate`.
+ It is always NO for a timed-out call, because the fetch that may still admit a
+ release has not finished yet, and it says nothing about a release left pending
+ by an earlier call.
  */
 @property (nonatomic, assign, readonly) BOOL hasPendingActivation;
 

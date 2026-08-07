@@ -15,7 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol QONRemoteConfigV2FetchCore <NSObject>
 - (void)setScope:(nullable QONRemoteConfigV2Scope *)scope;
-- (QONRemoteConfigSnapshot *)currentSnapshot;
+/** Must not be the read-guarded accessor: the coordinator reads for the SDK. */
+- (QONRemoteConfigSnapshot *)unguardedSnapshot;
 - (nullable QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope
                                                         expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation;
 - (QONRemoteConfigV2TransitionStatus)admitBody:(NSData *)body

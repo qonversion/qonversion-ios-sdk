@@ -177,6 +177,15 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
 
 #pragma mark - Controller
 
+/** Opaque subscription token that outlives the dormant-to-configured boundary. */
+@interface QONRemoteConfigSubscription : NSObject
+@property (nonatomic, copy) QONRemoteConfigUpdateHandler handler;
+@property (nonatomic, strong, nullable) id observerToken;
+@end
+
+@implementation QONRemoteConfigSubscription
+@end
+
 @interface QONRemoteConfigController ()
 @property (nonatomic, strong, nullable) QONRemoteConfigFallbackStore *fallbackStore;
 @property (nonatomic, strong) dispatch_queue_t callbackExecutor;
@@ -191,6 +200,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
 /** Serializes scope transitions against each other only, never against reads. */
 @property (nonatomic, strong) NSObject *identityLock;
 @property (nonatomic, assign) NSUInteger identityEpoch;
+@property (nonatomic, strong) NSMutableArray<QONRemoteConfigSubscription *> *subscriptions;
 @property (nonatomic, copy, nullable) NSString *boundCanonicalUserID;
 @property (nonatomic, assign) BOOL hasBoundIdentity;
 @end
@@ -205,6 +215,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     _fallbackStore = fallbackStore;
     _callbackExecutor = callbackExecutor;
     _identityLock = [NSObject new];
+    _subscriptions = [NSMutableArray new];
   }
   return self;
 }
@@ -223,6 +234,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       !bindingProvider || !scheduler || !identityQueue) {
     return NO;
   }
+  NSArray<QONRemoteConfigSubscription *> *pending = nil;
   @synchronized (self) {
     if (self.manager) return NO;
     self.manager = manager;
@@ -233,6 +245,19 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     self.scopeSink = scopeSink;
     self.scheduler = scheduler;
     self.identityQueue = identityQueue;
+    pending = [self.subscriptions copy];
+  }
+  // Replay handlers registered while the surface was still dormant, in the
+  // order the app subscribed.
+  for (QONRemoteConfigSubscription *subscription in pending) {
+    id observerToken = [manager addUpdateObserver:subscription.handler];
+    @synchronized (self) {
+      if ([self.subscriptions containsObject:subscription]) {
+        subscription.observerToken = observerToken;
+        continue;
+      }
+    }
+    [manager removeUpdateObserver:observerToken];
   }
   return YES;
 }
@@ -242,6 +267,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                   projectKey:(NSString *)projectKey
                  environment:(NSString *)environment
              canonicalUserID:(NSString *)canonicalUserID
+          readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 localStorage:(id<QNLocalStorage>)localStorage
        clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
              bindingProvider:(QONRemoteConfigBindingProvider)bindingProvider {
@@ -254,11 +280,6 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
   QONRemoteConfigStorePreloader *preloader =
       [[QONRemoteConfigStorePreloader alloc] initWithStore:store];
   QONRemoteConfigV2Release *fallbackRelease = self.fallbackStore.remoteConfigV2FallbackRelease;
-#ifdef DEBUG
-  QONRemoteConfigV2ReadGuardBuildMode buildMode = QONRemoteConfigV2ReadGuardBuildModeDebug;
-#else
-  QONRemoteConfigV2ReadGuardBuildMode buildMode = QONRemoteConfigV2ReadGuardBuildModeRelease;
-#endif
   QONRemoteConfigV2Manager *manager = [[QONRemoteConfigV2Manager alloc]
       initWithStore:store
       fallbackRelease:fallbackRelease
@@ -283,7 +304,8 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       initWithBaseURL:baseURL
       projectToken:projectToken
       httpExecutor:[[QONRemoteConfigV2URLSessionHTTPExecutor alloc]
-          initWithSession:NSURLSession.sharedSession]
+          initWithSession:[NSURLSession sessionWithConfiguration:
+              NSURLSessionConfiguration.ephemeralSessionConfiguration]]
       sessionStore:sessionStore
       clientContextProvider:clientContextProvider
       clock:clock
@@ -369,6 +391,9 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     // rebind queued by an older switch is fenced out by the epoch.
     [coordinator transitionToBinding:nil];
     if (scopeSink) scopeSink(nil);
+    // Unbinding re-arms the read guard too, so the window between the unbind
+    // and the rebind must not accuse the app either.
+    [self publishPersistedStateForChange:change manager:manager];
   }
   if (!scope) return;
 
@@ -396,14 +421,34 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       if (self.identityEpoch != epoch) return;
       if (scopeSink) scopeSink(scope);
       if (!binding || ![binding.scope isEqual:scope]) {
+        // Degraded but useful: the persisted configuration of the new identity
+        // stays readable even though nothing can fetch for it.
         [manager setScope:scope];
+        [self publishPersistedStateForChange:change manager:manager];
         return;
       }
       [coordinator transitionToBinding:binding];
+      [self publishPersistedStateForChange:change manager:manager];
     }
     [coordinator fetchWithForceReason:reason
                            completion:^(__unused QONRemoteConfigV2FetchResult *result) {}];
   });
+}
+
+/**
+ Publishes whatever the newly bound identity already has on disk.
+
+ Binding a scope resets the read guard, so without this an app that correctly
+ activated at startup would be accused of reading before activate right after
+ an identify or a logout — and on a release build it would keep reading the
+ pre-activation state, because the implicit activation is a once-per-lifetime
+ budget that the startup read already spent. The first bind is left alone: at
+ startup the app is still expected to activate explicitly.
+ */
+- (void)publishPersistedStateForChange:(QONRemoteConfigControllerIdentityChange)change
+                               manager:(QONRemoteConfigV2Manager *)manager {
+  if (change == QONRemoteConfigControllerIdentityChangeBuild) return;
+  [manager activate];
 }
 
 #pragma mark - Reads
@@ -498,6 +543,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
  hasPendingActivation:(BOOL)hasPendingActivation
               forCall:(QONRemoteConfigCall *)call {
   QONRemoteConfigFetchCompletion completion = call.completion;
+  call.completion = nil;
   QONRemoteConfigFetchResult *result = [[QONRemoteConfigFetchResult alloc]
       initWithStatus:status
             snapshot:snapshot ?: [self fallbackOnlySnapshot]
@@ -560,6 +606,17 @@ hasPendingActivation:hasPendingActivation];
     } @catch (__unused NSException *exception) {
       task = nil;
     }
+    if (!task) {
+      // Without a deadline the caller would silently wait the whole policy
+      // timeout instead of the one it asked for.
+      if ([call claim]) {
+        [self deliverStatus:QONRemoteConfigFetchStatusFailed
+                   snapshot:manager.unguardedSnapshot
+                    changed:NO
+       hasPendingActivation:NO
+                    forCall:call];
+      }
+    }
     [call setDeadlineTaskSafely:task];
   }
 
@@ -591,22 +648,34 @@ hasPendingActivation:hasPendingActivation];
 
 - (id)subscribeOnConfigUpdate:(QONRemoteConfigUpdateHandler)handler {
   if (!handler) return nil;
+  QONRemoteConfigSubscription *subscription = [QONRemoteConfigSubscription new];
+  subscription.handler = handler;
   QONRemoteConfigV2Manager *manager = nil;
   @synchronized (self) {
     manager = self.manager;
+    [self.subscriptions addObject:subscription];
   }
-  return [manager addUpdateObserver:^(QONRemoteConfigUpdate *update) {
-    handler(update);
-  }];
+  // Subscribing before configuration must not silently drop the handler: it is
+  // registered here when possible and replayed by installEngine otherwise.
+  if (manager) {
+    subscription.observerToken = [manager addUpdateObserver:handler];
+  }
+  return subscription;
 }
 
 - (void)unsubscribe:(id)token {
-  if (!token) return;
+  if (![token isKindOfClass:QONRemoteConfigSubscription.class]) return;
+  QONRemoteConfigSubscription *subscription = token;
   QONRemoteConfigV2Manager *manager = nil;
+  id observerToken = nil;
   @synchronized (self) {
+    if (![self.subscriptions containsObject:subscription]) return;
     manager = self.manager;
+    observerToken = subscription.observerToken;
+    subscription.observerToken = nil;
+    [self.subscriptions removeObject:subscription];
   }
-  [manager removeUpdateObserver:token];
+  if (observerToken) [manager removeUpdateObserver:observerToken];
 }
 
 @end

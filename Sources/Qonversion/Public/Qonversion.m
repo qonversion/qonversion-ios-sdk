@@ -35,6 +35,9 @@ static id shared = nil;
 @property (nonatomic, assign) BOOL debugMode;
 @property (nonatomic, assign) QONLaunchMode launchMode;
 
+- (void)identify:(NSString *)userID
+    remoteConfigAwareCompletion:(QONUserInfoCompletionHandler _Nullable)completion;
+
 @end
 
 @implementation Qonversion
@@ -146,8 +149,12 @@ static bool _isInitialized = NO;
   }
   __weak typeof(self) weakSelf = self;
   [self.productCenterManager identify:userID completion:^(QONUser *user, NSError *error) {
-    [controller switchToCanonicalUserID:[weakSelf.userInfoService obtainUserID]
-                                 change:QONRemoteConfigControllerIdentityChangeIdentify];
+    // A failed identify leaves the canonical identity untouched, so there is
+    // nothing to rebind and no reason to drop the readable configuration.
+    if (!error) {
+      [controller switchToCanonicalUserID:[weakSelf.userInfoService obtainUserID]
+                                   change:QONRemoteConfigControllerIdentityChangeIdentify];
+    }
     if (completion) completion(user, error);
   }];
 }

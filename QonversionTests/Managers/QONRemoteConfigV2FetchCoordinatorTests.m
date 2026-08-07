@@ -95,7 +95,7 @@
 
 @implementation QONRemoteConfigV2FetchTestCore
 - (void)setScope:(QONRemoteConfigV2Scope *)scope { self.currentScope = scope; }
-- (QONRemoteConfigSnapshot *)currentSnapshot { return self.snapshot; }
+- (QONRemoteConfigSnapshot *)unguardedSnapshot { return self.snapshot; }
 - (QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope
                                                 expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation {
   self.admissions += 1;
