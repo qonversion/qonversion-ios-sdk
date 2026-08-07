@@ -90,14 +90,31 @@ FOUNDATION_EXPORT int64_t const QONRemoteConfigV2MaximumSafeInteger;
                     latestAdmissionOrdinal:(int64_t)latestAdmissionOrdinal;
 @end
 
-/** Expected privacy and rendering boundary for one exact resolved-snapshot response. */
+/** Lowercase 64-character hex. Shared with the durable context pin store. */
+FOUNDATION_EXPORT BOOL QONRemoteConfigV2ValidContextFingerprint(NSString *_Nullable value);
+
+/**
+ Expected privacy and rendering boundary for one exact resolved-snapshot response.
+
+ `contextFingerprint` is nil while the identity scope is still unpinned. The
+ fingerprint is never pre-provisioned: the server derives it from the full
+ client context, which does not exist at bootstrap. The manager pins it on
+ trust-on-first-use from the first strictly validated envelope and supplies it
+ here on every later admission, so only the very first fetch of a scope is
+ unpinned — and that one is protected by session-bound routing.
+ */
 @interface QONRemoteConfigV2EnvelopeExpectation : NSObject <NSCopying>
 @property (nonatomic, assign, readonly) int64_t projectID;
 @property (nonatomic, copy, readonly) NSString *environmentUID;
-@property (nonatomic, copy, readonly) NSString *contextFingerprint;
+@property (nonatomic, copy, nullable, readonly) NSString *contextFingerprint;
+/** Unpinned expectation: any well-formed fingerprint is admissible. */
+- (nullable instancetype)initWithProjectID:(int64_t)projectID
+                            environmentUID:(NSString *)environmentUID;
 - (nullable instancetype)initWithProjectID:(int64_t)projectID
                             environmentUID:(NSString *)environmentUID
-                        contextFingerprint:(NSString *)contextFingerprint;
+                        contextFingerprint:(nullable NSString *)contextFingerprint;
+/** Same boundary with the scope's pinned fingerprint applied. */
+- (nullable instancetype)expectationByPinningContextFingerprint:(NSString *)contextFingerprint;
 @end
 
 @interface QONRemoteConfigV2Envelope : NSObject

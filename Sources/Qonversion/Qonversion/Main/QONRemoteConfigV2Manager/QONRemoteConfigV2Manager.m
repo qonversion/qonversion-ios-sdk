@@ -1,5 +1,6 @@
 #import "QONRemoteConfigV2Manager.h"
 #import "QONRemoteConfigSnapshot+Protected.h"
+#import "QONRemoteConfigV2ContextPinStore.h"
 #import "QONRemoteConfigV2FetchCoordinator.h"
 #import "QONRemoteConfigV2Models.h"
 #import "QONRemoteConfigV2Store.h"
@@ -95,6 +96,11 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
 @property (nonatomic, assign) BOOL readGuardLifetimeActivationConsumed;
 @property (nonatomic, assign) BOOL readGuardScopeUnavailable;
 @property (nonatomic, assign) BOOL readGuardFailSafeEventClaimed;
+@property (nonatomic, strong, nullable) id<QONRemoteConfigV2ContextPinStoring> contextPinStore;
+/** Trust-on-first-use pin of the current scope, or nil while it is unpinned. */
+@property (nonatomic, copy, nullable) NSString *contextPin;
+/** NO until the current scope's persisted pin has been consulted once. */
+@property (nonatomic, assign) BOOL contextPinLoaded;
 @end
 
 @implementation QONRemoteConfigV2Manager
@@ -161,13 +167,15 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
               readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 assertionHandler:(QONRemoteConfigV2ReadGuardAssertionHandler)assertionHandler
                 telemetryHandler:(QONRemoteConfigV2ReadGuardTelemetryHandler)telemetryHandler
-                  scopePreloader:(id<QONRemoteConfigV2ScopePreloading>)scopePreloader {
+                  scopePreloader:(id<QONRemoteConfigV2ScopePreloading>)scopePreloader
+                 contextPinStore:(id<QONRemoteConfigV2ContextPinStoring>)contextPinStore {
   if (!scopePreloader || buildMode < QONRemoteConfigV2ReadGuardBuildModeDebug ||
       buildMode > QONRemoteConfigV2ReadGuardBuildModeRelease) return nil;
   self = [self initWithStore:store fallbackRelease:fallbackRelease
       fallbackProjectKey:fallbackProjectKey fallbackEnvironment:fallbackEnvironment
       envelopeDecoder:envelopeDecoder callbackExecutor:callbackExecutor];
   if (self) {
+    _contextPinStore = contextPinStore;
     _readGuardEnabled = YES;
     _readGuardBuildMode = buildMode;
     _readGuardAssertionHandler = [assertionHandler copy];
@@ -428,6 +436,7 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
         self.scopeLoadFailed = NO;
         self.nextAdmissionOrdinal = 0;
         self.scopeGeneration += 1;
+        [self resetContextPinLocked];
       } else if (hasExactPreload) {
         // A freshly preloaded state starts a new read/observer generation even
         // when the logical scope is unchanged.
@@ -496,6 +505,7 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
       self.scopeLoadFailed = NO;
       self.nextAdmissionOrdinal = 0;
       self.scopeGeneration += 1;
+      [self resetContextPinLocked];
     }
     if (scope) [self loadScopeStateLocked:scope];
   });
@@ -532,6 +542,60 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
   }
   if (self.currentScope && self.scopeLoadFailed) [self loadScopeStateLocked:self.currentScope];
   return self.currentScope != nil && !self.scopeLoadFailed;
+}
+
+#pragma mark - Context fingerprint pin (trust on first use)
+
+/**
+ Forgets the retired scope's pin.
+
+ The pin itself stays on disk under the retired scope's own key, so coming back
+ to that identity restores it. What resets is which pin is in force, which is
+ exactly what an identity change must reset.
+ */
+- (void)resetContextPinLocked {
+  self.contextPin = nil;
+  self.contextPinLoaded = NO;
+}
+
+/** The current scope's pin, consulting durable storage at most once per scope. */
+- (NSString *)contextPinLocked {
+  if (self.contextPinLoaded) return self.contextPin;
+  QONRemoteConfigV2Scope *scope = self.currentScope;
+  if (!scope) return nil;
+  NSString *pin = nil;
+  @try {
+    pin = [self.contextPinStore contextFingerprintForScope:scope];
+  } @catch (__unused NSException *exception) {
+    pin = nil;
+  }
+  self.contextPin = QONRemoteConfigV2ValidContextFingerprint(pin) ? pin : nil;
+  self.contextPinLoaded = YES;
+  return self.contextPin;
+}
+
+/**
+ Pins the fingerprint for the current scope.
+
+ Without a pin store the pin is process-local: it still refuses a mid-session
+ identity mixup, but a restart re-pins. Callers that need the durable guarantee
+ supply a store.
+ */
+- (BOOL)pinContextFingerprintLocked:(NSString *)contextFingerprint {
+  QONRemoteConfigV2Scope *scope = self.currentScope;
+  if (!scope || !QONRemoteConfigV2ValidContextFingerprint(contextFingerprint)) return NO;
+  if (self.contextPinStore) {
+    BOOL stored = NO;
+    @try {
+      stored = [self.contextPinStore storeContextFingerprint:contextFingerprint forScope:scope];
+    } @catch (__unused NSException *exception) {
+      stored = NO;
+    }
+    if (!stored) return NO;
+  }
+  self.contextPin = [contextFingerprint copy];
+  self.contextPinLoaded = YES;
+  return YES;
 }
 
 - (void)invalidateReadGuardPreparationLocked {
@@ -729,19 +793,36 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
                                    strongETag:(NSString *)strongETag
                                admissionToken:(QONRemoteConfigV2AdmissionToken *)admissionToken {
   if (!body || !strongETag || !admissionToken) return QONRemoteConfigV2TransitionStatusRejected;
-  __block BOOL tokenWasCurrent = NO;
+  __block QONRemoteConfigV2EnvelopeExpectation *expectation = nil;
   dispatch_sync(self.stateQueue, ^{
-    tokenWasCurrent = [self admissionTokenIsCurrentLocked:admissionToken];
+    if (![self admissionTokenIsCurrentLocked:admissionToken]) return;
+    NSString *pin = [self contextPinLocked];
+    NSString *stated = admissionToken.expectation.contextFingerprint;
+    // A caller may still state a fingerprint; it narrows the pin, never replaces it.
+    if (pin && stated && ![pin isEqualToString:stated]) return;
+    expectation = pin
+        ? [admissionToken.expectation expectationByPinningContextFingerprint:pin]
+        : admissionToken.expectation;
   });
-  if (!tokenWasCurrent) return QONRemoteConfigV2TransitionStatusRejected;
+  if (!expectation) return QONRemoteConfigV2TransitionStatusRejected;
   QONRemoteConfigV2Envelope *envelope = [self.envelopeDecoder parseBody:body
-      strongETag:strongETag expectation:admissionToken.expectation];
+      strongETag:strongETag expectation:expectation];
   if (!envelope) return QONRemoteConfigV2TransitionStatusRejected;
 
   __block QONRemoteConfigV2TransitionStatus status = QONRemoteConfigV2TransitionStatusRejected;
   dispatch_sync(self.stateQueue, ^{
     if (![self admissionTokenIsCurrentLocked:admissionToken] ||
         ![self ensureCurrentScopeLoadedLocked]) return;
+    // The single authority on the pin. The pre-parse read above is only an
+    // optimisation, so a pin established between the two cannot be overwritten.
+    NSString *pin = [self contextPinLocked];
+    if (pin) {
+      if (![pin isEqualToString:envelope.contextFingerprint]) return;
+    } else if (![self pinContextFingerprintLocked:envelope.contextFingerprint]) {
+      // Fail closed: an unpinnable scope must not admit an unverifiable release.
+      status = QONRemoteConfigV2TransitionStatusPersistenceFailed;
+      return;
+    }
     NSInteger releaseFloor = MAX(self.state.candidate.releaseNumber,
                                  self.state.active.releaseNumber);
     if (envelope.snapshotRelease.releaseNumber < releaseFloor) return;
@@ -787,6 +868,12 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
     if (!self.currentScope || ![self.currentScope isEqual:scope]) return;
     if (![self ensureCurrentScopeLoadedLocked]) return;
     if (self.nextAdmissionOrdinal == INT64_MAX) return;
+    // This seam takes an already-built release, so it never pins. It still has
+    // to honour a pin the scope has: a fingerprinted release from another
+    // context is exactly the mixup the pin exists to refuse.
+    NSString *pin = [self contextPinLocked];
+    if (pin && release.contextFingerprint &&
+        ![pin isEqualToString:release.contextFingerprint]) return;
     QONRemoteConfigV2Release *latest = self.state.candidate;
     if (!latest || self.state.active.releaseNumber > latest.releaseNumber) latest = self.state.active;
     if (latest && release.releaseNumber <= latest.releaseNumber) {

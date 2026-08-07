@@ -6,6 +6,7 @@
 @class QONRemoteConfigV2Release, QONRemoteConfigV2Scope, QONRemoteConfigV2State;
 @class QONRemoteConfigV2Store;
 @protocol QONRemoteConfigV2EnvelopeDecoding;
+@protocol QONRemoteConfigV2ContextPinStoring;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -106,7 +107,8 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2TransitionStatus) {
               readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 assertionHandler:(nullable QONRemoteConfigV2ReadGuardAssertionHandler)assertionHandler
                 telemetryHandler:(nullable QONRemoteConfigV2ReadGuardTelemetryHandler)telemetryHandler
-                  scopePreloader:(id<QONRemoteConfigV2ScopePreloading>)scopePreloader;
+                  scopePreloader:(id<QONRemoteConfigV2ScopePreloading>)scopePreloader
+                 contextPinStore:(nullable id<QONRemoteConfigV2ContextPinStoring>)contextPinStore;
 /**
  Performs all persistent read and durable prepared-activation work synchronously.
  The SDK bootstrap must call it off main before setScope/readiness.
@@ -120,6 +122,12 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2TransitionStatus) {
  may finish after the method returns. No observer runs under an SDK lock.
  */
 - (void)setScope:(nullable QONRemoteConfigV2Scope *)scope;
+/**
+ The expectation states only what a caller can actually know: the project and
+ the environment. Its `contextFingerprint` is expected to be nil — the manager
+ applies the scope's trust-on-first-use pin itself, and a caller-supplied
+ fingerprint is only honoured as an additional constraint.
+ */
 - (nullable QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope
                                                         expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation;
 - (QONRemoteConfigV2TransitionStatus)admitBody:(NSData *)body

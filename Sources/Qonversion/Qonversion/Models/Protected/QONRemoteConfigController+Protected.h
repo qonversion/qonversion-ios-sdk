@@ -23,14 +23,6 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigControllerIdentityChange) {
   QONRemoteConfigControllerIdentityChangeLogout,
 };
 
-/**
- Supplies the privacy and rendering boundary the snapshot route will answer for
- one scope. It is injected because the fingerprint is established by the gateway
- session leg, which is not part of the public surface.
- */
-typedef QONRemoteConfigV2FetchBinding *_Nullable (^QONRemoteConfigBindingProvider)(
-    QONRemoteConfigV2Scope *scope);
-
 /** Receives every scope transition so a transport can rebind or unbind. */
 typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope);
 
@@ -75,12 +67,18 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
  Installs an already-assembled engine. Used by the real configuration path and
  by tests that substitute the transport, scheduler and storage wholesale.
  Installing twice is refused.
+
+ The controller binds every scope itself. Nothing supplies a context
+ fingerprint: the gateway derives it from the full client context, so it does
+ not exist at bootstrap. The manager pins it on trust-on-first-use instead.
+ A projectID of 0 or less leaves the surface unbindable, which is how a caller
+ that has no project identity yet keeps the engine off the network.
  */
 - (BOOL)installEngineWithManager:(QONRemoteConfigV2Manager *)manager
                      coordinator:(QONRemoteConfigV2FetchCoordinator *)coordinator
                       projectKey:(NSString *)projectKey
                      environment:(NSString *)environment
-                 bindingProvider:(QONRemoteConfigBindingProvider)bindingProvider
+                       projectID:(int64_t)projectID
                        scopeSink:(nullable QONRemoteConfigScopeSink)scopeSink
                        scheduler:(id<QONRemoteConfigV2FetchScheduler>)scheduler
                    identityQueue:(dispatch_queue_t)identityQueue;
@@ -102,7 +100,7 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
           readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 localStorage:(id<QNLocalStorage>)localStorage
        clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
-             bindingProvider:(QONRemoteConfigBindingProvider)bindingProvider;
+                   projectID:(int64_t)projectID;
 
 /**
  Rebinds the surface to another canonical identity. The previous identity's

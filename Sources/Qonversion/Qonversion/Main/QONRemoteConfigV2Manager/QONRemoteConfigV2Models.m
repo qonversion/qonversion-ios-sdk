@@ -35,9 +35,14 @@ static BOOL QONRemoteConfigV2ValidBoundedString(NSString *value, NSUInteger maxi
 }
 
 static BOOL QONRemoteConfigV2ValidSHA256(NSString *value) {
-  if (value.length != 64 || ![value isEqualToString:value.lowercaseString]) return NO;
+  if (![value isKindOfClass:NSString.class] || value.length != 64 ||
+      ![value isEqualToString:value.lowercaseString]) return NO;
   NSCharacterSet *invalid = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789abcdef"] invertedSet];
   return [value rangeOfCharacterFromSet:invalid].location == NSNotFound;
+}
+
+BOOL QONRemoteConfigV2ValidContextFingerprint(NSString *value) {
+  return QONRemoteConfigV2ValidSHA256(value);
 }
 
 static NSString *QONRemoteConfigV2SHA256Hex(NSData *data) {
@@ -105,11 +110,18 @@ static id QONRemoteConfigV2DeepJSONCopy(id value) {
 @implementation QONRemoteConfigV2EnvelopeExpectation
 
 - (instancetype)initWithProjectID:(int64_t)projectID
+                    environmentUID:(NSString *)environmentUID {
+  return [self initWithProjectID:projectID environmentUID:environmentUID
+              contextFingerprint:nil];
+}
+
+- (instancetype)initWithProjectID:(int64_t)projectID
                     environmentUID:(NSString *)environmentUID
                 contextFingerprint:(NSString *)contextFingerprint {
   if (projectID <= 0 || projectID > QONRemoteConfigV2MaximumSafeInteger ||
       !QONRemoteConfigV2ValidUID(environmentUID) ||
-      !QONRemoteConfigV2ValidSHA256(contextFingerprint)) return nil;
+      // nil means "not pinned yet"; anything else must be a real fingerprint.
+      (contextFingerprint != nil && !QONRemoteConfigV2ValidSHA256(contextFingerprint))) return nil;
   self = [super init];
   if (self) {
     _projectID = projectID;
@@ -117,6 +129,13 @@ static id QONRemoteConfigV2DeepJSONCopy(id value) {
     _contextFingerprint = [contextFingerprint copy];
   }
   return self;
+}
+
+- (instancetype)expectationByPinningContextFingerprint:(NSString *)contextFingerprint {
+  if (!QONRemoteConfigV2ValidSHA256(contextFingerprint)) return nil;
+  return [[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:self.projectID
+                                                          environmentUID:self.environmentUID
+                                                      contextFingerprint:contextFingerprint];
 }
 
 - (id)copyWithZone:(NSZone *)zone { return self; }
@@ -457,7 +476,11 @@ static NSDictionary<NSString *, QONRemoteConfigV2Entry *> *QONRemoteConfigV2Read
   if (!expectation) return nil;
   QONRemoteConfigV2Envelope *envelope = [self parseBoundBody:body strongETag:strongETag];
   if (!envelope || envelope.projectID != expectation.projectID ||
-      ![envelope.environmentUID isEqualToString:expectation.environmentUID] ||
+      ![envelope.environmentUID isEqualToString:expectation.environmentUID]) return nil;
+  // A nil expectation fingerprint is the unpinned trust-on-first-use case. The
+  // envelope's own fingerprint is still strictly validated by parseBoundBody:,
+  // and the caller pins it before the release is admitted.
+  if (expectation.contextFingerprint &&
       ![envelope.contextFingerprint isEqualToString:expectation.contextFingerprint]) return nil;
   return envelope;
 }

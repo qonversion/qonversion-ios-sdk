@@ -40,6 +40,12 @@ static NSData *ReleaseBody(NSString *releaseUID, NSInteger number, NSString *val
   return QONRCPubSnapshotBody(releaseUID, number, values);
 }
 
+/** One `alpha` entry that only publishes on the next activate. */
+static NSString *AlphaValues(NSString *raw, NSString *variationUID) {
+  return [NSString stringWithFormat:@"\"alpha\":%@",
+      QONRCPubItem(raw, variationUID, @"on_next_activate", @"null")];
+}
+
 /** Spins until the condition holds or the deadline passes. */
 static BOOL WaitUntil(BOOL (^condition)(void)) {
   NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:2.0];
@@ -446,6 +452,174 @@ static void TestASupersededIdentitySwitchCanNeverRebindItsScope(void) {
             "only the newest identity may end up bound");
 }
 
+#pragma mark - Context fingerprint pin
+
+static QONRemoteConfigV2Scope *PinScope(NSString *canonicalUserID) {
+  return [[QONRemoteConfigV2Scope alloc] initWithProjectKey:QONRCPubProjectKey
+                                                environment:QONRCPubEnvironmentUID
+                                            canonicalUserID:canonicalUserID];
+}
+
+static void TestContextPinStoreIsScopeKeyedAndValidatesWhatItReadsBack(void) {
+  QONRCPubStorage *storage = [QONRCPubStorage new];
+  QONRemoteConfigV2ContextPinStore *store =
+      [[QONRemoteConfigV2ContextPinStore alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2Scope *userA = PinScope(@"user-a");
+  QONRemoteConfigV2Scope *userB = PinScope(@"user-b");
+
+  QON_CHECK([store contextFingerprintForScope:userA] == nil,
+            "an unpinned scope must report no pin rather than a placeholder");
+  QON_CHECK(![store storeContextFingerprint:@"not-a-fingerprint" forScope:userA],
+            "a malformed fingerprint must never be pinned");
+  QON_CHECK([store storeContextFingerprint:QONRCPubFingerprint forScope:userA],
+            "a well-formed fingerprint must pin");
+  QON_CHECK([[store contextFingerprintForScope:userA] isEqualToString:QONRCPubFingerprint],
+            "a pinned scope must read its pin back");
+  QON_CHECK([store contextFingerprintForScope:userB] == nil,
+            "the pin must be keyed by the full scope, identity included");
+
+  QONRemoteConfigV2ContextPinStore *reopened =
+      [[QONRemoteConfigV2ContextPinStore alloc] initWithLocalStorage:storage];
+  QON_CHECK([[reopened contextFingerprintForScope:userA] isEqualToString:QONRCPubFingerprint],
+            "a pin must survive the store object that wrote it");
+
+  NSString *key = [QONRemoteConfigV2ContextPinStore storageKeyForScope:userA];
+  storage.objects[key] = @{@"schema_version": @1, @"scope_key": key,
+                           @"context_fingerprint": @"short"};
+  QON_CHECK([store contextFingerprintForScope:userA] == nil,
+            "a corrupt payload must read as no pin, never as a usable one");
+  storage.objects[key] = @{@"schema_version": @2, @"scope_key": key,
+                           @"context_fingerprint": QONRCPubFingerprint};
+  QON_CHECK([store contextFingerprintForScope:userA] == nil,
+            "an unknown schema must read as no pin");
+  storage.objects[key] = @{
+    @"schema_version": @1,
+    @"scope_key": [QONRemoteConfigV2ContextPinStore storageKeyForScope:userB],
+    @"context_fingerprint": QONRCPubFingerprint,
+  };
+  QON_CHECK([store contextFingerprintForScope:userA] == nil,
+            "a payload keyed to another scope must not answer this one");
+
+  [store removeContextFingerprintForScope:userA];
+  QON_CHECK([store contextFingerprintForScope:userA] == nil, "removing a pin must clear it");
+  storage.failWrites = YES;
+  QON_CHECK(![store storeContextFingerprint:QONRCPubFingerprint forScope:userA],
+            "a write that does not read back must be reported as a failure");
+}
+
+static void TestFirstAdmissionPinsTheContextAndLaterMismatchesAreRefused(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install for the context-pin scenario");
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSData *first = ReleaseBody(@"release-1", 1,
+                              AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
+  [environment.transport enqueueBody:first strongETag:QONRCPubStrongETag(first)];
+  QONRemoteConfigFetchResult *pinned = RunFetch(environment, 0, YES, NULL);
+  QON_CHECK(pinned.status == QONRemoteConfigFetchStatusFetched && pinned.changed,
+            "the first envelope of a scope must be admitted and pin its context");
+
+  NSData *foreign = QONRCPubSnapshotBodyWithFingerprint(
+      @"release-2", 2, AlphaValues(@"\"server-alpha-2\"", @"variation-a2"),
+      QONRCPubOtherFingerprint);
+  [environment.transport enqueueBody:foreign strongETag:QONRCPubStrongETag(foreign)];
+  QONRemoteConfigFetchResult *refused = RunFetch(environment, 0, YES, NULL);
+  QON_CHECK(!refused.changed && !refused.hasPendingActivation,
+            "an envelope resolved for another client context must be refused");
+  QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-1"],
+            "a refused envelope must not replace the pinned context's release");
+
+  NSData *third = ReleaseBody(@"release-3", 3,
+                              AlphaValues(@"\"server-alpha-3\"", @"variation-a3"));
+  [environment.transport enqueueBody:third strongETag:QONRCPubStrongETag(third)];
+  QONRemoteConfigFetchResult *readmitted = RunFetch(environment, 0, YES, NULL);
+  QON_CHECK(readmitted.changed &&
+                [[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-3"],
+            "the pinned context must keep admitting its own envelopes");
+}
+
+static void TestTheContextPinSurvivesAStoreRecreation(void) {
+  QONRCPubEnvironment *first = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(first, QONRemoteConfigV2ReadGuardBuildModeDebug, 0, @"user-a"),
+            "the first run must install its engine");
+  NSData *body = ReleaseBody(@"release-1", 1, AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
+  [first.transport enqueueBody:body strongETag:QONRCPubStrongETag(body)];
+  QON_CHECK(RunFetch(first, 0, YES, NULL).changed,
+            "the first run must pin its context");
+
+  // A restart: same persistent storage, brand new stores, manager and engine.
+  QONRCPubEnvironment *restarted = QONRCPubDormantEnvironment(DefaultsFixture());
+  restarted.storage = first.storage;
+  QON_CHECK(QONRCPubInstallEngine(restarted, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the restarted run must install over the surviving storage");
+  QON_CHECK(restarted.contextPinStore != first.contextPinStore,
+            "the restarted run must read the pin back rather than reuse the object");
+
+  NSData *foreign = QONRCPubSnapshotBodyWithFingerprint(
+      @"release-4", 4, AlphaValues(@"\"server-alpha-4\"", @"variation-a4"),
+      QONRCPubOtherFingerprint);
+  [restarted.transport enqueueBody:foreign strongETag:QONRCPubStrongETag(foreign)];
+  QON_CHECK(!RunFetch(restarted, 0, YES, NULL).changed,
+            "a restart must not be able to re-pin an unchanged scope");
+
+  NSData *own = ReleaseBody(@"release-5", 5, AlphaValues(@"\"server-alpha-5\"", @"variation-a5"));
+  [restarted.transport enqueueBody:own strongETag:QONRCPubStrongETag(own)];
+  QON_CHECK(RunFetch(restarted, 0, YES, NULL).changed &&
+                [[restarted.controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-5"],
+            "the surviving pin must still admit the pinned context's own envelopes");
+}
+
+static void TestScopeResetClearsThePinAndTheNewIdentityRePins(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install for the scope-reset scenario");
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSData *first = ReleaseBody(@"release-1", 1,
+                              AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
+  [environment.transport enqueueBody:first strongETag:QONRCPubStrongETag(first)];
+  QON_CHECK(RunFetch(environment, 0, YES, NULL).changed, "user-a must pin its context");
+
+  // A new identity is a new client context, so its fingerprint differs and the
+  // forced fetch of the rebind must be free to pin it.
+  NSData *foreign = QONRCPubSnapshotBodyWithFingerprint(
+      @"release-2", 2, AlphaValues(@"\"server-alpha-b\"", @"variation-b1"),
+      QONRCPubOtherFingerprint);
+  [environment.transport enqueueBody:foreign strongETag:QONRCPubStrongETag(foreign)];
+  [controller switchToCanonicalUserID:@"user-b"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  QON_CHECK(controller.activate, "the new identity's release must activate");
+  QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-b"],
+            "an identity change must clear the pin so the new scope can pin its own");
+
+  environment.clock.now += 10000;
+  NSData *retired = ReleaseBody(@"release-3", 3,
+                                AlphaValues(@"\"server-alpha-c\"", @"variation-c1"));
+  [environment.transport enqueueBody:retired strongETag:QONRCPubStrongETag(retired)];
+  QON_CHECK(!RunFetch(environment, 0, YES, NULL).changed,
+            "the new identity must refuse the retired identity's context");
+  QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-b"],
+            "a refused envelope must not disturb the new identity's release");
+
+  // Returning to the first identity restores that identity's own pin, so the
+  // fingerprint the second identity was pinned to is now the foreign one.
+  NSData *foreignAgain = QONRCPubSnapshotBodyWithFingerprint(
+      @"release-6", 6, AlphaValues(@"\"server-alpha-d\"", @"variation-d1"),
+      QONRCPubOtherFingerprint);
+  [environment.transport enqueueBody:foreignAgain strongETag:QONRCPubStrongETag(foreignAgain)];
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  [controller activate];
+  QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-1"],
+            "coming back to a pinned identity must restore its pin, not re-pin it");
+}
+
 // The controller never touches the install date itself: the transport owns it.
 // This pins the device-scoped storage contract the identity switch relies on.
 static void TestDeviceInstallDateIsDeviceScopedAcrossIdentities(void) {
@@ -511,10 +685,9 @@ static void TestTheRealAssemblyInstallsWithoutTouchingTheNetwork(void) {
   QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
   QONRemoteConfigController *controller = environment.controller;
   QONRCPubStorage *storage = [QONRCPubStorage new];
-  __block NSUInteger bindingRequests = 0;
 
-  // A binding provider that supplies nothing keeps the coordinator unbound, so
-  // the real assembly is exercised end to end with no request ever leaving.
+  // A project the caller cannot name yet keeps the coordinator unbound, so the
+  // real assembly is exercised end to end with no request ever leaving.
   BOOL configured = [controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
                                         projectToken:@"project-token"
                                           projectKey:QONRCPubProjectKey
@@ -523,16 +696,12 @@ static void TestTheRealAssemblyInstallsWithoutTouchingTheNetwork(void) {
                                   readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
                                         localStorage:storage
                                clientContextProvider:[QONRCPubContextProvider new]
-                                     bindingProvider:^QONRemoteConfigV2FetchBinding *(
-                                         __unused QONRemoteConfigV2Scope *scope) {
-                                       bindingRequests += 1;
-                                       return nil;
-                                     }];
+                                           projectID:0];
   QON_CHECK(configured && controller.isConfigured,
             "the real assembly must build and install its engine");
-  // configureWithBaseURL: owns its own identity queue, so wait on the effect.
-  QON_CHECK(WaitUntil(^BOOL { return bindingRequests == 1; }),
-            "installing must bind exactly one scope");
+  // Nothing is bound, so nothing may reach the network or the token storage.
+  QON_CHECK(storage.objects.count == 0,
+            "an unbindable assembly must not persist a session or a context pin");
 
   QON_CHECK(![controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
                                  projectToken:@"project-token"
@@ -542,8 +711,7 @@ static void TestTheRealAssemblyInstallsWithoutTouchingTheNetwork(void) {
                            readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
                                  localStorage:storage
                         clientContextProvider:[QONRCPubContextProvider new]
-                              bindingProvider:^QONRemoteConfigV2FetchBinding *(
-                                  __unused QONRemoteConfigV2Scope *scope) { return nil; }],
+                                    projectID:0],
             "configuring twice must be refused");
 
   QONRemoteConfigValue *value = [controller rawValueForKey:@"alpha"];
@@ -566,6 +734,10 @@ int main(void) {
     TestASubscriptionMadeWhileDormantIsReplayedAfterConfiguration();
     TestIdentitySwitchDropsTheOldScopeImmediatelyAndForcesAFetch();
     TestASupersededIdentitySwitchCanNeverRebindItsScope();
+    TestContextPinStoreIsScopeKeyedAndValidatesWhatItReadsBack();
+    TestFirstAdmissionPinsTheContextAndLaterMismatchesAreRefused();
+    TestTheContextPinSurvivesAStoreRecreation();
+    TestScopeResetClearsThePinAndTheNewIdentityRePins();
     TestDeviceInstallDateIsDeviceScopedAcrossIdentities();
     TestReleaseBuildActivatesOnceSilentlyOnAFirstRead();
     TestTheRealAssemblyInstallsWithoutTouchingTheNetwork();

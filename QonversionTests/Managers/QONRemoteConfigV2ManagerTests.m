@@ -380,7 +380,7 @@
       envelopeDecoder:[QONRemoteConfigV2EnvelopeParser new]
       callbackExecutor:callbackExecutor readGuardBuildMode:mode
       assertionHandler:assertionHandler telemetryHandler:telemetryHandler
-      scopePreloader:preloader];
+      scopePreloader:preloader contextPinStore:nil];
 }
 
 - (QONRemoteConfigV2ReadGuardPreloadStatus)preloadReadGuardManager:

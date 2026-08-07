@@ -10,6 +10,7 @@
 #import "QONRemoteConfigSnapshot+Protected.h"
 
 #import "QONRemoteConfigFallbackStore.h"
+#import "QONRemoteConfigV2ContextPinStore.h"
 #import "QONRemoteConfigV2FetchPolicyStore.h"
 #import "QONRemoteConfigV2GatewaySessionStore.h"
 #import "QONRemoteConfigV2GatewayTransport.h"
@@ -193,7 +194,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
 @property (nonatomic, strong, nullable) QONRemoteConfigV2FetchCoordinator *coordinator;
 @property (nonatomic, copy, nullable) NSString *projectKey;
 @property (nonatomic, copy, nullable) NSString *environment;
-@property (nonatomic, copy, nullable) QONRemoteConfigBindingProvider bindingProvider;
+@property (nonatomic, assign) int64_t projectID;
 @property (nonatomic, copy, nullable) QONRemoteConfigScopeSink scopeSink;
 @property (nonatomic, strong, nullable) id<QONRemoteConfigV2FetchScheduler> scheduler;
 @property (nonatomic, strong, nullable) dispatch_queue_t identityQueue;
@@ -226,12 +227,12 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                      coordinator:(QONRemoteConfigV2FetchCoordinator *)coordinator
                       projectKey:(NSString *)projectKey
                      environment:(NSString *)environment
-                 bindingProvider:(QONRemoteConfigBindingProvider)bindingProvider
+                       projectID:(int64_t)projectID
                        scopeSink:(QONRemoteConfigScopeSink)scopeSink
                        scheduler:(id<QONRemoteConfigV2FetchScheduler>)scheduler
                    identityQueue:(dispatch_queue_t)identityQueue {
   if (!manager || !coordinator || !projectKey.length || !environment.length ||
-      !bindingProvider || !scheduler || !identityQueue) {
+      !scheduler || !identityQueue) {
     return NO;
   }
   NSArray<QONRemoteConfigSubscription *> *pending = nil;
@@ -241,7 +242,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     self.coordinator = coordinator;
     self.projectKey = projectKey;
     self.environment = environment;
-    self.bindingProvider = bindingProvider;
+    self.projectID = projectID;
     self.scopeSink = scopeSink;
     self.scheduler = scheduler;
     self.identityQueue = identityQueue;
@@ -270,9 +271,8 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
           readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 localStorage:(id<QNLocalStorage>)localStorage
        clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
-             bindingProvider:(QONRemoteConfigBindingProvider)bindingProvider {
-  if (!baseURL || !projectToken.length || !localStorage || !clientContextProvider ||
-      !bindingProvider) {
+                   projectID:(int64_t)projectID {
+  if (!baseURL || !projectToken.length || !localStorage || !clientContextProvider) {
     return NO;
   }
   QONRemoteConfigV2Store *store = [QONRemoteConfigV2Store applicationSupportStore]
@@ -290,7 +290,9 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       readGuardBuildMode:buildMode
       assertionHandler:^(NSString *message) { NSCAssert(NO, @"%@", message); }
       telemetryHandler:nil
-      scopePreloader:preloader];
+      scopePreloader:preloader
+      contextPinStore:[[QONRemoteConfigV2ContextPinStore alloc]
+          initWithLocalStorage:localStorage]];
   if (!manager) return NO;
 
   dispatch_queue_t schedulerQueue = dispatch_queue_create(
@@ -328,7 +330,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                                       coordinator:coordinator
                                        projectKey:projectKey
                                       environment:environment
-                                  bindingProvider:bindingProvider
+                                        projectID:projectID
                                         scopeSink:^(QONRemoteConfigV2Scope *scope) {
                                           [weakTransport updateScope:scope];
                                         }
@@ -354,7 +356,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                          change:(QONRemoteConfigControllerIdentityChange)change {
   QONRemoteConfigV2Manager *manager = nil;
   QONRemoteConfigV2FetchCoordinator *coordinator = nil;
-  QONRemoteConfigBindingProvider bindingProvider = nil;
+  int64_t projectID = 0;
   QONRemoteConfigScopeSink scopeSink = nil;
   dispatch_queue_t identityQueue = nil;
   NSString *projectKey = nil;
@@ -362,7 +364,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
   @synchronized (self) {
     manager = self.manager;
     coordinator = self.coordinator;
-    bindingProvider = self.bindingProvider;
+    projectID = self.projectID;
     scopeSink = self.scopeSink;
     identityQueue = self.identityQueue;
     projectKey = self.projectKey;
@@ -404,10 +406,10 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     // The read guard requires all persistent work to finish off the main queue
     // before the scope is bound.
     [manager preloadScopeForReadGuard:scope];
-    QONRemoteConfigV2FetchBinding *binding = nil;
-    @try {
-      binding = bindingProvider(scope);
-    } @catch (__unused NSException *exception) {}
+    // No fingerprint is supplied here on purpose: the manager pins the
+    // gateway's own on trust-on-first-use and refuses every later mismatch.
+    QONRemoteConfigV2FetchBinding *binding =
+        [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope projectID:projectID];
     QONRemoteConfigV2FetchForceReason reason =
         change == QONRemoteConfigControllerIdentityChangeLogout
             ? QONRemoteConfigV2FetchForceReasonLogout

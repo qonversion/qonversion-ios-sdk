@@ -139,10 +139,7 @@ static NSUInteger failures = 0;
 static QONRemoteConfigV2FetchBinding *Binding(NSString *user) {
   QONRemoteConfigV2Scope *scope = [[QONRemoteConfigV2Scope alloc]
       initWithProjectKey:@"project" environment:@"production" canonicalUserID:user];
-  QONRemoteConfigV2EnvelopeExpectation *expectation = [[QONRemoteConfigV2EnvelopeExpectation alloc]
-      initWithProjectID:42 environmentUID:@"production"
-      contextFingerprint:[@"a" stringByPaddingToLength:64 withString:@"a" startingAtIndex:0]];
-  return [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope expectation:expectation];
+  return [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope projectID:42];
 }
 
 static QONRemoteConfigV2FetchPolicy *Policy(int64_t minimum, NSNumber *timeout) {

@@ -13,6 +13,7 @@
 #import "QONRemoteConfigController.h"
 #import "QONRemoteConfigController+Protected.h"
 #import "QONRemoteConfigFallbackStore.h"
+#import "QONRemoteConfigV2ContextPinStore.h"
 #import "QONRemoteConfigV2FetchPolicyStore.h"
 #import "QONRemoteConfigV2GatewayTransport.h"
 #import "QONRemoteConfigV2Store.h"
@@ -25,6 +26,9 @@ static NSString *const QONRCPubManifestHash =
     @"05b3abf2579a5eb66403cd78be557fd860633a1fe2103c7642030defe32c657f";
 static NSString *const QONRCPubFingerprint =
     @"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+/** A second, equally well-formed fingerprint: another client context entirely. */
+static NSString *const QONRCPubOtherFingerprint =
+    @"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 static int64_t const QONRCPubProjectID = 42;
 
 #pragma mark - Storage
@@ -32,6 +36,7 @@ static int64_t const QONRCPubProjectID = 42;
 @interface QONRCPubStorage : NSObject <QNLocalStorage>
 @property (nonatomic, strong) NSMutableDictionary *objects;
 @property (nonatomic, assign) BOOL failWrites;
+@property (nonatomic, assign) NSUInteger reads;
 @end
 
 @implementation QONRCPubStorage
@@ -43,7 +48,10 @@ static int64_t const QONRCPubProjectID = 42;
 - (void)storeObject:(id)object forKey:(NSString *)key {
   if (!self.failWrites) self.objects[key] = object;
 }
-- (id)loadObjectForKey:(NSString *)key { return self.objects[key]; }
+- (id)loadObjectForKey:(NSString *)key {
+  self.reads += 1;
+  return self.objects[key];
+}
 - (void)loadObjectForKey:(NSString *)key withCompletion:(void (^)(id))completion {
   completion(self.objects[key]);
 }
@@ -224,23 +232,21 @@ static NSString *QONRCPubItem(NSString *raw, NSString *variationUID, NSString *p
       raw, variationUID, policy, metadata];
 }
 
-static NSData *QONRCPubSnapshotBody(NSString *releaseUID, NSInteger releaseNumber,
-                                    NSString *values) {
+static NSData *QONRCPubSnapshotBodyWithFingerprint(NSString *releaseUID, NSInteger releaseNumber,
+                                                   NSString *values, NSString *fingerprint) {
   NSString *body = [NSString stringWithFormat:
       @"{\"schema_version\":1,\"project_id\":%lld,\"environment_uid\":\"%@\","
        "\"release_uid\":\"%@\",\"release_number\":%ld,\"manifest_content_hash\":\"%@\","
        "\"complete_key_set\":true,\"context_fingerprint\":\"%@\",\"values\":{%@}}",
       (long long)QONRCPubProjectID, QONRCPubEnvironmentUID, releaseUID, (long)releaseNumber,
-      QONRCPubManifestHash, QONRCPubFingerprint, values];
+      QONRCPubManifestHash, fingerprint, values];
   return QONRCPubUTF8(body);
 }
 
-static QONRemoteConfigV2FetchBinding *QONRCPubBinding(QONRemoteConfigV2Scope *scope) {
-  QONRemoteConfigV2EnvelopeExpectation *expectation =
-      [[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:QONRCPubProjectID
-                                                      environmentUID:QONRCPubEnvironmentUID
-                                                  contextFingerprint:QONRCPubFingerprint];
-  return [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope expectation:expectation];
+static NSData *QONRCPubSnapshotBody(NSString *releaseUID, NSInteger releaseNumber,
+                                    NSString *values) {
+  return QONRCPubSnapshotBodyWithFingerprint(releaseUID, releaseNumber, values,
+                                             QONRCPubFingerprint);
 }
 
 #pragma mark - Bundled defaults artifact
@@ -337,6 +343,7 @@ static NSBundle *_Nullable QONRCPubBundleWithDefaults(NSData *artifact) {
 @property (nonatomic, strong) QONRCPubClock *clock;
 @property (nonatomic, strong) QONRCPubStorage *storage;
 @property (nonatomic, strong) QONRemoteConfigV2Store *store;
+@property (nonatomic, strong) QONRemoteConfigV2ContextPinStore *contextPinStore;
 @property (nonatomic, strong) QONRemoteConfigFallbackStore *fallbackStore;
 @property (nonatomic, strong) dispatch_queue_t callbackExecutor;
 @property (nonatomic, strong) dispatch_queue_t identityQueue;
@@ -384,8 +391,11 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
                                   QONRemoteConfigV2ReadGuardBuildMode buildMode,
                                   int64_t minimumFetchIntervalMilliseconds,
                                   NSString *_Nullable canonicalUserID) {
-  environment.storage = [QONRCPubStorage new];
+  // A caller may hand in the previous run's storage to model a process restart.
+  if (!environment.storage) environment.storage = [QONRCPubStorage new];
   environment.store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:environment.storage];
+  environment.contextPinStore =
+      [[QONRemoteConfigV2ContextPinStore alloc] initWithLocalStorage:environment.storage];
   environment.transport = [QONRCPubTransport new];
   environment.scheduler = [QONRCPubScheduler new];
   environment.clock = [QONRCPubClock new];
@@ -403,7 +413,8 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
         weakEnvironment.readGuardAssertions += 1;
       }
       telemetryHandler:nil
-      scopePreloader:[[QONRemoteConfigStorePreloader alloc] initWithStore:environment.store]];
+      scopePreloader:[[QONRemoteConfigStorePreloader alloc] initWithStore:environment.store]
+      contextPinStore:environment.contextPinStore];
   QONRemoteConfigV2FetchPolicy *policy = [[QONRemoteConfigV2FetchPolicy alloc]
       initWithMinimumFetchIntervalMilliseconds:minimumFetchIntervalMilliseconds
       timeoutMilliseconds:nil
@@ -425,10 +436,7 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
                                             coordinator:environment.coordinator
                                              projectKey:QONRCPubProjectKey
                                             environment:QONRCPubEnvironmentUID
-                                        bindingProvider:^QONRemoteConfigV2FetchBinding *(
-                                            QONRemoteConfigV2Scope *scope) {
-                                          return QONRCPubBinding(scope);
-                                        }
+                                              projectID:QONRCPubProjectID
                                               scopeSink:nil
                                               scheduler:environment.scheduler
                                           identityQueue:environment.identityQueue]) {

@@ -42,12 +42,17 @@ static int64_t QONRemoteConfigV2FetchSaturatingAdd(int64_t left, int64_t right) 
 @implementation QONRemoteConfigV2FetchBinding
 
 - (instancetype)initWithScope:(QONRemoteConfigV2Scope *)scope
-                    expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation {
-  if (!scope || !expectation || ![scope.environment isEqualToString:expectation.environmentUID]) return nil;
+                     projectID:(int64_t)projectID {
+  if (!scope) return nil;
+  QONRemoteConfigV2EnvelopeExpectation *expectation =
+      [[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:projectID
+                                                      environmentUID:scope.environment];
+  if (!expectation) return nil;
   self = [super init];
   if (self) {
     _scope = [scope copy];
-    _expectation = [expectation copy];
+    _projectID = projectID;
+    _expectation = expectation;
   }
   return self;
 }

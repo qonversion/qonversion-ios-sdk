@@ -29,11 +29,20 @@ NS_ASSUME_NONNULL_BEGIN
 @interface QONRemoteConfigV2Manager (QONRemoteConfigV2FetchCore) <QONRemoteConfigV2FetchCore>
 @end
 
+/**
+ One scope the coordinator may fetch for.
+
+ The binding carries no context fingerprint. It cannot: the gateway derives the
+ fingerprint from the full client context, so nothing knows it before the first
+ response arrives. The expectation is therefore built unpinned and the manager
+ resolves the scope's trust-on-first-use pin at admission time.
+ */
 @interface QONRemoteConfigV2FetchBinding : NSObject <NSCopying>
 @property (nonatomic, strong, readonly) QONRemoteConfigV2Scope *scope;
+@property (nonatomic, assign, readonly) int64_t projectID;
 @property (nonatomic, strong, readonly) QONRemoteConfigV2EnvelopeExpectation *expectation;
 - (nullable instancetype)initWithScope:(QONRemoteConfigV2Scope *)scope
-                            expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation;
+                             projectID:(int64_t)projectID;
 @end
 
 typedef NS_ENUM(NSInteger, QONRemoteConfigV2FetchForceReason) {

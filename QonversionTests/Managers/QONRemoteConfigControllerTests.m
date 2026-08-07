@@ -362,6 +362,150 @@
   XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-c");
 }
 
+#pragma mark - Context fingerprint pin
+
+- (QONRemoteConfigV2Scope *)pinScope:(NSString *)canonicalUserID {
+  return [[QONRemoteConfigV2Scope alloc] initWithProjectKey:QONRCPubProjectKey
+                                                environment:QONRCPubEnvironmentUID
+                                            canonicalUserID:canonicalUserID];
+}
+
+- (NSString *)alphaValues:(NSString *)raw variation:(NSString *)variation {
+  return [self alphaValues:raw variation:variation policy:@"on_next_activate"];
+}
+
+- (void)enqueueForeignRelease:(QONRCPubEnvironment *)environment
+                   releaseUID:(NSString *)releaseUID
+                       number:(NSInteger)number
+                       values:(NSString *)values {
+  NSData *body = QONRCPubSnapshotBodyWithFingerprint(releaseUID, number, values,
+                                                     QONRCPubOtherFingerprint);
+  [environment.transport enqueueBody:body strongETag:QONRCPubStrongETag(body)];
+}
+
+- (void)testContextPinStoreIsScopeKeyedAndValidatesWhatItReadsBack {
+  QONRCPubStorage *storage = [QONRCPubStorage new];
+  QONRemoteConfigV2ContextPinStore *store =
+      [[QONRemoteConfigV2ContextPinStore alloc] initWithLocalStorage:storage];
+  QONRemoteConfigV2Scope *userA = [self pinScope:@"user-a"];
+  QONRemoteConfigV2Scope *userB = [self pinScope:@"user-b"];
+
+  XCTAssertNil([store contextFingerprintForScope:userA]);
+  XCTAssertFalse([store storeContextFingerprint:@"not-a-fingerprint" forScope:userA]);
+  XCTAssertTrue([store storeContextFingerprint:QONRCPubFingerprint forScope:userA]);
+  XCTAssertEqualObjects([store contextFingerprintForScope:userA], QONRCPubFingerprint);
+  XCTAssertNil([store contextFingerprintForScope:userB]);
+
+  QONRemoteConfigV2ContextPinStore *reopened =
+      [[QONRemoteConfigV2ContextPinStore alloc] initWithLocalStorage:storage];
+  XCTAssertEqualObjects([reopened contextFingerprintForScope:userA], QONRCPubFingerprint);
+
+  NSString *key = [QONRemoteConfigV2ContextPinStore storageKeyForScope:userA];
+  storage.objects[key] = @{@"schema_version": @1, @"scope_key": key,
+                           @"context_fingerprint": @"short"};
+  XCTAssertNil([store contextFingerprintForScope:userA]);
+  storage.objects[key] = @{@"schema_version": @2, @"scope_key": key,
+                           @"context_fingerprint": QONRCPubFingerprint};
+  XCTAssertNil([store contextFingerprintForScope:userA]);
+  storage.objects[key] = @{
+    @"schema_version": @1,
+    @"scope_key": [QONRemoteConfigV2ContextPinStore storageKeyForScope:userB],
+    @"context_fingerprint": QONRCPubFingerprint,
+  };
+  XCTAssertNil([store contextFingerprintForScope:userA]);
+
+  [store removeContextFingerprintForScope:userA];
+  XCTAssertNil([store contextFingerprintForScope:userA]);
+  storage.failWrites = YES;
+  XCTAssertFalse([store storeContextFingerprint:QONRCPubFingerprint forScope:userA]);
+}
+
+- (void)testFirstAdmissionPinsTheContextAndLaterMismatchesAreRefused {
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:0];
+  QONRemoteConfigController *controller = environment.controller;
+
+  [self enqueueRelease:environment releaseUID:@"release-1" number:1
+                values:[self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"]];
+  QONRemoteConfigFetchResult *pinned = [self runFetch:environment activate:YES deliveries:NULL];
+  XCTAssertEqual(pinned.status, QONRemoteConfigFetchStatusFetched);
+  XCTAssertTrue(pinned.changed);
+
+  [self enqueueForeignRelease:environment releaseUID:@"release-2" number:2
+                       values:[self alphaValues:@"\"server-alpha-2\"" variation:@"variation-a2"]];
+  QONRemoteConfigFetchResult *refused = [self runFetch:environment activate:YES deliveries:NULL];
+  XCTAssertFalse(refused.changed);
+  XCTAssertFalse(refused.hasPendingActivation);
+  XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-1");
+
+  [self enqueueRelease:environment releaseUID:@"release-3" number:3
+                values:[self alphaValues:@"\"server-alpha-3\"" variation:@"variation-a3"]];
+  XCTAssertTrue([self runFetch:environment activate:YES deliveries:NULL].changed);
+  XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-3");
+}
+
+- (void)testTheContextPinSurvivesAStoreRecreation {
+  QONRCPubEnvironment *first =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:0];
+  [self enqueueRelease:first releaseUID:@"release-1" number:1
+                values:[self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"]];
+  XCTAssertTrue([self runFetch:first activate:YES deliveries:NULL].changed);
+
+  // A restart: same persistent storage, brand new stores, manager and engine.
+  QONRCPubEnvironment *restarted = QONRCPubDormantEnvironment([self defaultsFixture]);
+  restarted.storage = first.storage;
+  XCTAssertTrue(QONRCPubInstallEngine(restarted, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+  XCTAssertNotEqual(restarted.contextPinStore, first.contextPinStore);
+
+  [self enqueueForeignRelease:restarted releaseUID:@"release-4" number:4
+                       values:[self alphaValues:@"\"server-alpha-4\"" variation:@"variation-a4"]];
+  XCTAssertFalse([self runFetch:restarted activate:YES deliveries:NULL].changed);
+
+  [self enqueueRelease:restarted releaseUID:@"release-5" number:5
+                values:[self alphaValues:@"\"server-alpha-5\"" variation:@"variation-a5"]];
+  XCTAssertTrue([self runFetch:restarted activate:YES deliveries:NULL].changed);
+  XCTAssertEqualObjects([restarted.controller rawValueForKey:@"alpha"].value, @"server-alpha-5");
+}
+
+- (void)testScopeResetClearsThePinAndTheNewIdentityRePins {
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:0];
+  QONRemoteConfigController *controller = environment.controller;
+
+  [self enqueueRelease:environment releaseUID:@"release-1" number:1
+                values:[self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"]];
+  XCTAssertTrue([self runFetch:environment activate:YES deliveries:NULL].changed);
+
+  // A new identity is a new client context, so its fingerprint differs and the
+  // forced fetch of the rebind must be free to pin it.
+  [self enqueueForeignRelease:environment releaseUID:@"release-2" number:2
+                       values:[self alphaValues:@"\"server-alpha-b\"" variation:@"variation-b1"]];
+  [controller switchToCanonicalUserID:@"user-b"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  XCTAssertTrue(controller.activate);
+  XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-b");
+
+  environment.clock.now += 10000;
+  [self enqueueRelease:environment releaseUID:@"release-3" number:3
+                values:[self alphaValues:@"\"server-alpha-c\"" variation:@"variation-c1"]];
+  XCTAssertFalse([self runFetch:environment activate:YES deliveries:NULL].changed);
+  XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-b");
+
+  // Returning to the first identity restores that identity's own pin.
+  [self enqueueForeignRelease:environment releaseUID:@"release-6" number:6
+                       values:[self alphaValues:@"\"server-alpha-d\"" variation:@"variation-d1"]];
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  [controller activate];
+  XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-1");
+}
+
 // The controller never touches the install date itself: the transport owns it.
 // This pins the device-scoped storage contract the identity switch relies on.
 - (void)testDeviceInstallDateIsDeviceScopedAcrossIdentities {
@@ -424,15 +568,9 @@
   QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
   QONRemoteConfigController *controller = environment.controller;
   QONRCPubStorage *storage = [QONRCPubStorage new];
-  __block NSUInteger bindingRequests = 0;
 
-  // A binding provider that supplies nothing keeps the coordinator unbound, so
-  // the real assembly is exercised end to end with no request ever leaving.
-  QONRemoteConfigBindingProvider provider = ^QONRemoteConfigV2FetchBinding *(
-      __unused QONRemoteConfigV2Scope *scope) {
-    bindingRequests += 1;
-    return nil;
-  };
+  // A project the caller cannot name yet keeps the coordinator unbound, so the
+  // real assembly is exercised end to end with no request ever leaving.
   BOOL configured = [controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
                                         projectToken:@"project-token"
                                           projectKey:QONRCPubProjectKey
@@ -441,7 +579,7 @@
                                   readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
                                         localStorage:storage
                                clientContextProvider:[QONRCPubContextProvider new]
-                                     bindingProvider:provider];
+                                           projectID:0];
   XCTAssertTrue(configured);
   XCTAssertTrue(controller.isConfigured);
 
@@ -450,7 +588,8 @@
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
                  dispatch_get_main_queue(), ^{ [bound fulfill]; });
   [self waitForExpectationsWithTimeout:2 handler:nil];
-  XCTAssertEqual(bindingRequests, 1u);
+  // Nothing is bound, so nothing may reach the network or the token storage.
+  XCTAssertEqual(storage.objects.count, 0u);
 
   XCTAssertFalse([controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
                                      projectToken:@"project-token"
@@ -460,7 +599,7 @@
                                readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
                                      localStorage:storage
                             clientContextProvider:[QONRCPubContextProvider new]
-                                  bindingProvider:provider]);
+                                        projectID:0]);
 
   XCTAssertEqual([controller rawValueForKey:@"alpha"].source,
                  QONRemoteConfigValueSourceFallback);
