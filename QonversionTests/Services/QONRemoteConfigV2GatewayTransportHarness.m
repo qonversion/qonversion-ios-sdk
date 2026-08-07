@@ -791,6 +791,421 @@ static void TestAStoredSessionTheLedgerCannotVouchForIsDropped(void) {
             "the rewritten session must be replaced, not reused");
 }
 
+#pragma mark - Activation ack
+
+/** Walks the bounded retry ladder to its end without racing the timer it arms. */
+static void RunAckRetryLadder(QONRCV2AckEnvironment *env) {
+  [env settle];
+  for (NSInteger attempt = 1; attempt < QONRemoteConfigV2ActivationAckMaximumAttempts; attempt++) {
+    QON_CHECK(env.scheduler.pendingCount > 0, "a retry must be scheduled after every failed attempt");
+    [env.scheduler runAll];
+    [env settle];
+  }
+}
+
+static void TestAnAckMatchesTheGatewayContractExactly(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 1, "exactly one ack must be sent");
+  NSURLRequest *ack = env.gateway.ackRequests.firstObject;
+  QON_CHECK([ack.HTTPMethod isEqualToString:@"POST"], "ack method");
+  QON_CHECK([ack.URL.absoluteString
+                isEqualToString:@"https://gateway.test.example/v3/remote-config-v2/ack"],
+            "ack url");
+  QON_CHECK([QONRCV2Header(ack, @"Authorization")
+                isEqualToString:[@"Bearer " stringByAppendingString:QONRCV2TestProjectToken]],
+            "ack authorization");
+  QON_CHECK([QONRCV2Header(ack, @"Content-Type") isEqualToString:@"application/json"],
+            "ack content type");
+  QON_CHECK([QONRCV2Header(ack, QONRemoteConfigV2GatewaySessionHeader)
+                isEqualToString:QONRCV2SeededSessionToken],
+            "the ack must ride the very session the snapshot was read under");
+  QON_CHECK([QONRCV2JSONFromRequest(ack) isEqual:(@{
+    @"release_number": @(QONRCV2AckRelease7),
+    @"activated_at": @(QONRCV2AckActivatedAtSeconds),
+  })], "ack body");
+  QON_CHECK(QONRCV2Header(ack, @"If-None-Match") == nil, "an ack carries no validator");
+
+  QONRemoteConfigV2ActivationAckRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.pending == nil && record.settledReleaseNumber == QONRCV2AckRelease7,
+            "a delivered release must be settled durably");
+  QON_CHECK(sender.droppedAckCount == 0, "nothing was dropped");
+}
+
+static void TestADeliveredReleaseIsNeverAckedTwice(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  // The same release re-reported: an implicit activation followed by an
+  // explicit activate().
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  // ...and re-reported after a rebind, which is what a second cold start does.
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 1, "a settled release must never be acked twice");
+}
+
+static void TestA401ReBootstrapsOnceAndRetriesTheAck(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:401];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 2, "the 401 must license exactly one more attempt");
+  QON_CHECK(env.gateway.sessionRequests.count == 1, "exactly one re-bootstrap, and no other");
+  QON_CHECK([QONRCV2Header(env.gateway.ackRequests[0], QONRemoteConfigV2GatewaySessionHeader)
+                isEqualToString:QONRCV2SeededSessionToken] &&
+                [QONRCV2Header(env.gateway.ackRequests[1], QONRemoteConfigV2GatewaySessionHeader)
+                    isEqualToString:QONRCV2MintedSessionToken],
+            "the second attempt must use the freshly minted session");
+  QONRemoteConfigV2ActivationAckRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.pending == nil && record.settledReleaseNumber == QONRCV2AckRelease7,
+            "the retried ack must be delivered and settled");
+  QON_CHECK(sender.droppedAckCount == 0, "nothing was dropped");
+  // The re-bootstrap is the transport's business, not the sender's retry budget.
+  QON_CHECK(env.scheduler.requestedDelays.count == 0, "a 401 must not spend a retry");
+}
+
+static void TestA401ThatSurvivesTheReBootstrapIsPermanent(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:401 times:2];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 2, "a second 401 must end the ack");
+  QON_CHECK(sender.droppedAckCount == 1, "the ack is dropped");
+  QONRemoteConfigV2ActivationAckRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.pending == nil && record.settledReleaseNumber == QONRCV2AckRelease7,
+            "permanent is an answer: the release is settled, not left owed");
+  [env.scheduler runAll];
+  [env settle];
+  QON_CHECK(env.gateway.ackRequests.count == 2, "and nothing retries it");
+}
+
+static void TestAPermanentRefusalSettlesTheRelease(void) {
+  // A gateway that does not serve /ack at all answers every ack with 404.
+  // Forgetting such a release would re-queue and re-POST the same ack on every
+  // start and every binding.
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:404 times:8];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 1, "a 404 is answered once");
+  QON_CHECK(sender.droppedAckCount == 1, "the ack is dropped");
+  QONRemoteConfigV2ActivationAckRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.pending == nil && record.settledReleaseNumber == QONRCV2AckRelease7,
+            "a permanently refused release must be settled, not forgotten");
+
+  [env.scheduler runAll];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  // A whole new process over the same durable state must stay silent as well.
+  [[env makeSender] bindScope:QONRCV2AckScopeA()];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 1,
+            "a gateway without the route must never become a restart storm");
+}
+
+static void TestA503IsRetriedToTheBoundAndThenDropped(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:503 times:8];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  RunAckRetryLadder(env);
+
+  QON_CHECK(env.gateway.ackRequests.count ==
+                (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts,
+            "the ladder is bounded");
+  // Half the cap plus jitter, never full-downward jitter.
+  QON_CHECK([env.scheduler.requestedDelays isEqual:(@[@750, @1500])], "retry delays");
+  QON_CHECK(env.scheduler.pendingCount == 0, "nothing is scheduled after the bound");
+  QON_CHECK(sender.droppedAckCount == 1, "the ack is dropped");
+  [env.scheduler runAll];
+  [env settle];
+  QON_CHECK(env.gateway.ackRequests.count ==
+                (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts,
+            "and stays dropped");
+  // Dropped in this process, still owed: the record is what a later start picks up.
+  QONRemoteConfigV2ActivationAckRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.pending.releaseNumber == QONRCV2AckRelease7,
+            "an abandoned ack stays owed durably");
+}
+
+static void TestAnExhaustedLadderIsNotReArmedByARebinding(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:503 times:8];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  RunAckRetryLadder(env);
+
+  // An identify that lands on the same identity, a re-report of the same
+  // activation, and a round trip through another identity.
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [sender bindScope:QONRCV2AckScopeB()];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [env settle];
+  QON_CHECK(env.gateway.ackRequests.count ==
+                (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts,
+            "a rebind must not buy the same release another ladder");
+
+  // Only a NEWER release re-arms delivery.
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease9];
+  [env settle];
+  QON_CHECK(env.gateway.ackRequests.count ==
+                (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts + 1,
+            "a newer release re-arms delivery");
+  QON_CHECK(QONRCV2AckReleaseNumber(env.gateway.ackRequests.lastObject) == QONRCV2AckRelease9,
+            "and it is the newer release that is reported");
+}
+
+static void TestAnUnbindAndRebindDoesNotBuyTheSameReleaseANewLadder(void) {
+  // The shape every identity change has: the scope is unbound first and bound
+  // again afterwards. Neither half may restart a ladder this process spent.
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:503 times:8];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  RunAckRetryLadder(env);
+
+  for (NSUInteger round = 0; round < 3; round++) {
+    [sender bindScope:nil];
+    [sender bindScope:QONRCV2AckScopeA()];
+    [env settle];
+  }
+
+  QON_CHECK(env.gateway.ackRequests.count ==
+                (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts,
+            "identity churn must never re-arm an abandoned ack");
+  QON_CHECK(sender.droppedAckCount == 1, "and must never re-count the drop");
+}
+
+static void TestAPartlySpentLadderIsNotRestartedByARebinding(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:503 times:8];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+  QON_CHECK(env.gateway.ackRequests.count == 1, "one attempt is spent");
+
+  // Rebinding in the middle of a ladder resumes it rather than starting over,
+  // so the total stays bounded however often the identity is rebound.
+  for (NSUInteger round = 0; round < 5; round++) {
+    [sender bindScope:nil];
+    [sender bindScope:QONRCV2AckScopeA()];
+    [env settle];
+  }
+
+  QON_CHECK(env.gateway.ackRequests.count ==
+                (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts,
+            "the bound is per process, not per binding");
+  QON_CHECK(sender.droppedAckCount == 1, "and the ack ends abandoned exactly once");
+}
+
+static void TestAnOlderActivationNeverSupersedesANewerOne(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:503];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease9];
+  [env settle];
+
+  // Two reads that raced past each other can report the older release last.
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+  [env.scheduler runAll];
+  [env settle];
+
+  for (NSURLRequest *request in env.gateway.ackRequests) {
+    QON_CHECK(QONRCV2AckReleaseNumber(request) == QONRCV2AckRelease9,
+              "an older activation must never displace the release that serves");
+  }
+  QONRemoteConfigV2ActivationAckRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.pending == nil && record.settledReleaseNumber == QONRCV2AckRelease9,
+            "and the newer release is the one that settles");
+}
+
+static void TestAnOlderReleaseCannotReAckASettledScope(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease9];
+  [env settle];
+
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 1,
+            "settled is a high-water mark: an older release is already answered for");
+}
+
+static void TestANewerActivationSupersedesTheQueuedOne(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:503];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  env.clock.now = QONRCV2AckLaterActivatedAtSeconds * 1000;
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease9];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 2, "the newer activation is sent at once");
+  QON_CHECK([QONRCV2JSONFromRequest(env.gateway.ackRequests[1]) isEqual:(@{
+    @"release_number": @(QONRCV2AckRelease9),
+    @"activated_at": @(QONRCV2AckLaterActivatedAtSeconds),
+  })], "the superseding ack states its own activation time");
+  QONRemoteConfigV2ActivationAckRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.pending == nil && record.settledReleaseNumber == QONRCV2AckRelease9,
+            "the newer release settles the scope");
+  // The superseded retry never fires, so release 7 is never re-sent.
+  [env.scheduler runAll];
+  [env settle];
+  QON_CHECK(env.gateway.ackRequests.count == 2 &&
+                QONRCV2AckReleaseNumber(env.gateway.ackRequests[0]) == QONRCV2AckRelease7 &&
+                QONRCV2AckReleaseNumber(env.gateway.ackRequests[1]) == QONRCV2AckRelease9,
+            "a superseded ack is never re-sent");
+}
+
+static void TestAPendingAckSurvivesAProcessRestart(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:503 times:QONRemoteConfigV2ActivationAckMaximumAttempts];
+  QONRemoteConfigV2ActivationAckSender *crashed = [env makeSender];
+  [crashed bindScope:QONRCV2AckScopeA()];
+  [crashed recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  RunAckRetryLadder(env);
+  QON_CHECK(crashed.droppedAckCount == 1, "the first process abandons the ack");
+
+  // A new process: new sender, new queue, new scheduler, a freshly built store
+  // over the same durable bytes.
+  env.scheduler = [QONRCV2ManualScheduler new];
+  env.clock.now = QONRCV2AckLaterActivatedAtSeconds * 1000;
+  QONRemoteConfigV2ActivationAckSender *restarted = [env makeSender];
+  [restarted bindScope:QONRCV2AckScopeA()];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count ==
+                (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts + 1,
+            "the next process delivers what this one could not");
+  // The ack still reports when the release was ACTIVATED, not when it was
+  // finally delivered.
+  QON_CHECK([QONRCV2JSONFromRequest(env.gateway.ackRequests.lastObject) isEqual:(@{
+    @"release_number": @(QONRCV2AckRelease7),
+    @"activated_at": @(QONRCV2AckActivatedAtSeconds),
+  })], "a late-delivered ack still reports when serving started");
+  QONRemoteConfigV2ActivationAckRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.pending == nil && record.settledReleaseNumber == QONRCV2AckRelease7,
+            "and settles it");
+  QON_CHECK(restarted.droppedAckCount == 0, "the new process drops nothing");
+}
+
+static void TestRebindingTheSameIdentityDoesNotReSendAnAckUnderWay(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:503];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  // An identify that resolves to the identity already bound.
+  [sender bindScope:QONRCV2AckScopeA()];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 1, "a no-op identify costs no request");
+  QON_CHECK(env.scheduler.pendingCount == 1, "and the armed retry is still the one that will run");
+  [env.scheduler runAll];
+  [env settle];
+  QON_CHECK(env.gateway.ackRequests.count == 2, "the retry runs exactly once");
+  QON_CHECK([env recordForScope:QONRCV2AckScopeA()].settledReleaseNumber == QONRCV2AckRelease7,
+            "and settles the release");
+}
+
+static void TestAnAckIsNeverSentUnderAnotherIdentitysSession(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [env settle];
+  // The transport now addresses another identity than the one the ack was
+  // queued for.
+  [env useIdentityScope:QONRCV2AckScopeB()];
+
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 0, "no request may be made under the wrong identity");
+  QON_CHECK(sender.droppedAckCount == 0, "a refusal costs no retry budget");
+  QON_CHECK([env recordForScope:QONRCV2AckScopeA()].pending.releaseNumber == QONRCV2AckRelease7,
+            "the ack stays queued for the identity that owes it");
+}
+
+static void TestAnActivationOfAnUnboundScopeIsIgnored(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [sender bindScope:QONRCV2AckScopeB()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 0, "an unbound activation is not an ack");
+  QON_CHECK([env recordForScope:QONRCV2AckScopeA()] == nil, "and is never made durable");
+}
+
+static void TestBindingAnotherIdentityFencesAnAckOnTheWire(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptAckStatus:503];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:QONRCV2AckRelease7];
+  [env settle];
+
+  [env useIdentityScope:QONRCV2AckScopeB()];
+  [sender bindScope:QONRCV2AckScopeB()];
+  [env settle];
+  [env.scheduler runAll];
+  [env settle];
+
+  // The retry the 503 scheduled belongs to the previous identity.
+  QON_CHECK(env.gateway.ackRequests.count == 1, "a fenced retry must never fire");
+  QON_CHECK([env recordForScope:QONRCV2AckScopeA()].pending.releaseNumber == QONRCV2AckRelease7,
+            "and the previous identity keeps owing it");
+}
+
+static void TestAReleaseNumberThatCouldNeverAddressAnythingIsRefused(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2ActivationAckSender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:0];
+  [sender recordActivationForScope:QONRCV2AckScopeA() releaseNumber:-1];
+  [env settle];
+
+  QON_CHECK(env.gateway.ackRequests.count == 0, "an unaddressable release is never acked");
+  QON_CHECK([env recordForScope:QONRCV2AckScopeA()] == nil, "and never persisted");
+}
+
 int main(void) {
   @autoreleasepool {
     TestRequestShapes();
@@ -813,6 +1228,25 @@ int main(void) {
     TestProjectIdentityIsKeyedWithoutTheIdentity();
     TestProjectIdentityPersistenceAndRange();
     TestAStoredSessionTheLedgerCannotVouchForIsDropped();
+
+    TestAnAckMatchesTheGatewayContractExactly();
+    TestADeliveredReleaseIsNeverAckedTwice();
+    TestA401ReBootstrapsOnceAndRetriesTheAck();
+    TestA401ThatSurvivesTheReBootstrapIsPermanent();
+    TestAPermanentRefusalSettlesTheRelease();
+    TestA503IsRetriedToTheBoundAndThenDropped();
+    TestAnExhaustedLadderIsNotReArmedByARebinding();
+    TestAnUnbindAndRebindDoesNotBuyTheSameReleaseANewLadder();
+    TestAPartlySpentLadderIsNotRestartedByARebinding();
+    TestAnOlderActivationNeverSupersedesANewerOne();
+    TestAnOlderReleaseCannotReAckASettledScope();
+    TestANewerActivationSupersedesTheQueuedOne();
+    TestAPendingAckSurvivesAProcessRestart();
+    TestRebindingTheSameIdentityDoesNotReSendAnAckUnderWay();
+    TestAnAckIsNeverSentUnderAnotherIdentitysSession();
+    TestAnActivationOfAnUnboundScopeIsIgnored();
+    TestBindingAnotherIdentityFencesAnAckOnTheWire();
+    TestAReleaseNumberThatCouldNeverAddressAnythingIsRefused();
 
     fprintf(stdout, "QONRemoteConfigV2GatewayTransportHarness: %lu/%lu passed\n",
             (unsigned long)(checks - failures), (unsigned long)checks);

@@ -203,6 +203,29 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
 @property (nonatomic, strong) NSMutableArray<QONRemoteConfigSubscription *> *subscriptions;
 @property (nonatomic, copy, nullable) NSString *boundCanonicalUserID;
 @property (nonatomic, assign) BOOL hasBoundIdentity;
+/**
+ Guards the ack queue and the noted-activation cache below.
+
+ Always taken inside `identityLock`, never around it: an identity transition
+ rebinds the ack queue while it holds the identity lock, and a plain read must
+ never be able to acquire the two in the other order.
+ */
+@property (nonatomic, strong) NSObject *ackLock;
+@property (nonatomic, strong, nullable) QONRemoteConfigV2ActivationAckSender *ackSender;
+@property (nonatomic, strong, nullable) QONRemoteConfigV2Scope *ackScope;
+/**
+ The (scope, release) already handed to the ack queue, so an ordinary `current`
+ read costs one comparison instead of a queue hop. It is a cache of the sender's
+ own idempotency, never a substitute for it: the sender is the only thing that
+ decides whether an ack is actually owed.
+
+ The scope is part of it precisely because the cache is written from the
+ caller's thread: a read that started before an identity change can land after
+ it, and a bare release number would then suppress the new identity's ack for
+ the same release number.
+ */
+@property (nonatomic, strong, nullable) QONRemoteConfigV2Scope *notedActivationScope;
+@property (nonatomic, assign) NSInteger notedActivationReleaseNumber;
 @end
 
 @implementation QONRemoteConfigController
@@ -215,6 +238,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     _fallbackStore = fallbackStore;
     _callbackExecutor = callbackExecutor;
     _identityLock = [NSObject new];
+    _ackLock = [NSObject new];
     _subscriptions = [NSMutableArray new];
   }
   return self;
@@ -256,6 +280,15 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       }
     }
     [manager removeUpdateObserver:observerToken];
+  }
+  return YES;
+}
+
+- (BOOL)installActivationAckSender:(QONRemoteConfigV2ActivationAckSender *)ackSender {
+  if (!ackSender) return NO;
+  @synchronized (self.ackLock) {
+    if (self.ackSender) return NO;
+    self.ackSender = ackSender;
   }
   return YES;
 }
@@ -338,6 +371,27 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                                         "io.qonversion.remote-config-identity",
                                         DISPATCH_QUEUE_SERIAL)];
   if (!installed) return NO;
+
+  // The activation ack rides the very same transport — same session, same
+  // bootstrap, same re-bootstrap-once rule — but owns its queue: it does
+  // durable I/O, and neither an activation nor a fetch waiter may ever be
+  // parked behind it. Installed before the first identity is bound, so the
+  // first activation is already reportable; a failure here only means the
+  // surface never acknowledges, which the read path does not depend on.
+  QONRemoteConfigV2ActivationAckStore *ackStore =
+      [[QONRemoteConfigV2ActivationAckStore alloc] initWithLocalStorage:localStorage];
+  QONRemoteConfigV2ActivationAckSender *ackSender = ackStore
+      ? [[QONRemoteConfigV2ActivationAckSender alloc]
+            initWithTransport:transport
+                        store:ackStore
+                        clock:clock
+                       random:[QONRemoteConfigSystemRandom new]
+                    scheduler:scheduler
+                        queue:dispatch_queue_create("io.qonversion.remote-config-ack",
+                                                    DISPATCH_QUEUE_SERIAL)]
+      : nil;
+  if (ackSender) [self installActivationAckSender:ackSender];
+
   [self switchToCanonicalUserID:canonicalUserID
                          change:QONRemoteConfigControllerIdentityChangeBuild];
   return YES;
@@ -390,6 +444,10 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     // rebind queued by an older switch is fenced out by the epoch.
     [coordinator transitionToBinding:nil];
     if (scopeSink) scopeSink(nil);
+    // The ack queue is unbound with everything else: an activation reported
+    // during the window between the unbind and the rebind belongs to no
+    // identity, and one identity's session may never vouch for another's.
+    [self bindAckScope:nil];
     // Unbinding re-arms the read guard too, so the window between the unbind
     // and the rebind must not accuse the app either.
     [self publishPersistedStateForChange:change manager:manager];
@@ -421,6 +479,9 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       // or a newer switch retires it afterwards.
       if (self.identityEpoch != epoch) return;
       if (scopeSink) scopeSink(scope);
+      // Bound before anything can activate for this identity — which is also
+      // where an ack an earlier process queued but never delivered is resumed.
+      [self bindAckScope:scope];
       if (!binding || ![binding.scope isEqual:scope]) {
         // Degraded but useful: the persisted configuration of the new identity
         // stays readable even though nothing can fetch for it.
@@ -450,6 +511,52 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                                manager:(QONRemoteConfigV2Manager *)manager {
   if (change == QONRemoteConfigControllerIdentityChangeBuild) return;
   [manager activate];
+  // This activation makes a release serve for the newly bound identity, so it
+  // owes an ack exactly like an app-driven one. During the unbind half of a
+  // switch the ack scope is nil and the offer is dropped.
+  [self noteActivatedReleaseNumber:manager.unguardedSnapshot.servedReleaseNumber];
+}
+
+#pragma mark - Activation ack
+
+/** Rebinds the ack queue and forgets what the previous identity had reported. */
+- (void)bindAckScope:(nullable QONRemoteConfigV2Scope *)scope {
+  QONRemoteConfigV2ActivationAckSender *sender = nil;
+  @synchronized (self.ackLock) {
+    sender = self.ackSender;
+    self.ackScope = scope;
+    self.notedActivationScope = nil;
+    self.notedActivationReleaseNumber = 0;
+  }
+  // Returns immediately: the sender does its durable read on its own queue, so
+  // an identity transition never pays for storage.
+  [sender bindScope:scope];
+}
+
+/**
+ Offers `releaseNumber` to the ack queue.
+
+ Every caller is a path the app is waiting on — a `current` read, an `activate`,
+ a fetch completion already handed off — so this must stay a comparison and a
+ hand-off, never work. The sender's own queue is where the ack is persisted and
+ sent, and nothing here can fail in a way the caller could observe.
+ */
+- (void)noteActivatedReleaseNumber:(NSInteger)releaseNumber {
+  if (releaseNumber <= 0) return;
+  QONRemoteConfigV2ActivationAckSender *sender = nil;
+  QONRemoteConfigV2Scope *scope = nil;
+  @synchronized (self.ackLock) {
+    sender = self.ackSender;
+    scope = self.ackScope;
+    if (!sender || !scope) return;
+    if (self.notedActivationReleaseNumber == releaseNumber &&
+        [self.notedActivationScope isEqual:scope]) {
+      return;
+    }
+    self.notedActivationScope = scope;
+    self.notedActivationReleaseNumber = releaseNumber;
+  }
+  [sender recordActivationForScope:scope releaseNumber:releaseNumber];
 }
 
 #pragma mark - Reads
@@ -466,7 +573,13 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
   @synchronized (self) {
     manager = self.manager;
   }
-  return manager ? manager.currentSnapshot : [self fallbackOnlySnapshot];
+  if (!manager) return [self fallbackOnlySnapshot];
+  QONRemoteConfigSnapshot *snapshot = manager.currentSnapshot;
+  // A read can itself activate — the guard's one-shot implicit activation in a
+  // release build — and that activation is exactly as ack-worthy as an explicit
+  // one. Offered after the snapshot is in hand, so the read never waits.
+  [self noteActivatedReleaseNumber:snapshot.servedReleaseNumber];
+  return snapshot;
 }
 
 - (QONRemoteConfigValue *)valueForKey:(NSString *)key
@@ -495,7 +608,15 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
   @synchronized (self) {
     manager = self.manager;
   }
-  return manager ? [manager activate] : NO;
+  if (!manager) return NO;
+  BOOL changed = [manager activate];
+  // Offered whether or not the activation changed anything: "unchanged" means
+  // the release is already the active one, which is the shape an activation
+  // takes after the read guard activated it implicitly — and that release is
+  // owed exactly the same ack. Strictly after the activation is complete, and
+  // it can neither delay nor fail it.
+  [self noteActivatedReleaseNumber:manager.unguardedSnapshot.servedReleaseNumber];
+  return changed;
 }
 
 #pragma mark - Fetching
@@ -642,6 +763,11 @@ hasPendingActivation:hasPendingActivation];
                       changed:changed
          hasPendingActivation:pending
                       forCall:call];
+    // Strictly after the completion is handed off: the ack queue does durable
+    // I/O and the fetch contract promises none of it.
+    if (call.shouldActivate) {
+      [strongSelf noteActivatedReleaseNumber:manager.unguardedSnapshot.servedReleaseNumber];
+    }
   }];
 }
 

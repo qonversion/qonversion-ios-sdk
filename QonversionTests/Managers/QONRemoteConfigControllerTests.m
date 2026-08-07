@@ -694,3 +694,206 @@
 }
 
 @end
+
+#pragma mark - Activation ack
+
+/**
+ When an ack is owed and what it may never cost, over the shipped chain: real
+ snapshot core, real read guard, real fetch coordinator, real durable ack store.
+
+ The wire contract and the failure ladder are proven in
+ QONRemoteConfigV2ActivationAckTests. The headless mirror of this suite is the
+ ack section of QONRemoteConfigControllerHarness.m.
+ */
+@interface QONRemoteConfigActivationAckTests : XCTestCase
+@end
+
+@implementation QONRemoteConfigActivationAckTests
+
+- (NSArray<NSArray<NSString *> *> *)defaultsFixture {
+  return @[
+    @[@"alpha", @"variation-fallback-alpha", @"\"fallback-alpha\""],
+    @[@"gamma", @"variation-fallback-gamma", @"\"fallback-gamma\""],
+  ];
+}
+
+/** Fetches one release without activating it. */
+- (void)serve:(QONRCPubEnvironment *)environment
+   releaseUID:(NSString *)releaseUID
+       number:(NSInteger)number
+     rawValue:(NSString *)rawValue {
+  NSString *values = [NSString stringWithFormat:@"\"alpha\":%@",
+      QONRCPubItem(rawValue, @"variation-a1", @"on_next_activate", @"null")];
+  NSData *body = QONRCPubSnapshotBody(releaseUID, number, values);
+  [environment.transport enqueueBody:body strongETag:QONRCPubStrongETag(body)];
+  [environment.controller fetchWithTimeout:0
+                                completion:^(__unused QONRemoteConfigFetchResult *result) {}];
+  [environment drain];
+}
+
+- (QONRCPubRecordedAck *)ack:(QONRCPubEnvironment *)environment at:(NSUInteger)index {
+  [environment settleAcks];
+  NSArray<QONRCPubRecordedAck *> *acks = nil;
+  @synchronized (environment.ackTransport) {
+    acks = [environment.ackTransport.acks copy];
+  }
+  return index < acks.count ? acks[index] : nil;
+}
+
+/** Walks the bounded retry ladder to its end without racing the timer it arms. */
+- (void)runRetryLadder:(QONRCPubEnvironment *)environment {
+  [environment settleAcks];
+  for (NSInteger attempt = 1; attempt < QONRemoteConfigV2ActivationAckMaximumAttempts; attempt++) {
+    XCTAssertTrue([environment.ackScheduler fireFirstPending]);
+    [environment settleAcks];
+  }
+}
+
+- (void)testAnExplicitActivationIsAckedExactlyOnce {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+  [self serve:environment releaseUID:@"release-1" number:1 rawValue:@"\"server-alpha-1\""];
+
+  XCTAssertTrue(environment.controller.activate);
+  XCTAssertEqual(environment.ackCount, 1u);
+
+  QONRCPubRecordedAck *ack = [self ack:environment at:0];
+  XCTAssertEqualObjects(ack.scope.canonicalUserID, @"user-a");
+  XCTAssertEqual(ack.ack.releaseNumber, 1);
+  XCTAssertGreaterThan(ack.ack.activatedAtSeconds, 0);
+
+  // Re-activating the same release owes nothing, however often it is asked for.
+  [environment.controller activate];
+  [environment.controller activate];
+  XCTAssertEqual(environment.ackCount, 1u);
+}
+
+- (void)testActivatingANewerReleaseAcksItAndNeverReAcksTheOldOne {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+  [self serve:environment releaseUID:@"release-1" number:1 rawValue:@"\"server-alpha-1\""];
+  [environment.controller activate];
+  XCTAssertEqual(environment.ackCount, 1u);
+
+  [self serve:environment releaseUID:@"release-2" number:2 rawValue:@"\"server-alpha-2\""];
+  XCTAssertTrue(environment.controller.activate);
+  XCTAssertEqual(environment.ackCount, 2u);
+  XCTAssertEqual([self ack:environment at:0].ack.releaseNumber, 1);
+  XCTAssertEqual([self ack:environment at:1].ack.releaseNumber, 2);
+}
+
+- (void)testAnActivationNeverWaitsOnAHungAckEndpoint {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+  // The gateway accepts the ack and never answers it.
+  environment.ackTransport.hang = YES;
+  [self serve:environment releaseUID:@"release-1" number:1 rawValue:@"\"server-alpha-1\""];
+
+  // Would never return if the activation joined the ack in any way.
+  XCTAssertTrue(environment.controller.activate);
+  XCTAssertEqual(environment.ackCount, 1u);
+  XCTAssertEqualObjects([environment.controller rawValueForKey:@"alpha"].value,
+                        @"server-alpha-1");
+
+  [environment.controller activate];
+  XCTAssertEqual(environment.ackCount, 1u);
+}
+
+- (void)testAReadThatImplicitlyActivatesIsAckedToo {
+  // Release builds activate on the first read instead of asserting; that
+  // activation changes the served release exactly as an explicit one does.
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeRelease, 0,
+                                      @"user-a"));
+  [self serve:environment releaseUID:@"release-1" number:1 rawValue:@"\"server-alpha-1\""];
+  XCTAssertEqual(environment.ackCount, 0u);
+
+  XCTAssertEqualObjects([environment.controller rawValueForKey:@"alpha"].value,
+                        @"server-alpha-1");
+  XCTAssertEqual(environment.readGuardAssertions, 0u);
+  XCTAssertEqual(environment.ackCount, 1u);
+  XCTAssertEqual([self ack:environment at:0].ack.releaseNumber, 1);
+
+  // The explicit activate() that follows reports unchanged and must not ack again.
+  [environment.controller activate];
+  XCTAssertEqual(environment.ackCount, 1u);
+}
+
+- (void)testAnAckAProcessCouldNotDeliverIsDeliveredByTheNextOne {
+  QONRCPubEnvironment *crashed = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue(QONRCPubInstallEngine(crashed, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+  [crashed.ackTransport scriptResponse:QONRemoteConfigV2AckResponseRetryable
+                                 times:QONRemoteConfigV2ActivationAckMaximumAttempts];
+  [self serve:crashed releaseUID:@"release-1" number:1 rawValue:@"\"server-alpha-1\""];
+  [crashed.controller activate];
+  [self runRetryLadder:crashed];
+  XCTAssertEqual(crashed.ackCount, (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts);
+  XCTAssertEqual(crashed.ackSender.droppedAckCount, 1);
+
+  // A new process over the same durable state.
+  QONRCPubEnvironment *restarted = QONRCPubDormantEnvironment([self defaultsFixture]);
+  restarted.storage = crashed.storage;
+  XCTAssertTrue(QONRCPubInstallEngine(restarted, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+  [restarted settleAcks];
+
+  XCTAssertEqual(restarted.ackCount, 1u);
+  XCTAssertEqual([self ack:restarted at:0].ack.releaseNumber, 1);
+  XCTAssertEqual(restarted.ackSender.droppedAckCount, 0);
+  [restarted.controller activate];
+  XCTAssertEqual(restarted.ackCount, 1u);
+}
+
+- (void)testIdentityChurnDoesNotReArmAnAbandonedAck {
+  // Every identity change unbinds and rebinds the ack queue. An app that
+  // identifies on every foreground must not turn a failing /ack into a
+  // permanent low-rate storm.
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+  [environment.ackTransport scriptResponse:QONRemoteConfigV2AckResponseRetryable
+                                     times:QONRemoteConfigV2ActivationAckMaximumAttempts];
+  [self serve:environment releaseUID:@"release-1" number:1 rawValue:@"\"server-alpha-1\""];
+  [environment.controller activate];
+  [self runRetryLadder:environment];
+  XCTAssertEqual(environment.ackCount,
+                 (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts);
+
+  for (NSUInteger round = 0; round < 3; round++) {
+    [environment.controller
+        switchToCanonicalUserID:@"user-b"
+                         change:QONRemoteConfigControllerIdentityChangeIdentify];
+    [environment settleIdentity];
+    [environment.controller
+        switchToCanonicalUserID:@"user-a"
+                         change:QONRemoteConfigControllerIdentityChangeIdentify];
+    [environment settleIdentity];
+  }
+
+  XCTAssertEqual(environment.ackCount,
+                 (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts);
+  XCTAssertEqual(environment.ackSender.droppedAckCount, 1);
+}
+
+- (void)testAnSDKThatNeverLearnedAnIdentityAcksNothing {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      nil));
+
+  [environment.controller activate];
+  [environment.controller current];
+
+  XCTAssertEqual(environment.ackCount, 0u);
+
+  // ...and neither does a surface that was never configured at all.
+  QONRCPubEnvironment *dormant = QONRCPubDormantEnvironment([self defaultsFixture]);
+  [dormant.controller activate];
+  [dormant.controller current];
+  XCTAssertNil(dormant.ackTransport);
+}
+
+@end

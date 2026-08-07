@@ -768,6 +768,195 @@ static void TestTheRealAssemblyInstallsWithoutTouchingTheNetwork(void) {
             "a fetch on an unbound coordinator must fail rather than hang");
 }
 
+#pragma mark - Activation ack
+
+/** The ack the fake gateway recorded at `index`, or nil. */
+static QONRCPubRecordedAck *RecordedAck(QONRCPubEnvironment *environment, NSUInteger index) {
+  [environment settleAcks];
+  NSArray<QONRCPubRecordedAck *> *acks = nil;
+  @synchronized (environment.ackTransport) {
+    acks = [environment.ackTransport.acks copy];
+  }
+  return index < acks.count ? acks[index] : nil;
+}
+
+/** Walks the bounded retry ladder to its end without racing the timer it arms. */
+static void RunAckRetryLadder(QONRCPubEnvironment *environment) {
+  [environment settleAcks];
+  for (NSInteger attempt = 1; attempt < QONRemoteConfigV2ActivationAckMaximumAttempts; attempt++) {
+    QON_CHECK([environment.ackScheduler fireFirstPending],
+              "a retry must be scheduled after every failed ack attempt");
+    [environment settleAcks];
+  }
+}
+
+/** Fetches one release and returns its body. */
+static void ServeRelease(QONRCPubEnvironment *environment, NSString *releaseUID,
+                         NSInteger releaseNumber, NSString *rawValue) {
+  NSData *body = ReleaseBody(releaseUID, releaseNumber,
+                             AlphaValues(rawValue, @"variation-a1"));
+  [environment.transport enqueueBody:body strongETag:QONRCPubStrongETag(body)];
+  RunFetch(environment, 0, NO, NULL);
+}
+
+static void TestAnExplicitActivationIsAckedExactlyOnce(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install over the fake seams");
+  ServeRelease(environment, @"release-1", 1, @"\"server-alpha-1\"");
+
+  QON_CHECK(environment.controller.activate, "the fetched release must activate");
+  QON_CHECK(environment.ackCount == 1, "an activation that changes the served release is acked");
+
+  QONRCPubRecordedAck *ack = RecordedAck(environment, 0);
+  QON_CHECK([ack.scope.canonicalUserID isEqualToString:@"user-a"],
+            "the ack must name the identity that activated");
+  QON_CHECK(ack.ack.releaseNumber == 1, "the ack must name the release that now serves");
+  QON_CHECK(ack.ack.activatedAtSeconds > 0, "the ack must be stamped when it was activated");
+
+  // Re-activating the same release owes nothing, however often it is asked for.
+  [environment.controller activate];
+  [environment.controller activate];
+  QON_CHECK(environment.ackCount == 1, "a re-activation of an acked release costs no request");
+}
+
+static void TestActivatingANewerReleaseAcksItAndNeverReAcksTheOld(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install over the fake seams");
+  ServeRelease(environment, @"release-1", 1, @"\"server-alpha-1\"");
+  [environment.controller activate];
+  QON_CHECK(environment.ackCount == 1, "the first release is acked");
+
+  ServeRelease(environment, @"release-2", 2, @"\"server-alpha-2\"");
+  QON_CHECK(environment.controller.activate, "the newer release must activate");
+  QON_CHECK(environment.ackCount == 2, "the newer release is acked too");
+  QON_CHECK(RecordedAck(environment, 0).ack.releaseNumber == 1 &&
+                RecordedAck(environment, 1).ack.releaseNumber == 2,
+            "each release is acked exactly once, in the order it started serving");
+}
+
+static void TestAnActivationNeverWaitsOnAHungAckEndpoint(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install over the fake seams");
+  // The gateway accepts the ack and never answers it.
+  environment.ackTransport.hang = YES;
+  ServeRelease(environment, @"release-1", 1, @"\"server-alpha-1\"");
+
+  // Would never return if the activation joined the ack in any way.
+  QON_CHECK(environment.controller.activate, "an activation must never wait on the ack");
+  QON_CHECK(environment.ackCount == 1, "the ack is on the wire");
+  QON_CHECK([[environment.controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-1"],
+            "and a read is not blocked by it either");
+
+  // The wedged ack neither blocks nor re-arms anything.
+  [environment.controller activate];
+  QON_CHECK(environment.ackCount == 1,
+            "a second activation of the same release stays silent while one is in flight");
+}
+
+static void TestAReadThatImplicitlyActivatesIsAcked(void) {
+  // Release builds activate on the first read instead of asserting; that
+  // activation changes the served release exactly as an explicit one does.
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeRelease, 0,
+                                  @"user-a"),
+            "the engine must install in release mode");
+  ServeRelease(environment, @"release-1", 1, @"\"server-alpha-1\"");
+  QON_CHECK(environment.ackCount == 0, "a fetch alone owes no ack");
+
+  QON_CHECK([[environment.controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-1"],
+            "the first read must activate silently");
+  QON_CHECK(environment.readGuardAssertions == 0, "and never accuse the app");
+  QON_CHECK(environment.ackCount == 1, "an implicit activation is acked exactly like an explicit one");
+  QON_CHECK(RecordedAck(environment, 0).ack.releaseNumber == 1, "and names the same release");
+
+  // The explicit activate() that follows reports unchanged and must not ack again.
+  [environment.controller activate];
+  QON_CHECK(environment.ackCount == 1, "the explicit activate that follows stays silent");
+}
+
+static void TestAnAckAProcessCouldNotDeliverIsDeliveredByTheNextOne(void) {
+  QONRCPubEnvironment *crashed = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(crashed, QONRemoteConfigV2ReadGuardBuildModeDebug, 0, @"user-a"),
+            "the first run must install");
+  [crashed.ackTransport scriptResponse:QONRemoteConfigV2AckResponseRetryable
+                                 times:QONRemoteConfigV2ActivationAckMaximumAttempts];
+  ServeRelease(crashed, @"release-1", 1, @"\"server-alpha-1\"");
+  [crashed.controller activate];
+  RunAckRetryLadder(crashed);
+  QON_CHECK(crashed.ackCount == (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts,
+            "the first process walks the bounded ladder");
+  QON_CHECK(crashed.ackSender.droppedAckCount == 1,
+            "and abandons the ack for the rest of its life");
+
+  // A new process over the same durable state.
+  QONRCPubEnvironment *restarted = QONRCPubDormantEnvironment(DefaultsFixture());
+  restarted.storage = crashed.storage;
+  QON_CHECK(QONRCPubInstallEngine(restarted, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the restarted run must install over the surviving storage");
+  [restarted settleAcks];
+
+  QON_CHECK(restarted.ackCount == 1, "binding the identity resumes the ack the last process owed");
+  QON_CHECK(RecordedAck(restarted, 0).ack.releaseNumber == 1, "and it still names release 1");
+  QON_CHECK(restarted.ackSender.droppedAckCount == 0, "the new process drops nothing");
+  // Nothing is owed any more, so a later activation of the same release is silent.
+  [restarted.controller activate];
+  QON_CHECK(restarted.ackCount == 1, "a settled release is never acked again");
+}
+
+static void TestIdentityChurnDoesNotReArmAnAbandonedAck(void) {
+  // Every identity change unbinds and rebinds the ack queue. An app that
+  // identifies on every foreground must not turn a failing /ack into a
+  // permanent low-rate storm.
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install over the fake seams");
+  [environment.ackTransport scriptResponse:QONRemoteConfigV2AckResponseRetryable
+                                     times:QONRemoteConfigV2ActivationAckMaximumAttempts];
+  ServeRelease(environment, @"release-1", 1, @"\"server-alpha-1\"");
+  [environment.controller activate];
+  RunAckRetryLadder(environment);
+  QON_CHECK(environment.ackCount == (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts,
+            "the ladder is walked to its bound");
+
+  for (NSUInteger round = 0; round < 3; round++) {
+    [environment.controller switchToCanonicalUserID:@"user-b"
+                                             change:QONRemoteConfigControllerIdentityChangeIdentify];
+    [environment settleIdentity];
+    [environment.controller switchToCanonicalUserID:@"user-a"
+                                             change:QONRemoteConfigControllerIdentityChangeIdentify];
+    [environment settleIdentity];
+  }
+
+  QON_CHECK(environment.ackCount == (NSUInteger)QONRemoteConfigV2ActivationAckMaximumAttempts,
+            "identity churn must never buy an abandoned ack another ladder");
+  QON_CHECK(environment.ackSender.droppedAckCount == 1, "and must never re-count the drop");
+}
+
+static void TestAnSDKThatNeverLearnedAnIdentityAcksNothing(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0, nil),
+            "the engine must install without an identity");
+
+  [environment.controller activate];
+  [environment.controller current];
+
+  QON_CHECK(environment.ackCount == 0, "an SDK that never learned an identity acks nothing");
+
+  // ...and neither does a surface that was never configured at all.
+  QONRCPubEnvironment *dormant = QONRCPubDormantEnvironment(DefaultsFixture());
+  [dormant.controller activate];
+  [dormant.controller current];
+  QON_CHECK(dormant.ackTransport == nil, "a dormant surface has no ack queue to speak through");
+}
+
 int main(void) {
   @autoreleasepool {
     TestDormantSurfaceServesBundledDefaultsAndRefusesToFetch();
@@ -788,6 +977,14 @@ int main(void) {
     TestDeviceInstallDateIsDeviceScopedAcrossIdentities();
     TestReleaseBuildActivatesOnceSilentlyOnAFirstRead();
     TestTheRealAssemblyInstallsWithoutTouchingTheNetwork();
+
+    TestAnExplicitActivationIsAckedExactlyOnce();
+    TestActivatingANewerReleaseAcksItAndNeverReAcksTheOld();
+    TestAnActivationNeverWaitsOnAHungAckEndpoint();
+    TestAReadThatImplicitlyActivatesIsAcked();
+    TestAnAckAProcessCouldNotDeliverIsDeliveredByTheNextOne();
+    TestIdentityChurnDoesNotReArmAnAbandonedAck();
+    TestAnSDKThatNeverLearnedAnIdentityAcksNothing();
   }
   if (failures == 0) {
     fprintf(stdout, "QONRemoteConfigControllerHarness: %lu/%lu passed\n",

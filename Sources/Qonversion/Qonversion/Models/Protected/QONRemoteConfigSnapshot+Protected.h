@@ -18,6 +18,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithPrimaryRelease:(nullable QONRemoteConfigV2Release *)primaryRelease
                         previousRelease:(nullable QONRemoteConfigV2Release *)previousRelease
                         fallbackRelease:(nullable QONRemoteConfigV2Release *)fallbackRelease;
+/**
+ The release number of the primary (served) release, or 0 when nothing is served.
+
+ Deliberately not the public `releaseNumber`, which walks down to the previous
+ and then the bundled release so a read always reports something: that walk is
+ right for a read and wrong for an acknowledgement, which must name the release
+ the gateway actually published.
+ */
+@property (nonatomic, assign, readonly) NSInteger servedReleaseNumber;
 - (nullable QONRemoteConfigV2Entry *)effectiveEntryForKey:(NSString *)key;
 @end
 

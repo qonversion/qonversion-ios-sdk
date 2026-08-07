@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import "QONRemoteConfigV2ActivationAck.h"
 #import "QONRemoteConfigV2FetchCoordinator.h"
 #import "QONRemoteConfigV2DeviceInstallDate.h"
 #import "QONRemoteConfigV2GatewaySessionStore.h"
@@ -8,6 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 FOUNDATION_EXPORT NSString *const QONRemoteConfigV2GatewaySessionPath;
 FOUNDATION_EXPORT NSString *const QONRemoteConfigV2GatewaySnapshotPath;
+FOUNDATION_EXPORT NSString *const QONRemoteConfigV2GatewayAckPath;
 FOUNDATION_EXPORT NSString *const QONRemoteConfigV2GatewaySessionHeader;
 FOUNDATION_EXPORT NSUInteger const QONRemoteConfigV2GatewayMaximumBootstrapBytes;
 
@@ -115,8 +117,16 @@ typedef void (^QONRemoteConfigV2TransportFailureObserver)(
  The one thing it does read out of a response body is the session bootstrap's
  `project_id`, which is the only place the SDK can learn it. It is established
  once per project and environment, kept durable, and thereafter only confirmed.
+
+ The same session seam serves the activation ack route —
+ POST {baseURL}/v3/remote-config-v2/ack — see `sendAck:forScope:completion:`.
+ It is a strictly out-of-band signal: it shares the session, the bootstrap and
+ the single re-bootstrap-on-401 rule, and nothing else. It can neither admit nor
+ invalidate config data, and it never reports through the failure observer,
+ which belongs to the fetch policy.
  */
-@interface QONRemoteConfigV2GatewayTransport : NSObject <QONRemoteConfigV2FetchTransport>
+@interface QONRemoteConfigV2GatewayTransport : NSObject <QONRemoteConfigV2FetchTransport,
+                                                          QONRemoteConfigV2AckTransporting>
 - (instancetype)init NS_UNAVAILABLE;
 - (nullable instancetype)initWithBaseURL:(NSURL *)baseURL
                             projectToken:(NSString *)projectToken

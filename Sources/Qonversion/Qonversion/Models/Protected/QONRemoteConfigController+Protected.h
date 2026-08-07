@@ -7,6 +7,7 @@
 
 #import "QONRemoteConfigController.h"
 #import "QONRemoteConfigFetchResult.h"
+#import "QONRemoteConfigV2ActivationAck.h"
 #import "QONRemoteConfigV2FetchCoordinator.h"
 #import "QONRemoteConfigV2Manager.h"
 #import "QONRemoteConfigV2Models.h"
@@ -81,6 +82,16 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
                        scopeSink:(nullable QONRemoteConfigScopeSink)scopeSink
                        scheduler:(id<QONRemoteConfigV2FetchScheduler>)scheduler
                    identityQueue:(dispatch_queue_t)identityQueue;
+
+/**
+ Installs the out-of-band activation ack queue.
+
+ Optional by construction: without it the surface simply never acknowledges an
+ activation, and nothing else changes. It must be installed before the first
+ identity is bound, so the very first activation is already reportable, and it
+ is refused afterwards.
+ */
+- (BOOL)installActivationAckSender:(QONRemoteConfigV2ActivationAckSender *)ackSender;
 
 /**
  Assembles the real engine against the gateway routes and installs it. Nothing

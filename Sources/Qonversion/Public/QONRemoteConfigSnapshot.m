@@ -31,6 +31,10 @@
       (self.previousRelease ? self.previousRelease.releaseNumber : self.fallbackRelease.releaseNumber);
 }
 
+- (NSInteger)servedReleaseNumber {
+  return self.primaryRelease ? self.primaryRelease.releaseNumber : 0;
+}
+
 - (NSString *)manifestContentHash {
   return self.primaryRelease.manifestContentHash ?: self.previousRelease.manifestContentHash ?:
       self.fallbackRelease.manifestContentHash ?: @"";

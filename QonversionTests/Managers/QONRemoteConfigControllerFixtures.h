@@ -181,6 +181,63 @@ static int64_t const QONRCPubProjectID = 42;
 }
 @end
 
+#pragma mark - Activation ack
+
+@interface QONRCPubRecordedAck : NSObject
+@property (nonatomic, strong) QONRemoteConfigV2Scope *scope;
+@property (nonatomic, strong) QONRemoteConfigV2ActivationAck *ack;
+@end
+
+@implementation QONRCPubRecordedAck
+@end
+
+/** Scripted ack transport that can also accept one ack and never answer it. */
+@interface QONRCPubAckTransport : NSObject <QONRemoteConfigV2AckTransporting>
+@property (nonatomic, strong) NSMutableArray<QONRCPubRecordedAck *> *acks;
+@property (nonatomic, strong) NSMutableArray<NSNumber *> *responses;
+@property (nonatomic, assign) BOOL hang;
+- (void)scriptResponse:(QONRemoteConfigV2AckResponse)response times:(NSUInteger)times;
+- (NSUInteger)ackCount;
+@end
+
+@implementation QONRCPubAckTransport
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _acks = [NSMutableArray new];
+    _responses = [NSMutableArray new];
+  }
+  return self;
+}
+- (void)scriptResponse:(QONRemoteConfigV2AckResponse)response times:(NSUInteger)times {
+  @synchronized (self) {
+    for (NSUInteger index = 0; index < times; index++) [self.responses addObject:@(response)];
+  }
+}
+- (NSUInteger)ackCount {
+  @synchronized (self) {
+    return self.acks.count;
+  }
+}
+- (void)sendAck:(QONRemoteConfigV2ActivationAck *)ack
+       forScope:(QONRemoteConfigV2Scope *)scope
+     completion:(QONRemoteConfigV2AckCompletion)completion {
+  QONRemoteConfigV2AckResponse response = QONRemoteConfigV2AckResponseDelivered;
+  @synchronized (self) {
+    QONRCPubRecordedAck *recorded = [QONRCPubRecordedAck new];
+    recorded.scope = scope;
+    recorded.ack = ack;
+    [self.acks addObject:recorded];
+    if (self.hang) return;
+    if (self.responses.count > 0) {
+      response = (QONRemoteConfigV2AckResponse)self.responses.firstObject.integerValue;
+      [self.responses removeObjectAtIndex:0];
+    }
+  }
+  completion(response);
+}
+@end
+
 #pragma mark - Client context
 
 @interface QONRCPubContextProvider : NSObject <QONRemoteConfigV2ClientContextProviding>
@@ -345,8 +402,13 @@ static NSBundle *_Nullable QONRCPubBundleWithDefaults(NSData *artifact) {
 @property (nonatomic, strong) dispatch_queue_t callbackExecutor;
 @property (nonatomic, strong) dispatch_queue_t identityQueue;
 @property (nonatomic, assign) NSUInteger readGuardAssertions;
+@property (nonatomic, strong) QONRCPubAckTransport *ackTransport;
+@property (nonatomic, strong) QONRCPubScheduler *ackScheduler;
+@property (nonatomic, strong) QONRemoteConfigV2ActivationAckSender *ackSender;
 - (void)drain;
 - (void)settleIdentity;
+- (void)settleAcks;
+- (NSUInteger)ackCount;
 @end
 
 @implementation QONRCPubEnvironment
@@ -360,6 +422,23 @@ static NSBundle *_Nullable QONRCPubBundleWithDefaults(NSData *artifact) {
 - (void)settleIdentity {
   dispatch_sync(self.identityQueue, ^{});
   [self drain];
+  [self settleAcks];
+}
+/**
+ Runs every unit of ack work that is already owed.
+
+ A response is handed back inside the block that sent it, so it lands on the
+ sender's queue behind the barrier this method just posted: one pass is never
+ enough to reach quiescence.
+ */
+- (void)settleAcks {
+  for (NSUInteger index = 0; index < 8; index++) {
+    [self.ackSender settleForTesting];
+  }
+}
+- (NSUInteger)ackCount {
+  [self settleAcks];
+  return self.ackTransport.ackCount;
 }
 @end
 
@@ -425,7 +504,21 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
       policy:policy
       callbackExecutor:environment.callbackExecutor
       policyPersistenceFailureObserver:nil];
-  if (!environment.manager || !environment.coordinator) return NO;
+  // The ack queue is its own seam: a fake transport that records what the
+  // gateway would have been told, a manual retry scheduler, and the REAL
+  // durable store over the run's storage, so a "restart" proves the record
+  // survives the store that wrote it.
+  environment.ackTransport = [QONRCPubAckTransport new];
+  environment.ackScheduler = [QONRCPubScheduler new];
+  environment.ackSender = [[QONRemoteConfigV2ActivationAckSender alloc]
+      initWithTransport:environment.ackTransport
+                  store:[[QONRemoteConfigV2ActivationAckStore alloc]
+                            initWithLocalStorage:environment.storage]
+                  clock:environment.clock
+                 random:[QONRCPubRandom new]
+              scheduler:environment.ackScheduler
+                  queue:dispatch_queue_create("io.qonversion.rc-pub-ack", DISPATCH_QUEUE_SERIAL)];
+  if (!environment.manager || !environment.coordinator || !environment.ackSender) return NO;
   if (![environment.controller installEngineWithManager:environment.manager
                                             coordinator:environment.coordinator
                                              projectKey:QONRCPubProjectKey
@@ -435,6 +528,7 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
                                           identityQueue:environment.identityQueue]) {
     return NO;
   }
+  if (![environment.controller installActivationAckSender:environment.ackSender]) return NO;
   if (canonicalUserID) {
     [environment.controller switchToCanonicalUserID:canonicalUserID
                                              change:QONRemoteConfigControllerIdentityChangeBuild];

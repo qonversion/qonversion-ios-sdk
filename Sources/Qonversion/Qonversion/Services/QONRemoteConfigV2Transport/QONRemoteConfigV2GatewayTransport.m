@@ -5,11 +5,25 @@
 
 NSString *const QONRemoteConfigV2GatewaySessionPath = @"v3/remote-config-v2/session";
 NSString *const QONRemoteConfigV2GatewaySnapshotPath = @"v3/remote-config-v2/snapshot";
+NSString *const QONRemoteConfigV2GatewayAckPath = @"v3/remote-config-v2/ack";
 NSString *const QONRemoteConfigV2GatewaySessionHeader = @"X-Qonversion-RC-Session";
 NSUInteger const QONRemoteConfigV2GatewayMaximumBootstrapBytes = 8192;
 
 static NSUInteger const QONRemoteConfigV2GatewayMaximumContextComponentBytes = 256;
 static int64_t const QONRemoteConfigV2GatewayMaximumRetryAfterMilliseconds = 86400000;
+
+/**
+ How a bootstrap reports that it could not mint a session.
+
+ The bootstrap is shared by two routes that speak different vocabularies, so it
+ states the refusal in its own terms — a typed failure kind plus whatever the
+ gateway answered — and lets each caller translate. The fetch path turns it into
+ a QONRemoteConfigV2FetchResponse; the ack path turns it into a
+ QONRemoteConfigV2AckResponse. Neither re-derives the other's meaning.
+ */
+typedef void (^QONRemoteConfigV2GatewayRefusal)(QONRemoteConfigV2TransportFailureKind kind,
+                                                NSNumber *_Nullable statusCode,
+                                                NSNumber *_Nullable retryAfterMilliseconds);
 
 #pragma mark - Shared helpers
 
@@ -337,8 +351,10 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
     return;
   }
 
-  [self bootstrapForScope:scope generation:generation respond:respond completion:
-      ^(QONRemoteConfigV2GatewaySession *freshSession) {
+  [self bootstrapForScope:scope
+               generation:generation
+                   refuse:[self fetchRefusalForRespond:respond]
+               completion:^(QONRemoteConfigV2GatewaySession *freshSession) {
     // A session created inside this fetch is already fresh: a 401 on it is a
     // real rejection, so it must never trigger another bootstrap round.
     [self performSnapshotForScope:scope
@@ -349,6 +365,183 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
               allowReBootstrap:NO
                           respond:respond];
   }];
+}
+
+#pragma mark - Activation ack
+
+/**
+ Reports one activation out of band — POST {baseURL}/v3/remote-config-v2/ack.
+
+ The `scope` the ack was queued for is compared against the identity the
+ transport currently addresses: an identity change between queueing and sending
+ must never let one identity's session vouch for another identity's activation,
+ so the attempt is refused as `NotAddressable` (which costs the sender no retry
+ budget) rather than sent.
+
+ Failure classification is deliberately coarse, because the gateway answers
+ opaquely: `2xx` is delivered, `429`/`5xx`/transport faults are retryable, and
+ everything else — including a `401` that survives one re-bootstrap and the
+ `404` of a gateway that does not serve this route yet — is permanent.
+ */
+- (void)sendAck:(QONRemoteConfigV2ActivationAck *)ack
+       forScope:(QONRemoteConfigV2Scope *)scope
+     completion:(QONRemoteConfigV2AckCompletion)completion {
+  if (!completion) return;
+
+  __block BOOL responded = NO;
+  QONRemoteConfigV2AckCompletion respond = ^(QONRemoteConfigV2AckResponse response) {
+    BOOL shouldRespond = NO;
+    @synchronized (self) {
+      if (!responded) {
+        responded = YES;
+        shouldRespond = YES;
+      }
+    }
+    if (shouldRespond) completion(response);
+  };
+
+  QONRemoteConfigV2Scope *current = nil;
+  int64_t generation = 0;
+  @synchronized (self) {
+    current = self.scope;
+    generation = self.generation;
+  }
+  if (!ack || !scope || !QONRemoteConfigV2GatewayScopesEqual(current, scope)) {
+    respond(QONRemoteConfigV2AckResponseNotAddressable);
+    return;
+  }
+
+  NSData *body = QONRemoteConfigV2GatewayJSONBody(@{
+    @"release_number": @(ack.releaseNumber),
+    @"activated_at": @(ack.activatedAtSeconds),
+  });
+  if (!body) {
+    // An ack this process cannot even encode will not encode any better later.
+    respond(QONRemoteConfigV2AckResponsePermanent);
+    return;
+  }
+
+  QONRemoteConfigV2GatewaySession *session = [self validSessionForScope:scope];
+  if (session) {
+    [self performAckForScope:scope
+                  generation:generation
+                     session:session
+                        body:body
+            allowReBootstrap:YES
+                     respond:respond];
+    return;
+  }
+  [self bootstrapForScope:scope
+               generation:generation
+                   refuse:[self ackRefusalForRespond:respond]
+               completion:^(QONRemoteConfigV2GatewaySession *freshSession) {
+    // A session minted inside this ack is already fresh: a 401 on it is a real
+    // rejection, so it must never trigger another bootstrap round.
+    [self performAckForScope:scope
+                  generation:generation
+                     session:freshSession
+                        body:body
+            allowReBootstrap:NO
+                     respond:respond];
+  }];
+}
+
+- (void)performAckForScope:(QONRemoteConfigV2Scope *)scope
+                generation:(int64_t)generation
+                   session:(QONRemoteConfigV2GatewaySession *)session
+                      body:(NSData *)body
+          allowReBootstrap:(BOOL)allowReBootstrap
+                   respond:(QONRemoteConfigV2AckCompletion)respond {
+  NSURLRequest *request = [self requestWithPath:QONRemoteConfigV2GatewayAckPath
+                                           body:body
+                                   sessionToken:session.sessionToken
+                                    ifNoneMatch:nil];
+  if (!request) {
+    respond(QONRemoteConfigV2AckResponsePermanent);
+    return;
+  }
+
+  [self execute:request completion:^(__unused NSData *data, NSHTTPURLResponse *response,
+                                     NSError *error) {
+    if (![self isCurrentScope:scope generation:generation]) {
+      // Not an attempt: the identity moved on, and the ack is still owed by the
+      // identity that queued it.
+      respond(QONRemoteConfigV2AckResponseNotAddressable);
+      return;
+    }
+    if (error || !response) {
+      respond(QONRemoteConfigV2AckResponseRetryable);
+      return;
+    }
+
+    NSInteger status = response.statusCode;
+    if (status >= 200 && status <= 299) {
+      respond(QONRemoteConfigV2AckResponseDelivered);
+      return;
+    }
+    if (status == 401) {
+      // Deliberately NOT removing the stored session: it is shared with the
+      // config read path, and an out-of-band signal may not invalidate state
+      // that path depends on. Minting simply replaces it if it really is dead,
+      // and the read path applies its own 401 rule.
+      if (!allowReBootstrap) {
+        respond(QONRemoteConfigV2AckResponsePermanent);
+        return;
+      }
+      [self bootstrapForScope:scope
+                   generation:generation
+                       refuse:[self ackRefusalForRespond:respond]
+                   completion:^(QONRemoteConfigV2GatewaySession *freshSession) {
+        [self performAckForScope:scope
+                      generation:generation
+                         session:freshSession
+                            body:body
+                allowReBootstrap:NO
+                         respond:respond];
+      }];
+      return;
+    }
+    if (status == 429 || (status >= 500 && status <= 599)) {
+      respond(QONRemoteConfigV2AckResponseRetryable);
+      return;
+    }
+    respond(QONRemoteConfigV2AckResponsePermanent);
+  }];
+}
+
+/** A bootstrap refusal, seen from the ack route. */
+- (QONRemoteConfigV2GatewayRefusal)ackRefusalForRespond:(QONRemoteConfigV2AckCompletion)respond {
+  return ^(QONRemoteConfigV2TransportFailureKind kind, NSNumber *statusCode,
+           __unused NSNumber *retryAfterMilliseconds) {
+    // The ack route never reports through the failure observer: that observer
+    // belongs to the fetch policy, and an out-of-band signal may not feed it.
+    switch (kind) {
+      case QONRemoteConfigV2TransportFailureKindSuperseded:
+        respond(QONRemoteConfigV2AckResponseNotAddressable);
+        return;
+      case QONRemoteConfigV2TransportFailureKindBootstrapTransport:
+      // A 200 that carried no usable session is a gateway contract violation a
+      // later attempt may well not repeat, and a storage fault is transient by
+      // nature.
+      case QONRemoteConfigV2TransportFailureKindBootstrapMalformed:
+      case QONRemoteConfigV2TransportFailureKindBootstrapPersistenceFailed:
+      case QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed:
+        respond(QONRemoteConfigV2AckResponseRetryable);
+        return;
+      case QONRemoteConfigV2TransportFailureKindBootstrapUnavailable: {
+        NSInteger status = statusCode ? statusCode.integerValue : 0;
+        respond(status == 429 || (status >= 500 && status <= 599)
+                    ? QONRemoteConfigV2AckResponseRetryable
+                    : QONRemoteConfigV2AckResponsePermanent);
+        return;
+      }
+      default:
+        // A refused credential, an absent route, a project the ledger refuses to
+        // rebind, an unbuildable request: retrying only repeats the answer.
+        respond(QONRemoteConfigV2AckResponsePermanent);
+        return;
+    }
+  };
 }
 
 #pragma mark - Project identity
@@ -364,7 +557,7 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
  */
 - (BOOL)confirmProjectIdentityForSession:(QONRemoteConfigV2GatewaySession *)session
                                    scope:(QONRemoteConfigV2Scope *)scope
-                                 respond:(QONRemoteConfigV2FetchTransportCompletion)respond {
+                                  refuse:(QONRemoteConfigV2GatewayRefusal)refuse {
   QONRemoteConfigV2ProjectIdentityOutcome outcome =
       QONRemoteConfigV2ProjectIdentityOutcomePersistenceFailed;
   @try {
@@ -381,31 +574,31 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
       // fabricating one would misreport it. It stays retryable and therefore
       // backs off, which is right — the disagreement is durable, so every
       // retry must keep failing instead of quietly rebinding the project.
-      [self failRespond:respond
-                   kind:QONRemoteConfigV2TransportFailureKindProjectIdentityConflict
-             statusCode:nil
-                 retryAfterMilliseconds:nil];
+      refuse(QONRemoteConfigV2TransportFailureKindProjectIdentityConflict, nil, nil);
       return NO;
     case QONRemoteConfigV2ProjectIdentityOutcomeUnusable:
       // The id itself is out of range, which makes the bootstrap that stated it
       // malformed rather than the storage faulty.
-      [self failRespond:respond
-                   kind:QONRemoteConfigV2TransportFailureKindBootstrapMalformed
-             statusCode:nil
-                 retryAfterMilliseconds:nil];
+      refuse(QONRemoteConfigV2TransportFailureKindBootstrapMalformed, nil, nil);
       return NO;
     case QONRemoteConfigV2ProjectIdentityOutcomePersistenceFailed:
-      [self failRespond:respond
-                   kind:QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed
-             statusCode:nil
-                 retryAfterMilliseconds:nil];
+      refuse(QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed, nil, nil);
       return NO;
   }
-  [self failRespond:respond
-               kind:QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed
-         statusCode:nil
-             retryAfterMilliseconds:nil];
+  refuse(QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed, nil, nil);
   return NO;
+}
+
+/** The refusal a fetch answers with: exactly the previous failRespond: behaviour. */
+- (QONRemoteConfigV2GatewayRefusal)fetchRefusalForRespond:
+    (QONRemoteConfigV2FetchTransportCompletion)respond {
+  return ^(QONRemoteConfigV2TransportFailureKind kind, NSNumber *statusCode,
+           NSNumber *retryAfterMilliseconds) {
+    [self failRespond:respond
+                 kind:kind
+           statusCode:statusCode
+               retryAfterMilliseconds:retryAfterMilliseconds];
+  };
 }
 
 #pragma mark - Bootstrap
@@ -448,7 +641,7 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
 
 - (void)bootstrapForScope:(QONRemoteConfigV2Scope *)scope
                generation:(int64_t)generation
-                  respond:(QONRemoteConfigV2FetchTransportCompletion)respond
+                   refuse:(QONRemoteConfigV2GatewayRefusal)refuse
                completion:(void (^)(QONRemoteConfigV2GatewaySession *session))completion {
   NSData *body = QONRemoteConfigV2GatewayJSONBody(@{@"user_uid": scope.canonicalUserID});
   NSURLRequest *request = body ? [self requestWithPath:QONRemoteConfigV2GatewaySessionPath
@@ -457,26 +650,17 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
                                           ifNoneMatch:nil]
                                : nil;
   if (!request) {
-    [self failRespond:respond
-                 kind:QONRemoteConfigV2TransportFailureKindNotConfigured
-           statusCode:nil
-               retryAfterMilliseconds:nil];
+    refuse(QONRemoteConfigV2TransportFailureKindNotConfigured, nil, nil);
     return;
   }
 
   [self execute:request completion:^(NSData *data, NSHTTPURLResponse *response, NSError *error) {
     if (![self isCurrentScope:scope generation:generation]) {
-      [self failRespond:respond
-                   kind:QONRemoteConfigV2TransportFailureKindSuperseded
-             statusCode:nil
-                 retryAfterMilliseconds:nil];
+      refuse(QONRemoteConfigV2TransportFailureKindSuperseded, nil, nil);
       return;
     }
     if (error || !response) {
-      [self failRespond:respond
-                   kind:QONRemoteConfigV2TransportFailureKindBootstrapTransport
-             statusCode:nil
-                 retryAfterMilliseconds:nil];
+      refuse(QONRemoteConfigV2TransportFailureKindBootstrapTransport, nil, nil);
       return;
     }
 
@@ -489,10 +673,7 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
       } else if (status == 404) {
         kind = QONRemoteConfigV2TransportFailureKindBootstrapNotFound;
       }
-      [self failRespond:respond
-                   kind:kind
-             statusCode:@(status)
-                 retryAfterMilliseconds:[self retryAfterMillisecondsFrom:response]];
+      refuse(kind, @(status), [self retryAfterMillisecondsFrom:response]);
       return;
     }
 
@@ -502,16 +683,13 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
     // diagnosable signal. Refuse it here instead.
     if (session && ![session.environment isEqualToString:scope.environment]) session = nil;
     if (!session) {
-      [self failRespond:respond
-                   kind:QONRemoteConfigV2TransportFailureKindBootstrapMalformed
-             statusCode:@(status)
-                 retryAfterMilliseconds:nil];
+      refuse(QONRemoteConfigV2TransportFailureKindBootstrapMalformed, @(status), nil);
       return;
     }
 
     // Before the token is stored, not after: a session belonging to another
     // project must not be left at rest under this scope's key.
-    if (![self confirmProjectIdentityForSession:session scope:scope respond:respond]) return;
+    if (![self confirmProjectIdentityForSession:session scope:scope refuse:refuse]) return;
 
     BOOL stored = NO;
     @try {
@@ -520,10 +698,7 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
       stored = NO;
     }
     if (!stored) {
-      [self failRespond:respond
-                   kind:QONRemoteConfigV2TransportFailureKindBootstrapPersistenceFailed
-             statusCode:nil
-                 retryAfterMilliseconds:nil];
+      refuse(QONRemoteConfigV2TransportFailureKindBootstrapPersistenceFailed, nil, nil);
       return;
     }
     completion(session);
@@ -658,8 +833,10 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
                    retryAfterMilliseconds:nil];
         return;
       }
-      [self bootstrapForScope:scope generation:generation respond:respond completion:
-          ^(QONRemoteConfigV2GatewaySession *freshSession) {
+      [self bootstrapForScope:scope
+                   generation:generation
+                       refuse:[self fetchRefusalForRespond:respond]
+                   completion:^(QONRemoteConfigV2GatewaySession *freshSession) {
         [self performSnapshotForScope:scope
                            generation:generation
                               session:freshSession
