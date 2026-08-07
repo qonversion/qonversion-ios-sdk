@@ -2,6 +2,7 @@
 #import "QONRemoteConfigV2FetchCoordinator.h"
 #import "QONRemoteConfigV2DeviceInstallDate.h"
 #import "QONRemoteConfigV2GatewaySessionStore.h"
+#import "QONRemoteConfigV2ProjectIdentityStore.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -87,6 +88,14 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2TransportFailureKind) {
   QONRemoteConfigV2TransportFailureKindSnapshotUnavailable,
   QONRemoteConfigV2TransportFailureKindSnapshotMalformed,
   QONRemoteConfigV2TransportFailureKindSnapshotTransport,
+  /**
+   The gateway stated a `project_id` that disagrees with the one this
+   installation already learned for the same project and environment. Never
+   re-learned: see QONRemoteConfigV2ProjectIdentityStore.
+   */
+  QONRemoteConfigV2TransportFailureKindProjectIdentityConflict,
+  /** The learned `project_id` could not be made durable, so it was not used. */
+  QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed,
 };
 
 /** Never carries a token or a response body. */
@@ -102,6 +111,10 @@ typedef void (^QONRemoteConfigV2TransportFailureObserver)(
 
  Snapshot bytes are handed to the coordinator exactly as received: the adapter
  never decodes or re-serializes the snapshot body.
+
+ The one thing it does read out of a response body is the session bootstrap's
+ `project_id`, which is the only place the SDK can learn it. It is established
+ once per project and environment, kept durable, and thereafter only confirmed.
  */
 @interface QONRemoteConfigV2GatewayTransport : NSObject <QONRemoteConfigV2FetchTransport>
 - (instancetype)init NS_UNAVAILABLE;
@@ -109,6 +122,7 @@ typedef void (^QONRemoteConfigV2TransportFailureObserver)(
                             projectToken:(NSString *)projectToken
                             httpExecutor:(id<QONRemoteConfigV2HTTPExecuting>)httpExecutor
                             sessionStore:(id<QONRemoteConfigV2GatewaySessionStoring>)sessionStore
+                     projectIdentityStore:(id<QONRemoteConfigV2ProjectIdentityStoring>)projectIdentityStore
                    clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
                                    clock:(id<QONRemoteConfigV2FetchClock>)clock
                          failureObserver:(nullable QONRemoteConfigV2TransportFailureObserver)failureObserver

@@ -466,7 +466,7 @@ static QONRemoteConfigV2Scope *ScopeForUser(NSString *canonicalUserID) {
                                             canonicalUserID:canonicalUserID];
 }
 
-/** The expectation the coordinator always states: no fingerprint at all. */
+/** The expectation the admission path always builds: no fingerprint at all. */
 static QONRemoteConfigV2EnvelopeExpectation *OpenExpectation(void) {
   return [[QONRemoteConfigV2EnvelopeExpectation alloc]
       initWithProjectID:QONRCPubProjectID environmentUID:QONRCPubEnvironmentUID];
@@ -553,9 +553,9 @@ static void TestAMalformedContextFingerprintIsRefused(void) {
   NSData *malformed = QONRCPubSnapshotBodyWithFingerprint(
       @"release-1", 1, AlphaValues(@"\"server-alpha-1\"", @"variation-a1"),
       QONRCPubFingerprint.uppercaseString);
-  QONRemoteConfigV2AdmissionToken *bad =
-      [manager beginAdmissionForScope:scope expectation:OpenExpectation()];
+  QONRemoteConfigV2AdmissionToken *bad = [manager beginAdmissionForScope:scope];
   QON_CHECK([manager admitBody:malformed strongETag:QONRCPubStrongETag(malformed)
+                     projectID:QONRCPubProjectID
                 admissionToken:bad] == QONRemoteConfigV2TransitionStatusRejected,
             "an envelope whose fingerprint is the wrong shape must be refused");
   QON_CHECK([environment.controller rawValueForKey:@"alpha"].source ==
@@ -564,38 +564,67 @@ static void TestAMalformedContextFingerprintIsRefused(void) {
 
   NSData *wellFormed = ReleaseBody(@"release-1", 1,
                                    AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
-  QONRemoteConfigV2AdmissionToken *good =
-      [manager beginAdmissionForScope:scope expectation:OpenExpectation()];
+  QONRemoteConfigV2AdmissionToken *good = [manager beginAdmissionForScope:scope];
   QON_CHECK([manager admitBody:wellFormed strongETag:QONRCPubStrongETag(wellFormed)
+                     projectID:QONRCPubProjectID
                 admissionToken:good] == QONRemoteConfigV2TransitionStatusAccepted,
             "the same envelope with a well-formed fingerprint must be admitted");
 }
 
-// A stated fingerprint constrains that one call and nothing beyond it. It is
-// not a pin: it never outlives the admission token that carried it.
-static void TestAStatedFingerprintConstrainsOnlyItsOwnCall(void) {
+// The project id reaching admission is the one the gateway stated for the
+// session these bytes came back on. It is the envelope boundary, so an envelope
+// from another project is refused rather than published.
+static void TestAnEnvelopeFromAnotherProjectIsRefused(void) {
   QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
   QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
                                   @"user-a"),
-            "the engine must install for the stated-fingerprint scenario");
+            "the engine must install for the project boundary scenario");
   QONRemoteConfigV2Manager *manager = environment.manager;
   QONRemoteConfigV2Scope *scope = ScopeForUser(@"user-a");
   NSData *body = ReleaseBody(@"release-1", 1, AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
   NSString *eTag = QONRCPubStrongETag(body);
 
-  QONRemoteConfigV2AdmissionToken *mismatched = [manager beginAdmissionForScope:scope
-      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc]
+  QONRemoteConfigV2AdmissionToken *foreign = [manager beginAdmissionForScope:scope];
+  QON_CHECK([manager admitBody:body strongETag:eTag
+                     projectID:QONRCPubProjectID + 1
+                admissionToken:foreign] == QONRemoteConfigV2TransitionStatusRejected,
+            "an envelope whose project_id is not the learned one must be refused");
+  QON_CHECK([environment.controller rawValueForKey:@"alpha"].source ==
+                QONRemoteConfigValueSourceFallback,
+            "a refused envelope must publish nothing");
+
+  // Zero is not a project: it is what a response that learned nothing carries,
+  // and it must never read as "no boundary to check".
+  QONRemoteConfigV2AdmissionToken *unlearned = [manager beginAdmissionForScope:scope];
+  QON_CHECK([manager admitBody:body strongETag:eTag projectID:0
+                admissionToken:unlearned] == QONRemoteConfigV2TransitionStatusRejected,
+            "an unstated project id must refuse the body, not admit it unconstrained");
+
+  QONRemoteConfigV2AdmissionToken *learned = [manager beginAdmissionForScope:scope];
+  QON_CHECK([manager admitBody:body strongETag:eTag projectID:QONRCPubProjectID
+                admissionToken:learned] == QONRemoteConfigV2TransitionStatusAccepted,
+            "the same bytes under the learned project id must be admitted");
+}
+
+// A stated fingerprint constrains that one parse and nothing beyond it. It is
+// not a pin, and the admission path never states one: nothing on the device can
+// predict the next tag, so the manager always parses against an open
+// expectation. The constraint remains available to a caller that already holds
+// the exact response it means to admit, which is the parser's contract.
+static void TestAStatedFingerprintConstrainsOnlyItsOwnCall(void) {
+  QONRemoteConfigV2EnvelopeParser *parser = [QONRemoteConfigV2EnvelopeParser new];
+  NSData *body = ReleaseBody(@"release-1", 1, AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
+  NSString *eTag = QONRCPubStrongETag(body);
+
+  QONRemoteConfigV2EnvelopeExpectation *mismatched =
+      [[QONRemoteConfigV2EnvelopeExpectation alloc]
           initWithProjectID:QONRCPubProjectID
              environmentUID:QONRCPubEnvironmentUID
-         contextFingerprint:QONRCPubOtherFingerprint]];
-  QON_CHECK([manager admitBody:body strongETag:eTag admissionToken:mismatched] ==
-                QONRemoteConfigV2TransitionStatusRejected,
+         contextFingerprint:QONRCPubOtherFingerprint];
+  QON_CHECK([parser parseBody:body strongETag:eTag expectation:mismatched] == nil,
             "an envelope that is not the response the caller named must be refused");
 
-  QONRemoteConfigV2AdmissionToken *open =
-      [manager beginAdmissionForScope:scope expectation:OpenExpectation()];
-  QON_CHECK([manager admitBody:body strongETag:eTag admissionToken:open] ==
-                QONRemoteConfigV2TransitionStatusAccepted,
+  QON_CHECK([parser parseBody:body strongETag:eTag expectation:OpenExpectation()] != nil,
             "the refusal must not outlive its own call");
 }
 
@@ -703,37 +732,36 @@ static void TestTheRealAssemblyInstallsWithoutTouchingTheNetwork(void) {
   QONRemoteConfigController *controller = environment.controller;
   QONRCPubStorage *storage = [QONRCPubStorage new];
 
-  // A project the caller cannot name yet keeps the coordinator unbound, so the
-  // real assembly is exercised end to end with no request ever leaving.
+  // No identity yet, so no scope to bind: the real assembly is exercised end to
+  // end with no request ever leaving. Nothing here states a project id — the
+  // SDK has none to state until the gateway bootstrap hands it one.
   BOOL configured = [controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
                                         projectToken:@"project-token"
                                           projectKey:QONRCPubProjectKey
                                          environment:QONRCPubEnvironmentUID
-                                     canonicalUserID:@"user-a"
+                                     canonicalUserID:nil
                                   readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
                                         localStorage:storage
-                               clientContextProvider:[QONRCPubContextProvider new]
-                                           projectID:0];
+                               clientContextProvider:[QONRCPubContextProvider new]];
   QON_CHECK(configured && controller.isConfigured,
             "the real assembly must build and install its engine");
   // Nothing is bound, so nothing may reach the network or the token storage.
   QON_CHECK(storage.objects.count == 0,
-            "an unbindable assembly must not persist a session or a context pin");
+            "an unbound assembly must not persist a session or a project identity");
 
   QON_CHECK(![controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
                                  projectToken:@"project-token"
                                    projectKey:QONRCPubProjectKey
                                   environment:QONRCPubEnvironmentUID
-                              canonicalUserID:@"user-a"
+                              canonicalUserID:nil
                            readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
                                  localStorage:storage
-                        clientContextProvider:[QONRCPubContextProvider new]
-                                    projectID:0],
+                        clientContextProvider:[QONRCPubContextProvider new]],
             "configuring twice must be refused");
 
   QONRemoteConfigValue *value = [controller rawValueForKey:@"alpha"];
   QON_CHECK(value.source == QONRemoteConfigValueSourceFallback,
-            "an unbindable scope must still read its bundled defaults");
+            "an unbound scope must still read its bundled defaults");
   NSUInteger deliveries = 0;
   QONRemoteConfigFetchResult *result = RunFetch(environment, 0, NO, &deliveries);
   QON_CHECK(deliveries == 1 && result.status == QONRemoteConfigFetchStatusFailed,
@@ -755,6 +783,7 @@ int main(void) {
     TestAFingerprintRotationSurvivesARestart();
     TestAMalformedContextFingerprintIsRefused();
     TestAStatedFingerprintConstrainsOnlyItsOwnCall();
+    TestAnEnvelopeFromAnotherProjectIsRefused();
     TestScopeIsolationIsKeyedStorageNotTheFingerprint();
     TestDeviceInstallDateIsDeviceScopedAcrossIdentities();
     TestReleaseBuildActivatesOnceSilentlyOnAFirstRead();

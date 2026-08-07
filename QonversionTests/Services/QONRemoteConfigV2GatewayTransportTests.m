@@ -7,6 +7,7 @@
 @property (nonatomic, strong) QONRCV2FakeHTTPExecutor *executor;
 @property (nonatomic, strong) QONRCV2FakeLocalStorage *storage;
 @property (nonatomic, strong) QONRemoteConfigV2GatewaySessionStore *sessionStore;
+@property (nonatomic, strong) QONRemoteConfigV2ProjectIdentityStore *projectIdentityStore;
 @property (nonatomic, strong) QONRCV2FakeClock *clock;
 @property (nonatomic, strong) QONRCV2FakeInstallDateProvider *installDateProvider;
 @property (nonatomic, strong) QONRemoteConfigV2GatewayTransport *transport;
@@ -22,6 +23,8 @@
   self.executor = [QONRCV2FakeHTTPExecutor new];
   self.storage = [QONRCV2FakeLocalStorage new];
   self.sessionStore = [[QONRemoteConfigV2GatewaySessionStore alloc] initWithLocalStorage:self.storage];
+  self.projectIdentityStore =
+      [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:self.storage];
   self.clock = [QONRCV2FakeClock new];
   self.clock.now = 1000000000000;
   self.installDateProvider = [QONRCV2FakeInstallDateProvider new];
@@ -35,6 +38,7 @@
           projectToken:QONRCV2TestProjectToken
           httpExecutor:self.executor
           sessionStore:self.sessionStore
+  projectIdentityStore:self.projectIdentityStore
  clientContextProvider:QONRCV2ContextProvider(self.installDateProvider)
                  clock:self.clock
        failureObserver:^(QONRemoteConfigV2TransportFailureKind kind, NSNumber *statusCode) {
@@ -366,6 +370,7 @@
             projectToken:QONRCV2TestProjectToken
             httpExecutor:executor
             sessionStore:self.sessionStore
+    projectIdentityStore:self.projectIdentityStore
    clientContextProvider:QONRCV2ContextProvider(self.installDateProvider)
                    clock:self.clock
          failureObserver:nil];
@@ -386,6 +391,7 @@
           projectToken:@"bad\r\ntoken"
           httpExecutor:self.executor
           sessionStore:self.sessionStore
+  projectIdentityStore:self.projectIdentityStore
  clientContextProvider:QONRCV2ContextProvider(self.installDateProvider)
                  clock:self.clock
        failureObserver:nil]);
@@ -529,6 +535,7 @@
           projectToken:QONRCV2TestProjectToken
           httpExecutor:self.executor
           sessionStore:self.sessionStore
+  projectIdentityStore:self.projectIdentityStore
  clientContextProvider:QONRCV2ContextProvider(provider)
                  clock:self.clock
        failureObserver:nil];
@@ -571,6 +578,121 @@
           expiresAtSeconds:0];
   XCTAssertFalse([session.description containsString:@"super-secret-token"]);
   XCTAssertFalse([session.debugDescription containsString:@"super-secret-token"]);
+}
+
+#pragma mark - Learned project identity
+
+// The numeric project_id is not a caller input. The gateway states it in the
+// session bootstrap, the SDK learns it there, and everything downstream — the
+// envelope expectation included — is built from what was learned.
+
+- (void)testBootstrapEstablishesTheProjectID {
+  QONRemoteConfigV2Scope *scope = QONRCV2Scope(QONRCV2TestAnonUID);
+  XCTAssertEqual([self.projectIdentityStore projectIDForScope:scope], 0);
+
+  [self enqueueBootstrapWithToken:@"session-token-1"];
+  [self enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+
+  XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindSuccess);
+  XCTAssertEqual(response.projectID, QONRCV2TestProjectID);
+  XCTAssertEqual([self.projectIdentityStore projectIDForScope:scope], QONRCV2TestProjectID);
+
+  [self enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QONRemoteConfigV2FetchResponse *again = [self fetchWithIfNoneMatch:nil];
+  XCTAssertEqual(again.kind, QONRemoteConfigV2FetchResponseKindSuccess);
+  XCTAssertEqual(again.projectID, QONRCV2TestProjectID);
+  XCTAssertEqual(self.executor.requests.count, 3u);
+}
+
+- (void)testAConflictingReBootstrapIsATypedFailure {
+  QONRemoteConfigV2Scope *scope = QONRCV2Scope(QONRCV2TestAnonUID);
+  [self enqueueBootstrapWithToken:@"session-token-1"];
+  [self enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  XCTAssertEqual([self fetchWithIfNoneMatch:nil].kind,
+                 QONRemoteConfigV2FetchResponseKindSuccess);
+
+  [self.executor enqueue:[QONRCV2ScriptedHTTPResponse status:401 body:nil headers:nil]];
+  [self.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:QONRCV2BootstrapBodyForProject(@"session-token-2", 0, QONRCV2TestProjectID + 1)
+     headers:@{@"Content-Type": @"application/json"}]];
+  [self enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+  XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindFailure);
+  XCTAssertEqual(response.projectID, 0);
+  XCTAssertEqualObjects(self.failureKinds.lastObject,
+                        @(QONRemoteConfigV2TransportFailureKindProjectIdentityConflict));
+  XCTAssertEqual([self.projectIdentityStore projectIDForScope:scope], QONRCV2TestProjectID);
+  XCTAssertNil([self.sessionStore sessionForScope:scope]);
+  XCTAssertEqual(self.executor.requests.count, 4u);
+}
+
+- (void)testTheLearnedProjectIDSurvivesStoreRecreation {
+  QONRemoteConfigV2Scope *scope = QONRCV2Scope(QONRCV2TestAnonUID);
+  [self enqueueBootstrapWithToken:@"session-token-1"];
+  [self enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  XCTAssertEqual([self fetchWithIfNoneMatch:nil].kind,
+                 QONRemoteConfigV2FetchResponseKindSuccess);
+
+  QONRemoteConfigV2ProjectIdentityStore *reopened =
+      [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:self.storage];
+  XCTAssertEqual([reopened projectIDForScope:scope], QONRCV2TestProjectID);
+  XCTAssertEqual([reopened establishProjectID:QONRCV2TestProjectID forScope:scope],
+                 QONRemoteConfigV2ProjectIdentityOutcomeConfirmed);
+  XCTAssertEqual([reopened establishProjectID:QONRCV2TestProjectID + 1 forScope:scope],
+                 QONRemoteConfigV2ProjectIdentityOutcomeConflict);
+  XCTAssertEqual([reopened projectIDForScope:scope], QONRCV2TestProjectID);
+}
+
+- (void)testProjectIdentityIsKeyedWithoutTheIdentity {
+  QONRemoteConfigV2Scope *anonymous = QONRCV2Scope(QONRCV2TestAnonUID);
+  QONRemoteConfigV2Scope *identified = QONRCV2Scope(@"identified-uid");
+  // Deliberate: a project id belongs to the project, not to the user, so a
+  // logout and a fresh login must not launder a conflicting id past the check.
+  XCTAssertEqualObjects([QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:anonymous],
+                        [QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:identified]);
+  XCTAssertNotEqualObjects([QONRemoteConfigV2GatewaySessionStore storageKeyForScope:anonymous],
+                           [QONRemoteConfigV2GatewaySessionStore storageKeyForScope:identified]);
+
+  [self enqueueBootstrapWithToken:@"session-token-1"];
+  [self enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  XCTAssertEqual([self fetchWithIfNoneMatch:nil].kind,
+                 QONRemoteConfigV2FetchResponseKindSuccess);
+
+  [self.transport updateScope:identified];
+  [self.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:QONRCV2BootstrapBodyForProject(@"session-token-2", 0, QONRCV2TestProjectID + 1)
+     headers:@{@"Content-Type": @"application/json"}]];
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+  XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindFailure);
+  XCTAssertEqualObjects(self.failureKinds.lastObject,
+                        @(QONRemoteConfigV2TransportFailureKindProjectIdentityConflict));
+}
+
+- (void)testProjectIdentityPersistenceFailureFailsTheFetch {
+  self.storage.ignoreWrites = YES;
+  [self enqueueBootstrapWithToken:@"session-token-1"];
+  [self enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+  XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindFailure);
+  XCTAssertEqualObjects(
+      self.failureKinds.lastObject,
+      @(QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed));
+  XCTAssertEqual(self.executor.requests.count, 1u);
+}
+
+- (void)testAProjectIDBeyondTheSafeIntegerRangeIsMalformed {
+  [self.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:QONRCV2BootstrapBodyForProject(@"session-token-1", 0, INT64_MAX)
+     headers:@{@"Content-Type": @"application/json"}]];
+  QONRemoteConfigV2FetchResponse *response = [self fetchWithIfNoneMatch:nil];
+  XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindFailure);
+  XCTAssertEqualObjects(self.failureKinds.lastObject,
+                        @(QONRemoteConfigV2TransportFailureKindBootstrapMalformed));
 }
 
 @end

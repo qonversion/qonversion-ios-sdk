@@ -13,6 +13,7 @@
 #import "QONRemoteConfigV2FetchPolicyStore.h"
 #import "QONRemoteConfigV2GatewaySessionStore.h"
 #import "QONRemoteConfigV2GatewayTransport.h"
+#import "QONRemoteConfigV2ProjectIdentityStore.h"
 #import "QONRemoteConfigV2Store.h"
 
 // Defaults for the real engine only. They are new constants for a surface that
@@ -193,7 +194,6 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
 @property (nonatomic, strong, nullable) QONRemoteConfigV2FetchCoordinator *coordinator;
 @property (nonatomic, copy, nullable) NSString *projectKey;
 @property (nonatomic, copy, nullable) NSString *environment;
-@property (nonatomic, assign) int64_t projectID;
 @property (nonatomic, copy, nullable) QONRemoteConfigScopeSink scopeSink;
 @property (nonatomic, strong, nullable) id<QONRemoteConfigV2FetchScheduler> scheduler;
 @property (nonatomic, strong, nullable) dispatch_queue_t identityQueue;
@@ -226,7 +226,6 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                      coordinator:(QONRemoteConfigV2FetchCoordinator *)coordinator
                       projectKey:(NSString *)projectKey
                      environment:(NSString *)environment
-                       projectID:(int64_t)projectID
                        scopeSink:(QONRemoteConfigScopeSink)scopeSink
                        scheduler:(id<QONRemoteConfigV2FetchScheduler>)scheduler
                    identityQueue:(dispatch_queue_t)identityQueue {
@@ -241,7 +240,6 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     self.coordinator = coordinator;
     self.projectKey = projectKey;
     self.environment = environment;
-    self.projectID = projectID;
     self.scopeSink = scopeSink;
     self.scheduler = scheduler;
     self.identityQueue = identityQueue;
@@ -269,8 +267,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
              canonicalUserID:(NSString *)canonicalUserID
           readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 localStorage:(id<QNLocalStorage>)localStorage
-       clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
-                   projectID:(int64_t)projectID {
+       clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider {
   if (!baseURL || !projectToken.length || !localStorage || !clientContextProvider) {
     return NO;
   }
@@ -299,6 +296,8 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
   QONRemoteConfigSystemClock *clock = [QONRemoteConfigSystemClock new];
   QONRemoteConfigV2GatewaySessionStore *sessionStore =
       [[QONRemoteConfigV2GatewaySessionStore alloc] initWithLocalStorage:localStorage];
+  QONRemoteConfigV2ProjectIdentityStore *projectIdentityStore =
+      [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:localStorage];
   QONRemoteConfigV2GatewayTransport *transport = [[QONRemoteConfigV2GatewayTransport alloc]
       initWithBaseURL:baseURL
       projectToken:projectToken
@@ -306,6 +305,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
           initWithSession:[NSURLSession sessionWithConfiguration:
               NSURLSessionConfiguration.ephemeralSessionConfiguration]]
       sessionStore:sessionStore
+      projectIdentityStore:projectIdentityStore
       clientContextProvider:clientContextProvider
       clock:clock
       failureObserver:nil];
@@ -316,7 +316,8 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       maximumBackoffMilliseconds:kQONRemoteConfigMaximumBackoffMilliseconds];
   QONRemoteConfigV2FetchPolicyStore *policyStore =
       [[QONRemoteConfigV2FetchPolicyStore alloc] initWithLocalStorage:localStorage];
-  if (!scheduler || !sessionStore || !transport || !policy || !policyStore) return NO;
+  if (!scheduler || !sessionStore || !projectIdentityStore || !transport || !policy ||
+      !policyStore) return NO;
   QONRemoteConfigV2FetchCoordinator *coordinator = [[QONRemoteConfigV2FetchCoordinator alloc]
       initWithCore:manager transport:transport policyStore:policyStore clock:clock
       random:[QONRemoteConfigSystemRandom new] scheduler:scheduler policy:policy];
@@ -327,7 +328,6 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                                       coordinator:coordinator
                                        projectKey:projectKey
                                       environment:environment
-                                        projectID:projectID
                                         scopeSink:^(QONRemoteConfigV2Scope *scope) {
                                           [weakTransport updateScope:scope];
                                         }
@@ -353,7 +353,6 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                          change:(QONRemoteConfigControllerIdentityChange)change {
   QONRemoteConfigV2Manager *manager = nil;
   QONRemoteConfigV2FetchCoordinator *coordinator = nil;
-  int64_t projectID = 0;
   QONRemoteConfigScopeSink scopeSink = nil;
   dispatch_queue_t identityQueue = nil;
   NSString *projectKey = nil;
@@ -361,7 +360,6 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
   @synchronized (self) {
     manager = self.manager;
     coordinator = self.coordinator;
-    projectID = self.projectID;
     scopeSink = self.scopeSink;
     identityQueue = self.identityQueue;
     projectKey = self.projectKey;
@@ -403,10 +401,12 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     // The read guard requires all persistent work to finish off the main queue
     // before the scope is bound.
     [manager preloadScopeForReadGuard:scope];
-    // No fingerprint is supplied here, and none exists to supply: it is a
-    // per-response tag that rotates with the user's targeting context.
+    // Neither a fingerprint nor a project id is supplied here, and neither
+    // exists to supply: the fingerprint is a per-response tag that rotates with
+    // the user's targeting context, and the project id is learned from the
+    // gateway's session bootstrap inside the fetch itself.
     QONRemoteConfigV2FetchBinding *binding =
-        [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope projectID:projectID];
+        [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope];
     QONRemoteConfigV2FetchForceReason reason =
         change == QONRemoteConfigControllerIdentityChangeLogout
             ? QONRemoteConfigV2FetchForceReasonLogout

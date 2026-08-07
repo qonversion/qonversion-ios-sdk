@@ -90,21 +90,23 @@
 @property (nonatomic, strong) QONRemoteConfigSnapshot *snapshot;
 @property (nonatomic, assign) NSUInteger admissions;
 @property (nonatomic, assign) NSUInteger admittedBodies;
+@property (nonatomic, assign) int64_t lastAdmittedProjectID;
 @property (nonatomic, assign) QONRemoteConfigV2TransitionStatus transitionStatus;
 @end
 
 @implementation QONRemoteConfigV2FetchTestCore
 - (void)setScope:(QONRemoteConfigV2Scope *)scope { self.currentScope = scope; }
 - (QONRemoteConfigSnapshot *)unguardedSnapshot { return self.snapshot; }
-- (QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope
-                                                expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation {
+- (QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope {
   self.admissions += 1;
   return (id)[NSObject new];
 }
 - (QONRemoteConfigV2TransitionStatus)admitBody:(NSData *)body
                                    strongETag:(NSString *)strongETag
+                                    projectID:(int64_t)projectID
                                admissionToken:(QONRemoteConfigV2AdmissionToken *)admissionToken {
   self.admittedBodies += 1;
+  self.lastAdmittedProjectID = projectID;
   return self.transitionStatus;
 }
 - (QONRemoteConfigV2ConditionalRequestValidator *)conditionalRequestValidator { return self.validator; }
@@ -121,7 +123,7 @@
 - (QONRemoteConfigV2FetchBinding *)bindingForUser:(NSString *)user {
   QONRemoteConfigV2Scope *scope = [[QONRemoteConfigV2Scope alloc]
       initWithProjectKey:@"project" environment:@"production" canonicalUserID:user];
-  return [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope projectID:42];
+  return [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope];
 }
 
 - (QONRemoteConfigV2FetchCoordinator *)coordinatorWithCore:(QONRemoteConfigV2FetchTestCore *)core
@@ -157,7 +159,7 @@
                          completion:^(__unused QONRemoteConfigV2FetchResult *result) { [both fulfill]; }];
   XCTAssertEqual(transport.requests.count, 1u);
   transport.completions.firstObject([QONRemoteConfigV2FetchResponse
-      successWithBody:[@"{}" dataUsingEncoding:NSUTF8StringEncoding] strongETag:@"etag"]);
+      successWithBody:[@"{}" dataUsingEncoding:NSUTF8StringEncoding] strongETag:@"etag" projectID:42]);
   [self waitForExpectations:@[both] timeout:2];
   XCTAssertEqual(core.admissions, 1u);
 }
@@ -225,7 +227,7 @@
   [scheduler fireTaskAtIndex:0];
   [self waitForExpectations:@[timedOut] timeout:2];
   transport.completions[0]([QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
-      strongETag:@"etag"]);
+      strongETag:@"etag" projectID:42]);
   dispatch_sync(callbacks, ^{});
   XCTAssertEqual(core.admittedBodies, 1u);
   XCTAssertNotNil(store.states[@"project\nproduction"]);
@@ -266,9 +268,9 @@
   XCTAssertEqual(transport.requests.count, 2u);
   XCTAssertEqual(core.admissions, 2u);
   transport.completions[0]([QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
-      strongETag:@"old"]);
+      strongETag:@"old" projectID:42]);
   transport.completions[1]([QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
-      strongETag:@"fresh"]);
+      strongETag:@"fresh" projectID:42]);
   [self waitForExpectations:@[fresh] timeout:2];
   XCTAssertEqual(core.admittedBodies, 1u);
 }

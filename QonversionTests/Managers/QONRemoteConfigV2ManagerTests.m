@@ -406,34 +406,35 @@
   QONRemoteConfigV2Scope *scope = [self wireScope:@"user"];
   [first setScope:scope];
   [second setScope:scope];
-  QONRemoteConfigV2AdmissionToken *old = [first beginAdmissionForScope:scope
-      expectation:[self wireExpectation]];
-  QONRemoteConfigV2AdmissionToken *latest = [first beginAdmissionForScope:scope
-      expectation:[self wireExpectation]];
+  QONRemoteConfigV2AdmissionToken *old = [first beginAdmissionForScope:scope];
+  QONRemoteConfigV2AdmissionToken *latest = [first beginAdmissionForScope:scope];
   NSString *bodyString = [self wireBodyWithValues:[NSString stringWithFormat:@"\"only\":%@",
       [self wireItemWithRaw:@"1" metadata:@"null" variationUID:@"variation"
       policy:@"on_next_activate"]]];
   NSData *body = [self utf8Data:bodyString];
   NSString *etag = [self strongETagForBody:body];
 
-  XCTAssertEqual([first admitBody:body strongETag:etag admissionToken:old],
+  XCTAssertEqual([first admitBody:body strongETag:etag projectID:42 admissionToken:old],
                  QONRemoteConfigV2TransitionStatusRejected);
-  XCTAssertEqual([second admitBody:body strongETag:etag admissionToken:latest],
+  XCTAssertEqual([second admitBody:body strongETag:etag projectID:42 admissionToken:latest],
                  QONRemoteConfigV2TransitionStatusRejected);
-  XCTAssertEqual([first admitBody:body strongETag:etag admissionToken:latest],
+  XCTAssertEqual([first admitBody:body strongETag:etag projectID:42 admissionToken:latest],
                  QONRemoteConfigV2TransitionStatusAccepted);
   XCTAssertEqualObjects(first.lastFetchedSnapshot.releaseUID, @"release");
 
-  QONRemoteConfigV2AdmissionToken *contextToken = [first beginAdmissionForScope:scope
-      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:42
-          environmentUID:@"env-production"
-          contextFingerprint:[@"b" stringByPaddingToLength:64 withString:@"b" startingAtIndex:0]]];
-  XCTAssertEqual([first admitBody:body strongETag:etag admissionToken:contextToken],
+  // The project id is learned, not stated, and it is the envelope boundary: a
+  // body belonging to another project is refused even on a current token.
+  QONRemoteConfigV2AdmissionToken *foreignProject = [first beginAdmissionForScope:scope];
+  XCTAssertEqual([first admitBody:body strongETag:etag projectID:43
+                   admissionToken:foreignProject],
+                 QONRemoteConfigV2TransitionStatusRejected);
+  XCTAssertEqual([first admitBody:body strongETag:etag projectID:0
+                   admissionToken:foreignProject],
                  QONRemoteConfigV2TransitionStatusRejected);
 
   [first setScope:[self wireScope:@"user-b"]];
   [first setScope:scope];
-  XCTAssertEqual([first admitBody:body strongETag:etag admissionToken:latest],
+  XCTAssertEqual([first admitBody:body strongETag:etag projectID:42 admissionToken:latest],
                  QONRemoteConfigV2TransitionStatusRejected);
 }
 
@@ -443,8 +444,7 @@
   QONRemoteConfigV2Manager *manager = [self managerWithStorage:storage decoder:decoder];
   QONRemoteConfigV2Scope *scope = [self wireScope:@"user"];
   [manager setScope:scope];
-  QONRemoteConfigV2AdmissionToken *superseded = [manager beginAdmissionForScope:scope
-      expectation:[self wireExpectation]];
+  QONRemoteConfigV2AdmissionToken *superseded = [manager beginAdmissionForScope:scope];
   NSString *bodyString = [self wireBodyWithValues:[NSString stringWithFormat:@"\"only\":%@",
       [self wireItemWithRaw:@"1" metadata:@"null" variationUID:@"variation"
       policy:@"immediate"]]];
@@ -453,12 +453,12 @@
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_async(group, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
     result = [manager admitBody:body strongETag:[self strongETagForBody:body]
-        admissionToken:superseded];
+             projectID:42 admissionToken:superseded];
   });
   XCTAssertEqual(dispatch_semaphore_wait(decoder.started,
       dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC)), 0L);
 
-  XCTAssertNotNil([manager beginAdmissionForScope:scope expectation:[self wireExpectation]]);
+  XCTAssertNotNil([manager beginAdmissionForScope:scope]);
   dispatch_semaphore_signal(decoder.resume);
   XCTAssertEqual(dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC)), 0L);
 
@@ -481,10 +481,9 @@
       [self wireItemWithRaw:@"3" metadata:@"null" variationUID:@"variation-a"
       policy:@"on_next_activate"]]];
   NSData *firstBody = [self utf8Data:firstBodyString];
-  QONRemoteConfigV2AdmissionToken *firstToken = [manager beginAdmissionForScope:scope
-      expectation:[self wireExpectation]];
+  QONRemoteConfigV2AdmissionToken *firstToken = [manager beginAdmissionForScope:scope];
   XCTAssertEqual([manager admitBody:firstBody strongETag:[self strongETagForBody:firstBody]
-      admissionToken:firstToken], QONRemoteConfigV2TransitionStatusAccepted);
+           projectID:42 admissionToken:firstToken], QONRemoteConfigV2TransitionStatusAccepted);
   XCTAssertTrue([manager activate]);
   XCTAssertNil([manager.currentSnapshot rawValueForKey:@"removed"]);
 
@@ -494,12 +493,9 @@
   secondBodyString = [secondBodyString stringByReplacingOccurrencesOfString:@"variation-a"
       withString:@"variation-b"];
   NSData *secondBody = [self utf8Data:secondBodyString];
-  QONRemoteConfigV2AdmissionToken *secondToken = [manager beginAdmissionForScope:scope
-      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:42
-          environmentUID:@"env-production"
-          contextFingerprint:[@"b" stringByPaddingToLength:64 withString:@"b" startingAtIndex:0]]];
+  QONRemoteConfigV2AdmissionToken *secondToken = [manager beginAdmissionForScope:scope];
   XCTAssertEqual([manager admitBody:secondBody strongETag:[self strongETagForBody:secondBody]
-      admissionToken:secondToken], QONRemoteConfigV2TransitionStatusAccepted);
+           projectID:42 admissionToken:secondToken], QONRemoteConfigV2TransitionStatusAccepted);
   XCTAssertEqualObjects(manager.lastFetchedSnapshot.releaseUID, @"release");
   XCTAssertTrue([manager activate]);
   XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"release");
@@ -507,12 +503,9 @@
   NSString *lowerBodyString = [secondBodyString stringByReplacingOccurrencesOfString:
       @"\"release_number\":7" withString:@"\"release_number\":6"];
   NSData *lowerBody = [self utf8Data:lowerBodyString];
-  QONRemoteConfigV2AdmissionToken *lowerToken = [manager beginAdmissionForScope:scope
-      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:42
-          environmentUID:@"env-production"
-          contextFingerprint:[@"b" stringByPaddingToLength:64 withString:@"b" startingAtIndex:0]]];
+  QONRemoteConfigV2AdmissionToken *lowerToken = [manager beginAdmissionForScope:scope];
   XCTAssertEqual([manager admitBody:lowerBody strongETag:[self strongETagForBody:lowerBody]
-      admissionToken:lowerToken], QONRemoteConfigV2TransitionStatusRejected);
+           projectID:42 admissionToken:lowerToken], QONRemoteConfigV2TransitionStatusRejected);
   XCTAssertEqual(manager.lastFetchedSnapshot.releaseNumber, 7);
 }
 
@@ -525,7 +518,7 @@
     if ([update.snapshot.releaseUID isEqualToString:@"blocking"]) {
       [manager acceptFetchedRelease:[self release:@"release" number:2
           values:@{@"key": @"2"} immediate:YES] forScope:scope];
-      XCTAssertNotNil([manager beginAdmissionForScope:scope expectation:[self wireExpectation]]);
+      XCTAssertNotNil([manager beginAdmissionForScope:scope]);
     }
   }];
   [manager addUpdateObserver:^(QONRemoteConfigUpdate *update) {
@@ -547,10 +540,9 @@
       [self wireItemWithRaw:@"1" metadata:@"null" variationUID:@"variation-1"
       policy:@"on_next_activate"]]];
   NSData *firstBody = [self utf8Data:firstString];
-  QONRemoteConfigV2AdmissionToken *firstToken = [manager beginAdmissionForScope:scope
-      expectation:[self wireExpectation]];
+  QONRemoteConfigV2AdmissionToken *firstToken = [manager beginAdmissionForScope:scope];
   XCTAssertEqual([manager admitBody:firstBody strongETag:[self strongETagForBody:firstBody]
-      admissionToken:firstToken], QONRemoteConfigV2TransitionStatusAccepted);
+           projectID:42 admissionToken:firstToken], QONRemoteConfigV2TransitionStatusAccepted);
   QONRemoteConfigV2ConditionalRequestValidator *first = manager.conditionalRequestValidator;
   XCTAssertNotNil(first);
   XCTAssertTrue([manager isConditionalRequestValidatorCurrent:first]);
@@ -560,10 +552,9 @@
       policy:@"on_next_activate"]]] stringByReplacingOccurrencesOfString:
       @"\"release_number\":7" withString:@"\"release_number\":8"];
   NSData *secondBody = [self utf8Data:secondString];
-  QONRemoteConfigV2AdmissionToken *secondToken = [manager beginAdmissionForScope:scope
-      expectation:[self wireExpectation]];
+  QONRemoteConfigV2AdmissionToken *secondToken = [manager beginAdmissionForScope:scope];
   XCTAssertEqual([manager admitBody:secondBody strongETag:[self strongETagForBody:secondBody]
-      admissionToken:secondToken], QONRemoteConfigV2TransitionStatusAccepted);
+           projectID:42 admissionToken:secondToken], QONRemoteConfigV2TransitionStatusAccepted);
   QONRemoteConfigV2ConditionalRequestValidator *second = manager.conditionalRequestValidator;
   XCTAssertNotEqualObjects(first, second);
   XCTAssertFalse([manager isConditionalRequestValidatorCurrent:first]);
@@ -1360,13 +1351,7 @@
                  QONRemoteConfigV2ReadGuardPreloadStatusCorrupt);
   [corruptManager setScope:scope];
   XCTAssertEqualObjects(corruptManager.currentSnapshot.releaseUID, @"bundle");
-  QONRemoteConfigV2EnvelopeExpectation *sameEnvironmentExpectation =
-      [[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:42
-          environmentUID:@"production"
-          contextFingerprint:[@"a" stringByPaddingToLength:64 withString:@"a"
-              startingAtIndex:0]];
-  XCTAssertNil([corruptManager beginAdmissionForScope:scope
-      expectation:sameEnvironmentExpectation]);
+  XCTAssertNil([corruptManager beginAdmissionForScope:scope]);
   dispatch_sync(callbacks, ^{});
   XCTAssertEqual(corruptEvents, 1u);
   XCTAssertEqual(corruptMisuse, 1u);

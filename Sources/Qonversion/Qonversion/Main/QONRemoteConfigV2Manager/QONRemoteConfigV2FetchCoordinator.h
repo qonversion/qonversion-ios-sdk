@@ -17,10 +17,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setScope:(nullable QONRemoteConfigV2Scope *)scope;
 /** Must not be the read-guarded accessor: the coordinator reads for the SDK. */
 - (QONRemoteConfigSnapshot *)unguardedSnapshot;
-- (nullable QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope
-                                                        expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation;
+- (nullable QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope;
+/**
+ `projectID` is the id the transport learned from this fetch's session
+ bootstrap. It is not something the coordinator can state up front — the
+ admission is opened before the request that learns it — so it arrives here,
+ with the bytes it is meant to constrain.
+ */
 - (QONRemoteConfigV2TransitionStatus)admitBody:(NSData *)body
                                    strongETag:(NSString *)strongETag
+                                    projectID:(int64_t)projectID
                                admissionToken:(QONRemoteConfigV2AdmissionToken *)admissionToken;
 - (nullable QONRemoteConfigV2ConditionalRequestValidator *)conditionalRequestValidator;
 - (BOOL)isConditionalRequestValidatorCurrent:(QONRemoteConfigV2ConditionalRequestValidator *)validator;
@@ -37,13 +43,15 @@ NS_ASSUME_NONNULL_BEGIN
  properties); it rotates legitimately and MUST NOT be pinned across fetches.
  Identity isolation is the session's job — this binding's scope is what keys
  the session token and the persisted state.
+
+ It carries no project id either. The numeric `project_id` is not something a
+ caller knows: the SDK learns it from the gateway's session bootstrap, inside
+ the very fetch this binding drives, and it reaches the admission with the
+ response bytes rather than ahead of them.
  */
 @interface QONRemoteConfigV2FetchBinding : NSObject <NSCopying>
 @property (nonatomic, strong, readonly) QONRemoteConfigV2Scope *scope;
-@property (nonatomic, assign, readonly) int64_t projectID;
-@property (nonatomic, strong, readonly) QONRemoteConfigV2EnvelopeExpectation *expectation;
-- (nullable instancetype)initWithScope:(QONRemoteConfigV2Scope *)scope
-                             projectID:(int64_t)projectID;
+- (nullable instancetype)initWithScope:(QONRemoteConfigV2Scope *)scope;
 @end
 
 typedef NS_ENUM(NSInteger, QONRemoteConfigV2FetchForceReason) {
@@ -136,7 +144,15 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2FetchResponseKind) {
 @property (nonatomic, strong, nullable, readonly) NSNumber *statusCode;
 /** Transport-normalized Retry-After delay. The coordinator gives it precedence over jitter. */
 @property (nonatomic, strong, nullable, readonly) NSNumber *retryAfterMilliseconds;
-+ (instancetype)successWithBody:(NSData *)body strongETag:(NSString *)strongETag;
+/**
+ The `project_id` the gateway stated for the session this body was fetched
+ under; 0 on any non-success response. A success carrying 0 is not admissible:
+ there is no envelope boundary to check it against.
+ */
+@property (nonatomic, assign, readonly) int64_t projectID;
++ (instancetype)successWithBody:(NSData *)body
+                     strongETag:(NSString *)strongETag
+                      projectID:(int64_t)projectID;
 + (instancetype)notModifiedWithStrongETag:(nullable NSString *)strongETag;
 + (instancetype)failureWithStatusCode:(nullable NSNumber *)statusCode
                 retryAfterMilliseconds:(nullable NSNumber *)retryAfterMilliseconds;

@@ -315,6 +315,8 @@
 		B2F100032F70000100000003 /* QONRemoteConfigV2GatewaySessionStore.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F100132F70000100000013 /* QONRemoteConfigV2GatewaySessionStore.h */; };
 		B2F100042F70000100000004 /* QONRemoteConfigV2GatewaySessionStore.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F100142F70000100000014 /* QONRemoteConfigV2GatewaySessionStore.m */; };
 		B2F100052F70000100000005 /* QONRemoteConfigV2GatewayTransport.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F100152F70000100000015 /* QONRemoteConfigV2GatewayTransport.h */; };
+		B2F100082F70000100000008 /* QONRemoteConfigV2ProjectIdentityStore.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F100192F70000100000019 /* QONRemoteConfigV2ProjectIdentityStore.h */; };
+		B2F100092F70000100000009 /* QONRemoteConfigV2ProjectIdentityStore.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F1001A2F7000010000001A /* QONRemoteConfigV2ProjectIdentityStore.m */; };
 		B2F100062F70000100000006 /* QONRemoteConfigV2GatewayTransport.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F100162F70000100000016 /* QONRemoteConfigV2GatewayTransport.m */; };
 		B2F100072F70000100000007 /* QONRemoteConfigV2GatewayTransportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F100172F70000100000017 /* QONRemoteConfigV2GatewayTransportTests.m */; };
 		B2F200012F80000100000001 /* QONRemoteConfigController.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F200112F80000100000011 /* QONRemoteConfigController.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -734,6 +736,8 @@
 		B2F100132F70000100000013 /* QONRemoteConfigV2GatewaySessionStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2GatewaySessionStore.h; sourceTree = "<group>"; };
 		B2F100142F70000100000014 /* QONRemoteConfigV2GatewaySessionStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2GatewaySessionStore.m; sourceTree = "<group>"; };
 		B2F100152F70000100000015 /* QONRemoteConfigV2GatewayTransport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2GatewayTransport.h; sourceTree = "<group>"; };
+		B2F100192F70000100000019 /* QONRemoteConfigV2ProjectIdentityStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2ProjectIdentityStore.h; sourceTree = "<group>"; };
+		B2F1001A2F7000010000001A /* QONRemoteConfigV2ProjectIdentityStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2ProjectIdentityStore.m; sourceTree = "<group>"; };
 		B2F100162F70000100000016 /* QONRemoteConfigV2GatewayTransport.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2GatewayTransport.m; sourceTree = "<group>"; };
 		B2F100172F70000100000017 /* QONRemoteConfigV2GatewayTransportTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2GatewayTransportTests.m; sourceTree = "<group>"; };
 		B2F100182F70000100000018 /* QONRemoteConfigV2GatewayTransportFixtures.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2GatewayTransportFixtures.h; sourceTree = "<group>"; };
@@ -1963,6 +1967,8 @@
 				B2F100142F70000100000014 /* QONRemoteConfigV2GatewaySessionStore.m */,
 				B2F100152F70000100000015 /* QONRemoteConfigV2GatewayTransport.h */,
 				B2F100162F70000100000016 /* QONRemoteConfigV2GatewayTransport.m */,
+				B2F100192F70000100000019 /* QONRemoteConfigV2ProjectIdentityStore.h */,
+				B2F1001A2F7000010000001A /* QONRemoteConfigV2ProjectIdentityStore.m */,
 			);
 			path = QONRemoteConfigV2Transport;
 			sourceTree = "<group>";
@@ -2014,6 +2020,7 @@
 				B2F100012F70000100000001 /* QONRemoteConfigV2DeviceInstallDate.h in Headers */,
 				B2F100032F70000100000003 /* QONRemoteConfigV2GatewaySessionStore.h in Headers */,
 				B2F100052F70000100000005 /* QONRemoteConfigV2GatewayTransport.h in Headers */,
+				B2F100082F70000100000008 /* QONRemoteConfigV2ProjectIdentityStore.h in Headers */,
 				B2F200012F80000100000001 /* QONRemoteConfigController.h in Headers */,
 				B2F200032F80000100000003 /* QONRemoteConfigFetchResult.h in Headers */,
 				B2F200052F80000100000005 /* QONRemoteConfigController+Protected.h in Headers */,
@@ -2492,6 +2499,7 @@
 				B2F100022F70000100000002 /* QONRemoteConfigV2DeviceInstallDate.m in Sources */,
 				B2F100042F70000100000004 /* QONRemoteConfigV2GatewaySessionStore.m in Sources */,
 				B2F100062F70000100000006 /* QONRemoteConfigV2GatewayTransport.m in Sources */,
+				B2F100092F70000100000009 /* QONRemoteConfigV2ProjectIdentityStore.m in Sources */,
 				B2F200022F80000100000002 /* QONRemoteConfigController.m in Sources */,
 				B2F200042F80000100000004 /* QONRemoteConfigFetchResult.m in Sources */,
 				895732C326DD03A3009507A6 /* QNInMemoryStorage.m in Sources */,

@@ -41,18 +41,11 @@ static int64_t QONRemoteConfigV2FetchSaturatingAdd(int64_t left, int64_t right) 
 
 @implementation QONRemoteConfigV2FetchBinding
 
-- (instancetype)initWithScope:(QONRemoteConfigV2Scope *)scope
-                     projectID:(int64_t)projectID {
+- (instancetype)initWithScope:(QONRemoteConfigV2Scope *)scope {
   if (!scope) return nil;
-  QONRemoteConfigV2EnvelopeExpectation *expectation =
-      [[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:projectID
-                                                      environmentUID:scope.environment];
-  if (!expectation) return nil;
   self = [super init];
   if (self) {
     _scope = [scope copy];
-    _projectID = projectID;
-    _expectation = expectation;
   }
   return self;
 }
@@ -159,15 +152,19 @@ static int64_t QONRemoteConfigV2FetchSaturatingAdd(int64_t left, int64_t right) 
 @property (nonatomic, copy, nullable, readwrite) NSString *strongETag;
 @property (nonatomic, strong, nullable, readwrite) NSNumber *statusCode;
 @property (nonatomic, strong, nullable, readwrite) NSNumber *retryAfterMilliseconds;
+@property (nonatomic, assign, readwrite) int64_t projectID;
 @end
 
 @implementation QONRemoteConfigV2FetchResponse
 
-+ (instancetype)successWithBody:(NSData *)body strongETag:(NSString *)strongETag {
++ (instancetype)successWithBody:(NSData *)body
+                     strongETag:(NSString *)strongETag
+                      projectID:(int64_t)projectID {
   QONRemoteConfigV2FetchResponse *response = [self new];
   response.kind = QONRemoteConfigV2FetchResponseKindSuccess;
   response.body = [body copy];
   response.strongETag = [strongETag copy];
+  response.projectID = projectID;
   return response;
 }
 + (instancetype)notModifiedWithStrongETag:(NSString *)strongETag {
@@ -512,8 +509,8 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2NotModifiedDisposition) {
     decision.immediateResult = gate;
     return decision;
   }
-  QONRemoteConfigV2AdmissionToken *admission = [self.core beginAdmissionForScope:self.binding.scope
-      expectation:self.binding.expectation];
+  QONRemoteConfigV2AdmissionToken *admission =
+      [self.core beginAdmissionForScope:self.binding.scope];
   if (!admission) {
     QONRemoteConfigV2FetchResult *failed = [self resultWithKind:QONRemoteConfigV2FetchResultKindFailed];
     decision.immediateResult = failed;
@@ -642,8 +639,8 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2NotModifiedDisposition) {
     return QONRemoteConfigV2NotModifiedDispositionAccept;
   }
   if (operation.didRetryWithoutETag) return QONRemoteConfigV2NotModifiedDispositionReject;
-  QONRemoteConfigV2AdmissionToken *admission = [self.core beginAdmissionForScope:operation.binding.scope
-      expectation:operation.binding.expectation];
+  QONRemoteConfigV2AdmissionToken *admission =
+      [self.core beginAdmissionForScope:operation.binding.scope];
   if (!admission) return QONRemoteConfigV2NotModifiedDispositionReject;
   operation.didRetryWithoutETag = YES;
   operation.validator = nil;
@@ -691,9 +688,12 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2NotModifiedDisposition) {
                                           policyState:(QONRemoteConfigV2FetchPolicyState *)policyState {
   QONRemoteConfigV2FetchOutcome *outcome = [QONRemoteConfigV2FetchOutcome new];
   if (response.kind == QONRemoteConfigV2FetchResponseKindSuccess) {
-    QONRemoteConfigV2TransitionStatus status = response.body && response.strongETag
+    // A success that states no project id has no admissible boundary: the
+    // envelope's own project_id would then be checked against nothing.
+    QONRemoteConfigV2TransitionStatus status =
+        response.body && response.strongETag && response.projectID > 0
         ? [self.core admitBody:response.body strongETag:response.strongETag
-            admissionToken:operation.admission]
+                     projectID:response.projectID admissionToken:operation.admission]
         : QONRemoteConfigV2TransitionStatusRejected;
     QONRemoteConfigV2FetchResult *result = [self resultWithKind:QONRemoteConfigV2FetchResultKindFetched];
     result.transitionStatus = status;

@@ -17,6 +17,11 @@ FOUNDATION_EXPORT BOOL QONRemoteConfigV2GatewayValidHeaderValue(NSString *_Nulla
 /** Bootstrap result for one identity scope. Tokens are never logged. */
 @interface QONRemoteConfigV2GatewaySession : NSObject <NSCopying>
 @property (nonatomic, copy, readonly) NSString *sessionToken;
+/**
+ The numeric project id the gateway stated. This is the SDK's only source for
+ it: no caller supplies it, and no caller can. See
+ QONRemoteConfigV2ProjectIdentityStore for what happens once it is known.
+ */
 @property (nonatomic, assign, readonly) int64_t projectID;
 @property (nonatomic, copy, readonly) NSString *environment;
 /** Whole seconds since the epoch, or 0 when the server did not state an expiry. */

@@ -50,7 +50,6 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
 @property (nonatomic, assign) int64_t ordinal;
 @property (nonatomic, strong) QONRemoteConfigV2Scope *scope;
 @property (nonatomic, assign) NSUInteger scopeGeneration;
-@property (nonatomic, strong) QONRemoteConfigV2EnvelopeExpectation *expectation;
 - (instancetype)initPrivate;
 @end
 
@@ -667,9 +666,8 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
   }
 }
 
-- (QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope
-                                                expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation {
-  if (!scope || !expectation || ![scope.environment isEqualToString:expectation.environmentUID]) return nil;
+- (QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope {
+  if (!scope) return nil;
   __block QONRemoteConfigV2AdmissionToken *token = nil;
   dispatch_sync(self.stateQueue, ^{
     if (![self.currentScope isEqual:scope] || ![self ensureCurrentScopeLoadedLocked] ||
@@ -680,7 +678,6 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
     token.ordinal = self.nextAdmissionOrdinal;
     token.scope = [scope copy];
     token.scopeGeneration = self.scopeGeneration;
-    token.expectation = [expectation copy];
   });
   return token;
 }
@@ -727,15 +724,24 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
 
 - (QONRemoteConfigV2TransitionStatus)admitBody:(NSData *)body
                                    strongETag:(NSString *)strongETag
+                                    projectID:(int64_t)projectID
                                admissionToken:(QONRemoteConfigV2AdmissionToken *)admissionToken {
   if (!body || !strongETag || !admissionToken) return QONRemoteConfigV2TransitionStatusRejected;
+  // Built here, from the id this fetch learned and the environment the token was
+  // opened for. A learned id that is out of range yields no expectation at all,
+  // which refuses the body rather than admitting it unconstrained.
+  QONRemoteConfigV2EnvelopeExpectation *expectation =
+      [[QONRemoteConfigV2EnvelopeExpectation alloc]
+          initWithProjectID:projectID
+             environmentUID:admissionToken.scope.environment];
+  if (!expectation) return QONRemoteConfigV2TransitionStatusRejected;
   __block BOOL tokenWasCurrent = NO;
   dispatch_sync(self.stateQueue, ^{
     tokenWasCurrent = [self admissionTokenIsCurrentLocked:admissionToken];
   });
   if (!tokenWasCurrent) return QONRemoteConfigV2TransitionStatusRejected;
   QONRemoteConfigV2Envelope *envelope = [self.envelopeDecoder parseBody:body
-      strongETag:strongETag expectation:admissionToken.expectation];
+      strongETag:strongETag expectation:expectation];
   if (!envelope) return QONRemoteConfigV2TransitionStatusRejected;
 
   __block QONRemoteConfigV2TransitionStatus status = QONRemoteConfigV2TransitionStatusRejected;

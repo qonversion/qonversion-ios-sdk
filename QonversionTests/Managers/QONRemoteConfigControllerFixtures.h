@@ -167,13 +167,16 @@ static int64_t const QONRCPubProjectID = 42;
     return;
   }
   completion([QONRemoteConfigV2FetchResponse successWithBody:scripted.body
-                                                  strongETag:scripted.strongETag]);
+                                                  strongETag:scripted.strongETag
+                                                   projectID:QONRCPubProjectID]);
 }
 - (BOOL)releaseHeldWithBody:(NSData *)body strongETag:(NSString *)strongETag {
   QONRemoteConfigV2FetchTransportCompletion completion = self.heldCompletion;
   if (!completion) return NO;
   self.heldCompletion = nil;
-  completion([QONRemoteConfigV2FetchResponse successWithBody:body strongETag:strongETag]);
+  completion([QONRemoteConfigV2FetchResponse successWithBody:body
+                                                  strongETag:strongETag
+                                                   projectID:QONRCPubProjectID]);
   return YES;
 }
 @end
@@ -427,7 +430,6 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
                                             coordinator:environment.coordinator
                                              projectKey:QONRCPubProjectKey
                                             environment:QONRCPubEnvironmentUID
-                                              projectID:QONRCPubProjectID
                                               scopeSink:nil
                                               scheduler:environment.scheduler
                                           identityQueue:environment.identityQueue]) {

@@ -71,14 +71,13 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
  The controller binds every scope itself. Nothing supplies a context
  fingerprint: it is a per-response tag that rotates with the user's targeting
  context, so it neither exists at bootstrap nor holds still between fetches.
- A projectID of 0 or less leaves the surface unbindable, which is how a caller
- that has no project identity yet keeps the engine off the network.
+ Nothing supplies a numeric project id either — the SDK learns it from the
+ gateway's session bootstrap, which is the only party that knows it.
  */
 - (BOOL)installEngineWithManager:(QONRemoteConfigV2Manager *)manager
                      coordinator:(QONRemoteConfigV2FetchCoordinator *)coordinator
                       projectKey:(NSString *)projectKey
                      environment:(NSString *)environment
-                       projectID:(int64_t)projectID
                        scopeSink:(nullable QONRemoteConfigScopeSink)scopeSink
                        scheduler:(id<QONRemoteConfigV2FetchScheduler>)scheduler
                    identityQueue:(dispatch_queue_t)identityQueue;
@@ -99,8 +98,7 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
              canonicalUserID:(nullable NSString *)canonicalUserID
           readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 localStorage:(id<QNLocalStorage>)localStorage
-       clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
-                   projectID:(int64_t)projectID;
+       clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider;
 
 /**
  Rebinds the surface to another canonical identity. The previous identity's

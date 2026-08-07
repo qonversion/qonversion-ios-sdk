@@ -116,19 +116,20 @@ static NSUInteger failures = 0;
 @property(nonatomic, strong) QONRemoteConfigSnapshot *snapshot;
 @property(nonatomic) NSUInteger admissions;
 @property(nonatomic) NSUInteger admittedBodies;
+@property(nonatomic) int64_t lastAdmittedProjectID;
 @property(nonatomic) QONRemoteConfigV2TransitionStatus transitionStatus;
 @end
 @implementation HarnessCore
 - (void)setScope:(QONRemoteConfigV2Scope *)scope { _scope = scope; }
 - (QONRemoteConfigSnapshot *)unguardedSnapshot { return self.snapshot; }
-- (QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(__unused QONRemoteConfigV2Scope *)scope
-                                                expectation:(__unused QONRemoteConfigV2EnvelopeExpectation *)expectation {
+- (QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(__unused QONRemoteConfigV2Scope *)scope {
   self.admissions += 1; return (id)[NSObject new];
 }
 - (QONRemoteConfigV2TransitionStatus)admitBody:(__unused NSData *)body
                                    strongETag:(__unused NSString *)strongETag
+                                    projectID:(int64_t)projectID
                                admissionToken:(__unused QONRemoteConfigV2AdmissionToken *)admissionToken {
-  self.admittedBodies += 1; return self.transitionStatus;
+  self.admittedBodies += 1; self.lastAdmittedProjectID = projectID; return self.transitionStatus;
 }
 - (QONRemoteConfigV2ConditionalRequestValidator *)conditionalRequestValidator { return self.validator; }
 - (BOOL)isConditionalRequestValidatorCurrent:(QONRemoteConfigV2ConditionalRequestValidator *)validator {
@@ -139,7 +140,7 @@ static NSUInteger failures = 0;
 static QONRemoteConfigV2FetchBinding *Binding(NSString *user) {
   QONRemoteConfigV2Scope *scope = [[QONRemoteConfigV2Scope alloc]
       initWithProjectKey:@"project" environment:@"production" canonicalUserID:user];
-  return [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope projectID:42];
+  return [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope];
 }
 
 static QONRemoteConfigV2FetchPolicy *Policy(int64_t minimum, NSNumber *timeout) {
@@ -178,7 +179,7 @@ static void TestCoalescingAndCallbackIsolation(void) {
   }];
   QON_CHECK(transport.requests.count == 1, "coalesced callers must share one HTTP request");
   [transport complete:0 response:[QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
-      strongETag:@"etag"]];
+      strongETag:@"etag" projectID:42]];
   Drain(callbacks);
   QON_CHECK(delivered == 2, "throwing callback must not starve the next waiter");
   QON_CHECK(core.admissions == 1 && core.admittedBodies == 1, "coalesced operation admits once");
@@ -249,9 +250,9 @@ static void TestTimeoutAndZombieFence(void) {
   QON_CHECK(transport.requests.count == 2 && core.admissions == 2,
       "new fetch after all waiters timeout must supersede zombie without cancelling HTTP");
   [transport complete:0 response:[QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
-      strongETag:@"old"]];
+      strongETag:@"old" projectID:42]];
   [transport complete:1 response:[QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
-      strongETag:@"new"]];
+      strongETag:@"new" projectID:42]];
   Drain(callbacks);
   QON_CHECK(results.count == 2 && core.admittedBodies == 1,
       "late zombie response must be fenced while new response persists Candidate");
@@ -363,7 +364,7 @@ static void TestTransportAndSchedulerExceptionsCannotHangWaiters(void) {
   [secondCoordinator fetchWithForceReason:QONRemoteConfigV2FetchForceReasonNone
       completion:^(id value) { schedulerResult = value; }];
   [secondTransport complete:0 response:[QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
-      strongETag:@"etag"]];
+      strongETag:@"etag" projectID:42]];
   Drain(callbacks);
   QON_CHECK(schedulerResult.kind == QONRemoteConfigV2FetchResultKindFetched,
       "scheduler exception must not block transport completion");
@@ -452,7 +453,7 @@ static void TestTransitionClaimsOldWaitersOnce(void) {
   [coordinator fetchWithForceReason:QONRemoteConfigV2FetchForceReasonNone completion:^(id result) { [results addObject:result]; }];
   [coordinator transitionToBinding:Binding(@"b")]; Drain(callbacks);
   [transport complete:0 response:[QONRemoteConfigV2FetchResponse successWithBody:[NSData data]
-      strongETag:@"late"]];
+      strongETag:@"late" projectID:42]];
   Drain(callbacks);
   QONRemoteConfigV2FetchResult *result = results.firstObject;
   QON_CHECK(results.count == 1 && result.kind == QONRemoteConfigV2FetchResultKindSuperseded,

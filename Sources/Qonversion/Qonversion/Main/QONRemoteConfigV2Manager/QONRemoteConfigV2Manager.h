@@ -121,14 +121,24 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2TransitionStatus) {
  */
 - (void)setScope:(nullable QONRemoteConfigV2Scope *)scope;
 /**
- The expectation states only what a caller can actually know: the project and
- the environment. Its `contextFingerprint` is normally nil, because nothing on
- the device can know it — see QONRemoteConfigV2EnvelopeExpectation.
+ Opens an admission for a scope. It states no envelope boundary, because at this
+ point there is none to state: the admission is opened before the request, and
+ the request is what learns the project id.
  */
-- (nullable QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope
-                                                        expectation:(QONRemoteConfigV2EnvelopeExpectation *)expectation;
+- (nullable QONRemoteConfigV2AdmissionToken *)beginAdmissionForScope:(QONRemoteConfigV2Scope *)scope;
+/**
+ `projectID` is the id the gateway stated for the session these bytes were
+ fetched under. It, together with the token's own environment, is the
+ QONRemoteConfigV2EnvelopeExpectation the body is parsed against, so an envelope
+ belonging to another project is refused rather than admitted.
+
+ The expectation's `contextFingerprint` is deliberately left open here: nothing
+ on the device can predict it, and it rotates legitimately — see
+ QONRemoteConfigV2EnvelopeExpectation.
+ */
 - (QONRemoteConfigV2TransitionStatus)admitBody:(NSData *)body
                                    strongETag:(NSString *)strongETag
+                                    projectID:(int64_t)projectID
                                admissionToken:(QONRemoteConfigV2AdmissionToken *)admissionToken;
 - (void)acceptFetchedRelease:(QONRemoteConfigV2Release *)release
                      forScope:(QONRemoteConfigV2Scope *)scope;

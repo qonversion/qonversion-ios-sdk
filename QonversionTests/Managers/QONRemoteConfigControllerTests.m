@@ -458,24 +458,25 @@
   NSData *malformed = QONRCPubSnapshotBodyWithFingerprint(@"release-1", 1,
       [self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"],
       QONRCPubFingerprint.uppercaseString);
-  QONRemoteConfigV2AdmissionToken *bad =
-      [manager beginAdmissionForScope:scope expectation:[self openExpectation]];
+  QONRemoteConfigV2AdmissionToken *bad = [manager beginAdmissionForScope:scope];
   XCTAssertEqual([manager admitBody:malformed strongETag:QONRCPubStrongETag(malformed)
+                          projectID:QONRCPubProjectID
                      admissionToken:bad], QONRemoteConfigV2TransitionStatusRejected);
   XCTAssertEqual([environment.controller rawValueForKey:@"alpha"].source,
                  QONRemoteConfigValueSourceFallback);
 
   NSData *wellFormed = QONRCPubSnapshotBody(@"release-1", 1,
       [self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"]);
-  QONRemoteConfigV2AdmissionToken *good =
-      [manager beginAdmissionForScope:scope expectation:[self openExpectation]];
+  QONRemoteConfigV2AdmissionToken *good = [manager beginAdmissionForScope:scope];
   XCTAssertEqual([manager admitBody:wellFormed strongETag:QONRCPubStrongETag(wellFormed)
+                          projectID:QONRCPubProjectID
                      admissionToken:good], QONRemoteConfigV2TransitionStatusAccepted);
 }
 
-// A stated fingerprint constrains that one call and nothing beyond it. It is
-// not a pin: it never outlives the admission token that carried it.
-- (void)testAStatedFingerprintConstrainsOnlyItsOwnCall {
+// The project id reaching admission is the one the gateway stated for the
+// session these bytes came back on. It is the envelope boundary, so an envelope
+// from another project is refused rather than published.
+- (void)testAnEnvelopeFromAnotherProjectIsRefused {
   QONRCPubEnvironment *environment =
       [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
               minimumFetchIntervalMilliseconds:0];
@@ -485,18 +486,44 @@
       [self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"]);
   NSString *eTag = QONRCPubStrongETag(body);
 
-  QONRemoteConfigV2AdmissionToken *mismatched = [manager beginAdmissionForScope:scope
-      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc]
-          initWithProjectID:QONRCPubProjectID
-             environmentUID:QONRCPubEnvironmentUID
-         contextFingerprint:QONRCPubOtherFingerprint]];
-  XCTAssertEqual([manager admitBody:body strongETag:eTag admissionToken:mismatched],
+  QONRemoteConfigV2AdmissionToken *foreign = [manager beginAdmissionForScope:scope];
+  XCTAssertEqual([manager admitBody:body strongETag:eTag projectID:QONRCPubProjectID + 1
+                     admissionToken:foreign],
+                 QONRemoteConfigV2TransitionStatusRejected);
+  XCTAssertEqual([environment.controller rawValueForKey:@"alpha"].source,
+                 QONRemoteConfigValueSourceFallback);
+
+  // Zero is not a project: it is what a response that learned nothing carries,
+  // and it must never read as "no boundary to check".
+  QONRemoteConfigV2AdmissionToken *unlearned = [manager beginAdmissionForScope:scope];
+  XCTAssertEqual([manager admitBody:body strongETag:eTag projectID:0
+                     admissionToken:unlearned],
                  QONRemoteConfigV2TransitionStatusRejected);
 
-  QONRemoteConfigV2AdmissionToken *open =
-      [manager beginAdmissionForScope:scope expectation:[self openExpectation]];
-  XCTAssertEqual([manager admitBody:body strongETag:eTag admissionToken:open],
+  QONRemoteConfigV2AdmissionToken *learned = [manager beginAdmissionForScope:scope];
+  XCTAssertEqual([manager admitBody:body strongETag:eTag projectID:QONRCPubProjectID
+                     admissionToken:learned],
                  QONRemoteConfigV2TransitionStatusAccepted);
+}
+
+// A stated fingerprint constrains that one parse and nothing beyond it. The
+// admission path never states one — nothing on the device can predict the next
+// tag — so this is the parser's contract, for a caller that already holds the
+// exact response it means to admit.
+- (void)testAStatedFingerprintConstrainsOnlyItsOwnCall {
+  QONRemoteConfigV2EnvelopeParser *parser = [QONRemoteConfigV2EnvelopeParser new];
+  NSData *body = QONRCPubSnapshotBody(@"release-1", 1,
+      [self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"]);
+  NSString *eTag = QONRCPubStrongETag(body);
+
+  QONRemoteConfigV2EnvelopeExpectation *mismatched =
+      [[QONRemoteConfigV2EnvelopeExpectation alloc]
+          initWithProjectID:QONRCPubProjectID
+             environmentUID:QONRCPubEnvironmentUID
+         contextFingerprint:QONRCPubOtherFingerprint];
+  XCTAssertNil([parser parseBody:body strongETag:eTag expectation:mismatched]);
+  XCTAssertNotNil([parser parseBody:body strongETag:eTag
+                        expectation:[self openExpectation]]);
 }
 
 - (void)testScopeIsolationIsKeyedStorageNotTheFingerprint {
@@ -594,17 +621,17 @@
   QONRemoteConfigController *controller = environment.controller;
   QONRCPubStorage *storage = [QONRCPubStorage new];
 
-  // A project the caller cannot name yet keeps the coordinator unbound, so the
-  // real assembly is exercised end to end with no request ever leaving.
+  // No identity yet, so no scope to bind: the real assembly is exercised end to
+  // end with no request ever leaving. Nothing here states a project id — the
+  // SDK has none to state until the gateway bootstrap hands it one.
   BOOL configured = [controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
                                         projectToken:@"project-token"
                                           projectKey:QONRCPubProjectKey
                                          environment:QONRCPubEnvironmentUID
-                                     canonicalUserID:@"user-a"
+                                     canonicalUserID:nil
                                   readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
                                         localStorage:storage
-                               clientContextProvider:[QONRCPubContextProvider new]
-                                           projectID:0];
+                               clientContextProvider:[QONRCPubContextProvider new]];
   XCTAssertTrue(configured);
   XCTAssertTrue(controller.isConfigured);
 
@@ -620,11 +647,10 @@
                                      projectToken:@"project-token"
                                        projectKey:QONRCPubProjectKey
                                       environment:QONRCPubEnvironmentUID
-                                  canonicalUserID:@"user-a"
+                                  canonicalUserID:nil
                                readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
                                      localStorage:storage
-                            clientContextProvider:[QONRCPubContextProvider new]
-                                        projectID:0]);
+                            clientContextProvider:[QONRCPubContextProvider new]]);
 
   XCTAssertEqual([controller rawValueForKey:@"alpha"].source,
                  QONRemoteConfigValueSourceFallback);

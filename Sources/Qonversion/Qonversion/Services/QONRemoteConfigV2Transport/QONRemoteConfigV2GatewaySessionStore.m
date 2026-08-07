@@ -66,7 +66,10 @@ BOOL QONRemoteConfigV2GatewayValidHeaderValue(NSString *value, NSUInteger maximu
       ![environment isKindOfClass:NSString.class] || environment.length == 0 ||
       [environment lengthOfBytesUsingEncoding:NSUTF8StringEncoding] >
           QONRemoteConfigV2MaximumScopeComponentBytes ||
-      projectID <= 0 || expiresAtSeconds < 0) {
+      // Same ceiling the envelope expectation enforces: an id this session could
+      // never be checked against is not a session worth keeping.
+      projectID <= 0 || projectID > QONRemoteConfigV2MaximumSafeInteger ||
+      expiresAtSeconds < 0) {
     return nil;
   }
   self = [super init];

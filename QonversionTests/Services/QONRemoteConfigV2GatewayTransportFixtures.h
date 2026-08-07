@@ -147,11 +147,19 @@ static QONRemoteConfigV2DeviceClientContextProvider *QONRCV2ContextProvider(
      installDateProvider:installDateProvider];
 }
 
-static NSData *QONRCV2BootstrapBody(NSString *token, int64_t expiresAtSeconds) {
+/** The project id every fixture bootstrap states unless a test says otherwise. */
+static int64_t const QONRCV2TestProjectID = 42;
+
+static NSData *QONRCV2BootstrapBodyForProject(NSString *token, int64_t expiresAtSeconds,
+                                              int64_t projectID) {
   NSString *json = [NSString stringWithFormat:
-      @"{\"session_token\":\"%@\",\"project_id\":42,\"environment\":\"production\","
-       "\"expires_at\":%lld}", token, expiresAtSeconds];
+      @"{\"session_token\":\"%@\",\"project_id\":%lld,\"environment\":\"production\","
+       "\"expires_at\":%lld}", token, projectID, expiresAtSeconds];
   return [json dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+static NSData *QONRCV2BootstrapBody(NSString *token, int64_t expiresAtSeconds) {
+  return QONRCV2BootstrapBodyForProject(token, expiresAtSeconds, QONRCV2TestProjectID);
 }
 
 /**

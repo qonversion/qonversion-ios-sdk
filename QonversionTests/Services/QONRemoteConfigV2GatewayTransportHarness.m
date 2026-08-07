@@ -33,6 +33,7 @@ static NSUInteger checks = 0;
 @property (nonatomic, strong) QONRCV2FakeHTTPExecutor *executor;
 @property (nonatomic, strong) QONRCV2FakeLocalStorage *storage;
 @property (nonatomic, strong) QONRemoteConfigV2GatewaySessionStore *sessionStore;
+@property (nonatomic, strong) QONRemoteConfigV2ProjectIdentityStore *projectIdentityStore;
 @property (nonatomic, strong) QONRCV2FakeClock *clock;
 @property (nonatomic, strong) QONRCV2FakeInstallDateProvider *installDateProvider;
 @property (nonatomic, strong) QONRemoteConfigV2GatewayTransport *transport;
@@ -47,6 +48,8 @@ static NSUInteger checks = 0;
     _executor = [QONRCV2FakeHTTPExecutor new];
     _storage = [QONRCV2FakeLocalStorage new];
     _sessionStore = [[QONRemoteConfigV2GatewaySessionStore alloc] initWithLocalStorage:_storage];
+    _projectIdentityStore =
+        [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:_storage];
     _clock = [QONRCV2FakeClock new];
     _clock.now = 1000000000000;
     _installDateProvider = [QONRCV2FakeInstallDateProvider new];
@@ -59,6 +62,7 @@ static NSUInteger checks = 0;
             projectToken:QONRCV2TestProjectToken
             httpExecutor:_executor
             sessionStore:_sessionStore
+    projectIdentityStore:_projectIdentityStore
    clientContextProvider:QONRCV2ContextProvider(_installDateProvider)
                    clock:_clock
          failureObserver:^(QONRemoteConfigV2TransportFailureKind kind, NSNumber *statusCode) {
@@ -412,6 +416,7 @@ static void TestDeviceInstallDate(void) {
           projectToken:QONRCV2TestProjectToken
           httpExecutor:env.executor
           sessionStore:env.sessionStore
+  projectIdentityStore:env.projectIdentityStore
  clientContextProvider:QONRCV2ContextProvider(provider)
                  clock:env.clock
        failureObserver:nil];
@@ -495,6 +500,7 @@ static void TestContractHardening(void) {
             projectToken:QONRCV2TestProjectToken
             httpExecutor:env.executor
             sessionStore:env.sessionStore
+    projectIdentityStore:env.projectIdentityStore
    clientContextProvider:QONRCV2ContextProvider(env.installDateProvider)
                    clock:env.clock
          failureObserver:nil];
@@ -513,6 +519,7 @@ static void TestContractHardening(void) {
           projectToken:@"bad\r\ntoken"
           httpExecutor:env.executor
           sessionStore:env.sessionStore
+  projectIdentityStore:env.projectIdentityStore
  clientContextProvider:QONRCV2ContextProvider(env.installDateProvider)
                  clock:env.clock
        failureObserver:nil] == nil,
@@ -527,6 +534,152 @@ static void TestSecretHygiene(void) {
             "description hides the token");
   QON_CHECK(![session.debugDescription containsString:@"super-secret-token"],
             "debugDescription hides the token");
+}
+
+#pragma mark - Learned project identity
+
+// The numeric project_id is not a caller input. The gateway states it in the
+// session bootstrap, the SDK learns it there, and everything downstream — the
+// envelope expectation included — is built from what was learned.
+
+static void TestBootstrapEstablishesTheProjectID(void) {
+  QONRCV2HarnessEnvironment *env = [QONRCV2HarnessEnvironment new];
+  QONRemoteConfigV2Scope *scope = QONRCV2Scope(QONRCV2TestAnonUID);
+  QON_CHECK([env.projectIdentityStore projectIDForScope:scope] == 0,
+            "nothing may be known before the first bootstrap");
+
+  [env enqueueBootstrapWithToken:@"session-token-1"];
+  [env enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QONRemoteConfigV2FetchResponse *response = [env fetchWithIfNoneMatch:nil];
+
+  QON_CHECK(response.kind == QONRemoteConfigV2FetchResponseKindSuccess, "the fetch must succeed");
+  QON_CHECK(response.projectID == QONRCV2TestProjectID,
+            "the success must carry the id the bootstrap stated");
+  QON_CHECK([env.projectIdentityStore projectIDForScope:scope] == QONRCV2TestProjectID,
+            "the first bootstrap must establish the id");
+
+  // A second fetch reuses the stored session and must report the same id
+  // without any further bootstrap.
+  [env enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QONRemoteConfigV2FetchResponse *again = [env fetchWithIfNoneMatch:nil];
+  QON_CHECK(again.kind == QONRemoteConfigV2FetchResponseKindSuccess &&
+                again.projectID == QONRCV2TestProjectID,
+            "a reused session must report the same learned id");
+  QON_CHECK(env.executor.requests.count == 3, "the second fetch must not re-bootstrap");
+}
+
+static void TestAConflictingReBootstrapIsATypedFailure(void) {
+  QONRCV2HarnessEnvironment *env = [QONRCV2HarnessEnvironment new];
+  QONRemoteConfigV2Scope *scope = QONRCV2Scope(QONRCV2TestAnonUID);
+  [env enqueueBootstrapWithToken:@"session-token-1"];
+  [env enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QON_CHECK([env fetchWithIfNoneMatch:nil].kind == QONRemoteConfigV2FetchResponseKindSuccess,
+            "the establishing fetch must succeed");
+
+  // The stored token is rejected, so the transport re-bootstraps — and this time
+  // the gateway answers with a different project.
+  [env.executor enqueue:[QONRCV2ScriptedHTTPResponse status:401 body:nil headers:nil]];
+  [env.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:QONRCV2BootstrapBodyForProject(@"session-token-2", 0, QONRCV2TestProjectID + 1)
+     headers:nil]];
+  [env enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+
+  QONRemoteConfigV2FetchResponse *response = [env fetchWithIfNoneMatch:nil];
+  QON_CHECK(response.kind == QONRemoteConfigV2FetchResponseKindFailure,
+            "a conflicting project id must fail the fetch");
+  QON_CHECK(response.projectID == 0, "a failure states no project id");
+  QON_CHECK([env.failureKinds.lastObject
+                isEqual:@(QONRemoteConfigV2TransportFailureKindProjectIdentityConflict)],
+            "the failure must be typed as a project identity conflict");
+  QON_CHECK([env.projectIdentityStore projectIDForScope:scope] == QONRCV2TestProjectID,
+            "the conflicting id must never be re-learned");
+  QON_CHECK([env.sessionStore sessionForScope:scope] == nil,
+            "the conflicting session must not be stored");
+  QON_CHECK(env.executor.requests.count == 4,
+            "the snapshot must not be requested under the refused session");
+}
+
+static void TestTheLearnedProjectIDSurvivesStoreRecreation(void) {
+  QONRCV2HarnessEnvironment *env = [QONRCV2HarnessEnvironment new];
+  QONRemoteConfigV2Scope *scope = QONRCV2Scope(QONRCV2TestAnonUID);
+  [env enqueueBootstrapWithToken:@"session-token-1"];
+  [env enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QON_CHECK([env fetchWithIfNoneMatch:nil].kind == QONRemoteConfigV2FetchResponseKindSuccess,
+            "the establishing fetch must succeed");
+
+  // Same storage, a brand new store object: the restart case.
+  QONRemoteConfigV2ProjectIdentityStore *reopened =
+      [[QONRemoteConfigV2ProjectIdentityStore alloc] initWithLocalStorage:env.storage];
+  QON_CHECK([reopened projectIDForScope:scope] == QONRCV2TestProjectID,
+            "a re-created store must still know the learned id");
+  QON_CHECK([reopened establishProjectID:QONRCV2TestProjectID forScope:scope] ==
+                QONRemoteConfigV2ProjectIdentityOutcomeConfirmed,
+            "the same id must confirm, not re-establish");
+  QON_CHECK([reopened establishProjectID:QONRCV2TestProjectID + 1 forScope:scope] ==
+                QONRemoteConfigV2ProjectIdentityOutcomeConflict,
+            "a different id must conflict across the restart too");
+  QON_CHECK([reopened projectIDForScope:scope] == QONRCV2TestProjectID,
+            "a refused conflict must leave the record untouched");
+}
+
+static void TestProjectIdentityIsKeyedWithoutTheIdentity(void) {
+  QONRemoteConfigV2Scope *anonymous = QONRCV2Scope(QONRCV2TestAnonUID);
+  QONRemoteConfigV2Scope *identified = QONRCV2Scope(@"identified-uid");
+  // Deliberate: a project id belongs to the project, not to the user, so a
+  // logout and a fresh login must not launder a conflicting id past the check.
+  QON_CHECK([[QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:anonymous]
+                isEqualToString:
+                    [QONRemoteConfigV2ProjectIdentityStore storageKeyForScope:identified]],
+            "two identities of one project must share the project identity key");
+  QON_CHECK(![[QONRemoteConfigV2GatewaySessionStore storageKeyForScope:anonymous]
+                isEqualToString:[QONRemoteConfigV2GatewaySessionStore storageKeyForScope:identified]],
+            "session tokens must still be keyed per identity");
+
+  QONRCV2HarnessEnvironment *env = [QONRCV2HarnessEnvironment new];
+  [env enqueueBootstrapWithToken:@"session-token-1"];
+  [env enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QON_CHECK([env fetchWithIfNoneMatch:nil].kind == QONRemoteConfigV2FetchResponseKindSuccess,
+            "the anonymous fetch must succeed");
+
+  [env.transport updateScope:identified];
+  [env.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:QONRCV2BootstrapBodyForProject(@"session-token-2", 0, QONRCV2TestProjectID + 1)
+     headers:nil]];
+  QONRemoteConfigV2FetchResponse *response = [env fetchWithIfNoneMatch:nil];
+  QON_CHECK(response.kind == QONRemoteConfigV2FetchResponseKindFailure &&
+                [env.failureKinds.lastObject
+                    isEqual:@(QONRemoteConfigV2TransportFailureKindProjectIdentityConflict)],
+            "a new identity must not be able to re-learn a different project id");
+}
+
+static void TestProjectIdentityPersistenceAndRange(void) {
+  QONRCV2HarnessEnvironment *env = [QONRCV2HarnessEnvironment new];
+  env.storage.ignoreWrites = YES;
+  [env enqueueBootstrapWithToken:@"session-token-1"];
+  [env enqueueSnapshotSuccessWithBody:QONRCV2NonCanonicalSnapshotBody()];
+  QONRemoteConfigV2FetchResponse *response = [env fetchWithIfNoneMatch:nil];
+  QON_CHECK(response.kind == QONRemoteConfigV2FetchResponseKindFailure,
+            "an id that cannot be made durable must fail the fetch");
+  QON_CHECK([env.failureKinds.lastObject isEqual:
+                @(QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed)],
+            "typed project identity persistence failure");
+  QON_CHECK(env.executor.requests.count == 1,
+            "the snapshot must not be requested without a durable project id");
+
+  // Out of range at the source: the session refuses to exist at all, which the
+  // bootstrap reports as malformed rather than carrying an uncheckable id.
+  QONRCV2HarnessEnvironment *oversized = [QONRCV2HarnessEnvironment new];
+  [oversized.executor enqueue:[QONRCV2ScriptedHTTPResponse
+      status:200
+        body:QONRCV2BootstrapBodyForProject(@"session-token-1", 0, INT64_MAX)
+     headers:nil]];
+  QONRemoteConfigV2FetchResponse *rejected = [oversized fetchWithIfNoneMatch:nil];
+  QON_CHECK(rejected.kind == QONRemoteConfigV2FetchResponseKindFailure &&
+                [oversized.failureKinds.lastObject
+                    isEqual:@(QONRemoteConfigV2TransportFailureKindBootstrapMalformed)],
+            "a project id beyond the safe integer range must be refused");
 }
 
 int main(void) {
@@ -545,6 +698,11 @@ int main(void) {
     TestDeviceInstallDate();
     TestContractHardening();
     TestSecretHygiene();
+    TestBootstrapEstablishesTheProjectID();
+    TestAConflictingReBootstrapIsATypedFailure();
+    TestTheLearnedProjectIDSurvivesStoreRecreation();
+    TestProjectIdentityIsKeyedWithoutTheIdentity();
+    TestProjectIdentityPersistenceAndRange();
 
     fprintf(stdout, "QONRemoteConfigV2GatewayTransportHarness: %lu/%lu passed\n",
             (unsigned long)(checks - failures), (unsigned long)checks);

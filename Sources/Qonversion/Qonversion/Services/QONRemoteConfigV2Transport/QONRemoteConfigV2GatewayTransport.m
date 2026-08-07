@@ -221,6 +221,7 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
 @property (nonatomic, copy) NSString *projectToken;
 @property (nonatomic, strong) id<QONRemoteConfigV2HTTPExecuting> httpExecutor;
 @property (nonatomic, strong) id<QONRemoteConfigV2GatewaySessionStoring> sessionStore;
+@property (nonatomic, strong) id<QONRemoteConfigV2ProjectIdentityStoring> projectIdentityStore;
 @property (nonatomic, strong) id<QONRemoteConfigV2ClientContextProviding> clientContextProvider;
 @property (nonatomic, strong) id<QONRemoteConfigV2FetchClock> clock;
 @property (nonatomic, copy, nullable) QONRemoteConfigV2TransportFailureObserver failureObserver;
@@ -234,11 +235,12 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
                    projectToken:(NSString *)projectToken
                    httpExecutor:(id<QONRemoteConfigV2HTTPExecuting>)httpExecutor
                    sessionStore:(id<QONRemoteConfigV2GatewaySessionStoring>)sessionStore
+            projectIdentityStore:(id<QONRemoteConfigV2ProjectIdentityStoring>)projectIdentityStore
           clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
                           clock:(id<QONRemoteConfigV2FetchClock>)clock
                 failureObserver:(QONRemoteConfigV2TransportFailureObserver)failureObserver {
   if (!baseURL.scheme.length || !baseURL.host.length || !httpExecutor || !sessionStore ||
-      !clientContextProvider || !clock ||
+      !projectIdentityStore || !clientContextProvider || !clock ||
       !QONRemoteConfigV2GatewayValidHeaderValue(
           projectToken, QONRemoteConfigV2GatewaySessionMaximumTokenBytes)) {
     return nil;
@@ -249,6 +251,7 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
     _projectToken = [projectToken copy];
     _httpExecutor = httpExecutor;
     _sessionStore = sessionStore;
+    _projectIdentityStore = projectIdentityStore;
     _clientContextProvider = clientContextProvider;
     _clock = clock;
     _failureObserver = [failureObserver copy];
@@ -348,6 +351,59 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
   }];
 }
 
+#pragma mark - Project identity
+
+/**
+ Reconciles the `project_id` a session states with what this installation
+ already learned, and reports the outcome as a typed failure when it cannot be
+ used. Returns YES when the caller may proceed with `session.projectID`.
+ */
+- (BOOL)confirmProjectIdentityForSession:(QONRemoteConfigV2GatewaySession *)session
+                                   scope:(QONRemoteConfigV2Scope *)scope
+                                 respond:(QONRemoteConfigV2FetchTransportCompletion)respond {
+  QONRemoteConfigV2ProjectIdentityOutcome outcome =
+      QONRemoteConfigV2ProjectIdentityOutcomePersistenceFailed;
+  @try {
+    outcome = [self.projectIdentityStore establishProjectID:session.projectID forScope:scope];
+  } @catch (__unused NSException *exception) {
+    outcome = QONRemoteConfigV2ProjectIdentityOutcomePersistenceFailed;
+  }
+  switch (outcome) {
+    case QONRemoteConfigV2ProjectIdentityOutcomeEstablished:
+    case QONRemoteConfigV2ProjectIdentityOutcomeConfirmed:
+      return YES;
+    case QONRemoteConfigV2ProjectIdentityOutcomeConflict:
+      // No status code: this is not something the gateway answered with, and
+      // fabricating one would misreport it. It stays retryable and therefore
+      // backs off, which is right — the disagreement is durable, so every
+      // retry must keep failing instead of quietly rebinding the project.
+      [self failRespond:respond
+                   kind:QONRemoteConfigV2TransportFailureKindProjectIdentityConflict
+             statusCode:nil
+                 retryAfterMilliseconds:nil];
+      return NO;
+    case QONRemoteConfigV2ProjectIdentityOutcomeUnusable:
+      // The id itself is out of range, which makes the bootstrap that stated it
+      // malformed rather than the storage faulty.
+      [self failRespond:respond
+                   kind:QONRemoteConfigV2TransportFailureKindBootstrapMalformed
+             statusCode:nil
+                 retryAfterMilliseconds:nil];
+      return NO;
+    case QONRemoteConfigV2ProjectIdentityOutcomePersistenceFailed:
+      [self failRespond:respond
+                   kind:QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed
+             statusCode:nil
+                 retryAfterMilliseconds:nil];
+      return NO;
+  }
+  [self failRespond:respond
+               kind:QONRemoteConfigV2TransportFailureKindProjectIdentityPersistenceFailed
+         statusCode:nil
+             retryAfterMilliseconds:nil];
+  return NO;
+}
+
 #pragma mark - Bootstrap
 
 - (nullable QONRemoteConfigV2GatewaySession *)validSessionForScope:(QONRemoteConfigV2Scope *)scope {
@@ -432,6 +488,10 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
       return;
     }
 
+    // Before the token is stored, not after: a session belonging to another
+    // project must not be left at rest under this scope's key.
+    if (![self confirmProjectIdentityForSession:session scope:scope respond:respond]) return;
+
     BOOL stored = NO;
     @try {
       stored = [self.sessionStore storeSession:session forScope:scope];
@@ -500,6 +560,11 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
                     ifNoneMatch:(NSString *)ifNoneMatch
                allowReBootstrap:(BOOL)allowReBootstrap
                         respond:(QONRemoteConfigV2FetchTransportCompletion)respond {
+  // Also on the reuse path: a stored session predates the ledger's current
+  // contents only if something rewrote one of them, and that must not fetch.
+  if (![self confirmProjectIdentityForSession:session scope:scope respond:respond]) return;
+  int64_t projectID = session.projectID;
+
   NSURLRequest *request = [self requestWithPath:QONRemoteConfigV2GatewaySnapshotPath
                                            body:body
                                    sessionToken:session.sessionToken
@@ -540,7 +605,9 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
         return;
       }
       // Exact bytes as received: no decode, no re-serialization, no copy semantics change.
-      respond([QONRemoteConfigV2FetchResponse successWithBody:data strongETag:eTag]);
+      respond([QONRemoteConfigV2FetchResponse successWithBody:data
+                                                   strongETag:eTag
+                                                    projectID:projectID]);
       return;
     }
 
