@@ -219,6 +219,8 @@ static void TestTimeoutCompletesOnBestAvailableWhileTheRequestKeepsRunning(void)
             "a timed-out read must still carry the value source");
   QON_CHECK(!captured.hasPendingActivation,
             "a timed-out call cannot claim a pending activation it has not seen");
+  QON_CHECK(environment.readGuardAssertions == 0,
+            "a slow network must not raise the app's read-before-activate assertion");
 
   NSData *second = ReleaseBody(@"release-2", 2, [NSString stringWithFormat:@"\"alpha\":%@",
       QONRCPubItem(@"\"server-alpha-2\"", @"variation-a2", @"on_next_activate", @"null")]);
@@ -429,6 +431,19 @@ static void TestReleaseBuildActivatesOnceSilentlyOnAFirstRead(void) {
   QONRemoteConfigFetchResult *result = RunFetch(environment, 0, NO, NULL);
   QON_CHECK(result.hasPendingActivation,
             "the fetched release must be pending before any read");
+
+  __block QONRemoteConfigFetchResult *timedOut = nil;
+  environment.transport.holdNextRequest = YES;
+  [controller fetchWithTimeout:0.05 completion:^(QONRemoteConfigFetchResult *result) {
+    timedOut = result;
+  }];
+  [environment drain];
+  QON_CHECK([environment.scheduler fireFirstPending], "the deadline must have been scheduled");
+  [environment drain];
+  QON_CHECK(timedOut.status == QONRemoteConfigFetchStatusTimedOut &&
+                [timedOut.snapshot rawValueForKey:@"alpha"].source ==
+                    QONRemoteConfigValueSourceFallback,
+            "a timed-out call must report the active configuration, not a pending release");
 
   QONRemoteConfigValue *value = [controller rawValueForKey:@"alpha"];
   QON_CHECK(environment.readGuardAssertions == 0,

@@ -49,9 +49,13 @@ QON_EXPERIMENTAL
 @property (nonatomic, assign, readonly) QONRemoteConfigFetchStatus status;
 
 /**
- Best available configuration at completion time. It is never nil: when nothing
- was ever fetched or activated it resolves from the bundled defaults, so every
- read still returns a value together with its source.
+ Best available configuration at completion time: whatever is active right now,
+ resolved down to the bundled defaults for keys that have no active value. It is
+ never nil, so every read still returns a value together with its source.
+
+ Reading it never activates anything on the caller's behalf, not even on a
+ timed-out call. A release fetched but not yet activated therefore does not
+ appear here — call `activate` to publish it.
  */
 @property (nonatomic, strong, readonly) QONRemoteConfigSnapshot *snapshot;
 

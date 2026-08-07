@@ -64,7 +64,8 @@ QON_EXPERIMENTAL
  background and its release becomes available to a later `activate`. The
  completion always receives the best configuration available at that moment, so
  a read on `result.snapshot` still returns a value together with its source
- (`server`, `cache` or `fallback`).
+ (`server`, `cache` or `fallback`). Timing out never activates anything, and it
+ never raises the read-before-activate assertion.
 
  Pass a non-positive `timeout` to let the SDK's own fetch policy decide.
 

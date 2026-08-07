@@ -233,6 +233,7 @@
                  QONRemoteConfigValueSourceServer);
   XCTAssertEqualObjects([captured.snapshot rawValueForKey:@"alpha"].value, @"server-alpha-1");
   XCTAssertFalse(captured.hasPendingActivation);
+  XCTAssertEqual(environment.readGuardAssertions, 0u);
 
   NSData *late = [self releaseBody:@"release-2" number:2
                             values:[self alphaValues:@"\"server-alpha-2\""
@@ -389,6 +390,18 @@
                                   policy:@"on_next_activate"]];
   QONRemoteConfigFetchResult *result = [self runFetch:environment activate:NO deliveries:NULL];
   XCTAssertTrue(result.hasPendingActivation);
+
+  __block QONRemoteConfigFetchResult *timedOut = nil;
+  environment.transport.holdNextRequest = YES;
+  [controller fetchWithTimeout:0.05 completion:^(QONRemoteConfigFetchResult *fetched) {
+    timedOut = fetched;
+  }];
+  [environment drain];
+  XCTAssertTrue([environment.scheduler fireFirstPending]);
+  [environment drain];
+  XCTAssertEqual(timedOut.status, QONRemoteConfigFetchStatusTimedOut);
+  XCTAssertEqual([timedOut.snapshot rawValueForKey:@"alpha"].source,
+                 QONRemoteConfigValueSourceFallback);
 
   QONRemoteConfigValue *value = [controller rawValueForKey:@"alpha"];
   XCTAssertEqual(environment.readGuardAssertions, 0u);

@@ -547,8 +547,12 @@ hasPendingActivation:hasPendingActivation];
         typeof(self) strongSelf = weakSelf;
         if (!strongSelf || ![call claim]) return;
         // The request itself is intentionally left running: only the wait ends.
+        // The snapshot is read unguarded for the same reason as below — the SDK
+        // is the reader here, and a slow network must not raise the app's
+        // read-before-activate assertion or silently spend its one implicit
+        // activation.
         [strongSelf deliverStatus:QONRemoteConfigFetchStatusTimedOut
-                         snapshot:manager.currentSnapshot
+                         snapshot:manager.unguardedSnapshot
                           changed:NO
              hasPendingActivation:NO
                           forCall:call];
@@ -574,8 +578,7 @@ hasPendingActivation:hasPendingActivation];
       pending = NO;
     }
     // A completed fetch is the SDK reading, not the app: it must not consume the
-    // app's one read-before-activate opportunity. The timed-out path above is
-    // deliberately different — there the app asked to proceed on best available.
+    // app's one read-before-activate opportunity.
     [strongSelf deliverStatus:[strongSelf statusForResultKind:result.kind]
                      snapshot:manager.unguardedSnapshot
                       changed:changed
