@@ -64,6 +64,21 @@ static BOOL QONRemoteConfigV2GatewayScopesEqual(QONRemoteConfigV2Scope *left,
 
 #pragma mark - Client context
 
+
+// -[NSHTTPURLResponse valueForHTTPHeaderField:] is iOS 13/tvOS 13+; the SDK
+// supports older deployment targets, so header lookup goes through
+// allHeaderFields with the case-insensitive comparison HTTP requires.
+static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *response, NSString *field) {
+  for (id key in response.allHeaderFields) {
+    if ([key isKindOfClass:[NSString class]] &&
+        [(NSString *)key caseInsensitiveCompare:field] == NSOrderedSame) {
+      id value = response.allHeaderFields[key];
+      return [value isKindOfClass:[NSString class]] ? (NSString *)value : nil;
+    }
+  }
+  return nil;
+}
+
 @implementation QONRemoteConfigV2ClientContext
 
 - (instancetype)initWithPlatform:(NSString *)platform
@@ -514,7 +529,7 @@ static BOOL QONRemoteConfigV2GatewayScopesEqual(QONRemoteConfigV2Scope *left,
     }
 
     NSInteger status = response.statusCode;
-    NSString *eTag = [response valueForHTTPHeaderField:@"ETag"];
+    NSString *eTag = QONRemoteConfigV2HeaderValue(response, @"ETag");
 
     if (status == 200) {
       if (data.length == 0 || !QONRemoteConfigV2GatewayStrongETagShape(eTag)) {
@@ -647,7 +662,7 @@ static BOOL QONRemoteConfigV2GatewayScopesEqual(QONRemoteConfigV2Scope *left,
 }
 
 - (nullable NSNumber *)retryAfterMillisecondsFrom:(NSHTTPURLResponse *)response {
-  NSString *value = [response valueForHTTPHeaderField:@"Retry-After"];
+  NSString *value = QONRemoteConfigV2HeaderValue(response, @"Retry-After");
   if (value.length == 0) return nil;
   NSScanner *scanner = [NSScanner scannerWithString:value];
   long long seconds = 0;
