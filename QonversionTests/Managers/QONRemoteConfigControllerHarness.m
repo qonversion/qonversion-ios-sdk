@@ -540,6 +540,114 @@ static void TestFirstAdmissionPinsTheContextAndLaterMismatchesAreRefused(void) {
             "the pinned context must keep admitting its own envelopes");
 }
 
+// The coordinator always states an unpinned expectation, but the admission API
+// still accepts a stated fingerprint. It must narrow the pin, never replace it.
+static void TestAStatedFingerprintNarrowsThePinAndNeverReplacesIt(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install for the stated-fingerprint scenario");
+  NSData *first = ReleaseBody(@"release-1", 1,
+                              AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
+  [environment.transport enqueueBody:first strongETag:QONRCPubStrongETag(first)];
+  QON_CHECK(RunFetch(environment, 0, YES, NULL).changed, "the scope must be pinned first");
+
+  QONRemoteConfigV2Manager *manager = environment.manager;
+  QONRemoteConfigV2Scope *scope = PinScope(@"user-a");
+  NSData *body = ReleaseBody(@"release-2", 2, AlphaValues(@"\"server-alpha-2\"", @"variation-a2"));
+  NSString *eTag = QONRCPubStrongETag(body);
+
+  QONRemoteConfigV2AdmissionToken *conflicting = [manager beginAdmissionForScope:scope
+      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc]
+          initWithProjectID:QONRCPubProjectID
+             environmentUID:QONRCPubEnvironmentUID
+         contextFingerprint:QONRCPubOtherFingerprint]];
+  QON_CHECK([manager admitBody:body strongETag:eTag admissionToken:conflicting] ==
+                QONRemoteConfigV2TransitionStatusRejected,
+            "a stated fingerprint that contradicts the pin must be refused");
+
+  QONRemoteConfigV2AdmissionToken *agreeing = [manager beginAdmissionForScope:scope
+      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc]
+          initWithProjectID:QONRCPubProjectID
+             environmentUID:QONRCPubEnvironmentUID
+         contextFingerprint:QONRCPubFingerprint]];
+  QON_CHECK([manager admitBody:body strongETag:eTag admissionToken:agreeing] ==
+                QONRemoteConfigV2TransitionStatusAccepted,
+            "a stated fingerprint that agrees with the pin must still admit");
+}
+
+/** An unpinned expectation: the shape the coordinator always states. */
+static QONRemoteConfigV2EnvelopeExpectation *UnpinnedExpectation(void) {
+  return [[QONRemoteConfigV2EnvelopeExpectation alloc]
+      initWithProjectID:QONRCPubProjectID environmentUID:QONRCPubEnvironmentUID];
+}
+
+// Validation is not admission. A single replayed response from another client
+// context, dropped by the release floor, must leave the scope unpinned —
+// otherwise it would lock that install out of every later release, forever.
+static void TestAnEnvelopeTheFloorDropsMustNotPinTheScope(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install for the rejected-envelope scenario");
+  QONRemoteConfigV2Manager *manager = environment.manager;
+  QONRemoteConfigV2Scope *scope = PinScope(@"user-a");
+
+  // A locally built release carries no fingerprint, so the scope ends up with a
+  // release floor while still being genuinely unpinned.
+  QONRemoteConfigV2Entry *entry = [[QONRemoteConfigV2Entry alloc]
+      initWithKey:@"alpha"
+          rawData:QONRCPubUTF8(@"\"seed\"")
+     variationUID:@"variation-seed"
+      applyPolicy:QONRemoteConfigApplyPolicyOnNextActivate
+         metadata:nil];
+  QONRemoteConfigV2Release *seed = [[QONRemoteConfigV2Release alloc]
+      initWithReleaseUID:@"seed" releaseNumber:10 manifestContentHash:QONRCPubManifestHash
+                 entries:@{@"alpha": entry}];
+  QON_CHECK(entry != nil && seed != nil, "the locally built seed release must build");
+  [manager acceptFetchedRelease:seed forScope:scope];
+  QON_CHECK([manager activate], "the seed release must activate");
+
+  NSData *foreign = QONRCPubSnapshotBodyWithFingerprint(
+      @"release-3", 3, AlphaValues(@"\"server-alpha-3\"", @"variation-a3"),
+      QONRCPubOtherFingerprint);
+  QONRemoteConfigV2AdmissionToken *dropped =
+      [manager beginAdmissionForScope:scope expectation:UnpinnedExpectation()];
+  QON_CHECK([manager admitBody:foreign strongETag:QONRCPubStrongETag(foreign)
+                admissionToken:dropped] == QONRemoteConfigV2TransitionStatusRejected,
+            "an envelope below the release floor must be rejected");
+
+  NSData *legitimate = ReleaseBody(@"release-11", 11,
+                                   AlphaValues(@"\"server-alpha-11\"", @"variation-a11"));
+  QONRemoteConfigV2AdmissionToken *next =
+      [manager beginAdmissionForScope:scope expectation:UnpinnedExpectation()];
+  QON_CHECK([manager admitBody:legitimate strongETag:QONRCPubStrongETag(legitimate)
+                admissionToken:next] == QONRemoteConfigV2TransitionStatusAccepted,
+            "a rejected envelope must not lock the scope out of its later releases");
+}
+
+// A device that cannot persist the pin must not admit what it cannot verify.
+static void TestAnUnpinnableScopeFailsClosedInsteadOfAdmitting(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  environment.contextPinStore = [QONRCPubUnpinnableStore new];
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the engine must install over an unpinnable device");
+  QONRemoteConfigV2Manager *manager = environment.manager;
+  QONRemoteConfigV2Scope *scope = PinScope(@"user-a");
+
+  NSData *body = ReleaseBody(@"release-1", 1, AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
+  QONRemoteConfigV2AdmissionToken *token =
+      [manager beginAdmissionForScope:scope expectation:UnpinnedExpectation()];
+  QON_CHECK([manager admitBody:body strongETag:QONRCPubStrongETag(body)
+                admissionToken:token] ==
+                QONRemoteConfigV2TransitionStatusPersistenceFailed,
+            "a scope whose pin cannot be persisted must fail closed");
+  QON_CHECK([environment.controller rawValueForKey:@"alpha"].source ==
+                QONRemoteConfigValueSourceFallback,
+            "nothing may be published when the pin could not be written");
+}
+
 static void TestTheContextPinSurvivesAStoreRecreation(void) {
   QONRCPubEnvironment *first = QONRCPubDormantEnvironment(DefaultsFixture());
   QON_CHECK(QONRCPubInstallEngine(first, QONRemoteConfigV2ReadGuardBuildModeDebug, 0, @"user-a"),
@@ -570,6 +678,40 @@ static void TestTheContextPinSurvivesAStoreRecreation(void) {
   QON_CHECK(RunFetch(restarted, 0, YES, NULL).changed &&
                 [[restarted.controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-5"],
             "the surviving pin must still admit the pinned context's own envelopes");
+}
+
+// An install that predates the pin store — or whose pin write never landed —
+// already has a release on disk that was admitted under some fingerprint. That
+// is the scope's real first use, so the next response must not be free to
+// re-pin it to any context at all.
+static void TestPersistedStateAnswersForAMissingPin(void) {
+  QONRCPubEnvironment *first = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(first, QONRemoteConfigV2ReadGuardBuildModeDebug, 0, @"user-a"),
+            "the first run must install its engine");
+  NSData *body = ReleaseBody(@"release-1", 1, AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
+  [first.transport enqueueBody:body strongETag:QONRCPubStrongETag(body)];
+  QON_CHECK(RunFetch(first, 0, YES, NULL).changed, "the first run must persist a release");
+
+  QONRCPubEnvironment *restarted = QONRCPubDormantEnvironment(DefaultsFixture());
+  restarted.storage = first.storage;
+  // Everything the release left behind survives except the pin itself.
+  [restarted.storage removeObjectForKey:
+      [QONRemoteConfigV2ContextPinStore storageKeyForScope:PinScope(@"user-a")]];
+  QON_CHECK(QONRCPubInstallEngine(restarted, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                  @"user-a"),
+            "the restarted run must install over the surviving state");
+
+  NSData *foreign = QONRCPubSnapshotBodyWithFingerprint(
+      @"release-4", 4, AlphaValues(@"\"server-alpha-4\"", @"variation-a4"),
+      QONRCPubOtherFingerprint);
+  [restarted.transport enqueueBody:foreign strongETag:QONRCPubStrongETag(foreign)];
+  QON_CHECK(!RunFetch(restarted, 0, YES, NULL).changed,
+            "a release already on disk must answer for a pin the store has lost");
+
+  NSData *own = ReleaseBody(@"release-5", 5, AlphaValues(@"\"server-alpha-5\"", @"variation-a5"));
+  [restarted.transport enqueueBody:own strongETag:QONRCPubStrongETag(own)];
+  QON_CHECK(RunFetch(restarted, 0, YES, NULL).changed,
+            "the fingerprint the state was admitted under must still be admissible");
 }
 
 static void TestScopeResetClearsThePinAndTheNewIdentityRePins(void) {
@@ -736,7 +878,11 @@ int main(void) {
     TestASupersededIdentitySwitchCanNeverRebindItsScope();
     TestContextPinStoreIsScopeKeyedAndValidatesWhatItReadsBack();
     TestFirstAdmissionPinsTheContextAndLaterMismatchesAreRefused();
+    TestAStatedFingerprintNarrowsThePinAndNeverReplacesIt();
+    TestAnEnvelopeTheFloorDropsMustNotPinTheScope();
+    TestAnUnpinnableScopeFailsClosedInsteadOfAdmitting();
     TestTheContextPinSurvivesAStoreRecreation();
+    TestPersistedStateAnswersForAMissingPin();
     TestScopeResetClearsThePinAndTheNewIdentityRePins();
     TestDeviceInstallDateIsDeviceScopedAcrossIdentities();
     TestReleaseBuildActivatesOnceSilentlyOnAFirstRead();

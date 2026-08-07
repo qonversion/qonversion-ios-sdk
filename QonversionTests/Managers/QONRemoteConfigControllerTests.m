@@ -445,6 +445,134 @@
   XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-3");
 }
 
+/** An unpinned expectation: the shape the coordinator always states. */
+- (QONRemoteConfigV2EnvelopeExpectation *)unpinnedExpectation {
+  return [[QONRemoteConfigV2EnvelopeExpectation alloc]
+      initWithProjectID:QONRCPubProjectID environmentUID:QONRCPubEnvironmentUID];
+}
+
+// Validation is not admission. A single replayed response from another client
+// context, dropped by the release floor, must leave the scope unpinned —
+// otherwise it would lock that install out of every later release, forever.
+- (void)testAnEnvelopeTheFloorDropsMustNotPinTheScope {
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:0];
+  QONRemoteConfigV2Manager *manager = environment.manager;
+  QONRemoteConfigV2Scope *scope = [self pinScope:@"user-a"];
+
+  // A locally built release carries no fingerprint, so the scope ends up with a
+  // release floor while still being genuinely unpinned.
+  QONRemoteConfigV2Entry *entry = [[QONRemoteConfigV2Entry alloc]
+      initWithKey:@"alpha"
+          rawData:QONRCPubUTF8(@"\"seed\"")
+     variationUID:@"variation-seed"
+      applyPolicy:QONRemoteConfigApplyPolicyOnNextActivate
+         metadata:nil];
+  QONRemoteConfigV2Release *seed = [[QONRemoteConfigV2Release alloc]
+      initWithReleaseUID:@"seed" releaseNumber:10 manifestContentHash:QONRCPubManifestHash
+                 entries:@{@"alpha": entry}];
+  XCTAssertNotNil(seed);
+  [manager acceptFetchedRelease:seed forScope:scope];
+  XCTAssertTrue([manager activate]);
+
+  NSData *foreign = QONRCPubSnapshotBodyWithFingerprint(@"release-3", 3,
+      [self alphaValues:@"\"server-alpha-3\"" variation:@"variation-a3"],
+      QONRCPubOtherFingerprint);
+  QONRemoteConfigV2AdmissionToken *dropped =
+      [manager beginAdmissionForScope:scope expectation:[self unpinnedExpectation]];
+  XCTAssertEqual([manager admitBody:foreign strongETag:QONRCPubStrongETag(foreign)
+                     admissionToken:dropped], QONRemoteConfigV2TransitionStatusRejected);
+
+  NSData *legitimate = QONRCPubSnapshotBody(@"release-11", 11,
+      [self alphaValues:@"\"server-alpha-11\"" variation:@"variation-a11"]);
+  QONRemoteConfigV2AdmissionToken *next =
+      [manager beginAdmissionForScope:scope expectation:[self unpinnedExpectation]];
+  XCTAssertEqual([manager admitBody:legitimate strongETag:QONRCPubStrongETag(legitimate)
+                     admissionToken:next], QONRemoteConfigV2TransitionStatusAccepted);
+}
+
+// A device that cannot persist the pin must not admit what it cannot verify.
+- (void)testAnUnpinnableScopeFailsClosedInsteadOfAdmitting {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  environment.contextPinStore = [QONRCPubUnpinnableStore new];
+  XCTAssertTrue(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+  QONRemoteConfigV2Manager *manager = environment.manager;
+  QONRemoteConfigV2Scope *scope = [self pinScope:@"user-a"];
+
+  NSData *body = QONRCPubSnapshotBody(@"release-1", 1,
+      [self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"]);
+  QONRemoteConfigV2AdmissionToken *token =
+      [manager beginAdmissionForScope:scope expectation:[self unpinnedExpectation]];
+  XCTAssertEqual([manager admitBody:body strongETag:QONRCPubStrongETag(body)
+                     admissionToken:token],
+                 QONRemoteConfigV2TransitionStatusPersistenceFailed);
+  XCTAssertEqual([environment.controller rawValueForKey:@"alpha"].source,
+                 QONRemoteConfigValueSourceFallback);
+}
+
+// An install that predates the pin store — or whose pin write never landed —
+// already has a release on disk that was admitted under some fingerprint. That
+// is the scope's real first use.
+- (void)testPersistedStateAnswersForAMissingPin {
+  QONRCPubEnvironment *first =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:0];
+  [self enqueueRelease:first releaseUID:@"release-1" number:1
+                values:[self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"]];
+  XCTAssertTrue([self runFetch:first activate:YES deliveries:NULL].changed);
+
+  QONRCPubEnvironment *restarted = QONRCPubDormantEnvironment([self defaultsFixture]);
+  restarted.storage = first.storage;
+  // Everything the release left behind survives except the pin itself.
+  [restarted.storage removeObjectForKey:
+      [QONRemoteConfigV2ContextPinStore storageKeyForScope:[self pinScope:@"user-a"]]];
+  XCTAssertTrue(QONRCPubInstallEngine(restarted, QONRemoteConfigV2ReadGuardBuildModeDebug, 0,
+                                      @"user-a"));
+
+  [self enqueueForeignRelease:restarted releaseUID:@"release-4" number:4
+                       values:[self alphaValues:@"\"server-alpha-4\"" variation:@"variation-a4"]];
+  XCTAssertFalse([self runFetch:restarted activate:YES deliveries:NULL].changed);
+
+  [self enqueueRelease:restarted releaseUID:@"release-5" number:5
+                values:[self alphaValues:@"\"server-alpha-5\"" variation:@"variation-a5"]];
+  XCTAssertTrue([self runFetch:restarted activate:YES deliveries:NULL].changed);
+}
+
+// The coordinator always states an unpinned expectation, but the admission API
+// still accepts a stated fingerprint. It must narrow the pin, never replace it.
+- (void)testAStatedFingerprintNarrowsThePinAndNeverReplacesIt {
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:0];
+  [self enqueueRelease:environment releaseUID:@"release-1" number:1
+                values:[self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"]];
+  XCTAssertTrue([self runFetch:environment activate:YES deliveries:NULL].changed);
+
+  QONRemoteConfigV2Manager *manager = environment.manager;
+  QONRemoteConfigV2Scope *scope = [self pinScope:@"user-a"];
+  NSData *body = QONRCPubSnapshotBody(@"release-2", 2,
+      [self alphaValues:@"\"server-alpha-2\"" variation:@"variation-a2"]);
+  NSString *eTag = QONRCPubStrongETag(body);
+
+  QONRemoteConfigV2AdmissionToken *conflicting = [manager beginAdmissionForScope:scope
+      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc]
+          initWithProjectID:QONRCPubProjectID
+             environmentUID:QONRCPubEnvironmentUID
+         contextFingerprint:QONRCPubOtherFingerprint]];
+  XCTAssertEqual([manager admitBody:body strongETag:eTag admissionToken:conflicting],
+                 QONRemoteConfigV2TransitionStatusRejected);
+
+  QONRemoteConfigV2AdmissionToken *agreeing = [manager beginAdmissionForScope:scope
+      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc]
+          initWithProjectID:QONRCPubProjectID
+             environmentUID:QONRCPubEnvironmentUID
+         contextFingerprint:QONRCPubFingerprint]];
+  XCTAssertEqual([manager admitBody:body strongETag:eTag admissionToken:agreeing],
+                 QONRemoteConfigV2TransitionStatusAccepted);
+}
+
 - (void)testTheContextPinSurvivesAStoreRecreation {
   QONRCPubEnvironment *first =
       [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug

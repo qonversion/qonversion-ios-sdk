@@ -488,29 +488,36 @@
   XCTAssertTrue([manager activate]);
   XCTAssertNil([manager.currentSnapshot rawValueForKey:@"removed"]);
 
+  // Same release, re-rendered for the same pinned context: only the variation
+  // moves. The fingerprint may not, now that the first admission pinned it.
   NSString *secondBodyString = [firstBodyString
-      stringByReplacingOccurrencesOfString:@"\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
-      withString:@"\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\""];
-  secondBodyString = [secondBodyString stringByReplacingOccurrencesOfString:@"variation-a"
-      withString:@"variation-b"];
+      stringByReplacingOccurrencesOfString:@"variation-a" withString:@"variation-b"];
   NSData *secondBody = [self utf8Data:secondBodyString];
   QONRemoteConfigV2AdmissionToken *secondToken = [manager beginAdmissionForScope:scope
-      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:42
-          environmentUID:@"env-production"
-          contextFingerprint:[@"b" stringByPaddingToLength:64 withString:@"b" startingAtIndex:0]]];
+      expectation:[self wireExpectation]];
   XCTAssertEqual([manager admitBody:secondBody strongETag:[self strongETagForBody:secondBody]
       admissionToken:secondToken], QONRemoteConfigV2TransitionStatusAccepted);
   XCTAssertEqualObjects(manager.lastFetchedSnapshot.releaseUID, @"release");
   XCTAssertTrue([manager activate]);
   XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"release");
 
+  // The same release resolved for another client context is a mixup, not a
+  // re-render, so the pin refuses it whatever the caller states.
+  NSString *foreignBodyString = [secondBodyString
+      stringByReplacingOccurrencesOfString:@"\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      withString:@"\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\""];
+  NSData *foreignBody = [self utf8Data:foreignBodyString];
+  QONRemoteConfigV2AdmissionToken *foreignToken = [manager beginAdmissionForScope:scope
+      expectation:[self wireExpectation]];
+  XCTAssertEqual([manager admitBody:foreignBody strongETag:[self strongETagForBody:foreignBody]
+      admissionToken:foreignToken], QONRemoteConfigV2TransitionStatusRejected);
+  XCTAssertEqualObjects(manager.currentSnapshot.releaseUID, @"release");
+
   NSString *lowerBodyString = [secondBodyString stringByReplacingOccurrencesOfString:
       @"\"release_number\":7" withString:@"\"release_number\":6"];
   NSData *lowerBody = [self utf8Data:lowerBodyString];
   QONRemoteConfigV2AdmissionToken *lowerToken = [manager beginAdmissionForScope:scope
-      expectation:[[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:42
-          environmentUID:@"env-production"
-          contextFingerprint:[@"b" stringByPaddingToLength:64 withString:@"b" startingAtIndex:0]]];
+      expectation:[self wireExpectation]];
   XCTAssertEqual([manager admitBody:lowerBody strongETag:[self strongETagForBody:lowerBody]
       admissionToken:lowerToken], QONRemoteConfigV2TransitionStatusRejected);
   XCTAssertEqual(manager.lastFetchedSnapshot.releaseNumber, 7);

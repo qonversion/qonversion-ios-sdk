@@ -36,7 +36,6 @@ static int64_t const QONRCPubProjectID = 42;
 @interface QONRCPubStorage : NSObject <QNLocalStorage>
 @property (nonatomic, strong) NSMutableDictionary *objects;
 @property (nonatomic, assign) BOOL failWrites;
-@property (nonatomic, assign) NSUInteger reads;
 @end
 
 @implementation QONRCPubStorage
@@ -48,14 +47,26 @@ static int64_t const QONRCPubProjectID = 42;
 - (void)storeObject:(id)object forKey:(NSString *)key {
   if (!self.failWrites) self.objects[key] = object;
 }
-- (id)loadObjectForKey:(NSString *)key {
-  self.reads += 1;
-  return self.objects[key];
-}
+- (id)loadObjectForKey:(NSString *)key { return self.objects[key]; }
 - (void)loadObjectForKey:(NSString *)key withCompletion:(void (^)(id))completion {
   completion(self.objects[key]);
 }
 - (void)removeObjectForKey:(NSString *)key { [self.objects removeObjectForKey:key]; }
+@end
+
+/** Pin store that reads as unpinned and refuses every write. */
+@interface QONRCPubUnpinnableStore : NSObject <QONRemoteConfigV2ContextPinStoring>
+@end
+
+@implementation QONRCPubUnpinnableStore
+- (NSString *_Nullable)contextFingerprintForScope:(__unused QONRemoteConfigV2Scope *)scope {
+  return nil;
+}
+- (BOOL)storeContextFingerprint:(__unused NSString *)contextFingerprint
+                       forScope:(__unused QONRemoteConfigV2Scope *)scope {
+  return NO;
+}
+- (void)removeContextFingerprintForScope:(__unused QONRemoteConfigV2Scope *)scope {}
 @end
 
 #pragma mark - Scheduler and clock
@@ -343,7 +354,7 @@ static NSBundle *_Nullable QONRCPubBundleWithDefaults(NSData *artifact) {
 @property (nonatomic, strong) QONRCPubClock *clock;
 @property (nonatomic, strong) QONRCPubStorage *storage;
 @property (nonatomic, strong) QONRemoteConfigV2Store *store;
-@property (nonatomic, strong) QONRemoteConfigV2ContextPinStore *contextPinStore;
+@property (nonatomic, strong) id<QONRemoteConfigV2ContextPinStoring> contextPinStore;
 @property (nonatomic, strong) QONRemoteConfigFallbackStore *fallbackStore;
 @property (nonatomic, strong) dispatch_queue_t callbackExecutor;
 @property (nonatomic, strong) dispatch_queue_t identityQueue;
@@ -394,8 +405,11 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
   // A caller may hand in the previous run's storage to model a process restart.
   if (!environment.storage) environment.storage = [QONRCPubStorage new];
   environment.store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:environment.storage];
-  environment.contextPinStore =
-      [[QONRemoteConfigV2ContextPinStore alloc] initWithLocalStorage:environment.storage];
+  // A caller may hand in its own pin store to model an unpinnable device.
+  if (!environment.contextPinStore) {
+    environment.contextPinStore =
+        [[QONRemoteConfigV2ContextPinStore alloc] initWithLocalStorage:environment.storage];
+  }
   environment.transport = [QONRCPubTransport new];
   environment.scheduler = [QONRCPubScheduler new];
   environment.clock = [QONRCPubClock new];
