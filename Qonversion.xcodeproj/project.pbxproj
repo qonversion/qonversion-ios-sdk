@@ -11,8 +11,6 @@
 		F00100000000000000000001 /* QONRemoteConfigV2FetchCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = F00200000000000000000002 /* QONRemoteConfigV2FetchCoordinator.m */; };
 		F00100000000000000000002 /* QONRemoteConfigV2FetchCoordinator.h in Headers */ = {isa = PBXBuildFile; fileRef = F00200000000000000000001 /* QONRemoteConfigV2FetchCoordinator.h */; };
 		F00100000000000000000003 /* QONRemoteConfigV2FetchPolicyStore.m in Sources */ = {isa = PBXBuildFile; fileRef = F00200000000000000000004 /* QONRemoteConfigV2FetchPolicyStore.m */; };
-		F00100000000000000000006 /* QONRemoteConfigV2ContextPinStore.m in Sources */ = {isa = PBXBuildFile; fileRef = F00200000000000000000007 /* QONRemoteConfigV2ContextPinStore.m */; };
-		F00100000000000000000007 /* QONRemoteConfigV2ContextPinStore.h in Headers */ = {isa = PBXBuildFile; fileRef = F00200000000000000000006 /* QONRemoteConfigV2ContextPinStore.h */; };
 		F00100000000000000000004 /* QONRemoteConfigV2FetchPolicyStore.h in Headers */ = {isa = PBXBuildFile; fileRef = F00200000000000000000003 /* QONRemoteConfigV2FetchPolicyStore.h */; };
 		F00100000000000000000005 /* QONRemoteConfigV2FetchCoordinatorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F00200000000000000000005 /* QONRemoteConfigV2FetchCoordinatorTests.m */; };
 		0260C539214A6A48356042F3 /* QONRemoteConfigSnapshot.m in Sources */ = {isa = PBXBuildFile; fileRef = E06E1B12300B7B060F723462 /* QONRemoteConfigSnapshot.m */; };
@@ -399,8 +397,6 @@
 		F00200000000000000000002 /* QONRemoteConfigV2FetchCoordinator.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2FetchCoordinator.m; sourceTree = "<group>"; };
 		F00200000000000000000003 /* QONRemoteConfigV2FetchPolicyStore.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2FetchPolicyStore.h; sourceTree = "<group>"; };
 		F00200000000000000000004 /* QONRemoteConfigV2FetchPolicyStore.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2FetchPolicyStore.m; sourceTree = "<group>"; };
-		F00200000000000000000006 /* QONRemoteConfigV2ContextPinStore.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2ContextPinStore.h; sourceTree = "<group>"; };
-		F00200000000000000000007 /* QONRemoteConfigV2ContextPinStore.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2ContextPinStore.m; sourceTree = "<group>"; };
 		F00200000000000000000005 /* QONRemoteConfigV2FetchCoordinatorTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2FetchCoordinatorTests.m; sourceTree = "<group>"; };
 		0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = QONEntitlementsUpdateListenerAdapter.m; sourceTree = "<group>"; };
 		1037791CABEE4F1611A8561E /* Pods-Watch Sample Watch App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Watch Sample Watch App.release.xcconfig"; path = "Target Support Files/Pods-Watch Sample Watch App/Pods-Watch Sample Watch App.release.xcconfig"; sourceTree = "<group>"; };
@@ -1065,8 +1061,6 @@
 		5EF70F7176C6CC56EE42B282 /* QONRemoteConfigV2Store */ = {
 			isa = PBXGroup;
 			children = (
-				F00200000000000000000006 /* QONRemoteConfigV2ContextPinStore.h */,
-				F00200000000000000000007 /* QONRemoteConfigV2ContextPinStore.m */,
 				F00200000000000000000003 /* QONRemoteConfigV2FetchPolicyStore.h */,
 				F00200000000000000000004 /* QONRemoteConfigV2FetchPolicyStore.m */,
 				4DDC15CD05353A25BDD0219B /* QONRemoteConfigV2Store.h */,
@@ -2121,7 +2115,6 @@
 				FC2C99538CFA4EE0D42F50D7 /* QONRemoteConfigSnapshot+Protected.h in Headers */,
 				F00100000000000000000002 /* QONRemoteConfigV2FetchCoordinator.h in Headers */,
 				F00100000000000000000004 /* QONRemoteConfigV2FetchPolicyStore.h in Headers */,
-				F00100000000000000000007 /* QONRemoteConfigV2ContextPinStore.h in Headers */,
 				2BF67036E25BB95C1B40140F /* QONRemoteConfigV2Store.h in Headers */,
 				64F83E8CBC08EE7FE52D2716 /* QONRemoteConfigV2Models.h in Headers */,
 				376D4522095E99309960A672 /* QONRemoteConfigV2Manager.h in Headers */,
@@ -2632,7 +2625,6 @@
 				57DD1304CDDECA1B68CFA807 /* QONRemoteConfigUpdate.m in Sources */,
 				F00100000000000000000001 /* QONRemoteConfigV2FetchCoordinator.m in Sources */,
 				F00100000000000000000003 /* QONRemoteConfigV2FetchPolicyStore.m in Sources */,
-				F00100000000000000000006 /* QONRemoteConfigV2ContextPinStore.m in Sources */,
 				2F6875D2E552C466B8E1C9A3 /* QONRemoteConfigV2Store.m in Sources */,
 				0721DD7665C511B906263E71 /* QONRemoteConfigV2Models.m in Sources */,
 				3A64B8327750874853ACD949 /* QONRemoteConfigV2Manager.m in Sources */,

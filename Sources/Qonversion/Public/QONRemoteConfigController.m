@@ -10,7 +10,6 @@
 #import "QONRemoteConfigSnapshot+Protected.h"
 
 #import "QONRemoteConfigFallbackStore.h"
-#import "QONRemoteConfigV2ContextPinStore.h"
 #import "QONRemoteConfigV2FetchPolicyStore.h"
 #import "QONRemoteConfigV2GatewaySessionStore.h"
 #import "QONRemoteConfigV2GatewayTransport.h"
@@ -290,9 +289,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       readGuardBuildMode:buildMode
       assertionHandler:^(NSString *message) { NSCAssert(NO, @"%@", message); }
       telemetryHandler:nil
-      scopePreloader:preloader
-      contextPinStore:[[QONRemoteConfigV2ContextPinStore alloc]
-          initWithLocalStorage:localStorage]];
+      scopePreloader:preloader];
   if (!manager) return NO;
 
   dispatch_queue_t schedulerQueue = dispatch_queue_create(
@@ -406,8 +403,8 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     // The read guard requires all persistent work to finish off the main queue
     // before the scope is bound.
     [manager preloadScopeForReadGuard:scope];
-    // No fingerprint is supplied here on purpose: the manager pins the
-    // gateway's own on trust-on-first-use and refuses every later mismatch.
+    // No fingerprint is supplied here, and none exists to supply: it is a
+    // per-response tag that rotates with the user's targeting context.
     QONRemoteConfigV2FetchBinding *binding =
         [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope projectID:projectID];
     QONRemoteConfigV2FetchForceReason reason =

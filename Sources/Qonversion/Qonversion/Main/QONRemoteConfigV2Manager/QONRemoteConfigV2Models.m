@@ -120,8 +120,9 @@ static id QONRemoteConfigV2DeepJSONCopy(id value) {
                 contextFingerprint:(NSString *)contextFingerprint {
   if (projectID <= 0 || projectID > QONRemoteConfigV2MaximumSafeInteger ||
       !QONRemoteConfigV2ValidUID(environmentUID) ||
-      // nil means "not pinned yet"; anything else must be a real fingerprint.
-      (contextFingerprint != nil && !QONRemoteConfigV2ValidSHA256(contextFingerprint))) return nil;
+      // nil means "any well-formed fingerprint"; a value must be a real one.
+      (contextFingerprint != nil &&
+       !QONRemoteConfigV2ValidContextFingerprint(contextFingerprint))) return nil;
   self = [super init];
   if (self) {
     _projectID = projectID;
@@ -129,13 +130,6 @@ static id QONRemoteConfigV2DeepJSONCopy(id value) {
     _contextFingerprint = [contextFingerprint copy];
   }
   return self;
-}
-
-- (instancetype)expectationByPinningContextFingerprint:(NSString *)contextFingerprint {
-  if (!QONRemoteConfigV2ValidSHA256(contextFingerprint)) return nil;
-  return [[QONRemoteConfigV2EnvelopeExpectation alloc] initWithProjectID:self.projectID
-                                                          environmentUID:self.environmentUID
-                                                      contextFingerprint:contextFingerprint];
 }
 
 - (id)copyWithZone:(NSZone *)zone { return self; }
@@ -477,9 +471,10 @@ static NSDictionary<NSString *, QONRemoteConfigV2Entry *> *QONRemoteConfigV2Read
   QONRemoteConfigV2Envelope *envelope = [self parseBoundBody:body strongETag:strongETag];
   if (!envelope || envelope.projectID != expectation.projectID ||
       ![envelope.environmentUID isEqualToString:expectation.environmentUID]) return nil;
-  // A nil expectation fingerprint is the unpinned trust-on-first-use case. The
-  // envelope's own fingerprint is still strictly validated by parseBoundBody:,
-  // and the caller pins it before the release is admitted.
+  // The normal case is a nil expectation fingerprint. The envelope's own value
+  // is still shape-validated by parseBoundBody:, but it is a per-response tag
+  // that rotates with the user's targeting context, so there is nothing here to
+  // compare it against and nothing across fetches that it must equal.
   if (expectation.contextFingerprint &&
       ![envelope.contextFingerprint isEqualToString:expectation.contextFingerprint]) return nil;
   return envelope;
@@ -554,7 +549,7 @@ static NSDictionary<NSString *, QONRemoteConfigV2Entry *> *QONRemoteConfigV2Read
       !QONRemoteConfigV2ValidUID(environmentUID) || !QONRemoteConfigV2ValidUID(releaseUID) ||
       !QONRemoteConfigV2ValidSHA256(manifestHash) ||
       [manifestHash isEqualToString:[@"0" stringByPaddingToLength:64 withString:@"0" startingAtIndex:0]] ||
-      !QONRemoteConfigV2ValidSHA256(contextFingerprint) || !values) return nil;
+      !QONRemoteConfigV2ValidContextFingerprint(contextFingerprint) || !values) return nil;
 
   QONRemoteConfigV2Release *release = [[QONRemoteConfigV2Release alloc]
       initWithReleaseUID:releaseUID releaseNumber:(NSInteger)releaseNumber

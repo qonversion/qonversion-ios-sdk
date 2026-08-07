@@ -172,8 +172,7 @@ static QONRemoteConfigV2Manager *Manager(GuardStorage *storage,
       fallbackProjectKey:@"project" fallbackEnvironment:@"production"
       envelopeDecoder:[QONRemoteConfigV2EnvelopeParser new]
       callbackExecutor:callbacks readGuardBuildMode:mode
-      assertionHandler:assertion telemetryHandler:telemetry scopePreloader:preloader
-      contextPinStore:nil];
+      assertionHandler:assertion telemetryHandler:telemetry scopePreloader:preloader];
 }
 
 static QONRemoteConfigV2ReadGuardPreloadStatus PreloadOffMain(

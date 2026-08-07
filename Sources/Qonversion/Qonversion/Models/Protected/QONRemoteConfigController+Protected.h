@@ -69,8 +69,8 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
  Installing twice is refused.
 
  The controller binds every scope itself. Nothing supplies a context
- fingerprint: the gateway derives it from the full client context, so it does
- not exist at bootstrap. The manager pins it on trust-on-first-use instead.
+ fingerprint: it is a per-response tag that rotates with the user's targeting
+ context, so it neither exists at bootstrap nor holds still between fetches.
  A projectID of 0 or less leaves the surface unbindable, which is how a caller
  that has no project identity yet keeps the engine off the network.
  */

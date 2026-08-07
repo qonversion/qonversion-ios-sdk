@@ -32,10 +32,11 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  One scope the coordinator may fetch for.
 
- The binding carries no context fingerprint. It cannot: the gateway derives the
- fingerprint from the full client context, so nothing knows it before the first
- response arrives. The expectation is therefore built unpinned and the manager
- resolves the scope's trust-on-first-use pin at admission time.
+ The binding carries no context fingerprint, and must not. The fingerprint
+ hashes mutable targeting context (app/OS version, locale, purchases,
+ properties); it rotates legitimately and MUST NOT be pinned across fetches.
+ Identity isolation is the session's job — this binding's scope is what keys
+ the session token and the persisted state.
  */
 @interface QONRemoteConfigV2FetchBinding : NSObject <NSCopying>
 @property (nonatomic, strong, readonly) QONRemoteConfigV2Scope *scope;

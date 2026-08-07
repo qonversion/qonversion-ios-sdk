@@ -13,7 +13,6 @@
 #import "QONRemoteConfigController.h"
 #import "QONRemoteConfigController+Protected.h"
 #import "QONRemoteConfigFallbackStore.h"
-#import "QONRemoteConfigV2ContextPinStore.h"
 #import "QONRemoteConfigV2FetchPolicyStore.h"
 #import "QONRemoteConfigV2GatewayTransport.h"
 #import "QONRemoteConfigV2Store.h"
@@ -52,21 +51,6 @@ static int64_t const QONRCPubProjectID = 42;
   completion(self.objects[key]);
 }
 - (void)removeObjectForKey:(NSString *)key { [self.objects removeObjectForKey:key]; }
-@end
-
-/** Pin store that reads as unpinned and refuses every write. */
-@interface QONRCPubUnpinnableStore : NSObject <QONRemoteConfigV2ContextPinStoring>
-@end
-
-@implementation QONRCPubUnpinnableStore
-- (NSString *_Nullable)contextFingerprintForScope:(__unused QONRemoteConfigV2Scope *)scope {
-  return nil;
-}
-- (BOOL)storeContextFingerprint:(__unused NSString *)contextFingerprint
-                       forScope:(__unused QONRemoteConfigV2Scope *)scope {
-  return NO;
-}
-- (void)removeContextFingerprintForScope:(__unused QONRemoteConfigV2Scope *)scope {}
 @end
 
 #pragma mark - Scheduler and clock
@@ -354,7 +338,6 @@ static NSBundle *_Nullable QONRCPubBundleWithDefaults(NSData *artifact) {
 @property (nonatomic, strong) QONRCPubClock *clock;
 @property (nonatomic, strong) QONRCPubStorage *storage;
 @property (nonatomic, strong) QONRemoteConfigV2Store *store;
-@property (nonatomic, strong) id<QONRemoteConfigV2ContextPinStoring> contextPinStore;
 @property (nonatomic, strong) QONRemoteConfigFallbackStore *fallbackStore;
 @property (nonatomic, strong) dispatch_queue_t callbackExecutor;
 @property (nonatomic, strong) dispatch_queue_t identityQueue;
@@ -405,11 +388,6 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
   // A caller may hand in the previous run's storage to model a process restart.
   if (!environment.storage) environment.storage = [QONRCPubStorage new];
   environment.store = [[QONRemoteConfigV2Store alloc] initWithLocalStorage:environment.storage];
-  // A caller may hand in its own pin store to model an unpinnable device.
-  if (!environment.contextPinStore) {
-    environment.contextPinStore =
-        [[QONRemoteConfigV2ContextPinStore alloc] initWithLocalStorage:environment.storage];
-  }
   environment.transport = [QONRCPubTransport new];
   environment.scheduler = [QONRCPubScheduler new];
   environment.clock = [QONRCPubClock new];
@@ -427,8 +405,7 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
         weakEnvironment.readGuardAssertions += 1;
       }
       telemetryHandler:nil
-      scopePreloader:[[QONRemoteConfigStorePreloader alloc] initWithStore:environment.store]
-      contextPinStore:environment.contextPinStore];
+      scopePreloader:[[QONRemoteConfigStorePreloader alloc] initWithStore:environment.store]];
   QONRemoteConfigV2FetchPolicy *policy = [[QONRemoteConfigV2FetchPolicy alloc]
       initWithMinimumFetchIntervalMilliseconds:minimumFetchIntervalMilliseconds
       timeoutMilliseconds:nil

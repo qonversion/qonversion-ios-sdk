@@ -53,6 +53,13 @@ FOUNDATION_EXPORT int64_t const QONRemoteConfigV2MaximumSafeInteger;
 @property (nonatomic, copy, nullable, readonly) NSData *canonicalBody;
 @property (nonatomic, copy, nullable, readonly) NSString *strongETag;
 @property (nonatomic, assign, readonly) int64_t projectID;
+/**
+ The per-response tag of the envelope this release came from, kept for
+ diagnostics. It is never compared against another response's: the fingerprint
+ hashes mutable targeting context (app/OS version, locale, purchases,
+ properties); it rotates legitimately and MUST NOT be pinned across fetches.
+ Identity isolation is the session's job.
+ */
 @property (nonatomic, copy, nullable, readonly) NSString *contextFingerprint;
 @property (nonatomic, assign, readonly) int64_t admissionOrdinal;
 - (nullable instancetype)initWithReleaseUID:(NSString *)releaseUID
@@ -90,31 +97,46 @@ FOUNDATION_EXPORT int64_t const QONRemoteConfigV2MaximumSafeInteger;
                     latestAdmissionOrdinal:(int64_t)latestAdmissionOrdinal;
 @end
 
-/** Lowercase 64-character hex. Shared with the durable context pin store. */
+/**
+ Shape of a `context_fingerprint`: lowercase 64-character hex.
+
+ Shape is the only thing the client checks. The fingerprint hashes mutable
+ targeting context (app/OS version, locale, purchases, properties); it rotates
+ legitimately and MUST NOT be pinned across fetches. Identity isolation is the
+ session's job.
+ */
 FOUNDATION_EXPORT BOOL QONRemoteConfigV2ValidContextFingerprint(NSString *_Nullable value);
 
 /**
  Expected privacy and rendering boundary for one exact resolved-snapshot response.
 
- `contextFingerprint` is nil while the identity scope is still unpinned. The
- fingerprint is never pre-provisioned: the server derives it from the full
- client context, which does not exist at bootstrap. The manager pins it on
- trust-on-first-use from the first strictly validated envelope and supplies it
- here on every later admission, so only the very first fetch of a scope is
- unpinned — and that one is protected by session-bound routing.
+ `contextFingerprint` is normally nil, and that is the correct shape. The
+ fingerprint hashes mutable targeting context (app/OS version, locale,
+ purchases, properties); it rotates legitimately and MUST NOT be pinned across
+ fetches. Identity isolation is the session's job.
+
+ It is an opaque per-response tag binding one envelope to the exact server-side
+ context that produced it. Nothing on the device can predict the next one, and
+ two consecutive responses for the same user legitimately carry different ones
+ — an app update, a locale change, a purchase or a property write is enough.
+ So nothing here asserts stability between responses: the parser checks the
+ shape, the release keeps the value, and no comparison is ever made across
+ fetches. Cross-identity protection is the per-scope session token, the
+ server's session-bound routing and the per-scope storage keys.
+
+ A non-nil value is still honoured as an exact-match constraint, for a caller
+ that already holds the one response it means to admit.
  */
 @interface QONRemoteConfigV2EnvelopeExpectation : NSObject <NSCopying>
 @property (nonatomic, assign, readonly) int64_t projectID;
 @property (nonatomic, copy, readonly) NSString *environmentUID;
 @property (nonatomic, copy, nullable, readonly) NSString *contextFingerprint;
-/** Unpinned expectation: any well-formed fingerprint is admissible. */
+/** The normal case: any well-formed fingerprint is admissible. */
 - (nullable instancetype)initWithProjectID:(int64_t)projectID
                             environmentUID:(NSString *)environmentUID;
 - (nullable instancetype)initWithProjectID:(int64_t)projectID
                             environmentUID:(NSString *)environmentUID
                         contextFingerprint:(nullable NSString *)contextFingerprint;
-/** Same boundary with the scope's pinned fingerprint applied. */
-- (nullable instancetype)expectationByPinningContextFingerprint:(NSString *)contextFingerprint;
 @end
 
 @interface QONRemoteConfigV2Envelope : NSObject
