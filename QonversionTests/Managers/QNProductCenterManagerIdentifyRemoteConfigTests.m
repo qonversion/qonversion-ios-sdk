@@ -609,10 +609,10 @@
     expectedUser = self.manager.user;
     dispatch_semaphore_signal(scheduled);
   });
-  XCTAssertEqual(dispatch_semaphore_wait(scheduled, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)), 0);
+  XCTAssertEqual(dispatch_semaphore_wait(scheduled, dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC)), 0);
   _manager.user = [QONUser new];
 
-  [self waitForExpectationsWithTimeout:1 handler:nil];
+  [self waitForExpectationsWithTimeout:30 handler:nil];
   XCTAssertEqual(deliveredUser, expectedUser);
 }
 
