@@ -296,7 +296,7 @@ static int64_t const QONRCPubProjectID = 42;
 
 @implementation QONRCPubContextProvider
 - (QONRemoteConfigV2ClientContext *_Nullable)currentClientContext {
-  return [[QONRemoteConfigV2ClientContext alloc] initWithPlatform:@"iOS"
+  return [[QONRemoteConfigV2ClientContext alloc] initWithPlatform:@"ios"
                                                        appVersion:@"1.2.3"
                                                         osVersion:@"17.4"
                                                        sdkVersion:@"9.9.9"

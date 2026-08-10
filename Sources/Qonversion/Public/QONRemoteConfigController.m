@@ -248,6 +248,8 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
     _identityLock = [NSObject new];
     _ackLock = [NSObject new];
     _subscriptions = [NSMutableArray new];
+    // No engine, so no interval. Not 0, which is a real "never throttle".
+    _installedMinimumFetchIntervalMilliseconds = -1;
   }
   return self;
 }
@@ -419,9 +421,38 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
           readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 localStorage:(id<QNLocalStorage>)localStorage
        clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider {
+  return [self configureWithBaseURL:baseURL
+                       projectToken:projectToken
+                         projectKey:projectKey
+                        environment:environment
+                    canonicalUserID:canonicalUserID
+                 readGuardBuildMode:buildMode
+                       localStorage:localStorage
+              clientContextProvider:clientContextProvider
+   minimumFetchIntervalMilliseconds:nil];
+}
+
+- (BOOL)configureWithBaseURL:(NSURL *)baseURL
+                projectToken:(NSString *)projectToken
+                  projectKey:(NSString *)projectKey
+                 environment:(NSString *)environment
+             canonicalUserID:(NSString *)canonicalUserID
+          readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
+                localStorage:(id<QNLocalStorage>)localStorage
+       clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
+minimumFetchIntervalMilliseconds:(NSNumber *)minimumFetchIntervalMilliseconds {
   if (!baseURL || !projectToken.length || !localStorage || !clientContextProvider) {
     return NO;
   }
+  // The SDK's constant is the default, not a floor and not a ceiling: a stated
+  // interval replaces it outright, including a stated 0.
+  int64_t minimumFetchInterval = minimumFetchIntervalMilliseconds
+      ? minimumFetchIntervalMilliseconds.longLongValue
+      : kQONRemoteConfigMinimumFetchIntervalMilliseconds;
+  // The policy refuses a negative interval too, by returning nil from its own
+  // initializer. Refusing it here as well keeps the reason legible: the assembly
+  // did not fail to build, it was asked for something that is not an interval.
+  if (minimumFetchInterval < 0) return NO;
   QONRemoteConfigV2Store *store = [QONRemoteConfigV2Store applicationSupportStore]
       ?: [[QONRemoteConfigV2Store alloc] initWithLocalStorage:localStorage];
   QONRemoteConfigStorePreloader *preloader =
@@ -466,7 +497,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       clock:clock
       failureObserver:[self telemetryTransportFailureObserver]];
   QONRemoteConfigV2FetchPolicy *policy = [[QONRemoteConfigV2FetchPolicy alloc]
-      initWithMinimumFetchIntervalMilliseconds:kQONRemoteConfigMinimumFetchIntervalMilliseconds
+      initWithMinimumFetchIntervalMilliseconds:minimumFetchInterval
       timeoutMilliseconds:@(kQONRemoteConfigTransportTimeoutMilliseconds)
       initialBackoffMilliseconds:kQONRemoteConfigInitialBackoffMilliseconds
       maximumBackoffMilliseconds:kQONRemoteConfigMaximumBackoffMilliseconds];
@@ -492,6 +523,9 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                                         "io.qonversion.remote-config-identity",
                                         DISPATCH_QUEUE_SERIAL)];
   if (!installed) return NO;
+  // Written once, on the only path that installs an engine, and read as a plain
+  // fact afterwards: the engine can never be replaced.
+  _installedMinimumFetchIntervalMilliseconds = policy.minimumFetchIntervalMilliseconds;
 
   // The activation ack rides the very same transport — same session, same
   // bootstrap, same re-bootstrap-once rule — but owns its queue: it does

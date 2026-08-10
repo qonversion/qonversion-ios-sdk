@@ -27,6 +27,17 @@ FOUNDATION_EXPORT NSString *const QONRemoteConfigV2DeviceInstallDateStorageKey;
  */
 @interface QONRemoteConfigV2DeviceInstallDateProvider : NSObject <QONRemoteConfigV2DeviceInstallDateProviding>
 - (instancetype)init NS_UNAVAILABLE;
+
+/**
+ Reads the platform's install-date fact, which QNDevice states as whole seconds
+ in a string, into the number this provider seeds itself with.
+
+ Anything that is not a positive whole number of seconds — a missing fact, an
+ empty string, a zero, a negative, a date the platform could not determine —
+ becomes nil, which means "seed nothing" rather than "the device was installed
+ at the epoch".
+ */
++ (nullable NSNumber *)installDateSecondsFromSystemFact:(nullable NSString *)fact;
 /**
  systemInstallDateSeconds is the platform-level install fact (QNDevice.installDate)
  and is only used to seed a device that has no stored value yet.

@@ -160,7 +160,59 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
 @property (nonatomic, strong) id<QONRemoteConfigV2DeviceInstallDateProviding> installDateProvider;
 @end
 
+/** Stands in for a device fact the platform would not tell us. */
+static NSString *const kQONRemoteConfigV2UnknownComponent = @"UNKNOWN";
+
+static NSString *QONRemoteConfigV2NormalizedComponent(NSString *_Nullable value) {
+  return value.length > 0 ? value : kQONRemoteConfigV2UnknownComponent;
+}
+
+/**
+ An Apple locale identifier, reshaped into the tag Android states.
+
+ `NSLocale` hands out identifiers like `en_US@rg=gbzzzz` or, from a language tag
+ source, `en-US`. Android sends `toLanguageTag()` with its dashes turned into
+ underscores, and `und` for a locale it could not determine. Everything after
+ the first `@` is a keyword list — calendar, region override, numbering system —
+ which is a preference rather than a locale and would fragment every targeting
+ rule that matched on it.
+ */
+static NSString *QONRemoteConfigV2NormalizedLocale(NSString *_Nullable identifier) {
+  NSString *value = identifier ?: @"";
+  NSRange keywords = [value rangeOfString:@"@"];
+  if (keywords.location != NSNotFound) {
+    value = [value substringToIndex:keywords.location];
+  }
+  value = [value stringByReplacingOccurrencesOfString:@"-" withString:@"_"];
+  if (value.length == 0 || [value isEqualToString:@"und"]) {
+    return kQONRemoteConfigV2UnknownComponent;
+  }
+  return value;
+}
+
 @implementation QONRemoteConfigV2DeviceClientContextProvider
+
++ (instancetype)providerWithPlatform:(NSString *)platform
+                          appVersion:(NSString *)appVersion
+                           osVersion:(NSString *)osVersion
+                          sdkVersion:(NSString *)sdkVersion
+                    localeIdentifier:(NSString *)localeIdentifier
+                         deviceModel:(NSString *)deviceModel
+                 installDateProvider:(id<QONRemoteConfigV2DeviceInstallDateProviding>)installDateProvider {
+  // `lowercaseString` is the locale-independent one on purpose: the Turkish
+  // dotless i would otherwise turn `iOS` into something no rule matches.
+  NSString *normalizedPlatform = platform.length > 0
+      ? platform.lowercaseString
+      : kQONRemoteConfigV2UnknownComponent;
+
+  return [[self alloc] initWithPlatform:normalizedPlatform
+                             appVersion:QONRemoteConfigV2NormalizedComponent(appVersion)
+                              osVersion:QONRemoteConfigV2NormalizedComponent(osVersion)
+                             sdkVersion:QONRemoteConfigV2NormalizedComponent(sdkVersion)
+                                 locale:QONRemoteConfigV2NormalizedLocale(localeIdentifier)
+                            deviceModel:QONRemoteConfigV2NormalizedComponent(deviceModel)
+                    installDateProvider:installDateProvider];
+}
 
 - (instancetype)initWithPlatform:(NSString *)platform
                       appVersion:(NSString *)appVersion

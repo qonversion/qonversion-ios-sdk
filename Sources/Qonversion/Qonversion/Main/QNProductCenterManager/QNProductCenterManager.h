@@ -5,7 +5,7 @@
 #import "QONRemoteConfigManager.h"
 #import "QONRequestTrigger.h"
 
-@class QONLaunchResult, QONStoreKit2PurchaseModel, QONFallbackService, QONPromotionalOffer, QONPurchaseOptions, QONPurchaseResult, SKProductDiscount;
+@class QONLaunchResult, QONStoreKit2PurchaseModel, QONFallbackService, QONPromotionalOffer, QONPurchaseOptions, QONPurchaseResult, SKProductDiscount, QONRemoteConfigController;
 @protocol QONPromoPurchasesDelegate, QONEntitlementsUpdateListener, QONDeferredPurchasesListener, QNUserInfoServiceInterface, QNIdentityManagerInterface, QNLocalStorage;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -14,6 +14,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, assign) QONLaunchMode launchMode;
 @property (nonatomic, strong) QONRemoteConfigManager *remoteConfigManager;
+
+/**
+ The experimental Remote Config surface, injected exactly like the v1 manager
+ above and for the same reason: a restore can discover that this installation
+ actually belongs to another user, and every surface keyed by identity has to
+ learn about it at that moment.
+
+ Held weakly because the surface is owned by the Qonversion instance that owns
+ this manager.
+ */
+@property (nonatomic, weak, nullable) QONRemoteConfigController *experimentalRemoteConfigController;
 
 - (instancetype)initWithUserInfoService:(id<QNUserInfoServiceInterface>)userInfoService identityManager:(id<QNIdentityManagerInterface>)identityManager localStorage:(id<QNLocalStorage>)localStorage fallbackService:(QONFallbackService *)fallbackService;
 

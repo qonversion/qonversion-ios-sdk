@@ -18,6 +18,7 @@
 #import "QONRemoteConfigUpdate.h"
 #import "QONRemoteConfigFetchResult.h"
 #import "QONRemoteConfigController.h"
+#import "QONRemoteConfigV2Configuration.h"
 #import "QONUser.h"
 #import "QONErrors.h"
 #import "QONStoreKitSugare.h"

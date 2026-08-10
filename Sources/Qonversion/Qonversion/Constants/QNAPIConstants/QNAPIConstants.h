@@ -9,6 +9,14 @@
 #import <Foundation/Foundation.h>
 
 extern NSString *const kAPIBase;
+/**
+ Production gateway of the experimental Remote Config surface.
+
+ Separate from kAPIBase because the surface is opt-in and addressable: a caller
+ may point it at a proxy or a non-production deployment without moving the rest
+ of the SDK. Both happen to be the same production host today.
+ */
+extern NSString *const kRemoteConfigV2APIBase;
 extern NSString *const kInitEndpoint;
 extern NSString *const kPurchaseEndpoint;
 extern NSString *const kPostPromoOfferDetailsEndpoint;

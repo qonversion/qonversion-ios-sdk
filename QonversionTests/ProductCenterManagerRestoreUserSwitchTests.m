@@ -12,6 +12,7 @@
 #import "QNLocalStorage.h"
 #import "QONFallbackService.h"
 #import "QONRemoteConfigManager.h"
+#import "QONRemoteConfigController+Protected.h"
 #import "QONRequestTrigger.h"
 #import "Helpers/XCTestCase+TestJSON.h"
 
@@ -45,6 +46,8 @@
 @property (nonatomic, strong) id mockUserInfoService;
 @property (nonatomic, strong) id mockIdentityManager;
 @property (nonatomic, strong) id mockRemoteConfigManager;
+/** Held strongly: the manager's own reference to the v2 surface is weak. */
+@property (nonatomic, strong) id mockRemoteConfigController;
 @property (nonatomic, strong) id mockStoreKitService;
 @property (nonatomic, strong) QNProductCenterManager *manager;
 
@@ -120,6 +123,9 @@
   
   _mockRemoteConfigManager = OCMClassMock([QONRemoteConfigManager class]);
   _manager.remoteConfigManager = _mockRemoteConfigManager;
+
+  _mockRemoteConfigController = OCMClassMock([QONRemoteConfigController class]);
+  _manager.experimentalRemoteConfigController = _mockRemoteConfigController;
 }
 
 - (void)tearDown {
@@ -127,7 +133,59 @@
   [_mockIdentityManager stopMocking];
   [_mockStoreKitService stopMocking];
   [_mockRemoteConfigManager stopMocking];
+  [_mockRemoteConfigController stopMocking];
   _manager = nil;
+}
+
+#pragma mark - Experimental Remote Config rebind
+
+- (void)testHandleUserSwitch_RebindsTheExperimentalRemoteConfigSurface {
+  OCMStub([_mockRemoteConfigController isConfigured]).andReturn(YES);
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_old");
+
+  QONLaunchResult *launchResult = [[QONLaunchResult alloc] init];
+  launchResult.uid = @"user_new";
+
+  [_manager handleUserSwitchIfNeededWithResult:launchResult];
+
+  // A restore that discovers this installation belongs to another user must
+  // retire the previous user's configuration, exactly like an identify does.
+  // Without it the surface keeps serving — and acknowledging — the wrong user.
+  OCMVerify([_mockRemoteConfigController
+      switchToCanonicalUserID:@"user_new"
+                       change:QONRemoteConfigControllerIdentityChangeIdentify]);
+}
+
+- (void)testHandleUserSwitch_LeavesADormantExperimentalSurfaceAlone {
+  OCMStub([_mockRemoteConfigController isConfigured]).andReturn(NO);
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_old");
+
+  QONLaunchResult *launchResult = [[QONLaunchResult alloc] init];
+  launchResult.uid = @"user_new";
+
+  OCMReject([_mockRemoteConfigController
+      switchToCanonicalUserID:[OCMArg any]
+                       change:QONRemoteConfigControllerIdentityChangeIdentify]);
+
+  [_manager handleUserSwitchIfNeededWithResult:launchResult];
+
+  OCMVerifyAll(_mockRemoteConfigController);
+}
+
+- (void)testHandleUserSwitch_SameUidNeverRebindsTheExperimentalSurface {
+  OCMStub([_mockRemoteConfigController isConfigured]).andReturn(YES);
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(@"user_123");
+
+  QONLaunchResult *launchResult = [[QONLaunchResult alloc] init];
+  launchResult.uid = @"user_123";
+
+  OCMReject([_mockRemoteConfigController
+      switchToCanonicalUserID:[OCMArg any]
+                       change:QONRemoteConfigControllerIdentityChangeIdentify]);
+
+  [_manager handleUserSwitchIfNeededWithResult:launchResult];
+
+  OCMVerifyAll(_mockRemoteConfigController);
 }
 
 #pragma mark - handleUserSwitchIfNeededWithResult: Tests

@@ -328,6 +328,10 @@
 		B2F200032F80000100000003 /* QONRemoteConfigFetchResult.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F200132F80000100000013 /* QONRemoteConfigFetchResult.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B2F200042F80000100000004 /* QONRemoteConfigFetchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F200142F80000100000014 /* QONRemoteConfigFetchResult.m */; };
 		B2F200052F80000100000005 /* QONRemoteConfigController+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F200152F80000100000015 /* QONRemoteConfigController+Protected.h */; };
+		B2F300012F90000100000001 /* QONRemoteConfigV2Configuration.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F300112F90000100000011 /* QONRemoteConfigV2Configuration.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B2F300022F90000100000002 /* QONRemoteConfigV2Configuration.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F300122F90000100000012 /* QONRemoteConfigV2Configuration.m */; };
+		B2F300032F90000100000003 /* QONRemoteConfigV2Configuration+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F300132F90000100000013 /* QONRemoteConfigV2Configuration+Protected.h */; };
+		B2F300042F90000100000004 /* QONRemoteConfigV2ConfigurationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F300142F90000100000014 /* QONRemoteConfigV2ConfigurationTests.m */; };
 		B2F200062F80000100000006 /* QONRemoteConfigControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F200162F80000100000016 /* QONRemoteConfigControllerTests.m */; };
 		B2F000012F60000100000001 /* QONRemoteConfigFallbackStore.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */; };
 		B2F000022F60000100000002 /* QONRemoteConfigFallbackStore.m in Sources */ = {isa = PBXBuildFile; fileRef = B2F000122F60000100000012 /* QONRemoteConfigFallbackStore.m */; };
@@ -754,6 +758,10 @@
 		B2F200132F80000100000013 /* QONRemoteConfigFetchResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigFetchResult.h; sourceTree = "<group>"; };
 		B2F200142F80000100000014 /* QONRemoteConfigFetchResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigFetchResult.m; sourceTree = "<group>"; };
 		B2F200152F80000100000015 /* QONRemoteConfigController+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigController+Protected.h"; sourceTree = "<group>"; };
+		B2F300112F90000100000011 /* QONRemoteConfigV2Configuration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigV2Configuration.h; sourceTree = "<group>"; };
+		B2F300122F90000100000012 /* QONRemoteConfigV2Configuration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2Configuration.m; sourceTree = "<group>"; };
+		B2F300132F90000100000013 /* QONRemoteConfigV2Configuration+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONRemoteConfigV2Configuration+Protected.h"; sourceTree = "<group>"; };
+		B2F300142F90000100000014 /* QONRemoteConfigV2ConfigurationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigV2ConfigurationTests.m; sourceTree = "<group>"; };
 		B2F200162F80000100000016 /* QONRemoteConfigControllerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigControllerTests.m; sourceTree = "<group>"; };
 		B2F200172F80000100000017 /* QONRemoteConfigControllerFixtures.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigControllerFixtures.h; sourceTree = "<group>"; };
 		B2F000112F60000100000011 /* QONRemoteConfigFallbackStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigFallbackStore.h; sourceTree = "<group>"; };
@@ -1554,6 +1562,8 @@
 				B2F200122F80000100000012 /* QONRemoteConfigController.m */,
 				B2F200132F80000100000013 /* QONRemoteConfigFetchResult.h */,
 				B2F200142F80000100000014 /* QONRemoteConfigFetchResult.m */,
+				B2F300112F90000100000011 /* QONRemoteConfigV2Configuration.h */,
+				B2F300122F90000100000012 /* QONRemoteConfigV2Configuration.m */,
 				D0C5A231720A99E0AAB27281 /* QONRemoteConfigUpdate.h */,
 				9F870444F6E59619AB1DCA65 /* QONRemoteConfigUpdate.m */,
 			);
@@ -1745,6 +1755,7 @@
 				0B69D8BEFE710A9EF0697B28 /* QONEntitlementsUpdateListenerAdapter.m */,
 				F1449137BF0F2FD8E4971FA4 /* QONRemoteConfigSnapshot+Protected.h */,
 				B2F200152F80000100000015 /* QONRemoteConfigController+Protected.h */,
+				B2F300132F90000100000013 /* QONRemoteConfigV2Configuration+Protected.h */,
 			);
 			path = Protected;
 			sourceTree = "<group>";
@@ -1927,6 +1938,7 @@
 				F00200000000000000000005 /* QONRemoteConfigV2FetchCoordinatorTests.m */,
 				B2F200172F80000100000017 /* QONRemoteConfigControllerFixtures.h */,
 				B2F200162F80000100000016 /* QONRemoteConfigControllerTests.m */,
+				B2F300142F90000100000014 /* QONRemoteConfigV2ConfigurationTests.m */,
 				89673C2E26F49BA9008D209A /* QNIdentityManagerTests.m */,
 				A1DEF1231000000000000002 /* QNUserPropertiesManagerTests.m */,
 				A1DEF1231000000000000004 /* QONRemoteConfigManagerInvalidationTests.m */,
@@ -2038,6 +2050,8 @@
 				B2F200012F80000100000001 /* QONRemoteConfigController.h in Headers */,
 				B2F200032F80000100000003 /* QONRemoteConfigFetchResult.h in Headers */,
 				B2F200052F80000100000005 /* QONRemoteConfigController+Protected.h in Headers */,
+				B2F300012F90000100000001 /* QONRemoteConfigV2Configuration.h in Headers */,
+				B2F300032F90000100000003 /* QONRemoteConfigV2Configuration+Protected.h in Headers */,
 				895732F026DD03A3009507A6 /* QNErrorsMapper.h in Headers */,
 				895732E026DD03A3009507A6 /* QONOfferings+Protected.h in Headers */,
 				895732FD26DD03A3009507A6 /* QNStoreKitService.h in Headers */,
@@ -2518,6 +2532,7 @@
 				B2F100092F70000100000009 /* QONRemoteConfigV2ProjectIdentityStore.m in Sources */,
 				B2F200022F80000100000002 /* QONRemoteConfigController.m in Sources */,
 				B2F200042F80000100000004 /* QONRemoteConfigFetchResult.m in Sources */,
+				B2F300022F90000100000002 /* QONRemoteConfigV2Configuration.m in Sources */,
 				895732C326DD03A3009507A6 /* QNInMemoryStorage.m in Sources */,
 				8957330326DD03A3009507A6 /* QNIdentityService.m in Sources */,
 				895732C826DD03A3009507A6 /* QNInternalConstants.m in Sources */,
@@ -2662,6 +2677,7 @@
 				B2F000032F60000100000003 /* QONRemoteConfigFallbackStoreTests.m in Sources */,
 				B2F100072F70000100000007 /* QONRemoteConfigV2GatewayTransportTests.m in Sources */,
 				B2F200062F80000100000006 /* QONRemoteConfigControllerTests.m in Sources */,
+				B2F300042F90000100000004 /* QONRemoteConfigV2ConfigurationTests.m in Sources */,
 				89673C2C26F37DC2008D209A /* XCTestCase+Helpers.m in Sources */,
 				45FFA2DE24BE1015007EFB8F /* QNTestConstants.m in Sources */,
 				459DAC0D243E4D610011ECF3 /* XCTestCase+TestJSON.m in Sources */,

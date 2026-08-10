@@ -125,7 +125,7 @@
   NSDictionary *body = QONRCV2JSONFromRequest(snapshot);
   XCTAssertEqualObjects(body.allKeys, @[@"client_context"]);
   XCTAssertEqualObjects(body[@"client_context"], (@{
-    @"platform": @"iOS",
+    @"platform": @"ios",
     @"app_version": @"1.2.3",
     @"os_version": @"17.4",
     @"sdk_version": @"9.9.9",
@@ -759,6 +759,141 @@
   XCTAssertEqual(response.kind, QONRemoteConfigV2FetchResponseKindFailure);
   XCTAssertEqualObjects(self.failureKinds.lastObject,
                         @(QONRemoteConfigV2TransportFailureKindBootstrapMalformed));
+}
+
+#pragma mark - Client context normalization
+
+/**
+ The exact arguments the SDK's enable path passes, in the order it passes them.
+
+ Every field is given a value nothing else could produce, so an argument swapped
+ anywhere between `initWithConfig:` and the wire shows up as a field holding
+ another field's value rather than as a test that still passes.
+ */
+- (QONRemoteConfigV2ClientContext *)enablePathContext {
+  QONRCV2FakeInstallDateProvider *installDate = [QONRCV2FakeInstallDateProvider new];
+  installDate.seconds = @1600000000;
+  QONRemoteConfigV2DeviceClientContextProvider *provider =
+      [QONRemoteConfigV2DeviceClientContextProvider providerWithPlatform:@"iOS"
+                                                             appVersion:@"app-1.2.3"
+                                                              osVersion:@"os-17.4"
+                                                             sdkVersion:@"sdk-6.14.0"
+                                                       localeIdentifier:@"en_US@rg=gbzzzz"
+                                                            deviceModel:@"iPhone15,2"
+                                                    installDateProvider:installDate];
+  return [provider currentClientContext];
+}
+
+- (void)testTheEnablePathProducesEverySevenWireFields {
+  XCTAssertEqualObjects([[self enablePathContext] JSONObject], (@{
+    // Lower case: a targeting rule must not depend on Apple's brand casing
+    // while the Android SDK states a plain "android".
+    @"platform": @"ios",
+    @"app_version": @"app-1.2.3",
+    @"os_version": @"os-17.4",
+    @"sdk_version": @"sdk-6.14.0",
+    // The keyword suffix is a preference, not a locale.
+    @"locale": @"en_US",
+    @"device_model": @"iPhone15,2",
+    @"device_installed_at": @1600000000,
+  }));
+}
+
+- (void)testALocaleIsReshapedIntoTheTagAndroidStates {
+  QONRCV2FakeInstallDateProvider *installDate = [QONRCV2FakeInstallDateProvider new];
+  NSDictionary<NSString *, NSString *> *cases = @{
+    @"en_US@rg=gbzzzz": @"en_US",
+    @"en_US@calendar=gregorian;numbers=latn": @"en_US",
+    @"en-US": @"en_US",  // the language-tag spelling Android sends
+    @"en": @"en",
+    @"@rg=gbzzzz": @"UNKNOWN",  // keywords and no locale at all
+    @"und": @"UNKNOWN",
+    @"": @"UNKNOWN",
+  };
+
+  [cases enumerateKeysAndObjectsUsingBlock:^(NSString *identifier, NSString *expected,
+                                             __unused BOOL *stop) {
+    QONRemoteConfigV2DeviceClientContextProvider *provider =
+        [QONRemoteConfigV2DeviceClientContextProvider providerWithPlatform:@"iOS"
+                                                               appVersion:@"1.2.3"
+                                                                osVersion:@"17.4"
+                                                               sdkVersion:@"9.9.9"
+                                                         localeIdentifier:identifier
+                                                              deviceModel:@"iPhone15,2"
+                                                      installDateProvider:installDate];
+    XCTAssertEqualObjects([provider currentClientContext].locale, expected,
+                          @"%@ must reach the wire as %@", identifier, expected);
+  }];
+}
+
+- (void)testAWithheldDeviceFactBecomesAPlaceholderRatherThanNoContext {
+  QONRemoteConfigV2DeviceClientContextProvider *provider =
+      [QONRemoteConfigV2DeviceClientContextProvider
+            providerWithPlatform:nil
+                      appVersion:nil
+                       osVersion:@""
+                      sdkVersion:@"9.9.9"
+                localeIdentifier:nil
+                     deviceModel:nil
+             installDateProvider:[QONRCV2FakeInstallDateProvider new]];
+  QONRemoteConfigV2ClientContext *context = [provider currentClientContext];
+
+  // A nil component nils the whole context, and a nil context fails every
+  // snapshot request: an app with no CFBundleShortVersionString would lose
+  // Remote Config entirely rather than lose one field.
+  XCTAssertNotNil(context);
+  XCTAssertEqualObjects(context.platform, @"UNKNOWN");
+  XCTAssertEqualObjects(context.appVersion, @"UNKNOWN");
+  XCTAssertEqualObjects(context.osVersion, @"UNKNOWN");
+  XCTAssertEqualObjects(context.locale, @"UNKNOWN");
+  XCTAssertEqualObjects(context.deviceModel, @"UNKNOWN");
+  XCTAssertEqualObjects(context.sdkVersion, @"9.9.9");
+  // The install date is the one omittable field: it is a device fact the
+  // gateway ages the user by, not a component it needs present.
+  XCTAssertNil(context.deviceInstalledAtSeconds);
+  XCTAssertNil([context JSONObject][@"device_installed_at"]);
+}
+
+- (void)testOnlyAPositiveWholeSecondCountSeedsTheInstallDate {
+  for (NSString *fact in @[@"", @"0", @"-1", @"abc", @"17 years", @"1600000000.5",
+                           @" 1600000000"]) {
+    XCTAssertNil([QONRemoteConfigV2DeviceInstallDateProvider
+                     installDateSecondsFromSystemFact:fact],
+                 @"%@ must seed nothing", fact);
+  }
+
+  XCTAssertNil([QONRemoteConfigV2DeviceInstallDateProvider installDateSecondsFromSystemFact:nil]);
+  XCTAssertEqualObjects([QONRemoteConfigV2DeviceInstallDateProvider
+                            installDateSecondsFromSystemFact:@"1600000000"],
+                        @1600000000);
+}
+
+- (void)testABaseURLCarryingAQueryOrFragmentCannotSwallowTheRoute {
+  NSURL *baseURL = [NSURL URLWithString:@"https://gateway.test.example/prefix?tenant=1#frag"];
+  QONRemoteConfigV2GatewayTransport *transport = [[QONRemoteConfigV2GatewayTransport alloc]
+       initWithBaseURL:baseURL
+          projectToken:QONRCV2TestProjectToken
+          httpExecutor:self.executor
+          sessionStore:self.sessionStore
+  projectIdentityStore:self.projectIdentityStore
+ clientContextProvider:QONRCV2ContextProvider(self.installDateProvider)
+                 clock:self.clock
+       failureObserver:nil];
+  [transport updateScope:QONRCV2Scope(QONRCV2TestAnonUID)];
+  [self.executor enqueue:[QONRCV2ScriptedHTTPResponse status:200
+                                                        body:QONRCV2BootstrapBody(@"session-token-1", 0)
+                                                     headers:nil]];
+
+  [transport fetchRequest:[[QONRemoteConfigV2FetchRequest alloc] initWithIfNoneMatch:nil]
+               completion:^(__unused QONRemoteConfigV2FetchResponse *response) {}];
+
+  // The configuration accepts such a url — it is absolute and addressable — and
+  // the transport is what makes it harmless: the path is appended to the base
+  // path, and the query and fragment are dropped rather than left to swallow
+  // the route.
+  XCTAssertGreaterThanOrEqual(self.executor.requests.count, 1u);
+  XCTAssertEqualObjects(self.executor.requests.firstObject.URL.absoluteString,
+                        @"https://gateway.test.example/prefix/v3/remote-config-v2/session");
 }
 
 @end

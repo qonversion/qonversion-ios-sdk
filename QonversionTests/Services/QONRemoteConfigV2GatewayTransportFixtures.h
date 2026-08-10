@@ -138,7 +138,7 @@ static QONRemoteConfigV2Scope *QONRCV2Scope(NSString *canonicalUserID) {
 static QONRemoteConfigV2DeviceClientContextProvider *QONRCV2ContextProvider(
     id<QONRemoteConfigV2DeviceInstallDateProviding> installDateProvider) {
   return [[QONRemoteConfigV2DeviceClientContextProvider alloc]
-        initWithPlatform:@"iOS"
+        initWithPlatform:@"ios"
               appVersion:@"1.2.3"
                osVersion:@"17.4"
               sdkVersion:@"9.9.9"

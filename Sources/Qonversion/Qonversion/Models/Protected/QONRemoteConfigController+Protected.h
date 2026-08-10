@@ -59,6 +59,16 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
 @interface QONRemoteConfigController ()
 
 /**
+ The minimum fetch interval the installed engine is actually using, in
+ milliseconds, or -1 while the surface is dormant.
+
+ It exists so the assembly can be checked from a test without handing anyone the
+ coordinator or its policy: an interval that never reached the policy is a
+ silent throttling bug nothing else would notice.
+ */
+@property (nonatomic, assign, readonly) int64_t installedMinimumFetchIntervalMilliseconds;
+
+/**
  Builds a dormant controller. Only the bundled-defaults getters and the
  fallback-only `current` work until an engine is installed.
  */
@@ -135,6 +145,24 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
           readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
                 localStorage:(id<QNLocalStorage>)localStorage
        clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider;
+
+/**
+ The same assembly, with the minimum fetch interval stated by the caller.
+
+ The SDK's own interval is a default rather than a ceiling: an app that wants to
+ see a freshly published release sooner may say so, and the debug build says 0.
+ Passing nil keeps the built-in default. A negative interval is refused, exactly
+ like the fetch policy refuses it.
+ */
+- (BOOL)configureWithBaseURL:(NSURL *)baseURL
+                projectToken:(NSString *)projectToken
+                  projectKey:(NSString *)projectKey
+                 environment:(NSString *)environment
+             canonicalUserID:(nullable NSString *)canonicalUserID
+          readGuardBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode
+                localStorage:(id<QNLocalStorage>)localStorage
+       clientContextProvider:(id<QONRemoteConfigV2ClientContextProviding>)clientContextProvider
+minimumFetchIntervalMilliseconds:(nullable NSNumber *)minimumFetchIntervalMilliseconds;
 
 /**
  Rebinds the surface to another canonical identity. The previous identity's

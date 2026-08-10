@@ -49,6 +49,28 @@ FOUNDATION_EXPORT NSUInteger const QONRemoteConfigV2GatewayMaximumBootstrapBytes
  */
 @interface QONRemoteConfigV2DeviceClientContextProvider : NSObject <QONRemoteConfigV2ClientContextProviding>
 - (instancetype)init NS_UNAVAILABLE;
+
+/**
+ Builds the provider out of raw platform facts, normalizing each one to the
+ cross-platform wire convention before it is ever sent.
+
+ The convention exists so a targeting rule reads the same on every SDK:
+ - `platform` is lower case, because a rule must not depend on Apple's brand
+   casing while the Android SDK states a plain `android`;
+ - `locale` is an underscore-separated tag with any keyword suffix removed, so
+   `en_US@rg=gbzzzz` and Android's `en-US` both arrive as `en_US`;
+ - anything the platform withholds becomes `UNKNOWN` rather than nothing at all,
+   because a nil component nils the whole context and takes the surface off the
+   air over a missing app version.
+ */
++ (nullable instancetype)providerWithPlatform:(nullable NSString *)platform
+                                   appVersion:(nullable NSString *)appVersion
+                                    osVersion:(nullable NSString *)osVersion
+                                   sdkVersion:(nullable NSString *)sdkVersion
+                             localeIdentifier:(nullable NSString *)localeIdentifier
+                                  deviceModel:(nullable NSString *)deviceModel
+                          installDateProvider:(id<QONRemoteConfigV2DeviceInstallDateProviding>)installDateProvider;
+
 - (nullable instancetype)initWithPlatform:(NSString *)platform
                                appVersion:(NSString *)appVersion
                                 osVersion:(NSString *)osVersion

@@ -145,7 +145,7 @@ static void TestRequestShapes(void) {
   QON_CHECK(QONRCV2Header(snapshot, @"If-None-Match") == nil, "snapshot without validator");
   NSDictionary *body = QONRCV2JSONFromRequest(snapshot);
   QON_CHECK([body[@"client_context"] isEqual:(@{
-    @"platform": @"iOS", @"app_version": @"1.2.3", @"os_version": @"17.4",
+    @"platform": @"ios", @"app_version": @"1.2.3", @"os_version": @"17.4",
     @"sdk_version": @"9.9.9", @"locale": @"en_US", @"device_model": @"iPhone15,2",
     @"device_installed_at": @1600000000,
   })], "snapshot client_context");
@@ -1884,6 +1884,152 @@ lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds];
   QON_CHECK([store recordForScope:QONRCV2AckScopeA()] == nil, "a malformed buffer is discarded");
 }
 
+#pragma mark - Client context normalization
+
+/**
+ The exact arguments the SDK's enable path passes, in the order it passes them.
+
+ Every field is given a value nothing else could produce, so an argument swapped
+ anywhere between `initWithConfig:` and the wire shows up as a field holding
+ another field's value rather than as a test that still passes.
+ */
+static QONRemoteConfigV2ClientContext *EnablePathContext(void) {
+  QONRCV2FakeInstallDateProvider *installDate = [QONRCV2FakeInstallDateProvider new];
+  installDate.seconds = @1600000000;
+  QONRemoteConfigV2DeviceClientContextProvider *provider =
+      [QONRemoteConfigV2DeviceClientContextProvider providerWithPlatform:@"iOS"
+                                                             appVersion:@"app-1.2.3"
+                                                              osVersion:@"os-17.4"
+                                                             sdkVersion:@"sdk-6.14.0"
+                                                       localeIdentifier:@"en_US@rg=gbzzzz"
+                                                            deviceModel:@"iPhone15,2"
+                                                    installDateProvider:installDate];
+  return [provider currentClientContext];
+}
+
+static void TestTheEnablePathProducesEverySevenWireFields(void) {
+  NSDictionary *object = [EnablePathContext() JSONObject];
+
+  QON_CHECK([object isEqual:(@{
+    // Lower case: a targeting rule must not depend on Apple's brand casing
+    // while the Android SDK states a plain "android".
+    @"platform": @"ios",
+    @"app_version": @"app-1.2.3",
+    @"os_version": @"os-17.4",
+    @"sdk_version": @"sdk-6.14.0",
+    // The keyword suffix is a preference, not a locale.
+    @"locale": @"en_US",
+    @"device_model": @"iPhone15,2",
+    @"device_installed_at": @1600000000,
+  })], "the enable path must produce exactly the seven wire fields, unswapped");
+}
+
+static void TestALocaleIsReshapedIntoTheTagAndroidStates(void) {
+  QONRCV2FakeInstallDateProvider *installDate = [QONRCV2FakeInstallDateProvider new];
+  NSArray<NSArray<NSString *> *> *cases = @[
+    @[@"en_US@rg=gbzzzz", @"en_US"],
+    @[@"en_US@calendar=gregorian;numbers=latn", @"en_US"],
+    @[@"en-US", @"en_US"],  // the language-tag spelling Android sends
+    @[@"en", @"en"],
+    @[@"@rg=gbzzzz", @"UNKNOWN"],  // keywords and no locale at all
+    @[@"und", @"UNKNOWN"],
+    @[@"", @"UNKNOWN"],
+  ];
+
+  for (NSArray<NSString *> *pair in cases) {
+    QONRemoteConfigV2DeviceClientContextProvider *provider =
+        [QONRemoteConfigV2DeviceClientContextProvider providerWithPlatform:@"iOS"
+                                                               appVersion:@"1.2.3"
+                                                                osVersion:@"17.4"
+                                                               sdkVersion:@"9.9.9"
+                                                         localeIdentifier:pair[0]
+                                                              deviceModel:@"iPhone15,2"
+                                                      installDateProvider:installDate];
+    QON_CHECK([[provider currentClientContext].locale isEqualToString:pair[1]],
+              "a locale must reach the wire in the shape every SDK states");
+  }
+}
+
+static void TestAWithheldDeviceFactBecomesAPlaceholderRatherThanNoContext(void) {
+  QONRCV2FakeInstallDateProvider *installDate = [QONRCV2FakeInstallDateProvider new];
+  QONRemoteConfigV2DeviceClientContextProvider *provider =
+      [QONRemoteConfigV2DeviceClientContextProvider providerWithPlatform:nil
+                                                             appVersion:nil
+                                                              osVersion:@""
+                                                             sdkVersion:@"9.9.9"
+                                                       localeIdentifier:nil
+                                                            deviceModel:nil
+                                                    installDateProvider:installDate];
+  QONRemoteConfigV2ClientContext *context = [provider currentClientContext];
+
+  // A nil component nils the whole context, and a nil context fails every
+  // snapshot request: an app with no CFBundleShortVersionString would lose
+  // Remote Config entirely rather than lose one field.
+  QON_CHECK(context != nil, "a withheld fact must not take the surface off the air");
+  QON_CHECK([context.platform isEqualToString:@"UNKNOWN"], "an absent platform is UNKNOWN");
+  QON_CHECK([context.appVersion isEqualToString:@"UNKNOWN"], "an absent app version is UNKNOWN");
+  QON_CHECK([context.osVersion isEqualToString:@"UNKNOWN"], "an empty os version is UNKNOWN");
+  QON_CHECK([context.locale isEqualToString:@"UNKNOWN"], "an absent locale is UNKNOWN");
+  QON_CHECK([context.deviceModel isEqualToString:@"UNKNOWN"], "an absent model is UNKNOWN");
+  QON_CHECK([context.sdkVersion isEqualToString:@"9.9.9"], "a stated fact is left alone");
+  // The install date is the one omittable field: it is a device fact the
+  // gateway ages the user by, not a component it needs present.
+  QON_CHECK(context.deviceInstalledAtSeconds == nil, "an unknown install date is omitted");
+  QON_CHECK([[context JSONObject] objectForKey:@"device_installed_at"] == nil,
+            "and never appears in the body");
+}
+
+static void TestOnlyAPositiveWholeSecondCountSeedsTheInstallDate(void) {
+  NSArray<NSString *> *refused = @[@"", @"0", @"-1", @"abc", @"17 years", @"1600000000.5",
+                                   @" 1600000000"];
+  for (NSString *fact in refused) {
+    QON_CHECK([QONRemoteConfigV2DeviceInstallDateProvider
+                  installDateSecondsFromSystemFact:fact] == nil,
+              "anything that is not a positive whole second count seeds nothing");
+  }
+
+  QON_CHECK([QONRemoteConfigV2DeviceInstallDateProvider
+                installDateSecondsFromSystemFact:nil] == nil,
+            "an absent platform fact seeds nothing");
+  QON_CHECK([[QONRemoteConfigV2DeviceInstallDateProvider
+                 installDateSecondsFromSystemFact:@"1600000000"] isEqualToNumber:@1600000000],
+            "a whole second count is read exactly");
+}
+
+static void TestABaseURLCarryingAQueryOrFragmentCannotSwallowTheRoute(void) {
+  QONRCV2FakeHTTPExecutor *executor = [QONRCV2FakeHTTPExecutor new];
+  QONRCV2FakeLocalStorage *storage = [QONRCV2FakeLocalStorage new];
+  NSURL *baseURL = [NSURL URLWithString:@"https://gateway.test.example/prefix?tenant=1#frag"];
+  QONRemoteConfigV2GatewayTransport *transport = [[QONRemoteConfigV2GatewayTransport alloc]
+       initWithBaseURL:baseURL
+          projectToken:QONRCV2TestProjectToken
+          httpExecutor:executor
+          sessionStore:[[QONRemoteConfigV2GatewaySessionStore alloc] initWithLocalStorage:storage]
+  projectIdentityStore:[[QONRemoteConfigV2ProjectIdentityStore alloc]
+                            initWithLocalStorage:storage
+                                         baseURL:baseURL
+                                    projectToken:QONRCV2TestProjectToken]
+ clientContextProvider:QONRCV2ContextProvider([QONRCV2FakeInstallDateProvider new])
+                 clock:[QONRCV2FakeClock new]
+       failureObserver:nil];
+  [transport updateScope:QONRCV2Scope(QONRCV2TestAnonUID)];
+  [executor enqueue:[QONRCV2ScriptedHTTPResponse status:200
+                                                   body:QONRCV2BootstrapBody(@"session-token-1", 0)
+                                                headers:nil]];
+
+  [transport fetchRequest:[[QONRemoteConfigV2FetchRequest alloc] initWithIfNoneMatch:nil]
+               completion:^(__unused QONRemoteConfigV2FetchResponse *response) {}];
+
+  // The configuration accepts such a url — it is absolute and addressable — and
+  // the transport is what makes it harmless: the path is appended to the base
+  // path, and the query and fragment are dropped rather than left to swallow
+  // the route.
+  QON_CHECK(executor.requests.count >= 1, "the bootstrap must have been attempted");
+  QON_CHECK([executor.requests.firstObject.URL.absoluteString
+                isEqualToString:@"https://gateway.test.example/prefix/v3/remote-config-v2/session"],
+            "a base url carrying a query or fragment must not swallow the route");
+}
+
 int main(void) {
   @autoreleasepool {
     TestRequestShapes();
@@ -1954,6 +2100,12 @@ int main(void) {
     TestObservationsWithoutABoundIdentityAreDropped();
     TestABindDoesNotReSendABatchUnderWay();
     TestTheDurableBufferRoundTrips();
+
+    TestTheEnablePathProducesEverySevenWireFields();
+    TestALocaleIsReshapedIntoTheTagAndroidStates();
+    TestAWithheldDeviceFactBecomesAPlaceholderRatherThanNoContext();
+    TestOnlyAPositiveWholeSecondCountSeedsTheInstallDate();
+    TestABaseURLCarryingAQueryOrFragmentCannotSwallowTheRoute();
 
     fprintf(stdout, "QONRemoteConfigV2GatewayTransportHarness: %lu/%lu passed\n",
             (unsigned long)(checks - failures), (unsigned long)checks);

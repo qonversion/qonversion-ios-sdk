@@ -768,6 +768,49 @@ static void TestTheRealAssemblyInstallsWithoutTouchingTheNetwork(void) {
             "a fetch on an unbound coordinator must fail rather than hang");
 }
 
+/** Runs the real assembly with a stated interval and reports what it installed. */
+static int64_t InstalledIntervalForStatedInterval(NSNumber *_Nullable stated, BOOL *configured) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QONRemoteConfigController *controller = environment.controller;
+  BOOL installed = [controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
+                                       projectToken:@"project-token"
+                                         projectKey:QONRCPubProjectKey
+                                        environment:QONRCPubEnvironmentUID
+                                    canonicalUserID:nil
+                                 readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+                                       localStorage:[QONRCPubStorage new]
+                              clientContextProvider:[QONRCPubContextProvider new]
+                   minimumFetchIntervalMilliseconds:stated];
+  if (configured) *configured = installed && controller.isConfigured;
+  return controller.installedMinimumFetchIntervalMilliseconds;
+}
+
+static void TestAStatedMinimumFetchIntervalReachesTheFetchPolicy(void) {
+  QONRCPubEnvironment *dormant = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(dormant.controller.installedMinimumFetchIntervalMilliseconds == -1,
+            "a dormant surface must report no interval at all, not a zero one");
+
+  BOOL configured = NO;
+  QON_CHECK(InstalledIntervalForStatedInterval(@4242, &configured) == 4242,
+            "a stated interval must reach the fetch policy");
+  QON_CHECK(configured, "a stated interval must not stop the assembly from installing");
+
+  // The built-in constant is a default, not a floor: a stated 0 means the app
+  // asked for no throttle at all, which is what a debug build resolves to.
+  QON_CHECK(InstalledIntervalForStatedInterval(@0, NULL) == 0,
+            "a stated zero must disable the throttle outright");
+
+  QON_CHECK(InstalledIntervalForStatedInterval(nil, NULL) == 60 * 60 * 1000,
+            "an unstated interval must leave the SDK's built-in one in place");
+}
+
+static void TestANegativeMinimumFetchIntervalLeavesTheSurfaceDormant(void) {
+  BOOL configured = YES;
+  QON_CHECK(InstalledIntervalForStatedInterval(@(-1), &configured) == -1,
+            "a refused assembly must install no interval");
+  QON_CHECK(!configured, "a negative interval must be refused, exactly like the policy refuses it");
+}
+
 #pragma mark - Activation ack
 
 /** The ack the fake gateway recorded at `index`, or nil. */
@@ -1133,6 +1176,8 @@ int main(void) {
     TestDeviceInstallDateIsDeviceScopedAcrossIdentities();
     TestReleaseBuildActivatesOnceSilentlyOnAFirstRead();
     TestTheRealAssemblyInstallsWithoutTouchingTheNetwork();
+    TestAStatedMinimumFetchIntervalReachesTheFetchPolicy();
+    TestANegativeMinimumFetchIntervalLeavesTheSurfaceDormant();
 
     TestAnExplicitActivationIsAckedExactlyOnce();
     TestActivatingANewerReleaseAcksItAndNeverReAcksTheOld();

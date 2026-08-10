@@ -661,6 +661,47 @@
   XCTAssertEqual(result.status, QONRemoteConfigFetchStatusFailed);
 }
 
+/** Runs the real assembly with a stated interval and reports what it installed. */
+- (int64_t)installedIntervalForStatedInterval:(NSNumber *)stated
+                                   configured:(BOOL *)configured {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  QONRemoteConfigController *controller = environment.controller;
+  BOOL installed = [controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
+                                       projectToken:@"project-token"
+                                         projectKey:QONRCPubProjectKey
+                                        environment:QONRCPubEnvironmentUID
+                                    canonicalUserID:nil
+                                 readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+                                       localStorage:[QONRCPubStorage new]
+                              clientContextProvider:[QONRCPubContextProvider new]
+                   minimumFetchIntervalMilliseconds:stated];
+  if (configured) *configured = installed && controller.isConfigured;
+  return controller.installedMinimumFetchIntervalMilliseconds;
+}
+
+- (void)testAStatedMinimumFetchIntervalReachesTheFetchPolicy {
+  QONRCPubEnvironment *dormant = QONRCPubDormantEnvironment([self defaultsFixture]);
+  // Not zero: a dormant surface has no interval, and zero is a real "never
+  // throttle".
+  XCTAssertEqual(dormant.controller.installedMinimumFetchIntervalMilliseconds, -1);
+
+  BOOL configured = NO;
+  XCTAssertEqual([self installedIntervalForStatedInterval:@4242 configured:&configured], 4242);
+  XCTAssertTrue(configured);
+
+  // The built-in constant is a default, not a floor: a stated 0 means the app
+  // asked for no throttle at all, which is what a debug build resolves to.
+  XCTAssertEqual([self installedIntervalForStatedInterval:@0 configured:NULL], 0);
+
+  XCTAssertEqual([self installedIntervalForStatedInterval:nil configured:NULL], 60 * 60 * 1000);
+}
+
+- (void)testANegativeMinimumFetchIntervalLeavesTheSurfaceDormant {
+  BOOL configured = YES;
+  XCTAssertEqual([self installedIntervalForStatedInterval:@(-1) configured:&configured], -1);
+  XCTAssertFalse(configured);
+}
+
 #pragma mark - Read guard
 
 - (void)testReleaseBuildActivatesOnceSilentlyOnAFirstRead {

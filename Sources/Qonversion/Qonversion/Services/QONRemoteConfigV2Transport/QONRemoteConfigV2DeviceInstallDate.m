@@ -40,6 +40,18 @@ static BOOL QONRemoteConfigV2InstallDateValidSeconds(int64_t seconds) {
 
 @implementation QONRemoteConfigV2DeviceInstallDateProvider
 
++ (NSNumber *)installDateSecondsFromSystemFact:(NSString *)fact {
+  if (![fact isKindOfClass:NSString.class] || fact.length == 0) return nil;
+
+  // Only a bare run of digits is a date. `longLongValue` would happily read
+  // "17 years" as 17, and a leading `-` as a pre-epoch install.
+  NSCharacterSet *nonDigits = NSCharacterSet.decimalDigitCharacterSet.invertedSet;
+  if ([fact rangeOfCharacterFromSet:nonDigits].location != NSNotFound) return nil;
+
+  long long seconds = fact.longLongValue;
+  return seconds > 0 ? @(seconds) : nil;
+}
+
 - (instancetype)initWithLocalStorage:(id<QNLocalStorage>)localStorage
             systemInstallDateSeconds:(NSNumber *)systemInstallDateSeconds
                                clock:(id<QONRemoteConfigV2FetchClock>)clock {

@@ -9,6 +9,7 @@
 #import "QNAPIConstants.h"
 
 NSString * const kAPIBase = @"https://api2.qonversion.io/";
+NSString * const kRemoteConfigV2APIBase = @"https://api2.qonversion.io/";
 NSString * const kSdkLogsBaseURL = @"https://sdk-logs.qonversion.io/";
 
 NSString * const kInitEndpoint = @"v1/user/init";

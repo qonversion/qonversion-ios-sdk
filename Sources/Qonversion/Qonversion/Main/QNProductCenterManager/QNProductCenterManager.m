@@ -23,6 +23,7 @@
 #import "QONStoreKit2PurchaseModel.h"
 #import "QONFallbackService.h"
 #import "QONFallbackObject.h"
+#import "QONRemoteConfigController+Protected.h"
 #import "QONPromotionalOffer.h"
 #import "QONPurchaseOptions.h"
 #import "QONPurchaseResult+Protected.h"
@@ -1711,6 +1712,16 @@ expectedIdentityMutationGeneration:@(ownerGeneration)
 
   [self.userInfoService storeIdentity:result.uid];
   [self.remoteConfigManager userHasBeenChangedToUserID:result.uid];
+  // The same discovery, delivered to the experimental surface. Without it the v2
+  // surface keeps serving — and acknowledging — the configuration of the user
+  // this installation just turned out not to be. The rebind is treated as an
+  // identify: a restore established which existing user this is, exactly like an
+  // explicit identify does.
+  QONRemoteConfigController *remoteConfigController = self.experimentalRemoteConfigController;
+  if (remoteConfigController.isConfigured) {
+    [remoteConfigController switchToCanonicalUserID:result.uid
+                                             change:QONRemoteConfigControllerIdentityChangeIdentify];
+  }
   [self resetActualPermissionsCache];
   [self.identityMutationLock unlock];
 }
