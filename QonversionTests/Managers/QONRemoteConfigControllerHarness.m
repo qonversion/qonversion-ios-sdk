@@ -957,6 +957,162 @@ static void TestAnSDKThatNeverLearnedAnIdentityAcksNothing(void) {
   QON_CHECK(dormant.ackTransport == nil, "a dormant surface has no ack queue to speak through");
 }
 
+#pragma mark - Client telemetry
+
+/** A telemetry environment: the same fakes, with the telemetry taps wired in. */
+static QONRCPubEnvironment *TelemetryEnvironment(QONRemoteConfigV2ReadGuardBuildMode buildMode) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  environment.wantsTelemetry = YES;
+  QON_CHECK(QONRCPubInstallEngine(environment, buildMode, 0, @"user-a"),
+            "the engine must install with telemetry wired");
+  return environment;
+}
+
+static QONRemoteConfigV2TelemetrySender *_Nullable LooseTelemetrySender(void) {
+  return [[QONRemoteConfigV2TelemetrySender alloc]
+      initWithTransport:[QONRCPubTelemetryTransport new]
+                  store:[[QONRemoteConfigV2TelemetryStore alloc]
+                            initWithLocalStorage:[QONRCPubStorage new]]
+                  clock:[QONRCPubClock new]
+                 random:[QONRCPubRandom new]
+              scheduler:[QONRCPubScheduler new]
+                  queue:dispatch_queue_create("io.qonversion.rc-pub-telemetry-loose",
+                                              DISPATCH_QUEUE_SERIAL)];
+}
+
+static void TestADecodeFailureIsReportedWithoutChangingTheRead(void) {
+  QONRCPubEnvironment *environment = TelemetryEnvironment(QONRemoteConfigV2ReadGuardBuildModeDebug);
+  QONRemoteConfigController *controller = environment.controller;
+  ServeRelease(environment, @"release-1", 1, @"\"server-alpha-1\"");
+  QON_CHECK(controller.activate, "the first release must activate");
+  ServeRelease(environment, @"release-2", 2, @"\"rejected-alpha\"");
+  QON_CHECK(controller.activate, "the second release must activate");
+
+  QONRemoteConfigValue *value = [controller valueForKey:@"alpha"
+                                                decoder:QONRCPubPrefixDecoder(@"server-")];
+  QON_CHECK(value.source == QONRemoteConfigValueSourceCache &&
+                [value.value isEqual:@"server-alpha-1"],
+            "telemetry must not change what a read returns");
+
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events =
+      [environment flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindDecodeFailure];
+  QON_CHECK(events.count == 1, "a rejected served value must be reported exactly once");
+  QON_CHECK([events.firstObject.logicalKey isEqualToString:@"alpha"],
+            "with the key the app could not read");
+  QON_CHECK(events.firstObject.releaseNumber == 2,
+            "and the release that served it, not the one that saved the read");
+  QON_CHECK(events.firstObject.count == 1, "one read, one occurrence");
+}
+
+static void TestRepeatedDecodeFailuresCoalesce(void) {
+  QONRCPubEnvironment *environment = TelemetryEnvironment(QONRemoteConfigV2ReadGuardBuildModeDebug);
+  QONRemoteConfigController *controller = environment.controller;
+  ServeRelease(environment, @"release-1", 1, @"\"rejected-alpha\"");
+  QON_CHECK(controller.activate, "the release must activate");
+
+  for (NSUInteger index = 0; index < 200; index++) {
+    QON_CHECK([controller valueForKey:@"alpha" decoder:QONRCPubPrefixDecoder(@"server-")] == nil,
+              "every candidate is rejected, so every read resolves nowhere");
+  }
+
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events =
+      [environment flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindDecodeFailure];
+  QON_CHECK(events.count == 1, "two hundred failing reads must not become two hundred records");
+  // Both the served value and the bundled default are rejected, and the served
+  // one is the higher-priority rejection, so that is the one reported.
+  QON_CHECK(events.firstObject.count == 200, "they are one counted event");
+  QON_CHECK(environment.telemetrySender.droppedEventCount == 0, "and nothing was dropped");
+}
+
+static void TestReadGuardEventsReachTheTelemetryQueue(void) {
+  QONRCPubEnvironment *environment =
+      TelemetryEnvironment(QONRemoteConfigV2ReadGuardBuildModeRelease);
+  ServeRelease(environment, @"release-1", 1, @"\"server-alpha-1\"");
+
+  // A read before any activate: the release build activates silently and both
+  // facts are worth reporting.
+  QON_CHECK([environment.controller.current rawValueForKey:@"alpha"] != nil,
+            "the read still returns the configuration");
+  [environment settleTelemetry];
+
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *readBeforeActivate =
+      [environment flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindReadBeforeActivate];
+  QON_CHECK(readBeforeActivate.count == 1, "a read before activate must be reported");
+  QON_CHECK(readBeforeActivate.firstObject.logicalKey == nil,
+            "a keyless kind must never state a key");
+  QON_CHECK(readBeforeActivate.firstObject.releaseNumber == 0,
+            "and must state an unknown release rather than re-enter the manager for one");
+  QON_CHECK(environment.readGuardAssertions == 0,
+            "and the release build must still not raise the assertion");
+}
+
+/**
+ A fresh install has no persisted configuration to preload, and that is the
+ normal state — not a failure. Reporting it would fire preload_failed once for
+ every new user and bury the genuine failures under them.
+ */
+static void TestAFreshInstallNeverReportsAPreloadFailure(void) {
+  QONRCPubEnvironment *environment =
+      TelemetryEnvironment(QONRemoteConfigV2ReadGuardBuildModeRelease);
+  // Nothing was ever served, so binding the identity found nothing to preload.
+  QON_CHECK([environment.controller.current rawValueForKey:@"alpha"] != nil,
+            "the read still resolves from the bundled defaults");
+
+  QON_CHECK([environment flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindPreloadFailed]
+                .count == 0,
+            "an absent preload is the normal first-launch state, not a failure");
+  QON_CHECK([environment flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindPreloadCorrupt]
+                .count == 0,
+            "and nothing was corrupt either");
+}
+
+static void TestASurfaceWithoutATelemetryQueueStaysSilent(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeRelease, 0,
+                                  @"user-a"),
+            "the engine must install without telemetry");
+  QON_CHECK(environment.telemetrySender == nil, "and must install no telemetry queue");
+
+  ServeRelease(environment, @"release-1", 1, @"\"rejected-alpha\"");
+  QON_CHECK(environment.controller.activate, "the release must activate");
+  QON_CHECK([environment.controller valueForKey:@"alpha"
+                                        decoder:QONRCPubPrefixDecoder(@"server-")] == nil,
+            "a decode failure with nowhere to report must behave exactly as before");
+  QON_CHECK([environment.controller.current rawValueForKey:@"alpha"] != nil,
+            "and so must every other read");
+}
+
+static void TestTheTelemetryQueueIsInstalledExactlyOnce(void) {
+  QONRCPubEnvironment *environment = TelemetryEnvironment(QONRemoteConfigV2ReadGuardBuildModeDebug);
+  QON_CHECK(![environment.controller installTelemetrySender:LooseTelemetrySender()],
+            "a second telemetry queue must be refused");
+
+  QONRCPubEnvironment *dormant = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK([dormant.controller installTelemetrySender:LooseTelemetrySender()],
+            "and a controller that has none must accept one");
+}
+
+static void TestTheRealAssemblyInstallsTheTelemetryQueue(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QONRemoteConfigController *controller = environment.controller;
+  QON_CHECK([controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
+                                projectToken:@"project-token"
+                                  projectKey:QONRCPubProjectKey
+                                 environment:QONRCPubEnvironmentUID
+                             canonicalUserID:nil
+                          readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+                                localStorage:[QONRCPubStorage new]
+                       clientContextProvider:[QONRCPubContextProvider new]],
+            "the real assembly must build and install its engine");
+  // The only way to observe the queue from outside is that the slot is taken.
+  QON_CHECK(![controller installTelemetrySender:LooseTelemetrySender()],
+            "the shipped assembly must have installed a telemetry queue of its own");
+
+  QONRCPubEnvironment *dormant = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK([dormant.controller installTelemetrySender:LooseTelemetrySender()],
+            "while a surface nobody configured stays dormant, with no queue at all");
+}
+
 int main(void) {
   @autoreleasepool {
     TestDormantSurfaceServesBundledDefaultsAndRefusesToFetch();
@@ -985,6 +1141,14 @@ int main(void) {
     TestAnAckAProcessCouldNotDeliverIsDeliveredByTheNextOne();
     TestIdentityChurnDoesNotReArmAnAbandonedAck();
     TestAnSDKThatNeverLearnedAnIdentityAcksNothing();
+
+    TestADecodeFailureIsReportedWithoutChangingTheRead();
+    TestRepeatedDecodeFailuresCoalesce();
+    TestReadGuardEventsReachTheTelemetryQueue();
+    TestAFreshInstallNeverReportsAPreloadFailure();
+    TestASurfaceWithoutATelemetryQueueStaysSilent();
+    TestTheTelemetryQueueIsInstalledExactlyOnce();
+    TestTheRealAssemblyInstallsTheTelemetryQueue();
   }
   if (failures == 0) {
     fprintf(stdout, "QONRemoteConfigControllerHarness: %lu/%lu passed\n",

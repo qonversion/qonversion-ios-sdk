@@ -9,8 +9,10 @@
 #import "QONRemoteConfigFetchResult.h"
 #import "QONRemoteConfigV2ActivationAck.h"
 #import "QONRemoteConfigV2FetchCoordinator.h"
+#import "QONRemoteConfigV2GatewayTransport.h"
 #import "QONRemoteConfigV2Manager.h"
 #import "QONRemoteConfigV2Models.h"
+#import "QONRemoteConfigV2Telemetry.h"
 
 @class QONRemoteConfigFallbackStore;
 @protocol QNLocalStorage;
@@ -92,6 +94,29 @@ typedef void (^QONRemoteConfigScopeSink)(QONRemoteConfigV2Scope *_Nullable scope
  is refused afterwards.
  */
 - (BOOL)installActivationAckSender:(QONRemoteConfigV2ActivationAckSender *)ackSender;
+
+/**
+ Installs the out-of-band client-telemetry queue.
+
+ Optional by construction, exactly like the ack queue: without it the surface
+ simply never reports, and nothing else changes. It must be installed before the
+ first identity is bound, and it is refused afterwards.
+ */
+- (BOOL)installTelemetrySender:(QONRemoteConfigV2TelemetrySender *)telemetrySender;
+
+/**
+ The three taps that feed the telemetry queue.
+
+ They are built here rather than inline at the assembly site so the mapping from
+ SDK-internal events to wire kinds is one implementation, exercised by tests
+ that install an engine themselves. Each one only enqueues: they are invoked
+ from the app's read path, from a transport callback and from a decoder, none of
+ which may be made to wait, re-enter the manager or fail because of telemetry.
+ They hold the controller weakly and are harmless before a sender is installed.
+ */
+- (QONRemoteConfigV2ReadGuardTelemetryHandler)telemetryReadGuardHandler;
+- (QONRemoteConfigV2DecodeFailureTelemetryHandler)telemetryDecodeFailureHandler;
+- (QONRemoteConfigV2TransportFailureObserver)telemetryTransportFailureObserver;
 
 /**
  Assembles the real engine against the gateway routes and installs it. Nothing

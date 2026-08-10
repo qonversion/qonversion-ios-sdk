@@ -4,12 +4,14 @@
 #import "QONRemoteConfigV2DeviceInstallDate.h"
 #import "QONRemoteConfigV2GatewaySessionStore.h"
 #import "QONRemoteConfigV2ProjectIdentityStore.h"
+#import "QONRemoteConfigV2Telemetry.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 FOUNDATION_EXPORT NSString *const QONRemoteConfigV2GatewaySessionPath;
 FOUNDATION_EXPORT NSString *const QONRemoteConfigV2GatewaySnapshotPath;
 FOUNDATION_EXPORT NSString *const QONRemoteConfigV2GatewayAckPath;
+FOUNDATION_EXPORT NSString *const QONRemoteConfigV2GatewayTelemetryPath;
 FOUNDATION_EXPORT NSString *const QONRemoteConfigV2GatewaySessionHeader;
 FOUNDATION_EXPORT NSUInteger const QONRemoteConfigV2GatewayMaximumBootstrapBytes;
 
@@ -119,14 +121,18 @@ typedef void (^QONRemoteConfigV2TransportFailureObserver)(
  once per project and environment, kept durable, and thereafter only confirmed.
 
  The same session seam serves the activation ack route —
- POST {baseURL}/v3/remote-config-v2/ack — see `sendAck:forScope:completion:`.
- It is a strictly out-of-band signal: it shares the session, the bootstrap and
- the single re-bootstrap-on-401 rule, and nothing else. It can neither admit nor
- invalidate config data, and it never reports through the failure observer,
- which belongs to the fetch policy.
+ POST {baseURL}/v3/remote-config-v2/ack — see `sendAck:forScope:completion:`,
+ and the client telemetry route —
+ POST {baseURL}/v3/remote-config-v2/telemetry — see
+ `sendTelemetryBatch:forScope:completion:`. Both are strictly out-of-band
+ signals: they share the session, the bootstrap and the single
+ re-bootstrap-on-401 rule, and nothing else. Neither can admit or invalidate
+ config data, and neither reports through the failure observer, which belongs to
+ the fetch policy.
  */
 @interface QONRemoteConfigV2GatewayTransport : NSObject <QONRemoteConfigV2FetchTransport,
-                                                          QONRemoteConfigV2AckTransporting>
+                                                          QONRemoteConfigV2AckTransporting,
+                                                          QONRemoteConfigV2TelemetryTransporting>
 - (instancetype)init NS_UNAVAILABLE;
 - (nullable instancetype)initWithBaseURL:(NSURL *)baseURL
                             projectToken:(NSString *)projectToken

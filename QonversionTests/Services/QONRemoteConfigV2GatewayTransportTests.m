@@ -1161,3 +1161,683 @@
 }
 
 @end
+
+#pragma mark - Client telemetry, gateway route
+
+@interface QONRemoteConfigV2TelemetryRouteTests : XCTestCase
+@property (nonatomic, strong) QONRCV2AckEnvironment *env;
+@end
+
+@implementation QONRemoteConfigV2TelemetryRouteTests
+
+- (void)setUp {
+  [super setUp];
+  self.env = [QONRCV2AckEnvironment new];
+}
+
+/** Walks a telemetry retry ladder to its bound, one manual tick per attempt. */
+- (void)runTelemetryRetryLadder {
+  [self.env settle];
+  for (NSInteger attempt = 1; attempt < QONRemoteConfigV2TelemetryMaximumAttempts; attempt++) {
+    XCTAssertGreaterThan(self.env.scheduler.pendingCount, 0u);
+    [self.env.scheduler runAll];
+    [self.env settle];
+  }
+}
+
+- (void)testATelemetryBatchMatchesTheGatewayContractExactly {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 3);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 1u);
+  NSURLRequest *request = self.env.gateway.telemetryRequests.firstObject;
+  XCTAssertEqualObjects(request.HTTPMethod, @"POST");
+  XCTAssertEqualObjects(request.URL.absoluteString,
+                        @"https://gateway.test.example/v3/remote-config-v2/telemetry");
+  XCTAssertEqualObjects(QONRCV2Header(request, @"Authorization"),
+                        [@"Bearer " stringByAppendingString:QONRCV2TestProjectToken]);
+  XCTAssertEqualObjects(QONRCV2Header(request, @"Content-Type"), @"application/json");
+  // The batch must ride the very session the snapshot was read under.
+  XCTAssertEqualObjects(QONRCV2Header(request, QONRemoteConfigV2GatewaySessionHeader),
+                        QONRCV2SeededSessionToken);
+  XCTAssertNil(QONRCV2Header(request, @"If-None-Match"));
+  XCTAssertEqualObjects(QONRCV2JSONFromRequest(request), (@{
+    @"events": @[@{
+      @"kind": @"decode_failure",
+      @"logical_key": QONRCV2TelemetryKeyAlpha,
+      @"release_number": @(QONRCV2TelemetryRelease4),
+      @"count": @3,
+      @"last_occurred_at": @(QONRCV2TelemetryObservedAtSeconds),
+    }],
+  }));
+  XCTAssertNil([self.env telemetryRecordForScope:QONRCV2AckScopeA()]);
+  XCTAssertEqual(sender.droppedEventCount, 0);
+}
+
+- (void)testOnlyDecodeFailuresCarryALogicalKey {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordKind:QONRemoteConfigV2TelemetryKindReadBeforeActivate
+          logicalKey:nil
+       releaseNumber:0];
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  NSDictionary *event = QONRCV2TelemetryOnlyEvent(self.env.gateway.telemetryRequests.firstObject);
+  XCTAssertEqualObjects(event[@"kind"], @"read_before_activate");
+  XCTAssertNil(event[@"logical_key"]);
+  XCTAssertEqualObjects(event[@"release_number"], @0);
+}
+
+- (void)testAKeyRuleViolationIsDroppedRatherThanSent {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  // A decode failure without a key, a keyless kind with one, and a key carrying
+  // a control byte: the gateway would reject the whole batch any of them landed in.
+  [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure logicalKey:nil releaseNumber:1];
+  [sender recordKind:QONRemoteConfigV2TelemetryKindImplicitActivation
+          logicalKey:QONRCV2TelemetryKeyAlpha
+       releaseNumber:1];
+  [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:@"control\tcharacter"
+       releaseNumber:1];
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 0u);
+  XCTAssertEqual(sender.droppedEventCount, 3);
+}
+
+- (void)testRepeatedFailuresCoalesceIntoOneEvent {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 500);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 1u);
+  NSDictionary *event = QONRCV2TelemetryOnlyEvent(self.env.gateway.telemetryRequests.firstObject);
+  XCTAssertEqualObjects(event[@"count"], @500);
+}
+
+- (void)testA400DropsTheBatchPermanently {
+  [self.env.gateway scriptTelemetryStatus:400 times:8];
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 2);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 1u);
+  XCTAssertEqual(self.env.scheduler.pendingCount, 0u);
+  XCTAssertEqual(sender.droppedEventCount, 2);
+  // Gone from disk too, so no restart can re-offer bytes the gateway refused.
+  XCTAssertNil([self.env telemetryRecordForScope:QONRCV2AckScopeA()]);
+}
+
+- (void)testA503IsRetriedToTheBoundAndThenDropped {
+  [self.env.gateway scriptTelemetryStatus:503 times:8];
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [self runTelemetryRetryLadder];
+
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount,
+                 (NSUInteger)QONRemoteConfigV2TelemetryMaximumAttempts);
+  XCTAssertEqual(sender.droppedEventCount, 1);
+  [self.env.scheduler runAll];
+  [self.env settle];
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount,
+                 (NSUInteger)QONRemoteConfigV2TelemetryMaximumAttempts);
+}
+
+- (void)testA401ReBootstrapsOnceAndKeepsTheSharedSession {
+  [self.env.gateway scriptTelemetryStatus:401];
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.gateway.sessionRequests.count, 1u);
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 2u);
+  XCTAssertEqualObjects(QONRCV2Header(self.env.gateway.telemetryRequests.lastObject,
+                                      QONRemoteConfigV2GatewaySessionHeader),
+                        QONRCV2MintedSessionToken);
+  // A 401 here may never leave the config read path without a session.
+  XCTAssertNotNil([self.env.sessionStore sessionForScope:QONRCV2AckScopeA()]);
+  XCTAssertEqual(sender.droppedEventCount, 0);
+}
+
+- (void)testTelemetryIsNeverSentUnderAnotherIdentitysSession {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [self.env useIdentityScope:QONRCV2AckScopeB()];
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 0u);
+  XCTAssertEqual([self.env telemetryRecordForScope:QONRCV2AckScopeA()].events.count, 1u);
+}
+
+- (void)testABufferedBatchSurvivesAProcessRestart {
+  self.env.gateway.hangTelemetry = YES;
+  QONRemoteConfigV2TelemetrySender *first = [self.env makeTelemetrySender];
+  [first bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(first, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 4);
+  [first noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 1u);
+  QONRemoteConfigV2TelemetryRecord *record = [self.env telemetryRecordForScope:QONRCV2AckScopeA()];
+  XCTAssertEqual(record.events.count, 1u);
+  XCTAssertEqual(record.events.firstObject.count, 4);
+
+  // A new process over the same disk: the batch is still owed.
+  self.env.gateway.hangTelemetry = NO;
+  QONRemoteConfigV2TelemetrySender *second = [self.env makeTelemetrySender];
+  [second bindScope:QONRCV2AckScopeA()];
+  [second noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 2u);
+  NSDictionary *event = QONRCV2TelemetryOnlyEvent(self.env.gateway.telemetryRequests.lastObject);
+  XCTAssertEqualObjects(event[@"count"], @4);
+  XCTAssertNil([self.env telemetryRecordForScope:QONRCV2AckScopeA()]);
+}
+
+/**
+ The worst case the durable record has to hold: a full batch on the wire AND a
+ map that filled up again behind it.
+ */
+- (void)testAFullBatchAndARefilledMapBothSurviveARestart {
+  self.env.gateway.hangTelemetry = YES;
+  // The threshold is raised out of the way so the test, not the buffer, decides
+  // when the batch leaves.
+  QONRemoteConfigV2TelemetrySender *first = [self.env makeTelemetrySenderWithFlushThreshold:1000];
+  [first bindScope:QONRCV2AckScopeA()];
+  NSUInteger total = QONRemoteConfigV2TelemetryMaximumBatchEntries +
+      QONRemoteConfigV2TelemetryMaximumEntries;
+  for (NSUInteger index = 0; index < QONRemoteConfigV2TelemetryMaximumBatchEntries; index++) {
+    [first recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+           logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+        releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [first noteSuccessfulFetch];
+  [self.env settle];
+  for (NSUInteger index = QONRemoteConfigV2TelemetryMaximumBatchEntries; index < total; index++) {
+    [first recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+           logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+        releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [self.env settle];
+
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 1u);
+  XCTAssertEqual(QONRCV2TelemetryEvents(self.env.gateway.telemetryRequests.firstObject).count,
+                 QONRemoteConfigV2TelemetryMaximumBatchEntries);
+  // The record holds the batch in flight AND the map behind it.
+  XCTAssertEqual([self.env telemetryRecordForScope:QONRCV2AckScopeA()].events.count, total);
+  XCTAssertEqual(first.droppedEventCount, 0);
+
+  // A new process over the same disk delivers every one of them.
+  self.env.gateway.hangTelemetry = NO;
+  QONRemoteConfigV2TelemetrySender *second = [self.env makeTelemetrySender];
+  [second bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger pass = 0; pass < 8; pass++) {
+    [second noteSuccessfulFetch];
+    [self.env settle];
+  }
+  NSMutableSet<NSString *> *keys = [NSMutableSet new];
+  for (NSURLRequest *request in self.env.gateway.telemetryRequests) {
+    for (NSDictionary *event in QONRCV2TelemetryEvents(request)) {
+      [keys addObject:event[@"logical_key"]];
+    }
+  }
+  XCTAssertEqual(keys.count, total);
+  XCTAssertNil([self.env telemetryRecordForScope:QONRCV2AckScopeA()]);
+}
+
+- (void)testAFlushWithoutASessionMakesNoRequest {
+  // An install that has never fetched: no session was ever minted for it.
+  [self.env.sessionStore removeSessionForScope:QONRCV2AckScopeA()];
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 2);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  // Telemetry must never bootstrap a session of its own — it has a 30 s tick,
+  // and the config read path owns session establishment.
+  XCTAssertEqual(self.env.gateway.sessionRequests.count, 0u);
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 0u);
+  XCTAssertEqual(sender.droppedEventCount, 0);
+  QONRemoteConfigV2TelemetryRecord *record = [self.env telemetryRecordForScope:QONRCV2AckScopeA()];
+  XCTAssertEqual(record.events.count, 1u);
+  XCTAssertEqual(record.events.firstObject.count, 2);
+}
+
+- (void)testA429IsRetryable {
+  [self.env.gateway scriptTelemetryStatus:429];
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertGreaterThan(self.env.scheduler.pendingCount, 0u);
+  [self.env.scheduler runAll];
+  [self.env settle];
+  XCTAssertEqual(self.env.gateway.telemetryRequestCount, 2u);
+  XCTAssertEqual(sender.droppedEventCount, 0);
+  XCTAssertNil([self.env telemetryRecordForScope:QONRCV2AckScopeA()]);
+}
+
+- (void)testNoRequestStatesMoreEventsThanTheContractAllows {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger index = 0; index < QONRemoteConfigV2TelemetryMaximumEntries; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  for (NSUInteger pass = 0; pass < 8; pass++) {
+    [sender noteSuccessfulFetch];
+    [self.env settle];
+  }
+
+  NSUInteger total = 0;
+  NSMutableSet<NSString *> *keys = [NSMutableSet new];
+  for (NSURLRequest *request in self.env.gateway.telemetryRequests) {
+    NSArray *events = QONRCV2TelemetryEvents(request);
+    XCTAssertLessThanOrEqual(events.count, QONRemoteConfigV2TelemetryMaximumBatchEntries);
+    total += events.count;
+    for (NSDictionary *event in events) [keys addObject:event[@"logical_key"]];
+  }
+  XCTAssertEqual(total, QONRemoteConfigV2TelemetryMaximumEntries);
+  XCTAssertEqual(keys.count, QONRemoteConfigV2TelemetryMaximumEntries);
+}
+
+@end
+
+#pragma mark - Client telemetry, sender rules
+
+@interface QONRemoteConfigV2TelemetrySenderTests : XCTestCase
+@property (nonatomic, strong) QONRCV2TelemetryEnvironment *env;
+@end
+
+@implementation QONRemoteConfigV2TelemetrySenderTests
+
+- (void)setUp {
+  [super setUp];
+  self.env = [QONRCV2TelemetryEnvironment new];
+}
+
+- (void)testAFlushIsDueAtTheThresholdAndNotBefore {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSenderWithMaximumEntries:64
+                                                                    flushThreshold:10];
+  [sender bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger index = 0; index < 9; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 0u);
+
+  [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:@"key-9"
+       releaseNumber:QONRCV2TelemetryRelease4];
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 1u);
+  XCTAssertEqual(self.env.transport.lastBatch.events.count, 10u);
+}
+
+- (void)testTheTickFlushesABufferBelowTheThreshold {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 0u);
+  XCTAssertGreaterThan(self.env.scheduler.pendingCount, 0u);
+
+  [self.env.scheduler runAll];
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 1u);
+}
+
+- (void)testTheCoalescingMapIsBounded {
+  // Threshold above the bound, so nothing flushes and the map is the thing under test.
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSenderWithMaximumEntries:64
+                                                                    flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger index = 0; index < 200; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [self.env settle];
+
+  XCTAssertEqual(sender.droppedEventCount, 200 - 64);
+  XCTAssertEqual([self.env recordForScope:QONRCV2AckScopeA()].events.count, 64u);
+}
+
+- (void)testAnEntryIsKeyedByKindAndKeyOnly {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSenderWithMaximumEntries:64
+                                                                    flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, 4, 2);
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyBeta, 4, 1);
+  [sender recordKind:QONRemoteConfigV2TelemetryKindPreloadCorrupt logicalKey:nil releaseNumber:0];
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.transport.batchCount, 1u);
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events = self.env.transport.lastBatch.events;
+  XCTAssertEqual(events.count, 3u);
+  XCTAssertEqual(events.firstObject.count, 2);
+}
+
+/**
+ A release rolling over between two flushes must not split one key in two.
+
+ The gateway refuses a whole batch that names the same (kind, logical_key)
+ twice, so the release number is an attribute of the entry rather than part of
+ its identity: the counts add and the newer release wins.
+ */
+- (void)testAReleaseRolloverKeepsOneEntry {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSenderWithMaximumEntries:64
+                                                                    flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, 4, 2);
+  // The app fetched and activated release 5, and the same key still fails.
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, 5, 3);
+  // And a read that started before the activation lands afterwards.
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, 4, 1);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events = self.env.transport.lastBatch.events;
+  XCTAssertEqual(events.count, 1u);
+  XCTAssertEqual(events.firstObject.count, 6);
+  // The newest release number, whatever order the observations arrived in.
+  XCTAssertEqual(events.firstObject.releaseNumber, 5);
+}
+
+- (void)testACountSaturatesAtTheContractCap {
+  QONRemoteConfigV2TelemetryStore *store =
+      [[QONRemoteConfigV2TelemetryStore alloc] initWithLocalStorage:self.env.storage];
+  QONRemoteConfigV2TelemetryEvent *saturated = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:QONRCV2TelemetryKeyAlpha
+       releaseNumber:QONRCV2TelemetryRelease4
+               count:QONRemoteConfigV2TelemetryMaximumEventCount
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds];
+  QONRemoteConfigV2TelemetryRecord *record =
+      [[QONRemoteConfigV2TelemetryRecord alloc] initWithEvents:@[saturated]];
+  XCTAssertTrue([store storeRecord:record forScope:QONRCV2AckScopeA()]);
+
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSenderWithMaximumEntries:64
+                                                                    flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 3);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.transport.lastBatch.events.firstObject.count,
+                 QONRemoteConfigV2TelemetryMaximumEventCount);
+  XCTAssertEqual(sender.droppedEventCount, 3);
+}
+
+- (void)testAStaleEventIsPrunedInsteadOfPoisoningItsBatch {
+  QONRemoteConfigV2TelemetryStore *store =
+      [[QONRemoteConfigV2TelemetryStore alloc] initWithLocalStorage:self.env.storage];
+  // A phone that was offline for a month, and a clock that ran ahead.
+  QONRemoteConfigV2TelemetryEvent *ancient = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:QONRCV2TelemetryKeyAlpha
+       releaseNumber:QONRCV2TelemetryRelease4
+               count:9
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds - 31 * 24 * 60 * 60];
+  QONRemoteConfigV2TelemetryEvent *fromTheFuture = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindPreloadCorrupt
+          logicalKey:nil
+       releaseNumber:0
+               count:2
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds + 3600];
+  QONRemoteConfigV2TelemetryRecord *record =
+      [[QONRemoteConfigV2TelemetryRecord alloc] initWithEvents:@[ancient, fromTheFuture]];
+  XCTAssertTrue([store storeRecord:record forScope:QONRCV2AckScopeA()]);
+
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSenderWithMaximumEntries:64
+                                                                    flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  // A fresh observation of a third key, shipped in the very same batch.
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyBeta, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.transport.batchCount, 1u);
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events = self.env.transport.lastBatch.events;
+  XCTAssertEqual(events.count, 1u);
+  XCTAssertEqualObjects(events.firstObject.logicalKey, QONRCV2TelemetryKeyBeta);
+  XCTAssertEqual(sender.droppedEventCount, 11);
+}
+
+- (void)testAnUnusableClockNeverBuildsABatch {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  self.env.clock.now = 0;
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 2);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  // A batch stamped with the epoch floor would be refused whole, so none is built.
+  XCTAssertEqual(self.env.transport.batchCount, 0u);
+  XCTAssertEqual(sender.droppedEventCount, 0);
+
+  self.env.clock.now = QONRCV2TelemetryObservedAtSeconds * 1000;
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyBeta, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 1u);
+}
+
+- (void)testARefundedBatchIsNeverDroppedForWantOfMapRoom {
+  [self.env.transport scriptResponse:QONRemoteConfigV2TelemetryResponseNotAddressable times:1];
+  // Threshold 10, bound 10: the map fills up again while the batch is out.
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSenderWithMaximumEntries:10
+                                                                    flushThreshold:10];
+  [sender bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger index = 0; index < 10; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"batched-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 1u);
+
+  // A refund may never be charged to the bound that stops NEW events.
+  XCTAssertEqual([self.env recordForScope:QONRCV2AckScopeA()].events.count, 10u);
+  XCTAssertEqual(sender.droppedEventCount, 0);
+}
+
+- (void)testAFullBufferSplitsAtTheBatchCap {
+  // The threshold is raised to the bound so the whole buffer flushes at once:
+  // the split is then the batch cap doing its job, not the threshold.
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSenderWithMaximumEntries:64
+                                                                    flushThreshold:64];
+  [sender bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger index = 0; index < 64; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [self.env settle];
+
+  XCTAssertEqual(self.env.transport.batchCount, 1u);
+  XCTAssertEqual(self.env.transport.lastBatch.events.count,
+                 QONRemoteConfigV2TelemetryMaximumBatchEntries);
+
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 2u);
+  XCTAssertEqual(self.env.transport.lastBatch.events.count,
+                 64 - QONRemoteConfigV2TelemetryMaximumBatchEntries);
+  XCTAssertEqual(self.env.transport.allEvents.count, 64u);
+}
+
+- (void)testARetryableFlushIsRetriedAndThenDropped {
+  [self.env.transport scriptResponse:QONRemoteConfigV2TelemetryResponseRetryable times:8];
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 3);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+  for (NSInteger attempt = 1; attempt < QONRemoteConfigV2TelemetryMaximumAttempts; attempt++) {
+    XCTAssertGreaterThan(self.env.scheduler.pendingCount, 0u);
+    [self.env.scheduler runAll];
+    [self.env settle];
+  }
+
+  XCTAssertEqual(self.env.transport.batchCount,
+                 (NSUInteger)QONRemoteConfigV2TelemetryMaximumAttempts);
+  XCTAssertEqual(sender.droppedEventCount, 3);
+  XCTAssertNil([self.env recordForScope:QONRCV2AckScopeA()]);
+}
+
+- (void)testAnUnaddressableFlushCostsNoRetryBudget {
+  [self.env.transport scriptResponse:QONRemoteConfigV2TelemetryResponseNotAddressable times:1];
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 3);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(sender.droppedEventCount, 0);
+  QONRemoteConfigV2TelemetryRecord *record = [self.env recordForScope:QONRCV2AckScopeA()];
+  XCTAssertEqual(record.events.count, 1u);
+  XCTAssertEqual(record.events.firstObject.count, 3);
+
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 2u);
+  XCTAssertEqual(self.env.transport.lastBatch.events.firstObject.count, 3);
+}
+
+- (void)testObservationsWithoutABoundIdentityAreDropped {
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSender];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 5);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+
+  XCTAssertEqual(self.env.transport.batchCount, 0u);
+  XCTAssertNil([self.env recordForScope:QONRCV2AckScopeA()]);
+}
+
+- (void)testABindDoesNotReSendABatchUnderWay {
+  self.env.transport.hang = YES;
+  QONRemoteConfigV2TelemetrySender *sender = [self.env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 1u);
+
+  // An identify that does not actually change the identity.
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender noteSuccessfulFetch];
+  [self.env settle];
+  XCTAssertEqual(self.env.transport.batchCount, 1u);
+}
+
+- (void)testTheDurableBufferRoundTrips {
+  QONRemoteConfigV2TelemetryStore *store =
+      [[QONRemoteConfigV2TelemetryStore alloc] initWithLocalStorage:self.env.storage];
+  QONRemoteConfigV2TelemetryEvent *decode = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:QONRCV2TelemetryKeyAlpha
+       releaseNumber:QONRCV2TelemetryRelease4
+               count:7
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds];
+  QONRemoteConfigV2TelemetryEvent *keyless = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindSnapshotMalformed
+          logicalKey:nil
+       releaseNumber:0
+               count:1
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds];
+  XCTAssertNotNil(decode);
+  XCTAssertNotNil(keyless);
+  QONRemoteConfigV2TelemetryRecord *record =
+      [[QONRemoteConfigV2TelemetryRecord alloc] initWithEvents:@[decode, keyless]];
+  XCTAssertTrue([store storeRecord:record forScope:QONRCV2AckScopeA()]);
+
+  QONRemoteConfigV2TelemetryRecord *loaded = [store recordForScope:QONRCV2AckScopeA()];
+  XCTAssertEqual(loaded.events.count, 2u);
+  XCTAssertEqualObjects(loaded.events.firstObject, decode);
+  XCTAssertEqualObjects(loaded.events.lastObject, keyless);
+  XCTAssertNil([store recordForScope:QONRCV2AckScopeB()]);
+  // No storage key may carry the identity it belongs to.
+  XCTAssertFalse([[QONRemoteConfigV2TelemetryStore storageKeyForScope:QONRCV2AckScopeA()]
+                     containsString:@"anon-uid-a"]);
+
+  // A record whose bytes disagree with the schema is untrusted whole.
+  self.env.storage
+      .objects[[QONRemoteConfigV2TelemetryStore storageKeyForScope:QONRCV2AckScopeA()]] =
+      @{@"schema_version": @1, @"events": @[@{@"kind": @"not_a_kind"}]};
+  XCTAssertNil([store recordForScope:QONRCV2AckScopeA()]);
+}
+
+- (void)testAnEventRefusesEveryShapeTheContractForbids {
+  XCTAssertNil([[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:nil
+       releaseNumber:1
+               count:1
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds]);
+  XCTAssertNil([[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindReadBeforeActivate
+          logicalKey:QONRCV2TelemetryKeyAlpha
+       releaseNumber:1
+               count:1
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds]);
+  XCTAssertNil([[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindReadBeforeActivate
+          logicalKey:nil
+       releaseNumber:-1
+               count:1
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds]);
+  XCTAssertNil([[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindReadBeforeActivate
+          logicalKey:nil
+       releaseNumber:1
+               count:0
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds]);
+  XCTAssertNil([[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindReadBeforeActivate
+          logicalKey:nil
+       releaseNumber:1
+               count:QONRemoteConfigV2TelemetryMaximumEventCount + 1
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds]);
+  XCTAssertNil([[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindReadBeforeActivate
+          logicalKey:nil
+       releaseNumber:1
+               count:1
+lastOccurredAtSeconds:0]);
+  NSString *tooLong = [@"" stringByPaddingToLength:QONRemoteConfigV2TelemetryMaximumLogicalKeyBytes + 1
+                                        withString:@"k"
+                                   startingAtIndex:0];
+  XCTAssertNil([[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:tooLong
+       releaseNumber:1
+               count:1
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds]);
+}
+
+@end

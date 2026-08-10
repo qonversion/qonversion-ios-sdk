@@ -238,6 +238,57 @@ static int64_t const QONRCPubProjectID = 42;
 }
 @end
 
+#pragma mark - Client telemetry
+
+@interface QONRCPubRecordedTelemetry : NSObject
+@property (nonatomic, strong) QONRemoteConfigV2Scope *scope;
+@property (nonatomic, copy) NSArray<QONRemoteConfigV2TelemetryEvent *> *events;
+@end
+
+@implementation QONRCPubRecordedTelemetry
+@end
+
+/** Records the batches the controller's telemetry queue would have shipped. */
+@interface QONRCPubTelemetryTransport : NSObject <QONRemoteConfigV2TelemetryTransporting>
+@property (nonatomic, strong) NSMutableArray<QONRCPubRecordedTelemetry *> *batches;
+- (NSArray<QONRemoteConfigV2TelemetryEvent *> *)allEvents;
+/** Every event of `kind`, in the order the sender shipped them. */
+- (NSArray<QONRemoteConfigV2TelemetryEvent *> *)eventsOfKind:(QONRemoteConfigV2TelemetryKind)kind;
+@end
+
+@implementation QONRCPubTelemetryTransport
+- (instancetype)init {
+  self = [super init];
+  if (self) _batches = [NSMutableArray new];
+  return self;
+}
+- (NSArray<QONRemoteConfigV2TelemetryEvent *> *)allEvents {
+  NSMutableArray<QONRemoteConfigV2TelemetryEvent *> *events = [NSMutableArray new];
+  @synchronized (self) {
+    for (QONRCPubRecordedTelemetry *batch in self.batches) [events addObjectsFromArray:batch.events];
+  }
+  return events;
+}
+- (NSArray<QONRemoteConfigV2TelemetryEvent *> *)eventsOfKind:(QONRemoteConfigV2TelemetryKind)kind {
+  NSMutableArray<QONRemoteConfigV2TelemetryEvent *> *events = [NSMutableArray new];
+  for (QONRemoteConfigV2TelemetryEvent *event in [self allEvents]) {
+    if (event.kind == kind) [events addObject:event];
+  }
+  return events;
+}
+- (void)sendTelemetryBatch:(NSArray<QONRemoteConfigV2TelemetryEvent *> *)events
+                   forScope:(QONRemoteConfigV2Scope *)scope
+                 completion:(QONRemoteConfigV2TelemetryCompletion)completion {
+  @synchronized (self) {
+    QONRCPubRecordedTelemetry *recorded = [QONRCPubRecordedTelemetry new];
+    recorded.scope = scope;
+    recorded.events = events;
+    [self.batches addObject:recorded];
+  }
+  completion(QONRemoteConfigV2TelemetryResponseDelivered);
+}
+@end
+
 #pragma mark - Client context
 
 @interface QONRCPubContextProvider : NSObject <QONRemoteConfigV2ClientContextProviding>
@@ -405,10 +456,25 @@ static NSBundle *_Nullable QONRCPubBundleWithDefaults(NSData *artifact) {
 @property (nonatomic, strong) QONRCPubAckTransport *ackTransport;
 @property (nonatomic, strong) QONRCPubScheduler *ackScheduler;
 @property (nonatomic, strong) QONRemoteConfigV2ActivationAckSender *ackSender;
+/**
+ Set before installing the engine to wire the telemetry taps.
+
+ Off by default so every existing test keeps the exact assembly it was written
+ against: a controller with no telemetry queue is also the shipped state of an
+ app that never configured the surface.
+ */
+@property (nonatomic, assign) BOOL wantsTelemetry;
+@property (nonatomic, strong, nullable) QONRCPubTelemetryTransport *telemetryTransport;
+@property (nonatomic, strong, nullable) QONRCPubScheduler *telemetryScheduler;
+@property (nonatomic, strong, nullable) QONRemoteConfigV2TelemetrySender *telemetrySender;
 - (void)drain;
 - (void)settleIdentity;
 - (void)settleAcks;
+- (void)settleTelemetry;
 - (NSUInteger)ackCount;
+/** Settles, then ships whatever the buffer holds, so a test need not wait 30 s. */
+- (NSArray<QONRemoteConfigV2TelemetryEvent *> *)flushedTelemetryOfKind:
+    (QONRemoteConfigV2TelemetryKind)kind;
 @end
 
 @implementation QONRCPubEnvironment
@@ -423,6 +489,26 @@ static NSBundle *_Nullable QONRCPubBundleWithDefaults(NSData *artifact) {
   dispatch_sync(self.identityQueue, ^{});
   [self drain];
   [self settleAcks];
+  [self settleTelemetry];
+}
+/**
+ Runs every unit of telemetry work that is already owed.
+
+ A read-guard event reaches the queue through the callback executor, so the
+ executor has to be drained first, and the sender's own queue afterwards.
+ */
+- (void)settleTelemetry {
+  for (NSUInteger index = 0; index < 8; index++) {
+    [self drain];
+    [self.telemetrySender settleForTesting];
+  }
+}
+- (NSArray<QONRemoteConfigV2TelemetryEvent *> *)flushedTelemetryOfKind:
+    (QONRemoteConfigV2TelemetryKind)kind {
+  [self settleTelemetry];
+  [self.telemetrySender noteSuccessfulFetch];
+  [self settleTelemetry];
+  return [self.telemetryTransport eventsOfKind:kind];
 }
 /**
  Runs every unit of ack work that is already owed.
@@ -486,8 +572,14 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
       assertionHandler:^(__unused NSString *message) {
         weakEnvironment.readGuardAssertions += 1;
       }
-      telemetryHandler:nil
+      telemetryHandler:environment.wantsTelemetry
+          ? [environment.controller telemetryReadGuardHandler]
+          : nil
       scopePreloader:[[QONRemoteConfigStorePreloader alloc] initWithStore:environment.store]];
+  if (environment.wantsTelemetry) {
+    environment.manager.decodeFailureTelemetryHandler =
+        [environment.controller telemetryDecodeFailureHandler];
+  }
   QONRemoteConfigV2FetchPolicy *policy = [[QONRemoteConfigV2FetchPolicy alloc]
       initWithMinimumFetchIntervalMilliseconds:minimumFetchIntervalMilliseconds
       timeoutMilliseconds:nil
@@ -529,6 +621,25 @@ static BOOL QONRCPubInstallEngine(QONRCPubEnvironment *environment,
     return NO;
   }
   if (![environment.controller installActivationAckSender:environment.ackSender]) return NO;
+  if (environment.wantsTelemetry) {
+    // Same shape as the ack queue: a fake transport that records what the
+    // gateway would have been told, a manual scheduler, and the REAL durable
+    // store over the run's storage. Installed before the first identity is
+    // bound, exactly like the shipped assembly does it.
+    environment.telemetryTransport = [QONRCPubTelemetryTransport new];
+    environment.telemetryScheduler = [QONRCPubScheduler new];
+    environment.telemetrySender = [[QONRemoteConfigV2TelemetrySender alloc]
+        initWithTransport:environment.telemetryTransport
+                    store:[[QONRemoteConfigV2TelemetryStore alloc]
+                              initWithLocalStorage:environment.storage]
+                    clock:environment.clock
+                   random:[QONRCPubRandom new]
+                scheduler:environment.telemetryScheduler
+                    queue:dispatch_queue_create("io.qonversion.rc-pub-telemetry",
+                                                DISPATCH_QUEUE_SERIAL)];
+    if (!environment.telemetrySender) return NO;
+    if (![environment.controller installTelemetrySender:environment.telemetrySender]) return NO;
+  }
   if (canonicalUserID) {
     [environment.controller switchToCanonicalUserID:canonicalUserID
                                              change:QONRemoteConfigControllerIdentityChangeBuild];

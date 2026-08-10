@@ -1206,6 +1206,684 @@ static void TestAReleaseNumberThatCouldNeverAddressAnythingIsRefused(void) {
   QON_CHECK([env recordForScope:QONRCV2AckScopeA()] == nil, "and never persisted");
 }
 
+#pragma mark - Client telemetry
+
+/** Walks a telemetry retry ladder to its bound, one manual tick per attempt. */
+static void RunTelemetryRetryLadder(QONRCV2AckEnvironment *env) {
+  [env settle];
+  for (NSInteger attempt = 1; attempt < QONRemoteConfigV2TelemetryMaximumAttempts; attempt++) {
+    QON_CHECK(env.scheduler.pendingCount > 0,
+              "a telemetry retry must be scheduled after every failed attempt");
+    [env.scheduler runAll];
+    [env settle];
+  }
+}
+
+static void TestATelemetryBatchMatchesTheGatewayContractExactly(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 3);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.gateway.telemetryRequestCount == 1, "exactly one telemetry request must be sent");
+  NSURLRequest *request = env.gateway.telemetryRequests.firstObject;
+  QON_CHECK([request.HTTPMethod isEqualToString:@"POST"], "telemetry method");
+  QON_CHECK([request.URL.absoluteString
+                isEqualToString:@"https://gateway.test.example/v3/remote-config-v2/telemetry"],
+            "telemetry url");
+  QON_CHECK([QONRCV2Header(request, @"Authorization")
+                isEqualToString:[@"Bearer " stringByAppendingString:QONRCV2TestProjectToken]],
+            "telemetry authorization");
+  QON_CHECK([QONRCV2Header(request, @"Content-Type") isEqualToString:@"application/json"],
+            "telemetry content type");
+  QON_CHECK([QONRCV2Header(request, QONRemoteConfigV2GatewaySessionHeader)
+                isEqualToString:QONRCV2SeededSessionToken],
+            "telemetry must ride the very session the snapshot was read under");
+  QON_CHECK(QONRCV2Header(request, @"If-None-Match") == nil, "telemetry carries no validator");
+  QON_CHECK([QONRCV2JSONFromRequest(request) isEqual:(@{
+    @"events": @[@{
+      @"kind": @"decode_failure",
+      @"logical_key": QONRCV2TelemetryKeyAlpha,
+      @"release_number": @(QONRCV2TelemetryRelease4),
+      @"count": @3,
+      @"last_occurred_at": @(QONRCV2TelemetryObservedAtSeconds),
+    }],
+  })], "telemetry body");
+  QON_CHECK([env telemetryRecordForScope:QONRCV2AckScopeA()] == nil,
+            "a delivered batch must leave nothing behind on disk");
+  QON_CHECK(sender.droppedEventCount == 0, "nothing was dropped");
+}
+
+static void TestOnlyDecodeFailuresCarryALogicalKey(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender recordKind:QONRemoteConfigV2TelemetryKindReadBeforeActivate
+          logicalKey:nil
+       releaseNumber:0];
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  NSDictionary *event = QONRCV2TelemetryOnlyEvent(env.gateway.telemetryRequests.firstObject);
+  QON_CHECK([event[@"kind"] isEqualToString:@"read_before_activate"], "keyless kind name");
+  QON_CHECK(event[@"logical_key"] == nil, "a keyless kind must not state a logical key");
+  QON_CHECK([event[@"release_number"] isEqual:@0], "an unknown release is stated as 0");
+}
+
+static void TestAKeyRuleViolationIsDroppedRatherThanSent(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  // A decode failure without a key, and a keyless kind with one: the gateway
+  // would reject the whole batch either landed in.
+  [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure logicalKey:nil releaseNumber:1];
+  [sender recordKind:QONRemoteConfigV2TelemetryKindImplicitActivation
+          logicalKey:QONRCV2TelemetryKeyAlpha
+       releaseNumber:1];
+  [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:@"control\tcharacter"
+       releaseNumber:1];
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.gateway.telemetryRequestCount == 0, "a violation must never reach the gateway");
+  QON_CHECK(sender.droppedEventCount == 3, "and must be counted as dropped");
+}
+
+static void TestRepeatedFailuresCoalesceIntoOneEvent(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 500);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.gateway.telemetryRequestCount == 1,
+            "five hundred identical failures must cost one request");
+  NSDictionary *event = QONRCV2TelemetryOnlyEvent(env.gateway.telemetryRequests.firstObject);
+  QON_CHECK([event[@"count"] isEqual:@500], "and must be reported as one counted event");
+}
+
+static void TestA400DropsTheBatchPermanently(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptTelemetryStatus:400 times:8];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 2);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.gateway.telemetryRequestCount == 1, "a 400 must never be retried");
+  QON_CHECK(env.scheduler.pendingCount == 0, "and must not even schedule one");
+  QON_CHECK(sender.droppedEventCount == 2, "the refused events are dropped");
+  QON_CHECK([env telemetryRecordForScope:QONRCV2AckScopeA()] == nil,
+            "and are gone from disk, so no restart can re-offer them");
+}
+
+static void TestATelemetry503IsRetriedToTheBoundAndThenDropped(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptTelemetryStatus:503 times:8];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  RunTelemetryRetryLadder(env);
+
+  QON_CHECK(env.gateway.telemetryRequestCount ==
+                (NSUInteger)QONRemoteConfigV2TelemetryMaximumAttempts,
+            "the ladder must stop at the bound");
+  QON_CHECK(sender.droppedEventCount == 1, "the abandoned batch is counted");
+  [env.scheduler runAll];
+  [env settle];
+  QON_CHECK(env.gateway.telemetryRequestCount ==
+                (NSUInteger)QONRemoteConfigV2TelemetryMaximumAttempts,
+            "and nothing re-arms it");
+}
+
+static void TestA401ReBootstrapsOnceAndKeepsTheSharedSession(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptTelemetryStatus:401];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.gateway.sessionRequests.count == 1, "a 401 must re-bootstrap exactly once");
+  QON_CHECK(env.gateway.telemetryRequestCount == 2, "and retry the batch once");
+  QON_CHECK([QONRCV2Header(env.gateway.telemetryRequests.lastObject,
+                           QONRemoteConfigV2GatewaySessionHeader)
+                isEqualToString:QONRCV2MintedSessionToken],
+            "the retry rides the freshly minted session");
+  QON_CHECK([env.sessionStore sessionForScope:QONRCV2AckScopeA()] != nil,
+            "a 401 on the telemetry route must never leave the read path without a session");
+  QON_CHECK(sender.droppedEventCount == 0, "nothing was dropped");
+}
+
+static void TestTelemetryIsNeverSentUnderAnotherIdentitysSession(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  // The transport moved to another identity before the flush could go out.
+  [env useIdentityScope:QONRCV2AckScopeB()];
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.gateway.telemetryRequestCount == 0,
+            "one identity's session may never carry another's telemetry");
+  QONRemoteConfigV2TelemetryRecord *record = [env telemetryRecordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.events.count == 1, "and the events stay owed by the identity that made them");
+}
+
+static void TestABufferedBatchSurvivesAProcessRestart(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  env.gateway.hangTelemetry = YES;
+  QONRemoteConfigV2TelemetrySender *first = [env makeTelemetrySender];
+  [first bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(first, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 4);
+  [first noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.gateway.telemetryRequestCount == 1, "the first process got as far as the wire");
+  QONRemoteConfigV2TelemetryRecord *record = [env telemetryRecordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.events.count == 1 && record.events.firstObject.count == 4,
+            "an in-flight batch stays durable until it settles");
+
+  // A new process over the same disk: the batch is still owed.
+  env.gateway.hangTelemetry = NO;
+  QONRemoteConfigV2TelemetrySender *second = [env makeTelemetrySender];
+  [second bindScope:QONRCV2AckScopeA()];
+  [second noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.gateway.telemetryRequestCount == 2, "the next process delivers it");
+  NSDictionary *event = QONRCV2TelemetryOnlyEvent(env.gateway.telemetryRequests.lastObject);
+  QON_CHECK([event[@"count"] isEqual:@4], "with the count the dead process had accumulated");
+  QON_CHECK([env telemetryRecordForScope:QONRCV2AckScopeA()] == nil, "and clears the buffer");
+}
+
+/**
+ The worst case the durable record has to hold: a full batch on the wire AND a
+ map that filled up again behind it.
+
+ This is the shape that made the write fail silently before the record cap was
+ sized for both — the moment with the most to lose is exactly the moment the
+ buffer stopped being writable.
+ */
+static void TestAFullBatchAndARefilledMapBothSurviveARestart(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  env.gateway.hangTelemetry = YES;
+  // The threshold is raised out of the way so the test, not the buffer, decides
+  // when the batch leaves.
+  QONRemoteConfigV2TelemetrySender *first = [env makeTelemetrySenderWithFlushThreshold:1000];
+  [first bindScope:QONRCV2AckScopeA()];
+  NSUInteger total = QONRemoteConfigV2TelemetryMaximumBatchEntries +
+      QONRemoteConfigV2TelemetryMaximumEntries;
+  // A full batch's worth of distinct keys, shipped and then left hanging.
+  for (NSUInteger index = 0; index < QONRemoteConfigV2TelemetryMaximumBatchEntries; index++) {
+    [first recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+           logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+        releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [first noteSuccessfulFetch];
+  [env settle];
+  // ...and a full map's worth accumulating behind it while it hangs.
+  for (NSUInteger index = QONRemoteConfigV2TelemetryMaximumBatchEntries; index < total; index++) {
+    [first recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+           logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+        releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [env settle];
+
+  QON_CHECK(env.gateway.telemetryRequestCount == 1, "one batch is stuck on the wire");
+  QON_CHECK(QONRCV2TelemetryEvents(env.gateway.telemetryRequests.firstObject).count ==
+                QONRemoteConfigV2TelemetryMaximumBatchEntries,
+            "and it is a full one");
+  QONRemoteConfigV2TelemetryRecord *record = [env telemetryRecordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.events.count == total,
+            "the durable buffer holds the batch in flight AND the map behind it");
+  QON_CHECK(first.droppedEventCount == 0, "nothing was dropped to make it fit");
+
+  // A new process over the same disk delivers every one of them.
+  env.gateway.hangTelemetry = NO;
+  QONRemoteConfigV2TelemetrySender *second = [env makeTelemetrySender];
+  [second bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger pass = 0; pass < 8; pass++) {
+    [second noteSuccessfulFetch];
+    [env settle];
+  }
+  NSMutableSet<NSString *> *keys = [NSMutableSet new];
+  for (NSURLRequest *request in env.gateway.telemetryRequests) {
+    for (NSDictionary *event in QONRCV2TelemetryEvents(request)) {
+      [keys addObject:event[@"logical_key"]];
+    }
+  }
+  QON_CHECK(keys.count == total, "every key the dead process buffered reaches the gateway");
+  QON_CHECK([env telemetryRecordForScope:QONRCV2AckScopeA()] == nil, "and the buffer is cleared");
+}
+
+static void TestABatchNeverStatesMoreEventsThanTheContractAllows(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  // A full buffer against the shipped threshold: more distinct entries than one
+  // request may carry, so the flush has to split them.
+  for (NSUInteger index = 0; index < QONRemoteConfigV2TelemetryMaximumEntries; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [env settle];
+
+  QON_CHECK(env.gateway.telemetryRequestCount >= 1, "a full buffer flushes on its own");
+  NSUInteger total = 0;
+  NSMutableSet<NSString *> *keys = [NSMutableSet new];
+  for (NSUInteger pass = 0; pass < 8; pass++) {
+    // Whatever a batch left behind goes out at the next opportunity.
+    [sender noteSuccessfulFetch];
+    [env settle];
+  }
+  for (NSURLRequest *request in env.gateway.telemetryRequests) {
+    NSArray *events = QONRCV2TelemetryEvents(request);
+    QON_CHECK(events.count <= QONRemoteConfigV2TelemetryMaximumBatchEntries,
+              "no request may state more events than the contract allows");
+    total += events.count;
+    for (NSDictionary *event in events) [keys addObject:event[@"logical_key"]];
+  }
+  QON_CHECK(total == QONRemoteConfigV2TelemetryMaximumEntries,
+            "and every distinct entry is reported exactly once");
+  QON_CHECK(keys.count == QONRemoteConfigV2TelemetryMaximumEntries, "with no key lost or repeated");
+}
+
+static void TestAFullBufferSplitsAtTheBatchCap(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  // The threshold is raised to the bound so the whole buffer flushes at once:
+  // the split is then the batch cap doing its job, not the threshold.
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSenderWithMaximumEntries:64
+                                                               flushThreshold:64];
+  [sender bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger index = 0; index < 64; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [env settle];
+
+  QON_CHECK(env.transport.batchCount == 1, "one batch went out");
+  QON_CHECK(env.transport.lastBatch.events.count == QONRemoteConfigV2TelemetryMaximumBatchEntries,
+            "capped at exactly what one request may carry");
+
+  [sender noteSuccessfulFetch];
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 2, "and the remainder follows");
+  QON_CHECK(env.transport.lastBatch.events.count == 64 -
+                QONRemoteConfigV2TelemetryMaximumBatchEntries,
+            "carrying exactly what was left");
+  QON_CHECK(env.transport.allEvents.count == 64, "nothing was lost in the split");
+}
+
+#pragma mark - Client telemetry, sender rules
+
+static void TestAFlushIsDueAtTheThresholdAndNotBefore(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSenderWithMaximumEntries:64
+                                                               flushThreshold:10];
+  [sender bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger index = 0; index < 9; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 0, "nine distinct entries are not yet a flush");
+
+  [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:@"key-9"
+       releaseNumber:QONRCV2TelemetryRelease4];
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 1, "the tenth is");
+  QON_CHECK(env.transport.lastBatch.events.count == 10, "and it carries all ten");
+}
+
+static void TestTheTickFlushesABufferBelowTheThreshold(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 0, "one entry is far below the threshold");
+  QON_CHECK(env.scheduler.pendingCount > 0, "so the periodic tick must be armed");
+
+  [env.scheduler runAll];
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 1, "and the tick is what ships it");
+}
+
+static void TestTheCoalescingMapIsBounded(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  // Threshold above the bound, so nothing flushes and the map itself is the
+  // thing under test.
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSenderWithMaximumEntries:64
+                                                               flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger index = 0; index < 200; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"key-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [env settle];
+
+  QON_CHECK(sender.droppedEventCount == 200 - 64,
+            "everything past the bound is dropped rather than buffered");
+  QONRemoteConfigV2TelemetryRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.events.count == 64, "and the durable buffer never exceeds the bound");
+}
+
+static void TestAnEntryIsKeyedByKindAndKeyOnly(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSenderWithMaximumEntries:64
+                                                               flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, 4, 2);
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyBeta, 4, 1);
+  [sender recordKind:QONRemoteConfigV2TelemetryKindPreloadCorrupt logicalKey:nil releaseNumber:0];
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.transport.batchCount == 1, "one flush");
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events = env.transport.lastBatch.events;
+  QON_CHECK(events.count == 3, "a different kind or key is a different entry");
+  QON_CHECK(events.firstObject.count == 2, "and the identical one coalesced");
+}
+
+/**
+ A release rolling over between two flushes must not split one key in two.
+
+ The gateway refuses a whole batch that names the same (kind, logical_key)
+ twice, so the release number is an attribute of the entry rather than part of
+ its identity: the counts add and the newer release wins.
+ */
+static void TestAReleaseRolloverKeepsOneEntry(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSenderWithMaximumEntries:64
+                                                               flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, 4, 2);
+  // The app fetched and activated release 5, and the same key still fails.
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, 5, 3);
+  // And a read that started before the activation lands afterwards: an older
+  // release reported late must not drag the entry backwards.
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, 4, 1);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events = env.transport.lastBatch.events;
+  QON_CHECK(events.count == 1, "one key across two releases stays one entry");
+  QON_CHECK(events.firstObject.count == 6, "with every release's occurrences added up");
+  QON_CHECK(events.firstObject.releaseNumber == 5,
+            "and the newest release number, whatever order they arrived in");
+}
+
+static void TestACountSaturatesAtTheContractCap(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  QONRemoteConfigV2TelemetryStore *store =
+      [[QONRemoteConfigV2TelemetryStore alloc] initWithLocalStorage:env.storage];
+  QONRemoteConfigV2TelemetryEvent *saturated = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:QONRCV2TelemetryKeyAlpha
+       releaseNumber:QONRCV2TelemetryRelease4
+               count:QONRemoteConfigV2TelemetryMaximumEventCount
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds];
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *only = @[saturated];
+  QONRemoteConfigV2TelemetryRecord *record =
+      [[QONRemoteConfigV2TelemetryRecord alloc] initWithEvents:only];
+  QON_CHECK([store storeRecord:record forScope:QONRCV2AckScopeA()], "a capped buffer is writable");
+
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSenderWithMaximumEntries:64
+                                                               flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 3);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QONRemoteConfigV2TelemetryEvent *shipped = env.transport.lastBatch.events.firstObject;
+  QON_CHECK(shipped.count == QONRemoteConfigV2TelemetryMaximumEventCount,
+            "the count saturates rather than exceeding what the contract allows");
+  QON_CHECK(sender.droppedEventCount == 3, "and the occurrences past the cap are counted as lost");
+}
+
+static void TestAStaleEventIsPrunedInsteadOfPoisoningItsBatch(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  QONRemoteConfigV2TelemetryStore *store =
+      [[QONRemoteConfigV2TelemetryStore alloc] initWithLocalStorage:env.storage];
+  // A phone that was offline for a month, and a clock that ran ahead.
+  QONRemoteConfigV2TelemetryEvent *ancient = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:QONRCV2TelemetryKeyAlpha
+       releaseNumber:QONRCV2TelemetryRelease4
+               count:9
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds - 31 * 24 * 60 * 60];
+  QONRemoteConfigV2TelemetryEvent *fromTheFuture = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindPreloadCorrupt
+          logicalKey:nil
+       releaseNumber:0
+               count:2
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds + 3600];
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *stale = @[ancient, fromTheFuture];
+  QONRemoteConfigV2TelemetryRecord *record =
+      [[QONRemoteConfigV2TelemetryRecord alloc] initWithEvents:stale];
+  QON_CHECK([store storeRecord:record forScope:QONRCV2AckScopeA()], "the stale buffer is writable");
+
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSenderWithMaximumEntries:64
+                                                               flushThreshold:1000];
+  [sender bindScope:QONRCV2AckScopeA()];
+  // A fresh observation of a third key, shipped in the very same batch.
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyBeta, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.transport.batchCount == 1, "the batch still goes out");
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events = env.transport.lastBatch.events;
+  QON_CHECK(events.count == 1, "carrying only what the server would accept");
+  QON_CHECK([events.firstObject.logicalKey isEqualToString:QONRCV2TelemetryKeyBeta],
+            "which is the fresh event, not the ones that would have refused the batch");
+  QON_CHECK(sender.droppedEventCount == 11, "the pruned occurrences are counted as lost");
+}
+
+static void TestAnUnusableClockNeverBuildsABatch(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  env.clock.now = 0;
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 2);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.transport.batchCount == 0,
+            "a batch stamped with the epoch floor would be refused whole, so none is built");
+  QON_CHECK(sender.droppedEventCount == 0, "and nothing is thrown away over it");
+
+  // The clock comes back; the buffered events are stale by then, so they are
+  // pruned rather than sent — but the sender is working again.
+  env.clock.now = QONRCV2TelemetryObservedAtSeconds * 1000;
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyBeta, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 1, "a usable clock flushes again");
+}
+
+static void TestARefundedBatchIsNeverDroppedForWantOfMapRoom(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  [env.transport scriptResponse:QONRemoteConfigV2TelemetryResponseNotAddressable times:1];
+  // Threshold 10, bound 10: the map fills up again while the batch is out.
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSenderWithMaximumEntries:10
+                                                               flushThreshold:10];
+  [sender bindScope:QONRCV2AckScopeA()];
+  for (NSUInteger index = 0; index < 10; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:[NSString stringWithFormat:@"batched-%lu", (unsigned long)index]
+         releaseNumber:QONRCV2TelemetryRelease4];
+  }
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 1, "the full map flushed");
+  QON_CHECK(sender.droppedEventCount == 0, "with nothing dropped so far");
+
+  QONRemoteConfigV2TelemetryRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.events.count == 10,
+            "the refused batch is back in the buffer, whole, even though the map was full");
+  QON_CHECK(sender.droppedEventCount == 0,
+            "a refund may never be charged to the bound that stops new events");
+}
+
+static void TestAFlushWithoutASessionMakesNoRequest(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  // An install that has never fetched: no session was ever minted for it.
+  [env.sessionStore removeSessionForScope:QONRCV2AckScopeA()];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 2);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.gateway.sessionRequests.count == 0,
+            "telemetry must never bootstrap a session of its own");
+  QON_CHECK(env.gateway.telemetryRequestCount == 0, "and must make no request without one");
+  QON_CHECK(sender.droppedEventCount == 0, "nothing is dropped over it");
+  QONRemoteConfigV2TelemetryRecord *record = [env telemetryRecordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.events.count == 1 && record.events.firstObject.count == 2,
+            "the events wait for the read path to establish a session");
+}
+
+static void TestA429IsRetryable(void) {
+  QONRCV2AckEnvironment *env = [QONRCV2AckEnvironment new];
+  [env.gateway scriptTelemetryStatus:429];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeTelemetrySender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.scheduler.pendingCount > 0, "a 429 must schedule a retry rather than drop");
+  [env.scheduler runAll];
+  [env settle];
+  QON_CHECK(env.gateway.telemetryRequestCount == 2, "and the retry goes out");
+  QON_CHECK(sender.droppedEventCount == 0, "with nothing lost");
+  QON_CHECK([env telemetryRecordForScope:QONRCV2AckScopeA()] == nil,
+            "the second attempt was accepted, so the buffer is clear");
+}
+
+static void TestARetryableFlushIsRetriedAndThenDropped(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  [env.transport scriptResponse:QONRemoteConfigV2TelemetryResponseRetryable times:8];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 3);
+  [sender noteSuccessfulFetch];
+  [env settle];
+  for (NSInteger attempt = 1; attempt < QONRemoteConfigV2TelemetryMaximumAttempts; attempt++) {
+    QON_CHECK(env.scheduler.pendingCount > 0, "a retry is scheduled after every failed attempt");
+    [env.scheduler runAll];
+    [env settle];
+  }
+
+  QON_CHECK(env.transport.batchCount == (NSUInteger)QONRemoteConfigV2TelemetryMaximumAttempts,
+            "the ladder is bounded");
+  QON_CHECK(sender.droppedEventCount == 3, "and the abandoned events are counted, not re-buffered");
+  QON_CHECK([env recordForScope:QONRCV2AckScopeA()] == nil, "the durable buffer is cleared too");
+}
+
+static void TestAnUnaddressableFlushCostsNoRetryBudget(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  [env.transport scriptResponse:QONRemoteConfigV2TelemetryResponseNotAddressable times:1];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 3);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(sender.droppedEventCount == 0, "nothing was refused, so nothing was dropped");
+  QONRemoteConfigV2TelemetryRecord *record = [env recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(record.events.count == 1 && record.events.firstObject.count == 3,
+            "the events are back in the buffer, whole");
+
+  // The next opportunity delivers them, with the full ladder still available.
+  [sender noteSuccessfulFetch];
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 2, "and a later flush sends them");
+  QON_CHECK(env.transport.lastBatch.events.firstObject.count == 3, "with the count intact");
+}
+
+static void TestObservationsWithoutABoundIdentityAreDropped(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSender];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 5);
+  [sender noteSuccessfulFetch];
+  [env settle];
+
+  QON_CHECK(env.transport.batchCount == 0,
+            "an observation made while nothing is bound belongs to nobody");
+  QON_CHECK([env recordForScope:QONRCV2AckScopeA()] == nil, "and is never persisted");
+}
+
+static void TestABindDoesNotReSendABatchUnderWay(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  env.transport.hang = YES;
+  QONRemoteConfigV2TelemetrySender *sender = [env makeSender];
+  [sender bindScope:QONRCV2AckScopeA()];
+  QONRCV2RecordDecodeFailures(sender, QONRCV2TelemetryKeyAlpha, QONRCV2TelemetryRelease4, 1);
+  [sender noteSuccessfulFetch];
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 1, "one batch is on the wire");
+
+  // An identify that does not actually change the identity.
+  [sender bindScope:QONRCV2AckScopeA()];
+  [sender noteSuccessfulFetch];
+  [env settle];
+  QON_CHECK(env.transport.batchCount == 1,
+            "re-binding the same identity must not double-count the batch in flight");
+}
+
+static void TestTheDurableBufferRoundTrips(void) {
+  QONRCV2TelemetryEnvironment *env = [QONRCV2TelemetryEnvironment new];
+  QONRemoteConfigV2TelemetryStore *store =
+      [[QONRemoteConfigV2TelemetryStore alloc] initWithLocalStorage:env.storage];
+  QONRemoteConfigV2TelemetryEvent *decode = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+          logicalKey:QONRCV2TelemetryKeyAlpha
+       releaseNumber:QONRCV2TelemetryRelease4
+               count:7
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds];
+  QONRemoteConfigV2TelemetryEvent *keyless = [[QONRemoteConfigV2TelemetryEvent alloc]
+        initWithKind:QONRemoteConfigV2TelemetryKindSnapshotMalformed
+          logicalKey:nil
+       releaseNumber:0
+               count:1
+lastOccurredAtSeconds:QONRCV2TelemetryObservedAtSeconds];
+  QON_CHECK(decode != nil && keyless != nil, "both events are well formed");
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *both = @[decode, keyless];
+  QONRemoteConfigV2TelemetryRecord *record =
+      [[QONRemoteConfigV2TelemetryRecord alloc] initWithEvents:both];
+  QON_CHECK([store storeRecord:record forScope:QONRCV2AckScopeA()], "the buffer is writable");
+
+  QONRemoteConfigV2TelemetryRecord *loaded = [store recordForScope:QONRCV2AckScopeA()];
+  QON_CHECK(loaded.events.count == 2, "and reads back whole");
+  QON_CHECK([loaded.events.firstObject isEqual:decode], "with the keyed event intact");
+  QON_CHECK([loaded.events.lastObject isEqual:keyless], "and the keyless one too");
+  QON_CHECK([store recordForScope:QONRCV2AckScopeB()] == nil,
+            "another identity's buffer is not this one's");
+  QON_CHECK(![[QONRemoteConfigV2TelemetryStore storageKeyForScope:QONRCV2AckScopeA()]
+                 containsString:@"anon-uid-a"],
+            "and no storage key may carry the identity");
+
+  // A record whose bytes disagree with the schema is untrusted whole.
+  env.storage.objects[[QONRemoteConfigV2TelemetryStore storageKeyForScope:QONRCV2AckScopeA()]] =
+      @{@"schema_version": @1, @"events": @[@{@"kind": @"not_a_kind"}]};
+  QON_CHECK([store recordForScope:QONRCV2AckScopeA()] == nil, "a malformed buffer is discarded");
+}
+
 int main(void) {
   @autoreleasepool {
     TestRequestShapes();
@@ -1247,6 +1925,35 @@ int main(void) {
     TestAnActivationOfAnUnboundScopeIsIgnored();
     TestBindingAnotherIdentityFencesAnAckOnTheWire();
     TestAReleaseNumberThatCouldNeverAddressAnythingIsRefused();
+
+    TestATelemetryBatchMatchesTheGatewayContractExactly();
+    TestOnlyDecodeFailuresCarryALogicalKey();
+    TestAKeyRuleViolationIsDroppedRatherThanSent();
+    TestRepeatedFailuresCoalesceIntoOneEvent();
+    TestA400DropsTheBatchPermanently();
+    TestATelemetry503IsRetriedToTheBoundAndThenDropped();
+    TestA401ReBootstrapsOnceAndKeepsTheSharedSession();
+    TestTelemetryIsNeverSentUnderAnotherIdentitysSession();
+    TestABufferedBatchSurvivesAProcessRestart();
+    TestAFullBatchAndARefilledMapBothSurviveARestart();
+    TestABatchNeverStatesMoreEventsThanTheContractAllows();
+    TestAFullBufferSplitsAtTheBatchCap();
+    TestAFlushIsDueAtTheThresholdAndNotBefore();
+    TestTheTickFlushesABufferBelowTheThreshold();
+    TestTheCoalescingMapIsBounded();
+    TestAnEntryIsKeyedByKindAndKeyOnly();
+    TestAReleaseRolloverKeepsOneEntry();
+    TestACountSaturatesAtTheContractCap();
+    TestAStaleEventIsPrunedInsteadOfPoisoningItsBatch();
+    TestAnUnusableClockNeverBuildsABatch();
+    TestARefundedBatchIsNeverDroppedForWantOfMapRoom();
+    TestAFlushWithoutASessionMakesNoRequest();
+    TestA429IsRetryable();
+    TestARetryableFlushIsRetriedAndThenDropped();
+    TestAnUnaddressableFlushCostsNoRetryBudget();
+    TestObservationsWithoutABoundIdentityAreDropped();
+    TestABindDoesNotReSendABatchUnderWay();
+    TestTheDurableBufferRoundTrips();
 
     fprintf(stdout, "QONRemoteConfigV2GatewayTransportHarness: %lu/%lu passed\n",
             (unsigned long)(checks - failures), (unsigned long)checks);

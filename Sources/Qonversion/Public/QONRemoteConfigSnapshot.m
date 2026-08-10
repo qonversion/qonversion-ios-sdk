@@ -95,17 +95,57 @@
 
 - (QONRemoteConfigValue *)valueForKey:(NSString *)key decoder:(QONRemoteConfigValueDecoder)decoder {
   if (!decoder) return nil;
+  QONRemoteConfigValue *resolved = nil;
+  BOOL decodeRejected = NO;
+  NSInteger rejectedReleaseNumber = 0;
   for (NSArray *candidate in [self candidatesForKey:key]) {
     QONRemoteConfigV2Entry *entry = candidate[0];
     NSData *rawData = entry.rawData;
+    // Not a decode failure: there was nothing to hand the decoder.
     if (!rawData) continue;
     NSError *error = nil;
+    QONRemoteConfigValueSource source = (QONRemoteConfigValueSource)[candidate[1] integerValue];
     id value = decoder([rawData copy], &error);
     if (value && !error) {
-      return [self resolvedValueForEntry:entry source:[candidate[1] integerValue] value:value];
+      resolved = [self resolvedValueForEntry:entry source:source value:value];
+      break;
+    }
+    // The highest-priority rejection is the one worth reporting: it is the
+    // release the app is actually being served and cannot read.
+    if (!decodeRejected) {
+      decodeRejected = YES;
+      rejectedReleaseNumber = [self releaseNumberForSource:source];
     }
   }
-  return nil;
+  // Reported whether or not a lower-priority candidate saved the read: a served
+  // value the app cannot decode is exactly the fault the dashboard is for, and
+  // silently falling back to the cache is what hides it today.
+  if (decodeRejected) [self notifyDecodeFailureForKey:key releaseNumber:rejectedReleaseNumber];
+  return resolved;
+}
+
+- (NSInteger)releaseNumberForSource:(QONRemoteConfigValueSource)source {
+  switch (source) {
+    case QONRemoteConfigValueSourceServer:
+      return self.primaryRelease.releaseNumber;
+    case QONRemoteConfigValueSourceCache:
+      return self.previousRelease.releaseNumber;
+    case QONRemoteConfigValueSourceFallback:
+      // A bundled default belongs to no server release, and the contract spells
+      // that "unknown" as 0 rather than as the release that happens to serve.
+      return 0;
+  }
+  return 0;
+}
+
+- (void)notifyDecodeFailureForKey:(NSString *)key releaseNumber:(NSInteger)releaseNumber {
+  QONRemoteConfigDecodeFailureObserver observer = self.decodeFailureObserver;
+  if (!observer || key.length == 0) return;
+  @try {
+    observer(key, releaseNumber);
+  } @catch (__unused NSException *exception) {
+    // Telemetry may never change what a read returns, including by throwing.
+  }
 }
 
 - (id)metadataForKey:(NSString *)key {

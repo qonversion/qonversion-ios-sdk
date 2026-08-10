@@ -209,8 +209,15 @@ static int64_t const QONRCV2AckLaterActivatedAtSeconds = 1700000900;
 @property (nonatomic, strong) NSMutableArray<NSNumber *> *ackStatuses;
 /** Accepts the ack and never answers it. */
 @property (nonatomic, assign) BOOL hangAcks;
+@property (nonatomic, strong) NSMutableArray<NSURLRequest *> *telemetryRequests;
+@property (nonatomic, strong) NSMutableArray<NSNumber *> *telemetryStatuses;
+/** Accepts the telemetry batch and never answers it. */
+@property (nonatomic, assign) BOOL hangTelemetry;
 - (void)scriptAckStatus:(NSInteger)status;
 - (void)scriptAckStatus:(NSInteger)status times:(NSUInteger)times;
+- (void)scriptTelemetryStatus:(NSInteger)status;
+- (void)scriptTelemetryStatus:(NSInteger)status times:(NSUInteger)times;
+- (NSUInteger)telemetryRequestCount;
 @end
 
 @implementation QONRCV2ScriptedGateway
@@ -220,6 +227,8 @@ static int64_t const QONRCV2AckLaterActivatedAtSeconds = 1700000900;
     _ackRequests = [NSMutableArray new];
     _sessionRequests = [NSMutableArray new];
     _ackStatuses = [NSMutableArray new];
+    _telemetryRequests = [NSMutableArray new];
+    _telemetryStatuses = [NSMutableArray new];
   }
   return self;
 }
@@ -229,6 +238,21 @@ static int64_t const QONRCV2AckLaterActivatedAtSeconds = 1700000900;
 - (void)scriptAckStatus:(NSInteger)status times:(NSUInteger)times {
   @synchronized (self) {
     for (NSUInteger index = 0; index < times; index++) [self.ackStatuses addObject:@(status)];
+  }
+}
+- (void)scriptTelemetryStatus:(NSInteger)status {
+  [self scriptTelemetryStatus:status times:1];
+}
+- (void)scriptTelemetryStatus:(NSInteger)status times:(NSUInteger)times {
+  @synchronized (self) {
+    for (NSUInteger index = 0; index < times; index++) {
+      [self.telemetryStatuses addObject:@(status)];
+    }
+  }
+}
+- (NSUInteger)telemetryRequestCount {
+  @synchronized (self) {
+    return self.telemetryRequests.count;
   }
 }
 - (void)executeRequest:(NSURLRequest *)request
@@ -259,6 +283,24 @@ static int64_t const QONRCV2AckLaterActivatedAtSeconds = 1700000900;
       if (self.ackStatuses.count > 0) {
         status = self.ackStatuses.firstObject.integerValue;
         [self.ackStatuses removeObjectAtIndex:0];
+      }
+    }
+    completion(nil,
+               [[NSHTTPURLResponse alloc] initWithURL:request.URL
+                                           statusCode:status
+                                          HTTPVersion:@"HTTP/1.1"
+                                         headerFields:nil],
+               nil);
+    return;
+  }
+  if ([path hasSuffix:QONRemoteConfigV2GatewayTelemetryPath]) {
+    NSInteger status = 204;
+    @synchronized (self) {
+      [self.telemetryRequests addObject:request];
+      if (self.hangTelemetry) return;
+      if (self.telemetryStatuses.count > 0) {
+        status = self.telemetryStatuses.firstObject.integerValue;
+        [self.telemetryStatuses removeObjectAtIndex:0];
       }
     }
     completion(nil,
@@ -369,6 +411,7 @@ static int64_t const QONRCV2AckLaterActivatedAtSeconds = 1700000900;
  re-create it and prove the record really is durable.
  */
 @interface QONRCV2AckEnvironment : NSObject
+@property (nonatomic, strong) NSMutableArray<QONRemoteConfigV2TelemetrySender *> *telemetrySenders;
 @property (nonatomic, strong) QONRCV2ScriptedGateway *gateway;
 @property (nonatomic, strong) QONRCV2FakeLocalStorage *storage;
 @property (nonatomic, strong) QONRemoteConfigV2GatewaySessionStore *sessionStore;
@@ -378,8 +421,14 @@ static int64_t const QONRCV2AckLaterActivatedAtSeconds = 1700000900;
 @property (nonatomic, strong) QONRCV2ManualScheduler *scheduler;
 @property (nonatomic, strong) NSMutableArray<QONRemoteConfigV2ActivationAckSender *> *senders;
 - (QONRemoteConfigV2ActivationAckSender *)makeSender;
+/** A telemetry sender over the same transport, storage and manual scheduler. */
+- (QONRemoteConfigV2TelemetrySender *)makeTelemetrySender;
+- (QONRemoteConfigV2TelemetrySender *)makeTelemetrySenderWithFlushThreshold:
+    (NSUInteger)flushThreshold;
 - (void)useIdentityScope:(nullable QONRemoteConfigV2Scope *)scope;
 - (nullable QONRemoteConfigV2ActivationAckRecord *)recordForScope:(QONRemoteConfigV2Scope *)scope;
+- (nullable QONRemoteConfigV2TelemetryRecord *)telemetryRecordForScope:
+    (QONRemoteConfigV2Scope *)scope;
 - (void)settle;
 @end
 
@@ -399,6 +448,7 @@ static int64_t const QONRCV2AckLaterActivatedAtSeconds = 1700000900;
     _clock.now = QONRCV2AckActivatedAtSeconds * 1000;
     _scheduler = [QONRCV2ManualScheduler new];
     _senders = [NSMutableArray new];
+    _telemetrySenders = [NSMutableArray new];
     _transport = [[QONRemoteConfigV2GatewayTransport alloc]
          initWithBaseURL:[NSURL URLWithString:QONRCV2TestBaseURLString]
             projectToken:QONRCV2TestProjectToken
@@ -440,12 +490,55 @@ static int64_t const QONRCV2AckLaterActivatedAtSeconds = 1700000900;
   return sender;
 }
 
+/** A telemetry sender over a freshly built store: a new process, the same disk. */
+- (QONRemoteConfigV2TelemetrySender *)makeTelemetrySender {
+  QONRemoteConfigV2TelemetrySender *sender = [[QONRemoteConfigV2TelemetrySender alloc]
+      initWithTransport:self.transport
+                  store:[[QONRemoteConfigV2TelemetryStore alloc]
+                            initWithLocalStorage:self.storage]
+                  clock:self.clock
+                 random:[QONRCV2FixedRandom new]
+              scheduler:self.scheduler
+                  queue:dispatch_queue_create("io.qonversion.rc-telemetry-test",
+                                              DISPATCH_QUEUE_SERIAL)];
+  if (sender) [self.telemetrySenders addObject:sender];
+  return sender;
+}
+
+/** The same, with the flush threshold raised so a test can choose the moment. */
+- (QONRemoteConfigV2TelemetrySender *)makeTelemetrySenderWithFlushThreshold:
+    (NSUInteger)flushThreshold {
+  QONRemoteConfigV2TelemetrySender *sender = [[QONRemoteConfigV2TelemetrySender alloc]
+          initWithTransport:self.transport
+                      store:[[QONRemoteConfigV2TelemetryStore alloc]
+                                initWithLocalStorage:self.storage]
+                      clock:self.clock
+                     random:[QONRCV2FixedRandom new]
+                  scheduler:self.scheduler
+                      queue:dispatch_queue_create("io.qonversion.rc-telemetry-test",
+                                                  DISPATCH_QUEUE_SERIAL)
+            maximumAttempts:QONRemoteConfigV2TelemetryMaximumAttempts
+initialRetryDelayMilliseconds:QONRemoteConfigV2TelemetryInitialRetryDelayMilliseconds
+maximumRetryDelayMilliseconds:QONRemoteConfigV2TelemetryMaximumRetryDelayMilliseconds
+             maximumEntries:QONRemoteConfigV2TelemetryMaximumEntries
+             flushThreshold:flushThreshold
+  flushIntervalMilliseconds:QONRemoteConfigV2TelemetryFlushIntervalMilliseconds];
+  if (sender) [self.telemetrySenders addObject:sender];
+  return sender;
+}
+
 - (void)useIdentityScope:(nullable QONRemoteConfigV2Scope *)scope {
   [self.transport updateScope:scope];
 }
 
 - (nullable QONRemoteConfigV2ActivationAckRecord *)recordForScope:(QONRemoteConfigV2Scope *)scope {
   return [[[QONRemoteConfigV2ActivationAckStore alloc] initWithLocalStorage:self.storage]
+      recordForScope:scope];
+}
+
+- (nullable QONRemoteConfigV2TelemetryRecord *)telemetryRecordForScope:
+    (QONRemoteConfigV2Scope *)scope {
+  return [[[QONRemoteConfigV2TelemetryStore alloc] initWithLocalStorage:self.storage]
       recordForScope:scope];
 }
 
@@ -459,6 +552,9 @@ static int64_t const QONRCV2AckLaterActivatedAtSeconds = 1700000900;
 - (void)settle {
   for (NSUInteger pass = 0; pass < 8; pass++) {
     for (QONRemoteConfigV2ActivationAckSender *sender in [self.senders copy]) {
+      [sender settleForTesting];
+    }
+    for (QONRemoteConfigV2TelemetrySender *sender in [self.telemetrySenders copy]) {
       [sender settleForTesting];
     }
   }
@@ -476,6 +572,199 @@ static int64_t QONRCV2AckReleaseNumber(NSURLRequest *request) {
   if (![body isKindOfClass:NSDictionary.class]) return 0;
   id value = ((NSDictionary *)body)[@"release_number"];
   return [value isKindOfClass:NSNumber.class] ? [value longLongValue] : 0;
+}
+
+#pragma mark - Client telemetry
+
+static NSString *const QONRCV2TelemetryKeyAlpha = @"paywall_prices";
+static NSString *const QONRCV2TelemetryKeyBeta = @"onboarding_copy";
+static int64_t const QONRCV2TelemetryRelease4 = 4;
+static int64_t const QONRCV2TelemetryObservedAtSeconds = 1700000000;
+
+/** The `events` array a telemetry request states, or nil when it states none. */
+static NSArray *_Nullable QONRCV2TelemetryEvents(NSURLRequest *request) {
+  id body = QONRCV2JSONFromRequest(request);
+  if (![body isKindOfClass:NSDictionary.class]) return nil;
+  id events = ((NSDictionary *)body)[@"events"];
+  return [events isKindOfClass:NSArray.class] ? events : nil;
+}
+
+/** The single event of a one-event batch, or nil when the batch is not one event. */
+static NSDictionary *_Nullable QONRCV2TelemetryOnlyEvent(NSURLRequest *request) {
+  NSArray *events = QONRCV2TelemetryEvents(request);
+  if (events.count != 1) return nil;
+  id event = events.firstObject;
+  return [event isKindOfClass:NSDictionary.class] ? event : nil;
+}
+
+@interface QONRCV2RecordedTelemetryBatch : NSObject
+@property (nonatomic, strong) QONRemoteConfigV2Scope *scope;
+@property (nonatomic, copy) NSArray<QONRemoteConfigV2TelemetryEvent *> *events;
+@end
+
+@implementation QONRCV2RecordedTelemetryBatch
+@end
+
+/**
+ Scripted telemetry transport for the sender's own rules.
+
+ The route tests drive the real transport instead; this one exists so
+ coalescing, bounds and the retry ladder can be exercised without a gateway in
+ the way.
+ */
+@interface QONRCV2FakeTelemetryTransport : NSObject <QONRemoteConfigV2TelemetryTransporting>
+@property (nonatomic, strong) NSMutableArray<QONRCV2RecordedTelemetryBatch *> *batches;
+@property (nonatomic, strong) NSMutableArray<NSNumber *> *responses;
+/** Accepts the batch and never answers it. */
+@property (nonatomic, assign) BOOL hang;
+- (void)scriptResponse:(QONRemoteConfigV2TelemetryResponse)response times:(NSUInteger)times;
+- (NSUInteger)batchCount;
+- (nullable QONRCV2RecordedTelemetryBatch *)lastBatch;
+/** Every event of every batch, in the order the sender shipped them. */
+- (NSArray<QONRemoteConfigV2TelemetryEvent *> *)allEvents;
+@end
+
+@implementation QONRCV2FakeTelemetryTransport
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _batches = [NSMutableArray new];
+    _responses = [NSMutableArray new];
+  }
+  return self;
+}
+- (void)scriptResponse:(QONRemoteConfigV2TelemetryResponse)response times:(NSUInteger)times {
+  @synchronized (self) {
+    for (NSUInteger index = 0; index < times; index++) [self.responses addObject:@(response)];
+  }
+}
+- (NSUInteger)batchCount {
+  @synchronized (self) {
+    return self.batches.count;
+  }
+}
+- (nullable QONRCV2RecordedTelemetryBatch *)lastBatch {
+  @synchronized (self) {
+    return self.batches.lastObject;
+  }
+}
+- (NSArray<QONRemoteConfigV2TelemetryEvent *> *)allEvents {
+  NSMutableArray<QONRemoteConfigV2TelemetryEvent *> *events = [NSMutableArray new];
+  @synchronized (self) {
+    for (QONRCV2RecordedTelemetryBatch *batch in self.batches) {
+      [events addObjectsFromArray:batch.events];
+    }
+  }
+  return events;
+}
+- (void)sendTelemetryBatch:(NSArray<QONRemoteConfigV2TelemetryEvent *> *)events
+                   forScope:(QONRemoteConfigV2Scope *)scope
+                 completion:(QONRemoteConfigV2TelemetryCompletion)completion {
+  QONRemoteConfigV2TelemetryResponse response = QONRemoteConfigV2TelemetryResponseDelivered;
+  @synchronized (self) {
+    QONRCV2RecordedTelemetryBatch *recorded = [QONRCV2RecordedTelemetryBatch new];
+    recorded.scope = scope;
+    recorded.events = events;
+    [self.batches addObject:recorded];
+    if (self.hang) return;
+    if (self.responses.count > 0) {
+      response = (QONRemoteConfigV2TelemetryResponse)self.responses.firstObject.integerValue;
+      [self.responses removeObjectAtIndex:0];
+    }
+  }
+  completion(response);
+}
+@end
+
+/**
+ A telemetry sender over the fake transport, the real durable store and a manual
+ scheduler, with the bounds the caller wants to exercise.
+ */
+@interface QONRCV2TelemetryEnvironment : NSObject
+@property (nonatomic, strong) QONRCV2FakeTelemetryTransport *transport;
+@property (nonatomic, strong) QONRCV2FakeLocalStorage *storage;
+@property (nonatomic, strong) QONRCV2FakeClock *clock;
+@property (nonatomic, strong) QONRCV2ManualScheduler *scheduler;
+@property (nonatomic, strong) NSMutableArray<QONRemoteConfigV2TelemetrySender *> *senders;
+- (QONRemoteConfigV2TelemetrySender *)makeSenderWithMaximumEntries:(NSUInteger)maximumEntries
+                                                    flushThreshold:(NSUInteger)flushThreshold;
+- (QONRemoteConfigV2TelemetrySender *)makeSender;
+- (nullable QONRemoteConfigV2TelemetryRecord *)recordForScope:(QONRemoteConfigV2Scope *)scope;
+- (void)settle;
+@end
+
+@implementation QONRCV2TelemetryEnvironment
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _transport = [QONRCV2FakeTelemetryTransport new];
+    _storage = [QONRCV2FakeLocalStorage new];
+    _clock = [QONRCV2FakeClock new];
+    _clock.now = QONRCV2TelemetryObservedAtSeconds * 1000;
+    _scheduler = [QONRCV2ManualScheduler new];
+    _senders = [NSMutableArray new];
+  }
+  return self;
+}
+
+- (QONRemoteConfigV2TelemetrySender *)makeSenderWithMaximumEntries:(NSUInteger)maximumEntries
+                                                    flushThreshold:(NSUInteger)flushThreshold {
+  QONRemoteConfigV2TelemetrySender *sender = [[QONRemoteConfigV2TelemetrySender alloc]
+        initWithTransport:self.transport
+                    store:[[QONRemoteConfigV2TelemetryStore alloc]
+                              initWithLocalStorage:self.storage]
+                    clock:self.clock
+                   random:[QONRCV2FixedRandom new]
+                scheduler:self.scheduler
+                    queue:dispatch_queue_create("io.qonversion.rc-telemetry-unit",
+                                                DISPATCH_QUEUE_SERIAL)
+          maximumAttempts:QONRemoteConfigV2TelemetryMaximumAttempts
+initialRetryDelayMilliseconds:QONRemoteConfigV2TelemetryInitialRetryDelayMilliseconds
+maximumRetryDelayMilliseconds:QONRemoteConfigV2TelemetryMaximumRetryDelayMilliseconds
+           maximumEntries:maximumEntries
+           flushThreshold:flushThreshold
+flushIntervalMilliseconds:QONRemoteConfigV2TelemetryFlushIntervalMilliseconds];
+  if (sender) [self.senders addObject:sender];
+  return sender;
+}
+
+- (QONRemoteConfigV2TelemetrySender *)makeSender {
+  return [self makeSenderWithMaximumEntries:QONRemoteConfigV2TelemetryMaximumEntries
+                             flushThreshold:QONRemoteConfigV2TelemetryFlushThreshold];
+}
+
+- (nullable QONRemoteConfigV2TelemetryRecord *)recordForScope:(QONRemoteConfigV2Scope *)scope {
+  return [[[QONRemoteConfigV2TelemetryStore alloc] initWithLocalStorage:self.storage]
+      recordForScope:scope];
+}
+
+/**
+ Runs every unit of telemetry work that is already owed.
+
+ A response is handed back inside the block that sent it, so it lands on the
+ sender's queue behind the barrier this method just posted: one pass is never
+ enough to reach quiescence.
+ */
+- (void)settle {
+  for (NSUInteger pass = 0; pass < 8; pass++) {
+    for (QONRemoteConfigV2TelemetrySender *sender in [self.senders copy]) {
+      [sender settleForTesting];
+    }
+  }
+}
+
+@end
+
+/** Records one decode failure the given number of times. */
+static void QONRCV2RecordDecodeFailures(QONRemoteConfigV2TelemetrySender *sender,
+                                        NSString *logicalKey, int64_t releaseNumber,
+                                        NSUInteger times) {
+  for (NSUInteger index = 0; index < times; index++) {
+    [sender recordKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+            logicalKey:logicalKey
+         releaseNumber:releaseNumber];
+  }
 }
 
 NS_ASSUME_NONNULL_END

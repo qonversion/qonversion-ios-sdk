@@ -212,6 +212,14 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
  */
 @property (nonatomic, strong) NSObject *ackLock;
 @property (nonatomic, strong, nullable) QONRemoteConfigV2ActivationAckSender *ackSender;
+/**
+ The telemetry queue shares `ackLock` and `ackScope` with the ack queue.
+
+ They are the same kind of thing — out-of-band signals bound to the identity the
+ transport currently addresses — and giving them one lock is what keeps a scope
+ transition from ever binding them to two different identities.
+ */
+@property (nonatomic, strong, nullable) QONRemoteConfigV2TelemetrySender *telemetrySender;
 @property (nonatomic, strong, nullable) QONRemoteConfigV2Scope *ackScope;
 /**
  The (scope, release) already handed to the ack queue, so an ordinary `current`
@@ -293,6 +301,116 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
   return YES;
 }
 
+- (BOOL)installTelemetrySender:(QONRemoteConfigV2TelemetrySender *)telemetrySender {
+  if (!telemetrySender) return NO;
+  @synchronized (self.ackLock) {
+    if (self.telemetrySender) return NO;
+    self.telemetrySender = telemetrySender;
+  }
+  return YES;
+}
+
+#pragma mark - Telemetry taps
+
+- (QONRemoteConfigV2ReadGuardTelemetryHandler)telemetryReadGuardHandler {
+  __weak typeof(self) weakSelf = self;
+  return ^(QONRemoteConfigV2ReadGuardTelemetryEvent event) {
+    [weakSelf recordReadGuardTelemetryEvent:event];
+  };
+}
+
+- (QONRemoteConfigV2DecodeFailureTelemetryHandler)telemetryDecodeFailureHandler {
+  __weak typeof(self) weakSelf = self;
+  return ^(NSString *logicalKey, NSInteger releaseNumber) {
+    [weakSelf recordTelemetryKind:QONRemoteConfigV2TelemetryKindDecodeFailure
+                       logicalKey:logicalKey
+                    releaseNumber:(int64_t)releaseNumber];
+  };
+}
+
+- (QONRemoteConfigV2TransportFailureObserver)telemetryTransportFailureObserver {
+  __weak typeof(self) weakSelf = self;
+  return ^(QONRemoteConfigV2TransportFailureKind kind, __unused NSNumber *statusCode) {
+    // Only the two "the server said something this SDK cannot parse" kinds are
+    // reported. Every other kind is a network or authorization fact the gateway
+    // already knows first-hand, and reporting it back would be noise.
+    //
+    // Both map to snapshot_malformed, which the contract defines as any gateway
+    // response envelope this client could not parse — the bootstrap envelope
+    // included. A separate kind would split one server-side defect across two
+    // dashboard rows for no operational gain.
+    if (kind != QONRemoteConfigV2TransportFailureKindSnapshotMalformed &&
+        kind != QONRemoteConfigV2TransportFailureKindBootstrapMalformed) {
+      return;
+    }
+    [weakSelf recordTelemetryKind:QONRemoteConfigV2TelemetryKindSnapshotMalformed
+                       logicalKey:nil
+                    releaseNumber:0];
+  };
+}
+
+/** The SDK-internal read-guard vocabulary, translated to the wire's closed enum. */
+- (void)recordReadGuardTelemetryEvent:(QONRemoteConfigV2ReadGuardTelemetryEvent)event {
+  QONRemoteConfigV2TelemetryKind kind;
+  switch (event) {
+    case QONRemoteConfigV2ReadGuardTelemetryEventReadBeforeActivate:
+      kind = QONRemoteConfigV2TelemetryKindReadBeforeActivate;
+      break;
+    case QONRemoteConfigV2ReadGuardTelemetryEventImplicitActivation:
+      kind = QONRemoteConfigV2TelemetryKindImplicitActivation;
+      break;
+    // Deliberately NOT reported. An absent preload is what every fresh install
+    // looks like before its first fetch — the normal state, not a fault — so
+    // reporting it would make preload_failed fire once for every new user and
+    // bury the genuine failures underneath. Only a preload that tried and could
+    // not is a failure.
+    case QONRemoteConfigV2ReadGuardTelemetryEventPreloadAbsent:
+      return;
+    case QONRemoteConfigV2ReadGuardTelemetryEventPreloadFailed:
+      kind = QONRemoteConfigV2TelemetryKindPreloadFailed;
+      break;
+    case QONRemoteConfigV2ReadGuardTelemetryEventPreloadCorrupt:
+      kind = QONRemoteConfigV2TelemetryKindPreloadCorrupt;
+      break;
+    case QONRemoteConfigV2ReadGuardTelemetryEventPreparedActivationPersistenceFailed:
+      kind = QONRemoteConfigV2TelemetryKindActivationPersistenceFailed;
+      break;
+    default:
+      return;
+  }
+  // The read-guard kinds name no key and no release: the release number would
+  // have to be read back out of the manager, and this handler runs on the read
+  // path, where re-entering the manager is exactly what it may not do. The
+  // contract spells that "unknown" as 0.
+  [self recordTelemetryKind:kind logicalKey:nil releaseNumber:0];
+}
+
+/**
+ Hands one observation to the telemetry queue.
+
+ Every caller is a path the app is waiting on, so this must stay a lookup and a
+ hand-off. The sender's own queue is where the event is coalesced, persisted and
+ sent, and nothing here can fail in a way the caller could observe.
+ */
+- (void)recordTelemetryKind:(QONRemoteConfigV2TelemetryKind)kind
+                 logicalKey:(nullable NSString *)logicalKey
+              releaseNumber:(int64_t)releaseNumber {
+  QONRemoteConfigV2TelemetrySender *sender = nil;
+  @synchronized (self.ackLock) {
+    sender = self.telemetrySender;
+  }
+  [sender recordKind:kind logicalKey:logicalKey releaseNumber:releaseNumber];
+}
+
+/** A fetch just succeeded, so the buffered telemetry has a reachable network. */
+- (void)noteTelemetryFlushOpportunity {
+  QONRemoteConfigV2TelemetrySender *sender = nil;
+  @synchronized (self.ackLock) {
+    sender = self.telemetrySender;
+  }
+  [sender noteSuccessfulFetch];
+}
+
 - (BOOL)configureWithBaseURL:(NSURL *)baseURL
                 projectToken:(NSString *)projectToken
                   projectKey:(NSString *)projectKey
@@ -318,9 +436,12 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       callbackExecutor:self.callbackExecutor
       readGuardBuildMode:buildMode
       assertionHandler:^(NSString *message) { NSCAssert(NO, @"%@", message); }
-      telemetryHandler:nil
+      telemetryHandler:[self telemetryReadGuardHandler]
       scopePreloader:preloader];
   if (!manager) return NO;
+  // Attached before anything can read: a snapshot handed out without it would
+  // silently swallow the one decode failure the dashboard exists to show.
+  manager.decodeFailureTelemetryHandler = [self telemetryDecodeFailureHandler];
 
   dispatch_queue_t schedulerQueue = dispatch_queue_create(
       "io.qonversion.remote-config-scheduler", DISPATCH_QUEUE_SERIAL);
@@ -343,7 +464,7 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
       projectIdentityStore:projectIdentityStore
       clientContextProvider:clientContextProvider
       clock:clock
-      failureObserver:nil];
+      failureObserver:[self telemetryTransportFailureObserver]];
   QONRemoteConfigV2FetchPolicy *policy = [[QONRemoteConfigV2FetchPolicy alloc]
       initWithMinimumFetchIntervalMilliseconds:kQONRemoteConfigMinimumFetchIntervalMilliseconds
       timeoutMilliseconds:@(kQONRemoteConfigTransportTimeoutMilliseconds)
@@ -391,6 +512,24 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
                                                     DISPATCH_QUEUE_SERIAL)]
       : nil;
   if (ackSender) [self installActivationAckSender:ackSender];
+
+  // The telemetry queue rides the same transport for the same reasons, and owns
+  // its own queue for the same reason again: it does durable I/O, and no read,
+  // activation or fetch waiter may ever be parked behind it. Installed before
+  // the first identity is bound, so the very first read is already reportable.
+  QONRemoteConfigV2TelemetryStore *telemetryStore =
+      [[QONRemoteConfigV2TelemetryStore alloc] initWithLocalStorage:localStorage];
+  QONRemoteConfigV2TelemetrySender *telemetrySender = telemetryStore
+      ? [[QONRemoteConfigV2TelemetrySender alloc]
+            initWithTransport:transport
+                        store:telemetryStore
+                        clock:clock
+                       random:[QONRemoteConfigSystemRandom new]
+                    scheduler:scheduler
+                        queue:dispatch_queue_create("io.qonversion.remote-config-telemetry",
+                                                    DISPATCH_QUEUE_SERIAL)]
+      : nil;
+  if (telemetrySender) [self installTelemetrySender:telemetrySender];
 
   [self switchToCanonicalUserID:canonicalUserID
                          change:QONRemoteConfigControllerIdentityChangeBuild];
@@ -519,18 +658,27 @@ static int64_t const kQONRemoteConfigMaximumBackoffMilliseconds = 60 * 60 * 1000
 
 #pragma mark - Activation ack
 
-/** Rebinds the ack queue and forgets what the previous identity had reported. */
+/**
+ Rebinds the out-of-band queues and forgets what the previous identity reported.
+
+ The telemetry queue is rebound with the ack queue and for the same reason: an
+ observation made while no identity is bound belongs to nobody, and one
+ identity's session may never carry another's telemetry.
+ */
 - (void)bindAckScope:(nullable QONRemoteConfigV2Scope *)scope {
   QONRemoteConfigV2ActivationAckSender *sender = nil;
+  QONRemoteConfigV2TelemetrySender *telemetrySender = nil;
   @synchronized (self.ackLock) {
     sender = self.ackSender;
+    telemetrySender = self.telemetrySender;
     self.ackScope = scope;
     self.notedActivationScope = nil;
     self.notedActivationReleaseNumber = 0;
   }
-  // Returns immediately: the sender does its durable read on its own queue, so
-  // an identity transition never pays for storage.
+  // Both return immediately: each does its durable read on its own queue, so an
+  // identity transition never pays for storage.
   [sender bindScope:scope];
+  [telemetrySender bindScope:scope];
 }
 
 /**
@@ -767,6 +915,14 @@ hasPendingActivation:hasPendingActivation];
     // I/O and the fetch contract promises none of it.
     if (call.shouldActivate) {
       [strongSelf noteActivatedReleaseNumber:manager.unguardedSnapshot.servedReleaseNumber];
+    }
+    // A round trip that actually reached the gateway is the one moment the
+    // network is known to be usable, so it is also the cheapest moment to ship
+    // whatever telemetry has accumulated. Same ordering rule: strictly after the
+    // caller has been answered.
+    if (result.kind == QONRemoteConfigV2FetchResultKindFetched ||
+        result.kind == QONRemoteConfigV2FetchResultKindNotModified) {
+      [strongSelf noteTelemetryFlushOpportunity];
     }
   }];
 }

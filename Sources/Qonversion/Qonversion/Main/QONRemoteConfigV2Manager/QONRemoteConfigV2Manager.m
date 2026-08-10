@@ -273,8 +273,28 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
 }
 
 - (QONRemoteConfigSnapshot *)snapshotForState:(QONRemoteConfigV2State *)state {
-  return [[QONRemoteConfigSnapshot alloc] initWithPrimaryRelease:state.active
-      previousRelease:state.previous fallbackRelease:[self fallbackReleaseForCurrentScopeLocked]];
+  QONRemoteConfigSnapshot *snapshot = [[QONRemoteConfigSnapshot alloc]
+      initWithPrimaryRelease:state.active
+             previousRelease:state.previous
+             fallbackRelease:[self fallbackReleaseForCurrentScopeLocked]];
+  [self attachDecodeFailureObserverTo:snapshot];
+  return snapshot;
+}
+
+/**
+ Hands the snapshot a way to report a typed-read rejection.
+
+ The block captures the handler, never the manager: a snapshot outlives the read
+ that produced it, and it may not keep the manager alive or reach back into it.
+ */
+- (void)attachDecodeFailureObserverTo:(QONRemoteConfigSnapshot *)snapshot {
+  QONRemoteConfigV2DecodeFailureTelemetryHandler handler = self.decodeFailureTelemetryHandler;
+  if (!snapshot || !handler) return;
+  snapshot.decodeFailureObserver = ^(NSString *logicalKey, NSInteger releaseNumber) {
+    @try {
+      handler(logicalKey, releaseNumber);
+    } @catch (__unused NSException *exception) {}
+  };
 }
 
 - (void)emitReadGuardTelemetry:(QONRemoteConfigV2ReadGuardTelemetryEvent)event {
@@ -377,6 +397,7 @@ static void *QONRemoteConfigV2ReadGuardPreloadQueueKey =
           ? self.state.previous : self.state.active;
       snapshot = [[QONRemoteConfigSnapshot alloc] initWithPrimaryRelease:self.state.candidate
           previousRelease:previous fallbackRelease:[self fallbackReleaseForCurrentScopeLocked]];
+      [self attachDecodeFailureObserverTo:snapshot];
     }
   });
   return snapshot;

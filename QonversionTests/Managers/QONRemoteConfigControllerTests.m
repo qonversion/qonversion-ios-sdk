@@ -897,3 +897,190 @@
 }
 
 @end
+
+#pragma mark - Client telemetry
+
+/**
+ What the shipped chain reports, over the shipped chain: real snapshot core, real
+ read guard, real fetch coordinator, real durable telemetry buffer.
+
+ The wire contract, the coalescing bounds and the failure ladder are proven in
+ QONRemoteConfigV2TelemetryRouteTests and QONRemoteConfigV2TelemetrySenderTests.
+ The headless mirror of this suite is the telemetry section of
+ QONRemoteConfigControllerHarness.m.
+ */
+@interface QONRemoteConfigTelemetryTests : XCTestCase
+@end
+
+@implementation QONRemoteConfigTelemetryTests
+
+- (NSArray<NSArray<NSString *> *> *)defaultsFixture {
+  return @[
+    @[@"alpha", @"variation-fallback-alpha", @"\"fallback-alpha\""],
+    @[@"gamma", @"variation-fallback-gamma", @"\"fallback-gamma\""],
+  ];
+}
+
+/** Fetches one release without activating it. */
+- (void)serve:(QONRCPubEnvironment *)environment
+   releaseUID:(NSString *)releaseUID
+       number:(NSInteger)number
+     rawValue:(NSString *)rawValue {
+  NSString *values = [NSString stringWithFormat:@"\"alpha\":%@",
+      QONRCPubItem(rawValue, @"variation-a1", @"on_next_activate", @"null")];
+  NSData *body = QONRCPubSnapshotBody(releaseUID, number, values);
+  [environment.transport enqueueBody:body strongETag:QONRCPubStrongETag(body)];
+  [environment.controller fetchWithTimeout:0
+                                completion:^(__unused QONRemoteConfigFetchResult *result) {}];
+  [environment drain];
+}
+
+/** A fully wired environment with the telemetry taps installed. */
+- (QONRCPubEnvironment *)environmentWithBuildMode:(QONRemoteConfigV2ReadGuardBuildMode)buildMode {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  environment.wantsTelemetry = YES;
+  XCTAssertTrue(QONRCPubInstallEngine(environment, buildMode, 0, @"user-a"));
+  return environment;
+}
+
+- (QONRemoteConfigV2TelemetrySender *)looseSender {
+  return [[QONRemoteConfigV2TelemetrySender alloc]
+      initWithTransport:[QONRCPubTelemetryTransport new]
+                  store:[[QONRemoteConfigV2TelemetryStore alloc]
+                            initWithLocalStorage:[QONRCPubStorage new]]
+                  clock:[QONRCPubClock new]
+                 random:[QONRCPubRandom new]
+              scheduler:[QONRCPubScheduler new]
+                  queue:dispatch_queue_create("io.qonversion.rc-pub-telemetry-loose",
+                                              DISPATCH_QUEUE_SERIAL)];
+}
+
+- (void)testADecodeFailureIsReportedWithoutChangingTheRead {
+  QONRCPubEnvironment *environment =
+      [self environmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug];
+  QONRemoteConfigController *controller = environment.controller;
+  [self serve:environment releaseUID:@"release-1" number:1 rawValue:@"\"server-alpha-1\""];
+  XCTAssertTrue(controller.activate);
+  [self serve:environment releaseUID:@"release-2" number:2 rawValue:@"\"rejected-alpha\""];
+  XCTAssertTrue(controller.activate);
+
+  QONRemoteConfigValue *value = [controller valueForKey:@"alpha"
+                                                decoder:QONRCPubPrefixDecoder(@"server-")];
+  // Telemetry may never change what a read returns.
+  XCTAssertEqual(value.source, QONRemoteConfigValueSourceCache);
+  XCTAssertEqualObjects(value.value, @"server-alpha-1");
+
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events =
+      [environment flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindDecodeFailure];
+  XCTAssertEqual(events.count, 1u);
+  XCTAssertEqualObjects(events.firstObject.logicalKey, @"alpha");
+  // The release that served the value, not the one that saved the read.
+  XCTAssertEqual(events.firstObject.releaseNumber, 2);
+  XCTAssertEqual(events.firstObject.count, 1);
+}
+
+- (void)testRepeatedDecodeFailuresCoalesceIntoOneEvent {
+  QONRCPubEnvironment *environment =
+      [self environmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug];
+  QONRemoteConfigController *controller = environment.controller;
+  [self serve:environment releaseUID:@"release-1" number:1 rawValue:@"\"rejected-alpha\""];
+  XCTAssertTrue(controller.activate);
+
+  for (NSUInteger index = 0; index < 200; index++) {
+    XCTAssertNil([controller valueForKey:@"alpha" decoder:QONRCPubPrefixDecoder(@"server-")]);
+  }
+
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events =
+      [environment flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindDecodeFailure];
+  XCTAssertEqual(events.count, 1u);
+  XCTAssertEqual(events.firstObject.count, 200);
+  XCTAssertEqual(environment.telemetrySender.droppedEventCount, 0);
+}
+
+- (void)testReadGuardEventsReachTheTelemetryQueue {
+  QONRCPubEnvironment *environment =
+      [self environmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeRelease];
+  [self serve:environment releaseUID:@"release-1" number:1 rawValue:@"\"server-alpha-1\""];
+
+  // A read before any activate: the release build activates silently, and both
+  // facts are worth reporting.
+  XCTAssertNotNil([environment.controller.current rawValueForKey:@"alpha"]);
+
+  NSArray<QONRemoteConfigV2TelemetryEvent *> *events =
+      [environment flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindReadBeforeActivate];
+  XCTAssertEqual(events.count, 1u);
+  XCTAssertNil(events.firstObject.logicalKey);
+  // Stated as unknown rather than re-entering the manager from the read path.
+  XCTAssertEqual(events.firstObject.releaseNumber, 0);
+  XCTAssertEqual(environment.readGuardAssertions, 0u);
+}
+
+- (void)testASurfaceWithoutATelemetryQueueStaysSilent {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeRelease, 0,
+                                      @"user-a"));
+  XCTAssertNil(environment.telemetrySender);
+
+  [self serve:environment releaseUID:@"release-1" number:1 rawValue:@"\"rejected-alpha\""];
+  XCTAssertTrue(environment.controller.activate);
+  XCTAssertNil([environment.controller valueForKey:@"alpha"
+                                           decoder:QONRCPubPrefixDecoder(@"server-")]);
+  XCTAssertNotNil([environment.controller.current rawValueForKey:@"alpha"]);
+}
+
+- (void)testTheTelemetryQueueIsInstalledExactlyOnce {
+  QONRCPubEnvironment *environment =
+      [self environmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug];
+  XCTAssertFalse([environment.controller installTelemetrySender:[self looseSender]]);
+
+  QONRCPubEnvironment *dormant = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue([dormant.controller installTelemetrySender:[self looseSender]]);
+}
+
+- (void)testTheRealAssemblyInstallsTheTelemetryQueue {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment([self defaultsFixture]);
+  QONRemoteConfigController *controller = environment.controller;
+  XCTAssertTrue([controller configureWithBaseURL:[NSURL URLWithString:@"https://gateway.invalid/"]
+                                    projectToken:@"project-token"
+                                      projectKey:QONRCPubProjectKey
+                                     environment:QONRCPubEnvironmentUID
+                                 canonicalUserID:nil
+                              readGuardBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+                                    localStorage:[QONRCPubStorage new]
+                           clientContextProvider:[QONRCPubContextProvider new]]);
+  // The only way to observe the queue from outside is that the slot is taken.
+  XCTAssertFalse([controller installTelemetrySender:[self looseSender]]);
+
+  QONRCPubEnvironment *dormant = QONRCPubDormantEnvironment([self defaultsFixture]);
+  XCTAssertTrue([dormant.controller installTelemetrySender:[self looseSender]]);
+}
+
+@end
+
+@interface QONRemoteConfigTelemetryPreloadTests : XCTestCase
+@end
+
+@implementation QONRemoteConfigTelemetryPreloadTests
+
+/**
+ A fresh install has no persisted configuration to preload, and that is the
+ normal state — not a failure. Reporting it would fire preload_failed once for
+ every new user and bury the genuine failures under them.
+ */
+- (void)testAFreshInstallNeverReportsAPreloadFailure {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(@[
+    @[@"alpha", @"variation-fallback-alpha", @"\"fallback-alpha\""],
+  ]);
+  environment.wantsTelemetry = YES;
+  XCTAssertTrue(QONRCPubInstallEngine(environment,
+                                      QONRemoteConfigV2ReadGuardBuildModeRelease, 0, @"user-a"));
+
+  // Nothing was ever served, so binding the identity found nothing to preload.
+  XCTAssertNotNil([environment.controller.current rawValueForKey:@"alpha"]);
+  XCTAssertEqual([environment
+      flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindPreloadFailed].count, 0u);
+  XCTAssertEqual([environment
+      flushedTelemetryOfKind:QONRemoteConfigV2TelemetryKindPreloadCorrupt].count, 0u);
+}
+
+@end

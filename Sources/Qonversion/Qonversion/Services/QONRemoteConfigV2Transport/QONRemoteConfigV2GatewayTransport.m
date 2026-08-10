@@ -6,6 +6,7 @@
 NSString *const QONRemoteConfigV2GatewaySessionPath = @"v3/remote-config-v2/session";
 NSString *const QONRemoteConfigV2GatewaySnapshotPath = @"v3/remote-config-v2/snapshot";
 NSString *const QONRemoteConfigV2GatewayAckPath = @"v3/remote-config-v2/ack";
+NSString *const QONRemoteConfigV2GatewayTelemetryPath = @"v3/remote-config-v2/telemetry";
 NSString *const QONRemoteConfigV2GatewaySessionHeader = @"X-Qonversion-RC-Session";
 NSUInteger const QONRemoteConfigV2GatewayMaximumBootstrapBytes = 8192;
 
@@ -542,6 +543,182 @@ static NSString *_Nullable QONRemoteConfigV2HeaderValue(NSHTTPURLResponse *respo
         return;
     }
   };
+}
+
+#pragma mark - Client telemetry
+
+/** The ack vocabulary, seen from the telemetry route: the two are congruent. */
+static QONRemoteConfigV2TelemetryResponse QONRemoteConfigV2TelemetryResponseFromAck(
+    QONRemoteConfigV2AckResponse response) {
+  switch (response) {
+    case QONRemoteConfigV2AckResponseDelivered:
+      return QONRemoteConfigV2TelemetryResponseDelivered;
+    case QONRemoteConfigV2AckResponsePermanent:
+      return QONRemoteConfigV2TelemetryResponsePermanent;
+    case QONRemoteConfigV2AckResponseRetryable:
+      return QONRemoteConfigV2TelemetryResponseRetryable;
+    case QONRemoteConfigV2AckResponseNotAddressable:
+      return QONRemoteConfigV2TelemetryResponseNotAddressable;
+  }
+  return QONRemoteConfigV2TelemetryResponseRetryable;
+}
+
+/**
+ Ships one coalesced telemetry batch — POST {baseURL}/v3/remote-config-v2/telemetry.
+
+ Same rules as the ack route, for the same reasons: the scope the batch was
+ collected for is compared against the identity the transport currently
+ addresses, a `401` is retried through exactly one re-bootstrap and never drops
+ the stored session (the config read path depends on it), and the whole route is
+ invisible to the failure observer, which belongs to the fetch policy.
+
+ A batch this process cannot encode — an event the contract refuses, or more
+ events than one request may carry — is refused as permanent rather than sent:
+ the gateway would reject the whole request anyway, and it will encode no better
+ later.
+ */
+- (void)sendTelemetryBatch:(NSArray<QONRemoteConfigV2TelemetryEvent *> *)events
+                   forScope:(QONRemoteConfigV2Scope *)scope
+                 completion:(QONRemoteConfigV2TelemetryCompletion)completion {
+  if (!completion) return;
+
+  __block BOOL responded = NO;
+  QONRemoteConfigV2TelemetryCompletion respond = ^(QONRemoteConfigV2TelemetryResponse response) {
+    BOOL shouldRespond = NO;
+    @synchronized (self) {
+      if (!responded) {
+        responded = YES;
+        shouldRespond = YES;
+      }
+    }
+    if (shouldRespond) completion(response);
+  };
+
+  QONRemoteConfigV2Scope *current = nil;
+  int64_t generation = 0;
+  @synchronized (self) {
+    current = self.scope;
+    generation = self.generation;
+  }
+  if (!scope || !QONRemoteConfigV2GatewayScopesEqual(current, scope)) {
+    respond(QONRemoteConfigV2TelemetryResponseNotAddressable);
+    return;
+  }
+
+  NSData *body = [self telemetryBodyForEvents:events];
+  if (!body) {
+    respond(QONRemoteConfigV2TelemetryResponsePermanent);
+    return;
+  }
+
+  QONRemoteConfigV2GatewaySession *session = [self validSessionForScope:scope];
+  if (!session) {
+    // Telemetry never establishes a session. It has a 30-second tick, so an
+    // install that has not yet fetched would otherwise bootstrap the whole
+    // fleet on a timer, and racing the config path's own bootstrap would mint
+    // sessions nobody asked for. No request is made, no retry budget is spent,
+    // and the events stay buffered for whenever the read path does the work.
+    respond(QONRemoteConfigV2TelemetryResponseNotAddressable);
+    return;
+  }
+  [self performTelemetryForScope:scope
+                      generation:generation
+                         session:session
+                            body:body
+                allowReBootstrap:YES
+                         respond:respond];
+}
+
+- (nullable NSData *)telemetryBodyForEvents:(NSArray<QONRemoteConfigV2TelemetryEvent *> *)events {
+  if (![events isKindOfClass:NSArray.class] || events.count == 0 ||
+      events.count > QONRemoteConfigV2TelemetryMaximumBatchEntries) {
+    return nil;
+  }
+  NSMutableArray<NSDictionary<NSString *, id> *> *objects =
+      [NSMutableArray arrayWithCapacity:events.count];
+  for (QONRemoteConfigV2TelemetryEvent *event in events) {
+    if (![event isKindOfClass:QONRemoteConfigV2TelemetryEvent.class]) return nil;
+    NSDictionary<NSString *, id> *object = [event JSONObject];
+    if (!object) return nil;
+    [objects addObject:object];
+  }
+  return QONRemoteConfigV2GatewayJSONBody(@{@"events": [objects copy]});
+}
+
+- (void)performTelemetryForScope:(QONRemoteConfigV2Scope *)scope
+                      generation:(int64_t)generation
+                         session:(QONRemoteConfigV2GatewaySession *)session
+                            body:(NSData *)body
+                allowReBootstrap:(BOOL)allowReBootstrap
+                         respond:(QONRemoteConfigV2TelemetryCompletion)respond {
+  NSURLRequest *request = [self requestWithPath:QONRemoteConfigV2GatewayTelemetryPath
+                                           body:body
+                                   sessionToken:session.sessionToken
+                                    ifNoneMatch:nil];
+  if (!request) {
+    respond(QONRemoteConfigV2TelemetryResponsePermanent);
+    return;
+  }
+
+  [self execute:request completion:^(__unused NSData *data, NSHTTPURLResponse *response,
+                                     NSError *error) {
+    if (![self isCurrentScope:scope generation:generation]) {
+      // Not an attempt: the identity moved on, and the events are still owed by
+      // the identity that produced them.
+      respond(QONRemoteConfigV2TelemetryResponseNotAddressable);
+      return;
+    }
+    if (error || !response) {
+      respond(QONRemoteConfigV2TelemetryResponseRetryable);
+      return;
+    }
+
+    NSInteger status = response.statusCode;
+    if (status >= 200 && status <= 299) {
+      respond(QONRemoteConfigV2TelemetryResponseDelivered);
+      return;
+    }
+    if (status == 401) {
+      // Deliberately NOT removing the stored session: it is shared with the
+      // config read path, and an out-of-band signal may not invalidate state
+      // that path depends on. This is the one bootstrap telemetry may cause,
+      // and only because the session it already had was refused.
+      if (!allowReBootstrap) {
+        // Terminal rather than retryable, exactly as the ack route treats it: a
+        // credential refused twice will be refused again, and telemetry is the
+        // one signal allowed to give up on a batch.
+        respond(QONRemoteConfigV2TelemetryResponsePermanent);
+        return;
+      }
+      [self bootstrapForScope:scope
+                   generation:generation
+                       refuse:[self telemetryRefusalForRespond:respond]
+                   completion:^(QONRemoteConfigV2GatewaySession *freshSession) {
+        [self performTelemetryForScope:scope
+                            generation:generation
+                               session:freshSession
+                                  body:body
+                      allowReBootstrap:NO
+                               respond:respond];
+      }];
+      return;
+    }
+    if (status == 429 || (status >= 500 && status <= 599)) {
+      respond(QONRemoteConfigV2TelemetryResponseRetryable);
+      return;
+    }
+    // A 400 lands here: the contract makes it terminal, and the sender drops the
+    // batch rather than re-offering bytes the gateway has already refused.
+    respond(QONRemoteConfigV2TelemetryResponsePermanent);
+  }];
+}
+
+/** A bootstrap refusal, seen from the telemetry route. */
+- (QONRemoteConfigV2GatewayRefusal)telemetryRefusalForRespond:
+    (QONRemoteConfigV2TelemetryCompletion)respond {
+  return [self ackRefusalForRespond:^(QONRemoteConfigV2AckResponse response) {
+    respond(QONRemoteConfigV2TelemetryResponseFromAck(response));
+  }];
 }
 
 #pragma mark - Project identity

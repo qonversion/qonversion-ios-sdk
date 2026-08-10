@@ -38,6 +38,16 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2ReadGuardTelemetryEvent) {
 typedef void (^QONRemoteConfigV2ReadGuardAssertionHandler)(NSString *message);
 typedef void (^QONRemoteConfigV2ReadGuardTelemetryHandler)(
     QONRemoteConfigV2ReadGuardTelemetryEvent event);
+/**
+ Told that a typed read rejected the value served for `logicalKey`.
+
+ Separate from the read-guard handler because it is the only telemetry that
+ names a key, and because it originates in the snapshot the manager handed out
+ rather than in the manager's own read path. Like the read-guard handler, it may
+ only enqueue and return: it is invoked from the app's read.
+ */
+typedef void (^QONRemoteConfigV2DecodeFailureTelemetryHandler)(NSString *logicalKey,
+                                                               NSInteger releaseNumber);
 
 /** Immutable output of an injected, off-main persistent-state preload. */
 @interface QONRemoteConfigV2ReadGuardPreloadResult : NSObject
@@ -78,6 +88,17 @@ typedef NS_ENUM(NSInteger, QONRemoteConfigV2TransitionStatus) {
  */
 @property (nonatomic, strong, readonly) QONRemoteConfigSnapshot *unguardedSnapshot;
 @property (nonatomic, strong, nullable, readonly) QONRemoteConfigSnapshot *lastFetchedSnapshot;
+
+/**
+ Attached to every snapshot the manager hands out, so a typed read that rejects
+ the served value is reported.
+
+ Settable rather than an initializer parameter: the assembly that owns the
+ telemetry queue is built after the manager, and leaving it nil — which every
+ existing initializer does — keeps the surface exactly as silent as it was.
+ */
+@property (atomic, copy, nullable) QONRemoteConfigV2DecodeFailureTelemetryHandler
+    decodeFailureTelemetryHandler;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithStore:(QONRemoteConfigV2Store *)store
