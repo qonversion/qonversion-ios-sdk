@@ -169,6 +169,13 @@ minimumFetchIntervalMilliseconds:(nullable NSNumber *)minimumFetchIntervalMillis
  configuration stops being readable before this method returns; the rebind and
  the forced fetch finish asynchronously off the main queue. Passing nil leaves
  the surface unbound.
+
+ Announcing the identity that is already bound is not a rebind: nothing is
+ retired, nothing is republished and the epoch does not move. For an identify or
+ a logout it still forces a fetch, because the identity relationship can change
+ without the canonical uid changing (a merge that resolves to this same user), and
+ the served release must then be re-evaluated. A build is exempt: installing the
+ engine already fetches for the identity it binds.
  */
 - (void)switchToCanonicalUserID:(nullable NSString *)canonicalUserID
                          change:(QONRemoteConfigControllerIdentityChange)change;

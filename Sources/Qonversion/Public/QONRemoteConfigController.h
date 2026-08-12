@@ -38,7 +38,10 @@ typedef void (^QONRemoteConfigUpdateHandler)(QONRemoteConfigUpdate *update)
 
  Changing identity (identify or logout) retires the previous identity's
  configuration immediately and publishes whatever the new identity already has
- stored, so a read right after the change is never a read-before-activate.
+ stored, so a read right after the change is never a read-before-activate. An
+ identify that resolves to the identity already bound retires nothing — the
+ release being read keeps serving — but still re-reads targeting, because
+ attaching an external id can change what the server evaluates for the same user.
 
  All completions and update handlers run on the main queue.
  */

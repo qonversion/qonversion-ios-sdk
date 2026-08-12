@@ -603,27 +603,39 @@ minimumFetchIntervalMilliseconds:(NSNumber *)minimumFetchIntervalMilliseconds {
       : nil;
 
   NSUInteger epoch = 0;
+  BOOL sameIdentity = NO;
   @synchronized (self.identityLock) {
-    BOOL sameIdentity = self.hasBoundIdentity &&
+    sameIdentity = self.hasBoundIdentity &&
         ((self.boundCanonicalUserID == nil && scope == nil) ||
          [self.boundCanonicalUserID isEqualToString:scope.canonicalUserID]);
-    if (sameIdentity) return;
-    self.identityEpoch += 1;
-    epoch = self.identityEpoch;
-    self.boundCanonicalUserID = scope.canonicalUserID;
-    self.hasBoundIdentity = YES;
-    // Unbind first and synchronously: after this returns, no read can observe
-    // the retired identity's configuration, whatever the rebind below does. A
-    // rebind queued by an older switch is fenced out by the epoch.
-    [coordinator transitionToBinding:nil];
-    if (scopeSink) scopeSink(nil);
-    // The ack queue is unbound with everything else: an activation reported
-    // during the window between the unbind and the rebind belongs to no
-    // identity, and one identity's session may never vouch for another's.
-    [self bindAckScope:nil];
-    // Unbinding re-arms the read guard too, so the window between the unbind
-    // and the rebind must not accuse the app either.
-    [self publishPersistedStateForChange:change manager:manager];
+    // Read under the same lock a transition bumps it under, so a switch that
+    // overtakes the refresh below can fence that refresh out.
+    epoch = sameIdentity ? self.identityEpoch : self.identityEpoch + 1;
+    if (!sameIdentity) {
+      self.identityEpoch = epoch;
+      self.boundCanonicalUserID = scope.canonicalUserID;
+      self.hasBoundIdentity = YES;
+      // Unbind first and synchronously: after this returns, no read can observe
+      // the retired identity's configuration, whatever the rebind below does. A
+      // rebind queued by an older switch is fenced out by the epoch.
+      [coordinator transitionToBinding:nil];
+      if (scopeSink) scopeSink(nil);
+      // The ack queue is unbound with everything else: an activation reported
+      // during the window between the unbind and the rebind belongs to no
+      // identity, and one identity's session may never vouch for another's.
+      [self bindAckScope:nil];
+      // Unbinding re-arms the read guard too, so the window between the unbind
+      // and the rebind must not accuse the app either.
+      [self publishPersistedStateForChange:change manager:manager];
+    }
+  }
+  if (sameIdentity) {
+    [self refreshTargetingForChange:change
+                              scope:scope
+                        coordinator:coordinator
+                      identityQueue:identityQueue
+                              epoch:epoch];
+    return;
   }
   if (!scope) return;
 
@@ -641,11 +653,7 @@ minimumFetchIntervalMilliseconds:(NSNumber *)minimumFetchIntervalMilliseconds {
     QONRemoteConfigV2FetchBinding *binding =
         [[QONRemoteConfigV2FetchBinding alloc] initWithScope:scope];
     QONRemoteConfigV2FetchForceReason reason =
-        change == QONRemoteConfigControllerIdentityChangeLogout
-            ? QONRemoteConfigV2FetchForceReasonLogout
-            : (change == QONRemoteConfigControllerIdentityChangeIdentify
-                   ? QONRemoteConfigV2FetchForceReasonIdentify
-                   : QONRemoteConfigV2FetchForceReasonBuild);
+        [QONRemoteConfigController forceReasonForChange:change];
     @synchronized (self.identityLock) {
       // Publishing under the same lock as the unbind above keeps the two
       // orderings the only possible ones: either this scope is already stale,
@@ -664,6 +672,61 @@ minimumFetchIntervalMilliseconds:(NSNumber *)minimumFetchIntervalMilliseconds {
       }
       [coordinator transitionToBinding:binding];
       [self publishPersistedStateForChange:change manager:manager];
+    }
+    [coordinator fetchWithForceReason:reason
+                           completion:^(__unused QONRemoteConfigV2FetchResult *result) {}];
+  });
+}
+
++ (QONRemoteConfigV2FetchForceReason)forceReasonForChange:
+    (QONRemoteConfigControllerIdentityChange)change {
+  switch (change) {
+    case QONRemoteConfigControllerIdentityChangeLogout:
+      return QONRemoteConfigV2FetchForceReasonLogout;
+    case QONRemoteConfigControllerIdentityChangeIdentify:
+      return QONRemoteConfigV2FetchForceReasonIdentify;
+    case QONRemoteConfigControllerIdentityChangeBuild:
+      return QONRemoteConfigV2FetchForceReasonBuild;
+  }
+  return QONRemoteConfigV2FetchForceReasonIdentify;
+}
+
+/**
+ Re-reads targeting for the identity that is already bound.
+
+ An identify can change what the server evaluates without changing the canonical
+ uid: an identity merge that resolves to the user this installation already is
+ still attaches an external id, and the properties set on that account at signup
+ are new targeting inputs. The v1 cache is dropped for exactly this reason; the
+ v2 surface owes the same re-evaluation, and without it an anonymous user who
+ logs into a new account keeps reading the pre-identify release forever.
+
+ Deliberately not a scope transition: the identity did not change, so the epoch
+ is not bumped, nothing is unbound or rebound, no persisted state is republished,
+ and the release the app is reading keeps serving until a newer one is fetched
+ and activated. That is what makes this safe to run for an identity the app
+ re-announces on every foreground.
+
+ The forced reason bypasses the minimum fetch interval but not the failure
+ backoff, and the fetch goes through the coordinator, so a repeat that lands
+ while one is still in flight joins it instead of opening a second request.
+ */
+- (void)refreshTargetingForChange:(QONRemoteConfigControllerIdentityChange)change
+                            scope:(nullable QONRemoteConfigV2Scope *)scope
+                      coordinator:(QONRemoteConfigV2FetchCoordinator *)coordinator
+                    identityQueue:(dispatch_queue_t)identityQueue
+                            epoch:(NSUInteger)epoch {
+  // Nothing to re-evaluate while the surface is unbound, and nothing to redo for
+  // a build: installing the engine binds the first identity and fetches for it.
+  if (!scope || !identityQueue || change == QONRemoteConfigControllerIdentityChangeBuild) return;
+  QONRemoteConfigV2FetchForceReason reason =
+      [QONRemoteConfigController forceReasonForChange:change];
+  dispatch_async(identityQueue, ^{
+    // Ordered behind every transition already queued. A switch that overtook
+    // this refresh retires it here, and that switch's own forced fetch is the
+    // one that covers the identity now bound.
+    @synchronized (self.identityLock) {
+      if (self.identityEpoch != epoch) return;
     }
     [coordinator fetchWithForceReason:reason
                            completion:^(__unused QONRemoteConfigV2FetchResult *result) {}];

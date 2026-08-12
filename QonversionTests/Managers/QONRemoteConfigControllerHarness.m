@@ -416,8 +416,8 @@ static void TestIdentitySwitchDropsTheOldScopeImmediatelyAndForcesAFetch(void) {
   [controller switchToCanonicalUserID:@"user-b"
                                change:QONRemoteConfigControllerIdentityChangeIdentify];
   [environment settleIdentity];
-  QON_CHECK(environment.transport.requests.count == requestsAfterSwitch,
-            "re-announcing the identity already bound must not refetch");
+  QON_CHECK(environment.transport.requests.count == requestsAfterSwitch + 1,
+            "re-announcing the identity already bound must still re-read targeting");
   QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-b"],
             "re-announcing the identity already bound must not blank the configuration");
 
@@ -425,6 +425,196 @@ static void TestIdentitySwitchDropsTheOldScopeImmediatelyAndForcesAFetch(void) {
                                change:QONRemoteConfigControllerIdentityChangeLogout];
   QON_CHECK([controller.current.releaseUID isEqualToString:@"release-bundle"],
             "an unbound surface must fall back to the bundle");
+}
+
+#pragma mark - Same-identity targeting refresh
+//
+// identify() can change what the server evaluates without changing the
+// canonical uid: an identity merge that resolves to the user this installation
+// already is still attaches an external id, and the properties set on that
+// account at signup are new targeting inputs. Android fires
+// targetingInvalidated() for exactly this case; these tests hold the iOS
+// surface to the same contract — a forced re-read, and nothing retired.
+
+static void TestAnIdentifyThatKeepsTheSameUserIDStillRefreshesTargeting(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  // A long minimum interval: only a forced fetch can reach the transport again.
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug,
+                                  3600000, @"user-a"),
+            "the engine must install for the same-identity refresh scenario");
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSData *first = ReleaseBody(@"release-1", 1, AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
+  [environment.transport enqueueBody:first strongETag:QONRCPubStrongETag(first)];
+  RunFetch(environment, 0, YES, NULL);
+  QON_CHECK([controller.current.releaseUID isEqualToString:@"release-1"],
+            "the identity must be reading its own release before the refresh");
+  QONRemoteConfigFetchResult *throttled = RunFetch(environment, 0, NO, NULL);
+  QON_CHECK(throttled.status == QONRemoteConfigFetchStatusThrottled,
+            "a plain fetch inside the minimum interval must be throttled");
+
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  NSData *second = ReleaseBody(@"release-2", 2, AlphaValues(@"\"server-alpha-2\"", @"variation-a2"));
+  [environment.transport enqueueBody:second strongETag:QONRCPubStrongETag(second)];
+
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  QON_CHECK([controller.current.releaseUID isEqualToString:@"release-1"],
+            "an identify onto the bound identity must retire nothing");
+  QON_CHECK([controller rawValueForKey:@"alpha"].source == QONRemoteConfigValueSourceServer,
+            "a read right after a same-uid identify must still resolve from the server release");
+
+  [environment settleIdentity];
+  QON_CHECK(environment.transport.requests.count == requestsBefore + 1,
+            "a same-uid identify must force a fetch through the minimum-interval gate");
+  QON_CHECK(environment.readGuardAssertions == 0,
+            "a same-uid identify must not accuse an app that already activated");
+  QON_CHECK([controller.current.releaseUID isEqualToString:@"release-1"],
+            "a same-uid identify must not publish the fetched release by itself");
+  QON_CHECK(controller.activate, "the refreshed release must activate");
+  QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-2"],
+            "the re-evaluated targeting must be readable after an activate");
+}
+
+static void TestALogoutThatKeepsTheSameUserIDAlsoRefreshesTargeting(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug,
+                                  3600000, @"user-a"),
+            "the engine must install for the same-identity logout scenario");
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSData *first = ReleaseBody(@"release-1", 1, AlphaValues(@"\"server-alpha-1\"", @"variation-a1"));
+  [environment.transport enqueueBody:first strongETag:QONRCPubStrongETag(first)];
+  RunFetch(environment, 0, YES, NULL);
+
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  NSData *second = ReleaseBody(@"release-2", 2, AlphaValues(@"\"server-alpha-2\"", @"variation-a2"));
+  [environment.transport enqueueBody:second strongETag:QONRCPubStrongETag(second)];
+  // A logout that unlinks nothing leaves the canonical uid alone, so the switch
+  // below is a re-announcement — and it must not be silently dropped either.
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeLogout];
+  QON_CHECK([controller.current.releaseUID isEqualToString:@"release-1"],
+            "a logout onto the bound identity must retire nothing");
+  [environment settleIdentity];
+  QON_CHECK(environment.transport.requests.count == requestsBefore + 1,
+            "a same-uid logout must force a fetch too");
+  QON_CHECK(environment.readGuardAssertions == 0,
+            "a same-uid logout must not accuse an app that already activated");
+  QON_CHECK(controller.activate, "the refreshed release must activate");
+  QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-2"],
+            "the re-evaluated targeting must be readable after an activate");
+}
+
+static void TestRepeatedSameUserIdentifiesCoalesceIntoOneFetch(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug,
+                                  3600000, @"user-a"),
+            "the engine must install for the coalescing scenario");
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  // The first refresh stays in flight, so the two behind it have something to
+  // join. An app that identifies on every foreground must not open a request
+  // per call.
+  environment.transport.holdNextRequest = YES;
+  for (NSUInteger round = 0; round < 3; round++) {
+    [controller switchToCanonicalUserID:@"user-a"
+                                 change:QONRemoteConfigControllerIdentityChangeIdentify];
+  }
+  [environment settleIdentity];
+  QON_CHECK(environment.transport.requests.count == requestsBefore + 1,
+            "repeated same-uid identifies must coalesce into the in-flight fetch");
+
+  NSData *body = ReleaseBody(@"release-2", 2, AlphaValues(@"\"server-alpha-2\"", @"variation-a2"));
+  QON_CHECK([environment.transport releaseHeldWithBody:body strongETag:QONRCPubStrongETag(body)],
+            "the coalesced fetch must still be the one held open");
+  [environment settleIdentity];
+  QON_CHECK(controller.activate, "the coalesced fetch's release must activate");
+  QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-2"],
+            "one request must be enough to re-evaluate targeting");
+}
+
+static void TestASameUserRefreshDoesNotBypassTheFailureBackoff(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug,
+                                  3600000, @"user-a"),
+            "the engine must install for the backoff scenario");
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  [environment.transport enqueueFailure];
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  QON_CHECK(environment.transport.requests.count == requestsBefore + 1,
+            "the first same-uid refresh must reach the transport");
+
+  NSUInteger requestsAfterFailure = environment.transport.requests.count;
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  QON_CHECK(environment.transport.requests.count == requestsAfterFailure,
+            "a forced refresh bypasses the minimum interval but never the failure backoff");
+
+  environment.clock.now += 10000;
+  NSData *body = ReleaseBody(@"release-2", 2, AlphaValues(@"\"server-alpha-2\"", @"variation-a2"));
+  [environment.transport enqueueBody:body strongETag:QONRCPubStrongETag(body)];
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  QON_CHECK(environment.transport.requests.count == requestsAfterFailure + 1,
+            "past the backoff the refresh must reach the transport again");
+}
+
+static void TestASameUserRefreshIsRetiredByASwitchThatOvertakesIt(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug,
+                                  3600000, @"user-a"),
+            "the engine must install for the overtaken-refresh scenario");
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSData *body = ReleaseBody(@"release-b", 4, AlphaValues(@"\"server-alpha-b\"", @"variation-b1"));
+  [environment.transport enqueueBody:body strongETag:QONRCPubStrongETag(body)];
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  // Hold the identity queue so both announcements are queued before either runs.
+  // Without the gate this test would only be asserting which of the two won a
+  // wakeup race; the contract under test is what happens when the switch wins.
+  dispatch_semaphore_t gate = dispatch_semaphore_create(0);
+  dispatch_async(environment.identityQueue, ^{
+    dispatch_semaphore_wait(gate, DISPATCH_TIME_FOREVER);
+  });
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [controller switchToCanonicalUserID:@"user-b"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  dispatch_semaphore_signal(gate);
+  [environment settleIdentity];
+  QON_CHECK(environment.transport.requests.count == requestsBefore + 1,
+            "a refresh overtaken by a real identity switch must not issue its own fetch");
+  QON_CHECK(controller.activate, "the surviving identity's release must activate");
+  QON_CHECK([[controller rawValueForKey:@"alpha"].value isEqual:@"server-alpha-b"],
+            "only the identity that won the switch may end up bound");
+}
+
+static void TestAnIdentityAnnouncedWhileUnboundFetchesNothing(void) {
+  QONRCPubEnvironment *environment = QONRCPubDormantEnvironment(DefaultsFixture());
+  QON_CHECK(QONRCPubInstallEngine(environment, QONRemoteConfigV2ReadGuardBuildModeDebug,
+                                  3600000, @"user-a"),
+            "the engine must install for the unbound-refresh scenario");
+  QONRemoteConfigController *controller = environment.controller;
+
+  [controller switchToCanonicalUserID:nil
+                               change:QONRemoteConfigControllerIdentityChangeLogout];
+  [environment settleIdentity];
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  [controller switchToCanonicalUserID:nil
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  QON_CHECK(environment.transport.requests.count == requestsBefore,
+            "an unbound surface has no identity to re-evaluate targeting for");
+  QON_CHECK([controller.current.releaseUID isEqualToString:@"release-bundle"],
+            "an unbound surface must keep falling back to the bundle");
 }
 
 static void TestASupersededIdentitySwitchCanNeverRebindItsScope(void) {
@@ -1167,6 +1357,12 @@ int main(void) {
     TestASubscriptionMadeWhileDormantIsReplayedAfterConfiguration();
     TestIdentitySwitchDropsTheOldScopeImmediatelyAndForcesAFetch();
     TestASupersededIdentitySwitchCanNeverRebindItsScope();
+    TestAnIdentifyThatKeepsTheSameUserIDStillRefreshesTargeting();
+    TestALogoutThatKeepsTheSameUserIDAlsoRefreshesTargeting();
+    TestRepeatedSameUserIdentifiesCoalesceIntoOneFetch();
+    TestASameUserRefreshDoesNotBypassTheFailureBackoff();
+    TestASameUserRefreshIsRetiredByASwitchThatOvertakesIt();
+    TestAnIdentityAnnouncedWhileUnboundFetchesNothing();
     TestAFingerprintRotationBetweenFetchesIsAdmitted();
     TestAFingerprintRotationSurvivesARestart();
     TestAMalformedContextFingerprintIsRefused();

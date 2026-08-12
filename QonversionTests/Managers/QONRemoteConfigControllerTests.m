@@ -333,11 +333,183 @@
   [controller switchToCanonicalUserID:@"user-b"
                                change:QONRemoteConfigControllerIdentityChangeIdentify];
   [environment settleIdentity];
-  XCTAssertEqual(environment.transport.requests.count, requestsAfterSwitch);
+  XCTAssertEqual(environment.transport.requests.count, requestsAfterSwitch + 1);
   XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-b");
 
   [controller switchToCanonicalUserID:nil
                                change:QONRemoteConfigControllerIdentityChangeLogout];
+  XCTAssertEqualObjects(controller.current.releaseUID, @"release-bundle");
+}
+
+#pragma mark - Same-identity targeting refresh
+//
+// identify() can change what the server evaluates without changing the
+// canonical uid: an identity merge that resolves to the user this installation
+// already is still attaches an external id, and the properties set on that
+// account at signup are new targeting inputs. Android fires
+// targetingInvalidated() for exactly this case; these tests hold the iOS
+// surface to the same contract — a forced re-read, and nothing retired.
+
+- (void)testAnIdentifyThatKeepsTheSameUserIDStillRefreshesTargeting {
+  // A long minimum interval: only a forced fetch can reach the transport again.
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:3600000];
+  QONRemoteConfigController *controller = environment.controller;
+  [self enqueueRelease:environment releaseUID:@"release-1" number:1
+                values:[self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"
+                                  policy:@"on_next_activate"]];
+  [self runFetch:environment activate:YES deliveries:NULL];
+  XCTAssertEqualObjects(controller.current.releaseUID, @"release-1");
+  XCTAssertEqual([self runFetch:environment activate:NO deliveries:NULL].status,
+                 QONRemoteConfigFetchStatusThrottled);
+
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  [self enqueueRelease:environment releaseUID:@"release-2" number:2
+                values:[self alphaValues:@"\"server-alpha-2\"" variation:@"variation-a2"
+                                  policy:@"on_next_activate"]];
+
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  // Nothing is retired: the release the app is reading keeps serving.
+  XCTAssertEqualObjects(controller.current.releaseUID, @"release-1");
+  XCTAssertEqual([controller rawValueForKey:@"alpha"].source,
+                 QONRemoteConfigValueSourceServer);
+
+  [environment settleIdentity];
+  XCTAssertEqual(environment.transport.requests.count, requestsBefore + 1);
+  XCTAssertEqual(environment.readGuardAssertions, 0u);
+  XCTAssertEqualObjects(controller.current.releaseUID, @"release-1");
+  XCTAssertTrue(controller.activate);
+  XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-2");
+}
+
+- (void)testALogoutThatKeepsTheSameUserIDAlsoRefreshesTargeting {
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:3600000];
+  QONRemoteConfigController *controller = environment.controller;
+  [self enqueueRelease:environment releaseUID:@"release-1" number:1
+                values:[self alphaValues:@"\"server-alpha-1\"" variation:@"variation-a1"
+                                  policy:@"on_next_activate"]];
+  [self runFetch:environment activate:YES deliveries:NULL];
+
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  [self enqueueRelease:environment releaseUID:@"release-2" number:2
+                values:[self alphaValues:@"\"server-alpha-2\"" variation:@"variation-a2"
+                                  policy:@"on_next_activate"]];
+  // A logout that unlinks nothing leaves the canonical uid alone, so the switch
+  // below is a re-announcement — and it must not be silently dropped either.
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeLogout];
+  XCTAssertEqualObjects(controller.current.releaseUID, @"release-1");
+  [environment settleIdentity];
+  XCTAssertEqual(environment.transport.requests.count, requestsBefore + 1);
+  XCTAssertEqual(environment.readGuardAssertions, 0u);
+  XCTAssertTrue(controller.activate);
+  XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-2");
+}
+
+- (void)testRepeatedSameUserIdentifiesCoalesceIntoOneFetch {
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:3600000];
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  // The first refresh stays in flight, so the two behind it have something to
+  // join. An app that identifies on every foreground must not open a request
+  // per call.
+  environment.transport.holdNextRequest = YES;
+  for (NSUInteger round = 0; round < 3; round++) {
+    [controller switchToCanonicalUserID:@"user-a"
+                                 change:QONRemoteConfigControllerIdentityChangeIdentify];
+  }
+  [environment settleIdentity];
+  XCTAssertEqual(environment.transport.requests.count, requestsBefore + 1);
+
+  NSData *body = [self releaseBody:@"release-2" number:2
+                            values:[self alphaValues:@"\"server-alpha-2\"" variation:@"variation-a2"
+                                              policy:@"on_next_activate"]];
+  XCTAssertTrue([environment.transport releaseHeldWithBody:body
+                                                strongETag:QONRCPubStrongETag(body)]);
+  [environment settleIdentity];
+  XCTAssertTrue(controller.activate);
+  XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-2");
+}
+
+- (void)testASameUserRefreshDoesNotBypassTheFailureBackoff {
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:3600000];
+  QONRemoteConfigController *controller = environment.controller;
+
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  [environment.transport enqueueFailure];
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  XCTAssertEqual(environment.transport.requests.count, requestsBefore + 1);
+
+  NSUInteger requestsAfterFailure = environment.transport.requests.count;
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  // Forced bypasses the minimum interval, never the failure backoff.
+  XCTAssertEqual(environment.transport.requests.count, requestsAfterFailure);
+
+  environment.clock.now += 10000;
+  [self enqueueRelease:environment releaseUID:@"release-2" number:2
+                values:[self alphaValues:@"\"server-alpha-2\"" variation:@"variation-a2"
+                                  policy:@"on_next_activate"]];
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  XCTAssertEqual(environment.transport.requests.count, requestsAfterFailure + 1);
+}
+
+- (void)testASameUserRefreshIsRetiredByASwitchThatOvertakesIt {
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:3600000];
+  QONRemoteConfigController *controller = environment.controller;
+  [self enqueueRelease:environment releaseUID:@"release-b" number:4
+                values:[self alphaValues:@"\"server-alpha-b\"" variation:@"variation-b1"
+                                  policy:@"on_next_activate"]];
+
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  // Hold the identity queue so both announcements are queued before either runs.
+  // Without the gate this test would only be asserting which of the two won a
+  // wakeup race; the contract under test is what happens when the switch wins.
+  dispatch_semaphore_t gate = dispatch_semaphore_create(0);
+  dispatch_async(environment.identityQueue, ^{
+    dispatch_semaphore_wait(gate, DISPATCH_TIME_FOREVER);
+  });
+  [controller switchToCanonicalUserID:@"user-a"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [controller switchToCanonicalUserID:@"user-b"
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  dispatch_semaphore_signal(gate);
+  [environment settleIdentity];
+  XCTAssertEqual(environment.transport.requests.count, requestsBefore + 1);
+  XCTAssertTrue(controller.activate);
+  XCTAssertEqualObjects([controller rawValueForKey:@"alpha"].value, @"server-alpha-b");
+}
+
+- (void)testAnIdentityAnnouncedWhileUnboundFetchesNothing {
+  QONRCPubEnvironment *environment =
+      [self configuredEnvironmentWithBuildMode:QONRemoteConfigV2ReadGuardBuildModeDebug
+              minimumFetchIntervalMilliseconds:3600000];
+  QONRemoteConfigController *controller = environment.controller;
+
+  [controller switchToCanonicalUserID:nil
+                               change:QONRemoteConfigControllerIdentityChangeLogout];
+  [environment settleIdentity];
+  NSUInteger requestsBefore = environment.transport.requests.count;
+  [controller switchToCanonicalUserID:nil
+                               change:QONRemoteConfigControllerIdentityChangeIdentify];
+  [environment settleIdentity];
+  XCTAssertEqual(environment.transport.requests.count, requestsBefore);
   XCTAssertEqualObjects(controller.current.releaseUID, @"release-bundle");
 }
 
