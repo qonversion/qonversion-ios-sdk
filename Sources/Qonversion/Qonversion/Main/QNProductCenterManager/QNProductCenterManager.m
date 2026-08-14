@@ -23,6 +23,7 @@
 #import "QONStoreKit2PurchaseModel.h"
 #import "QONFallbackService.h"
 #import "QONFallbackObject.h"
+#import "QONRemoteConfigController+Protected.h"
 #import "QONPromotionalOffer.h"
 #import "QONPurchaseOptions.h"
 #import "QONPurchaseResult+Protected.h"
@@ -34,6 +35,39 @@
 static NSString * const kLaunchResult = @"qonversion.launch.result";
 static NSString * const kLaunchResultTimeStamp = @"qonversion.launch.result.timestamp";
 static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.suite";
+static NSString * const kIdentityMutationSupersededKey = @"qonversion.identity-mutation-superseded";
+
+@interface QNIdentityRequestData : NSObject
+
+@property (nonatomic, copy) NSString *identityID;
+@property (nonatomic, strong) NSMutableArray<QONUserInfoCompletionHandler> *completions;
+
+- (instancetype)initWithIdentityID:(NSString *)identityID
+                         completion:(nullable QONUserInfoCompletionHandler)completion;
+- (void)addCompletion:(nullable QONUserInfoCompletionHandler)completion;
+
+@end
+
+@implementation QNIdentityRequestData
+
+- (instancetype)initWithIdentityID:(NSString *)identityID
+                         completion:(nullable QONUserInfoCompletionHandler)completion {
+  self = [super init];
+  if (self) {
+    _identityID = [identityID copy];
+    _completions = [NSMutableArray new];
+    [self addCompletion:completion];
+  }
+  return self;
+}
+
+- (void)addCompletion:(nullable QONUserInfoCompletionHandler)completion {
+  if (completion) {
+    [self.completions addObject:[completion copy]];
+  }
+}
+
+@end
 
 @interface QNProductCenterManager() <QNStoreKitServiceDelegate>
 
@@ -67,15 +101,40 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 @property (nonatomic, copy) NSDictionary<NSString *, QONPurchaseOptions *> *processingPurchaseOptions;
 
-@property (nonatomic, assign) BOOL launchingFinished;
+@property (atomic, assign) BOOL launchingFinished;
 @property (nonatomic, assign) BOOL productsLoading;
-@property (nonatomic, assign) BOOL restoreInProgress;
-@property (nonatomic, assign) BOOL receiptRestoreInProgress;
+@property (atomic, assign) BOOL restoreInProgress;
+@property (atomic, assign) BOOL receiptRestoreInProgress;
 @property (nonatomic, assign) BOOL awaitingRestoreResult;
-@property (nonatomic, assign) BOOL identityInProgress;
-@property (nonatomic, assign) BOOL unhandledLogoutAvailable;
-@property (nonatomic, copy) NSString *pendingIdentityUserID;
-@property (nonatomic, strong) NSMutableDictionary<NSString *, NSMutableArray<QONUserInfoCompletionHandler> *> *pendingIdentityBlocks;
+@property (atomic, assign) BOOL identityInProgress;
+@property (atomic, assign) BOOL identityLogoutInProgress;
+@property (atomic, assign) BOOL unhandledLogoutAvailable;
+@property (nonatomic, strong) NSLock *identityStateLock;
+@property (nonatomic, strong) NSRecursiveLock *identityMutationLock;
+@property (nonatomic, strong) NSLock *entitlementsBlocksLock;
+@property (nonatomic, strong) NSLock *userInfoBlocksLock;
+@property (nonatomic, strong) NSLock *restoreBlocksLock;
+@property (nonatomic, strong) NSLock *launchStateLock;
+@property (nonatomic, assign) NSUInteger launchesInFlight;
+@property (nonatomic, strong, nullable) NSError *pendingLaunchTerminalError;
+@property (nonatomic, assign) NSUInteger identityMutationGeneration;
+@property (nonatomic, assign) NSUInteger receiptRestoreIdentityMutationGeneration;
+@property (nonatomic, assign) NSUInteger transactionsRestoreIdentityMutationGeneration;
+@property (nonatomic, strong, nullable) QNIdentityRequestData *activeIdentityRequest;
+@property (nonatomic, strong) NSMutableArray<QNIdentityRequestData *> *pendingIdentityRequests;
+
+- (NSError *)identityMutationSupersededError;
+- (BOOL)isIdentityMutationSupersededError:(nullable NSError *)error;
+- (void)finishReceiptRestoreWithResult:(nullable QONLaunchResult *)result error:(nullable NSError *)error;
+- (void)launch:(QONRequestTrigger)requestTrigger
+ identityRequest:(nullable QNIdentityRequestData *)identityRequest
+expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
+    completion:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion;
+- (void)launchWithTrigger:(QONRequestTrigger)requestTrigger
+           identityRequest:(nullable QNIdentityRequestData *)identityRequest
+expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
+              scopeCommit:(nullable void (^)(QONLaunchResult *result))scopeCommit
+                completion:(nullable QONLaunchCompletionHandler)completion;
 
 @end
 
@@ -111,7 +170,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     _productsBlocks = [NSMutableArray new];
     _offeringsBlocks = [NSMutableArray new];
     _userInfoBlocks = [NSMutableArray new];
-    _pendingIdentityBlocks = [NSMutableDictionary new];
+    _identityStateLock = [NSLock new];
+    _identityMutationLock = [NSRecursiveLock new];
+    _entitlementsBlocksLock = [NSLock new];
+    _userInfoBlocksLock = [NSLock new];
+    _restoreBlocksLock = [NSLock new];
+    _launchStateLock = [NSLock new];
+    _pendingIdentityRequests = [NSMutableArray new];
   }
   
   return self;
@@ -223,13 +288,76 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (BOOL)isUserStable {
-  return self.launchingFinished && !self.identityInProgress && self.pendingIdentityUserID.length == 0 && !self.unhandledLogoutAvailable;
+  [self.identityStateLock lock];
+  BOOL hasIdentityWork = self.activeIdentityRequest != nil || self.pendingIdentityRequests.count > 0;
+  [self.identityStateLock unlock];
+  return self.launchingFinished
+      && !self.identityInProgress
+      && !self.identityLogoutInProgress
+      && !self.restoreInProgress
+      && !self.receiptRestoreInProgress
+      && !hasIdentityWork
+      && !self.unhandledLogoutAvailable;
+}
+
+- (NSError *)identityMutationSupersededError {
+  return [NSError errorWithDomain:NSURLErrorDomain
+                             code:NSURLErrorCancelled
+                         userInfo:@{
+                           NSLocalizedDescriptionKey: @"The restore result was superseded by a newer identity operation.",
+                           kIdentityMutationSupersededKey: @YES,
+                         }];
+}
+
+- (BOOL)isIdentityMutationSupersededError:(nullable NSError *)error {
+  return [error.userInfo[kIdentityMutationSupersededKey] boolValue];
 }
 
 - (void)launchWithTrigger:(QONRequestTrigger)requestTrigger completion:(nullable QONLaunchCompletionHandler)completion {
+  [self launchWithTrigger:requestTrigger identityRequest:nil completion:completion];
+}
+
+- (void)launchWithTrigger:(QONRequestTrigger)requestTrigger
+           identityRequest:(nullable QNIdentityRequestData *)identityRequest
+                 completion:(nullable QONLaunchCompletionHandler)completion {
+  [self launchWithTrigger:requestTrigger
+          identityRequest:identityRequest
+expectedIdentityMutationGeneration:nil
+              scopeCommit:nil
+                completion:completion];
+}
+
+- (void)launchWithTrigger:(QONRequestTrigger)requestTrigger
+           identityRequest:(nullable QNIdentityRequestData *)identityRequest
+expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
+              scopeCommit:(nullable void (^)(QONLaunchResult *result))scopeCommit
+                completion:(nullable QONLaunchCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
   
-  [self launch:requestTrigger completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+  [self launch:requestTrigger
+identityRequest:identityRequest
+expectedIdentityMutationGeneration:expectedGeneration
+ completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+    if ([weakSelf isIdentityMutationSupersededError:error]) {
+      [weakSelf handlePendingRequests:nil];
+      if (completion) {
+        run_block_on_main(completion, result, error)
+      }
+      return;
+    }
+
+    BOOL mutationLockHeld = NO;
+    if (identityRequest) {
+      [weakSelf.identityMutationLock lock];
+      mutationLockHeld = YES;
+      if (![weakSelf isActiveIdentityRequest:identityRequest]) {
+        [weakSelf.identityMutationLock unlock];
+        return;
+      }
+    }
+    if (scopeCommit && !error) {
+      scopeCommit(result);
+    }
     [weakSelf storeLaunchResultIfNeeded:result];
     
     weakSelf.launchResult = result;
@@ -251,60 +379,74 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     if (error) {
       QONVERSION_LOG(@"❗️ Request failed %@", error.description);
     }
+    if (mutationLockHeld) {
+      [weakSelf.identityMutationLock unlock];
+    }
   }];
 }
 
 - (void)identify:(NSString *)identityId completion:(nullable QONUserInfoCompletionHandler)completion {
+  [self.identityMutationLock lock];
+  // A newly accepted identity intent supersedes every restore that was
+  // accepted against the previous user boundary, even when it coalesces.
+  self.identityMutationGeneration += 1;
   self.unhandledLogoutAvailable = NO;
-  
-  NSString *currentIdentityId = [self.userInfoService obtainCustomIdentityUserID];
-  if ([currentIdentityId isEqualToString:identityId]) {
-    if (completion) {
-      [self userInfo:completion];
-    }
-    return;
+  QNIdentityRequestData *requestToStart = nil;
+  [self.identityStateLock lock];
+  // Coalesce only adjacent equal requests. A,A shares one network attempt;
+  // A,B,A remains three ordered state transitions and ends on A.
+  QNIdentityRequestData *coalescingRequest = self.pendingIdentityRequests.lastObject;
+  if (!coalescingRequest && [self.activeIdentityRequest.identityID isEqualToString:identityId]) {
+    coalescingRequest = self.activeIdentityRequest;
   }
-  
-  [self addIdentityCompletion:identityId completion:completion];
-  self.pendingIdentityUserID = identityId;
-  if (!self.launchingFinished || self.restoreInProgress) {
-    return;
-  }
-  
-  self.identityInProgress = YES;
-  if (self.launchError) {
-    __block __weak QNProductCenterManager *weakSelf = self;
-
-    [weakSelf launch:QONRequestTriggerIdentify completion:^(QONLaunchResult * _Nullable result, NSError * _Nullable error) {
-      if (error) {
-        weakSelf.identityInProgress = NO;
-        [weakSelf executeEntitlementsBlocksWithError:error];
-        [weakSelf.remoteConfigManager userChangingRequestFailedWithError:error];
-      } else {
-        [weakSelf processIdentity:identityId];
-      }
-    }];
+  if ([coalescingRequest.identityID isEqualToString:identityId]) {
+    [coalescingRequest addCompletion:completion];
   } else {
-    [self processIdentity:identityId];
+    QNIdentityRequestData *request = [[QNIdentityRequestData alloc] initWithIdentityID:identityId
+                                                                            completion:completion];
+    [self.pendingIdentityRequests addObject:request];
   }
+  requestToStart = [self takeNextIdentityRequestIfReadyLocked];
+  [self.identityStateLock unlock];
+
+  [self startIdentityRequest:requestToStart];
+  [self.identityMutationLock unlock];
 }
 
 - (void)processIdentity:(NSString *)identityId {
+  [self processIdentity:identityId request:nil];
+}
+
+- (void)processIdentity:(NSString *)identityId request:(nullable QNIdentityRequestData *)request {
   NSString *currentUserID = [self.userInfoService obtainUserID];
   
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.identityManager identify:identityId completion:^(NSString *result, NSError * _Nullable error) {
-    weakSelf.identityInProgress = NO;
-    
-    if (error) {
-      [weakSelf executeEntitlementsBlocksWithError:error];
-      [weakSelf.remoteConfigManager userChangingRequestFailedWithError:error];
-      [weakSelf fireIdentityError:error identityId:identityId];
+    if (request && ![weakSelf isActiveIdentityRequest:request]) {
+      // logout (or another cancellation boundary) won the race. Never apply a
+      // late identity response after callers were told the attempt was canceled.
       return;
     }
-    
-    weakSelf.pendingIdentityUserID = nil;
-    
+    if (error) {
+      [weakSelf failIdentityRequest:request error:error];
+      return;
+    }
+
+    [weakSelf.identityMutationLock lock];
+    BOOL mutationLockHeld = YES;
+    if (request && ![weakSelf isActiveIdentityRequest:request]) {
+      [weakSelf.identityMutationLock unlock];
+      return;
+    }
+    // Persistence, the custom identity, and the Remote Config scope commit as
+    // one logout-serialized boundary. Whichever owns identityMutationLock
+    // first wins; logout can no longer slip between validation and storage.
+    // Claim the successful scope/custom-identity commit. This invalidates a
+    // restore accepted while the network identity request was still active.
+    weakSelf.identityMutationGeneration += 1;
+    if (result.length > 0) {
+      [weakSelf.userInfoService storeIdentity:result];
+    }
     [weakSelf.userInfoService storeCustomIdentityUserID:identityId];
     
     if ([currentUserID isEqualToString:result]) {
@@ -316,36 +458,103 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       // must miss the cache, or queued completions would be served the
       // pre-identify evaluation and orphaned by the cache-hit path.
       [weakSelf.remoteConfigManager invalidateRemoteConfigsCache];
-      [weakSelf handlePendingRequests:nil];
-      [weakSelf fireIdentitySuccess:identityId];
+      // Keep isUserStable false through the RC boundary transition. Clearing
+      // these earlier opens a window where a concurrent caller can consume a
+      // pre-identify warm config before invalidation reaches the RC manager.
+      [weakSelf finishIdentityRequest:request error:nil];
+      if (mutationLockHeld) {
+        [weakSelf.identityMutationLock unlock];
+      }
     } else {
-      [[QNAPIClient shared] setUserID:result];
-      [weakSelf.remoteConfigManager userHasBeenChanged];
+      [weakSelf.remoteConfigManager userHasBeenChangedToUserID:result];
+      if (mutationLockHeld) {
+        [weakSelf.identityMutationLock unlock];
+      }
 
       [weakSelf resetActualPermissionsCache];
-      [weakSelf launchWithTrigger:QONRequestTriggerIdentify completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
-        if (error) {
-          [weakSelf fireIdentityError:error identityId:identityId];
-        } else {
-          [weakSelf fireIdentitySuccess:identityId];
+      QONLaunchCompletionHandler launchCompletion = ^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+        if (request && ![weakSelf isActiveIdentityRequest:request]) {
+          return;
         }
-      }];
+        [weakSelf finishIdentityRequest:request error:error];
+      };
+      if (request) {
+        [weakSelf launchWithTrigger:QONRequestTriggerIdentify identityRequest:request completion:launchCompletion];
+      } else {
+        [weakSelf launchWithTrigger:QONRequestTriggerIdentify completion:launchCompletion];
+      }
     }
   }];
 }
 
 - (void)logout {
-  self.pendingIdentityUserID = nil;
+  NSError *cancellationError = [NSError errorWithDomain:NSURLErrorDomain
+                                                   code:NSURLErrorCancelled
+                                               userInfo:@{NSLocalizedDescriptionKey: @"The identify request was canceled by logout."}];
+  [self.identityMutationLock lock];
+  [self.identityStateLock lock];
+  if (self.identityLogoutInProgress) {
+    // A synchronous Remote Config callback may re-enter logout while the
+    // outer call still owns this recursive lock. The outer call has already
+    // unlinked the identity and is the sole owner of cancellation + scope
+    // publication; a nested call must not clear its logical boundary.
+    [self.identityStateLock unlock];
+    [self.identityMutationLock unlock];
+    return;
+  }
+  // The public logout intent is newer than every previously accepted restore,
+  // even when there is no persisted identity left to unlink.
+  self.identityMutationGeneration += 1;
+  self.identityLogoutInProgress = YES;
+  QNIdentityRequestData *activeRequest = self.activeIdentityRequest;
+  NSMutableArray<QNIdentityRequestData *> *cancelledRequests = [self.pendingIdentityRequests mutableCopy];
+  if (activeRequest) {
+    [cancelledRequests insertObject:activeRequest atIndex:0];
+  }
+  self.activeIdentityRequest = nil;
+  [self.pendingIdentityRequests removeAllObjects];
+  self.identityInProgress = NO;
+  [self.identityStateLock unlock];
+
   BOOL isLogoutNeeded = [self.identityManager logoutIfNeeded];
+  NSString *logoutUserID = nil;
   
   if (isLogoutNeeded) {
     [self.userInfoService storeCustomIdentityUserID:nil];
+    [self actualizeUserInfo];
     self.unhandledLogoutAvailable = YES;
-    [self.remoteConfigManager userHasBeenChanged];
-    NSString *userID = [self.userInfoService obtainUserID];
-    [[QNAPIClient shared] setUserID:userID];
-    
+    logoutUserID = [self.userInfoService obtainUserID];
     [self resetActualPermissionsCache];
+  }
+
+  if (cancelledRequests.count > 0) {
+    // Drain the cancelled identity's Remote Config window while logout still
+    // owns the mutation boundary. A concurrent identify can only queue here,
+    // so this cancellation can never land in the new attempt's window.
+    [self.remoteConfigManager userChangingRequestFailedWithError:cancellationError];
+  }
+  if (isLogoutNeeded) {
+    // Publish the successful logout scope last: this clears the cancellation
+    // latch and makes the original user the only observable stable scope.
+    [self.remoteConfigManager userHasBeenChangedToUserID:logoutUserID];
+    self.identityMutationGeneration += 1;
+  }
+
+  [self.identityStateLock lock];
+  self.identityLogoutInProgress = NO;
+  BOOL hasNewIdentityRequest = self.pendingIdentityRequests.count > 0;
+  [self.identityStateLock unlock];
+
+  [self.identityMutationLock unlock];
+
+  for (QNIdentityRequestData *request in cancelledRequests) {
+    [self deliverIdentityRequest:request error:cancellationError];
+  }
+  if (hasNewIdentityRequest) {
+    // A post-logout identify supersedes the deferred logout launch and will
+    // fetch the final user's state itself.
+    self.unhandledLogoutAvailable = NO;
+    [self handlePendingRequests:nil];
   }
 }
 
@@ -367,13 +576,18 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)userInfo:(QONUserInfoCompletionHandler)completion {
+  [self.userInfoBlocksLock lock];
   if (!self.launchingFinished) {
     [self.userInfoBlocks addObject:completion];
+    [self.userInfoBlocksLock unlock];
     return;
   }
+  [self.userInfoBlocksLock unlock];
   
   [self actualizeUserInfo];
-  run_block_on_main(completion, self.user, self.launchError);
+  QONUser *user = self.user;
+  NSError *error = self.launchError;
+  run_block_on_main(completion, user, error);
 }
 
 - (void)presentCodeRedemptionSheet {
@@ -385,10 +599,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     return;
   }
 
-  @synchronized (self) {
-    [self.entitlementsBlocks addObject:completion];
-    [self handlePendingRequests:nil];
-  }
+  [self.entitlementsBlocksLock lock];
+  [self.entitlementsBlocks addObject:completion];
+  [self.entitlementsBlocksLock unlock];
+  [self handlePendingRequests:nil];
 }
 
 - (void)handleLogout {
@@ -454,6 +668,10 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
                          completion:(nonnull QONPurchaseResultCompletionHandler)completion {
   __block __weak QNProductCenterManager *weakSelf = self;
   [self launchWithTrigger:QONRequestTriggerPurchase completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+    if ([weakSelf isIdentityMutationSupersededError:error]) {
+      [weakSelf handlePurchaseError:error completion:completion];
+      return;
+    }
     NSDictionary<NSString *, QONProduct *> *products = [weakSelf getActualProducts];
     if (error && products.count == 0) {
       [weakSelf handlePurchaseError:error completion:completion];
@@ -527,47 +745,78 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 
 - (void)restoreReceipt:(QNRestoreCompletionHandler)completion {
+  [self.identityMutationLock lock];
+  [self.restoreBlocksLock lock];
   if (completion) {
     [self.receiptRestoreBlocks addObject:completion];
   }
-  
   if (self.receiptRestoreInProgress) {
+    [self.restoreBlocksLock unlock];
+    [self.identityMutationLock unlock];
     return;
   }
-  
   self.receiptRestoreInProgress = YES;
+  self.receiptRestoreIdentityMutationGeneration = self.identityMutationGeneration;
+  NSUInteger ownerGeneration = self.receiptRestoreIdentityMutationGeneration;
+  [self.restoreBlocksLock unlock];
+  [self.identityMutationLock unlock];
   
   __block __weak QNProductCenterManager *weakSelf = self;
   [self.storeKitService receipt:^(NSString * _Nonnull receipt) {
-    [weakSelf launchWithTrigger:QONRequestTriggerRestore completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
-      if (!error) {
-        [weakSelf handleUserSwitchIfNeededWithResult:result];
-      }
-
-      @synchronized (weakSelf) {
-        weakSelf.receiptRestoreInProgress = NO;
-        NSArray<QONEntitlementsCompletionHandler> *completions = [self.receiptRestoreBlocks copy];
-        [weakSelf.receiptRestoreBlocks removeAllObjects];
-        
-        for (QONEntitlementsCompletionHandler block in completions) {
-          run_block_on_main(block, result.entitlements, error);
-        }
-      }
+    [weakSelf.identityMutationLock lock];
+    if (weakSelf.identityMutationGeneration != ownerGeneration) {
+      NSError *supersededError = [weakSelf identityMutationSupersededError];
+      [weakSelf.identityMutationLock unlock];
+      [weakSelf finishReceiptRestoreWithResult:nil error:supersededError];
+      [weakSelf handlePendingRequests:nil];
+      return;
+    }
+    [weakSelf launchWithTrigger:QONRequestTriggerRestore
+                identityRequest:nil
+expectedIdentityMutationGeneration:@(ownerGeneration)
+                    scopeCommit:^(QONLaunchResult *result) {
+      [weakSelf handleUserSwitchIfNeededWithResult:result];
+    }
+                      completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      [weakSelf finishReceiptRestoreWithResult:result error:error];
     }];
+    [weakSelf.identityMutationLock unlock];
   }];
 }
 
+- (void)finishReceiptRestoreWithResult:(nullable QONLaunchResult *)result error:(nullable NSError *)error {
+  [self.restoreBlocksLock lock];
+  self.receiptRestoreInProgress = NO;
+  NSArray<QNRestoreCompletionHandler> *completions = [self.receiptRestoreBlocks copy];
+  [self.receiptRestoreBlocks removeAllObjects];
+  [self.restoreBlocksLock unlock];
+
+  NSDictionary<NSString *, QONEntitlement *> *entitlements = result.entitlements ?: @{};
+  for (QNRestoreCompletionHandler block in completions) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      block(entitlements, error);
+    });
+  }
+}
+
 - (void)restoreTransactions:(QNRestoreCompletionHandler)completion {
+  [self.identityMutationLock lock];
+  [self.restoreBlocksLock lock];
   if (completion != nil) {
     [self.restorePurchasesBlocks addObject:completion];
   }
 
   if (self.restoreInProgress) {
+    [self.restoreBlocksLock unlock];
+    [self.identityMutationLock unlock];
     return;
   }
 
   self.awaitingRestoreResult = YES;
   self.restoreInProgress = YES;
+  self.transactionsRestoreIdentityMutationGeneration = self.identityMutationGeneration;
+  [self.restoreBlocksLock unlock];
+  [self.identityMutationLock unlock];
 
   [self.storeKitService restore];
 }
@@ -576,10 +825,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   __block __weak QNProductCenterManager *weakSelf = self;
 
   [self launchWithTrigger:QONRequestTriggerActualizePermissions completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+      if ([weakSelf isIdentityMutationSupersededError:error]) {
+        run_block_on_main(completion, @{}, error);
+        return;
+      }
       weakSelf.unhandledLogoutAvailable = NO;
       NSDictionary<NSString *, QONEntitlement *> *entitlements = result.entitlements;
       NSError *resultError = error;
-      if (error && !weakSelf.pendingIdentityUserID) {
+      if (error && ![weakSelf hasPendingIdentityRequests]) {
         // Preserve backend entitlements when available (e.g. Stripe subscriptions).
         // Only fall back to cache when backend returned no entitlements.
         if (!entitlements || entitlements.count == 0) {
@@ -625,43 +878,46 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)executeEntitlementsBlocksWithError:(NSError *)error {
-  @synchronized (self) {
-    if (self.entitlementsBlocks.count == 0) {
-      return;
-    }
-    
-    NSMutableArray <QONEntitlementsCompletionHandler> *_blocks = [self.entitlementsBlocks copy];
-    [self.entitlementsBlocks removeAllObjects];
-    
-    if (error) {
-      if (self.pendingIdentityUserID.length > 0) {
-        [self fireEntitlementsBlocks:[_blocks copy] result:@{} error:error];
-      } else {
-        NSDictionary<NSString *, QONEntitlement *> *cachedEntitlements = [self getActualEntitlementsForDefaultState:NO];
-        cachedEntitlements = cachedEntitlements ?: @{};
-        [self fireEntitlementsBlocks:[_blocks copy] result:cachedEntitlements error:error];
-      }
+  [self.entitlementsBlocksLock lock];
+  NSArray<QONEntitlementsCompletionHandler> *blocks = [self.entitlementsBlocks copy];
+  [self.entitlementsBlocks removeAllObjects];
+  [self.entitlementsBlocksLock unlock];
+  if (blocks.count == 0) {
+    return;
+  }
+
+  if (error) {
+    if ([self hasPendingIdentityRequests]) {
+      [self fireEntitlementsBlocks:blocks result:@{} error:error];
     } else {
-      [self prepareEntitlementsResultWithCompletion:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable error) {
-        [self fireEntitlementsBlocks:[_blocks copy] result:result ?: @{} error:error];
-      }];
+      NSDictionary<NSString *, QONEntitlement *> *cachedEntitlements = [self getActualEntitlementsForDefaultState:NO];
+      cachedEntitlements = cachedEntitlements ?: @{};
+      [self fireEntitlementsBlocks:blocks result:cachedEntitlements error:error];
     }
+  } else {
+    [self prepareEntitlementsResultWithCompletion:^(NSDictionary<NSString *,QONEntitlement *> * _Nonnull result, NSError * _Nullable resultError) {
+      [self fireEntitlementsBlocks:blocks result:result ?: @{} error:resultError];
+    }];
   }
 }
 
 - (void)executeUserBlocks {
-  @synchronized (self) {
-    NSArray <QONUserInfoCompletionHandler> *blocks = [self.userInfoBlocks copy];
-    if (blocks.count == 0) {
-      return;
-    }
-    
-    [self.userInfoBlocks removeAllObjects];
-    
-    [self actualizeUserInfo];
-    for (QONUserInfoCompletionHandler block in blocks) {
-      run_block_on_main(block, self.user, self.launchError);
-    }
+  [self executeUserBlocksWithError:self.launchError];
+}
+
+- (void)executeUserBlocksWithError:(nullable NSError *)resultError {
+  [self.userInfoBlocksLock lock];
+  NSArray<QONUserInfoCompletionHandler> *blocks = [self.userInfoBlocks copy];
+  [self.userInfoBlocks removeAllObjects];
+  [self.userInfoBlocksLock unlock];
+  if (blocks.count == 0) {
+    return;
+  }
+
+  [self actualizeUserInfo];
+  QONUser *user = self.user;
+  for (QONUserInfoCompletionHandler block in blocks) {
+    run_block_on_main(block, user, resultError);
   }
 }
 
@@ -904,15 +1160,138 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 
 - (void)launch:(QONRequestTrigger)requestTrigger
     completion:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion {
-  _launchingFinished = NO;
+  [self launch:requestTrigger identityRequest:nil completion:completion];
+}
+
+- (void)launch:(QONRequestTrigger)requestTrigger
+ identityRequest:(nullable QNIdentityRequestData *)identityRequest
+    completion:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+  [self launch:requestTrigger
+identityRequest:identityRequest
+expectedIdentityMutationGeneration:nil
+ completion:completion];
+}
+
+- (void)launch:(QONRequestTrigger)requestTrigger
+ identityRequest:(nullable QNIdentityRequestData *)identityRequest
+expectedIdentityMutationGeneration:(nullable NSNumber *)expectedGeneration
+    completion:(void (^)(QONLaunchResult * _Nullable result, NSError * _Nullable error))completion {
+  [self.identityMutationLock lock];
+  NSNumber *ownerGeneration = expectedGeneration;
+  if (!identityRequest && !ownerGeneration) {
+    // Every response that can write user/launch state belongs to the user
+    // generation at request start. This prevents an old products/actualize/
+    // init response from overwriting state after identify/logout/restore.
+    ownerGeneration = @(self.identityMutationGeneration);
+  }
+
+  [self.userInfoBlocksLock lock];
+  [self.launchStateLock lock];
+  self.launchesInFlight += 1;
+  self.launchingFinished = NO;
+  [self.launchStateLock unlock];
+  [self.userInfoBlocksLock unlock];
+
   __block __weak QNProductCenterManager *weakSelf = self;
-  [self.apiClient launchRequest:requestTrigger completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
-    @synchronized (weakSelf) {
-      weakSelf.launchingFinished = YES;
-      NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:self];
-      [[NSNotificationCenter defaultCenter] postNotification:notification];
+  __block BOOL launchTicketReleased = NO;
+  void (^releaseLaunchTicket)(NSError * _Nullable) = ^(NSError * _Nullable terminalError) {
+    BOOL allLaunchesFinished = NO;
+    NSError *errorToDeliver = nil;
+    NSArray<QONUserInfoCompletionHandler> *terminalUserBlocks = nil;
+    QONUser *terminalUser = nil;
+    [weakSelf.identityMutationLock lock];
+    [weakSelf.userInfoBlocksLock lock];
+    [weakSelf.launchStateLock lock];
+    if (!launchTicketReleased) {
+      launchTicketReleased = YES;
+      // The last finishing launch determines the terminal state seen by work
+      // that was waiting for the whole concurrent launch set to become idle.
+      weakSelf.pendingLaunchTerminalError = terminalError;
+      if (weakSelf.launchesInFlight > 0) {
+        weakSelf.launchesInFlight -= 1;
+      }
+      allLaunchesFinished = weakSelf.launchesInFlight == 0;
+      weakSelf.launchingFinished = allLaunchesFinished;
+      if (allLaunchesFinished) {
+        errorToDeliver = weakSelf.pendingLaunchTerminalError;
+        weakSelf.pendingLaunchTerminalError = nil;
+      }
     }
+    [weakSelf.launchStateLock unlock];
+
+    if (allLaunchesFinished) {
+      terminalUserBlocks = [weakSelf.userInfoBlocks copy];
+      [weakSelf.userInfoBlocks removeAllObjects];
+      if (terminalUserBlocks.count > 0) {
+        // Preserve the historical no-waiter behavior: a superseded launch
+        // must not rewrite the newer scope's in-memory user merely because
+        // its bookkeeping ticket became terminal. Snapshot user state only
+        // when there are actual userInfo callers to drain.
+        [weakSelf actualizeUserInfo];
+        terminalUser = weakSelf.user;
+      }
+    }
+    [weakSelf.userInfoBlocksLock unlock];
+    [weakSelf.identityMutationLock unlock];
+
+    if (allLaunchesFinished) {
+      // launchingFinished and the terminal userInfo snapshot are published
+      // atomically with launch start. A new launch cannot enqueue its callback
+      // into the ticket that just finished.
+      for (QONUserInfoCompletionHandler block in terminalUserBlocks) {
+        run_block_on_main(block, terminalUser, errorToDeliver);
+      }
+      if ([weakSelf isIdentityMutationSupersededError:errorToDeliver]) {
+        // A superseded response intentionally skips the normal high-level
+        // commit path. Terminate every queue that depended on that launch;
+        // otherwise products/offerings can remain retained forever
+        // when no replacement launch is required (for example, no-op logout).
+        [weakSelf executeProductsBlocksWithError:errorToDeliver];
+        [weakSelf executeOfferingsBlocksWithError:errorToDeliver];
+      }
+      NSNotification *notification = [NSNotification notificationWithName:kLaunchIsFinishedNotification object:weakSelf];
+      [[NSNotificationCenter defaultCenter] postNotification:notification];
+      [weakSelf handlePendingRequests:errorToDeliver];
+    }
+  };
+
+  [self.apiClient launchRequest:requestTrigger completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+    __block BOOL mutationLockHeld = NO;
+    if (identityRequest || ownerGeneration) {
+      [weakSelf.identityMutationLock lock];
+      mutationLockHeld = YES;
+      if (identityRequest && ![weakSelf isActiveIdentityRequest:identityRequest]) {
+        [weakSelf.identityMutationLock unlock];
+        mutationLockHeld = NO;
+        releaseLaunchTicket([weakSelf identityMutationSupersededError]);
+        return;
+      }
+      if (ownerGeneration && weakSelf.identityMutationGeneration != ownerGeneration.unsignedIntegerValue) {
+        NSError *supersededError = [weakSelf identityMutationSupersededError];
+        if (completion) {
+          completion([[QONLaunchResult alloc] init], supersededError);
+        }
+        [weakSelf.identityMutationLock unlock];
+        releaseLaunchTicket(supersededError);
+        return;
+      }
+    }
+
+    void (^finishLaunch)(QONLaunchResult *, NSError *) = ^(QONLaunchResult *result, NSError *finishError) {
+      if (completion) {
+        completion(result, finishError);
+      }
+      if (mutationLockHeld) {
+        [weakSelf.identityMutationLock unlock];
+        mutationLockHeld = NO;
+      }
+      releaseLaunchTicket(finishError);
+    };
     if (!completion) {
+      if (mutationLockHeld) {
+        [weakSelf.identityMutationLock unlock];
+      }
+      releaseLaunchTicket(error);
       return;
     }
 
@@ -927,13 +1306,13 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
           launchResult = [QNMapper fillLaunchResult:mappedResult.data];
         }
       }
-      completion(launchResult, error);
+      finishLaunch(launchResult, error);
       return;
     }
 
     QNMapperObject *result = [QNMapper mapperObjectFrom:dict];
     if (result.error) {
-      completion([[QONLaunchResult alloc] init], result.error);
+      finishLaunch([[QONLaunchResult alloc] init], result.error);
       return;
     }
 
@@ -944,13 +1323,14 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
     [weakSelf.persistentStorage storeObject:weakSelf.productsEntitlementsRelation forKey:kKeyQUserDefaultsProductsPermissionsRelation];
 
     QONLaunchResult *launchResult = [QNMapper fillLaunchResult:result.data];
-    completion(launchResult, nil);
+    finishLaunch(launchResult, nil);
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
       [weakSelf.apiClient processStoredRequests];
     });
   }];
+  [self.identityMutationLock unlock];
 }
 
 - (void)handleFailedTransaction:(SKPaymentTransaction *)transaction forProduct:(SKProduct *)product error:(NSError *)error {
@@ -1129,9 +1509,22 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
   NSArray *restoredTransactionsCopy = [self.restoredTransactions copy];
   self.restoredTransactions = nil;
   __block __weak QNProductCenterManager *weakSelf = self;
-  [self launch:QONRequestTriggerSyncHistoricalData completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
+  [self.identityMutationLock lock];
+  NSUInteger ownerGeneration = self.transactionsRestoreIdentityMutationGeneration;
+  if (self.identityMutationGeneration != ownerGeneration) {
+    NSError *supersededError = [self identityMutationSupersededError];
+    [self.identityMutationLock unlock];
+    [self executeRestoreBlocksWithResult:@{} error:supersededError];
+    return;
+  }
+  [self launch:QONRequestTriggerSyncHistoricalData
+identityRequest:nil
+expectedIdentityMutationGeneration:@(ownerGeneration)
+ completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
     if (error) {
-      if ([weakSelf shouldCalculateEntitlementsForError:error]) {
+      if ([weakSelf isIdentityMutationSupersededError:error]) {
+        [weakSelf executeRestoreBlocksWithResult:@{} error:error];
+      } else if ([weakSelf shouldCalculateEntitlementsForError:error]) {
         NSArray<SKProduct *> *storeProducts = [weakSelf.storeKitService getLoadedProducts];
         NSDictionary<NSString *, QONEntitlement *> *calculatedEntitlements = [weakSelf calculateEntitlementsForRestoredTransactions:restoredTransactionsCopy products:storeProducts];
 
@@ -1146,6 +1539,7 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
       [weakSelf executeRestoreBlocksWithResult:result.entitlements error:error];
     }
   }];
+  [self.identityMutationLock unlock];
 }
 
 - (void)handleRestoreCompletedTransactionsFailed:(NSError *)error {
@@ -1154,13 +1548,17 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)executeRestoreBlocksWithResult:(NSDictionary<NSString *, QONEntitlement *> *)entitlements error:(NSError *)error {
+  [self.restoreBlocksLock lock];
   self.restoreInProgress = NO;
-
-  NSMutableArray <QONEntitlementsCompletionHandler> *_blocks = [self.restorePurchasesBlocks copy];
+  NSArray<QNRestoreCompletionHandler> *blocks = [self.restorePurchasesBlocks copy];
   [self.restorePurchasesBlocks removeAllObjects];
+  [self.restoreBlocksLock unlock];
 
-  for (QONEntitlementsCompletionHandler block in _blocks) {
-    run_block_on_main(block, entitlements, error);
+  NSDictionary<NSString *, QONEntitlement *> *resultEntitlements = entitlements ?: @{};
+  for (QNRestoreCompletionHandler block in blocks) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      block(resultEntitlements, error);
+    });
   }
 
   [self handlePendingRequests:error];
@@ -1290,21 +1688,42 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handleUserSwitchIfNeededWithResult:(QONLaunchResult *)result {
-  if (!result || result.uid.length == 0) {
+  if (!result) {
     return;
   }
 
+  [self.identityMutationLock lock];
+  // A valid restore response claims this generation even when the receipt
+  // belongs to the current uid. Only the first response accepted against a
+  // generation may update global launch/user state; sibling restores become
+  // stale before they can publish a different scope.
+  self.identityMutationGeneration += 1;
+  if (result.uid.length == 0) {
+    [self.identityMutationLock unlock];
+    return;
+  }
   NSString *currentUserID = [self.userInfoService obtainUserID];
   if ([currentUserID isEqualToString:result.uid]) {
+    [self.identityMutationLock unlock];
     return;
   }
 
   QONVERSION_LOG(@"🔄 Restore: user switch detected from %@ to %@", currentUserID, result.uid);
 
   [self.userInfoService storeIdentity:result.uid];
-  [[QNAPIClient shared] setUserID:result.uid];
-  [self.remoteConfigManager userHasBeenChanged];
+  [self.remoteConfigManager userHasBeenChangedToUserID:result.uid];
+  // The same discovery, delivered to the experimental surface. Without it the v2
+  // surface keeps serving — and acknowledging — the configuration of the user
+  // this installation just turned out not to be. The rebind is treated as an
+  // identify: a restore established which existing user this is, exactly like an
+  // explicit identify does.
+  QONRemoteConfigController *remoteConfigController = self.experimentalRemoteConfigController;
+  if (remoteConfigController.isConfigured) {
+    [remoteConfigController switchToCanonicalUserID:result.uid
+                                             change:QONRemoteConfigControllerIdentityChangeIdentify];
+  }
   [self resetActualPermissionsCache];
+  [self.identityMutationLock unlock];
 }
 
 // MARK: - Move to separate file
@@ -1454,56 +1873,155 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.product-center.sui
 }
 
 - (void)handlePendingRequests:(NSError *)lastError {
-  if (!self.launchingFinished || self.restoreInProgress || self.identityInProgress) {
+  [self.identityMutationLock lock];
+  if (!self.launchingFinished || self.restoreInProgress) {
+    [self.identityMutationLock unlock];
     return;
   }
 
-  if (self.pendingIdentityUserID) {
-    [self identify:self.pendingIdentityUserID completion:nil];
+  QNIdentityRequestData *requestToStart = nil;
+  [self.identityStateLock lock];
+  if (self.activeIdentityRequest || self.identityLogoutInProgress) {
+    [self.identityStateLock unlock];
+    [self.identityMutationLock unlock];
+    return;
+  }
+  requestToStart = [self takeNextIdentityRequestIfReadyLocked];
+  BOOL identityWorkBecameActive = self.activeIdentityRequest != nil || self.pendingIdentityRequests.count > 0;
+  [self.identityStateLock unlock];
+  if (requestToStart) {
+    [self startIdentityRequest:requestToStart];
+  } else if (identityWorkBecameActive) {
+    [self.identityMutationLock unlock];
+    return;
   } else if (self.unhandledLogoutAvailable) {
     [self handleLogout];
   } else {
     [self.remoteConfigManager handlePendingRequests];
     [self executeEntitlementsBlocksWithError:lastError];
   }
+  [self.identityMutationLock unlock];
 }
 
-- (void)addIdentityCompletion:(NSString *)identityId completion:(nullable QONUserInfoCompletionHandler)completion {
-    if (!completion) {
-        return;
-    }
-
-    NSMutableArray *completions = self.pendingIdentityBlocks[identityId];
-    if (!completions) {
-        completions = [NSMutableArray new];
-        self.pendingIdentityBlocks[identityId] = completions;
-    }
-    [completions addObject:completion];
+- (BOOL)hasPendingIdentityRequests {
+  [self.identityStateLock lock];
+  BOOL hasRequests = self.activeIdentityRequest != nil || self.pendingIdentityRequests.count > 0;
+  [self.identityStateLock unlock];
+  return hasRequests;
 }
 
-- (void)fireIdentitySuccess:(NSString *)identityId {
-    NSMutableArray *completions = self.pendingIdentityBlocks[identityId];
-    if (!completions) {
-        return;
-    }
-    self.pendingIdentityBlocks[identityId] = nil;
+- (nullable QNIdentityRequestData *)takeNextIdentityRequestIfReadyLocked {
+  if (self.activeIdentityRequest || self.identityLogoutInProgress || !self.launchingFinished || self.restoreInProgress || self.pendingIdentityRequests.count == 0) {
+    return nil;
+  }
+  QNIdentityRequestData *request = self.pendingIdentityRequests.firstObject;
+  [self.pendingIdentityRequests removeObjectAtIndex:0];
+  self.activeIdentityRequest = request;
+  self.identityInProgress = YES;
+  return request;
+}
 
-    [self userInfo:^(QONUser * _Nullable user, NSError * _Nullable error) {
-        for (QONUserInfoCompletionHandler completion in completions) {
-            run_block_on_main(completion, user, error);
-        }
+- (BOOL)isActiveIdentityRequest:(QNIdentityRequestData *)request {
+  [self.identityStateLock lock];
+  BOOL isActive = self.activeIdentityRequest == request;
+  [self.identityStateLock unlock];
+  return isActive;
+}
+
+- (void)startIdentityRequest:(nullable QNIdentityRequestData *)request {
+  if (!request || ![self isActiveIdentityRequest:request]) {
+    return;
+  }
+
+  NSString *identityID = request.identityID;
+  NSString *currentIdentityID = [self.userInfoService obtainCustomIdentityUserID];
+  if ([currentIdentityID isEqualToString:identityID]) {
+    [self finishIdentityRequest:request error:nil];
+    return;
+  }
+
+  // Clear the previous terminal-error latch before any network work for this
+  // identity begins. identityInProgress is already true, so Remote Config
+  // cannot observe a stable old scope between serialized attempts.
+  [self.remoteConfigManager userChangingRequestStarted];
+  if (![self isActiveIdentityRequest:request]) {
+    return;
+  }
+
+  __block __weak QNProductCenterManager *weakSelf = self;
+  if (self.launchError) {
+    [self launch:QONRequestTriggerIdentify identityRequest:request completion:^(QONLaunchResult * _Nullable result, NSError * _Nullable error) {
+      if (![weakSelf isActiveIdentityRequest:request]) {
+        return;
+      }
+      if (error) {
+        [weakSelf failIdentityRequest:request error:error];
+      } else {
+        [weakSelf processIdentity:identityID request:request];
+      }
     }];
+  } else {
+    [self processIdentity:identityID request:request];
+  }
 }
 
-- (void)fireIdentityError:(NSError * _Nullable)error identityId:(NSString *)identityId {
-    NSMutableArray *completions = self.pendingIdentityBlocks[identityId];
-    if (!completions) {
-        return;
+- (void)failIdentityRequest:(nullable QNIdentityRequestData *)request error:(NSError *)error {
+  BOOL mutationLockHeld = NO;
+  if (request) {
+    [self.identityMutationLock lock];
+    mutationLockHeld = YES;
+    if (![self isActiveIdentityRequest:request]) {
+      [self.identityMutationLock unlock];
+      return;
     }
-    self.pendingIdentityBlocks[identityId] = nil;
+  }
+  [self executeEntitlementsBlocksWithError:error];
+  [self.remoteConfigManager userChangingRequestFailedWithError:error];
+  [self finishIdentityRequest:request error:error];
+  if (mutationLockHeld) {
+    [self.identityMutationLock unlock];
+  }
+}
+
+- (void)finishIdentityRequest:(nullable QNIdentityRequestData *)request error:(nullable NSError *)error {
+  if (!request) {
+    // Retained for focused tests of processIdentity:. Public identify always
+    // owns a request record and therefore takes the guarded path below.
+    self.identityInProgress = NO;
+    [self handlePendingRequests:error];
+    return;
+  }
+
+  [self.identityStateLock lock];
+  if (self.activeIdentityRequest != request) {
+    [self.identityStateLock unlock];
+    return;
+  }
+  self.activeIdentityRequest = nil;
+  self.identityInProgress = NO;
+  [self.identityStateLock unlock];
+
+  [self deliverIdentityRequest:request error:error];
+  [self handlePendingRequests:error];
+}
+
+- (void)deliverIdentityRequest:(QNIdentityRequestData *)request error:(nullable NSError *)error {
+  NSArray<QONUserInfoCompletionHandler> *completions = [request.completions copy];
+  [request.completions removeAllObjects];
+  if (completions.count == 0) {
+    return;
+  }
+  if (error) {
     for (QONUserInfoCompletionHandler completion in completions) {
-        run_block_on_main(completion, nil, error);
+      run_block_on_main(completion, nil, error);
     }
+    return;
+  }
+  [self userInfo:^(QONUser * _Nullable user, NSError * _Nullable userInfoError) {
+    for (QONUserInfoCompletionHandler completion in completions) {
+      run_block_on_main(completion, user, userInfoError);
+    }
+  }];
 }
 
 

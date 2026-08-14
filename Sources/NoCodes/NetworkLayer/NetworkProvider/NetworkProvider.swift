@@ -41,14 +41,9 @@ class NetworkProvider: NSObject, NetworkProviderInterface, URLSessionDelegate {
     }
   }
 
-  // MARK: - Temporary SSL bypass for staging. Remove before release.
   func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-    if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-       let serverTrust = challenge.protectionSpace.serverTrust {
-      completionHandler(.useCredential, URLCredential(trust: serverTrust))
-    } else {
-      completionHandler(.performDefaultHandling, nil)
-    }
+    // Keep system trust-chain and hostname validation for every endpoint.
+    completionHandler(.performDefaultHandling, nil)
   }
 }
 

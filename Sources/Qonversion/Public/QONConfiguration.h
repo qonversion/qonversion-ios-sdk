@@ -13,6 +13,7 @@
 #import "QONDeferredPurchasesListener.h"
 #import "QONEnvironment.h"
 #import "QONPromoPurchasesDelegate.h"
+#import "QONRemoteConfigV2Configuration.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -81,6 +82,15 @@ NS_SWIFT_NAME(Qonversion.Configuration)
  */
 @property (nonatomic, copy, readonly) NSString *userDefaultsSuiteName;
 
+/**
+ Configuration of the experimental fetch/activate Remote Config surface, or nil
+ when the app never asked for it — which is the default.
+
+ Held and handed out by value, so mutating what this returns does not
+ reconfigure the SDK.
+ */
+@property (nonatomic, copy, readonly, nullable) QONRemoteConfigV2Configuration *remoteConfigV2Configuration QON_EXPERIMENTAL;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 /**
@@ -144,6 +154,20 @@ NS_SWIFT_NAME(Qonversion.Configuration)
  @param url your proxy server url
  */
 - (void)setProxyURL:(NSString *)url;
+
+/**
+ Enable the experimental fetch/activate Remote Config surface.
+
+ Without this call the surface stays dormant: the SDK builds no store, starts no
+ background work and contacts no endpoint, while
+ `Qonversion.shared().experimentalRemoteConfig` still serves the bundled
+ defaults. The surface is brought online during `Qonversion.initWithConfig:`, so
+ an identity change made afterwards rebinds it like any other.
+
+ @param configuration addressing of the Remote Config gateway, or nil to leave
+ the surface dormant.
+ */
+- (void)setRemoteConfigV2Configuration:(QONRemoteConfigV2Configuration * _Nullable)configuration QON_EXPERIMENTAL;
 
 - (id)copyWithZone:(NSZone * _Nullable)zone;
 

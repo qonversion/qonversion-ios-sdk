@@ -15,6 +15,9 @@
 #import <Qonversion/QONRemoteConfigurationSource.h>
 #import <Qonversion/QONSubscriptionPeriod.h>
 #import <Qonversion/QONRemoteConfig.h>
+#import <Qonversion/QONRemoteConfigValue.h>
+#import <Qonversion/QONRemoteConfigSnapshot.h>
+#import <Qonversion/QONRemoteConfigUpdate.h>
 #import <Qonversion/QONUserProperty.h>
 #import <Qonversion/QONUserProperties.h>
 #import <Qonversion/QONStoreKit2PurchaseModel.h>

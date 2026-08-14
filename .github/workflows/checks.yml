@@ -51,12 +51,18 @@ jobs:
           EXPECTED_URL="https://api2.qonversion.io/"
 
           MAIN_URL=$(grep 'kAPIBase = @"' Sources/Qonversion/Qonversion/Constants/QNAPIConstants/QNAPIConstants.m | sed 's/.*@"//;s/".*//')
+          REMOTE_CONFIG_V2_URL=$(grep 'kRemoteConfigV2APIBase = @"' Sources/Qonversion/Qonversion/Constants/QNAPIConstants/QNAPIConstants.m | sed 's/.*@"//;s/".*//')
           NOCODES_URL=$(grep 'baseURL = "' Sources/NoCodes/Assemblies/ServicesAssembly.swift | sed 's/.*= "//;s/".*//')
 
           FAILED=0
 
           if [ "$MAIN_URL" != "$EXPECTED_URL" ]; then
             echo "::error::Main API URL mismatch: expected '$EXPECTED_URL', got '$MAIN_URL'"
+            FAILED=1
+          fi
+
+          if [ "$REMOTE_CONFIG_V2_URL" != "$EXPECTED_URL" ]; then
+            echo "::error::Remote Config v2 API URL mismatch: expected '$EXPECTED_URL', got '$REMOTE_CONFIG_V2_URL'"
             FAILED=1
           fi
 

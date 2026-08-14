@@ -13,6 +13,12 @@
 #import "QONExperiment.h"
 #import "QONRemoteConfig.h"
 #import "QONRemoteConfigList.h"
+#import "QONRemoteConfigValue.h"
+#import "QONRemoteConfigSnapshot.h"
+#import "QONRemoteConfigUpdate.h"
+#import "QONRemoteConfigFetchResult.h"
+#import "QONRemoteConfigController.h"
+#import "QONRemoteConfigV2Configuration.h"
 #import "QONUser.h"
 #import "QONErrors.h"
 #import "QONStoreKitSugare.h"
@@ -37,6 +43,18 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
  Use `initWithConfig` instead.
  */
 - (instancetype)init NS_UNAVAILABLE;
+
+/**
+ Experimental fetch/activate Remote Config surface.
+
+ The controller always exists so bundled defaults can be read before the SDK
+ does anything, but it stays dormant — no network, no persistence, no identity
+ work — until the SDK is explicitly configured for this surface. It does not
+ replace `remoteConfig:completion:`; both can coexist.
+
+ @see QONRemoteConfigController
+ */
+@property (nonatomic, strong, readonly) QONRemoteConfigController *experimentalRemoteConfig QON_EXPERIMENTAL;
 
 /**
  An entry point to use Qonversion SDK. Call to initialize Qonversion SDK with required and extra configs.
@@ -308,6 +326,30 @@ NS_SWIFT_NAME(remoteConfigList(contextKeys:includeEmptyContextKey:completion:));
  @param completion completion block that includes information about the loaded remote configs.
  */
 - (void)remoteConfigList:(QONRemoteConfigListCompletionHandler)completion;
+
+/**
+ Reads a generated Remote Config default directly from
+ `qonversion_remote_config_defaults.json` in the application bundle.
+
+ This class method is synchronous and can be called before initWithConfig:. It
+ never initializes the SDK and never consults the network, identity, cache, or
+ Documents directory. Returns nil when the key is absent or the complete
+ artifact is missing or invalid. A JSON null is returned as NSNull.
+
+ @param contextKey context key whose bundled default should be returned.
+ */
++ (nullable id)fallbackRemoteConfigValueForContextKey:(NSString *)contextKey
+NS_SWIFT_NAME(fallbackRemoteConfigValue(contextKey:));
+
+/**
+ Instance convenience for the bundled Remote Config default getter. This has
+ the same bundle-only behavior as the class method and does not use instance
+ state.
+
+ @param contextKey context key whose bundled default should be returned.
+ */
+- (nullable id)fallbackRemoteConfigValueForContextKey:(NSString *)contextKey
+NS_SWIFT_NAME(fallbackRemoteConfigValue(contextKey:));
 
 /**
  Invalidates the in-memory cache of remote configs so the next remoteConfig or

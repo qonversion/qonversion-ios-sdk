@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
                               name:(NSString *)name
                               type:(QONRemoteConfigurationSourceType)type
                     assignmentType:(QONRemoteConfigurationAssignmentType)assignmentType
-                        contextKey:(NSString *)contextKey;
+                        contextKey:(nullable NSString *)contextKey;
 
 @end
 

@@ -15,9 +15,31 @@
 #import "QONExceptionManager.h"
 #import "QONUserProperty.h"
 #import "QONFallbackService.h"
+#import "QONRemoteConfigFallbackStore.h"
+#import "QONRemoteConfigController+Protected.h"
+#import "QONRemoteConfigV2Configuration+Protected.h"
 #import "QONRedemptionManager.h"
 
 static id shared = nil;
+
+/**
+ How the app was built.
+
+ Compile time and nothing else. It decides two things that must never disagree
+ with each other or drift at run time: whether a read before the first activate
+ asserts or silently activates the persisted release, and whether fetches are
+ throttled. Probing for an attached debugger was considered and rejected —
+ attaching one to a release build would quietly move the app onto the debug
+ read-guard semantics and serve it different configuration than the same binary
+ serves everyone else.
+ */
+static QONRemoteConfigV2ReadGuardBuildMode QONRemoteConfigV2AppBuildMode(void) {
+#if DEBUG
+  return QONRemoteConfigV2ReadGuardBuildModeDebug;
+#else
+  return QONRemoteConfigV2ReadGuardBuildModeRelease;
+#endif
+}
 
 @interface Qonversion()
 
@@ -32,6 +54,13 @@ static id shared = nil;
 @property (nonatomic, strong) QONFallbackService *fallbackService;
 @property (nonatomic, assign) BOOL debugMode;
 @property (nonatomic, assign) QONLaunchMode launchMode;
+
+- (void)identify:(NSString *)userID
+    remoteConfigAwareCompletion:(QONUserInfoCompletionHandler _Nullable)completion;
+
+- (void)configureExperimentalRemoteConfigWithConfiguration:(QONRemoteConfigV2Configuration *_Nullable)configuration
+                                                projectKey:(NSString *)projectKey
+                                                sdkVersion:(NSString *)sdkVersion;
 
 @end
 
@@ -72,7 +101,15 @@ static bool _isInitialized = NO;
 #pragma clang diagnostic pop
   [[Qonversion sharedInstance] setDeferredPurchasesListener:configCopy.deferredPurchasesListener];
   [[Qonversion sharedInstance] setPromoPurchasesDelegate:configCopy.promoPurchasesDelegate];
-  
+
+  // Brought online here, before anything in the process can identify: the
+  // configure call binds the canonical identity itself, and identify/logout only
+  // rebind a surface that is already configured. A configuration that arrives
+  // after the first identify would silently miss it.
+  [[Qonversion sharedInstance] configureExperimentalRemoteConfigWithConfiguration:configCopy.remoteConfigV2Configuration
+                                                                       projectKey:configCopy.projectKey
+                                                                       sdkVersion:configCopy.version];
+
   [[Qonversion sharedInstance] launchWithKey:configCopy.projectKey completion:^(QONLaunchResult * _Nonnull result, NSError * _Nullable error) {
     
   }];
@@ -128,15 +165,39 @@ static bool _isInitialized = NO;
 }
 
 - (void)identify:(NSString *)userID {
-  [self.productCenterManager identify:userID completion:nil];
+  [self identify:userID remoteConfigAwareCompletion:nil];
 }
 
 - (void)identify:(NSString *)userID completion:(QONUserInfoCompletionHandler)completion {
-  [self.productCenterManager identify:userID completion:completion];
+  [self identify:userID remoteConfigAwareCompletion:completion];
+}
+
+- (void)identify:(NSString *)userID
+    remoteConfigAwareCompletion:(QONUserInfoCompletionHandler _Nullable)completion {
+  QONRemoteConfigController *controller = self.experimentalRemoteConfig;
+  if (!controller.isConfigured) {
+    [self.productCenterManager identify:userID completion:completion];
+    return;
+  }
+  __weak typeof(self) weakSelf = self;
+  [self.productCenterManager identify:userID completion:^(QONUser *user, NSError *error) {
+    // A failed identify leaves the canonical identity untouched, so there is
+    // nothing to rebind and no reason to drop the readable configuration.
+    if (!error) {
+      [controller switchToCanonicalUserID:[weakSelf.userInfoService obtainUserID]
+                                   change:QONRemoteConfigControllerIdentityChangeIdentify];
+    }
+    if (completion) completion(user, error);
+  }];
 }
 
 - (void)logout {
   [self.productCenterManager logout];
+  QONRemoteConfigController *controller = self.experimentalRemoteConfig;
+  if (controller.isConfigured) {
+    [controller switchToCanonicalUserID:[self.userInfoService obtainUserID]
+                                 change:QONRemoteConfigControllerIdentityChangeLogout];
+  }
 }
 
 - (void)presentCodeRedemptionSheet {
@@ -249,6 +310,19 @@ static bool _isInitialized = NO;
   [self.remoteConfigManager obtainRemoteConfigList:completion];
 }
 
++ (id)fallbackRemoteConfigValueForContextKey:(NSString *)contextKey {
+  static QONRemoteConfigFallbackStore *fallbackStore = nil;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    fallbackStore = [[QONRemoteConfigFallbackStore alloc] initWithBundle:NSBundle.mainBundle];
+  });
+  return [fallbackStore valueForContextKey:contextKey];
+}
+
+- (id)fallbackRemoteConfigValueForContextKey:(NSString *)contextKey {
+  return [Qonversion fallbackRemoteConfigValueForContextKey:contextKey];
+}
+
 - (void)invalidateRemoteConfigsCache {
   [self.remoteConfigManager invalidateRemoteConfigsCache];
 }
@@ -320,13 +394,23 @@ static bool _isInitialized = NO;
     _fallbackService = fallbackService;
     _propertiesManager = [QNUserPropertiesManager new];
     _attributionManager = [QNAttributionManager new];
-    _remoteConfigManager = [QONRemoteConfigManager new];
+    _remoteConfigManager = [[QONRemoteConfigManager alloc] initWithLocalStorage:_localStorage];
     _exceptionManager = [QONExceptionManager shared];
     _redemptionManager = [QONRedemptionManager new];
     _redemptionManager.productCenterManager = _productCenterManager;
     _redemptionManager.userInfoService = _userInfoService;
 
+    // Constructed for real, but dormant: without an explicit configuration call
+    // it owns no store, no transport and no identity binding.
+    _experimentalRemoteConfig = [[QONRemoteConfigController alloc]
+        initWithFallbackStore:[[QONRemoteConfigFallbackStore alloc] initWithBundle:NSBundle.mainBundle]
+             callbackExecutor:dispatch_get_main_queue()];
+
     _productCenterManager.remoteConfigManager = _remoteConfigManager;
+    // A restore can discover this installation belongs to another user. The
+    // product center is where that is noticed, so it is where both remote config
+    // surfaces have to be reachable from.
+    _productCenterManager.experimentalRemoteConfigController = _experimentalRemoteConfig;
     _remoteConfigManager.productCenterManager = _productCenterManager;
     _remoteConfigManager.userPropertiesManager = _propertiesManager;
     
@@ -334,6 +418,63 @@ static bool _isInitialized = NO;
   }
   
   return self;
+}
+
+/**
+ Brings the experimental Remote Config surface online, or leaves it dormant.
+
+ The gateway is addressed with the project key in both roles it plays there: it
+ is the bearer credential the routes authenticate, and it is the key the stored
+ scope and every downloaded envelope are checked against.
+ */
+- (void)configureExperimentalRemoteConfigWithConfiguration:(QONRemoteConfigV2Configuration *_Nullable)configuration
+                                                projectKey:(NSString *)projectKey
+                                                sdkVersion:(NSString *)sdkVersion {
+  if (!configuration) {
+    return;
+  }
+
+  // The configuration refused anything that is not an addressable http(s) url,
+  // so this cannot come back nil.
+  NSURL *baseURL = [NSURL URLWithString:configuration.baseURL];
+
+  QONRemoteConfigV2ReadGuardBuildMode buildMode = QONRemoteConfigV2AppBuildMode();
+  NSNumber *minimumFetchInterval =
+      [configuration effectiveMinimumFetchIntervalMillisecondsForBuildMode:buildMode];
+
+  QNDevice *device = [QNDevice current];
+  QONRemoteConfigV2DeviceInstallDateProvider *installDateProvider =
+      [[QONRemoteConfigV2DeviceInstallDateProvider alloc]
+           initWithLocalStorage:self.localStorage
+       systemInstallDateSeconds:[QONRemoteConfigV2DeviceInstallDateProvider
+                                    installDateSecondsFromSystemFact:device.installDate]
+                          clock:[QONRemoteConfigSystemClock new]];
+  // Every device fact is normalized by the provider, which owns the wire
+  // convention. Nothing here may reorder these arguments silently: the wiring
+  // test pins all seven fields end to end.
+  QONRemoteConfigV2DeviceClientContextProvider *clientContextProvider =
+      [QONRemoteConfigV2DeviceClientContextProvider providerWithPlatform:kQNPlatform
+                                                             appVersion:device.appVersion
+                                                              osVersion:device.osVersion
+                                                             sdkVersion:sdkVersion
+                                                       localeIdentifier:NSLocale.currentLocale.localeIdentifier
+                                                            deviceModel:device.model
+                                                    installDateProvider:installDateProvider];
+
+  BOOL configured = [self.experimentalRemoteConfig
+                configureWithBaseURL:baseURL
+                        projectToken:projectKey
+                          projectKey:projectKey
+                         environment:configuration.environmentUid
+                     canonicalUserID:[self.userInfoService obtainUserID]
+                  readGuardBuildMode:buildMode
+                        localStorage:self.localStorage
+               clientContextProvider:clientContextProvider
+    minimumFetchIntervalMilliseconds:minimumFetchInterval];
+
+  if (!configured) {
+    QONVERSION_ERROR(@"❌ Remote Config: the experimental surface could not be configured");
+  }
 }
 
 - (void)collectAdvertisingId {

@@ -11,8 +11,21 @@
 #import "QONExperiment.h"
 
 @class QONRemoteConfigService, QNProductCenterManager, QNUserPropertiesManager, QONFallbackService;
+@protocol QNLocalStorage;
 
 NS_ASSUME_NONNULL_BEGIN
+
+// Internal diagnostic contract. It intentionally lives outside the public
+// headers so durable fallback observability can evolve without changing the
+// customer-facing Remote Config model.
+typedef NS_ENUM(NSInteger, QONRemoteConfigDeliveryOrigin) {
+  QONRemoteConfigDeliveryOriginUnknown = 0,
+  QONRemoteConfigDeliveryOriginServer = 1,
+  QONRemoteConfigDeliveryOriginMemory = 2,
+  QONRemoteConfigDeliveryOriginRetryBaseline = 3,
+  QONRemoteConfigDeliveryOriginDiskLastKnownGood = 4,
+  QONRemoteConfigDeliveryOriginBundle = 5,
+};
 
 @interface QONRemoteConfigManager : NSObject
 
@@ -20,7 +33,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) QONFallbackService *fallbackService;
 @property (nonatomic, strong) QNProductCenterManager *productCenterManager;
 @property (nonatomic, strong) QNUserPropertiesManager *userPropertiesManager;
+@property (atomic, assign, readonly) QONRemoteConfigDeliveryOrigin lastDeliveryOrigin;
 
+- (instancetype)initWithLocalStorage:(nullable id<QNLocalStorage>)localStorage;
+
+- (void)userChangingRequestStarted;
 - (void)userChangingRequestFailedWithError:(NSError *)error;
 - (void)handlePendingRequests;
 - (void)obtainRemoteConfigWithContextKey:(NSString * _Nullable)contextKey completion:(QONRemoteConfigCompletionHandler)completion;
@@ -31,14 +48,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)attachUserToRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
 - (void)detachUserFromRemoteConfiguration:(NSString *)remoteConfigurationId completion:(QONRemoteConfigurationAttachCompletionHandler)completion;
 - (void)userHasBeenChanged;
+- (void)userHasBeenChangedToUserID:(NSString *)userID;
 
 /**
  Marks every cached remote config stale so the next load fetches a fresh
  targeting evaluation. Non-destructive: loading states and pending completions
  survive; the cache generation bump keeps in-flight loads from re-caching a
  superseded response and re-issues an awaited in-flight load once
- (DEV-1236 B4). Runs synchronously on the caller thread — see the
- implementation note about ordering with handlePendingRequests.
+ (DEV-1236 B4). Synchronously joins the manager's serial state executor, which
+ preserves ordering with handlePendingRequests and identity changes.
  */
 - (void)invalidateRemoteConfigsCache;
 

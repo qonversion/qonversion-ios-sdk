@@ -128,9 +128,38 @@
   [_partialManagerMock processIdentity:identityId];
 
   // Then
-  OCMVerify([_mockClient setUserID:mergedUid]);
-  OCMVerify([_mockRemoteConfigManager userHasBeenChanged]);
+  OCMVerify([_mockRemoteConfigManager userHasBeenChangedToUserID:mergedUid]);
+  OCMReject([_mockClient setUserID:[OCMArg any]]);
   OCMVerifyAll(_partialManagerMock); // resetActualPermissionsCache + launchWithTrigger
+}
+
+- (void)testProcessIdentity_DifferentUid_RemainsUnstableUntilRemoteConfigUserTransition {
+  NSString *identityId = @"user@example.com";
+  NSString *currentUid = @"uid_initial";
+  NSString *mergedUid = @"uid_merged_999";
+
+  OCMStub([_mockUserInfoService obtainUserID]).andReturn(currentUid);
+  OCMStub([_mockIdentityManager identify:identityId completion:[OCMArg invokeBlockWithArgs:mergedUid, [NSNull null], nil]]);
+  OCMStub([_partialManagerMock resetActualPermissionsCache]);
+  OCMStub([_partialManagerMock launchWithTrigger:QONRequestTriggerIdentify completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    __unsafe_unretained QONLaunchCompletionHandler completion = nil;
+    [invocation getArgument:&completion atIndex:3];
+    completion([QONLaunchResult new], nil);
+  });
+
+  _manager.launchingFinished = YES;
+  _manager.identityInProgress = YES;
+
+  __block BOOL stableDuringUserTransition = YES;
+  OCMStub([_mockRemoteConfigManager userHasBeenChangedToUserID:mergedUid]).andDo(^(NSInvocation *invocation) {
+    stableDuringUserTransition = [self.manager isUserStable];
+  });
+
+  [_partialManagerMock processIdentity:identityId];
+
+  XCTAssertFalse(stableDuringUserTransition,
+                 @"the new RC scope must replace the old scope before callers can observe a stable identity");
+  XCTAssertTrue([_manager isUserStable]);
 }
 
 /*
@@ -173,6 +202,7 @@
   OCMReject([_partialManagerMock resetActualPermissionsCache]);
   OCMReject([_partialManagerMock launchWithTrigger:QONRequestTriggerIdentify completion:[OCMArg any]]);
   OCMReject([_mockRemoteConfigManager userHasBeenChanged]);
+  OCMReject([_mockRemoteConfigManager userHasBeenChangedToUserID:[OCMArg any]]);
   OCMReject([_mockClient setUserID:[OCMArg any]]);
 
   // When

@@ -19,6 +19,7 @@ NSString *const kTreatmentGroupType = @"treatment";
 
 NSString *const kRemoteConfigurationAssignmentTypeAuto = @"auto";
 NSString *const kRemoteConfigurationAssignmentTypeManual = @"manual";
+NSString *const kRemoteConfigurationAssignmentTypeFrozen = @"frozen";
 
 NSString *const kRemoteConfigurationSourceTypeControlGroup = @"experiment_control_group";
 NSString *const kRemoteConfigurationSourceTypeTreatmentGroup = @"experiment_treatment_group";
@@ -46,7 +47,8 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
     
     _remoteConfigurationAssignmentTypes = @{
       kRemoteConfigurationAssignmentTypeAuto: @(QONRemoteConfigurationAssignmentTypeAuto),
-      kRemoteConfigurationAssignmentTypeManual: @(QONRemoteConfigurationAssignmentTypeManual)
+      kRemoteConfigurationAssignmentTypeManual: @(QONRemoteConfigurationAssignmentTypeManual),
+      kRemoteConfigurationAssignmentTypeFrozen: @(QONRemoteConfigurationAssignmentTypeFrozen)
     };
     
     _remoteConfigurationSourceTypes = @{
@@ -63,12 +65,25 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   if (![remoteConfigData isKindOfClass:[NSDictionary class]]) {
     return nil;
   }
-  NSDictionary *payload = remoteConfigData[@"payload"];
-  NSDictionary *experimentData = remoteConfigData[@"experiment"];
+  id payloadObject = remoteConfigData[@"payload"];
+  NSDictionary *payload = [payloadObject isKindOfClass:[NSDictionary class]] ? payloadObject : nil;
+  if (payloadObject && payloadObject != [NSNull null] && !payload) {
+    return nil;
+  }
+
+  id experimentObject = remoteConfigData[@"experiment"];
+  NSDictionary *experimentData = [experimentObject isKindOfClass:[NSDictionary class]] ? experimentObject : nil;
+  if (experimentObject && experimentObject != [NSNull null] && !experimentData) {
+    return nil;
+  }
+
   NSDictionary *remoteConfigurationSourceData = remoteConfigData[@"source"];
   
   QONRemoteConfigurationSource *remoteConfigurationSource = [self mapRemoteConfigurationSource:remoteConfigurationSourceData];
   QONExperiment *experiment = [self mapExperiment:experimentData];
+  if (!remoteConfigurationSource || (experimentData && !experiment)) {
+    return nil;
+  }
   
   return [[QONRemoteConfig alloc] initWithPayload:payload experiment:experiment source:remoteConfigurationSource];
 }
@@ -103,6 +118,10 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   }
   NSString *experimentId = experimentData[@"uid"];
   NSString *experimentName = experimentData[@"name"];
+  if (![experimentId isKindOfClass:[NSString class]] || experimentId.length == 0 ||
+      ![experimentName isKindOfClass:[NSString class]]) {
+    return nil;
+  }
   
   return [[QONExperiment alloc] initWithIdentifier:experimentId name:experimentName group:group];
 }
@@ -114,15 +133,27 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   
   NSString *uid = remoteConfigurationSourceData[@"uid"];
   NSString *name = remoteConfigurationSourceData[@"name"];
-  NSString *contextKey = remoteConfigurationSourceData[@"context_key"];
+  NSString *typeRawValue = remoteConfigurationSourceData[@"type"];
+  NSString *assignmentTypeRawValue = remoteConfigurationSourceData[@"assignment_type"];
+  if (![uid isKindOfClass:[NSString class]] || uid.length == 0 ||
+      ![name isKindOfClass:[NSString class]] ||
+      ![typeRawValue isKindOfClass:[NSString class]] ||
+      ![assignmentTypeRawValue isKindOfClass:[NSString class]]) {
+    return nil;
+  }
+
+  id contextKeyObject = remoteConfigurationSourceData[@"context_key"];
+  if (contextKeyObject && contextKeyObject != [NSNull null] &&
+      ![contextKeyObject isKindOfClass:[NSString class]]) {
+    return nil;
+  }
+  NSString *contextKey = [contextKeyObject isKindOfClass:[NSString class]] ? contextKeyObject : nil;
   if ([contextKey isEqualToString:@""]) {
     contextKey = nil;
   }
 
-  NSString *typeRawValue = remoteConfigurationSourceData[@"type"];
   QONRemoteConfigurationSourceType type = [self mapRemoteConfigurationSourceTypeFromString:typeRawValue];
 
-  NSString *assignmentTypeRawValue = remoteConfigurationSourceData[@"assignment_type"];
   QONRemoteConfigurationAssignmentType assignmentType = [self mapRemoteConfigurationAssignmentTypeFromString:assignmentTypeRawValue];
 
   return [[QONRemoteConfigurationSource alloc] initWithIdentifier:uid name:name type:type assignmentType:assignmentType contextKey:contextKey];
@@ -136,6 +167,11 @@ NSString *const kRemoteConfigurationSourceTypeRemoteConfiguration = @"remote_con
   NSString *groupId = experimentGroupData[@"uid"];
   NSString *groupName = experimentGroupData[@"name"];
   NSString *groupTypeRawValue = experimentGroupData[@"type"];
+  if (![groupId isKindOfClass:[NSString class]] || groupId.length == 0 ||
+      ![groupName isKindOfClass:[NSString class]] ||
+      ![groupTypeRawValue isKindOfClass:[NSString class]]) {
+    return nil;
+  }
   QONExperimentGroupType groupType = [self mapGroupTypeFromString:groupTypeRawValue];
   
   return [[QONExperimentGroup alloc] initWithIdentifier:groupId type:groupType name:groupName];

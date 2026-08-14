@@ -71,6 +71,19 @@ static NSString *const kSDKVersion = @"6.14.0";
   _promoPurchasesDelegate = delegate;
 }
 
+@synthesize remoteConfigV2Configuration = _remoteConfigV2Configuration;
+
+- (void)setRemoteConfigV2Configuration:(QONRemoteConfigV2Configuration * _Nullable)configuration {
+  _remoteConfigV2Configuration = [configuration copy];
+}
+
+- (QONRemoteConfigV2Configuration * _Nullable)remoteConfigV2Configuration {
+  // Handed out by value, like it was taken in. The object is mutable — its fetch
+  // interval has a setter — so returning the stored one would let any caller
+  // reconfigure the SDK through a getter it was given for reading.
+  return [_remoteConfigV2Configuration copy];
+}
+
 - (void)setProxyURL:(NSString *)url {
   if (![url hasPrefix:@"http://"] && ![url hasPrefix:@"https://"]) {
     _baseURL = [NSString stringWithFormat:@"https://%@", url];
@@ -94,6 +107,7 @@ static NSString *const kSDKVersion = @"6.14.0";
 #pragma clang diagnostic pop
   [copyConfig setDeferredPurchasesListener:_deferredPurchasesListener];
   [copyConfig setCustomUserDefaults:_customUserDefaults];
+  [copyConfig setRemoteConfigV2Configuration:_remoteConfigV2Configuration];
   [copyConfig setProxyURL:_baseURL];
   
   return copyConfig;
