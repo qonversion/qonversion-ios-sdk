@@ -1,3 +1,6 @@
+#if QN_UNIT_TEST_ISOLATION
+#import "QNUnitIsolationTransport.h"
+#endif
 #import "QNAttributionManager.h"
 #import "QNAPIClient.h"
 #import "QNUtils.h"
@@ -24,6 +27,10 @@
 }
 
 - (void)addAppleSearchAttributionData {
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport denyPlatformOperation];
+  return;
+#endif
   double delayInSeconds = 5.0;
   dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
   dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
@@ -32,6 +39,10 @@
 }
 
 - (void)fetchAppleSearchAttributionData {
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport denyPlatformOperation];
+  return;
+#endif
 #if TARGET_OS_IOS || TARGET_OS_VISION
   NSString *token;
   NSTimeInterval requestTimestamp = [NSDate date].timeIntervalSince1970;
@@ -96,6 +107,10 @@
 }
 
 - (void)tryToFetchAppleSearchAttributionData:(id)ADClientSharedClientInstance {
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport denyPlatformOperation];
+  return;
+#endif
   SEL iAdDetailsSelector = NSSelectorFromString(@"requestAttributionDetailsWithBlock:");
   if (![ADClientSharedClientInstance respondsToSelector:iAdDetailsSelector]) {
     return;

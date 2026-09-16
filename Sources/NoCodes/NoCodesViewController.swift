@@ -107,6 +107,11 @@ final class NoCodesViewController: UIViewController {
   }
     
   override func viewDidLoad() {
+#if QN_UNIT_TEST_ISOLATION
+    // No WKWebView, HTML subresources or Safari/UI delegation in this unit mode.
+    _ = QNUnitIsolationTransport.blockPlatformOperation()
+    return
+#else
     super.viewDidLoad()
     
     let userContentController = WKUserContentController()
@@ -164,6 +169,7 @@ final class NoCodesViewController: UIViewController {
         logger.error(LoggerInfoMessages.screenLoadingFailed.rawValue)
       }
     }
+#endif
   }
 
   override func viewDidAppear(_ animated: Bool) {
@@ -201,10 +207,15 @@ final class NoCodesViewController: UIViewController {
   }
 
   override func viewDidLayoutSubviews() {
+#if QN_UNIT_TEST_ISOLATION
+    // The isolated view never creates these native views.
+    return
+#else
     super.viewDidLayoutSubviews()
     
     activityIndicator.center = view.center
     webView.frame = view.frame
+#endif
   }
   
   func close() {
@@ -558,6 +569,10 @@ extension NoCodesViewController {
   }
 
   private func handle(urlAction: NoCodesAction) {
+#if QN_UNIT_TEST_ISOLATION
+    _ = QNUnitIsolationTransport.blockPlatformOperation()
+    return
+#else
     guard let urlString: String = urlAction.parameters?[Constants.url.rawValue] as? String,
           let url = URL(string: urlString) else {
       logger.error(LoggerInfoMessages.urlHandlingFailed.rawValue)
@@ -567,9 +582,14 @@ extension NoCodesViewController {
     let safariVC = SFSafariViewController(url: url)
     navigationController?.present(safariVC, animated: true)
     delegate.noCodesFinishedExecuting(action: urlAction)
+#endif
   }
   
   private func handle(deepLinkAction: NoCodesAction) {
+#if QN_UNIT_TEST_ISOLATION
+    _ = QNUnitIsolationTransport.blockPlatformOperation()
+    return
+#else
     guard let deepLinkString: String = deepLinkAction.parameters?[Constants.deeplink.rawValue] as? String,
           let url = URL(string: deepLinkString) else {
       logger.error(LoggerInfoMessages.deeplingHandlingFailed.rawValue)
@@ -583,6 +603,7 @@ extension NoCodesViewController {
       logger.error(LoggerInfoMessages.deeplingHandlingFailed.rawValue)
       close(action: deepLinkAction)
     }
+#endif
   }
   
   private func handle(customAction: NoCodesAction) {

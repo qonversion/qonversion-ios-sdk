@@ -1,0 +1,76 @@
+{
+  "runtime_authorized": false,
+  "fresh_host_process_per_selector": true,
+  "maximum_selectors_per_invocation": 1,
+  "selectors": [
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationTransportTests/testModeAndHostIdentity"
+    },
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationTransportTests/testUnmatchedRequestIsDenied"
+    },
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationTransportTests/testNativeLoopbackControlThenGuardedRequestCannotConnect"
+    },
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationTransportTests/testBoundedFixtureThenExhaustion"
+    },
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationTransportTests/testBackgroundConfigurationRejectedBeforeSessionCreation"
+    },
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationTransportTests/testLateCallbackCannotConsumeNextCaseFixture"
+    },
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationTransportTests/testConfigurationOverrideCannotReplaceMandatoryProtocol"
+    },
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationTransportTests/testInjectedNativeSessionRejectedBeforeUse"
+    },
+    {
+      "stage": 3,
+      "selector": "QonversionTests/QNUnitIsolationSDKStartupTests/testSecondarySDKInitializationUsesFakeStoreAndDeniedTransport"
+    },
+    {
+      "stage": 2,
+      "selector": "QonversionTests/QNUnitIsolationPlatformTests/testAttributionDeniedBeforeDelayedPlatformTask"
+    },
+    {
+      "stage": 2,
+      "selector": "QonversionTests/QNUnitIsolationPlatformTests/testStoreObserverIsInMemoryAndRestoreDenied"
+    },
+    {
+      "stage": 2,
+      "selector": "QonversionTests/QNUnitIsolationPlatformTests/testProductRequestDeniedBeforeStoreRequestStart"
+    },
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationNoCodesTransportTests/testBothNetworkProviderConstructorsDeny"
+    },
+    {
+      "stage": 1,
+      "selector": "QonversionTests/QNUnitIsolationNoCodesTransportTests/testDefaultImagePreloaderUsesGuardedSession"
+    },
+    {
+      "stage": 2,
+      "selector": "QonversionTests/QNUnitIsolationStoreKit2Tests/testSyncRejectedBeforeTransactionSequence"
+    },
+    {
+      "stage": 3,
+      "selector": "QonversionTests/QNUnitIsolationNoCodesStartupTests/testSecondaryNoCodesInitializationCannotUseProductionTransport"
+    },
+    {
+      "stage": 2,
+      "selector": "QonversionTests/QNUnitIsolationWebKitTests/testSecondaryViewConstructionDoesNotCreateWebKit"
+    }
+  ],
+  "full_shared_process_suite_supported": false
+}

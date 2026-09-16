@@ -1,3 +1,6 @@
+#if QN_UNIT_TEST_ISOLATION
+#import "QNUnitIsolationTransport.h"
+#endif
 //
 //  QONRedemptionManager.m
 //  Qonversion
@@ -15,11 +18,22 @@
 NSString * const QONRedemptionErrorDomain = @"com.qonversion.redemption";
 
 @implementation QONRedemptionManager
+#if QN_UNIT_TEST_ISOLATION
+@synthesize session = _session;
+- (void)setSession:(NSURLSession *)session {
+  [QNUnitIsolationTransport requireGuardedSession:session];
+  _session = session;
+}
+#endif
 
 - (instancetype)init {
   self = [super init];
   if (self) {
+#if QN_UNIT_TEST_ISOLATION
+    _session = [QNUnitIsolationTransport sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration delegate:nil queue:nil];
+#else
     _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
+#endif
     _baseURL = kAPIBase;
   }
   return self;
@@ -340,6 +354,9 @@ NSString * const QONRedemptionErrorDomain = @"com.qonversion.redemption";
   NSString *source = [[NSUserDefaults standardUserDefaults] stringForKey:keyQSource] ?: @"iOS";
   [request addValue:source forHTTPHeaderField:@"Source"];
 
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport requireGuardedSession:self.session];
+#endif
   NSURLSessionDataTask *task = [self.session dataTaskWithRequest:request
                                                completionHandler:^(NSData * _Nullable responseData,
                                                                    NSURLResponse * _Nullable response,

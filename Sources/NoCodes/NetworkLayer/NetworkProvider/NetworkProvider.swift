@@ -19,15 +19,26 @@ class NetworkProvider: NSObject, NetworkProviderInterface, URLSessionDelegate {
       config.timeoutIntervalForRequest = timeout
       config.timeoutIntervalForResource = timeout
     }
+#if QN_UNIT_TEST_ISOLATION
+    session = QNUnitIsolationTransport.session(configuration: config, delegate: self, queue: nil)
+#else
     session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+#endif
   }
 
   override init() {
     super.init()
+#if QN_UNIT_TEST_ISOLATION
+    session = QNUnitIsolationTransport.session(configuration: .default, delegate: self, queue: nil)
+#else
     session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+#endif
   }
 
   func send(request: URLRequest) async throws -> (Data, URLResponse) {
+#if QN_UNIT_TEST_ISOLATION
+    QNUnitIsolationTransport.requireGuarded(session)
+#endif
     return try await withCheckedThrowingContinuation { continuation in
       session.dataTask(with: request) { data, response, error in
         if let error = error {

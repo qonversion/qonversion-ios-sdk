@@ -15,11 +15,9 @@
 #import "QNUserInfoServiceInterface.h"
 #import "QONRequestTrigger.h"
 #import "QNTestConstants.h"
+#import "QNUnitIsolationTransport.h"
 
-#pragma mark - URLProtocol stub
-
-@interface QONRedemptionURLProtocolStub : NSURLProtocol
-@end
+#pragma mark - In-memory fixture data
 
 static NSInteger gStubStatusCode = 200;
 static NSData *gStubBody = nil;
@@ -31,72 +29,6 @@ static NSMutableArray<NSDictionary *> *gStubHeaders = nil;
 // Per-URL queue: maps endpoint path -> NSArray of dicts
 //   { @"status": NSNumber, @"body": NSData, @"error": NSError (optional) }
 static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil;
-
-@implementation QONRedemptionURLProtocolStub
-
-+ (BOOL)canInitWithRequest:(NSURLRequest *)request { return YES; }
-+ (NSURLRequest *)canonicalRequestForRequest:(NSURLRequest *)request { return request; }
-+ (BOOL)requestIsCacheEquivalent:(NSURLRequest *)a toRequest:(NSURLRequest *)b { return NO; }
-
-- (void)startLoading {
-  NSURL *url = self.request.URL;
-  if (gStubURLs) {
-    [gStubURLs addObject:url];
-  }
-  if (gStubBodies && self.request.HTTPBody) {
-    id parsed = [NSJSONSerialization JSONObjectWithData:self.request.HTTPBody options:0 error:nil];
-    if ([parsed isKindOfClass:[NSDictionary class]]) {
-      [gStubBodies addObject:parsed];
-    }
-  }
-  if (gStubHeaders) {
-    [gStubHeaders addObject:(self.request.allHTTPHeaderFields ?: @{})];
-  }
-
-  // Per-path queue takes precedence (multi-step flows like 409 → status).
-  NSString *path = url.path ?: @"";
-  NSDictionary *response = nil;
-  if (gStubQueueByPath) {
-    for (NSString *key in gStubQueueByPath.allKeys) {
-      if ([path hasSuffix:key]) {
-        NSMutableArray *queue = gStubQueueByPath[key];
-        if (queue.count > 0) {
-          response = queue.firstObject;
-          [queue removeObjectAtIndex:0];
-        }
-        break;
-      }
-    }
-  }
-
-  NSInteger status = gStubStatusCode;
-  NSData *body = gStubBody;
-  NSError *error = gStubError;
-  if (response) {
-    status = [response[@"status"] integerValue];
-    body = response[@"body"];
-    error = response[@"error"];
-  }
-
-  if (error) {
-    [self.client URLProtocol:self didFailWithError:error];
-    return;
-  }
-
-  NSHTTPURLResponse *httpResponse = [[NSHTTPURLResponse alloc] initWithURL:url
-                                                                statusCode:status
-                                                               HTTPVersion:@"HTTP/1.1"
-                                                              headerFields:@{@"Content-Type": @"application/json"}];
-  [self.client URLProtocol:self didReceiveResponse:httpResponse cacheStoragePolicy:NSURLCacheStorageNotAllowed];
-  if (body) {
-    [self.client URLProtocol:self didLoadData:body];
-  }
-  [self.client URLProtocolDidFinishLoading:self];
-}
-
-- (void)stopLoading {}
-
-@end
 
 #pragma mark - Tests
 
@@ -110,6 +42,7 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
 
 - (void)setUp {
   [super setUp];
+  [QNUnitIsolationTransport beginCaseWithExpectedDenials:0 platformDenials:0];
 
   // Reset stub state
   gStubStatusCode = 200;
@@ -121,12 +54,11 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   gStubQueueByPath = [NSMutableDictionary new];
 
   NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
-  config.protocolClasses = @[[QONRedemptionURLProtocolStub class]];
-  NSURLSession *session = [NSURLSession sessionWithConfiguration:config];
+  NSURLSession *session = [QNUnitIsolationTransport sessionWithConfiguration:config delegate:nil queue:nil];
 
   _manager = [QONRedemptionManager new];
   _manager.session = session;
-  _manager.baseURL = @"https://api2.qonversion.io/";
+  _manager.baseURL = @"https://unit.example.invalid/";
 
   _mockProductCenterManager = OCMClassMock([QNProductCenterManager class]);
   _mockUserInfoService = OCMProtocolMock(@protocol(QNUserInfoServiceInterface));
@@ -144,7 +76,36 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   gStubBodies = nil;
   gStubHeaders = nil;
   gStubQueueByPath = nil;
+  XCTAssertTrue([QNUnitIsolationTransport finishCase]);
   [super tearDown];
+}
+
+
+- (void)prepareFixtureResponses {
+  for (NSString *endpoint in @[kWebRedeemEndpoint, kWebRedeemStatusEndpoint, kWebRedeemReissueEndpoint]) {
+    NSArray *responses = gStubQueueByPath[endpoint];
+    if (!responses) {
+      NSMutableDictionary *response = [@{@"status": @(gStubStatusCode), @"body": gStubBody ?: [NSData data]} mutableCopy];
+      if (gStubError) response[@"error"] = gStubError;
+      responses = @[response];
+    }
+    NSURL *url = [NSURL URLWithString:[self.manager.baseURL stringByAppendingString:endpoint]];
+    for (NSDictionary *response in responses) {
+      [QNUnitIsolationTransport enqueueMethod:@"POST" URL:url status:[response[@"status"] integerValue]
+        data:response[@"body"] ?: [NSData data] error:response[@"error"]];
+    }
+  }
+}
+- (void)captureFixtureRequests {
+  [gStubURLs removeAllObjects]; [gStubBodies removeAllObjects]; [gStubHeaders removeAllObjects];
+  for (NSURLRequest *request in [QNUnitIsolationTransport capturedRequests]) {
+    [gStubURLs addObject:request.URL];
+    if (request.HTTPBody) {
+      id body = [NSJSONSerialization JSONObjectWithData:request.HTTPBody options:0 error:nil];
+      if ([body isKindOfClass:NSDictionary.class]) [gStubBodies addObject:body];
+    }
+    [gStubHeaders addObject:request.allHTTPHeaderFields ?: @{}];
+  }
 }
 
 #pragma mark - URL parsing
@@ -198,7 +159,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/garbage"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultInvalidToken);
     [exp fulfill];
   }];
@@ -218,7 +180,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultSuccess);
     XCTAssertEqual(gStubURLs.count, (NSUInteger)1);
     XCTAssertTrue([gStubURLs.firstObject.path hasSuffix:kWebRedeemEndpoint]);
@@ -258,7 +221,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *completionExp = [self expectationWithDescription:@"completion called"];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultSuccess);
     [completionExp fulfill];
   }];
@@ -274,7 +238,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultInvalidToken);
     [exp fulfill];
   }];
@@ -289,7 +254,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultTokenExpired);
     [exp fulfill];
   }];
@@ -312,7 +278,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultAlreadyConsumed);
     // Two requests: redeem (409) then status (200).
     XCTAssertEqual(gStubURLs.count, (NSUInteger)2);
@@ -334,7 +301,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultTokenExpired);
     [exp fulfill];
   }];
@@ -352,7 +320,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultAlreadyConsumed);
     [exp fulfill];
   }];
@@ -366,7 +335,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultNetworkError);
     [exp fulfill];
   }];
@@ -384,7 +354,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"qonversion://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultInvalidToken);
     // No HTTP request must have been issued for a rejected scheme — this is
     // the load-bearing security assertion. Any leak of the token over the
@@ -404,7 +375,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://evil.example.com/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultInvalidToken);
     XCTAssertEqual(gStubURLs.count, (NSUInteger)0, @"no request may be issued for a foreign host");
     [exp fulfill];
@@ -422,7 +394,8 @@ static NSMutableDictionary<NSString *, NSMutableArray *> *gStubQueueByPath = nil
   NSURL *url = [NSURL URLWithString:@"https://Screens.Qonversion.IO/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultSuccess);
     XCTAssertEqual(gStubURLs.count, (NSUInteger)1);
     [exp fulfill];
@@ -449,7 +422,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(gStubHeaders.count, (NSUInteger)1);
     NSString *key = gStubHeaders.firstObject[@"Idempotency-Key"];
     XCTAssertNotNil(key, @"redeem request must carry an Idempotency-Key header");
@@ -477,7 +451,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(gStubHeaders.count, (NSUInteger)2, @"redeem + status recovery call");
     NSString *redeemKey = gStubHeaders[0][@"Idempotency-Key"];
     NSString *statusKey = gStubHeaders[1][@"Idempotency-Key"];
@@ -496,12 +471,14 @@ static BOOL QONIsValidUUID(NSString *value) {
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
 
   XCTestExpectation *exp1 = [self expectationWithDescription:@"first"];
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [exp1 fulfill]; }];
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests]; [exp1 fulfill]; }];
   [self waitForExpectations:@[exp1] timeout:5.0];
   NSString *firstKey = gStubHeaders.lastObject[@"Idempotency-Key"];
 
   XCTestExpectation *exp2 = [self expectationWithDescription:@"second"];
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [exp2 fulfill]; }];
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests]; [exp2 fulfill]; }];
   [self waitForExpectations:@[exp2] timeout:5.0];
   NSString *secondKey = gStubHeaders.lastObject[@"Idempotency-Key"];
 
@@ -522,7 +499,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(gStubURLs.count, (NSUInteger)1);
     XCTAssertEqualObjects(gStubURLs.firstObject.host, @"proxy.example.test");
     XCTAssertFalse([gStubURLs.firstObject.host isEqualToString:@"api2.qonversion.io"]);
@@ -546,7 +524,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultRetryable);
     XCTAssertNotEqual(result, QONRedemptionResultNetworkError, @"rate limit is a live-server response, not 'no network'");
     [exp fulfill];
@@ -562,7 +541,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultRetryable);
     [exp fulfill];
   }];
@@ -577,7 +557,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultRetryable);
     [exp fulfill];
   }];
@@ -593,7 +574,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertNotEqual(result, QONRedemptionResultNetworkError);
     XCTAssertEqual(result, QONRedemptionResultRetryable);
     [exp fulfill];
@@ -616,7 +598,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   NSURL *url = [NSURL URLWithString:@"https://screens.qonversion.io/r/proj_abc/tok_xyz123"];
   XCTestExpectation *exp = [self expectationWithDescription:@""];
 
-  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) {
+  [self prepareFixtureResponses];
+  [_manager handleRedemptionLink:url completion:^(QONRedemptionResult result) { [self captureFixtureRequests];
     XCTAssertEqual(result, QONRedemptionResultRetryable);
     XCTAssertEqual(gStubURLs.count, (NSUInteger)0, @"no redeem request must be issued without app_uid");
     [exp fulfill];
@@ -632,7 +615,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   gStubBody = [@"{}" dataUsingEncoding:NSUTF8StringEncoding];
 
   XCTestExpectation *exp = [self expectationWithDescription:@""];
-  [_manager reissueWithEmail:@"user@example.com" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) {
+  [self prepareFixtureResponses];
+  [_manager reissueWithEmail:@"user@example.com" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) { [self captureFixtureRequests];
     XCTAssertTrue(success);
     XCTAssertEqual(statusCode, 200);
     XCTAssertNil(error);
@@ -649,7 +633,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   // The SDK gates it and returns a validation failure (success NO + error),
   // issuing no network request.
   XCTestExpectation *exp = [self expectationWithDescription:@""];
-  [_manager reissueWithEmail:@"" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) {
+  [self prepareFixtureResponses];
+  [_manager reissueWithEmail:@"" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) { [self captureFixtureRequests];
     XCTAssertFalse(success);
     XCTAssertNotNil(error, @"empty email must yield a validation error");
     XCTAssertEqualObjects(error.domain, QONRedemptionErrorDomain);
@@ -663,7 +648,8 @@ static BOOL QONIsValidUUID(NSString *value) {
 - (void)testReissueWithWhitespaceEmailFailsValidationWithoutNetwork {
   // #10 — a whitespace-only email is also empty after trimming.
   XCTestExpectation *exp = [self expectationWithDescription:@""];
-  [_manager reissueWithEmail:@"   \n\t" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) {
+  [self prepareFixtureResponses];
+  [_manager reissueWithEmail:@"   \n\t" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) { [self captureFixtureRequests];
     XCTAssertFalse(success);
     XCTAssertNotNil(error);
     XCTAssertEqual(gStubURLs.count, (NSUInteger)0);
@@ -678,7 +664,8 @@ static BOOL QONIsValidUUID(NSString *value) {
   gStubBody = [@"{}" dataUsingEncoding:NSUTF8StringEncoding];
 
   XCTestExpectation *exp = [self expectationWithDescription:@""];
-  [_manager reissueWithEmail:@"user@example.com" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) {
+  [self prepareFixtureResponses];
+  [_manager reissueWithEmail:@"user@example.com" completion:^(BOOL success, NSInteger statusCode, NSError * _Nullable error) { [self captureFixtureRequests];
     XCTAssertFalse(success);
     XCTAssertEqual(statusCode, 429);
     [exp fulfill];

@@ -1,3 +1,6 @@
+#if QN_UNIT_TEST_ISOLATION
+#import "QNUnitIsolationTransport.h"
+#endif
 #import "QNAPIClient.h"
 #import "QNInternalConstants.h"
 #import "QNRequestBuilder.h"
@@ -29,6 +32,13 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 @end
 
 @implementation QNAPIClient
+#if QN_UNIT_TEST_ISOLATION
+@synthesize session = _session;
+- (void)setSession:(NSURLSession *)session {
+  [QNUnitIsolationTransport requireGuardedSession:session];
+  _session = session;
+}
+#endif
 
 - (instancetype)init {
   self = super.init;
@@ -41,7 +51,11 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     _apiKey = @"";
     _userID = @"";
     _debug = NO;
+#if QN_UNIT_TEST_ISOLATION
+    _session = [QNUnitIsolationTransport sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration delegate:self queue:nil];
+#else
     _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration delegate:self delegateQueue:nil];
+#endif
     _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kAttributionEndpoint];
     _criticalErrorCodes = [QNUtils authErrorsCodes];
   }
@@ -533,6 +547,9 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   request = [self.requestSerializer addTryCountToHeader:@(tryCount) request:request];
   
   __block __weak QNAPIClient *weakSelf = self;
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport requireGuardedSession:self.session];
+#endif
   [[self.session dataTaskWithRequest:request completionHandler:^(id _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
     if (error) {
       BOOL isConnectionError = [QNUtils isConnectionError:error];

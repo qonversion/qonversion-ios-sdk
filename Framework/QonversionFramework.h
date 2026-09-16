@@ -24,3 +24,7 @@
 #import <Qonversion/QONPromotionalOffer.h>
 
 #import <Qonversion/QONUser.h>
+
+#if QN_UNIT_TEST_ISOLATION
+#import <Qonversion/QNUnitIsolationTransport.h>
+#endif

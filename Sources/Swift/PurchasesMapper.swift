@@ -65,7 +65,11 @@ final class PurchasesMapper {
       }
     }
     
+#if QN_UNIT_TEST_ISOLATION
+    purchaseInfo.storefrontCountryCode = QNUnitIsolationTransport.storefrontCountryCode()
+#else
     purchaseInfo.storefrontCountryCode = await Storefront.current?.countryCode
+#endif
 
     return purchaseInfo
   }

@@ -1,3 +1,6 @@
+#if QN_UNIT_TEST_ISOLATION
+#import "QNUnitIsolationTransport.h"
+#endif
 #import "QNRequestSerializer.h"
 #import "QNUserInfo.h"
 #import "QNDevice.h"
@@ -98,7 +101,11 @@ NS_ASSUME_NONNULL_BEGIN
   }
   
   if (@available(iOS 13.0, macos 10.15, tvOS 13.0, *)) {
+#if QN_UNIT_TEST_ISOLATION
+    NSString *countryCode = QNUnitIsolationTransport.storefrontCountryCode;
+#else
     NSString *countryCode = SKPaymentQueue.defaultQueue.storefront.countryCode ?: @"";
+#endif
     purchaseDict[@"country"] = countryCode;
   }
   

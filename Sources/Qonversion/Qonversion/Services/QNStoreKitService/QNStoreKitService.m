@@ -1,3 +1,6 @@
+#if QN_UNIT_TEST_ISOLATION
+#import "QNUnitIsolationTransport.h"
+#endif
 #import "QNStoreKitService.h"
 #import "QNUtils.h"
 #import "QNUserInfo.h"
@@ -19,6 +22,14 @@
 
 @end
 
+static id QNStoreQueue(void) {
+#if QN_UNIT_TEST_ISOLATION
+  return [QNUnitIsolationStoreQueue sharedQueue];
+#else
+  return [SKPaymentQueue defaultQueue];
+#endif
+}
+
 @implementation QNStoreKitService
 
 - (instancetype)initWithDelegate:(id <QNStoreKitServiceDelegate>)delegate {
@@ -30,6 +41,10 @@
 }
 
 - (void)loadProducts:(NSSet <NSString *> *)products {
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport denyPlatformOperation];
+  return;
+#endif
   SKProductsRequest *request = [SKProductsRequest.alloc initWithProductIdentifiers:products];
   [request setDelegate:self];
   [request start];
@@ -49,7 +64,7 @@
     _isProductsLoaded = NO;
   }
   
-  [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
+  [QNStoreQueue() addTransactionObserver:self];
   return self;
 }
 
@@ -70,6 +85,10 @@
 }
 
 - (void)purchaseProduct:(SKProduct *)product options:(QONPurchaseOptions * _Nullable)options identityId:(NSString *)identityId {
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport denyPlatformOperation];
+  return;
+#endif
   @synchronized (self) {
     self->_purchasingCurrently = product.productIdentifier;
   }
@@ -87,19 +106,19 @@
     }
   }
   
-  [[SKPaymentQueue defaultQueue] addPayment:[payment copy]];
+  [QNStoreQueue() addPayment:[payment copy]];
 }
 
 - (void)presentCodeRedemptionSheet {
 #if TARGET_OS_IOS || TARGET_OS_VISION
   if (@available(iOS 14.0, *)) {
-    [[SKPaymentQueue defaultQueue] presentCodeRedemptionSheet];
+    [QNStoreQueue() presentCodeRedemptionSheet];
   }
 #endif
 }
 
 - (void)restore {
-  [[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
+  [QNStoreQueue() restoreCompletedTransactions];
 }
 
 - (nullable SKProduct *)productAt:(NSString *)productID {
@@ -142,6 +161,9 @@
 }
 
 - (nullable NSString *)receipt {
+#if QN_UNIT_TEST_ISOLATION
+  return nil;
+#else
   NSURL *receiptURL = QNUserInfo.bundle.appStoreReceiptURL;
   
   if (!receiptURL) {
@@ -160,6 +182,7 @@
   }
   
   return [receiptData base64EncodedStringWithOptions:0];
+#endif
 }
 
 // MARK: - SKPaymentTransactionObserver
@@ -345,6 +368,10 @@
 // MARK: - Private
 
 - (void)startReceiptRefreshRequest {
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport denyPlatformOperation];
+  return;
+#endif
   @synchronized(self) {
     self.receiptRefreshRequest = [self buildReceiptRefreshRequest];
     self.receiptRefreshRequest.delegate = self;
@@ -409,6 +436,10 @@
 }
 
 - (void)processTransaction:(SKPaymentTransaction *)transaction productIdentifier:(NSString *)productIdentifier {
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport denyPlatformOperation];
+  return;
+#endif
   NSArray *transactionsArray = self.processingTransactions[productIdentifier] ?: @[];
   NSMutableArray *transactions = [transactionsArray mutableCopy];
   [transactions addObject:transaction];
@@ -426,13 +457,17 @@
   if (transaction.transactionState == SKPaymentTransactionStateFailed
       || transaction.transactionState == SKPaymentTransactionStatePurchased
       || transaction.transactionState == SKPaymentTransactionStateRestored) {
-    [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+    [QNStoreQueue() finishTransaction:transaction];
   }
   
   return;
 }
 
 - (SKReceiptRefreshRequest *)buildReceiptRefreshRequest {
+#if QN_UNIT_TEST_ISOLATION
+  [QNUnitIsolationTransport denyPlatformOperation];
+  return nil;
+#endif
   return [[SKReceiptRefreshRequest alloc] init];
 }
 

@@ -28,9 +28,13 @@ public class StoreKit2Service: StoreKit2ServiceInterface {
   let mapper = PurchasesMapper()
   
   func syncTransactions() async throws {
+#if QN_UNIT_TEST_ISOLATION
+    throw QNUnitIsolationTransport.blockPlatformOperation()
+#else
       let filteredTransactions = await fetchAllFilteredTransactions()
       let productIds: [String] = filteredTransactions.map { $0.productID }
       try await handleTransactions(filteredTransactions, for: productIds)
+#endif
   }
   
   func handleTransaction(_ transaction: Transaction) async throws {
@@ -45,13 +49,21 @@ public class StoreKit2Service: StoreKit2ServiceInterface {
   // MARK: - Private
   
   private func handleTransactions(_ transactions: [Transaction], for productIds: [String]) async throws {
+#if QN_UNIT_TEST_ISOLATION
+    throw QNUnitIsolationTransport.blockPlatformOperation()
+#else
     let products: [Product] = try await Product.products(for: Set(productIds))
     let mappedTransactions: [Qonversion.StoreKit2PurchaseModel] = await mapper.map(transactions: transactions, with: products)
     try await Qonversion.shared().handlePurchases(mappedTransactions)
+#endif
   }
   
   @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
   private func fetchAllFilteredTransactions() async -> [Transaction] {
+#if QN_UNIT_TEST_ISOLATION
+    _ = QNUnitIsolationTransport.blockPlatformOperation()
+    return []
+#else
     let allTransasctions: [Transaction] = await fetchTransactions(for: Transaction.all)
     let unfinishedTransasctions: [Transaction] = await fetchTransactions(for: Transaction.unfinished)
     let currentEntitlements: [Transaction] = await fetchTransactions(for: Transaction.currentEntitlements)
@@ -67,6 +79,7 @@ public class StoreKit2Service: StoreKit2ServiceInterface {
     let filteredTransactions = filter(transactions: Array(uniqueTransactions.values))
     
     return filteredTransactions
+#endif
   }
   
   @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)

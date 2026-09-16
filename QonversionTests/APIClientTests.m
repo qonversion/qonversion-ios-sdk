@@ -1,3 +1,4 @@
+#import "QNUnitIsolationTransport.h"
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
 #import "QNTestConstants.h"
@@ -36,6 +37,7 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   _client = [[QNAPIClient alloc] init];
   
   [_client setRequestSerializer:_mockRequestSerializer];
+  [QNUnitIsolationTransport registerMemoryOnlyMock:_mockSession];
   [_client setSession:_mockSession];
   [_client setApiKey:kTestAPIKey];
   [_client setSDKVersion:@"10.11.12"];

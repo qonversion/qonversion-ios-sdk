@@ -107,7 +107,11 @@ final class ServicesAssembly {
   }
   
   func urlSession() -> URLSession {
+#if QN_UNIT_TEST_ISOLATION
+    return QNUnitIsolationTransport.sharedSession()
+#else
     return URLSession.shared
+#endif
   }
   
   func deviceInfoCollector() -> DeviceInfoCollectorInterface {

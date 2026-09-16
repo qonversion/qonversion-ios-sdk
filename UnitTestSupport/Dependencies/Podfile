@@ -1,0 +1,9 @@
+source 'https://cdn.cocoapods.org/'
+install! 'cocoapods', :integrate_targets => false
+project '../../Qonversion', 'Debug' => :debug, 'Release' => :release, 'UnitIsolation' => :debug
+use_frameworks!
+
+target 'QonversionTests' do
+  platform :ios, '13.0'
+  pod 'OCMock', '= 3.9.4'
+end

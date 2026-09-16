@@ -20,11 +20,22 @@ final class ImagePreloader: ImagePreloaderInterface {
   /// Maximum number of concurrent image downloads
   private let maxConcurrentDownloads: Int
   
+  static var defaultSession: URLSession {
+#if QN_UNIT_TEST_ISOLATION
+    return QNUnitIsolationTransport.sharedSession()
+#else
+    return .shared
+#endif
+  }
+
   init(
-    urlSession: URLSession = .shared,
+    urlSession: URLSession = ImagePreloader.defaultSession,
     timeout: TimeInterval = 10.0,
     maxConcurrentDownloads: Int = 5
   ) {
+#if QN_UNIT_TEST_ISOLATION
+    QNUnitIsolationTransport.requireGuarded(urlSession)
+#endif
     self.urlSession = urlSession
     self.timeout = timeout
     self.maxConcurrentDownloads = maxConcurrentDownloads

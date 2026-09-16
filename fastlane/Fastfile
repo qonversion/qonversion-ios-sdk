@@ -5,7 +5,7 @@ PROJECT_SCHEME = "Sample"
 XCODE_PROJECT = "./#{PROJECT_NAME}.xcodeproj"
 
 lane :tests do
-  runTests("QonversionTests")
+  UI.user_error!("OPE-722: shared-process unit execution is blocked. First validate the dedicated host with the documented build-only preflight; each future fixture case requires a fresh host process.")
 end
 
 lane :integration_tests do
