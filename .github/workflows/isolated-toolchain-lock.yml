@@ -1,0 +1,36 @@
+name: Isolated CocoaPods lock preparation
+
+on:
+  push:
+    branches: [codex/ope722-toolchain-lock]
+
+permissions:
+  contents: read
+
+jobs:
+  prepare-lock:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/ope722-toolchain-lock'
+    runs-on: macos-15
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Offline failure tests
+        run: python3 .github/scripts/test_prepare_toolchain_lock.py
+      - name: Verify Bundler bootstrap and resolve dependency lock only
+        run: python3 .github/scripts/prepare_toolchain_lock.py --expected-head '${{ github.sha }}'
+      - name: Upload sanitized preparation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: isolated-toolchain-lock
+          path: |
+            ${{ runner.temp }}/ope722-toolchain-lock-result/provenance.json
+            ${{ runner.temp }}/ope722-toolchain-lock-result/Gemfile
+            ${{ runner.temp }}/ope722-toolchain-lock-result/Gemfile.lock
+          if-no-files-found: error
+          retention-days: 30
