@@ -149,12 +149,40 @@ class GateTests(unittest.TestCase):
                     patch.object(gate, 'bounded', return_value=b'Bundler version 2.6.9\n') as command:
                 result = gate.bootstrap('/fixed/ruby', '/fixed/gem', task, {})
                 install = command.call_args_list[0].args[0]
-                self.assertEqual(install[:4], ['/fixed/ruby', '/fixed/gem', '--norc', 'install'])
+                # RubyGems 4.0.20 rejects a leading --norc before command dispatch.
+                self.assertEqual(install[:4], ['/fixed/ruby', '/fixed/gem', 'install', '--norc'])
                 self.assertEqual(install[4], str(task / 'bundler.gem'))
                 self.assertIn('--local', install)
                 self.assertIn('--ignore-dependencies', install)
                 self.assertEqual(result, ['/fixed/ruby', str(bundle)])
                 self.assertEqual(command.call_args_list[1].args[0], result + ['--version'])
+
+    def test_bootstrap_failure_stages_and_hash_verification_are_preserved(self):
+        for fail_at in ['BOOTSTRAP_DOWNLOAD', 'BOOTSTRAP_INSTALL', 'BOOTSTRAP_VERSION']:
+            with self.subTest(stage=fail_at), tempfile.TemporaryDirectory() as folder:
+                task = Path(folder)
+                bundle = task / 'bootstrap/gems/bundler-2.6.9/exe/bundle'
+                bundle.parent.mkdir(parents=True)
+                bundle.touch()
+                state = {}
+                def download(target):
+                    if fail_at == 'BOOTSTRAP_DOWNLOAD':
+                        raise gate.Rejected('BOOTSTRAP_HASH')
+                    target.write_bytes(b'synthetic verified package')
+                def command(argv, *_):
+                    if state['stage'] == fail_at:
+                        raise gate.Rejected('COMMAND_FAILED')
+                    return b''
+                with patch.object(gate, 'download_package', side_effect=download), patch.object(gate, 'digest', return_value=gate.PACKAGE_SHA), \
+                        patch.object(gate, 'bounded', side_effect=command) as executed:
+                    with self.assertRaises(gate.Rejected):
+                        gate.bootstrap('/ruby', '/gem', task, {}, state)
+                    self.assertEqual(state['stage'], fail_at)
+                    if fail_at == 'BOOTSTRAP_DOWNLOAD':
+                        self.assertNotIn('bootstrap_sha256', state)
+                        executed.assert_not_called()
+                    else:
+                        self.assertEqual(state['bootstrap_sha256'], gate.PACKAGE_SHA)
 
     def test_wrong_bundler_version_rejected(self):
         with tempfile.TemporaryDirectory() as folder:

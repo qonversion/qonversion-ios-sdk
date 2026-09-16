@@ -150,14 +150,19 @@ def runtime_tuple(ruby, task, env):
     return values
 
 
-def bootstrap(ruby, gem, task, env):
+def bootstrap(ruby, gem, task, env, state=None):
+    state = state if state is not None else {}
     package = task / 'bundler.gem'
+    state['stage'] = 'BOOTSTRAP_DOWNLOAD'
     download_package(package)
     # Recheck the on-disk bytes immediately before code loading.
     require(digest(package.read_bytes()) == PACKAGE_SHA, 'BOOTSTRAP_HASH')
-    bounded([ruby, gem, '--norc', 'install', str(package), '--local', '--ignore-dependencies',
+    state['bootstrap_sha256'] = PACKAGE_SHA
+    state['stage'] = 'BOOTSTRAP_INSTALL'
+    bounded([ruby, gem, 'install', '--norc', str(package), '--local', '--ignore-dependencies',
              '--no-document', '--install-dir', str(task / 'bootstrap'),
              '--bindir', str(task / 'bootstrap/bin')], task, env, 120)
+    state['stage'] = 'BOOTSTRAP_VERSION'
     bundle = task / 'bootstrap/gems' / ('bundler-' + BUNDLER) / 'exe/bundle'
     require(bundle.is_file() and bundle.resolve().is_relative_to(task.resolve()), 'BUNDLER_EXECUTABLE')
     command = [ruby, str(bundle)]
@@ -231,9 +236,7 @@ def prepare(root, task, state):
     env = isolated_environment(task)
     state['stage'] = 'RUNTIME'
     state['runtime'] = runtime_tuple(ruby, task, env)
-    state['stage'] = 'BOOTSTRAP'
-    bundle = bootstrap(ruby, gem, task, env)
-    state['bootstrap_sha256'] = PACKAGE_SHA
+    bundle = bootstrap(ruby, gem, task, env, state)
     require((root / 'UnitTestSupport/Toolchain/Gemfile').read_bytes() == GEMFILE, 'GEMFILE_PIN')
     (task / 'Gemfile').write_bytes(GEMFILE)
     state['stage'] = 'LOCK_RESOLUTION'
