@@ -97,7 +97,15 @@
 
   if (token.length > 0) {
     QONVERSION_LOG(@"✅ AdServices token fetched");
-    [self sendAttributionData:@{@"token": token, @"requested_at": @(requestTimestamp)} provider:QONAttributionProviderAppleAdServices];
+    NSDictionary *attributionData = @{@"token": token, @"requested_at": @(requestTimestamp)};
+    [self.client attributionRequest:QONAttributionProviderAppleAdServices data:attributionData completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
+      if (error) {
+        QONVERSION_LOG(@"❌ AdServices attribution request failed: %@", error.localizedDescription);
+        // A token minted while Apple was unreachable is never resolvable, so the next
+        // attempt requests a new token instead of resending this one.
+        [self scheduleAppleSearchAttributionDataFetchWithAttempt:attempt + 1];
+      }
+    }];
     return;
   } else {
     if (shouldRetry) {
