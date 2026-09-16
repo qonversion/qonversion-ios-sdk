@@ -116,7 +116,7 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONErrorCode) {
  requests and completes every subsequent call with the same error until the app is relaunched, so fix the
  project key in the Qonversion dashboard or the app configuration — retrying will not help.
  */
-+ (BOOL)isAuthorizationError:(nonnull NSError *)error;
++ (BOOL)isAuthorizationError:(NSError *)error;
 
 + (NSError *)internalErrorWithCode:(QONErrorCode)errorCode;
 + (NSError *)errorWithCode:(QONErrorCode)errorCode message:(NSString *)message;
