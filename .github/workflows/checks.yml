@@ -29,16 +29,28 @@ jobs:
           pod lib lint --verbose
   
   spm:
+    name: SPM (${{ matrix.platform }})
     runs-on: macos-latest
-    
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ['iOS Simulator', 'macOS', 'tvOS Simulator', 'watchOS Simulator', 'visionOS Simulator']
+
     steps:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.2'
       - uses: actions/checkout@v2
-      - name: SPM validation
+      # `swift build` compiles only the host (macOS) slice and silently skips every iOS-only code path
+      # (NoCodes, UIKit, WebKit). Building the package through xcodebuild validates the real platform slices
+      # exactly the way SPM consumers get them.
+      - name: SPM build (${{ matrix.platform }})
         run: |
-          swift build
+          xcodebuild -workspace .swiftpm/xcode/package.xcworkspace \
+            -scheme Qonversion \
+            -destination 'generic/platform=${{ matrix.platform }}' \
+            -skipPackagePluginValidation -skipMacroValidation \
+            build CODE_SIGNING_ALLOWED=NO -quiet
   
   common-checks:
     runs-on: ubuntu-latest
