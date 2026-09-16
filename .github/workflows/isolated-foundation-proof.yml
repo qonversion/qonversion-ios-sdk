@@ -1,0 +1,39 @@
+name: Isolated Foundation Attempt proof
+
+on:
+  push:
+    branches: [codex/ope721-foundation-proof]
+
+permissions:
+  contents: read
+
+jobs:
+  foundation-proof:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/ope721-foundation-proof'
+    runs-on: macos-15
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Check runner fail-closed behavior offline
+        run: python3 .github/scripts/test_probe_attempt_header.py
+      - name: Prepare pinned baseline source
+        run: |
+          mkdir -p probe-input
+          git show eb5641d08978633d903c80e29ac7c1f84a4fdcdb:Sources/Qonversion/Qonversion/Core/QNRequestSerializer/QNRequestSerializer.m > probe-input/old.m
+      - name: Prove sandbox boundary and native Foundation regression
+        run: |
+          python3 .github/scripts/probe_attempt_header.py \
+            probe-input/old.m \
+            Sources/Qonversion/Qonversion/Core/QNRequestSerializer/QNRequestSerializer.m \
+            probe-output
+      - name: Upload successful sanitized proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: foundation-attempt-proof
+          path: probe-output/results.json
+          if-no-files-found: error
+          retention-days: 30
