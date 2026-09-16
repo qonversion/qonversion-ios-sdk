@@ -10,10 +10,6 @@
 // unresolvable while a token requested a few minutes later resolves.
 static NSTimeInterval const kQNUnconditionalAttributionDelay = 360;
 
-// The attempt number of that unconditional attempt. It is deliberately outside
-// -attributionAttemptDelays, so the attempt never schedules a follow-up of its own.
-static NSUInteger const kQNUnconditionalAttributionAttempt = NSUIntegerMax - 1;
-
 @interface QNAttributionManager()
 
 @property (nonatomic, strong) QNAPIClient *client;
@@ -43,14 +39,6 @@ static NSUInteger const kQNUnconditionalAttributionAttempt = NSUIntegerMax - 1;
   return @{@0: @5, @1: @30, @2: @120, @3: @600};
 }
 
-- (NSString *)attributionAttemptName:(NSUInteger)attempt {
-  if (attempt == kQNUnconditionalAttributionAttempt) {
-    return @"unconditional";
-  }
-
-  return [NSString stringWithFormat:@"%lu", (unsigned long)attempt];
-}
-
 // Apple issues the token from its server, so the first attempt fails on a restricted network.
 // Retry within the same launch instead of losing the attempt until the next one.
 - (void)scheduleAppleSearchAttributionDataFetchWithAttempt:(NSUInteger)attempt {
@@ -60,7 +48,7 @@ static NSUInteger const kQNUnconditionalAttributionAttempt = NSUIntegerMax - 1;
   }
 
   double delayInSeconds = delay.doubleValue;
-  QONVERSION_LOG(@"⏳ AdServices attempt %@ scheduled in %.0f sec", [self attributionAttemptName:attempt], delayInSeconds);
+  QONVERSION_LOG(@"⏳ AdServices attempt %lu scheduled in %.0f sec", (unsigned long)attempt, delayInSeconds);
   dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
   dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
     [self fetchAppleSearchAttributionDataWithAttempt:attempt];
@@ -71,10 +59,13 @@ static NSUInteger const kQNUnconditionalAttributionAttempt = NSUIntegerMax - 1;
 // and the SDK never learns about that. This attempt requests a fresh token regardless of how
 // the first one went, and is made once per launch.
 - (void)scheduleUnconditionalAppleSearchAttributionDataFetch {
-  QONVERSION_LOG(@"⏳ AdServices unconditional attempt scheduled in %.0f sec", kQNUnconditionalAttributionDelay);
+  // One past the last attempt of the ladder, so this attempt is never part of it and a
+  // failure here schedules nothing.
+  NSUInteger attempt = [self attributionAttemptDelays].count;
+  QONVERSION_LOG(@"⏳ AdServices unconditional attempt %lu scheduled in %.0f sec", (unsigned long)attempt, kQNUnconditionalAttributionDelay);
   dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kQNUnconditionalAttributionDelay * NSEC_PER_SEC));
   dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-    [self fetchAppleSearchAttributionDataWithAttempt:kQNUnconditionalAttributionAttempt];
+    [self fetchAppleSearchAttributionDataWithAttempt:attempt];
   });
 }
 
@@ -126,12 +117,12 @@ static NSUInteger const kQNUnconditionalAttributionAttempt = NSUIntegerMax - 1;
   }
 
   if (token.length > 0) {
-    QONVERSION_LOG(@"✅ AdServices token fetched, attempt %@", [self attributionAttemptName:attempt]);
+    QONVERSION_LOG(@"✅ AdServices token fetched, attempt %lu", (unsigned long)attempt);
     NSDictionary *attributionData = @{@"token": token, @"requested_at": @(requestTimestamp)};
-    QONVERSION_LOG(@"📤 Sending AdServices token, attempt %@", [self attributionAttemptName:attempt]);
+    QONVERSION_LOG(@"📤 Sending AdServices token, attempt %lu", (unsigned long)attempt);
     [self.client attributionRequest:QONAttributionProviderAppleAdServices data:attributionData completion:^(NSDictionary * _Nullable dict, NSError * _Nullable error) {
       if (!error) {
-        QONVERSION_LOG(@"✅ AdServices token sent, attempt %@", [self attributionAttemptName:attempt]);
+        QONVERSION_LOG(@"✅ AdServices token sent, attempt %lu", (unsigned long)attempt);
       } else {
         QONVERSION_LOG(@"❌ AdServices attribution request failed: %@", error.localizedDescription);
         // A token minted while Apple was unreachable is never resolvable, so the next
