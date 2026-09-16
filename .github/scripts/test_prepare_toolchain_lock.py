@@ -37,7 +37,7 @@ class GateTests(unittest.TestCase):
             original.replace(b'CHECKSUMS\n', b'OTHER\n'),
             original.replace(gate.TOP_HASHES['cocoapods'].encode(), b'0' * 64),
             original.replace(b'  cocoapods (1.16.2) sha256=' + gate.TOP_HASHES['cocoapods'].encode() + b'\n', b''),
-            original.replace(b'  ruby\n', b'  unknown-platform\n'),
+            original.replace(b'  ruby\n', b'  https://private.invalid\n'),
             original + b'raw secret\n',
         ]
         for data in cases:
@@ -67,6 +67,22 @@ class GateTests(unittest.TestCase):
         for platforms in [['ruby'], ['x86_64-darwin'], ['arm64-darwin-23'], ['x86_64-linux-gnu']]:
             with self.assertRaisesRegex(gate.Rejected, '^LOCK_RUNTIME_PLATFORM$'):
                 gate.validate_native_coverage('arm64-darwin-24', platforms)
+
+    def test_platform_proposal_tokens_do_not_imply_installation_approval(self):
+        for token in ['arm-linux-musleabihf', 'x86_64-freebsd-13', 'x86_64-openbsd-7.0', 'x64-mingw-ucrt', 'java']:
+            data = lock_fixture().replace(b'  ruby\n', ('  ' + token + '\n').encode())
+            result = gate.validate_lock(data)
+            self.assertIn(token, result['platforms'])
+            gate.validate_native_coverage('arm64-darwin-24', result['platforms'])
+            with self.assertRaisesRegex(gate.Rejected, '^LOCK_RUNTIME_PLATFORM$'):
+                gate.validate_native_coverage('arm64-darwin-24', [token])
+
+    def test_platform_tokens_reject_urls_paths_controls_and_unbounded_content(self):
+        for token in ['https://example.invalid', '/tmp/path', '../relative', 'file:uri', 'name@host',
+                      'has space', 'has\ttab', 'bad\x00byte', 'x' * 81, '-leading', 'trailing-',
+                      'a..b', 'a--b', 'unicode-é', 'C:\\path']:
+            with self.subTest(token=repr(token)), self.assertRaises(gate.Rejected):
+                gate.validate_lock(lock_fixture().replace(b'  ruby\n', ('  ' + token + '\n').encode()))
 
     def test_environment_drops_ambient_credentials_and_ruby_bundler_overrides(self):
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {

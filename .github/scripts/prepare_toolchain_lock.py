@@ -199,10 +199,12 @@ def validate_lock(data):
     require(sections['BUNDLED WITH'] == ['   ' + BUNDLER], 'LOCK_BUNDLER')
     platforms = [line.removeprefix('  ') for line in sections['PLATFORMS']]
     require(1 <= len(platforms) <= 20 and len(set(platforms)) == len(platforms), 'LOCK_PLATFORMS')
-    # Bundler 2.6.9 adds complete extra platforms to a fresh lock. These public
-    # variants are proposal metadata only; none is approved for installation.
-    platform_pattern = r'ruby|(?:arm64|x86_64)-darwin(?:-[0-9]{1,3})?|(?:aarch64|arm|arm64|x86|x86_64)-linux(?:-gnu|-musl)?'
-    require(all(re.fullmatch(platform_pattern, item) for item in platforms), 'LOCK_PLATFORMS')
+    # Bundler's extra-platform filter excludes recognized Java/Windows, but maps
+    # other OS/ABI variants to generic Ruby. Validate bounded registry metadata
+    # tokens, not an invented OS allowlist. Every variant still needs Gate B review.
+    platform_pattern = r'[a-z0-9](?:[a-z0-9_.-]{0,78}[a-z0-9])?'
+    require(all(re.fullmatch(platform_pattern, item) and '..' not in item and '--' not in item
+                for item in platforms), 'LOCK_PLATFORMS')
     checksums = {}
     for line in sections['CHECKSUMS']:
         match = re.fullmatch(r'  ([A-Za-z0-9_.-]+ \([A-Za-z0-9_.-]+\)) sha256=([a-f0-9]{64})', line)

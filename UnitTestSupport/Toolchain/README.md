@@ -37,7 +37,7 @@ match the known CocoaPods/core package hashes, use only the public registry,
 and cover the observed native macOS CPU/platform (exact or generic Darwin).
 Pinned Bundler's [add_extra_platforms!](https://github.com/rubygems/rubygems/blob/v3.6.9/bundler/lib/bundler/spec_set.rb)
 adds complete extra platforms and may generalize the local Darwin entry. Bounded
-public Darwin/Linux variants are accepted as proposed lock metadata only. Every
+ASCII registry platform tokens (no URLs, paths or controls) are accepted as proposed metadata only. Every
 platform variant and transitive package requires independent review before Gate B. A successful
 `TOOLCHAIN_LOCK_PREPARED` receipt proves neither build success nor runtime isolation.
 
