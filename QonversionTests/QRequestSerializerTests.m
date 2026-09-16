@@ -35,8 +35,8 @@
         NSString *previousAttempt = [previousRequest valueForHTTPHeaderField:@"Attempt"];
         request = [self.serializer addTryCountToHeader:@(tryCount) request:previousRequest];
 
-        XCTAssertEqualObjects([request valueForHTTPHeaderField:@"Attempt"],
-                              [NSString stringWithFormat:@"%ld", (long)tryCount + 1]);
+        NSString *expectedAttempt = [NSString stringWithFormat:@"%ld", (long)tryCount + 1];
+        XCTAssertEqualObjects([request valueForHTTPHeaderField:@"Attempt"], expectedAttempt);
         XCTAssertEqualObjects([previousRequest valueForHTTPHeaderField:@"Attempt"], previousAttempt);
         XCTAssertEqualObjects(request.URL, initialRequest.URL);
         XCTAssertEqualObjects(request.HTTPMethod, initialRequest.HTTPMethod);
