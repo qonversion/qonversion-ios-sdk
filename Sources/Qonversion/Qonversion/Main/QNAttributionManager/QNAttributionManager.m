@@ -13,6 +13,7 @@ static NSTimeInterval const kQNUnconditionalAttributionDelay = 360;
 @interface QNAttributionManager()
 
 @property (nonatomic, strong) QNAPIClient *client;
+@property (nonatomic, assign) BOOL unconditionalAttemptScheduled;
 
 @end
 
@@ -30,6 +31,18 @@ static NSTimeInterval const kQNUnconditionalAttributionDelay = 360;
 
 - (void)addAppleSearchAttributionData {
   [self scheduleAppleSearchAttributionDataFetchWithAttempt:0];
+
+  // Collecting the attribution is a public call that an app may make any number of times,
+  // while the unconditional attempt is meant to happen once per launch. The check and the
+  // assignment are kept together because the calls can come from different threads.
+  @synchronized (self) {
+    if (self.unconditionalAttemptScheduled) {
+      return;
+    }
+
+    self.unconditionalAttemptScheduled = YES;
+  }
+
   [self scheduleUnconditionalAppleSearchAttributionDataFetch];
 }
 
@@ -121,8 +134,12 @@ static NSTimeInterval const kQNUnconditionalAttributionDelay = 360;
       if (error) {
         QONVERSION_LOG(@"❌ AdServices attribution request failed: %@", error.localizedDescription);
         // A token minted while Apple was unreachable is never resolvable, so the next
-        // attempt requests a new token instead of resending this one.
-        [self scheduleAppleSearchAttributionDataFetchWithAttempt:attempt + 1];
+        // attempt requests a new token instead of resending this one. Any other failure is
+        // left alone: the API never reports a token as invalid, so no other error carries a
+        // signal that a new token would fix.
+        if ([QNUtils isConnectionError:error]) {
+          [self scheduleAppleSearchAttributionDataFetchWithAttempt:attempt + 1];
+        }
       }
     }];
     return;
