@@ -143,5 +143,28 @@ class BuildOnlyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaisesRegex(ValueError,'exceeds limit'):build.write_verdict(Path(tmp),{'bad':'x'*8192})
             self.assertFalse((Path(tmp)/'build-verdict.json').exists())
+    def test_pod_version_and_install_use_same_resolved_executable(self):
+        state={};root=Path('/synthetic-source')
+        with patch.object(build.shutil,'which',return_value='/synthetic-tools/pod') as which,patch.object(build,'bounded',return_value=b'1.16.2\n') as run:
+            command=build.pinned_pod_install_command(root,state)
+            which.assert_called_once_with('pod')
+            run.assert_called_once_with(['/synthetic-tools/pod','--version'],root,30)
+            self.assertEqual(command,['/synthetic-tools/pod','install','--deployment','--project-directory=UnitTestSupport/Dependencies'])
+            self.assertEqual(state['pod_version'],'1.16.2')
+    def test_wrong_pod_version_rejected_before_install_command(self):
+        state={}
+        with patch.object(build.shutil,'which',return_value='/synthetic-tools/pod'),patch.object(build,'bounded',return_value=b'1.17.0\n') as run:
+            with self.assertRaisesRegex(ValueError,'version mismatch') as caught:build.pinned_pod_install_command(Path('/synthetic'),state)
+            self.assertEqual(run.call_count,1);self.assertEqual(state['pod_version'],'1.17.0')
+            self.assertEqual(build.failure_reason(caught.exception),'DEPENDENCY_VERSION_MISMATCH')
+    def test_pod_free_text_is_not_exported_as_version(self):
+        state={}
+        with patch.object(build.shutil,'which',return_value='/synthetic-tools/pod'),patch.object(build,'bounded',return_value=b'1.16.2 synthetic-private-token\n'):
+            with self.assertRaisesRegex(ValueError,'not numeric'):build.pinned_pod_install_command(Path('/synthetic'),state)
+            self.assertIsNone(state['pod_version'])
+    def test_missing_pod_rejected_without_commands(self):
+        with patch.object(build.shutil,'which',return_value=None),patch.object(build,'bounded') as run:
+            with self.assertRaises(FileNotFoundError):build.pinned_pod_install_command(Path('/synthetic'),{})
+            run.assert_not_called()
 
 if __name__ == '__main__': unittest.main(verbosity=2)

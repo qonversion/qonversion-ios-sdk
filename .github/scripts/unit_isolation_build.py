@@ -7,6 +7,7 @@ from pathlib import Path
 import plistlib
 import re
 import signal
+import shutil
 import subprocess
 import sys
 from check_unit_isolation import verify, require
@@ -100,6 +101,17 @@ def build_command(derived):
             '-derivedDataPath', str(derived), 'CODE_SIGNING_ALLOWED=NO',
             'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGN_IDENTITY=']
 
+def pinned_pod_install_command(root, state):
+    executable = shutil.which('pod')
+    if executable is None: raise FileNotFoundError('CocoaPods executable unavailable')
+    # Homebrew and RubyGems launchers need not accept the same _version_ syntax.
+    # Pin the ordinary CLI's reported version, then reuse that exact executable.
+    version = bounded([executable, '--version'], root, 30).decode('utf-8', errors='replace').strip()
+    state['pod_version'] = version if re.fullmatch(r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}', version) else None
+    require(state['pod_version'] is not None, 'CocoaPods version is not numeric')
+    require(state['pod_version'] == '1.16.2', 'Pinned CocoaPods version mismatch')
+    return [executable, 'install', '--deployment', '--project-directory=UnitTestSupport/Dependencies']
+
 def diagnostic_category(message):
     # Only the category leaves this function; never the compiler's free text.
     rules = [
@@ -157,6 +169,8 @@ def failure_reason(error):
                 'Native build command failed; inspect private build log': 'COMMAND_FAILED',
                 'Native build-only stage requires macOS': 'PLATFORM_UNSUPPORTED',
                 'Source revision mismatch': 'SOURCE_REVISION_MISMATCH',
+                'CocoaPods version is not numeric': 'DEPENDENCY_VERSION_UNPARSEABLE',
+                'Pinned CocoaPods version mismatch': 'DEPENDENCY_VERSION_MISMATCH',
                 'Build input must be committed and clean': 'DIRTY_INPUT',
                 'Dependency preparation mutated source': 'DEPENDENCY_MUTATED_SOURCE'}.get(str(error), 'VALIDATION_REJECTED')
     return 'BUILD_STAGE_ERROR'
@@ -177,10 +191,10 @@ def run_build(root, args, state):
     static_result = verify(root)
     os.environ['COCOAPODS_DISABLE_STATS'] = 'true'
     state['stage'] = 'DEPENDENCY_VERSION'
-    require(bounded(['pod', '_1.16.2_', '--version'], root, 30).decode().strip() == '1.16.2', 'Pinned CocoaPods is unavailable')
+    install_command = pinned_pod_install_command(root, state)
     locked = (root / 'UnitTestSupport/Dependencies/Podfile.lock').read_bytes()
     state['stage'] = 'DEPENDENCY_INSTALL'
-    bounded(['pod', '_1.16.2_', 'install', '--deployment', '--project-directory=UnitTestSupport/Dependencies'], root, 180, args.output / 'pods-private.log')
+    bounded(install_command, root, 180, args.output / 'pods-private.log')
     state['stage'] = 'DEPENDENCY_VALIDATE'
     require((root / 'UnitTestSupport/Dependencies/Podfile.lock').read_bytes() == locked, 'Dependency lock changed')
     require((root / 'UnitTestSupport/Dependencies/Pods/Manifest.lock').read_bytes() == locked, 'Dependency manifest differs from lock')
@@ -204,6 +218,7 @@ def run_build(root, args, state):
     state['stage'] = 'COMPLETE'
     return {'status': 'BUILD_ONLY_PASS', 'stage': 'COMPLETE', 'head': head, 'sdk_executed': False,
             'tests_executed': False, 'native_isolation_proven': False,
+            'pod_version': state['pod_version'],
             'static_preflight': static_result, 'dependency': dependency, **resolved, **descriptor}
 
 def main():
@@ -214,12 +229,13 @@ def main():
     os.umask(0o077)
     args.output.mkdir(mode=0o700, parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
-    state = {'stage': 'SOURCE_PREFLIGHT', 'head': None, 'tracked': []}
+    state = {'stage': 'SOURCE_PREFLIGHT', 'head': None, 'tracked': [], 'pod_version': None}
     try:
         result = run_build(root, args, state)
     except (Exception, KeyboardInterrupt) as error:
         result = {'status': 'BUILD_ONLY_FAILED', 'stage': state['stage'], 'head': state['head'],
                   'reason': failure_reason(error), 'sdk_executed': False, 'tests_executed': False,
+                  'pod_version': state['pod_version'],
                   'native_isolation_proven': False,
                   'diagnostics': collect_diagnostics(args.output / 'build-private.log', root, state['tracked'])}
         write_verdict(args.output, result)
