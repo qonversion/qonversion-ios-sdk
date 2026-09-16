@@ -23,7 +23,31 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch }}
 
+      # Idempotent push: trunk regularly answers 500 / "GitHub commit API timed out" AFTER the spec has landed,
+      # and a retry then fails with "duplicate entry". The trunk API is the source of truth (the CDN lags).
       - name: CocoaPods Release
-        run: pod trunk push Qonversion.podspec --allow-warnings
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+          POD: Qonversion
+          SPEC: Qonversion.podspec
+        run: |
+          version=$(grep -oE "s.version\s*=\s*'[0-9.]+'" "$SPEC" | grep -oE "'[0-9.]+'" | tr -d "'")
+          on_trunk() {
+            curl -sf "https://trunk.cocoapods.org/api/v1/pods/$POD" \
+              | jq -e --arg v "$version" '.versions[] | select(.name == $v)' >/dev/null
+          }
+          if on_trunk; then
+            echo "$POD $version is already on trunk — nothing to push"
+            exit 0
+          fi
+          if pod trunk push "$SPEC" --allow-warnings; then
+            exit 0
+          fi
+          echo "pod trunk push failed — re-checking trunk, the push often lands despite the error"
+          sleep 60
+          if on_trunk; then
+            echo "$POD $version is on trunk — treating the push as successful"
+            exit 0
+          fi
+          echo "::error::$POD $version is not on trunk after the push"
+          exit 1
