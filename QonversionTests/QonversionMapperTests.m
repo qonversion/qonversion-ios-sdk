@@ -1,4 +1,5 @@
 #import <XCTest/XCTest.h>
+#import <OCMock/OCMock.h>
 
 #import "QNMapper.h"
 #import "QONErrors.h"
@@ -9,6 +10,7 @@
 #import "QONEntitlement.h"
 #import "QONLaunchResult.h"
 #import "QONProduct.h"
+#import "QONPromotionalOffer.h"
 
 @interface QNMapperTests : XCTestCase
 @property (nonatomic, strong) NSDictionary *userInitSuccess;
@@ -93,6 +95,25 @@
   
   NSInteger valueFromExistValue = [QNMapper mapInteger:dict[@"key_1"] orReturn:0];
   XCTAssertTrue(valueFromExistValue == 1);
+}
+
+- (void)testPromotionalOffer_publicInitializerStoresDiscounts {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  if (@available(iOS 12.2, macOS 10.14.4, tvOS 12.2, watchOS 6.2, *)) {
+    SKProductDiscount *productDiscount = OCMClassMock([SKProductDiscount class]);
+    SKPaymentDiscount *paymentDiscount = [[SKPaymentDiscount alloc] initWithIdentifier:@"offer_id"
+                                                                          keyIdentifier:@"key_id"
+                                                                                  nonce:[NSUUID UUID]
+                                                                              signature:@"signature"
+                                                                              timestamp:@1];
+
+    QONPromotionalOffer *offer = [[QONPromotionalOffer alloc] initWithProductDiscount:productDiscount paymentDiscount:paymentDiscount];
+
+    XCTAssertIdentical(offer.productDiscount, productDiscount);
+    XCTAssertIdentical(offer.paymentDiscount, paymentDiscount);
+  }
+#pragma clang diagnostic pop
 }
 
 @end

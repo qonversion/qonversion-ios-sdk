@@ -107,6 +107,17 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONErrorCode) {
 
 @interface QONErrors: NSObject
 
+/**
+ Returns YES when the error means the request was not authorized by the Qonversion API:
+ the project key is missing or invalid, or the project is inactive.
+
+ Such failures are reported either as `QONErrorCodeInvalidCredentials`, or as an `NSError` in `QonversionErrorDomain`
+ whose `code` is the raw HTTP status (401, 402 or 403). After the first error reported with a raw HTTP status the SDK
+ stops sending requests and completes every subsequent call with the same error until the app is relaunched, so check
+ the project key in the app configuration and the project's status in the Qonversion dashboard — retrying will not help.
+ */
++ (BOOL)isAuthorizationError:(NSError *)error;
+
 + (NSError *)internalErrorWithCode:(QONErrorCode)errorCode;
 + (NSError *)errorWithCode:(QONErrorCode)errorCode message:(NSString *)message;
 + (NSError *)errorWithCode:(QONErrorCode)errorCode message:(NSString *)message failureReason:(NSString *)failureReason;

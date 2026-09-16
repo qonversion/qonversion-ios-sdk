@@ -11,7 +11,7 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.2'
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Cache CocoaPods
         uses: actions/cache@v3
@@ -29,22 +29,36 @@ jobs:
           pod lib lint --verbose
   
   spm:
+    name: SPM (${{ matrix.platform }})
     runs-on: macos-latest
-    
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ['iOS Simulator', 'macOS', 'tvOS Simulator', 'watchOS Simulator', 'visionOS Simulator']
+
     steps:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.2'
-      - uses: actions/checkout@v2
-      - name: SPM validation
+      - uses: actions/checkout@v4
+      # `swift build` compiles only the host (macOS) slice and silently skips every iOS-only code path
+      # (NoCodes, UIKit, WebKit). Building the package through xcodebuild validates the real platform slices
+      # exactly the way SPM consumers get them. The tracked `.swiftpm/xcode/package.xcworkspace` is what makes
+      # xcodebuild build the *package*: without `-workspace`, `-scheme Qonversion` in the repo root silently
+      # picks the framework target of Qonversion.xcodeproj instead.
+      - name: SPM build (${{ matrix.platform }})
         run: |
-          swift build
+          xcodebuild -workspace .swiftpm/xcode/package.xcworkspace \
+            -scheme Qonversion \
+            -destination 'generic/platform=${{ matrix.platform }}' \
+            -skipPackagePluginValidation -skipMacroValidation \
+            build CODE_SIGNING_ALLOWED=NO -quiet
   
   common-checks:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Verify API base URL
         run: |
@@ -78,7 +92,7 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.2'
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Cache CocoaPods
         uses: actions/cache@v3
