@@ -164,7 +164,6 @@
 		70BAB0642B58306E00D19A6A /* expected_entitlements.json in Resources */ = {isa = PBXBuildFile; fileRef = 70893C992B3EC136002C6B82 /* expected_entitlements.json */; };
 		70CB7CDD2C246DF200241FF1 /* QONPromotionalOffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		70CB7CDE2C246DF200241FF1 /* QONPromotionalOffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */; };
-		70CB7CE12C247A8A00241FF1 /* QONPromotionalOffer+Protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 70CB7CDF2C247A8A00241FF1 /* QONPromotionalOffer+Protected.h */; };
 		70CB7CE42C2DB37A00241FF1 /* qonversion_ios_fallbacks.json in Resources */ = {isa = PBXBuildFile; fileRef = 70CB7CE32C2DB37900241FF1 /* qonversion_ios_fallbacks.json */; };
 		70D05A8E29C9FC1600EA5DDF /* QONRemoteConfigManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 70D05A8C29C9FC1600EA5DDF /* QONRemoteConfigManager.h */; };
 		70D05A8F29C9FC1600EA5DDF /* QONRemoteConfigManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 70D05A8D29C9FC1600EA5DDF /* QONRemoteConfigManager.m */; };
@@ -529,7 +528,6 @@
 		70B917662B34284200BF0689 /* QONTransaction+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONTransaction+Protected.h"; sourceTree = "<group>"; };
 		70CB7CDB2C246DF200241FF1 /* QONPromotionalOffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONPromotionalOffer.h; sourceTree = "<group>"; };
 		70CB7CDC2C246DF200241FF1 /* QONPromotionalOffer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONPromotionalOffer.m; sourceTree = "<group>"; };
-		70CB7CDF2C247A8A00241FF1 /* QONPromotionalOffer+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "QONPromotionalOffer+Protected.h"; sourceTree = "<group>"; };
 		70CB7CE32C2DB37900241FF1 /* qonversion_ios_fallbacks.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = qonversion_ios_fallbacks.json; sourceTree = "<group>"; };
 		70D05A8C29C9FC1600EA5DDF /* QONRemoteConfigManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QONRemoteConfigManager.h; sourceTree = "<group>"; };
 		70D05A8D29C9FC1600EA5DDF /* QONRemoteConfigManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QONRemoteConfigManager.m; sourceTree = "<group>"; };
@@ -1592,7 +1590,6 @@
 				707734F62A9F6B8700CFF742 /* QONRemoteConfigurationSource+Protected.h */,
 				702DBDEB2A3216C900D590D0 /* QONExperiment+Protected.h */,
 				8957324226DD03A3009507A6 /* QONUser+Protected.h */,
-				70CB7CDF2C247A8A00241FF1 /* QONPromotionalOffer+Protected.h */,
 				701922752B10AB3300724926 /* QONSubscriptionPeriod+Protected.h */,
 				70B917662B34284200BF0689 /* QONTransaction+Protected.h */,
 				8957324326DD03A3009507A6 /* QONOfferings+Protected.h */,
@@ -1858,7 +1855,6 @@
 				895732E426DD03A3009507A6 /* QONIntroEligibility+Protected.h in Headers */,
 				70E99384291BC60A006E0A64 /* QONEnvironment.h in Headers */,
 				8957330226DD03A3009507A6 /* QNUserInfoService.h in Headers */,
-				70CB7CE12C247A8A00241FF1 /* QONPromotionalOffer+Protected.h in Headers */,
 				70D0E2B8291A9BE3004E8DE8 /* QONConfiguration.h in Headers */,
 				895732EB26DD03A3009507A6 /* QNServicesAssembly.h in Headers */,
 				895732E226DD03A3009507A6 /* QONOffering+Protected.h in Headers */,

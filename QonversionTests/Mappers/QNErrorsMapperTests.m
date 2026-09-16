@@ -10,6 +10,8 @@
 #import <OCMock/OCMock.h>
 #import "QNErrorsMapper.h"
 #import "QONErrors.h"
+#import "QNUtils.h"
+#import "Qonversion.h"
 #import <Foundation/Foundation.h>
 
 @interface QNErrorsMapper ()
@@ -261,6 +263,21 @@
   
   // then
   XCTAssertEqual(type, 23);
+}
+
+- (void)testAuthorizationErrorCodes_publicListMatchesInternalHelpers {
+  NSArray<NSNumber *> *codes = [QONErrors authorizationErrorCodes];
+
+  XCTAssertEqualObjects(codes, (@[@401, @402, @403]));
+  XCTAssertEqualObjects([QNUtils authErrorsCodes], codes);
+
+  for (NSNumber *code in codes) {
+    NSError *error = [NSError errorWithDomain:QonversionErrorDomain code:code.integerValue userInfo:nil];
+    XCTAssertTrue([QNUtils isAuthorizationError:error], @"%@ must be treated as an authorization error", code);
+  }
+
+  NSError *notAuthError = [NSError errorWithDomain:QonversionErrorDomain code:404 userInfo:nil];
+  XCTAssertFalse([QNUtils isAuthorizationError:notAuthError]);
 }
 
 @end

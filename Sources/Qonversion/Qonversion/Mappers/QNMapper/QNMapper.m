@@ -17,7 +17,7 @@
 #import "QONExperimentGroup+Protected.h"
 #import "QONUser+Protected.h"
 #import "QONTransaction+Protected.h"
-#import "QONPromotionalOffer+Protected.h"
+#import "QONPromotionalOffer.h"
 #import "QONFallbackObject.h"
 
 #import <StoreKit/StoreKit.h>

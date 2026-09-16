@@ -128,8 +128,8 @@
 }
 
 + (NSArray *)authErrorsCodes {
-   return @[@401, @402, @403];
- }
+  return [QONErrors authorizationErrorCodes];
+}
 
 + (NSDate *)calculateExpirationDateForPeriod:(SKProductSubscriptionPeriod *)period fromDate:(NSDate *)transactionDate {
   if (!period) {

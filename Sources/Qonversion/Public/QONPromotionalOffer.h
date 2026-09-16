@@ -19,6 +19,13 @@ API_AVAILABLE(ios(12.2), macos(10.14.4), watchos(6.2), tvos(12.2), visionos(1.0)
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 @property (nonatomic, strong) SKProductDiscount *productDiscount;
 @property (nonatomic, strong) SKPaymentDiscount *paymentDiscount;
+
+/**
+ Creates a promotional offer from the StoreKit discount and the signed payment discount.
+ @param productDiscount discount of the product the offer is applied to.
+ @param paymentDiscount signed payment discount obtained from Qonversion (see `-[Qonversion getPromotionalOffer:discount:completion:]`).
+ */
+- (instancetype)initWithProductDiscount:(SKProductDiscount *)productDiscount paymentDiscount:(SKPaymentDiscount *)paymentDiscount;
 #pragma clang diagnostic pop
 
 @end

@@ -5,6 +5,10 @@
 
 @implementation QONErrors
 
++ (NSArray<NSNumber *> *)authorizationErrorCodes {
+  return @[@401, @402, @403];
+}
+
 + (NSString *)messageForError:(QONErrorCode)error {
   switch (error) {
     case QONErrorCodeIncorrectRequest:

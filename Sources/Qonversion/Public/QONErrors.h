@@ -107,6 +107,12 @@ typedef NS_ERROR_ENUM(QONErrorDomain, QONErrorCode) {
 
 @interface QONErrors: NSObject
 
+/**
+ HTTP status codes that the Qonversion API returns for authorization failures (for example, an invalid project key).
+ The SDK reports such failures as an `NSError` in `QonversionErrorDomain` whose `code` is the HTTP status code.
+ */
++ (NSArray<NSNumber *> *)authorizationErrorCodes;
+
 + (NSError *)internalErrorWithCode:(QONErrorCode)errorCode;
 + (NSError *)errorWithCode:(QONErrorCode)errorCode message:(NSString *)message;
 + (NSError *)errorWithCode:(QONErrorCode)errorCode message:(NSString *)message failureReason:(NSString *)failureReason;
