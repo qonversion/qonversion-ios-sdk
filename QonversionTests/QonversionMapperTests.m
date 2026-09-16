@@ -110,8 +110,8 @@
 
     QONPromotionalOffer *offer = [[QONPromotionalOffer alloc] initWithProductDiscount:productDiscount paymentDiscount:paymentDiscount];
 
-    XCTAssertEqual(offer.productDiscount, productDiscount);
-    XCTAssertEqual(offer.paymentDiscount, paymentDiscount);
+    XCTAssertIdentical(offer.productDiscount, productDiscount);
+    XCTAssertIdentical(offer.paymentDiscount, paymentDiscount);
   }
 #pragma clang diagnostic pop
 }

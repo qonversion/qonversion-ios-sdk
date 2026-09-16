@@ -11,7 +11,7 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.2'
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Cache CocoaPods
         uses: actions/cache@v3
@@ -40,10 +40,12 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.2'
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       # `swift build` compiles only the host (macOS) slice and silently skips every iOS-only code path
       # (NoCodes, UIKit, WebKit). Building the package through xcodebuild validates the real platform slices
-      # exactly the way SPM consumers get them.
+      # exactly the way SPM consumers get them. The tracked `.swiftpm/xcode/package.xcworkspace` is what makes
+      # xcodebuild build the *package*: without `-workspace`, `-scheme Qonversion` in the repo root silently
+      # picks the framework target of Qonversion.xcodeproj instead.
       - name: SPM build (${{ matrix.platform }})
         run: |
           xcodebuild -workspace .swiftpm/xcode/package.xcworkspace \
@@ -56,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Verify API base URL
         run: |
@@ -90,7 +92,7 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.2'
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Cache CocoaPods
         uses: actions/cache@v3

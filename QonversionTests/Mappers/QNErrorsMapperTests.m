@@ -265,19 +265,26 @@
   XCTAssertEqual(type, 23);
 }
 
-- (void)testAuthorizationErrorCodes_publicListMatchesInternalHelpers {
-  NSArray<NSNumber *> *codes = [QONErrors authorizationErrorCodes];
-
-  XCTAssertEqualObjects(codes, (@[@401, @402, @403]));
-  XCTAssertEqualObjects([QNUtils authErrorsCodes], codes);
-
-  for (NSNumber *code in codes) {
+- (void)testIsAuthorizationError_rawHTTPStatusesInQonversionDomain {
+  for (NSNumber *code in @[@401, @402, @403]) {
     NSError *error = [NSError errorWithDomain:QonversionErrorDomain code:code.integerValue userInfo:nil];
-    XCTAssertTrue([QNUtils isAuthorizationError:error], @"%@ must be treated as an authorization error", code);
+    XCTAssertTrue([QONErrors isAuthorizationError:error], @"%@ must be treated as an authorization error", code);
+    XCTAssertTrue([QNUtils isAuthorizationError:error], @"internal helper must agree for %@", code);
   }
+}
 
-  NSError *notAuthError = [NSError errorWithDomain:QonversionErrorDomain code:404 userInfo:nil];
-  XCTAssertFalse([QNUtils isAuthorizationError:notAuthError]);
+- (void)testIsAuthorizationError_invalidCredentialsCode {
+  NSError *error = [QONErrors errorWithQONErrorCode:QONErrorCodeInvalidCredentials];
+
+  XCTAssertTrue([QONErrors isAuthorizationError:error]);
+}
+
+- (void)testIsAuthorizationError_otherCodesAndDomains {
+  XCTAssertFalse([QONErrors isAuthorizationError:[NSError errorWithDomain:QonversionErrorDomain code:404 userInfo:nil]]);
+  XCTAssertFalse([QONErrors isAuthorizationError:[NSError errorWithDomain:QonversionErrorDomain code:500 userInfo:nil]]);
+  XCTAssertFalse([QONErrors isAuthorizationError:[QONErrors errorWithQONErrorCode:QONErrorCodeBackendError]]);
+  XCTAssertFalse([QONErrors isAuthorizationError:[NSError errorWithDomain:NSURLErrorDomain code:401 userInfo:nil]]);
+  XCTAssertFalse([QONErrors isAuthorizationError:[NSError errorWithDomain:@"com.example.app" code:403 userInfo:nil]]);
 }
 
 @end

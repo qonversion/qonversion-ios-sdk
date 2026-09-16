@@ -1,12 +1,17 @@
 #import "QONErrors.h"
 #import "QNInternalConstants.h"
+#import "QNUtils.h"
 #import "Qonversion.h"
 #import <StoreKit/StoreKit.h>
 
 @implementation QONErrors
 
-+ (NSArray<NSNumber *> *)authorizationErrorCodes {
-  return @[@401, @402, @403];
++ (BOOL)isAuthorizationError:(NSError *)error {
+  if (![error.domain isEqualToString:QonversionErrorDomain]) {
+    return NO;
+  }
+
+  return error.code == QONErrorCodeInvalidCredentials || [QNUtils isAuthorizationError:error];
 }
 
 + (NSString *)messageForError:(QONErrorCode)error {
