@@ -146,7 +146,7 @@ class GateTests(unittest.TestCase):
             bundle.write_text('placeholder, never executed')
             def download(target): target.write_bytes(b'synthetic verified bytes')
             with patch.object(gate, 'download_package', side_effect=download), patch.object(gate, 'digest', return_value=gate.PACKAGE_SHA), \
-                    patch.object(gate, 'bounded', return_value=b'Bundler version 2.6.9\n') as command:
+                    patch.object(gate, 'bounded', side_effect=[b'', (b'Bundler version 2.6.9\n', b'')]) as command:
                 result = gate.bootstrap('/fixed/ruby', '/fixed/gem', task, {})
                 install = command.call_args_list[0].args[0]
                 # RubyGems 4.0.20 rejects a leading --norc before command dispatch.
@@ -156,6 +156,7 @@ class GateTests(unittest.TestCase):
                 self.assertIn('--ignore-dependencies', install)
                 self.assertEqual(result, ['/fixed/ruby', str(bundle)])
                 self.assertEqual(command.call_args_list[1].args[0], result + ['--version'])
+                self.assertTrue(command.call_args_list[1].kwargs['split_output'])
 
     def test_bootstrap_failure_stages_and_hash_verification_are_preserved(self):
         for fail_at in ['BOOTSTRAP_DOWNLOAD', 'BOOTSTRAP_INSTALL', 'BOOTSTRAP_VERSION']:
@@ -169,7 +170,7 @@ class GateTests(unittest.TestCase):
                     if fail_at == 'BOOTSTRAP_DOWNLOAD':
                         raise gate.Rejected('BOOTSTRAP_HASH')
                     target.write_bytes(b'synthetic verified package')
-                def command(argv, *_):
+                def command(argv, *_, **_kwargs):
                     if state['stage'] == fail_at:
                         raise gate.Rejected('COMMAND_FAILED')
                     return b''
@@ -192,9 +193,55 @@ class GateTests(unittest.TestCase):
             bundle.touch()
             (task / 'bundler.gem').touch()
             with patch.object(gate, 'download_package'), patch.object(gate, 'digest', return_value=gate.PACKAGE_SHA), \
-                    patch.object(gate, 'bounded', return_value=b'Bundler version 99.0.0'):
-                with self.assertRaisesRegex(gate.Rejected, '^BUNDLER_VERSION$'):
+                    patch.object(gate, 'bounded', side_effect=[b'', (b'Bundler version 99.0.0', b'')]):
+                with self.assertRaisesRegex(gate.Rejected, '^BUNDLER_VERSION_MISMATCH$'):
                     gate.bootstrap('/ruby', '/gem', task, {})
+
+    def test_version_stderr_is_separate_and_only_safe_counts_survive(self):
+        state = {}
+        stderr = b'warning PRIVATE_TOKEN /private/path https://private.invalid\n'
+        gate.verify_bundler_version(b'Bundler version 2.6.9\n', stderr, state)
+        self.assertEqual(state['bundler_reported_version'], '2.6.9')
+        self.assertEqual(state['version_diagnostic']['stderr_bytes'], len(stderr))
+        self.assertEqual(state['version_diagnostic']['stderr_lines'], 1)
+        for secret in ['PRIVATE', '/private', 'https:']:
+            self.assertNotIn(secret, json.dumps(state))
+
+    def test_version_malformed_duplicate_conflicting_and_embedded_tokens_fail(self):
+        cases = [
+            (b'PRIVATE Bundler version 2.6.9\n', b''),
+            (b'Bundler version 2.6.9 suffix\n', b''),
+            (b'2.6.9\n', b''),
+            (b'Bundler version 2.6.9\n' * 2, b''),
+            (b'Bundler version 2.6.9\n', b'Bundler version 99.0.0\n'),
+            (b'Bundler version 2.6.9\n', b'Bundler version 2.6.9\n'),
+            (b'Bundler version 2.6.9\n', b'Bundler version PRIVATE\n'),
+            (b'unknown stdout\nBundler version 2.6.9\n', b''),
+            (b'', b'Bundler version 2.6.9\n'),
+        ]
+        for stdout, stderr in cases:
+            state = {}
+            with self.subTest(stream_hash=gate.digest(stdout + stderr)), self.assertRaisesRegex(gate.Rejected, '^BUNDLER_VERSION_FORMAT$'):
+                gate.verify_bundler_version(stdout, stderr, state)
+            self.assertNotIn('PRIVATE', json.dumps(state))
+
+    def test_split_capture_preserves_streams_and_shared_output_cap(self):
+        with tempfile.TemporaryDirectory() as folder:
+            task = Path(folder)
+            code = 'import sys; print("Bundler version 2.6.9"); print("private stderr", file=sys.stderr)'
+            stdout, stderr = gate.bounded([sys.executable, '-c', code], task, {}, 5, split_output=True)
+            self.assertEqual(stdout, b'Bundler version 2.6.9\n')
+            self.assertEqual(stderr, b'private stderr\n')
+            for code in ['import sys; sys.stdout.write("x"*2500000); sys.stderr.write("y"*2500000)',
+                         'import sys; sys.stderr.write("y"*5000000)']:
+                with self.assertRaisesRegex(gate.Rejected, '^COMMAND_OUTPUT_LIMIT$'):
+                    gate.bounded([sys.executable, '-c', code], task, {}, 5, split_output=True)
+
+    def test_nonzero_version_command_cannot_pass_through_numeric_output(self):
+        with tempfile.TemporaryDirectory() as folder:
+            code = 'print("Bundler version 2.6.9"); exit(1)'
+            with self.assertRaisesRegex(gate.Rejected, '^COMMAND_FAILED$'):
+                gate.bounded([sys.executable, '-c', code], Path(folder), {}, 5, split_output=True)
 
     def test_resolve_invokes_lock_only_after_bootstrap(self):
         root = Path(__file__).resolve().parents[2]

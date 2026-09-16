@@ -58,28 +58,32 @@ def isolated_environment(task):
     return values
 
 
-def bounded(command, task, env, timeout):
+def bounded(command, task, env, timeout, split_output=False):
     """Private capped output; kill/reap the process group on timeout or interrupt."""
     process = subprocess.Popen(command, cwd=task, env=env, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT, start_new_session=True)
+                               stderr=subprocess.PIPE, start_new_session=True)
     selector = selectors.DefaultSelector()
     output = bytearray()
+    streams = {'stdout': bytearray(), 'stderr': bytearray()}
     deadline = time.monotonic() + timeout
     try:
-        selector.register(process.stdout, selectors.EVENT_READ)
-        while True:
+        selector.register(process.stdout, selectors.EVENT_READ, 'stdout')
+        selector.register(process.stderr, selectors.EVENT_READ, 'stderr')
+        while selector.get_map():
             remaining = deadline - time.monotonic()
             require(remaining > 0, 'COMMAND_TIMEOUT')
-            if not selector.select(min(remaining, 0.25)):
-                continue
-            chunk = os.read(process.stdout.fileno(), 65536)
-            if not chunk:
-                break
-            require(len(output) + len(chunk) <= MAX_LOG, 'COMMAND_OUTPUT_LIMIT')
-            output.extend(chunk)
+            for key, _ in selector.select(min(remaining, 0.25)):
+                chunk = os.read(key.fileobj.fileno(), 65536)
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    continue
+                require(len(output) + len(chunk) <= MAX_LOG, 'COMMAND_OUTPUT_LIMIT')
+                output.extend(chunk)
+                if split_output:
+                    streams[key.data].extend(chunk)
         process.wait(timeout=max(0.001, deadline - time.monotonic()))
         require(process.returncode == 0, 'COMMAND_FAILED')
-        return bytes(output)
+        return (bytes(streams['stdout']), bytes(streams['stderr'])) if split_output else bytes(output)
     except BaseException as error:
         for sig in [signal.SIGTERM, signal.SIGKILL]:
             try:
@@ -97,6 +101,7 @@ def bounded(command, task, env, timeout):
     finally:
         selector.close()
         process.stdout.close()
+        process.stderr.close()
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -150,6 +155,33 @@ def runtime_tuple(ruby, task, env):
     return values
 
 
+def verify_bundler_version(stdout, stderr, state):
+    # Capture only counts and strict numeric candidates; never export either
+    # stream, paths, warning text or embedded version-like tokens.
+    lines = {name: [line for line in data.decode('utf-8', errors='replace').splitlines() if line]
+             for name, data in [('stdout', stdout), ('stderr', stderr)]}
+    candidates = []
+    markers = 0
+    for stream, values in lines.items():
+        for line in values:
+            match = re.fullmatch(r'(?:Bundler version )?(' + VERSION + r')', line)
+            if line.startswith('Bundler version ') or re.fullmatch(VERSION, line):
+                markers += 1
+            if match:
+                candidates.append((stream, match[1]))
+    state['version_diagnostic'] = {
+        'stdout_lines': len(lines['stdout']), 'stderr_lines': len(lines['stderr']),
+        'stderr_bytes': len(stderr), 'numeric_candidate_count': len(candidates),
+        'version_marker_count': markers,
+        'numeric_candidates': [version for _, version in candidates[:2]],
+    }
+    require(len(lines['stdout']) == 1 and markers == len(candidates) == 1 and candidates[0][0] == 'stdout', 'BUNDLER_VERSION_FORMAT')
+    match = re.fullmatch(r'Bundler version (' + VERSION + r')', lines['stdout'][0])
+    require(match is not None, 'BUNDLER_VERSION_FORMAT')
+    state['bundler_reported_version'] = match[1]
+    require(match[1] == BUNDLER, 'BUNDLER_VERSION_MISMATCH')
+
+
 def bootstrap(ruby, gem, task, env, state=None):
     state = state if state is not None else {}
     package = task / 'bundler.gem'
@@ -166,8 +198,8 @@ def bootstrap(ruby, gem, task, env, state=None):
     bundle = task / 'bootstrap/gems' / ('bundler-' + BUNDLER) / 'exe/bundle'
     require(bundle.is_file() and bundle.resolve().is_relative_to(task.resolve()), 'BUNDLER_EXECUTABLE')
     command = [ruby, str(bundle)]
-    actual = bounded(command + ['--version'], task, env, 15).decode('utf-8', errors='replace').strip()
-    require(actual == 'Bundler version ' + BUNDLER, 'BUNDLER_VERSION')
+    stdout, stderr = bounded(command + ['--version'], task, env, 15, split_output=True)
+    verify_bundler_version(stdout, stderr, state)
     return command
 
 
