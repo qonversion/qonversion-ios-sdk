@@ -5,6 +5,15 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
 
+// Delay before the attempt that is made even when the first token was sent successfully.
+// Apple registers the attribution record with a delay, so a token requested at launch may be
+// unresolvable while a token requested a few minutes later resolves.
+static NSTimeInterval const kQNUnconditionalAttributionDelay = 360;
+
+// The attempt number of that unconditional attempt. It is deliberately outside
+// -attributionAttemptDelays, so the attempt never schedules a follow-up of its own.
+static NSUInteger const kQNUnconditionalAttributionAttempt = NSUIntegerMax - 1;
+
 @interface QNAttributionManager()
 
 @property (nonatomic, strong) QNAPIClient *client;
@@ -25,6 +34,7 @@
 
 - (void)addAppleSearchAttributionData {
   [self scheduleAppleSearchAttributionDataFetchWithAttempt:0];
+  [self scheduleUnconditionalAppleSearchAttributionDataFetch];
 }
 
 // Delay before every attempt, keyed by the attempt number. An attempt that is not
@@ -45,6 +55,16 @@
   dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
   dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
     [self fetchAppleSearchAttributionDataWithAttempt:attempt];
+  });
+}
+
+// A token that reached the API without an error may still be unresolvable on Apple's side,
+// and the SDK never learns about that. This attempt requests a fresh token regardless of how
+// the first one went, and is made once per launch.
+- (void)scheduleUnconditionalAppleSearchAttributionDataFetch {
+  dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kQNUnconditionalAttributionDelay * NSEC_PER_SEC));
+  dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+    [self fetchAppleSearchAttributionDataWithAttempt:kQNUnconditionalAttributionAttempt];
   });
 }
 
