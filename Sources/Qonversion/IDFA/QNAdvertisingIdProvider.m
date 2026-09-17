@@ -1,26 +1,27 @@
 //
-//  QNDevice+Advertising.m
+//  QNAdvertisingIdProvider.m
 //  Qonversion
 //
 //  Created by Surik Sarkisyan on 25.08.2021.
 //  Copyright © 2021 Qonversion Inc. All rights reserved.
 //
 
-#import "QNDevice+Advertising.h"
+#import "QNAdvertisingIdProvider.h"
 
-@implementation QNDevice (Advertising)
+static NSString *const kQNZeroAdvertisingID = @"00000000-0000-0000-0000-000000000000";
 
-- (NSString *)obtainAdvertisingID {
-  NSString *advertiserId = [[QNDevice current] getAdvertiserID:5];
-  if (advertiserId.length > 0 &&
-      ![advertiserId isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
+@implementation QNAdvertisingIdProvider
+
++ (nullable NSString *)obtainAdvertisingID {
+  NSString *advertiserId = [self advertiserIDWithMaxAttempts:5];
+  if (advertiserId.length > 0 && ![advertiserId isEqualToString:kQNZeroAdvertisingID]) {
     return advertiserId;
   }
-  
+
   return nil;
 }
 
-- (NSString *)getAdvertiserID:(NSUInteger)maxAttempts {
++ (nullable NSString *)advertiserIDWithMaxAttempts:(NSUInteger)maxAttempts {
   Class ASIdentifierManager = NSClassFromString(@"ASIdentifierManager");
   SEL sharedManager = NSSelectorFromString(@"sharedManager");
   SEL advertisingIdentifier = NSSelectorFromString(@"advertisingIdentifier");
@@ -40,7 +41,7 @@
       identifier = [adid UUIDString];
     }
     if (identifier == nil && maxAttempts > 0) {
-      return [[QNDevice current] getAdvertiserID:maxAttempts - 1];
+      return [self advertiserIDWithMaxAttempts:maxAttempts - 1];
     } else {
       return identifier;
     }

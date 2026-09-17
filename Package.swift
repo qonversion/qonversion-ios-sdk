@@ -3,8 +3,7 @@
 
 import PackageDescription
 
-let sources: [String] = ["Qonversion/IDFA",
-                         "Qonversion/Public",
+let sources: [String] = ["Qonversion/Public",
                          "Qonversion/Qonversion/Assemblies",
                          "Qonversion/Qonversion/Assemblies/QNServicesAssembly",
                          "Qonversion/Qonversion/Constants",
@@ -60,19 +59,33 @@ let package = Package(
         .iOS(.v13), .watchOS("6.2"), .macOS(.v10_15), .tvOS(.v12), .visionOS(.v1)
     ],
     products: [
+        // The default product: the SDK plus the IDFA reader (`QonversionIDFA`).
         .library(
             name: "Qonversion",
+            targets: ["Qonversion", "QonversionIDFA", "QonversionSwift", "NoCodes"]),
+        // Kids Mode: the same SDK without the `QonversionIDFA` target, so the binary never references
+        // `ASIdentifierManager` — the Swift package counterpart of the `Qonversion/NoIdfa` CocoaPods subspec.
+        // Link exactly one of the two products.
+        .library(
+            name: "QonversionNoIdfa",
             targets: ["Qonversion", "QonversionSwift", "NoCodes"])
     ],
     targets: [.target(
                 name: "Qonversion",
                 path: "Sources",
-                exclude: ["Swift", "NoCodes"],
+                exclude: ["Swift", "NoCodes", "Qonversion/IDFA"],
                 resources: [
                     .copy("../Sources/PrivacyInfo.xcprivacy")
                 ],
                 publicHeadersPath: "Qonversion/Public",
                 cSettings: sources.map { .headerSearchPath($0) }),
+              // `QNAdvertisingIdProvider`: the only code that touches the advertising identifier. The core does not
+              // depend on this target — `QNDevice` finds the class at runtime with `NSClassFromString`, so leaving the
+              // target out (product `QonversionNoIdfa`) is what enables Kids Mode.
+              .target(
+                name: "QonversionIDFA",
+                path: "Sources/Qonversion/IDFA",
+                publicHeadersPath: "."),
               .target(
                 name: "QonversionSwift",
                 dependencies: ["Qonversion"],

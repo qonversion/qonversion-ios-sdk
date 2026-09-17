@@ -185,8 +185,8 @@
 		7D28F4C830227602F4BC5BF8 /* QONRedemptionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 42BCAF69EE7817634773B8EE /* QONRedemptionManager.m */; };
 		891DEA802703BA1B0079B439 /* QNErrorsMapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */; };
 		891ECE0B2773614600DF6A56 /* AdServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 891ECE0927734B8900DF6A56 /* AdServices.framework */; };
-		8957327926DD03A3009507A6 /* QNDevice+Advertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B626DD03A2009507A6 /* QNDevice+Advertising.h */; };
-		8957327A26DD03A3009507A6 /* QNDevice+Advertising.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731B726DD03A2009507A6 /* QNDevice+Advertising.m */; };
+		8957327926DD03A3009507A6 /* QNAdvertisingIdProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B626DD03A2009507A6 /* QNAdvertisingIdProvider.h */; };
+		8957327A26DD03A3009507A6 /* QNAdvertisingIdProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731B726DD03A2009507A6 /* QNAdvertisingIdProvider.m */; };
 		8957327B26DD03A3009507A6 /* QONUser.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731B926DD03A2009507A6 /* QONUser.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8957327D26DD03A3009507A6 /* QONOfferings.m in Sources */ = {isa = PBXBuildFile; fileRef = 895731BB26DD03A2009507A6 /* QONOfferings.m */; };
 		8957327E26DD03A3009507A6 /* QONIntroEligibility.h in Headers */ = {isa = PBXBuildFile; fileRef = 895731BC26DD03A2009507A6 /* QONIntroEligibility.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -549,8 +549,8 @@
 		891DEA7F2703BA1B0079B439 /* QNErrorsMapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QNErrorsMapperTests.m; sourceTree = "<group>"; };
 		891ECE0927734B8900DF6A56 /* AdServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk/System/Library/Frameworks/AdServices.framework; sourceTree = DEVELOPER_DIR; };
 		894278832759351C00A8A6EC /* GoogleSignIn.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = GoogleSignIn.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		895731B626DD03A2009507A6 /* QNDevice+Advertising.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QNDevice+Advertising.h"; sourceTree = "<group>"; };
-		895731B726DD03A2009507A6 /* QNDevice+Advertising.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QNDevice+Advertising.m"; sourceTree = "<group>"; };
+		895731B626DD03A2009507A6 /* QNAdvertisingIdProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QNAdvertisingIdProvider.h; sourceTree = "<group>"; };
+		895731B726DD03A2009507A6 /* QNAdvertisingIdProvider.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QNAdvertisingIdProvider.m; sourceTree = "<group>"; };
 		895731B926DD03A2009507A6 /* QONUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONUser.h; sourceTree = "<group>"; };
 		895731BA26DD03A2009507A6 /* QONAutomationsDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QONAutomationsDelegate.h; sourceTree = "<group>"; };
 		895731BB26DD03A2009507A6 /* QONOfferings.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QONOfferings.m; sourceTree = "<group>"; };
@@ -1341,8 +1341,8 @@
 		895731B526DD03A2009507A6 /* IDFA */ = {
 			isa = PBXGroup;
 			children = (
-				895731B626DD03A2009507A6 /* QNDevice+Advertising.h */,
-				895731B726DD03A2009507A6 /* QNDevice+Advertising.m */,
+				895731B626DD03A2009507A6 /* QNAdvertisingIdProvider.h */,
+				895731B726DD03A2009507A6 /* QNAdvertisingIdProvider.m */,
 			);
 			path = IDFA;
 			sourceTree = "<group>";
@@ -1873,7 +1873,7 @@
 				6A121DB12BBB10370073B330 /* QONRemoteConfigListRequestData.h in Headers */,
 				7094501A29CD994200F55E68 /* QONRemoteConfig.h in Headers */,
 				8957327B26DD03A3009507A6 /* QONUser.h in Headers */,
-				8957327926DD03A3009507A6 /* QNDevice+Advertising.h in Headers */,
+				8957327926DD03A3009507A6 /* QNAdvertisingIdProvider.h in Headers */,
 				8981E78825C030DD002310BD /* QonversionFramework.h in Headers */,
 				895732F626DD03A3009507A6 /* QNAttributionManager.h in Headers */,
 				895732FB26DD03A3009507A6 /* QNIdentityManager.h in Headers */,
@@ -2299,7 +2299,7 @@
 				895732F426DD03A3009507A6 /* QNUserPropertiesManager.m in Sources */,
 				8957329A26DD03A3009507A6 /* QONErrors.m in Sources */,
 				895732CE26DD03A3009507A6 /* QNProperties.m in Sources */,
-				8957327A26DD03A3009507A6 /* QNDevice+Advertising.m in Sources */,
+				8957327A26DD03A3009507A6 /* QNAdvertisingIdProvider.m in Sources */,
 				70CB7CDE2C246DF200241FF1 /* QONPromotionalOffer.m in Sources */,
 				895732C626DD03A3009507A6 /* QNAPIConstants.m in Sources */,
 				6A21BF552AB205AC005BDA7C /* QONRequest.m in Sources */,
