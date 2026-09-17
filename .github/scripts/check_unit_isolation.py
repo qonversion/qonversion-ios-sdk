@@ -69,6 +69,7 @@ def validate_graph(objects, scheme, baseline):
         require('QN_UNIT_TEST_ISOLATION=1' in settings['GCC_PREPROCESSOR_DEFINITIONS'],'Missing ObjC isolation flag')
         require('QN_UNIT_TEST_ISOLATION' in settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'],'Missing Swift isolation flag')
     unit_config=configs(objects,UNIT)['UnitIsolation']
+    require(unit_config['buildSettings'].get('TEST_HOST')=='$(BUILT_PRODUCTS_DIR)/QonversionUnitTestHost.app/QonversionUnitTestHost','Wrong explicit UnitIsolation TEST_HOST')
     require(objects[unit_config['baseConfigurationReference']]['path']=='UnitTestSupport/Dependencies/Pods/Target Support Files/Pods-QonversionTests/Pods-QonversionTests.unitisolation.xcconfig','Wrong isolated dependency config')
     require(unit_config['buildSettings'].get('PODS_ROOT')=='$(SRCROOT)/UnitTestSupport/Dependencies/Pods','Wrong isolated Pods path')
     require(unit_config['buildSettings'].get('PODS_PODFILE_DIR_PATH')=='$(SRCROOT)/UnitTestSupport/Dependencies','Wrong isolated Podfile path')

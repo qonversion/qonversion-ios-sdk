@@ -18,6 +18,26 @@ class IsolationStaticTests(unittest.TestCase):
     def test_sample_host_rejected(self):
         check.configs(self.objects,check.UNIT)['UnitIsolation']['buildSettings']['TEST_HOST']='Sample.app/Sample'
         with self.assertRaisesRegex(ValueError,'TEST_HOST'):self.validate()
+    def test_explicit_isolated_host_and_loader_binding(self):
+        values=check.configs(self.objects,check.UNIT)['UnitIsolation']['buildSettings']
+        self.assertEqual(values['TEST_HOST'],'$(BUILT_PRODUCTS_DIR)/QonversionUnitTestHost.app/QonversionUnitTestHost')
+        self.assertEqual(values['BUNDLE_LOADER'],'$(TEST_HOST)')
+        products='/synthetic/Build/Products/UnitIsolation-iphonesimulator'
+        host=values['TEST_HOST'].replace('$(BUILT_PRODUCTS_DIR)',products)
+        self.assertEqual(values['BUNDLE_LOADER'].replace('$(TEST_HOST)',host),host)
+        self.assertTrue(host.endswith('/QonversionUnitTestHost.app/QonversionUnitTestHost'))
+    def test_extra_executable_folder_macro_and_path_variants_rejected(self):
+        values=check.configs(self.objects,check.UNIT)['UnitIsolation']['buildSettings']
+        for path in [
+            '$(BUILT_PRODUCTS_DIR)/QonversionUnitTestHost.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/QonversionUnitTestHost',
+            '$(BUILT_PRODUCTS_DIR)/QonversionUnitTestHost.app//QonversionUnitTestHost',
+            '$(BUILT_PRODUCTS_DIR)/QonversionUnitTestHost.app/Contents/MacOS/QonversionUnitTestHost']:
+            with self.subTest(path=path):
+                values['TEST_HOST']=path
+                with self.assertRaisesRegex(ValueError,'explicit UnitIsolation TEST_HOST'):self.validate()
+    def test_loader_cannot_diverge_from_isolated_host(self):
+        check.configs(self.objects,check.UNIT)['UnitIsolation']['buildSettings']['BUNDLE_LOADER']='private-other-loader'
+        with self.assertRaisesRegex(ValueError,'bundle loader'):self.validate()
     def test_missing_objc_flag_rejected(self):
         check.configs(self.objects,check.SDK)['UnitIsolation']['buildSettings']['GCC_PREPROCESSOR_DEFINITIONS']=[]
         with self.assertRaisesRegex(ValueError,'ObjC'):self.validate()
