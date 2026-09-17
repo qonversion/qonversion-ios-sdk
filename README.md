@@ -229,7 +229,7 @@ In Xcode: **File → Add Package Dependencies...**, enter `https://github.com/qo
 .product(name: "Qonversion", package: "qonversion-ios-sdk")
 ```
 
-The Swift package exposes three modules: `Qonversion` (core SDK), `QonversionSwift` (Swift-only API) and `NoCodes` (No-Codes). The CocoaPod merges them into a single `Qonversion` module.
+The Swift package exposes three modules: `Qonversion` (core SDK), `QonversionSwift` (Swift-only API) and `NoCodes` (No-Codes). The CocoaPod merges them into a single `Qonversion` module — with CocoaPods, drop `import NoCodes` / `import QonversionSwift` from the samples below.
 
 ### CocoaPods
 
