@@ -299,7 +299,13 @@ final class QonversionAssembly {
             userIdProvider: miscAssembly.internalConfig,
             localStorage: localStorage,
             cacheLifetime: cacheLifetime,
-            logger: logger
+            logger: logger,
+            // TEMPORARY — REVERT BEFORE RELEASE (restore to true, or drop the
+            // argument). While the v4 backend is being brought up, the local
+            // calculation hides exactly what needs to be seen: a purchase that
+            // never reached the server still lights up the app. Off, the app
+            // shows the backend's own answer and nothing else.
+            localFallbackEnabled: false
         )
 
         let userChangesNotifier: UserChangesNotifier = miscAssembly.userChangesNotifier()

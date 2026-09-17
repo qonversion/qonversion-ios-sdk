@@ -23,6 +23,14 @@
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>
 			</dict>
+			<!-- The dev Mac on the LAN. Spelled out because
+			     NSAllowsLocalNetworking does not reliably cover a bare
+			     private-range IPv4 literal. -->
+			<key>192.168.1.75</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
 		</dict>
 	</dict>
 	<key>UIApplicationSceneManifest</key>

@@ -21,20 +21,25 @@ enum ConfigurationManager {
 
     // TEMPORARY — REVERT BEFORE RELEASE.
     //
-    // Pointed at the api-gateway PR environment of feat/v4-sdk-support, which
-    // is the only place the /v4 SDK surface is deployed: it does not exist on
-    // main, so production answers every v4 call from the not-found handler.
-    // That environment is torn down when the PR merges.
+    // Pointed at the LOCAL dev stack. The /v4 SDK surface exists nowhere else
+    // that works end to end: it is not on main (so production answers every
+    // v4 call from the not-found handler), and on the feat/v4-sdk-support
+    // staging environment POST /v4/users times out — userman reads there, but
+    // its MySQL writes hang.
     //
     // Production values to restore:
     //   defaultProjectKey = "PV77YHL7qnGvsdmpTs7gimsxUvY-Znl2"
     //   defaultApiUrl     = nil
-    static let defaultProjectKey = "8aa76234e3cac3f4dee02a7aace44e335e2e8f08da293dcdab897ac2d7da387e"
+    static let defaultProjectKey = "dev_access_token_789"
 
-    /// Plain HTTP on purpose: the staging ingress serves the Kubernetes
-    /// "Fake Certificate", which iOS refuses outright — and no ATS exception
-    /// waives certificate validation, only the requirement to use TLS.
-    static let defaultApiUrl: String? = "http://feat-v4-sdk-support.api-gateway.stage.qmoons.me"
+    /// The Mac's LAN address rather than localhost, so a device on the same
+    /// Wi-Fi reaches it; the simulator is fine with it too. Plain HTTP is what
+    /// the local gateway serves.
+    ///
+    /// Staging, for when its write path is fixed:
+    ///   key "8aa76234e3cac3f4dee02a7aace44e335e2e8f08da293dcdab897ac2d7da387e"
+    ///   url "http://feat-v4-sdk-support.api-gateway.stage.qmoons.me"
+    static let defaultApiUrl: String? = "http://192.168.1.75:7101"
 
     private static var userDefaults: UserDefaults { .standard }
 

@@ -43,6 +43,17 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
     private let cacheLifetimeSeconds: TimeInterval
     private let logger: LoggerWrapper
 
+    /// Whether a backend failure may be answered from the device.
+    ///
+    /// TEMPORARY — the assembly currently passes false so the app shows the
+    /// backend's own answer and nothing else, which is what makes a purchase
+    /// that never reached the server visible instead of masked. Restore it to
+    /// true before release: with it off, an offline user loses access he paid
+    /// for, and that is the whole reason the local calculation exists.
+    ///
+    /// Defaults to true so the unit tests keep exercising the real behaviour.
+    private let localFallbackEnabled: Bool
+
     init(
         entitlementsService: EntitlementsServiceInterface,
         storeKitFacade: StoreKitFacadeInterface,
@@ -51,8 +62,10 @@ final class EntitlementsManager: EntitlementsManagerInterface, @unchecked Sendab
         userIdProvider: UserIdProvider,
         localStorage: LocalStorageInterface,
         cacheLifetime: TimeInterval,
-        logger: LoggerWrapper
+        logger: LoggerWrapper,
+        localFallbackEnabled: Bool = true
     ) {
+        self.localFallbackEnabled = localFallbackEnabled
         self.entitlementsService = entitlementsService
         self.storeKitFacade = storeKitFacade
         self.productsDataSource = productsDataSource
@@ -280,6 +293,14 @@ private extension EntitlementsManager {
         context: LocalCalculationContext,
         generation: Int
     ) -> [String: Qonversion.Entitlement]? {
+        // The single choke point for the switch: every caller — purchase,
+        // restore and the resolution's own catch — arrives here, so turning it
+        // off leaves nothing that can answer from the device.
+        guard localFallbackEnabled else {
+            logger.warning("The local entitlements fallback is disabled in this build — answering from the backend only.")
+            return nil
+        }
+
         let products: [Qonversion.Product] = productsDataSource.cachedProducts()
         let calculated = EntitlementsCalculator.calculate(
             transactions: transactions,
