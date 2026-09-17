@@ -678,14 +678,11 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
   }
 }
 
-// MARK: - Temporary SSL bypass for staging. Remove before release.
 - (void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler {
-  if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
-    NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-    completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
-  } else {
-    completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
-  }
+  // Never manufacture a credential from an unverified SecTrust. Delegating to
+  // URLSession preserves the platform trust chain and hostname checks for the
+  // default API as well as customer-provided HTTPS proxy URLs.
+  completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
 }
 
 @end
