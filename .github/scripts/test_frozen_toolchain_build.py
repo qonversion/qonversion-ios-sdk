@@ -63,8 +63,23 @@ class FrozenTests(unittest.TestCase):
             self.assertEqual(env['BUNDLE_DEPLOYMENT'], 'true')
             self.assertEqual(env['BUNDLE_GEMFILE'], str(task / 'Gemfile'))
             self.assertTrue(env['PATH'].startswith('/approved/bin:'))
+            for key in ['CP_HOME_DIR','CP_CACHE_DIR','CP_REPOS_DIR']:
+                directory=Path(env[key])
+                self.assertTrue(directory.is_dir() and directory.resolve().is_relative_to(task.resolve()))
+                self.assertEqual(directory.stat().st_mode & 0o777,0o700)
+                self.assertEqual(list(directory.iterdir()),[])
             for key in ['PRIVATE_TOKEN', 'RUBYOPT', 'HOME']:
                 self.assertNotIn(key, env)
+
+    def test_cocoapods_paths_ignore_ambient_settings_and_reject_preexisting_symlink(self):
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ,{
+                'CP_HOME_DIR':'/private/ambient','CP_CACHE_DIR':'/private/ambient','CP_REPOS_DIR':'/private/ambient'}):
+            task=Path(folder)
+            env=gate.frozen_environment(task,'/approved/bin/ruby')
+            self.assertTrue(all(env[key].startswith(str(task)+'/') for key in ['CP_HOME_DIR','CP_CACHE_DIR','CP_REPOS_DIR']))
+        with tempfile.TemporaryDirectory() as folder:
+            task=Path(folder);(task/'pod-home').symlink_to(ROOT,target_is_directory=True)
+            with self.assertRaises(FileExistsError):gate.frozen_environment(task,'/approved/bin/ruby')
 
     def test_exact_runtime_mismatch_stops_before_bootstrap(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(gate.sys, 'platform', 'darwin'), \

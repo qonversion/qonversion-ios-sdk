@@ -72,6 +72,14 @@ def accepted_inputs(root):
 
 def frozen_environment(task, ruby):
     env = toolchain.isolated_environment(task)
+    # CocoaPods has its own home/settings and repository caches; a clean shell
+    # environment alone does not prevent reads from the runner's user cache.
+    for key, name in [('CP_HOME_DIR', 'pod-home'), ('CP_CACHE_DIR', 'pod-cache'), ('CP_REPOS_DIR', 'pod-repos')]:
+        directory = task / name
+        directory.mkdir(mode=0o700)
+        toolchain.require(not directory.is_symlink() and directory.resolve().is_relative_to(task.resolve()),
+                          'COCOAPODS_PRIVATE_PATH')
+        env[key] = str(directory)
     env.update(BUNDLE_FROZEN='true', BUNDLE_DEPLOYMENT='true',
                BUNDLE_FORCE_RUBY_PLATFORM='false', BUNDLE_DISABLE_CHECKSUM_VALIDATION='false',
                COCOAPODS_DISABLE_STATS='true')

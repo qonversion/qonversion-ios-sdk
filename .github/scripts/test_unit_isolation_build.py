@@ -1,4 +1,5 @@
 import copy
+import os
 from pathlib import Path
 import unittest
 import sys
@@ -71,13 +72,53 @@ class BuildOnlyTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, '^Native build stage timed out$'):
                 build.bounded([sys.executable, '-c', 'import time; time.sleep(60)'], tmp, 0.05)
         self.assertLess(time.monotonic()-before, 4)
+    def test_verbose_pod_output_limit_stops_process_and_caps_private_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log=Path(tmp)/'private.log'
+            with self.assertRaisesRegex(ValueError,'^Native dependency output exceeded limit$') as caught:
+                build.bounded([sys.executable,'-c','import sys,time; sys.stdout.write("synthetic-private"*10000); sys.stdout.flush(); time.sleep(60)'],tmp,1,log,output_limit=128)
+            self.assertLessEqual(log.stat().st_size,128)
+            self.assertEqual(build.failure_reason(caught.exception),'DEPENDENCY_OUTPUT_LIMIT')
+    def test_verbose_pod_timeout_and_nonlog_cache_are_bounded_separately(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log=Path(tmp)/'private.log'
+            build.bounded([sys.executable,'-c','from pathlib import Path; import sys; Path("cache").write_bytes(b"x"*(5*1024*1024)); print("ok"); print("private",file=sys.stderr)'],tmp,2,log,output_limit=128)
+            self.assertEqual((Path(tmp)/'cache').stat().st_size,5*1024*1024)
+            self.assertLessEqual(log.stat().st_size,128)
+            with self.assertRaisesRegex(ValueError,'^Native build stage timed out$'):
+                build.bounded([sys.executable,'-c','import time; time.sleep(60)'],tmp,.05,log,output_limit=128)
+    def test_output_cap_kills_term_ignoring_descendant_after_leader_exits(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);pid_file=root/'descendant.pid';heartbeat=root/'heartbeat'
+            child_code=('import os,signal,time; from pathlib import Path; '
+                        'signal.signal(signal.SIGTERM,signal.SIG_IGN); '
+                        f'Path({str(pid_file)!r}).write_text(str(os.getpid())); '
+                        f'p=Path({str(heartbeat)!r}); n=0\n'
+                        'while True:\n n+=1; p.write_text(str(n)); time.sleep(.01)\n')
+            parent_code=('import subprocess,sys,time; from pathlib import Path; '
+                         f'subprocess.Popen([sys.executable,"-c",{child_code!r}]); '
+                         f'p=Path({str(heartbeat)!r})\n'
+                         'while not p.exists(): time.sleep(.01)\n'
+                         'sys.stdout.write("x"*65536); sys.stdout.flush(); time.sleep(60)\n')
+            real_killpg=os.killpg
+            try:
+                with patch.object(build.os,'killpg',wraps=real_killpg) as kills:
+                    with self.assertRaisesRegex(ValueError,'^Native dependency output exceeded limit$'):
+                        build.bounded([sys.executable,'-c',parent_code],tmp,3,root/'private.log',output_limit=128)
+                    self.assertTrue(any(call.args[1]==signal.SIGKILL for call in kills.call_args_list))
+                time.sleep(.05);before=heartbeat.read_bytes();time.sleep(.15)
+                self.assertEqual(heartbeat.read_bytes(),before)
+            finally:
+                if pid_file.exists():
+                    try:os.kill(int(pid_file.read_text()),signal.SIGKILL)
+                    except ProcessLookupError:pass
     def test_parent_interrupt_stops_and_reaps_group(self):
         child = Mock(pid=12345, stdout=Mock())
         child.communicate.side_effect = KeyboardInterrupt
         with patch.object(build.subprocess, 'Popen', return_value=child), patch.object(build.os, 'killpg') as kill:
             with self.assertRaises(KeyboardInterrupt): build.bounded(['synthetic-never-executed'], '.', 1)
-            kill.assert_called_once_with(12345, signal.SIGTERM)
-            child.wait.assert_called_once_with(timeout=3)
+            self.assertEqual([call.args for call in kill.call_args_list],[(12345,signal.SIGTERM),(12345,0),(12345,signal.SIGKILL)])
+            self.assertEqual(child.wait.call_count,2)
             child.stdout.close.assert_called_once()
     def test_pinned_dependency_graph(self): self.assertEqual(build.validate_pods(*pods())['dependency_shell_phases'], 0)
     def test_sample_dependency_rejected(self):
@@ -152,6 +193,16 @@ class BuildOnlyTests(unittest.TestCase):
             self.assertEqual(result['unmatched_lines'],3)
             self.assertNotIn('SyntheticError',json.dumps(result))
             self.assertFalse(build.collect_pod_diagnostics(Path(tmp)/'missing')['available'])
+    def test_nested_cocoapods_cache_cause_is_classified_without_private_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log=Path(tmp)/'pods-private.log'
+            log.write_text("[!] Unable to add a source with url `https://secret.invalid` named `secret`.\n"
+                           "(Could not create '/private/customer/repos', the CocoaPods repo cache directory.\n"
+                           "Errno::EACCES: Permission denied - /private/customer/repos)\n")
+            result=build.collect_pod_diagnostics(log)
+            self.assertEqual({r['category']:r['records'] for r in result['categories']},
+                             {'SOURCE_SETUP_FAILED':1,'COCOAPODS_CACHE_CREATE_FAILED':1,'FILESYSTEM_ACCESS_DENIED':1})
+            for private in ['secret','customer','/private','https:']:self.assertNotIn(private,json.dumps(result))
     def test_pod_tail_line_and_count_limits_preserve_late_diagnostics(self):
         with tempfile.TemporaryDirectory() as tmp:
             log=Path(tmp)/'pods-private.log'
@@ -199,7 +250,7 @@ class BuildOnlyTests(unittest.TestCase):
             command=build.pinned_pod_install_command(root,state)
             which.assert_called_once_with('pod')
             run.assert_called_once_with(['/synthetic-tools/pod','--version'],root,30)
-            self.assertEqual(command,['/synthetic-tools/pod','install','--deployment','--project-directory=UnitTestSupport/Dependencies'])
+            self.assertEqual(command,['/synthetic-tools/pod','install','--deployment','--verbose','--project-directory=UnitTestSupport/Dependencies'])
             self.assertEqual(state['pod_version'],'1.16.2')
     def test_wrong_pod_version_rejected_before_install_command(self):
         state={}

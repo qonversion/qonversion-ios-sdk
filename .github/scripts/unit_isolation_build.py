@@ -6,10 +6,12 @@ import os
 from pathlib import Path
 import plistlib
 import re
+import selectors
 import signal
 import shutil
 import subprocess
 import sys
+import time
 from check_unit_isolation import verify, require
 from openstep_read import parse
 
@@ -69,23 +71,50 @@ def validate_pods(objects, spec):
     require(not any(spec.get(key) for key in ['prepare_command', 'script_phases', 'dependencies', 'subspecs']), 'Unexpected dependency hooks or graph')
     return {'dependency': 'OCMock', 'version': '3.9.4', 'generated_targets': sorted(PODS), 'dependency_shell_phases': 0}
 
-def bounded(command, cwd, timeout, log_path=None):
+def bounded(command, cwd, timeout, log_path=None, output_limit=None):
     # Terminate the whole build process group on timeout. Logs are private and are
     # not artifacts; only fixed verdicts/source revision are printed by this tool.
     with open(log_path or os.devnull, 'wb') as error_log:
-        process = subprocess.Popen(command, cwd=cwd, stdout=subprocess.PIPE if log_path is None else error_log,
-                                   stderr=error_log, start_new_session=True)
+        process = subprocess.Popen(command, cwd=cwd,
+                                   stdout=subprocess.PIPE if log_path is None or output_limit is not None else error_log,
+                                   stderr=subprocess.STDOUT if output_limit is not None else error_log, start_new_session=True)
         def stop_group():
             try: os.killpg(process.pid, signal.SIGTERM)
             except ProcessLookupError: pass
             try: process.wait(timeout=3)
-            except subprocess.TimeoutExpired:
+            except subprocess.TimeoutExpired: pass
+            # The leader can exit on TERM while a descendant ignores it. Check
+            # the owned session's group even after wait has reaped the leader.
+            try: os.killpg(process.pid, 0)
+            except ProcessLookupError: pass
+            else:
                 try: os.killpg(process.pid, signal.SIGKILL)
                 except ProcessLookupError: pass
-                process.wait(timeout=3)
+            process.wait(timeout=3)
             if process.stdout is not None: process.stdout.close()
         try:
-            out, _ = process.communicate(timeout=timeout)
+            if output_limit is None:
+                out, _ = process.communicate(timeout=timeout)
+            else:
+                # Only the verbose CocoaPods command uses this bounded pipe.
+                # Limit its private log without limiting generated dependency files.
+                deadline, total, out = time.monotonic() + timeout, 0, None
+                with selectors.DefaultSelector() as selector:
+                    selector.register(process.stdout, selectors.EVENT_READ)
+                    while selector.get_map():
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0: raise subprocess.TimeoutExpired(command, timeout)
+                        for key, _ in selector.select(min(remaining, .25)):
+                            chunk = os.read(key.fileobj.fileno(), 65536)
+                            if not chunk:
+                                selector.unregister(key.fileobj)
+                                continue
+                            available = max(0, output_limit - total)
+                            error_log.write(chunk[:available])
+                            total += len(chunk)
+                            require(total <= output_limit, 'Native dependency output exceeded limit')
+                process.wait(timeout=max(.001, deadline - time.monotonic()))
+                process.stdout.close()
         except subprocess.TimeoutExpired:
             stop_group()
             raise ValueError('Native build stage timed out') from None
@@ -110,7 +139,7 @@ def pinned_pod_install_command(root, state):
     state['pod_version'] = version if re.fullmatch(r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}', version) else None
     require(state['pod_version'] is not None, 'CocoaPods version is not numeric')
     require(state['pod_version'] == '1.16.2', 'Pinned CocoaPods version mismatch')
-    return [executable, 'install', '--deployment', '--project-directory=UnitTestSupport/Dependencies']
+    return [executable, 'install', '--deployment', '--verbose', '--project-directory=UnitTestSupport/Dependencies']
 
 def diagnostic_category(message):
     # Only the category leaves this function; never the compiler's free text.
@@ -177,6 +206,8 @@ def collect_pod_diagnostics(log_path):
         ('RESOLUTION_CONFLICT', r'CocoaPods could not find compatible versions for pod'),
         ('MINIMUM_DEPLOYMENT_TARGET', r'required a higher minimum deployment target'),
         ('SOURCE_SETUP_FAILED', r'Unable to add a source with url'),
+        ('COCOAPODS_CACHE_CREATE_FAILED', r'Could not create .*the CocoaPods repo cache directory'),
+        ('CDN_REPO_TYPE_FAILED', r'Couldn\x27t determine repo type for URL'),
         ('CDN_DOWNLOAD_FAILED', r'CDN: .*URL couldn\x27t be downloaded'),
         ('CDN_REPO_UPDATE_FAILED', r'CDN: .*Repo update failed'),
         ('TLS_VERIFY_FAILED', r'certificate verify failed|SSL certificate problem|SSL peer certificate.*not OK'),
@@ -196,6 +227,12 @@ def collect_pod_diagnostics(log_path):
         ('RUBY_NAME_ERROR', r'\bNameError\b'),
         ('RUBY_TYPE_ERROR', r'\bTypeError\b'),
         ('RUBY_FFI_LOAD_ERROR', r'Could not open library|incompatible architecture|Library not loaded:'),
+        ('FILESYSTEM_ACCESS_DENIED', r'Errno::EACCES|Permission denied(?! \(publickey\))'),
+        ('FILESYSTEM_READ_ONLY', r'Errno::EROFS|Read-only file system'),
+        ('FILESYSTEM_NO_SPACE', r'Errno::ENOSPC|No space left on device'),
+        ('FILESYSTEM_EXISTS', r'Errno::EEXIST|File exists'),
+        ('FILESYSTEM_MISSING', r'Errno::ENOENT|No such file or directory'),
+        ('FILESYSTEM_NOT_DIRECTORY', r'Errno::ENOTDIR|Not a directory'),
     ]
     result = {'available': log_path.is_file(), 'categories': [], 'unclassified_error_lines': 0,
               'unmatched_lines': 0, 'truncated': False}
@@ -236,6 +273,7 @@ def failure_reason(error):
     if isinstance(error, ValueError):
         return {'Native build stage timed out': 'TIMEOUT',
                 'Native build command failed; inspect private build log': 'COMMAND_FAILED',
+                'Native dependency output exceeded limit': 'DEPENDENCY_OUTPUT_LIMIT',
                 'Native build-only stage requires macOS': 'PLATFORM_UNSUPPORTED',
                 'Source revision mismatch': 'SOURCE_REVISION_MISMATCH',
                 'CocoaPods version is not numeric': 'DEPENDENCY_VERSION_UNPARSEABLE',
@@ -263,7 +301,7 @@ def run_build(root, args, state):
     install_command = pinned_pod_install_command(root, state)
     locked = (root / 'UnitTestSupport/Dependencies/Podfile.lock').read_bytes()
     state['stage'] = 'DEPENDENCY_INSTALL'
-    bounded(install_command, root, 180, args.output / 'pods-private.log')
+    bounded(install_command, root, 180, args.output / 'pods-private.log', output_limit=4*1024*1024)
     state['stage'] = 'DEPENDENCY_VALIDATE'
     require((root / 'UnitTestSupport/Dependencies/Podfile.lock').read_bytes() == locked, 'Dependency lock changed')
     require((root / 'UnitTestSupport/Dependencies/Pods/Manifest.lock').read_bytes() == locked, 'Dependency manifest differs from lock')
