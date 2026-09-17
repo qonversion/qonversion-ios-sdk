@@ -38,7 +38,9 @@ require "bundler/setup"
 require "json"
 bundle_root = File.realpath(ENV.fetch("BUNDLE_PATH")) + "/"
 default_root = File.realpath(Gem.default_dir) + "/"
-bootstrap_root = File.realpath(ENV.fetch("GEM_HOME")) + "/"
+# bundler/setup changes GEM_HOME to BUNDLE_PATH. The expected bootstrap root
+# comes from the parent's immutable, verified installation path instead.
+bootstrap_root = File.realpath(ARGV.fetch(0)) + "/"
 rows = Bundler.load.specs.map do |s|
   location = File.realpath(s.full_gem_path)
   {name: s.name, version: s.version.to_s, platform: s.platform.to_s,
@@ -79,7 +81,7 @@ def frozen_environment(task, ruby):
 
 def validate_selection(document, expected, installed=False):
     toolchain.require(isinstance(document, dict) and document.get('bundler') == toolchain.BUNDLER,
-                      'SELECTED_BUNDLER_VERSION')
+                      'SELECTED_BUNDLER_RUNTIME_VERSION')
     rows = document.get('specs')
     toolchain.require(isinstance(rows, list) and 45 <= len(rows) <= 46, 'SELECTED_SPEC_COUNT')
     selected = {}
@@ -88,8 +90,9 @@ def validate_selection(document, expected, installed=False):
         toolchain.require(isinstance(row, dict), 'SELECTED_SPEC_FORMAT')
         name, version, platform = row.get('name'), row.get('version'), row.get('platform')
         if installed and name == 'bundler':
-            toolchain.require(version == toolchain.BUNDLER and platform == 'ruby' and row.get('bootstrap_path') is True,
-                              'SELECTED_BUNDLER_VERSION')
+            toolchain.require(version == toolchain.BUNDLER, 'SELECTED_BUNDLER_SPEC_VERSION')
+            toolchain.require(platform == 'ruby', 'SELECTED_BUNDLER_SPEC_PLATFORM')
+            toolchain.require(row.get('bootstrap_path') is True, 'SELECTED_BUNDLER_SPEC_PATH')
             continue
         toolchain.require(name in expected and name not in selected and version == expected[name], 'SELECTED_SPEC_VERSION')
         toolchain.require(platform == ('arm64-darwin' if name == 'ffi' else 'ruby'), 'SELECTED_SPEC_PLATFORM')
@@ -154,7 +157,8 @@ def tooling(root, task, state):
                       task, env, 300)
     unchanged_lock(task)
     state['stage'] = 'INSTALLED_SELECTION'
-    state['installed_selection'] = validate_selection(metadata(ruby, bundle, INSTALLED_METADATA, task, env),
+    state['installed_selection'] = validate_selection(metadata(ruby, bundle, INSTALLED_METADATA, task, env,
+                                                               [task / 'bootstrap']),
                                                        expected, installed=True)
     state['stage'] = 'POD_BINSTUB'
     toolchain.bounded(bundle + ['binstubs', 'cocoapods', '--path', str(task / 'bin')], task, env, 30)

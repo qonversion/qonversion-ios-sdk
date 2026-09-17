@@ -148,10 +148,50 @@ class FrozenTests(unittest.TestCase):
         document, expected = selection(installed=True)
         row = {'name': 'bundler', 'version': '2.6.9', 'platform': 'ruby', 'bootstrap_path': False}
         document['specs'].append(row)
-        with self.assertRaisesRegex(gate.toolchain.Rejected, '^SELECTED_BUNDLER_VERSION$'):
+        with self.assertRaisesRegex(gate.toolchain.Rejected, '^SELECTED_BUNDLER_SPEC_PATH$'):
             gate.validate_selection(document, expected, installed=True)
         row['bootstrap_path'] = True
         self.assertEqual(gate.validate_selection(document, expected, installed=True)['selected_names'], 45)
+
+    def test_installed_metadata_uses_immutable_bootstrap_after_gem_home_changes(self):
+        document, _ = selection(installed=True)
+        with tempfile.TemporaryDirectory() as folder:
+            task = Path(folder)
+            env = {'GEM_HOME': str(task / 'bundle'), 'BUNDLE_PATH': str(task / 'bundle')}
+            bundle = ['/ruby', str(task / 'bootstrap/gems/bundler-2.6.9/exe/bundle')]
+            with patch.object(gate.toolchain, 'bounded', return_value=(json.dumps(document).encode(), b'')) as command:
+                gate.metadata('/ruby', bundle, gate.INSTALLED_METADATA, task, env, [task / 'bootstrap'])
+            self.assertEqual(command.call_args.args[0][-1], str(task / 'bootstrap'))
+            self.assertNotEqual(command.call_args.args[0][-1], env['GEM_HOME'])
+            self.assertIn('File.realpath(ARGV.fetch(0))', gate.INSTALLED_METADATA)
+            self.assertNotIn('ENV.fetch("GEM_HOME")', gate.INSTALLED_METADATA)
+
+    def test_tooling_passes_verified_bootstrap_root_to_installed_query(self):
+        before, _ = selection()
+        after, _ = selection(installed=True)
+        with tempfile.TemporaryDirectory() as folder, patch.object(gate.sys, 'platform', 'darwin'), \
+                patch.object(gate.shutil, 'which', side_effect=['/ruby', '/gem']), \
+                patch.object(gate.toolchain, 'runtime_tuple', return_value=gate.RUNTIME), \
+                patch.object(gate.toolchain, 'bootstrap', return_value=['/ruby', '/bundle']), \
+                patch.object(gate, 'metadata', side_effect=[before, after]) as metadata, \
+                patch.object(gate.toolchain, 'bounded'), patch.object(gate, 'pod_environment', return_value={}):
+            task = Path(folder)
+            gate.tooling(ROOT, task, {})
+            self.assertEqual(metadata.call_args_list[1].args[-1], [task / 'bootstrap'])
+
+    def test_bundler_failures_have_distinct_fixed_reasons(self):
+        document, expected = selection(installed=True)
+        document['bundler'] = '2.7.0'
+        with self.assertRaisesRegex(gate.toolchain.Rejected, '^SELECTED_BUNDLER_RUNTIME_VERSION$'):
+            gate.validate_selection(document, expected, installed=True)
+        document['bundler'] = '2.6.9'
+        row = {'name': 'bundler', 'version': '2.7.0', 'platform': 'ruby', 'bootstrap_path': True}
+        document['specs'].append(row)
+        with self.assertRaisesRegex(gate.toolchain.Rejected, '^SELECTED_BUNDLER_SPEC_VERSION$'):
+            gate.validate_selection(document, expected, installed=True)
+        row.update(version='2.6.9', platform='arm64-darwin')
+        with self.assertRaisesRegex(gate.toolchain.Rejected, '^SELECTED_BUNDLER_SPEC_PLATFORM$'):
+            gate.validate_selection(document, expected, installed=True)
 
     def test_pod_binstub_is_temporary_executable_and_not_symlink(self):
         with tempfile.TemporaryDirectory() as folder:
