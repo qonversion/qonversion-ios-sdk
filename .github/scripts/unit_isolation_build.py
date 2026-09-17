@@ -81,6 +81,58 @@ def validate_settings(rows):
     require(selected['QonversionUnitTestHost'].get('PRODUCT_BUNDLE_IDENTIFIER') == 'io.qonversion.unit-test-host', 'Wrong resolved host identity')
     return {'resolved_targets': sorted(selected), 'isolation_flags_verified': True}
 
+def json_type(value):
+    return {type(None): 'NULL', bool: 'BOOLEAN', int: 'NUMBER', float: 'NUMBER',
+            str: 'STRING', list: 'ARRAY', dict: 'OBJECT'}.get(type(value), 'OTHER')
+
+def settings_summary(rows):
+    # Fixed schema, bounded known-target membership and predicates only. Never
+    # export settings values, unknown names, paths or exception messages.
+    result = {'schema': json_type(rows), 'rows': 0, 'inspected_rows': 0,
+              'unknown_targets': 0, 'malformed_rows': 0, 'truncated': False,
+              'target_counts': {name: 0 for name in sorted(EXPECTED | PODS)}, 'targets': {}}
+    if not isinstance(rows, list): return result
+    result['rows'] = min(len(rows), 1000000)
+    result['truncated'] = len(rows) > 64
+    for row in rows[:64]:
+        result['inspected_rows'] += 1
+        if not isinstance(row, dict): result['malformed_rows'] += 1; continue
+        name = row.get('target')
+        if not isinstance(name, str) or name not in EXPECTED | PODS:
+            result['unknown_targets'] += 1; continue
+        result['target_counts'][name] += 1
+        if name not in EXPECTED or name in result['targets']: continue
+        values = row.get('buildSettings')
+        details = {'schema': json_type(values), 'types': {}, 'checks': {}}
+        result['targets'][name] = details
+        if not isinstance(values, dict): continue
+        def check(field, label, predicate):
+            value = values.get(field)
+            details['types'][field] = json_type(value) if field in values else 'MISSING'
+            details['checks'][label] = predicate(value) if isinstance(value, str) else None
+        check('CONFIGURATION', 'configuration', lambda v: v == CONFIG)
+        check('PLATFORM_NAME', 'simulator', lambda v: v == 'iphonesimulator')
+        check('CODE_SIGNING_ALLOWED', 'signing_disabled', lambda v: v == 'NO')
+        if name in {'Qonversion', 'QonversionTests'}:
+            check('GCC_PREPROCESSOR_DEFINITIONS', 'objc_isolation', lambda v: 'QN_UNIT_TEST_ISOLATION=1' in v.split())
+            check('SWIFT_ACTIVE_COMPILATION_CONDITIONS', 'swift_isolation', lambda v: 'QN_UNIT_TEST_ISOLATION' in v.split())
+        if name == 'QonversionTests':
+            check('TEST_HOST', 'dedicated_host_suffix', lambda v: v.endswith('/QonversionUnitTestHost.app/QonversionUnitTestHost'))
+            check('BUNDLE_LOADER', 'bundle_loader_matches_host', lambda v: v == values.get('TEST_HOST'))
+            check('PODS_ROOT', 'isolated_pods_suffix', lambda v: v.endswith('/UnitTestSupport/Dependencies/Pods'))
+            check('PODS_PODFILE_DIR_PATH', 'isolated_podfile_suffix', lambda v: v.endswith('/UnitTestSupport/Dependencies'))
+        if name == 'QonversionUnitTestHost':
+            check('PRODUCT_BUNDLE_IDENTIFIER', 'dedicated_host_identity', lambda v: v == 'io.qonversion.unit-test-host')
+    return result
+
+def inspect_settings(raw, state):
+    try: rows = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        state['settings_validation'] = {'schema': 'INVALID_JSON'}
+        raise ValueError('Native settings JSON rejected') from None
+    state['settings_validation'] = settings_summary(rows)
+    return validate_settings(rows)
+
 def validate_xctestrun(document):
     # Xcode's v2 structure; reject unexpected/legacy formats rather than guessing.
     require(document.get('__xctestrun_metadata__', {}).get('FormatVersion') == 2, 'Unsupported xctestrun format')
@@ -415,6 +467,36 @@ def failure_reason(error):
                 'Native build command failed; inspect private build log': 'COMMAND_FAILED',
                 'Native dependency output exceeded limit': 'DEPENDENCY_OUTPUT_LIMIT',
                 'Native settings output exceeded limit': 'SETTINGS_OUTPUT_LIMIT',
+                'Native settings JSON rejected': 'SETTINGS_JSON_REJECTED',
+                'Unexpected resolved build target': 'SETTINGS_UNEXPECTED_TARGET',
+                'Duplicate resolved target': 'SETTINGS_DUPLICATE_TARGET',
+                'Missing resolved build targets': 'SETTINGS_MISSING_TARGET',
+                'Wrong resolved configuration': 'SETTINGS_CONFIGURATION',
+                'Build must target iOS Simulator': 'SETTINGS_PLATFORM',
+                'Signing must be disabled': 'SETTINGS_SIGNING',
+                'Missing resolved ObjC isolation flag': 'SETTINGS_OBJC_ISOLATION',
+                'Missing resolved Swift isolation flag': 'SETTINGS_SWIFT_ISOLATION',
+                'Wrong resolved test host': 'SETTINGS_TEST_HOST',
+                'Wrong resolved bundle loader': 'SETTINGS_BUNDLE_LOADER',
+                'Wrong resolved Pods path': 'SETTINGS_PODS_PATH',
+                'Wrong resolved Podfile path': 'SETTINGS_PODFILE_PATH',
+                'Wrong resolved host identity': 'SETTINGS_HOST_IDENTITY',
+                'Unsupported xctestrun format': 'XCTESTRUN_FORMAT',
+                'Unexpected test configurations': 'XCTESTRUN_CONFIGURATIONS',
+                'Unexpected xctestrun suites': 'XCTESTRUN_SUITES',
+                'Unexpected xctestrun suite': 'XCTESTRUN_SUITE',
+                'Wrong xctestrun host': 'XCTESTRUN_HOST',
+                'Wrong xctestrun bundle': 'XCTESTRUN_BUNDLE',
+                'Unexpected UI test runner': 'XCTESTRUN_UI_RUNNER',
+                'Expected exactly one generated xctestrun': 'XCTESTRUN_FILE_COUNT',
+                'Unexpected generated dependency targets': 'DEPENDENCY_TARGETS',
+                'Dependency build script not allowed': 'DEPENDENCY_BUILD_SCRIPT',
+                'Dependency isolation configuration missing': 'DEPENDENCY_CONFIGURATION',
+                'Wrong dependency version': 'DEPENDENCY_SPEC_VERSION',
+                'Wrong dependency source': 'DEPENDENCY_SPEC_SOURCE',
+                'Unexpected dependency hooks or graph': 'DEPENDENCY_SPEC_HOOKS',
+                'Dependency lock changed': 'DEPENDENCY_LOCK_CHANGED',
+                'Dependency manifest differs from lock': 'DEPENDENCY_MANIFEST_CHANGED',
                 'Dependency cache path rejected': 'DEPENDENCY_SPEC_PATH_REJECTED',
                 'Dependency spec lock rejected': 'DEPENDENCY_SPEC_LOCK_REJECTED',
                 'Dependency spec size rejected': 'DEPENDENCY_SPEC_SIZE_REJECTED',
@@ -459,8 +541,7 @@ def run_build(root, args, state):
     derived = args.output / 'DerivedData'
     command = build_command(derived)
     state['stage'] = 'RESOLVED_SETTINGS'
-    settings = json.loads(bounded_settings(settings_command(derived), root, 90, args.output))
-    resolved = validate_settings(settings)
+    resolved = inspect_settings(bounded_settings(settings_command(derived), root, 90, args.output), state)
     # No test/test-without-building, simctl boot/launch, fastlane, or host executable.
     state['stage'] = 'BUILD_FOR_TESTING'
     bounded(command + ['build-for-testing'], root, 900, args.output / 'build-private.log')
@@ -496,6 +577,13 @@ def main():
         if state['stage'] == 'RESOLVED_SETTINGS':
             result['settings_diagnostics'] = collect_xcode_diagnostics(args.output / 'settings-private.log')
             result['diagnostics'] = collect_diagnostics(args.output / 'settings-private.log', root, state['tracked'])
+            if 'settings_validation' in state:
+                result['settings_validation'] = state['settings_validation']
+                # Keep the existing total verdict bound even with a warning
+                # flood. Predicate diagnostics take priority after query success.
+                while len(json.dumps(result, separators=(',', ':')).encode()) + 1 > 8192 and result['diagnostics']['compiler']:
+                    result['diagnostics']['compiler'].pop()
+                    result['diagnostics']['truncated'] = True
         elif state['stage'] == 'BUILD_FOR_TESTING':
             result['xcode_diagnostics'] = collect_xcode_diagnostics(args.output / 'build-private.log')
         write_verdict(args.output, result)

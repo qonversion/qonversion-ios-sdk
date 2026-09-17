@@ -8,6 +8,8 @@ import time
 from unittest.mock import patch, Mock
 import signal
 import json
+import ast
+import inspect
 import unit_isolation_build as build
 
 def settings():
@@ -91,6 +93,74 @@ class BuildOnlyTests(unittest.TestCase):
                 with self.assertRaises(FileNotFoundError) as caught:build.required_dependency_file(Path(tmp)/'missing',reason)
                 self.assertEqual(build.failure_reason(caught.exception),enum)
     def test_settings(self): self.assertTrue(build.validate_settings(settings())['isolation_flags_verified'])
+    def test_settings_json_failure_and_guard_failure_have_distinct_reasons(self):
+        for raw in [b'{"private":"secret"',b'\xff']:
+            state={}
+            with self.assertRaises(ValueError) as caught:build.inspect_settings(raw,state)
+            self.assertEqual(build.failure_reason(caught.exception),'SETTINGS_JSON_REJECTED')
+            self.assertEqual(state,{'settings_validation':{'schema':'INVALID_JSON'}})
+        state={};rows=settings();rows[0]['buildSettings']['CONFIGURATION']='private-config'
+        with self.assertRaises(ValueError) as caught:build.inspect_settings(json.dumps(rows),state)
+        self.assertEqual(build.failure_reason(caught.exception),'SETTINGS_CONFIGURATION')
+        self.assertFalse(state['settings_validation']['targets'][rows[0]['target']]['checks']['configuration'])
+        self.assertNotIn('private',json.dumps(state))
+    def test_each_settings_guard_still_rejects_with_specific_reason(self):
+        mutations=[
+            ('target','private-target','SETTINGS_UNEXPECTED_TARGET'),
+            ('duplicate',None,'SETTINGS_DUPLICATE_TARGET'),
+            ('missing',None,'SETTINGS_MISSING_TARGET'),
+            ('CONFIGURATION','private','SETTINGS_CONFIGURATION'),
+            ('PLATFORM_NAME','iphoneos','SETTINGS_PLATFORM'),
+            ('CODE_SIGNING_ALLOWED','YES','SETTINGS_SIGNING'),
+            ('GCC_PREPROCESSOR_DEFINITIONS','DEBUG=1','SETTINGS_OBJC_ISOLATION'),
+            ('SWIFT_ACTIVE_COMPILATION_CONDITIONS','DEBUG','SETTINGS_SWIFT_ISOLATION'),
+            ('TEST_HOST','/private/Sample.app/Sample','SETTINGS_TEST_HOST'),
+            ('BUNDLE_LOADER','/private/other','SETTINGS_BUNDLE_LOADER'),
+            ('PODS_ROOT','/private/Pods','SETTINGS_PODS_PATH'),
+            ('PODS_PODFILE_DIR_PATH','/private','SETTINGS_PODFILE_PATH'),
+            ('PRODUCT_BUNDLE_IDENTIFIER','private.customer','SETTINGS_HOST_IDENTITY')]
+        for field,value,reason in mutations:
+            with self.subTest(field=field):
+                rows=settings()
+                if field=='target':rows[0]['target']=value
+                elif field=='duplicate':rows.append(copy.deepcopy(rows[0]))
+                elif field=='missing':rows.pop()
+                else:
+                    name='QonversionUnitTestHost' if field=='PRODUCT_BUNDLE_IDENTIFIER' else 'QonversionTests'
+                    next(r for r in rows if r['target']==name)['buildSettings'][field]=value
+                with self.assertRaises(ValueError) as caught:build.inspect_settings(json.dumps(rows),{})
+                self.assertEqual(build.failure_reason(caught.exception),reason)
+    def test_owned_settings_descriptor_and_dependency_messages_have_fixed_enums(self):
+        for validator in [build.validate_settings,build.validate_xctestrun,build.validate_pods]:
+            for node in ast.walk(ast.parse(inspect.getsource(validator))):
+                if isinstance(node,ast.Call) and isinstance(node.func,ast.Name) and node.func.id=='require':
+                    self.assertIsInstance(node.args[1],ast.Constant)
+                    self.assertNotEqual(build.failure_reason(ValueError(node.args[1].value)),'VALIDATION_REJECTED')
+        self.assertEqual(build.failure_reason(RuntimeError('private-path/token')),'BUILD_STAGE_ERROR')
+        self.assertEqual(build.failure_reason(ValueError('Wrong resolved test host: private')),'VALIDATION_REJECTED')
+    def test_settings_summary_schema_unknown_names_duplicates_and_limits(self):
+        for value,kind in [(None,'NULL'),({},'OBJECT'),('private','STRING'),(1,'NUMBER'),(True,'BOOLEAN')]:
+            self.assertEqual(build.settings_summary(value)['schema'],kind)
+            self.assertNotIn('private',json.dumps(build.settings_summary(value)))
+        rows=settings()+[{'target':'private-target','buildSettings':{'TOKEN':'secret'}},None,settings()[0]]
+        summary=build.settings_summary(rows)
+        self.assertEqual(summary['unknown_targets'],1);self.assertEqual(summary['malformed_rows'],1)
+        self.assertEqual(summary['target_counts']['Qonversion'],2)
+        self.assertEqual(set(summary['targets']),build.EXPECTED)
+        raw=json.dumps(summary)
+        for private in ['private','secret','TOKEN','/derived','io.qonversion','/source']:self.assertNotIn(private,raw)
+        summary=build.settings_summary([{'target':'private'}]*1000)
+        self.assertEqual(summary['rows'],1000);self.assertEqual(summary['inspected_rows'],64)
+        self.assertEqual(summary['unknown_targets'],64);self.assertTrue(summary['truncated'])
+    def test_settings_nonstring_fields_are_diagnostic_only_not_coerced(self):
+        rows=settings();rows[0]['buildSettings']['GCC_PREPROCESSOR_DEFINITIONS']=['private']
+        state={}
+        with self.assertRaises(AttributeError) as caught:build.inspect_settings(json.dumps(rows),state)
+        detail=state['settings_validation']['targets'][rows[0]['target']]
+        self.assertEqual(detail['types']['GCC_PREPROCESSOR_DEFINITIONS'],'ARRAY')
+        self.assertIsNone(detail['checks']['objc_isolation'])
+        self.assertEqual(build.failure_reason(caught.exception),'BUILD_STAGE_ERROR')
+        self.assertNotIn('private',json.dumps(state))
     def test_generated_descriptor(self): self.assertTrue(build.validate_xctestrun(descriptor())['dedicated_host_verified'])
     def test_sample_resolved_host_rejected(self):
         rows = settings(); next(r for r in rows if r['target'] == 'QonversionTests')['buildSettings']['TEST_HOST'] = '/derived/Sample.app/Sample'
@@ -389,6 +459,30 @@ class BuildOnlyTests(unittest.TestCase):
             self.assertNotIn('private',raw);self.assertLessEqual(len(raw.encode()),8192)
             workflow=(Path(__file__).resolve().parents[2]/'.github/workflows/isolated-frozen-build.yml').read_text()
             self.assertNotIn('settings-private',workflow)
+    def test_settings_predicates_survive_warning_flood_within_verdict_cap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output=Path(tmp)/'new-output';relative='Sources/'+('a'*190)+'.m'
+            def failed(root,args,state):
+                state.update(stage='RESOLVED_SETTINGS',head='0'*40,pod_version='1.16.2',tracked=[relative])
+                (args.output/'settings-private.log').write_text(''.join(
+                    f'{root}/{relative}:{10000000-i}:10000000: warning: property synthetic-private not found\n' for i in range(20)) +
+                    'No profiles for private; SDK private not found; no such module private; no buildable entries; '
+                    'No space left on device; Permission denied; unable to find utility; runFirstLaunch; '
+                    'dependency cycle; certificate verify failed\n')
+                rows=settings()
+                next(r for r in rows if r['target']=='QonversionTests')['buildSettings']['TEST_HOST']='/private/Sample.app/Sample'
+                build.inspect_settings(json.dumps(rows),state)
+            with patch.object(sys,'argv',['unit_isolation_build.py','--expected-head','0'*40,'--output',str(output)]), \
+                    patch.object(build,'run_build',side_effect=failed),patch('builtins.print'):
+                with self.assertRaises(SystemExit):build.main()
+            raw=(output/'build-verdict.json').read_text();result=json.loads(raw)
+            self.assertLessEqual(len(raw.encode()),8192)
+            self.assertEqual(result['reason'],'SETTINGS_TEST_HOST')
+            self.assertFalse(result['settings_validation']['targets']['QonversionTests']['checks']['dedicated_host_suffix'])
+            self.assertTrue(result['diagnostics']['truncated'])
+            self.assertFalse(result['sdk_executed']);self.assertFalse(result['tests_executed'])
+            for private in ['synthetic-private','/private','Sample.app','/derived','/source']:
+                self.assertNotIn(private,raw)
     def test_failed_build_writes_always_verdict(self):
         with tempfile.TemporaryDirectory() as tmp:
             output=Path(tmp)/'new-output'
