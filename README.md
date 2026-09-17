@@ -231,6 +231,8 @@ In Xcode: **File → Add Package Dependencies...**, enter `https://github.com/qo
 
 The Swift package exposes three modules: `Qonversion` (core SDK), `QonversionSwift` (Swift-only API) and `NoCodes` (No-Codes). The CocoaPod merges them into a single `Qonversion` module — with CocoaPods, drop `import NoCodes` / `import QonversionSwift` from the samples below.
 
+Building an app for kids? Add the `QonversionNoIdfa` product instead of `Qonversion` (link exactly one of them, 6.17.0+) — the same SDK without the IDFA reader, the Swift package counterpart of `pod 'Qonversion/NoIdfa'`; the imports are the same. See the [Kids Mode guide](https://documentation.qonversion.io/docs/kids-mode-sdk).
+
 ### CocoaPods
 
 > CocoaPods trunk becomes read-only on December 2, 2026: new SDK versions will be published through Swift Package Manager only, existing CocoaPods builds keep working. See the [migration guide](https://documentation.qonversion.io/docs/dec-2026-migration-guide-cocoapods-to-spm).

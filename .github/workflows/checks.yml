@@ -83,9 +83,10 @@ jobs:
           if find dd-QonversionNoIdfa -name 'QonversionIDFA.o' -o -name 'QNAdvertisingIdProvider.o' | grep -q .; then
             echo "::error::QonversionNoIdfa built the IDFA target"; exit 1
           fi
-          hits=$(echo "$objects" | xargs strings | grep -c ASIdentifierManager || true)
+          # What App Review is known to look for in the Kids category: the class, the selector and the framework.
+          hits=$(echo "$objects" | xargs strings | grep -c -E 'ASIdentifierManager|advertisingIdentifier|AdSupport' || true)
           if [ "$hits" -ne 0 ]; then
-            echo "::error::QonversionNoIdfa references ASIdentifierManager ($hits occurrences)"; exit 1
+            echo "::error::QonversionNoIdfa references ASIdentifierManager / advertisingIdentifier / AdSupport ($hits occurrences)"; exit 1
           fi
       - name: Qonversion carries the IDFA reader
         run: |

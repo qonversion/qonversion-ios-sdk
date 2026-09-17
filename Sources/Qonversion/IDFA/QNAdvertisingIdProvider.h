@@ -12,6 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Reads the advertising identifier (IDFA) through `ASIdentifierManager`.
 ///
+/// Internal — not part of the public API, may change without notice.
+///
 /// This class is the only place in the SDK that touches the identifier, and it ships separately from the core:
 /// the `NoIdfa` CocoaPods subspec excludes this folder and the `QonversionNoIdfa` Swift package product leaves the
 /// `QonversionIDFA` target out. The core never imports this header — `QNDevice` looks the class up at runtime with
