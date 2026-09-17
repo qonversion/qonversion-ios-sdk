@@ -34,7 +34,62 @@ def pods():
     objects.update({'config': {'buildConfigurations': ['unit']}, 'unit': {'name': build.CONFIG}})
     return objects, {'name': 'OCMock', 'version': '3.9.4', 'source': {'git': 'https://github.com/erikdoe/ocmock.git', 'tag': 'v3.9.4'}}
 
+def cached_spec_fixture(folder):
+    root=Path(folder)/'source';task=Path(folder)/'task'
+    (root/'UnitTestSupport/Dependencies').mkdir(parents=True)
+    original=Path(__file__).resolve().parents[2]/'UnitTestSupport/Dependencies/Podfile.lock'
+    (root/'UnitTestSupport/Dependencies/Podfile.lock').write_bytes(original.read_bytes())
+    (task/'tmp').mkdir(parents=True,mode=0o700)
+    repo=task/'pod-repos';path=repo/'trunk/Specs/c/0/6/OCMock/3.9.4/OCMock.podspec.json'
+    path.parent.mkdir(parents=True,mode=0o700)
+    path.write_bytes((Path(__file__).parent/'fixtures/OCMock-3.9.4.podspec.json').read_bytes())
+    return root,path,{'TMPDIR':str(task/'tmp'),'CP_REPOS_DIR':str(repo)}
+
 class BuildOnlyTests(unittest.TestCase):
+    def test_exact_public_cdn_spec_hash_and_existing_metadata_guard(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root,path,env=cached_spec_fixture(tmp)
+            with patch.dict(build.os.environ,env):spec=build.cached_ocmock_spec(root)
+            self.assertEqual(build.hashlib.sha1(path.read_bytes()).hexdigest(),build.OCMOCK_SHA1)
+            self.assertEqual(build.hashlib.sha256(path.read_bytes()).hexdigest(),build.OCMOCK_SHA256)
+            self.assertEqual(build.validate_pods(pods()[0],spec)['version'],'3.9.4')
+    def test_cached_spec_wrong_hash_version_size_and_lock_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root,path,env=cached_spec_fixture(tmp);original=path.read_bytes()
+            with patch.dict(build.os.environ,env):
+                for value in [original+b' ',original.replace(b'3.9.4',b'3.9.5')]:
+                    path.write_bytes(value)
+                    with self.assertRaisesRegex(ValueError,'^Dependency spec hash rejected$'):build.cached_ocmock_spec(root)
+                path.write_bytes(b'x'*65537)
+                with self.assertRaisesRegex(ValueError,'^Dependency spec size rejected$'):build.cached_ocmock_spec(root)
+                path.write_bytes(original)
+                (root/'UnitTestSupport/Dependencies/Podfile.lock').write_text('  OCMock: '+'0'*40+'\n')
+                with self.assertRaisesRegex(ValueError,'^Dependency spec lock rejected$'):build.cached_ocmock_spec(root)
+    def test_missing_and_foreign_cache_fail_without_glob_or_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root,path,env=cached_spec_fixture(tmp)
+            with patch.dict(build.os.environ,env):
+                path.unlink()
+                with self.assertRaisesRegex(FileNotFoundError,'^Dependency cached spec missing$') as caught:
+                    build.cached_ocmock_spec(root)
+                self.assertEqual(build.failure_reason(caught.exception),'DEPENDENCY_SPEC_MISSING')
+            for invalid in ['', 'relative/path', str(Path(tmp)/'foreign')]:
+                with patch.dict(build.os.environ,{**env,'CP_REPOS_DIR':invalid}):
+                    with self.assertRaisesRegex(ValueError,'^Dependency cache path rejected$'):build.cached_ocmock_spec(root)
+    def test_spec_file_and_parent_symlinks_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root,path,env=cached_spec_fixture(tmp);copy=Path(tmp)/'public-copy.json';copy.write_bytes(path.read_bytes())
+            with patch.dict(build.os.environ,env):
+                path.unlink();path.symlink_to(copy)
+                with self.assertRaisesRegex(ValueError,'^Dependency cache path rejected$'):build.cached_ocmock_spec(root)
+                path.unlink();directory=path.parent;backup=directory.with_name('moved');directory.rename(backup);directory.symlink_to(backup,target_is_directory=True)
+                with self.assertRaisesRegex(ValueError,'^Dependency cache path rejected$'):build.cached_ocmock_spec(root)
+    def test_antecedent_missing_files_have_distinct_fixed_reasons(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for reason,enum in [('Dependency manifest missing','DEPENDENCY_MANIFEST_MISSING'),
+                                ('Dependency project missing','DEPENDENCY_PROJECT_MISSING')]:
+                with self.assertRaises(FileNotFoundError) as caught:build.required_dependency_file(Path(tmp)/'missing',reason)
+                self.assertEqual(build.failure_reason(caught.exception),enum)
     def test_settings(self): self.assertTrue(build.validate_settings(settings())['isolation_flags_verified'])
     def test_generated_descriptor(self): self.assertTrue(build.validate_xctestrun(descriptor())['dedicated_host_verified'])
     def test_sample_resolved_host_rejected(self):

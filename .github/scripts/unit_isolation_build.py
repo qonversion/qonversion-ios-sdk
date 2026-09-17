@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """First native stage: inspect/build only. Never launches tests, SDK or simulator."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -19,6 +20,41 @@ SCHEME = 'QonversionUnitTests'
 CONFIG = 'UnitIsolation'
 EXPECTED = {'Qonversion', 'QonversionTests', 'QonversionUnitTestHost'}
 PODS = {'OCMock', 'Pods-QonversionTests'}
+OCMOCK_SHA1 = '589f2c84dacb1f5aaf6e4cec1f292551fe748e74'
+OCMOCK_SHA256 = 'addfac262a1516a2b90031ff0dec11e74d33dea02dd9c110dfed564560cc8458'
+
+def cached_ocmock_spec(root):
+    # Normal CDN pods remove Pods/Local Podspecs after installation. Read only
+    # the exact cached JSON under the wrapper's existing private task directory.
+    temporary = Path(os.environ.get('TMPDIR', ''))
+    repo = Path(os.environ.get('CP_REPOS_DIR', ''))
+    task = temporary.parent
+    require(temporary.is_absolute() and temporary.name == 'tmp' and temporary.is_dir()
+            and task.is_dir() and repo.is_absolute() and repo == task / 'pod-repos',
+            'Dependency cache path rejected')
+    relative = Path('trunk/Specs/c/0/6/OCMock/3.9.4/OCMock.podspec.json')
+    candidate = repo / relative
+    paths = [task, temporary, repo]
+    current = repo
+    for part in relative.parts:
+        current = current / part
+        paths.append(current)
+    require(not any(path.is_symlink() for path in paths)
+            and candidate.resolve().is_relative_to(repo.resolve()), 'Dependency cache path rejected')
+    if not candidate.is_file(): raise FileNotFoundError('Dependency cached spec missing')
+    locked = (root / 'UnitTestSupport/Dependencies/Podfile.lock').read_text()
+    require(re.findall(r'^  OCMock: ([0-9a-f]{40})$', locked, re.M) == [OCMOCK_SHA1],
+            'Dependency spec lock rejected')
+    with candidate.open('rb') as source:
+        raw = source.read(65537)
+    require(len(raw) <= 65536, 'Dependency spec size rejected')
+    require(hashlib.sha1(raw).hexdigest() == OCMOCK_SHA1
+            and hashlib.sha256(raw).hexdigest() == OCMOCK_SHA256, 'Dependency spec hash rejected')
+    return json.loads(raw)
+
+def required_dependency_file(path, reason):
+    if not path.is_file(): raise FileNotFoundError(reason)
+    return path
 
 def validate_settings(rows):
     selected = {}
@@ -268,12 +304,19 @@ def collect_pod_diagnostics(log_path):
 
 def failure_reason(error):
     if isinstance(error, KeyboardInterrupt): return 'INTERRUPTED'
-    if isinstance(error, FileNotFoundError): return 'REQUIRED_TOOL_OR_FILE_MISSING'
+    if isinstance(error, FileNotFoundError):
+        return {'Dependency manifest missing': 'DEPENDENCY_MANIFEST_MISSING',
+                'Dependency project missing': 'DEPENDENCY_PROJECT_MISSING',
+                'Dependency cached spec missing': 'DEPENDENCY_SPEC_MISSING'}.get(str(error), 'REQUIRED_TOOL_OR_FILE_MISSING')
     if isinstance(error, subprocess.TimeoutExpired): return 'TIMEOUT'
     if isinstance(error, ValueError):
         return {'Native build stage timed out': 'TIMEOUT',
                 'Native build command failed; inspect private build log': 'COMMAND_FAILED',
                 'Native dependency output exceeded limit': 'DEPENDENCY_OUTPUT_LIMIT',
+                'Dependency cache path rejected': 'DEPENDENCY_SPEC_PATH_REJECTED',
+                'Dependency spec lock rejected': 'DEPENDENCY_SPEC_LOCK_REJECTED',
+                'Dependency spec size rejected': 'DEPENDENCY_SPEC_SIZE_REJECTED',
+                'Dependency spec hash rejected': 'DEPENDENCY_SPEC_HASH_REJECTED',
                 'Native build-only stage requires macOS': 'PLATFORM_UNSUPPORTED',
                 'Source revision mismatch': 'SOURCE_REVISION_MISMATCH',
                 'CocoaPods version is not numeric': 'DEPENDENCY_VERSION_UNPARSEABLE',
@@ -304,11 +347,12 @@ def run_build(root, args, state):
     bounded(install_command, root, 180, args.output / 'pods-private.log', output_limit=4*1024*1024)
     state['stage'] = 'DEPENDENCY_VALIDATE'
     require((root / 'UnitTestSupport/Dependencies/Podfile.lock').read_bytes() == locked, 'Dependency lock changed')
-    require((root / 'UnitTestSupport/Dependencies/Pods/Manifest.lock').read_bytes() == locked, 'Dependency manifest differs from lock')
+    manifest = required_dependency_file(root / 'UnitTestSupport/Dependencies/Pods/Manifest.lock', 'Dependency manifest missing')
+    require(manifest.read_bytes() == locked, 'Dependency manifest differs from lock')
     require(not subprocess.check_output(['git', 'status', '--porcelain'], cwd=root, text=True).strip(), 'Dependency preparation mutated source')
     pods_root = root / 'UnitTestSupport/Dependencies/Pods'
-    dependency = validate_pods(parse((pods_root / 'Pods.xcodeproj/project.pbxproj').read_text())['objects'],
-                               json.loads((pods_root / 'Local Podspecs/OCMock.podspec.json').read_text()))
+    project = required_dependency_file(pods_root / 'Pods.xcodeproj/project.pbxproj', 'Dependency project missing')
+    dependency = validate_pods(parse(project.read_text())['objects'], cached_ocmock_spec(root))
     verify(root)
     derived = args.output / 'DerivedData'
     command = build_command(derived)
