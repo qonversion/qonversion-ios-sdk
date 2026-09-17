@@ -79,7 +79,7 @@ jobs:
       - name: QonversionNoIdfa carries no IDFA code
         run: |
           objects=$(find dd-QonversionNoIdfa -name '*.o' -path '*Objects-normal*')
-          test -n "$objects"
+          test -n "$objects" || { echo "::error::no compiled objects found for QonversionNoIdfa — derivedData layout changed?"; exit 1; }
           if find dd-QonversionNoIdfa -name 'QonversionIDFA.o' -o -name 'QNAdvertisingIdProvider.o' | grep -q .; then
             echo "::error::QonversionNoIdfa built the IDFA target"; exit 1
           fi
