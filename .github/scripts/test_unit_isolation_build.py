@@ -117,6 +117,16 @@ class BuildOnlyTests(unittest.TestCase):
         self.assertNotIn('test', args); self.assertNotIn('test-without-building', args)
         self.assertIn('CODE_SIGNING_ALLOWED=NO', args)
         self.assertNotIn('-allowProvisioningUpdates', args)
+    def test_settings_query_selects_testing_action_without_changing_build_options(self):
+        derived=Path('/tmp/synthetic-derived')
+        args=build.settings_command(derived)
+        self.assertEqual(args[:-3],build.build_command(derived))
+        self.assertEqual(args[-3:],['build-for-testing','-showBuildSettings','-json'])
+        for action in ['test','test-without-building','build','run','archive']:
+            self.assertNotIn(action,args)
+        self.assertEqual(args[args.index('-destination')+1],'generic/platform=iOS Simulator')
+        self.assertEqual(args[args.index('-configuration')+1],'UnitIsolation')
+        self.assertIn('CODE_SIGNING_ALLOWED=NO',args)
     def test_bounded_failure_does_not_expose_process_output(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaisesRegex(ValueError, '^Native build command failed; inspect private build log$'):

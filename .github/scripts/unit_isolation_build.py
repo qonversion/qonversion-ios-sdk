@@ -205,6 +205,11 @@ def build_command(derived):
             '-derivedDataPath', str(derived), 'CODE_SIGNING_ALLOWED=NO',
             'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGN_IDENTITY=']
 
+def settings_command(derived):
+    # -showBuildSettings inspects the matching scheme action without building.
+    # This scheme deliberately enables testing builds, not running builds.
+    return build_command(derived) + ['build-for-testing', '-showBuildSettings', '-json']
+
 def pinned_pod_install_command(root, state):
     executable = shutil.which('pod')
     if executable is None: raise FileNotFoundError('CocoaPods executable unavailable')
@@ -454,7 +459,7 @@ def run_build(root, args, state):
     derived = args.output / 'DerivedData'
     command = build_command(derived)
     state['stage'] = 'RESOLVED_SETTINGS'
-    settings = json.loads(bounded_settings(command + ['-showBuildSettings', '-json'], root, 90, args.output))
+    settings = json.loads(bounded_settings(settings_command(derived), root, 90, args.output))
     resolved = validate_settings(settings)
     # No test/test-without-building, simctl boot/launch, fastlane, or host executable.
     state['stage'] = 'BUILD_FOR_TESTING'
