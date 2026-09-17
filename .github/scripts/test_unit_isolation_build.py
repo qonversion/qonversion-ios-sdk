@@ -142,6 +142,64 @@ class BuildOnlyTests(unittest.TestCase):
             self.assertLessEqual(log.stat().st_size,128)
             with self.assertRaisesRegex(ValueError,'^Native build stage timed out$'):
                 build.bounded([sys.executable,'-c','import time; time.sleep(60)'],tmp,.05,log,output_limit=128)
+    def test_settings_streams_separate_and_failure_preserves_private_diagnostics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output=Path(tmp)
+            command=[sys.executable,'-c','import sys; print("[]"); print("synthetic-private-stderr",file=sys.stderr)']
+            self.assertEqual(json.loads(build.bounded_settings(command,tmp,1,output)),[])
+            self.assertEqual(json.loads((output/'settings-private.json').read_text()),[])
+            self.assertIn('synthetic-private-stderr',(output/'settings-private.log').read_text())
+            with self.assertRaisesRegex(ValueError,'^Native build command failed; inspect private build log$'):
+                build.bounded_settings(
+                    [sys.executable,'-c','import sys; print("[]"); print("xcodebuild: error: synthetic-private",file=sys.stderr); sys.exit(9)'],tmp,1,output)
+            self.assertIn('synthetic-private',(output/'settings-private.log').read_text())
+    def test_settings_shared_output_cap_and_deadline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output=Path(tmp)
+            with self.assertRaisesRegex(ValueError,'^Native settings output exceeded limit$') as caught:
+                build.bounded_settings([sys.executable,'-c','import sys,time; sys.stdout.write("x"*80); sys.stdout.flush(); sys.stderr.write("y"*80); sys.stderr.flush(); time.sleep(60)'],tmp,1,output,output_limit=128)
+            self.assertEqual(build.failure_reason(caught.exception),'SETTINGS_OUTPUT_LIMIT')
+            self.assertLessEqual(sum((output/name).stat().st_size for name in ['settings-private.json','settings-private.log']),128)
+            with self.assertRaisesRegex(ValueError,'^Native build stage timed out$'):
+                build.bounded_settings([sys.executable,'-c','import time; time.sleep(60)'],tmp,.05,output)
+    def test_settings_capture_interrupt_uses_owned_group_cleanup(self):
+        selector=build.selectors.DefaultSelector()
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(build.selectors,'DefaultSelector',return_value=selector), \
+                patch.object(selector,'select',side_effect=KeyboardInterrupt), \
+                patch.object(build,'stop_owned_group',wraps=build.stop_owned_group) as stop:
+            with self.assertRaises(KeyboardInterrupt):
+                build.bounded_settings([sys.executable,'-c','import sys,time; print("ready",flush=True); time.sleep(60)'],tmp,1,Path(tmp))
+            stop.assert_called_once()
+            process=stop.call_args.args[0]
+            self.assertIsNotNone(process.poll())
+            self.assertTrue(process.stdout.closed and process.stderr.closed)
+    def test_settings_timeout_kills_term_ignoring_descendant_after_leader_exits(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);pid_file=root/'descendant.pid';heartbeat=root/'heartbeat'
+            child_code=('import os,signal,time; from pathlib import Path; '
+                        'signal.signal(signal.SIGTERM,signal.SIG_IGN); '
+                        f'Path({str(pid_file)!r}).write_text(str(os.getpid())); '
+                        f'p=Path({str(heartbeat)!r}); n=0\n'
+                        'while True:\n n+=1; p.write_text(str(n)); time.sleep(.01)\n')
+            parent_code=('import subprocess,sys,time; from pathlib import Path; '
+                         f'subprocess.Popen([sys.executable,"-c",{child_code!r}]); '
+                         f'p=Path({str(heartbeat)!r})\n'
+                         'while not p.exists(): time.sleep(.01)\n'
+                         'print("[]",flush=True); time.sleep(60)\n')
+            real_killpg=os.killpg
+            try:
+                with patch.object(build.os,'killpg',wraps=real_killpg) as kills:
+                    with self.assertRaisesRegex(ValueError,'^Native build stage timed out$'):
+                        build.bounded_settings([sys.executable,'-c',parent_code],tmp,.5,root)
+                    self.assertTrue(any(call.args[1]==signal.SIGKILL for call in kills.call_args_list))
+                self.assertTrue(heartbeat.exists())
+                time.sleep(.05);before=heartbeat.read_bytes();time.sleep(.15)
+                self.assertEqual(heartbeat.read_bytes(),before)
+            finally:
+                if pid_file.exists():
+                    try:os.kill(int(pid_file.read_text()),signal.SIGKILL)
+                    except ProcessLookupError:pass
     def test_output_cap_kills_term_ignoring_descendant_after_leader_exits(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);pid_file=root/'descendant.pid';heartbeat=root/'heartbeat'
@@ -238,6 +296,29 @@ class BuildOnlyTests(unittest.TestCase):
             raw=json.dumps(result)
             for value in [tmp,'PRIVATE_ENV','synthetic','private-name','private.invalid','/private','secret']:
                 self.assertNotIn(value,raw)
+    def test_xcode_categories_preserve_no_paths_or_free_text(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log=Path(tmp)/'settings-private.log'
+            log.write_text('error: Unable to open base configuration reference file /private/token.xcconfig\n'
+                           'xcodebuild: error: Scheme private-customer is not currently configured for the build action.\n'
+                           'xcodebuild: error: Unable to find a destination matching secret-device\n'
+                           'error: SDK private-sdk cannot be located at https://private.invalid/token\n'
+                           'xcodebuild: error: other-private-cause\n')
+            result=build.collect_xcode_diagnostics(log)
+            self.assertEqual({r['category']:r['records'] for r in result['categories']},
+                {'XCCONFIG_MISSING':1,'SCHEME_ACTION_UNAVAILABLE':1,'DESTINATION_NOT_FOUND':1,'SDK_NOT_FOUND':1})
+            self.assertEqual(result['unclassified_error_lines'],1)
+            raw=json.dumps(result)
+            for private in ['private','token','secret','https:']:self.assertNotIn(private,raw)
+    def test_xcode_diagnostics_are_bounded_and_unknown_is_not_invented(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log=Path(tmp)/'settings-private.log'
+            log.write_bytes(b'x'*(4*1024*1024)+b'\n'+b'progress\n'*11000+
+                            b'xcodebuild: error: synthetic-private\n'*1001)
+            result=build.collect_xcode_diagnostics(log)
+            self.assertTrue(result['truncated']);self.assertEqual(result['categories'],[])
+            self.assertEqual(result['unclassified_error_lines'],999)
+            self.assertLess(len(json.dumps(result)),2048)
     def test_pod_unknown_errors_remain_unknown_without_raw_output(self):
         with tempfile.TemporaryDirectory() as tmp:
             log=Path(tmp)/'pods-private.log'
@@ -281,6 +362,23 @@ class BuildOnlyTests(unittest.TestCase):
             self.assertEqual(result['status'],'BUILD_ONLY_FAILED')
             self.assertEqual(result['dependency_diagnostics']['categories'],[{'category':'TARGET_NOT_FOUND','records':1}])
             self.assertNotIn('private',raw);self.assertLessEqual(len(raw.encode()),8192)
+    def test_settings_failure_verdict_keeps_safe_classification_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output=Path(tmp)/'new-output'
+            def failed(root,args,state):
+                state.update(stage='RESOLVED_SETTINGS',head='0'*40,pod_version='1.16.2')
+                (args.output/'settings-private.log').write_text('error: Unable to open base configuration reference file /private/token.xcconfig\n')
+                (args.output/'settings-private.json').write_text('{"ENV":"synthetic-private"}')
+                raise ValueError('Native build command failed; inspect private build log')
+            with patch.object(sys,'argv',['unit_isolation_build.py','--expected-head','0'*40,'--output',str(output)]), \
+                    patch.object(build,'run_build',side_effect=failed),patch('builtins.print'):
+                with self.assertRaises(SystemExit):build.main()
+            raw=(output/'build-verdict.json').read_text();result=json.loads(raw)
+            self.assertEqual(result['status'],'BUILD_ONLY_FAILED')
+            self.assertEqual(result['settings_diagnostics']['categories'],[{'category':'XCCONFIG_MISSING','records':1}])
+            self.assertNotIn('private',raw);self.assertLessEqual(len(raw.encode()),8192)
+            workflow=(Path(__file__).resolve().parents[2]/'.github/workflows/isolated-frozen-build.yml').read_text()
+            self.assertNotIn('settings-private',workflow)
     def test_failed_build_writes_always_verdict(self):
         with tempfile.TemporaryDirectory() as tmp:
             output=Path(tmp)/'new-output'

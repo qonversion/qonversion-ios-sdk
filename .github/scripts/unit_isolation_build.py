@@ -107,6 +107,21 @@ def validate_pods(objects, spec):
     require(not any(spec.get(key) for key in ['prepare_command', 'script_phases', 'dependencies', 'subspecs']), 'Unexpected dependency hooks or graph')
     return {'dependency': 'OCMock', 'version': '3.9.4', 'generated_targets': sorted(PODS), 'dependency_shell_phases': 0}
 
+def stop_owned_group(process):
+    try: os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError: pass
+    try: process.wait(timeout=3)
+    except subprocess.TimeoutExpired: pass
+    # The leader may exit while a descendant ignores TERM.
+    try: os.killpg(process.pid, 0)
+    except ProcessLookupError: pass
+    else:
+        try: os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError: pass
+    process.wait(timeout=3)
+    for stream in (process.stdout, process.stderr):
+        if stream is not None: stream.close()
+
 def bounded(command, cwd, timeout, log_path=None, output_limit=None):
     # Terminate the whole build process group on timeout. Logs are private and are
     # not artifacts; only fixed verdicts/source revision are printed by this tool.
@@ -114,20 +129,6 @@ def bounded(command, cwd, timeout, log_path=None, output_limit=None):
         process = subprocess.Popen(command, cwd=cwd,
                                    stdout=subprocess.PIPE if log_path is None or output_limit is not None else error_log,
                                    stderr=subprocess.STDOUT if output_limit is not None else error_log, start_new_session=True)
-        def stop_group():
-            try: os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError: pass
-            try: process.wait(timeout=3)
-            except subprocess.TimeoutExpired: pass
-            # The leader can exit on TERM while a descendant ignores it. Check
-            # the owned session's group even after wait has reaped the leader.
-            try: os.killpg(process.pid, 0)
-            except ProcessLookupError: pass
-            else:
-                try: os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError: pass
-            process.wait(timeout=3)
-            if process.stdout is not None: process.stdout.close()
         try:
             if output_limit is None:
                 out, _ = process.communicate(timeout=timeout)
@@ -152,13 +153,51 @@ def bounded(command, cwd, timeout, log_path=None, output_limit=None):
                 process.wait(timeout=max(.001, deadline - time.monotonic()))
                 process.stdout.close()
         except subprocess.TimeoutExpired:
-            stop_group()
+            stop_owned_group(process)
             raise ValueError('Native build stage timed out') from None
         except BaseException:
-            stop_group()
+            stop_owned_group(process)
             raise
         require(process.returncode == 0, 'Native build command failed; inspect private build log')
         return out
+
+def bounded_settings(command, cwd, timeout, output, output_limit=8*1024*1024):
+    # Both streams remain private. Only stdout is parsed as build-settings JSON;
+    # stderr is classified into fixed identifiers after a failure.
+    with (output / 'settings-private.json').open('wb') as stdout_file, \
+            (output / 'settings-private.log').open('wb') as stderr_file:
+        process = subprocess.Popen(command, cwd=cwd, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, start_new_session=True)
+        deadline, total, stdout = time.monotonic() + timeout, 0, bytearray()
+        try:
+            with selectors.DefaultSelector() as selector:
+                selector.register(process.stdout, selectors.EVENT_READ, (stdout_file, True))
+                selector.register(process.stderr, selectors.EVENT_READ, (stderr_file, False))
+                while selector.get_map():
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0: raise subprocess.TimeoutExpired(command, timeout)
+                    for key, _ in selector.select(min(remaining, .25)):
+                        chunk = os.read(key.fileobj.fileno(), 65536)
+                        if not chunk:
+                            selector.unregister(key.fileobj)
+                            continue
+                        saved = chunk[:max(0, output_limit-total)]
+                        destination, is_stdout = key.data
+                        destination.write(saved)
+                        if is_stdout: stdout.extend(saved)
+                        total += len(chunk)
+                        require(total <= output_limit, 'Native settings output exceeded limit')
+            process.wait(timeout=max(.001, deadline-time.monotonic()))
+            require(process.returncode == 0, 'Native build command failed; inspect private build log')
+            return bytes(stdout)
+        except subprocess.TimeoutExpired:
+            stop_owned_group(process)
+            raise ValueError('Native build stage timed out') from None
+        except BaseException:
+            stop_owned_group(process)
+            raise
+        finally:
+            process.stdout.close(); process.stderr.close()
 
 def build_command(derived):
     return ['xcodebuild', '-workspace', 'QonversionUnitIsolation.xcworkspace', '-scheme', SCHEME,
@@ -302,6 +341,63 @@ def collect_pod_diagnostics(log_path):
     result['categories'] = [{'category': name, 'records': count} for name,count in counts.items() if count]
     return result
 
+def collect_xcode_diagnostics(log_path):
+    rules = [
+        ('XCCONFIG_MISSING', r'Unable to open base configuration reference file|could not find included file|unable to open.*\.xcconfig'),
+        ('SCHEME_NOT_FOUND', r'does not contain a scheme named|scheme .*not found'),
+        ('SCHEME_ACTION_UNAVAILABLE', r'scheme .*not.*configured for.*(?:build|test)|no buildable entries|no buildable targets'),
+        ('WORKSPACE_NOT_FOUND', r'does not exist.*workspace|workspace.*does not exist|is not a workspace file'),
+        ('PROJECT_NOT_FOUND', r'project.*does not exist|is not a project file|could not find project'),
+        ('PROJECT_PARSE_FAILED', r'could not be opened because|cannot be parsed|malformed project|error reading project'),
+        ('SDK_NOT_FOUND', r'SDK .*cannot be located|SDK .*not found|unable to find.*SDK'),
+        ('DESTINATION_NOT_FOUND', r'Unable to find a destination matching|Found no destinations|Ineligible destinations'),
+        ('PLATFORM_NOT_INSTALLED', r'(?:iOS|visionOS|watchOS|tvOS|Simulator|runtime).*not installed|download and install.*platform'),
+        ('DEVELOPER_TOOL_SELECTION', r'xcode-select: error|requires Xcode, but active developer directory|invalid active developer path'),
+        ('XCODE_LICENSE', r'have not agreed to the Xcode license|license agreement.*accept'),
+        ('XCODE_FIRST_LAUNCH', r'runFirstLaunch|first launch tasks'),
+        ('PACKAGE_RESOLUTION_FAILED', r'Could not resolve package dependencies|failed to resolve dependencies|failed downloading'),
+        ('MODULE_NOT_FOUND', r'no such module|module .*not found'),
+        ('BUILD_INPUT_MISSING', r'Build input file cannot be found|unable to load contents of file list'),
+        ('TARGET_DEPENDENCY_CYCLE', r'Cycle inside|dependency cycle|cycle in dependencies'),
+        ('SIGNING_REQUIRED', r'requires a development team|No profiles for|provisioning profile'),
+        ('UNSUPPORTED_BUILD_SETTING', r'unsupported.*build setting|invalid value.*build setting'),
+        ('TOOL_NOT_FOUND', r'unable to find utility|tool .*not found|Failed to locate'),
+        ('CORE_SIMULATOR_UNAVAILABLE', r'CoreSimulatorService.*(?:invalid|failed)|Failed to initialize.*CoreSimulator'),
+        ('FILESYSTEM_ACCESS_DENIED', r'Permission denied|Operation not permitted'),
+        ('FILESYSTEM_NO_SPACE', r'No space left on device'),
+        ('FILESYSTEM_READ_ONLY', r'Read-only file system'),
+        ('TLS_VERIFY_FAILED', r'certificate verify failed|SSL certificate problem'),
+        ('DNS_LOOKUP_FAILED', r'Could not resolve host|getaddrinfo: nodename nor servname'),
+    ]
+    result = {'available': log_path.is_file(), 'categories': [], 'unclassified_error_lines': 0,
+              'unmatched_lines': 0, 'truncated': False}
+    if not result['available']: return result
+    with log_path.open('rb') as source:
+        offset = max(0, source.seek(0, 2)-4*1024*1024); source.seek(offset)
+        raw = source.read(4*1024*1024)
+    if offset: raw = raw.partition(b'\n')[2]; result['truncated'] = True
+    lines = raw.decode('utf-8', errors='replace').splitlines()
+    if len(lines) > 10000: result['truncated'] = True
+    counts = {name: 0 for name, _ in rules}
+    patterns = [(name, re.compile(pattern, re.I)) for name, pattern in rules]
+    for line in lines[-10000:]:
+        if len(line) > 4096: result['truncated'] = True; continue
+        line = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', line)
+        if not line.strip(): continue
+        matched = False
+        for name, pattern in patterns:
+            if pattern.search(line):
+                matched = True
+                if counts[name] == 999: result['truncated'] = True
+                counts[name] = min(999, counts[name]+1)
+        if not matched:
+            result['unmatched_lines'] += 1
+            if re.search(r'\berror:', line, re.I):
+                if result['unclassified_error_lines'] == 999: result['truncated'] = True
+                result['unclassified_error_lines'] = min(999, result['unclassified_error_lines']+1)
+    result['categories'] = [{'category': name, 'records': count} for name,count in counts.items() if count]
+    return result
+
 def failure_reason(error):
     if isinstance(error, KeyboardInterrupt): return 'INTERRUPTED'
     if isinstance(error, FileNotFoundError):
@@ -313,6 +409,7 @@ def failure_reason(error):
         return {'Native build stage timed out': 'TIMEOUT',
                 'Native build command failed; inspect private build log': 'COMMAND_FAILED',
                 'Native dependency output exceeded limit': 'DEPENDENCY_OUTPUT_LIMIT',
+                'Native settings output exceeded limit': 'SETTINGS_OUTPUT_LIMIT',
                 'Dependency cache path rejected': 'DEPENDENCY_SPEC_PATH_REJECTED',
                 'Dependency spec lock rejected': 'DEPENDENCY_SPEC_LOCK_REJECTED',
                 'Dependency spec size rejected': 'DEPENDENCY_SPEC_SIZE_REJECTED',
@@ -357,7 +454,7 @@ def run_build(root, args, state):
     derived = args.output / 'DerivedData'
     command = build_command(derived)
     state['stage'] = 'RESOLVED_SETTINGS'
-    settings = json.loads(bounded(command + ['-showBuildSettings', '-json'], root, 90))
+    settings = json.loads(bounded_settings(command + ['-showBuildSettings', '-json'], root, 90, args.output))
     resolved = validate_settings(settings)
     # No test/test-without-building, simctl boot/launch, fastlane, or host executable.
     state['stage'] = 'BUILD_FOR_TESTING'
@@ -391,6 +488,11 @@ def main():
                   'diagnostics': collect_diagnostics(args.output / 'build-private.log', root, state['tracked'])}
         if state['stage'] == 'DEPENDENCY_INSTALL':
             result['dependency_diagnostics'] = collect_pod_diagnostics(args.output / 'pods-private.log')
+        if state['stage'] == 'RESOLVED_SETTINGS':
+            result['settings_diagnostics'] = collect_xcode_diagnostics(args.output / 'settings-private.log')
+            result['diagnostics'] = collect_diagnostics(args.output / 'settings-private.log', root, state['tracked'])
+        elif state['stage'] == 'BUILD_FOR_TESTING':
+            result['xcode_diagnostics'] = collect_xcode_diagnostics(args.output / 'build-private.log')
         write_verdict(args.output, result)
         raise SystemExit(1)
     write_verdict(args.output, result)
