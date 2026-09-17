@@ -1,0 +1,23 @@
+{
+  "gate_a_head": "c2469b48cd6d2f8f967cd74e0a3d9583b70b0c15",
+  "gate_a_run": 35162865985,
+  "gate_a_attempt": 1,
+  "lock_sha256": "08b51056c2bc276c84c9f99a4b277df6ae357e33efaf3cffcb63381efec36333",
+  "gemfile_sha256": "e860ad5e06b2d580a5c66815a3962144c2834474bc964fb7c02b98c97bc132cf",
+  "runtime": {
+    "ruby": "3.3.12",
+    "rubygems": "4.0.20",
+    "platform": "arm64-darwin-24"
+  },
+  "bundler": "2.6.9",
+  "selected_names": 45,
+  "ffi": {
+    "version": "1.17.4",
+    "platform": "arm64-darwin"
+  },
+  "allowed_native_extension_gems": [
+    "bigdecimal",
+    "json",
+    "nkf"
+  ]
+}

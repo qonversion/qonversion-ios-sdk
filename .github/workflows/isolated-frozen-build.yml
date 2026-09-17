@@ -1,0 +1,40 @@
+name: Frozen tooling and isolated unit host build only
+
+on:
+  push:
+    branches: [codex/ope722-frozen-build]
+
+permissions:
+  contents: read
+
+jobs:
+  build-only:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/ope722-frozen-build'
+    runs-on: macos-15
+    timeout-minutes: 35
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Offline source, tooling and build-only checks
+        run: |
+          python3 .github/scripts/test_unit_isolation.py
+          python3 .github/scripts/test_unit_isolation_build.py
+          python3 .github/scripts/test_prepare_toolchain_lock.py
+          python3 .github/scripts/test_frozen_toolchain_build.py
+      - name: Frozen tooling followed by build-for-testing only
+        run: python3 .github/scripts/frozen_toolchain_build.py --expected-head '${{ github.sha }}'
+      - name: Upload sanitized tooling and build verdicts only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: isolated-frozen-build-only
+          path: |
+            ${{ runner.temp }}/ope722-frozen-build-result/toolchain-verdict.json
+            ${{ runner.temp }}/ope722-frozen-build-result/native-build/build-verdict.json
+          if-no-files-found: error
+          retention-days: 30
