@@ -160,6 +160,75 @@ def collect_diagnostics(log_path, root, tracked):
     result['linker'] = [{'category': name, 'records': count} for name,count in linker.items() if count]
     return result
 
+def collect_pod_diagnostics(log_path):
+    # Match fixed identifiers only. No exception message, URL, path, dependency
+    # name, command, environment value or stack frame can leave this function.
+    rules = [
+        ('PODFILE_MISSING', r'No `Podfile\x27 found in the project directory'),
+        ('LOCKFILE_MISSING', r'No `Podfile\.lock\x27 found in the project directory'),
+        ('DEPLOYMENT_PODFILE_CHANGED', r'There were changes to the podfile in deployment mode'),
+        ('DEPLOYMENT_LOCKFILE_CHANGED', r'There were changes to the lockfile in deployment mode'),
+        ('PROJECT_NOT_FOUND', r'Unable to find the Xcode project'),
+        ('PROJECT_AMBIGUOUS', r'Could not automatically select an Xcode project'),
+        ('TARGET_NOT_FOUND', r'Unable to find a target named'),
+        ('PLATFORM_REQUIRED', r'It is necessary to specify the platform in the Podfile if not integrating'),
+        ('UNKNOWN_BUILD_CONFIGURATION', r'Unknown configurations? whitelisted'),
+        ('SPEC_NOT_FOUND', r'Unable to find a specification for|None of your spec sources contain a spec satisfying'),
+        ('RESOLUTION_CONFLICT', r'CocoaPods could not find compatible versions for pod'),
+        ('MINIMUM_DEPLOYMENT_TARGET', r'required a higher minimum deployment target'),
+        ('SOURCE_SETUP_FAILED', r'Unable to add a source with url'),
+        ('CDN_DOWNLOAD_FAILED', r'CDN: .*URL couldn\x27t be downloaded'),
+        ('CDN_REPO_UPDATE_FAILED', r'CDN: .*Repo update failed'),
+        ('TLS_VERIFY_FAILED', r'certificate verify failed|SSL certificate problem|SSL peer certificate.*not OK'),
+        ('DNS_LOOKUP_FAILED', r'Could not resolve host|Couldn\x27t resolve host name|getaddrinfo: nodename nor servname'),
+        ('CONNECTION_FAILED', r'Failed to connect to|Connection refused|Connection timed out'),
+        ('HTTP_401', r'(?:Response:|HTTP[^\r\n]{0,12})\s*401\b'),
+        ('HTTP_403', r'(?:Response:|HTTP[^\r\n]{0,12})\s*403\b'),
+        ('HTTP_404', r'(?:Response:|HTTP[^\r\n]{0,12})\s*404\b'),
+        ('HTTP_429', r'(?:Response:|HTTP[^\r\n]{0,12})\s*429\b'),
+        ('HTTP_5XX', r'(?:Response:|HTTP[^\r\n]{0,12})\s*5[0-9]{2}\b'),
+        ('GIT_ACCESS_FAILED', r'Permission denied \(publickey\)|fatal: could not read Username|fatal: Authentication failed'),
+        ('GIT_REF_NOT_FOUND', r'Remote branch .* not found in upstream|Couldn\x27t find remote ref'),
+        ('XCODE_LICENSE', r'You have not agreed to the Xcode license'),
+        ('RUBY_LOAD_ERROR', r'\bLoadError\b|cannot load such file --'),
+        ('RUBY_ARGUMENT_ERROR', r'\bArgumentError\b'),
+        ('RUBY_NO_METHOD_ERROR', r'\bNoMethodError\b'),
+        ('RUBY_NAME_ERROR', r'\bNameError\b'),
+        ('RUBY_TYPE_ERROR', r'\bTypeError\b'),
+        ('RUBY_FFI_LOAD_ERROR', r'Could not open library|incompatible architecture|Library not loaded:'),
+    ]
+    result = {'available': log_path.is_file(), 'categories': [], 'unclassified_error_lines': 0,
+              'unmatched_lines': 0, 'truncated': False}
+    if not result['available']: return result
+    with log_path.open('rb') as source:
+        offset = max(0, source.seek(0, 2) - 4 * 1024 * 1024)
+        source.seek(offset)
+        data = source.read(4 * 1024 * 1024)
+    if offset:
+        data = data.partition(b'\n')[2]; result['truncated'] = True
+    counts = {category: 0 for category, _ in rules}
+    lines = data.decode('utf-8', errors='replace').splitlines()
+    if len(lines) > 10000: result['truncated'] = True
+    patterns = [(category, re.compile(pattern, re.I)) for category, pattern in rules]
+    for line in lines[-10000:]:
+        if len(line) > 4096: result['truncated'] = True; continue
+        line = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', line)
+        if not line.strip(): continue
+        matched = False
+        for category, pattern in patterns:
+            if pattern.search(line):
+                matched = True
+                if counts[category] == 999: result['truncated'] = True
+                counts[category] = min(999, counts[category] + 1)
+        if not matched:
+            if result['unmatched_lines'] == 65535: result['truncated'] = True
+            result['unmatched_lines'] = min(65535, result['unmatched_lines'] + 1)
+            if re.match(r'^\s*(?:\[!\]|### Error|(?:fatal|error):)', line, re.I):
+                if result['unclassified_error_lines'] == 999: result['truncated'] = True
+                result['unclassified_error_lines'] = min(999, result['unclassified_error_lines'] + 1)
+    result['categories'] = [{'category': name, 'records': count} for name,count in counts.items() if count]
+    return result
+
 def failure_reason(error):
     if isinstance(error, KeyboardInterrupt): return 'INTERRUPTED'
     if isinstance(error, FileNotFoundError): return 'REQUIRED_TOOL_OR_FILE_MISSING'
@@ -238,6 +307,8 @@ def main():
                   'pod_version': state['pod_version'],
                   'native_isolation_proven': False,
                   'diagnostics': collect_diagnostics(args.output / 'build-private.log', root, state['tracked'])}
+        if state['stage'] == 'DEPENDENCY_INSTALL':
+            result['dependency_diagnostics'] = collect_pod_diagnostics(args.output / 'pods-private.log')
         write_verdict(args.output, result)
         raise SystemExit(1)
     write_verdict(args.output, result)

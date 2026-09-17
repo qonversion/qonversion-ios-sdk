@@ -126,6 +126,55 @@ class BuildOnlyTests(unittest.TestCase):
             self.assertEqual(result['compiler'][0],{'file':relative,'line':999,'column':4,'severity':'error','category':'MISSING_MODULE'})
     def test_unknown_failure_message_not_exported(self):
         self.assertEqual(build.failure_reason(ValueError('synthetic-private-token')), 'VALIDATION_REJECTED')
+    def test_pod_identifiers_and_counts_do_not_export_private_text(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log=Path(tmp)/'pods-private.log'
+            log.write_text("\x1b[31m[!] There were changes to the lockfile in deployment mode:\x1b[0m\n"
+                           "PRIVATE_ENV=synthetic-private-token /private/customer/project\n"
+                           "[!] CDN: private-name URL couldn't be downloaded: https://private.invalid/token Response: 403 secret\n"
+                           "certificate verify failed: /private/cert synthetic-private-token\n"
+                           "ArgumentError - secret https://private.invalid/token\n")
+            result=build.collect_pod_diagnostics(log)
+            counts={row['category']:row['records'] for row in result['categories']}
+            self.assertEqual(counts,{'DEPLOYMENT_LOCKFILE_CHANGED':1,'CDN_DOWNLOAD_FAILED':1,
+                                    'TLS_VERIFY_FAILED':1,'HTTP_403':1,'RUBY_ARGUMENT_ERROR':1})
+            self.assertEqual(result['unmatched_lines'],1)
+            raw=json.dumps(result)
+            for value in [tmp,'PRIVATE_ENV','synthetic','private-name','private.invalid','/private','secret']:
+                self.assertNotIn(value,raw)
+    def test_pod_unknown_errors_remain_unknown_without_raw_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log=Path(tmp)/'pods-private.log'
+            log.write_text('[!] Unknown synthetic-private-token\n### Error\nSyntheticError: other-secret\n')
+            result=build.collect_pod_diagnostics(log)
+            self.assertEqual(result['categories'],[])
+            self.assertEqual(result['unclassified_error_lines'],2)
+            self.assertEqual(result['unmatched_lines'],3)
+            self.assertNotIn('SyntheticError',json.dumps(result))
+            self.assertFalse(build.collect_pod_diagnostics(Path(tmp)/'missing')['available'])
+    def test_pod_tail_line_and_count_limits_preserve_late_diagnostics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log=Path(tmp)/'pods-private.log'
+            log.write_bytes(b'x'*(4*1024*1024)+b'\n'+b'progress\n'*11000+
+                            b'private'+b'x'*4096+b'\n'+b'LoadError secret\n'*1001)
+            result=build.collect_pod_diagnostics(log)
+            self.assertTrue(result['truncated'])
+            self.assertEqual(result['categories'],[{'category':'RUBY_LOAD_ERROR','records':999}])
+            self.assertLess(len(json.dumps(result)),2048)
+    def test_dependency_failure_verdict_keeps_fixed_categories_and_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output=Path(tmp)/'new-output'
+            def failed(root,args,state):
+                state.update(stage='DEPENDENCY_INSTALL',head='0'*40,pod_version='1.16.2')
+                (args.output/'pods-private.log').write_text('[!] Unable to find a target named `private-target` in project `/private/customer`\n')
+                raise ValueError('Native build command failed; inspect private build log')
+            with patch.object(sys,'argv',['unit_isolation_build.py','--expected-head','0'*40,'--output',str(output)]), \
+                    patch.object(build,'run_build',side_effect=failed),patch('builtins.print'):
+                with self.assertRaises(SystemExit):build.main()
+            raw=(output/'build-verdict.json').read_text();result=json.loads(raw)
+            self.assertEqual(result['status'],'BUILD_ONLY_FAILED')
+            self.assertEqual(result['dependency_diagnostics']['categories'],[{'category':'TARGET_NOT_FOUND','records':1}])
+            self.assertNotIn('private',raw);self.assertLessEqual(len(raw.encode()),8192)
     def test_failed_build_writes_always_verdict(self):
         with tempfile.TemporaryDirectory() as tmp:
             output=Path(tmp)/'new-output'
@@ -137,6 +186,7 @@ class BuildOnlyTests(unittest.TestCase):
                 with self.assertRaises(SystemExit):build.main()
             raw=(output/'build-verdict.json').read_text();result=json.loads(raw)
             self.assertEqual(result['stage'],'BUILD_FOR_TESTING');self.assertEqual(result['reason'],'COMMAND_FAILED')
+            self.assertNotIn('dependency_diagnostics',result)
             self.assertFalse(result['sdk_executed']);self.assertNotIn('synthetic-private-token',raw)
             self.assertLessEqual(len(raw.encode()),8192)
     def test_oversized_verdict_rejected(self):
