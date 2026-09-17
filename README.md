@@ -17,11 +17,11 @@ Qonversion - In-app subscription monetization: implement subscriptions and grow 
      </a>
 </p>
 
-[![Platform](https://img.shields.io/cocoapods/p/Qonversion.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup)
-[![Version](https://img.shields.io/cocoapods/v/Qonversion.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup#install-via-cocoapods)
-[![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup#install-via-carthage)
+[![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS%20%7C%20watchOS%20%7C%20visionOS-blue.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup)
+[![Version](https://img.shields.io/github/v/release/qonversion/qonversion-ios-sdk?style=flat)](https://github.com/qonversion/qonversion-ios-sdk/releases)
 [![SwiftPM compatible](https://img.shields.io/badge/SwiftPM-compatible-4BC51D.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup#install-via-swift-package-manager)
-[![MIT License](http://img.shields.io/cocoapods/l/Qonversion.svg?style=flat)](https://qonversion.io)
+[![CocoaPods compatible](https://img.shields.io/badge/CocoaPods-compatible-4BC51D.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup#install-via-cocoapods)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
 
 ## In-App Subscription Implementation & Management
@@ -218,18 +218,26 @@ Convinced? Let's go!
 
 ## Installation
 
+### Swift Package Manager (recommended)
+
+In Xcode: **File → Add Package Dependencies...**, enter `https://github.com/qonversion/qonversion-ios-sdk` and add the `Qonversion` library to your target. Or in `Package.swift`:
+
+```swift
+// Qonversion SDK (includes No-Codes functionality)
+.package(url: "https://github.com/qonversion/qonversion-ios-sdk.git", from: "6.15.0")
+// target dependency:
+.product(name: "Qonversion", package: "qonversion-ios-sdk")
+```
+
+The Swift package exposes three modules: `Qonversion` (core SDK), `QonversionSwift` (Swift-only API) and `NoCodes` (No-Codes). The CocoaPod merges them into a single `Qonversion` module.
+
 ### CocoaPods
+
+> CocoaPods trunk becomes read-only on December 2, 2026: new SDK versions will be published through Swift Package Manager only, existing CocoaPods builds keep working. See the [migration guide](https://documentation.qonversion.io/docs/dec-2026-migration-guide-cocoapods-to-spm).
 
 ```ruby
 # Qonversion SDK (includes No-Codes functionality)
 pod 'Qonversion'
-```
-
-### Swift Package Manager
-
-```swift
-// Qonversion SDK (includes No-Codes functionality)
-.package(url: "https://github.com/qonversion/qonversion-ios-sdk.git", from: "6.0.0")
 ```
 
 ### Usage
