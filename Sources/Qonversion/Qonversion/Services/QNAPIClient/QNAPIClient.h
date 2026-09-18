@@ -12,7 +12,7 @@ typedef void (^QNAPIClientCommonCompletionHandler)(id _Nullable data, NSError * 
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface QNAPIClient : NSObject <NSURLSessionDelegate>
+@interface QNAPIClient : NSObject
 
 + (instancetype)shared;
 

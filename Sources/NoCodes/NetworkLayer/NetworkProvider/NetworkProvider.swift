@@ -9,22 +9,20 @@ import Foundation
 
 #if os(iOS)
 
-class NetworkProvider: NSObject, NetworkProviderInterface, URLSessionDelegate {
-  private(set) var session: URLSession!
+class NetworkProvider: NetworkProviderInterface {
+  private(set) var session: URLSession
 
   init(timeout: TimeInterval?) {
-    super.init()
     let config = URLSessionConfiguration.default
     if let timeout = timeout {
       config.timeoutIntervalForRequest = timeout
       config.timeoutIntervalForResource = timeout
     }
-    session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+    session = URLSession(configuration: config)
   }
 
-  override init() {
-    super.init()
-    session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+  init() {
+    session = URLSession(configuration: .default)
   }
 
   func send(request: URLRequest) async throws -> (Data, URLResponse) {
@@ -38,16 +36,6 @@ class NetworkProvider: NSObject, NetworkProviderInterface, URLSessionDelegate {
           continuation.resume(throwing: NSError(domain: "NetworkProvider", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"]))
         }
       }.resume()
-    }
-  }
-
-  // MARK: - Temporary SSL bypass for staging. Remove before release.
-  func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-    if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-       let serverTrust = challenge.protectionSpace.serverTrust {
-      completionHandler(.useCredential, URLCredential(trust: serverTrust))
-    } else {
-      completionHandler(.performDefaultHandling, nil)
     }
   }
 }
