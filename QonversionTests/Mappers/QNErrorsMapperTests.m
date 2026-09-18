@@ -287,4 +287,15 @@
   XCTAssertFalse([QONErrors isAuthorizationError:[NSError errorWithDomain:@"com.example.app" code:403 userInfo:nil]]);
 }
 
+// `QONErrorDomain` is the `extern` behind `NS_ERROR_ENUM(QONErrorDomain, QONErrorCode)` — Swift's `Qonversion.ErrorDomain`
+// and the `Qonversion.ErrorCode` bridging read it, so it must be defined and equal to the domain the SDK creates errors in.
+- (void)testErrorDomain_isDefinedAndMatchesQonversionErrorDomain {
+  XCTAssertEqualObjects(QONErrorDomain, QonversionErrorDomain);
+  XCTAssertEqualObjects(QONErrorDomain, @"com.qonversion.io");
+
+  NSError *error = [QONErrors errorWithQONErrorCode:QONErrorCodeBackendError];
+  XCTAssertEqualObjects(error.domain, QONErrorDomain);
+  XCTAssertEqual(error.code, QONErrorCodeBackendError);
+}
+
 @end
