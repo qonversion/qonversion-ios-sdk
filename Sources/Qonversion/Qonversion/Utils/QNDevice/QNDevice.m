@@ -221,9 +221,12 @@ static NSString * const kUserDefaultsSuiteName = @"qonversion.device.suite";
       self.idfaProhibited = YES;
       _advertiserID = nil;
 #else
+      // The IDFA reader lives in a separate compilation unit (the `QonversionIDFA` Swift package target / the part of
+      // the pod the `NoIdfa` subspec excludes), so it is looked up at runtime: no class means Kids Mode.
+      Class provider = NSClassFromString(@"QNAdvertisingIdProvider");
       SEL selector = NSSelectorFromString(@"obtainAdvertisingID");
-      if ([[QNDevice current] respondsToSelector:selector]) {
-        _advertiserID = ((NSString * (*)(id, SEL))[[QNDevice current] methodForSelector:selector])([QNDevice current], selector);
+      if (provider && [provider respondsToSelector:selector]) {
+        _advertiserID = ((NSString * (*)(id, SEL))[provider methodForSelector:selector])(provider, selector);
       } else {
         self.idfaProhibited = YES;
       }

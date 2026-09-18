@@ -53,6 +53,48 @@ jobs:
             -destination 'generic/platform=${{ matrix.platform }}' \
             -skipPackagePluginValidation -skipMacroValidation \
             build CODE_SIGNING_ALLOWED=NO -quiet
+
+  # Kids Mode as a Swift package: the `QonversionNoIdfa` product must ship without the `QonversionIDFA` target, so the
+  # compiled code never mentions `ASIdentifierManager` (what App Review looks for in the Kids category), while the
+  # default `Qonversion` product must still carry the IDFA reader. Checked on the compiled objects of each product.
+  spm-noidfa:
+    name: SPM products (IDFA vs NoIdfa)
+    runs-on: macos-latest
+
+    steps:
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.2'
+      - uses: actions/checkout@v4
+      - name: Build both products (iOS Simulator)
+        run: |
+          for scheme in Qonversion QonversionNoIdfa; do
+            xcodebuild -workspace .swiftpm/xcode/package.xcworkspace \
+              -scheme "$scheme" \
+              -destination 'generic/platform=iOS Simulator' \
+              -derivedDataPath "dd-$scheme" \
+              -skipPackagePluginValidation -skipMacroValidation \
+              build CODE_SIGNING_ALLOWED=NO -quiet
+          done
+      - name: QonversionNoIdfa carries no IDFA code
+        run: |
+          objects=$(find dd-QonversionNoIdfa -name '*.o' -path '*Objects-normal*')
+          test -n "$objects" || { echo "::error::no compiled objects found for QonversionNoIdfa — derivedData layout changed?"; exit 1; }
+          if find dd-QonversionNoIdfa -name 'QonversionIDFA.o' -o -name 'QNAdvertisingIdProvider.o' | grep -q .; then
+            echo "::error::QonversionNoIdfa built the IDFA target"; exit 1
+          fi
+          # What App Review is known to look for in the Kids category: the class, the selector and the framework.
+          hits=$(echo "$objects" | xargs strings | grep -c -E 'ASIdentifierManager|advertisingIdentifier|AdSupport' || true)
+          if [ "$hits" -ne 0 ]; then
+            echo "::error::QonversionNoIdfa references ASIdentifierManager / advertisingIdentifier / AdSupport ($hits occurrences)"; exit 1
+          fi
+      - name: Qonversion carries the IDFA reader
+        run: |
+          find dd-Qonversion -name 'QNAdvertisingIdProvider.o' | grep -q . || { echo "::error::Qonversion did not build QNAdvertisingIdProvider"; exit 1; }
+          hits=$(find dd-Qonversion -name '*.o' -path '*Objects-normal*' | xargs strings | grep -c ASIdentifierManager || true)
+          if [ "$hits" -eq 0 ]; then
+            echo "::error::Qonversion does not reference ASIdentifierManager — the IDFA reader is missing"; exit 1
+          fi
   
   common-checks:
     runs-on: ubuntu-latest

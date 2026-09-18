@@ -272,7 +272,7 @@ static NSString *const QonversionErrorDomain = @"com.qonversion.io";
 /**
  On iOS 14.5+, after requesting the app tracking permission using ATT, you need to notify Qonversion
  if tracking is allowed and IDFA is available.
- For Qonversion/NoIdfa SDK advertising ID is always empty.
+ For the `Qonversion/NoIdfa` CocoaPods subspec and the `QonversionNoIdfa` Swift package product the advertising ID is always empty.
  */
 - (void)collectAdvertisingId;
 
