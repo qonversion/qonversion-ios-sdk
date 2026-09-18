@@ -4,6 +4,11 @@
 #import "Qonversion.h"
 #import <StoreKit/StoreKit.h>
 
+// The domain every SDK error is created in. `QonversionErrorDomain` (Qonversion.h) has always carried the same
+// value; this definition backs the `extern` declaration in QONErrors.h that `NS_ERROR_ENUM` and Swift's
+// `Qonversion.ErrorDomain` / `Qonversion.ErrorCode.errorDomain` link against.
+NSErrorDomain const QONErrorDomain = @"com.qonversion.io";
+
 @implementation QONErrors
 
 + (BOOL)isAuthorizationError:(NSError *)error {
