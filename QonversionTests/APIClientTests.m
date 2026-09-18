@@ -137,4 +137,14 @@ NSString *const kTestAPIKey = @"QNAPIClient_test_api_key";
   [self waitForExpectationsWithTimeout:keyQNTestTimeout handler:nil];
 }
 
+- (void)testThatSessionPerformsSystemServerTrustValidation {
+  // A session created without a delegate cannot answer a server-trust challenge itself,
+  // so URLSession applies the system trust evaluation. Guards DEV-1837: the SDK shipped
+  // 6.9.0 through 6.17.1 with a delegate that accepted any server certificate.
+  QNAPIClient *client = [[QNAPIClient alloc] init]; // not _client: setUp installs a mock session
+  XCTAssertNil(client.session.delegate);
+  XCTAssertFalse([client conformsToProtocol:@protocol(NSURLSessionDelegate)]);
+  XCTAssertFalse([client respondsToSelector:@selector(URLSession:didReceiveChallenge:completionHandler:)]);
+}
+
 @end

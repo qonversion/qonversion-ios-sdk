@@ -41,7 +41,7 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
     _apiKey = @"";
     _userID = @"";
     _debug = NO;
-    _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration delegate:self delegateQueue:nil];
+    _session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
     _retriableRequests = @[kInitEndpoint, kPurchaseEndpoint, kAttributionEndpoint];
     _criticalErrorCodes = [QNUtils authErrorsCodes];
   }
@@ -675,16 +675,6 @@ NSUInteger const kUnableToParseEmptyDataDefaultCode = 3840;
 
     NSData *updatedStoredRequestsData = [QNKeyedArchiver archivedDataWithObject:[storedRequests copy]];
     [self.localStorage storeObject:updatedStoredRequestsData forKey:kStoredRequestsKey];
-  }
-}
-
-// MARK: - Temporary SSL bypass for staging. Remove before release.
-- (void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler {
-  if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
-    NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-    completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
-  } else {
-    completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
   }
 }
 
