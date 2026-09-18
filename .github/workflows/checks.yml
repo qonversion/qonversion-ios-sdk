@@ -127,6 +127,21 @@ jobs:
 
           echo "API URLs verified: $EXPECTED_URL"
 
+      # DEV-1837: 6.9.0 through 6.17.1 shipped URLSession delegates that answered every server-trust challenge with
+      # a credential built from the unverified SecTrust (QNAPIClient and NoCodes NetworkProvider). An earlier fix
+      # was written and never merged, so the guard has to be mechanical. Certificate pinning is deliberately not
+      # in scope: if it is ever added, extend this pattern on purpose instead of deleting the step.
+      - name: No TLS trust overrides in shipped sources
+        run: |
+          PATTERN='credentialForTrust|URLCredential\(trust:|serverTrust|NSURLAuthenticationMethodServerTrust|didReceiveChallenge|didReceive challenge'
+          HITS=$(grep -rnE "$PATTERN" Sources/ --include='*.h' --include='*.m' --include='*.swift' || true)
+          if [ -n "$HITS" ]; then
+            echo "::error::Server-trust override found in Sources/ - TLS certificate validation must stay enabled"
+            echo "$HITS"
+            exit 1
+          fi
+          echo "OK: no server-trust overrides in Sources/"
+
   tests:
     runs-on: macos-latest
 
