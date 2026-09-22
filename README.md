@@ -208,7 +208,7 @@ Send user-level subscription data to your favorite platforms.
 * **Track and increase your revenue.** Qonversion provides detailed real-time revenue analytics including cohort analysis, trial conversion rates, country segmentation, and much more.
 * **Integrations with the leading mobile platforms.** Qonversion allows sending data to platforms like AppsFlyer, Adjust, Branch, Tenjin, Facebook Ads, Amplitude, Mixpanel, and many others.
 * **Change promoted in-app products.** Change promoted in-app products anytime without app releases.
-* **A/B test** and identify winning in-app purchases, subscriptions or paywals.
+* **A/B test** and identify winning in-app purchases, subscriptions or paywalls.
 * **Cross-device and cross-platform access management.** If you provide user authorization in your app, you can easily set Qonversion to provide premium access to authorized users across devices and operating systems.
 * **SDK caches the data.** Qonversion SDK caches purchase data including in-app products and entitlements, so the user experience is not affected even with the slow or interrupting network connection.
 * **Webhooks.** You can easily send all of the data to your server with Qonversion webhooks.
