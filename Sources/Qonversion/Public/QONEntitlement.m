@@ -128,6 +128,9 @@
        
      case QONEntitlementSourceManual:
        return @"Manual";
+
+     case QONEntitlementSourcePaddle:
+       return @"Paddle";
    }
  }
 

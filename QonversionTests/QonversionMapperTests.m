@@ -54,6 +54,26 @@
   XCTAssertTrue([premium.expirationDate.description isEqualToString:@"2020-05-08 14:51:26 +0000"]);
 }
 
+- (void)testThatMapperParsesPaddleSource {
+  NSDictionary *permission = @{
+    @"id": @"premium",
+    @"active": @1,
+    @"source": @"paddle",
+    @"associated_product": @"main",
+    @"started_timestamp": @1586369486
+  };
+  NSDictionary *launch = @{
+    @"uid": @"qonversion_user_id",
+    @"permissions": @[permission]
+  };
+
+  QONLaunchResult *result = [QNMapper fillLaunchResult:launch];
+
+  QONEntitlement *premium = result.entitlements[@"premium"];
+  XCTAssertNotNil(premium);
+  XCTAssertEqual(premium.source, QONEntitlementSourcePaddle);
+}
+
 - (void)testThatMapperParseFewPermissionsCorrectly {
   QONLaunchResult *result = [QNMapper fillLaunchResult:self.userInitSuccess];
   
