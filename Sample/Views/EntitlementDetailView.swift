@@ -118,6 +118,8 @@ struct EntitlementDetailView: View {
             return "Stripe"
         case .manual:
             return "Manual"
+        case .paddle:
+            return "Paddle"
         case .unknown:
             return "Unknown"
         @unknown default:

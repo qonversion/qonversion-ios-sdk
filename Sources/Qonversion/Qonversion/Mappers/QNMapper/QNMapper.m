@@ -194,6 +194,7 @@
        @"appstore": @(QONEntitlementSourceAppStore),
        @"playstore": @(QONEntitlementSourcePlayStore),
        @"stripe": @(QONEntitlementSourceStripe),
+       @"paddle": @(QONEntitlementSourcePaddle),
        @"manual": @(QONEntitlementSourceManual),
        @"unknown": @(QONEntitlementSourceUnknown)
      };

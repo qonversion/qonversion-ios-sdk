@@ -6,7 +6,8 @@ typedef NS_ENUM(NSInteger, QONEntitlementSource) {
    QONEntitlementSourceAppStore = 1, // App Store
    QONEntitlementSourcePlayStore = 2, // Play Store
    QONEntitlementSourceStripe = 3, // Stripe
-   QONEntitlementSourceManual = 4 // The entitlement was activated manually
+   QONEntitlementSourceManual = 4, // The entitlement was activated manually
+   QONEntitlementSourcePaddle = 5 // Paddle
  } NS_SWIFT_NAME(Qonversion.EntitlementSource);
 
 typedef NS_ENUM(NSInteger, QONEntitlementGrantType) {
