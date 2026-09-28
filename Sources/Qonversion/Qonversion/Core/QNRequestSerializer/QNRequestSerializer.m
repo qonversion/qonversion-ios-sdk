@@ -187,7 +187,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSURLRequest *)addTryCountToHeader:(NSNumber *)tryCount request:(NSURLRequest *)request {
   NSMutableURLRequest *mutableRequest = [request mutableCopy];
   NSString *attempt = [NSString stringWithFormat:@"%ld", (long)tryCount.integerValue + 1];
-  [mutableRequest addValue:attempt forHTTPHeaderField:@"Attempt"];
+  [mutableRequest setValue:attempt forHTTPHeaderField:@"Attempt"];
   request = [mutableRequest copy];
   
   return request;
