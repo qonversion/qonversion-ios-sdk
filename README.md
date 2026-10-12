@@ -1,274 +1,176 @@
-<h1 align="center">
-    Qonversion
-</h1>
+<!-- header image: pending — add when the asset is published (see readme-v2/readme-template.md §2.1) -->
 
-Qonversion - In-app subscription monetization: implement subscriptions and grow your app’s revenue with A/B experiments 
+# Qonversion iOS SDK
 
-* In-app subscription management SDK
-* No-Code Builder SDK for creating paywalls and onboarding in just a couple of lines of code
-* API and webhooks to make your subscription data available where you need it
-* Seamless Stripe integration to enable cross-platform access management
-* Subscribers CRM with user-level transactions
-* Instant access to real-time subscription analytics
-* Built-in A/B experiments for subscription business model
+**Qonversion is the app growth system for people and agents.** It collects the revenue data of your
+subscription app and keeps it lined up with what App Store Connect reports, so campaigns, experiments and
+entitlements run on the same numbers. This repository holds the iOS SDK: the part that runs inside
+your app.
 
-<p align="center">
-     <a href="https://qonversion.io"><img width="90%" src="https://qcdn3.sfo3.digitaloceanspaces.com/github/qonversion_platform.png">
-     </a>
-</p>
-
-[![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS%20%7C%20watchOS%20%7C%20visionOS-blue.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup)
-[![Version](https://img.shields.io/github/v/release/qonversion/qonversion-ios-sdk?style=flat)](https://github.com/qonversion/qonversion-ios-sdk/releases)
+[![Version](https://img.shields.io/github/v/release/qonversion/qonversion-ios-sdk?label=version)](https://github.com/qonversion/qonversion-ios-sdk/releases)
 [![SwiftPM compatible](https://img.shields.io/badge/SwiftPM-compatible-4BC51D.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup#install-via-swift-package-manager)
-[![CocoaPods compatible](https://img.shields.io/badge/CocoaPods-compatible-4BC51D.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup#install-via-cocoapods)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
+[![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS%20%7C%20watchOS%20%7C%20visionOS-blue.svg?style=flat)](https://documentation.qonversion.io/docs/ios-sdk-setup)
 
+## Quickstart
 
-## In-App Subscription Implementation & Management
+Create a project in the [dashboard](https://dash.qonversion.io) and connect your stores first — nothing validates until then.
 
-<p align="center">
-     <a href="https://documentation.qonversion.io/docs/integrations-overview"><img width="90%" src="https://user-images.githubusercontent.com/13959241/161107203-8ef3ecee-86be-47a2-ac57-b21d3da19339.png">
-     </a>
-</p>
+**1. Install**
 
-1. Qonversion SDK provides three simple methods to manage subscriptions:
-	* Get in-app product details
-	* Make purchases
-	* Check subscription status to manage premium access
-2. Qonversion communicates with Apple or Google platforms both through SDK and server-side to process native in-app payments and keep subscription statuses up to date.
-3. You can use Qonversion webhooks and API in addition to SDK to get user-level data where you need it.
-
-See the [quick start guide documentation](https://documentation.qonversion.io/docs/quickstart).
-
-## Analytics
-
-Qonversion provides advanced subscription analytics out-of-the-box. You can monitor real-time metrics from new users and trial-to-paid conversions to revenue, MRR, ARR, cohort retention and more. Understand your customers and make better decisions with precise subscription analytics.
-
-<p align="center">
-     <a href="https://documentation.qonversion.io/docs/analytics"><img width="90%" src="https://files.readme.io/9a4fdf6-Analytics.png">
-     </a>
-</p>
-
-
-## A/B Experiments
-
-Qonversion's A/B Experiments feature provides everything required to quickly launch paywall and other monetization experiments, analyze results and roll out winning versions without releasing a new app build. Qonversion A/B Experiments include:
-
-* User segmentation by country, install date, app version, free/paying user
-* Traffic allocation
-* Advanced subscription analytics
-* Visualization of A/B experiments results
-* Statistical significance of the results
-* Roll out winning versions without app release with remote config
-
-
-<p align="center">
-     <a href="https://documentation.qonversion.io/docs/subscription-ab-testing"><img width="90%" src="https://qcdn3.sfo3.digitaloceanspaces.com/github/ab_tests.png">
-     </a>
-</p>
-
-See more details [here](https://documentation.qonversion.io/docs/paywall-experiments).
-
-## No-Code Builder
-
-Create, customize, and launch high-converting paywalls and onboarding flows — in just a couple of lines of code!
-
-The **Qonversion No-Code Builder SDK** is the fastest way to design and implement paywalls and onboarding flows in your app. Skip the development time with a **drag-and-drop editor, built-in A/B testing, and real-time analytics**.
-
-### What You Can Do with No-Code Paywalls and Onboarding
-
-- **Quickly launch high-converting paywalls and onboarding screens** using pre-built templates
-- **Customize UI components** – Text, images, buttons, pricing options, and more
-- **A/B test paywalls and onboarding flows** without app releases
-- **Real-time analytics** for paywall and onboarding performance
-
-See the [No-Code Builder documentation](https://documentation.qonversion.io/docs/no-codes).
-
-## Web to App (Redemption)
-
-Web to App lets a user who purchased on your website redeem that purchase inside the
-native app. The web checkout sends the user an email containing a redemption link of
-the form `https://<your-host>/r/{project_uid}/{token}`. When the user opens that link
-on a device with your app installed, iOS routes it to your app as a
-[Universal Link](https://developer.apple.com/ios/universal-links/), and the SDK
-exchanges the token for an entitlement. The backend grants the entitlement to the
-current app user, and the SDK refreshes entitlements so your next
-`checkEntitlements` call sees it.
-
-### 1. Configure Universal Links / Associated Domains
-
-1. In Xcode, open your target → **Signing & Capabilities** → add the
-   **Associated Domains** capability.
-2. Add an entry for the host that serves your redemption links:
-
-   ```
-   applinks:<your-host>
-   ```
-
-3. Host an `apple-app-site-association` (AASA) file at
-   `https://<your-host>/.well-known/apple-app-site-association` that maps the
-   `/r/*` path to your app's App ID. Qonversion hosts the AASA for its default
-   redemption host; if you serve links from your own domain, publish the AASA
-   yourself. See Apple's
-   [Supporting Universal Links](https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app)
-   for the exact JSON format.
-
-> Only `https` Universal Links are accepted by `handleRedemptionLink`. Custom URL
-> schemes (e.g. `myapp://`) are intentionally rejected for the email handoff,
-> because any installed app can register a custom scheme and hijack the token.
-
-### 2. Forward the link from `application(_:continue:restorationHandler:)`
-
-When iOS opens a Universal Link, forward it to the SDK from your
-`UIApplicationDelegate` (or the corresponding `SceneDelegate` callback):
+Swift Package Manager, in Xcode: **File → Add Package Dependencies…**, enter
+`https://github.com/qonversion/qonversion-ios-sdk` and add the `Qonversion` library to your target.
+Or in `Package.swift`:
 
 ```swift
-func application(
-  _ application: UIApplication,
-  continue userActivity: NSUserActivity,
-  restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
-) -> Bool {
-  guard userActivity.activityType == NSUserActivityTypeBrowsingWeb,
-        let url = userActivity.webpageURL else {
-    return false
-  }
-
-  Qonversion.handleRedemptionLink(url: url) { result in
-    switch result {
-    case .success:
-      // Entitlement granted server-side for the current app user. The SDK has
-      // refreshed entitlements; your next checkEntitlements call will see it.
-      break
-    case .tokenExpired:
-      // The link's TTL elapsed — offer the reissue UI (see below).
-      break
-    case .alreadyConsumed:
-      // The token was already redeemed (e.g. on another device).
-      break
-    case .invalidToken:
-      // Tampered, mistyped, or stale link.
-      break
-    case .networkError:
-      // The device could not reach the backend — ask the user to retry.
-      break
-    case .retryable:
-      // The server was reachable but returned a transient error (rate limit,
-      // 5xx, auth/config). Safe to retry later; do NOT show an offline error.
-      break
-    @unknown default:
-      break
-    }
-  }
-
-  return true
-}
-```
-
-In a SwiftUI app, attach the handler with `.onContinueUserActivity(NSUserActivityTypeBrowsingWeb)`
-or `.onOpenURL` and call `Qonversion.handleRedemptionLink(url:completion:)` the same way.
-
-### 3. Reissue UI (`presentReissueUI`)
-
-If redemption fails because the token expired (`.tokenExpired`) or install
-attribution could not match the purchase, present the built-in reissue UI so the
-user can request a fresh redemption email:
-
-```swift
-Qonversion.shared().presentReissueUI(from: viewController) { submitted in
-  // `true`  — the user submitted their email (a new redemption email is sent).
-  // `false` — the user dismissed the screen without submitting.
-}
-```
-
-The reissue flow POSTs the user's email to Qonversion, which sends a new
-redemption link. Rate limiting (HTTP 429) is reported back so you can show an
-appropriate "try again later" message.
-
-## Integrations
-
-Send user-level subscription data to your favorite platforms.
-
-* Amplitude
-* Mixpanel
-* Appsflyer
-* Adjust
-* Singular
-* CleverTap
-* [All other integrations here](https://qonversion.io/integrations)
-
-<p align="center">
-     <a href="https://documentation.qonversion.io/docs/integrations-overview"><img width="90%", src="https://qcdn3.sfo3.digitaloceanspaces.com/github/integrations.png">
-     </a>
-</p>
-
-## Why Qonversion?
-
-* **No headaches with Apple's StoreKit & Google Billing.** Qonversion provides simple methods to handle Apple StoreKit & Google Billing purchase flow.
-* **Receipt validation.** Qonversion validates user receipts with Apple and Google to provide 100% accurate purchase information and subscription statuses. It also prevents unauthorized access to the premium features of your app.
-* **Track and increase your revenue.** Qonversion provides detailed real-time revenue analytics including cohort analysis, trial conversion rates, country segmentation, and much more.
-* **Integrations with the leading mobile platforms.** Qonversion allows sending data to platforms like AppsFlyer, Adjust, Branch, Tenjin, Facebook Ads, Amplitude, Mixpanel, and many others.
-* **Change promoted in-app products.** Change promoted in-app products anytime without app releases.
-* **A/B test** and identify winning in-app purchases, subscriptions or paywalls.
-* **Cross-device and cross-platform access management.** If you provide user authorization in your app, you can easily set Qonversion to provide premium access to authorized users across devices and operating systems.
-* **SDK caches the data.** Qonversion SDK caches purchase data including in-app products and entitlements, so the user experience is not affected even with the slow or interrupting network connection.
-* **Webhooks.** You can easily send all of the data to your server with Qonversion webhooks.
-* **Customer support.** You can always reach out to our customer support and get the help required.
-
-Convinced? Let's go!
-
-## Installation
-
-### Swift Package Manager (recommended)
-
-In Xcode: **File → Add Package Dependencies...**, enter `https://github.com/qonversion/qonversion-ios-sdk` and add the `Qonversion` library to your target. Or in `Package.swift`:
-
-```swift
-// Qonversion SDK (includes No-Codes functionality)
-.package(url: "https://github.com/qonversion/qonversion-ios-sdk.git", from: "6.15.0")
+.package(url: "https://github.com/qonversion/qonversion-ios-sdk.git", from: "6.0.0"),
 // target dependency:
 .product(name: "Qonversion", package: "qonversion-ios-sdk")
 ```
 
-The Swift package exposes three modules: `Qonversion` (core SDK), `QonversionSwift` (Swift-only API) and `NoCodes` (No-Codes). The CocoaPod merges them into a single `Qonversion` module — with CocoaPods, drop `import NoCodes` / `import QonversionSwift` from the samples below.
+Swift Package Manager resolves the latest 6.x release; the exact current version is on [Releases](https://github.com/qonversion/qonversion-ios-sdk/releases).
 
-Building an app for kids? Add the `QonversionNoIdfa` product instead of `Qonversion` (link exactly one of them, 6.17.0+) — the same SDK without the IDFA reader, the Swift package counterpart of `pod 'Qonversion/NoIdfa'`; the imports are the same. See the [Kids Mode guide](https://documentation.qonversion.io/docs/kids-mode-sdk).
-
-### CocoaPods
-
-> CocoaPods trunk becomes read-only on December 2, 2026: new SDK versions will be published through Swift Package Manager only, existing CocoaPods builds keep working. See the [migration guide](https://documentation.qonversion.io/docs/dec-2026-migration-guide-cocoapods-to-spm).
-
-```ruby
-# Qonversion SDK (includes No-Codes functionality)
-pod 'Qonversion'
-```
-
-### Usage
+**2. Initialize**
 
 ```swift
 import Qonversion
-import NoCodes
 
-// Initialize Qonversion SDK
-let config = Qonversion.Configuration(projectKey: "your_project_key", launchMode: .subscriptionManagement)
+let config = Qonversion.Configuration(projectKey: "your_project_key",
+                                      launchMode: .subscriptionManagement)
 Qonversion.initWithConfig(config)
-
-// Use No-Codes functionality
-let configuration = NoCodesConfiguration(projectKey: "your_project_key")
-NoCodes.initialize(with: configuration)
-NoCodes.shared.showScreen(withContextKey: "welcome")
 ```
+
+The project key is in the dashboard under **Settings → Developer → Keys**.
+
+This is Subscription Management Mode — Qonversion owns the purchase flow. To keep your own purchase
+code and use Qonversion for analytics only, initialize with [Analytics Mode](https://documentation.qonversion.io/docs/analytics-mode) instead.
+
+**3. Check what the user has access to**
+
+```swift
+Qonversion.shared().checkEntitlements { entitlements, error in
+  guard error == nil else { return }
+
+  if entitlements["premium"]?.isActive == true {
+    // unlock premium features
+  }
+}
+```
+
+Full walk-through, both modes and the store setup: [Quick start](https://documentation.qonversion.io/docs/quickstart).
+
+### CocoaPods
+
+> CocoaPods trunk becomes read-only on December 2, 2026
+> ([their announcement](https://blog.cocoapods.org/CocoaPods-Specs-Repo/)): new SDK versions will be
+> published through Swift Package Manager only, existing CocoaPods builds keep working. See the
+> [migration guide](https://documentation.qonversion.io/docs/dec-2026-migration-guide-cocoapods-to-spm).
+
+```ruby
+pod 'Qonversion'
+```
+
+The modules you import from the Swift package are `Qonversion` (core SDK), `QonversionSwift`
+(Swift-only API) and `NoCodes`. The CocoaPod merges them into a single `Qonversion` module, so which
+module a symbol lives in depends on how you installed the SDK — check it before you copy a sample.
+
+Need a build that never touches the IDFA — an app in the Kids Category, for example? Link
+`QonversionNoIdfa` instead of `Qonversion`, exactly one of the two, 6.17.0 and newer. It is the same
+SDK without the IDFA reader, the Swift package counterpart of `pod 'Qonversion/NoIdfa'`, and the
+imports are the same. See the
+[Kids Mode guide](https://documentation.qonversion.io/docs/kids-mode-sdk).
 
 ## Documentation
 
-Check the [full documentation](https://documentation.qonversion.io/docs/quickstart) to learn about implementation details and available features.
+* [Welcome](https://documentation.qonversion.io/docs/qonversion-platform) — what the platform does and the three ways to start.
+* [iOS setup](https://documentation.qonversion.io/docs/ios-sdk-setup) — full installation for this platform.
+* [Quick start](https://documentation.qonversion.io/docs/quickstart) — choose a mode, create a project, connect the stores.
+* [API reference](https://documentation.qonversion.io/reference/v4/overview) — REST API v4.
+* [For agents](https://documentation.qonversion.io/docs/for-agents) — MCP servers, machine-readable docs, ready-made prompts.
 
-#### Help us improve the documentation
+Redeeming a web purchase inside the app — Associated Domains, the AASA file, handling the universal
+link and the reissue flow — is documented in full on
+[Redeem web purchases in your app](https://documentation.qonversion.io/docs/web-funnel-redemption).
+Two things worth knowing before you read it: the entitlement is already granted server-side when the
+link arrives, so you do not add an `identify` call yourself, and the redemption URL carries a
+single-use token — do not log or display it.
 
-Whether you’re a core user or trying it out for the first time, you can make a valuable contribution to Qonversion by improving the documentation. Help us by:
+## What this SDK does
 
-* sending us feedback about something you thought was confusing or simply missing
-* sending us a pull request via GitHub
-* suggesting better wording or ways of explaining certain topics in the [Qonversion documentation](http://documentation.qonversion.io). Use `SUGGEST EDITS` button in the top right corner.
+* **Collects purchases** and sends them to Qonversion, where they are confirmed with the store instead of being trusted from the device.
+* **Resolves entitlements** — one answer to "is this user premium right now", the same on every device the user signs in to.
+* **Keeps the history** — trials, conversions, renewals, cancellations, refunds, upgrades and downgrades, as events you can query, export or forward.
+* **Feeds Remote Configs and A/B tests** — change which products, paywalls and app behaviour your users see, and run A/B tests without shipping a release.
+* **Feeds Apple Ads reporting** — see what each campaign, ad group and keyword returns in real revenue, not only in installs.
+* **Renders screens built in the dashboard** — paywalls and onboarding, updated without shipping a release.
+
+What happens when something fails — the standby service, fallback files and the uptime commitment
+behind the platform: [reliability](https://qonversion.io/reliability).
+
+## For agents
+
+An agent can integrate this SDK end to end. The companion file [`AGENTS.md`](AGENTS.md) gives it the
+current version, the documented method names and the rules it must not break, instead of what its
+training data remembers.
+
+**Read these docs as an agent.** The documentation exposes an MCP server at
+`https://documentation.qonversion.io/mcp` — no account needed. Any page is available as markdown by
+appending `.md` to its URL, and [`llms.txt`](https://documentation.qonversion.io/llms.txt) lists every page.
+
+**Work on your project data as an agent.** The Qonversion MCP server at `https://mcp.qonversion.io/mcp`
+exposes the platform's resources as tools. Reading Apple Ads — campaign reports, time series and the
+connection status — is on for all accounts. **Changing campaigns — bids, budgets and campaign status
+— is a closed beta, switched on per account on request**; outside it those tools are not available,
+so ask support to enable it before wiring an agent to them. The agent authenticates as you over
+OAuth 2.1, each tool is gated by its own scope, and no Qonversion key is handed to the model.
+
+Destructive tools and Apple Ads changes that increase spend do not fire on the first call: they
+return a short-lived token addressed to the human operator, and completing the action requires
+echoing the resource id verbatim and giving a reason, which is recorded in the audit log. Pausing an
+entity or lowering a value is **not** parked — it applies immediately. The full tool list, the
+per-client setup and the scopes are in
+[MCP Server](https://documentation.qonversion.io/docs/mcp-server).
+
+**Have an agent integrate this SDK.** Paste this into Claude Code, Cursor, Codex or any coding agent
+working in your app's repository:
+
+> Integrate the Qonversion SDK into this app.
+>
+> Read the official documentation before writing any code. The docs expose an MCP server at `https://documentation.qonversion.io/mcp` — use it if you can. Otherwise fetch pages directly; any page is available as markdown by appending `.md` to its URL, and `https://documentation.qonversion.io/llms.txt` lists every page.
+>
+> Steps:
+> 1. Check with me that a Qonversion project exists and the app stores are connected — project key, App Store shared secret and App Store ID, Google Play service account key. This is step 2 of the quick start, I have to do it in the dashboard, and nothing validates until it is done. Google credentials can take up to 24 hours to start working.
+> 2. Read `https://documentation.qonversion.io/docs/quickstart.md` and decide with me between Analytics Mode and Subscription Management Mode. Do not pick one silently.
+> 3. Read the install page for this project's platform, linked from `https://documentation.qonversion.io/docs/install-sdk.md`. Use the SDK version the docs name, not one from memory.
+> 4. Install and configure the SDK. Ask me for the Qonversion project key; it is in the dashboard under Settings → Developer → Keys. Never commit it to the repository.
+> 5. Implement the mode we chose, following the documented method names exactly.
+> 6. Show me the diff and tell me what you could not verify against the docs.
+
+Prefer to do it by hand? The steps are in the [quick start](https://documentation.qonversion.io/docs/quickstart).
+
+## Sample app
+
+A SwiftUI app that initializes the SDK, lists products, makes a purchase, reads entitlements and
+handles a redemption link: [`Sample/`](Sample).
+
+## Requirements
+
+| | Minimum |
+|---|---|
+| iOS | 13.0 |
+| macOS | 10.15 |
+| tvOS | 12.0 |
+| watchOS | 6.2 |
+| visionOS | 1.0 |
+| Swift tools | 5.9 |
+
+`presentReissueUI` requires iOS 13.0 or tvOS 13.0 and newer. It lives in the `QonversionSwift`
+module, so under Swift Package Manager it needs `import QonversionSwift`.
+
+## Help
+
+Contact us via [issues on GitHub](https://github.com/qonversion/qonversion-ios-sdk/issues) or the
+[contact form](https://qonversion.io/contact-us) on our site.
 
 ## Contributing
 
@@ -280,11 +182,6 @@ Contributions are what make the open source community such an amazing place to l
 4. Push to the Branch (`git push origin feature/SuperFeature`)
 5. Open a Pull Request
 
-
-## Have a question?
-
-Contact us via [issues on GitHub](https://github.com/qonversion/qonversion-ios-sdk/issues) or the [contact form](https://qonversion.io/contact-us) on our site.
-
 ## License
 
-Qonversion SDK is available under the MIT license.
+Qonversion SDK is available under the MIT license. See [LICENSE](LICENSE).
