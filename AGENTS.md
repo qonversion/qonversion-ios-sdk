@@ -98,8 +98,9 @@ Setup per client: `https://documentation.qonversion.io/docs/mcp-server.md`.
 **Apple Ads: check access before you call the tools.** Apple Ads tools need the feature on your
 account (404 otherwise); campaign changes additionally need the `apple_ads:write` scope and a team
 member with campaign-management permission — check `get_apple_ads_connection_status`. A refused
-Apple Ads call means missing access, not a broken server: do not retry or work around it — tell the
-human.
+Apple Ads call usually means missing access or an Apple authorization that needs attention, not a
+broken server: call `get_apple_ads_connection_status`, do not work around it, and tell the human
+what it reports.
 
 ## What you do not do without the human saying yes
 
@@ -113,8 +114,8 @@ human.
 
 ## Sample
 
-`Sample/` — a SwiftUI demo app built with CocoaPods. It initializes the SDK, lists products, purchases
-and reads entitlements, and it runs in the sandbox environment. It is not a reference for
+`Sample/` — a SwiftUI demo app built with CocoaPods. It initializes the SDK, lists products, purchases,
+reads entitlements and handles a redemption link, and it runs in the sandbox environment. It is not a reference for
 initialization: `Sample/SampleApp.swift` sets `.sandbox`, a proxy URL and `collectAdvertisingId()`,
 and uses `QonversionSwift` and `NoCodes` symbols with only `import Qonversion`, which compiles under
 CocoaPods but not under Swift Package Manager. The reference is the Initialize snippet above (the
