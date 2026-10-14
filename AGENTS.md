@@ -12,13 +12,15 @@ reads the same data server-side.
 
 ## Get the current version — do not use one from memory
 
-Your training data is older than the latest release. Pick one:
+Your training data is older than the latest release. Take the version from:
 
-1. `https://documentation.qonversion.io/docs/ios-sdk-setup.md` — the install page as markdown.
-2. `gh api repos/qonversion/qonversion-ios-sdk/releases/latest --jq .tag_name`.
-3. `Qonversion.podspec` in this repository — `s.version` is the released version.
+1. `gh api repos/qonversion/qonversion-ios-sdk/releases/latest --jq .tag_name` — the latest release tag.
+2. `pod trunk info Qonversion` — the latest version on CocoaPods trunk; `s.version` in `Qonversion.podspec` in this repository matches the latest release.
 
-If the three disagree, the docs page wins and you say so to the human.
+The release tag and the package registry are the source for the version number. The install
+page, `https://documentation.qonversion.io/docs/ios-sdk-setup.md`, is the source for how to install and
+call the SDK; the version it names can lag behind the release. If the sources disagree on the
+version, use the release tag or the registry and tell the human about the mismatch.
 
 ## Install
 
@@ -93,12 +95,11 @@ customers, remote configurations, experiments, analytics, exports, and Apple Ads
 OAuth 2.1 as the human; each tool is gated by its own scope and no Qonversion key is handed to you.
 Setup per client: `https://documentation.qonversion.io/docs/mcp-server.md`.
 
-**Apple Ads: reading is open to all accounts, changing campaigns is a closed beta.** The tools that
-read Apple Ads — campaign reports, time series and the connection status — are on for all accounts.
-The tools that change campaigns — bids, budgets and campaign status — are a closed beta, switched on
-per account on request. Outside the beta those write tools are not available. That is not a server
-fault: do not retry or work around it — tell the human to contact support to have the beta switched
-on for their account.
+**Apple Ads: check access before you call the tools.** Apple Ads tools need the feature on your
+account (404 otherwise); campaign changes additionally need the `apple_ads:write` scope and a team
+member with campaign-management permission — check `get_apple_ads_connection_status`. A refused
+Apple Ads call means missing access, not a broken server: do not retry or work around it — tell the
+human.
 
 ## What you do not do without the human saying yes
 
@@ -108,11 +109,16 @@ on for their account.
 - **Destructive MCP tools** (`delete_*`, `revoke_*`, `detach_*`, `discard_*`, `regenerate_project_secret`) and **Apple Ads changes that increase spend** do not fire on the first call: they return a one-time token addressed to the human. You must surface the pending action to the human and wait for an explicit yes before calling `confirm_destructive_action`. The token is in your hands, so this is a guard, not a lock — never auto-confirm your own token, and never invent the reason that goes into the audit log.
 - **`regenerate_project_secret` is deprecated** and deletes the project's oldest Secret Key immediately, with no overlap. Do not propose it.
 - **SDK version.** Do not bump a major version as a side effect of another task. Major versions have migration guides.
-- **Environment.** Do not switch the SDK between the sandbox and the production environment without being asked — it changes which purchases are counted as real. The identifier differs per platform (`QONEnvironment` on iOS, `QEnvironment` on Android, `Environment` in the wrappers); read it from the SDK, not from memory.
+- **Environment.** Do not switch the SDK between the sandbox and the production environment without being asked — it changes which purchases are counted as real. The identifier differs per platform (`Qonversion.Environment` in Swift, `QONEnvironment` in Objective-C); read it from the SDK, not from memory.
 
 ## Sample
 
-`Sample/` — a SwiftUI app that initializes the SDK, lists products, purchases and reads entitlements. `Sample/SampleApp.swift` is the reference for initialization.
+`Sample/` — a SwiftUI demo app built with CocoaPods. It initializes the SDK, lists products, purchases
+and reads entitlements, and it runs in the sandbox environment. It is not a reference for
+initialization: `Sample/SampleApp.swift` sets `.sandbox`, a proxy URL and `collectAdvertisingId()`,
+and uses `QonversionSwift` and `NoCodes` symbols with only `import Qonversion`, which compiles under
+CocoaPods but not under Swift Package Manager. The reference is the Initialize snippet above (the
+same as in the README).
 
 ## Requirements
 
